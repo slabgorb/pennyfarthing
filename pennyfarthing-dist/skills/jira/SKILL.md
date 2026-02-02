@@ -1,7 +1,7 @@
 ---
 name: jira
 description: Jira CLI commands for sprint management. Use when viewing, assigning, or updating Jira issues from the command line.
-args: "[view|claim|move|assign|create|sync|reconcile|link|search|sprint]"
+args: "[view|check|claim|move|assign|create|sync|reconcile|link|search|sprint]"
 ---
 
 # /jira - Jira Issue Management
@@ -34,36 +34,60 @@ jira issue view MSSCI-12038 --raw
 
 ---
 
-### `/jira claim <issue-key> [--claim]`
+### `/jira check <issue-key>`
 
-Check availability and claim a story for work.
+Check if a story is available to claim (not assigned to someone else).
 
 <run>
-.pennyfarthing/scripts jira/jira-claim-story.sh <issue-key> [--claim]
+.pennyfarthing/scripts/jira/jira-claim-story.sh <issue-key>
 </run>
 
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
 | `issue-key` | Yes | Jira key `MSSCI-XXXXX` or story key `35-7-name` |
-| `--claim` | No | Actually claim (assign + move to In Progress) |
 </args>
 
 <exit-codes>
 | Code | Meaning |
 |------|---------|
-| `0` | Available or successfully claimed |
+| `0` | Available (unassigned or assigned to you) |
 | `1` | Assigned to someone else |
 | `2` | Not found or not synced |
 | `3` | Error (CLI not installed, etc.) |
 </exit-codes>
 
 <example>
-# Check if available
-.pennyfarthing/scripts jira/jira-claim-story.sh MSSCI-12038
+.pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12038
+</example>
 
-# Claim it (assign to self + In Progress)
-.pennyfarthing/scripts jira/jira-claim-story.sh MSSCI-12038 --claim
+---
+
+### `/jira claim <issue-key>`
+
+Claim a story for work (assign to self + move to In Progress).
+
+<run>
+.pennyfarthing/scripts/jira/jira-claim-story.sh <issue-key> --claim
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `issue-key` | Yes | Jira key `MSSCI-XXXXX` or story key `35-7-name` |
+</args>
+
+<exit-codes>
+| Code | Meaning |
+|------|---------|
+| `0` | Successfully claimed |
+| `1` | Assigned to someone else (BLOCKED) |
+| `2` | Not found or not synced |
+| `3` | Error (CLI not installed, etc.) |
+</exit-codes>
+
+<example>
+.pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12038 --claim
 </example>
 
 ---
@@ -135,7 +159,7 @@ jira issue assign MSSCI-12038 x --project MSSCI
 Create a single Jira story under an epic from sprint YAML.
 
 <run>
-.pennyfarthing/scripts jira/create-jira-story.sh <epic-key> <story-id>
+.pennyfarthing/scripts/jira/create-jira-story.sh <epic-key> <story-id>
 </run>
 
 <args>
@@ -150,7 +174,7 @@ Creating a single story that's missing from Jira but exists in sprint YAML.
 </when>
 
 <example>
-.pennyfarthing/scripts jira/create-jira-story.sh MSSCI-12077 MSSCI-12066
+.pennyfarthing/scripts/jira/create-jira-story.sh MSSCI-12077 MSSCI-12066
 </example>
 
 <output>
@@ -169,7 +193,7 @@ Creating a single story that's missing from Jira but exists in sprint YAML.
 Create a Jira epic and all its child stories from sprint YAML.
 
 <run>
-.pennyfarthing/scripts jira/create-jira-epic.sh <epic-id> [--dry-run]
+.pennyfarthing/scripts/jira/create-jira-epic.sh <epic-id> [--dry-run]
 </run>
 
 <args>
@@ -181,10 +205,10 @@ Create a Jira epic and all its child stories from sprint YAML.
 
 <example>
 # Preview what would be created
-.pennyfarthing/scripts jira/create-jira-epic.sh epic-41 --dry-run
+.pennyfarthing/scripts/jira/create-jira-epic.sh epic-41 --dry-run
 
 # Create epic and stories
-.pennyfarthing/scripts jira/create-jira-epic.sh epic-41
+.pennyfarthing/scripts/jira/create-jira-epic.sh epic-41
 </example>
 
 <output>
@@ -202,7 +226,7 @@ Create a Jira epic and all its child stories from sprint YAML.
 Sync an epic and its stories from sprint YAML to Jira.
 
 <run>
-.pennyfarthing/scripts jira/sync-epic-jira.sh <epic-id> [options]
+.pennyfarthing/scripts/jira/sync-epic-jira.sh <epic-id> [options]
 </run>
 
 <args>
@@ -217,13 +241,13 @@ Sync an epic and its stories from sprint YAML to Jira.
 
 <example>
 # Show sync status
-.pennyfarthing/scripts jira/sync-epic-jira.sh MSSCI-11952
+.pennyfarthing/scripts/jira/sync-epic-jira.sh MSSCI-11952
 
 # Preview changes
-.pennyfarthing/scripts jira/sync-epic-jira.sh MSSCI-11952 --dry-run
+.pennyfarthing/scripts/jira/sync-epic-jira.sh MSSCI-11952 --dry-run
 
 # Full sync
-.pennyfarthing/scripts jira/sync-epic-jira.sh MSSCI-11952 --all
+.pennyfarthing/scripts/jira/sync-epic-jira.sh MSSCI-11952 --all
 </example>
 
 <output>
@@ -240,7 +264,7 @@ Sync an epic and its stories from sprint YAML to Jira.
 Generate a reconciliation report comparing sprint YAML against Jira.
 
 <run>
-.pennyfarthing/scripts jira/jira-reconcile.sh [--fix]
+.pennyfarthing/scripts/jira/jira-reconcile.sh [--fix]
 </run>
 
 <args>
@@ -251,10 +275,10 @@ Generate a reconciliation report comparing sprint YAML against Jira.
 
 <example>
 # Report only
-.pennyfarthing/scripts jira/jira-reconcile.sh
+.pennyfarthing/scripts/jira/jira-reconcile.sh
 
 # Report and fix
-.pennyfarthing/scripts jira/jira-reconcile.sh --fix
+.pennyfarthing/scripts/jira/jira-reconcile.sh --fix
 </example>
 
 <output>
@@ -402,8 +426,8 @@ Sprint field reference:
 | Command | Script/Action |
 |---------|---------------|
 | `/jira view MSSCI-XXX` | `jira issue view MSSCI-XXX` |
-| `/jira claim MSSCI-XXX` | `jira-claim-story.sh MSSCI-XXX` |
-| `/jira claim MSSCI-XXX --claim` | `jira-claim-story.sh MSSCI-XXX --claim` |
+| `/jira check MSSCI-XXX` | `jira-claim-story.sh MSSCI-XXX` |
+| `/jira claim MSSCI-XXX` | `jira-claim-story.sh MSSCI-XXX --claim` |
 | `/jira move MSSCI-XXX "Done"` | `jira issue move MSSCI-XXX "Done" -p MSSCI` |
 | `/jira assign MSSCI-XXX "user"` | `jira issue assign MSSCI-XXX "user" -p MSSCI` |
 | `/jira create story E-KEY S-ID` | `create-jira-story.sh E-KEY S-ID` |

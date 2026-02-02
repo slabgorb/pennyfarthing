@@ -169,7 +169,7 @@ docker ps
 just test-setup
 
 # Increase timeout if needed
-TEST_TIMEOUT=60000 npm test
+TEST_TIMEOUT=60000 pnpm test
 ```
 
 #### "No tests to run"
@@ -189,7 +189,7 @@ go test -run "TestUser"     # Works
 go test -run "testuser"     # No matches
 
 # JavaScript - case doesn't matter
-npm test -- -t "user"       # Matches TestUser, testUser, etc.
+pnpm test -- -t "user"       # Matches TestUser, testUser, etc.
 ```
 
 #### "Tests passing locally but failing in CI"
@@ -265,7 +265,7 @@ checkpoint_save "dev-phase" "implemented user auth"
 **Prevention:** Tests MUST pass before approval:
 ```bash
 # Always run before approval
-npm test
+pnpm test
 # or
 just test
 ```
@@ -283,7 +283,7 @@ grep -r "throw new Error.*not implemented" src/
 **Verification:** Confirm tests fail for the right reason:
 ```bash
 # Run tests and check output
-npm test 2>&1 | grep -E "(FAIL|Error|expected)"
+pnpm test 2>&1 | grep -E "(FAIL|Error|expected)"
 
 # Should see assertion failures, not syntax errors
 ```

@@ -11,6 +11,116 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.0.0] - 2026-02-02
+
+### Sprint 12 Release - Cyclist React Migration & VS Code Deprecation
+
+This major release completes the Cyclist React migration, delivering a modern UI with docking panels, accessibility compliance, and tiered context injection. The VS Code extension has been deprecated in favor of the superior Cyclist experience.
+
+### Breaking Changes
+
+- **VS Code Extension Removed** - The `pennyfarthing-vscode` package has been deprecated and completely removed
+  - Cyclist (Electron app) is now the sole UI for Pennyfarthing
+  - All VS Code extension source code, tests, and configuration deleted
+  - Monorepo structure changed from 4 packages to 3 packages
+  - See ADR-0019 for full rationale
+
+### Added
+
+#### Cyclist React Migration (Epics 69-73)
+- **React + Tailwind Build Pipeline** (MSSCI-12697) - Modern React 18 with Tailwind CSS v4
+- **MessageView Component** (MSSCI-12698) - Streaming messages with markdown, syntax highlighting, and subagent spans
+- **Docking System** (MSSCI-12704) - FlexLayout-based panels with drag-and-drop
+- **Panel Drag-and-Drop** (MSSCI-12705) - Reorder tabs, move between sidebars
+- **Layout Persistence** (MSSCI-12706) - Save/restore workspace layouts
+- **Command Palette** (MSSCI-12721) - Cmd+Shift+P searchable command palette
+- **Stop/Reset Controls** (MSSCI-12729) - Escape key stops Claude, visible Stop/Reset buttons
+
+#### New Components
+- **FileTree** (MSSCI-12710) - Hierarchical file browser for Changed panel
+- **DiffViewer** (MSSCI-12711) - Side-by-side and unified diff views
+- **ContextIndicator** (MSSCI-12712) - Visual context usage meter
+- **ApprovalModal** (MSSCI-12713) - Permission request dialogs
+- **PersonaHeader** (MSSCI-12700) - Agent portrait, name, and catchphrase
+- **StatsStrip** (MSSCI-12699/12779) - PWD, Jira email, GitHub username, model, context %
+- **ModeSwitch** (MSSCI-12773) - 3-way Plan/Manual/Accept toggle
+
+#### Visual Customization & Accessibility (Epic 73)
+- **Color Palette System** (MSSCI-12768) - 8 presets: Midnight, Daylight, High Contrast, etc.
+- **Font Customization** (MSSCI-12769) - UI and code font selection
+- **Responsive Breakpoints** (MSSCI-12770) - Auto-collapse sidebars at narrow widths
+- **WCAG AA Compliance** (MSSCI-12771) - ARIA labels, focus indicators, 4.5:1 contrast
+- **Theme-Aware Subagent Messages** (MSSCI-12776) - Helper personas for subagents
+- **User Avatar** (MSSCI-12777) - GitHub/Gravatar profile pictures
+- **ThemePalette UI** (MSSCI-12817) - Visual color preset picker in Settings
+
+#### Tiered Context Injection (Epic MSSCI-12793)
+- **Session State Tracking** (MSSCI-12795) - Track lastAgent, turnCount, injectedComponents
+- **Tier Selection Logic** (MSSCI-12796) - FULL/REFRESH/HANDOFF/MINIMAL tiers
+- **Python Prime Tier Support** (MSSCI-12797) - `--tier` argument with compressed personas
+- **TypeScript Tier Integration** (MSSCI-12798) - Wire tier selection into message flow
+- **Debug Panel Tier Display** (MSSCI-12799) - Show current tier with color coding
+- **Component Token Tracking** (MSSCI-12800) - Per-component token breakdown
+
+#### Cyclist UX Polish (Epic 64)
+- **DIFFS Panel Line Numbers** (MSSCI-12466) - Show actual file line numbers
+- **DIFFS File Opener** (MSSCI-12467) - Click to open in $EDITOR
+- **Combined Diff View** (MSSCI-12468) - Original → final state visualization
+- **Stats Strip Redesign** (MSSCI-12469) - Responsive PWD, identity context
+- **Tab Bar Sync** (MSSCI-12470) - Fix indicator state on startup
+- **Fresh Start Audit** (MSSCI-12471) - Clean state on app start/clear/TirePump
+- **Persona Section Cleanup** (MSSCI-12472-12474) - Remove OCEAN scores, random catchphrases
+- **Expandable Story Section** (MSSCI-12475/64-19) - Sprint and epic context display
+- **BikeLane Section** (MSSCI-12476/12551) - Workflow status visualization
+- **Background Tasks Visibility** (MSSCI-12477) - Subagent and task monitoring
+- **CYCLIST Marker Parsing** (MSSCI-12787) - Handoff/Question/Choices action buttons
+- **AC & BikeLane Panels** (MSSCI-12849) - Acceptance criteria checklist
+
+#### Patch Mode Workflow
+- **Patch Mode** (MSSCI-12848) - Interrupt-driven bugfix workflow: branch from feature, fix, merge back
+
+### Changed
+
+- **Monorepo Structure** - Now 3 packages: `@pennyfarthing/core`, `@pennyfarthing/shared`, `@pennyfarthing/cyclist`
+- **Panel Architecture** - Migrated from vanilla JS sidebar to React docking panels
+- **Message Rendering** - React components replace DOM manipulation
+
+### Fixed
+
+- **Test Suite** (MSSCI-12856) - Fixed 81 pre-existing broken test files from React migration
+- **Panel Resize** (MSSCI-12778) - Functional resize handles
+- **Progress Panel** (MSSCI-12780) - Show task content instead of raw markers
+- **Git Panel** (MSSCI-12781) - Multi-repo support with file dropdowns
+- **Debug Panel** (MSSCI-12782) - OTEL telemetry display with formatted stats
+- **Skill Content Display** (MSSCI-12783) - Filter skill content from user messages
+- **Background Task Timer** (MSSCI-12784) - Real-time updates while viewing
+
+### Removed
+
+- `packages/vscode-extension/` directory (49 files, ~21,000 lines)
+- VS Code Chat participant integration
+- Legacy vanilla JS sidebar modules
+- TipTap editor (replaced with native textarea)
+
+### Migration
+
+If you were using the VS Code extension:
+1. Install Cyclist: `npm install @pennyfarthing/cyclist`
+2. Run Cyclist: `npx cyclist` or use the `just cyclist` recipe
+3. All agent workflows, personas, and features work identically in Cyclist
+
+### Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 116 |
+| Points Delivered | 254 |
+| Epics Completed | 17 |
+| New React Components | 15+ |
+| Token Savings (Tiered Context) | 84% |
+
+---
+
 ## [8.1.0] - 2026-01-30
 
 ### Python CLI Migration (Epic 67)

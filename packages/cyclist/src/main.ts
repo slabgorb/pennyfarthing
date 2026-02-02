@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getAllReposGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -36,8 +36,11 @@ import {
   BackgroundTask,
   trackBackgroundTask,
   completeBackgroundTask,
+  getBackgroundTaskByToolId,
+  getBackgroundTasks,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
+import { getPrimeContext, selectContextTier } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -61,6 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
+import { setStoryUpdateCallback, setGitUpdateCallback } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -84,6 +88,8 @@ import {
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
+  IPC_LAYOUT_CHANNELS,
+  IPC_AVATAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -104,13 +110,22 @@ try {
   const mod = await import('electron-reload');
   const electronReload = mod.default as unknown as (
     glob: string,
-    options: { electron?: string; hardResetMethod?: 'exit' | 'quit' }
+    options: {
+      electron?: string;
+      hardResetMethod?: 'exit' | 'quit';
+      ignored?: RegExp | string | string[];
+      followSymlinks?: boolean;
+    }
   ) => void;
-  electronReload(__dirname, {
+  // Watch only *.js files in dist/ - use glob pattern to be specific
+  // This prevents rebuilds when files outside packages/cyclist change
+  electronReload(join(__dirname, '**', '*.js'), {
     electron: join(__dirname, '..', 'node_modules', '.bin', 'electron'),
     hardResetMethod: 'exit',
+    followSymlinks: false,
+    ignored: /node_modules/,
   });
-  console.log('[Cyclist] Hot reload enabled - watching for file changes');
+  console.log('[Cyclist] Hot reload enabled - watching', __dirname, 'for *.js changes');
 } catch {
   // Not in development or module not available
 }
@@ -128,6 +143,8 @@ export {
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
+  IPC_LAYOUT_CHANNELS,
+  IPC_AVATAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -221,6 +238,41 @@ export function updateStatsFromSDK(message: SDKMessage): void {
   }
   // Broadcast to renderer if window exists
   broadcastToRenderer(IPC_DATA_CHANNELS.STATS_UPDATE, currentStats);
+}
+
+/**
+ * Enriched SDK message with subagent context (MSSCI-12776)
+ * Added fields for UI display when message is from a subagent
+ */
+type EnrichedSDKMessage = SDKMessage & {
+  subagent_type?: string;
+  subagent_name?: string;
+};
+
+/**
+ * Enrich SDK message with subagent context (MSSCI-12776)
+ * If message has parent_tool_use_id, look up the Task that spawned it
+ * and add subagent_name and subagent_type for UI display
+ */
+function enrichMessageWithSubagentContext(message: SDKMessage): EnrichedSDKMessage {
+  // Check if message has parent_tool_use_id (indicates it's from a subagent)
+  const parentId = (message as { parent_tool_use_id?: string | null }).parent_tool_use_id;
+  if (!parentId) {
+    return message;
+  }
+
+  // Look up the Task that spawned this subagent
+  const task = getBackgroundTaskByToolId(parentId);
+  if (!task) {
+    return message;
+  }
+
+  // Enrich message with subagent context
+  return {
+    ...message,
+    subagent_type: task.subagentType,
+    subagent_name: task.description,
+  };
 }
 
 // =============================================================================
@@ -448,6 +500,31 @@ export function resetSkills(): void {
 // =============================================================================
 
 /**
+ * Current active agent name for tier calculation
+ * Set when agent is loaded via AGENT_LOAD_CONTEXT or AGENT_NEW_SESSION
+ * MSSCI-12799: Required for tier display in DebugPanel
+ */
+let currentAgentName: string | null = null;
+
+/**
+ * Get the current agent name
+ */
+export function getCurrentAgent(): string | null {
+  return currentAgentName;
+}
+
+/**
+ * Set the current agent name and update ClaudeService state
+ */
+export function setCurrentAgent(agent: string | null): void {
+  currentAgentName = agent;
+  // Also update ClaudeService's lastAgent for tier calculation
+  if (claudeServiceInstance) {
+    claudeServiceInstance.setLastAgent(agent);
+  }
+}
+
+/**
  * Current context state - updated by polling check-context.sh
  */
 let currentContext: ContextInfo = {
@@ -473,6 +550,8 @@ export function getContext(): ContextInfo {
  * Called when clearing session
  */
 export function resetContext(): void {
+  // MSSCI-12799: Clear current agent when context is reset
+  currentAgentName = null;
   currentContext = {
     percent: null,
     tokens: null,
@@ -491,11 +570,12 @@ export function resetContext(): void {
  * Returns true if context was updated (values changed)
  */
 export function updateContextState(context: ContextInfo): boolean {
-  // Check if values actually changed
+  // Check if values actually changed (including tier for MSSCI-12799)
   if (
     currentContext.percent === context.percent &&
     currentContext.tokens === context.tokens &&
-    currentContext.status === context.status
+    currentContext.status === context.status &&
+    currentContext.tier === context.tier
   ) {
     return false;
   }
@@ -516,6 +596,18 @@ export const CONTEXT_POLL_INTERVAL_MS = 15000;
 let contextPollTimer: NodeJS.Timeout | null = null;
 
 /**
+ * Calculate the current tier from ClaudeService state
+ * MSSCI-12799: Used to include tier in context broadcast
+ */
+function calculateCurrentTier(): ReturnType<typeof selectContextTier> | undefined {
+  if (!currentAgentName || !claudeServiceInstance) {
+    return undefined;
+  }
+  const state = claudeServiceInstance.getContextState();
+  return selectContextTier(currentAgentName, state);
+}
+
+/**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
  * @param projectDir - The project directory
@@ -525,6 +617,8 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
   // Initial fetch (may not have session ID yet)
   const sessionId = getSessionId?.() ?? undefined;
   const initialContext = getContextUsage(projectDir, sessionId);
+  // MSSCI-12799: Include tier in context
+  initialContext.tier = calculateCurrentTier();
   updateContextState(initialContext);
 
   // Set up polling
@@ -532,9 +626,11 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
     // Get session ID each poll - it may become available after first message
     const currentSessionId = getSessionId?.() ?? undefined;
     const context = getContextUsage(projectDir, currentSessionId);
+    // MSSCI-12799: Include tier in context
+    context.tier = calculateCurrentTier();
     const changed = updateContextState(context);
     if (changed) {
-      console.log('Context updated:', context.percent, '%', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
+      console.log('Context updated:', context.percent, '%', context.tier ? `tier=${context.tier}` : '', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
     }
   }, CONTEXT_POLL_INTERVAL_MS);
 
@@ -793,10 +889,11 @@ export function setupDataIPCHandlers(ipcMain: {
   });
 
   // Git handler - returns git status for all repos (multi-repo support)
+  // Uses async version to avoid blocking event loop and git lock conflicts
   ipcMain.handle(IPC_DATA_CHANNELS.GIT_GET, async () => {
     const projectDir = getProjectDirectory();
     if (!projectDir) return null;
-    return { repos: getAllReposGitInfo(projectDir) };
+    return { repos: await getAllReposGitInfoAsync(projectDir) };
   });
 
   // Tool stats handler - returns current tool stats (E5-2)
@@ -830,6 +927,12 @@ export function setupDataIPCHandlers(ipcMain: {
       directory: getProjectDirectory(),
       userEmail: getUserEmail(),
     };
+  });
+
+  // MSSCI-12784: Background tasks handler - returns all current tasks
+  // Used when Background tab opens to get accurate snapshot
+  ipcMain.handle(IPC_BACKGROUND_TASK_CHANNELS.TASK_GET_ALL, async () => {
+    return getBackgroundTasks();
   });
 
   console.log('Data IPC handlers registered:', getDataChannels());
@@ -893,6 +996,18 @@ export function startProjectWatchers(): void {
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
   console.log('Background task callbacks registered for OTLP broadcasts');
+
+  // Register story update callback to bridge WebSocket to Electron IPC
+  // This fixes panels not updating without page reload
+  setStoryUpdateCallback((storyInfo) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.STORY_UPDATE, storyInfo);
+  });
+
+  // Register git update callback to bridge WebSocket to Electron IPC
+  setGitUpdateCallback((reposInfo) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.GIT_UPDATE, reposInfo);
+  });
+  console.log('Story and git update callbacks registered for IPC broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
@@ -987,7 +1102,10 @@ export function setupClaudeIPCHandlers(ipcMain: {
 
     try {
       for await (const message of service.sendMessage(prompt, { images })) {
-        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
+        // MSSCI-12776: Enrich messages with subagent context
+        // If message has parent_tool_use_id, look up the Task that spawned it
+        const enrichedMessage = enrichMessageWithSubagentContext(message);
+        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, enrichedMessage);
 
         // Update stats from SDK message (model info, etc.)
         updateStatsFromSDK(message);
@@ -1045,20 +1163,20 @@ export function setupClaudeIPCHandlers(ipcMain: {
                   const input = block.input as { file_path: string; old_string: string; new_string: string };
                   broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
                     id: block.id || `edit-${Date.now()}`,
-                    filePath: input.file_path,
-                    oldContent: input.old_string,
-                    newContent: input.new_string,
-                    toolType: 'Edit',
+                    path: input.file_path,
+                    original: input.old_string,
+                    modified: input.new_string,
+                    toolName: 'Edit',
                     timestamp: Date.now(),
                   });
                 } else if (block.name === 'Write') {
                   const input = block.input as { file_path: string; content: string };
                   broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
                     id: block.id || `write-${Date.now()}`,
-                    filePath: input.file_path,
-                    oldContent: '',
-                    newContent: input.content,
-                    toolType: 'Write',
+                    path: input.file_path,
+                    original: '',
+                    modified: input.content,
+                    toolName: 'Write',
                     timestamp: Date.now(),
                     isNewFile: true,
                   });
@@ -1182,10 +1300,25 @@ export function setupClaudeIPCHandlers(ipcMain: {
     return true;
   });
 
+  // System prompt handlers - set/get persona context for --append-system-prompt
+  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SET_SYSTEM_PROMPT, async (_event: unknown, ...args: unknown[]) => {
+    const prompt = args[0] as string;
+    const service = getClaudeService();
+    console.log(`[main] Setting system prompt (${prompt.length} chars)`);
+    service.setSystemPrompt(prompt);
+    return true;
+  });
+
+  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_GET_SYSTEM_PROMPT, async () => {
+    const service = getClaudeService();
+    return service.getSystemPrompt();
+  });
+
   // Clear and reload handler - clears session and loads new agent (MSSCI-11840)
   ipcMain.handle(IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD, async (_event: unknown, ...args: unknown[]) => {
     const agent = args[0] as string;
     const service = getClaudeService();
+    const projectDir = getProjectDirectory();
     console.log(`[main] Context clear and reload: ${agent}`);
 
     // Clear session state and WAIT for process to fully exit
@@ -1207,11 +1340,51 @@ export function setupClaudeIPCHandlers(ipcMain: {
     broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
     broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
 
+    // Load prime context for the agent (persona, behavior guide, etc.)
+    // and set it as the system prompt so personas behave as in CLI mode
+    if (projectDir) {
+      // Extract agent name from command (e.g., "/dev" -> "dev")
+      const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+      // MSSCI-12799: Track current agent for tier display
+      setCurrentAgent(agentName);
+      const primeContext = getPrimeContext(agentName, projectDir);
+      if (primeContext) {
+        service.setSystemPrompt(primeContext);
+        console.log(`[main] Set system prompt for agent "${agentName}" (${primeContext.length} chars)`);
+      }
+    }
+
     // Launch the new agent via the agent launch event
     broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
 
     console.log(`Session cleared and agent launch triggered: ${agent}`);
     return true;
+  });
+
+  // Load agent context handler - loads prime context and sets system prompt
+  // Can be called explicitly when starting a new agent session
+  ipcMain.handle(IPC_AGENT_CHANNELS.AGENT_LOAD_CONTEXT, async (_event: unknown, ...args: unknown[]) => {
+    const agent = args[0] as string;
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+      console.warn('[main] Cannot load agent context: no project directory');
+      return false;
+    }
+
+    // Extract agent name from command (e.g., "/dev" -> "dev")
+    const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+    // MSSCI-12799: Track current agent for tier display
+    setCurrentAgent(agentName);
+    const primeContext = getPrimeContext(agentName, projectDir);
+    if (primeContext) {
+      const service = getClaudeService();
+      service.setSystemPrompt(primeContext);
+      console.log(`[main] Loaded context for agent "${agentName}" (${primeContext.length} chars)`);
+      return true;
+    }
+
+    console.warn(`[main] Failed to load context for agent "${agentName}"`);
+    return false;
   });
 
   console.log('Claude SDK IPC handlers registered');
@@ -1557,6 +1730,167 @@ Adopt this character immediately in your next response. Do not acknowledge this 
   });
 
   console.log('Settings IPC handlers registered');
+}
+
+// =============================================================================
+// Layout Persistence IPC Handlers (MSSCI-12706)
+// =============================================================================
+
+/**
+ * Set up IPC handlers for layout persistence
+ * MSSCI-12706: Handles layout get/save to config.local.yaml
+ */
+export function setupLayoutIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get layout from config.local.yaml
+  ipcMain.handle(IPC_LAYOUT_CHANNELS.GET, async () => {
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+      return null;
+    }
+
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (!fs.existsSync(configPath)) {
+        return null;
+      }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = parse(content);
+      return config || null;
+    } catch (err) {
+      console.error('[Layout] Failed to read config:', err);
+      return null;
+    }
+  });
+
+  // Save layout to config.local.yaml
+  ipcMain.handle(IPC_LAYOUT_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
+    const layout = args[0] as Record<string, unknown>;
+    const projectDir = getProjectDirectory();
+
+    if (!projectDir) {
+      return { success: false };
+    }
+
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      const configDir = dirname(configPath);
+
+      // Ensure .pennyfarthing directory exists
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+
+      // Read existing config to preserve other settings
+      let existing: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        try {
+          const content = fs.readFileSync(configPath, 'utf-8');
+          const parsed = parse(content);
+          if (parsed && typeof parsed === 'object') {
+            existing = parsed as Record<string, unknown>;
+          }
+        } catch {
+          // Corrupted file - start fresh
+          existing = {};
+        }
+      }
+
+      // Merge layout into existing config
+      const merged: Record<string, unknown> = { ...existing, layout };
+
+      // Keep theme at top for consistent ordering
+      const { theme, ...rest } = merged;
+      const output = theme !== undefined ? { theme, ...rest } : rest;
+
+      fs.writeFileSync(configPath, stringifyYaml(output), 'utf-8');
+      return { success: true };
+    } catch (err) {
+      console.error('[Layout] Failed to save config:', err);
+      return { success: false };
+    }
+  });
+
+  console.log('Layout IPC handlers registered');
+}
+
+// =============================================================================
+// Avatar IPC Handlers (MSSCI-12777)
+// =============================================================================
+
+// In-memory avatar cache (persists for session)
+let cachedAvatarUrl: string | null = null;
+
+/**
+ * Default silhouette SVG data URL
+ */
+const DEFAULT_AVATAR =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzY2NiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTUiIHI9IjgiIGZpbGw9IiNhYWEiLz48ZWxsaXBzZSBjeD0iMjAiIGN5PSIzNSIgcng9IjEyIiByeT0iMTAiIGZpbGw9IiNhYWEiLz48L3N2Zz4=';
+
+/**
+ * Set up IPC handlers for user avatar
+ * MSSCI-12777: Handles avatar fetching from GitHub with caching
+ */
+export function setupAvatarIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get user avatar (full fallback chain)
+  ipcMain.handle(IPC_AVATAR_CHANNELS.GET, async () => {
+    // Check cache first
+    if (cachedAvatarUrl) {
+      return cachedAvatarUrl;
+    }
+
+    // Try GitHub
+    try {
+      const { execSync } = await import('child_process');
+      const result = execSync('gh api /user', { encoding: 'utf-8', timeout: 5000 });
+      const userData = JSON.parse(result);
+      if (userData?.avatar_url) {
+        cachedAvatarUrl = userData.avatar_url;
+        return cachedAvatarUrl;
+      }
+    } catch {
+      // gh CLI not available or not authenticated
+    }
+
+    return DEFAULT_AVATAR;
+  });
+
+  // Fetch from GitHub via gh CLI
+  ipcMain.handle(IPC_AVATAR_CHANNELS.FETCH_FROM_GITHUB, async () => {
+    try {
+      const { execSync } = await import('child_process');
+      const result = execSync('gh api /user', { encoding: 'utf-8', timeout: 5000 });
+      const userData = JSON.parse(result);
+      if (userData?.avatar_url) {
+        return { avatar_url: userData.avatar_url };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Get cached avatar
+  ipcMain.handle(IPC_AVATAR_CHANNELS.GET_CACHED, async () => {
+    return cachedAvatarUrl;
+  });
+
+  // Set cached avatar
+  ipcMain.handle(IPC_AVATAR_CHANNELS.SET_CACHED, async (_event: unknown, ...args: unknown[]) => {
+    const url = args[0] as string;
+    cachedAvatarUrl = url;
+  });
+
+  // Clear avatar cache
+  ipcMain.handle(IPC_AVATAR_CHANNELS.CLEAR_CACHE, async () => {
+    cachedAvatarUrl = null;
+  });
+
+  console.log('Avatar IPC handlers registered');
 }
 
 // =============================================================================
@@ -2365,6 +2699,8 @@ if (isElectron) {
   setupClaudeIPCHandlers(ipcMain);
   setupFileBrowserIPCHandlers(ipcMain);
   setupSettingsIPCHandlers(ipcMain);
+  setupLayoutIPCHandlers(ipcMain); // MSSCI-12706: Layout persistence
+  setupAvatarIPCHandlers(ipcMain); // MSSCI-12777: User avatar
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
   setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking

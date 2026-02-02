@@ -9,9 +9,9 @@
 
 set -uo pipefail
 
-# Self-locate and set up PROJECT_ROOT
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
-if ! source "$SCRIPT_DIR/../lib/find-root.sh" 2>/dev/null; then
+# Self-locate (resolve symlink first for .git/hooks/ symlinks)
+REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
+if ! source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh" 2>/dev/null; then
     exit 0
 fi
 

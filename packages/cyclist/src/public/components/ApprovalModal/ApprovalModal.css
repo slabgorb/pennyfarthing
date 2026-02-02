@@ -1,0 +1,194 @@
+/**
+ * ApprovalModal Component Styles
+ * MSSCI-12713 - ApprovalModal Component
+ */
+
+/* ============================================================================
+   Overlay
+   ============================================================================ */
+
+.approval-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal, 1000);
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+
+.approval-modal {
+  --modal-bg: var(--color-surface, #1e1e1e);
+  --modal-border: var(--color-border, #333);
+  --modal-radius: var(--radius-lg, 8px);
+  --modal-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+
+  background-color: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: var(--modal-radius);
+  box-shadow: var(--modal-shadow);
+  max-width: 480px;
+  width: 90%;
+  padding: 1.5rem;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+/* ============================================================================
+   Title
+   ============================================================================ */
+
+.approval-modal__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text, #fff);
+}
+
+/* ============================================================================
+   Content
+   ============================================================================ */
+
+.approval-modal__content {
+  margin-bottom: 1rem;
+}
+
+.approval-modal__tool {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888);
+}
+
+.approval-modal__icon {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.7;
+}
+
+.approval-modal__preview {
+  margin: 0;
+  padding: 0.75rem;
+  background-color: var(--color-surface-dark, #141414);
+  border-radius: var(--radius-sm, 4px);
+  font-family: var(--font-mono, 'SF Mono', 'Monaco', 'Consolas', monospace);
+  font-size: 0.875rem;
+  color: var(--color-text, #fff);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ============================================================================
+   Checkbox
+   ============================================================================ */
+
+.approval-modal__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #888);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.approval-modal__checkbox-label:hover {
+  color: var(--color-text, #fff);
+}
+
+.approval-modal__checkbox-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary, #0078d4);
+}
+
+/* ============================================================================
+   Actions
+   ============================================================================ */
+
+.approval-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.approval-modal__button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.approval-modal__button:hover {
+  transform: translateY(-1px);
+}
+
+.approval-modal__button:active {
+  transform: translateY(0);
+}
+
+.approval-modal__button--approve {
+  background-color: var(--color-primary, #0078d4);
+  color: white;
+}
+
+.approval-modal__button--approve:hover {
+  background-color: var(--color-primary-hover, #1084d8);
+}
+
+.approval-modal__button--reject {
+  background-color: var(--color-surface-elevated, #2d2d2d);
+  color: var(--color-text, #fff);
+}
+
+.approval-modal__button--reject:hover {
+  background-color: var(--color-surface-hover, #383838);
+}
+
+/* ============================================================================
+   Severity Variants
+   ============================================================================ */
+
+/* Safe - green accent */
+.severity-safe .approval-modal__preview {
+  border-left: 3px solid var(--color-success, #4caf50);
+}
+
+/* Normal - default styling */
+.severity-normal .approval-modal__preview {
+  border-left: 3px solid var(--color-primary, #0078d4);
+}
+
+/* Destructive - red accent */
+.severity-destructive .approval-modal__preview {
+  border-left: 3px solid var(--color-danger, #dc3545);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.severity-destructive .approval-modal__title {
+  color: var(--color-danger, #dc3545);
+}
+
+.severity-destructive .approval-modal__button--approve {
+  background-color: var(--color-danger, #dc3545);
+}
+
+.severity-destructive .approval-modal__button--approve:hover {
+  background-color: var(--color-danger-hover, #c82333);
+}

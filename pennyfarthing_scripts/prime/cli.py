@@ -34,6 +34,7 @@ from pennyfarthing_scripts.prime.loader import (
 )
 from pennyfarthing_scripts.prime.models import PrimeResult, WorkflowState
 from pennyfarthing_scripts.prime.persona import (
+    format_persona_compressed,
     format_persona_output,
     get_crew_manifest,
     get_user_title,
@@ -41,6 +42,7 @@ from pennyfarthing_scripts.prime.persona import (
     load_persona,
 )
 from pennyfarthing_scripts.prime.session import cleanup_old_sessions, register_session
+from pennyfarthing_scripts.prime.tiers import ContextTier, tier_from_string, load_tier_components
 from pennyfarthing_scripts.prime.workflow import check_redirect, detect_workflow_state
 
 
@@ -87,6 +89,154 @@ def _format_workflow_state_text(result: PrimeResult) -> str:
     return "\n".join(lines)
 
 
+def _prime_tiered(
+    agent_name: str | None,
+    tier: ContextTier,
+    quiet: bool,
+    json_output: bool,
+    no_workflow: bool,
+    no_register: bool,
+    session_id: str | None,
+    root: Path,
+    result: PrimeResult,
+) -> int:
+    """Handle reduced tier context loading (REFRESH, HANDOFF, MINIMAL).
+
+    This is a separate path from the FULL tier to ensure reduced output.
+
+    Args:
+        agent_name: Name of agent to load context for
+        tier: Context tier level (REFRESH, HANDOFF, or MINIMAL)
+        quiet: If True, suppress section headers
+        json_output: If True, output JSON instead of text
+        no_workflow: If True, skip workflow detection
+        no_register: If True, skip session registration
+        session_id: Explicit session ID
+        root: Project root path
+        result: PrimeResult to populate
+
+    Returns:
+        Exit code (0 for success)
+    """
+    # Session registration (if enabled)
+    if agent_name and not no_register:
+        cleanup_old_sessions(root)
+        session_info = register_session(agent_name, session_id, root)
+        result.session_id = session_info.session_id
+
+    # Workflow state (always included in all tiers)
+    if not no_workflow:
+        workflow_status = detect_workflow_state(root)
+        result.workflow_status = workflow_status
+
+        if agent_name and workflow_status.state == WorkflowState.IN_PROGRESS_STATE:
+            redirect = check_redirect(workflow_status, agent_name)
+            if redirect:
+                result.redirect_to, result.redirect_reason = redirect
+
+        if not json_output:
+            _print_header("Workflow State", quiet)
+            print(_format_workflow_state_text(result))
+
+    # MINIMAL tier: Just workflow state + note
+    if tier == ContextTier.MINIMAL:
+        if not json_output:
+            print()
+            print("<!-- Minimal context: see conversation history for full agent context -->")
+
+        if json_output:
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
+
+        return 0
+
+    # REFRESH tier: Dynamic state only
+    if tier == ContextTier.REFRESH:
+        if not json_output:
+            # Sprint context
+            sprint_content = load_sprint_context(root)
+            if sprint_content:
+                _print_header("Sprint Context", quiet)
+                print(sprint_content)
+
+            # Session header only (not full assessment)
+            session_result = load_session_context(root)
+            if session_result:
+                filename, header, _ = session_result
+                _print_header(f"Active Session: {filename}", quiet)
+                if header:
+                    print(header)
+
+            # Note about full context
+            print()
+            print("<!-- Full context already in conversation history -->")
+
+        if json_output:
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
+
+        return 0
+
+    # HANDOFF tier: Agent essentials for new agent
+    if tier == ContextTier.HANDOFF:
+        if agent_name:
+            # Agent definition
+            agent_content = load_agent_definition(agent_name, root)
+            if agent_content is None:
+                if json_output:
+                    print(json.dumps({"error": f"Agent '{agent_name}' not found"}))
+                else:
+                    print(f"Error: Agent '{agent_name}' not found", file=sys.stderr)
+                return 1
+
+            if not json_output:
+                _print_header(f"Agent Definition: {agent_name}", quiet)
+                print(agent_content)
+
+            # Compressed persona
+            if is_character_voice_enabled(root):
+                persona, theme = load_persona(agent_name, root)
+                if persona and theme:
+                    result.persona = persona
+                    result.theme = theme
+                    if not json_output:
+                        _print_header(f"Persona: {persona.character} ({agent_name})", quiet)
+                        print(format_persona_compressed(persona, theme, agent_name))
+
+        if not json_output:
+            # Note about behavior guides
+            print()
+            print("<!-- Behavior guides in conversation history -->")
+
+        # Redirect marker
+        if result.redirect_to and not json_output:
+            print()
+            print("=" * 60)
+            print(f"REDIRECT: You ({agent_name}) should hand off to {result.redirect_to}")
+            print(f"Reason: {result.redirect_reason}")
+            print("=" * 60)
+
+        if json_output:
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
+
+        return 0
+
+    return 0
+
+
 def prime(
     agent_name: str | None = None,
     minimal: bool = False,
@@ -98,6 +248,7 @@ def prime(
     no_register: bool = False,
     session_id: str | None = None,
     project_root: Path | None = None,
+    tier: str | None = None,
 ) -> int:
     """Load and print context.
 
@@ -113,6 +264,12 @@ def prime(
     9. Domain docs (--full only)
     10. Redirect marker (if wrong agent)
 
+    Context tiers (--tier):
+    - FULL: All components (~4000 tokens) - default
+    - REFRESH: Dynamic state only (~600 tokens)
+    - HANDOFF: Agent essentials (~700 tokens)
+    - MINIMAL: Routing only (~200 tokens)
+
     Args:
         agent_name: Name of agent to load context for
         minimal: If True, skip all context (fastest)
@@ -124,6 +281,7 @@ def prime(
         no_register: If True, skip session registration
         session_id: Explicit session ID (generated if not provided)
         project_root: Project root path (auto-detected if not provided)
+        tier: Context tier level (FULL, REFRESH, HANDOFF, MINIMAL)
 
     Returns:
         Exit code (0 for success)
@@ -138,6 +296,31 @@ def prime(
 
     # Build result for JSON output
     result = PrimeResult(agent_name=agent_name or "")
+
+    # Parse tier if specified
+    context_tier: ContextTier | None = None
+    if tier:
+        try:
+            context_tier = tier_from_string(tier)
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+    # ==========================================================================
+    # TIERED CONTEXT PATH (REFRESH, HANDOFF, MINIMAL)
+    # ==========================================================================
+    if context_tier and context_tier != ContextTier.FULL:
+        return _prime_tiered(
+            agent_name=agent_name,
+            tier=context_tier,
+            quiet=quiet,
+            json_output=json_output,
+            no_workflow=no_workflow,
+            no_register=no_register,
+            session_id=session_id,
+            root=root,
+            result=result,
+        )
 
     # ==========================================================================
     # Session registration (if enabled)
@@ -267,6 +450,16 @@ def prime(
     # JSON output
     # ==========================================================================
     if json_output:
+        # Get token counts for FULL tier
+        tier_value = context_tier.value if context_tier else "FULL"
+        components = load_tier_components(
+            context_tier or ContextTier.FULL,
+            agent_name or "",
+            root,
+        )
+        result.tier = tier_value
+        result.token_counts = components.get("token_counts", {})
+        result.total_tokens = components.get("total_tokens", 0)
         print(json.dumps(result.to_dict(), indent=2))
 
     return 0
@@ -355,6 +548,13 @@ Examples:
         metavar="ID",
         help="Use explicit session ID",
     )
+    parser.add_argument(
+        "--tier",
+        metavar="TIER",
+        type=lambda x: x.upper(),
+        choices=["FULL", "REFRESH", "HANDOFF", "MINIMAL"],
+        help="Context tier: FULL (~4000 tokens), REFRESH (~600), HANDOFF (~700), MINIMAL (~200)",
+    )
 
     parsed = parser.parse_args(args)
 
@@ -369,6 +569,7 @@ Examples:
             no_workflow=parsed.no_workflow,
             no_register=parsed.no_register,
             session_id=parsed.session_id,
+            tier=parsed.tier,
         )
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)

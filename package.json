@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "8.1.0",
+  "version": "9.0.0",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "bin": {
@@ -30,8 +30,8 @@
     "url": "https://github.com/1898andCo/pennyfarthing/issues"
   },
   "scripts": {
-    "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/utils/generate-skill-docs.sh",
-    "docs": "./scripts/utils/generate-skill-docs.sh",
+    "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
+    "docs": "./scripts/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",

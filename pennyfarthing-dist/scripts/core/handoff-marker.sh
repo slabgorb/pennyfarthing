@@ -62,12 +62,23 @@ AGENT_COMMAND:
 ---
 EOF
 elif [[ "$IS_CYCLIST" != "true" ]]; then
-  # Not in Cyclist - no marker
+  # Not in Cyclist - no marker, include context info
+  # Get context percentage for warning
+  CONTEXT_PCT="${CONTEXT_USABLE_PERCENT:-unknown}"
+  if [[ "$CONTEXT_PCT" != "unknown" ]] && [[ "$CONTEXT_PCT" -ge 60 ]] 2>/dev/null; then
+    CONTEXT_WARNING=" (context: ${CONTEXT_PCT}% - consider /clear before continuing)"
+  elif [[ "$CONTEXT_PCT" != "unknown" ]]; then
+    CONTEXT_WARNING=" (context: ${CONTEXT_PCT}%)"
+  else
+    CONTEXT_WARNING=""
+  fi
   cat <<EOF
 ---
 AGENT_COMMAND:
   marker: ""
-  fallback: "Run \`/${NEXT_AGENT}\` to continue"
+  fallback: "Run \`/${NEXT_AGENT}\` to continue${CONTEXT_WARNING}"
+  relay_mode: ${RELAY_MODE}
+  context_percent: ${CONTEXT_PCT}
 ---
 EOF
 elif [[ "$RELAY_MODE" != "true" ]]; then

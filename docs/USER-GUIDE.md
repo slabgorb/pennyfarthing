@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with BikeLane workflow system and persona themes.
 
-**Version:** 7.6.1
+**Version:** 8.1.0
 
 ---
 

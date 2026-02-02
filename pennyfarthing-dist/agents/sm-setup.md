@@ -135,14 +135,14 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 
 ## Step 3: Claim in Jira
 
-Use `/jira claim` command:
+Use `/jira check` and `/jira claim` commands:
 
 ```bash
 # Check availability first
-.pennyfarthing/scripts/jira/jira-claim-story.sh {JIRA_KEY}
+/jira check {JIRA_KEY}
 
 # Then claim (assign to self + move to In Progress)
-.pennyfarthing/scripts/jira/jira-claim-story.sh {JIRA_KEY} --claim
+/jira claim {JIRA_KEY}
 ```
 
 **Exit codes:**
