@@ -53,7 +53,7 @@ Already have WebSocket support:
 | **Background Tasks** | | | |
 | backgroundTask:* | YES `/ws/background-tasks` | P1 - Remove IPC |
 | **Layout** | | | |
-| layout:get/save/onUpdate | NO | P2 - Add `/ws/layout` |
+| layout:get/save/onUpdate | REST `/api/settings/layout` | P2 - DONE |
 | **Menu-triggered Events** | | | |
 | agent:launch | NO | P2 - Add `/ws/menu` |
 | theme:showQuickSwitcher | NO | P3 - Consider approach |
@@ -173,7 +173,7 @@ For Electron menu → renderer events (agent:launch, theme:showQuickSwitcher, et
 3. **Background Tasks** - DONE (2026-02-02, removed IPC branch)
 4. **Approvals** - DONE (2026-02-02, ApprovalModal migrated to /ws/hooks)
 5. **Stats/Context** - DONE (2026-02-02, added /ws/context, migrated useStatsStrip)
-6. **Layout** - TODO: Add /ws/layout endpoint
+6. **Layout** - DONE (2026-02-02, added REST /api/settings/layout, migrated useLayoutPersistence)
 7. **Diffs** - TODO: Add /ws/diffs endpoint
 8. **Rest** - As needed
 
