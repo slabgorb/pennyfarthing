@@ -30,3 +30,5 @@ export { createHookRequestRouter, getHookClients, addHookClient, resolveApproval
 // MSSCI-12469: Identity API for stats strip
 export { createIdentityRouter } from './identity.js';
 export type { IdentityInfo } from './identity.js';
+// Todos API for web mode fallback
+export { createTodosRouter, setWebModeTodos, getWebModeTodos } from './todos.js';
