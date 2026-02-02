@@ -42,14 +42,16 @@ interface UseLayoutPersistenceResult {
   saveLayout: (layout: WorkspaceLayoutConfig) => void;
 }
 
-function isValidLayout(config: any): boolean {
+function isValidLayout(config: unknown): boolean {
   if (!config || typeof config !== 'object') return false;
-  const layout = config.layout;
+  const configObj = config as Record<string, unknown>;
+  const layout = configObj.layout;
   if (!layout || typeof layout !== 'object') return false;
+  const layoutObj = layout as Record<string, unknown>;
 
   // Check for valid sidebar structures
-  const left = layout.leftSidebar;
-  const right = layout.rightSidebar;
+  const left = layoutObj.leftSidebar as Record<string, unknown> | undefined;
+  const right = layoutObj.rightSidebar as Record<string, unknown> | undefined;
 
   if (!left || !right) return false;
   if (typeof left.width !== 'number' || typeof right.width !== 'number') return false;
@@ -59,9 +61,10 @@ function isValidLayout(config: any): boolean {
   return true;
 }
 
-function configToWorkspaceLayout(config: any): WorkspaceLayoutConfig {
+function configToWorkspaceLayout(config: unknown): WorkspaceLayoutConfig {
   const defaultLayout = createWorkspaceLayout();
-  const layout = config?.layout;
+  const configObj = config as Record<string, unknown> | null | undefined;
+  const layout = configObj?.layout as Record<string, unknown> | undefined;
 
   if (!layout) return defaultLayout;
 
