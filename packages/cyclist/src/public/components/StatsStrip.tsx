@@ -79,7 +79,7 @@ export default function StatsStrip(): React.ReactElement {
       <div className="stats-left" data-testid="stats-left">
         {/* PWD */}
         <span
-          className="stats-pwd truncate"
+          className="stats-pwd"
           data-testid="stats-pwd"
           title={pwd}
           data-full-path={pwd}
