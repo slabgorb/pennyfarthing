@@ -3,9 +3,10 @@
  *
  * Displays tool use and result in a distinct block.
  * Story MSSCI-12698 - MessageView Component with Streaming
+ * Story MSSCI-13398 - Collapsible tool result display
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 interface ToolUseMessage {
   type: 'tool_use';
@@ -25,6 +26,27 @@ interface ToolResultMessage {
 interface ToolCallBlockProps {
   toolUse: ToolUseMessage;
   result?: ToolResultMessage;
+}
+
+const TRUNCATION_THRESHOLD = 50;
+
+/**
+ * Count lines in content, handling both Unix and Windows line endings
+ */
+function countLines(content: string): number {
+  if (!content) return 0;
+  // Normalize CRLF to LF, then count
+  const normalized = content.replace(/\r\n/g, '\n');
+  return normalized.split('\n').length;
+}
+
+/**
+ * Get truncated content (first N lines)
+ */
+function getTruncatedContent(content: string, maxLines: number): string {
+  const normalized = content.replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+  return lines.slice(0, maxLines).join('\n');
 }
 
 function formatToolInput(toolName: string, input: Record<string, unknown>): string {
@@ -49,9 +71,48 @@ function formatToolInput(toolName: string, input: Record<string, unknown>): stri
 }
 
 export default function ToolCallBlock({ toolUse, result }: ToolCallBlockProps): React.ReactElement {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // AC1: Start collapsed by default
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  // AC3: Track whether showing full content or truncated
+  const [showFullContent, setShowFullContent] = useState(false);
+  // AC4: Track copy state
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+
   const status = result ? 'complete' : 'pending';
   const inputDisplay = formatToolInput(toolUse.tool_name, toolUse.input);
+
+  // AC2: Memoize line count for performance
+  const lineCount = useMemo(() => {
+    return result ? countLines(result.content) : 0;
+  }, [result?.content]);
+
+  // AC3: Determine if truncation applies
+  const shouldTruncate = lineCount > TRUNCATION_THRESHOLD;
+  const isTruncated = shouldTruncate && !showFullContent;
+
+  // AC3: Get display content (truncated or full)
+  const displayContent = useMemo(() => {
+    if (!result) return '';
+    if (isTruncated) {
+      return getTruncatedContent(result.content, TRUNCATION_THRESHOLD);
+    }
+    return result.content;
+  }, [result?.content, isTruncated]);
+
+  // AC4: Handle copy to clipboard
+  const handleCopy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result.content);
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch {
+      setCopyState('error');
+    }
+  };
+
+  // AC2: Format line count text
+  const lineCountText = lineCount === 1 ? '1 line' : `${lineCount} lines`;
 
   return (
     <div data-testid="tool-call-block" className="tool-call-block">
@@ -66,18 +127,37 @@ export default function ToolCallBlock({ toolUse, result }: ToolCallBlockProps): 
       </div>
       {result && (
         <>
-          <button
-            data-testid="tool-result-toggle"
-            className="tool-result-toggle"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            {isCollapsed ? '▶' : '▼'} Result
-          </button>
+          <div className="tool-result-header">
+            <button
+              data-testid="tool-result-toggle"
+              className="tool-result-toggle"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? '▶' : '▼'} Result ({lineCountText})
+            </button>
+            <button
+              data-testid="tool-result-copy"
+              className={`tool-result-copy ${copyState === 'copied' ? 'copied' : ''} ${copyState === 'error' ? 'copy-error' : ''}`}
+              onClick={handleCopy}
+              aria-label="Copy result to clipboard"
+            >
+              {copyState === 'copied' ? '✓' : '📋'}
+            </button>
+          </div>
           <div
             data-testid="tool-result-content"
-            className={`tool-result-content ${isCollapsed ? 'collapsed' : ''}`}
+            className={`tool-result-content ${isCollapsed ? 'collapsed' : ''} ${isTruncated && !isCollapsed ? 'truncated' : ''}`}
           >
-            <pre>{result.content}</pre>
+            <pre>{displayContent}</pre>
+            {shouldTruncate && !isCollapsed && isTruncated && (
+              <button
+                data-testid="tool-result-expand"
+                className="tool-result-expand"
+                onClick={() => setShowFullContent(true)}
+              >
+                Show all ({lineCount} lines)
+              </button>
+            )}
           </div>
         </>
       )}
