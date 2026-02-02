@@ -267,7 +267,8 @@ describe('AC4: PWD shows current working directory', () => {
 
     await waitFor(() => {
       const pwd = screen.getByTestId('stats-pwd');
-      expect(pwd).toHaveClass('truncate');
+      // Truncation is handled by .stats-pwd CSS class (overflow: hidden, text-overflow: ellipsis)
+      expect(pwd).toHaveClass('stats-pwd');
     });
   });
 
