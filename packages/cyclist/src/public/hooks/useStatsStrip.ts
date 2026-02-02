@@ -4,13 +4,13 @@
  * React hook for fetching and subscribing to stats strip data.
  * Story MSSCI-12699 - StatsStrip Component
  *
- * Aggregates data from:
- * - context: Context percentage, used/total tokens
- * - stats: Model name
- * - projectInfo: PWD, Jira email, GitHub username
+ * IPC DEPRECATED - Now uses WebSocket for all data:
+ * - /ws/context: Context percentage, used/total tokens
+ * - /ws/stats: Model name
+ * - /api/identity: PWD, Jira email, GitHub username (REST, fetched once)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface ContextData {
   percent: number;
@@ -36,6 +36,8 @@ interface UseStatsStripResult {
   error: Error | null;
 }
 
+const WS_RECONNECT_DELAY = 2000;
+
 export function useStatsStrip(): UseStatsStripResult {
   const [context, setContext] = useState<ContextData | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -43,118 +45,160 @@ export function useStatsStrip(): UseStatsStripResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Track load state for each API (value unused, only type needed for callback)
-  const [_loadState, setLoadState] = useState({
+  // Track load state for each source
+  const loadStateRef = useRef({
     context: false,
     stats: false,
     projectInfo: false,
   });
 
-  const checkLoadComplete = useCallback((state: typeof _loadState) => {
+  const checkLoadComplete = useCallback(() => {
+    const state = loadStateRef.current;
     if (state.context && state.stats && state.projectInfo) {
       setIsLoading(false);
     }
   }, []);
 
+  // WebSocket for /ws/context
   useEffect(() => {
-    const api = window.electronAPI;
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
 
-    // Fetch context
-    if (api?.context) {
-      api.context.get()
-        .then((data) => {
-          setContext(data as ContextData | null);
-          setLoadState(prev => {
-            const next = { ...prev, context: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch context'));
-          setLoadState(prev => {
-            const next = { ...prev, context: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        });
+    const connect = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}/ws/context`);
 
-      // Subscribe to updates
-      api.context.onUpdate((_, data) => {
-        setContext(data as ContextData | null);
-      });
-    } else {
-      setLoadState(prev => {
-        const next = { ...prev, context: true };
-        checkLoadComplete(next);
-        return next;
-      });
-    }
+      ws.onopen = () => {
+        console.log('[useStatsStrip] Context WebSocket connected');
+      };
 
-    // Fetch stats
-    if (api?.stats) {
-      api.stats.get()
-        .then((data) => {
-          setStats(data as StatsData | null);
-          setLoadState(prev => {
-            const next = { ...prev, stats: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        })
-        .catch((err) => {
-          if (!error) setError(err instanceof Error ? err : new Error('Failed to fetch stats'));
-          setLoadState(prev => {
-            const next = { ...prev, stats: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        });
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'init' || data.type === 'update') {
+            const ctx = data.context;
+            if (ctx) {
+              setContext({
+                percent: ctx.percent ?? 0,
+                used: ctx.tokens ?? undefined,
+                total: ctx.available ? (ctx.tokens ?? 0) + ctx.available : undefined,
+              });
+            }
+            if (!loadStateRef.current.context) {
+              loadStateRef.current.context = true;
+              checkLoadComplete();
+            }
+          }
+        } catch (err) {
+          console.error('[useStatsStrip] Failed to parse context message:', err);
+        }
+      };
 
-      // Subscribe to updates
-      api.stats.onUpdate((_, data) => {
-        setStats(data as StatsData | null);
-      });
-    } else {
-      setLoadState(prev => {
-        const next = { ...prev, stats: true };
-        checkLoadComplete(next);
-        return next;
-      });
-    }
+      ws.onclose = () => {
+        if (mounted) {
+          reconnectTimer = setTimeout(connect, WS_RECONNECT_DELAY);
+        }
+      };
 
-    // Fetch projectInfo
-    if (api?.projectInfo) {
-      api.projectInfo.get()
-        .then((data) => {
-          setProjectInfo(data as ProjectInfoData | null);
-          setLoadState(prev => {
-            const next = { ...prev, projectInfo: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        })
-        .catch((err) => {
-          if (!error) setError(err instanceof Error ? err : new Error('Failed to fetch projectInfo'));
-          setLoadState(prev => {
-            const next = { ...prev, projectInfo: true };
-            checkLoadComplete(next);
-            return next;
-          });
-        });
+      ws.onerror = (err) => {
+        console.error('[useStatsStrip] Context WebSocket error:', err);
+        ws?.close();
+      };
+    };
 
-      // Subscribe to updates
-      api.projectInfo.onUpdate((_, data) => {
-        setProjectInfo(data as ProjectInfoData | null);
-      });
-    } else {
-      setLoadState(prev => {
-        const next = { ...prev, projectInfo: true };
-        checkLoadComplete(next);
-        return next;
-      });
-    }
-  }, [checkLoadComplete, error]);
+    connect();
+
+    return () => {
+      mounted = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, [checkLoadComplete]);
+
+  // WebSocket for /ws/stats
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
+
+    const connect = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}/ws/stats`);
+
+      ws.onopen = () => {
+        console.log('[useStatsStrip] Stats WebSocket connected');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          // Stats sends data directly (not wrapped in type)
+          setStats({ model: data.model ?? null });
+          // Also extract pwd from stats (updated on Bash tool completions)
+          if (data.pwd) {
+            setProjectInfo(prev => ({
+              pwd: data.pwd,
+              jiraEmail: prev?.jiraEmail ?? null,
+              githubUsername: prev?.githubUsername ?? null,
+            }));
+          }
+          if (!loadStateRef.current.stats) {
+            loadStateRef.current.stats = true;
+            checkLoadComplete();
+          }
+        } catch (err) {
+          console.error('[useStatsStrip] Failed to parse stats message:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        if (mounted) {
+          reconnectTimer = setTimeout(connect, WS_RECONNECT_DELAY);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[useStatsStrip] Stats WebSocket error:', err);
+        ws?.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      mounted = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, [checkLoadComplete]);
+
+  // REST for /api/identity (jiraEmail, githubUsername - fetched once)
+  // pwd comes from /ws/stats (updated on Bash tool completions)
+  useEffect(() => {
+    const fetchIdentity = async () => {
+      try {
+        const response = await fetch('/api/identity');
+        if (response.ok) {
+          const data = await response.json();
+          // Merge with existing projectInfo (preserve pwd from stats)
+          setProjectInfo(prev => ({
+            pwd: prev?.pwd ?? '',
+            jiraEmail: data.jiraEmail ?? null,
+            githubUsername: data.githubUsername ?? null,
+          }));
+        }
+      } catch (err) {
+        console.error('[useStatsStrip] Failed to fetch identity:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch identity'));
+      } finally {
+        loadStateRef.current.projectInfo = true;
+        checkLoadComplete();
+      }
+    };
+
+    fetchIdentity();
+  }, [checkLoadComplete]);
 
   return { context, stats, projectInfo, isLoading, error };
 }

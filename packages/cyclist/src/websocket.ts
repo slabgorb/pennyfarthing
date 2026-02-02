@@ -18,6 +18,7 @@ import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
 import { getAllReposGitInfoAsync, getReposFromConfig } from './api/git.js';
 import { getSettingsForWebSocket } from './api/settings.js';
+import { getContextUsage, type ContextInfo } from './api/context.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -44,6 +45,9 @@ const spansClients = new Set<WebSocket>();
 // Settings WebSocket clients (bidirectional sync between ControlBar and SettingsPanel)
 const settingsClients = new Set<WebSocket>();
 
+// Context WebSocket clients (Phase 2: context usage percentage)
+const contextClients = new Set<WebSocket>();
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -52,9 +56,11 @@ const LIVERELOAD_DEBOUNCE_MS = 100;
 let storyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
 let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let contextDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
 const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
 const SETTINGS_DEBOUNCE_MS = 100; // Settings debounce for config.local.yaml changes
+const CONTEXT_DEBOUNCE_MS = 2000; // Context debounce (expensive operation)
 
 // Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
 // These allow main.ts to receive updates for Electron IPC broadcast
@@ -94,6 +100,10 @@ export function getSpansClients(): Set<WebSocket> {
 
 export function getSettingsClients(): Set<WebSocket> {
   return settingsClients;
+}
+
+export function getContextClients(): Set<WebSocket> {
+  return contextClients;
 }
 
 // Setup WebSocket servers for stats and persona updates
@@ -139,6 +149,9 @@ export function setupWebSocketServers(
 
   // WebSocket server for settings at /ws/settings (bidirectional sync)
   const settingsWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for context at /ws/context (Phase 2: context usage)
+  const contextWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -195,6 +208,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/settings') {
       settingsWss.handleUpgrade(request, socket, head, (ws) => {
         settingsWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/context') {
+      contextWss.handleUpgrade(request, socket, head, (ws) => {
+        contextWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -451,8 +468,33 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle context WebSocket connections (Phase 2: context usage)
+  contextWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Context client connected');
+    contextClients.add(ws);
+
+    // Send initial context on connection
+    const projectDir = getProjectDir();
+    const context = getContextUsage(projectDir);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', context }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Context client disconnected');
+      contextClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      contextClients.delete(ws);
+    });
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
+  // Also trigger context updates when tool events arrive
   addToolEventListener((event: ToolEvent) => {
     // Broadcast span to spans WebSocket clients
     const message = JSON.stringify({ type: 'span', span: event });
@@ -465,6 +507,20 @@ export function setupWebSocketServers(
     // Track pwd from Bash tool completions
     if (event.toolName === 'Bash' && event.workingDirectory) {
       updatePwd(event.workingDirectory);
+    }
+
+    // Trigger debounced context update when tool events arrive
+    // This indicates Claude activity that may change context usage
+    if (contextClients.size > 0) {
+      if (contextDebounceTimer) {
+        clearTimeout(contextDebounceTimer);
+      }
+      contextDebounceTimer = setTimeout(() => {
+        const projectDir = getProjectDir();
+        const context = getContextUsage(projectDir);
+        broadcastContextUpdate(context);
+        contextDebounceTimer = null;
+      }, CONTEXT_DEBOUNCE_MS);
     }
   });
 
@@ -772,6 +828,17 @@ function triggerGitUpdate(projectDir: string): void {
 export function broadcastSettingsUpdate(settings: unknown): void {
   const message = JSON.stringify({ type: 'update', settings });
   for (const client of settingsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Broadcast context update to all connected clients
+// Exported for use by OTLP receiver after tool events
+export function broadcastContextUpdate(context: ContextInfo): void {
+  const message = JSON.stringify({ type: 'update', context });
+  for (const client of contextClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
