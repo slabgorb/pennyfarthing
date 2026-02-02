@@ -119,9 +119,10 @@ export const IPC_COMMAND_CHANNELS = {
 } as const;
 
 /**
- * IPC channel names for background task notifications (31-15, 35-16)
+ * IPC channel names for background task notifications (31-15, 35-16, MSSCI-12784)
  */
 export const IPC_BACKGROUND_TASK_CHANNELS = {
+  TASK_GET_ALL: 'backgroundTask:getAll',    // MSSCI-12784: Fetch all on tab open
   TASK_STARTED: 'backgroundTask:started',   // Story 35-16
   TASK_COMPLETED: 'backgroundTask:completed',
 } as const;

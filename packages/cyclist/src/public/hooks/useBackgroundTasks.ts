@@ -3,6 +3,7 @@
  *
  * React hook for subscribing to background task notifications via electronAPI.
  * Story MSSCI-12717 - React Migration
+ * Story MSSCI-12784 - Timer accuracy: fetch on mount, IPC for updates
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -12,6 +13,8 @@ export interface BackgroundTask {
   description: string;
   subagentType: string;
   startedAt: number;
+  completedAt?: number;
+  durationMs?: number;
   status: 'pending' | 'completed';
   success?: boolean;
   output?: string;
@@ -35,6 +38,15 @@ export function useBackgroundTasks(): UseBackgroundTasksResult {
       return;
     }
 
+    // Fetch current tasks on mount (provides accurate snapshot when tab opens)
+    api.backgroundTask.getAll().then((currentTasks: BackgroundTask[]) => {
+      if (currentTasks && currentTasks.length > 0) {
+        setTasks(currentTasks);
+      }
+    }).catch(() => {
+      // Ignore fetch errors - IPC events will populate
+    });
+
     // Subscribe to task started events
     api.backgroundTask.onStarted((_, task) => {
       setTasks(prev => {
@@ -46,7 +58,7 @@ export function useBackgroundTasks(): UseBackgroundTasksResult {
       });
     });
 
-    // Subscribe to task completed events
+    // Subscribe to task completed events (includes accurate durationMs from backend)
     api.backgroundTask.onCompleted((_, task) => {
       setTasks(prev => prev.map(t =>
         t.taskId === task.taskId ? { ...t, ...(task as BackgroundTask) } : t
