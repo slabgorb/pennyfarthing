@@ -9,9 +9,9 @@ import { useTodos, TodoItem } from '../../hooks/useTodos';
 
 function TodoItemView({ todo }: { todo: TodoItem }): React.ReactElement {
   const statusIcon = {
-    pending: '*',
-    in_progress: '>',
-    completed: 'v',
+    pending: '○',
+    in_progress: '●',
+    completed: '✓',
   }[todo.status];
 
   const statusClass = `todo-item todo-${todo.status}`;
@@ -100,8 +100,11 @@ export function ProgressPanel(): React.ReactElement {
       )}
 
       {completed.length > 0 && (
-        <div className="todo-section collapsed">
+        <div className="todo-section todo-completed">
           <h4>Completed ({completed.length})</h4>
+          {completed.map(todo => (
+            <TodoItemView key={todo.id} todo={todo} />
+          ))}
         </div>
       )}
     </div>
