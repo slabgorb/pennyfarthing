@@ -195,6 +195,14 @@ export function getBackgroundTasks(): BackgroundTask[] {
 }
 
 /**
+ * Get a background task by its tool_use_id (taskId)
+ * Used to enrich messages with subagent context (MSSCI-12776)
+ */
+export function getBackgroundTaskByToolId(toolId: string): BackgroundTask | null {
+  return backgroundTasks.find(t => t.taskId === toolId) ?? null;
+}
+
+/**
  * Reset background task store
  */
 export function resetBackgroundTasks(): void {
