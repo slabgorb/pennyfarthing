@@ -21,6 +21,7 @@ Already have WebSocket support:
 - `/ws/welcome` - Welcome messages
 - `/ws/hooks` - Hook approval requests
 - `/ws/settings` - Settings sync
+- `/ws/diffs` - Edit/Write tool diffs (added 2026-02-02)
 - `/ws/livereload` - Dev hot reload
 
 ### IPC Channels to Migrate (preload.ts)
@@ -69,7 +70,7 @@ Already have WebSocket support:
 | **Avatar** | | | |
 | avatar:* | NO | P3 - REST only |
 | **Diff Viewer** | | | |
-| diff:update | NO | P2 - Add `/ws/diffs` |
+| diff:update | YES `/ws/diffs` | P2 - DONE |
 
 ## Migration Phases
 
@@ -174,7 +175,7 @@ For Electron menu → renderer events (agent:launch, theme:showQuickSwitcher, et
 4. **Approvals** - DONE (2026-02-02, ApprovalModal migrated to /ws/hooks)
 5. **Stats/Context** - DONE (2026-02-02, added /ws/context, migrated useStatsStrip)
 6. **Layout** - DONE (2026-02-02, added REST /api/settings/layout, migrated useLayoutPersistence)
-7. **Diffs** - TODO: Add /ws/diffs endpoint
+7. **Diffs** - DONE (2026-02-02, added /ws/diffs, migrated useDiffs)
 8. **Rest** - As needed
 
 ## Success Criteria
