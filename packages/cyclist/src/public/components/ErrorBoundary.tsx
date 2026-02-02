@@ -39,8 +39,9 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-boundary-fallback" style={{
           padding: '16px',
-          color: 'var(--color-error, #dc3545)',
-          backgroundColor: 'var(--color-error-bg, #f8d7da)',
+          color: 'var(--status-error, #ef4444)',
+          backgroundColor: 'var(--bg-tertiary, #0f0f1a)',
+          border: '1px solid var(--status-error, #ef4444)',
           borderRadius: '4px',
           margin: '8px',
         }}>
