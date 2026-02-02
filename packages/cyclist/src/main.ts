@@ -36,6 +36,7 @@ import {
   BackgroundTask,
   trackBackgroundTask,
   completeBackgroundTask,
+  getBackgroundTaskByToolId,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { getPrimeContext, selectContextTier } from './prime.js';
@@ -236,6 +237,41 @@ export function updateStatsFromSDK(message: SDKMessage): void {
   }
   // Broadcast to renderer if window exists
   broadcastToRenderer(IPC_DATA_CHANNELS.STATS_UPDATE, currentStats);
+}
+
+/**
+ * Enriched SDK message with subagent context (MSSCI-12776)
+ * Added fields for UI display when message is from a subagent
+ */
+type EnrichedSDKMessage = SDKMessage & {
+  subagent_type?: string;
+  subagent_name?: string;
+};
+
+/**
+ * Enrich SDK message with subagent context (MSSCI-12776)
+ * If message has parent_tool_use_id, look up the Task that spawned it
+ * and add subagent_name and subagent_type for UI display
+ */
+function enrichMessageWithSubagentContext(message: SDKMessage): EnrichedSDKMessage {
+  // Check if message has parent_tool_use_id (indicates it's from a subagent)
+  const parentId = (message as { parent_tool_use_id?: string | null }).parent_tool_use_id;
+  if (!parentId) {
+    return message;
+  }
+
+  // Look up the Task that spawned this subagent
+  const task = getBackgroundTaskByToolId(parentId);
+  if (!task) {
+    return message;
+  }
+
+  // Enrich message with subagent context
+  return {
+    ...message,
+    subagent_type: task.subagentType,
+    subagent_name: task.description,
+  };
 }
 
 // =============================================================================
@@ -1059,7 +1095,10 @@ export function setupClaudeIPCHandlers(ipcMain: {
 
     try {
       for await (const message of service.sendMessage(prompt, { images })) {
-        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
+        // MSSCI-12776: Enrich messages with subagent context
+        // If message has parent_tool_use_id, look up the Task that spawned it
+        const enrichedMessage = enrichMessageWithSubagentContext(message);
+        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, enrichedMessage);
 
         // Update stats from SDK message (model info, etc.)
         updateStatsFromSDK(message);
