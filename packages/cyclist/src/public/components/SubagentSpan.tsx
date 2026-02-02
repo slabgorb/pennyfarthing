@@ -3,6 +3,7 @@
  *
  * Collapsible container for subagent message groups.
  * Story MSSCI-12698 - MessageView Component with Streaming
+ * Story MSSCI-12776 - Theme-Aware Subagent Display Messages
  */
 
 import React, { useState } from 'react';
@@ -24,10 +25,29 @@ interface SubagentSpanProps {
   name: string;
   messages: SubagentMessage[];
   defaultCollapsed?: boolean;
+  // MSSCI-12776: Theme-aware helper display
+  helperName?: string | null;
+  helperStyle?: string | null;
+  helperEmoji?: string | null;
+  friendlyMessage?: string | null;
 }
 
-export default function SubagentSpan({ type, name, messages, defaultCollapsed = false }: SubagentSpanProps): React.ReactElement {
+export default function SubagentSpan({
+  type,
+  name,
+  messages,
+  defaultCollapsed = false,
+  helperName,
+  helperStyle,
+  helperEmoji,
+  friendlyMessage,
+}: SubagentSpanProps): React.ReactElement {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
+  // Determine display values with fallbacks (AC5)
+  const displayName = helperName || type;
+  const displayMessage = friendlyMessage || name;
+  const displayEmoji = helperEmoji || '🔧'; // Default helper icon
 
   // Group tool_use and tool_result by tool_id
   const toolResults = new Map<string, SubagentMessage>();
@@ -104,8 +124,32 @@ export default function SubagentSpan({ type, name, messages, defaultCollapsed = 
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <span className="subagent-toggle">{isCollapsed ? '▶' : '▼'}</span>
-        <span className="subagent-type">{type}</span>
-        <span className="subagent-name">{name}</span>
+
+        {/* Helper icon (AC4) */}
+        {helperName && (
+          <span data-testid="helper-icon" className="helper-icon">
+            {displayEmoji}
+          </span>
+        )}
+
+        {/* Helper name or fallback to type (AC4, AC5) */}
+        <span
+          className="subagent-helper-name"
+          title={helperStyle || undefined}
+        >
+          {displayName}
+        </span>
+
+        {/* Friendly message or fallback to name (AC4, AC5) */}
+        <span className="subagent-friendly-message">
+          {displayMessage}
+        </span>
+
+        {/* Type badge for debugging context (AC4) */}
+        <span data-testid="subagent-type-badge" className="subagent-type-badge">
+          {type}
+        </span>
+
         {isCollapsed && (
           <span className="subagent-count">{messages.length} messages</span>
         )}

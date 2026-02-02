@@ -45,8 +45,34 @@ const mockElectronAPI = {
   },
 };
 
-beforeEach(() => {
-  (window as any).electronAPI = mockElectronAPI;
+beforeEach(async () => {
+  // Reset module cache to ensure fresh imports
+  vi.resetModules();
+
+  // Restore the mock electronAPI
+  (window as any).electronAPI = {
+    persona: {
+      get: vi.fn(() => Promise.resolve({
+        character: 'Jayne Cobb',
+        theme: 'firefly',
+        role: 'tea',
+        slug: 'jayne-cobb',
+        quote: 'Time for some thrilling heroics.',
+      })),
+      onUpdate: vi.fn(),
+    },
+    theme: {
+      getHelper: vi.fn((agentRole: string) => Promise.resolve({
+        name: 'Vera',
+        style: 'Testing tool of choice',
+      })),
+      getSubagentHelper: vi.fn((subagentType: string) => Promise.resolve({
+        name: 'Vera',
+        style: 'Subagent specialized helper',
+      })),
+    },
+  };
+
   vi.clearAllMocks();
 });
 
@@ -116,10 +142,11 @@ describe('AC1: Parse subagent type from Task tool invocation', () => {
 describe('AC2: Look up current agent\'s helper persona from theme', () => {
   it('should look up helper by current agent role', async () => {
     const { getAgentHelper } = await import('../src/public/js/subagent-display');
+    const api = (window as any).electronAPI;
 
     const helper = await getAgentHelper('tea');
 
-    expect(mockElectronAPI.theme.getHelper).toHaveBeenCalledWith('tea');
+    expect(api.theme.getHelper).toHaveBeenCalledWith('tea');
     expect(helper).toEqual({
       name: 'Vera',
       style: 'Testing tool of choice',
@@ -128,10 +155,11 @@ describe('AC2: Look up current agent\'s helper persona from theme', () => {
 
   it('should look up helper specific to subagent type when available', async () => {
     const { getSubagentHelper } = await import('../src/public/js/subagent-display');
+    const api = (window as any).electronAPI;
 
     const helper = await getSubagentHelper('testing-runner');
 
-    expect(mockElectronAPI.theme.getSubagentHelper).toHaveBeenCalledWith('testing-runner');
+    expect(api.theme.getSubagentHelper).toHaveBeenCalledWith('testing-runner');
     expect(helper).toEqual({
       name: 'Vera',
       style: 'Subagent specialized helper',
@@ -148,7 +176,8 @@ describe('AC2: Look up current agent\'s helper persona from theme', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    mockElectronAPI.theme.getHelper.mockRejectedValueOnce(new Error('Theme not found'));
+    const api = (window as any).electronAPI;
+    api.theme.getHelper.mockRejectedValueOnce(new Error('Theme not found'));
 
     const { getAgentHelper } = await import('../src/public/js/subagent-display');
 
@@ -158,6 +187,7 @@ describe('AC2: Look up current agent\'s helper persona from theme', () => {
 
   it('should cache helper lookups for performance', async () => {
     const { getAgentHelper, clearHelperCache } = await import('../src/public/js/subagent-display');
+    const api = (window as any).electronAPI;
 
     // First call
     await getAgentHelper('tea');
@@ -165,12 +195,12 @@ describe('AC2: Look up current agent\'s helper persona from theme', () => {
     await getAgentHelper('tea');
 
     // Should only call API once
-    expect(mockElectronAPI.theme.getHelper).toHaveBeenCalledTimes(1);
+    expect(api.theme.getHelper).toHaveBeenCalledTimes(1);
 
     // Clear cache and call again
     clearHelperCache();
     await getAgentHelper('tea');
-    expect(mockElectronAPI.theme.getHelper).toHaveBeenCalledTimes(2);
+    expect(api.theme.getHelper).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -372,8 +402,9 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
     );
 
     await waitFor(() => {
-      // Should fall back to showing the subagent type
-      expect(screen.getByText('testing-runner')).toBeInTheDocument();
+      // Should fall back to showing the subagent type in the helper name position
+      const helperNameElement = document.querySelector('.subagent-helper-name');
+      expect(helperNameElement).toHaveTextContent('testing-runner');
     });
   });
 
@@ -416,7 +447,8 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
   });
 
   it('should handle null theme gracefully', async () => {
-    mockElectronAPI.persona.get.mockResolvedValueOnce({
+    const api = (window as any).electronAPI;
+    api.persona.get.mockResolvedValueOnce({
       character: null,
       theme: null,
       role: 'tea',
@@ -456,8 +488,12 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
     await waitFor(() => {
       // Should render with raw type/name
       expect(screen.getByTestId('subagent-span')).toBeInTheDocument();
-      expect(screen.getByText('testing-runner')).toBeInTheDocument();
-      expect(screen.getByText('Verify RED state')).toBeInTheDocument();
+      // Type shown in both helper-name (fallback) and type-badge
+      const helperNameElement = document.querySelector('.subagent-helper-name');
+      expect(helperNameElement).toHaveTextContent('testing-runner');
+      // Friendly message shows the name
+      const friendlyMessage = document.querySelector('.subagent-friendly-message');
+      expect(friendlyMessage).toHaveTextContent('Verify RED state');
     });
   });
 });
@@ -485,10 +521,12 @@ describe('Integration: useSubagentHelper hook', () => {
 
   it('should update when persona changes', async () => {
     const { useSubagentHelper } = await import('../src/public/hooks/useSubagentHelper');
+    const { clearHelperCache } = await import('../src/public/js/subagent-display');
     const { renderHook, act } = await import('@testing-library/react');
+    const api = (window as any).electronAPI;
 
-    let updateCallback: ((data: any) => void) | null = null;
-    mockElectronAPI.persona.onUpdate.mockImplementation((_, callback) => {
+    let updateCallback: ((_: unknown, data: any) => void) | null = null;
+    api.persona.onUpdate.mockImplementation((callback: (_: unknown, data: any) => void) => {
       updateCallback = callback;
     });
 
@@ -498,10 +536,13 @@ describe('Integration: useSubagentHelper hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    // Clear cache so next call goes to API
+    clearHelperCache();
+
     // Simulate persona change
     act(() => {
       if (updateCallback) {
-        updateCallback({
+        updateCallback(null, {
           character: 'River Tam',
           theme: 'firefly',
           role: 'reviewer',
@@ -509,12 +550,16 @@ describe('Integration: useSubagentHelper hook', () => {
       }
     });
 
-    // Helper should update
-    expect(mockElectronAPI.theme.getHelper).toHaveBeenCalledWith('reviewer');
+    // Wait for the async update to complete
+    await waitFor(() => {
+      // Helper should have been called with the new role
+      expect(api.theme.getHelper).toHaveBeenCalledWith('reviewer');
+    });
   });
 
   it('should handle errors without crashing', async () => {
-    mockElectronAPI.persona.get.mockRejectedValueOnce(new Error('Failed'));
+    const api = (window as any).electronAPI;
+    api.persona.get.mockRejectedValueOnce(new Error('Failed'));
 
     const { useSubagentHelper } = await import('../src/public/hooks/useSubagentHelper');
     const { renderHook } = await import('@testing-library/react');
