@@ -1,19 +1,16 @@
 /**
- * MSSCI-12777: User Avatar from GitHub/Gravatar
+ * MSSCI-12777: User Avatar from GitHub
  *
  * Replace the default user headshot with the user's actual profile picture
- * from GitHub or Gravatar. Improves personalization and visual identity
- * in the Cyclist UI.
+ * from GitHub. Improves personalization and visual identity in the Cyclist UI.
  *
  * Acceptance Criteria:
  * - AC1: User avatar displays from GitHub profile when available
- * - AC2: Falls back to Gravatar MD5 hash when GitHub unavailable
- * - AC3: Avatar caches locally to avoid repeated API calls
- * - AC4: Shows default silhouette if both GitHub and Gravatar fail
- * - AC5: Avatar displays in message headers for user messages
- * - AC6: Git user.email config read correctly
- * - AC7: GitHub API integration uses `gh` CLI
- * - AC8: Cache stored in appropriate local directory
+ * - AC2: Avatar caches locally to avoid repeated API calls
+ * - AC3: Shows default silhouette if GitHub fails
+ * - AC4: Avatar displays in message headers for user messages
+ * - AC5: GitHub API integration uses `gh` CLI
+ * - AC6: Cache stored in appropriate local directory
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -24,9 +21,7 @@ import React from 'react';
 const mockElectronAPI = {
   avatar: {
     get: vi.fn(),
-    getGitEmail: vi.fn(),
     fetchFromGitHub: vi.fn(),
-    fetchFromGravatar: vi.fn(),
     getCached: vi.fn(),
     setCached: vi.fn(),
     clearCache: vi.fn(),
@@ -53,7 +48,7 @@ describe('AC1: User avatar displays from GitHub profile when available', () => {
       avatar_url: 'https://avatars.githubusercontent.com/u/12345?v=4',
     });
 
-    const result = await getGitHubAvatarUrl('user@example.com');
+    const result = await getGitHubAvatarUrl();
 
     expect(mockElectronAPI.avatar.fetchFromGitHub).toHaveBeenCalled();
     expect(result).toBe('https://avatars.githubusercontent.com/u/12345?v=4');
@@ -63,7 +58,7 @@ describe('AC1: User avatar displays from GitHub profile when available', () => {
     const { getGitHubAvatarUrl } = await import('../src/public/js/avatar-service');
     mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce(null);
 
-    const result = await getGitHubAvatarUrl('user@example.com');
+    const result = await getGitHubAvatarUrl();
 
     expect(result).toBeNull();
   });
@@ -72,78 +67,30 @@ describe('AC1: User avatar displays from GitHub profile when available', () => {
     const { getGitHubAvatarUrl } = await import('../src/public/js/avatar-service');
     mockElectronAPI.avatar.fetchFromGitHub.mockRejectedValueOnce(new Error('API error'));
 
-    const result = await getGitHubAvatarUrl('user@example.com');
+    const result = await getGitHubAvatarUrl();
 
     expect(result).toBeNull();
   });
 });
 
 // =============================================================================
-// AC2: Falls back to Gravatar MD5 hash when GitHub unavailable
+// AC2: Avatar caches locally to avoid repeated API calls
 // =============================================================================
 
-describe('AC2: Falls back to Gravatar MD5 hash when GitHub unavailable', () => {
-  it('should generate correct Gravatar URL from email hash', async () => {
-    const { getGravatarUrl } = await import('../src/public/js/avatar-service');
-
-    // MD5 hash of "test@example.com" (lowercase, trimmed)
-    const result = getGravatarUrl('test@example.com');
-
-    // Gravatar URL format: https://www.gravatar.com/avatar/{md5hash}?d=404&s=80
-    expect(result).toMatch(/^https:\/\/www\.gravatar\.com\/avatar\/[a-f0-9]{32}/);
-    expect(result).toContain('?d=404');
-  });
-
-  it('should normalize email to lowercase before hashing', async () => {
-    const { getGravatarUrl } = await import('../src/public/js/avatar-service');
-
-    const lowerResult = getGravatarUrl('test@example.com');
-    const upperResult = getGravatarUrl('TEST@EXAMPLE.COM');
-
-    expect(lowerResult).toBe(upperResult);
-  });
-
-  it('should trim whitespace from email before hashing', async () => {
-    const { getGravatarUrl } = await import('../src/public/js/avatar-service');
-
-    const normalResult = getGravatarUrl('test@example.com');
-    const paddedResult = getGravatarUrl('  test@example.com  ');
-
-    expect(normalResult).toBe(paddedResult);
-  });
-
-  it('should use Gravatar when GitHub returns null', async () => {
-    const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
-    mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce(null);
-    mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
-
-    const result = await getUserAvatar();
-
-    expect(result).toMatch(/gravatar\.com\/avatar/);
-  });
-});
-
-// =============================================================================
-// AC3: Avatar caches locally to avoid repeated API calls
-// =============================================================================
-
-describe('AC3: Avatar caches locally to avoid repeated API calls', () => {
+describe('AC2: Avatar caches locally to avoid repeated API calls', () => {
   it('should check cache before making API calls', async () => {
     const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
     mockElectronAPI.avatar.getCached.mockResolvedValueOnce('https://cached-avatar.com/image.png');
 
     const result = await getUserAvatar();
 
-    expect(mockElectronAPI.avatar.getCached).toHaveBeenCalledWith('user@example.com');
+    expect(mockElectronAPI.avatar.getCached).toHaveBeenCalled();
     expect(mockElectronAPI.avatar.fetchFromGitHub).not.toHaveBeenCalled();
     expect(result).toBe('https://cached-avatar.com/image.png');
   });
 
   it('should cache avatar URL after successful fetch', async () => {
     const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
     mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
     mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce({
       avatar_url: 'https://github-avatar.com/image.png',
@@ -152,7 +99,6 @@ describe('AC3: Avatar caches locally to avoid repeated API calls', () => {
     await getUserAvatar();
 
     expect(mockElectronAPI.avatar.setCached).toHaveBeenCalledWith(
-      'user@example.com',
       'https://github-avatar.com/image.png'
     );
   });
@@ -165,38 +111,36 @@ describe('AC3: Avatar caches locally to avoid repeated API calls', () => {
     expect(mockElectronAPI.avatar.clearCache).toHaveBeenCalled();
   });
 
-  it('should cache Gravatar URL when GitHub fails', async () => {
-    const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
+  it('should return default avatar when GitHub fails', async () => {
+    const { getUserAvatar, DEFAULT_AVATAR } = await import('../src/public/js/avatar-service');
     mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
     mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce(null);
 
-    await getUserAvatar();
+    const result = await getUserAvatar();
 
-    expect(mockElectronAPI.avatar.setCached).toHaveBeenCalledWith(
-      'user@example.com',
-      expect.stringMatching(/gravatar\.com\/avatar/)
-    );
+    expect(result).toBe(DEFAULT_AVATAR);
   });
 });
 
 // =============================================================================
-// AC4: Shows default silhouette if both GitHub and Gravatar fail
+// AC3: Shows default silhouette if GitHub fails
 // =============================================================================
 
-describe('AC4: Shows default silhouette if both GitHub and Gravatar fail', () => {
-  it('should return default avatar when no email configured', async () => {
+describe('AC3: Shows default silhouette if GitHub fails', () => {
+  it('should return default avatar when GitHub API fails', async () => {
     const { getUserAvatar, DEFAULT_AVATAR } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce(null);
+    mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
+    mockElectronAPI.avatar.fetchFromGitHub.mockRejectedValueOnce(new Error('API error'));
 
     const result = await getUserAvatar();
 
     expect(result).toBe(DEFAULT_AVATAR);
   });
 
-  it('should return default avatar when email is empty string', async () => {
+  it('should return default avatar when GitHub returns no avatar', async () => {
     const { getUserAvatar, DEFAULT_AVATAR } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('');
+    mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
+    mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce(null);
 
     const result = await getUserAvatar();
 
@@ -214,10 +158,10 @@ describe('AC4: Shows default silhouette if both GitHub and Gravatar fail', () =>
 });
 
 // =============================================================================
-// AC5: Avatar displays in message headers for user messages
+// AC4: Avatar displays in message headers for user messages
 // =============================================================================
 
-describe('AC5: Avatar displays in message headers for user messages', () => {
+describe('AC4: Avatar displays in message headers for user messages', () => {
   it('should render UserAvatar component for user messages', async () => {
     const Message = (await import('../src/public/components/Message')).default;
     mockElectronAPI.avatar.get.mockResolvedValueOnce('https://avatar.example.com/user.png');
@@ -282,42 +226,17 @@ describe('AC5: Avatar displays in message headers for user messages', () => {
 });
 
 // =============================================================================
-// AC6: Git user.email config read correctly
+// AC5: GitHub API integration uses `gh` CLI
 // =============================================================================
 
-describe('AC6: Git user.email config read correctly', () => {
-  it('should call getGitEmail to retrieve email from git config', async () => {
-    const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
-    mockElectronAPI.avatar.getCached.mockResolvedValueOnce('https://cached.com/avatar.png');
-
-    await getUserAvatar();
-
-    expect(mockElectronAPI.avatar.getGitEmail).toHaveBeenCalled();
-  });
-
-  it('should handle git config errors gracefully', async () => {
-    const { getUserAvatar, DEFAULT_AVATAR } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockRejectedValueOnce(new Error('git not found'));
-
-    const result = await getUserAvatar();
-
-    expect(result).toBe(DEFAULT_AVATAR);
-  });
-});
-
-// =============================================================================
-// AC7: GitHub API integration uses `gh` CLI
-// =============================================================================
-
-describe('AC7: GitHub API integration uses gh CLI', () => {
+describe('AC5: GitHub API integration uses gh CLI', () => {
   it('should use electronAPI.avatar.fetchFromGitHub for GitHub calls', async () => {
     const { getGitHubAvatarUrl } = await import('../src/public/js/avatar-service');
     mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce({
       avatar_url: 'https://github.com/avatar.png',
     });
 
-    await getGitHubAvatarUrl('user@example.com');
+    await getGitHubAvatarUrl();
 
     // The IPC handler should execute: gh api /user
     expect(mockElectronAPI.avatar.fetchFromGitHub).toHaveBeenCalled();
@@ -332,20 +251,19 @@ describe('AC7: GitHub API integration uses gh CLI', () => {
       html_url: 'https://github.com/testuser',
     });
 
-    const result = await getGitHubAvatarUrl('user@example.com');
+    const result = await getGitHubAvatarUrl();
 
     expect(result).toBe('https://avatars.githubusercontent.com/u/12345?v=4');
   });
 });
 
 // =============================================================================
-// AC8: Cache stored in appropriate local directory
+// AC6: Cache stored in appropriate local directory
 // =============================================================================
 
-describe('AC8: Cache stored in appropriate local directory', () => {
+describe('AC6: Cache stored in appropriate local directory', () => {
   it('should use electronAPI for cache operations (IPC to main process)', async () => {
     const { getUserAvatar } = await import('../src/public/js/avatar-service');
-    mockElectronAPI.avatar.getGitEmail.mockResolvedValueOnce('user@example.com');
     mockElectronAPI.avatar.getCached.mockResolvedValueOnce(null);
     mockElectronAPI.avatar.fetchFromGitHub.mockResolvedValueOnce({
       avatar_url: 'https://github.com/avatar.png',

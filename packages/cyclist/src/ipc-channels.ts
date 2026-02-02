@@ -156,3 +156,15 @@ export const IPC_LAYOUT_CHANNELS = {
   SAVE: 'layout:save',
   UPDATE: 'layout:update',
 } as const;
+
+/**
+ * IPC channel names for user avatar (MSSCI-12777)
+ * Used for fetching and caching user avatars from GitHub
+ */
+export const IPC_AVATAR_CHANNELS = {
+  GET: 'avatar:get',
+  FETCH_FROM_GITHUB: 'avatar:fetchFromGitHub',
+  GET_CACHED: 'avatar:getCached',
+  SET_CACHED: 'avatar:setCached',
+  CLEAR_CACHE: 'avatar:clearCache',
+} as const;
