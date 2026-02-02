@@ -688,5 +688,6 @@ class TestExitPatchModeIntegration:
             # Should have returned original state
             assert result["story_id"] == "MSSCI-12345"
 
-            # Stack should be empty
-            assert stack.depth() == 0
+            # Stack should be empty (reload from file to check)
+            reloaded_stack = PatchStack(stack_file=stack_file)
+            assert reloaded_stack.depth() == 0
