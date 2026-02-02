@@ -225,17 +225,48 @@ export function useControlBar(): UseControlBarResult {
   // Load initial settings and listen for changes
   useEffect(() => {
     const api = window.electronAPI;
-    if (!api?.settings) return;
 
-    // Load initial settings
-    api.settings.get?.().then((settings: Record<string, unknown>) => {
-      const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      setBellMode(!!workflow?.bell_mode);
-      setRelayMode(!!workflow?.relay_mode);
-    });
+    // Load initial settings - try IPC first, then REST fallback
+    async function loadSettings() {
+      try {
+        let settings: Record<string, unknown> | null = null;
 
-    // Subscribe to settings changes
-    api.settings.onChanged?.((settings: Record<string, unknown>) => {
+        if (api?.settings?.get) {
+          console.log('[ControlBar] Loading settings via IPC');
+          settings = await api.settings.get() as Record<string, unknown>;
+        } else {
+          // REST fallback for web mode
+          console.log('[ControlBar] Loading settings via REST (web mode)');
+          const response = await fetch('/api/settings');
+          if (response.ok) {
+            settings = await response.json();
+          }
+        }
+
+        if (settings) {
+          const workflow = settings.workflow as Record<string, unknown> | undefined;
+          const newBellMode = !!workflow?.bell_mode;
+          const newRelayMode = !!workflow?.relay_mode;
+          console.log('[ControlBar] Settings loaded:', { bellMode: newBellMode, relayMode: newRelayMode });
+          setBellMode(newBellMode);
+          setRelayMode(newRelayMode);
+        }
+      } catch (err) {
+        console.error('[ControlBar] Failed to load settings:', err);
+      }
+    }
+
+    console.log('[ControlBar] useEffect mount - loading settings');
+    loadSettings();
+
+    // Poll for settings changes in web mode (no WebSocket subscription available)
+    if (!api?.settings?.onChanged) {
+      const interval = setInterval(loadSettings, 5000);
+      return () => clearInterval(interval);
+    }
+
+    // Subscribe to settings changes (Electron only)
+    api.settings.onChanged((settings: Record<string, unknown>) => {
       const workflow = settings?.workflow as Record<string, unknown> | undefined;
       setBellMode(!!workflow?.bell_mode);
       setRelayMode(!!workflow?.relay_mode);
@@ -304,14 +335,22 @@ export function useControlBar(): UseControlBarResult {
   const handleBellModeChange = useCallback(async (enabled: boolean) => {
     try {
       const api = window.electronAPI;
-      if (!api?.settings) return;
 
-      const current = await api.settings.get?.() as Record<string, unknown> || {};
-      const workflow = (current.workflow as Record<string, unknown>) || {};
-      await api.settings.save?.({
-        ...current,
-        workflow: { ...workflow, bell_mode: enabled },
-      });
+      if (api?.settings?.save) {
+        const current = await api.settings.get?.() as Record<string, unknown> || {};
+        const workflow = (current.workflow as Record<string, unknown>) || {};
+        await api.settings.save({
+          ...current,
+          workflow: { ...workflow, bell_mode: enabled },
+        });
+      } else {
+        // REST fallback for web mode
+        await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflow: { bell_mode: enabled } }),
+        });
+      }
       setBellMode(enabled);
       console.log('[ControlBar] Bell mode set to:', enabled);
     } catch (err) {
@@ -322,14 +361,22 @@ export function useControlBar(): UseControlBarResult {
   const handleRelayModeChange = useCallback(async (enabled: boolean) => {
     try {
       const api = window.electronAPI;
-      if (!api?.settings) return;
 
-      const current = await api.settings.get?.() as Record<string, unknown> || {};
-      const workflow = (current.workflow as Record<string, unknown>) || {};
-      await api.settings.save?.({
-        ...current,
-        workflow: { ...workflow, relay_mode: enabled },
-      });
+      if (api?.settings?.save) {
+        const current = await api.settings.get?.() as Record<string, unknown> || {};
+        const workflow = (current.workflow as Record<string, unknown>) || {};
+        await api.settings.save({
+          ...current,
+          workflow: { ...workflow, relay_mode: enabled },
+        });
+      } else {
+        // REST fallback for web mode
+        await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflow: { relay_mode: enabled } }),
+        });
+      }
       setRelayMode(enabled);
       console.log('[ControlBar] Relay mode set to:', enabled);
     } catch (err) {

@@ -68,13 +68,17 @@ export function SettingsPanel(): React.ReactElement {
     async function loadSettings() {
       try {
         if (api?.settings?.get) {
+          console.log('[SettingsPanel] Loading settings via IPC');
           const data = await api.settings.get();
+          console.log('[SettingsPanel] Settings loaded (IPC):', data);
           setSettings(data as Settings);
         } else {
           // REST fallback for web mode
+          console.log('[SettingsPanel] Loading settings via REST (web mode)');
           const response = await fetch('/api/settings');
           if (response.ok) {
             const data = await response.json();
+            console.log('[SettingsPanel] Settings loaded (REST):', data);
             setSettings(data as Settings);
           }
         }
@@ -163,6 +167,7 @@ export function SettingsPanel(): React.ReactElement {
   const handleToggle = useCallback(async (section: string, key: string, value: boolean) => {
     if (!settings) return;
 
+    console.log(`[SettingsPanel] Toggle ${section}.${key} = ${value}`);
     setSaving(true);
     try {
       const updated = {
@@ -172,15 +177,18 @@ export function SettingsPanel(): React.ReactElement {
 
       const api = window.electronAPI;
       if (api?.settings?.save) {
+        console.log('[SettingsPanel] Saving via IPC');
         await api.settings.save(updated);
       } else {
         // REST fallback for web mode
+        console.log('[SettingsPanel] Saving via REST (web mode)');
         await fetch('/api/settings', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ [section]: { [key]: value } }),
         });
       }
+      console.log('[SettingsPanel] Save complete, updating local state');
       setSettings(updated);
     } finally {
       setSaving(false);
