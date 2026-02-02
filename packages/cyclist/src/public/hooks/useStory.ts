@@ -7,6 +7,9 @@
 
 import { useState, useEffect } from 'react';
 
+// Import types from story-parser for criteria and workflow
+import type { CriteriaItem, WorkflowPhase } from '../../../story-parser.js';
+
 export interface StoryData {
   id: string;
   title: string;
@@ -15,7 +18,13 @@ export interface StoryData {
   workflow?: string;
   points?: number;
   epic?: string;
+  // MSSCI-12849: AC and BikeLane panel data
+  criteria?: CriteriaItem[] | null;
+  workflowPhases?: WorkflowPhase[] | null;
 }
+
+// Re-export types for panel components
+export type { CriteriaItem, WorkflowPhase };
 
 interface UseStoryResult {
   story: StoryData | null;

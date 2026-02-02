@@ -38,6 +38,8 @@ export const PANEL_INVENTORY = {
   // Right sidebar panels
   SPRINT: 'sprint',
   PROGRESS: 'progress',
+  ACCEPTANCE_CRITERIA: 'acceptance-criteria',
+  BIKELANE: 'bikelane',
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
@@ -152,6 +154,22 @@ const PANEL_CONFIGS: Record<string, PanelConfig> = {
     closable: true,
     draggable: true,
   },
+  [PANEL_INVENTORY.ACCEPTANCE_CRITERIA]: {
+    id: PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
+    title: 'AC',
+    component: 'ConnectedAcceptanceCriteriaPanel',
+    position: 'right',
+    closable: true,
+    draggable: true,
+  },
+  [PANEL_INVENTORY.BIKELANE]: {
+    id: PANEL_INVENTORY.BIKELANE,
+    title: 'BikeLane',
+    component: 'ConnectedBikeLanePanel',
+    position: 'right',
+    closable: true,
+    draggable: true,
+  },
 };
 
 // =============================================================================
@@ -183,6 +201,8 @@ export function createWorkspaceLayout(): WorkspaceLayoutConfig {
       panels: [
         PANEL_INVENTORY.SPRINT,
         PANEL_INVENTORY.PROGRESS,
+        PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
+        PANEL_INVENTORY.BIKELANE,
         PANEL_INVENTORY.BACKGROUND,
         PANEL_INVENTORY.GIT,
         PANEL_INVENTORY.SETTINGS,
