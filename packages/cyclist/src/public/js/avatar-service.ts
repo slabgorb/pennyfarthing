@@ -1,14 +1,13 @@
 /**
  * Avatar Service
  *
- * Fetches and caches user avatars from GitHub and Gravatar.
- * Story MSSCI-12777 - User Avatar from GitHub/Gravatar
+ * Fetches and caches user avatars from GitHub.
+ * Story MSSCI-12777 - User Avatar from GitHub
  *
  * Priority chain:
  * 1. Local cache (fastest)
  * 2. GitHub API via `gh` CLI
- * 3. Gravatar MD5 hash fallback
- * 4. Default silhouette
+ * 3. Default silhouette
  */
 
 // Default silhouette SVG data URL
@@ -17,42 +16,66 @@ export const DEFAULT_AVATAR =
 
 /**
  * Get GitHub avatar URL via gh CLI
- * @param email - User's email (used for lookup)
  * @returns Avatar URL or null if not found
  */
-export async function getGitHubAvatarUrl(email: string): Promise<string | null> {
-  // TODO: Implement - call electronAPI.avatar.fetchFromGitHub
-  throw new Error('getGitHubAvatarUrl not implemented');
-}
-
-/**
- * Generate Gravatar URL from email
- * @param email - User's email
- * @returns Gravatar URL with MD5 hash
- */
-export function getGravatarUrl(email: string): string {
-  // TODO: Implement - MD5 hash of lowercase, trimmed email
-  throw new Error('getGravatarUrl not implemented');
+export async function getGitHubAvatarUrl(): Promise<string | null> {
+  try {
+    const api = window.electronAPI;
+    if (!api?.avatar?.fetchFromGitHub) {
+      return null;
+    }
+    const response = await api.avatar.fetchFromGitHub();
+    if (response && typeof response === 'object' && 'avatar_url' in response) {
+      return (response as { avatar_url: string }).avatar_url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * Get user avatar with fallback chain
  * 1. Check cache
  * 2. Try GitHub
- * 3. Fall back to Gravatar
- * 4. Return default silhouette
+ * 3. Return default silhouette
  *
- * @returns Avatar URL (GitHub, Gravatar, or default)
+ * @returns Avatar URL (GitHub or default)
  */
 export async function getUserAvatar(): Promise<string> {
-  // TODO: Implement full fallback chain
-  throw new Error('getUserAvatar not implemented');
+  try {
+    const api = window.electronAPI;
+    if (!api?.avatar) {
+      return DEFAULT_AVATAR;
+    }
+
+    // Check cache first
+    const cached = await api.avatar.getCached();
+    if (cached) {
+      return cached as string;
+    }
+
+    // Try GitHub
+    const githubUrl = await getGitHubAvatarUrl();
+    if (githubUrl) {
+      // Cache the result
+      await api.avatar.setCached(githubUrl);
+      return githubUrl;
+    }
+
+    // Return default
+    return DEFAULT_AVATAR;
+  } catch {
+    return DEFAULT_AVATAR;
+  }
 }
 
 /**
  * Clear avatar cache
  */
 export async function clearAvatarCache(): Promise<void> {
-  // TODO: Implement - call electronAPI.avatar.clearCache
-  throw new Error('clearAvatarCache not implemented');
+  const api = window.electronAPI;
+  if (api?.avatar?.clearCache) {
+    await api.avatar.clearCache();
+  }
 }

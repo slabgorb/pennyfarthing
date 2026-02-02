@@ -87,6 +87,7 @@ import {
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
   IPC_LAYOUT_CHANNELS,
+  IPC_AVATAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -141,6 +142,7 @@ export {
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
   IPC_LAYOUT_CHANNELS,
+  IPC_AVATAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -1769,6 +1771,83 @@ export function setupLayoutIPCHandlers(ipcMain: {
 }
 
 // =============================================================================
+// Avatar IPC Handlers (MSSCI-12777)
+// =============================================================================
+
+// In-memory avatar cache (persists for session)
+let cachedAvatarUrl: string | null = null;
+
+/**
+ * Default silhouette SVG data URL
+ */
+const DEFAULT_AVATAR =
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzY2NiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTUiIHI9IjgiIGZpbGw9IiNhYWEiLz48ZWxsaXBzZSBjeD0iMjAiIGN5PSIzNSIgcng9IjEyIiByeT0iMTAiIGZpbGw9IiNhYWEiLz48L3N2Zz4=';
+
+/**
+ * Set up IPC handlers for user avatar
+ * MSSCI-12777: Handles avatar fetching from GitHub with caching
+ */
+export function setupAvatarIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get user avatar (full fallback chain)
+  ipcMain.handle(IPC_AVATAR_CHANNELS.GET, async () => {
+    // Check cache first
+    if (cachedAvatarUrl) {
+      return cachedAvatarUrl;
+    }
+
+    // Try GitHub
+    try {
+      const { execSync } = await import('child_process');
+      const result = execSync('gh api /user', { encoding: 'utf-8', timeout: 5000 });
+      const userData = JSON.parse(result);
+      if (userData?.avatar_url) {
+        cachedAvatarUrl = userData.avatar_url;
+        return cachedAvatarUrl;
+      }
+    } catch {
+      // gh CLI not available or not authenticated
+    }
+
+    return DEFAULT_AVATAR;
+  });
+
+  // Fetch from GitHub via gh CLI
+  ipcMain.handle(IPC_AVATAR_CHANNELS.FETCH_FROM_GITHUB, async () => {
+    try {
+      const { execSync } = await import('child_process');
+      const result = execSync('gh api /user', { encoding: 'utf-8', timeout: 5000 });
+      const userData = JSON.parse(result);
+      if (userData?.avatar_url) {
+        return { avatar_url: userData.avatar_url };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Get cached avatar
+  ipcMain.handle(IPC_AVATAR_CHANNELS.GET_CACHED, async () => {
+    return cachedAvatarUrl;
+  });
+
+  // Set cached avatar
+  ipcMain.handle(IPC_AVATAR_CHANNELS.SET_CACHED, async (_event: unknown, ...args: unknown[]) => {
+    const url = args[0] as string;
+    cachedAvatarUrl = url;
+  });
+
+  // Clear avatar cache
+  ipcMain.handle(IPC_AVATAR_CHANNELS.CLEAR_CACHE, async () => {
+    cachedAvatarUrl = null;
+  });
+
+  console.log('Avatar IPC handlers registered');
+}
+
+// =============================================================================
 // Audit Log IPC Handlers (22-6)
 // =============================================================================
 
@@ -2575,6 +2654,7 @@ if (isElectron) {
   setupFileBrowserIPCHandlers(ipcMain);
   setupSettingsIPCHandlers(ipcMain);
   setupLayoutIPCHandlers(ipcMain); // MSSCI-12706: Layout persistence
+  setupAvatarIPCHandlers(ipcMain); // MSSCI-12777: User avatar
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
   setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
