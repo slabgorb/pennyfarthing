@@ -3,9 +3,6 @@
  *
  * Story MSSCI-12849 - Missing AC & BikeLane panels in Progress tab
  *
- * STUB: This component exists to allow tests to import it.
- * Dev will implement the actual functionality.
- *
  * Reference: Deleted vanilla JS in commit 9aea4f371
  * - js/sidebar/bikelane.js
  */
@@ -28,9 +25,147 @@ export interface BikeLanePanelProps {
   onToggle?: () => void;
 }
 
-export function BikeLanePanel(_props: BikeLanePanelProps): React.ReactElement {
-  // STUB: Throw error so tests fail with clear message
-  throw new Error('BikeLanePanel not implemented');
+/**
+ * Format workflow type for display
+ * TDD, BDD -> uppercase
+ * trivial, others -> Title case
+ */
+function formatWorkflowType(type: string | null): string {
+  if (!type) return '—';
+
+  const upperTypes = ['tdd', 'bdd'];
+  if (upperTypes.includes(type.toLowerCase())) {
+    return type.toUpperCase();
+  }
+
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/**
+ * Get icon for phase status
+ */
+function getPhaseIcon(status: 'done' | 'current' | 'pending'): string {
+  switch (status) {
+    case 'done':
+      return '✓';
+    case 'current':
+      return '●';
+    case 'pending':
+    default:
+      return '○';
+  }
+}
+
+/**
+ * Phase step in progress visualization
+ */
+function PhaseStep({ phase, isLast }: { phase: WorkflowPhase; isLast: boolean }): React.ReactElement {
+  const icon = getPhaseIcon(phase.status);
+  const statusClass = `phase-step ${phase.status}`;
+
+  return (
+    <>
+      <div className={statusClass}>
+        <span className="phase-icon">{icon}</span>
+        <span className="phase-label">{phase.label}</span>
+      </div>
+      {!isLast && <span className="phase-arrow">→</span>}
+    </>
+  );
+}
+
+/**
+ * Phase history item in timeline
+ */
+function PhaseHistoryItem({ entry }: { entry: PhaseHistoryEntry }): React.ReactElement {
+  const icon = getPhaseIcon(entry.status);
+  const statusClass = `phase-history-item ${entry.status}`;
+
+  const durationText = entry.status === 'current'
+    ? 'in progress'
+    : entry.status === 'pending'
+    ? 'pending'
+    : entry.duration || '—';
+
+  return (
+    <div className={statusClass}>
+      <span className="history-icon">{icon}</span>
+      <span className="history-phase">{entry.phase.toUpperCase()}</span>
+      <span className="history-agent">{entry.agent}</span>
+      <span className="history-duration">{durationText}</span>
+    </div>
+  );
+}
+
+/**
+ * BikeLanePanel - Displays workflow progress and phase history
+ */
+export function BikeLanePanel({
+  workflowType,
+  phases,
+  phaseHistory,
+  collapsed = false,
+  onToggle,
+}: BikeLanePanelProps): React.ReactElement {
+  // Handle empty state
+  if (!workflowType && (!phases || phases.length === 0)) {
+    return (
+      <div className="bikelane-panel empty hidden" data-testid="bikelane-panel">
+        <div className="placeholder">No active workflow</div>
+      </div>
+    );
+  }
+
+  const formattedType = formatWorkflowType(workflowType);
+
+  // Handle collapsed state
+  if (collapsed) {
+    return (
+      <div className="bikelane-panel collapsed" data-testid="bikelane-panel">
+        <div className="bikelane-header" onClick={onToggle}>
+          <span className="workflow-type-badge" data-workflow-type={workflowType || ''}>
+            {formattedType}
+          </span>
+          <span className="bikelane-expand">▶</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bikelane-panel" data-testid="bikelane-panel">
+      <div className="bikelane-header" onClick={onToggle}>
+        <span className="workflow-type-badge" data-workflow-type={workflowType || ''}>
+          {formattedType}
+        </span>
+        {onToggle && <span className="bikelane-expand">▼</span>}
+      </div>
+
+      {/* Phase progress visualization */}
+      {phases && phases.length > 0 && (
+        <div className="phase-progress">
+          {phases.map((phase, index) => (
+            <PhaseStep
+              key={phase.name}
+              phase={phase}
+              isLast={index === phases.length - 1}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Phase history timeline */}
+      {phaseHistory && phaseHistory.length > 0 && (
+        <div className="phase-history">
+          <div className="phase-history-list">
+            {phaseHistory.map((entry, index) => (
+              <PhaseHistoryItem key={index} entry={entry} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default BikeLanePanel;
