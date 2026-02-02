@@ -227,6 +227,7 @@ export function FileTree({ files, onFileClick }: FileTreeProps): React.ReactElem
   const [collapsedDirs, setCollapsedDirs] = useState<Set<string>>(new Set());
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
   const previousFocusedRef = useRef<string | null>(null);
+  const treeRef = useRef<HTMLDivElement>(null);
 
   // Group files by directory
   const groupedFiles = useMemo(() => groupFilesByDirectory(files), [files]);
@@ -281,6 +282,29 @@ export function FileTree({ files, onFileClick }: FileTreeProps): React.ReactElem
     setFocusedPath(path);
   }, []);
 
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+
+    e.preventDefault();
+
+    // Get all visible tree items
+    const treeItems = treeRef.current?.querySelectorAll('[role="treeitem"]');
+    if (!treeItems || treeItems.length === 0) return;
+
+    const items = Array.from(treeItems) as HTMLElement[];
+    const currentIndex = items.findIndex(item => document.activeElement === item);
+
+    let nextIndex: number;
+    if (e.key === 'ArrowDown') {
+      nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+    } else {
+      nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+    }
+
+    items[nextIndex]?.focus();
+  }, []);
+
   // Empty state
   if (files.length === 0) {
     return (
@@ -299,7 +323,13 @@ export function FileTree({ files, onFileClick }: FileTreeProps): React.ReactElem
   }
 
   return (
-    <div role="tree" aria-label="Changed files" className="filetree">
+    <div
+      ref={treeRef}
+      role="tree"
+      aria-label="Changed files"
+      className="filetree"
+      onKeyDown={handleKeyDown}
+    >
       <span
         data-testid="file-count-badge"
         className="file-count-badge"
