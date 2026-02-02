@@ -23,8 +23,9 @@ export interface ElectronDataAPI {
 
   /**
    * Subscribe to data updates from main process
+   * Returns cleanup function to remove the listener
    */
-  onUpdate: (callback: (event: unknown, data: unknown) => void) => void;
+  onUpdate: (callback: (event: unknown, data: unknown) => void) => () => void;
 }
 
 /**
@@ -135,8 +136,9 @@ export interface ElectronDiffAPI {
   /**
    * Subscribe to diff updates from main process
    * Receives DiffData when Edit or Write tools are used
+   * Returns cleanup function to remove the listener
    */
-  onUpdate: (callback: (event: unknown, data: unknown) => void) => void;
+  onUpdate: (callback: (event: unknown, data: unknown) => void) => () => void;
 }
 
 /**
@@ -579,7 +581,7 @@ const isElectron = typeof process !== 'undefined' &&
  * @param updateChannel - The channel name for update subscriptions
  */
 function createDataAPI(
-  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void } | null,
+  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void; removeListener: (channel: string, callback: (event: unknown, data: unknown) => void) => void } | null,
   getChannel: string,
   updateChannel: string
 ): ElectronDataAPI {
@@ -587,9 +589,9 @@ function createDataAPI(
     return {
       get: () => ipcRenderer.invoke(getChannel),
       onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-        // Multiple modules can subscribe to the same channel
-        // On page refresh, old listeners are garbage collected
         ipcRenderer.on(updateChannel, callback);
+        // Return cleanup function to remove listener on unmount
+        return () => ipcRenderer.removeListener(updateChannel, callback);
       },
     };
   } else {
@@ -597,7 +599,8 @@ function createDataAPI(
     return {
       get: () => Promise.resolve(null),
       onUpdate: (_callback: (event: unknown, data: unknown) => void) => {
-        // No-op in test environment
+        // No-op in test environment - return no-op cleanup
+        return () => {};
       },
     };
   }
@@ -670,6 +673,7 @@ function createElectronAPI(): ElectronAPI {
       diff: {
         onUpdate: (callback: (event: unknown, data: unknown) => void) => {
           ipcRenderer.on('diff:update', callback);
+          return () => ipcRenderer.removeListener('diff:update', callback);
         },
       },
       // File browser API (E8-3)
@@ -863,7 +867,8 @@ function createElectronAPI(): ElectronAPI {
       // Diff viewer API (E8-2) - test stub
       diff: {
         onUpdate: (_callback: (event: unknown, data: unknown) => void) => {
-          // No-op in test environment
+          // No-op in test environment - return no-op cleanup
+          return () => {};
         },
       },
       // File browser API (E8-3) - test stub
