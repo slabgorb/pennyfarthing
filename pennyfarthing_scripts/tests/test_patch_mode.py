@@ -336,18 +336,24 @@ class TestStateRestoration:
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         with patch("pennyfarthing_scripts.patch_mode.get_patch_stack") as mock_stack:
-            mock_stack.return_value.pop.return_value = PatchState(**saved_state)
-            result = restore_workflow_state()
-            assert result["story_id"] == "MSSCI-12345"
-            assert result["workflow"] == "tdd"
-            assert result["phase"] == "green"
+            state = PatchState(**saved_state)
+            mock_stack.return_value.peek.return_value = state
+            mock_stack.return_value.pop.return_value = state
+            with patch("pennyfarthing_scripts.patch_mode.subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                result = restore_workflow_state()
+                assert result["story_id"] == "MSSCI-12345"
+                assert result["workflow"] == "tdd"
+                assert result["phase"] == "green"
 
     def test_restore_checkouts_feature_branch(self, tmp_path: Path, saved_state: dict) -> None:
         """AC7: restore should checkout the original feature branch."""
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         with patch("pennyfarthing_scripts.patch_mode.get_patch_stack") as mock_stack:
-            mock_stack.return_value.pop.return_value = PatchState(**saved_state)
+            state = PatchState(**saved_state)
+            mock_stack.return_value.peek.return_value = state
+            mock_stack.return_value.pop.return_value = state
             with patch("pennyfarthing_scripts.patch_mode.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 restore_workflow_state(repo_path=tmp_path)
@@ -419,6 +425,10 @@ class TestTirepumpIntegration:
             mock_state = MagicMock()
             mock_state.agent = "dev"
             mock_state.story_id = "MSSCI-12345"
+            mock_state.workflow = "tdd"
+            mock_state.phase = "green"
+            mock_state.feature_branch = "feat/test"
+            mock_stack.return_value.peek.return_value = mock_state
             mock_stack.return_value.pop.return_value = mock_state
 
             with patch("pennyfarthing_scripts.patch_mode.subprocess.run") as mock_run:
@@ -438,6 +448,11 @@ class TestTirepumpIntegration:
         with patch("pennyfarthing_scripts.patch_mode.get_patch_stack") as mock_stack:
             mock_state = MagicMock()
             mock_state.agent = "dev"
+            mock_state.story_id = "MSSCI-12345"
+            mock_state.workflow = "tdd"
+            mock_state.phase = "green"
+            mock_state.feature_branch = "feat/test"
+            mock_stack.return_value.peek.return_value = mock_state
             mock_stack.return_value.pop.return_value = mock_state
 
             with patch("pennyfarthing_scripts.patch_mode.subprocess.run") as mock_run:
@@ -691,3 +706,125 @@ class TestExitPatchModeIntegration:
             # Stack should be empty (reload from file to check)
             reloaded_stack = PatchStack(stack_file=stack_file)
             assert reloaded_stack.depth() == 0
+
+    def test_exit_preserves_state_on_merge_failure(self, tmp_path: Path) -> None:
+        """exit_patch_mode should preserve state if git merge fails."""
+        if not IMPORT_SUCCESS:
+            pytest.skip("Module not implemented")
+
+        # Setup: create stack with saved state
+        stack_file = tmp_path / ".session" / "patch-stack.yaml"
+        stack_file.parent.mkdir(parents=True, exist_ok=True)
+        stack = PatchStack(stack_file=stack_file)
+        state = PatchState(
+            story_id="MSSCI-12345",
+            workflow="tdd",
+            phase="green",
+            agent="dev",
+            feature_branch="feat/MSSCI-12345-feature",
+        )
+        stack.push(state)
+
+        # Mock git to fail on merge (second call)
+        call_count = [0]
+
+        def mock_run_side_effect(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:  # checkout succeeds
+                return MagicMock(returncode=0)
+            else:  # merge fails
+                return MagicMock(returncode=1, stderr="merge conflict")
+
+        with patch("pennyfarthing_scripts.patch_mode.subprocess.run", side_effect=mock_run_side_effect):
+            with pytest.raises(RuntimeError) as exc_info:
+                exit_patch_mode(
+                    patch_branch="patch/fix-bug-123",
+                    repo_path=tmp_path,
+                    stack_file=stack_file,
+                )
+
+            assert "merge" in str(exc_info.value).lower()
+
+            # State should be PRESERVED (not lost)
+            reloaded_stack = PatchStack(stack_file=stack_file)
+            assert reloaded_stack.depth() == 1, "State should be preserved on merge failure"
+            preserved = reloaded_stack.peek()
+            assert preserved.story_id == "MSSCI-12345"
+
+    def test_restore_preserves_state_on_checkout_failure(self, tmp_path: Path) -> None:
+        """restore_workflow_state should preserve state if git checkout fails."""
+        if not IMPORT_SUCCESS:
+            pytest.skip("Module not implemented")
+
+        # Setup: create stack with saved state
+        stack_file = tmp_path / ".session" / "patch-stack.yaml"
+        stack_file.parent.mkdir(parents=True, exist_ok=True)
+        stack = PatchStack(stack_file=stack_file)
+        state = PatchState(
+            story_id="MSSCI-12345",
+            workflow="tdd",
+            phase="green",
+            agent="dev",
+            feature_branch="feat/MSSCI-12345-feature",
+        )
+        stack.push(state)
+
+        with patch("pennyfarthing_scripts.patch_mode.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stderr="branch does not exist")
+
+            with pytest.raises(RuntimeError) as exc_info:
+                restore_workflow_state(
+                    repo_path=tmp_path,
+                    stack_file=stack_file,
+                )
+
+            assert "checkout" in str(exc_info.value).lower()
+
+            # State should be PRESERVED (not lost)
+            reloaded_stack = PatchStack(stack_file=stack_file)
+            assert reloaded_stack.depth() == 1, "State should be preserved on checkout failure"
+            preserved = reloaded_stack.peek()
+            assert preserved.story_id == "MSSCI-12345"
+
+
+class TestDescriptionValidation:
+    """Tests for description validation in create_patch_branch."""
+
+    def test_empty_description_raises_error(self) -> None:
+        """create_patch_branch should reject empty description."""
+        if not IMPORT_SUCCESS:
+            pytest.skip("Module not implemented")
+
+        with pytest.raises(ValueError) as exc_info:
+            create_patch_branch(
+                description="",
+                feature_branch="feat/test",
+            )
+
+        assert "empty" in str(exc_info.value).lower()
+
+    def test_whitespace_only_description_raises_error(self) -> None:
+        """create_patch_branch should reject whitespace-only description."""
+        if not IMPORT_SUCCESS:
+            pytest.skip("Module not implemented")
+
+        with pytest.raises(ValueError) as exc_info:
+            create_patch_branch(
+                description="   ",
+                feature_branch="feat/test",
+            )
+
+        assert "empty" in str(exc_info.value).lower()
+
+    def test_special_chars_only_description_raises_error(self) -> None:
+        """create_patch_branch should reject description that sanitizes to empty."""
+        if not IMPORT_SUCCESS:
+            pytest.skip("Module not implemented")
+
+        with pytest.raises(ValueError) as exc_info:
+            create_patch_branch(
+                description="!!!",
+                feature_branch="feat/test",
+            )
+
+        assert "empty" in str(exc_info.value).lower()
