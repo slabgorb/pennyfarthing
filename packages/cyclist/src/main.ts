@@ -40,7 +40,7 @@ import {
   getBackgroundTasks,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
-import { getPrimeContext, selectContextTier } from './prime.js';
+import { getPrimeContext, selectContextTier, getPrimeContextWithTier } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -1347,10 +1347,13 @@ export function setupClaudeIPCHandlers(ipcMain: {
       const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
       // MSSCI-12799: Track current agent for tier display
       setCurrentAgent(agentName);
-      const primeContext = getPrimeContext(agentName, projectDir);
+      // Calculate tier based on session state (will be FULL after clear)
+      const state = service.getContextState();
+      const tier = selectContextTier(agentName, state);
+      const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
       if (primeContext) {
         service.setSystemPrompt(primeContext);
-        console.log(`[main] Set system prompt for agent "${agentName}" (${primeContext.length} chars)`);
+        console.log(`[main] Set system prompt for agent "${agentName}" tier=${tier} (${primeContext.length} chars)`);
       }
     }
 
@@ -1375,11 +1378,14 @@ export function setupClaudeIPCHandlers(ipcMain: {
     const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
     // MSSCI-12799: Track current agent for tier display
     setCurrentAgent(agentName);
-    const primeContext = getPrimeContext(agentName, projectDir);
+    // Calculate tier based on session state for context backoff
+    const service = getClaudeService();
+    const state = service.getContextState();
+    const tier = selectContextTier(agentName, state);
+    const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
     if (primeContext) {
-      const service = getClaudeService();
       service.setSystemPrompt(primeContext);
-      console.log(`[main] Loaded context for agent "${agentName}" (${primeContext.length} chars)`);
+      console.log(`[main] Loaded context for agent "${agentName}" tier=${tier} (${primeContext.length} chars)`);
       return true;
     }
 

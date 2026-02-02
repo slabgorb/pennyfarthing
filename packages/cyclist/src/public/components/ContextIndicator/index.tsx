@@ -180,7 +180,7 @@ export function getAriaAttributes(
 
 /**
  * React hook for fetching and subscribing to context data.
- * Uses electronAPI.context for IPC communication.
+ * Uses WebSocket /ws/context for real-time updates.
  */
 export function useContextIndicator(): UseContextIndicatorResult {
   const [context, setContext] = useState<ContextData | null>(null);
@@ -188,27 +188,37 @@ export function useContextIndicator(): UseContextIndicatorResult {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const api = window.electronAPI;
+    // Connect to context WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/context`);
 
-    if (api?.context) {
-      // Fetch initial data
-      api.context.get()
-        .then((data) => {
-          setContext(data as ContextData | null);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch context'));
-          setIsLoading(false);
-        });
+    ws.onopen = () => {
+      console.log('[ContextIndicator] WebSocket connected');
+    };
 
-      // Subscribe to updates
-      api.context.onUpdate((_, data) => {
-        setContext(data as ContextData | null);
-      });
-    } else {
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          setContext(data.context as ContextData | null);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('[ContextIndicator] Failed to parse message:', err);
+        setError(err instanceof Error ? err : new Error('Failed to parse context'));
+      }
+    };
+
+    ws.onerror = () => {
+      setError(new Error('WebSocket connection failed'));
       setIsLoading(false);
-    }
+    };
+
+    ws.onclose = () => {
+      console.log('[ContextIndicator] WebSocket disconnected');
+    };
+
+    return () => ws.close();
   }, []);
 
   return { context, isLoading, error };

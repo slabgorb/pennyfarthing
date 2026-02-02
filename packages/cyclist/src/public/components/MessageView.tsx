@@ -165,7 +165,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
           <div>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚴</div>
             <div>Type <code style={{
-              background: 'var(--bg-tertiary, #2d2d2d)',
+              background: 'var(--bg-tertiary, #0f0f1a)',
               padding: '2px 6px',
               borderRadius: '3px',
               fontFamily: 'var(--font-mono, monospace)'

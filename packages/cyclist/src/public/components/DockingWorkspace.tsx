@@ -37,9 +37,7 @@ export const PANEL_INVENTORY = {
   MESSAGE: 'message',
   // Right sidebar panels
   SPRINT: 'sprint',
-  PROGRESS: 'progress',
-  ACCEPTANCE_CRITERIA: 'acceptance-criteria',
-  BIKELANE: 'bikelane',
+  PROGRESS: 'progress',  // Now contains Workflow/AC/Todo as internal tabs
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
@@ -154,22 +152,7 @@ const PANEL_CONFIGS: Record<string, PanelConfig> = {
     closable: true,
     draggable: true,
   },
-  [PANEL_INVENTORY.ACCEPTANCE_CRITERIA]: {
-    id: PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
-    title: 'AC',
-    component: 'ConnectedAcceptanceCriteriaPanel',
-    position: 'right',
-    closable: true,
-    draggable: true,
-  },
-  [PANEL_INVENTORY.BIKELANE]: {
-    id: PANEL_INVENTORY.BIKELANE,
-    title: 'BikeLane',
-    component: 'ConnectedBikeLanePanel',
-    position: 'right',
-    closable: true,
-    draggable: true,
-  },
+  // Note: AC and BikeLane are now internal tabs within ProgressPanel
 };
 
 // =============================================================================
@@ -200,9 +183,7 @@ export function createWorkspaceLayout(): WorkspaceLayoutConfig {
     rightSidebar: {
       panels: [
         PANEL_INVENTORY.SPRINT,
-        PANEL_INVENTORY.PROGRESS,
-        PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
-        PANEL_INVENTORY.BIKELANE,
+        PANEL_INVENTORY.PROGRESS,  // Contains Workflow/AC/Todo as internal tabs
         PANEL_INVENTORY.BACKGROUND,
         PANEL_INVENTORY.GIT,
         PANEL_INVENTORY.SETTINGS,
@@ -551,13 +532,14 @@ export function DockingWorkspace({
   const [rightUserOverride, setRightUserOverride] = useState(false);
 
   // Determine effective collapsed state
+  // Priority: prop > initialLayout > responsive auto-collapse
   const shouldAutoCollapse = responsive && isSmall;
   const effectiveLeftCollapsed = leftCollapsedProp !== undefined
     ? leftCollapsedProp
-    : (shouldAutoCollapse && !leftUserOverride);
+    : (initialLayout?.leftSidebar?.collapsed ?? (shouldAutoCollapse && !leftUserOverride));
   const effectiveRightCollapsed = rightCollapsedProp !== undefined
     ? rightCollapsedProp
-    : (shouldAutoCollapse && !rightUserOverride);
+    : (initialLayout?.rightSidebar?.collapsed ?? (shouldAutoCollapse && !rightUserOverride));
 
   const [leftCollapsed, setLeftCollapsed] = useState(effectiveLeftCollapsed);
   const [rightCollapsed, setRightCollapsed] = useState(effectiveRightCollapsed);
@@ -636,7 +618,13 @@ export function DockingWorkspace({
     }
     setLeftResponsiveCollapsed(false);
     onLeftCollapseChange?.(newValue);
-  }, [leftCollapsed, onLeftCollapseChange, responsive, isSmall]);
+    // Update layout and persist collapsed state
+    setLayout(prev => {
+      const newLayout = { ...prev, leftSidebar: { ...prev.leftSidebar, collapsed: newValue } };
+      onLayoutChange?.(newLayout);
+      return newLayout;
+    });
+  }, [leftCollapsed, onLeftCollapseChange, onLayoutChange, responsive, isSmall]);
 
   const handleRightCollapseToggle = useCallback(() => {
     const newValue = !rightCollapsed;
@@ -650,7 +638,13 @@ export function DockingWorkspace({
     }
     setRightResponsiveCollapsed(false);
     onRightCollapseChange?.(newValue);
-  }, [rightCollapsed, onRightCollapseChange, responsive, isSmall]);
+    // Update layout and persist collapsed state
+    setLayout(prev => {
+      const newLayout = { ...prev, rightSidebar: { ...prev.rightSidebar, collapsed: newValue } };
+      onLayoutChange?.(newLayout);
+      return newLayout;
+    });
+  }, [rightCollapsed, onRightCollapseChange, onLayoutChange, responsive, isSmall]);
 
   // ==========================================================================
   // Resize Handlers

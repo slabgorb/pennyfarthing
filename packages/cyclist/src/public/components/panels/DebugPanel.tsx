@@ -173,32 +173,52 @@ export function DebugPanel(): React.ReactElement {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const api = window.electronAPI;
-    if (!api) return;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    // Subscribe to context updates
-    api.context?.get?.().then(data => {
-      setContext(data as ContextData);
-    });
-    api.context?.onUpdate?.((_, data) => {
-      setContext(data as ContextData);
-    });
+    // Connect to context WebSocket
+    const contextWs = new WebSocket(`${protocol}//${window.location.host}/ws/context`);
+    contextWs.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          setContext(data.context as ContextData);
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
 
-    // Subscribe to token stats
-    api.tokenStats?.get?.().then(data => {
-      setTokenStats(data as Record<string, unknown>);
-    });
-    api.tokenStats?.onUpdate?.((_, data) => {
-      setTokenStats(data as Record<string, unknown>);
-    });
+    // Connect to token-stats WebSocket
+    const tokenWs = new WebSocket(`${protocol}//${window.location.host}/ws/token-stats`);
+    tokenWs.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setTokenStats(data as Record<string, unknown>);
+      } catch {
+        // Ignore parse errors
+      }
+    };
 
-    // Subscribe to audit log entries (OTEL spans) - MSSCI-12782
-    api.auditLog?.getEntries?.().then(entries => {
-      setSpans(entries as ToolEvent[]);
-    });
-    api.auditLog?.onEntry?.((entry: unknown) => {
-      setSpans(prev => [...prev, entry as ToolEvent]);
-    });
+    // Connect to spans WebSocket for OTEL tool events
+    const spansWs = new WebSocket(`${protocol}//${window.location.host}/ws/spans`);
+    spansWs.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' && data.spans) {
+          setSpans(data.spans as ToolEvent[]);
+        } else if (data.type === 'span' && data.span) {
+          setSpans(prev => [...prev, data.span as ToolEvent]);
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    return () => {
+      contextWs.close();
+      tokenWs.close();
+      spansWs.close();
+    };
   }, []);
 
   // Toggle group expansion
