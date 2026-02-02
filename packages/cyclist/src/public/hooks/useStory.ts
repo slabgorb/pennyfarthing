@@ -1,11 +1,12 @@
 /**
  * useStory Hook
  *
- * React hook for subscribing to story/sprint data via electronAPI.
+ * React hook for subscribing to story/sprint data.
+ * Uses electronAPI in Electron mode, falls back to REST API in web mode.
  * Story MSSCI-12717 - React Migration
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // Import types from story-parser for criteria and workflow
 import type { CriteriaItem, WorkflowPhase } from '../../../story-parser.js';
@@ -32,35 +33,62 @@ interface UseStoryResult {
   error: Error | null;
 }
 
+// Fetch story via REST API (web mode fallback)
+async function fetchStoryFromApi(): Promise<StoryData | null> {
+  const response = await fetch('/api/story');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch story: ${response.status}`);
+  }
+  const data = await response.json();
+  // API returns { id: null, ... } when no session exists
+  return data.id ? data : null;
+}
+
 export function useStory(): UseStoryResult {
   const [story, setStory] = useState<StoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchStory = useCallback(async () => {
+    try {
+      const data = await fetchStoryFromApi();
+      setStory(data);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch story'));
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const api = window.electronAPI;
-    if (!api?.story) {
-      setError(new Error('electronAPI.story not available'));
-      setIsLoading(false);
+
+    // Electron mode: use IPC
+    if (api?.story) {
+      api.story.get()
+        .then((data) => {
+          setStory(data as StoryData | null);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err : new Error('Failed to fetch story'));
+          setIsLoading(false);
+        });
+
+      // Subscribe to updates
+      api.story.onUpdate((_, data) => {
+        setStory(data as StoryData | null);
+      });
       return;
     }
 
-    // Initial fetch
-    api.story.get()
-      .then((data) => {
-        setStory(data as StoryData | null);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err : new Error('Failed to fetch story'));
-        setIsLoading(false);
-      });
+    // Web mode: use REST API with polling
+    fetchStory();
 
-    // Subscribe to updates
-    api.story.onUpdate((_, data) => {
-      setStory(data as StoryData | null);
-    });
-  }, []);
+    // Poll for updates every 5 seconds in web mode
+    const interval = setInterval(fetchStory, 5000);
+    return () => clearInterval(interval);
+  }, [fetchStory]);
 
   return { story, isLoading, error };
 }
