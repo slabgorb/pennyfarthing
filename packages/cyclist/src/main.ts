@@ -1013,10 +1013,30 @@ export function startProjectWatchers(): void {
   if (detectPennyfarthingProject(projectDir)) {
     const sessionId = process.env.CYCLIST_SESSION_ID;
     const projectName = basename(projectDir);
-    watchAgentChanges(projectDir, sessionId, (_agentRole: string) => {
+    watchAgentChanges(projectDir, sessionId, (agentRole: string) => {
+      // MSSCI-12799: Track current agent for tier selection
+      setCurrentAgent(agentRole);
+      console.log(`[main] Agent change detected: ${agentRole}`);
+
+      // Update persona display
       const persona = getCurrentPersona(projectDir, sessionId);
       if (persona) {
         broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, { ...persona, projectName });
+      }
+
+      // Load tiered context for the new agent
+      try {
+        const service = getClaudeService();
+        const state = service.getContextState();
+        const tier = selectContextTier(agentRole, state);
+        const primeContext = getPrimeContextWithTier(agentRole, projectDir, tier);
+        if (primeContext) {
+          service.setSystemPrompt(primeContext);
+          console.log(`[main] Loaded context for agent "${agentRole}" tier=${tier} (${primeContext.length} chars)`);
+        }
+      } catch (error) {
+        // ClaudeService may not be initialized yet on first agent change
+        console.warn('[main] Could not load agent context:', error);
       }
     });
     console.log('Agent change watcher started for:', projectDir);
