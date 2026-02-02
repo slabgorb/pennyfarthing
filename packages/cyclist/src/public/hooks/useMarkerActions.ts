@@ -110,7 +110,7 @@ function processMarkers(
         autoExecute: true,
       };
 
-    case MARKER_TYPES.QUESTION:
+    case MARKER_TYPES.QUESTION: {
       if (primaryMarker.value === 'yesno') {
         return {
           type: 'yesno',
@@ -141,6 +141,7 @@ function processMarkers(
         return processChoicesMarker(choicesMarker.value, fullText);
       }
       return null;
+    }
 
     case MARKER_TYPES.CHOICES:
       return processChoicesMarker(primaryMarker.value, fullText);
