@@ -37,6 +37,7 @@ import {
   trackBackgroundTask,
   completeBackgroundTask,
   getBackgroundTaskByToolId,
+  getBackgroundTasks,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { getPrimeContext, selectContextTier } from './prime.js';
@@ -926,6 +927,12 @@ export function setupDataIPCHandlers(ipcMain: {
       directory: getProjectDirectory(),
       userEmail: getUserEmail(),
     };
+  });
+
+  // MSSCI-12784: Background tasks handler - returns all current tasks
+  // Used when Background tab opens to get accurate snapshot
+  ipcMain.handle(IPC_BACKGROUND_TASK_CHANNELS.TASK_GET_ALL, async () => {
+    return getBackgroundTasks();
   });
 
   console.log('Data IPC handlers registered:', getDataChannels());

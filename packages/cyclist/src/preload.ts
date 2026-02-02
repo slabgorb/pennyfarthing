@@ -404,13 +404,15 @@ export interface ElectronToolsAPI {
 }
 
 /**
- * Background Task type (35-16)
+ * Background Task type (35-16, MSSCI-12784)
  */
 interface BackgroundTaskData {
   taskId: string;
   description: string;
   subagentType: string;
   startedAt: number;
+  completedAt?: number;
+  durationMs?: number;
   status: 'pending' | 'completed';
   success?: boolean;
   output?: string;
@@ -419,10 +421,16 @@ interface BackgroundTaskData {
 }
 
 /**
- * Background Task API interface (31-15, 35-16)
+ * Background Task API interface (31-15, 35-16, MSSCI-12784)
  * Provides IPC channels for background task notifications
  */
 export interface ElectronBackgroundTaskAPI {
+  /**
+   * Get all current background tasks (MSSCI-12784)
+   * Used to fetch accurate state when Background tab opens
+   */
+  getAll: () => Promise<BackgroundTaskData[]>;
+
   /**
    * Subscribe to background task start events (35-16)
    * Triggered when a Task with run_in_background: true is registered
@@ -764,8 +772,9 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
-      // Background Task API (31-15, 35-16)
+      // Background Task API (31-15, 35-16, MSSCI-12784)
       backgroundTask: {
+        getAll: () => ipcRenderer.invoke('backgroundTask:getAll') as Promise<BackgroundTaskData[]>,
         onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
           ipcRenderer.on('backgroundTask:started', callback);
         },
@@ -963,8 +972,9 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Background Task API (31-15, 35-16) - test stub
+      // Background Task API (31-15, 35-16, MSSCI-12784) - test stub
       backgroundTask: {
+        getAll: () => Promise.resolve([]),
         onStarted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
           // No-op in test environment
         },
