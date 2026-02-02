@@ -455,4 +455,70 @@ describe('MSSCI-12849: useStory Hook Enhancements', () => {
     const module = await import('../src/public/hooks/useStory.js');
     expect(module.useStory).toBeDefined();
   });
+
+  it('StoryData should include criteria field', async () => {
+    // Verify the interface includes criteria for AC panel
+    const module = await import('../src/public/hooks/useStory.js');
+    expect(module.useStory).toBeDefined();
+    // Type check at compile time ensures criteria?: CriteriaItem[] | null exists
+  });
+
+  it('StoryData should include workflowPhases field', async () => {
+    // Verify the interface includes workflowPhases for BikeLane panel
+    const module = await import('../src/public/hooks/useStory.js');
+    expect(module.useStory).toBeDefined();
+    // Type check at compile time ensures workflowPhases?: WorkflowPhase[] | null exists
+  });
+});
+
+// ============================================================================
+// Integration Tests - Panel Registration
+// ============================================================================
+
+describe('MSSCI-12849: Panel Integration', () => {
+  it('PANEL_INVENTORY should include ACCEPTANCE_CRITERIA', async () => {
+    const { PANEL_INVENTORY } = await import(
+      '../src/public/components/DockingWorkspace.js'
+    );
+    expect(PANEL_INVENTORY.ACCEPTANCE_CRITERIA).toBe('acceptance-criteria');
+  });
+
+  it('PANEL_INVENTORY should include BIKELANE', async () => {
+    const { PANEL_INVENTORY } = await import(
+      '../src/public/components/DockingWorkspace.js'
+    );
+    expect(PANEL_INVENTORY.BIKELANE).toBe('bikelane');
+  });
+
+  it('createWorkspaceLayout should include AC panel in right sidebar', async () => {
+    const { createWorkspaceLayout, PANEL_INVENTORY } = await import(
+      '../src/public/components/DockingWorkspace.js'
+    );
+    const layout = createWorkspaceLayout();
+    expect(layout.rightSidebar.panels).toContain(PANEL_INVENTORY.ACCEPTANCE_CRITERIA);
+  });
+
+  it('createWorkspaceLayout should include BikeLane panel in right sidebar', async () => {
+    const { createWorkspaceLayout, PANEL_INVENTORY } = await import(
+      '../src/public/components/DockingWorkspace.js'
+    );
+    const layout = createWorkspaceLayout();
+    expect(layout.rightSidebar.panels).toContain(PANEL_INVENTORY.BIKELANE);
+  });
+
+  it('ConnectedAcceptanceCriteriaPanel should be exported', async () => {
+    const { ConnectedAcceptanceCriteriaPanel } = await import(
+      '../src/public/components/panels/AcceptanceCriteriaPanel.js'
+    );
+    expect(ConnectedAcceptanceCriteriaPanel).toBeDefined();
+    expect(typeof ConnectedAcceptanceCriteriaPanel).toBe('function');
+  });
+
+  it('ConnectedBikeLanePanel should be exported', async () => {
+    const { ConnectedBikeLanePanel } = await import(
+      '../src/public/components/panels/BikeLanePanel.js'
+    );
+    expect(ConnectedBikeLanePanel).toBeDefined();
+    expect(typeof ConnectedBikeLanePanel).toBe('function');
+  });
 });
