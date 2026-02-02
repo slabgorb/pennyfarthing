@@ -9,6 +9,7 @@
 
 import React from 'react';
 import type { CriteriaItem } from '../../../story-parser.js';
+import { useStory } from '../../hooks/useStory.js';
 
 export interface AcceptanceCriteriaPanelProps {
   criteria: CriteriaItem[] | null;
@@ -80,6 +81,33 @@ export function AcceptanceCriteriaPanel({
       </div>
     </div>
   );
+}
+
+/**
+ * ConnectedAcceptanceCriteriaPanel - Self-contained panel that fetches its own data
+ *
+ * Used by DockingWorkspace via registerPanelComponent
+ */
+export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
+  const { story, isLoading, error } = useStory();
+
+  if (isLoading) {
+    return (
+      <div className="ac-panel loading" data-testid="ac-panel">
+        <div className="spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="ac-panel error" data-testid="ac-panel">
+        <div className="error-message">{error.message}</div>
+      </div>
+    );
+  }
+
+  return <AcceptanceCriteriaPanel criteria={story?.criteria ?? null} />;
 }
 
 export default AcceptanceCriteriaPanel;

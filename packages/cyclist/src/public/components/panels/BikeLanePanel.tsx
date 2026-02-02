@@ -9,6 +9,7 @@
 
 import React from 'react';
 import type { WorkflowPhase } from '../../../story-parser.js';
+import { useStory } from '../../hooks/useStory.js';
 
 export interface PhaseHistoryEntry {
   phase: string;
@@ -165,6 +166,39 @@ export function BikeLanePanel({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * ConnectedBikeLanePanel - Self-contained panel that fetches its own data
+ *
+ * Used by DockingWorkspace via registerPanelComponent.
+ * Subscribes to story updates so it re-renders when session file changes.
+ */
+export function ConnectedBikeLanePanel(): React.ReactElement {
+  const { story, isLoading, error } = useStory();
+
+  if (isLoading) {
+    return (
+      <div className="bikelane-panel loading" data-testid="bikelane-panel">
+        <div className="spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bikelane-panel error" data-testid="bikelane-panel">
+        <div className="error-message">{error.message}</div>
+      </div>
+    );
+  }
+
+  return (
+    <BikeLanePanel
+      workflowType={story?.workflow ?? null}
+      phases={story?.workflowPhases ?? null}
+    />
   );
 }
 

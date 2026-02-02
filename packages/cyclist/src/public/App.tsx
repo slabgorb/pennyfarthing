@@ -29,6 +29,8 @@ import {
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
+  ConnectedAcceptanceCriteriaPanel,
+  ConnectedBikeLanePanel,
 } from './components/panels';
 
 // =============================================================================
@@ -47,6 +49,8 @@ registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 // Right sidebar panels
 registerPanelComponent(PANEL_INVENTORY.SPRINT, SprintPanel);
 registerPanelComponent(PANEL_INVENTORY.PROGRESS, ProgressPanel);
+registerPanelComponent(PANEL_INVENTORY.ACCEPTANCE_CRITERIA, ConnectedAcceptanceCriteriaPanel);
+registerPanelComponent(PANEL_INVENTORY.BIKELANE, ConnectedBikeLanePanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
