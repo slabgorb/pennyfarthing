@@ -48,6 +48,20 @@ const settingsClients = new Set<WebSocket>();
 // Context WebSocket clients (Phase 2: context usage percentage)
 const contextClients = new Set<WebSocket>();
 
+// Diffs WebSocket clients (Phase 2: Edit/Write tool diffs)
+const diffsClients = new Set<WebSocket>();
+
+// In-memory diff store (for initial send on connection)
+interface DiffData {
+  id: string;
+  path: string;
+  original: string;
+  modified: string;
+  toolName: string;
+  timestamp: number;
+}
+const diffStore: DiffData[] = [];
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -106,6 +120,10 @@ export function getContextClients(): Set<WebSocket> {
   return contextClients;
 }
 
+export function getDiffsClients(): Set<WebSocket> {
+  return diffsClients;
+}
+
 // Setup WebSocket servers for stats and persona updates
 export function setupWebSocketServers(
   server: Server,
@@ -152,6 +170,9 @@ export function setupWebSocketServers(
 
   // WebSocket server for context at /ws/context (Phase 2: context usage)
   const contextWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for diffs at /ws/diffs (Phase 2: Edit/Write diffs)
+  const diffsWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -212,6 +233,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/context') {
       contextWss.handleUpgrade(request, socket, head, (ws) => {
         contextWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/diffs') {
+      diffsWss.handleUpgrade(request, socket, head, (ws) => {
+        diffsWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -492,6 +517,41 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle diffs WebSocket connections (Phase 2: Edit/Write diffs)
+  diffsWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Diffs client connected');
+    diffsClients.add(ws);
+
+    // Send existing diffs on connection
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', diffs: diffStore }));
+    }
+
+    // Handle clear message from client
+    ws.on('message', (data: Buffer) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'clear') {
+          // Clear diff store (client requested clear)
+          diffStore.length = 0;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    });
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Diffs client disconnected');
+      diffsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      diffsClients.delete(ws);
+    });
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
   // Also trigger context updates when tool events arrive
@@ -521,6 +581,29 @@ export function setupWebSocketServers(
         broadcastContextUpdate(context);
         contextDebounceTimer = null;
       }, CONTEXT_DEBOUNCE_MS);
+    }
+
+    // Broadcast diffs for Edit/Write tool events
+    if ((event.toolName === 'Edit' || event.toolName === 'Write') && event.filePath) {
+      const diff: DiffData = {
+        id: event.spanId || `${event.toolName.toLowerCase()}-${Date.now()}`,
+        path: event.filePath,
+        original: event.diffOriginal || '',
+        modified: event.diffModified || '',
+        toolName: event.toolName,
+        timestamp: event.timestamp,
+      };
+
+      // Store diff for new connections
+      const existingIndex = diffStore.findIndex(d => d.path === diff.path);
+      if (existingIndex >= 0) {
+        diffStore[existingIndex] = diff;
+      } else {
+        diffStore.push(diff);
+      }
+
+      // Broadcast to connected clients
+      broadcastDiff(diff);
     }
   });
 
@@ -839,6 +922,17 @@ export function broadcastSettingsUpdate(settings: unknown): void {
 export function broadcastContextUpdate(context: ContextInfo): void {
   const message = JSON.stringify({ type: 'update', context });
   for (const client of contextClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Broadcast diff update to all connected clients
+// Called when Edit/Write tool events are processed
+export function broadcastDiff(diff: DiffData): void {
+  const message = JSON.stringify({ type: 'diff', diff });
+  for (const client of diffsClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
