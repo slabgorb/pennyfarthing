@@ -37,9 +37,7 @@ export const PANEL_INVENTORY = {
   MESSAGE: 'message',
   // Right sidebar panels
   SPRINT: 'sprint',
-  PROGRESS: 'progress',
-  ACCEPTANCE_CRITERIA: 'acceptance-criteria',
-  BIKELANE: 'bikelane',
+  PROGRESS: 'progress',  // Now contains Workflow/AC/Todo as internal tabs
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
@@ -154,22 +152,7 @@ const PANEL_CONFIGS: Record<string, PanelConfig> = {
     closable: true,
     draggable: true,
   },
-  [PANEL_INVENTORY.ACCEPTANCE_CRITERIA]: {
-    id: PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
-    title: 'AC',
-    component: 'ConnectedAcceptanceCriteriaPanel',
-    position: 'right',
-    closable: true,
-    draggable: true,
-  },
-  [PANEL_INVENTORY.BIKELANE]: {
-    id: PANEL_INVENTORY.BIKELANE,
-    title: 'BikeLane',
-    component: 'ConnectedBikeLanePanel',
-    position: 'right',
-    closable: true,
-    draggable: true,
-  },
+  // Note: AC and BikeLane are now internal tabs within ProgressPanel
 };
 
 // =============================================================================
@@ -200,9 +183,7 @@ export function createWorkspaceLayout(): WorkspaceLayoutConfig {
     rightSidebar: {
       panels: [
         PANEL_INVENTORY.SPRINT,
-        PANEL_INVENTORY.PROGRESS,
-        PANEL_INVENTORY.ACCEPTANCE_CRITERIA,
-        PANEL_INVENTORY.BIKELANE,
+        PANEL_INVENTORY.PROGRESS,  // Contains Workflow/AC/Todo as internal tabs
         PANEL_INVENTORY.BACKGROUND,
         PANEL_INVENTORY.GIT,
         PANEL_INVENTORY.SETTINGS,

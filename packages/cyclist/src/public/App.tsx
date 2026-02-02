@@ -20,6 +20,7 @@ import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './js/font-presets.js';
 
 // Import all panel components
+// Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)
 import {
   MessagePanel,
   SprintPanel,
@@ -30,8 +31,6 @@ import {
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
-  ConnectedAcceptanceCriteriaPanel,
-  ConnectedBikeLanePanel,
 } from './components/panels';
 
 // =============================================================================
@@ -48,10 +47,9 @@ registerPanelComponent(PANEL_INVENTORY.DIFFS, DiffsPanel);
 registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 
 // Right sidebar panels
+// Note: AC and BikeLane are now internal tabs within ProgressPanel
 registerPanelComponent(PANEL_INVENTORY.SPRINT, SprintPanel);
 registerPanelComponent(PANEL_INVENTORY.PROGRESS, ProgressPanel);
-registerPanelComponent(PANEL_INVENTORY.ACCEPTANCE_CRITERIA, ConnectedAcceptanceCriteriaPanel);
-registerPanelComponent(PANEL_INVENTORY.BIKELANE, ConnectedBikeLanePanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
