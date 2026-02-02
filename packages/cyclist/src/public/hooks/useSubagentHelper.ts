@@ -53,13 +53,15 @@ export function useSubagentHelper(): UseSubagentHelperResult {
           setIsLoading(false);
         });
 
-      // Subscribe to persona updates (follows usePersona pattern)
-      api.persona.onUpdate((_, data) => {
+      // Subscribe to persona updates (follows usePersona pattern) - capture cleanup function
+      const cleanup = api.persona.onUpdate((_, data) => {
         const persona = data as { role?: string } | null;
         if (persona?.role) {
           fetchHelper(persona.role);
         }
       });
+
+      return cleanup;
     } else {
       setIsLoading(false);
     }
