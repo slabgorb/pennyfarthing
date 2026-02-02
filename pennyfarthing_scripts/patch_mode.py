@@ -151,9 +151,21 @@ def create_patch_branch(
 
     Returns:
         Name of created patch branch
+
+    Raises:
+        ValueError: If description is empty or produces empty branch name
     """
+    if not description or not description.strip():
+        raise ValueError("Patch description cannot be empty")
+
     timestamp = int(time.time())
     sanitized_desc = _sanitize_branch_name(description)
+
+    if not sanitized_desc:
+        raise ValueError(
+            f"Patch description '{description}' produces empty branch name after sanitization"
+        )
+
     branch_name = f"patch/{sanitized_desc}-{timestamp}"
 
     cwd = str(repo_path) if repo_path else None
@@ -291,16 +303,22 @@ def exit_patch_mode(
     """
     stack = get_patch_stack(stack_file)
 
-    # Pop the saved state
-    state = stack.pop()
+    # Peek at state first - don't pop until operations succeed
+    state = stack.peek()
+    if state is None:
+        raise RuntimeError("Cannot exit patch mode: stack is empty")
 
     # Merge patch branch back to feature branch if provided
+    # Do this BEFORE popping state so we can recover on failure
     if patch_branch:
         merge_patch_branch(
             patch_branch=patch_branch,
             feature_branch=state.feature_branch,
             repo_path=repo_path,
         )
+
+    # Only pop after successful merge
+    stack.pop()
 
     # Build handoff marker for original agent
     handoff_marker = f"<!-- CYCLIST:HANDOFF:/{state.agent} -->"
@@ -330,17 +348,27 @@ def restore_workflow_state(
         Dict with restored state
     """
     stack = get_patch_stack(stack_file)
-    state = stack.pop()
+
+    # Peek at state first - don't pop until checkout succeeds
+    state = stack.peek()
+    if state is None:
+        raise RuntimeError("Cannot restore workflow state: stack is empty")
 
     cwd = str(repo_path) if repo_path else None
 
     # Checkout the original feature branch
-    subprocess.run(
+    result = subprocess.run(
         ["git", "checkout", state.feature_branch],
         capture_output=True,
         text=True,
         cwd=cwd,
     )
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Git checkout failed: {result.stderr}")
+
+    # Only pop after successful checkout
+    stack.pop()
 
     return {
         "story_id": state.story_id,
