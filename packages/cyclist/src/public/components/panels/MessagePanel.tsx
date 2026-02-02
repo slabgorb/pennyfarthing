@@ -214,15 +214,15 @@ export function MessagePanel(): React.ReactElement {
       return;
     }
 
-    const cleanupMessage = claude.onMessage(handleSDKMessage);
-    const cleanupComplete = claude.onComplete(handleComplete);
-    const cleanupError = claude.onError(handleError);
+    const cleanupMessage = claude.onMessage?.(handleSDKMessage);
+    const cleanupComplete = claude.onComplete?.(handleComplete);
+    const cleanupError = claude.onError?.(handleError);
 
     // Cleanup listeners on unmount or dependency change to prevent duplicates
     return () => {
-      cleanupMessage();
-      cleanupComplete();
-      cleanupError();
+      if (typeof cleanupMessage === 'function') cleanupMessage();
+      if (typeof cleanupComplete === 'function') cleanupComplete();
+      if (typeof cleanupError === 'function') cleanupError();
     };
   }, [handleSDKMessage, handleComplete, handleError]);
 

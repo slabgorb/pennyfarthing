@@ -219,10 +219,25 @@ export function ModeSwitch({
 }: ModeSwitchProps): React.ReactElement {
   // Support both controlled and uncontrolled usage
   const [internalMode, setInternalMode] = useState<Mode>(defaultMode);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const mode = controlledMode ?? internalMode;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Check for reduced motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+
+    const listener = (e: MediaQueryListEvent) => {
+      setReducedMotion(e.matches);
+    };
+
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
 
   // Calculate highlight position based on current mode
   const modeIndex = MODES.indexOf(mode);
@@ -282,6 +297,7 @@ export function ModeSwitch({
   const classNames = [
     'mode-switch',
     disabled ? 'mode-switch--disabled' : '',
+    reducedMotion ? 'reduced-motion' : '',
     className,
   ].filter(Boolean).join(' ');
 
@@ -290,9 +306,10 @@ export function ModeSwitch({
       ref={containerRef}
       className={classNames}
       data-testid="mode-switch"
-      role="radiogroup"
+      role="group"
       aria-label="Permission mode"
       onKeyDown={handleKeyDown}
+      style={reducedMotion ? { transition: 'none' } : undefined}
     >
       {/* Sliding highlight */}
       <div
@@ -300,6 +317,7 @@ export function ModeSwitch({
         data-testid="mode-highlight"
         style={{
           transform: `translateX(${modeIndex * 100}%)`,
+          transition: reducedMotion ? 'none' : undefined,
         }}
         data-mode={mode}
       />
@@ -307,19 +325,21 @@ export function ModeSwitch({
       {/* Mode options */}
       {MODES.map((m, index) => {
         const isActive = mode === m;
+        const isFocused = focusedIndex === index;
         return (
           <button
             key={m}
             ref={(el) => { optionRefs.current[index] = el; }}
             type="button"
-            className={`mode-option ${isActive ? 'active' : ''}`}
+            className={`mode-option ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
             data-mode={m}
             data-testid={`mode-${m}`}
-            role="radio"
-            aria-checked={isActive}
+            aria-pressed={isActive}
             aria-label={`${MODE_LABELS[m]} mode: ${MODE_DESCRIPTIONS[m]}`}
             title={MODE_DESCRIPTIONS[m]}
             onClick={() => handleModeChange(m)}
+            onFocus={() => setFocusedIndex(index)}
+            onBlur={() => setFocusedIndex(null)}
             disabled={disabled}
           >
             {MODE_LABELS[m]}

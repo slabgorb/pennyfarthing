@@ -45,13 +45,69 @@ export interface DiffData {
   hunks: DiffHunk[];
 }
 
-export interface DiffViewerProps {
-  data: DiffData;
+interface DiffViewerPropsBase {
   viewMode?: ViewMode;
   fileViewMode?: FileViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
   onFileViewModeChange?: (mode: FileViewMode) => void;
   onHunkNavigate?: (hunkIndex: number) => void;
+}
+
+interface DiffViewerPropsWithData extends DiffViewerPropsBase {
+  data: DiffData;
+  filePath?: never;
+  oldContent?: never;
+  newContent?: never;
+}
+
+interface DiffViewerPropsWithContent extends DiffViewerPropsBase {
+  data?: never;
+  filePath: string;
+  oldContent: string;
+  newContent: string;
+}
+
+export type DiffViewerProps = DiffViewerPropsWithData | DiffViewerPropsWithContent;
+
+/**
+ * Generate hunks from content differences for simple add/remove cases
+ */
+function generateSimpleHunks(oldContent: string, newContent: string): DiffHunk[] {
+  const isNew = oldContent === '' && newContent !== '';
+  const isDeleted = oldContent !== '' && newContent === '';
+
+  if (isNew) {
+    const lines = newContent.split('\n');
+    return [{
+      oldStart: 0,
+      oldCount: 0,
+      newStart: 1,
+      newCount: lines.length,
+      lines: lines.map((content, i) => ({
+        type: 'added' as DiffLineType,
+        content,
+        newLineNumber: i + 1,
+      })),
+    }];
+  }
+
+  if (isDeleted) {
+    const lines = oldContent.split('\n');
+    return [{
+      oldStart: 1,
+      oldCount: lines.length,
+      newStart: 0,
+      newCount: 0,
+      lines: lines.map((content, i) => ({
+        type: 'removed' as DiffLineType,
+        content,
+        oldLineNumber: i + 1,
+      })),
+    }];
+  }
+
+  // If both have content, treat as full modification
+  return [];
 }
 
 // =============================================================================
@@ -359,14 +415,28 @@ function SideBySideView({ hunks, focusedHunk }: SideBySideViewProps): React.Reac
 // DiffViewer Component
 // =============================================================================
 
-export function DiffViewer({
-  data,
-  viewMode = 'unified',
-  fileViewMode = 'partial',
-  onViewModeChange,
-  onFileViewModeChange,
-  onHunkNavigate,
-}: DiffViewerProps): React.ReactElement {
+export function DiffViewer(props: DiffViewerProps): React.ReactElement {
+  const {
+    viewMode = 'unified',
+    fileViewMode = 'partial',
+    onViewModeChange,
+    onFileViewModeChange,
+    onHunkNavigate,
+  } = props;
+
+  // Support both data prop and direct props
+  const data: DiffData = 'data' in props && props.data
+    ? props.data
+    : {
+        filePath: (props as DiffViewerPropsWithContent).filePath,
+        oldContent: (props as DiffViewerPropsWithContent).oldContent,
+        newContent: (props as DiffViewerPropsWithContent).newContent,
+        hunks: generateSimpleHunks(
+          (props as DiffViewerPropsWithContent).oldContent,
+          (props as DiffViewerPropsWithContent).newContent
+        ),
+      };
+
   const [focusedHunk, setFocusedHunk] = useState(0);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const viewerRef = useRef<HTMLDivElement>(null);

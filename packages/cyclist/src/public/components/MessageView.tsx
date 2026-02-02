@@ -177,7 +177,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
   }
 
   return (
-    <div data-testid="message-view" className="message-view">
+    <div data-testid="message-view" className="message-view" role="log" aria-live="polite">
       <MessageList
         ref={messageListRef}
         onScrollChange={handleScrollChange}
