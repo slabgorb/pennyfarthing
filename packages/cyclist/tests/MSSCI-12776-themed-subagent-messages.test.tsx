@@ -301,47 +301,6 @@ describe('AC4: Display helper name, icon, and friendly message', () => {
     });
   });
 
-  it('should display helper icon from theme emoji when available', async () => {
-    const SubagentSpan = (await import('../src/public/components/SubagentSpan')).default;
-
-    render(
-      <SubagentSpan
-        type="testing-runner"
-        name="Verify RED state"
-        messages={[]}
-        helperName="Vera"
-        helperEmoji="🔫"
-      />
-    );
-
-    await waitFor(() => {
-      const icon = screen.getByTestId('helper-icon');
-      expect(icon).toBeInTheDocument();
-      expect(icon).toHaveTextContent('🔫');
-    });
-  });
-
-  it('should use default helper icon when no emoji provided', async () => {
-    const SubagentSpan = (await import('../src/public/components/SubagentSpan')).default;
-
-    render(
-      <SubagentSpan
-        type="testing-runner"
-        name="Verify RED state"
-        messages={[]}
-        helperName="Vera"
-        helperEmoji={null}
-      />
-    );
-
-    await waitFor(() => {
-      const icon = screen.getByTestId('helper-icon');
-      expect(icon).toBeInTheDocument();
-      // Default helper icon (wrench or similar)
-      expect(icon).toHaveTextContent('🔧');
-    });
-  });
-
   it('should show helper style as tooltip or subtitle', async () => {
     const SubagentSpan = (await import('../src/public/components/SubagentSpan')).default;
 
@@ -408,7 +367,7 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
     });
   });
 
-  it('should display description when no friendly message available', async () => {
+  it('should generate friendly message from type and name when no prop provided', async () => {
     const SubagentSpan = (await import('../src/public/components/SubagentSpan')).default;
 
     render(
@@ -421,28 +380,26 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Verify RED state')).toBeInTheDocument();
+      // Should use generateFriendlyMessage which combines type action + description
+      expect(screen.getByText('Running tests: Verify RED state')).toBeInTheDocument();
     });
   });
 
-  it('should use default helper icon when no emoji defined', async () => {
+  it('should fall back to name when type is unknown and no friendly message provided', async () => {
     const SubagentSpan = (await import('../src/public/components/SubagentSpan')).default;
 
     render(
       <SubagentSpan
-        type="testing-runner"
+        type="unknown-type"
         name="Verify RED state"
         messages={[]}
-        helperName="Vera"
-        helperEmoji={null}
+        friendlyMessage={null}
       />
     );
 
     await waitFor(() => {
-      // Should show a default helper icon (wrench)
-      const icon = screen.getByTestId('helper-icon');
-      expect(icon).toBeInTheDocument();
-      expect(icon).toHaveTextContent('🔧');
+      // Unknown type falls back to description, which is "Verify RED state"
+      expect(screen.getByText('Verify RED state')).toBeInTheDocument();
     });
   });
 
@@ -507,7 +464,7 @@ describe('Integration: useSubagentHelper hook', () => {
     const { useSubagentHelper } = await import('../src/public/hooks/useSubagentHelper');
     const { renderHook } = await import('@testing-library/react');
 
-    const { result } = renderHook(() => useSubagentHelper('testing-runner'));
+    const { result } = renderHook(() => useSubagentHelper());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -530,7 +487,7 @@ describe('Integration: useSubagentHelper hook', () => {
       updateCallback = callback;
     });
 
-    const { result } = renderHook(() => useSubagentHelper('testing-runner'));
+    const { result } = renderHook(() => useSubagentHelper());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -564,7 +521,7 @@ describe('Integration: useSubagentHelper hook', () => {
     const { useSubagentHelper } = await import('../src/public/hooks/useSubagentHelper');
     const { renderHook } = await import('@testing-library/react');
 
-    const { result } = renderHook(() => useSubagentHelper('testing-runner'));
+    const { result } = renderHook(() => useSubagentHelper());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

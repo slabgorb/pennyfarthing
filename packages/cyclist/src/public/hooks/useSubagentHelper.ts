@@ -19,13 +19,13 @@ export interface UseSubagentHelperResult {
   error: Error | null;
 }
 
-export function useSubagentHelper(subagentType: string): UseSubagentHelperResult {
+export function useSubagentHelper(): UseSubagentHelperResult {
   const [helper, setHelper] = useState<Helper | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const api = (window as any).electronAPI;
+    const api = window.electronAPI;
 
     const fetchHelper = async (role: string) => {
       try {
@@ -41,27 +41,29 @@ export function useSubagentHelper(subagentType: string): UseSubagentHelperResult
     if (api?.persona) {
       // Fetch initial persona and helper
       api.persona.get()
-        .then((persona: { role?: string } | null) => {
+        .then((data) => {
+          const persona = data as { role?: string } | null;
           if (persona?.role) {
             return fetchHelper(persona.role);
           }
           setIsLoading(false);
         })
-        .catch((err: Error) => {
+        .catch((err) => {
           setError(err instanceof Error ? err : new Error('Failed to fetch persona'));
           setIsLoading(false);
         });
 
-      // Subscribe to persona updates
-      api.persona.onUpdate((_: unknown, data: { role?: string } | null) => {
-        if (data?.role) {
-          fetchHelper(data.role);
+      // Subscribe to persona updates (follows usePersona pattern)
+      api.persona.onUpdate((_, data) => {
+        const persona = data as { role?: string } | null;
+        if (persona?.role) {
+          fetchHelper(persona.role);
         }
       });
     } else {
       setIsLoading(false);
     }
-  }, [subagentType]);
+  }, []);
 
   return { helper, isLoading, error };
 }

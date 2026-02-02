@@ -46,13 +46,13 @@ export async function getAgentHelper(agentRole: string): Promise<Helper | null> 
     return helperCache.get(cacheKey)!;
   }
 
-  const api = (window as any).electronAPI;
+  const api = window.electronAPI;
   if (!api?.theme?.getHelper) {
     return null;
   }
 
   try {
-    const helper = await api.theme.getHelper(agentRole);
+    const helper = await api.theme.getHelper(agentRole) as Helper | null;
     if (helper) {
       helperCache.set(cacheKey, helper);
     }
@@ -69,13 +69,13 @@ export async function getSubagentHelper(subagentType: string): Promise<Helper | 
     return helperCache.get(cacheKey)!;
   }
 
-  const api = (window as any).electronAPI;
+  const api = window.electronAPI;
   if (!api?.theme?.getSubagentHelper) {
     return null;
   }
 
   try {
-    const helper = await api.theme.getSubagentHelper(subagentType);
+    const helper = await api.theme.getSubagentHelper(subagentType) as Helper | null;
     if (helper) {
       helperCache.set(cacheKey, helper);
     }
