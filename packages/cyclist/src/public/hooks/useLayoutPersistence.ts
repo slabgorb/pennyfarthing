@@ -4,6 +4,10 @@
  * React hook for saving and restoring layout state to config.local.yaml.
  * Story MSSCI-12706 - Layout Persistence
  *
+ * IPC DEPRECATED - Now uses REST API:
+ * - GET /api/settings/layout - Load layout
+ * - PATCH /api/settings/layout - Save layout
+ *
  * Features:
  * - Load layout from config on mount
  * - Save layout on changes (debounced)
@@ -42,10 +46,7 @@ interface UseLayoutPersistenceResult {
   saveLayout: (layout: WorkspaceLayoutConfig) => void;
 }
 
-function isValidLayout(config: unknown): boolean {
-  if (!config || typeof config !== 'object') return false;
-  const configObj = config as Record<string, unknown>;
-  const layout = configObj.layout;
+function isValidLayoutData(layout: unknown): boolean {
   if (!layout || typeof layout !== 'object') return false;
   const layoutObj = layout as Record<string, unknown>;
 
@@ -61,35 +62,34 @@ function isValidLayout(config: unknown): boolean {
   return true;
 }
 
-function configToWorkspaceLayout(config: unknown): WorkspaceLayoutConfig {
+function layoutDataToWorkspaceLayout(layout: unknown): WorkspaceLayoutConfig {
   const defaultLayout = createWorkspaceLayout();
-  const configObj = config as Record<string, unknown> | null | undefined;
-  const layout = configObj?.layout as Record<string, unknown> | undefined;
+  const layoutObj = layout as Record<string, unknown> | null | undefined;
 
-  if (!layout) return defaultLayout;
+  if (!layoutObj) return defaultLayout;
 
   return {
     leftSidebar: {
-      panels: Array.isArray(layout.leftSidebar?.panels)
-        ? layout.leftSidebar.panels
+      panels: Array.isArray(layoutObj.leftSidebar?.panels)
+        ? (layoutObj.leftSidebar as Record<string, unknown>).panels as string[]
         : defaultLayout.leftSidebar.panels,
-      width: typeof layout.leftSidebar?.width === 'number'
-        ? layout.leftSidebar.width
+      width: typeof layoutObj.leftSidebar?.width === 'number'
+        ? (layoutObj.leftSidebar as Record<string, unknown>).width as number
         : defaultLayout.leftSidebar.width,
-      collapsed: typeof layout.leftSidebar?.collapsed === 'boolean'
-        ? layout.leftSidebar.collapsed
+      collapsed: typeof layoutObj.leftSidebar?.collapsed === 'boolean'
+        ? (layoutObj.leftSidebar as Record<string, unknown>).collapsed as boolean
         : defaultLayout.leftSidebar.collapsed,
     },
     center: defaultLayout.center,
     rightSidebar: {
-      panels: Array.isArray(layout.rightSidebar?.panels)
-        ? layout.rightSidebar.panels
+      panels: Array.isArray(layoutObj.rightSidebar?.panels)
+        ? (layoutObj.rightSidebar as Record<string, unknown>).panels as string[]
         : defaultLayout.rightSidebar.panels,
-      width: typeof layout.rightSidebar?.width === 'number'
-        ? layout.rightSidebar.width
+      width: typeof layoutObj.rightSidebar?.width === 'number'
+        ? (layoutObj.rightSidebar as Record<string, unknown>).width as number
         : defaultLayout.rightSidebar.width,
-      collapsed: typeof layout.rightSidebar?.collapsed === 'boolean'
-        ? layout.rightSidebar.collapsed
+      collapsed: typeof layoutObj.rightSidebar?.collapsed === 'boolean'
+        ? (layoutObj.rightSidebar as Record<string, unknown>).collapsed as boolean
         : defaultLayout.rightSidebar.collapsed,
     },
   };
@@ -120,23 +120,15 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingLayoutRef = useRef<WorkspaceLayoutConfig | null>(null);
 
-  // Load layout on mount
+  // Load layout on mount via REST API
   useEffect(() => {
-    const api = window.electronAPI;
-
     const loadLayout = async () => {
       try {
-        // Get project info for context
-        if (api?.projectInfo) {
-          await api.projectInfo.get();
-        }
-
-        // Load layout from config
-        if (api?.layout) {
-          const config = await api.layout.get();
-
-          if (config && isValidLayout(config)) {
-            setLayout(configToWorkspaceLayout(config));
+        const response = await fetch('/api/settings/layout');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.layout && isValidLayoutData(data.layout)) {
+            setLayout(layoutDataToWorkspaceLayout(data.layout));
           } else {
             // Use default layout for null/undefined/invalid config
             setLayout(createWorkspaceLayout());
@@ -146,6 +138,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
         }
       } catch (err) {
         // On error, use default layout
+        console.error('[useLayoutPersistence] Failed to load layout:', err);
         setLayout(createWorkspaceLayout());
         setError(err instanceof Error ? err : new Error('Failed to load layout'));
       } finally {
@@ -156,7 +149,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
     loadLayout();
   }, []);
 
-  // Debounced save function
+  // Debounced save function via REST API
   const saveLayout = useCallback((newLayout: WorkspaceLayoutConfig) => {
     pendingLayoutRef.current = newLayout;
 
@@ -170,15 +163,21 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
       const layoutToSave = pendingLayoutRef.current;
       if (!layoutToSave) return;
 
-      const api = window.electronAPI;
-      if (!api?.layout) return;
-
       setIsSaving(true);
       try {
         const config = workspaceLayoutToConfig(layoutToSave);
-        await api.layout.save(config);
+        const response = await fetch('/api/settings/layout', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save layout');
+        }
         setError(null);
       } catch (err) {
+        console.error('[useLayoutPersistence] Failed to save layout:', err);
         setError(err instanceof Error ? err : new Error('Failed to save layout'));
       } finally {
         setIsSaving(false);

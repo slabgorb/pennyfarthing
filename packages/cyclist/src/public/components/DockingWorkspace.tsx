@@ -532,13 +532,14 @@ export function DockingWorkspace({
   const [rightUserOverride, setRightUserOverride] = useState(false);
 
   // Determine effective collapsed state
+  // Priority: prop > initialLayout > responsive auto-collapse
   const shouldAutoCollapse = responsive && isSmall;
   const effectiveLeftCollapsed = leftCollapsedProp !== undefined
     ? leftCollapsedProp
-    : (shouldAutoCollapse && !leftUserOverride);
+    : (initialLayout?.leftSidebar?.collapsed ?? (shouldAutoCollapse && !leftUserOverride));
   const effectiveRightCollapsed = rightCollapsedProp !== undefined
     ? rightCollapsedProp
-    : (shouldAutoCollapse && !rightUserOverride);
+    : (initialLayout?.rightSidebar?.collapsed ?? (shouldAutoCollapse && !rightUserOverride));
 
   const [leftCollapsed, setLeftCollapsed] = useState(effectiveLeftCollapsed);
   const [rightCollapsed, setRightCollapsed] = useState(effectiveRightCollapsed);
@@ -617,7 +618,13 @@ export function DockingWorkspace({
     }
     setLeftResponsiveCollapsed(false);
     onLeftCollapseChange?.(newValue);
-  }, [leftCollapsed, onLeftCollapseChange, responsive, isSmall]);
+    // Update layout and persist collapsed state
+    setLayout(prev => {
+      const newLayout = { ...prev, leftSidebar: { ...prev.leftSidebar, collapsed: newValue } };
+      onLayoutChange?.(newLayout);
+      return newLayout;
+    });
+  }, [leftCollapsed, onLeftCollapseChange, onLayoutChange, responsive, isSmall]);
 
   const handleRightCollapseToggle = useCallback(() => {
     const newValue = !rightCollapsed;
@@ -631,7 +638,13 @@ export function DockingWorkspace({
     }
     setRightResponsiveCollapsed(false);
     onRightCollapseChange?.(newValue);
-  }, [rightCollapsed, onRightCollapseChange, responsive, isSmall]);
+    // Update layout and persist collapsed state
+    setLayout(prev => {
+      const newLayout = { ...prev, rightSidebar: { ...prev.rightSidebar, collapsed: newValue } };
+      onLayoutChange?.(newLayout);
+      return newLayout;
+    });
+  }, [rightCollapsed, onRightCollapseChange, onLayoutChange, responsive, isSmall]);
 
   // ==========================================================================
   // Resize Handlers
