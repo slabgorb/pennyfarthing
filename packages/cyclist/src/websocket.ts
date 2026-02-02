@@ -16,7 +16,15 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getAllReposGitInfoAsync, getReposFromConfig } from './api/git.js';
+import { getReposFromConfig, type RepoGitInfo } from './api/git.js';
+import {
+  getCachedGitStatus,
+  invalidateGitCache,
+  forceRefreshGitCache,
+  onGitCacheRefresh,
+  hasFreshCache,
+  getCachedGitStatusSync,
+} from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 
@@ -79,7 +87,7 @@ const CONTEXT_DEBOUNCE_MS = 2000; // Context debounce (expensive operation)
 // Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
 // These allow main.ts to receive updates for Electron IPC broadcast
 type StoryUpdateCallback = (storyInfo: ReturnType<typeof getStoryInfo>) => void;
-type GitUpdateCallback = (reposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>) => void;
+type GitUpdateCallback = (reposInfo: RepoGitInfo[]) => void;
 let storyUpdateCallback: StoryUpdateCallback | null = null;
 let gitUpdateCallback: GitUpdateCallback | null = null;
 
@@ -363,14 +371,24 @@ export function setupWebSocketServers(
 
   // Handle git WebSocket connections (MSSCI-11943)
   // Updated to send multi-repo data for sidebar REPOS section
+  // Now uses git-cache to prevent lock conflicts
   gitWss.on('connection', async (ws: WebSocket) => {
     // Add client to broadcast set
     gitClients.add(ws);
 
-    // Send initial git data on connection (multi-repo) - async to avoid blocking
+    // Send initial git data on connection (multi-repo) - uses cache to avoid lock conflicts
     const projectDir = getProjectDir();
-    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
-    console.log('[Git WS] New connection, sending init with', allReposInfo.length, 'repos');
+
+    // If we have fresh cache, send it immediately; otherwise fetch
+    let allReposInfo;
+    if (hasFreshCache(projectDir)) {
+      allReposInfo = getCachedGitStatusSync(projectDir);
+      console.log('[Git WS] New connection, sending cached init with', allReposInfo.length, 'repos');
+    } else {
+      allReposInfo = await getCachedGitStatus(projectDir);
+      console.log('[Git WS] New connection, sending fresh init with', allReposInfo.length, 'repos');
+    }
+
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
     }
@@ -555,6 +573,7 @@ export function setupWebSocketServers(
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
   // Also trigger context updates when tool events arrive
+  // Also invalidate git cache on tool completion (PostToolUse)
   addToolEventListener((event: ToolEvent) => {
     // Broadcast span to spans WebSocket clients
     const message = JSON.stringify({ type: 'span', span: event });
@@ -567,6 +586,14 @@ export function setupWebSocketServers(
     // Track pwd from Bash tool completions
     if (event.toolName === 'Bash' && event.workingDirectory) {
       updatePwd(event.workingDirectory);
+    }
+
+    // Invalidate git cache on tool completion - this replaces the .git/index watcher
+    // Tools that modify files (Edit, Write, Bash) may change git status
+    // The cache will debounce and refresh after a delay to avoid lock conflicts
+    if (event.toolName === 'Edit' || event.toolName === 'Write' || event.toolName === 'Bash') {
+      const projectDir = getProjectDir();
+      invalidateGitCache(projectDir);
     }
 
     // Trigger debounced context update when tool events arrive
@@ -668,7 +695,9 @@ export function setupWebSocketServers(
   }
 
   // Set up git file watchers for all configured repos
-  // (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
+  // (MSSCI-11943: AC2 - broadcast on .git/HEAD changes only)
+  // NOTE: .git/index watcher REMOVED to prevent lock conflicts with Claude's git operations
+  // Git status is now invalidated via tool events instead (see git-cache.ts)
   const repos = getReposFromConfig(projectDir);
   for (const repo of repos) {
     const repoPath = join(projectDir, repo.path);
@@ -676,27 +705,28 @@ export function setupWebSocketServers(
     if (!existsSync(gitDir)) continue;
 
     try {
-      // Watch .git/HEAD for branch switches
+      // Watch .git/HEAD for branch switches (infrequent, safe to force refresh)
       const headPath = join(gitDir, 'HEAD');
       if (existsSync(headPath)) {
-        watch(headPath, (eventType) => {
+        watch(headPath, async (eventType) => {
           if (eventType !== 'change') return;
-          triggerGitUpdate(projectDir);
+          // Branch switch - force immediate refresh
+          console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
+          await forceRefreshGitCache(projectDir);
         });
       }
 
-      // Watch .git/index for staging changes
-      const indexPath = join(gitDir, 'index');
-      if (existsSync(indexPath)) {
-        watch(indexPath, (eventType) => {
-          if (eventType !== 'change') return;
-          triggerGitUpdate(projectDir);
-        });
-      }
+      // .git/index watcher REMOVED - was causing lock conflicts
+      // Git status now invalidated via PostToolUse events instead
     } catch (err) {
       console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
     }
   }
+
+  // Register git cache refresh callback to broadcast updates
+  onGitCacheRefresh((allReposInfo) => {
+    broadcastGitUpdate(allReposInfo);
+  });
 
   // Set up settings file watcher for config.local.yaml changes
   // This enables real-time bidirectional sync between ControlBar and SettingsPanel
@@ -879,7 +909,7 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
 }
 
 // MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
-function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>): void {
+function broadcastGitUpdate(allReposInfo: RepoGitInfo[]): void {
   const message = JSON.stringify({ type: 'update', repos: allReposInfo });
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -893,15 +923,18 @@ function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposG
 }
 
 // MSSCI-11943: Trigger git update with coalescing (500ms per AC2)
-// Now async to avoid blocking the event loop during git commands
+// Now uses git-cache to prevent lock conflicts
+// NOTE: This is now only called for .git/HEAD changes (branch switches)
+// File changes are handled via tool event invalidation in git-cache.ts
 function triggerGitUpdate(projectDir: string): void {
   if (gitCoalesceTimer) {
     clearTimeout(gitCoalesceTimer);
   }
 
   gitCoalesceTimer = setTimeout(async () => {
-    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
-    broadcastGitUpdate(allReposInfo);
+    // Use cache - it will refresh if stale
+    await getCachedGitStatus(projectDir);
+    // Broadcast happens via the onGitCacheRefresh callback
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
 }
