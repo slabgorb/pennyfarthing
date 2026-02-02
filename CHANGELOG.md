@@ -11,6 +11,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.0.1] - 2026-02-02
+
+### Cyclist IPC to WebSocket Migration
+
+This patch release completes the migration from Electron IPC to WebSocket-based communication, enabling full web mode support for Cyclist.
+
+### Added
+
+- **Git Status Cache** - New caching layer (`git-cache.ts`) prevents `.git/index` lock conflicts during frequent polling
+  - Deduplicates concurrent git status requests
+  - Invalidates on PostToolUse events (Edit, Write, Bash) with 1.5s debounce
+  - Force refresh on branch switches via `.git/HEAD` watcher
+- **REST API Fallbacks** - Web mode support for panels that previously required Electron IPC
+  - `/api/settings` endpoint for Settings panel
+  - `/api/todos` endpoint for Todos panel
+  - ControlBar bell/relay mode sync via REST
+- **WebSocket Endpoints** - New real-time data channels
+  - `/ws/settings` - Bidirectional settings sync
+  - `/ws/context` - Context usage percentage updates
+  - `/ws/diffs` - Edit/Write tool diff streaming
+- **Interactive Debug Workflow** - New stepped workflow for debugging sessions
+- **ClaudeContext Provider** - React context for Claude service state management
+
+### Changed
+
+- **IPC to WebSocket Migration** - All React hooks now use WebSocket with IPC fallback
+  - `useStatsStrip`, `useGitStatus`, `useStory`, `usePersona`, `useTodos`
+  - `useBackgroundTasks`, `useDiffs`, `useLayoutPersistence`
+- **Tiered Context Injection** - Wired up backoff tiers for reduced token usage
+
+### Fixed
+
+- **Git Lock Conflicts** - Replaced problematic `.git/index` file watcher with event-driven cache invalidation
+- **IPC Subscription Cleanup** - Added proper cleanup functions to prevent memory leaks
+- **Skill/Doctor Script Paths** - Fixed statusline detection paths
+- **Toggle Button Animations** - Removed distracting throb animation
+
+---
+
 ## [9.0.0] - 2026-02-02
 
 ### Sprint 12 Release - Cyclist React Migration & VS Code Deprecation
