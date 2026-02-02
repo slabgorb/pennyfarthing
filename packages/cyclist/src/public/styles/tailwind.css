@@ -2512,22 +2512,11 @@
   filter: none;
 }
 
-/* Pulse animation for active toggles */
-@keyframes toggle-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% {
-    box-shadow: 0 0 4px 1px currentColor;
-  }
-}
-
+/* Active toggle colors (no animation - too distracting) */
 .btn-toggle.bell-toggle.active {
-  animation: toggle-pulse 2s ease-in-out infinite;
   color: var(--color-warning, #f59e0b);
 }
 
 .btn-toggle.relay-toggle.active {
-  animation: toggle-pulse 2s ease-in-out infinite;
   color: var(--color-purple, #8b5cf6);
 }
