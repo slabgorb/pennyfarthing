@@ -39,6 +39,22 @@ export function parseSubagentDescription(input: TaskInput): string | null {
 // AC2: Look up current agent's helper persona from theme
 // =============================================================================
 
+// Theme data cache
+let themeDataCache: { agents: Array<{ role: string; helper?: Helper }> } | null = null;
+
+async function loadThemeData(): Promise<void> {
+  if (themeDataCache) return;
+
+  try {
+    const response = await fetch('/api/theme-agents/full');
+    if (response.ok) {
+      themeDataCache = await response.json();
+    }
+  } catch {
+    // Ignore errors, cache stays null
+  }
+}
+
 export async function getAgentHelper(agentRole: string): Promise<Helper | null> {
   // Check cache first
   const cacheKey = `agent:${agentRole}`;
@@ -46,17 +62,18 @@ export async function getAgentHelper(agentRole: string): Promise<Helper | null> 
     return helperCache.get(cacheKey)!;
   }
 
-  const api = window.electronAPI;
-  if (!api?.theme?.getHelper) {
-    return null;
-  }
-
   try {
-    const helper = await api.theme.getHelper(agentRole) as Helper | null;
-    if (helper) {
-      helperCache.set(cacheKey, helper);
+    // Load theme data if not cached
+    await loadThemeData();
+
+    if (themeDataCache?.agents) {
+      const agent = themeDataCache.agents.find(a => a.role === agentRole);
+      if (agent?.helper) {
+        helperCache.set(cacheKey, agent.helper);
+        return agent.helper;
+      }
     }
-    return helper;
+    return null;
   } catch {
     return null;
   }
@@ -69,17 +86,13 @@ export async function getSubagentHelper(subagentType: string): Promise<Helper | 
     return helperCache.get(cacheKey)!;
   }
 
-  const api = window.electronAPI;
-  if (!api?.theme?.getSubagentHelper) {
-    return null;
-  }
-
   try {
-    const helper = await api.theme.getSubagentHelper(subagentType) as Helper | null;
-    if (helper) {
-      helperCache.set(cacheKey, helper);
-    }
-    return helper;
+    // Load theme data if not cached
+    await loadThemeData();
+
+    // Subagent helpers may be defined differently - for now just return null
+    // The theme data structure may need to be extended to support this
+    return null;
   } catch {
     return null;
   }

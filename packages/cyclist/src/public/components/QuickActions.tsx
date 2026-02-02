@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMarkerActions } from '../hooks/useMarkerActions';
+import { useClaudeContext } from '../contexts/ClaudeContext';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -40,24 +41,13 @@ interface QuickActionsPropsWithActions {
 type QuickActionsProps = QuickActionsPropsWithMessage | QuickActionsPropsWithActions;
 
 /**
- * Send a message to Claude via electronAPI
- */
-function sendMessage(text: string): void {
-  console.log('[QuickActions] sendMessage called:', text, 'electronAPI available:', !!window.electronAPI?.claude?.send);
-  if (window.electronAPI?.claude?.send) {
-    window.electronAPI.claude.send(text, []);
-  } else {
-    console.warn('[QuickActions] electronAPI.claude.send not available');
-  }
-}
-
-/**
- * Get relay mode setting from electronAPI
+ * Get relay mode setting from REST API
  */
 async function getRelayMode(): Promise<boolean> {
   try {
-    if (window.electronAPI?.settings?.get) {
-      const settings = await window.electronAPI.settings.get();
+    const response = await fetch('/api/settings');
+    if (response.ok) {
+      const settings = await response.json();
       return settings?.workflow?.relay_mode ?? false;
     }
   } catch {
@@ -67,6 +57,16 @@ async function getRelayMode(): Promise<boolean> {
 }
 
 export default function QuickActions(props: QuickActionsProps): React.ReactElement | null {
+  // Get send function from Claude context
+  const { send: claudeSend } = useClaudeContext();
+
+  /**
+   * Send a message to Claude via WebSocket context
+   */
+  const sendMessage = useCallback((text: string): void => {
+    console.log('[QuickActions] sendMessage called:', text);
+    claudeSend(text, []);
+  }, [claudeSend]);
   const { onAction } = props;
   const [isDisabled, setIsDisabled] = useState(false);
   const [relayMode, setRelayMode] = useState(false);
@@ -259,17 +259,3 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
   );
 }
 
-// Type declaration for window.electronAPI
-declare global {
-  interface Window {
-    electronAPI?: {
-      claude?: {
-        send: (text: string, images: unknown[]) => void;
-        onMessage?: (callback: (message: unknown) => void) => () => void;
-      };
-      settings?: {
-        get: () => Promise<{ workflow?: { relay_mode?: boolean } }>;
-      };
-    };
-  }
-}

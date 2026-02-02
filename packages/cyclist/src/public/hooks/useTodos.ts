@@ -50,31 +50,10 @@ export function useTodos(): UseTodosResult {
   }, []);
 
   useEffect(() => {
-    const api = window.electronAPI;
-
-    // Electron mode: use IPC
-    if (api?.todos) {
-      api.todos.get()
-        .then((data) => {
-          setTodos((data as TodoItem[]) || []);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch todos'));
-          setIsLoading(false);
-        });
-
-      // Subscribe to updates
-      api.todos.onUpdate((_, data) => {
-        setTodos((data as TodoItem[]) || []);
-      });
-      return;
-    }
-
-    // Web mode: use REST API with polling
+    // Use REST API with polling (todos are updated by Claude stream, not real-time)
     fetchTodos();
 
-    // Poll for updates every 5 seconds in web mode
+    // Poll for updates every 5 seconds
     const interval = setInterval(fetchTodos, 5000);
     return () => clearInterval(interval);
   }, [fetchTodos]);

@@ -20,7 +20,7 @@ export type { BackgroundTask } from './useBackgroundTasks';
 export { useDiffs } from './useDiffs';
 export type { DiffData } from './useDiffs';
 
-export { useMessageStream } from './useMessageStream';
+// useMessageStream is deprecated - use ClaudeContext instead
 
 export { useStatsStrip } from './useStatsStrip';
 
@@ -32,3 +32,7 @@ export { useCommandHistory } from './useCommandHistory';
 export { useTabCompletion } from './useTabCompletion';
 export { useMessageQueue } from './useMessageQueue';
 export type { QueuedMessage } from './useMessageQueue';
+
+// Claude API hooks
+export { useClaude } from './useClaude';
+export type { UseClaudeResult, UseClaudeCallbacks, ClaudeMessage, PermissionMode, PastedImage } from './useClaude';

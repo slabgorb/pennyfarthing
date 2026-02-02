@@ -25,14 +25,17 @@ export function useUserAvatar(): UseUserAvatarResult {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // TODO: Implement - fetch avatar via electronAPI.avatar.get
-    // For now, stub that throws to fail tests
     const fetchAvatar = async () => {
       try {
-        const api = window.electronAPI;
-        if (api?.avatar?.get) {
-          const url = await api.avatar.get();
-          setAvatarUrl(url as string);
+        // Try REST endpoint for avatar
+        const response = await fetch('/api/identity');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.avatarUrl) {
+            setAvatarUrl(data.avatarUrl);
+          } else {
+            setAvatarUrl(DEFAULT_AVATAR);
+          }
         } else {
           setAvatarUrl(DEFAULT_AVATAR);
         }

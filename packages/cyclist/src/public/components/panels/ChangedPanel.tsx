@@ -19,12 +19,11 @@ export function ChangedPanel(): React.ReactElement {
   const [files, setFiles] = useState<FileChange[]>([]);
 
   useEffect(() => {
-    const api = window.electronAPI;
-    if (!api?.diff) return;
+    // Connect to diffs WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/diffs`);
 
-    // Subscribe to diff updates
-    api.diff.onUpdate((_, data) => {
-      const diff = data as DiffData;
+    const handleDiff = (diff: DiffData) => {
       setFiles(prev => {
         // Determine status based on content
         let status: FileStatus = 'modified';
@@ -47,7 +46,26 @@ export function ChangedPanel(): React.ReactElement {
         }
         return [...prev, newFile];
       });
-    });
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' && data.diffs) {
+          // Initial load of existing diffs
+          for (const diff of data.diffs) {
+            handleDiff(diff as DiffData);
+          }
+        } else if (data.type === 'diff' && data.diff) {
+          // New diff update
+          handleDiff(data.diff as DiffData);
+        }
+      } catch (err) {
+        console.error('[ChangedPanel] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    return () => ws.close();
   }, []);
 
   const handleFileClick = useCallback((file: FileChange) => {
