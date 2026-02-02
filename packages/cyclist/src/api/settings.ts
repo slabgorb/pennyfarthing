@@ -69,6 +69,50 @@ export function createErrorResponse(code: ErrorCode, message: string): ErrorResp
 }
 
 /**
+ * Get settings for WebSocket broadcast
+ * Used by websocket.ts for /ws/settings endpoint
+ */
+export async function getSettingsForWebSocket(projectDir: string | null): Promise<SettingsResponse> {
+  const settings = getCurrentSettings();
+
+  // Read theme, handoff_mode, and bell_mode from config.local.yaml
+  let theme = 'alice-in-wonderland';
+  let handoffMode = 'manual';
+  let bellMode = false;
+
+  if (projectDir) {
+    try {
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
+        if (parsed?.theme) {
+          theme = parsed.theme;
+        }
+        if (parsed?.workflow?.handoff_mode) {
+          handoffMode = parsed.workflow.handoff_mode;
+        }
+        if (parsed?.workflow?.bell_mode !== undefined) {
+          bellMode = parsed.workflow.bell_mode;
+        }
+      }
+    } catch {
+      // Ignore project config errors - use defaults
+    }
+  }
+
+  return {
+    ...settings,
+    workflow: {
+      ...settings.workflow,
+      handoff_mode: handoffMode,
+      bell_mode: bellMode,
+    },
+    pennyfarthing: { theme },
+  };
+}
+
+/**
  * Create the settings router
  */
 export function createSettingsRouter(): Router {

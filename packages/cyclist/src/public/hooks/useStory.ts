@@ -2,11 +2,13 @@
  * useStory Hook
  *
  * React hook for subscribing to story/sprint data.
- * Uses electronAPI in Electron mode, falls back to REST API in web mode.
  * Story MSSCI-12717 - React Migration
+ * Story MSSCI-12860 - IPC to WebSocket Migration (Phase 1)
+ *
+ * Uses WebSocket /ws/story for real-time updates (no polling).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Import types from story-parser for criteria and workflow
 import type { CriteriaItem, WorkflowPhase } from '../../../story-parser.js';
@@ -33,62 +35,92 @@ interface UseStoryResult {
   error: Error | null;
 }
 
-// Fetch story via REST API (web mode fallback)
-async function fetchStoryFromApi(): Promise<StoryData | null> {
-  const response = await fetch('/api/story');
-  if (!response.ok) {
-    throw new Error(`Failed to fetch story: ${response.status}`);
-  }
-  const data = await response.json();
-  // API returns { id: null, ... } when no session exists
-  return data.id ? data : null;
+/** WebSocket message format from /ws/story */
+interface StoryMessage {
+  type: 'init' | 'update';
+  id: string | null;
+  title: string | null;
+  phase?: string | null;
+  status?: string | null;
+  points?: number | null;
+  workflow?: WorkflowPhase[] | null;
+  criteria?: CriteriaItem[] | null;
+  [key: string]: unknown;
+}
+
+/** Transform WebSocket message to StoryData */
+function transformMessage(msg: StoryMessage): StoryData | null {
+  if (!msg.id) return null;
+  return {
+    id: msg.id,
+    title: msg.title ?? '',
+    status: msg.status ?? undefined,
+    phase: msg.phase ?? undefined,
+    points: msg.points ?? undefined,
+    criteria: msg.criteria,
+    workflowPhases: msg.workflow,
+  };
 }
 
 export function useStory(): UseStoryResult {
   const [story, setStory] = useState<StoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  const fetchStory = useCallback(async () => {
-    try {
-      const data = await fetchStoryFromApi();
-      setStory(data);
-      setIsLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch story'));
-      setIsLoading(false);
-    }
-  }, []);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    const api = window.electronAPI;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/story`;
 
-    // Electron mode: use IPC
-    if (api?.story) {
-      api.story.get()
-        .then((data) => {
-          setStory(data as StoryData | null);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch story'));
-          setIsLoading(false);
-        });
+    const connect = () => {
+      try {
+        wsRef.current = new WebSocket(wsUrl);
 
-      // Subscribe to updates
-      api.story.onUpdate((_, data) => {
-        setStory(data as StoryData | null);
-      });
-      return;
-    }
+        wsRef.current.onopen = () => {
+          console.debug('[useStory] WebSocket connected');
+        };
 
-    // Web mode: use REST API with polling
-    fetchStory();
+        wsRef.current.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data) as StoryMessage;
+            if (msg.type === 'init' || msg.type === 'update') {
+              setStory(transformMessage(msg));
+              setIsLoading(false);
+              setError(null);
+            }
+          } catch (err) {
+            console.error('[useStory] Failed to parse message:', err);
+          }
+        };
 
-    // Poll for updates every 5 seconds in web mode
-    const interval = setInterval(fetchStory, 5000);
-    return () => clearInterval(interval);
-  }, [fetchStory]);
+        wsRef.current.onclose = () => {
+          console.debug('[useStory] WebSocket closed, reconnecting...');
+          reconnectTimeoutRef.current = setTimeout(connect, 2000);
+        };
+
+        wsRef.current.onerror = (err) => {
+          console.error('[useStory] WebSocket error:', err);
+          setError(new Error('WebSocket connection failed'));
+        };
+      } catch (err) {
+        console.error('[useStory] WebSocket init failed:', err);
+        setError(err instanceof Error ? err : new Error('Failed to connect'));
+        setIsLoading(false);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   return { story, isLoading, error };
 }

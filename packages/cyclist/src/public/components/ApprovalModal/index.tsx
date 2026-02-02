@@ -337,31 +337,119 @@ export function useApprovalModal(): UseApprovalModalResult {
 }
 
 // ============================================================================
-// IPC Functions
+// WebSocket Functions (Phase 1 Migration - MSSCI-12860)
 // ============================================================================
 
+/** WebSocket message format from /ws/hooks */
+interface HookRequestMessage {
+  type: 'hook-request';
+  toolId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  context?: {
+    percentage: number;
+    isHigh: boolean;
+    isCritical: boolean;
+  };
+}
+
+/** WebSocket response format to /ws/hooks */
+interface HookResponseMessage {
+  type: 'hook-response';
+  toolId: string;
+  approved: boolean;
+  data?: {
+    grantScope?: GrantScope;
+  };
+}
+
+/** Global WebSocket instance for permission requests */
+let hooksWs: WebSocket | null = null;
+let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+
 /**
- * Subscribe to permission requests from IPC.
+ * Get or create WebSocket connection to /ws/hooks.
+ */
+function getHooksWebSocket(): WebSocket | null {
+  if (hooksWs && hooksWs.readyState === WebSocket.OPEN) {
+    return hooksWs;
+  }
+  return null;
+}
+
+/**
+ * Subscribe to permission requests via WebSocket.
  */
 export function subscribeToPermissionRequests(
   callback: (request: ApprovalRequest) => void
 ): () => void {
-  const api = window.electronAPI;
-  if (api?.permission?.onRequest) {
-    return api.permission.onRequest((_: unknown, req: ApprovalRequest) => {
-      callback(req);
-    });
-  }
-  return () => {};
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/hooks`;
+
+  const connect = () => {
+    try {
+      hooksWs = new WebSocket(wsUrl);
+
+      hooksWs.onopen = () => {
+        console.debug('[ApprovalModal] WebSocket connected to /ws/hooks');
+      };
+
+      hooksWs.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data) as HookRequestMessage;
+          if (msg.type === 'hook-request') {
+            callback({
+              toolId: msg.toolId,
+              toolName: msg.toolName,
+              input: msg.input as ToolInput,
+            });
+          }
+        } catch (err) {
+          console.error('[ApprovalModal] Failed to parse message:', err);
+        }
+      };
+
+      hooksWs.onclose = () => {
+        console.debug('[ApprovalModal] WebSocket closed, reconnecting...');
+        reconnectTimeout = setTimeout(connect, 2000);
+      };
+
+      hooksWs.onerror = (err) => {
+        console.error('[ApprovalModal] WebSocket error:', err);
+      };
+    } catch (err) {
+      console.error('[ApprovalModal] WebSocket init failed:', err);
+    }
+  };
+
+  connect();
+
+  return () => {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+    if (hooksWs) {
+      hooksWs.close();
+      hooksWs = null;
+    }
+  };
 }
 
 /**
- * Send permission response via IPC.
+ * Send permission response via WebSocket.
  */
 export function sendPermissionResponse(response: ApprovalResponse): void {
-  const api = window.electronAPI;
-  if (api?.permission?.sendResponse) {
-    api.permission.sendResponse(response);
+  const ws = getHooksWebSocket();
+  if (ws) {
+    const msg: HookResponseMessage = {
+      type: 'hook-response',
+      toolId: response.toolId,
+      approved: response.approved,
+      data: response.grantScope ? { grantScope: response.grantScope } : undefined,
+    };
+    ws.send(JSON.stringify(msg));
+  } else {
+    console.warn('[ApprovalModal] WebSocket not connected, cannot send response');
   }
 }
 

@@ -17,6 +17,7 @@ import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
 import { getAllReposGitInfoAsync, getReposFromConfig } from './api/git.js';
+import { getSettingsForWebSocket } from './api/settings.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -40,6 +41,9 @@ const gitClients = new Set<WebSocket>();
 // Spans WebSocket clients (real-time debugging)
 const spansClients = new Set<WebSocket>();
 
+// Settings WebSocket clients (bidirectional sync between ControlBar and SettingsPanel)
+const settingsClients = new Set<WebSocket>();
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -47,8 +51,10 @@ const LIVERELOAD_DEBOUNCE_MS = 100;
 // Debounce timers for story and git (MSSCI-11943)
 let storyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
+let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
 const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
+const SETTINGS_DEBOUNCE_MS = 100; // Settings debounce for config.local.yaml changes
 
 // Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
 // These allow main.ts to receive updates for Electron IPC broadcast
@@ -84,6 +90,10 @@ export function getGitClients(): Set<WebSocket> {
 
 export function getSpansClients(): Set<WebSocket> {
   return spansClients;
+}
+
+export function getSettingsClients(): Set<WebSocket> {
+  return settingsClients;
 }
 
 // Setup WebSocket servers for stats and persona updates
@@ -126,6 +136,9 @@ export function setupWebSocketServers(
 
   // WebSocket server for hook requests at /ws/hooks (MSSCI-12409)
   const hooksWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for settings at /ws/settings (bidirectional sync)
+  const settingsWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -178,6 +191,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/hooks') {
       hooksWss.handleUpgrade(request, socket, head, (ws) => {
         hooksWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/settings') {
+      settingsWss.handleUpgrade(request, socket, head, (ws) => {
+        settingsWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -407,6 +424,33 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle settings WebSocket connections (bidirectional sync)
+  settingsWss.on('connection', async (ws: WebSocket) => {
+    console.log('[WebSocket] Settings client connected');
+    settingsClients.add(ws);
+
+    // Send initial settings on connection
+    try {
+      const settings = await getSettingsForWebSocket(getProjectDir());
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', settings }));
+      }
+    } catch (err) {
+      console.error('[WebSocket] Error fetching initial settings:', err);
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Settings client disconnected');
+      settingsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      settingsClients.delete(ws);
+    });
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
   addToolEventListener((event: ToolEvent) => {
@@ -512,6 +556,35 @@ export function setupWebSocketServers(
       }
     } catch (err) {
       console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
+    }
+  }
+
+  // Set up settings file watcher for config.local.yaml changes
+  // This enables real-time bidirectional sync between ControlBar and SettingsPanel
+  const configLocalPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+  if (existsSync(join(projectDir, '.pennyfarthing'))) {
+    try {
+      watch(join(projectDir, '.pennyfarthing'), { recursive: false }, (eventType, filename) => {
+        if (!filename || filename !== 'config.local.yaml') return;
+
+        // Debounce rapid changes
+        if (settingsDebounceTimer) {
+          clearTimeout(settingsDebounceTimer);
+        }
+
+        settingsDebounceTimer = setTimeout(async () => {
+          try {
+            const settings = await getSettingsForWebSocket(projectDir);
+            broadcastSettingsUpdate(settings);
+          } catch (err) {
+            console.error('[WebSocket] Failed to broadcast settings update:', err);
+          }
+          settingsDebounceTimer = null;
+        }, SETTINGS_DEBOUNCE_MS);
+      });
+      console.log('[WebSocket] Settings file watcher set up for config.local.yaml');
+    } catch (err) {
+      console.error('[WebSocket] Failed to set up settings file watcher:', err);
     }
   }
 
@@ -692,4 +765,15 @@ function triggerGitUpdate(projectDir: string): void {
     broadcastGitUpdate(allReposInfo);
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
+}
+
+// Broadcast settings update to all connected clients
+// Exported for use by settings API after PATCH
+export function broadcastSettingsUpdate(settings: unknown): void {
+  const message = JSON.stringify({ type: 'update', settings });
+  for (const client of settingsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
 }

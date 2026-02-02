@@ -2,13 +2,15 @@
  * useGitStatus Hook
  *
  * React hook for subscribing to git status data.
- * Uses electronAPI in Electron mode, falls back to REST API in web mode.
  * Story MSSCI-12717 - React Migration
  * Story MSSCI-12781 - Fixed to handle multi-repo response format
  * Story MSSCI-12798 - Expose full repo array for stacked display
+ * Story MSSCI-12860 - IPC to WebSocket Migration (Phase 1)
+ *
+ * Uses WebSocket /ws/git for real-time updates (no polling).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface GitStatusData {
   branch: string;
@@ -40,7 +42,7 @@ export interface DirtyFile {
   path: string;
 }
 
-/** Raw repo git info from main process */
+/** Raw repo git info from server */
 interface RepoGitInfo {
   name: string;
   path: string;
@@ -51,8 +53,9 @@ interface RepoGitInfo {
   dirtyFiles: DirtyFile[];
 }
 
-/** Raw response from git:get IPC call */
-interface GitResponse {
+/** WebSocket message format from /ws/git */
+interface GitMessage {
+  type: 'init' | 'update';
   repos: RepoGitInfo[];
 }
 
@@ -93,12 +96,12 @@ function countFilesByType(dirtyFiles: DirtyFile[]): { staged: number; modified: 
 /**
  * Transform raw git response to per-repo status array for stacked display
  */
-function transformToRepoArray(response: GitResponse | null): RepoStatusData[] {
-  if (!response?.repos?.length) {
+function transformToRepoArray(repos: RepoGitInfo[]): RepoStatusData[] {
+  if (!repos?.length) {
     return [];
   }
 
-  return response.repos.map(repo => {
+  return repos.map(repo => {
     const counts = countFilesByType(repo.dirtyFiles);
     return {
       name: repo.name,
@@ -119,20 +122,20 @@ function transformToRepoArray(response: GitResponse | null): RepoStatusData[] {
  * Transform raw git response to GitStatusData for display (legacy aggregated view)
  * Uses first repo for branch info, aggregates file counts across all repos
  */
-function transformGitResponse(response: GitResponse | null): GitStatusData | null {
-  if (!response?.repos?.length) {
+function transformGitResponse(repos: RepoGitInfo[]): GitStatusData | null {
+  if (!repos?.length) {
     return null;
   }
 
   // Use first repo as primary (usually the orchestrator or main repo)
-  const primaryRepo = response.repos[0];
+  const primaryRepo = repos[0];
 
   // Count file types across all repos
   let staged = 0;
   let modified = 0;
   let untracked = 0;
 
-  for (const repo of response.repos) {
+  for (const repo of repos) {
     const counts = countFilesByType(repo.dirtyFiles);
     staged += counts.staged;
     modified += counts.modified;
@@ -140,7 +143,7 @@ function transformGitResponse(response: GitResponse | null): GitStatusData | nul
   }
 
   // Check if any repo is dirty
-  const isDirty = response.repos.some(repo => !repo.clean);
+  const isDirty = repos.some(repo => !repo.clean);
 
   return {
     branch: primaryRepo.branch,
@@ -160,68 +163,67 @@ interface UseGitStatusResult {
   error: Error | null;
 }
 
-// Fetch git status via REST API (web mode fallback)
-async function fetchGitFromApi(): Promise<GitResponse | null> {
-  const response = await fetch('/api/git/all');
-  if (!response.ok) {
-    throw new Error(`Failed to fetch git status: ${response.status}`);
-  }
-  const repos = await response.json();
-  // API returns array directly, wrap in expected format
-  return { repos };
-}
-
 export function useGitStatus(): UseGitStatusResult {
   const [gitStatus, setGitStatus] = useState<GitStatusData | null>(null);
   const [repos, setRepos] = useState<RepoStatusData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  const fetchGit = useCallback(async () => {
-    try {
-      const response = await fetchGitFromApi();
-      setGitStatus(transformGitResponse(response));
-      setRepos(transformToRepoArray(response));
-      setIsLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch git status'));
-      setIsLoading(false);
-    }
-  }, []);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    const api = window.electronAPI;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/git`;
 
-    // Electron mode: use IPC
-    if (api?.git) {
-      api.git.get()
-        .then((data) => {
-          const response = data as GitResponse | null;
-          setGitStatus(transformGitResponse(response));
-          setRepos(transformToRepoArray(response));
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch git status'));
-          setIsLoading(false);
-        });
+    const connect = () => {
+      try {
+        wsRef.current = new WebSocket(wsUrl);
 
-      // Subscribe to updates
-      api.git.onUpdate((_, data) => {
-        const response = data as GitResponse | null;
-        setGitStatus(transformGitResponse(response));
-        setRepos(transformToRepoArray(response));
-      });
-      return;
-    }
+        wsRef.current.onopen = () => {
+          console.debug('[useGitStatus] WebSocket connected');
+        };
 
-    // Web mode: use REST API with polling
-    fetchGit();
+        wsRef.current.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data) as GitMessage;
+            if (msg.type === 'init' || msg.type === 'update') {
+              setGitStatus(transformGitResponse(msg.repos));
+              setRepos(transformToRepoArray(msg.repos));
+              setIsLoading(false);
+              setError(null);
+            }
+          } catch (err) {
+            console.error('[useGitStatus] Failed to parse message:', err);
+          }
+        };
 
-    // Poll for updates every 10 seconds in web mode (git status is heavier)
-    const interval = setInterval(fetchGit, 10000);
-    return () => clearInterval(interval);
-  }, [fetchGit]);
+        wsRef.current.onclose = () => {
+          console.debug('[useGitStatus] WebSocket closed, reconnecting...');
+          reconnectTimeoutRef.current = setTimeout(connect, 2000);
+        };
+
+        wsRef.current.onerror = (err) => {
+          console.error('[useGitStatus] WebSocket error:', err);
+          setError(new Error('WebSocket connection failed'));
+        };
+      } catch (err) {
+        console.error('[useGitStatus] WebSocket init failed:', err);
+        setError(err instanceof Error ? err : new Error('Failed to connect'));
+        setIsLoading(false);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   return { gitStatus, repos, isLoading, error };
 }
