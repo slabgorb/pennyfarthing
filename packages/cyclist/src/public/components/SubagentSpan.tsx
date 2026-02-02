@@ -3,11 +3,14 @@
  *
  * Collapsible container for subagent message groups.
  * Story MSSCI-12698 - MessageView Component with Streaming
+ * Story MSSCI-12776 - Theme-Aware Subagent Display Messages
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
+import { useSubagentHelper } from '../hooks/useSubagentHelper';
+import { generateFriendlyMessage } from '../js/subagent-display';
 
 interface SubagentMessage {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -24,10 +27,40 @@ interface SubagentSpanProps {
   name: string;
   messages: SubagentMessage[];
   defaultCollapsed?: boolean;
+  // MSSCI-12776: Theme-aware helper display (optional - can be overridden by props for testing)
+  helperName?: string | null;
+  helperStyle?: string | null;
+  friendlyMessage?: string | null;
 }
 
-export default function SubagentSpan({ type, name, messages, defaultCollapsed = false }: SubagentSpanProps): React.ReactElement {
+export default function SubagentSpan({
+  type,
+  name,
+  messages,
+  defaultCollapsed = false,
+  helperName: propHelperName,
+  helperStyle: propHelperStyle,
+  friendlyMessage: propFriendlyMessage,
+}: SubagentSpanProps): React.ReactElement {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
+  // MSSCI-12776: Fetch themed helper from current persona (AC2)
+  const { helper } = useSubagentHelper();
+
+  // Generate friendly message from subagent context (AC3)
+  const generatedFriendlyMessage = useMemo(() => {
+    return generateFriendlyMessage({ subagent_type: type, description: name });
+  }, [type, name]);
+
+  // Use truthy props if provided (for testing), otherwise use hook/generated values (AC4, AC5)
+  // Treating null same as undefined - both mean "use fallback"
+  const helperName = propHelperName ?? helper?.name;
+  const helperStyle = propHelperStyle ?? helper?.style;
+  const friendlyMessage = propFriendlyMessage ?? generatedFriendlyMessage;
+
+  // Determine display values with fallbacks (AC5)
+  const displayName = helperName || type;
+  const displayMessage = friendlyMessage || name;
 
   // Group tool_use and tool_result by tool_id
   const toolResults = new Map<string, SubagentMessage>();
@@ -104,8 +137,25 @@ export default function SubagentSpan({ type, name, messages, defaultCollapsed = 
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <span className="subagent-toggle">{isCollapsed ? '▶' : '▼'}</span>
-        <span className="subagent-type">{type}</span>
-        <span className="subagent-name">{name}</span>
+
+        {/* Helper name or fallback to type (AC4, AC5) */}
+        <span
+          className="subagent-helper-name"
+          title={helperStyle || undefined}
+        >
+          {displayName}
+        </span>
+
+        {/* Friendly message or fallback to name (AC4, AC5) */}
+        <span className="subagent-friendly-message">
+          {displayMessage}
+        </span>
+
+        {/* Type badge for debugging context (AC4) */}
+        <span data-testid="subagent-type-badge" className="subagent-type-badge">
+          {type}
+        </span>
+
         {isCollapsed && (
           <span className="subagent-count">{messages.length} messages</span>
         )}
