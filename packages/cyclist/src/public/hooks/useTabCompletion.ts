@@ -6,12 +6,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { SLASH_COMMANDS, trackCommandUsage, filterCommands as filterCommandsWithFrequency } from '../js/slash-commands.js';
-
-interface SlashCommand {
-  name: string;
-  description: string;
-}
+import { SLASH_COMMANDS, trackCommandUsage, filterCommands as filterCommandsWithFrequency, SlashCommand } from '../utils/slash-commands';
 
 interface CompletionState {
   visible: boolean;

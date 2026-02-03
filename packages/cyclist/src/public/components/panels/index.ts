@@ -14,6 +14,7 @@ export { ChangedPanel } from './ChangedPanel';
 export { DiffsPanel } from './DiffsPanel';
 export { DebugPanel } from './DebugPanel';
 export { SettingsPanel } from './SettingsPanel';
+export { AuditLogPanel } from './AuditLogPanel';
 
 // Legacy exports - kept for backwards compatibility and tests
 // These panels are now rendered as internal tabs within ProgressPanel

@@ -18,7 +18,7 @@ import {
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
-import { loadFontSettings, applyFontSettings } from './js/font-presets.js';
+import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 
 // Import all panel components
 // Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)
@@ -32,6 +32,7 @@ import {
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
+  AuditLogPanel,
 } from './components/panels';
 
 // =============================================================================
@@ -46,6 +47,7 @@ registerPanelComponent(PANEL_INVENTORY.MESSAGE, MessagePanel);
 registerPanelComponent(PANEL_INVENTORY.CHANGED, ChangedPanel);
 registerPanelComponent(PANEL_INVENTORY.DIFFS, DiffsPanel);
 registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
+registerPanelComponent(PANEL_INVENTORY.AUDIT_LOG, AuditLogPanel);
 
 // Right sidebar panels
 // Note: AC and BikeLane are now internal tabs within ProgressPanel

@@ -32,3 +32,5 @@ export { createIdentityRouter } from './identity.js';
 export type { IdentityInfo } from './identity.js';
 // Todos API for web mode fallback
 export { createTodosRouter, setWebModeTodos, getWebModeTodos } from './todos.js';
+// Audit log API
+export { createAuditLogRouter } from './audit-log.js';

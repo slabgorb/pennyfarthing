@@ -14,12 +14,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMarkerActions } from '../hooks/useMarkerActions';
 import { useClaudeContext } from '../contexts/ClaudeContext';
-
-interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
-  content?: string;
-  timestamp: number;
-}
+import type { MessageData } from '../types/message';
 
 interface ActionItem {
   label: string;

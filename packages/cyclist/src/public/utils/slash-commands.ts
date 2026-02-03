@@ -8,6 +8,17 @@
  */
 
 // ============================================================================
+// Types
+// ============================================================================
+
+export interface SlashCommand {
+  name: string;
+  description: string;
+}
+
+export type CommandFrequency = Record<string, number>;
+
+// ============================================================================
 // Command Definitions
 // ============================================================================
 
@@ -16,7 +27,7 @@
  * Generated from pennyfarthing-dist/commands/ at build time
  * Sorted alphabetically by name
  */
-export const SLASH_COMMANDS = [
+export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/add",
     "description": "Add files to context"
@@ -94,6 +105,10 @@ export const SLASH_COMMANDS = [
     "description": "Check system health"
   },
   {
+    "name": "/fix-blocker",
+    "description": "Quick alias for /patch - fix blocking issue during story work"
+  },
+  {
     "name": "/git-cleanup",
     "description": "Clean up git repos by organizing changes into proper commits/branches by initiative"
   },
@@ -148,6 +163,10 @@ export const SLASH_COMMANDS = [
   {
     "name": "/party-mode",
     "description": "Free-form creative brainstorming with all agents"
+  },
+  {
+    "name": "/patch",
+    "description": "Interrupt-driven bug fix during active story work"
   },
   {
     "name": "/permissions",
@@ -279,9 +298,8 @@ const COMMAND_FREQUENCY_KEY = 'cyclist:command-frequency';
 
 /**
  * Get command usage frequency map from localStorage
- * @returns {Object} Map of command name to usage count
  */
-export function getCommandFrequency() {
+export function getCommandFrequency(): CommandFrequency {
   if (typeof localStorage === 'undefined') return {};
   try {
     const stored = localStorage.getItem(COMMAND_FREQUENCY_KEY);
@@ -293,9 +311,8 @@ export function getCommandFrequency() {
 
 /**
  * Track command usage - increment frequency counter
- * @param {string} commandName - The command name (e.g., "/sm")
  */
-export function trackCommandUsage(commandName) {
+export function trackCommandUsage(commandName: string): void {
   if (typeof localStorage === 'undefined') return;
   const freq = getCommandFrequency();
   freq[commandName] = (freq[commandName] || 0) + 1;
@@ -305,7 +322,7 @@ export function trackCommandUsage(commandName) {
 /**
  * Clear command frequency data
  */
-export function clearCommandFrequency() {
+export function clearCommandFrequency(): void {
   if (typeof localStorage === 'undefined') return;
   localStorage.removeItem(COMMAND_FREQUENCY_KEY);
 }
@@ -317,10 +334,8 @@ export function clearCommandFrequency() {
 /**
  * Filter commands by prefix (case-insensitive)
  * Sorted by usage frequency (most used first), then alphabetically
- * @param {string} prefix - The prefix to filter by (e.g., "/dev", "/he")
- * @returns {Array} Matching commands sorted by frequency then alphabetically
  */
-export function filterCommands(prefix) {
+export function filterCommands(prefix: string): SlashCommand[] {
   const search = prefix.toLowerCase();
   const freq = getCommandFrequency();
 
@@ -342,11 +357,8 @@ export function filterCommands(prefix) {
 /**
  * Check if position in text is a valid completion trigger
  * Valid triggers: "/" at start of line or after whitespace
- * @param {string} text - The text content
- * @param {number} position - Position to check (either at "/" or just after)
- * @returns {boolean} True if this is a valid trigger position
  */
-export function isCompletionTrigger(text, position) {
+export function isCompletionTrigger(text: string, position: number): boolean {
   // Support both: position AT the "/" or position AFTER the "/"
   let slashPos = position;
   if (text[position] !== '/') {

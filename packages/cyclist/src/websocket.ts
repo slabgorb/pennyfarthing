@@ -29,6 +29,56 @@ import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { storePendingToolInput } from './span-correlation.js';
 
+// =============================================================================
+// Git Cache Invalidation Logic
+// =============================================================================
+
+/**
+ * Determine if a tool event should trigger git cache invalidation.
+ * Only invalidate when files are actually modified - not for read-only operations.
+ */
+function shouldInvalidateGitCache(event: ToolEvent): boolean {
+  // Only successful operations can change git status
+  if (!event.success) {
+    return false;
+  }
+
+  // Edit/Write always modify files when successful
+  if (event.toolName === 'Edit' || event.toolName === 'Write') {
+    return true;
+  }
+
+  // Bash: check if it's a git command or file-modifying command
+  if (event.toolName === 'Bash' && event.input) {
+    const cmd = event.input.trim();
+
+    // Git commands that change state
+    if (/^git\s+(add|commit|checkout|reset|stash|merge|rebase|cherry-pick|revert|pull|fetch|push|branch\s+-[dD]|rm|mv|restore|switch|clean)/i.test(cmd)) {
+      return true;
+    }
+
+    // File-modifying commands
+    if (/^(rm|mv|cp|touch|mkdir|rmdir|chmod|chown)\s/i.test(cmd)) {
+      return true;
+    }
+
+    // Redirections that create/modify files
+    if (/[>|]/.test(cmd) && !/^\s*(cat|echo|printf)\s.*\|\s*(grep|awk|sed|head|tail|wc|sort|uniq)/.test(cmd)) {
+      // Has redirect but isn't just piping to a filter
+      if (/>\s*[^|&]/.test(cmd)) {
+        return true;
+      }
+    }
+
+    // npm/pnpm install can modify package-lock.json
+    if (/^(npm|pnpm|yarn)\s+(install|add|remove|uninstall)/i.test(cmd)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Pasted image type (matches main.ts PastedImage)
 interface PastedImage {
   dataUrl: string;
@@ -38,10 +88,11 @@ interface PastedImage {
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
-  type: 'send' | 'abort' | 'clear' | 'setMode' | 'getMode';
+  type: 'send' | 'abort' | 'clear' | 'setMode' | 'getMode' | 'clearAndReload';
   prompt?: string;
   mode?: PermissionMode;
   images?: PastedImage[];
+  agent?: string;  // For clearAndReload
 }
 
 // Track Claude sessions per WebSocket connection (web mode only)
@@ -129,12 +180,14 @@ type ClaudeAbortCallback = () => void;
 type ClaudeClearCallback = () => void;
 type ClaudeSetModeCallback = (mode: PermissionMode) => void;
 type ClaudeGetModeCallback = () => PermissionMode;
+type ClaudeClearAndReloadCallback = (agent: string) => Promise<void>;
 
 let claudeSendCallback: ClaudeSendCallback | null = null;
 let claudeAbortCallback: ClaudeAbortCallback | null = null;
 let claudeClearCallback: ClaudeClearCallback | null = null;
 let claudeSetModeCallback: ClaudeSetModeCallback | null = null;
 let claudeGetModeCallback: ClaudeGetModeCallback | null = null;
+let claudeClearAndReloadCallback: ClaudeClearAndReloadCallback | null = null;
 
 /**
  * Register callback to receive story updates for IPC broadcast
@@ -186,6 +239,14 @@ export function setClaudeSetModeCallback(callback: ClaudeSetModeCallback): void 
  */
 export function setClaudeGetModeCallback(callback: ClaudeGetModeCallback): void {
   claudeGetModeCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude clearAndReload commands from WebSocket
+ * TirePump: Clear session and reload agent
+ */
+export function setClaudeClearAndReloadCallback(callback: ClaudeClearAndReloadCallback): void {
+  claudeClearAndReloadCallback = callback;
 }
 
 // Export client getters for external use
@@ -780,10 +841,10 @@ export function setupWebSocketServers(
       updatePwd(event.workingDirectory);
     }
 
-    // Invalidate git cache on tool completion - this replaces the .git/index watcher
-    // Tools that modify files (Edit, Write, Bash) may change git status
-    // The cache will debounce and refresh after a delay to avoid lock conflicts
-    if (event.toolName === 'Edit' || event.toolName === 'Write' || event.toolName === 'Bash') {
+    // Invalidate git cache only when files are actually modified
+    // Not every tool use affects git status - be selective to avoid unnecessary refreshes
+    const shouldInvalidateGit = shouldInvalidateGitCache(event);
+    if (shouldInvalidateGit) {
       const projectDir = getProjectDir();
       invalidateGitCache(projectDir);
     }
@@ -1043,6 +1104,25 @@ export function setupWebSocketServers(
                 }
               }
               break;
+
+            case 'clearAndReload':
+              if (msg.agent && claudeClearAndReloadCallback) {
+                console.log('[WebSocket] TirePump: clearAndReload agent:', msg.agent);
+                try {
+                  await claudeClearAndReloadCallback(msg.agent);
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'clearAndReloadComplete', agent: msg.agent }));
+                  }
+                } catch (err) {
+                  console.error('[WebSocket] clearAndReload failed:', err);
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'error', error: 'clearAndReload failed' }));
+                  }
+                }
+              } else if (!msg.agent) {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing agent for clearAndReload' }));
+              }
+              break;
           }
         } catch (err) {
           console.error('[WebSocket] Error handling Electron mode message:', err);
@@ -1166,6 +1246,32 @@ export function setupWebSocketServers(
               if (ws.readyState === WebSocket.OPEN) {
                 const currentMode = service.getPermissionMode();
                 ws.send(JSON.stringify({ type: 'mode', mode: currentMode }));
+              }
+              break;
+
+            case 'clearAndReload':
+              if (msg.agent) {
+                console.log('[WebSocket] Web mode TirePump: clearAndReload agent:', msg.agent);
+                // Clear the session
+                await service.clearSessionAsync();
+                // Send the agent command as a new message
+                const agentCommand = msg.agent.startsWith('/') ? msg.agent : `/${msg.agent}`;
+                try {
+                  for await (const message of service.sendMessage(agentCommand)) {
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({ type: 'message', message }));
+                    }
+                  }
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'clearAndReloadComplete', agent: msg.agent }));
+                  }
+                } catch (err) {
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'error', error: 'clearAndReload failed' }));
+                  }
+                }
+              } else {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing agent for clearAndReload' }));
               }
               break;
           }

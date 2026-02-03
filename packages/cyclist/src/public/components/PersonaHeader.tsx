@@ -15,8 +15,9 @@
  * - Accessible with ARIA labels
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { usePersona } from '../hooks/usePersona';
+import { AgentPopup } from './AgentPopup';
 
 // Agent colors matching CLI statusbar (statusline.sh)
 const AGENT_COLORS: Record<string, string> = {
@@ -43,12 +44,21 @@ function humanizeTheme(theme: string): string {
 export default function PersonaHeader(): React.ReactElement {
   const { persona } = usePersona();
   const [portraitError, setPortraitError] = useState(false);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const character = persona?.character || 'Agent';
   const theme = persona?.theme || 'default';
   const role = persona?.role || 'agent';
   const slug = persona?.slug;
   const quote = persona?.quote;
+
+  const handleOpenPopup = useCallback(() => {
+    setIsPopupOpen(true);
+  }, []);
+
+  const handleClosePopup = useCallback(() => {
+    setIsPopupOpen(false);
+  }, []);
 
   // Get role color, fallback to magenta
   const roleColor = AGENT_COLORS[role] || '#e879f9';
@@ -59,62 +69,74 @@ export default function PersonaHeader(): React.ReactElement {
   }
 
   return (
-    <div
-      className="persona-header"
-      data-testid="persona-header"
-      role="banner"
-      aria-label="Current agent persona"
-      aria-live="polite"
-    >
-      <div className="persona-portrait-group">
-        <div className="persona-portrait" data-testid="persona-portrait">
-          {slug && theme && !portraitError ? (
-            <img
-              src={`/portraits/${theme}/small/${slug}.png`}
-              alt={character}
-              className="portrait-image"
-              onError={() => setPortraitError(true)}
-            />
-          ) : (
-            <span className="portrait-fallback">🤖</span>
+    <>
+      <div
+        className="persona-header clickable"
+        data-testid="persona-header"
+        role="button"
+        tabIndex={0}
+        aria-label="Current agent persona - click to view team"
+        aria-live="polite"
+        onClick={handleOpenPopup}
+        onKeyDown={(e) => e.key === 'Enter' && handleOpenPopup()}
+      >
+        <div className="persona-portrait-group">
+          <div className="persona-portrait" data-testid="persona-portrait">
+            {slug && theme && !portraitError ? (
+              <img
+                src={`/portraits/${theme}/small/${slug}.png`}
+                alt={character}
+                className="portrait-image"
+                onError={() => setPortraitError(true)}
+              />
+            ) : (
+              <span className="portrait-fallback">🤖</span>
+            )}
+          </div>
+          <span
+            className="persona-role badge"
+            data-testid="persona-role"
+            title={role}
+            style={{ backgroundColor: roleColor }}
+          >
+            {role}
+          </span>
+        </div>
+        <div className="persona-info">
+          <div className="persona-name-row">
+            <span
+              className="persona-character"
+              data-testid="persona-character"
+              title={character}
+            >
+              {character}
+            </span>
+            <span
+              className="persona-theme"
+              data-testid="persona-theme"
+              title={`Theme: ${theme}`}
+            >
+              {humanizeTheme(theme)}
+            </span>
+          </div>
+          {quote && (
+            <span
+              className="persona-catchphrase"
+              data-testid="persona-catchphrase"
+              title={quote}
+            >
+              "{quote}"
+            </span>
           )}
         </div>
-        <span
-          className="persona-role badge"
-          data-testid="persona-role"
-          title={role}
-          style={{ backgroundColor: roleColor }}
-        >
-          {role}
-        </span>
       </div>
-      <div className="persona-info">
-        <div className="persona-name-row">
-          <span
-            className="persona-character"
-            data-testid="persona-character"
-            title={character}
-          >
-            {character}
-          </span>
-          <span
-            className="persona-theme"
-            data-testid="persona-theme"
-            title={`Theme: ${theme}`}
-          >
-            {humanizeTheme(theme)}
-          </span>
-        </div>
-        {quote && (
-          <span
-            className="persona-catchphrase"
-            data-testid="persona-catchphrase"
-            title={quote}
-          >
-            "{quote}"
-          </span>
-        )}
-      </div>
-    </div>
+
+      <AgentPopup
+        isOpen={isPopupOpen}
+        onClose={handleClosePopup}
+        currentRole={role}
+        currentTheme={theme}
+      />
+    </>
   );
 }

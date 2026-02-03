@@ -18,7 +18,7 @@ import {
   FONT_SIZE_SCALE,
   FontPreset,
   FontSize,
-} from '../../js/font-presets.js';
+} from '../../utils/font-presets';
 import './FontPicker.css';
 
 // =============================================================================

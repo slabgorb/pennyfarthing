@@ -11,6 +11,11 @@
  * Turn Complete Logic (MSSCI-12450):
  * - Bell mode OFF: All queued messages sent at once when Claude stops
  * - Bell mode ON: Messages injected by hook; remaining queue sent on stop
+ *
+ * Bell Injected Display (Audit Fix 2026-02-03):
+ * - When hook consumes a message, notify via onBellConsumed callback
+ * - MessagePanel displays the injected message with 🔔 indicator
+ * - "Send Now" button allows immediate injection (abort + submit)
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -22,6 +27,15 @@ export interface QueuedMessage {
     mimeType: string;
     filename: string;
   }>;
+}
+
+/** Callback when a message is consumed by bell mode hook */
+export type BellConsumedCallback = (message: QueuedMessage) => void;
+
+/** Functions needed to inject a message immediately */
+export interface InjectDependencies {
+  abort: () => void;
+  submit: (text: string, images: QueuedMessage['images']) => void;
 }
 
 interface UseMessageQueueResult {
@@ -39,6 +53,10 @@ interface UseMessageQueueResult {
   pauseQueue: () => void;
   resumeQueue: () => void;
   handleTurnComplete: (onSubmit: (text: string, images: QueuedMessage['images']) => void) => void;
+  /** Register callback for when bell mode hook consumes a message */
+  onBellConsumed: (callback: BellConsumedCallback) => () => void;
+  /** Immediately inject a queued message (abort current + submit) */
+  injectMessage: (index: number, deps: InjectDependencies) => Promise<boolean>;
 }
 
 const MAX_QUEUE_SIZE = 10;
@@ -75,6 +93,9 @@ export function useMessageQueue(): UseMessageQueueResult {
   const [queuePaused, setQueuePaused] = useState(false);
   const queueRef = useRef(queue);
   const bellModeRef = useRef(bellMode);
+
+  // Callbacks for bell-consumed events (notifies MessagePanel to display)
+  const bellConsumedCallbacksRef = useRef<Set<BellConsumedCallback>>(new Set());
 
   // Keep refs in sync
   useEffect(() => {
@@ -134,6 +155,9 @@ export function useMessageQueue(): UseMessageQueueResult {
           try {
             const data = JSON.parse(event.data);
             if (data.type === 'bell-consumed') {
+              // Get the consumed message BEFORE dequeuing (for display callback)
+              const consumedMessage = queueRef.current[0];
+
               // Dequeue the first message when hook consumes it
               setQueue(prev => {
                 if (prev.length === 0) return prev;
@@ -143,7 +167,18 @@ export function useMessageQueue(): UseMessageQueueResult {
                 } catch { /* ignore */ }
                 return newQueue;
               });
-              console.log('[MessageQueue] Bell consumed:', data.text);
+
+              // Notify all registered callbacks so MessagePanel can display
+              if (consumedMessage) {
+                console.log('[MessageQueue] Bell consumed, notifying callbacks:', consumedMessage.text);
+                bellConsumedCallbacksRef.current.forEach(cb => {
+                  try {
+                    cb(consumedMessage);
+                  } catch (err) {
+                    console.error('[MessageQueue] Bell consumed callback error:', err);
+                  }
+                });
+              }
             }
           } catch (err) {
             console.error('[MessageQueue] Failed to parse bell message:', err);
@@ -271,6 +306,59 @@ export function useMessageQueue(): UseMessageQueueResult {
     saveQueue([]);
   }, [queuePaused, saveQueue]);
 
+  /**
+   * Register a callback for when bell mode hook consumes a message.
+   * Returns unsubscribe function.
+   */
+  const onBellConsumed = useCallback((callback: BellConsumedCallback): (() => void) => {
+    bellConsumedCallbacksRef.current.add(callback);
+    return () => {
+      bellConsumedCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
+  /**
+   * Immediately inject a queued message (abort current + submit).
+   * Used for "Send Now" button functionality.
+   *
+   * @param index - Index of message to inject
+   * @param deps - abort and submit functions from Claude context
+   * @returns true if message was injected
+   */
+  const injectMessage = useCallback(async (
+    index: number,
+    deps: InjectDependencies
+  ): Promise<boolean> => {
+    const currentQueue = queueRef.current;
+    if (index < 0 || index >= currentQueue.length) {
+      return false;
+    }
+
+    // Get the message before removing
+    const message = currentQueue[index];
+    if (!message) return false;
+
+    // Remove from queue immediately
+    setQueue(prev => {
+      const newQueue = [...prev.slice(0, index), ...prev.slice(index + 1)];
+      saveQueue(newQueue);
+      return newQueue;
+    });
+
+    // Abort Claude if processing
+    console.log('[MessageQueue] Injecting message, aborting Claude...');
+    deps.abort();
+
+    // Brief delay to let abort complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Submit the message
+    console.log('[MessageQueue] Submitting injected message:', message.text);
+    deps.submit(message.text, message.images);
+
+    return true;
+  }, [saveQueue]);
+
   return {
     queue,
     queueCount: queue.length,
@@ -286,5 +374,7 @@ export function useMessageQueue(): UseMessageQueueResult {
     pauseQueue,
     resumeQueue,
     handleTurnComplete,
+    onBellConsumed,
+    injectMessage,
   };
 }
