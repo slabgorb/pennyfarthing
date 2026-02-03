@@ -1,7 +1,7 @@
 # ADR-0019: Migration to Dockview for Panel Management
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 

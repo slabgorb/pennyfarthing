@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working on the Pennyfarthing fra
 
 Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
-**Version:** 8.1.0
+**Version:** 9.0.2
 
 ## Dogfooding Architecture
 
@@ -65,7 +65,7 @@ pennyfarthing-dist/      # Published package content (single source of truth)
 ├── agents/              # 19 agent definitions
 ├── commands/            # 46 slash commands
 ├── guides/              # Behavior guides
-├── skills/              # 22 knowledge domains
+├── skills/              # 23 knowledge domains
 ├── personas/            # Themed agent personas
 │   └── themes/          # 102 persona themes
 ├── workflows/           # Workflow definitions
@@ -272,12 +272,31 @@ pennyfarthing uninstall  # Remove from project
 
 ## Cyclist (Visual Terminal)
 
-Electron-based visual terminal for agent orchestration.
+Electron-based visual terminal for agent orchestration with a React UI.
+
+**Architecture (v9.0+):**
+- **Dockview panels** - 11 draggable panels (ADR-0019), replacing hand-rolled system
+- **React components** - `src/public/components/` for all UI
+- **Tool visualization** - `ToolCallBlock.tsx`, `ToolStack.tsx` for rich tool display
 
 **Key codenames:**
 - **WheelHub** - Central server (`packages/cyclist/src/server.ts`)
 - **TirePump** - Context clearing system
 - **JobFair** - Character benchmarking
+
+**Panel components** (`src/public/components/panels/`):
+- `MessagePanel` - Sacred center, cannot be closed/moved
+- `ChangedPanel`, `DiffsPanel` - File change tracking
+- `SprintPanel`, `ProgressPanel`, `BikeLanePanel` - Workflow tracking
+- `AcceptanceCriteriaPanel` - Story acceptance criteria
+- `SettingsPanel`, `DebugPanel`, `GitPanel`, `BackgroundPanel`
+
+**Key React components:**
+- `DockviewWorkspace.tsx` - Main layout with dockview-react
+- `MessageView.tsx` - Conversation display with streaming
+- `ToolCallBlock.tsx` - Tool use with intent summaries
+- `ToolStack.tsx` - Grouped consecutive tool calls
+- `QuickActions.tsx` - CYCLIST marker detection
 
 ## Critical Implementation Rules
 

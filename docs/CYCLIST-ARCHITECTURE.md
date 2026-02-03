@@ -4,12 +4,13 @@ Cyclist is a desktop application for running Claude Code with a visual terminal 
 
 ## Overview
 
-As of v7.5, Cyclist is integrated into the Pennyfarthing monorepo as `@pennyfarthing/cyclist`. It uses:
+As of v9.0, Cyclist uses a **React-based UI** with **Dockview panels** (see ADR-0019). It uses:
 
 - **Electron** for the desktop application shell
+- **React 18** for the UI layer (`src/public/components/`)
+- **Dockview** for panel management (floating, splitting, dragging)
 - **Express** for serving the UI and handling API requests
-- **node-pty** for pseudo-terminal emulation
-- **xterm.js** for terminal rendering
+- **node-pty** for pseudo-terminal emulation (Electron mode)
 - **TipTap** for rich text editing
 
 ## Quick Start
@@ -135,22 +136,52 @@ Cyclist supports running multiple instances for different projects simultaneousl
 | `src/api/hook-request.ts` | WheelHub hook approval flow |
 | `src/api/git.ts` | Git status including multi-repo support |
 
-### Frontend Modules
+### React Components (v9.0+)
 
-| File | Purpose |
-|------|---------|
-| `public/js/persona.js` | Persona section updates |
-| `public/js/portrait.js` | Character portrait loading |
-| `public/js/stats.js` | Session statistics display |
-| `public/js/stats-strip.js` | Compact stats bar with git status |
-| `public/js/story.js` | Story progress and workflow |
-| `public/js/todos.js` | Task visualizer |
-| `public/js/editor.js` | TipTap editor initialization |
-| `public/js/controls.js` | Permission mode controls |
-| `public/js/theme.js` | Theme management |
-| `public/js/settings-ui.js` | Settings panel and persistence |
-| `public/js/components/ApprovalModal.js` | Hook request approval UI |
-| `public/js/components/BackgroundTasksPanel.js` | Background task tracker |
+The UI is now React-based. Key components in `src/public/components/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `DockviewWorkspace.tsx` | Main layout with dockview-react panels |
+| `MessageView.tsx` | Conversation display with streaming content |
+| `MessageList.tsx` | Scrollable message history |
+| `Message.tsx` | Individual message rendering |
+| `ToolCallBlock.tsx` | Tool use display with intent summaries |
+| `ToolStack.tsx` | Grouped consecutive tool calls |
+| `ToolStatus.tsx` | Pending/success/error indicators |
+| `Editor.tsx` | TipTap rich text input |
+| `ControlBar.tsx` | Mode toggles and controls |
+| `QuickActions.tsx` | CYCLIST marker detection and buttons |
+| `StatsStrip.tsx` | Compact stats bar |
+| `PersonaHeader.tsx` | Agent persona in message header |
+| `DiffViewer.tsx` | Side-by-side diff display |
+| `FileTree.tsx` | Project file browser |
+| `CommandPalette.tsx` | Fuzzy command search |
+| `StreamingContent.tsx` | Real-time message streaming |
+| `SubagentSpan.tsx` | Background task visualization |
+| `ErrorBoundary.tsx` | React error boundary wrapper |
+
+### Panel Components
+
+Panels in `src/public/components/panels/`:
+
+| Panel | Purpose |
+|-------|---------|
+| `MessagePanel.tsx` | Sacred center - conversation (locked) |
+| `ChangedPanel.tsx` | Changed files list |
+| `DiffsPanel.tsx` | File diff viewer |
+| `SprintPanel.tsx` | Sprint/story tracking |
+| `ProgressPanel.tsx` | Workflow phase progress |
+| `BikeLanePanel.tsx` | BikeLane stepped workflow UI |
+| `AcceptanceCriteriaPanel.tsx` | Story acceptance criteria checklist |
+| `SettingsPanel.tsx` | Configuration UI |
+| `DebugPanel.tsx` | OTEL spans and debugging |
+| `GitPanel.tsx` | Git status and operations |
+| `BackgroundPanel.tsx` | Background task tracker |
+
+### Legacy JS Modules (being migrated)
+
+Some vanilla JS remains in `public/js/` during React migration:
 
 ## IPC Channels
 

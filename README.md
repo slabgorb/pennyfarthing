@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v8.1.0** | *The outer loop goes once, the inner loop goes many times.*
+**v9.0.2** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -16,8 +16,8 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 
 - **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, and more
 - **19 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (PRD, Architecture), Procedural (Brainstorming, Retrospective)
-- **45 Slash Commands** - Entry points for agent activation and workflows
-- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **46 Slash Commands** - Entry points for agent activation and workflows
+- **23 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 
 ### 2. Personality Research
@@ -37,7 +37,7 @@ Smoothing out development processes:
 
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
-- **Cyclist Visual Terminal** - Rich UI with agent portraits, session stats, workflow visualization
+- **Cyclist Visual Terminal** - React UI with Dockview panels, agent portraits, tool visualization
 
 ---
 
@@ -192,7 +192,16 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v7.6
+## What's New in v9.0
+
+- **Dockview Panel System** - Draggable, floatable, splittable panels replacing hand-rolled system (ADR-0019)
+- **React UI** - Full React component architecture for Cyclist
+- **Tool Use Visualization** - Human-readable tool summaries, collapsible results, tool stacking
+- **useMarkdownParser Hook** - React hook for markdown rendering (vanilla JS migration)
+- **Bell Mode** - Queue messages while Claude works (ADR-0016)
+- **Relay Mode** - Automatic agent handoffs (ADR-0017)
+
+### Previous Highlights (v7.6-v8.x)
 
 - **BikeLane Workflow System** - Unified umbrella for Phased, Stepped, and Procedural workflows
 - **BMAD 6.0 Compatibility** - Full import support for BMAD workflows with tri-modal execution
