@@ -16,29 +16,7 @@ import StatsStrip from '../StatsStrip';
 import { useMessageQueue, QueuedMessage, InjectDependencies } from '../../hooks/useMessageQueue';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
 import type { ClaudeMessage } from '../../hooks/useClaude';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result' | 'bell_injected';
-  content?: string;
-  timestamp: number;
-  isStreaming?: boolean;
-  tool_name?: string;
-  tool_id?: string;
-  input?: Record<string, unknown>;
-  parent_id?: string;
-  subagent_type?: string;
-  subagent_name?: string;
-  /** Whether this tool result represents an error (MSSCI-13402) */
-  is_error?: boolean;
-  /** Duration in milliseconds for tool execution (MSSCI-13402) */
-  durationMs?: number;
-  /** Number of images attached to user message */
-  imageCount?: number;
-}
+import type { MessageData } from '../../types/message';
 
 // Content block types from SDK nested format (AC5: Story 75-5)
 interface SDKTextBlock {

@@ -15,7 +15,7 @@ import {
   savePresetToProject,
   loadPresetFromProject,
   DEFAULT_PRESET,
-} from '../../js/color-presets.js';
+} from '../../utils/color-presets';
 import {
   loadFontSettings,
   saveFontSettings,
@@ -23,7 +23,7 @@ import {
   DEFAULT_FONT_SETTINGS,
   FontSettings,
   FontSize,
-} from '../../js/font-presets.js';
+} from '../../utils/font-presets';
 
 interface Settings {
   workflow?: {

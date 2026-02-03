@@ -8,16 +8,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-
-interface Message {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
-  content?: string;
-  timestamp: number;
-  isStreaming?: boolean;
-}
+import type { MessageData } from '../types/message';
 
 interface UseMessageStreamResult {
-  messages: Message[];
+  messages: MessageData[];
   isStreaming: boolean;
   error: Error | null;
   isConnected: boolean;
@@ -34,7 +28,7 @@ interface WebSocketMessage {
 }
 
 export function useMessageStream(): UseMessageStreamResult {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageData[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -56,8 +50,8 @@ export function useMessageStream(): UseMessageStreamResult {
           .join('');
       }
 
-      const message: Message = {
-        type: msg.type as Message['type'],
+      const message: MessageData = {
+        type: msg.type as MessageData['type'],
         content: contentStr,
         timestamp: Date.now(),
         isStreaming: true,

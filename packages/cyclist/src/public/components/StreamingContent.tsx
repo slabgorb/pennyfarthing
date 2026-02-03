@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { parseMarkdown } from '../js/components/message-view/markdown-parser.js';
+import { parseMarkdown } from '../utils/markdown';
 
 interface StreamingContentProps {
   content: string;
