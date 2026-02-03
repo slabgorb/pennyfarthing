@@ -381,6 +381,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     // Check benchmark permissions (needed for /benchmark, /solo subagents)
     const benchmarkCheck = checkBenchmarkPermissions(projectRoot);
     results.push(benchmarkCheck);
+
+    // Check PreToolUse hooks for context-circuit-breaker
+    const circuitBreakerCheck = checkContextCircuitBreaker(projectRoot, installationType);
+    results.push(circuitBreakerCheck);
   }
 
   return results;
@@ -587,6 +591,107 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       detail: 'Could not parse settings.local.json'
     };
   }
+}
+
+/**
+ * Check that context-circuit-breaker hook is configured in PreToolUse
+ * This is needed to prevent context exhaustion (auto-saves session)
+ */
+function checkContextCircuitBreaker(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.PreToolUse exists and contains context-circuit-breaker
+    if (!settings.hooks?.PreToolUse) {
+      return {
+        name: 'settings/context-circuit-breaker',
+        status: 'warn',
+        detail: 'Missing PreToolUse hooks - context circuit breaker not configured',
+        fix: () => {
+          addContextCircuitBreaker(projectRoot, installationType);
+        }
+      };
+    }
+
+    // Check if context-circuit-breaker is configured
+    const hasCircuitBreaker = settings.hooks.PreToolUse.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('context-circuit-breaker')
+        );
+      }
+      return false;
+    });
+
+    if (!hasCircuitBreaker) {
+      return {
+        name: 'settings/context-circuit-breaker',
+        status: 'warn',
+        detail: 'context-circuit-breaker not configured - context exhaustion protection disabled',
+        fix: () => {
+          addContextCircuitBreaker(projectRoot, installationType);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/context-circuit-breaker',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/context-circuit-breaker',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add context-circuit-breaker hook to PreToolUse in settings.local.json
+ */
+function addContextCircuitBreaker(projectRoot: string, installationType: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const scriptBase = getScriptBasePath(installationType);
+
+  const requiredHook = {
+    matcher: 'Edit|Write|Bash|Task',
+    hooks: [
+      {
+        type: 'command',
+        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.PreToolUse) {
+    hooks.PreToolUse = [requiredHook];
+  } else if (Array.isArray(hooks.PreToolUse)) {
+    // Append the required hook (circuit breaker should run last)
+    hooks.PreToolUse = [...hooks.PreToolUse, requiredHook];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 /**
@@ -901,12 +1006,21 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
               command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-warning.sh`
             }
           ]
+        },
+        {
+          matcher: 'Edit|Write|Bash|Task',
+          hooks: [
+            {
+              type: 'command',
+              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+            }
+          ]
         }
       ]
     },
     statusLine: {
       type: 'command',
-      command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/statusline.sh`
+      command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/misc/statusline.sh`
     }
   };
 
@@ -946,7 +1060,10 @@ function checkHooks(projectRoot: string): CheckResult[] {
   const hooks = [
     { path: `${scriptBase}/hooks/session-start.sh`, name: 'hook/session-start' },
     { path: `${scriptBase}/hooks/pre-edit-check.sh`, name: 'hook/pre-edit-check' },
-    { path: `${scriptBase}/hooks/context-warning.sh`, name: 'hook/context-warning' }
+    { path: `${scriptBase}/hooks/context-warning.sh`, name: 'hook/context-warning' },
+    { path: `${scriptBase}/hooks/context-circuit-breaker.sh`, name: 'hook/context-circuit-breaker' },
+    { path: `${scriptBase}/hooks/bell-mode-hook.sh`, name: 'hook/bell-mode' },
+    { path: `${scriptBase}/hooks/question-reflector-check.sh`, name: 'hook/question-reflector' }
   ];
 
   for (const { path, name } of hooks) {
