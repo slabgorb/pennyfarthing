@@ -32,6 +32,10 @@ interface MessageData {
   parent_id?: string;
   subagent_type?: string;
   subagent_name?: string;
+  /** Whether this tool result represents an error (MSSCI-13402) */
+  is_error?: boolean;
+  /** Duration in milliseconds for tool execution (MSSCI-13402) */
+  durationMs?: number;
 }
 
 interface SDKMessage {
@@ -45,6 +49,8 @@ interface SDKMessage {
   input?: Record<string, unknown>;
   output?: string;
   is_error?: boolean;
+  /** Duration in milliseconds for tool execution (MSSCI-13402) */
+  durationMs?: number;
   parent_tool_use_id?: string | null;
   subagent_type?: string;
   subagent_name?: string;
@@ -132,7 +138,7 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
     };
   }
 
-  // Handle tool_result
+  // Handle tool_result (MSSCI-13402: include is_error and durationMs)
   if (sdkMessage.type === 'tool_result') {
     return {
       type: 'tool_result',
@@ -142,6 +148,8 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       parent_id,
       subagent_type,
       subagent_name,
+      is_error: sdkMessage.is_error,
+      durationMs: sdkMessage.durationMs,
     };
   }
 
