@@ -10,17 +10,8 @@ import React, { useState, useMemo } from 'react';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
 import { useSubagentHelper } from '../hooks/useSubagentHelper';
-import { generateFriendlyMessage } from '../js/subagent-display';
-
-interface SubagentMessage {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
-  content?: string;
-  parent_id: string;
-  timestamp: number;
-  tool_name?: string;
-  tool_id?: string;
-  input?: Record<string, unknown>;
-}
+import { generateFriendlyMessage } from '../utils/subagent-display';
+import type { SubagentMessage } from '../types/message';
 
 interface SubagentSpanProps {
   type: string;

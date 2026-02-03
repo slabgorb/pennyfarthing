@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback, KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { COLOR_PRESETS, getPresetIds, getPreset, ColorPreset } from '../../js/color-presets.js';
+import { COLOR_PRESETS, getPresetIds, getPreset, ColorPreset } from '../../utils/color-presets';
 import './ThemePalette.css';
 
 // =============================================================================

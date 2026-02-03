@@ -22,25 +22,7 @@ import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
 import { isSkillContent } from '../utils/messageFilters';
 import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
-
-interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
-  content?: string;
-  timestamp: number;
-  isStreaming?: boolean;
-  tool_name?: string;
-  tool_id?: string;
-  input?: Record<string, unknown>;
-  parent_id?: string;
-  subagent_type?: string;
-  subagent_name?: string;
-  /** Whether this tool result represents an error (MSSCI-13402) */
-  is_error?: boolean;
-  /** Duration in milliseconds for tool execution (MSSCI-13402) */
-  durationMs?: number;
-  /** Number of images attached to user message */
-  imageCount?: number;
-}
+import type { MessageData } from '../types/message';
 
 interface MessageViewProps {
   messages: MessageData[];

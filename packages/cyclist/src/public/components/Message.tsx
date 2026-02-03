@@ -7,19 +7,11 @@
  */
 
 import React, { useState } from 'react';
-import { parseMarkdown } from '../js/components/message-view/markdown-parser.js';
+import { parseMarkdown } from '../utils/markdown';
 import StreamingContent from './StreamingContent';
 import { usePersona } from '../hooks/usePersona';
 import { useUserAvatar } from '../hooks/useUserAvatar';
-
-interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result' | 'bell_injected';
-  content?: string;
-  timestamp: number;
-  isStreaming?: boolean;
-  /** Number of images attached to user message */
-  imageCount?: number;
-}
+import type { MessageData } from '../types/message';
 
 interface MessageProps {
   message: MessageData;

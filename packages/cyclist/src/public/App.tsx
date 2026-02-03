@@ -18,7 +18,7 @@ import {
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
-import { loadFontSettings, applyFontSettings } from './js/font-presets.js';
+import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 
 // Import all panel components
 // Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)

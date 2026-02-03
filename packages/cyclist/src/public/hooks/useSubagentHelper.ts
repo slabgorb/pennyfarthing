@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getAgentHelper, Helper } from '../js/subagent-display';
+import { getAgentHelper, Helper } from '../utils/subagent-display';
 
 export type { Helper };
 
