@@ -29,6 +29,8 @@ export interface RepoStatusData {
   branch: string;
   ahead?: number;
   behind?: number;
+  /** Commits origin/develop has that this branch doesn't (needs pull/rebase) */
+  developBehind?: number;
   staged: number;
   modified: number;
   untracked: number;
@@ -50,6 +52,7 @@ interface RepoGitInfo {
   clean: boolean;
   ahead: number | null;
   behind: number | null;
+  developBehind: number | null;
   dirtyFiles: DirtyFile[];
 }
 
@@ -109,6 +112,7 @@ function transformToRepoArray(repos: RepoGitInfo[]): RepoStatusData[] {
       branch: repo.branch,
       ahead: repo.ahead ?? undefined,
       behind: repo.behind ?? undefined,
+      developBehind: repo.developBehind ?? undefined,
       staged: counts.staged,
       modified: counts.modified,
       untracked: counts.untracked,

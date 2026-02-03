@@ -461,6 +461,18 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
+.message-attachment-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
 .message-assistant {
   background: var(--bg-tertiary, #2d2d2d);
   color: var(--text-primary, #d4d4d4);
@@ -1167,6 +1179,44 @@
 
 .git-panel .repo-status .sync-status {
   margin-bottom: 4px;
+}
+
+/* Develop behind warning */
+.git-panel .develop-behind-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: rgba(204, 167, 0, 0.15);
+  border: 1px solid var(--warning-color, #cca700);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.git-panel .develop-behind-warning .warning-icon {
+  flex-shrink: 0;
+}
+
+.git-panel .develop-behind-warning .warning-text {
+  flex: 1;
+  color: var(--warning-color, #cca700);
+}
+
+.git-panel .develop-behind-warning .pull-develop-btn {
+  padding: 2px 8px;
+  background: var(--warning-color, #cca700);
+  color: #000;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.git-panel .develop-behind-warning .pull-develop-btn:hover {
+  opacity: 0.9;
 }
 
 .git-panel .repo-status .file-status {

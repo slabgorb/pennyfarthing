@@ -17,6 +17,8 @@ interface MessageData {
   content?: string;
   timestamp: number;
   isStreaming?: boolean;
+  /** Number of images attached to user message */
+  imageCount?: number;
 }
 
 interface MessageProps {
@@ -97,7 +99,14 @@ export default function Message({ message }: MessageProps): React.ReactElement {
       <div data-testid="avatar" className="message-avatar">
         {message.type === 'user' ? <UserAvatar /> : <AssistantAvatar />}
       </div>
-      <div className="message-content" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="message-content">
+        <div dangerouslySetInnerHTML={{ __html: html }} />
+        {message.type === 'user' && message.imageCount && message.imageCount > 0 && (
+          <span className="message-attachment-indicator" title={`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}>
+            📎 {message.imageCount}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

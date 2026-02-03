@@ -158,14 +158,10 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
       return;
     }
 
-    // Note: images support would need to be added to the WebSocket handler
-    if (images && images.length > 0) {
-      console.warn('[ClaudeContext] Image support not yet implemented in WebSocket mode');
-    }
-
     wsRef.current.send(JSON.stringify({
       type: 'send',
       prompt,
+      images,
     }));
   }, []);
 

@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { useGitStatus, RepoStatusData, DirtyFile } from '../../hooks/useGitStatus';
+import { useClaudeContext } from '../../contexts/ClaudeContext';
 
 /** Get CSS class for file status */
 function getFileStatusClass(status: string): string {
@@ -51,12 +52,14 @@ function FileList({ files }: FileListProps): React.ReactElement {
 
 interface RepoStatusProps {
   repo: RepoStatusData;
+  onPullDevelop?: (repoName: string, repoPath: string) => void;
 }
 
-function RepoStatus({ repo }: RepoStatusProps): React.ReactElement {
+function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { name, branch, ahead, behind, staged, modified, untracked, isDirty, files } = repo;
+  const { name, path, branch, ahead, behind, developBehind, staged, modified, untracked, isDirty, files } = repo;
   const hasFiles = files.length > 0;
+  const hasDevelopUpdates = developBehind !== undefined && developBehind > 0;
 
   return (
     <div className={`repo-status ${isExpanded ? 'expanded' : ''}`} data-testid={`repo-status-${name}`}>
@@ -80,6 +83,22 @@ function RepoStatus({ repo }: RepoStatusProps): React.ReactElement {
           )}
         </div>
       ) : null}
+
+      {hasDevelopUpdates && (
+        <div className="develop-behind-warning">
+          <span className="warning-icon">⚠️</span>
+          <span className="warning-text">develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead</span>
+          {onPullDevelop && (
+            <button
+              className="pull-develop-btn"
+              onClick={() => onPullDevelop(name, path)}
+              title="Pull latest from develop"
+            >
+              Pull
+            </button>
+          )}
+        </div>
+      )}
 
       {(staged > 0 || modified > 0 || untracked > 0) && (
         <button
@@ -109,6 +128,14 @@ function RepoStatus({ repo }: RepoStatusProps): React.ReactElement {
 
 export function GitPanel(): React.ReactElement {
   const { repos, isLoading, error } = useGitStatus();
+  const { send } = useClaudeContext();
+
+  const handlePullDevelop = (repoName: string, repoPath: string) => {
+    const prompt = repoPath === '.'
+      ? `pull develop`
+      : `cd ${repoPath} && git pull origin develop`;
+    send(prompt);
+  };
 
   if (isLoading) {
     return (
@@ -137,7 +164,7 @@ export function GitPanel(): React.ReactElement {
   return (
     <div className="git-panel stacked" data-testid="git-panel">
       {repos.map(repo => (
-        <RepoStatus key={repo.name} repo={repo} />
+        <RepoStatus key={repo.name} repo={repo} onPullDevelop={handlePullDevelop} />
       ))}
     </div>
   );

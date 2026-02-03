@@ -36,6 +36,8 @@ interface MessageData {
   is_error?: boolean;
   /** Duration in milliseconds for tool execution (MSSCI-13402) */
   durationMs?: number;
+  /** Number of images attached to user message */
+  imageCount?: number;
 }
 
 interface MessageViewProps {
