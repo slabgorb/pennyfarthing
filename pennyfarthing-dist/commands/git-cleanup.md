@@ -5,39 +5,45 @@ workflow: git-cleanup
 
 # Git Cleanup Command
 
-Organize uncommitted changes into proper commits and branches.
+Organize uncommitted changes into proper commits and branches across **all configured repos**.
 
 ## Quick Start
 
 Run `/git-cleanup` to start the stepped workflow.
 
+## Multi-Repo Support
+
+This workflow handles multiple repos defined in `.claude/project/pennyfarthing-settings.yaml`.
+
+**CRITICAL:** Always use the multi-repo status script, not plain `git status`:
+
+```bash
+.pennyfarthing/scripts/git/git-status-all.sh
+```
+
+For operations in a specific repo, use `git -C {repo_path}`:
+
+```bash
+git -C pennyfarthing status --short
+git -C pennyfarthing diff
+```
+
 ## Workflow Steps
 
 | Step | Name | Purpose |
 |------|------|---------|
-| 1 | Analyze | Check stash, gather git status |
-| 2 | Categorize | Group changes by initiative |
-| 3 | Execute | Create branches, commit, merge |
-| 4 | Verify | Confirm clean state, push |
-| 5 | Complete | Verify stash empty, summary |
+| 1 | Analyze | Gather status from ALL repos |
+| 2 | Categorize | Group changes by initiative (may span repos) |
+| 3 | Execute | Create branches, commit, merge in each repo |
+| 4 | Verify | Confirm clean state across all repos |
+| 5 | Complete | Push and summary |
 
 ## Critical Rules
 
 - **NEVER** commit directly to develop (use branches)
 - **NEVER** force push
-- **ALWAYS** check stash before starting (`git stash list`)
-- **ALWAYS** clear stash after completing (with user permission)
-- **ALWAYS** check stash before assuming work is lost
-
-## Stash Safety
-
-Work is rarely lost - it's usually in stash:
-
-```bash
-git stash list              # Check for saved work
-git stash show -p stash@{0} # See contents
-git stash pop               # Restore it
-```
+- **ALWAYS** use `git -C {repo_path}` for subrepo operations
+- **ALWAYS** check ALL repos, not just the orchestrator
 
 ## Commit Types
 

@@ -1,10 +1,23 @@
 # Step 2: Categorize Changes
 
-Group uncommitted changes by initiative type using conventional commit categories.
+Group uncommitted changes by initiative type, accounting for multi-repo structure.
 
 ## Objective
 
-Organize scattered changes into logical groups that can be committed separately with proper branch names and commit messages.
+Organize scattered changes into logical groups that can be committed separately. Each group becomes one branch + commit.
+
+## Multi-Repo Awareness
+
+Changes may span multiple repos. Group by **initiative**, not by repo:
+
+```
+Group: "Todos WebSocket feature"
+  - pennyfarthing/packages/cyclist/src/main.ts
+  - pennyfarthing/packages/cyclist/src/websocket.ts
+  - pennyfarthing/packages/cyclist/src/public/hooks/useTodos.ts
+```
+
+All files in a group get committed together in their respective repos.
 
 ## Categorization Rules
 
@@ -24,18 +37,19 @@ Organize scattered changes into logical groups that can be committed separately 
 ### Grouping Heuristics
 
 1. **By Story ID** - If changes relate to a known story (check session files)
-2. **By Directory** - Files in same directory often belong together
-3. **By File Type** - Docs together, configs together, source together
-4. **By Semantic Coupling** - Migration + model + handler for same feature
+2. **By Feature** - Related functionality across files/repos
+3. **By Directory** - Files in same directory often belong together
+4. **By File Type** - Docs together, configs together, source together
 
 ## Execution
 
 ### 2.1 Analyze Change Patterns
 
-For each changed file, determine:
+For each changed file across all repos, determine:
 - Which initiative type it belongs to
 - If it relates to an active story
 - If it should group with other files
+- Which repo it's in
 
 ### 2.2 Propose Groupings
 
@@ -49,9 +63,12 @@ Present proposed groups in this format:
 **Branch:** `{type}/{description}`
 **Commit:** `{type}({scope}): {message}`
 
-Files:
-- `{file_path}` ({status})
-- `{file_path}` ({status})
+**Repo: pennyfarthing**
+- `packages/cyclist/src/main.ts` (M)
+- `packages/cyclist/src/websocket.ts` (M)
+
+**Repo: pennyfarthing-orchestrator**
+- `sprint/current-sprint.yaml` (M)
 
 Rationale: {why these files belong together}
 
@@ -76,16 +93,6 @@ For each group, decide tracking level:
 | **Quick** | `chore/*` | No | No | Maintenance, configs |
 | **Tracked** | `feat/MSSCI-*` | Yes | Yes | Features worth tracking |
 
-### Promoting to Tracked Story
-
-If a group deserves Jira tracking (retroactive story):
-
-1. Mark group with **[T]** Track in Jira
-2. Provide: title, description, points (default: 2)
-3. Workflow will: create Jira → branch → commit → PR → merge
-
-This is the `/standalone` pattern integrated into cleanup.
-
 ## Approval Gate
 
 **This step requires user approval before execution.**
@@ -100,6 +107,7 @@ Total groups: {n}
 - Tracked stories: {count}
 - Skipped: {count}
 
+Repos affected: {list}
 Files to commit: {count}
 
 Ready to proceed?
