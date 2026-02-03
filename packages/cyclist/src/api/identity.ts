@@ -11,6 +11,7 @@ import { execSync } from 'child_process';
 export interface IdentityInfo {
   jiraEmail: string | null;
   githubUsername: string | null;
+  avatarUrl: string | null;
 }
 
 /**
@@ -64,9 +65,11 @@ function getIdentity(): IdentityInfo {
     return cachedIdentity;
   }
 
+  const githubUsername = getGithubUsername();
   cachedIdentity = {
     jiraEmail: getJiraEmail(),
-    githubUsername: getGithubUsername(),
+    githubUsername,
+    avatarUrl: githubUsername ? `https://avatars.githubusercontent.com/${githubUsername}` : null,
   };
   lastFetch = now;
 

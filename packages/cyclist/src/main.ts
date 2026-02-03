@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1009,6 +1009,84 @@ export function startProjectWatchers(): void {
   });
   console.log('Story and git update callbacks registered for IPC broadcasts');
 
+  // Register Claude command callbacks to bridge WebSocket to ClaudeService
+  // This allows React components to communicate via WebSocket in Electron mode
+  setClaudeSendCallback(async (prompt, onMessage, onComplete, onError) => {
+    try {
+      const service = getClaudeService();
+      for await (const message of service.sendMessage(prompt)) {
+        // Enrich messages with subagent context (same as IPC handler)
+        const enrichedMessage = enrichMessageWithSubagentContext(message);
+
+        // Send to this specific WebSocket client
+        onMessage(enrichedMessage);
+
+        // Also broadcast to IPC for Electron renderer
+        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, enrichedMessage);
+
+        // Update stats
+        updateStatsFromSDK(message);
+
+        // Handle TodoWrite messages
+        if (isTodoWriteMessage(message)) {
+          const todos = extractTodos(message);
+          updateTodosState(todos);
+        }
+      }
+      onComplete();
+      broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      onError(errorMessage);
+      broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_ERROR, errorMessage);
+    }
+  });
+
+  setClaudeAbortCallback(() => {
+    try {
+      const service = getClaudeService();
+      console.log('[WebSocket] Abort callback triggered');
+      service.abort();
+    } catch (error) {
+      console.error('[WebSocket] Error in abort callback:', error);
+    }
+  });
+
+  setClaudeClearCallback(() => {
+    try {
+      const service = getClaudeService();
+      service.clearSession();
+      clearSessionId();
+      resetTokenStats();
+      resetTodos();
+      resetEventStore();
+      resetToolStats();
+      resetSkills();
+      resetContext();
+      resetUsageStats();
+      // Broadcast zeroed stats
+      broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
+      broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+      broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+      broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
+      broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
+      console.log('[WebSocket] Session cleared via callback');
+    } catch (error) {
+      console.error('[WebSocket] Error in clear callback:', error);
+    }
+  });
+
+  setClaudeSetModeCallback((mode) => {
+    try {
+      const service = getClaudeService();
+      service.setPermissionMode(mode);
+      console.log('[WebSocket] Permission mode set to:', mode);
+    } catch (error) {
+      console.error('[WebSocket] Error in setMode callback:', error);
+    }
+  });
+  console.log('Claude SDK callbacks registered for WebSocket bridge');
+
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
     const sessionId = process.env.CYCLIST_SESSION_ID;
@@ -1115,6 +1193,8 @@ export function setupClaudeIPCHandlers(ipcMain: {
         // If message has parent_tool_use_id, look up the Task that spawned it
         const enrichedMessage = enrichMessageWithSubagentContext(message);
         broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, enrichedMessage);
+        // Also broadcast to WebSocket clients for React components
+        broadcastClaudeMessage(enrichedMessage);
 
         // Update stats from SDK message (model info, etc.)
         updateStatsFromSDK(message);
@@ -1142,79 +1222,88 @@ export function setupClaudeIPCHandlers(ipcMain: {
         }
 
         // E8-2: Broadcast diff data for Edit/Write tool messages
-        // Tool_use blocks are nested inside 'assistant' messages under message.content[]
+        // Handle tool_use in two formats:
+        // 1. Nested inside 'assistant' messages under message.content[] (SDK format)
+        // 2. Discrete 'tool_use' messages (CLI streaming format)
+
+        // Helper to process a tool_use block
+        const processToolUseBlock = (toolName: string | undefined, toolId: string | undefined, toolInput: Record<string, unknown> | undefined) => {
+          if (!toolName) return;
+
+          // Story 33-7: Wire approval gate into tool execution pipeline
+          const toolUseMessage = {
+            type: 'tool_use' as const,
+            tool_name: toolName,
+            tool_id: toolId,
+            input: toolInput || {},
+          };
+          processToolUseWithApproval(toolUseMessage);
+
+          // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
+          if (toolId && toolName && toolInput) {
+            storePendingToolInput(toolId, toolName, toolInput);
+          }
+
+          if (toolName === 'Edit') {
+            const input = toolInput as { file_path: string; old_string: string; new_string: string };
+            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+              id: toolId || `edit-${Date.now()}`,
+              path: input.file_path,
+              original: input.old_string,
+              modified: input.new_string,
+              toolName: 'Edit',
+              timestamp: Date.now(),
+            });
+          } else if (toolName === 'Write') {
+            const input = toolInput as { file_path: string; content: string };
+            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+              id: toolId || `write-${Date.now()}`,
+              path: input.file_path,
+              original: '',
+              modified: input.content,
+              toolName: 'Write',
+              timestamp: Date.now(),
+              isNewFile: true,
+            });
+          } else if (toolName === 'Skill') {
+            const input = toolInput as { skill: string; args?: string };
+            handleSkillEvent({
+              id: toolId || `skill-${Date.now()}`,
+              skill: input.skill,
+              args: input.args,
+              timestamp: Date.now(),
+              status: 'running',
+            });
+          } else if (toolName === 'Task') {
+            const input = toolInput as {
+              description?: string;
+              subagent_type?: string;
+              run_in_background?: boolean;
+            };
+            trackBackgroundTask({
+              taskId: toolId || `task-${Date.now()}`,
+              description: input.description || '',
+              subagentType: input.subagent_type || '',
+              startedAt: Date.now(),
+              isBackground: input.run_in_background === true,
+            });
+          }
+        };
+
+        // Format 1: Discrete tool_use messages (CLI streaming format)
+        if (message.type === 'tool_use') {
+          const toolMsg = message as { tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
+          processToolUseBlock(toolMsg.tool_name, toolMsg.tool_id, toolMsg.input);
+        }
+
+        // Format 2: Nested inside assistant messages (SDK format)
         if (message.type === 'assistant') {
           const assistantMsg = message as { message?: { content?: Array<{ type: string; name?: string; id?: string; input?: Record<string, unknown> }> } };
           const content = assistantMsg.message?.content;
           if (content && Array.isArray(content)) {
             for (const block of content) {
               if (block.type === 'tool_use') {
-                // Story 33-7: Wire approval gate into tool execution pipeline
-                // Check if this tool_use needs approval and trigger modal if so
-                const toolUseMessage = {
-                  type: 'tool_use' as const,
-                  tool_name: block.name,
-                  tool_id: block.id,
-                  input: block.input as Record<string, unknown>,
-                };
-                // Fire and forget - we observe the stream, we don't control execution
-                // This triggers the approval modal UI when gate is enabled
-                processToolUseWithApproval(toolUseMessage);
-
-                // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
-                // Story 36-9: This is the primary correlation mechanism since Claude Code
-                // OTEL logs don't include traceId/spanId at logRecord level
-                if (block.id && block.name && block.input) {
-                  storePendingToolInput(block.id, block.name, block.input);
-                }
-
-                if (block.name === 'Edit') {
-                  const input = block.input as { file_path: string; old_string: string; new_string: string };
-                  broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                    id: block.id || `edit-${Date.now()}`,
-                    path: input.file_path,
-                    original: input.old_string,
-                    modified: input.new_string,
-                    toolName: 'Edit',
-                    timestamp: Date.now(),
-                  });
-                } else if (block.name === 'Write') {
-                  const input = block.input as { file_path: string; content: string };
-                  broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                    id: block.id || `write-${Date.now()}`,
-                    path: input.file_path,
-                    original: '',
-                    modified: input.content,
-                    toolName: 'Write',
-                    timestamp: Date.now(),
-                    isNewFile: true,
-                  });
-                } else if (block.name === 'Skill') {
-                  // 35-12: Track skill invocations
-                  const input = block.input as { skill: string; args?: string };
-                  handleSkillEvent({
-                    id: block.id || `skill-${Date.now()}`,
-                    skill: input.skill,
-                    args: input.args,
-                    timestamp: Date.now(),
-                    status: 'running',
-                  });
-                } else if (block.name === 'Task') {
-                  // Background tasks fix: detect from message stream, not OTEL
-                  // OTEL logs do NOT emit tool_parameters for Task tools
-                  const input = block.input as {
-                    description?: string;
-                    subagent_type?: string;
-                    run_in_background?: boolean;
-                  };
-                  trackBackgroundTask({
-                    taskId: block.id || `task-${Date.now()}`,
-                    description: input.description || '',
-                    subagentType: input.subagent_type || '',
-                    startedAt: Date.now(),
-                    isBackground: input.run_in_background === true,
-                  });
-                }
+                processToolUseBlock(block.name, block.id, block.input);
               }
             }
           }
@@ -1258,9 +1347,13 @@ export function setupClaudeIPCHandlers(ipcMain: {
         }
       }
       broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
+      // Also broadcast to WebSocket clients for React components
+      broadcastClaudeComplete();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_ERROR, errorMessage);
+      // Also broadcast to WebSocket clients for React components
+      broadcastClaudeError(errorMessage);
       throw error;
     }
   });
@@ -1714,6 +1807,8 @@ Adopt this character immediately in your next response. Do not acknowledge this 
                 try {
                   for await (const message of claudeServiceInstance!.sendMessage(refreshPrompt)) {
                     broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
+                    // Also broadcast to WebSocket clients for React components
+                    broadcastClaudeMessage(message);
                   }
                 } catch (err) {
                   console.error('[Settings] Failed to send persona refresh to Claude:', err);
@@ -2883,6 +2978,10 @@ if (isElectron) {
 
       // B-24: Kill any orphaned Claude processes from crashed sessions
       cleanupStaleProcesses();
+
+      // Set Electron mode flag for WebSocket server
+      // In Electron mode, Claude messages are broadcast from main.ts, not per-connection ClaudeService
+      process.env.CYCLIST_ELECTRON_MODE = '1';
 
       await startServer();
       await startApprovalServer(); // 33-7: Start after project dir set
