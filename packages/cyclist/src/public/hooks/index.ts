@@ -36,3 +36,10 @@ export type { QueuedMessage } from './useMessageQueue';
 // Claude API hooks
 export { useClaude } from './useClaude';
 export type { UseClaudeResult, UseClaudeCallbacks, ClaudeMessage, PermissionMode, PastedImage } from './useClaude';
+
+// Content processing hooks
+export { useMarkdownParser } from './useMarkdownParser';
+export type { UseMarkdownParserResult } from './useMarkdownParser';
+
+export { useSyntaxHighlighter } from './useSyntaxHighlighter';
+export type { UseSyntaxHighlighterResult } from './useSyntaxHighlighter';
