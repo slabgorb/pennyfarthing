@@ -13,6 +13,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 4: User Journey Mapping
 
+<purpose>Map all user types that interact with the system with narrative story-based journeys that capture interactions, touchpoints, and emotional states.</purpose>
+
+<instructions>Identify all user personas and archetypes; for each user type, collaboratively craft narrative journey stories; capture decision points, pain points, and desired outcomes; ensure journey completeness from initial interaction through goal completion; save journeys to document.</instructions>
+
+<output>Comprehensive user journey narratives for all identified user types, each with clear story flow, decision points, pain points, and desired outcomes documented in the PRD.</output>
+
 **Progress: Step 4 of 11** - Next: Domain Requirements
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

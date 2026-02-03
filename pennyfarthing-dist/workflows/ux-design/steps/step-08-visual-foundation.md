@@ -1,5 +1,11 @@
 # Step 8: Visual Foundation
 
+<purpose>Establish visual design foundation including color themes, typography systems, and spacing/layout foundations through collaborative exploration of brand guidelines and design principles.</purpose>
+
+<instructions>Assess brand guidelines. If no brand exists, generate color theme options and HTML visualizer. Define typography system (tone, readability, hierarchy). Establish spacing and layout foundation (density, grid system). Create visual foundation strategy with color system, typography, spacing, and accessibility sections. Generate visual foundation content. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Visual design foundation content appended to specification including color system, typography system, spacing/layout foundation, and accessibility considerations, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

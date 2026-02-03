@@ -8,6 +8,17 @@ args: "[recipe] [args...]"
 
 # /just - Project Task Runner
 
+<run>
+Main commands:
+- `just --list` - List all available recipes
+- `just <recipe>` - Run a specific recipe (e.g., `just build`, `just test`, `just cyclist`)
+</run>
+
+<output>
+- `just --list` outputs a list of available recipes with their descriptions
+- Individual recipe commands output their execution results (build logs, test results, etc.) depending on the recipe
+</output>
+
 `just` is a command runner for project tasks. All commands run from the **project root**.
 
 ## Commands

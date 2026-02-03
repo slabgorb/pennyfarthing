@@ -9,6 +9,18 @@ templateFile: '{workflow_path}/tech-spec-template.md'
 wipFile: '{implementation_artifacts}/tech-spec-wip.md'
 ---
 
+<purpose>
+Analyze the requirement delta between the current state and what the user wants to build. Establish a verifiable delta between current and target state by eliciting requirements, performing surface-level code scans, and initializing a work-in-progress technical specification document.
+</purpose>
+
+<instructions>
+Execute the sequence of instructions in order: Check for existing WIP (with recovery menu), greet user and gather initial request, perform quick orient scan, ask informed questions based on findings, capture core understanding with user confirmation, initialize WIP file with template and metadata, and present checkpoint menu for next steps (Advanced Elicitation, Continue, or Party Mode).
+</instructions>
+
+<output>
+WIP file initialized at {wipFile} with captured metadata (title, slug, created date, status, stepsCompleted: [1]), Overview section with Problem Statement/Solution/Scope, and Context for Development section. User selected to continue to next step.
+</output>
+
 # Step 1: Analyze Requirement Delta
 
 **Progress: Step 1 of 4** - Next: Deep Investigation

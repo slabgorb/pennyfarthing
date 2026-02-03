@@ -1,5 +1,32 @@
 # Market Research Step 4: Customer Decisions and Journey
 
+<purpose>
+Conduct customer decision processes analysis identifying decision-making processes, decision factors and criteria, customer journey mapping, touchpoint analysis, information gathering patterns, decision influencers, and purchase decision factors using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for customer decision processes, journey mapping, buying criteria, and influencers
+2. Analyze and aggregate decision findings
+3. Generate decision processes analysis content with eight subsections (Decision Processes, Decision Factors, Customer Journey, Touchpoint Analysis, Information Gathering, Decision Influencers, Purchase Factors, Decision Optimizations)
+4. Include source citations for all decision data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
+</instructions>
+
+<output>
+Customer decision processes analysis sections containing:
+- Customer decision-making processes with source citations
+- Decision factors and criteria with source citations
+- Customer journey mapping across all stages with source citations
+- Touchpoint analysis with source citations
+- Information gathering patterns with source citations
+- Decision influencers identification with source citations
+- Purchase decision factors with source citations
+- Customer decision optimizations with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

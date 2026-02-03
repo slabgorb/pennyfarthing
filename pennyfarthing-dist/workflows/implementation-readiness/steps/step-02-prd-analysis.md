@@ -13,6 +13,27 @@ outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 epicsFile: '{planning_artifacts}/*epic*.md' # Will be resolved to actual file
 ---
 
+<purpose>
+To fully read and analyze the PRD document to extract all Functional Requirements (FRs) and Non-Functional Requirements (NFRs) for validation against epics coverage.
+</purpose>
+
+<instructions>
+1. Load and completely read the PRD document (whole or sharded)
+2. Extract all Functional Requirements (FRs) with numbering
+3. Extract all Non-Functional Requirements (NFRs)
+4. Document any additional requirements or constraints
+5. Add findings to the assessment report
+6. Auto-proceed to next step for epic coverage validation
+</instructions>
+
+<output>
+PRD analysis section containing:
+- Complete list of extracted Functional Requirements (FR1, FR2, etc.)
+- Complete list of extracted Non-Functional Requirements (NFR1, NFR2, etc.)
+- Additional requirements and constraints identified
+- Initial PRD completeness assessment
+</output>
+
 # Step 2: PRD Analysis
 
 ## STEP GOAL:

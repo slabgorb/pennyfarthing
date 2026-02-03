@@ -1,5 +1,11 @@
 # Step 1B: UX Design Workflow Continuation
 
+<purpose>Resume the UX design workflow from where it was previously interrupted by analyzing current state, reloading input documents, and determining the correct next step to load.</purpose>
+
+<instructions>Analyze frontmatter to get stepsCompleted and lastStep. Reload all input documents from inputDocuments array. Summarize current progress and ask user for confirmation. Determine next step number based on lastStep value and present continuation options.</instructions>
+
+<output>User welcomed back with summary of completed steps and current progress, ready to continue from the appropriate next step in the workflow.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

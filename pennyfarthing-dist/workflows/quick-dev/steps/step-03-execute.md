@@ -7,6 +7,31 @@ thisStepFile: './step-03-execute.md'
 nextStepFile: './step-04-self-check.md'
 ---
 
+<purpose>
+Execute all planned tasks in sequence without pausing for approval between tasks. Write code following identified patterns, run tests to verify functionality, and only halt for blocking issues that require user guidance.
+</purpose>
+
+<instructions>
+1. For each task in the plan (from tech-spec or mental plan):
+   - Load relevant source files to understand context
+   - Implement changes following existing code patterns
+   - Write or update tests to verify the specific acceptance criteria for this task
+   - Mark task complete and move to the next task immediately
+2. Handle errors pragmatically: retry, look for patterns, test incrementally
+3. Only halt and request guidance if facing a blocking issue (3+ failures, ambiguous decision)
+4. Track all completed work for the next step (self-check)
+5. Once all tasks are complete (or blocked), proceed to step-04-self-check.md
+</instructions>
+
+<output>
+- Implemented code changes for all tasks
+- Tests written and passing for new/modified functionality
+- All existing tests still passing
+- List of completed tasks checked off
+- Any blocking issues documented with clear explanation
+- Ready to transition to self-check phase
+</output>
+
 # Step 3: Execute Implementation
 
 **Goal:** Implement all tasks, write tests, follow patterns, handle errors.

@@ -7,6 +7,18 @@ nextStepFile: './step-04-review.md'
 wipFile: '{implementation_artifacts}/tech-spec-wip.md'
 ---
 
+<purpose>
+Generate an implementation-ready plan that addresses the requirement delta using the technical context captured in Steps 1 and 2. Create specific, ordered, actionable implementation tasks and testable acceptance criteria that meet the READY FOR DEVELOPMENT standard.
+</purpose>
+
+<instructions>
+Load the WIP file with all captured context, generate discrete implementation tasks with specific files and actions ordered logically, create testable acceptance criteria in Given/When/Then format covering happy path and edge cases, fill in Dependencies/Testing Strategy/Notes sections, update WIP frontmatter with stepsCompleted: [1, 2, 3] and status: 'review', and proceed to Step 4.
+</instructions>
+
+<output>
+WIP file updated with implementation plan including specific ordered tasks with file paths, testable acceptance criteria in Given/When/Then format, Dependencies documented, Testing Strategy defined, and Notes section completed. Frontmatter updated with stepsCompleted: [1, 2, 3] and status: 'review'. File ready for Step 4 review.
+</output>
+
 # Step 3: Generate Implementation Plan
 
 **Progress: Step 3 of 4** - Next: Review & Finalize

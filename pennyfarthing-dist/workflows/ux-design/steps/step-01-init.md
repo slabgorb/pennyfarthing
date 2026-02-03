@@ -1,5 +1,11 @@
 # Step 1: UX Design Workflow Initialization
 
+<purpose>Initialize the UX design workflow by detecting continuation state and setting up the design specification document with discovered context documents and template initialization.</purpose>
+
+<instructions>Check for existing workflow state. If continuation detected, hand off to step-01b. If fresh workflow, discover input documents (PRD, briefs, context), confirm with user, create specification from template, initialize frontmatter, and report to user before loading step-02.</instructions>
+
+<output>UX design specification document created at {planning_artifacts}/ux-design-specification.md with initialized frontmatter, discovered input documents tracked, and user ready to proceed to discovery phase.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

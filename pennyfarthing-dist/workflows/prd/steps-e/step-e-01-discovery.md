@@ -11,6 +11,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step E-1: Discovery & Understanding
 
+<purpose>Understand what the user wants to edit in the PRD, detect PRD format/type, check for validation report guidance, and route to appropriate editing workflow.</purpose>
+
+<instructions>Discover which PRD document user wants to edit; detect format and structure; identify specific sections or requirements to edit; check if validation report exists; route to format-specific editing (current format edit or legacy conversion); understand edit scope and objectives.</instructions>
+
+<output>Clear understanding of edit objectives, detected PRD format, identified sections to edit, and routing to appropriate editing workflow step.</output>
+
 ## STEP GOAL:
 
 Understand what the user wants to edit in the PRD, detect PRD format/type, check for validation report guidance, and route appropriately.

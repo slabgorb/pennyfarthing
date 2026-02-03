@@ -3,6 +3,22 @@ name: mermaid
 description: Generate diagrams using Mermaid syntax. Use this skill when creating architecture diagrams, sequence diagrams, ER diagrams, flowcharts, or any visual documentation in markdown files.
 ---
 
+<run>
+Generate Mermaid diagrams by writing code blocks with the `mermaid` language identifier in markdown files. Mermaid syntax is rendered natively by GitHub, GitLab, and most markdown editors. Choose the appropriate diagram type (flowchart, sequence, ER, class, or state) based on what you need to visualize.
+</run>
+
+<output>
+Mermaid code blocks that render as diagrams. Example output format:
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Process]
+    B --> C[End]
+```
+
+The diagram renders visually in GitHub, GitLab, and compatible markdown viewers.
+</output>
+
 # Mermaid Diagram Skill
 
 ## When to Use This Skill

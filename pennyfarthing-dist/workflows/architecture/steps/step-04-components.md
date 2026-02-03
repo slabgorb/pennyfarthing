@@ -1,5 +1,17 @@
 # Step 4: Component Design
 
+<purpose>
+Define major system components, their responsibilities, boundaries, and dependencies based on selected patterns. Establish implementation consistency rules that prevent AI agents from making conflicting architectural choices.
+</purpose>
+
+<instructions>
+Identify primary components from selected patterns with clear responsibilities and data ownership. Define component boundaries and communication protocols. Map component dependencies. Document explicit consistency rules for AI implementation to ensure compatible implementations across different agents.
+</instructions>
+
+<output>
+Component Design section with ASCII/Mermaid component diagram, Component Responsibilities table, Boundary Decisions, and Implementation Consistency Rules. Update frontmatter stepsCompleted array after user confirms [C].
+</output>
+
 <step-meta>
 number: 4
 name: component-design

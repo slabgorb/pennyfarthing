@@ -1,5 +1,11 @@
 # Step 3: Core Experience Definition
 
+<purpose>Define the core user experience, platform requirements, and what makes interactions effortless through collaborative discovery of the primary user action and critical success moments.</purpose>
+
+<instructions>Identify the ONE core user action. Explore platform requirements (web, mobile, desktop). Identify effortless interactions and critical success moments. Synthesize experience principles. Generate core experience content with defining experience, platform strategy, effortless interactions, critical success moments, and experience principles sections. Present A/P/C menu. Save when user selects C.</instructions>
+
+<output>Core user experience content appended to specification including platform strategy and guiding experience principles, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

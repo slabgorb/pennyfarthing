@@ -6,6 +6,30 @@ name: explore
 gate: false
 </step-meta>
 
+<purpose>
+Systematically explore the UI to understand current state and identify areas of concern.
+</purpose>
+
+<instructions>
+1. USE Playwright MCP for all browser interactions
+2. Take initial screenshot of landing page
+3. Identify main navigation routes and sections
+4. Note any immediate issues (broken layouts, console errors, visual glitches)
+5. Ask user which area to focus on
+6. For each area: navigate, screenshot, interact, observe issues
+7. Document all findings with screenshots
+8. Present issues found and get user guidance on what to fix
+</instructions>
+
+<output>
+Report findings:
+- Current State: [screenshots showing landing page and main sections]
+- Main Sections: [list navigation items found]
+- Initial Observations: [notable findings]
+- Issues Found: [list with descriptions and severity]
+- Ready for user to select area or decide on fixes
+</output>
+
 ## Purpose
 
 Systematically explore the UI to understand current state and identify areas of concern.

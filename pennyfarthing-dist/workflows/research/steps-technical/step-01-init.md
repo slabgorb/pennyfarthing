@@ -1,5 +1,27 @@
 # Technical Research Step 1: Technical Research Scope Confirmation
 
+<purpose>
+Confirm technical research scope and approach establishing clear boundaries for comprehensive technical analysis including architecture analysis, implementation approaches, technology stack, integration patterns, and performance considerations.
+</purpose>
+
+<instructions>
+1. Confirm understanding of user's technical research goals and topic
+2. Present the five key technical research focus areas (architecture analysis, implementation approaches, technology stack, integration patterns, performance considerations)
+3. Explain research approach with web search verification and source validation
+4. Present [C] continue option for user confirmation
+5. Document scope confirmation in research file only after user selects [C]
+6. Update frontmatter stepsCompleted to [1] before loading next step
+</instructions>
+
+<output>
+Document scope confirmation containing:
+- Research topic and goals confirmation
+- Five technical research focus areas clearly listed
+- Research methodology explanation (web verification, multi-source validation, confidence levels)
+- Scope confirmation documented in research file with date
+- Proper routing to step-02-technical-overview.md
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user confirmation

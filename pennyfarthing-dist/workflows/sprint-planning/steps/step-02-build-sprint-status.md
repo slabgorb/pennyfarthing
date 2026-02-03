@@ -10,6 +10,23 @@ thisStepFile: './step-02-build-sprint-status.md'
 nextStepFile: './step-03-status-detection.md'
 ---
 
+<purpose>
+Build sprint status structure from parsed epic and story data. Create the foundational structure that tracks all epics, stories, and retrospectives with their default statuses.
+</purpose>
+
+<instructions>
+For each epic found from step 1, create entries in this exact order:
+1. Epic entry with key `epic-{num}` and default status `backlog`
+2. Story entries with key `{epic}-{story}-{title}` and default status `backlog`
+3. Retrospective entry with key `epic-{num}-retrospective` and default status `optional`
+
+Ensure all items are properly grouped by epic: Epic N entry, all stories for Epic N, retrospective for Epic N, Epic N+1 entry, etc. Follow the example structure provided in the Goal section.
+</instructions>
+
+<output>
+A structured development_status YAML structure organized by epic, with all stories and retrospectives properly grouped, ready for status detection in the next step.
+</output>
+
 # Step 2: Build Sprint Status Structure
 
 ## Goal

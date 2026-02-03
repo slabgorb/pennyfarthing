@@ -13,6 +13,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 3: Success Criteria Definition
 
+<purpose>Define comprehensive success criteria covering user, business, and technical success dimensions for the product.</purpose>
+
+<instructions>Collaborate with user to identify specific, measurable success criteria; cover user satisfaction, business metrics, and technical quality; capture acceptance thresholds for each criterion; optionally use advanced elicitation or party mode for deeper insight; save criteria to document.</instructions>
+
+<output>Comprehensive success criteria document with user success metrics, business success metrics, and technical success metrics, each with specific acceptance thresholds and measurability criteria.</output>
+
 **Progress: Step 3 of 11** - Next: User Journey Mapping
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

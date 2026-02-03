@@ -6,6 +6,28 @@ description: 'Complete the product brief workflow, update status files, and sugg
 outputFile: '{planning_artifacts}/product-brief-{{project_name}}-{{date}}.md'
 ---
 
+<purpose>
+Complete the product brief workflow, update status files, and provide guidance on logical next steps for continued product development.
+</purpose>
+
+<instructions>
+1. Announce workflow completion and summarize accomplishments
+2. Update main workflow status file with completion information
+3. Validate product brief completeness and consistency
+4. Suggest logical next workflow steps (PRD, UX design, etc.)
+5. Present completion menu and provide next step guidance
+6. End workflow session gracefully
+</instructions>
+
+<output>
+- Completion announcement with summary of accomplishments
+- Workflow status file updated with completion timestamp
+- Quality validation results confirming completeness and consistency
+- Next step recommendations provided to user
+- Final document location: {outputFile}
+- Workflow marked as complete
+</output>
+
 # Step 6: Product Brief Completion
 
 ## STEP GOAL:

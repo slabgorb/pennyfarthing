@@ -1,5 +1,28 @@
 # Market Research Step 1: Market Research Initialization
 
+<purpose>
+Initialize market research by confirming understanding of the research topic and establishing clear research scope covering market size, customer insights, competitive landscape, and strategic recommendations.
+</purpose>
+
+<instructions>
+1. Confirm understanding of user's market research goals and topic
+2. Present market research areas to be covered (market size, customer insights, competitive landscape, strategic recommendations)
+3. Explain research methodology with web verification and source validation
+4. Write initial scope document immediately to research file
+5. Present [C] continue option for user confirmation
+6. Update frontmatter stepsCompleted to [1] before loading next step
+7. Load step-02-customer-behavior.md or step-02-customer-insights.md based on variant
+</instructions>
+
+<output>
+Initial scope document containing:
+- Research topic and goals confirmation
+- Market research areas clearly listed
+- Research methodology explanation
+- Research workflow progression outline
+- Document ready for user review and scope confirmation
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate research content in init step

@@ -11,6 +11,12 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 
 # Step 10: SMART Requirements Validation
 
+<purpose>Validate Functional Requirements meet SMART quality criteria (Specific, Measurable, Attainable, Relevant, Traceable), ensuring high-quality requirements that can be implemented and tested.</purpose>
+
+<instructions>Extract all functional requirements from PRD; evaluate each requirement against SMART criteria; assess specificity, measurability, attainability, relevance, and traceability; score each requirement on SMART completeness; identify low-scoring requirements; calculate overall quality metrics; update validation report.</instructions>
+
+<output>SMART validation report with individual requirement scores, identified low-quality requirements, SMART criteria assessment, quality metrics, and improvement recommendations for each criterion.</output>
+
 ## STEP GOAL:
 
 Validate Functional Requirements meet SMART quality criteria (Specific, Measurable, Attainable, Relevant, Traceable), ensuring high-quality requirements.

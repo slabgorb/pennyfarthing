@@ -10,6 +10,23 @@ thisStepFile: './step-04-generate-status-file.md'
 nextStepFile: './step-05-validate-and-report.md'
 ---
 
+<purpose>
+Generate the sprint status YAML file with all epics, stories, and retrospectives. Create or update the status file with complete metadata and development_status structure.
+</purpose>
+
+<instructions>
+Create or update `{status_file}` with the complete structure:
+1. Add metadata comments for documentation: generated date, project name, tracking_system (file-system), and story_location
+2. Include comprehensive status definitions comments for Epic, Story, and Retrospective statuses with their transitions
+3. Add workflow notes explaining epic transitions, parallel story work, SM story creation patterns, and dev to review workflow
+4. CRITICAL: Include metadata fields TWICE - once as comments for documentation, once as YAML key:value fields for parsing
+5. Populate development_status section with all items from step 3 in proper epic grouping order
+</instructions>
+
+<output>
+A complete, well-documented sprint status YAML file at `{status_file}` with all epics, stories, and retrospectives properly structured and ready for validation.
+</output>
+
 # Step 4: Generate Sprint Status File
 
 ## Goal

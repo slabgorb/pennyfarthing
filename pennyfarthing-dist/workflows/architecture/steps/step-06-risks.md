@@ -1,5 +1,17 @@
 # Step 6: Risk Assessment
 
+<purpose>
+Identify technical risks, failure modes, and mitigation strategies. Include risks specific to AI-assisted implementation such as ambiguous requirements or inconsistent interpretations that could cause implementation divergence.
+</purpose>
+
+<instructions>
+Identify technical risks (bottlenecks, single points of failure, security, data consistency, operational complexity). Assess impact/likelihood for each. Define mitigations and monitoring/alerting strategies. Identify AI implementation risks where agents might misinterpret requirements or diverge on implementation.
+</instructions>
+
+<output>
+Risk Assessment section with Technical Risks table, Failure Modes with recovery procedures, Security Considerations, AI Implementation Risks, and Operational Readiness plan. Update frontmatter stepsCompleted array after user confirms [C].
+</output>
+
 <step-meta>
 number: 6
 name: risk-assessment

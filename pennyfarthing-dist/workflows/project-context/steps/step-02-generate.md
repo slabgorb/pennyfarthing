@@ -1,5 +1,36 @@
 # Step 2: Context Rules Generation
 
+<purpose>
+Collaboratively generate specific, critical rules that AI agents must follow when implementing code in this project, organized by technology stack, language, framework, testing, code quality, workflow, and anti-patterns.
+</purpose>
+
+<instructions>
+1. Document exact technology stack and versions from discovery
+2. Generate language-specific rules for unobvious patterns
+3. Generate framework-specific rules for project conventions
+4. Generate testing rules for consistency
+5. Generate code quality and style rules
+6. Generate development workflow rules
+7. Identify critical don't-miss rules and anti-patterns
+8. Present A/P/C menu after each category for user validation
+9. Append validated rules to project context file
+10. Update frontmatter with completed sections
+</instructions>
+
+<output>
+- Technology stack and versions documented
+- Language-specific rules for each category
+- Framework-specific rules for project patterns
+- Testing rules for consistency
+- Code quality and style rules
+- Development workflow rules
+- Critical anti-pattern rules documented
+- A/P/C menu selections processed
+- Rules appended to project context file
+- Frontmatter updated with sections_completed
+- Ready to proceed to step-03
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

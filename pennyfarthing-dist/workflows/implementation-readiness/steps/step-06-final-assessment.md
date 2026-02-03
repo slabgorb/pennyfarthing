@@ -11,6 +11,31 @@ workflowFile: '{workflow_path}/workflow.md'
 outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 ---
 
+<purpose>
+To provide a comprehensive summary of all findings and give the report a final polish, ensuring clear recommendations and overall readiness status.
+</purpose>
+
+<instructions>
+1. Review all findings from previous steps in the output file
+2. Compile comprehensive summary of all issues across categories
+3. Determine overall readiness status (READY/NEEDS WORK/NOT READY)
+4. Add final assessment section with critical issues and recommendations
+5. Ensure all findings are clearly documented and actionable
+6. Add date and assessor information
+7. Save final report
+8. Present completion message with report location
+</instructions>
+
+<output>
+Final assessment section containing:
+- Overall readiness status determination
+- Summary of all critical issues requiring immediate action
+- Comprehensive list of recommended next steps
+- Count of issues across categories
+- Final report with all previous sections and findings
+- Assessment completion confirmation
+</output>
+
 # Step 6: Final Assessment
 
 ## STEP GOAL:

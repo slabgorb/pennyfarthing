@@ -10,6 +10,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 7: Implementation Leakage Validation
 
+<purpose>Ensure Functional Requirements and Non-Functional Requirements don't include implementation details - they should specify WHAT, not HOW.</purpose>
+
+<instructions>Extract all FRs and NFRs from PRD; scan each requirement for implementation keywords and patterns (specific technologies, frameworks, methodologies, HOW details); identify leakage violations; classify by severity; calculate leakage percentage; update validation report with findings and recommendations.</instructions>
+
+<output>Implementation leakage validation report with identified violations, severity classification, specific examples of leakage, leakage metrics, and recommendations for abstraction improvements.</output>
+
 ## STEP GOAL:
 
 Ensure Functional Requirements and Non-Functional Requirements don't include implementation details - they should specify WHAT, not HOW.

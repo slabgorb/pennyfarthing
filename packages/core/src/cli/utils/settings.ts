@@ -262,6 +262,20 @@ export async function mergeSettingsLocalJson(
         logger.info('Added missing context-circuit-breaker hook');
       }
     }
+
+    // Check for schema-validation hook
+    const hasSchemaValidation = (hooks.PreToolUse as unknown[]).some((entry: unknown) =>
+      hookEntryContains(entry, 'schema-validation')
+    );
+
+    if (!hasSchemaValidation && templateContent.hooks?.PreToolUse) {
+      const schemaValidationEntry = findHookEntry(templateContent.hooks.PreToolUse, 'schema-validation');
+      if (schemaValidationEntry) {
+        hooks.PreToolUse = [...(hooks.PreToolUse as unknown[]), schemaValidationEntry];
+        modified = true;
+        logger.info('Added missing schema-validation hook');
+      }
+    }
   }
 
   // Ensure statusLine is configured and points to new location

@@ -19,6 +19,32 @@ outputFile: '{planning_artifacts}/epics.md'
 epicsTemplate: './templates/epics-template.md'
 ---
 
+<purpose>
+To generate all epics with their complete story breakdowns following the template structure exactly. Each story must be appropriately sized for single dev agent completion, have clear acceptance criteria using Given/When/Then format, and maintain proper story dependencies that flow sequentially without forward references.
+</purpose>
+
+<instructions>
+1. Load the approved epic structure from the previous step
+2. Explain story creation guidelines and the database/entity creation principle
+3. Process each epic sequentially in order
+4. For each epic: display overview, work with user to break down into stories, generate each story with acceptance criteria
+5. For each story: create title, user story (As a/I want/So that), and specific testable acceptance criteria
+6. Collaborate with user after each story to verify correctness and scope
+7. Append approved stories to the output file following template structure
+8. Verify all FRs are covered by stories and all placeholders are replaced
+9. Get user confirmation (C) before proceeding to final validation
+</instructions>
+
+<output>
+- Complete epics section with all approved epics
+- All stories for each epic with proper numbering (Epic N, Story M)
+- User story statements in As a/I want/So that format for each story
+- Acceptance Criteria using Given/When/Then format for each story
+- Verification that all FRs are covered by at least one story
+- Completed epics.md file following template structure exactly
+- User confirmation to proceed to final validation
+</output>
+
 # Step 3: Generate Epics and Stories
 
 ## STEP GOAL:

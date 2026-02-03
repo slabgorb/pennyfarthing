@@ -1,5 +1,27 @@
 # Domain Research Step 1: Domain Research Scope Confirmation
 
+<purpose>
+Confirm domain research scope and approach with the user to establish clear boundaries for comprehensive domain analysis including industry analysis, regulatory environment, technology patterns, economic factors, and supply chain considerations.
+</purpose>
+
+<instructions>
+1. Confirm understanding of user's domain research goals and topic
+2. Present the five key domain research focus areas (industry analysis, regulatory environment, technology patterns, economic factors, supply chain)
+3. Explain research approach with web search verification and source validation
+4. Present [C] continue option for user confirmation
+5. Document scope confirmation in research file only after user selects [C]
+6. Update frontmatter stepsCompleted to [1] before loading next step
+</instructions>
+
+<output>
+Document scope confirmation containing:
+- Research topic and goals confirmation
+- Five domain research focus areas clearly listed
+- Research methodology explanation (web verification, multi-source validation, confidence levels)
+- Scope confirmation documented in research file with date
+- Proper routing to step-02-domain-analysis.md
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user confirmation

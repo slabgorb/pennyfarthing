@@ -5,6 +5,9 @@ description: Manage runtime permission grants - list active grants, add/revoke t
 
 # Permission Management Skill
 
+<run>/permissions</run>
+<output>List all active permission grants</output>
+
 ## Overview
 
 Pennyfarthing uses a runtime permission system for tool access control. This skill provides commands to view and manage permission grants.

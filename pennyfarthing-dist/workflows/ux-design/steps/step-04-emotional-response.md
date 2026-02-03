@@ -1,5 +1,11 @@
 # Step 4: Desired Emotional Response
 
+<purpose>Define desired emotional responses users should feel when using the product through collaborative exploration of emotional goals and emotional journey mapping.</purpose>
+
+<instructions>Explore core emotional goals. Identify emotional journey mapping across user lifecycle stages. Define micro-emotions (confidence vs confusion, trust vs skepticism). Connect emotions to UX design decisions. Validate emotional goals alignment with product vision. Generate emotional response content with primary goals, journey mapping, micro-emotions, design implications, and emotional design principles sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Emotional response content appended to specification including emotional design principles and UX implications, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

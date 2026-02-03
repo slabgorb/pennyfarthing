@@ -1,5 +1,31 @@
 # Technical Research Step 3: Integration Patterns
 
+<purpose>
+Conduct integration patterns analysis identifying API design patterns, communication protocols, data formats and standards, system interoperability approaches, microservices integration patterns, event-driven integration, and integration security patterns using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for API patterns, communication protocols, interoperability, and integration approaches
+2. Analyze and aggregate integration findings
+3. Generate integration patterns analysis content with seven subsections (API Design Patterns, Communication Protocols, Data Formats, System Interoperability, Microservices Integration, Event-Driven Integration, Integration Security)
+4. Include source citations for all integration data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
+</instructions>
+
+<output>
+Integration patterns analysis sections containing:
+- API design patterns and protocols with source citations
+- Communication protocols analysis with source citations
+- Data formats and standards with source citations
+- System interoperability approaches with source citations
+- Microservices integration patterns with source citations
+- Event-driven integration patterns with source citations
+- Integration security patterns with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

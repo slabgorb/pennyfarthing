@@ -6,6 +6,32 @@ name: commit
 gate: false
 </step-meta>
 
+<purpose>
+Roll up all fixes into a single chore commit using the `/chore` skill.
+</purpose>
+
+<instructions>
+1. REVIEW all changes before committing
+2. Present summary of all changes (issues fixed, files changed)
+3. Show git status output to verify no unintended changes
+4. Ask user to confirm ready to commit
+5. USE `/chore` skill to execute the commit
+6. VERIFY no unintended changes are staged
+7. Confirm commit succeeded with hash and message
+8. Offer options to push, debug more, or exit
+</instructions>
+
+<output>
+Provide:
+- Summary: Issues fixed count, files changed count
+- Changes table: File path and what was changed
+- Git status before commit
+- Commit hash
+- Commit message used
+- Post-commit status
+- Next steps offered to user
+</output>
+
 ## Purpose
 
 Roll up all fixes into a single chore commit using the `/chore` skill.

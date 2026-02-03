@@ -12,6 +12,12 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 
 # Step E-2: Deep Review & Analysis
 
+<purpose>Thoroughly review the existing PRD, analyze validation report findings (if provided), and prepare a detailed change plan before editing.</purpose>
+
+<instructions>Load and deeply analyze the PRD structure and content; if validation report exists, extract key findings and recommendations; identify sections requiring changes; conduct dialogue to understand user's edit priorities; prepare structured change plan with prioritized edits.</instructions>
+
+<output>Detailed analysis of PRD strengths and gaps, prioritized change plan with specific sections and edit recommendations, validation findings summary (if applicable), and structured roadmap for editing steps.</output>
+
 ## STEP GOAL:
 
 Thoroughly review the existing PRD, analyze validation report findings (if provided), and prepare a detailed change plan before editing.

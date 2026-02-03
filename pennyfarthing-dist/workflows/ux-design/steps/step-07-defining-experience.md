@@ -1,5 +1,11 @@
 # Step 7: Defining Core Experience
 
+<purpose>Define the core interaction that, if nailed perfectly, makes everything else follow through collaborative exploration of user mental models, success criteria, and interaction mechanics.</purpose>
+
+<instructions>Identify the defining experience (core action users describe to friends). Explore user mental model and current solutions. Define success criteria (when users say it just works). Identify novel vs established patterns. Design experience mechanics (initiation, interaction, feedback, completion). Generate defining experience content with experience description, mental model analysis, success criteria, novel patterns evaluation, and mechanics sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Defining experience content appended to specification including detailed experience mechanics and success criteria, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

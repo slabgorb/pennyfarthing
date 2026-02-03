@@ -7,6 +7,18 @@ nextStepFile: './step-03-generate.md'
 wipFile: '{implementation_artifacts}/tech-spec-wip.md'
 ---
 
+<purpose>
+Map technical constraints and anchor points within the codebase to provide implementation-ready ground truth. Build on the Quick Scan from Step 1 with deep investigation to identify exact files to modify, code patterns to follow, and technical constraints that will impact implementation.
+</purpose>
+
+<instructions>
+Load the WIP file from Step 1, execute universal code investigation by reading and analyzing relevant files/directories, document technical context (tech stack, code patterns, files to modify, test patterns), look for project-context.md if not already loaded, update WIP file frontmatter and Context for Development section, and present checkpoint menu for Advanced Elicitation, Continue, or Party Mode.
+</instructions>
+
+<output>
+WIP file updated with documented technical context including tech_stack, files_to_modify, code_patterns, and test_patterns in frontmatter. Context for Development section filled with Codebase Patterns, Files to Reference table, and Technical Decisions. User confirmed with [c] to continue to Step 3.
+</output>
+
 # Step 2: Map Technical Constraints & Anchor Points
 
 **Progress: Step 2 of 4** - Next: Generate Plan

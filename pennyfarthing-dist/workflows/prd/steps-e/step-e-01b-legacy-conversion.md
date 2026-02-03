@@ -10,6 +10,12 @@ prdPurpose: '{project_root}/src/modules/bmm/workflows/2-plan-workflows/prd/data/
 
 # Step E-1B: Legacy PRD Conversion Assessment
 
+<purpose>Analyze legacy PRD against BMAD standards, identify gaps and improvement opportunities, propose conversion strategy, and let user choose conversion approach.</purpose>
+
+<instructions>Load and analyze legacy PRD structure; compare against BMAD standard sections and formatting; identify missing sections, gaps, and improvement opportunities; propose conversion strategy options; present user with conversion choices (full conversion, incremental editing, hybrid approach).</instructions>
+
+<output>Comprehensive legacy PRD analysis with gap assessment, conversion strategy proposal, and user-selected approach for proceeding with edits.</output>
+
 ## STEP GOAL:
 
 Analyze legacy PRD against BMAD standards, identify gaps, propose conversion strategy, and let user choose how to proceed.

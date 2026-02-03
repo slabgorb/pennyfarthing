@@ -10,6 +10,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 5: Measurability Validation
 
+<purpose>Validate that all Functional Requirements (FRs) and Non-Functional Requirements (NFRs) are measurable, testable, and follow proper format without implementation details.</purpose>
+
+<instructions>Extract all FRs and NFRs from PRD; analyze each requirement for measurability indicators (numeric targets, acceptance criteria, pass/fail conditions); check for implementation leakage; identify non-measurable requirements; classify severity of measurability issues; update validation report.</instructions>
+
+<output>Measurability validation report with analysis of each requirement, identification of non-measurable requirements, severity classification, implementation leakage findings, and recommendations for improvement.</output>
+
 ## STEP GOAL:
 
 Validate that all Functional Requirements (FRs) and Non-Functional Requirements (NFRs) are measurable, testable, and follow proper format without implementation details.
