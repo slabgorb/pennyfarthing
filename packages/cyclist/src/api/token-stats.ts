@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { WebSocket } from 'ws';
-import { getTokenStats, setTokenStatsCallback, TokenStats } from '../otlp-receiver.js';
+import { getTokenStats, addTokenStatsListener, TokenStats } from '../otlp-receiver.js';
 
 // Token stats WebSocket clients (for real-time updates)
 const tokenStatsClients = new Set<WebSocket>();
@@ -32,10 +32,11 @@ export function createTokenStatsRouter(): Router {
   return router;
 }
 
-// Initialize token stats callback for WebSocket broadcasts
+// Initialize token stats listener for WebSocket broadcasts
 // Called once during server setup
+// Uses addTokenStatsListener to support multiple subscribers (e.g., IPC + WebSocket)
 export function initTokenStatsBroadcast(): void {
-  setTokenStatsCallback((stats) => {
+  addTokenStatsListener((stats) => {
     broadcastTokenStats(stats);
   });
 }
