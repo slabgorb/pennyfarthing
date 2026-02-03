@@ -71,6 +71,20 @@ const contextClients = new Set<WebSocket>();
 // Diffs WebSocket clients (Phase 2: Edit/Write tool diffs)
 const diffsClients = new Set<WebSocket>();
 
+// Todos WebSocket clients (MSSCI-TODO: todos via WebSocket instead of REST polling)
+const todosClients = new Set<WebSocket>();
+
+// In-memory todos store (for initial send on connection)
+interface TodoItem {
+  id: string;
+  content: string;
+  activeForm: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  blockedBy?: string[];
+  blocks?: string[];
+}
+let currentTodos: TodoItem[] = [];
+
 // In-memory diff store (for initial send on connection)
 interface DiffData {
   id: string;
@@ -198,8 +212,43 @@ export function getDiffsClients(): Set<WebSocket> {
   return diffsClients;
 }
 
+export function getTodosClients(): Set<WebSocket> {
+  return todosClients;
+}
+
 export function getClaudeClients(): Set<WebSocket> {
   return claudeClients;
+}
+
+// =============================================================================
+// Todos Callback (Electron Mode Bridge)
+// =============================================================================
+// In Electron mode, main.ts updates todos when TodoWrite messages arrive.
+// This callback allows main.ts to push todo updates to WebSocket clients.
+
+type TodosUpdateCallback = (todos: TodoItem[]) => void;
+let todosUpdateCallback: TodosUpdateCallback | null = null;
+
+/**
+ * Register callback to receive todo updates for WebSocket broadcast
+ * Called by main.ts when TodoWrite messages are processed
+ */
+export function setTodosUpdateCallback(callback: TodosUpdateCallback): void {
+  todosUpdateCallback = callback;
+}
+
+/**
+ * Broadcast todos update to all connected WebSocket clients
+ * Called by main.ts when todos state changes
+ */
+export function broadcastTodosUpdate(todos: TodoItem[]): void {
+  currentTodos = todos;
+  const message = JSON.stringify({ type: 'update', todos });
+  for (const client of todosClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
 }
 
 // =============================================================================
@@ -295,6 +344,9 @@ export function setupWebSocketServers(
   // WebSocket server for diffs at /ws/diffs (Phase 2: Edit/Write diffs)
   const diffsWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for todos at /ws/todos (replaces REST polling)
+  const todosWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -358,6 +410,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/diffs') {
       diffsWss.handleUpgrade(request, socket, head, (ws) => {
         diffsWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/todos') {
+      todosWss.handleUpgrade(request, socket, head, (ws) => {
+        todosWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -680,6 +736,28 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       diffsClients.delete(ws);
+    });
+  });
+
+  // Handle todos WebSocket connections (replaces REST polling)
+  todosWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Todos client connected');
+    todosClients.add(ws);
+
+    // Send existing todos on connection
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', todos: currentTodos }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Todos client disconnected');
+      todosClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      todosClients.delete(ws);
     });
   });
 

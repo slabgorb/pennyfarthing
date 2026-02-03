@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, broadcastTodosUpdate } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -414,11 +414,18 @@ export function getTodos(): TodoItem[] {
 
 /**
  * Update todos state from TodoWrite message
- * Replaces current todos with new data and broadcasts to renderer
+ * Replaces current todos with new data and broadcasts to renderer and WebSocket
  */
 export function updateTodosState(todos: TodoItem[]): void {
   currentTodos = [...todos];
   broadcastToRenderer(IPC_DATA_CHANNELS.TODOS_UPDATE, currentTodos);
+  // Also broadcast via WebSocket for React components
+  broadcastTodosUpdate(currentTodos.map((t, i) => ({
+    id: `todo-${i}`,
+    content: t.content,
+    activeForm: t.activeForm,
+    status: t.status,
+  })));
 }
 
 /**
@@ -428,6 +435,8 @@ export function updateTodosState(todos: TodoItem[]): void {
 export function resetTodos(): void {
   currentTodos = [];
   broadcastToRenderer(IPC_DATA_CHANNELS.TODOS_UPDATE, currentTodos);
+  // Also broadcast via WebSocket for React components
+  broadcastTodosUpdate([]);
 }
 
 // =============================================================================
