@@ -44,6 +44,16 @@
   --status-error: #ef4444;
   --status-info: #3b82f6;
 
+  /* Tool Type Colors (MSSCI-13402) */
+  --tool-read-color: #3b82f6;    /* blue */
+  --tool-write-color: #f97316;   /* orange */
+  --tool-bash-color: #22c55e;    /* green */
+  --tool-glob-color: #a855f7;    /* purple */
+  --tool-grep-color: #06b6d4;    /* cyan */
+  --tool-edit-color: #eab308;    /* yellow */
+  --tool-task-color: #ec4899;    /* pink */
+  --tool-default-color: #6b7280; /* gray */
+
   /* Terminal Colors */
   --terminal-background: #0f0f1a;
   --terminal-foreground: #e4e4e7;
@@ -137,3 +147,76 @@
 .syntax-tag { color: var(--syntax-tag); }
 .syntax-attribute { color: var(--syntax-attribute); }
 .syntax-property { color: var(--syntax-property); }
+
+/* =============================================================================
+   Tool Call Block Styling (MSSCI-13402)
+   ============================================================================= */
+
+/* Tool type color classes - applied as left border */
+.tool-call-block.tool-read { border-left: 3px solid var(--tool-read-color); }
+.tool-call-block.tool-write { border-left: 3px solid var(--tool-write-color); }
+.tool-call-block.tool-bash { border-left: 3px solid var(--tool-bash-color); }
+.tool-call-block.tool-glob { border-left: 3px solid var(--tool-glob-color); }
+.tool-call-block.tool-grep { border-left: 3px solid var(--tool-grep-color); }
+.tool-call-block.tool-edit { border-left: 3px solid var(--tool-edit-color); }
+.tool-call-block.tool-task { border-left: 3px solid var(--tool-task-color); }
+
+/* Error state styling */
+.tool-call-block.tool-error {
+  border-left-color: var(--status-error);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.tool-result-content.error-content {
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--status-error);
+}
+
+/* Status indicator styling */
+.tool-status-pending { color: var(--status-warning); }
+.tool-status-complete { color: var(--status-success); }
+.tool-status-error { color: var(--status-error); }
+
+/* Duration display */
+.tool-duration {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-left: auto;
+}
+
+/* ToolStatus indicator component */
+.tool-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+}
+
+.tool-status-indicator.status-pending {
+  color: var(--status-warning);
+}
+
+.tool-status-indicator.status-success {
+  color: var(--status-success);
+}
+
+.tool-status-indicator.status-error {
+  color: var(--status-error);
+}
+
+/* Spinner animation for pending state */
+.tool-status-indicator .spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--status-warning);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
