@@ -7,7 +7,7 @@
  * Security: XSS prevention via HTML escaping BEFORE markdown processing.
  */
 
-import { highlightCode } from '../js/components/message-view/syntax-highlighter.js';
+import { highlightCode } from './syntax';
 
 /**
  * Strip CYCLIST structured markers from text before rendering.
