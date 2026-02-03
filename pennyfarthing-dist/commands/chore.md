@@ -37,15 +37,16 @@ Fast path for committing small changes that don't warrant story tracking.
 <workflow>
 **CRITICAL: Never commit directly to develop. Branch protection hooks will reject direct commits.**
 
+**CRITICAL: Never use git stash.** The stash/pull/pop pattern can silently revert changes when upstream modifies the same files during the pull.
+
 1. Verify dirty files exist (abort if clean)
 2. Determine variant (chore/doc/ux) from first arg
-3. Create branch from develop: `{variant}/{timestamp}`
-4. Stage all changes
-5. Generate or use provided commit message
-6. Commit with conventional format
-7. Merge to develop locally
-8. Push develop
-9. Delete local branch
+3. Create branch from current HEAD (keeps dirty changes): `{variant}/{timestamp}`
+4. Stage and commit all changes
+5. Fetch origin and rebase onto latest develop
+6. Switch to develop, merge the branch
+7. Push develop
+8. Delete local branch
 </workflow>
 
 ## Execution
@@ -133,26 +134,26 @@ fi
 
 ### Step 4: Branch and Commit
 
-```bash
-# Stash current changes
-git stash push -m "${BRANCH_TYPE}-wip-$(date +%s)"
+**IMPORTANT: Do NOT use git stash.** Stash + pull + pop can silently revert changes when upstream modifies the same files.
 
-# Update develop and create branch
-git checkout develop && git pull origin develop
+```bash
+# Create branch from current HEAD (preserves dirty changes)
 BRANCH="${BRANCH_TYPE}/$(date +%Y%m%d-%H%M%S)"
 git checkout -b "$BRANCH"
 
-# Restore changes
-git stash pop
-
-# Stage and commit
+# Stage and commit on the branch
 git add .
 git commit -m "${PREFIX}: ${MESSAGE}
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 
-# Merge and push
+# Now fetch and rebase onto latest develop
+git fetch origin develop
+git rebase origin/develop
+
+# Switch to develop, fast-forward merge, and push
 git checkout develop
+git pull origin develop
 git merge "$BRANCH"
 git branch -d "$BRANCH"
 git push origin develop
