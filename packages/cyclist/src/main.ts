@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, broadcastTodosUpdate, broadcastDiff } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastDiff } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1107,6 +1107,48 @@ export function startProjectWatchers(): void {
       return 'default';
     }
   });
+
+  // TirePump: Clear session and reload agent via WebSocket
+  setClaudeClearAndReloadCallback(async (agent: string) => {
+    const service = getClaudeService();
+    console.log(`[WebSocket] TirePump: clearAndReload agent "${agent}"`);
+
+    // Clear session state and WAIT for process to fully exit
+    await service.clearSessionAsync();
+    clearSessionId();
+    resetTokenStats();
+    resetTodos();
+    resetEventStore();
+    resetToolStats();
+    resetSkills();
+    resetContext();
+    resetUsageStats();
+
+    // Broadcast zeroed stats to update UI immediately
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
+    broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
+
+    // Load prime context for the agent
+    if (projectDir) {
+      const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+      setCurrentAgent(agentName);
+      const state = service.getContextState();
+      const tier = selectContextTier(agentName, state);
+      const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
+      if (primeContext) {
+        service.setSystemPrompt(primeContext);
+        console.log(`[WebSocket] TirePump: Set system prompt for agent "${agentName}" tier=${tier}`);
+      }
+    }
+
+    // Launch the new agent via the agent launch event
+    broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
+    console.log(`[WebSocket] TirePump: Session cleared and agent launch triggered: ${agent}`);
+  });
+
   console.log('Claude SDK callbacks registered for WebSocket bridge');
 
   // Start watching for agent changes

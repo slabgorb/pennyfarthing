@@ -2648,3 +2648,35 @@
 .btn-toggle.relay-toggle.active {
   color: var(--color-purple, #8b5cf6);
 }
+
+/* TirePump button - visible at 50%+ context */
+.btn-toggle.pump-toggle {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--color-cyan, #06b6d4);
+}
+
+.btn-toggle.pump-toggle .toggle-icon {
+  filter: none;
+}
+
+/* TirePump warning state at 70%+ context */
+.btn-toggle.pump-toggle.warning {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--color-error, #ef4444);
+  animation: pump-pulse 1.5s ease-in-out infinite;
+}
+
+.btn-toggle.pump-toggle.warning .toggle-icon {
+  filter: none;
+}
+
+@keyframes pump-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.3);
+  }
+}
