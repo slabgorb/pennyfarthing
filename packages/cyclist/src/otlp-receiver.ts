@@ -273,12 +273,48 @@ let sessionTokens: TokenStats = {
 // Callback for when token stats are updated (set by main.ts for IPC broadcast)
 let onTokenStatsUpdate: ((stats: TokenStats) => void) | null = null;
 
+// Additional listeners for token stats (for WebSocket broadcast, etc.)
+const tokenStatsListeners: ((stats: TokenStats) => void)[] = [];
+
 /**
  * Register callback for token stats updates
  * Called by main.ts to wire up IPC broadcast
  */
 export function setTokenStatsCallback(callback: (stats: TokenStats) => void): void {
   onTokenStatsUpdate = callback;
+}
+
+/**
+ * Add a listener for token stats updates (supports multiple subscribers)
+ * Returns unsubscribe function
+ */
+export function addTokenStatsListener(listener: (stats: TokenStats) => void): () => void {
+  tokenStatsListeners.push(listener);
+  return () => {
+    const index = tokenStatsListeners.indexOf(listener);
+    if (index > -1) {
+      tokenStatsListeners.splice(index, 1);
+    }
+  };
+}
+
+/**
+ * Notify all token stats listeners
+ * Called internally when token stats are updated
+ */
+function notifyTokenStatsListeners(stats: TokenStats): void {
+  // Call the primary callback (IPC broadcast)
+  if (onTokenStatsUpdate) {
+    onTokenStatsUpdate(stats);
+  }
+  // Call all additional listeners (WebSocket, etc.)
+  for (const listener of tokenStatsListeners) {
+    try {
+      listener(stats);
+    } catch (e) {
+      console.error('[OTLP] Error in token stats listener:', e);
+    }
+  }
 }
 
 // Callback for when tool events are recorded (set by main.ts for IPC broadcast)
@@ -465,10 +501,8 @@ export function aggregateTokenStats(parsed: PartialTokenStats): void {
     aggregateTokensForAgent(parsed);
     // Story 19-5: Track tokens by story
     aggregateTokensForStory(parsed);
-    // Notify callback (triggers IPC broadcast in Electron)
-    if (onTokenStatsUpdate) {
-      onTokenStatsUpdate({ ...sessionTokens });
-    }
+    // Notify all listeners (IPC broadcast + WebSocket)
+    notifyTokenStatsListeners({ ...sessionTokens });
   }
 }
 
