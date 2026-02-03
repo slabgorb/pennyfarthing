@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, copyFileSync, readdirSync } from 'fs';
+import { readFileSync, copyFileSync, readdirSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -23,6 +23,7 @@ import {
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
+import { mergeSettingsLocalJson } from '../utils/settings.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -99,7 +100,7 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     process.exit(1);
   }
 
-  const settingsUpdated = await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
+  const settingsUpdated = await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
 
   if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0 && !settingsUpdated) {
     logger.success(`Already up to date (v${updateInfo.currentVersion})`);
@@ -187,7 +188,7 @@ async function updateInstalledContent(
 
   // Update settings
   const assetsPath = getAssetsPath();
-  await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
+  await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
 
   // Update manifest version
   logger.newline();
@@ -370,164 +371,4 @@ function compareVersions(a: string, b: string): number {
   }
 
   return 0;
-}
-
-/**
- * Merge required hooks into existing settings.local.json
- * This ensures critical hooks like SessionStart are always configured
- * Returns true if any changes were made
- */
-async function mergeSettingsHooks(
-  projectRoot: string,
-  assetsPath: string,
-  options: { dryRun?: boolean }
-): Promise<boolean> {
-  const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const templatePath = join(assetsPath, 'templates/settings.local.json.template');
-
-  if (!pathExists(templatePath)) {
-    return false;
-  }
-
-  const templateContent = JSON.parse(readFileSync(templatePath, 'utf8'));
-
-  // If no existing settings, create from template
-  if (!pathExists(settingsPath)) {
-    if (!options.dryRun) {
-      ensureDirSync(join(projectRoot, '.claude'));
-      writeFileSync(settingsPath, JSON.stringify(templateContent, null, 2), 'utf8');
-    }
-    logger.created('.claude/settings.local.json');
-    return true;
-  }
-
-  // Read existing settings
-  let existingSettings: Record<string, unknown>;
-  try {
-    existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
-  } catch {
-    logger.warning('Could not parse existing settings.local.json, skipping merge');
-    return false;
-  }
-
-  let modified = false;
-
-  // Ensure hooks object exists
-  if (!existingSettings.hooks) {
-    existingSettings.hooks = {};
-    modified = true;
-  }
-
-  const hooks = existingSettings.hooks as Record<string, unknown>;
-
-  // Merge SessionStart hooks - these are critical for PROJECT_ROOT
-  if (!hooks.SessionStart) {
-    hooks.SessionStart = templateContent.hooks?.SessionStart || [];
-    modified = true;
-    logger.info('Added missing SessionStart hooks');
-  } else if (Array.isArray(hooks.SessionStart)) {
-    // Check if session-start.sh hook is configured
-    const hasSessionStartHook = hooks.SessionStart.some((entry: unknown) => {
-      if (typeof entry === 'object' && entry !== null) {
-        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
-        return hookEntry.hooks?.some(h =>
-          h.command?.includes('session-start.sh')
-        );
-      }
-      return false;
-    });
-
-    if (!hasSessionStartHook && templateContent.hooks?.SessionStart) {
-      // Prepend the session-start.sh hook entry
-      const sessionStartEntry = templateContent.hooks.SessionStart.find((entry: unknown) => {
-        if (typeof entry === 'object' && entry !== null) {
-          const hookEntry = entry as { hooks?: Array<{ command?: string }> };
-          return hookEntry.hooks?.some(h => h.command?.includes('session-start.sh'));
-        }
-        return false;
-      });
-      if (sessionStartEntry) {
-        hooks.SessionStart = [sessionStartEntry, ...hooks.SessionStart];
-        modified = true;
-        logger.info('Added missing session-start.sh hook');
-      }
-    }
-  }
-
-  // Merge SessionEnd hooks if missing
-  if (!hooks.SessionEnd && templateContent.hooks?.SessionEnd) {
-    hooks.SessionEnd = templateContent.hooks.SessionEnd;
-    modified = true;
-    logger.info('Added missing SessionEnd hooks');
-  }
-
-  // Merge Stop hooks if missing (question reflector enforcement)
-  if (!hooks.Stop && templateContent.hooks?.Stop) {
-    hooks.Stop = templateContent.hooks.Stop;
-    modified = true;
-    logger.info('Added missing Stop hooks');
-  } else if (Array.isArray(hooks.Stop)) {
-    // Check if question-reflector-check hook is configured
-    const hasReflectorHook = hooks.Stop.some((entry: unknown) => {
-      if (typeof entry === 'object' && entry !== null) {
-        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
-        return hookEntry.hooks?.some(h =>
-          h.command?.includes('question-reflector-check')
-        );
-      }
-      return false;
-    });
-
-    if (!hasReflectorHook && templateContent.hooks?.Stop) {
-      // Prepend the question-reflector-check hook entry
-      const reflectorEntry = templateContent.hooks.Stop.find((entry: unknown) => {
-        if (typeof entry === 'object' && entry !== null) {
-          const hookEntry = entry as { hooks?: Array<{ command?: string }> };
-          return hookEntry.hooks?.some(h => h.command?.includes('question-reflector-check'));
-        }
-        return false;
-      });
-      if (reflectorEntry) {
-        hooks.Stop = [reflectorEntry, ...hooks.Stop];
-        modified = true;
-        logger.info('Added missing question-reflector-check hook');
-      }
-    }
-  }
-
-  // Ensure statusLine is configured and points to new location
-  const statusLine = existingSettings.statusLine as Record<string, unknown> | undefined;
-  if (!statusLine) {
-    existingSettings.statusLine = templateContent.statusLine;
-    modified = true;
-    logger.info('Added missing statusLine configuration');
-  } else if (statusLine.command && typeof statusLine.command === 'string') {
-    // Migrate from any legacy path to new path (.pennyfarthing/scripts/misc/statusline.sh)
-    const legacyPaths = [
-      '.claude/core/statusline.sh',
-      '.claude/statusline.sh',
-      '.claude/pennyfarthing/statusline.sh',  // Old copy-mode path (v4.0.0-4.0.3)
-      '.claude/pennyfarthing/scripts/statusline.sh',  // Bug in template (fixed in v4.0.5)
-      '.claude/scripts/statusline.sh',  // Previous location (pre-v6.6)
-      '.pennyfarthing/scripts/statusline.sh'  // Missing misc/ subdirectory (fixed in v7.0.3)
-    ];
-    for (const legacyPath of legacyPaths) {
-      if (statusLine.command.includes(legacyPath)) {
-        statusLine.command = statusLine.command.replace(
-          legacyPath,
-          '.pennyfarthing/scripts/misc/statusline.sh'
-        );
-        modified = true;
-        logger.info(`Updated statusLine path from ${legacyPath} to new location`);
-        break;
-      }
-    }
-  }
-
-  if (modified && !options.dryRun) {
-    writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
-    logger.updated('.claude/settings.local.json');
-  }
-
-  return modified;
 }

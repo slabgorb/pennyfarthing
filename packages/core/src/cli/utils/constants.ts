@@ -29,6 +29,7 @@ export type CoreAgent = typeof CORE_AGENTS[number];
 export const DIRECTORY_SYMLINKS = [
   { name: 'agents', link: '.pennyfarthing/agents' },
   { name: 'guides', link: '.pennyfarthing/guides' },
+  { name: 'output-styles', link: '.pennyfarthing/output-styles' },
   { name: 'personas', link: '.pennyfarthing/personas' },
   { name: 'scripts', link: '.pennyfarthing/scripts' },
   { name: 'workflows', link: '.pennyfarthing/workflows' }
@@ -53,6 +54,7 @@ export const MANAGED_PATHS = [
   '.claude/skills',
   '.pennyfarthing/agents',
   '.pennyfarthing/guides',
+  '.pennyfarthing/output-styles',
   '.pennyfarthing/personas',
   '.pennyfarthing/scripts',
   '.pennyfarthing/workflows'
