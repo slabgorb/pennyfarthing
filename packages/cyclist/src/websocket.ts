@@ -35,8 +35,12 @@ interface ClaudeWebSocketMessage {
   mode?: PermissionMode;
 }
 
-// Track Claude sessions per WebSocket connection
+// Track Claude sessions per WebSocket connection (web mode only)
 const claudeSessions = new Map<WebSocket, ClaudeService>();
+
+// Claude WebSocket clients for Electron mode broadcast
+// In Electron mode, these clients receive messages from main process via broadcastClaudeMessage
+const claudeClients = new Set<WebSocket>();
 
 // Livereload clients
 const livereloadClients = new Set<WebSocket>();
@@ -91,6 +95,22 @@ type GitUpdateCallback = (reposInfo: RepoGitInfo[]) => void;
 let storyUpdateCallback: StoryUpdateCallback | null = null;
 let gitUpdateCallback: GitUpdateCallback | null = null;
 
+// =============================================================================
+// Claude Command Callbacks (Electron Mode Bridge)
+// =============================================================================
+// In Electron mode, WebSocket messages need to be forwarded to the main process's
+// ClaudeService singleton. These callbacks allow main.ts to register handlers.
+
+type ClaudeSendCallback = (prompt: string, onMessage: (msg: unknown) => void, onComplete: () => void, onError: (err: string) => void) => void;
+type ClaudeAbortCallback = () => void;
+type ClaudeClearCallback = () => void;
+type ClaudeSetModeCallback = (mode: PermissionMode) => void;
+
+let claudeSendCallback: ClaudeSendCallback | null = null;
+let claudeAbortCallback: ClaudeAbortCallback | null = null;
+let claudeClearCallback: ClaudeClearCallback | null = null;
+let claudeSetModeCallback: ClaudeSetModeCallback | null = null;
+
 /**
  * Register callback to receive story updates for IPC broadcast
  * Called by main.ts to bridge WebSocket updates to Electron IPC
@@ -105,6 +125,35 @@ export function setStoryUpdateCallback(callback: StoryUpdateCallback): void {
  */
 export function setGitUpdateCallback(callback: GitUpdateCallback): void {
   gitUpdateCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude send commands from WebSocket
+ * Called by main.ts to bridge WebSocket commands to ClaudeService
+ */
+export function setClaudeSendCallback(callback: ClaudeSendCallback): void {
+  claudeSendCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude abort commands from WebSocket
+ */
+export function setClaudeAbortCallback(callback: ClaudeAbortCallback): void {
+  claudeAbortCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude clear commands from WebSocket
+ */
+export function setClaudeClearCallback(callback: ClaudeClearCallback): void {
+  claudeClearCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude setMode commands from WebSocket
+ */
+export function setClaudeSetModeCallback(callback: ClaudeSetModeCallback): void {
+  claudeSetModeCallback = callback;
 }
 
 // Export client getters for external use
@@ -130,6 +179,53 @@ export function getContextClients(): Set<WebSocket> {
 
 export function getDiffsClients(): Set<WebSocket> {
   return diffsClients;
+}
+
+export function getClaudeClients(): Set<WebSocket> {
+  return claudeClients;
+}
+
+// =============================================================================
+// Claude WebSocket Broadcast Functions (for Electron mode)
+// =============================================================================
+// In Electron mode, the main process manages the ClaudeService and broadcasts
+// messages to WebSocket clients. These functions are called from main.ts.
+
+/**
+ * Broadcast a Claude message to all connected WebSocket clients
+ * Used by main.ts to relay messages from the main process ClaudeService
+ */
+export function broadcastClaudeMessage(message: unknown): void {
+  const payload = JSON.stringify({ type: 'message', message });
+  for (const client of claudeClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  }
+}
+
+/**
+ * Broadcast Claude query completion to all connected WebSocket clients
+ */
+export function broadcastClaudeComplete(): void {
+  const payload = JSON.stringify({ type: 'complete' });
+  for (const client of claudeClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  }
+}
+
+/**
+ * Broadcast Claude error to all connected WebSocket clients
+ */
+export function broadcastClaudeError(error: string): void {
+  const payload = JSON.stringify({ type: 'error', error });
+  for (const client of claudeClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  }
 }
 
 // Setup WebSocket servers for stats and persona updates
@@ -757,92 +853,179 @@ export function setupWebSocketServers(
     }
   }
 
-  // Handle Claude WebSocket connections (web mode)
+  // Handle Claude WebSocket connections
+  // In Electron mode: clients receive broadcasts from main.ts (no local ClaudeService)
+  // In Web mode: each client gets its own ClaudeService subprocess
+  const isElectronMode = process.env.CYCLIST_ELECTRON_MODE === '1';
+
   claudeWss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] Claude client connected');
+    console.log('[WebSocket] Claude client connected (electron mode:', isElectronMode, ')');
 
-    // Create a new ClaudeService instance for this connection
-    const projectDir = getProjectDir();
-    const otelConfig = getOtelConfig(projectDir);
-    const service = new ClaudeService({ cwd: projectDir, env: otelConfig ?? undefined });
-    claudeSessions.set(ws, service);
+    // Always track the client for broadcast capability
+    claudeClients.add(ws);
 
-    // Handle incoming messages
-    ws.on('message', async (data) => {
-      try {
-        const msg = JSON.parse(data.toString()) as ClaudeWebSocketMessage;
+    if (isElectronMode) {
+      // Electron mode: forward commands to main.ts ClaudeService via callbacks
+      // Responses are broadcast back to all clients via broadcastClaudeMessage
 
-        switch (msg.type) {
-          case 'send':
-            if (!msg.prompt) {
-              ws.send(JSON.stringify({ type: 'error', error: 'Missing prompt' }));
-              return;
-            }
+      ws.on('message', async (data) => {
+        try {
+          const msg = JSON.parse(data.toString()) as ClaudeWebSocketMessage;
+          console.log('[WebSocket] Electron mode received:', msg.type);
 
-            // Stream messages back to client
-            try {
-              for await (const message of service.sendMessage(msg.prompt)) {
+          switch (msg.type) {
+            case 'send':
+              if (!msg.prompt) {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing prompt' }));
+                return;
+              }
+              if (claudeSendCallback) {
+                claudeSendCallback(
+                  msg.prompt,
+                  (message) => {
+                    // Message broadcast is handled by main.ts calling broadcastClaudeMessage
+                    // But we also send directly to this client for immediate feedback
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({ type: 'message', message }));
+                    }
+                  },
+                  () => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({ type: 'complete' }));
+                    }
+                  },
+                  (error) => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({ type: 'error', error }));
+                    }
+                  }
+                );
+              } else {
+                console.error('[WebSocket] Claude send callback not registered');
+                ws.send(JSON.stringify({ type: 'error', error: 'Claude service not available' }));
+              }
+              break;
+
+            case 'abort':
+              if (claudeAbortCallback) {
+                claudeAbortCallback();
+              }
+              break;
+
+            case 'clear':
+              if (claudeClearCallback) {
+                claudeClearCallback();
+              }
+              break;
+
+            case 'setMode':
+              if (msg.mode && claudeSetModeCallback) {
+                claudeSetModeCallback(msg.mode);
+              }
+              break;
+          }
+        } catch (err) {
+          console.error('[WebSocket] Error handling Electron mode message:', err);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'error', error: 'Invalid message format' }));
+          }
+        }
+      });
+
+      ws.on('close', () => {
+        console.log('[WebSocket] Claude client disconnected');
+        claudeClients.delete(ws);
+      });
+
+      ws.on('error', () => {
+        claudeClients.delete(ws);
+      });
+    } else {
+      // Web mode: create a new ClaudeService instance for this connection
+      const projectDir = getProjectDir();
+      const otelConfig = getOtelConfig(projectDir);
+      const service = new ClaudeService({ cwd: projectDir, env: otelConfig ?? undefined });
+      claudeSessions.set(ws, service);
+
+      // Handle incoming messages
+      ws.on('message', async (data) => {
+        try {
+          const msg = JSON.parse(data.toString()) as ClaudeWebSocketMessage;
+
+          switch (msg.type) {
+            case 'send':
+              if (!msg.prompt) {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing prompt' }));
+                return;
+              }
+
+              // Stream messages back to client
+              try {
+                for await (const message of service.sendMessage(msg.prompt)) {
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'message', message }));
+                  }
+                }
                 if (ws.readyState === WebSocket.OPEN) {
-                  ws.send(JSON.stringify({ type: 'message', message }));
+                  ws.send(JSON.stringify({ type: 'complete' }));
+                }
+              } catch (err) {
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({
+                    type: 'error',
+                    error: err instanceof Error ? err.message : 'Unknown error'
+                  }));
                 }
               }
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'complete' }));
+              break;
+
+            case 'abort':
+              service.abort();
+              break;
+
+            case 'clear':
+              service.clearSession();
+              break;
+
+            case 'setMode':
+              if (msg.mode) {
+                service.setPermissionMode(msg.mode);
               }
-            } catch (err) {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                  type: 'error',
-                  error: err instanceof Error ? err.message : 'Unknown error'
-                }));
-              }
-            }
-            break;
-
-          case 'abort':
-            service.abort();
-            break;
-
-          case 'clear':
-            service.clearSession();
-            break;
-
-          case 'setMode':
-            if (msg.mode) {
-              service.setPermissionMode(msg.mode);
-            }
-            break;
+              break;
+          }
+        } catch (err) {
+          console.error('[WebSocket] Error handling message:', err);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              error: 'Invalid message format'
+            }));
+          }
         }
-      } catch (err) {
-        console.error('[WebSocket] Error handling message:', err);
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: 'error',
-            error: 'Invalid message format'
-          }));
+      });
+
+      // Cleanup on disconnect
+      ws.on('close', () => {
+        console.log('[WebSocket] Claude client disconnected');
+        claudeClients.delete(ws);
+        const service = claudeSessions.get(ws);
+        if (service) {
+          service.abort(); // Kill any running process
+          claudeSessions.delete(ws);
         }
-      }
-    });
+      });
 
-    // Cleanup on disconnect
-    ws.on('close', () => {
-      console.log('[WebSocket] Claude client disconnected');
-      const service = claudeSessions.get(ws);
-      if (service) {
-        service.abort(); // Kill any running process
-        claudeSessions.delete(ws);
-      }
-    });
-
-    // Handle errors
-    ws.on('error', (err) => {
-      console.error('[WebSocket] Claude client error:', err);
-      const service = claudeSessions.get(ws);
-      if (service) {
-        service.abort();
-        claudeSessions.delete(ws);
-      }
-    });
+      // Handle errors
+      ws.on('error', (err) => {
+        console.error('[WebSocket] Claude client error:', err);
+        claudeClients.delete(ws);
+        const service = claudeSessions.get(ws);
+        if (service) {
+          service.abort();
+          claudeSessions.delete(ws);
+        }
+      });
+    }
   });
 
   // Handle livereload WebSocket connections (dev mode only)
