@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Added
+
+- **SpanTimeline Component** - Visual timeline for subagent spans
+- **ConfirmDialog Component** - Reusable confirmation dialog
+- **AuditLogPanel** - Panel for viewing system audit logs
+- **AgentPopup Component** - Popup for agent details
+- **TirePump Button** - Context clearing button in ControlBar
+- **Bell Mode Queue UI** - Visual queue for messages during agent work
+- **Tool Display Badges** - Humanized tool summaries with badges
+- **Image Paste Support** - Paste images directly with develop-behind detection
+- **XML Schema Migration** - Tools and validation hooks for schema migration
+- **useSyntaxHighlighter Hook** - React hook for code syntax highlighting
+- **CDP Debugging Support** - Chrome DevTools Protocol support for Playwright MCP
+- **Command Typeahead Sorting** - Frequency-based sorting for slash command suggestions
+- **Todos WebSocket** - Replaced REST polling with WebSocket for todos
+- **useMarkdownParser Hook** - React hook for markdown rendering
+- **Tool Use Stack Grouping** - Consecutive tool calls grouped visually
+- **Collapsible Tool Results** - Expandable/collapsible tool output display
+
+### Changed
+
+- **Type Consolidation** - Consolidated types and eliminated js/ folder
+- **Dockview Migration** - Replaced DockingWorkspace with Dockview library
+
+### Fixed
+
+- **Git Cache Invalidation** - Smarter cache invalidation logic
+- **Token Stats WebSocket** - Fixed broadcast and nested scrollbar issues
+- **Panel Refresh Bugs** - Fixed changed files and sprint tab refresh (75-6)
+- **Cyclist UI Bugs** - Multiple UI fixes for story 75-5
+- **Themes API Path** - Fixed .pennyfarthing symlink path resolution
+- **Panel Restore Menu** - Added restore menu, hide message panel close button
+- **Sidebar Toggle Buttons** - Collapsed sidebar toggle buttons now visible
+- **Sidebar Visibility** - Fixed visibility not restoring on refresh
+- **Typeahead Commands** - Fixed missing commands and z-index issues
+- **WebSocket Claude Bridge** - Added image support and Electron mode bridging
 
 ---
 

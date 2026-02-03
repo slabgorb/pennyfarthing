@@ -15,9 +15,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, and more
-- **19 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (PRD, Architecture), Procedural (Brainstorming, Retrospective)
-- **46 Slash Commands** - Entry points for agent activation and workflows
-- **23 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **24 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (PRD, Architecture), Procedural (Brainstorming, Retrospective)
+- **48 Slash Commands** - Entry points for agent activation and workflows
+- **24 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 
 ### 2. Personality Research
@@ -100,7 +100,7 @@ BikeLane is the umbrella workflow system supporting three types:
 | **Dev** | Developer | Make tests pass (GREEN) |
 | **Reviewer** | Code Reviewer | Quality validation, approve/reject |
 
-Use `/workflow list` to see all 19 workflows. Use `/workflow start <name>` to begin any workflow.
+Use `/workflow list` to see all 24 workflows. Use `/workflow start <name>` to begin any workflow.
 
 ## Benchmarking & Personality Research
 
