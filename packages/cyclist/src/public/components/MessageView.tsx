@@ -32,6 +32,10 @@ interface MessageData {
   parent_id?: string;
   subagent_type?: string;
   subagent_name?: string;
+  /** Whether this tool result represents an error (MSSCI-13402) */
+  is_error?: boolean;
+  /** Duration in milliseconds for tool execution (MSSCI-13402) */
+  durationMs?: number;
 }
 
 interface MessageViewProps {
@@ -144,6 +148,8 @@ export default function MessageView({ messages }: MessageViewProps): React.React
             tool_id: result.tool_id!,
             content: result.content || '',
             timestamp: result.timestamp,
+            is_error: result.is_error,
+            durationMs: result.durationMs,
           } : undefined}
         />
       );

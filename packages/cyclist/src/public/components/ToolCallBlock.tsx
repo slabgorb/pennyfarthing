@@ -10,6 +10,7 @@
 import React, { useState, useMemo } from 'react';
 import { getToolTypeClass } from '../utils/toolTypeColors.js';
 import { formatDuration } from '../utils/formatDuration.js';
+import { ToolStatus, ToolStatusType } from './ToolStatus.js';
 
 interface ToolUseMessage {
   type: 'tool_use';
@@ -88,7 +89,7 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
 
   // MSSCI-13402: Determine status based on result presence and error state
   const isError = result?.is_error === true;
-  const status = !result ? 'pending' : isError ? 'error' : 'complete';
+  const status: ToolStatusType = !result ? 'pending' : isError ? 'error' : 'success';
   const inputDisplay = formatToolInput(toolUse.tool_name, toolUse.input);
 
   // MSSCI-13402: Get tool type CSS class
@@ -139,8 +140,9 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
     <div data-testid="tool-call-block" className={blockClasses}>
       <div className="tool-header">
         <span className="tool-name">{toolUse.tool_name}</span>
+        {/* MSSCI-13402: Status indicator with icons */}
         <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
-          {status}
+          <ToolStatus status={status} />
         </span>
         {/* MSSCI-13402: Duration display */}
         {result && (

@@ -174,7 +174,7 @@
 
 /* Status indicator styling */
 .tool-status-pending { color: var(--status-warning); }
-.tool-status-complete { color: var(--status-success); }
+.tool-status-success { color: var(--status-success); }
 .tool-status-error { color: var(--status-error); }
 
 /* Duration display */
