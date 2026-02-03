@@ -38,12 +38,27 @@ interface MessageData {
   durationMs?: number;
 }
 
+// Content block types from SDK nested format (AC5: Story 75-5)
+interface SDKTextBlock {
+  type: 'text';
+  text: string;
+}
+
+interface SDKToolUseBlock {
+  type: 'tool_use';
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+}
+
+type SDKContentBlock = SDKTextBlock | SDKToolUseBlock | { type: string; text?: string };
+
 interface SDKMessage {
   type: string;
   message?: {
-    content?: Array<{ type: string; text?: string }>;
+    content?: Array<SDKContentBlock>;
   };
-  content?: string | Array<{ type: string; text?: string }>;
+  content?: string | Array<SDKContentBlock>;
   tool_name?: string;
   tool_id?: string;
   input?: Record<string, unknown>;
@@ -60,41 +75,78 @@ interface SDKMessage {
 // Message Transform
 // =============================================================================
 
-function transformMessage(sdkMessage: SDKMessage): MessageData | null {
+/**
+ * Transform SDK message to MessageData.
+ * Returns an array because nested SDK format may contain both text and tool_use blocks.
+ * (AC5: Story 75-5 - Extract tool_use from nested SDK format)
+ */
+function transformMessage(sdkMessage: SDKMessage): MessageData[] {
   const timestamp = Date.now();
   // Map parent_tool_use_id to parent_id for subagent grouping
   const parent_id = sdkMessage.parent_tool_use_id || undefined;
   const subagent_type = sdkMessage.subagent_type;
   const subagent_name = sdkMessage.subagent_name;
 
+  const results: MessageData[] = [];
+
   // Handle assistant/message type
   if (sdkMessage.type === 'assistant' || sdkMessage.type === 'message') {
-    let content = '';
     const contentArray = sdkMessage.message?.content || sdkMessage.content;
+
     if (Array.isArray(contentArray)) {
-      content = contentArray
-        .filter((block): block is { type: string; text: string } =>
-          block.type === 'text' && typeof block.text === 'string'
+      // Extract text blocks
+      const textContent = contentArray
+        .filter((block): block is SDKTextBlock =>
+          block.type === 'text' && typeof (block as SDKTextBlock).text === 'string'
         )
         .map(block => block.text)
         .join('');
+
+      // Add text message if we have content (AC5: only if >= 3 chars)
+      if (textContent && textContent.trim().length >= 3) {
+        results.push({
+          type: 'assistant',
+          content: textContent,
+          timestamp,
+          isStreaming: true,
+          parent_id,
+          subagent_type,
+          subagent_name,
+        });
+      }
+
+      // Extract tool_use blocks from nested SDK format (AC5: Story 75-5)
+      const toolUseBlocks = contentArray.filter(
+        (block): block is SDKToolUseBlock => block.type === 'tool_use'
+      );
+
+      for (const toolBlock of toolUseBlocks) {
+        results.push({
+          type: 'tool_use',
+          tool_name: toolBlock.name,
+          tool_id: toolBlock.id,
+          input: toolBlock.input,
+          timestamp,
+          parent_id,
+          subagent_type,
+          subagent_name,
+        });
+      }
     } else if (typeof contentArray === 'string') {
-      content = contentArray;
+      if (contentArray.trim().length >= 3) {
+        results.push({
+          type: 'assistant',
+          content: contentArray,
+          timestamp,
+          isStreaming: true,
+          parent_id,
+          subagent_type,
+          subagent_name,
+        });
+      }
     }
 
-    if (!content || content.trim().length < 3) {
-      return null;
-    }
-
-    return {
-      type: 'assistant',
-      content,
-      timestamp,
-      isStreaming: true,
-      parent_id,
-      subagent_type,
-      subagent_name,
-    };
+    return results;
   }
 
   // Handle user messages
@@ -103,8 +155,8 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
     const contentArray = sdkMessage.message?.content || sdkMessage.content;
     if (Array.isArray(contentArray)) {
       content = contentArray
-        .filter((block): block is { type: string; text: string } =>
-          block.type === 'text' && typeof block.text === 'string'
+        .filter((block): block is SDKTextBlock =>
+          block.type === 'text' && typeof (block as SDKTextBlock).text === 'string'
         )
         .map(block => block.text)
         .join('');
@@ -112,21 +164,23 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       content = contentArray;
     }
 
-    if (!content) return null;
+    if (content) {
+      results.push({
+        type: 'user',
+        content,
+        timestamp,
+        parent_id,
+        subagent_type,
+        subagent_name,
+      });
+    }
 
-    return {
-      type: 'user',
-      content,
-      timestamp,
-      parent_id,
-      subagent_type,
-      subagent_name,
-    };
+    return results;
   }
 
-  // Handle tool_use
+  // Handle discrete tool_use (not nested in assistant message)
   if (sdkMessage.type === 'tool_use') {
-    return {
+    results.push({
       type: 'tool_use',
       tool_name: sdkMessage.tool_name,
       tool_id: sdkMessage.tool_id,
@@ -135,12 +189,13 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       parent_id,
       subagent_type,
       subagent_name,
-    };
+    });
+    return results;
   }
 
   // Handle tool_result (MSSCI-13402: include is_error and durationMs)
   if (sdkMessage.type === 'tool_result') {
-    return {
+    results.push({
       type: 'tool_result',
       tool_id: sdkMessage.tool_id,
       content: typeof sdkMessage.output === 'string' ? sdkMessage.output : '',
@@ -150,10 +205,11 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       subagent_name,
       is_error: sdkMessage.is_error,
       durationMs: sdkMessage.durationMs,
-    };
+    });
+    return results;
   }
 
-  return null;
+  return results;
 }
 
 // =============================================================================
@@ -187,8 +243,8 @@ export function MessagePanel(): React.ReactElement {
   // Handle incoming SDK message
   const handleSDKMessage = useCallback((sdkMessage: ClaudeMessage) => {
     const transformed = transformMessage(sdkMessage as SDKMessage);
-    if (transformed) {
-      setMessages(prev => [...prev, transformed]);
+    if (transformed.length > 0) {
+      setMessages(prev => [...prev, ...transformed]);
     }
   }, []);
 

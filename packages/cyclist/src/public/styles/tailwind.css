@@ -468,6 +468,27 @@
   border-bottom-left-radius: 4px;
 }
 
+/* Hook/System message styling (AC3: Story 75-5) */
+.message-hook,
+.message-system {
+  background: var(--bg-secondary, #252526);
+  border: 1px dashed var(--border-color, #3c3c3c);
+  color: var(--text-secondary, #8b8b8b);
+  max-width: 100%;
+  font-size: 0.85rem;
+}
+
+.message-hook .message-avatar,
+.message-system .message-avatar {
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.hook-feedback {
+  background: var(--bg-secondary, #252526);
+  border-left: 3px solid var(--warning-color, #cca700);
+  padding-left: 0.75rem;
+}
+
 .message-tool_use,
 .message-tool_result {
   background: var(--bg-secondary, #252526);
