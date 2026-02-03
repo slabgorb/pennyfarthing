@@ -551,12 +551,16 @@ function normalizeStoryStatus(status: string | undefined | null): 'backlog' | 'i
 }
 
 // Get workflow phases from workflow YAML definition
-// Checks multiple locations: .claude/workflows/, pennyfarthing-dist/workflows/
+// Checks multiple locations: .pennyfarthing/workflows/, .claude/workflows/, pennyfarthing-dist/workflows/
 export function getWorkflowPhases(workflowName: string, projectDir: string): Omit<WorkflowPhase, 'status'>[] | null {
   try {
     // Look for workflow YAML in multiple locations (in priority order)
     const searchPaths = [
+      // 1. Runtime via symlinks: .pennyfarthing/workflows/ (orchestrator pattern)
+      join(projectDir, '.pennyfarthing', 'workflows', `${workflowName}.yaml`),
+      // 2. Legacy: .claude/workflows/
       join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`),
+      // 3. Monorepo/dev: pennyfarthing-dist/workflows/
       join(projectDir, 'pennyfarthing-dist', 'workflows', `${workflowName}.yaml`),
     ];
 
