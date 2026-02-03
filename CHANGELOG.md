@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*No unreleased changes*
+
+---
+
+## [9.0.3] - 2026-02-03
+
 ### Added
 
 - **SpanTimeline Component** - Visual timeline for subagent spans
