@@ -16,8 +16,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { WorkspaceLayoutConfig } from '../components/DockingWorkspace';
-import { createWorkspaceLayout } from '../components/DockingWorkspace';
+import type { WorkspaceLayoutConfig } from '../components/DockviewWorkspace';
+import { createWorkspaceLayout } from '../components/DockviewWorkspace';
 
 const LAYOUT_VERSION = 1;
 const DEBOUNCE_DELAY = 300;

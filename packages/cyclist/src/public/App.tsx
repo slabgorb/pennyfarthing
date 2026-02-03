@@ -11,10 +11,10 @@
 
 import React, { useEffect, useCallback } from 'react';
 import {
-  DockingWorkspace,
+  DockviewWorkspace,
   registerPanelComponent,
   PANEL_INVENTORY,
-} from './components/DockingWorkspace';
+} from './components/DockviewWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
@@ -152,7 +152,7 @@ export default function App(): React.ReactElement {
         ) : (
           /* Main content area */
           <main id="main-content" tabIndex={-1}>
-            <DockingWorkspace
+            <DockviewWorkspace
               initialLayout={layout}
               onLayoutChange={saveLayout}
             />
