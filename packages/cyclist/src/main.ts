@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, broadcastTodosUpdate } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, broadcastTodosUpdate, broadcastDiff } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1268,25 +1268,30 @@ export function setupClaudeIPCHandlers(ipcMain: {
 
           if (toolName === 'Edit') {
             const input = toolInput as { file_path: string; old_string: string; new_string: string };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+            const diffData = {
               id: toolId || `edit-${Date.now()}`,
               path: input.file_path,
               original: input.old_string,
               modified: input.new_string,
               toolName: 'Edit',
               timestamp: Date.now(),
-            });
+            };
+            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, diffData);
+            // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
+            broadcastDiff(diffData);
           } else if (toolName === 'Write') {
             const input = toolInput as { file_path: string; content: string };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+            const diffData = {
               id: toolId || `write-${Date.now()}`,
               path: input.file_path,
               original: '',
               modified: input.content,
               toolName: 'Write',
               timestamp: Date.now(),
-              isNewFile: true,
-            });
+            };
+            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, { ...diffData, isNewFile: true });
+            // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
+            broadcastDiff(diffData);
           } else if (toolName === 'Skill') {
             const input = toolInput as { skill: string; args?: string };
             handleSkillEvent({
