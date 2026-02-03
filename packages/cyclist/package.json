@@ -23,7 +23,7 @@
     "dev": "npm run build && concurrently -k -n tsc,preload,vite,electron -c blue,cyan,magenta,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"vite build --watch\" \"electron dist/main.js\"",
     "dev:cdp": "npm run build && concurrently -k -n tsc,preload,vite,electron -c blue,cyan,magenta,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"vite build --watch\" \"electron --remote-debugging-port=9222 dist/main.js\"",
     "dev:once": "npm run build && electron dist/main.js",
-    "dev:web": "CYCLIST_DEV_WEB=1 CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} tsx watch src/server.ts",
+    "dev:web": "CYCLIST_ELECTRON_MODE= CYCLIST_DEV_WEB=1 CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} tsx watch src/server.ts",
     "dev:server": "tsx watch src/server.ts",
     "dev:debug": "CYCLIST_DEV_WEB=1 OTEL_DEBUG=true CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} node --inspect src/server.ts",
     "dev:debug-brk": "CYCLIST_DEV_WEB=1 OTEL_DEBUG=true CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} node --inspect-brk src/server.ts",
