@@ -331,7 +331,18 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      // 2. Monorepo/dev: project dir pennyfarthing-dist
+      // 2. Runtime via symlinks: .pennyfarthing/personas/themes (orchestrator pattern)
+      if (!themesDir) {
+        const projectDir = getProjectDirectory();
+        if (projectDir) {
+          const runtimeThemes = path.join(projectDir, '.pennyfarthing', 'personas', 'themes');
+          if (fs.existsSync(runtimeThemes)) {
+            themesDir = runtimeThemes;
+          }
+        }
+      }
+
+      // 3. Monorepo/dev: project dir pennyfarthing-dist
       if (!themesDir) {
         const projectDir = getProjectDirectory();
         if (projectDir) {

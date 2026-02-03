@@ -27,6 +27,7 @@ import {
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
+import { storePendingToolInput } from './span-correlation.js';
 
 // Pasted image type (matches main.ts PastedImage)
 interface PastedImage {
@@ -1073,6 +1074,55 @@ export function setupWebSocketServers(
                 for await (const message of service.sendMessage(msg.prompt)) {
                   if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'message', message }));
+                  }
+
+                  // Process tool_use messages for diff tracking (mirrors main.ts Electron mode)
+                  // This stores pending inputs for OTLP correlation AND broadcasts diffs directly
+                  const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
+                  if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
+                    // Store for OTLP correlation
+                    storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
+
+                    // Broadcast diffs directly for Edit/Write tools
+                    if (sdkMsg.tool_name === 'Edit') {
+                      const input = sdkMsg.input as { file_path?: string; old_string?: string; new_string?: string };
+                      if (input.file_path) {
+                        const diff: DiffData = {
+                          id: sdkMsg.tool_id,
+                          path: input.file_path,
+                          original: input.old_string || '',
+                          modified: input.new_string || '',
+                          toolName: 'Edit',
+                          timestamp: Date.now(),
+                        };
+                        const existingIndex = diffStore.findIndex(d => d.path === diff.path);
+                        if (existingIndex >= 0) {
+                          diffStore[existingIndex] = diff;
+                        } else {
+                          diffStore.push(diff);
+                        }
+                        broadcastDiff(diff);
+                      }
+                    } else if (sdkMsg.tool_name === 'Write') {
+                      const input = sdkMsg.input as { file_path?: string; content?: string };
+                      if (input.file_path) {
+                        const diff: DiffData = {
+                          id: sdkMsg.tool_id,
+                          path: input.file_path,
+                          original: '',
+                          modified: input.content || '',
+                          toolName: 'Write',
+                          timestamp: Date.now(),
+                        };
+                        const existingIndex = diffStore.findIndex(d => d.path === diff.path);
+                        if (existingIndex >= 0) {
+                          diffStore[existingIndex] = diff;
+                        } else {
+                          diffStore.push(diff);
+                        }
+                        broadcastDiff(diff);
+                      }
+                    }
                   }
                 }
                 if (ws.readyState === WebSocket.OPEN) {

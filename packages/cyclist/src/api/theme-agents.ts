@@ -99,12 +99,17 @@ function findThemePath(projectDir: string, themeName: string): string | null {
     possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${themeName}.yaml`));
   }
 
-  // 2. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
+  // 2. Runtime via symlinks: .pennyfarthing/personas/themes (orchestrator pattern)
+  possiblePaths.push(
+    join(projectDir, '.pennyfarthing', 'personas', 'themes', `${themeName}.yaml`),
+  );
+
+  // 3. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
   possiblePaths.push(
     join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', `${themeName}.yaml`),
   );
 
-  // 3. Project directory paths
+  // 4. Legacy and fallback project directory paths
   possiblePaths.push(
     join(projectDir, '.claude', 'personas', 'themes', `${themeName}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${themeName}.yaml`),
