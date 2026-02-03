@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Ubuntu, Common]
 
     steps:
       - name: Checkout
@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true  # Vitest tests, may have environment issues in CI
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Ubuntu, Common]
 
     steps:
       - name: Checkout
@@ -79,7 +79,7 @@ jobs:
         continue-on-error: true  # Lint not configured on all packages yet
 
   python-benchmark:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Ubuntu, Common]
     name: Python CLI Startup Benchmark
 
     steps:
