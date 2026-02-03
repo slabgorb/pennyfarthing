@@ -1608,54 +1608,8 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
  */
 export const isSettingsInitialized = false;
 
-/**
- * Handle settings:get IPC call
- * Returns current settings with theme, handoff_mode, and bell_mode
- * All workflow settings are stored in .pennyfarthing/config.local.yaml (single source of truth)
- * This mirrors the HTTP API behavior in api/settings.ts
- */
-export async function handleSettingsGet(): Promise<CyclistSettings & { workflow: CyclistSettings['workflow'] & { handoff_mode?: string; bell_mode?: boolean }; pennyfarthing: { theme: string } }> {
-  const settings = getCurrentSettings();
-
-  // Read theme, handoff_mode, and bell_mode from config.local.yaml (single source of truth)
-  let theme = 'alice-in-wonderland'; // Default fallback
-  let handoffMode = 'manual'; // Default fallback
-  let bellMode = false; // Default fallback
-  const projectDir = getProjectDirectory();
-  if (projectDir) {
-    try {
-      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-      if (fs.existsSync(configPath)) {
-        const content = fs.readFileSync(configPath, 'utf-8');
-        const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
-        if (parsed?.theme) {
-          theme = parsed.theme;
-        }
-        if (parsed?.workflow?.handoff_mode) {
-          handoffMode = parsed.workflow.handoff_mode;
-        }
-        if (parsed?.workflow?.bell_mode !== undefined) {
-          bellMode = parsed.workflow.bell_mode;
-        }
-      }
-    } catch {
-      // Ignore project config errors - use defaults
-    }
-  }
-
-  // Return settings with theme, handoff_mode, and bell_mode included
-  return {
-    ...settings,
-    workflow: {
-      ...settings.workflow,
-      handoff_mode: handoffMode,
-      bell_mode: bellMode,
-    },
-    pennyfarthing: {
-      theme,
-    },
-  };
-}
+// handleSettingsGet - REMOVED (React uses REST /api/settings)
+// The equivalent functionality is in api/settings.ts getSettingsForWebSocket()
 
 /**
  * Handle settings:save IPC call
@@ -1745,11 +1699,9 @@ export {
   CATEGORY_MAP,
   deriveCategory,
   getThemeMetadataCache,
-  getAvailableThemes,
-  loadThemeMetadata,
   loadThemeMetadataWithAgents,
 } from './theme-metadata.js';
-import { getAvailableThemes, loadThemeMetadata } from './theme-metadata.js';
+// getAvailableThemes, loadThemeMetadata - REMOVED (React uses REST /api/settings/themes)
 
 // Re-export from menu-builder
 export { registerSettingsShortcut } from './menu-builder.js';
@@ -1775,10 +1727,8 @@ export function setupSettingsIPCHandlers(ipcMain: {
     return enabled;
   });
 
-  // 24-1: Get all settings
-  ipcMain.handle(IPC_SETTINGS_CHANNELS.GET, async () => {
-    return handleSettingsGet();
-  });
+  // 24-1: Get all settings - REMOVED (React uses REST /api/settings)
+  // ipcMain.handle(IPC_SETTINGS_CHANNELS.GET, ...)
 
   // 24-1: Save settings
   ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
@@ -1842,15 +1792,11 @@ Adopt this character immediately in your next response. Do not acknowledge this 
     openSettingsWindow();
   });
 
-  // 24-2: Get available themes
-  ipcMain.handle(IPC_SETTINGS_CHANNELS.GET_AVAILABLE_THEMES, async () => {
-    return getAvailableThemes();
-  });
+  // 24-2: Get available themes - REMOVED (React uses REST /api/settings/themes)
+  // ipcMain.handle(IPC_SETTINGS_CHANNELS.GET_AVAILABLE_THEMES, ...)
 
-  // 24-5: Get theme metadata
-  ipcMain.handle(IPC_SETTINGS_CHANNELS.GET_THEME_METADATA, async () => {
-    return loadThemeMetadata();
-  });
+  // 24-5: Get theme metadata - REMOVED (React uses REST /api/settings/themes)
+  // ipcMain.handle(IPC_SETTINGS_CHANNELS.GET_THEME_METADATA, ...)
 
   console.log('Settings IPC handlers registered');
 }
