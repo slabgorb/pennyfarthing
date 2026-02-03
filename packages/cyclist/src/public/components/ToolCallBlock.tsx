@@ -11,6 +11,7 @@ import React, { useState, useMemo } from 'react';
 import { getToolTypeClass } from '../utils/toolTypeColors.js';
 import { formatDuration } from '../utils/formatDuration.js';
 import { ToolStatus, ToolStatusType } from './ToolStatus.js';
+import { generateToolIntentSummary } from '../utils/toolIntentSummarizer.js';
 
 interface ToolUseMessage {
   type: 'tool_use';
@@ -95,6 +96,11 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   // MSSCI-13402: Get tool type CSS class
   const toolTypeClass = getToolTypeClass(toolUse.tool_name);
 
+  // Generate human-readable intent summary (Story 74-1)
+  const intentSummary = useMemo(() => {
+    return generateToolIntentSummary(toolUse.tool_name, toolUse.input);
+  }, [toolUse.tool_name, toolUse.input]);
+
   // AC2: Memoize line count for performance
   const lineCount = useMemo(() => {
     return result ? countLines(result.content) : 0;
@@ -139,7 +145,7 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   return (
     <div data-testid="tool-call-block" className={blockClasses}>
       <div className="tool-header">
-        <span className="tool-name">{toolUse.tool_name}</span>
+        <span className="tool-name" title={toolUse.tool_name}>{intentSummary}</span>
         {/* MSSCI-13402: Status indicator with icons */}
         <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
           <ToolStatus status={status} />
@@ -150,9 +156,6 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
             {result.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
           </span>
         )}
-      </div>
-      <div className="tool-input">
-        <code>{inputDisplay}</code>
       </div>
       {result && (
         <>

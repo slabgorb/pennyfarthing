@@ -17,9 +17,11 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
+import ToolStack from './ToolStack';
 import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
 import { isSkillContent } from '../utils/messageFilters';
+import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -51,6 +53,11 @@ interface SubagentGroup {
   messages: MessageData[];
 }
 
+interface ToolStackGroup {
+  isToolStack: true;
+  stack: ToolStackData;
+}
+
 export default function MessageView({ messages }: MessageViewProps): React.ReactElement {
   const messageListRef = useRef<MessageListHandle>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -73,9 +80,9 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     return null;
   }, [messages]);
 
-  // Group messages by subagent parent_id
+  // Group messages by subagent parent_id and consecutive tool uses
   const groupedContent = useMemo(() => {
-    const result: (MessageData | SubagentGroup)[] = [];
+    const result: (MessageData | SubagentGroup | ToolStackGroup)[] = [];
     const subagentGroups = new Map<string, SubagentGroup>();
 
     // First pass: collect tool results for matching
@@ -86,15 +93,19 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       }
     });
 
-    // Second pass: group messages (filtering skill content from user messages)
+    // Second pass: filter messages and group by subagent (excluding tool_use for now)
+    const filteredMessages: MessageData[] = [];
     messages.forEach(msg => {
       // Filter out skill content from user messages (MSSCI-12783)
       if (msg.type === 'user' && isSkillContent(msg.content)) {
-        return; // Skip this message - it's skill content
+        return;
       }
-
+      // Skip tool_result - rendered with tool_use
+      if (msg.type === 'tool_result') {
+        return;
+      }
+      // Skip messages with parent_id (subagent messages handled separately)
       if (msg.parent_id) {
-        // This message belongs to a subagent
         let group = subagentGroups.get(msg.parent_id);
         if (!group) {
           group = {
@@ -104,28 +115,80 @@ export default function MessageView({ messages }: MessageViewProps): React.React
             messages: [],
           };
           subagentGroups.set(msg.parent_id, group);
-          result.push(group);
         }
         group.messages.push(msg);
-      } else if (msg.type === 'tool_result') {
-        // Skip standalone tool_result - it's rendered with tool_use
-      } else {
+        return;
+      }
+      filteredMessages.push(msg);
+    });
+
+    // Third pass: group consecutive tool_use messages into stacks
+    const toolStacks = groupToolsIntoStacks(filteredMessages);
+
+    // Create a set of tool_ids that belong to stacks (2+ tools)
+    const stackedToolIds = new Set<string>();
+    toolStacks.forEach(stack => {
+      if (stack.count >= 2) {
+        stack.tools.forEach(tool => stackedToolIds.add(tool.tool_id));
+      }
+    });
+
+    // Fourth pass: build result array, inserting ToolStackGroups where appropriate
+    let currentStackIndex = 0;
+    let pendingStack: ToolStackData | null = null;
+
+    filteredMessages.forEach(msg => {
+      if (msg.parent_id) {
+        // Subagent messages - insert the group when we first see a message from it
+        const group = subagentGroups.get(msg.parent_id);
+        if (group && !result.includes(group)) {
+          result.push(group);
+        }
+      } else if (msg.type === 'tool_use' && msg.tool_id && stackedToolIds.has(msg.tool_id)) {
+        // This tool belongs to a stack
+        const stack = toolStacks.find(s =>
+          s.count >= 2 && s.tools.some(t => t.tool_id === msg.tool_id)
+        );
+        if (stack && (!pendingStack || pendingStack.stackId !== stack.stackId)) {
+          // New stack - add it
+          result.push({ isToolStack: true, stack });
+          pendingStack = stack;
+        }
+        // Skip individual rendering - handled by ToolStack
+      } else if (msg.type === 'tool_use') {
+        // Single tool - render normally
         result.push(msg);
+        pendingStack = null;
+      } else {
+        // Non-tool message
+        result.push(msg);
+        pendingStack = null;
       }
     });
 
     return { items: result, toolResults };
   }, [messages]);
 
-  const renderItem = (item: MessageData | SubagentGroup, index: number) => {
+  const renderItem = (item: MessageData | SubagentGroup | ToolStackGroup, index: number) => {
+    // Check if this is a tool stack group
+    if ('isToolStack' in item && item.isToolStack) {
+      return (
+        <ToolStack
+          key={`stack-${item.stack.stackId}`}
+          stack={item.stack}
+          toolResults={groupedContent.toolResults as Map<string, { type: 'tool_result'; tool_id: string; content: string; timestamp: number }>}
+        />
+      );
+    }
+
     // Check if this is a subagent group
     if ('messages' in item && Array.isArray(item.messages)) {
       return (
         <SubagentSpan
-          key={`subagent-${item.parent_id}`}
-          type={item.type}
-          name={item.name}
-          messages={item.messages as any}
+          key={`subagent-${(item as SubagentGroup).parent_id}`}
+          type={(item as SubagentGroup).type}
+          name={(item as SubagentGroup).name}
+          messages={(item as SubagentGroup).messages as any}
         />
       );
     }
