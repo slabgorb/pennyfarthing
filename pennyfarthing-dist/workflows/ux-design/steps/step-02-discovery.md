@@ -1,5 +1,11 @@
 # Step 2: Project Understanding
 
+<purpose>Understand project context, target users, and unique UX value proposition through collaborative discovery of project vision, target users, and key design challenges and opportunities.</purpose>
+
+<instructions>Review loaded context documents. Fill gaps by asking about product description, target users, and unique value proposition. Explore user context and identify UX design challenges. Generate project understanding content with Executive Summary sections. Present A/P/C menu. Only save when user selects C and append step to stepsCompleted.</instructions>
+
+<output>Project understanding content appended to specification including executive summary, target users, key design challenges, and design opportunities, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

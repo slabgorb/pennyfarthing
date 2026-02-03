@@ -10,6 +10,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 3: Information Density Validation
 
+<purpose>Validate PRD meets BMAD information density standards by scanning for conversational filler, wordy phrases, and redundant expressions that violate conciseness principles.</purpose>
+
+<instructions>Analyze PRD content for information density violations; scan for anti-patterns including conversational filler, wordiness, redundancy, and verbose phrasing; calculate density metrics; document violations with location and severity; update validation report with findings; optionally suggest improvements.</instructions>
+
+<output>Density validation report with identified violations, severity classification, specific locations, density metrics, and optional improvement suggestions.</output>
+
 ## STEP GOAL:
 
 Validate PRD meets BMAD information density standards by scanning for conversational filler, wordy phrases, and redundant expressions that violate conciseness principles.

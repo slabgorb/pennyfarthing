@@ -7,6 +7,29 @@ thisStepFile: './step-05-adversarial-review.md'
 nextStepFile: './step-06-resolve-findings.md'
 ---
 
+<purpose>
+Construct a complete diff of all changes made during the workflow and invoke an adversarial review to identify potential issues. The review should be skeptical and comprehensive, not confirmatory. Process findings into a structured list for the user to address.
+</purpose>
+
+<instructions>
+1. Construct diff from baseline_commit: if Git repo, use `git diff {baseline_commit}`; if no Git, list all modified files with their current state
+2. Include all untracked files created during this workflow (step 2-4 only)
+3. Invoke the adversarial review task with the complete diff as input
+4. Receive findings from the review task
+5. If zero findings found, halt and request guidance (this is suspicious)
+6. For each finding, evaluate severity (Critical/High/Medium/Low) and validity (real/noise/undecided)
+7. Order findings by severity, number them (F1, F2, etc.)
+8. Present findings as structured list (table or TODO format) to the user
+9. Load step-06-resolve-findings.md to let user choose resolution approach
+</instructions>
+
+<output>
+- Complete diff of all changes since baseline_commit
+- Adversarial review findings list with ID, severity, validity, and description
+- Ordered by severity (Critical → Low)
+- Ready for user to choose resolution approach (walk-through/auto-fix/skip)
+</output>
+
 # Step 5: Adversarial Code Review
 
 **Goal:** Construct diff of all changes, invoke adversarial review task, present findings.

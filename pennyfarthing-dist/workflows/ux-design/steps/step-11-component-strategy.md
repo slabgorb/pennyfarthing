@@ -1,5 +1,11 @@
 # Step 11: Component Strategy
 
+<purpose>Define component library strategy and design custom components not covered by the chosen design system through collaborative analysis of component needs and implementation planning.</purpose>
+
+<instructions>Analyze design system coverage (available vs needed). Design each custom component with purpose, content, actions, states, variants, and accessibility. Document component specifications. Define overall component strategy (foundation components, custom components, implementation approach). Plan implementation roadmap (phase 1 core, phase 2 supporting, phase 3 enhancement). Generate component strategy content with design system analysis, custom component specifications, implementation strategy, and roadmap sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Component strategy content appended to specification including custom component specifications with accessibility considerations, implementation roadmap prioritized by criticality, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

@@ -1,4 +1,32 @@
-# Technical Research Step 4: Implementation Research
+# Technical Research Step 5: Implementation Research
+
+<purpose>
+Conduct comprehensive implementation research identifying technology adoption strategies, development workflows and tooling, testing and quality assurance practices, deployment and operations practices, team organization and skills, cost optimization, and risk assessment using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute web searches for technology adoption strategies, development workflows, testing practices, and operational excellence
+2. Analyze and aggregate implementation findings
+3. Generate implementation research analysis content with seven subsections (Technology Adoption, Development Workflows, Testing and QA, Deployment Practices, Team Organization, Cost Optimization, Risk Assessment)
+4. Add Technical Research Recommendations section with three subsections (Implementation Roadmap, Technology Stack Recommendations, Success Metrics)
+5. Include source citations for all implementation data
+6. Write content immediately to document
+7. Present [C] complete option after content generation (final step for technical workflow)
+8. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before completing workflow
+</instructions>
+
+<output>
+Implementation research analysis sections containing:
+- Technology adoption strategies with source citations
+- Development workflows and tooling with source citations
+- Testing and quality assurance practices with source citations
+- Deployment and operations practices with source citations
+- Team organization and skill requirements with source citations
+- Cost optimization and resource management with source citations
+- Risk assessment and mitigation with source citations
+- Technical research recommendations for implementation roadmap, technology stack, and success metrics
+- All content appended to research document
+</output>
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 

@@ -5,6 +5,10 @@ description: Systematic debugging approach for isolating and fixing issues. Use 
 
 # Systematic Debugging Skill
 
+<run>systematic-debugging</run>
+
+<output>Systematic debugging approach for isolating and fixing issues. Use when debugging failures, investigating errors, bisecting regressions, or validating fixes.</output>
+
 **Purpose:** Guide methodical debugging to find root causes, not just symptoms.
 
 **Use when:** Bug reports, test failures, unexpected behavior, regressions.

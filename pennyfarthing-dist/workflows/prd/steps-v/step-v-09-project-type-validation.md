@@ -12,6 +12,12 @@ projectTypesData: '../data/project-types.csv'
 
 # Step 9: Project-Type Compliance Validation
 
+<purpose>Validate project-type specific requirements are properly documented - different project types (api_backend, web_app, mobile_app, etc.) have different required and excluded sections.</purpose>
+
+<instructions>Determine project type from PRD frontmatter; load project-type requirements from CSV data; verify all required sections for project type are present; check for prohibited sections; analyze type-specific requirement coverage; identify gaps; update validation report.</instructions>
+
+<output>Project-type compliance validation report with required/optional section verification, identified gaps, type-specific coverage analysis, and recommendations for project-type conformance.</output>
+
 ## STEP GOAL:
 
 Validate project-type specific requirements are properly documented - different project types (api_backend, web_app, mobile_app, etc.) have different required and excluded sections.

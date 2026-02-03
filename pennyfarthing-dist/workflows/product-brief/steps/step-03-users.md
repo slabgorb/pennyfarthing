@@ -11,6 +11,28 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ---
 
+<purpose>
+Define target users with rich personas and map their key interactions with the product through collaborative user research and journey mapping.
+</purpose>
+
+<instructions>
+1. Begin user discovery conversation identifying who experiences the problem
+2. Develop rich personas for primary user segments
+3. Explore secondary user segments and their roles
+4. Map user journeys through discovery, onboarding, core usage, and success moments
+5. Generate Target Users content with personas and journey maps
+6. Present A/P/C menu for optional advanced elicitation or party mode
+7. Save content to document when user selects C
+</instructions>
+
+<output>
+- Target Users section with Primary and Secondary user personas
+- User Journey section mapping key interaction points
+- Rich persona descriptions with motivations and goals
+- Document updated at {outputFile} with stepsCompleted: [1, 2, 3]
+- User ready to proceed to success metrics definition
+</output>
+
 # Step 3: Target Users Discovery
 
 ## STEP GOAL:

@@ -1,5 +1,11 @@
 # Step 5: UX Pattern Analysis & Inspiration
 
+<purpose>Analyze inspiring products and UX patterns to inform design decisions for the current project through collaborative identification of successful patterns and extraction of transferable lessons.</purpose>
+
+<instructions>Identify 2-3 favorite apps users already use. Analyze UX patterns and principles for each. Extract transferable patterns for navigation, interaction, and visual design. Identify anti-patterns to avoid. Define design inspiration strategy (adopt, adapt, avoid). Generate inspiration analysis content with product analysis, transferable patterns, anti-patterns, and strategy sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Inspiration analysis content appended to specification including design inspiration strategy with patterns to adopt, adapt, and avoid, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

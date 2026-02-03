@@ -13,6 +13,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 9: Functional Requirements Synthesis
 
+<purpose>Synthesize all discovery insights into comprehensive functional requirements that define feature specifications and user-facing capabilities.</purpose>
+
+<instructions>Review all previous discovery documentation; synthesize insights into clear functional requirements; structure requirements with feature descriptions, acceptance criteria, and user story format; optionally use advanced elicitation; document comprehensive functional specification.</instructions>
+
+<output>Comprehensive functional requirements document with feature specifications, acceptance criteria, user story mappings, and traceability to success criteria and user journeys.</output>
+
 **Progress: Step 9 of 11** - Next: Non-Functional Requirements
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

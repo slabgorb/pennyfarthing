@@ -1,5 +1,29 @@
 # Domain Research Step 2: Industry Analysis
 
+<purpose>
+Conduct comprehensive industry analysis focusing on market size, growth dynamics, market structure, segmentation, industry trends, and competitive dynamics using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for market size, growth rates, segmentation, and trends
+2. Analyze and aggregate findings from all searches
+3. Generate industry analysis content with five subsections (Market Size, Market Dynamics, Market Structure, Industry Trends, Competitive Dynamics)
+4. Include source citations for all data points
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2] before loading next step
+</instructions>
+
+<output>
+Industry analysis document sections containing:
+- Market size and valuation metrics with source citations
+- Growth rates and market dynamics with source citations
+- Market segmentation and structure analysis with source citations
+- Industry trends and evolution patterns with source citations
+- Competitive dynamics assessment with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

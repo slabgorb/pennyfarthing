@@ -13,6 +13,12 @@ prdTemplate: '../templates/prd-template.md'
 
 # Step 1: Workflow Initialization
 
+<purpose>Initialize the PRD workflow by detecting continuation state, discovering input documents, and setting up the document structure for collaborative product requirement discovery.</purpose>
+
+<instructions>Check for existing workflow state; if continuing, hand off to step-01b. Otherwise, discover input documents, create initial document from template, track loaded files in frontmatter, and present initialization report with confirmation menu.</instructions>
+
+<output>Initialized PRD document with proper frontmatter structure (inputDocuments array, documentCounts, stepsCompleted), discovered input documents loaded and tracked, user confirmation to proceed to next step.</output>
+
 **Progress: Step 1 of 11** - Next: Project Discovery
 
 ## STEP GOAL:

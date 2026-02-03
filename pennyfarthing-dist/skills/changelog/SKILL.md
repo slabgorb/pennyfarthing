@@ -3,6 +3,24 @@ name: changelog
 description: Maintain changelogs following Keep a Changelog format. Use when creating release notes, parsing conventional commits for changelog entries, auto-generating changelog sections from git history, or preparing CHANGELOG.md for releases.
 ---
 
+<run>
+Commands for changelog maintenance:
+- Parse conventional commits for changelog entries
+- Auto-generate changelog sections from git history
+- Version bump decisions using semantic versioning
+- Create release notes and CHANGELOG.md updates
+</run>
+
+<output>
+Changelog entries in Keep a Changelog format:
+- Added (new features from `feat:` commits)
+- Changed (changes from `perf:` commits, breaking changes)
+- Deprecated (features marked for removal)
+- Removed (removed features)
+- Fixed (bug fixes from `fix:` commits)
+- Security (vulnerability fixes)
+</output>
+
 # Changelog Management Skill
 
 ## When to Use This Skill

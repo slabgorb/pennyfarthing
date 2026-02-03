@@ -7,6 +7,14 @@ args: "[list|show [name]|set <name>|start <name> [--mode <mode>]|resume [name]|s
 
 # /workflow - Workflow Management
 
+<run>
+.pennyfarthing/scripts/workflow/list-workflows.sh
+</run>
+
+<output>
+Table of workflows with type indicators, steps/phases count, available modes, default status, and descriptions.
+</output>
+
 Pennyfarthing uses YAML-defined workflows to control agent sequences. The default TDD workflow (SM → TEA → Dev → Reviewer) can be customized or replaced with alternative flows. BikeLane stepped workflows provide progressive disclosure for planning and decision-making processes.
 
 ## Commands

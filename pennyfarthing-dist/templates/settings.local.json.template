@@ -75,6 +75,15 @@
         ]
       },
       {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/schema-validation.sh"
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write|Bash|Task",
         "hooks": [
           {

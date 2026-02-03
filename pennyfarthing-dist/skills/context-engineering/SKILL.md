@@ -6,6 +6,9 @@ allowed_tools: [Read, Glob, Grep, Task]
 
 # Context Engineering Skill
 
+<run>context-engineering</run>
+<output>strategies for managing context windows in long-running agent sessions</output>
+
 **Purpose:** Strategies for managing context windows efficiently in long-running agent sessions.
 
 **Use when:** Working on complex tasks, approaching context limits, designing subagent prompts.

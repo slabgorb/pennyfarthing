@@ -14,6 +14,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 5: Domain-Specific Requirements (Optional)
 
+<purpose>Explore domain-specific constraints, compliance requirements, and technical considerations for complex domains that shape product requirements.</purpose>
+
+<instructions>Check if domain is marked as high-complexity; if simple domain, skip this step; for complex domains, explore regulatory constraints, industry standards, and technical domain considerations through collaborative dialogue; document domain-specific requirements.</instructions>
+
+<output>Domain-specific requirements documentation including applicable regulatory constraints, industry standards, technical domain considerations, and compliance requirements relevant to the project domain.</output>
+
 **Progress: Step 5 of 13** - Next: Innovation Focus
 
 ## STEP GOAL:

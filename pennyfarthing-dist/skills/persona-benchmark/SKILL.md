@@ -7,6 +7,15 @@ description: Run benchmarks to compare persona effectiveness across themes. Use 
 
 Run benchmarks to compare persona effectiveness.
 
+<run>
+/persona-benchmark <test-case-id> <persona>
+/persona-benchmark <test-case-id> <persona> [--analyze] [--suite]
+</run>
+
+<output>
+Benchmark results saved to `.claude/benchmarks/results/{timestamp}-{persona}-{test-case-id}.yaml` with quantitative and qualitative metrics, or analysis summary when using `--analyze`.
+</output>
+
 ## Usage
 
 ```

@@ -6,6 +6,10 @@ allowed_tools: [Read, Glob, Grep, Task]
 
 # Agentic Patterns Skill
 
+<run>When designing agent behavior, debugging agent failures, improving agent reliability.</run>
+
+<output>Core reasoning patterns for building effective LLM agents. Includes ReAct, Plan-and-Execute, Self-Reflection, confidence calibration, error recovery, multi-agent coordination, and context management strategies.</output>
+
 **Purpose:** Core reasoning patterns for building effective LLM agents.
 
 **Use when:** Designing agent behavior, debugging agent failures, improving agent reliability.

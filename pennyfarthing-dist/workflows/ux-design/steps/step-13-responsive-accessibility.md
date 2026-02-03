@@ -1,5 +1,11 @@
 # Step 13: Responsive Design & Accessibility
 
+<purpose>Define responsive design strategy and accessibility requirements ensuring the product works beautifully across all devices and is accessible to all users.</purpose>
+
+<instructions>Define responsive strategy for desktop (layout, features), tablet (gestures, density), and mobile (navigation, collapse, priority). Establish breakpoint strategy (standard vs custom, mobile-first vs desktop-first). Design accessibility strategy (WCAG level A/AA/AAA, color contrast, keyboard navigation, screen reader, touch targets). Define testing strategy (responsive testing, accessibility testing, user testing). Document implementation guidelines (responsive development, accessibility development). Generate responsive and accessibility content with strategy, breakpoint strategy, accessibility strategy, testing strategy, and implementation guidelines sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Responsive and accessibility content appended to specification including comprehensive testing strategy and implementation guidelines for responsive design and accessibility compliance, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

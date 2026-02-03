@@ -1,5 +1,27 @@
 # Step 1: Context Discovery & Initialization
 
+<purpose>
+Discover the project's technology stack, existing patterns, and critical implementation rules that AI agents must follow when writing code.
+</purpose>
+
+<instructions>
+1. Check for existing project context (project-context.md)
+2. Discover project technology stack from package files and config
+3. Identify existing code patterns, naming conventions, and organization
+4. Extract critical implementation rules that AI agents need
+5. Initialize project context document with discovered information
+6. Present discovery summary to user
+</instructions>
+
+<output>
+- Existing project context detection status
+- Identified technology stack with versions
+- Found implementation patterns and conventions
+- Initialized project context document
+- Discovery summary presented to user
+- User ready to proceed to step-02
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

@@ -1,5 +1,30 @@
 # Domain Research Step 3: Competitive Landscape
 
+<purpose>
+Conduct competitive landscape analysis identifying key players, market share distribution, competitive positioning strategies, business models, and competitive dynamics using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for key players, market share, competitive strategies, and entry barriers
+2. Analyze and aggregate competitive findings
+3. Generate competitive analysis content with six subsections (Key Players, Market Share, Competitive Strategies, Business Models, Competitive Dynamics, Ecosystem Analysis)
+4. Include source citations for all findings
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
+</instructions>
+
+<output>
+Competitive landscape analysis sections containing:
+- Key players and market leaders with source citations
+- Market share and competitive positioning with source citations
+- Competitive strategies and differentiation with source citations
+- Business models and value propositions with source citations
+- Competitive dynamics and entry barriers with source citations
+- Ecosystem and partnership analysis with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

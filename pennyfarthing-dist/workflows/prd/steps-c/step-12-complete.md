@@ -9,6 +9,12 @@ validationFlow: '../steps-v/step-v-01-discovery.md'
 
 # Step 12: Workflow Completion
 
+<purpose>Complete the PRD workflow, finalize document status, update completion metadata, and suggest next steps including validation and publication options.</purpose>
+
+<instructions>Verify all sections of PRD are complete; update frontmatter with workflow completion status; finalize stepsCompleted array; generate completion summary; present options for validation workflow, stakeholder review, or publication; confirm user satisfaction with completed PRD.</instructions>
+
+<output>Finalized PRD document with complete workflow metadata, completion confirmation, summary of deliverables, and options for next workflow steps.</output>
+
 **Final Step - Complete the PRD**
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

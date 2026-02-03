@@ -1,4 +1,40 @@
-# Technical Research Step 5: Technical Synthesis and Completion
+# Technical Research Step 6: Technical Synthesis and Completion
+
+<purpose>
+Produce a comprehensive, authoritative technical research document with compelling narrative introduction, detailed table of contents, executive summary, and synthesis sections based on exhaustive technical research across five research areas.
+</purpose>
+
+<instructions>
+1. Generate compelling narrative introduction establishing technical research significance
+2. Create detailed table of contents with 12 sections
+3. Synthesize all technical research sections from steps 1-5
+4. Generate complete document structure with research goals achievement explanation
+5. Include Executive Summary with key technical findings and strategic recommendations
+6. Add comprehensive source documentation and quality assurance section
+7. Complete Technical Research Methodology section with source verification details
+8. Present [C] complete option for final document
+9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when C selected
+</instructions>
+
+<output>
+Complete technical research document containing:
+- Compelling narrative introduction establishing technical research significance
+- Executive summary with key technical findings and strategic recommendations
+- Table of contents with complete navigation structure (12 sections)
+- Technical research introduction and methodology with goals achievement
+- Technical landscape and architecture analysis
+- Implementation approaches and best practices
+- Technology stack evolution and trends
+- Integration and interoperability patterns
+- Performance and scalability analysis
+- Security and compliance considerations
+- Strategic technical recommendations
+- Implementation roadmap and risk assessment
+- Future technical outlook and innovation opportunities
+- Technical research methodology and source verification section
+- Appendices with detailed technical data tables and resources
+- All sections with proper source citations
+</output>
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 

@@ -11,6 +11,29 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ---
 
+<purpose>
+Define comprehensive success metrics that include user success, business objectives, and key performance indicators through collaborative metric definition aligned with product vision and user value.
+</purpose>
+
+<instructions>
+1. Begin success metrics discovery from user perspective
+2. Define measurable user success metrics and outcomes
+3. Explore business objectives and success criteria
+4. Develop specific, measurable KPIs with targets and timeframes
+5. Ensure metrics align with product vision and drive decisions
+6. Generate Success Metrics content with user, business, and KPI sections
+7. Present A/P/C menu for optional advanced elicitation or party mode
+8. Save content to document when user selects C
+</instructions>
+
+<output>
+- Success Metrics section defining user success outcomes
+- Business Objectives section with strategic goals
+- Key Performance Indicators section with measurable targets
+- Document updated at {outputFile} with stepsCompleted: [1, 2, 3, 4]
+- User ready to proceed to MVP scope definition
+</output>
+
 # Step 4: Success Metrics Definition
 
 ## STEP GOAL:

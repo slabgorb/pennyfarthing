@@ -1,5 +1,31 @@
 # Domain Research Step 4: Regulatory Focus
 
+<purpose>
+Conduct focused regulatory and compliance analysis identifying applicable regulations, industry standards, compliance frameworks, data protection requirements, and licensing/certification needs using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute web searches for regulations, standards, privacy requirements, and licensing
+2. Search specifically for GDPR, CCPA, and data protection laws relevant to topic
+3. Generate regulatory analysis content with seven subsections (Applicable Regulations, Industry Standards, Compliance Frameworks, Data Protection, Licensing, Implementation Considerations, Risk Assessment)
+4. Include source citations for all regulatory information
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
+</instructions>
+
+<output>
+Regulatory analysis sections containing:
+- Applicable regulations and frameworks with source citations
+- Industry standards and best practices with source citations
+- Compliance frameworks documentation with source citations
+- Data protection and privacy requirements with source citations
+- Licensing and certification requirements with source citations
+- Implementation considerations with source citations
+- Risk assessment with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

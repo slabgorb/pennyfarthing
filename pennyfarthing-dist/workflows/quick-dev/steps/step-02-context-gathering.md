@@ -7,6 +7,29 @@ thisStepFile: './step-02-context-gathering.md'
 nextStepFile: './step-03-execute.md'
 ---
 
+<purpose>
+Gather sufficient context for Mode B (direct instructions) to create a realistic mental plan of tasks. Identify affected files, detect existing code patterns, note dependencies, and create preliminary acceptance criteria based on the user's request.
+</purpose>
+
+<instructions>
+1. Search codebase to identify files relevant to the user's task description
+2. Examine those files to discover existing patterns, conventions, and error handling approaches
+3. Identify dependencies (libraries, modules, configs) that may be affected
+4. Synthesize gathered information into a mental plan with ordered tasks and inferred acceptance criteria
+5. Present the plan to the user for confirmation before proceeding to execution
+6. Accept user feedback (y/n/adjust) and continue or refine the plan accordingly
+</instructions>
+
+<output>
+- List of files to modify (with their purposes)
+- Key patterns identified in the codebase
+- Dependencies and related files that might be affected
+- Mental plan with ordered tasks
+- Inferred acceptance criteria from the user request
+- User confirmation to proceed (y/n/adjust)
+- Explicit NEXT directive to step-03-execute.md once confirmed
+</output>
+
 # Step 2: Context Gathering (Direct Mode)
 
 **Goal:** Quickly gather context for direct instructions - files, patterns, dependencies.

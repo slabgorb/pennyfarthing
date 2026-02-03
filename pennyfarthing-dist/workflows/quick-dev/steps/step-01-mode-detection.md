@@ -8,6 +8,27 @@ nextStepFile_modeA: './step-03-execute.md'
 nextStepFile_modeB: './step-02-context-gathering.md'
 ---
 
+<purpose>
+Determine whether the user has provided a tech-spec file (Mode A) or direct task instructions (Mode B). Capture baseline commit, load project context if available, and evaluate escalation threshold to decide whether the request fits in Quick Dev or needs broader planning workflows.
+</purpose>
+
+<instructions>
+1. Capture the baseline commit hash (or "NO_GIT" if not a git repo)
+2. Load project context if exists in the codebase
+3. Parse user input to determine Mode A (tech-spec path provided) or Mode B (direct task description)
+4. For Mode B, evaluate escalation signals and present appropriate choices
+5. Set state variables for all subsequent steps
+6. Provide explicit NEXT directive indicating which step to load or workflow to exit to
+</instructions>
+
+<output>
+- `{baseline_commit}` - Git HEAD at workflow start (or "NO_GIT")
+- `{execution_mode}` - Either "tech-spec" or "direct"
+- `{tech_spec_path}` - Path to tech-spec file (only if Mode A)
+- `{project_context}` - Loaded project context if available
+- Explicit NEXT directive showing the next step to load or workflow to exit to
+</output>
+
 # Step 1: Mode Detection
 
 **Goal:** Determine execution mode, capture baseline, handle escalation if needed.

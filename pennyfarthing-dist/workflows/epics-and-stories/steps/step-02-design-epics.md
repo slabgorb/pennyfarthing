@@ -19,6 +19,29 @@ outputFile: '{planning_artifacts}/epics.md'
 epicsTemplate: './templates/epics-template.md'
 ---
 
+<purpose>
+To design and get explicit user approval for the epics_list that will organize all extracted requirements into user-value-focused epics. Each epic must be standalone, deliver complete functionality for its domain, and enable future epics without requiring them to function.
+</purpose>
+
+<instructions>
+1. Load and review the extracted requirements from the previous step
+2. Explain epic design principles (user-value first, incremental delivery, dependency-free within epic)
+3. Identify user value themes by analyzing the functional requirements
+4. Propose epic structure collaboratively with the user
+5. Create the epics_list showing epic titles, user outcomes, and FR coverage
+6. Create a requirements coverage map showing how each FR maps to an epic
+7. Present the epic list for user review and refinement
+8. Get user confirmation and explicit approval (C) before proceeding
+</instructions>
+
+<output>
+- Approved epics_list organized by user value with epic titles and goals
+- Functional requirement coverage map showing FR to epic mapping
+- Verified coverage of all extracted requirements
+- Epic structure validated for standalone operation and dependency flow
+- User explicit approval to proceed to story creation
+</output>
+
 # Step 2: Design Epic List
 
 ## STEP GOAL:
