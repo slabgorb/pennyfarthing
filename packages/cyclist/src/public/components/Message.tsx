@@ -91,8 +91,8 @@ export default function Message({ message }: MessageProps): React.ReactElement {
     );
   }
 
-  // For streaming assistant messages, use StreamingContent with throbbing avatar
-  if (message.type === 'assistant' && message.isStreaming) {
+  // For streaming agent messages, use StreamingContent with throbbing avatar
+  if (message.type === 'agent' && message.isStreaming) {
     return (
       <div data-testid={testId} className={`message ${roleClass}`}>
         <div data-testid="avatar" className="message-avatar">

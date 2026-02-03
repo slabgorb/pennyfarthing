@@ -11,7 +11,7 @@
  */
 export type MessageType =
   | 'user'
-  | 'assistant'
+  | 'agent'
   | 'tool_use'
   | 'tool_result'
   | 'bell_injected';

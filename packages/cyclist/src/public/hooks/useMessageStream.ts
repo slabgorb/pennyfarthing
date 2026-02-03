@@ -50,8 +50,11 @@ export function useMessageStream(): UseMessageStreamResult {
           .join('');
       }
 
+      // Map SDK 'assistant' type to our internal 'agent' type
+      const messageType = msg.type === 'assistant' ? 'agent' : msg.type as MessageData['type'];
+
       const message: MessageData = {
-        type: msg.type as MessageData['type'],
+        type: messageType,
         content: contentStr,
         timestamp: Date.now(),
         isStreaming: true,
@@ -59,7 +62,7 @@ export function useMessageStream(): UseMessageStreamResult {
 
       setMessages((prev) => [...prev, message]);
 
-      // Update streaming state
+      // Update streaming state for agent messages
       if (msg.type === 'assistant') {
         setIsStreaming(true);
       }
