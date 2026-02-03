@@ -37,7 +37,7 @@ interface PastedImage {
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
-  type: 'send' | 'abort' | 'clear' | 'setMode';
+  type: 'send' | 'abort' | 'clear' | 'setMode' | 'getMode';
   prompt?: string;
   mode?: PermissionMode;
   images?: PastedImage[];
@@ -113,11 +113,13 @@ type ClaudeSendCallback = (prompt: string, images: PastedImage[], onMessage: (ms
 type ClaudeAbortCallback = () => void;
 type ClaudeClearCallback = () => void;
 type ClaudeSetModeCallback = (mode: PermissionMode) => void;
+type ClaudeGetModeCallback = () => PermissionMode;
 
 let claudeSendCallback: ClaudeSendCallback | null = null;
 let claudeAbortCallback: ClaudeAbortCallback | null = null;
 let claudeClearCallback: ClaudeClearCallback | null = null;
 let claudeSetModeCallback: ClaudeSetModeCallback | null = null;
+let claudeGetModeCallback: ClaudeGetModeCallback | null = null;
 
 /**
  * Register callback to receive story updates for IPC broadcast
@@ -162,6 +164,13 @@ export function setClaudeClearCallback(callback: ClaudeClearCallback): void {
  */
 export function setClaudeSetModeCallback(callback: ClaudeSetModeCallback): void {
   claudeSetModeCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude getMode commands from WebSocket
+ */
+export function setClaudeGetModeCallback(callback: ClaudeGetModeCallback): void {
+  claudeGetModeCallback = callback;
 }
 
 // Export client getters for external use
@@ -936,6 +945,15 @@ export function setupWebSocketServers(
                 claudeSetModeCallback(msg.mode);
               }
               break;
+
+            case 'getMode':
+              if (claudeGetModeCallback) {
+                const currentMode = claudeGetModeCallback();
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({ type: 'mode', mode: currentMode }));
+                }
+              }
+              break;
           }
         } catch (err) {
           console.error('[WebSocket] Error handling Electron mode message:', err);
@@ -1003,6 +1021,13 @@ export function setupWebSocketServers(
             case 'setMode':
               if (msg.mode) {
                 service.setPermissionMode(msg.mode);
+              }
+              break;
+
+            case 'getMode':
+              if (ws.readyState === WebSocket.OPEN) {
+                const currentMode = service.getPermissionMode();
+                ws.send(JSON.stringify({ type: 'mode', mode: currentMode }));
               }
               break;
           }

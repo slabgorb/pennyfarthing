@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1086,6 +1086,16 @@ export function startProjectWatchers(): void {
       console.log('[WebSocket] Permission mode set to:', mode);
     } catch (error) {
       console.error('[WebSocket] Error in setMode callback:', error);
+    }
+  });
+
+  setClaudeGetModeCallback(() => {
+    try {
+      const service = getClaudeService();
+      return service.getPermissionMode();
+    } catch (error) {
+      console.error('[WebSocket] Error in getMode callback:', error);
+      return 'default';
     }
   });
   console.log('Claude SDK callbacks registered for WebSocket bridge');
