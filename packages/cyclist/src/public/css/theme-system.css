@@ -395,11 +395,10 @@
   border-radius: 8px;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
-  overflow: hidden;
 }
 
 .tool-stack.collapsed {
-  /* Collapsed state - more compact */
+  /* Header always visible in collapsed state */
 }
 
 /* Stack Header - always visible */
