@@ -2,11 +2,11 @@
  * useTodos Hook
  *
  * React hook for subscribing to todo list data.
- * Uses electronAPI in Electron mode, falls back to REST API in web mode.
+ * Uses WebSocket /ws/todos for real-time updates (no polling).
  * Story MSSCI-12717 - React Migration
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface TodoItem {
   id: string;
@@ -23,40 +23,71 @@ interface UseTodosResult {
   error: Error | null;
 }
 
-// Fetch todos via REST API (web mode fallback)
-async function fetchTodosFromApi(): Promise<TodoItem[]> {
-  const response = await fetch('/api/todos');
-  if (!response.ok) {
-    throw new Error(`Failed to fetch todos: ${response.status}`);
-  }
-  const data = await response.json();
-  return (data as TodoItem[]) || [];
+/** WebSocket message format from /ws/todos */
+interface TodosMessage {
+  type: 'init' | 'update';
+  todos: TodoItem[];
 }
 
 export function useTodos(): UseTodosResult {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  const fetchTodos = useCallback(async () => {
-    try {
-      const data = await fetchTodosFromApi();
-      setTodos(data);
-      setIsLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch todos'));
-      setIsLoading(false);
-    }
-  }, []);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    // Use REST API with polling (todos are updated by Claude stream, not real-time)
-    fetchTodos();
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/todos`;
 
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchTodos, 5000);
-    return () => clearInterval(interval);
-  }, [fetchTodos]);
+    const connect = () => {
+      try {
+        wsRef.current = new WebSocket(wsUrl);
+
+        wsRef.current.onopen = () => {
+          console.debug('[useTodos] WebSocket connected');
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data) as TodosMessage;
+            if (msg.type === 'init' || msg.type === 'update') {
+              setTodos(msg.todos || []);
+              setIsLoading(false);
+              setError(null);
+            }
+          } catch (err) {
+            console.error('[useTodos] Failed to parse message:', err);
+          }
+        };
+
+        wsRef.current.onclose = () => {
+          console.debug('[useTodos] WebSocket closed, reconnecting...');
+          reconnectTimeoutRef.current = setTimeout(connect, 2000);
+        };
+
+        wsRef.current.onerror = (err) => {
+          console.error('[useTodos] WebSocket error:', err);
+          setError(new Error('WebSocket connection failed'));
+        };
+      } catch (err) {
+        console.error('[useTodos] WebSocket init failed:', err);
+        setError(err instanceof Error ? err : new Error('Failed to connect'));
+        setIsLoading(false);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   return { todos, isLoading, error };
 }
