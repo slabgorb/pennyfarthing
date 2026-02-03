@@ -2541,6 +2541,45 @@
   color: var(--error-color, #f14c4c);
 }
 
+.queue-item-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.queue-item-inject {
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  color: var(--accent-color, #007acc);
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.queue-item-inject:hover {
+  color: var(--success-color, #4caf50);
+}
+
+/* =============================================================================
+   Bell Injected Message Styles (Audit Fix 2026-02-03)
+   ============================================================================= */
+
+.message-bell-injected {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 193, 7, 0.1) 0%,
+    transparent 20%
+  );
+}
+
+.message-bell-injected .bell-indicator {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
 /* =============================================================================
    Bell/Relay Toggle Styles (MSSCI-12275, MSSCI-12395)
    ============================================================================= */

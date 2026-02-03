@@ -94,6 +94,10 @@ export const SLASH_COMMANDS = [
     "description": "Check system health"
   },
   {
+    "name": "/fix-blocker",
+    "description": "Quick alias for /patch - fix blocking issue during story work"
+  },
+  {
     "name": "/git-cleanup",
     "description": "Clean up git repos by organizing changes into proper commits/branches by initiative"
   },
@@ -148,6 +152,10 @@ export const SLASH_COMMANDS = [
   {
     "name": "/party-mode",
     "description": "Free-form creative brainstorming with all agents"
+  },
+  {
+    "name": "/patch",
+    "description": "Interrupt-driven bug fix during active story work"
   },
   {
     "name": "/permissions",

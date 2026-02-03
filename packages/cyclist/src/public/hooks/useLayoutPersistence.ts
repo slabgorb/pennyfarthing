@@ -68,29 +68,38 @@ function layoutDataToWorkspaceLayout(layout: unknown): WorkspaceLayoutConfig {
 
   if (!layoutObj) return defaultLayout;
 
+  const leftSidebar = layoutObj.leftSidebar as Record<string, unknown> | undefined;
+  const rightSidebar = layoutObj.rightSidebar as Record<string, unknown> | undefined;
+
   return {
     leftSidebar: {
-      panels: Array.isArray(layoutObj.leftSidebar?.panels)
-        ? (layoutObj.leftSidebar as Record<string, unknown>).panels as string[]
+      panels: Array.isArray(leftSidebar?.panels)
+        ? leftSidebar.panels as string[]
         : defaultLayout.leftSidebar.panels,
-      width: typeof layoutObj.leftSidebar?.width === 'number'
-        ? (layoutObj.leftSidebar as Record<string, unknown>).width as number
+      width: typeof leftSidebar?.width === 'number'
+        ? leftSidebar.width as number
         : defaultLayout.leftSidebar.width,
-      collapsed: typeof layoutObj.leftSidebar?.collapsed === 'boolean'
-        ? (layoutObj.leftSidebar as Record<string, unknown>).collapsed as boolean
+      collapsed: typeof leftSidebar?.collapsed === 'boolean'
+        ? leftSidebar.collapsed as boolean
         : defaultLayout.leftSidebar.collapsed,
+      activePanel: typeof leftSidebar?.activePanel === 'string'
+        ? leftSidebar.activePanel as string
+        : undefined,
     },
     center: defaultLayout.center,
     rightSidebar: {
-      panels: Array.isArray(layoutObj.rightSidebar?.panels)
-        ? (layoutObj.rightSidebar as Record<string, unknown>).panels as string[]
+      panels: Array.isArray(rightSidebar?.panels)
+        ? rightSidebar.panels as string[]
         : defaultLayout.rightSidebar.panels,
-      width: typeof layoutObj.rightSidebar?.width === 'number'
-        ? (layoutObj.rightSidebar as Record<string, unknown>).width as number
+      width: typeof rightSidebar?.width === 'number'
+        ? rightSidebar.width as number
         : defaultLayout.rightSidebar.width,
-      collapsed: typeof layoutObj.rightSidebar?.collapsed === 'boolean'
-        ? (layoutObj.rightSidebar as Record<string, unknown>).collapsed as boolean
+      collapsed: typeof rightSidebar?.collapsed === 'boolean'
+        ? rightSidebar.collapsed as boolean
         : defaultLayout.rightSidebar.collapsed,
+      activePanel: typeof rightSidebar?.activePanel === 'string'
+        ? rightSidebar.activePanel as string
+        : undefined,
     },
   };
 }
@@ -102,11 +111,13 @@ function workspaceLayoutToConfig(layout: WorkspaceLayoutConfig): LayoutConfig {
       panels: layout.leftSidebar.panels,
       width: layout.leftSidebar.width,
       collapsed: layout.leftSidebar.collapsed,
+      activePanel: layout.leftSidebar.activePanel,
     },
     rightSidebar: {
       panels: layout.rightSidebar.panels,
       width: layout.rightSidebar.width,
       collapsed: layout.rightSidebar.collapsed,
+      activePanel: layout.rightSidebar.activePanel,
     },
   };
 }

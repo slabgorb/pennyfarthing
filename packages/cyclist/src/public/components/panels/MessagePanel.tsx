@@ -13,7 +13,7 @@ import Editor, { PastedImage } from '../Editor';
 import { ControlBar, useControlBar } from '../ControlBar';
 import PersonaHeader from '../PersonaHeader';
 import StatsStrip from '../StatsStrip';
-import { useMessageQueue, QueuedMessage } from '../../hooks/useMessageQueue';
+import { useMessageQueue, QueuedMessage, InjectDependencies } from '../../hooks/useMessageQueue';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
 import type { ClaudeMessage } from '../../hooks/useClaude';
 
@@ -22,7 +22,7 @@ import type { ClaudeMessage } from '../../hooks/useClaude';
 // =============================================================================
 
 interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
+  type: 'user' | 'assistant' | 'tool_use' | 'tool_result' | 'bell_injected';
   content?: string;
   timestamp: number;
   isStreaming?: boolean;
@@ -234,13 +234,44 @@ export function MessagePanel(): React.ReactElement {
   } = useControlBar();
 
   // Claude context for WebSocket communication
-  const { send, onMessage, onComplete, onError, isConnected } = useClaudeContext();
+  const { send, abort, onMessage, onComplete, onError, isConnected } = useClaudeContext();
 
-  // Message queue hook for turn complete handling
-  const { handleTurnComplete, pauseQueue } = useMessageQueue();
+  // Message queue hook for turn complete handling and bell mode
+  const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueue();
 
   // Ref to track the submit function for turn complete
   const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>();
+
+  // Subscribe to bell-consumed events to display injected messages
+  useEffect(() => {
+    const unsubscribe = onBellConsumed((consumedMessage) => {
+      // Add bell-injected message to the message view
+      setMessages(prev => [...prev, {
+        type: 'bell_injected',
+        content: consumedMessage.text,
+        timestamp: Date.now(),
+        imageCount: consumedMessage.images.length > 0 ? consumedMessage.images.length : undefined,
+      }]);
+    });
+
+    return unsubscribe;
+  }, [onBellConsumed]);
+
+  // Create inject dependencies for "Send Now" button
+  const injectDeps: InjectDependencies = {
+    abort,
+    submit: (text, images) => {
+      // Add user message to view immediately
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: text,
+        timestamp: Date.now(),
+        imageCount: images.length > 0 ? images.length : undefined,
+      }]);
+      setIsProcessing(true);
+      send(text, images);
+    },
+  };
 
   // Handle incoming SDK message
   const handleSDKMessage = useCallback((sdkMessage: ClaudeMessage) => {
@@ -336,6 +367,7 @@ export function MessagePanel(): React.ReactElement {
               onSubmit={handleSubmit}
               isProcessing={isProcessing || isRunning}
               placeholder="Send a message..."
+              onInject={(index) => injectMessage(index, injectDeps)}
             />
           </div>
           <ControlBar
