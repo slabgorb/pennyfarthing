@@ -4,9 +4,12 @@
  * Displays tool use and result in a distinct block.
  * Story MSSCI-12698 - MessageView Component with Streaming
  * Story MSSCI-13398 - Collapsible tool result display
+ * Story MSSCI-13402 - Tool use visual design polish
  */
 
 import React, { useState, useMemo } from 'react';
+import { getToolTypeClass } from '../utils/toolTypeColors.js';
+import { formatDuration } from '../utils/formatDuration.js';
 
 interface ToolUseMessage {
   type: 'tool_use';
@@ -21,6 +24,10 @@ interface ToolResultMessage {
   tool_id: string;
   content: string;
   timestamp: number;
+  /** Whether this result represents an error */
+  is_error?: boolean;
+  /** Duration in milliseconds */
+  durationMs?: number;
 }
 
 interface ToolCallBlockProps {
@@ -79,8 +86,13 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   // AC4: Track copy state
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
 
-  const status = result ? 'complete' : 'pending';
+  // MSSCI-13402: Determine status based on result presence and error state
+  const isError = result?.is_error === true;
+  const status = !result ? 'pending' : isError ? 'error' : 'complete';
   const inputDisplay = formatToolInput(toolUse.tool_name, toolUse.input);
+
+  // MSSCI-13402: Get tool type CSS class
+  const toolTypeClass = getToolTypeClass(toolUse.tool_name);
 
   // AC2: Memoize line count for performance
   const lineCount = useMemo(() => {
@@ -115,13 +127,27 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   // AC2: Format line count text
   const lineCountText = lineCount === 1 ? '1 line' : `${lineCount} lines`;
 
+  // MSSCI-13402: Build class list with tool type and error state
+  const blockClasses = [
+    'tool-call-block',
+    toolTypeClass,
+    isError ? 'tool-error' : '',
+    className || '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div data-testid="tool-call-block" className={`tool-call-block ${className || ''}`}>
+    <div data-testid="tool-call-block" className={blockClasses}>
       <div className="tool-header">
         <span className="tool-name">{toolUse.tool_name}</span>
         <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
           {status}
         </span>
+        {/* MSSCI-13402: Duration display */}
+        {result && (
+          <span data-testid="tool-duration" className="tool-duration">
+            {result.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
+          </span>
+        )}
       </div>
       <div className="tool-input">
         <code>{inputDisplay}</code>
@@ -147,7 +173,7 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
           </div>
           <div
             data-testid="tool-result-content"
-            className={`tool-result-content ${isCollapsed ? 'collapsed' : ''} ${isTruncated && !isCollapsed ? 'truncated' : ''}`}
+            className={`tool-result-content ${isCollapsed ? 'collapsed' : ''} ${isTruncated && !isCollapsed ? 'truncated' : ''} ${isError ? 'error-content' : ''}`}
           >
             <pre>{displayContent}</pre>
             {shouldTruncate && !isCollapsed && isTruncated && (
