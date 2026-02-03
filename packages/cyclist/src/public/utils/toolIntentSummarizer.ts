@@ -130,6 +130,10 @@ export function generateToolIntentSummary(
     }
 
     case 'Bash': {
+      // Prefer Claude's description if provided (human-readable intent)
+      const description = getString(safeInput, 'description');
+      if (description) return truncate(description);
+      // Fall back to command-based summarization
       const command = getString(safeInput, 'command');
       if (!command) return 'Bash';
       return summarizeBashCommand(command);

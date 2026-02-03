@@ -6,15 +6,17 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import ToolCallBlock from './ToolCallBlock';
+import ToolCallBlock, { getToolBadgeLabel } from './ToolCallBlock';
 import type { ToolStackData } from '../utils/toolStackGrouper';
 import { generateToolIntentSummary } from '../utils/toolIntentSummarizer';
+import { formatDuration } from '../utils/formatDuration';
 
 interface ToolResultMessage {
   type: 'tool_result';
   tool_id: string;
   content: string;
   timestamp: number;
+  durationMs?: number;
 }
 
 interface ToolStackProps {
@@ -53,6 +55,24 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
     }
     return summaries.join(', ');
   }, [stack.tools]);
+
+  // Compute tool type counts for mini badges
+  const toolTypeCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    stack.tools.forEach(tool => {
+      const count = counts.get(tool.tool_name) || 0;
+      counts.set(tool.tool_name, count + 1);
+    });
+    return counts;
+  }, [stack.tools]);
+
+  // Total duration across all tools in stack
+  const totalDuration = useMemo(() => {
+    return stack.tools.reduce((sum, tool) => {
+      const result = toolResults.get(tool.tool_id);
+      return sum + (result?.durationMs || 0);
+    }, 0);
+  }, [stack.tools, toolResults]);
 
   // AC4: Determine which tool is current (pending)
   const getToolClass = (toolIndex: number): string => {
@@ -113,13 +133,29 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
           data-testid="tool-stack-count"
           className="tool-stack-count"
         >
-          {countText}
+          {countText} {stack.isActive ? 'running' : 'completed'}
         </span>
         {isCollapsed && !stack.isActive && (
-          <span className="tool-stack-summary">
-            {collapsedSummary}
-          </span>
+          <>
+            <span className="tool-stack-badges">
+              {Array.from(toolTypeCounts.entries()).slice(0, 4).map(([type, count]) => (
+                <span
+                  key={type}
+                  className={`tool-mini-badge badge-${type.toLowerCase()}`}
+                  title={`${count} ${type} call${count > 1 ? 's' : ''}`}
+                >
+                  {getToolBadgeLabel(type)}
+                </span>
+              ))}
+            </span>
+            <span className="tool-stack-summary">
+              {collapsedSummary}
+            </span>
+          </>
         )}
+        <span className="tool-stack-duration">
+          {totalDuration > 0 ? formatDuration(totalDuration) : ''}
+        </span>
       </div>
 
       {shouldShowTools && (
