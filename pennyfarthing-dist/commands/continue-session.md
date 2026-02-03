@@ -29,7 +29,38 @@ Recovery command for resuming work after the context circuit breaker (85% thresh
 
 <on-invoke>
 
-## Step 1: Scan for Checkpoints
+## Step 1: Check for Circuit Breaker Agent
+
+First, check if the circuit breaker saved an active agent:
+
+```bash
+source "${PROJECT_ROOT:-.}/.pennyfarthing/scripts/lib/checkpoint.sh"
+SAVED_AGENT=$(checkpoint_restore "circuit_breaker_agent")
+if [[ -n "$SAVED_AGENT" ]]; then
+    echo "Circuit breaker saved agent: $SAVED_AGENT"
+else
+    echo "No circuit breaker agent found"
+fi
+```
+
+**If a saved agent is found:**
+- Invoke that agent's command (e.g., `/sm`, `/dev`, `/tea`, `/reviewer`)
+- The agent will be primed with FULL tier context (fresh session)
+- This restores the exact agent that was active when the circuit breaker triggered
+
+```markdown
+## Circuit Breaker Recovery
+
+The circuit breaker saved your active agent: **{SAVED_AGENT}**
+
+Invoking `/{SAVED_AGENT}` to restore with full context...
+```
+
+Then invoke the Skill tool with skill="{SAVED_AGENT}" to activate the agent.
+
+**If no saved agent**, continue to Step 2 below.
+
+## Step 2: Scan for Checkpoints
 
 Run bash to check for saved checkpoints:
 
@@ -43,7 +74,7 @@ else
 fi
 ```
 
-## Step 2: Parse and Present Options
+## Step 3: Parse and Present Options (if no saved agent)
 
 If checkpoints exist, parse and present them:
 
@@ -60,7 +91,7 @@ Which checkpoint would you like to restore? (Enter number or 'all' for most rece
 
 Output `<!-- CYCLIST:CHOICES:checkpoint -->` marker, then use AskUserQuestion to let user choose.
 
-## Step 3: Restore Checkpoint
+## Step 4: Restore Checkpoint
 
 Source the checkpoint utilities and restore:
 
@@ -79,7 +110,7 @@ echo "  Context: $CONTEXT"
 echo "  Files: $FILES"
 ```
 
-## Step 4: Find Session File
+## Step 5: Find Session File
 
 Look for the matching session file:
 
@@ -93,7 +124,7 @@ else
 fi
 ```
 
-## Step 5: Resume Appropriate Agent
+## Step 6: Resume Appropriate Agent
 
 Based on the restored phase, invoke the appropriate agent:
 
@@ -127,6 +158,7 @@ Standard checkpoint labels include the story ID:
 
 | Label Pattern | Purpose | Example |
 |---------------|---------|---------|
+| `circuit_breaker_agent` | **Auto-saved** by circuit breaker | `circuit_breaker_agent` → `dev` |
 | `phase:{story-id}` | Workflow phase | `phase:3-4` → `dev` |
 | `context:{story-id}` | Work summary | `context:3-4` → `Implementing validation` |
 | `files:{story-id}` | Key files | `files:3-4` → `src/api.ts,src/utils.ts` |
@@ -170,10 +202,12 @@ This command completes the circuit breaker workflow:
 
 1. Agent works normally
 2. Context reaches 85% → circuit breaker triggers
-3. Agent saves checkpoint: `checkpoint_save "phase:X-Y" "dev"`
+3. Circuit breaker **automatically saves** the active agent to `circuit_breaker_agent` checkpoint
 4. User starts new Claude session
 5. User runs `/continue-session`
-6. Checkpoint restored, agent resumes
+6. Command reads `circuit_breaker_agent` checkpoint
+7. Agent is invoked with `/{agent}` command → FULL tier context injection
+8. Agent resumes with complete persona, behavior guide, and session context
 </integration>
 
 <reference>
