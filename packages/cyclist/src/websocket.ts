@@ -28,11 +28,19 @@ import {
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 
+// Pasted image type (matches main.ts PastedImage)
+interface PastedImage {
+  dataUrl: string;
+  mimeType: string;
+  filename: string;
+}
+
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
   type: 'send' | 'abort' | 'clear' | 'setMode';
   prompt?: string;
   mode?: PermissionMode;
+  images?: PastedImage[];
 }
 
 // Track Claude sessions per WebSocket connection (web mode only)
@@ -101,7 +109,7 @@ let gitUpdateCallback: GitUpdateCallback | null = null;
 // In Electron mode, WebSocket messages need to be forwarded to the main process's
 // ClaudeService singleton. These callbacks allow main.ts to register handlers.
 
-type ClaudeSendCallback = (prompt: string, onMessage: (msg: unknown) => void, onComplete: () => void, onError: (err: string) => void) => void;
+type ClaudeSendCallback = (prompt: string, images: PastedImage[], onMessage: (msg: unknown) => void, onComplete: () => void, onError: (err: string) => void) => void;
 type ClaudeAbortCallback = () => void;
 type ClaudeClearCallback = () => void;
 type ClaudeSetModeCallback = (mode: PermissionMode) => void;
@@ -880,8 +888,13 @@ export function setupWebSocketServers(
                 return;
               }
               if (claudeSendCallback) {
+                const images = msg.images || [];
+                if (images.length > 0) {
+                  console.log(`[WebSocket] Processing ${images.length} pasted image(s)`);
+                }
                 claudeSendCallback(
                   msg.prompt,
+                  images,
                   (message) => {
                     // Message broadcast is handled by main.ts calling broadcastClaudeMessage
                     // But we also send directly to this client for immediate feedback
