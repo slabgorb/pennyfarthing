@@ -83,6 +83,19 @@ const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SETTINGS,
 ] as const;
 
+// Title Case display names for tab headers (AC4: Story 75-5)
+const PANEL_TITLES: Record<string, string> = {
+  changed: 'Changed',
+  diffs: 'Diffs',
+  debug: 'Debug',
+  message: 'Message',
+  sprint: 'Sprint',
+  progress: 'Progress',
+  background: 'Background',
+  git: 'Git',
+  settings: 'Settings',
+};
+
 // Track closed panels for restoration
 const closedPanels: Set<string> = new Set();
 
@@ -131,6 +144,7 @@ export function restorePanel(panelId: string): boolean {
     component: 'PanelAdapter',
     params: { panelId },
     position: referencePanel ? { referencePanel: referencePanel.id } : undefined,
+    title: PANEL_TITLES[panelId] || panelId,
   });
 
   closedPanels.delete(panelId);
@@ -174,6 +188,7 @@ function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
     id: LEFT_SIDEBAR_PANELS[0],
     component: 'PanelAdapter',
     params: { panelId: LEFT_SIDEBAR_PANELS[0] },
+    title: PANEL_TITLES[LEFT_SIDEBAR_PANELS[0]],
   });
 
   // Add remaining left sidebar panels to the same group
@@ -184,6 +199,7 @@ function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
       component: 'PanelAdapter',
       params: { panelId },
       position: { referencePanel: leftFirstPanel.id },
+      title: PANEL_TITLES[panelId],
     });
   }
 
@@ -193,6 +209,7 @@ function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
     component: 'PanelAdapter',
     params: { panelId: PANEL_INVENTORY.MESSAGE },
     position: { referencePanel: leftFirstPanel.id, direction: 'right' },
+    title: PANEL_TITLES[PANEL_INVENTORY.MESSAGE],
   });
 
   // Add first right sidebar panel (creates new group to the right of center)
@@ -201,6 +218,7 @@ function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
     component: 'PanelAdapter',
     params: { panelId: RIGHT_SIDEBAR_PANELS[0] },
     position: { referencePanel: messagePanel.id, direction: 'right' },
+    title: PANEL_TITLES[RIGHT_SIDEBAR_PANELS[0]],
   });
 
   // Add remaining right sidebar panels to the same group
@@ -211,6 +229,7 @@ function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
       component: 'PanelAdapter',
       params: { panelId },
       position: { referencePanel: rightFirstPanel.id },
+      title: PANEL_TITLES[panelId],
     });
   }
 
