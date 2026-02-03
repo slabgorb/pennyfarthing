@@ -377,6 +377,57 @@ top -l 1 | head -20
 
 ---
 
+## Visual/UI Debugging with Playwright MCP
+
+For debugging UI issues in Electron apps or web applications, use the `interactive-debug` workflow
+with Playwright MCP.
+
+### Electron Apps (Requires CDP)
+
+1. **Start with CDP enabled:**
+   ```bash
+   # Via justfile (if configured)
+   just myapp cdp
+
+   # Or direct
+   electron --remote-debugging-port=9222 dist/main.js
+   ```
+
+2. **Get internal server URL:**
+   ```bash
+   curl -s http://localhost:9222/json/list | grep '"url"'
+   # Returns: "url": "http://localhost:60178/"
+   ```
+
+3. **Connect Playwright to internal URL (not CDP port):**
+   ```
+   mcp__playwright__browser_navigate to http://localhost:60178/
+   mcp__playwright__browser_snapshot  # See accessibility tree
+   ```
+
+**Important:** Playwright MCP doesn't connect to CDP directly. It uses its own browser.
+Connect to the app's internal server URL discovered via `/json/list`.
+
+### Web Apps
+
+Simply navigate to the dev server URL:
+```
+mcp__playwright__browser_navigate to http://localhost:3000/
+```
+
+### Playwright Debugging Commands
+
+| Tool | Purpose |
+|------|---------|
+| `browser_snapshot` | Get accessibility tree (better than screenshots) |
+| `browser_click` | Interact with elements |
+| `browser_console_messages` | Check for JS errors |
+| `browser_network_requests` | Debug API calls |
+
+See: `/workflow interactive-debug` for full workflow.
+
+---
+
 ## Integration with Other Skills
 
 | Skill | How It Complements |
@@ -384,6 +435,7 @@ top -l 1 | head -20
 | `/testing` | Run tests to verify fixes |
 | `/dev-patterns` | Avoid common pitfalls |
 | `/agentic-patterns` | ReAct pattern for systematic investigation |
+| `/workflow interactive-debug` | UI debugging with Playwright MCP |
 
 ---
 
