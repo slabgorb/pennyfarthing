@@ -80,6 +80,25 @@ function formatToolInput(toolName: string, input: Record<string, unknown>): stri
   return JSON.stringify(input, null, 2);
 }
 
+/**
+ * Get single-letter badge label for tool type
+ */
+export function getToolBadgeLabel(toolName: string): string {
+  const labels: Record<string, string> = {
+    Read: 'R',
+    Write: 'W',
+    Bash: 'B',
+    Glob: 'G',
+    Grep: 'S',  // S for Search
+    Edit: 'E',
+    Task: 'T',
+    WebFetch: 'F',
+    WebSearch: 'W',
+    TodoWrite: 'D',  // D for Do/Tasks
+  };
+  return labels[toolName] || toolName.charAt(0).toUpperCase();
+}
+
 export default function ToolCallBlock({ toolUse, result, className }: ToolCallBlockProps): React.ReactElement {
   // AC1: Start collapsed by default
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -142,20 +161,25 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
     className || '',
   ].filter(Boolean).join(' ');
 
+  // Get badge label for tool type
+  const badgeLabel = getToolBadgeLabel(toolUse.tool_name);
+
   return (
     <div data-testid="tool-call-block" className={blockClasses}>
       <div className="tool-header">
-        <span className="tool-name" title={toolUse.tool_name}>{intentSummary}</span>
+        {/* Tool type badge - colored pill for instant recognition */}
+        <span className="tool-type-badge" title={toolUse.tool_name}>
+          {badgeLabel}
+        </span>
+        <span className="tool-name" title={inputDisplay}>{intentSummary}</span>
         {/* MSSCI-13402: Status indicator with icons */}
         <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
           <ToolStatus status={status} />
         </span>
         {/* MSSCI-13402: Duration display */}
-        {result && (
-          <span data-testid="tool-duration" className="tool-duration">
-            {result.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
-          </span>
-        )}
+        <span data-testid="tool-duration" className="tool-duration">
+          {result?.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
+        </span>
       </div>
       {result && (
         <>
