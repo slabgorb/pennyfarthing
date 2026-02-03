@@ -58,6 +58,20 @@
   width: 0 !important;
 }
 
+/* Keep collapse toggle visible and clickable when sidebar is collapsed */
+.sidebar[data-collapsed="true"] .collapse-toggle {
+  position: fixed;
+  z-index: 50;
+}
+
+.sidebar-left[data-collapsed="true"] .collapse-toggle {
+  left: 8px;
+}
+
+.sidebar-right[data-collapsed="true"] .collapse-toggle {
+  right: 8px;
+}
+
 /* Tablist styling */
 .tablist {
   display: flex;
