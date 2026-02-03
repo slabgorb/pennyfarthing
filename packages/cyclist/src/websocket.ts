@@ -29,6 +29,56 @@ import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { storePendingToolInput } from './span-correlation.js';
 
+// =============================================================================
+// Git Cache Invalidation Logic
+// =============================================================================
+
+/**
+ * Determine if a tool event should trigger git cache invalidation.
+ * Only invalidate when files are actually modified - not for read-only operations.
+ */
+function shouldInvalidateGitCache(event: ToolEvent): boolean {
+  // Only successful operations can change git status
+  if (!event.success) {
+    return false;
+  }
+
+  // Edit/Write always modify files when successful
+  if (event.toolName === 'Edit' || event.toolName === 'Write') {
+    return true;
+  }
+
+  // Bash: check if it's a git command or file-modifying command
+  if (event.toolName === 'Bash' && event.input) {
+    const cmd = event.input.trim();
+
+    // Git commands that change state
+    if (/^git\s+(add|commit|checkout|reset|stash|merge|rebase|cherry-pick|revert|pull|fetch|push|branch\s+-[dD]|rm|mv|restore|switch|clean)/i.test(cmd)) {
+      return true;
+    }
+
+    // File-modifying commands
+    if (/^(rm|mv|cp|touch|mkdir|rmdir|chmod|chown)\s/i.test(cmd)) {
+      return true;
+    }
+
+    // Redirections that create/modify files
+    if (/[>|]/.test(cmd) && !/^\s*(cat|echo|printf)\s.*\|\s*(grep|awk|sed|head|tail|wc|sort|uniq)/.test(cmd)) {
+      // Has redirect but isn't just piping to a filter
+      if (/>\s*[^|&]/.test(cmd)) {
+        return true;
+      }
+    }
+
+    // npm/pnpm install can modify package-lock.json
+    if (/^(npm|pnpm|yarn)\s+(install|add|remove|uninstall)/i.test(cmd)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Pasted image type (matches main.ts PastedImage)
 interface PastedImage {
   dataUrl: string;
@@ -791,10 +841,10 @@ export function setupWebSocketServers(
       updatePwd(event.workingDirectory);
     }
 
-    // Invalidate git cache on tool completion - this replaces the .git/index watcher
-    // Tools that modify files (Edit, Write, Bash) may change git status
-    // The cache will debounce and refresh after a delay to avoid lock conflicts
-    if (event.toolName === 'Edit' || event.toolName === 'Write' || event.toolName === 'Bash') {
+    // Invalidate git cache only when files are actually modified
+    // Not every tool use affects git status - be selective to avoid unnecessary refreshes
+    const shouldInvalidateGit = shouldInvalidateGitCache(event);
+    if (shouldInvalidateGit) {
       const projectDir = getProjectDir();
       invalidateGitCache(projectDir);
     }

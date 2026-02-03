@@ -24,12 +24,16 @@ const caches = new Map<string, GitCacheState>();
 // Debounce timer for refresh after invalidation
 const refreshTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+// Track when invalidation started (for max delay enforcement)
+const invalidationStartTimes = new Map<string, number>();
+
 // Callbacks for when cache refreshes (used by WebSocket broadcast)
 type RefreshCallback = (repos: RepoGitInfo[]) => void;
 const refreshCallbacks = new Set<RefreshCallback>();
 
 // Configuration
 const REFRESH_DELAY_MS = 1500; // Wait after invalidation before fetching
+const MAX_INVALIDATION_DELAY_MS = 5000; // Force refresh after this time even if events keep coming
 const STALE_THRESHOLD_MS = 30000; // Force refresh if cache older than 30s
 
 /**
@@ -101,15 +105,42 @@ export function invalidateGitCache(projectDir: string): void {
   const cache = getOrCreateCache(projectDir);
   cache.stale = true;
 
+  const now = Date.now();
+
+  // Track when this invalidation sequence started
+  // (only set if not already tracking - prevents resetting on each event)
+  if (!invalidationStartTimes.has(projectDir)) {
+    invalidationStartTimes.set(projectDir, now);
+  }
+
   // Clear any existing refresh timer
   const existingTimer = refreshTimers.get(projectDir);
   if (existingTimer) {
     clearTimeout(existingTimer);
   }
 
+  // Calculate delay: use normal debounce, but cap at max delay from first invalidation
+  const invalidationStart = invalidationStartTimes.get(projectDir)!;
+  const timeSinceStart = now - invalidationStart;
+  const remainingMaxDelay = Math.max(0, MAX_INVALIDATION_DELAY_MS - timeSinceStart);
+  const actualDelay = Math.min(REFRESH_DELAY_MS, remainingMaxDelay);
+
+  // If we've hit the max delay, refresh immediately
+  if (actualDelay === 0) {
+    invalidationStartTimes.delete(projectDir);
+    refreshTimers.delete(projectDir);
+    if (refreshCallbacks.size > 0) {
+      getCachedGitStatus(projectDir).catch(err => {
+        console.error('[GitCache] Max delay refresh error:', err);
+      });
+    }
+    return;
+  }
+
   // Schedule a debounced refresh
   const timer = setTimeout(async () => {
     refreshTimers.delete(projectDir);
+    invalidationStartTimes.delete(projectDir);
     // Only refresh if there are listeners (WebSocket clients)
     if (refreshCallbacks.size > 0) {
       try {
@@ -118,7 +149,7 @@ export function invalidateGitCache(projectDir: string): void {
         console.error('[GitCache] Debounced refresh error:', err);
       }
     }
-  }, REFRESH_DELAY_MS);
+  }, actualDelay);
 
   refreshTimers.set(projectDir, timer);
 }
@@ -130,12 +161,13 @@ export async function forceRefreshGitCache(projectDir: string): Promise<RepoGitI
   const cache = getOrCreateCache(projectDir);
   cache.stale = true;
 
-  // Clear any pending debounced refresh
+  // Clear any pending debounced refresh and invalidation tracking
   const existingTimer = refreshTimers.get(projectDir);
   if (existingTimer) {
     clearTimeout(existingTimer);
     refreshTimers.delete(projectDir);
   }
+  invalidationStartTimes.delete(projectDir);
 
   return getCachedGitStatus(projectDir);
 }
