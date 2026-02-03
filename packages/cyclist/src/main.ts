@@ -1011,10 +1011,13 @@ export function startProjectWatchers(): void {
 
   // Register Claude command callbacks to bridge WebSocket to ClaudeService
   // This allows React components to communicate via WebSocket in Electron mode
-  setClaudeSendCallback(async (prompt, onMessage, onComplete, onError) => {
+  setClaudeSendCallback(async (prompt, images, onMessage, onComplete, onError) => {
     try {
       const service = getClaudeService();
-      for await (const message of service.sendMessage(prompt)) {
+      if (images.length > 0) {
+        console.log(`[main] WebSocket callback processing ${images.length} pasted image(s)`);
+      }
+      for await (const message of service.sendMessage(prompt, { images })) {
         // Enrich messages with subagent context (same as IPC handler)
         const enrichedMessage = enrichMessageWithSubagentContext(message);
 

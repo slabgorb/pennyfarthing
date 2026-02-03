@@ -168,15 +168,14 @@ export function useClaude(callbacks?: UseClaudeCallbacks): UseClaudeResult {
       return;
     }
 
-    // Note: images support would need to be added to the WebSocket handler
-    // For now, we just send the prompt
     if (images && images.length > 0) {
-      console.warn('[useClaude] Image support not yet implemented in WebSocket mode');
+      console.log(`[useClaude] Sending ${images.length} image(s) with prompt`);
     }
 
     wsRef.current.send(JSON.stringify({
       type: 'send',
       prompt,
+      images: images || [],
     }));
   }, []);
 
