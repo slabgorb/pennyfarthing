@@ -1,51 +1,39 @@
 # Step 4: Verify and Push
 
-Verify the cleanup was successful and optionally push to remote.
+Verify the cleanup was successful and push to remote.
 
 ## Objective
 
-1. Confirm all changes are properly committed
+1. Confirm all changes are properly committed across all repos
 2. Verify no uncommitted changes remain (or only intentionally skipped)
 3. Show commit history for review
-4. Push to remote if requested
+4. Push to remote
 
 ## Verification
 
-### 4.1 Final Git Status
+### 4.1 Final Git Status (All Repos)
 
 ```bash
-echo "=== Final State ==="
 .pennyfarthing/scripts/git/git-status-all.sh
 ```
 
-Expected: Clean working directory or only intentionally skipped files.
+Expected: Clean working directory in all repos, or only intentionally skipped files.
 
-### 4.2 Review Commits
+### 4.2 Review Commits (Each Repo)
 
 ```bash
-echo "=== New Commits ==="
-git log --oneline develop@{1}..develop 2>/dev/null || git log --oneline -5
+# For each repo that had changes
+git -C {repo_path} log --oneline -5
 ```
 
 ### 4.3 Branch Cleanup Check
 
 ```bash
-echo "=== Remaining Branches ==="
-git branch | grep -v "develop\|main"
+# For each repo
+git -C {repo_path} branch | grep -v "develop\|main"
 ```
 
 All cleanup branches should be deleted after merge.
-
-### 4.4 Stash Status
-
-```bash
-echo "=== Stash Status ==="
-git stash list | head -5
-```
-
-If stash entries remain from cleanup, either:
-- Pop and commit (if intentional skip)
-- Drop (if no longer needed)
 
 ## Summary Report
 
@@ -53,36 +41,37 @@ If stash entries remain from cleanup, either:
 ## Git Cleanup Summary
 
 ### Commits Created
-| Commit | Type | Message |
-|--------|------|---------|
-| abc1234 | chore | chore(sprint): update tracking |
-| def5678 | docs | docs: update README |
+
+**pennyfarthing:**
+| Commit | Message |
+|--------|---------|
+| abc1234 | feat(cyclist): replace todos REST polling with WebSocket |
+
+**pennyfarthing-orchestrator:**
+| Commit | Message |
+|--------|---------|
+| (none) | |
 
 ### Final State
-- Working directory: {clean / X files remaining}
-- Unpushed commits: {n}
-- Stash entries: {n}
+- pennyfarthing: {clean / X files remaining}
+- orchestrator: {clean / X files remaining}
 
 ### Remaining Work
 {list any skipped files or deferred changes}
 ```
 
-## Push Decision
+## Push
 
-**Push to remote?**
-
-- **Yes**: Push develop to origin
-- **No**: Keep commits local for now
+Push develop to remote for each repo with new commits:
 
 ```bash
-# If pushing
-git push origin develop
+git -C {repo_path} push origin develop
 ```
 
 ---
 
-**[P]** Push to remote now
-**[L]** Keep local (don't push)
-**[R]** Review commits again before deciding
+**[P]** Push all repos to remote
+**[L]** Keep local (don't push yet)
+**[R]** Review commits again
 
 <!-- CYCLIST:CHOICES:P,L,R -->

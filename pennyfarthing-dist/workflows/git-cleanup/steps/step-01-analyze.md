@@ -4,51 +4,40 @@ Gather the current git state across all configured repositories.
 
 ## Objective
 
-Build a complete picture of:
-- Uncommitted changes in each repo
-- Unpushed commits on develop
-- Active worktrees and their state
-- Active work sessions that might explain changes
+Build a complete picture of uncommitted changes across ALL repos defined in `.claude/project/pennyfarthing-settings.yaml`.
 
 ## Execution
 
-### 1.0 Check Stash (CRITICAL - DO THIS FIRST)
-
-```bash
-echo "=== Stash Status (CRITICAL) ==="
-git stash list
-```
-
-**If stash has ANY entries:**
-1. Show the stash contents to user
-2. Ask: "Stash contains saved work. Clear it completely before proceeding?"
-3. If user agrees: `git stash clear`
-4. If user declines: **STOP** - do not proceed with cleanup
-
-**This prevents:**
-- Losing work that was stashed from a previous interrupted cleanup
-- Confusion about what changes belong to what
-- Accidentally clearing someone else's stashed work
-
 ### 1.1 Gather Git Status (All Repos)
+
+**CRITICAL: Use the multi-repo script, not plain `git status`.**
 
 ```bash
 .pennyfarthing/scripts/git/git-status-all.sh
 ```
 
-This shows branch, staged/unstaged changes, and unpushed commits for all repos.
+This shows branch, staged/unstaged changes, and unpushed commits for **all repos** defined in the project configuration.
 
-### 1.2 Check Recent Commit Patterns
+### 1.2 For Each Repo with Changes
+
+For repos with uncommitted changes, gather more detail:
 
 ```bash
-echo "=== Recent Commits (for message style) ==="
-git log --oneline -10
-echo ""
-echo "=== Recent Branches ==="
-git branch --sort=-committerdate | head -10
+# Show full diff for a specific repo
+git -C {repo_path} diff
+
+# Check the branch
+git -C {repo_path} branch --show-current
 ```
 
-### 1.3 Check Active Work Sessions
+### 1.3 Check Recent Commit Patterns
+
+```bash
+# In each repo with changes, check commit style
+git -C {repo_path} log --oneline -5
+```
+
+### 1.4 Check Active Work Sessions
 
 ```bash
 echo "=== Active Work Sessions ==="
@@ -57,21 +46,12 @@ ls -la .session/*.md 2>/dev/null || echo "No active sessions"
 
 If sessions exist, read headers to understand what work is in progress.
 
-### 1.4 Check Worktree Status
-
-```bash
-echo "=== Worktree Status ==="
-.pennyfarthing/scripts/git/worktree-manager.sh status 2>/dev/null || echo "No worktrees"
-```
-
-### 1.5 Pre-flight Checks
-
-**Before proceeding, verify:**
+## Pre-flight Checks
 
 | Check | Status | Action if Failed |
 |-------|--------|------------------|
 | No merge conflicts | ☐ | Resolve conflicts first |
-| develop is up to date | ☐ | `git pull origin develop` |
+| Each repo's develop up to date | ☐ | `git -C {repo} pull origin develop` |
 | No uncommitted secrets | ☐ | Add to .gitignore |
 
 ## Output Format
@@ -81,13 +61,16 @@ Present findings in this structure:
 ```
 ## Analysis Results
 
-### Repo: {repo_name}
+### Repo: {repo_name} (path: {repo_path})
 Branch: {current_branch}
 Unpushed: {count} commits
 
 **Uncommitted Changes:**
 - {file_path} ({status: M/A/D/??})
 - ...
+
+### Repo: {another_repo}
+...
 
 ### Warnings
 - {any issues found}

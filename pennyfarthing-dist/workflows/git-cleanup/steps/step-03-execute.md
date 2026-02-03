@@ -4,202 +4,170 @@ Create branches, commit changes, and merge to develop for each approved group.
 
 ## Objective
 
-Execute the approved change groupings following the branch workflow:
-1. Stash all changes
-2. For each group: branch → stage → commit → merge (or PR for tracked)
-3. Track progress and handle failures gracefully
+Execute the approved change groupings using a simple branch workflow. No stashing required.
 
-## Two Execution Paths
+## Approach: One Group at a Time
 
-| Type | Flow | Merge Method |
-|------|------|--------------|
-| **Quick** | branch → commit → local merge | Fast-forward |
-| **Tracked** | Jira → branch → commit → push → PR → squash merge | PR squash |
+Process groups sequentially. For each group:
+1. Create branch in each affected repo
+2. Stage and commit the group's files
+3. Merge to develop
+4. Move to next group
 
 ## Critical Rules
 
-**NEVER commit directly to develop.** Branch protection hooks will reject it.
-
-**NEVER force push.** Data loss is not recoverable.
-
-**NEVER commit secrets.** Check for .env, credentials, API keys.
+- **NEVER commit directly to develop** - Branch protection hooks will reject it
+- **NEVER force push** - Data loss is not recoverable
+- **NEVER commit secrets** - Check for .env, credentials, API keys
 
 ## Execution
 
-### 3.1 Stash All Changes
+### For Each Group
+
+#### 3.1 Create Branch (in each affected repo)
 
 ```bash
-# Stash everything to start clean - MARK CLEARLY
-git stash push -m "CLEANUP-WIP: git-cleanup-$(date +%Y%m%d-%H%M%S)"
+# For each repo that has changes in this group
+git -C {repo_path} checkout develop
+git -C {repo_path} pull origin develop
+git -C {repo_path} checkout -b {branch_name}
 ```
 
-**Verify stash worked:**
-```bash
-git stash list  # Should show your CLEANUP-WIP entry
-```
+**Branch naming:**
+- `feat/description` for features
+- `fix/description` for bug fixes
+- `chore/description` for maintenance
+- `docs/description` for documentation
 
-### 3.2 For Each Group
-
-Execute this sequence for each approved group:
-
-#### Create Branch
-
-```bash
-# Ensure on develop and up to date
-git checkout develop
-git pull origin develop
-
-# Create feature branch
-git checkout -b {branch_name}
-```
-
-#### Apply and Stage Changes
+#### 3.2 Stage Files for This Group
 
 ```bash
-# Pop stash
-git stash pop
-
-# Stage only files for this group
-git add {file1} {file2} ...
-
-# Re-stash remaining changes - MARK CLEARLY
-git stash push -m "CLEANUP-WIP: remaining changes"
+# Stage only files belonging to this group
+git -C {repo_path} add {file1} {file2} ...
 ```
 
-#### Show Diff for Verification
+#### 3.3 Show Diff for Verification
 
 ```bash
 # Show what will be committed
-git diff --cached --stat
+git -C {repo_path} diff --cached --stat
 ```
 
-#### Commit
+#### 3.4 Commit
 
 ```bash
-git commit -m "$(cat <<'EOF'
+git -C {repo_path} commit -m "$(cat <<'EOF'
 {type}({scope}): {description}
 
-{body if needed}
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
 
-#### Merge to Develop (Quick Path)
+#### 3.5 Merge to Develop
 
 ```bash
 # Switch to develop
-git checkout develop
+git -C {repo_path} checkout develop
 
-# Merge the branch (creates merge commit)
-git merge {branch_name} --no-ff -m "Merge {branch_name}"
-
-# Or fast-forward merge for clean history
-git merge {branch_name}
+# Merge the branch (fast-forward)
+git -C {repo_path} merge {branch_name}
 
 # Delete local branch
-git branch -d {branch_name}
+git -C {repo_path} branch -d {branch_name}
 ```
 
-### 3.3 For Tracked Groups (Standalone Path)
+#### 3.6 Repeat for Next Group
 
-Groups marked for Jira tracking follow the full PR workflow:
+Move to the next group and repeat steps 3.1-3.5.
+
+## Multi-Repo Groups
+
+When a group spans multiple repos, execute steps 3.1-3.5 in **each repo** before moving to the next group:
+
+```
+Group: "Todos WebSocket"
+  1. pennyfarthing: checkout -b feat/todos-websocket
+  2. pennyfarthing: add main.ts websocket.ts useTodos.ts
+  3. pennyfarthing: commit
+  4. pennyfarthing: merge to develop
+
+  (If orchestrator also had changes in this group, repeat there)
+
+  ✓ Group complete, move to next group
+```
+
+## Tracked Groups (Jira + PR Path)
+
+For groups marked for Jira tracking:
 
 #### Create Jira Story
 
 ```bash
-# Create story in Jira
 JIRA_KEY=$(jira issue create \
   --project MSSCI \
   --type Story \
   --summary "{title}" \
   --body "{description}" \
   --label pennyfarthing \
-  --custom story-points="{points}" \
   --no-input 2>&1 | grep -oE 'MSSCI-[0-9]+' | head -1)
 
 echo "Created: $JIRA_KEY"
-
-# Add to current sprint and mark done
-jira sprint add {sprint_id} "$JIRA_KEY"
-jira issue move "$JIRA_KEY" "Done"
 ```
 
-#### Create Branch with Jira Key
+#### Use Jira Key in Branch
 
 ```bash
-SLUG=$(echo "{title}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-' | cut -c1-30)
-BRANCH="feat/${JIRA_KEY}-${SLUG}"
-git checkout -b "$BRANCH"
-```
-
-#### Commit with Jira Reference
-
-```bash
-git commit -m "$(cat <<'EOF'
-feat: {title} ({JIRA_KEY})
-
-{description}
-EOF
-)"
+BRANCH="feat/${JIRA_KEY}-${slug}"
+git -C {repo_path} checkout -b "$BRANCH"
 ```
 
 #### Push and Create PR
 
 ```bash
-git push -u origin "$BRANCH"
+git -C {repo_path} push -u origin "$BRANCH"
 
 gh pr create \
+  --repo {repo_owner}/{repo_name} \
   --title "feat: {title} (${JIRA_KEY})" \
   --body "## Summary
 {description}
 
 ## Jira
-[${JIRA_KEY}](https://1898andco.atlassian.net/browse/${JIRA_KEY})
+[${JIRA_KEY}](https://your-jira.atlassian.net/browse/${JIRA_KEY})
 
 ## Test plan
-- [x] Changes verified locally
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+- [x] Changes verified locally"
 ```
 
-#### Merge PR and Cleanup
+#### Merge PR
 
 ```bash
 gh pr merge --squash --delete-branch
-git checkout develop
-git pull origin develop
+git -C {repo_path} checkout develop
+git -C {repo_path} pull origin develop
 ```
 
-### 3.4 Progress Tracking
+## Progress Tracking
 
 Report progress after each group:
 
 ```
 ## Execution Progress
 
-| Group | Type | Status | Branch | Jira |
-|-------|------|--------|--------|------|
-| Sprint cleanup | Quick | ✅ Done | chore/sprint-update | - |
-| Docs update | Quick | ✅ Done | docs/update-readme | - |
-| Prime module | Tracked | ✅ Done | feat/MSSCI-12500-prime | MSSCI-12500 |
-| Config changes | Quick | ⏳ Pending | - | - |
+| Group | Repo | Status | Branch |
+|-------|------|--------|--------|
+| Sprint cleanup | orchestrator | ✅ Done | chore/sprint-update |
+| Todos WebSocket | pennyfarthing | ✅ Done | feat/todos-websocket |
+| Config changes | both | ⏳ In Progress | chore/config-update |
 ```
 
-### 3.5 Error Handling
+## Error Handling
 
 If a commit fails:
-1. **Hook rejection**: Check commit message format, try again
-2. **Merge conflict**: Report to user, offer to abort or resolve
-3. **Test failure**: Report which tests failed, offer to proceed or abort
-
-**CRITICAL: Before panicking about lost work, CHECK STASH:**
-```bash
-git stash list              # Work is probably here!
-git stash show -p stash@{0} # See what's in it
-git stash pop               # Restore it
-```
-
-When a pre-commit hook blocks a commit, staged changes may be auto-stashed. Always check.
+1. **Hook rejection**: Check commit message format, fix and retry
+2. **Merge conflict**: Report to user, resolve manually
+3. **Test failure**: Report which tests failed, decide whether to proceed
 
 ## Output
 
@@ -210,14 +178,14 @@ After all groups processed:
 
 Commits created: {n}
 Branches merged: {n}
-Remaining stashed: {yes/no}
+Repos updated: {list}
 
 Ready to verify and push?
 ```
 
 ---
 
-**[A]** Abort (revert all changes, restore stash)
+**[A]** Abort current group (leave those changes uncommitted)
 **[C]** Continue to verification
 
 <!-- GATE -->
