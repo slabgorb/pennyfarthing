@@ -26,6 +26,7 @@ interface ToolResultMessage {
 interface ToolCallBlockProps {
   toolUse: ToolUseMessage;
   result?: ToolResultMessage;
+  className?: string;
 }
 
 const TRUNCATION_THRESHOLD = 50;
@@ -70,7 +71,7 @@ function formatToolInput(toolName: string, input: Record<string, unknown>): stri
   return JSON.stringify(input, null, 2);
 }
 
-export default function ToolCallBlock({ toolUse, result }: ToolCallBlockProps): React.ReactElement {
+export default function ToolCallBlock({ toolUse, result, className }: ToolCallBlockProps): React.ReactElement {
   // AC1: Start collapsed by default
   const [isCollapsed, setIsCollapsed] = useState(true);
   // AC3: Track whether showing full content or truncated
@@ -115,7 +116,7 @@ export default function ToolCallBlock({ toolUse, result }: ToolCallBlockProps): 
   const lineCountText = lineCount === 1 ? '1 line' : `${lineCount} lines`;
 
   return (
-    <div data-testid="tool-call-block" className="tool-call-block">
+    <div data-testid="tool-call-block" className={`tool-call-block ${className || ''}`}>
       <div className="tool-header">
         <span className="tool-name">{toolUse.tool_name}</span>
         <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
