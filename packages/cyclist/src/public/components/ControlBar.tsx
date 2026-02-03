@@ -61,6 +61,12 @@ export interface ControlBarProps {
   onBellModeChange?: (enabled: boolean) => void;
   /** Called when relay mode toggle clicked */
   onRelayModeChange?: (enabled: boolean) => void;
+  /** Context percentage for TirePump visibility */
+  contextPercent?: number;
+  /** Current agent slug for TirePump reload */
+  currentAgent?: string | null;
+  /** Called when TirePump button clicked */
+  onTirePump?: () => void;
 }
 
 // =============================================================================
@@ -77,6 +83,9 @@ export function ControlBar({
   relayMode = false,
   onBellModeChange,
   onRelayModeChange,
+  contextPercent = 0,
+  currentAgent = null,
+  onTirePump,
 }: ControlBarProps): React.ReactElement {
   const lastEscapeTime = useRef<number>(0);
   const DOUBLE_PRESS_THRESHOLD = 500; // ms
@@ -149,6 +158,20 @@ export function ControlBar({
         >
           <span className="toggle-icon">🚲</span>
         </button>
+
+        {/* TirePump Button - visible at 50%+ context, warning at 70%+ */}
+        {contextPercent >= 50 && currentAgent && (
+          <button
+            type="button"
+            className={`btn-toggle pump-toggle ${contextPercent >= 70 ? 'warning' : ''}`}
+            data-testid="pump-toggle"
+            onClick={onTirePump}
+            aria-label="TirePump: Clear context and reload agent"
+            title={`TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}`}
+          >
+            <span className="toggle-icon">🫧</span>
+          </button>
+        )}
       </div>
 
       {/* Stop button - always visible, disabled when not running */}
@@ -203,6 +226,10 @@ interface UseControlBarResult {
   bellMode: boolean;
   /** Relay mode state */
   relayMode: boolean;
+  /** Context percentage for TirePump */
+  contextPercent: number;
+  /** Current agent slug for TirePump */
+  currentAgent: string | null;
   /** Handle stop action */
   handleStop: () => void;
   /** Handle force stop action (SIGKILL) */
@@ -213,6 +240,8 @@ interface UseControlBarResult {
   handleBellModeChange: (enabled: boolean) => void;
   /** Handle relay mode toggle */
   handleRelayModeChange: (enabled: boolean) => void;
+  /** Handle TirePump action */
+  handleTirePump: () => void;
 }
 
 export function useControlBar(): UseControlBarResult {
@@ -220,9 +249,11 @@ export function useControlBar(): UseControlBarResult {
   const [isStopping, setIsStopping] = useState(false);
   const [bellMode, setBellMode] = useState(false);
   const [relayMode, setRelayMode] = useState(false);
+  const [contextPercent, setContextPercent] = useState(0);
+  const [currentAgent, setCurrentAgent] = useState<string | null>(null);
 
   // Claude context for WebSocket communication
-  const { abort, clear, onMessage, onComplete, onError, isConnected } = useClaudeContext();
+  const { abort, clear, clearAndReload, onMessage, onComplete, onError, isConnected } = useClaudeContext();
 
   // Load initial settings and listen for changes (using REST/WebSocket, not IPC)
   useEffect(() => {
@@ -271,6 +302,48 @@ export function useControlBar(): UseControlBarResult {
 
     ws.onerror = (err) => {
       console.error('[ControlBar] WebSocket error:', err);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  // Subscribe to context WebSocket for TirePump visibility
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/context`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          const percent = data.context?.percent ?? 0;
+          setContextPercent(percent);
+        }
+      } catch (err) {
+        console.error('[ControlBar] Failed to parse context message:', err);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  // Subscribe to persona WebSocket for current agent
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/persona`);
+
+    ws.onmessage = (event) => {
+      try {
+        const persona = JSON.parse(event.data);
+        // slug is the agent role (dev, sm, tea, reviewer, etc.)
+        setCurrentAgent(persona?.slug ?? null);
+      } catch (err) {
+        console.error('[ControlBar] Failed to parse persona message:', err);
+      }
     };
 
     return () => {
@@ -369,16 +442,37 @@ export function useControlBar(): UseControlBarResult {
     }
   }, []);
 
+  // TirePump: Clear context and reload current agent
+  const handleTirePump = useCallback(() => {
+    if (!currentAgent) {
+      console.warn('[ControlBar] Cannot TirePump: no current agent');
+      return;
+    }
+    try {
+      console.log('[ControlBar] TirePump: clearing context and reloading agent:', currentAgent);
+      clearAndReload(currentAgent);
+      // Reset local state since session is being cleared
+      setIsRunning(false);
+      setIsStopping(false);
+      setContextPercent(0);
+    } catch (err) {
+      console.error('[ControlBar] TirePump failed:', err);
+    }
+  }, [currentAgent, clearAndReload]);
+
   return {
     isRunning,
     isStopping,
     bellMode,
     relayMode,
+    contextPercent,
+    currentAgent,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
+    handleTirePump,
   };
 }
 

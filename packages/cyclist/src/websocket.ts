@@ -38,10 +38,11 @@ interface PastedImage {
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
-  type: 'send' | 'abort' | 'clear' | 'setMode' | 'getMode';
+  type: 'send' | 'abort' | 'clear' | 'setMode' | 'getMode' | 'clearAndReload';
   prompt?: string;
   mode?: PermissionMode;
   images?: PastedImage[];
+  agent?: string;  // For clearAndReload
 }
 
 // Track Claude sessions per WebSocket connection (web mode only)
@@ -129,12 +130,14 @@ type ClaudeAbortCallback = () => void;
 type ClaudeClearCallback = () => void;
 type ClaudeSetModeCallback = (mode: PermissionMode) => void;
 type ClaudeGetModeCallback = () => PermissionMode;
+type ClaudeClearAndReloadCallback = (agent: string) => Promise<void>;
 
 let claudeSendCallback: ClaudeSendCallback | null = null;
 let claudeAbortCallback: ClaudeAbortCallback | null = null;
 let claudeClearCallback: ClaudeClearCallback | null = null;
 let claudeSetModeCallback: ClaudeSetModeCallback | null = null;
 let claudeGetModeCallback: ClaudeGetModeCallback | null = null;
+let claudeClearAndReloadCallback: ClaudeClearAndReloadCallback | null = null;
 
 /**
  * Register callback to receive story updates for IPC broadcast
@@ -186,6 +189,14 @@ export function setClaudeSetModeCallback(callback: ClaudeSetModeCallback): void 
  */
 export function setClaudeGetModeCallback(callback: ClaudeGetModeCallback): void {
   claudeGetModeCallback = callback;
+}
+
+/**
+ * Register callback to handle Claude clearAndReload commands from WebSocket
+ * TirePump: Clear session and reload agent
+ */
+export function setClaudeClearAndReloadCallback(callback: ClaudeClearAndReloadCallback): void {
+  claudeClearAndReloadCallback = callback;
 }
 
 // Export client getters for external use
@@ -1043,6 +1054,25 @@ export function setupWebSocketServers(
                 }
               }
               break;
+
+            case 'clearAndReload':
+              if (msg.agent && claudeClearAndReloadCallback) {
+                console.log('[WebSocket] TirePump: clearAndReload agent:', msg.agent);
+                try {
+                  await claudeClearAndReloadCallback(msg.agent);
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'clearAndReloadComplete', agent: msg.agent }));
+                  }
+                } catch (err) {
+                  console.error('[WebSocket] clearAndReload failed:', err);
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'error', error: 'clearAndReload failed' }));
+                  }
+                }
+              } else if (!msg.agent) {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing agent for clearAndReload' }));
+              }
+              break;
           }
         } catch (err) {
           console.error('[WebSocket] Error handling Electron mode message:', err);
@@ -1166,6 +1196,32 @@ export function setupWebSocketServers(
               if (ws.readyState === WebSocket.OPEN) {
                 const currentMode = service.getPermissionMode();
                 ws.send(JSON.stringify({ type: 'mode', mode: currentMode }));
+              }
+              break;
+
+            case 'clearAndReload':
+              if (msg.agent) {
+                console.log('[WebSocket] Web mode TirePump: clearAndReload agent:', msg.agent);
+                // Clear the session
+                await service.clearSessionAsync();
+                // Send the agent command as a new message
+                const agentCommand = msg.agent.startsWith('/') ? msg.agent : `/${msg.agent}`;
+                try {
+                  for await (const message of service.sendMessage(agentCommand)) {
+                    if (ws.readyState === WebSocket.OPEN) {
+                      ws.send(JSON.stringify({ type: 'message', message }));
+                    }
+                  }
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'clearAndReloadComplete', agent: msg.agent }));
+                  }
+                } catch (err) {
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'error', error: 'clearAndReload failed' }));
+                  }
+                }
+              } else {
+                ws.send(JSON.stringify({ type: 'error', error: 'Missing agent for clearAndReload' }));
               }
               break;
           }
