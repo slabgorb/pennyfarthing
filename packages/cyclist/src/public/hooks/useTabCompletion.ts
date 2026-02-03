@@ -6,24 +6,12 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { SLASH_COMMANDS } from '../js/slash-commands.js';
 
-// Import slash commands from the JS module
-// At build time, this will be available
 interface SlashCommand {
   name: string;
   description: string;
 }
-
-// We'll define a minimal command set for the hook
-// The full commands are loaded from the auto-generated file
-const DEFAULT_COMMANDS: SlashCommand[] = [
-  { name: '/help', description: 'Show available commands' },
-  { name: '/clear', description: 'Clear conversation history' },
-  { name: '/sm', description: 'Scrum Master - Story coordination' },
-  { name: '/dev', description: 'Developer - Feature implementation' },
-  { name: '/tea', description: 'Test Engineer/Architect' },
-  { name: '/reviewer', description: 'Code Reviewer' },
-];
 
 interface CompletionState {
   visible: boolean;
@@ -44,7 +32,7 @@ interface UseTabCompletionResult {
 }
 
 export function useTabCompletion(commands?: SlashCommand[]): UseTabCompletionResult {
-  const allCommands = useMemo(() => commands || DEFAULT_COMMANDS, [commands]);
+  const allCommands = useMemo(() => commands || SLASH_COMMANDS, [commands]);
 
   const [state, setState] = useState<CompletionState>({
     visible: false,
