@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { DEFAULT_AVATAR } from '../js/avatar-service';
+import { DEFAULT_AVATAR } from '../utils/avatar-service';
 
 export { DEFAULT_AVATAR };
 

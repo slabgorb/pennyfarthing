@@ -32,6 +32,8 @@ interface ClaudeContextValue {
   abort: () => void;
   /** Clear the session */
   clear: () => void;
+  /** Clear session and reload agent (TirePump) */
+  clearAndReload: (agent: string) => void;
   /** Set permission mode */
   setMode: (mode: PermissionMode) => void;
   /** Whether WebSocket is connected */
@@ -185,6 +187,17 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     wsRef.current.send(JSON.stringify({ type: 'clear' }));
   }, []);
 
+  // Clear session and reload agent (TirePump)
+  const clearAndReload = useCallback((agent: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.warn('[ClaudeContext] Cannot clearAndReload: not connected');
+      return;
+    }
+
+    console.log('[ClaudeContext] TirePump: clearAndReload agent:', agent);
+    wsRef.current.send(JSON.stringify({ type: 'clearAndReload', agent }));
+  }, []);
+
   // Set permission mode
   const setMode = useCallback((newMode: PermissionMode) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -224,13 +237,14 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     send,
     abort,
     clear,
+    clearAndReload,
     setMode,
     isConnected,
     mode,
     onMessage,
     onComplete,
     onError,
-  }), [send, abort, clear, setMode, isConnected, mode, onMessage, onComplete, onError]);
+  }), [send, abort, clear, clearAndReload, setMode, isConnected, mode, onMessage, onComplete, onError]);
 
   return (
     <ClaudeContext.Provider value={value}>

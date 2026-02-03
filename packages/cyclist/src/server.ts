@@ -118,6 +118,9 @@ app.use('/api/hook-request', createHookRequestRouter());
 app.use('/api/identity', createIdentityRouter());
 // Todos API for web mode fallback
 app.use('/api/todos', createTodosRouter());
+// Audit log API
+import { createAuditLogRouter } from './api/audit-log.js';
+app.use('/api/audit-log', createAuditLogRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
