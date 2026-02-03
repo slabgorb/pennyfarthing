@@ -10,7 +10,6 @@
 import React, { useState, useMemo } from 'react';
 import { getToolTypeClass } from '../utils/toolTypeColors.js';
 import { formatDuration } from '../utils/formatDuration.js';
-import { ToolStatus, ToolStatusType } from './ToolStatus.js';
 import { generateToolIntentSummary } from '../utils/toolIntentSummarizer.js';
 
 interface ToolUseMessage {
@@ -107,9 +106,8 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   // AC4: Track copy state
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
 
-  // MSSCI-13402: Determine status based on result presence and error state
+  // MSSCI-13402: Determine error state for styling
   const isError = result?.is_error === true;
-  const status: ToolStatusType = !result ? 'pending' : isError ? 'error' : 'success';
   const inputDisplay = formatToolInput(toolUse.tool_name, toolUse.input);
 
   // MSSCI-13402: Get tool type CSS class
@@ -172,10 +170,6 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
           {badgeLabel}
         </span>
         <span className="tool-name" title={inputDisplay}>{intentSummary}</span>
-        {/* MSSCI-13402: Status indicator with icons */}
-        <span data-testid="tool-status" className={`tool-status tool-status-${status}`}>
-          <ToolStatus status={status} />
-        </span>
         {/* MSSCI-13402: Duration display */}
         <span data-testid="tool-duration" className="tool-duration">
           {result?.durationMs !== undefined ? formatDuration(result.durationMs) : ''}

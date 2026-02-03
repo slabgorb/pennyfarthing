@@ -44,10 +44,20 @@ interface Message {
  * @param messages - Array of messages to process
  * @returns Array of tool stacks (only stacks with 2+ tools)
  */
+/**
+ * Generate a stable stack ID from the first tool's ID.
+ * This ensures the same stack keeps the same key across re-renders,
+ * preventing React from remounting and losing collapse state.
+ */
+function generateStableStackId(tools: ToolUseMessage[]): string {
+  if (tools.length === 0) return 'stack-empty';
+  // Use first tool's ID as anchor - it won't change as more tools are added
+  return `stack-${tools[0].tool_id}`;
+}
+
 export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
   const stacks: ToolStackData[] = [];
   let currentTools: ToolUseMessage[] = [];
-  let stackCounter = 0;
 
   for (const msg of messages) {
     if (msg.type === 'tool_use') {
@@ -69,7 +79,7 @@ export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
       if (currentTools.length >= 2) {
         const lastTool = currentTools[currentTools.length - 1];
         stacks.push({
-          stackId: `stack-${stackCounter++}`,
+          stackId: generateStableStackId(currentTools),
           tools: [...currentTools],
           count: currentTools.length,
           isActive: lastTool.isStreaming === true,
@@ -85,7 +95,7 @@ export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
   if (currentTools.length >= 1) {
     const lastTool = currentTools[currentTools.length - 1];
     stacks.push({
-      stackId: `stack-${stackCounter++}`,
+      stackId: generateStableStackId(currentTools),
       tools: [...currentTools],
       count: currentTools.length,
       isActive: lastTool.isStreaming === true,
