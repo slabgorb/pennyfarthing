@@ -1,5 +1,17 @@
 # Step 5: Interface Definition
 
+<purpose>
+Define APIs, internal contracts, and communication patterns between components. Establish naming conventions, error handling, and versioning strategies that ensure explicit, unambiguous contracts for consistent implementation.
+</purpose>
+
+<instructions>
+Define external APIs with authentication and request/response formats. Specify internal component communication (synchronous/asynchronous) with exact message formats. Establish naming conventions, error codes, and versioning strategy. Document contract enforcement rules explicit enough for independent implementations.
+</instructions>
+
+<output>
+Interface Definitions section with External APIs table, Internal Communication protocols, Conventions documented, and Contract Enforcement rules. Update frontmatter stepsCompleted array after user confirms [C].
+</output>
+
 <step-meta>
 number: 5
 name: interface-definition

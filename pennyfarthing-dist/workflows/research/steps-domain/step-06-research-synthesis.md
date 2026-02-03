@@ -1,5 +1,39 @@
 # Domain Research Step 6: Research Synthesis and Completion
 
+<purpose>
+Produce a comprehensive, authoritative domain research document with compelling narrative introduction, detailed table of contents, executive summary, and all synthesis sections based on exhaustive domain research across six research areas.
+</purpose>
+
+<instructions>
+1. Generate compelling narrative introduction establishing research significance
+2. Create detailed table of contents with 10 sections
+3. Synthesize all domain research sections from steps 1-5
+4. Generate complete document structure with research goals achievement explanation
+5. Include Executive Summary with key findings and strategic recommendations
+6. Add comprehensive source documentation and quality assurance section
+7. Complete Research Methodology section with source verification details
+8. Present [C] complete option for final document
+9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when C selected
+</instructions>
+
+<output>
+Complete domain research document containing:
+- Compelling narrative introduction establishing research significance
+- Executive summary with key findings and strategic recommendations
+- Table of contents with complete navigation structure (10 sections)
+- Research introduction and methodology with goals achievement
+- Industry overview and market dynamics analysis
+- Technology landscape and innovation trends
+- Regulatory framework and compliance requirements
+- Competitive landscape and ecosystem analysis
+- Strategic insights and domain opportunities
+- Implementation considerations and risk assessment
+- Future outlook and strategic planning
+- Research methodology and source verification section
+- Appendices with detailed data tables and resources
+- All sections with proper source citations
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

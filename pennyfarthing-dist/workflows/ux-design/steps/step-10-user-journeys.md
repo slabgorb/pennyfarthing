@@ -1,5 +1,11 @@
 # Step 10: User Journey Flows
 
+<purpose>Design detailed user journey flows for critical user interactions through collaborative definition of flows with Mermaid diagrams and optimization for efficiency and delight.</purpose>
+
+<instructions>Load PRD user journeys as foundation. For each critical journey, design detailed flow (entry points, information needs, decisions, feedback, success definition). Create flow diagrams using Mermaid showing entry points, decision branches, success/failure paths, and error recovery. Optimize flows for efficiency and delight. Document journey patterns extracted across flows. Generate user journey content with journey descriptions, flow diagrams, journey patterns, and flow optimization principles sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>User journey flows content appended to specification including detailed Mermaid flow diagrams for all critical journeys, journey patterns, and optimization principles, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

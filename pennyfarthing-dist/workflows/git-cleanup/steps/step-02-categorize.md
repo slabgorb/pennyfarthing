@@ -1,6 +1,29 @@
 # Step 2: Categorize Changes
 
-Group uncommitted changes by initiative type, accounting for multi-repo structure.
+<purpose>
+Group uncommitted changes by initiative type (docs, chore, feat, fix, refactor, test) and organize them into logical groups that can be committed separately, accounting for multi-repo structure where changes may span multiple repositories.
+</purpose>
+
+<instructions>
+1. Analyze change patterns for each file across all repos to determine initiative type and groupings
+2. Use categorization rules (prefix reference) to classify each change
+3. Apply grouping heuristics (by story ID, feature, directory, file type)
+4. Propose groups in structured format showing which files belong together
+5. Present summary with approval gate requiring user decision before execution
+6. Allow editing, tracking in Jira, skipping groups, or continuing to execution
+</instructions>
+
+<output>
+Proposed change groups with:
+- Descriptive name for each group
+- Type (feat|fix|chore|docs|refactor|test)
+- Branch name format
+- Commit message format
+- Files listed by repo with their status
+- Rationale for grouping
+- Summary of total groups (quick commits, tracked stories, skipped)
+- User choices: [E] edit, [T] track, [S] skip, [C] continue
+</output>
 
 ## Objective
 

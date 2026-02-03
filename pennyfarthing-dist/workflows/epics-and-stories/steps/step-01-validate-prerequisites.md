@@ -17,6 +17,31 @@ epicsTemplate: './templates/epics-template.md'
 # partyModeWorkflow: '{project_root}/.pennyfarthing/workflows/party-mode/workflow.yaml'
 ---
 
+<purpose>
+To validate that all required input documents exist and extract all requirements (FRs, NFRs, and additional requirements from UX/Architecture) needed for epic and story creation. This is a prerequisite step that ensures the foundation is solid before proceeding to epic design.
+</purpose>
+
+<instructions>
+1. Welcome the user to the comprehensive epic and story creation process
+2. Validate that required documents exist (PRD.md, Architecture.md, and optionally UX Design.md)
+3. Extract all Functional Requirements (FRs) from the PRD document
+4. Extract all Non-Functional Requirements (NFRs) from the PRD document
+5. Extract additional technical requirements from the Architecture document
+6. Extract UX requirements from the UX Design document (if it exists)
+7. Initialize the output template with extracted requirements
+8. Present extracted requirements to the user for review and confirmation
+9. Wait for user confirmation (C) before proceeding to the next step
+</instructions>
+
+<output>
+- Complete list of Functional Requirements (FRs) extracted from PRD
+- Complete list of Non-Functional Requirements (NFRs) extracted from PRD
+- Additional technical requirements from Architecture document
+- Additional UX requirements from UX Design document (if applicable)
+- Initialized epics.md file with all extracted requirements populated in the template
+- User confirmation that requirements are accurate and complete
+</output>
+
 # Step 1: Validate Prerequisites and Extract Requirements
 
 ## STEP GOAL:

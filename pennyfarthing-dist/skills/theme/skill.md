@@ -5,6 +5,18 @@ description: Manage persona themes - list available themes, show current/specifi
 
 # Theme Management Skill
 
+<run>
+To manage persona themes, use the following commands:
+- `/list-themes` - List all available themes
+- `/show-theme` - Show current theme or specific theme details
+- `/set-theme <name>` - Set the active theme
+- `/theme-maker` - Create a new custom theme interactively
+</run>
+
+<output>
+Theme commands return theme names, descriptions, agent mappings, and confirmation of theme changes. Current theme is stored in `.pennyfarthing/config.local.yaml`.
+</output>
+
 ## Overview
 
 Pennyfarthing uses themed personas to give each agent a unique character. This skill provides commands to list, view, and change themes.

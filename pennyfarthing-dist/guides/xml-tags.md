@@ -325,6 +325,298 @@ Assume the code is broken until you prove otherwise.
 | `<persona>` | Agent files (top) |
 | `<role>` | Agent files (after persona) |
 
+## Session Tags
+
+Tags used in session files (`.session/{story-id}-session.md`) for workflow state tracking.
+
+### `<session>`
+
+**Purpose:** Root container for all session data.
+
+**Usage:** Wraps entire session file content.
+
+```markdown
+<session story="MSSCI-12345" workflow="tdd">
+  <!-- session content -->
+</session>
+```
+
+**Attributes:**
+- `story` - Story identifier (Jira key or local ID)
+- `workflow` - Workflow type: `tdd`, `trivial`, `bdd`, `agent-docs`
+
+### `<meta>`
+
+**Purpose:** Story metadata that doesn't change during the session.
+
+**Usage:** Inside `<session>`, contains static story info.
+
+```markdown
+<meta>
+  <jira>MSSCI-12345</jira>
+  <epic>MSSCI-12300</epic>
+  <points>3</points>
+  <started>2026-02-03</started>
+</meta>
+```
+
+### `<status>`
+
+**Purpose:** Machine-readable workflow state for agent navigation.
+
+**Usage:** Self-closing element updated at phase transitions.
+
+```markdown
+<status phase="green" next-agent="reviewer" handoff-ready="true"/>
+```
+
+**Attributes:**
+- `phase` - Current workflow phase (`setup`, `red`, `green`, `review`, `finish`)
+- `next-agent` - Agent to handle next (`sm`, `tea`, `dev`, `reviewer`)
+- `handoff-ready` - Whether current work is complete (`true`/`false`)
+
+### `<acceptance-criteria>`
+
+**Purpose:** Track AC completion status in machine-parseable format.
+
+**Usage:** Contains `<ac>` child elements.
+
+```markdown
+<acceptance-criteria>
+  <ac id="1" status="done">User can create account</ac>
+  <ac id="2" status="pending">Email validation works</ac>
+</acceptance-criteria>
+```
+
+### `<ac>`
+
+**Purpose:** Individual acceptance criterion.
+
+**Attributes:**
+- `id` - Numeric identifier (1, 2, 3...)
+- `status` - `pending`, `in-progress`, `done`, `blocked`
+
+### `<work-log>`
+
+**Purpose:** Container for chronological agent contributions.
+
+**Usage:** Contains `<entry>` and `<assessment>` elements.
+
+### `<entry>`
+
+**Purpose:** Standard work log entry from any agent.
+
+**Attributes:**
+- `agent` - Agent identifier (`sm`, `tea`, `dev`, `reviewer`)
+- `date` - Entry date (YYYY-MM-DD)
+- `phase` - Optional TDD phase (`red`, `green`, `refactor`)
+
+```markdown
+<entry agent="tea" date="2026-02-03" phase="red">
+  Wrote failing tests for all ACs.
+</entry>
+```
+
+### `<assessment>`
+
+**Purpose:** Formal verdict from Reviewer agent.
+
+**Attributes:**
+- `agent` - Must be `reviewer`
+- `verdict` - `approved`, `rejected`, `needs-work`
+
+```markdown
+<assessment agent="reviewer" verdict="approved">
+  All ACs verified, code follows patterns.
+</assessment>
+```
+
+**See also:** `guides/session-schema.md` for complete session file schema.
+
+---
+
+## Skill Tags
+
+Tags used in skill files (`skills/{name}/SKILL.md`) for command documentation.
+
+### `<run>`
+
+**Purpose:** The exact command to execute for a skill command.
+
+**Usage:** One per command, contains shell command.
+
+```markdown
+<run>
+.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
+</run>
+```
+
+### `<args>`
+
+**Purpose:** Document command arguments in table format.
+
+**Usage:** Follows `<run>`, contains markdown table.
+
+```markdown
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `filter` | No | Filter by status: `todo`, `done` |
+</args>
+```
+
+### `<example>`
+
+**Purpose:** Show command usage with expected output.
+
+**Usage:** Realistic invocation followed by commented output.
+
+```markdown
+<example>
+.pennyfarthing/scripts/sprint/check-story.sh MSSCI-12038
+# Returns: {"type": "story", "available": true}
+</example>
+```
+
+### `<when>`
+
+**Purpose:** Document conditions for using a command and next steps.
+
+**Usage:** Trigger conditions or follow-up actions.
+
+```markdown
+<when>
+- Starting new development work
+- After promote, create Jira epic with `/jira create epic`
+</when>
+```
+
+### `<agent-activation>`
+
+**Purpose:** Command to load agent persona before using skill.
+
+**Usage:** Shell command for agent activation.
+
+```markdown
+<agent-activation>
+Load SM persona first:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
+```
+</agent-activation>
+```
+
+**See also:** `guides/skill-schema.md` for complete skill file schema.
+
+---
+
+## Workflow Step Tags
+
+Tags used in workflow step files (`workflows/{name}/steps/step-*.md`) for BikeLane navigation.
+
+### `<step-meta>`
+
+**Purpose:** Machine-readable step metadata for workflow navigation.
+
+**Usage:** Required at top of every step file.
+
+```markdown
+<step-meta>
+number: 1
+name: initialize
+gate: false
+next: step-02-context
+</step-meta>
+```
+
+**Fields:**
+- `number` - Step number (integer)
+- `name` - Step identifier (kebab-case)
+- `gate` - Whether step has checkpoint (boolean)
+- `next` - Next step filename (optional)
+
+### `<purpose>`
+
+**Purpose:** Explain what the step accomplishes.
+
+**Usage:** Clear, concise goal statement.
+
+```markdown
+<purpose>
+Set up the architecture session by gathering inputs and establishing context.
+</purpose>
+```
+
+### `<prerequisites>`
+
+**Purpose:** What must be true before starting this step.
+
+**Usage:** Bullet list of requirements.
+
+```markdown
+<prerequisites>
+- PRD document exists
+- Previous step completed
+</prerequisites>
+```
+
+### `<instructions>`
+
+**Purpose:** Step-by-step execution guide.
+
+**Usage:** Numbered list of actions.
+
+```markdown
+<instructions>
+1. Read the PRD document
+2. Identify architectural concerns
+3. Document recommendation
+</instructions>
+```
+
+### `<actions>`
+
+**Purpose:** Specific file and script operations.
+
+**Usage:** Prefixed bullet list (Check:, Read:, Write:, Run:).
+
+```markdown
+<actions>
+- Read: `{planning_artifacts}/*prd*.md`
+- Write: `{output_file}` with session content
+</actions>
+```
+
+### `<collaboration-menu>`
+
+**Purpose:** Present user options after step completion.
+
+**Usage:** Standard menu with keyboard shortcuts.
+
+```markdown
+<collaboration-menu>
+- **[C] Continue** - Proceed to next step
+- **[R] Revise** - Make changes
+- **[H] Help** - Get guidance
+</collaboration-menu>
+```
+
+### `<next-step>`
+
+**Purpose:** Explicit navigation to the next step.
+
+**Usage:** Instruction on which file to load.
+
+```markdown
+<next-step>
+After gate passes, proceed to step-02-context.md
+</next-step>
+```
+
+**See also:** `guides/workflow-step-schema.md` for complete workflow step schema.
+
+---
+
 ## Adding New Tags
 
 Before adding a new tag type:

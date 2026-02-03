@@ -1,5 +1,11 @@
 # Step 12: UX Consistency Patterns
 
+<purpose>Establish UX consistency patterns for common situations like buttons, forms, navigation, and feedback through collaborative definition of pattern categories and design guidelines.</purpose>
+
+<instructions>Identify critical pattern categories (button hierarchy, feedback, forms, navigation, modals, empty states, search). Define patterns for critical categories with considerations (hierarchy, feedback, error recovery, accessibility, mobile). Establish pattern guidelines with when to use, visual design, behavior, accessibility, mobile considerations, and variants. Ensure design system integration. Generate pattern documentation with clear usage guidelines and visual examples. Generate UX patterns content with button hierarchy, feedback patterns, form patterns, navigation patterns, and additional patterns sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>UX consistency patterns content appended to specification including pattern guidelines for all critical categories with accessibility and mobile considerations, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

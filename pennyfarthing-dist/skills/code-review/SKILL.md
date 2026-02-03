@@ -3,7 +3,11 @@ name: code-review
 description: Code review checklists and patterns for Pennyfarthing. Use when reviewing PRs, self-reviewing code, or checking for common issues before commit.
 ---
 
-# Code Review Skill 
+# Code Review Skill
+
+<run>Review code against the checklists below. Focus on authorization, error handling, TypeScript/React patterns, and performance.</run>
+
+<output>Code review comments using [MUST FIX], [SUGGESTION], [QUESTION], [NICE] prefixes</output>
 
 ## Overview
 

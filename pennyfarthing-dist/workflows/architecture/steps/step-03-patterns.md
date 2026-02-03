@@ -1,5 +1,17 @@
 # Step 3: Pattern Selection
 
+<purpose>
+Identify and evaluate architectural patterns that address identified concerns with verification of current technology versions, trade-off analysis, and selection of patterns that best fit the project requirements.
+</purpose>
+
+<instructions>
+Survey applicable patterns (microservices, event-driven, CQRS, circuit breakers, etc.) based on context concerns. Search web for current stable versions and best practices. Evaluate trade-offs (complexity, team familiarity, overhead, system fit). Select 1-3 primary patterns with rationale.
+</instructions>
+
+<output>
+Pattern Analysis section with Technology Versions table, Candidate Patterns comparison, Selected Pattern(s) with justification, and Rejected Alternatives. Update frontmatter stepsCompleted array after user confirms [C].
+</output>
+
 <step-meta>
 number: 3
 name: pattern-selection

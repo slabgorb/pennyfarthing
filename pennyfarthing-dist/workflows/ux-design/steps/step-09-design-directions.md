@@ -1,5 +1,11 @@
 # Step 9: Design Direction Mockups
 
+<purpose>Generate comprehensive design direction mockups showing different visual approaches for the product through collaborative exploration and selection of visual directions.</purpose>
+
+<instructions>Generate 6-8 design direction variations exploring layout, interactions, colors, density, and navigation. Create HTML design direction showcase at {planning_artifacts}/ux-design-directions.html with interactive elements. Present design exploration framework with evaluation criteria. Facilitate selection (pick favorite, combine elements, request modifications). Document design direction decision with rationale. Generate design direction content with directions explored, chosen direction, design rationale, and implementation approach sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Design direction content appended to specification including chosen visual direction with clear rationale and implementation approach. HTML mockup showcase created with interactive design direction visualizer, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

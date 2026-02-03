@@ -9,6 +9,12 @@ validationWorkflow: './steps-v/step-v-01-discovery.md'
 
 # Step E-4: Complete & Validate
 
+<purpose>Present summary of completed edits and offer next steps including seamless integration with validation workflow or publication options.</purpose>
+
+<instructions>Verify all approved edits have been applied; prepare comprehensive summary of changes made; present completion confirmation with user; offer options including full validation workflow, stakeholder review, or publication; route to next steps based on user choice.</instructions>
+
+<output>Complete summary of edits applied, confirmation of PRD status, options for next workflow steps (validation, review, or publication), and routing to selected next step.</output>
+
 ## STEP GOAL:
 
 Present summary of completed edits and offer next steps including seamless integration with validation workflow.

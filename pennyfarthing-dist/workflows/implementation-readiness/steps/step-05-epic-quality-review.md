@@ -13,6 +13,34 @@ outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 epicsBestPractices: '{project-root}/_bmad/bmm/workflows/3-solutioning/create-epics-and-stories'
 ---
 
+<purpose>
+To validate epics and stories against create-epics-and-stories best practices, focusing on user value, independence, dependencies, and implementation readiness.
+</purpose>
+
+<instructions>
+1. Systematically validate each epic and story against best practices
+2. Check epic user value (not technical milestones)
+3. Verify epic independence (no forward dependencies)
+4. Assess story sizing and completeness
+5. Validate acceptance criteria quality
+6. Check database/entity creation timing
+7. Document all best practices violations by severity
+8. Execute autonomously without user input
+9. Update output file with comprehensive quality findings
+10. Load next step after review completion
+</instructions>
+
+<output>
+Epic quality review section containing:
+- All epics validated against best practices
+- Categorized violations (critical, major, minor)
+- Specific examples for each violation found
+- Dependencies analysis and forward dependency issues
+- Story sizing and acceptance criteria assessment
+- Clear, actionable remediation guidance
+- Overall quality assessment
+</output>
+
 # Step 5: Epic Quality Review
 
 ## STEP GOAL:

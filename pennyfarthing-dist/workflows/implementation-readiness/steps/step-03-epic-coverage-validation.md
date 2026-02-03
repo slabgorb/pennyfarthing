@@ -12,6 +12,29 @@ workflowFile: '{workflow_path}/workflow.md'
 outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 ---
 
+<purpose>
+To validate that all Functional Requirements from the PRD are captured in the epics and stories document, identifying any gaps in coverage.
+</purpose>
+
+<instructions>
+1. Load the epics and stories document completely
+2. Extract FR coverage information
+3. Compare extracted coverage against PRD FR list from previous step
+4. Create coverage matrix showing which FRs are covered
+5. Document all missing or uncovered FRs
+6. Add findings to assessment report
+7. Auto-proceed to next step for UX alignment
+</instructions>
+
+<output>
+Epic coverage validation section containing:
+- FR coverage matrix showing coverage status
+- List of covered FRs with their epic/story locations
+- List of missing/uncovered FRs
+- Coverage statistics (total FRs, coverage percentage)
+- Impact assessment of gaps
+</output>
+
 # Step 3: Epic Coverage Validation
 
 ## STEP GOAL:

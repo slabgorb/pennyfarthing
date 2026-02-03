@@ -13,6 +13,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 8: Scoping Exercise - MVP & Future Features
 
+<purpose>Define MVP boundaries and prioritize features across development phases to create a strategic delivery roadmap.</purpose>
+
+<instructions>Collaborate with user to identify core MVP features and future feature sets; establish clear phase-based feature prioritization; capture dependencies and sequencing logic; document MVP scope and phased roadmap.</instructions>
+
+<output>Documented MVP scope with prioritized core features, phased feature roadmap across development iterations, and feature dependency analysis.</output>
+
 **Progress: Step 8 of 11** - Next: Functional Requirements
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

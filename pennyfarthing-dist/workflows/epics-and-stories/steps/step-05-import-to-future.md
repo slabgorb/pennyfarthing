@@ -15,6 +15,29 @@ futureYaml: '{project_root}/sprint/future.yaml'
 importScript: '{project_root}/.pennyfarthing/scripts/sprint/import-epic-to-future.sh'
 ---
 
+<purpose>
+To import the validated and complete epics and stories from the epics.md document into the sprint/future.yaml backlog system, making them available for sprint planning and story promotion. This is the final step that makes the epics accessible through the sprint management system.
+</purpose>
+
+<instructions>
+1. Determine the initiative name from the epics document (prompt user if not obvious)
+2. Run the import script in dry-run mode to show what will be added
+3. Display the preview to the user showing epic numbers, initiative structure, and story IDs
+4. Get user confirmation that the preview looks correct
+5. If confirmed, run the import script without dry-run to apply changes to future.yaml
+6. Verify the import by checking that epic appears in future.yaml with correct numbering
+7. Display completion message with epic number, initiative name, and story count
+</instructions>
+
+<output>
+- Initiative imported to sprint/future.yaml
+- Epic assigned with correct sequential number (epic-N)
+- All stories with proper IDs (epic-N-story-M format)
+- Dry-run preview showing exactly what will be imported
+- Verification that epic and stories are accessible via sprint commands
+- Completion message with next steps for sprint planning
+</output>
+
 # Step 5: Import to Future Backlog
 
 ## STEP GOAL:

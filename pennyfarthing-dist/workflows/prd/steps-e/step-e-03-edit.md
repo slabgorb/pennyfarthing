@@ -10,6 +10,12 @@ prdPurpose: '{project_root}/src/modules/bmm/workflows/2-plan-workflows/prd/data/
 
 # Step E-3: Edit & Update
 
+<purpose>Apply changes to the PRD following the approved change plan, including content updates, structure improvements, and format conversion if needed.</purpose>
+
+<instructions>Load PRD document and approved change plan; execute each prioritized edit with user input and approval; apply content updates, structural improvements, and format conversions; verify changes maintain PRD consistency; save updated PRD; prepare for next step.</instructions>
+
+<output>Updated PRD document with all approved changes applied, improved structure and content, consistent formatting, and ready for completion or further review.</output>
+
 ## STEP GOAL:
 
 Apply changes to the PRD following the approved change plan from step e-02, including content updates, structure improvements, and format conversion if needed.

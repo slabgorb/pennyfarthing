@@ -10,6 +10,24 @@ outputFile: '{planning_artifacts}/product-brief-{{project_name}}-{{date}}.md'
 productBriefTemplate: '../product-brief.template.md'
 ---
 
+<purpose>
+Initialize the product brief workflow by detecting continuation state and setting up the document structure for collaborative product discovery.
+</purpose>
+
+<instructions>
+1. Check for existing workflow state by looking for the output document
+2. If document exists with stepsCompleted, hand off to step-01b for continuation
+3. If fresh workflow, discover input documents and create initial document from template
+4. Update frontmatter with discovered documents
+5. Present results to user and proceed to next step
+</instructions>
+
+<output>
+- Initialized product brief document at {outputFile}
+- Frontmatter updated with stepsCompleted: [1] and inputDocuments array
+- User confirmation of document setup and discovered input documents
+</output>
+
 # Step 1: Product Brief Initialization
 
 ## STEP GOAL:

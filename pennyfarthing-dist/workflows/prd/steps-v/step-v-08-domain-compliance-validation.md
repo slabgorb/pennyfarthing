@@ -12,6 +12,12 @@ domainComplexityData: '../data/domain-complexity.csv'
 
 # Step 8: Domain Compliance Validation
 
+<purpose>Validate domain-specific requirements are present for high-complexity domains (Healthcare, Fintech, GovTech, etc.), ensuring regulatory and compliance requirements are properly documented.</purpose>
+
+<instructions>Determine project domain from PRD frontmatter; check domain complexity level from CSV data; for high-complexity domains, verify domain-specific requirements section exists and covers applicable regulations; analyze compliance coverage; identify compliance gaps; update validation report.</instructions>
+
+<output>Domain compliance validation report with complexity assessment, identified compliance requirements, coverage analysis, compliance gaps, and recommendations for domain-specific improvements.</output>
+
 ## STEP GOAL:
 
 Validate domain-specific requirements are present for high-complexity domains (Healthcare, Fintech, GovTech, etc.), ensuring regulatory and compliance requirements are properly documented.

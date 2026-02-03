@@ -6,6 +6,33 @@ name: fix
 gate: false
 </step-meta>
 
+<purpose>
+Work through identified issues one by one, making fixes and verifying them in the browser.
+</purpose>
+
+<instructions>
+1. FIX one issue at a time
+2. For each issue: Analyze (reproduce, locate source, understand why)
+3. Consult UX Designer perspective on visual/UX fixes
+4. Implement focused code changes
+5. VERIFY each fix in browser with Playwright MCP
+6. Take before/after screenshots
+7. Confirm with user that fix is correct
+8. TRACK all changes for final commit
+9. Repeat until all issues are fixed and verified
+</instructions>
+
+<output>
+Provide for each fix:
+- Issue description
+- Before screenshot
+- After screenshot
+- Files changed with descriptions
+- Confirmation from user
+- Running list of all changes made
+- Final summary of all fixes ready for commit
+</output>
+
 ## Purpose
 
 Work through identified issues one by one, making fixes and verifying them in the browser.

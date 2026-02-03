@@ -11,6 +11,12 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 
 # Step 11: Holistic Quality Assessment
 
+<purpose>Assess the PRD as a cohesive, compelling document - evaluating document flow, dual audience effectiveness (humans and LLMs), BMAD PRD principles compliance, and overall quality rating.</purpose>
+
+<instructions>Review PRD holistically for flow and coherence; assess readability and clarity for human audience; evaluate machine-readability and AI-assistant usefulness; evaluate alignment with BMAD principles; identify strengths and improvement opportunities; provide overall quality rating and recommendations; update validation report.</instructions>
+
+<output>Holistic quality assessment report with document flow analysis, audience effectiveness evaluation, BMAD principles alignment, identified strengths and weaknesses, overall quality rating, and strategic improvement recommendations.</output>
+
 ## STEP GOAL:
 
 Assess the PRD as a cohesive, compelling document - evaluating document flow, dual audience effectiveness (humans and LLMs), BMAD PRD principles compliance, and overall quality rating.

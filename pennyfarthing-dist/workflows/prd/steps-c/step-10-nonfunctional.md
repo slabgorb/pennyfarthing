@@ -13,6 +13,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 10: Non-Functional Requirements
 
+<purpose>Define quality attributes including performance, security, scalability, reliability, and other non-functional requirements that matter for this product.</purpose>
+
+<instructions>Collaborate with user to identify critical quality attributes; establish measurable targets for performance, security, scalability, reliability, and accessibility; determine quality thresholds and trade-off priorities; document comprehensive non-functional specification.</instructions>
+
+<output>Comprehensive non-functional requirements documentation including performance targets, security requirements, scalability requirements, reliability targets, and quality attribute priorities.</output>
+
 **Progress: Step 10 of 12** - Next: Polish Document
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

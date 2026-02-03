@@ -11,6 +11,30 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ---
 
+<purpose>
+Define MVP scope with clear boundaries and outline future vision through collaborative scope negotiation that balances ambition with realism.
+</purpose>
+
+<instructions>
+1. Begin scope definition conversation focused on MVP mindset
+2. Define core features essential for solving the problem
+3. Establish out-of-scope boundaries and deferred features
+4. Define MVP success criteria and validation gates
+5. Explore future vision and long-term capabilities
+6. Generate MVP Scope content with core features and future vision
+7. Present A/P/C menu for optional advanced elicitation or party mode
+8. Save content to document when user selects C
+</instructions>
+
+<output>
+- MVP Scope section with Core Features defined
+- Out of Scope for MVP section with clear boundaries
+- MVP Success Criteria section with validation gates
+- Future Vision section with long-term capabilities
+- Document updated at {outputFile} with stepsCompleted: [1, 2, 3, 4, 5]
+- User ready to proceed to workflow completion
+</output>
+
 # Step 5: MVP Scope Definition
 
 ## STEP GOAL:

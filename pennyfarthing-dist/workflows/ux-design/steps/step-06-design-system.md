@@ -1,5 +1,11 @@
 # Step 6: Design System Choice
 
+<purpose>Choose appropriate design system approach (custom, established, or themeable) based on project requirements, constraints, and team considerations through collaborative decision-making.</purpose>
+
+<instructions>Present design system options (custom, established, themeable). Analyze project requirements (platform, timeline, team size, brand, technical constraints). Explore specific design system options recommended for the platform. Facilitate decision process through framework questions. Finalize choice with clear rationale. Generate design system content with choice, rationale, implementation approach, and customization strategy sections. Present A/P/C menu. Save when C selected.</instructions>
+
+<output>Design system choice content appended to specification including rationale and implementation approach, with user confirmation and frontmatter updated.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

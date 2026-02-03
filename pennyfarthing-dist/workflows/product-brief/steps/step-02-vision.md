@@ -11,6 +11,28 @@ advancedElicitationTask: '{project_root}/_bmad/core/workflows/advanced-elicitati
 partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ---
 
+<purpose>
+Conduct comprehensive product vision discovery to define the core problem, solution, and unique value proposition through collaborative analysis.
+</purpose>
+
+<instructions>
+1. Begin vision discovery conversation exploring the core problem
+2. Explore problem understanding from multiple angles
+3. Analyze existing solutions and gaps
+4. Collaborate on solution vision and differentiators
+5. Generate Executive Summary and Core Vision content
+6. Present A/P/C menu for optional advanced elicitation or party mode
+7. Save content to document when user selects C
+</instructions>
+
+<output>
+- Executive Summary capturing product essence
+- Core Vision section with problem statement and solution
+- Unique Differentiators section highlighting competitive advantage
+- Document updated at {outputFile} with stepsCompleted: [1, 2]
+- User ready to proceed to target user discovery
+</output>
+
 # Step 2: Product Vision Discovery
 
 ## STEP GOAL:

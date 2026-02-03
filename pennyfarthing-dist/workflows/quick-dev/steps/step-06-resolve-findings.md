@@ -6,6 +6,29 @@ workflow_path: '{project_root}/_bmad/bmm/workflows/bmad-quick-flow/quick-dev'
 thisStepFile: './step-06-resolve-findings.md'
 ---
 
+<purpose>
+Present the user with three options for handling adversarial review findings: walk through each finding individually for discussion and decision, automatically fix items classified as "real", or skip all findings and proceed. Apply chosen approach, update tech-spec with final status, and provide completion summary.
+</purpose>
+
+<instructions>
+1. Present three resolution options to user: [1] Walk-through, [2] Auto-fix, [3] Skip
+2. Execute chosen option:
+   - Walk-through: For each finding, present context, ask fix/skip/discuss, apply fixes as requested
+   - Auto-fix: Filter to "real" findings, apply all fixes, report results
+   - Skip: Acknowledge findings were reviewed, note user chose to proceed without fixes
+3. If Mode A (tech-spec): Load tech-spec file, update status to "Completed", add review notes section with findings summary, save
+4. Present completion output explaining what was implemented at appropriate detail level
+5. Inform user the workflow is complete and ready to commit
+</instructions>
+
+<output>
+- Findings status (all addressed, auto-fixed with count, or skipped)
+- List of applied fixes (if applicable)
+- Tech-spec updated with completion status and review notes (Mode A only)
+- Final completion summary with what was implemented, files modified, tests status, findings summary
+- Clear next steps for user (commit changes, run more tests, or start new session)
+</output>
+
 # Step 6: Resolve Findings
 
 **Goal:** Handle adversarial review findings interactively, apply fixes, finalize tech-spec.

@@ -11,6 +11,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 4: Product Brief Coverage Validation
 
+<purpose>Validate that PRD covers all content from Product Brief (if brief was used as input), mapping brief content to PRD sections and identifying gaps.</purpose>
+
+<instructions>Check if product brief exists in inputDocuments; if brief available, load it and analyze key content areas; map brief content to PRD sections; identify coverage gaps and unmapped content; calculate coverage percentage; update validation report with coverage findings.</instructions>
+
+<output>Coverage validation report with mapped brief content, identified coverage gaps, coverage percentage metric, and recommendations for addressing gaps.</output>
+
 ## STEP GOAL:
 
 Validate that PRD covers all content from Product Brief (if brief was used as input), mapping brief content to PRD sections and identifying gaps.

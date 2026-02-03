@@ -1,5 +1,31 @@
 # Market Research Step 3: Customer Pain Points and Needs
 
+<purpose>
+Conduct customer pain points and needs analysis identifying customer challenges, unmet needs, adoption barriers, service pain points, satisfaction gaps, emotional impact, and pain point prioritization using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for customer pain points, frustrations, unmet needs, and barriers
+2. Analyze and aggregate pain points findings
+3. Generate pain points analysis content with seven subsections (Challenges and Frustrations, Unmet Needs, Adoption Barriers, Service Pain Points, Satisfaction Gaps, Emotional Impact, Pain Point Prioritization)
+4. Include source citations for all pain point data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
+</instructions>
+
+<output>
+Customer pain points analysis sections containing:
+- Customer challenges and frustrations with source citations
+- Unmet needs and solution gaps with source citations
+- Adoption barriers analysis with source citations
+- Service and support pain points with source citations
+- Customer satisfaction gaps assessment with source citations
+- Emotional impact analysis with source citations
+- Pain point prioritization with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

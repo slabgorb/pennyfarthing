@@ -10,6 +10,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 6: Traceability Validation
 
+<purpose>Validate the traceability chain from Executive Summary → Success Criteria → User Journeys → Functional Requirements is intact, ensuring every requirement traces back to a user need or business objective.</purpose>
+
+<instructions>Extract vision, success criteria, user journeys, and requirements from PRD; map traceability links from requirements back to journeys, success criteria, and vision; identify orphaned requirements without traceability; verify bidirectional traceability; calculate traceability completeness; update validation report.</instructions>
+
+<output>Traceability validation report with traceability chain visualization, identified gaps and orphaned requirements, bidirectional traceability verification, traceability coverage metrics.</output>
+
 ## STEP GOAL:
 
 Validate the traceability chain from Executive Summary → Success Criteria → User Journeys → Functional Requirements is intact, ensuring every requirement traces back to a user need or business objective.

@@ -13,6 +13,27 @@ outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 templateFile: '{workflow_path}/templates/readiness-report-template.md'
 ---
 
+<purpose>
+To discover, inventory, and organize all project documents, identifying duplicates and determining which versions to use for the assessment.
+</purpose>
+
+<instructions>
+1. Search for all required documents systematically (PRD, Architecture, Epics, UX)
+2. Group sharded documents together
+3. Identify duplicates (whole + sharded versions)
+4. Present findings and get user confirmation
+5. Save document inventory to output file
+6. Load next step after confirmation
+</instructions>
+
+<output>
+Document inventory with:
+- All discovered documents organized by type
+- Duplicates identified and flagged
+- User confirmation of file selections
+- Document inventory saved to implementation-readiness-report
+</output>
+
 # Step 1: Document Discovery
 
 ## STEP GOAL:

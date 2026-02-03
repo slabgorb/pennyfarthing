@@ -1,5 +1,30 @@
 # Market Research Step 2: Customer Behavior and Segments
 
+<purpose>
+Conduct customer behavior analysis identifying behavior patterns, demographic segmentation, psychographic profiles, customer segments, behavior drivers, and interaction patterns using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for customer behavior, demographics, psychographics, and drivers
+2. Analyze and aggregate customer behavior findings
+3. Generate customer behavior analysis content with six subsections (Behavior Patterns, Demographic Segmentation, Psychographic Profiles, Customer Segments, Behavior Drivers, Customer Interaction)
+4. Include source citations for all behavioral data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2] before loading next step
+</instructions>
+
+<output>
+Customer behavior analysis sections containing:
+- Customer behavior patterns and preferences with source citations
+- Demographic segmentation analysis with source citations
+- Psychographic profiles documentation with source citations
+- Detailed customer segment profiles with source citations
+- Behavior drivers and influences with source citations
+- Customer interaction patterns with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

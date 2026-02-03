@@ -1,5 +1,32 @@
 # Market Research Step 2: Customer Insights
 
+<purpose>
+Conduct comprehensive customer insights analysis identifying behavior patterns, pain points, decision processes, customer journeys, satisfaction drivers, and demographic/psychographic profiles using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for customer behavior, pain points, decision processes, and journeys
+2. Analyze and aggregate customer insights findings
+3. Generate customer insights content with seven subsections (Behavior Patterns, Pain Points, Decision-Making, Customer Journey, Satisfaction Drivers, Demographic Profiles, Psychographic Profiles)
+4. Include source citations for all customer data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2] before loading next step
+8. Load step-05-competitive-analysis.md as next step
+</instructions>
+
+<output>
+Customer insights analysis sections containing:
+- Customer behavior patterns with source citations
+- Pain points and challenges with source citations
+- Decision-making processes with source citations
+- Customer journey mapping with source citations
+- Customer satisfaction drivers with source citations
+- Demographic profiles with source citations
+- Psychographic profiles with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

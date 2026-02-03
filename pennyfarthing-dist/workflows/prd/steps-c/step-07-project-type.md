@@ -16,6 +16,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 7: Project-Type Deep Dive
 
+<purpose>Conduct project-type specific discovery using CSV-driven guidance to explore key considerations unique to the product type.</purpose>
+
+<instructions>Load project-type guidance from CSV file matching the detected project type; use guidance framework to conduct type-specific discovery dialogue; explore type-specific features, architecture patterns, and considerations; document project-type insights.</instructions>
+
+<output>Project-type specific discovery documentation capturing type-specific features, architectural considerations, and key discovery insights for the product type.</output>
+
 **Progress: Step 7 of 11** - Next: Scoping
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

@@ -5,6 +5,14 @@ description: yq is a YAML processor. Use this skill when reading, modifying, or 
 
 # yq - YAML Processor Skill
 
+<run>
+yq [expression] [file]
+</run>
+
+<output>
+YAML/JSON output depending on specified format
+</output>
+
 ## Overview
 
 `yq` is a lightweight and portable command-line YAML processor. It's like `jq` but for YAML. This skill covers the mikefarah/yq version (v4+).

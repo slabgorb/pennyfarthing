@@ -1,5 +1,17 @@
 # Step 1b: Workflow Continuation Handler
 
+<purpose>
+Detect existing architecture workflow state from session file and provide user with options to continue, restart, or review previous progress before proceeding.
+</purpose>
+
+<instructions>
+Read the existing output file and parse frontmatter to identify completed steps and current progress. Analyze the document state, summarize decisions made so far, and present continuation options with data loss prevention (archiving).
+</instructions>
+
+<output>
+Workflow continuation information displayed with summary of completed steps, current document state, and user-selectable options (Continue/Restart/View) with archive confirmation if restarting.
+</output>
+
 <step-meta>
 number: 1b
 name: continue

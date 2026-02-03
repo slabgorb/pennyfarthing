@@ -19,6 +19,30 @@ outputFile: '{planning_artifacts}/epics.md'
 epicsTemplate: './templates/epics-template.md'
 ---
 
+<purpose>
+To validate that all requirements are completely covered by stories, verify story quality and dependencies are correct, ensure the document follows the template structure exactly, and confirm everything is ready for development work.
+</purpose>
+
+<instructions>
+1. Load the complete epic and story breakdown from the previous step
+2. Perform FR coverage validation to ensure every FR is covered by at least one story
+3. Validate architecture implementation requirements (starter template, database setup)
+4. Validate story quality (completable by single dev agent, clear acceptance criteria, no forward dependencies)
+5. Validate epic structure for user value and proper dependencies
+6. Perform critical dependency validation (epic independence and within-epic story flow)
+7. Update any remaining placeholders and verify formatting
+8. Get user confirmation (C) to proceed to import step
+</instructions>
+
+<output>
+- Verification that every FR has story coverage
+- Confirmation of proper architecture requirements implementation
+- Validation that stories are appropriately sized and have clear acceptance criteria
+- Confirmation of proper story dependencies (only depend on previous stories)
+- Final epics.md file with all placeholders replaced and formatting verified
+- User confirmation that document is complete and ready for development
+</output>
+
 # Step 4: Final Validation
 
 ## STEP GOAL:

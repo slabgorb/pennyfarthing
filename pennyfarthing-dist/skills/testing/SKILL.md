@@ -5,6 +5,28 @@ description: Test commands and patterns for TDD workflow. This skill should be u
 
 # Testing Skill
 
+<run>
+Main test commands for running the test suite:
+
+```bash
+just test              # If using just
+npm test               # If using npm
+go test ./...          # If using Go directly
+```
+
+These commands execute the full test suite and are the primary entry point for validating code changes.
+</run>
+
+<output>
+Test output varies by framework:
+
+- **Go tests:** Display pass/fail status for each test, summary of tests run, coverage reports (if enabled), and PASS/FAIL result code
+- **Node/npm tests (Vitest/Jest):** Shows test file results, individual test names, execution time, coverage percentages (if enabled), and pass/fail summary
+- **Just:** Delegates to underlying test runner, output depends on what test command is configured
+
+Output includes execution time and a final summary line indicating total tests passed/failed.
+</output>
+
 ## When to Use This Skill
 
 - Running tests (backend, frontend, or all)

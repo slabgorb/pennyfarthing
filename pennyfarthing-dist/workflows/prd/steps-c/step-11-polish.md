@@ -14,6 +14,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 11: Document Polish
 
+<purpose>Optimize and polish the complete PRD document for flow, coherence, and readability while preserving all content and requirements.</purpose>
+
+<instructions>Load the entire PRD document; review structure and organization; improve cross-section flow and coherence; enhance readability and clarity; verify all requirements are traceable; polish without removing or modifying core content; optionally gather feedback.</instructions>
+
+<output>Polished PRD document with improved structure, enhanced flow and coherence, clearer writing, and verified completeness of all sections and requirements.</output>
+
 **Progress: Step 11 of 12** - Next: Complete PRD
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

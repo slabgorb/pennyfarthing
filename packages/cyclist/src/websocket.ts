@@ -1,6 +1,6 @@
 import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { watch, existsSync } from 'fs';
+import { watch, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
@@ -864,7 +864,17 @@ export function setupWebSocketServers(
 
   // Set up session file watcher (MSSCI-12237: Story Status Tree View)
   // Watch .session/*-session.md files and broadcast updates via /ws/story
+  // Story 75-6: Create .session/ directory if it doesn't exist to ensure watcher is always set up
   const sessionDir = join(projectDir, '.session');
+  if (!existsSync(sessionDir)) {
+    try {
+      mkdirSync(sessionDir, { recursive: true });
+      console.log('[WebSocket] Created .session directory for session file watching');
+    } catch (err) {
+      console.error('[WebSocket] Failed to create .session directory:', err);
+    }
+  }
+  // Always try to set up the watcher (directory now guaranteed to exist or error logged)
   if (existsSync(sessionDir)) {
     try {
       watch(sessionDir, { recursive: false }, (eventType, filename) => {

@@ -1,6 +1,29 @@
 # Step 3: Execute Commits
 
-Create branches, commit changes, and merge to develop for each approved group.
+<purpose>
+Execute the approved change groupings by creating branches, staging and committing files, and merging to develop in each affected repo. Process groups sequentially without stashing changes.
+</purpose>
+
+<instructions>
+1. For each approved group, create branches in affected repos following naming conventions
+2. Stage only the files belonging to the current group (never commit directly to develop)
+3. Show diffs for verification before committing
+4. Commit with proper message format including Co-Authored-By line
+5. Merge branches to develop and delete local branches after merge
+6. For tracked groups, create Jira story, update branch with story ID, push and create PR
+7. Report progress after each group with status table
+8. Handle errors appropriately (hook rejection, merge conflicts, test failures)
+</instructions>
+
+<output>
+Execution progress report showing:
+- Status table with Group | Repo | Status | Branch
+- Commits created count
+- Branches merged count
+- List of repos updated
+- Confirmation ready to verify and push
+- User choices: [A] abort current group, [C] continue to verification
+</output>
 
 ## Objective
 

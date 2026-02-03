@@ -11,6 +11,12 @@ prdPurpose: '../data/prd-purpose.md'
 
 # Step 1: Document Discovery & Confirmation
 
+<purpose>Handle fresh context validation by confirming PRD path, discovering and loading input documents from frontmatter, and initializing the validation report.</purpose>
+
+<instructions>Confirm PRD file path is valid; load complete PRD document and frontmatter; extract and reload input documents from inputDocuments array; create validation report with PRD metadata; confirm readiness to begin validation checks.</instructions>
+
+<output>Loaded PRD document with complete context, extracted and verified input documents, initialized validation report with PRD metadata, ready for format detection and validation checks.</output>
+
 ## STEP GOAL:
 
 Handle fresh context validation by confirming PRD path, discovering and loading input documents from frontmatter, and initializing the validation report.
