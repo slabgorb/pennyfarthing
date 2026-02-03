@@ -13,6 +13,7 @@ default:
 # Run modes:
 #   just cyclist              # Electron + folder picker (default)
 #   just cyclist here         # Electron + current directory
+#   just cyclist cdp          # Electron + CDP debugging (port 9222 for Playwright)
 #   just cyclist web          # Web dev mode (browser + hot reload)
 #   just cyclist server       # Web server only
 #   just cyclist verbose      # Enable debug logging
@@ -104,6 +105,7 @@ cyclist *args:
     project_dir=""
     here="false"
     verbose="false"
+    cdp="false"
 
     for arg in "$@"; do
         case "$arg" in
@@ -112,6 +114,9 @@ cyclist *args:
                 ;;
             here)
                 here="true"
+                ;;
+            cdp)
+                cdp="true"
                 ;;
             verbose)
                 verbose="true"
@@ -125,6 +130,7 @@ cyclist *args:
                 echo "Run modes:"
                 echo "  just cyclist              # Electron + folder picker"
                 echo "  just cyclist here         # Electron + current directory"
+                echo "  just cyclist cdp          # Electron + CDP debugging (port 9222)"
                 echo "  just cyclist web          # Web dev mode"
                 echo "  just cyclist server       # Web server only"
                 echo "  just cyclist verbose      # Enable debug logging"
@@ -170,7 +176,12 @@ cyclist *args:
         electron)
             echo "Starting Cyclist (Electron)..."
             [[ -n "$project_dir" ]] && echo "  Project: $project_dir" || echo "  Project: (folder picker)"
-            eval $env_vars npm run dev
+            if [[ "$cdp" == "true" ]]; then
+                echo "  CDP: enabled on port 9222 (Playwright)"
+                eval $env_vars npm run dev:cdp
+            else
+                eval $env_vars npm run dev
+            fi
             ;;
         web)
             echo "Starting Cyclist (Web dev mode)..."
