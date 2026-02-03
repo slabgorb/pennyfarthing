@@ -272,19 +272,67 @@ export const SLASH_COMMANDS = [
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 // ============================================================================
+// Command Frequency Tracking (localStorage)
+// ============================================================================
+
+const COMMAND_FREQUENCY_KEY = 'cyclist:command-frequency';
+
+/**
+ * Get command usage frequency map from localStorage
+ * @returns {Object} Map of command name to usage count
+ */
+export function getCommandFrequency() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const stored = localStorage.getItem(COMMAND_FREQUENCY_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Track command usage - increment frequency counter
+ * @param {string} commandName - The command name (e.g., "/sm")
+ */
+export function trackCommandUsage(commandName) {
+  if (typeof localStorage === 'undefined') return;
+  const freq = getCommandFrequency();
+  freq[commandName] = (freq[commandName] || 0) + 1;
+  localStorage.setItem(COMMAND_FREQUENCY_KEY, JSON.stringify(freq));
+}
+
+/**
+ * Clear command frequency data
+ */
+export function clearCommandFrequency() {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.removeItem(COMMAND_FREQUENCY_KEY);
+}
+
+// ============================================================================
 // Filtering Functions
 // ============================================================================
 
 /**
  * Filter commands by prefix (case-insensitive)
+ * Sorted by usage frequency (most used first), then alphabetically
  * @param {string} prefix - The prefix to filter by (e.g., "/dev", "/he")
- * @returns {Array} Matching commands sorted alphabetically
+ * @returns {Array} Matching commands sorted by frequency then alphabetically
  */
 export function filterCommands(prefix) {
   const search = prefix.toLowerCase();
-  return SLASH_COMMANDS.filter(cmd =>
-    cmd.name.toLowerCase().startsWith(search)
-  );
+  const freq = getCommandFrequency();
+
+  return SLASH_COMMANDS
+    .filter(cmd => cmd.name.toLowerCase().startsWith(search))
+    .sort((a, b) => {
+      const freqA = freq[a.name] || 0;
+      const freqB = freq[b.name] || 0;
+      // Sort by frequency descending, then alphabetically
+      if (freqB !== freqA) return freqB - freqA;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 // ============================================================================

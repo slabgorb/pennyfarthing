@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { SLASH_COMMANDS } from '../js/slash-commands.js';
+import { SLASH_COMMANDS, trackCommandUsage, filterCommands as filterCommandsWithFrequency } from '../js/slash-commands.js';
 
 interface SlashCommand {
   name: string;
@@ -42,11 +42,16 @@ export function useTabCompletion(commands?: SlashCommand[]): UseTabCompletionRes
   });
 
   const filterCommands = useCallback((prefix: string): SlashCommand[] => {
-    const search = prefix.toLowerCase();
-    return allCommands.filter(cmd =>
-      cmd.name.toLowerCase().startsWith(search)
-    );
-  }, [allCommands]);
+    // Use frequency-aware filtering from slash-commands module
+    // Falls back to basic filtering if custom commands provided
+    if (commands) {
+      const search = prefix.toLowerCase();
+      return allCommands.filter(cmd =>
+        cmd.name.toLowerCase().startsWith(search)
+      );
+    }
+    return filterCommandsWithFrequency(prefix);
+  }, [allCommands, commands]);
 
   const showCompletion = useCallback((prefix: string) => {
     const filtered = filterCommands(prefix);
@@ -105,6 +110,9 @@ export function useTabCompletion(commands?: SlashCommand[]): UseTabCompletionRes
     if (!state.visible || state.commands.length === 0) return null;
     const selected = state.commands[state.selectedIndex];
     hideCompletion();
+    if (selected?.name) {
+      trackCommandUsage(selected.name);
+    }
     return selected?.name || null;
   }, [state, hideCompletion]);
 
