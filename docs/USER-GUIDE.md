@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with BikeLane workflow system and persona themes.
 
-**Version:** 8.1.0
+**Version:** 9.0.2
 
 ---
 
@@ -27,12 +27,12 @@ Complete guide to using Pennyfarthing, a Claude Code agent framework with BikeLa
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
-- **Agent System** - 24 coordinated agents for multi-agent development
+- **Agent System** - 19 coordinated agents for multi-agent development
 - **BikeLane Workflows** - 19 workflow options for different development scenarios (TDD, BDD, research, architecture, etc.)
-- **Persona System** - 104 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
+- **Persona System** - 102 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
-- **Slash Commands** - 45 entry points for agent activation and workflows
-- **Skills** - 22 project-agnostic knowledge domains
+- **Slash Commands** - 46 entry points for agent activation and workflows
+- **Skills** - 23 project-agnostic knowledge domains
 - **Sprint Management** - Story tracking and workflow coordination
 - **Scientific Benchmarking** - TRAIL framework for evaluating code review effectiveness
 - **Showcase Website** - Interactive theme gallery with OCEAN personality visualizations

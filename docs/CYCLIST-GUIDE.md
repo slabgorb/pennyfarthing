@@ -62,44 +62,113 @@ pnpm run dev:server
 
 ## Interface Overview
 
+Cyclist v9.0+ uses **Dockview panels** - all panels are draggable, can be split, floated, or maximized. The default layout:
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Menu Bar: Agents | Workflows | View | Help                    │
-├──────────────┬──────────────────────────────────────────────────┤
-│              │                                                  │
-│   Sidebar    │              Message View                        │
-│              │                                                  │
-│  ┌────────┐  │  Claude's responses with syntax highlighting     │
-│  │Portrait│  │  and rendered markdown                           │
-│  │        │  │                                                  │
-│  └────────┘  │                                                  │
-│              │                                                  │
-│  Character   │                                                  │
-│  Name        │                                                  │
-│  Role        ├──────────────────────────────────────────────────┤
-│  Quote       │              Tab Panel                           │
-│              │  Diffs | Files | Browser | Audit Log             │
-│  ──────────  │                                                  │
-│              │                                                  │
-│  Story       │                                                  │
-│  Progress    ├──────────────────────────────────────────────────┤
-│  Phase       │         Quick Actions                            │
-│              │  [Yes] [No] [Option 1] [Option 2]                │
-│  ──────────  ├──────────────────────────────────────────────────┤
-│              │                                                  │
-│  Git Status  │         Rich Text Editor                         │
-│  Branch      │  Formatting toolbar | Input area                 │
-│              │                                                  │
-│  ──────────  │  ─────────────────────────────────────────────── │
-│              │  Stats: tokens | context | tools | project | git │
-│  Tasks       │                                                  │
-│  [ ] Todo 1  │                                                  │
-│  [✓] Todo 2  │                                                  │
-│              │                                                  │
-└──────────────┴──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Menu Bar: Agents | Workflows | View | Help                             │
+├─────────────────┬───────────────────────────────────┬───────────────────┤
+│                 │                                   │                   │
+│  LEFT SIDEBAR   │         MESSAGE PANEL             │   RIGHT SIDEBAR   │
+│  (draggable)    │         (sacred center)           │   (draggable)     │
+│                 │                                   │                   │
+│  ┌───────────┐  │  ┌─────────────────────────────┐  │  ┌─────────────┐  │
+│  │ Changed   │  │  │ Persona Header              │  │  │ Sprint      │  │
+│  │ Files     │  │  │ [Portrait] Agent Name       │  │  │ Panel       │  │
+│  └───────────┘  │  └─────────────────────────────┘  │  └─────────────┘  │
+│  ┌───────────┐  │                                   │  ┌─────────────┐  │
+│  │ Diffs     │  │  ┌─────────────────────────────┐  │  │ Progress    │  │
+│  │ Panel     │  │  │ Conversation Messages       │  │  │ Panel       │  │
+│  └───────────┘  │  │                             │  │  └─────────────┘  │
+│  ┌───────────┐  │  │ Tool calls with summaries:  │  │  ┌─────────────┐  │
+│  │ Debug     │  │  │ ┌─────────────────────────┐ │  │  │ Background  │  │
+│  │ Panel     │  │  │ │ 📖 Reading src/foo.ts   │ │  │  │ Tasks       │  │
+│  └───────────┘  │  │ │ ▶ Result (42 lines)     │ │  │  └─────────────┘  │
+│                 │  │ └─────────────────────────┘ │  │  ┌─────────────┐  │
+│                 │  │                             │  │  │ Git         │  │
+│                 │  └─────────────────────────────┘  │  │ Panel       │  │
+│                 │                                   │  └─────────────┘  │
+│                 │  ┌─────────────────────────────┐  │  ┌─────────────┐  │
+│                 │  │ Quick Actions               │  │  │ Settings    │  │
+│                 │  │ [Yes] [No] [/dev]           │  │  │ Panel       │  │
+│                 │  └─────────────────────────────┘  │  └─────────────┘  │
+│                 │  ┌─────────────────────────────┐  │                   │
+│                 │  │ Editor + Stats Strip        │  │                   │
+│                 │  └─────────────────────────────┘  │                   │
+└─────────────────┴───────────────────────────────────┴───────────────────┘
 ```
 
-## Sidebar Sections
+**Panel Features (v9.0+):**
+- **Drag panels** between sidebars or float them as separate windows
+- **Split panels** horizontally or vertically within regions
+- **Maximize** any panel by double-clicking its tab
+- **Restore closed panels** via View menu → Restore Panel
+- **MessagePanel is locked** - cannot be closed or moved (sacred center)
+
+## Panel System (v9.0+)
+
+Cyclist uses **Dockview** for panel management. All panels except MessagePanel can be:
+- **Dragged** to different locations
+- **Floated** as separate windows (pop-out)
+- **Split** to show multiple panels side-by-side
+- **Maximized** with double-click on tab
+- **Closed** and restored via View menu
+
+### Left Sidebar Panels
+
+#### Changed Files Panel
+Lists files modified during the session. Click to view diffs.
+
+#### Diffs Panel
+Side-by-side diff viewer with syntax highlighting.
+- Navigate edits with j/k keys
+- Click file paths to open in external editor
+- View modes: Partial, Combined, Original, Current
+
+#### Debug Panel
+OTEL spans and debugging information for developers.
+
+### Center (Sacred)
+
+#### Message Panel
+The conversation view - **cannot be closed or moved**.
+
+**Features:**
+- **Persona Header** - Character portrait and name in message header
+- **Tool Call Blocks** - Human-readable summaries (e.g., "Reading src/foo.ts")
+- **Collapsible Results** - Tool outputs collapsed by default
+- **Tool Stacks** - Consecutive tool calls grouped together
+- **Quick Actions** - Smart buttons from CYCLIST markers
+- **Editor** - TipTap rich text input with stats strip
+
+### Right Sidebar Panels
+
+#### Sprint Panel
+Current sprint and story tracking.
+
+#### Progress Panel
+Workflow phase visualization (SM → TEA → Dev → Reviewer).
+
+#### BikeLane Panel
+Stepped workflow UI for PRD, architecture, and research workflows.
+
+#### Acceptance Criteria Panel
+Story acceptance criteria checklist with completion tracking.
+
+#### Background Panel
+Running background tasks and subagents.
+
+#### Git Panel
+Repository status, branch info, sync state.
+
+#### Settings Panel
+Theme selection, font settings, configuration.
+
+---
+
+## Legacy: Sidebar Sections (v8.x)
+
+> **Note:** In v9.0+, these sections are now separate Dockview panels.
 
 ### Persona Section
 

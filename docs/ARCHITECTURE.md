@@ -42,11 +42,11 @@ Context is loaded only when needed:
 pennyfarthing/
 ├── pennyfarthing-dist/             # Source files (copied on install)
 │   ├── agents/                     # 19 agent definitions (includes subagents)
-│   ├── commands/                   # 45 slash commands
+│   ├── commands/                   # 46 slash commands
 │   ├── guides/                     # Behavior guides
-│   ├── skills/                     # 22 knowledge domains
+│   ├── skills/                     # 23 knowledge domains
 │   ├── personas/                   # 102 theme files
-│   └── workflows/                  # 20 workflow definitions
+│   └── workflows/                  # 19 workflow definitions
 │
 ├── src/                            # NPM CLI source
 │
