@@ -36,6 +36,8 @@ interface MessageData {
   is_error?: boolean;
   /** Duration in milliseconds for tool execution (MSSCI-13402) */
   durationMs?: number;
+  /** Number of images attached to user message */
+  imageCount?: number;
 }
 
 // Content block types from SDK nested format (AC5: Story 75-5)
@@ -301,6 +303,7 @@ export function MessagePanel(): React.ReactElement {
       type: 'user',
       content: text,
       timestamp: Date.now(),
+      imageCount: images.length > 0 ? images.length : undefined,
     }]);
 
     setIsProcessing(true);

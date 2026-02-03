@@ -56,6 +56,8 @@ export interface GitInfo {
   ahead: number | null;
   behind: number | null;
   dirtyFiles: DirtyFile[];
+  /** Commits that origin/develop has that local branch doesn't (needs pull/rebase) */
+  developBehind: number | null;
 }
 
 // Extended git info with repo name for multi-repo display
@@ -126,6 +128,7 @@ export function getAllReposGitInfo(projectDir: string): RepoGitInfo[] {
       clean: gitInfo?.clean ?? true,
       ahead: gitInfo?.ahead ?? null,
       behind: gitInfo?.behind ?? null,
+      developBehind: gitInfo?.developBehind ?? null,
       dirtyFiles: gitInfo?.dirtyFiles ?? [],
     };
   });
@@ -148,6 +151,7 @@ export async function getAllReposGitInfoAsync(projectDir: string): Promise<RepoG
       clean: gitInfo?.clean ?? true,
       ahead: gitInfo?.ahead ?? null,
       behind: gitInfo?.behind ?? null,
+      developBehind: gitInfo?.developBehind ?? null,
       dirtyFiles: gitInfo?.dirtyFiles ?? [],
     };
   }));
@@ -215,7 +219,20 @@ export function getGitInfo(projectDir: string): GitInfo | null {
       // No upstream configured - leave as null
     }
 
-    return { branch, clean, ahead, behind, dirtyFiles };
+    // Get commits that origin/develop has that current branch doesn't
+    let developBehind: number | null = null;
+    try {
+      const developBehindOutput = execSync('git rev-list --count HEAD..origin/develop', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      developBehind = parseInt(developBehindOutput.trim(), 10);
+    } catch {
+      // origin/develop doesn't exist - leave as null
+    }
+
+    return { branch, clean, ahead, behind, dirtyFiles, developBehind };
   } catch (error) {
     // Not a git repo or git command failed - return null gracefully
     // Handles: not a git repository, EPIPE, ENOENT, etc.
@@ -241,6 +258,18 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
   const releaseLock = await acquireRepoLock(projectDir);
 
   try {
+    // Fetch latest refs from remote (quiet, no output)
+    // This ensures ahead/behind counts are accurate against remote state
+    try {
+      await execAsync('git fetch --quiet', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+        timeout: 10000, // 10s timeout for network operation
+      });
+    } catch {
+      // Fetch failed (offline, no remote, etc.) - continue with local refs
+    }
+
     // Get current branch
     const { stdout: branchOutput } = await execAsync('git rev-parse --abbrev-ref HEAD', {
       cwd: projectDir,
@@ -278,7 +307,7 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
       }
     }
 
-    // Get ahead/behind counts (suppress stderr for branches without upstream)
+    // Get ahead/behind counts vs tracking branch
     let ahead: number | null = null;
     let behind: number | null = null;
     try {
@@ -297,8 +326,21 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
       // No upstream configured - leave as null
     }
 
+    // Get commits that origin/develop has that current branch doesn't
+    // This alerts when develop has moved ahead (work done in another clone)
+    let developBehind: number | null = null;
+    try {
+      const { stdout: developBehindOutput } = await execAsync(
+        'git rev-list --count HEAD..origin/develop',
+        { cwd: projectDir, encoding: 'utf-8' }
+      );
+      developBehind = parseInt(developBehindOutput.trim(), 10);
+    } catch {
+      // origin/develop doesn't exist or other error - leave as null
+    }
+
     releaseLock();
-    return { branch, clean, ahead, behind, dirtyFiles };
+    return { branch, clean, ahead, behind, dirtyFiles, developBehind };
   } catch (error) {
     releaseLock();
     // Not a git repo or git command failed - return null gracefully
