@@ -1,0 +1,188 @@
+/**
+ * Dockview Theme for Cyclist
+ *
+ * Story MSSCI-14001: Replace DockingWorkspace with Dockview
+ *
+ * Maps Dockview CSS variables to Cyclist theme variables.
+ * This ensures consistent styling across the application.
+ */
+
+/* =============================================================================
+   Container Styles
+   ============================================================================= */
+
+.cyclist-dockview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  /* Dockview CSS variable mappings to Cyclist theme */
+  --dv-group-view-background-color: var(--bg-secondary, #0f0f1a);
+  --dv-tabs-and-actions-container-background-color: var(--bg-tertiary, #1a1a2e);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--accent-color, #6366f1);
+  --dv-activegroup-visiblepanel-tab-color: var(--text-primary, #ffffff);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--bg-tertiary, #1a1a2e);
+  --dv-activegroup-hiddenpanel-tab-color: var(--text-secondary, #a1a1aa);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--bg-secondary, #0f0f1a);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--text-secondary, #a1a1aa);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bg-tertiary, #1a1a2e);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--text-muted, #71717a);
+  --dv-separator-border: var(--border-color, #27272a);
+  --dv-paneview-header-border-color: var(--border-color, #27272a);
+  --dv-tab-close-icon: var(--text-muted, #71717a);
+  --dv-drag-over-background-color: rgba(99, 102, 241, 0.2);
+  --dv-drag-over-border-color: var(--accent-color, #6366f1);
+}
+
+.dockview-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* =============================================================================
+   Panel Content Styles
+   ============================================================================= */
+
+.dockview-panel-content {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: var(--bg-primary, #0a0a0f);
+}
+
+.error-boundary-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* =============================================================================
+   Tab Styles
+   ============================================================================= */
+
+.cyclist-dockview .dv-tab {
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px 4px 0 0;
+  transition: background-color 0.15s ease;
+}
+
+.cyclist-dockview .dv-tab:hover {
+  background-color: var(--bg-hover, #27272a);
+}
+
+/* Active tab indicator */
+.cyclist-dockview .dv-tab.dv-active-tab {
+  border-bottom: 2px solid var(--accent-color, #6366f1);
+}
+
+/* Tab close button */
+.cyclist-dockview .dv-tab .dv-default-tab-content .dv-close-action {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.cyclist-dockview .dv-tab:hover .dv-default-tab-content .dv-close-action {
+  opacity: 1;
+}
+
+/* =============================================================================
+   Group Styles
+   ============================================================================= */
+
+.cyclist-dockview .dv-group-panel {
+  border: 1px solid var(--border-color, #27272a);
+}
+
+/* Center group (sacred) - no close button on tabs */
+.cyclist-dockview [data-dockview-group="center"] .dv-close-action {
+  display: none !important;
+}
+
+/* =============================================================================
+   Resize Sash Styles
+   ============================================================================= */
+
+.cyclist-dockview .dv-resize-container .dv-sash {
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.cyclist-dockview .dv-resize-container .dv-sash:hover {
+  background-color: var(--accent-color, #6366f1);
+}
+
+.cyclist-dockview .dv-resize-container .dv-sash:active {
+  background-color: var(--accent-color-bright, #818cf8);
+}
+
+/* =============================================================================
+   Drop Target Styles
+   ============================================================================= */
+
+.cyclist-dockview .dv-drop-target {
+  background-color: var(--dv-drag-over-background-color);
+  border: 2px dashed var(--dv-drag-over-border-color);
+}
+
+/* =============================================================================
+   Minimum Dimension Warning
+   ============================================================================= */
+
+.min-dimension-warning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 8px 16px;
+  background-color: var(--status-warning-bg, rgba(234, 179, 8, 0.1));
+  color: var(--status-warning, #eab308);
+  border-bottom: 1px solid var(--status-warning, #eab308);
+  text-align: center;
+  font-size: 13px;
+}
+
+/* =============================================================================
+   Accessibility
+   ============================================================================= */
+
+/* Focus indicators */
+.cyclist-dockview .dv-tab:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+  outline-offset: -2px;
+}
+
+.cyclist-dockview .dv-sash:focus-visible {
+  outline: 2px solid var(--accent-color, #6366f1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cyclist-dockview .dv-tab,
+  .cyclist-dockview .dv-sash,
+  .cyclist-dockview .dv-close-action {
+    transition: none;
+  }
+}
+
+/* =============================================================================
+   Responsive Overrides
+   ============================================================================= */
+
+@media (max-width: 1023px) {
+  /* Collapsed sidebars on small screens */
+  .cyclist-dockview .dv-group-panel[data-group-id="left"],
+  .cyclist-dockview .dv-group-panel[data-group-id="right"] {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1440px) {
+  /* Wider sidebars on large screens */
+  .cyclist-dockview .dv-tab {
+    padding: 6px 16px;
+  }
+}
