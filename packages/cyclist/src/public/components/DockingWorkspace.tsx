@@ -528,18 +528,22 @@ export function DockingWorkspace({
   const { breakpoint, isSmall, isLarge, sidebarWidth: responsiveSidebarWidth, isBelowMinimum } = responsiveState;
 
   // Track user manual overrides for collapse state
-  const [leftUserOverride, setLeftUserOverride] = useState(false);
-  const [rightUserOverride, setRightUserOverride] = useState(false);
+  // If initialLayout has explicit collapsed values, treat as user override (persisted preference)
+  const [leftUserOverride, setLeftUserOverride] = useState(
+    initialLayout?.leftSidebar?.collapsed !== undefined
+  );
+  const [rightUserOverride, setRightUserOverride] = useState(
+    initialLayout?.rightSidebar?.collapsed !== undefined
+  );
 
   // Determine effective collapsed state
-  // Priority: prop > initialLayout > responsive auto-collapse
-  const shouldAutoCollapse = responsive && isSmall;
+  // Priority: prop > initialLayout > responsive auto-collapse (only if no persisted preference)
   const effectiveLeftCollapsed = leftCollapsedProp !== undefined
     ? leftCollapsedProp
-    : (initialLayout?.leftSidebar?.collapsed ?? (shouldAutoCollapse && !leftUserOverride));
+    : (initialLayout?.leftSidebar?.collapsed ?? false);
   const effectiveRightCollapsed = rightCollapsedProp !== undefined
     ? rightCollapsedProp
-    : (initialLayout?.rightSidebar?.collapsed ?? (shouldAutoCollapse && !rightUserOverride));
+    : (initialLayout?.rightSidebar?.collapsed ?? false);
 
   const [leftCollapsed, setLeftCollapsed] = useState(effectiveLeftCollapsed);
   const [rightCollapsed, setRightCollapsed] = useState(effectiveRightCollapsed);
@@ -549,6 +553,10 @@ export function DockingWorkspace({
   // Track whether current collapse is due to responsive behavior
   const [leftResponsiveCollapsed, setLeftResponsiveCollapsed] = useState(false);
   const [rightResponsiveCollapsed, setRightResponsiveCollapsed] = useState(false);
+
+  // Track if this is the initial mount - skip responsive auto-collapse on first render
+  // to respect persisted layout preferences
+  const isInitialMount = useRef(true);
 
   // Drag state
   const [draggingPanelId, setDraggingPanelId] = useState<string | null>(null);
@@ -574,9 +582,17 @@ export function DockingWorkspace({
   }, [rightCollapsedProp]);
 
   // Responsive auto-collapse effect
+  // Skip on initial mount to respect persisted layout preferences
   useEffect(() => {
     if (!responsive) return;
 
+    // On initial mount, respect the persisted layout - don't auto-collapse
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only auto-collapse on resize if user hasn't explicitly set a preference
     if (isSmall && !leftUserOverride) {
       setLeftCollapsed(true);
       setLeftResponsiveCollapsed(true);
