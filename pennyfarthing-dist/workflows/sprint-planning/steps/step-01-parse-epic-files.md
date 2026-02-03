@@ -10,6 +10,21 @@ thisStepFile: './step-01-parse-epic-files.md'
 nextStepFile: './step-02-build-sprint-status.md'
 ---
 
+<purpose>
+Parse epic files and extract all work items for sprint status tracking. Build complete inventory of all epics and stories from all epic files.
+</purpose>
+
+<instructions>
+1. Look for all files matching `{epics_pattern}` in `{epics_location}` (could be a single `epics.md` file or multiple `epic-1.md`, `epic-2.md` files)
+2. For each epic file found, extract epic numbers from headers like `## Epic 1:` or `## Epic 2:` and story IDs and titles from patterns like `### Story 1.1: User Authentication`
+3. Convert story format from `Epic.Story: Title` to kebab-case key using these conversion rules: Replace period with dash for the ID (1-1), convert title to kebab-case (user-authentication), and final key is `1-1-user-authentication`
+4. Use flexible document discovery: Search for whole document first (epics.md, bmm-epics.md, *epic*.md), check for sharded version (epics/index.md), read index.md to understand structure, read all epic section files (epic-1.md, epic-2.md, etc.), and process all epics and stories from combined content. If both exist, use the whole document.
+</instructions>
+
+<output>
+Complete inventory of all epics and stories from all epic files, with proper kebab-case keys and structured data ready for sprint status building.
+</output>
+
 # Step 1: Parse Epic Files and Extract All Work Items
 
 ## Goal

@@ -6,6 +6,18 @@ workflow_path: '{project_root}/_bmad/bmm/workflows/bmad-quick-flow/quick-spec'
 wipFile: '{implementation_artifacts}/tech-spec-wip.md'
 ---
 
+<purpose>
+Review the complete tech-spec with the user to ensure it meets the READY FOR DEVELOPMENT standard, handle feedback and modifications, finalize the spec with status 'ready-for-dev', rename the WIP file to final form using the slug, and guide the user to the next development phase.
+</purpose>
+
+<instructions>
+Load the WIP file and present the complete spec content with summary statistics, display review menu (Approve/Changes/Questions/Advanced Elicitation/Party Mode), handle user feedback by making requested edits and re-presenting sections, verify spec meets READY FOR DEVELOPMENT standard, finalize by updating frontmatter with status: 'ready-for-dev' and stepsCompleted: [1, 2, 3, 4], rename WIP file to tech-spec-{slug}.md, and present final menu for Advanced Elicitation/Adversarial Review/Begin Development/Done/Party Mode.
+</instructions>
+
+<output>
+WIP file finalized and renamed to tech-spec-{slug}.md with status: 'ready-for-dev' and stepsCompleted: [1, 2, 3, 4]. User reviewed and approved complete spec meeting READY FOR DEVELOPMENT standard. Final menu presented with next-step options and recommended fresh context command for development phase.
+</output>
+
 # Step 4: Review & Finalize
 
 **Progress: Step 4 of 4** - Final Step

@@ -6,6 +6,25 @@ description: 'Resume the product brief workflow from where it was left off, ensu
 outputFile: '{planning_artifacts}/product-brief-{{project_name}}-{{date}}.md'
 ---
 
+<purpose>
+Resume the product brief workflow from where it was left off, ensuring smooth continuation with full context restoration.
+</purpose>
+
+<instructions>
+1. Analyze current workflow state from document frontmatter
+2. Reload all previously loaded input documents for context
+3. Present progress report and determine next step based on lastStep value
+4. If workflow complete, suggest next workflow options
+5. If workflow incomplete, load appropriate next step file
+</instructions>
+
+<output>
+- Current workflow state analyzed and presented to user
+- All input documents reloaded for context continuity
+- Next step identified and ready to load
+- User confirmation before proceeding to next step
+</output>
+
 # Step 1B: Product Brief Continuation
 
 ## STEP GOAL:

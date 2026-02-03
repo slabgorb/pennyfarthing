@@ -1,5 +1,31 @@
 # Technical Research Step 4: Architectural Patterns
 
+<purpose>
+Conduct architectural patterns analysis identifying system architecture patterns and trade-offs, design principles and best practices, scalability and performance patterns, integration and communication patterns, security architecture patterns, and data and deployment architecture using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute web searches for system architecture patterns, design principles, scalability patterns, and security architecture
+2. Analyze and aggregate architectural findings
+3. Generate architectural patterns analysis content with seven subsections (System Architecture Patterns, Design Principles, Scalability Patterns, Integration Patterns, Security Architecture, Data Architecture, Deployment Architecture)
+4. Include source citations for all architectural data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
+</instructions>
+
+<output>
+Architectural patterns analysis sections containing:
+- System architecture patterns with source citations
+- Design principles and best practices with source citations
+- Scalability and performance patterns with source citations
+- Integration and communication patterns with source citations
+- Security architecture patterns with source citations
+- Data architecture patterns with source citations
+- Deployment and operations architecture with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

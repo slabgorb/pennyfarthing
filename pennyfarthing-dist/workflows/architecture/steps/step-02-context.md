@@ -1,5 +1,17 @@
 # Step 2: Context Analysis
 
+<purpose>
+Analyze project context and requirements to identify technical constraints, current system landscape, and key architectural concerns that will drive pattern selection and design decisions.
+</purpose>
+
+<instructions>
+Extract technical constraints from PRD (performance, security, integration requirements). Map existing systems and patterns. Identify scalability, reliability, maintainability, and cost concerns. Generate analysis and present A/P/C collaboration menu for refinement.
+</instructions>
+
+<output>
+Architecture Context section in session file with Technical Constraints, Current Landscape overview, and Key Concerns documented. Update frontmatter stepsCompleted array after user confirms [C].
+</output>
+
 <step-meta>
 number: 2
 name: context-analysis

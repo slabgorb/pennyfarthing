@@ -1,5 +1,31 @@
 # Market Research Step 5: Competitive Analysis
 
+<purpose>
+Conduct competitive landscape analysis identifying key market players, market share distribution, competitive positioning strategies, competitive strengths/weaknesses, market differentiation opportunities, and competitive threats using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute web searches for key market players, market share, competitive positioning, and threats
+2. Analyze and aggregate competitive findings
+3. Generate competitive analysis content with seven subsections (Key Players, Market Share, Competitive Positioning, Strengths/Weaknesses, Market Differentiation, Competitive Threats, Opportunities)
+4. Include source citations for all competitive data
+5. Write content immediately to document
+6. Present [C] complete option after content generation (final step)
+7. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before completing workflow
+</instructions>
+
+<output>
+Competitive analysis sections containing:
+- Key market players and market share data with source citations
+- Market share analysis and competitive positioning with source citations
+- Competitive positioning strategies with source citations
+- Strengths and weaknesses assessment with source citations
+- Market differentiation opportunities with source citations
+- Competitive threats and challenges with source citations
+- Competitive opportunities analysis with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

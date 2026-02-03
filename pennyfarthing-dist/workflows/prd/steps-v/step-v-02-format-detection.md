@@ -11,6 +11,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 2: Format Detection & Structure Analysis
 
+<purpose>Detect if PRD follows BMAD format and route appropriately - classify as BMAD Standard, BMAD Variant, or Non-Standard format.</purpose>
+
+<instructions>Analyze PRD structure to detect format conformance; identify section presence and order; classify format type; for non-standard formats, offer optional parity check; update validation report with format classification; route to appropriate next validation step.</instructions>
+
+<output>PRD format classification (BMAD Standard/Variant/Non-Standard), structure analysis summary, validation report updated with format findings, ready for format-specific validation checks.</output>
+
 ## STEP GOAL:
 
 Detect if PRD follows BMAD format and route appropriately - classify as BMAD Standard / BMAD Variant / Non-Standard, with optional parity check for non-standard formats.

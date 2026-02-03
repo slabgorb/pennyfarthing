@@ -1,6 +1,25 @@
 # Step 1: Analyze Current State
 
-Gather the current git state across all configured repositories.
+<purpose>
+Gather the current git state across all configured repositories and build a complete picture of uncommitted changes across ALL repos.
+</purpose>
+
+<instructions>
+1. Run the multi-repo git status script to show branch, staged/unstaged changes, and unpushed commits
+2. For each repo with changes, gather detailed diffs and commit patterns
+3. Check for active work sessions to understand context
+4. Verify pre-flight checks (no merge conflicts, develop branches up to date, no secrets)
+5. Present findings in structured format with analysis results by repo
+</instructions>
+
+<output>
+Analysis results grouped by repo including:
+- Current branch name
+- Count of unpushed commits
+- List of uncommitted changes with status (M/A/D/??)
+- Any warnings or issues found
+- Ready for user choice: [A] to analyze specific repo, or [C] to continue
+</output>
 
 ## Objective
 

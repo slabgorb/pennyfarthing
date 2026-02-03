@@ -10,6 +10,28 @@ thisStepFile: './step-05-validate-and-report.md'
 nextStepFile: null
 ---
 
+<purpose>
+Validate the generated sprint status file and report results. Ensure data integrity and completeness before concluding the sprint planning workflow.
+</purpose>
+
+<instructions>
+Perform comprehensive validation checks on the generated `{status_file}`:
+1. Verify every epic in epic files appears in the status file
+2. Verify every story in epic files appears in the status file
+3. Verify every epic has a corresponding retrospective entry
+4. Verify no items in status file that don't exist in epic files
+5. Verify all status values are legal and match state machine definitions
+6. Verify file is valid YAML syntax
+
+Calculate and report totals: total epics, total stories, epics in-progress count, and stories done count.
+
+Display completion summary to user with file location, total counts, and next steps for status file usage.
+</instructions>
+
+<output>
+Validation report confirming all data integrity checks pass, summary statistics showing epic and story counts with status breakdowns, and confirmation message that sprint status has been successfully generated.
+</output>
+
 # Step 5: Validate and Report
 
 ## Goal

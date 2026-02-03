@@ -4,6 +4,30 @@ description: Common development patterns, fixes, and gotchas. Use when implement
 allowed_tools: [Read, Glob, Grep, Task]
 ---
 
+<run>
+Reference this skill when implementing features, debugging issues, or avoiding known pitfalls in development. Use these patterns to guide:
+- Working directory management in bash commands
+- TypeScript type system decisions
+- Error handling in Go
+- Test structure and isolation
+- HTTP status code selection
+- Turn-efficient coding practices
+- Background task execution
+
+The patterns capture common gotchas and solutions across multiple languages and frameworks.
+</run>
+
+<output>
+Following these patterns produces:
+- Reliable bash commands that work regardless of current directory
+- TypeScript builds that pass verbatimModuleSyntax validation
+- Go code with proper error handling and validation
+- Well-isolated, maintainable test suites
+- Consistent HTTP API behavior
+- Faster task completion through turn-efficient techniques
+- Properly tracked background operations
+</output>
+
 # Dev Patterns Skill
 
 ## Overview

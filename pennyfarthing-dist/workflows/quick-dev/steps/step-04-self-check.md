@@ -7,6 +7,28 @@ thisStepFile: './step-04-self-check.md'
 nextStepFile: './step-05-adversarial-review.md'
 ---
 
+<purpose>
+Perform a comprehensive self-audit of the implementation before external review. Verify that all tasks are complete, tests pass, acceptance criteria are satisfied, and code follows project patterns. Update tech-spec status if in Mode A. Provide a clear summary for the adversarial review phase.
+</purpose>
+
+<instructions>
+1. Verify all tasks marked complete with no skipped work
+2. Run full test suite and confirm all tests passing
+3. For each acceptance criterion, verify it is demonstrably satisfied
+4. Review all modified code to ensure it follows existing patterns and project-context rules
+5. If Mode A (tech-spec): load tech-spec file, mark all tasks as [x], update status to "Implementation Complete", save
+6. Present implementation summary to transition to review phase
+7. Load step-05-adversarial-review.md to proceed
+</instructions>
+
+<output>
+- Verification checklist: Tasks ✓, Tests ✓, AC ✓, Patterns ✓
+- Test suite run results (all passing)
+- Tech-spec updated with completion status (Mode A only)
+- Implementation summary showing what was built, files modified, and test status
+- Transition message to adversarial review phase
+</output>
+
 # Step 4: Self-Check
 
 **Goal:** Audit completed work against tasks, tests, AC, and patterns before external review.

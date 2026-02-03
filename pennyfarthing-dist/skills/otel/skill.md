@@ -6,6 +6,10 @@ allowed_tools: [Read, Glob, Grep, Task]
 
 # OTEL Skill - Claude Code Telemetry
 
+<run>Enable OTEL debug logging and inspect telemetry data to understand span structure, attributes, and correlation patterns.</run>
+
+<output>Enriched span data with tool metadata, file information, and correlation IDs for UI visualization and telemetry analysis.</output>
+
 ## Purpose
 
 Document the actual OTEL data Claude Code emits. This is ground truth, not speculation.

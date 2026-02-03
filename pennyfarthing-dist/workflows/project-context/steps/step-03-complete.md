@@ -1,5 +1,33 @@
 # Step 3: Context Completion & Finalization
 
+<purpose>
+Complete the project context file, optimize it for LLM efficiency, validate all critical rules are captured and actionable, and provide guidance for usage and maintenance.
+</purpose>
+
+<instructions>
+1. Review complete context file for content and structure analysis
+2. Optimize content for LLM context efficiency
+3. Remove redundant or obvious information
+4. Ensure final structure follows optimized format
+5. Present completion summary to user based on skill level
+6. Update frontmatter with completion status
+7. Add usage guidelines section for agents and humans
+8. Validate all critical rules are complete
+9. Provide clear next steps for agent integration and maintenance
+</instructions>
+
+<output>
+- Complete context file reviewed and optimized
+- Content optimized for LLM efficiency
+- Final structure validated
+- Completion summary presented to user
+- Frontmatter updated with status: 'complete'
+- Usage guidelines section appended
+- Validation checklist completed
+- File ready for AI agent consumption
+- Next steps provided for maintenance and evolution
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without user input

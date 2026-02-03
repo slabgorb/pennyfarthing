@@ -16,6 +16,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 6: Innovation Discovery
 
+<purpose>Detect and explore innovative aspects of the product including novel technology, unique approaches, or differentiated features.</purpose>
+
+<instructions>Analyze product classification for innovation signals; conduct collaborative dialogue to identify innovative elements; explore novel aspects, technical differentiation, and competitive advantages; document innovation aspects in the PRD.</instructions>
+
+<output>Innovation documentation capturing novel elements, unique technical approaches, competitive differentiation, and innovative features of the product.</output>
+
 **Progress: Step 6 of 11** - Next: Project Type Analysis
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

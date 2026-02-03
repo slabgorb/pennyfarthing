@@ -1,5 +1,17 @@
 # Step 1: Initialize Architecture Session
 
+<purpose>
+Set up the architecture decision session by gathering inputs, detecting existing workflows, and establishing initial context for collaborative architectural discovery.
+</purpose>
+
+<instructions>
+Check for existing workflow and either resume from continuation or initialize fresh session. Gather required inputs (PRD, existing documentation, constraints), identify stakeholders, and present collaboration options to proceed.
+</instructions>
+
+<output>
+Session workspace initialized with frontmatter and either workflow continuation state or fresh initialization summary including discovered inputs, stakeholders, and ready-to-continue status.
+</output>
+
 <step-meta>
 number: 1
 name: initialize

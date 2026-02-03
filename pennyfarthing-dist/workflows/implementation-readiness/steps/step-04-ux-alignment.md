@@ -12,6 +12,29 @@ workflowFile: '{workflow_path}/workflow.md'
 outputFile: '{planning_artifacts}/implementation-readiness-report-{{date}}.md'
 ---
 
+<purpose>
+To check if UX documentation exists and validate that it aligns with PRD requirements and Architecture decisions, ensuring architecture accounts for both PRD and UX needs.
+</purpose>
+
+<instructions>
+1. Search for UX documentation (whole or sharded formats)
+2. If found: validate alignment between UX, PRD, and Architecture
+3. If not found: assess whether UX/UI is implied in the project
+4. Document any alignment issues or gaps
+5. Add warnings if UX is implied but missing
+6. Add findings to assessment report
+7. Auto-proceed to next step for epic quality review
+</instructions>
+
+<output>
+UX alignment assessment section containing:
+- UX document status (found/not found)
+- Alignment validation results between UX-PRD and UX-Architecture
+- List of any misalignments or gaps
+- Warnings about implied but missing UX documentation
+- Recommendations for addressing gaps
+</output>
+
 # Step 4: UX Alignment
 
 ## STEP GOAL:

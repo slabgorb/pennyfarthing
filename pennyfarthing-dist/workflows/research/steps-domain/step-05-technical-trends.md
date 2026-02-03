@@ -1,5 +1,31 @@
 # Domain Research Step 5: Technical Trends
 
+<purpose>
+Conduct comprehensive technical trends analysis identifying emerging technologies, digital transformation impacts, innovation patterns, and future technology projections using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute web searches for emerging technologies, digital transformation, and future outlook
+2. Analyze and aggregate technology findings
+3. Generate technical trends content with six subsections (Emerging Technologies, Digital Transformation, Innovation Patterns, Future Outlook, Implementation Opportunities, Challenges and Risks)
+4. Add Recommendations section with three subsections (Technology Adoption, Innovation Roadmap, Risk Mitigation)
+5. Include source citations for all technology information
+6. Write content immediately to document
+7. Present [C] continue option after content generation
+8. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before loading next step
+</instructions>
+
+<output>
+Technical trends analysis sections containing:
+- Emerging technologies and innovations with source citations
+- Digital transformation trends and impacts with source citations
+- Innovation patterns and disruption analysis with source citations
+- Future outlook and projections with source citations
+- Implementation opportunities and challenges with source citations
+- Strategic recommendations for technology adoption, innovation roadmap, and risk mitigation
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

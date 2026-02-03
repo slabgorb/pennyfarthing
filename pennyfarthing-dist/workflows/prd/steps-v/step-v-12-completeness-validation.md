@@ -11,6 +11,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 12: Completeness Validation
 
+<purpose>Final comprehensive completeness check - validate no template variables remain, each section has required content, section-specific completeness requirements are met, and frontmatter is properly populated.</purpose>
+
+<instructions>Scan PRD for remaining template variables and placeholders; verify all required sections have substantial content; check section-specific completeness requirements; validate frontmatter contains all required metadata; calculate completeness percentage; identify missing elements; update validation report with completeness findings.</instructions>
+
+<output>Completeness validation report with template variable scan results, section-by-section completeness assessment, frontmatter validation, completeness percentage metric, and list of outstanding items.</output>
+
 ## STEP GOAL:
 
 Final comprehensive completeness check - validate no template variables remain, each section has required content, section-specific completeness, and frontmatter is properly populated.

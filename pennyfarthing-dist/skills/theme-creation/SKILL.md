@@ -5,6 +5,10 @@ description: Create custom persona themes for Pennyfarthing. Use when users want
 
 # Theme Creation Skill
 
+<run>/theme-maker</run>
+
+<output>Interactive wizard that guides users through AI-driven, Guided, or Manual theme creation modes to build custom persona themes for Pennyfarthing agents</output>
+
 ## Overview
 
 This skill covers creating custom persona themes for Pennyfarthing agents. Themes define how each agent (SM, TEA, Dev, Reviewer, etc.) presents themselves with character names, styles, quotes, and personality traits.

@@ -1,5 +1,30 @@
 # Technical Research Step 2: Technology Stack Analysis
 
+<purpose>
+Conduct technology stack analysis identifying programming languages, development frameworks, database and storage technologies, development tools and platforms, and cloud infrastructure/deployment options using verified web search data.
+</purpose>
+
+<instructions>
+1. Execute parallel web searches for programming languages, frameworks, databases, tools, and cloud platforms
+2. Analyze and aggregate technology stack findings
+3. Generate technology stack analysis content with six subsections (Programming Languages, Development Frameworks, Database and Storage, Development Tools, Cloud Infrastructure, Technology Adoption Trends)
+4. Include source citations for all technology data
+5. Write content immediately to document
+6. Present [C] continue option after content generation
+7. Update frontmatter stepsCompleted to [1, 2] before loading next step
+</instructions>
+
+<output>
+Technology stack analysis sections containing:
+- Programming languages analysis with source citations
+- Development frameworks and libraries with source citations
+- Database and storage technologies with source citations
+- Development tools and platforms with source citations
+- Cloud infrastructure and deployment options with source citations
+- Technology adoption trends with source citations
+- All content appended to research document
+</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - 🛑 NEVER generate content without web search verification

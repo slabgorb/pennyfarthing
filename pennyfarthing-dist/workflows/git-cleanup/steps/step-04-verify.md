@@ -1,6 +1,26 @@
 # Step 4: Verify and Push
 
-Verify the cleanup was successful and push to remote.
+<purpose>
+Verify that all changes have been properly committed across all repos, confirm no uncommitted changes remain (except intentionally skipped), review commit history, and push to remote.
+</purpose>
+
+<instructions>
+1. Run multi-repo git status script to confirm clean working directories
+2. Review commits in each repo that had changes using git log
+3. Check for cleanup branches that should have been deleted (expected: none)
+4. Generate summary report showing commits created by repo and final state
+5. Verify any intentionally skipped files
+6. Push develop to remote for each repo with new commits
+7. Offer user choices to push, keep local, or review again
+</instructions>
+
+<output>
+Git cleanup summary report including:
+- Commits created table by repo with commit hashes and messages
+- Final state for each repo (clean or files remaining)
+- List of any remaining work or skipped files
+- User choices: [P] push all to remote, [L] keep local, [R] review again
+</output>
 
 ## Objective
 

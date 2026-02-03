@@ -17,6 +17,12 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 # Step 2: Project Discovery
 
+<purpose>Discover and classify the project through collaborative dialogue to understand product type, domain, complexity, and project context (greenfield vs brownfield).</purpose>
+
+<instructions>Check document state and loaded input documents; load classification data from CSV files; conduct discovery conversation to identify project type, domain, and complexity signals; confirm classification with user; optionally execute advanced elicitation or party mode workflows; save classification to frontmatter.</instructions>
+
+<output>Confirmed project classification with projectType, domain, complexity level, and projectContext saved to document frontmatter; stepsCompleted updated with this step; ready to proceed to product vision step.</output>
+
 **Progress: Step 2 of 13** - Next: Product Vision
 
 ## STEP GOAL:

@@ -1,5 +1,11 @@
 # Step 14: Workflow Completion
 
+<purpose>Complete the UX design workflow, validate the specification, update status tracking, and provide next step guidance to the user.</purpose>
+
+<instructions>Announce workflow completion with all accomplished sections. Update workflow status file with completion information and timestamp. Perform document quality check (completeness, consistency). Suggest next steps (wireframes, prototypes, architecture, Figma design). Provide final completion confirmation with core deliverables list. Set lastStep = 14 in frontmatter. Do NOT load additional steps.</instructions>
+
+<output>Workflow completion announced with comprehensive summary of accomplished sections. Workflow status file updated. Next step options provided to user. UX design specification validated and ready for implementation. Specification location: {planning_artifacts}/ux-design-specification.md with supporting visual assets at {planning_artifacts}/ux-color-themes.html and {planning_artifacts}/ux-design-directions.html.</output>
+
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
 - ✅ THIS IS A FINAL STEP - Workflow completion required

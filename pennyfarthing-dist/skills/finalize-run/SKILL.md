@@ -5,6 +5,9 @@ description: Validate and save benchmark run results. Use when completing a benc
 
 # Finalize Run Skill
 
+<run>Validates and saves benchmark run results</run>
+<output>JSON with validation success status and saved file path</output>
+
 All runs MUST pass through this skill before saving. This is the guardrail.
 
 ## Invocation

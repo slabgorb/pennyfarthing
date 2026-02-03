@@ -8,6 +8,12 @@ outputFile: '{planning_artifacts}/prd.md'
 
 # Step 1B: Workflow Continuation
 
+<purpose>Resume the PRD workflow from where it was left off, ensuring smooth continuation with full context restoration and accurate next-step determination.</purpose>
+
+<instructions>Analyze current workflow state from frontmatter; restore all previously loaded context documents; determine the correct next step from the last completed step's frontmatter; present progress summary with continuation option.</instructions>
+
+<output>Fully restored context with all previous input documents reloaded, accurate determination of next workflow step, user confirmation to proceed to the next step in the workflow.</output>
+
 ## STEP GOAL:
 
 Resume the PRD workflow from where it was left off, ensuring smooth continuation with full context restoration.

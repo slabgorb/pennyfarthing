@@ -10,6 +10,12 @@ validationReportPath: '{validation_report_path}'
 
 # Step 2B: Document Parity Check
 
+<purpose>Analyze non-standard PRD and identify gaps to achieve BMAD PRD parity, presenting user with options for how to proceed.</purpose>
+
+<instructions>Load and deeply analyze non-standard PRD structure; identify missing sections and gaps relative to BMAD standard; map existing content to BMAD sections; prepare parity analysis with specific recommendations; present user with conversion options (full conversion, selective upgrade, continue as-is).</instructions>
+
+<output>Detailed parity analysis documenting gaps between current format and BMAD standard, conversion recommendations with effort estimates, and user-selected approach for proceeding with validation.</output>
+
 ## STEP GOAL:
 
 Analyze non-standard PRD and identify gaps to achieve BMAD PRD parity, presenting user with options for how to proceed.

@@ -7,6 +7,14 @@ description: Evaluate agent responses using standardized rubrics. Use when scori
 
 Canonical evaluation of agent responses. All judging goes through this skill.
 
+<run>
+Judge is invoked via CLI with `/judge --mode <mode> --data <json>` to evaluate agent responses using standardized rubrics. Modes include solo (single response), compare (two responses), phase-specific modes (SM/TEA/Dev/Reviewer), coherence (chain coherence), swebench (SWE-bench evaluation), and ground-truth (patch comparison).
+</run>
+
+<output>
+Judge returns structured JSON output containing evaluation scores, weighted totals, reasoning, and token usage information. Output format varies by mode: solo/compare return individual or comparative scores with dimensions (correctness, depth, quality, persona); phase modes return team evaluations; coherence returns a rating (excellent/good/poor); swebench/ground-truth return deterministic scores via Python scripts. All responses include validation of results and error handling for failed evaluations.
+</output>
+
 ## Invocation
 
 ```

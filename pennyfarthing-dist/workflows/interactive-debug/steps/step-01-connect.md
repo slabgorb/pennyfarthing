@@ -6,6 +6,30 @@ name: connect
 gate: false
 </step-meta>
 
+<purpose>
+Detect what type of frontend is running (web server or Electron app), establish a Playwright MCP connection, and verify the connection works.
+</purpose>
+
+<instructions>
+1. READ the complete step file before taking any action
+2. Determine app type (Web vs Electron) using process detection
+3. If Web: verify server is running or start it
+4. If Electron: check CDP is enabled and get internal server URL
+5. Establish Playwright MCP connection
+6. Verify connection with snapshot
+7. Confirm app type, URL, and CDP port to user
+</instructions>
+
+<output>
+Report back:
+- App Type: {Web|Electron}
+- Connected to: {actual_url}
+- CDP Port: {port if Electron, "N/A" if Web}
+- Playwright MCP: Verified
+- Snapshot: [display snapshot or screenshot]
+- Ready to explore the UI
+</output>
+
 ## Purpose
 
 Detect what type of frontend is running (web server or Electron app), establish a Playwright MCP connection, and verify the connection works.

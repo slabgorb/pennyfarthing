@@ -385,6 +385,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     // Check PreToolUse hooks for context-circuit-breaker
     const circuitBreakerCheck = checkContextCircuitBreaker(projectRoot, installationType);
     results.push(circuitBreakerCheck);
+
+    // Check PreToolUse hooks for schema-validation
+    const schemaValidationCheck = checkSchemaValidationHook(projectRoot, installationType);
+    results.push(schemaValidationCheck);
   }
 
   return results;
@@ -689,6 +693,107 @@ function addContextCircuitBreaker(projectRoot: string, installationType: string)
   } else if (Array.isArray(hooks.PreToolUse)) {
     // Append the required hook (circuit breaker should run last)
     hooks.PreToolUse = [...hooks.PreToolUse, requiredHook];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+}
+
+/**
+ * Check that schema-validation hook is configured in PreToolUse
+ * This validates XML schema for session/skill/step files on Write
+ */
+function checkSchemaValidationHook(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.PreToolUse exists
+    if (!settings.hooks?.PreToolUse) {
+      return {
+        name: 'settings/schema-validation',
+        status: 'warn',
+        detail: 'Missing PreToolUse hooks - schema validation not configured',
+        fix: () => {
+          addSchemaValidationHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    // Check if schema-validation is configured
+    const hasSchemaValidation = settings.hooks.PreToolUse.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('schema-validation')
+        );
+      }
+      return false;
+    });
+
+    if (!hasSchemaValidation) {
+      return {
+        name: 'settings/schema-validation',
+        status: 'warn',
+        detail: 'schema-validation not configured - XML schema enforcement disabled',
+        fix: () => {
+          addSchemaValidationHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/schema-validation',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/schema-validation',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add schema-validation hook to PreToolUse in settings.local.json
+ */
+function addSchemaValidationHook(projectRoot: string, installationType: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const scriptBase = getScriptBasePath(installationType);
+
+  const requiredHook = {
+    matcher: 'Write',
+    hooks: [
+      {
+        type: 'command',
+        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/schema-validation.sh`
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.PreToolUse) {
+    hooks.PreToolUse = [requiredHook];
+  } else if (Array.isArray(hooks.PreToolUse)) {
+    // Insert schema validation early (after pre-edit-check but before circuit breaker)
+    hooks.PreToolUse = [requiredHook, ...hooks.PreToolUse];
   }
 
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');

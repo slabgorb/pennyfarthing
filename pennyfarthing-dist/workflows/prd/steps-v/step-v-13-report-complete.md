@@ -9,6 +9,12 @@ prdFile: '{prd_file_path}'
 
 # Step 13: Validation Report Complete
 
+<purpose>Finalize validation report, summarize all findings from validation steps, present summary to user conversationally, and offer actionable next steps including editing or publication.</purpose>
+
+<instructions>Aggregate all validation step findings into comprehensive report; create executive summary with key metrics and recommendations; prepare conversational presentation for user; identify critical issues, major issues, and minor issues; recommend prioritized remediation path; offer next steps including editing workflow or publication options.</instructions>
+
+<output>Complete validation report with executive summary, aggregated findings from all validation checks, severity classification of issues, prioritized remediation recommendations, and options for next workflow steps.</output>
+
 ## STEP GOAL:
 
 Finalize validation report, summarize all findings from steps 1-12, present summary to user conversationally, and offer actionable next steps.

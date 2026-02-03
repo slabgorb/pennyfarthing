@@ -1,5 +1,17 @@
 # Step 7: Decision Documentation
 
+<purpose>
+Consolidate all architecture decisions from previous steps into a formal Architecture Decision Record (ADR) or specification. Validate completeness and finalize the decision document for stakeholder review.
+</purpose>
+
+<instructions>
+Validate all previous step outputs are complete before proceeding. Choose appropriate document type (ADR/Architecture Spec/Design Doc). Compile comprehensive decision record including context, drivers, options, outcome, components, interfaces, risks, and consistency rules. Write to appropriate location with proper linking.
+</instructions>
+
+<output>
+Finalized architecture decision document (ADR or spec format) stored in docs/adr/ or appropriate location, with complete sections from all previous steps, validation confirmation, and completion summary. Update frontmatter stepsCompleted array with all steps completed.
+</output>
+
 <step-meta>
 number: 7
 name: documentation
