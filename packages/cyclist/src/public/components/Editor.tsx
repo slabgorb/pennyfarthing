@@ -41,6 +41,8 @@ export interface EditorProps {
   onSubmit: (text: string, images: PastedImage[]) => void;
   isProcessing?: boolean;
   placeholder?: string;
+  /** Callback to immediately inject a queued message (abort + send) */
+  onInject?: (index: number) => Promise<boolean>;
 }
 
 // PermissionMode type moved to ModeSwitch component
@@ -89,6 +91,8 @@ interface QueueDisplayProps {
   bellMode: boolean;
   onRemove: (index: number) => void;
   onClear: () => void;
+  /** Callback to immediately inject a queued message (abort + send) */
+  onInject?: (index: number) => Promise<boolean>;
 }
 
 /**
@@ -103,7 +107,7 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function QueueDisplay({ queue, bellMode, onRemove, onClear }: QueueDisplayProps) {
+function QueueDisplay({ queue, bellMode, onRemove, onClear, onInject }: QueueDisplayProps) {
   if (queue.length === 0) return null;
 
   return (
@@ -133,14 +137,26 @@ function QueueDisplay({ queue, bellMode, onRemove, onClear }: QueueDisplayProps)
                   📎{msg.images.length}
                 </span>
               )}
-              <button
-                type="button"
-                className="queue-item-remove"
-                onClick={() => onRemove(index)}
-                title="Remove from queue"
-              >
-                ×
-              </button>
+              <div className="queue-item-actions">
+                {onInject && (
+                  <button
+                    type="button"
+                    className="queue-item-inject"
+                    onClick={() => onInject(index)}
+                    title="Send now (abort current and send this message)"
+                  >
+                    ▶
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="queue-item-remove"
+                  onClick={() => onRemove(index)}
+                  title="Remove from queue"
+                >
+                  ×
+                </button>
+              </div>
             </li>
           );
         })}
@@ -184,7 +200,7 @@ function ImagePreview({ images, onRemove }: ImagePreviewProps) {
 // Editor Component
 // =============================================================================
 
-export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorProps): React.ReactElement {
+export function Editor({ onSubmit, isProcessing = false, placeholder, onInject }: EditorProps): React.ReactElement {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
   const [pendingImages, setPendingImages] = useState<PastedImage[]>([]);
@@ -555,6 +571,7 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
         bellMode={bellMode}
         onRemove={removeFromQueue}
         onClear={clearQueue}
+        onInject={onInject}
       />
     </div>
   );

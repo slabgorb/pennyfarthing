@@ -13,7 +13,7 @@ import { usePersona } from '../hooks/usePersona';
 import { useUserAvatar } from '../hooks/useUserAvatar';
 
 interface MessageData {
-  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
+  type: 'user' | 'assistant' | 'tool_use' | 'tool_result' | 'bell_injected';
   content?: string;
   timestamp: number;
   isStreaming?: boolean;
@@ -76,6 +76,28 @@ function UserAvatar(): React.ReactElement {
 export default function Message({ message }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
+
+  // For bell-injected messages (queued messages injected via PostToolUse hook)
+  // Show with 🔔 indicator so user knows it was sent mid-turn
+  if (message.type === 'bell_injected') {
+    const html = message.content ? parseMarkdown(message.content) : '';
+    return (
+      <div data-testid="message-bell-injected" className="message message-user message-bell-injected">
+        <div data-testid="avatar" className="message-avatar">
+          <UserAvatar />
+        </div>
+        <div className="message-content">
+          <span className="bell-indicator" title="Injected via Bell Mode">🔔</span>
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+          {message.imageCount && message.imageCount > 0 && (
+            <span className="message-attachment-indicator" title={`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}>
+              📎 {message.imageCount}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // For streaming assistant messages, use StreamingContent with throbbing avatar
   if (message.type === 'assistant' && message.isStreaming) {
