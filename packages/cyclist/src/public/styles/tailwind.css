@@ -55,21 +55,24 @@
 }
 
 .sidebar[data-collapsed="true"] {
-  width: 0 !important;
+  /* Use min-width for toggle visibility instead of 0 */
+  width: 32px !important;
+  min-width: 32px;
 }
 
-/* Keep collapse toggle visible and clickable when sidebar is collapsed */
+/* Hide content but keep toggle visible when collapsed */
+.sidebar[data-collapsed="true"] .tablist,
+.sidebar[data-collapsed="true"] .panel {
+  display: none;
+}
+
+/* Style collapse toggle when collapsed - make it fill the narrow strip */
 .sidebar[data-collapsed="true"] .collapse-toggle {
-  position: fixed;
-  z-index: 50;
-}
-
-.sidebar-left[data-collapsed="true"] .collapse-toggle {
-  left: 8px;
-}
-
-.sidebar-right[data-collapsed="true"] .collapse-toggle {
-  right: 8px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  bottom: auto;
+  padding: 8px 4px;
 }
 
 /* Tablist styling */
