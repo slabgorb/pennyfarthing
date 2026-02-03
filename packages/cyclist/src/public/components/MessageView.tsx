@@ -55,7 +55,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
   // Find the last assistant message for QuickActions
   const lastAssistantMessage = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].type === 'assistant' && !messages[i].isStreaming) {
+      if (messages[i].type === 'agent' && !messages[i].isStreaming) {
         return messages[i];
       }
     }

@@ -56,6 +56,15 @@ interface SDKMessage {
 // =============================================================================
 
 /**
+ * Check if content is Stop hook feedback that should be hidden.
+ * Stop hook feedback messages are internal enforcement messages, not user-facing content.
+ * Example: "Stop hook feedback:\nMissing CYCLIST marker..."
+ */
+function isStopHookFeedback(content: string): boolean {
+  return content.startsWith('Stop hook feedback:');
+}
+
+/**
  * Transform SDK message to MessageData.
  * Returns an array because nested SDK format may contain both text and tool_use blocks.
  * (AC5: Story 75-5 - Extract tool_use from nested SDK format)
@@ -83,9 +92,10 @@ function transformMessage(sdkMessage: SDKMessage): MessageData[] {
         .join('');
 
       // Add text message if we have content (AC5: only if >= 3 chars)
-      if (textContent && textContent.trim().length >= 3) {
+      // Filter out Stop hook feedback messages - they're internal enforcement, not user content
+      if (textContent && textContent.trim().length >= 3 && !isStopHookFeedback(textContent.trim())) {
         results.push({
-          type: 'assistant',
+          type: 'agent',
           content: textContent,
           timestamp,
           isStreaming: true,
@@ -113,9 +123,10 @@ function transformMessage(sdkMessage: SDKMessage): MessageData[] {
         });
       }
     } else if (typeof contentArray === 'string') {
-      if (contentArray.trim().length >= 3) {
+      // Filter out Stop hook feedback messages - they're internal enforcement, not user content
+      if (contentArray.trim().length >= 3 && !isStopHookFeedback(contentArray.trim())) {
         results.push({
-          type: 'assistant',
+          type: 'agent',
           content: contentArray,
           timestamp,
           isStreaming: true,
@@ -262,9 +273,9 @@ export function MessagePanel(): React.ReactElement {
   // Handle query completion
   const handleComplete = useCallback(() => {
     setIsProcessing(false);
-    // Mark ALL assistant messages as no longer streaming
+    // Mark ALL agent messages as no longer streaming
     setMessages(prev => prev.map(msg =>
-      msg.type === 'assistant' && msg.isStreaming
+      msg.type === 'agent' && msg.isStreaming
         ? { ...msg, isStreaming: false }
         : msg
     ));
@@ -280,7 +291,7 @@ export function MessagePanel(): React.ReactElement {
   const handleError = useCallback((error: string) => {
     setIsProcessing(false);
     setMessages(prev => [...prev, {
-      type: 'assistant',
+      type: 'agent',
       content: `Error: ${error}`,
       timestamp: Date.now(),
     }]);
