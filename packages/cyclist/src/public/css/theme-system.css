@@ -220,3 +220,90 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* =============================================================================
+   Tool Stack Styling (MSSCI-13400)
+   ============================================================================= */
+
+/* Container for grouped tool calls */
+.tool-stack {
+  margin: 0.5rem 0;
+  border-left: 2px solid var(--border);
+  padding-left: 0.5rem;
+}
+
+.tool-stack.collapsed {
+  padding-bottom: 0;
+}
+
+/* Clickable header with toggle */
+.tool-stack-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.tool-stack-header:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.tool-stack-header:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Toggle arrow indicator */
+.tool-stack-toggle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 1rem;
+  text-align: center;
+}
+
+/* Tool count badge */
+.tool-stack-count {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Summary text showing intent when collapsed */
+.tool-stack-summary {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400px;
+}
+
+/* Container for expanded tool list */
+.tool-stack-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+/* Visual distinction for tools within a stack */
+.tool-stack-content .tool-call-block {
+  margin-left: 0.5rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+/* Tool state classes within stack */
+.tool-stack-content .tool-current {
+  opacity: 1;
+}
+
+.tool-stack-content .tool-historical {
+  opacity: 0.8;
+}

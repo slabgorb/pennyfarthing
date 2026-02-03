@@ -5,9 +5,10 @@
  * Story MSSCI-13400 - Tool use stack between messages
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import ToolCallBlock from './ToolCallBlock';
 import type { ToolStackData } from '../utils/toolStackGrouper';
+import { generateToolIntentSummary } from '../utils/toolIntentSummarizer';
 
 interface ToolResultMessage {
   type: 'tool_result';
@@ -40,6 +41,18 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
 
   // AC2: Count display with singular/plural
   const countText = stack.count === 1 ? '1 tool' : `${stack.count} tools`;
+
+  // Generate summary of tool intents for collapsed view
+  const collapsedSummary = useMemo(() => {
+    // Show first 2 tool intents, abbreviated
+    const summaries = stack.tools.slice(0, 2).map(tool =>
+      generateToolIntentSummary(tool.tool_name, tool.input)
+    );
+    if (stack.tools.length > 2) {
+      return summaries.join(', ') + '...';
+    }
+    return summaries.join(', ');
+  }, [stack.tools]);
 
   // AC4: Determine which tool is current (pending)
   const getToolClass = (toolIndex: number): string => {
@@ -91,7 +104,7 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
         role="button"
         tabIndex={0}
         aria-expanded={!isCollapsed || stack.isActive}
-        aria-label={`Tool stack with ${countText}`}
+        aria-label={`Tool stack with ${countText}: ${collapsedSummary}`}
       >
         <span className="tool-stack-toggle">
           {isCollapsed && !stack.isActive ? '▶' : '▼'}
@@ -99,10 +112,14 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
         <span
           data-testid="tool-stack-count"
           className="tool-stack-count"
-          style={{ display: isCollapsed && !stack.isActive ? 'inline' : 'none' }}
         >
           {countText}
         </span>
+        {isCollapsed && !stack.isActive && (
+          <span className="tool-stack-summary">
+            {collapsedSummary}
+          </span>
+        )}
       </div>
 
       {shouldShowTools && (
