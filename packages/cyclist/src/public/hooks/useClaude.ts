@@ -36,9 +36,10 @@ export interface ClaudeMessage {
 }
 
 interface WebSocketClaudeMessage {
-  type: 'message' | 'complete' | 'error' | 'init';
+  type: 'message' | 'complete' | 'error' | 'init' | 'mode';
   message?: ClaudeMessage;
   error?: string;
+  mode?: PermissionMode;
 }
 
 export interface UseClaudeResult {
@@ -93,6 +94,8 @@ export function useClaude(callbacks?: UseClaudeCallbacks): UseClaudeResult {
     ws.onopen = () => {
       console.log('[useClaude] Connected');
       setIsConnected(true);
+      // Request current mode from server
+      ws.send(JSON.stringify({ type: 'getMode' }));
     };
 
     ws.onmessage = (event) => {
@@ -121,6 +124,14 @@ export function useClaude(callbacks?: UseClaudeCallbacks): UseClaudeResult {
           case 'init':
             // Initial connection acknowledgment
             console.log('[useClaude] Init received');
+            break;
+
+          case 'mode':
+            // Server responded with current permission mode
+            if (data.mode) {
+              console.log('[useClaude] Mode received:', data.mode);
+              setModeState(data.mode);
+            }
             break;
         }
       } catch (err) {

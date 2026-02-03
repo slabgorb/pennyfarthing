@@ -1,11 +1,13 @@
 /**
  * useMessageStream Hook
  *
- * React hook for subscribing to IPC message stream via electronAPI.
+ * React hook for subscribing to Claude message stream via WebSocket.
+ * Migrated from IPC to WebSocket for unified communication.
+ *
  * Story MSSCI-12698 - MessageView Component with Streaming
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface Message {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -18,52 +20,115 @@ interface UseMessageStreamResult {
   messages: Message[];
   isStreaming: boolean;
   error: Error | null;
+  isConnected: boolean;
 }
 
-interface ElectronAPI {
-  claude: {
-    onMessage: (callback: (message: Message) => void) => () => void;
+interface WebSocketMessage {
+  type: 'message' | 'complete' | 'error' | 'init' | 'mode';
+  message?: {
+    type: string;
+    content?: string | Array<{ type: string; text?: string }>;
+    [key: string]: unknown;
   };
-}
-
-declare global {
-  interface Window {
-    electronAPI?: ElectronAPI;
-  }
+  error?: string;
 }
 
 export function useMessageStream(): UseMessageStreamResult {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const handleMessage = useCallback((message: Message) => {
-    setMessages(prev => [...prev, message]);
+  const handleWebSocketMessage = useCallback((data: WebSocketMessage) => {
+    if (data.type === 'message' && data.message) {
+      const msg = data.message;
 
-    // Update streaming state
-    if (message.type === 'assistant') {
-      setIsStreaming(message.isStreaming ?? false);
+      // Extract content string
+      let contentStr = '';
+      if (typeof msg.content === 'string') {
+        contentStr = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        contentStr = msg.content
+          .filter((c) => c.type === 'text' && c.text)
+          .map((c) => c.text)
+          .join('');
+      }
+
+      const message: Message = {
+        type: msg.type as Message['type'],
+        content: contentStr,
+        timestamp: Date.now(),
+        isStreaming: true,
+      };
+
+      setMessages((prev) => [...prev, message]);
+
+      // Update streaming state
+      if (msg.type === 'assistant') {
+        setIsStreaming(true);
+      }
+    } else if (data.type === 'complete') {
+      setIsStreaming(false);
+    } else if (data.type === 'error' && data.error) {
+      setError(new Error(data.error));
+      setIsStreaming(false);
     }
   }, []);
 
-  useEffect(() => {
-    const api = window.electronAPI;
-    if (!api?.claude) {
-      setError(new Error('electronAPI not available'));
-      return;
-    }
+  const connect = useCallback(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/claude`;
 
-    let cleanup: (() => void) | undefined;
-    try {
-      cleanup = api.claude.onMessage(handleMessage);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Connection failed'));
-    }
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('[useMessageStream] Connected');
+      setIsConnected(true);
+      setError(null);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as WebSocketMessage;
+        handleWebSocketMessage(data);
+      } catch (err) {
+        console.error('[useMessageStream] Failed to parse message:', err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('[useMessageStream] Disconnected');
+      setIsConnected(false);
+      wsRef.current = null;
+
+      // Attempt reconnection after delay
+      reconnectTimeoutRef.current = setTimeout(() => {
+        console.log('[useMessageStream] Attempting reconnect...');
+        connect();
+      }, 2000);
+    };
+
+    ws.onerror = () => {
+      setError(new Error('WebSocket connection failed'));
+    };
+  }, [handleWebSocketMessage]);
+
+  useEffect(() => {
+    connect();
 
     return () => {
-      cleanup?.();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [handleMessage]);
+  }, [connect]);
 
-  return { messages, isStreaming, error };
+  return { messages, isStreaming, error, isConnected };
 }

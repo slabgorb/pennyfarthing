@@ -13,6 +13,8 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react';
+
+// Note: useRef is used for both DOM refs and WebSocket ref in useModeSync
 import './ModeSwitch.css';
 
 // =============================================================================
@@ -153,7 +155,7 @@ export function useModeSwitchShortcuts(onModeChange: (mode: Mode) => void): void
 }
 
 // =============================================================================
-// useModeSync Hook (Backend Integration)
+// useModeSync Hook (Backend Integration via WebSocket)
 // =============================================================================
 
 interface UseModeSyncResult {
@@ -163,43 +165,72 @@ interface UseModeSyncResult {
 }
 
 /**
- * Hook to sync UI mode state with Claude backend via IPC
+ * Hook to sync UI mode state with Claude backend via WebSocket
+ * Migrated from IPC to WebSocket for unified communication
  */
 export function useModeSync(): UseModeSyncResult {
   const [mode, setModeState] = useState<Mode>('manual');
   const [isLoading, setIsLoading] = useState(true);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // Load initial mode from Claude backend
+  // Connect to WebSocket and sync mode
   useEffect(() => {
-    const api = (window as { electronAPI?: { claude?: { getMode?: () => Promise<string> } } }).electronAPI?.claude;
-    if (!api?.getMode) {
-      setIsLoading(false);
-      return;
-    }
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/claude`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    api.getMode().then((claudeMode: string) => {
-      setModeState(CLAUDE_TO_MODE[claudeMode] || 'manual');
+    ws.onopen = () => {
+      // Request current mode from server
+      ws.send(JSON.stringify({ type: 'getMode' }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'mode' && data.mode) {
+          const uiMode = CLAUDE_TO_MODE[data.mode] || 'manual';
+          setModeState(uiMode);
+          setIsLoading(false);
+          console.log('[ModeSwitch] Mode synced:', data.mode, '→', uiMode);
+        }
+      } catch (err) {
+        console.error('[ModeSwitch] Failed to parse mode response:', err);
+      }
+    };
+
+    ws.onerror = () => {
       setIsLoading(false);
-    }).catch(() => {
-      setIsLoading(false);
-    });
+    };
+
+    // Timeout fallback if server doesn't respond
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+      }
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeout);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      wsRef.current = null;
+    };
   }, []);
 
-  // Set mode on Claude backend
-  const setMode = useCallback(async (newMode: Mode) => {
-    const api = (window as { electronAPI?: { claude?: { setMode?: (mode: string) => Promise<void> } } }).electronAPI?.claude;
-    if (!api?.setMode) {
-      setModeState(newMode);
-      return;
-    }
-
+  // Set mode on Claude backend via WebSocket
+  const setMode = useCallback((newMode: Mode) => {
     const claudeMode = MODE_TO_CLAUDE[newMode];
-    try {
-      await api.setMode(claudeMode);
+
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'setMode', mode: claudeMode }));
       setModeState(newMode);
       console.log('[ModeSwitch] Mode set to:', newMode, '→', claudeMode);
-    } catch (err) {
-      console.error('[ModeSwitch] Failed to set mode:', err);
+    } else {
+      // WebSocket not connected, just update local state
+      setModeState(newMode);
+      console.warn('[ModeSwitch] WebSocket not connected, mode set locally only');
     }
   }, []);
 
