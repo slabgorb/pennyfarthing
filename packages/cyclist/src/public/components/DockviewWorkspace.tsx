@@ -19,7 +19,7 @@ import {
   DockviewReadyEvent,
   IDockviewPanelProps,
   DockviewApi,
-  SerializedDockview,
+  IDockviewPanel,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -73,6 +73,70 @@ export function getDockviewApi(): DockviewApi | null {
   return dockviewApiRef;
 }
 
+// Panel group definitions (needed for restore logic)
+const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG] as const;
+const RIGHT_SIDEBAR_PANELS = [
+  PANEL_INVENTORY.SPRINT,
+  PANEL_INVENTORY.PROGRESS,
+  PANEL_INVENTORY.BACKGROUND,
+  PANEL_INVENTORY.GIT,
+  PANEL_INVENTORY.SETTINGS,
+] as const;
+
+// Track closed panels for restoration
+const closedPanels: Set<string> = new Set();
+
+/**
+ * Get list of closed panels that can be restored
+ */
+export function getClosedPanels(): string[] {
+  return Array.from(closedPanels);
+}
+
+/**
+ * Restore a previously closed panel
+ */
+export function restorePanel(panelId: string): boolean {
+  const api = dockviewApiRef;
+  if (!api || !closedPanels.has(panelId)) return false;
+
+  // Determine which group to add it to
+  const isLeftPanel = LEFT_SIDEBAR_PANELS.includes(panelId as any);
+  const isRightPanel = RIGHT_SIDEBAR_PANELS.includes(panelId as any);
+
+  // Find a reference panel in the appropriate group
+  let referencePanel: IDockviewPanel | undefined;
+
+  if (isLeftPanel) {
+    for (const id of LEFT_SIDEBAR_PANELS) {
+      const panel = api.getPanel(id);
+      if (panel) {
+        referencePanel = panel;
+        break;
+      }
+    }
+  } else if (isRightPanel) {
+    for (const id of RIGHT_SIDEBAR_PANELS) {
+      const panel = api.getPanel(id);
+      if (panel) {
+        referencePanel = panel;
+        break;
+      }
+    }
+  }
+
+  // Add the panel back
+  api.addPanel({
+    id: panelId,
+    component: 'PanelAdapter',
+    params: { panelId },
+    position: referencePanel ? { referencePanel: referencePanel.id } : undefined,
+  });
+
+  closedPanels.delete(panelId);
+  return true;
+}
+
 // =============================================================================
 // Panel Adapter - Wraps existing panels for Dockview
 // =============================================================================
@@ -103,15 +167,6 @@ export function PanelAdapter({ params }: IDockviewPanelProps<PanelAdapterParams>
 // =============================================================================
 // Default Layout
 // =============================================================================
-
-const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG];
-const RIGHT_SIDEBAR_PANELS = [
-  PANEL_INVENTORY.SPRINT,
-  PANEL_INVENTORY.PROGRESS,
-  PANEL_INVENTORY.BACKGROUND,
-  PANEL_INVENTORY.GIT,
-  PANEL_INVENTORY.SETTINGS,
-];
 
 function createDefaultLayout(api: DockviewApi, sidebarWidth: number): void {
   // Add first panel to left sidebar (creates the first group)
@@ -235,7 +290,14 @@ export function DockviewWorkspace({
   const apiRef = useRef<DockviewApi | null>(null);
   const { isSmall, isBelowMinimum, sidebarWidth } = useResponsiveLayout();
   const [isReady, setIsReady] = useState(false);
+  const [closedPanelsList, setClosedPanelsList] = useState<string[]>([]);
+  const [showRestoreMenu, setShowRestoreMenu] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Update closed panels list when panels change
+  const updateClosedPanelsList = useCallback(() => {
+    setClosedPanelsList(Array.from(closedPanels));
+  }, []);
 
   // Handle Dockview ready event
   const onReady = useCallback((event: DockviewReadyEvent) => {
@@ -290,15 +352,27 @@ export function DockviewWorkspace({
     }, 300);
   }, [onLayoutChange, sidebarWidth]);
 
-  // Subscribe to layout changes
+  // Subscribe to layout changes and track closed panels
   useEffect(() => {
     const api = apiRef.current;
     if (!api || !isReady) return;
 
     const disposables = [
       api.onDidLayoutChange(() => handleLayoutChange()),
-      api.onDidAddPanel(() => handleLayoutChange()),
-      api.onDidRemovePanel(() => handleLayoutChange()),
+      api.onDidAddPanel((e) => {
+        // Panel restored, remove from closed set
+        closedPanels.delete(e.panel.id);
+        updateClosedPanelsList();
+        handleLayoutChange();
+      }),
+      api.onDidRemovePanel((e) => {
+        // Track closed panels (except message which can't be closed)
+        if (e.panel.id !== PANEL_INVENTORY.MESSAGE) {
+          closedPanels.add(e.panel.id);
+          updateClosedPanelsList();
+        }
+        handleLayoutChange();
+      }),
     ];
 
     return () => {
@@ -325,6 +399,12 @@ export function DockviewWorkspace({
     }
   }, [isSmall, sidebarWidth, isReady]);
 
+  // Handle restoring a closed panel
+  const handleRestorePanel = useCallback((panelId: string) => {
+    restorePanel(panelId);
+    setShowRestoreMenu(false);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -340,6 +420,18 @@ export function DockviewWorkspace({
     PanelAdapter,
   };
 
+  // Panel display names for the restore menu
+  const panelDisplayNames: Record<string, string> = {
+    changed: 'Changed Files',
+    diffs: 'Diffs',
+    debug: 'Debug',
+    sprint: 'Sprint',
+    progress: 'Progress',
+    background: 'Background',
+    git: 'Git',
+    settings: 'Settings',
+  };
+
   return (
     <div className="cyclist-dockview" data-dockview-group="container">
       {/* Minimum dimension warning */}
@@ -350,6 +442,38 @@ export function DockviewWorkspace({
           role="alert"
         >
           Window is below minimum size ({MIN_DIMENSIONS.width}x{MIN_DIMENSIONS.height})
+        </div>
+      )}
+
+      {/* Panel restore button - shown when panels are closed */}
+      {closedPanelsList.length > 0 && (
+        <div className="panel-restore-container">
+          <button
+            className="panel-restore-button"
+            onClick={() => setShowRestoreMenu(!showRestoreMenu)}
+            aria-expanded={showRestoreMenu}
+            aria-haspopup="menu"
+            title="Restore closed panels"
+          >
+            <span className="panel-restore-icon">+</span>
+            <span className="panel-restore-count">{closedPanelsList.length}</span>
+          </button>
+
+          {showRestoreMenu && (
+            <div className="panel-restore-menu" role="menu">
+              <div className="panel-restore-header">Restore Panel</div>
+              {closedPanelsList.map((panelId) => (
+                <button
+                  key={panelId}
+                  className="panel-restore-item"
+                  onClick={() => handleRestorePanel(panelId)}
+                  role="menuitem"
+                >
+                  {panelDisplayNames[panelId] || panelId}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

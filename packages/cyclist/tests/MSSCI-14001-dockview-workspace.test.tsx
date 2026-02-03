@@ -394,4 +394,16 @@ describe('DockviewWorkspace Integration', () => {
 
     expect(() => render(<DockviewWorkspace initialLayout={layout} />)).not.toThrow();
   });
+
+  it('should export getClosedPanels function', async () => {
+    const module = await import('../src/public/components/DockviewWorkspace');
+    expect(module.getClosedPanels).toBeDefined();
+    expect(typeof module.getClosedPanels).toBe('function');
+  });
+
+  it('should export restorePanel function', async () => {
+    const module = await import('../src/public/components/DockviewWorkspace');
+    expect(module.restorePanel).toBeDefined();
+    expect(typeof module.restorePanel).toBe('function');
+  });
 });
