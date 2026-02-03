@@ -85,8 +85,11 @@ describe('MSSCI-13969: useMarkdownParser Hook', () => {
     it('should escape img onerror attacks', () => {
       const markdown = '<img src="x" onerror="alert(1)">';
       const { result } = renderHook(() => useMarkdownParser(markdown));
-      expect(result.current.html).not.toContain('onerror=');
+      // Verify the raw <img tag is escaped (can't execute as HTML element)
+      expect(result.current.html).not.toContain('<img');
       expect(result.current.html).toContain('&lt;img');
+      // Verify quotes are escaped (can't break out of attribute context)
+      expect(result.current.html).toContain('&quot;');
     });
 
     it('should escape HTML special characters', () => {

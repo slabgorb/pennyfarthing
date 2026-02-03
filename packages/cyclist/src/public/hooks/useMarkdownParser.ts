@@ -1,13 +1,17 @@
 /**
- * useMarkdownParser Hook - STUB for TDD RED phase
+ * useMarkdownParser Hook
  *
- * Story MSSCI-13969: Convert markdown-parser.js to React hook
- * This stub allows tests to compile but fail on assertions.
+ * Story MSSCI-13969: React hook for parsing markdown to HTML with security.
+ * Extracted from js/components/message-view/markdown-parser.js
  *
- * TODO: Dev implements this in GREEN phase
+ * Features:
+ * - XSS prevention via HTML escaping
+ * - CYCLIST marker stripping
+ * - Memoization for performance
  */
 
 import { useMemo } from 'react';
+import { parseMarkdown } from '../utils/markdown.js';
 
 export interface UseMarkdownParserResult {
   html: string;
@@ -23,6 +27,10 @@ export interface UseMarkdownParserResult {
 export function useMarkdownParser(
   markdown: string | null
 ): UseMarkdownParserResult {
-  // STUB: Not implemented - for TDD RED phase
-  throw new Error('useMarkdownParser not implemented');
+  const html = useMemo(() => {
+    if (!markdown) return '';
+    return parseMarkdown(markdown);
+  }, [markdown]);
+
+  return { html, isLoading: false, error: null };
 }
