@@ -35,6 +35,7 @@ export const PANEL_INVENTORY = {
   CHANGED: 'changed',
   DIFFS: 'diffs',
   DEBUG: 'debug',
+  AUDIT_LOG: 'audit-log',
   // Center panel (sacred)
   MESSAGE: 'message',
   // Right sidebar panels
@@ -74,7 +75,7 @@ export function getDockviewApi(): DockviewApi | null {
 }
 
 // Panel group definitions (needed for restore logic)
-const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG] as const;
+const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
 const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SPRINT,
   PANEL_INVENTORY.PROGRESS,
@@ -88,6 +89,7 @@ const PANEL_TITLES: Record<string, string> = {
   changed: 'Changed',
   diffs: 'Diffs',
   debug: 'Debug',
+  'audit-log': 'Audit Log',
   message: 'Message',
   sprint: 'Sprint',
   progress: 'Progress',
