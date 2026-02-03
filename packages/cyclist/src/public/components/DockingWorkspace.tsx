@@ -342,7 +342,7 @@ function Sidebar({
       data-testid={`sidebar-${region}-dropzone`}
       data-drop-valid={isDropZoneActive ? 'true' : undefined}
       className={`sidebar sidebar-${region} ${isDropZoneActive ? 'drop-zone-active' : ''}`}
-      style={{ width: collapsed ? 0 : width }}
+      style={{ width: collapsed ? 32 : width }}
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
