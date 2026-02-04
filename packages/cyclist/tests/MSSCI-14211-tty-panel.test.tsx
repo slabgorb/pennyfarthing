@@ -18,14 +18,21 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // =============================================================================
 // Mock xterm.js and related addons
 // =============================================================================
 
-// Mock Terminal class from xterm
+// Mock Terminal instance state
+const mockTerminalState = {
+  _dataCallback: null as ((data: string) => void) | null,
+  _resizeCallback: null as ((dims: { cols: number; rows: number }) => void) | null,
+  _keyCallback: null as ((event: { key: string; domEvent: KeyboardEvent }) => void) | null,
+};
+
+// Mock Terminal instance methods
 const mockTerminal = {
   open: vi.fn(),
   write: vi.fn(),
@@ -36,41 +43,53 @@ const mockTerminal = {
   blur: vi.fn(),
   resize: vi.fn(),
   dispose: vi.fn(),
-  onData: vi.fn((callback) => {
-    mockTerminal._dataCallback = callback;
+  onData: vi.fn((callback: (data: string) => void) => {
+    mockTerminalState._dataCallback = callback;
     return { dispose: vi.fn() };
   }),
-  onResize: vi.fn((callback) => {
-    mockTerminal._resizeCallback = callback;
+  onResize: vi.fn((callback: (dims: { cols: number; rows: number }) => void) => {
+    mockTerminalState._resizeCallback = callback;
     return { dispose: vi.fn() };
   }),
-  onKey: vi.fn((callback) => {
-    mockTerminal._keyCallback = callback;
+  onKey: vi.fn((callback: (event: { key: string; domEvent: KeyboardEvent }) => void) => {
+    mockTerminalState._keyCallback = callback;
     return { dispose: vi.fn() };
   }),
   cols: 80,
   rows: 24,
-  _dataCallback: null as ((data: string) => void) | null,
-  _resizeCallback: null as ((dims: { cols: number; rows: number }) => void) | null,
-  _keyCallback: null as ((event: { key: string; domEvent: KeyboardEvent }) => void) | null,
+  get _dataCallback() { return mockTerminalState._dataCallback; },
+  get _resizeCallback() { return mockTerminalState._resizeCallback; },
+  get _keyCallback() { return mockTerminalState._keyCallback; },
   loadAddon: vi.fn(),
   element: document.createElement('div'),
   options: {} as Record<string, unknown>,
 };
 
-// Mock FitAddon
+// Mock FitAddon instance
 const mockFitAddon = {
   fit: vi.fn(),
   proposeDimensions: vi.fn(() => ({ cols: 80, rows: 24 })),
   dispose: vi.fn(),
 };
 
+// Track Terminal constructor calls
+const TerminalMock = vi.fn(function(this: typeof mockTerminal, _options?: Record<string, unknown>) {
+  Object.assign(this, mockTerminal);
+  return this;
+});
+
+// Track FitAddon constructor calls
+const FitAddonMock = vi.fn(function(this: typeof mockFitAddon) {
+  Object.assign(this, mockFitAddon);
+  return this;
+});
+
 vi.mock('xterm', () => ({
-  Terminal: vi.fn(() => mockTerminal),
+  Terminal: TerminalMock,
 }));
 
 vi.mock('xterm-addon-fit', () => ({
-  FitAddon: vi.fn(() => mockFitAddon),
+  FitAddon: FitAddonMock,
 }));
 
 // Mock Electron IPC for PTY communication
@@ -114,12 +133,35 @@ vi.mock('electron', () => ({
 // Test Helpers
 // =============================================================================
 
+// Global ResizeObserver mock for happy-dom
+class MockResizeObserver {
+  callback: ResizeObserverCallback;
+  static instances: MockResizeObserver[] = [];
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    MockResizeObserver.instances.push(this);
+  }
+
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+
+  // Helper to trigger resize
+  trigger(entries: Array<{ contentRect: { width: number; height: number } }>) {
+    this.callback(entries as unknown as ResizeObserverEntry[], this);
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockIpcRenderer._listeners = {};
-  mockTerminal._dataCallback = null;
-  mockTerminal._resizeCallback = null;
-  mockTerminal._keyCallback = null;
+  mockTerminalState._dataCallback = null;
+  mockTerminalState._resizeCallback = null;
+  mockTerminalState._keyCallback = null;
+  MockResizeObserver.instances = [];
+  // Set up global ResizeObserver mock
+  global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 });
 
 afterEach(() => {
@@ -241,8 +283,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       render(<TTYPanel />);
 
       // Simulate user typing
-      if (mockTerminal._dataCallback) {
-        mockTerminal._dataCallback('ls\r');
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('ls\r');
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', 'ls\r');
@@ -262,12 +304,14 @@ describe('MSSCI-14211: TTY Panel', () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      mockIpcRenderer.simulatePtyError('Failed to spawn shell');
-
-      await waitFor(() => {
-        expect(screen.getByTestId('tty-error')).toBeInTheDocument();
-        expect(screen.getByText(/failed to spawn|error/i)).toBeInTheDocument();
+      // Wrap IPC simulation in act() to flush React state updates
+      await act(async () => {
+        mockIpcRenderer.simulatePtyError('Failed to spawn shell');
       });
+
+      expect(screen.getByTestId('tty-error')).toBeInTheDocument();
+      // Check for the error overlay message specifically
+      expect(screen.getByText(/Failed to spawn shell:/i)).toBeInTheDocument();
     });
   });
 
@@ -341,41 +385,23 @@ describe('MSSCI-14211: TTY Panel', () => {
     });
 
     it('should observe container resize with ResizeObserver', async () => {
-      const mockResizeObserver = vi.fn((callback) => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      }));
-      global.ResizeObserver = mockResizeObserver as unknown as typeof ResizeObserver;
-
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      expect(mockResizeObserver).toHaveBeenCalled();
+      // Check that a ResizeObserver was created and observe was called
+      expect(MockResizeObserver.instances.length).toBeGreaterThan(0);
+      expect(MockResizeObserver.instances[0].observe).toHaveBeenCalled();
     });
 
     it('should call fit() when container size changes', async () => {
-      let resizeCallback: ((entries: unknown[]) => void) | null = null;
-
-      const mockResizeObserver = vi.fn((callback) => {
-        resizeCallback = callback;
-        return {
-          observe: vi.fn(),
-          unobserve: vi.fn(),
-          disconnect: vi.fn(),
-        };
-      });
-      global.ResizeObserver = mockResizeObserver as unknown as typeof ResizeObserver;
-
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
       mockFitAddon.fit.mockClear();
 
-      // Simulate resize event
-      if (resizeCallback) {
-        resizeCallback([{ contentRect: { width: 800, height: 600 } }]);
-      }
+      // Simulate resize event using the global mock
+      const observer = MockResizeObserver.instances[0];
+      observer.trigger([{ contentRect: { width: 800, height: 600 } }]);
 
       await waitFor(() => {
         expect(mockFitAddon.fit).toHaveBeenCalled();
@@ -387,8 +413,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       render(<TTYPanel />);
 
       // Simulate terminal resize callback
-      if (mockTerminal._resizeCallback) {
-        mockTerminal._resizeCallback({ cols: 100, rows: 30 });
+      if (mockTerminalState._resizeCallback) {
+        mockTerminalState._resizeCallback({ cols: 100, rows: 30 });
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:resize', {
@@ -399,55 +425,47 @@ describe('MSSCI-14211: TTY Panel', () => {
 
     it('should debounce resize events', async () => {
       vi.useFakeTimers();
-      let resizeCallback: ((entries: unknown[]) => void) | null = null;
-
-      const mockResizeObserver = vi.fn((callback) => {
-        resizeCallback = callback;
-        return {
-          observe: vi.fn(),
-          unobserve: vi.fn(),
-          disconnect: vi.fn(),
-        };
-      });
-      global.ResizeObserver = mockResizeObserver as unknown as typeof ResizeObserver;
 
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
+      // Initial fit is called via setTimeout(..., 0), run all pending timers to clear it
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       mockFitAddon.fit.mockClear();
 
-      // Trigger multiple rapid resize events
-      if (resizeCallback) {
-        resizeCallback([{ contentRect: { width: 800, height: 600 } }]);
-        resizeCallback([{ contentRect: { width: 810, height: 600 } }]);
-        resizeCallback([{ contentRect: { width: 820, height: 600 } }]);
-      }
+      // Trigger multiple rapid resize events using the global mock
+      const observer = MockResizeObserver.instances[0];
+      observer.trigger([{ contentRect: { width: 800, height: 600 } }]);
+      observer.trigger([{ contentRect: { width: 810, height: 600 } }]);
+      observer.trigger([{ contentRect: { width: 820, height: 600 } }]);
 
-      // Before debounce timeout, fit should not have been called
+      // Before debounce timeout, fit should not have been called (debounce is 100ms)
+      await act(async () => {
+        vi.advanceTimersByTime(50);
+      });
       expect(mockFitAddon.fit).not.toHaveBeenCalled();
 
-      // After debounce
-      vi.advanceTimersByTime(100);
+      // After debounce timeout completes
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
       expect(mockFitAddon.fit).toHaveBeenCalledTimes(1);
 
       vi.useRealTimers();
     });
 
     it('should clean up ResizeObserver on unmount', async () => {
-      const mockDisconnect = vi.fn();
-      const mockResizeObserver = vi.fn(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: mockDisconnect,
-      }));
-      global.ResizeObserver = mockResizeObserver as unknown as typeof ResizeObserver;
-
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       const { unmount } = render(<TTYPanel />);
 
+      const observer = MockResizeObserver.instances[0];
+
       unmount();
 
-      expect(mockDisconnect).toHaveBeenCalled();
+      expect(observer.disconnect).toHaveBeenCalled();
     });
   });
 
@@ -564,12 +582,9 @@ describe('MSSCI-14211: TTY Panel', () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Simulate arrow up keypress
-      if (mockTerminal._keyCallback) {
-        mockTerminal._keyCallback({
-          key: '\x1b[A',
-          domEvent: new KeyboardEvent('keydown', { key: 'ArrowUp' }),
-        });
+      // Simulate arrow up keypress via onData (xterm sends all input through onData)
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('\x1b[A'); // Arrow up escape sequence
       }
 
       // Arrow up should be sent to PTY for shell history navigation
@@ -580,8 +595,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      if (mockTerminal._dataCallback) {
-        mockTerminal._dataCallback('\x1b[B'); // Arrow down
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('\x1b[B'); // Arrow down
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x1b[B');
@@ -706,38 +721,44 @@ describe('MSSCI-14211: TTY Panel', () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      mockIpcRenderer.simulatePtyExit(0);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('tty-exited')).toBeInTheDocument();
-        expect(screen.getByText(/exited|process ended/i)).toBeInTheDocument();
+      // Wrap IPC simulation in act() to flush React state updates
+      await act(async () => {
+        mockIpcRenderer.simulatePtyExit(0);
       });
+
+      expect(screen.getByTestId('tty-exited')).toBeInTheDocument();
+      expect(screen.getByText(/exited|process ended/i)).toBeInTheDocument();
     });
 
     it('should offer restart option after PTY exit', async () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      mockIpcRenderer.simulatePtyExit(0);
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
+      // Wrap IPC simulation in act() to flush React state updates
+      await act(async () => {
+        mockIpcRenderer.simulatePtyExit(0);
       });
+
+      expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
     });
 
     it('should restart PTY when restart button clicked', async () => {
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      mockIpcRenderer.simulatePtyExit(0);
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
+      // Wrap IPC simulation in act() to flush React state updates
+      await act(async () => {
+        mockIpcRenderer.simulatePtyExit(0);
       });
+
+      expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
 
       mockIpcRenderer.send.mockClear();
       const restartButton = screen.getByRole('button', { name: /restart|new session/i });
-      await userEvent.click(restartButton);
+      // Use fireEvent instead of userEvent to avoid timer conflicts
+      await act(async () => {
+        fireEvent.click(restartButton);
+      });
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.anything());
     });
@@ -749,8 +770,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       // Rapid character input
       const rapidInput = 'abcdefghijklmnop';
       for (const char of rapidInput) {
-        if (mockTerminal._dataCallback) {
-          mockTerminal._dataCallback(char);
+        if (mockTerminalState._dataCallback) {
+          mockTerminalState._dataCallback(char);
         }
       }
 
@@ -765,8 +786,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       render(<TTYPanel />);
 
       // Ctrl+C sends ETX (0x03)
-      if (mockTerminal._dataCallback) {
-        mockTerminal._dataCallback('\x03');
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('\x03');
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x03');
@@ -777,8 +798,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       render(<TTYPanel />);
 
       // Ctrl+D sends EOT (0x04)
-      if (mockTerminal._dataCallback) {
-        mockTerminal._dataCallback('\x04');
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('\x04');
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x04');
@@ -789,8 +810,8 @@ describe('MSSCI-14211: TTY Panel', () => {
       render(<TTYPanel />);
 
       // Tab character
-      if (mockTerminal._dataCallback) {
-        mockTerminal._dataCallback('\t');
+      if (mockTerminalState._dataCallback) {
+        mockTerminalState._dataCallback('\t');
       }
 
       expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\t');
@@ -819,13 +840,19 @@ describe('MSSCI-14211: TTY Panel', () => {
     });
 
     it('should focus terminal on panel activation', async () => {
+      vi.useFakeTimers();
+
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Terminal should receive focus
-      await waitFor(() => {
-        expect(mockTerminal.focus).toHaveBeenCalled();
+      // Focus is called after setTimeout(..., 0) in useEffect
+      await act(async () => {
+        vi.advanceTimersByTime(0);
       });
+
+      expect(mockTerminal.focus).toHaveBeenCalled();
+
+      vi.useRealTimers();
     });
 
     it('should have keyboard instructions available', async () => {

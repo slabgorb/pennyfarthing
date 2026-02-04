@@ -37,6 +37,7 @@ export const PANEL_INVENTORY = {
   DIFFS: 'diffs',
   DEBUG: 'debug',
   AUDIT_LOG: 'audit-log',
+  TTY: 'tty',
   // Center panel (sacred)
   MESSAGE: 'message',
   // Right sidebar panels
@@ -79,7 +80,7 @@ export function getDockviewApi(): DockviewApi | null {
 
 // Panel group definitions (needed for restore logic)
 // Exported so layout persistence can merge missing panels
-export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
+export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG, PANEL_INVENTORY.TTY] as const;
 export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SPRINT,
   PANEL_INVENTORY.WORKFLOW,
@@ -96,6 +97,7 @@ const PANEL_TITLES: Record<string, string> = {
   diffs: 'Diffs',
   debug: 'Debug',
   'audit-log': 'Audit Log',
+  tty: 'Terminal',
   message: 'Message',
   sprint: 'Sprint',
   workflow: 'Workflow',
