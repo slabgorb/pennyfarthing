@@ -178,12 +178,18 @@ export function getSprintData(projectDir: string): SprintData {
 
   // Parse current sprint
   let currentSprint: CurrentSprintYaml = {};
+  let parseError: string | null = null;
   if (existsSync(currentSprintPath)) {
     try {
       const content = readFileSync(currentSprintPath, 'utf-8');
       currentSprint = parseYaml(content) as CurrentSprintYaml;
     } catch (err) {
-      console.error('[sprint-data] Failed to parse current-sprint.yaml:', err);
+      // Provide actionable error message for YAML parse failures
+      const yamlErr = err as { message?: string; linePos?: Array<{ line: number; col: number }> };
+      const lineInfo = yamlErr.linePos?.[0] ? ` at line ${yamlErr.linePos[0].line}` : '';
+      parseError = `YAML parse error${lineInfo}: ${yamlErr.message || 'Unknown error'}`;
+      console.error('[sprint-data] Failed to parse current-sprint.yaml:', parseError);
+      console.error('[sprint-data] TIP: Single-quoted strings cannot contain blank lines. Use literal block scalars (|) instead.');
     }
   }
 
