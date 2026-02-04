@@ -3,6 +3,7 @@
  *
  * React hook for subscribing to diff data via WebSocket.
  * Story MSSCI-12717 - React Migration
+ * Story MSSCI-14238 - Git-based diffs (replaces OTEL-based extraction)
  *
  * IPC DEPRECATED - Now uses WebSocket /ws/diffs
  */
@@ -12,10 +13,20 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 export interface DiffData {
   id?: string;
   path: string;
+  /** @deprecated Use `diff` field for raw git diff content */
   original: string;
+  /** @deprecated Use `diff` field for raw git diff content */
   modified: string;
+  /** Raw git diff output (MSSCI-14238) */
+  diff?: string;
   toolName: string;
   timestamp: number;
+  /** File status from git (MSSCI-14238) */
+  status?: 'modified' | 'added' | 'deleted' | 'renamed';
+  /** Line additions count (MSSCI-14238) */
+  additions?: number;
+  /** Line deletions count (MSSCI-14238) */
+  deletions?: number;
 }
 
 interface UseDiffsResult {
@@ -71,6 +82,22 @@ export function useDiffs(): UseDiffsResult {
             });
             // Auto-select new diff
             setSelectedDiff(diffData);
+          } else if (data.type === 'refresh') {
+            // Full refresh of diffs (MSSCI-14238: git cache refresh)
+            const refreshedDiffs = (data.diffs || []) as DiffData[];
+            setDiffs(refreshedDiffs);
+            // Keep current selection if it still exists
+            if (refreshedDiffs.length > 0) {
+              setSelectedDiff(prev => {
+                if (prev) {
+                  const stillExists = refreshedDiffs.find(d => d.path === prev.path);
+                  if (stillExists) return stillExists;
+                }
+                return refreshedDiffs[refreshedDiffs.length - 1];
+              });
+            } else {
+              setSelectedDiff(null);
+            }
           }
         } catch (err) {
           console.error('[useDiffs] Failed to parse message:', err);
