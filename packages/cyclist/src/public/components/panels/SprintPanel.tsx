@@ -95,6 +95,98 @@ function isEpicCompleted(epic: SprintEpic): boolean {
 }
 
 /**
+ * Get status badge content and class for a story status
+ */
+function getStatusBadgeInfo(status: SprintStory['status']): { icon: string; className: string } {
+  switch (status) {
+    case 'done':
+      return { icon: '✓', className: 'status-done' };
+    case 'in_progress':
+      return { icon: '●', className: 'status-in-progress' };
+    case 'blocked':
+      return { icon: '⚠', className: 'status-blocked' };
+    case 'backlog':
+    default:
+      return { icon: '○', className: 'status-backlog' };
+  }
+}
+
+/**
+ * Build Jira ticket URL
+ */
+function getJiraUrl(jiraKey: string): string {
+  return `https://1898andco.atlassian.net/browse/${jiraKey}`;
+}
+
+/**
+ * Context indicator component for epics and stories
+ */
+function ContextIndicator({
+  hasContext,
+  testIdPrefix,
+  id,
+}: {
+  hasContext: boolean;
+  testIdPrefix: 'epic' | 'story';
+  id: string;
+}): React.ReactElement {
+  return (
+    <span
+      className={`context-indicator ${hasContext ? 'has-context' : 'no-context'}`}
+      data-testid={`${testIdPrefix}-context-indicator-${id}`}
+      data-has-context={String(hasContext)}
+      title={hasContext ? 'Context file exists' : 'No context file'}
+    >
+      {hasContext ? '📄' : ''}
+    </span>
+  );
+}
+
+/**
+ * Status badge component for stories
+ */
+function StatusBadge({ status, storyId }: { status: SprintStory['status']; storyId: string }): React.ReactElement {
+  const { icon, className } = getStatusBadgeInfo(status);
+  return (
+    <span
+      className={`story-status-badge ${className}`}
+      data-testid={`story-status-badge-${storyId}`}
+      data-status={status}
+      aria-label={`Status: ${status}`}
+    >
+      {icon}
+    </span>
+  );
+}
+
+/**
+ * Jira link component for stories
+ */
+function JiraLink({ jiraKey, storyId }: { jiraKey: string; storyId: string }): React.ReactElement {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = getJiraUrl(jiraKey);
+    // Use electronAPI if available, otherwise open in new tab
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.shell?.openExternal) {
+      (window as any).electronAPI.shell.openExternal(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  return (
+    <a
+      className="jira-link cyclist-link"
+      data-testid={`story-jira-link-${storyId}`}
+      href={getJiraUrl(jiraKey)}
+      onClick={handleClick}
+    >
+      {jiraKey}
+    </a>
+  );
+}
+
+/**
  * EnhancedSprintPanel - Full sprint management with epic actions
  */
 export function EnhancedSprintPanel(): React.ReactElement {
@@ -290,6 +382,12 @@ export function EnhancedSprintPanel(): React.ReactElement {
                   </button>
                   <span className="epic-title">{epic.title}</span>
                   {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
+                  <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
+                  {completed && epic.hasContext && (
+                    <span className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
+                      Ready
+                    </span>
+                  )}
 
                   {/* Progress bar */}
                   <div
@@ -332,24 +430,31 @@ export function EnhancedSprintPanel(): React.ReactElement {
                 {/* Stories list (collapsible) */}
                 {isExpanded && (
                   <div className="epic-stories">
-                    {epic.stories.map((story) => (
-                      <div
-                        key={story.id}
-                        className="story-item"
-                        data-testid={`story-item-${story.id}`}
-                        data-status={story.status}
-                        data-story-id={story.id}
-                        aria-label={`${story.id}: ${story.title}`}
-                      >
-                        <span className="story-title">{story.title}</span>
-                        <span
-                          className="story-points"
-                          data-testid={`story-points-${story.id}`}
+                    {epic.stories.map((story) => {
+                      const hasContext = story.hasContext ?? false;
+                      const isBlocked = story.status === 'blocked';
+                      return (
+                        <div
+                          key={story.id}
+                          className={`story-item ${!hasContext ? 'missing-context' : ''} ${isBlocked ? 'story-blocked' : ''}`}
+                          data-testid={`story-item-${story.id}`}
+                          data-status={story.status}
+                          data-story-id={story.id}
+                          aria-label={`${story.id}: ${story.title}`}
                         >
-                          {story.points}
-                        </span>
-                      </div>
-                    ))}
+                          <StatusBadge status={story.status} storyId={story.id} />
+                          {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
+                          <span className="story-title">{story.title}</span>
+                          <ContextIndicator hasContext={hasContext} testIdPrefix="story" id={story.id} />
+                          <span
+                            className="story-points"
+                            data-testid={`story-points-${story.id}`}
+                          >
+                            {story.points}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
