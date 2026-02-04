@@ -17,8 +17,9 @@ export interface SprintStory {
   id: string;
   title: string;
   points: number;
-  status: 'backlog' | 'in_progress' | 'done' | 'cancelled';
+  status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
+  hasContext?: boolean;
 }
 
 export interface SprintEpic {
@@ -26,6 +27,7 @@ export interface SprintEpic {
   title: string;
   jiraKey: string | null;
   stories: SprintStory[];
+  hasContext?: boolean;
 }
 
 export interface FutureEpic {
