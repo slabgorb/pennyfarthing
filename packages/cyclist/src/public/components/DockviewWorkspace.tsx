@@ -123,7 +123,10 @@ export function getClosedPanels(): string[] {
  */
 export function restorePanel(panelId: string): boolean {
   const api = dockviewApiRef;
-  if (!api || !closedPanels.has(panelId)) return false;
+  if (!api) return false;
+
+  // If panel already exists in Dockview, nothing to restore
+  if (api.getPanel(panelId)) return false;
 
   // Determine which group to add it to
   const isLeftPanel = LEFT_SIDEBAR_PANELS.includes(panelId as any);

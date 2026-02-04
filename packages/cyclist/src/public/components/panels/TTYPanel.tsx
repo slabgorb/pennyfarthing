@@ -1,11 +1,12 @@
 /**
- * TTYPanel - Terminal panel using xterm.js
+ * TTYPanel - Terminal panel using xterm.js over WebSocket
  *
  * Story MSSCI-14211 - TTY Panel with xterm.js terminal emulator
  * Epic: Epic 76 - Dockview Panel Migration
  *
  * Features:
  * - Embeds xterm.js terminal in a Dockview panel
+ * - Communicates with server via /ws/pty WebSocket (works in both Electron and web mode)
  * - Loads user's shell with environment (bash/zsh profile)
  * - Opens in project root directory
  * - Proper resize handling via FitAddon
@@ -17,24 +18,6 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 
-// Safely access electron IPC - only available in Electron context
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ipcRenderer: typeof import('electron').ipcRenderer | null = (() => {
-  try {
-    // Check if we're in Electron renderer with contextIsolation=false
-    // or if preload script exposed it on window
-    if (typeof window !== 'undefined' && (window as { electronAPI?: { ipcRenderer?: unknown } }).electronAPI?.ipcRenderer) {
-      return (window as { electronAPI: { ipcRenderer: typeof import('electron').ipcRenderer } }).electronAPI.ipcRenderer;
-    }
-    // Try direct require (works with nodeIntegration=true, contextIsolation=false)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('electron').ipcRenderer;
-  } catch {
-    // Not in Electron environment
-    return null;
-  }
-})();
-
 /** Props for TTYPanel component */
 export interface TTYPanelProps {
   /** Project root directory for the terminal. Defaults to current project. */
@@ -45,120 +28,65 @@ export interface TTYPanelProps {
 type TerminalStatus = 'connecting' | 'connected' | 'error' | 'exited';
 
 /**
- * Detect user's default shell from environment
- */
-function getDefaultShell(): string {
-  // In Electron, process.env.SHELL is available
-  const shell = typeof process !== 'undefined' ? process.env.SHELL : undefined;
-  // Fallback to /bin/bash if SHELL is not set
-  return shell || '/bin/bash';
-}
-
-/**
- * Get project root - uses provided prop or attempts to detect from environment
- */
-function getProjectRoot(propRoot?: string): string {
-  if (propRoot) return propRoot;
-
-  // In Electron, we can get the project directory from various sources
-  // The main process sets CYCLIST_PROJECT_DIR
-  if (typeof process !== 'undefined' && process.env.CYCLIST_PROJECT_DIR) {
-    return process.env.CYCLIST_PROJECT_DIR;
-  }
-
-  // Fallback to current working directory (not home)
-  return process.cwd?.() || '/';
-}
-
-/**
  * TTYPanel - Terminal emulator panel for Cyclist
  */
 export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [status, setStatus] = useState<TerminalStatus>('connecting');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Check if we're in Electron environment
-  if (!ipcRenderer) {
-    return (
-      <div
-        className="tty-panel tty-not-available"
-        data-testid="tty-panel"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: 'var(--text-secondary, #94a3b8)',
-          padding: '24px',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>🖥️</div>
-        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary, #e2e8f0)' }}>
-          Terminal Not Available
-        </h3>
-        <p style={{ margin: 0, fontSize: '13px' }}>
-          The terminal panel requires Electron.
-          <br />
-          Run Cyclist as a desktop app to use this feature.
-        </p>
-      </div>
-    );
-  }
-
-  // Store IPC listener references for cleanup
-  const ipcListenersRef = useRef<{
-    data: (event: unknown, data: string) => void;
-    error: (event: unknown, error: string) => void;
-    exit: (event: unknown, code: number) => void;
-    spawn: (event: unknown, pid: number) => void;
-  } | null>(null);
+  /**
+   * Build the WebSocket URL for /ws/pty
+   */
+  const getWsUrl = useCallback(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws/pty`;
+  }, []);
 
   /**
-   * Spawn a new PTY session
+   * Spawn a new PTY session via WebSocket
    */
   const spawnPty = useCallback(() => {
-    const shell = getDefaultShell();
-    const cwd = getProjectRoot(projectRoot);
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     setStatus('connecting');
     setErrorMessage(null);
 
-    ipcRenderer.send('pty:spawn', {
-      shell,
-      args: ['-l'], // Login shell to load profile
-      cwd,
-      env: {
-        ...process.env,
-        TERM: 'xterm-256color',
-      },
-    });
+    const fitAddon = fitAddonRef.current;
+    const cols = fitAddon ? Math.max(fitAddon.proposeDimensions()?.cols ?? 80, 1) : 80;
+    const rows = fitAddon ? Math.max(fitAddon.proposeDimensions()?.rows ?? 24, 1) : 24;
+
+    ws.send(JSON.stringify({
+      type: 'spawn',
+      cwd: projectRoot,
+      cols,
+      rows,
+    }));
   }, [projectRoot]);
 
   /**
    * Handle restart button click
    */
   const handleRestart = useCallback(() => {
-    // Clear and reset terminal
     xtermRef.current?.clear();
     xtermRef.current?.reset();
     spawnPty();
   }, [spawnPty]);
 
   /**
-   * Initialize terminal and PTY
+   * Initialize terminal and WebSocket
    */
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // Create xterm Terminal with proper configuration
+    // Create xterm Terminal
     const terminal = new Terminal({
       allowProposedApi: true,
       allowTransparency: false,
@@ -174,15 +102,12 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
       },
     });
 
-    // Create and load FitAddon for resize handling
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
 
-    // Store refs
     xtermRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
-    // Open terminal in container
     terminal.open(terminalRef.current);
 
     // Initial fit after open
@@ -191,51 +116,70 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
       terminal.focus();
     }, 0);
 
-    // Set up IPC listeners for PTY communication
-    const handlePtyData = (_event: unknown, data: string) => {
-      terminal.write(data);
+    // Connect WebSocket to /ws/pty
+    const wsUrl = getWsUrl();
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      // Spawn PTY once connected
+      const cols = Math.max(fitAddon.proposeDimensions()?.cols ?? 80, 1);
+      const rows = Math.max(fitAddon.proposeDimensions()?.rows ?? 24, 1);
+
+      ws.send(JSON.stringify({
+        type: 'spawn',
+        cwd: projectRoot,
+        cols,
+        rows,
+      }));
     };
 
-    const handlePtyError = (_event: unknown, error: string) => {
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'data') {
+          terminal.write(msg.data);
+        } else if (msg.type === 'spawn') {
+          setStatus('connected');
+        } else if (msg.type === 'exit') {
+          setStatus('exited');
+        } else if (msg.type === 'error') {
+          setStatus('error');
+          setErrorMessage(msg.error);
+        }
+      } catch {
+        // Non-JSON data, write directly
+        terminal.write(event.data);
+      }
+    };
+
+    ws.onerror = () => {
       setStatus('error');
-      setErrorMessage(error);
+      setErrorMessage('WebSocket connection failed');
     };
 
-    const handlePtyExit = (_event: unknown, _code: number) => {
-      setStatus('exited');
+    ws.onclose = () => {
+      if (status === 'connected') {
+        setStatus('exited');
+      }
     };
 
-    const handlePtySpawn = (_event: unknown, _pid: number) => {
-      setStatus('connected');
-    };
-
-    // Store listener references for cleanup
-    ipcListenersRef.current = {
-      data: handlePtyData,
-      error: handlePtyError,
-      exit: handlePtyExit,
-      spawn: handlePtySpawn,
-    };
-
-    // Register IPC listeners
-    ipcRenderer.on('pty:data', handlePtyData);
-    ipcRenderer.on('pty:error', handlePtyError);
-    ipcRenderer.on('pty:exit', handlePtyExit);
-    ipcRenderer.on('pty:spawn', handlePtySpawn);
-
-    // Send terminal input to PTY
+    // Send terminal input to PTY via WebSocket
     const dataDisposable = terminal.onData((data) => {
-      ipcRenderer.send('pty:data', data);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'data', data }));
+      }
     });
 
-    // Handle terminal resize - notify PTY
+    // Handle terminal resize - notify PTY via WebSocket
     const resizeDisposable = terminal.onResize(({ cols, rows }) => {
-      ipcRenderer.send('pty:resize', { cols, rows });
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'resize', cols, rows }));
+      }
     });
 
-    // Set up ResizeObserver for container resize handling with debounce
+    // ResizeObserver for container resize handling with debounce
     const resizeObserver = new ResizeObserver(() => {
-      // Debounce resize events
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
@@ -247,36 +191,25 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
     resizeObserver.observe(terminalRef.current);
     resizeObserverRef.current = resizeObserver;
 
-    // Spawn PTY session
-    spawnPty();
-
     // Cleanup on unmount
     return () => {
-      // Clear resize timeout
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-
-      // Disconnect ResizeObserver
       resizeObserverRef.current?.disconnect();
 
-      // Remove IPC listeners
-      if (ipcListenersRef.current) {
-        ipcRenderer.removeListener('pty:data', ipcListenersRef.current.data);
-        ipcRenderer.removeListener('pty:error', ipcListenersRef.current.error);
-        ipcRenderer.removeListener('pty:exit', ipcListenersRef.current.exit);
-        ipcRenderer.removeListener('pty:spawn', ipcListenersRef.current.spawn);
+      // Kill PTY and close WebSocket
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'kill' }));
+        ws.close();
       }
+      wsRef.current = null;
 
-      // Kill PTY process
-      ipcRenderer.send('pty:kill');
-
-      // Dispose terminal
       dataDisposable.dispose();
       resizeDisposable.dispose();
       terminal.dispose();
     };
-  }, [spawnPty]);
+  }, [getWsUrl, projectRoot]);
 
   // Render status message for error/exit states
   const renderStatusOverlay = () => {
