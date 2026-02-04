@@ -144,18 +144,18 @@ export default function App(): React.ReactElement {
         <SkipLink href="#message-input">Skip to input</SkipLink>
         <SkipLink href="#sidebar-nav">Skip to navigation</SkipLink>
 
-        {/* Loading state */}
-        {(isLoading || !layout) ? (
+        {/* Loading state - only show while actually loading */}
+        {isLoading ? (
           <main id="main-content" tabIndex={-1}>
             <div className="cyclist-loading">
               <div className="loading-spinner" aria-label="Loading layout..." />
             </div>
           </main>
         ) : (
-          /* Main content area */
+          /* Main content area - layout can be null for first-time users */
           <main id="main-content" tabIndex={-1}>
             <DockviewWorkspace
-              initialLayout={layout}
+              initialLayout={layout ?? undefined}
               onLayoutChange={saveLayout}
             />
           </main>

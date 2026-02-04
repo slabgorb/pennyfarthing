@@ -5,10 +5,12 @@
  * Story: MSSCI-12706 - Layout Persistence
  * Epic: epic-70 (Flexible Workspace)
  *
+ * Updated to use native Dockview SerializedDockview format.
+ *
  * Requirements:
  * - Save layout state to config.local.yaml on change
  * - Restore layout on startup
- * - Save panel positions, widths, collapsed states
+ * - Save complete Dockview state (grid, panels, active groups)
  * - Independent layouts per project
  * - Graceful handling of corrupted/missing config
  * - Debounced autosave
@@ -16,101 +18,149 @@
  * Acceptance Criteria:
  * - AC1: Layout state saved to `.pennyfarthing/config.local.yaml` on change
  * - AC2: Layout state restored on app startup
- * - AC3: Saved state includes: panel positions, widths, collapsed states
- * - AC4: Each project maintains independent layout
+ * - AC3: Saved state uses native Dockview SerializedDockview format
+ * - AC4: Each project maintains independent layout (via REST API context)
  * - AC5: Graceful handling of corrupted/missing layout config
  * - AC6: Layout changes trigger autosave (debounced)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 
 // Hook to be implemented
 import { useLayoutPersistence } from '../src/public/hooks/useLayoutPersistence';
-import type { WorkspaceLayoutConfig } from '../src/public/components/DockingWorkspace';
+import type { SerializedDockview } from 'dockview-react';
 
 // ============================================================================
-// Mock Setup
+// Mock Setup - REST API based
 // ============================================================================
 
-const mockElectronAPI = {
-  layout: {
-    get: vi.fn(() => Promise.resolve(null)),
-    save: vi.fn(() => Promise.resolve({ success: true })),
-    onUpdate: vi.fn(),
-  },
-  projectInfo: {
-    get: vi.fn(() => Promise.resolve({ pwd: '/test/project' })),
-  },
-};
+// Mock fetch for REST API calls
+const mockFetch = vi.fn();
 
 beforeEach(() => {
-  (window as any).electronAPI = mockElectronAPI;
-  vi.clearAllMocks();
+  global.fetch = mockFetch;
+  mockFetch.mockReset();
+  // Default: return null layout (first-time user)
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ layout: null }),
+  });
   vi.useFakeTimers();
 });
 
 afterEach(() => {
-  delete (window as any).electronAPI;
   vi.useRealTimers();
 });
 
 // ============================================================================
-// Test Fixtures
+// Test Fixtures - Native Dockview SerializedDockview format
 // ============================================================================
 
-const mockDefaultLayout: WorkspaceLayoutConfig = {
-  leftSidebar: {
-    panels: ['changed', 'diffs', 'debug'],
-    width: 300,
-    collapsed: false,
+// Mock native Dockview layout (matches api.toJSON() output)
+const mockNativeDockviewLayout: SerializedDockview = {
+  grid: {
+    root: {
+      type: 'branch',
+      data: [
+        {
+          type: 'leaf',
+          data: {
+            views: ['changed', 'diffs', 'debug'],
+            activeView: 'changed',
+            id: 'left-sidebar',
+          },
+          size: 300,
+        },
+        {
+          type: 'leaf',
+          data: {
+            views: ['message'],
+            activeView: 'message',
+            id: 'center',
+          },
+          size: 600,
+        },
+        {
+          type: 'leaf',
+          data: {
+            views: ['sprint', 'progress', 'background', 'git', 'settings'],
+            activeView: 'sprint',
+            id: 'right-sidebar',
+          },
+          size: 300,
+        },
+      ],
+      size: 800,
+    },
+    width: 1200,
+    height: 800,
+    orientation: 'HORIZONTAL',
   },
-  center: {
-    panels: ['message'],
-    locked: true,
+  panels: {
+    changed: { id: 'changed', contentComponent: 'PanelAdapter', title: 'Changed', params: { panelId: 'changed' } },
+    diffs: { id: 'diffs', contentComponent: 'PanelAdapter', title: 'Diffs', params: { panelId: 'diffs' } },
+    debug: { id: 'debug', contentComponent: 'PanelAdapter', title: 'Debug', params: { panelId: 'debug' } },
+    message: { id: 'message', contentComponent: 'PanelAdapter', title: 'Message', params: { panelId: 'message' } },
+    sprint: { id: 'sprint', contentComponent: 'PanelAdapter', title: 'Sprint', params: { panelId: 'sprint' } },
+    progress: { id: 'progress', contentComponent: 'PanelAdapter', title: 'Progress', params: { panelId: 'progress' } },
+    background: { id: 'background', contentComponent: 'PanelAdapter', title: 'Background', params: { panelId: 'background' } },
+    git: { id: 'git', contentComponent: 'PanelAdapter', title: 'Git', params: { panelId: 'git' } },
+    settings: { id: 'settings', contentComponent: 'PanelAdapter', title: 'Settings', params: { panelId: 'settings' } },
   },
-  rightSidebar: {
-    panels: ['sprint', 'progress', 'background', 'git', 'settings'],
-    width: 300,
-    collapsed: false,
-  },
+  activeGroup: 'center',
 };
 
-const mockCustomLayout: WorkspaceLayoutConfig = {
-  leftSidebar: {
-    panels: ['diffs', 'changed'],  // Reordered
-    width: 400,                     // Different width
-    collapsed: true,                // Collapsed
-  },
-  center: {
-    panels: ['message'],
-    locked: true,
-  },
-  rightSidebar: {
-    panels: ['progress', 'sprint', 'settings'],  // Some removed, reordered
-    width: 250,
-    collapsed: false,
-  },
-};
-
-const mockSavedLayoutConfig = {
-  theme: 'rome',
-  layout: {
-    version: 1,
-    leftSidebar: {
-      panels: ['diffs', 'changed'],
-      width: 400,
-      collapsed: true,
-      activePanel: 'diffs',
+// Modified layout with different panel arrangement
+const mockModifiedDockviewLayout: SerializedDockview = {
+  grid: {
+    root: {
+      type: 'branch',
+      data: [
+        {
+          type: 'leaf',
+          data: {
+            views: ['diffs', 'changed'],  // Reordered, debug removed
+            activeView: 'diffs',
+            id: 'left-sidebar',
+          },
+          size: 400,  // Different width
+        },
+        {
+          type: 'leaf',
+          data: {
+            views: ['message'],
+            activeView: 'message',
+            id: 'center',
+          },
+          size: 550,
+        },
+        {
+          type: 'leaf',
+          data: {
+            views: ['progress', 'sprint', 'settings'],  // Reordered
+            activeView: 'progress',
+            id: 'right-sidebar',
+          },
+          size: 250,  // Different width
+        },
+      ],
+      size: 800,
     },
-    rightSidebar: {
-      panels: ['progress', 'sprint', 'settings'],
-      width: 250,
-      collapsed: false,
-      activePanel: 'progress',
-    },
+    width: 1200,
+    height: 800,
+    orientation: 'HORIZONTAL',
   },
+  panels: {
+    changed: { id: 'changed', contentComponent: 'PanelAdapter', title: 'Changed', params: { panelId: 'changed' } },
+    diffs: { id: 'diffs', contentComponent: 'PanelAdapter', title: 'Diffs', params: { panelId: 'diffs' } },
+    message: { id: 'message', contentComponent: 'PanelAdapter', title: 'Message', params: { panelId: 'message' } },
+    sprint: { id: 'sprint', contentComponent: 'PanelAdapter', title: 'Sprint', params: { panelId: 'sprint' } },
+    progress: { id: 'progress', contentComponent: 'PanelAdapter', title: 'Progress', params: { panelId: 'progress' } },
+    settings: { id: 'settings', contentComponent: 'PanelAdapter', title: 'Settings', params: { panelId: 'settings' } },
+  },
+  activeGroup: 'center',
 };
 
 // ============================================================================
@@ -118,7 +168,7 @@ const mockSavedLayoutConfig = {
 // ============================================================================
 
 describe('AC1: Layout state saved to config.local.yaml on change', () => {
-  const TestComponent = ({ layout }: { layout: WorkspaceLayoutConfig }) => {
+  const TestComponent = ({ layout }: { layout: SerializedDockview }) => {
     const { saveLayout, isSaving } = useLayoutPersistence();
     return (
       <div>
@@ -130,23 +180,31 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
     );
   };
 
-  it('should call electronAPI.layout.save when saveLayout is called', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should call REST API PATCH when saveLayout is called', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
     });
 
-    // Advance timers to trigger debounced save (use async version to flush promises)
+    // Advance timers to trigger debounced save
     await act(async () => {
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
+    // Should have called PATCH /api/settings/layout
+    const patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(1);
   });
 
-  it('should pass layout data in correct format to save', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should pass native Dockview layout format to save', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -156,17 +214,23 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.leftSidebar.width).toBe(400);
-    expect(savedData.leftSidebar.collapsed).toBe(true);
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+
+    // Verify native Dockview structure
+    expect(savedData.grid).toBeDefined();
+    expect(savedData.panels).toBeDefined();
+    expect(savedData.grid.width).toBe(1200);
   });
 
   it('should indicate saving state during save operation', async () => {
-    mockElectronAPI.layout.save.mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve({ success: true }), 100))
+    mockFetch.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({}) }), 100))
     );
 
-    render(<TestComponent layout={mockCustomLayout} />);
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -174,16 +238,16 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
 
     // Advance past debounce but not past the save completion
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(300);
+      await vi.advanceTimersByTimeAsync(350);
     });
 
     expect(screen.getByTestId('saving-state')).toHaveTextContent('true');
   });
 
   it('should set saving to false after save completes', async () => {
-    mockElectronAPI.layout.save.mockResolvedValue({ success: true });
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
 
-    render(<TestComponent layout={mockCustomLayout} />);
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -207,28 +271,34 @@ describe('AC2: Layout state restored on app startup', () => {
     return (
       <div>
         <div data-testid="loading-state">{isLoading.toString()}</div>
-        <div data-testid="layout-left-width">{layout?.leftSidebar.width}</div>
-        <div data-testid="layout-left-collapsed">{layout?.leftSidebar.collapsed?.toString()}</div>
-        <div data-testid="layout-left-panels">{layout?.leftSidebar.panels.join(',')}</div>
+        <div data-testid="has-layout">{layout ? 'yes' : 'no'}</div>
+        <div data-testid="grid-width">{layout?.grid?.width}</div>
+        <div data-testid="panel-count">{layout?.panels ? Object.keys(layout.panels).length : 0}</div>
         {error && <div data-testid="error">{error.message}</div>}
       </div>
     );
   };
 
-  it('should fetch layout on mount', async () => {
+  it('should fetch layout on mount via REST API', async () => {
     render(<TestComponent />);
 
-    // Flush all pending promises
     await act(async () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(mockElectronAPI.layout.get).toHaveBeenCalled();
+    // Should have called GET /api/settings/layout
+    const getCalls = mockFetch.mock.calls.filter(
+      ([url]) => url === '/api/settings/layout'
+    );
+    expect(getCalls.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should show loading state while fetching', async () => {
-    mockElectronAPI.layout.get.mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve(mockSavedLayoutConfig), 100))
+    mockFetch.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({
+        ok: true,
+        json: () => Promise.resolve({ layout: mockNativeDockviewLayout })
+      }), 100))
     );
 
     render(<TestComponent />);
@@ -236,8 +306,11 @@ describe('AC2: Layout state restored on app startup', () => {
     expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
   });
 
-  it('should restore saved layout from config', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(mockSavedLayoutConfig);
+  it('should restore saved native Dockview layout', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ layout: mockNativeDockviewLayout })
+    });
 
     render(<TestComponent />);
 
@@ -245,24 +318,16 @@ describe('AC2: Layout state restored on app startup', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.getByTestId('layout-left-width')).toHaveTextContent('400');
-    expect(screen.getByTestId('layout-left-collapsed')).toHaveTextContent('true');
-  });
-
-  it('should restore panel order from saved config', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(mockSavedLayoutConfig);
-
-    render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(screen.getByTestId('layout-left-panels')).toHaveTextContent('diffs,changed');
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    expect(screen.getByTestId('grid-width')).toHaveTextContent('1200');
+    expect(screen.getByTestId('panel-count')).toHaveTextContent('9');
   });
 
   it('should set loading to false after fetch completes', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(mockSavedLayoutConfig);
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ layout: mockNativeDockviewLayout })
+    });
 
     render(<TestComponent />);
 
@@ -275,11 +340,11 @@ describe('AC2: Layout state restored on app startup', () => {
 });
 
 // ============================================================================
-// AC3: Saved state includes panel positions, widths, collapsed states
+// AC3: Saved state uses native Dockview SerializedDockview format
 // ============================================================================
 
-describe('AC3: Saved state includes panel positions, widths, collapsed states', () => {
-  const TestComponent = ({ layout }: { layout: WorkspaceLayoutConfig }) => {
+describe('AC3: Saved state uses native Dockview format', () => {
+  const TestComponent = ({ layout }: { layout: SerializedDockview }) => {
     const { saveLayout } = useLayoutPersistence();
     return (
       <button data-testid="save-btn" onClick={() => saveLayout(layout)}>
@@ -288,8 +353,10 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
     );
   };
 
-  it('should save panel positions (order in array)', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should save complete grid structure with panel positions', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -299,13 +366,20 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.leftSidebar.panels).toEqual(['diffs', 'changed']);
-    expect(savedData.rightSidebar.panels).toEqual(['progress', 'sprint', 'settings']);
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+
+    // Verify grid structure is preserved
+    expect(savedData.grid.root.type).toBe('branch');
+    expect(savedData.grid.root.data).toHaveLength(3); // 3 groups
   });
 
-  it('should save sidebar widths', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should save sidebar sizes in grid structure', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -315,13 +389,20 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.leftSidebar.width).toBe(400);
-    expect(savedData.rightSidebar.width).toBe(250);
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+
+    // Verify sizes are in the grid structure
+    expect(savedData.grid.root.data[0].size).toBe(400); // Left sidebar width
+    expect(savedData.grid.root.data[2].size).toBe(250); // Right sidebar width
   });
 
-  it('should save collapsed states for both sidebars', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should save panel definitions with params', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -331,13 +412,21 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.leftSidebar.collapsed).toBe(true);
-    expect(savedData.rightSidebar.collapsed).toBe(false);
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+
+    // Verify panels object structure
+    expect(savedData.panels).toBeDefined();
+    expect(savedData.panels.changed.contentComponent).toBe('PanelAdapter');
+    expect(savedData.panels.changed.params.panelId).toBe('changed');
   });
 
-  it('should include version number for migration support', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+  it('should save active group for focus restoration', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -347,18 +436,21 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.version).toBeDefined();
-    expect(typeof savedData.version).toBe('number');
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+
+    expect(savedData.activeGroup).toBeDefined();
   });
 });
 
 // ============================================================================
-// AC4: Each project maintains independent layout
+// AC4: Each project maintains independent layout (via REST API context)
 // ============================================================================
 
 describe('AC4: Each project maintains independent layout', () => {
-  it('should request project path when fetching layout', async () => {
+  it('should fetch layout via project-scoped REST API', async () => {
     const TestComponent = () => {
       const { layout } = useLayoutPersistence();
       return <div data-testid="layout-loaded">{layout ? 'yes' : 'no'}</div>;
@@ -370,13 +462,14 @@ describe('AC4: Each project maintains independent layout', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
+    // REST API is project-scoped by server context
+    expect(mockFetch).toHaveBeenCalledWith('/api/settings/layout');
   });
 
-  it('should pass project context when saving layout', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue({ pwd: '/project/alpha' });
+  it('should save layout via project-scoped REST API', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
 
-    const TestComponent = ({ layout }: { layout: WorkspaceLayoutConfig }) => {
+    const TestComponent = ({ layout }: { layout: SerializedDockview }) => {
       const { saveLayout } = useLayoutPersistence();
       return (
         <button data-testid="save-btn" onClick={() => saveLayout(layout)}>
@@ -385,7 +478,7 @@ describe('AC4: Each project maintains independent layout', () => {
       );
     };
 
-    render(<TestComponent layout={mockCustomLayout} />);
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -395,39 +488,11 @@ describe('AC4: Each project maintains independent layout', () => {
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    // The save should use the project-specific config
-    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
-  });
-
-  it('should not share layout state between different projects', async () => {
-    // This test verifies the API call includes project context
-    mockElectronAPI.projectInfo.get.mockResolvedValueOnce({ pwd: '/project/alpha' });
-
-    const TestComponent = () => {
-      const { layout } = useLayoutPersistence();
-      return <div data-testid="layout">{layout ? 'loaded' : 'none'}</div>;
-    };
-
-    const { unmount } = render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
-
-    unmount();
-
-    // Second project
-    mockElectronAPI.projectInfo.get.mockResolvedValueOnce({ pwd: '/project/beta' });
-
-    render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalledTimes(2);
+    // The save should go to project-specific config via REST API
+    const patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(1);
   });
 });
 
@@ -442,54 +507,15 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
       <div>
         <div data-testid="loading-state">{isLoading.toString()}</div>
         <div data-testid="has-layout">{layout ? 'yes' : 'no'}</div>
-        <div data-testid="left-panels">{layout?.leftSidebar.panels.join(',')}</div>
         {error && <div data-testid="error">{error.message}</div>}
       </div>
     );
   };
 
-  it('should return default layout when config is null', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(null);
-
-    render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-  });
-
-  it('should return default layout when config is undefined', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(undefined);
-
-    render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-  });
-
-  it('should return default layout when API returns error', async () => {
-    mockElectronAPI.layout.get.mockRejectedValue(new Error('Config read failed'));
-
-    render(<TestComponent />);
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-  });
-
-  it('should return default layout when saved layout is malformed', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue({
-      layout: {
-        // Missing required fields
-        leftSidebar: { width: 'not-a-number' },
-      },
+  it('should return null layout when config is null (DockviewWorkspace builds default)', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ layout: null })
     });
 
     render(<TestComponent />);
@@ -498,18 +524,48 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-    // Should fall back to defaults
-    expect(screen.getByTestId('left-panels')).toHaveTextContent('changed,diffs,debug');
+    // Hook returns null, DockviewWorkspace will build default
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('no');
   });
 
-  it('should handle missing panels array gracefully', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue({
-      layout: {
-        version: 1,
-        leftSidebar: { width: 300, collapsed: false },  // panels missing
-        rightSidebar: { panels: [], width: 300, collapsed: false },
-      },
+  it('should return null layout when API returns error', async () => {
+    mockFetch.mockRejectedValue(new Error('Config read failed'));
+
+    render(<TestComponent />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Hook returns null on error, DockviewWorkspace builds default
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('no');
+  });
+
+  it('should return null layout when saved layout is malformed (not Dockview format)', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        layout: {
+          // Old format - not native Dockview
+          leftSidebar: { width: 300 },
+        }
+      })
+    });
+
+    render(<TestComponent />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Invalid format returns null, DockviewWorkspace builds default
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('no');
+  });
+
+  it('should accept valid native Dockview layout', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ layout: mockNativeDockviewLayout })
     });
 
     render(<TestComponent />);
@@ -522,9 +578,11 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
   });
 
   it('should not crash when save fails', async () => {
-    mockElectronAPI.layout.save.mockRejectedValue(new Error('Write failed'));
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ layout: null }) }) // GET
+      .mockRejectedValueOnce(new Error('Write failed')); // PATCH
 
-    const TestComponent = ({ layout }: { layout: WorkspaceLayoutConfig }) => {
+    const SaveTestComponent = ({ layout }: { layout: SerializedDockview }) => {
       const { saveLayout, error } = useLayoutPersistence();
       return (
         <div>
@@ -536,7 +594,7 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
       );
     };
 
-    render(<TestComponent layout={mockCustomLayout} />);
+    render(<SaveTestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('save-btn').click();
@@ -556,14 +614,30 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 // ============================================================================
 
 describe('AC6: Layout changes trigger autosave (debounced)', () => {
-  const TestComponent = ({ layout }: { layout: WorkspaceLayoutConfig }) => {
+  // Create layout variants for testing debounce
+  const createLayoutWithWidth = (width: number): SerializedDockview => ({
+    ...mockModifiedDockviewLayout,
+    grid: {
+      ...mockModifiedDockviewLayout.grid,
+      root: {
+        ...mockModifiedDockviewLayout.grid.root,
+        data: [
+          { ...mockModifiedDockviewLayout.grid.root.data[0], size: width },
+          mockModifiedDockviewLayout.grid.root.data[1],
+          mockModifiedDockviewLayout.grid.root.data[2],
+        ],
+      },
+    },
+  });
+
+  const TestComponent = ({ layout }: { layout: SerializedDockview }) => {
     const { saveLayout, isSaving } = useLayoutPersistence();
 
     // Simulate multiple rapid changes
     const triggerMultipleChanges = () => {
-      saveLayout({ ...layout, leftSidebar: { ...layout.leftSidebar, width: 310 } });
-      saveLayout({ ...layout, leftSidebar: { ...layout.leftSidebar, width: 320 } });
-      saveLayout({ ...layout, leftSidebar: { ...layout.leftSidebar, width: 330 } });
+      saveLayout(createLayoutWithWidth(310));
+      saveLayout(createLayoutWithWidth(320));
+      saveLayout(createLayoutWithWidth(330));
     };
 
     return (
@@ -580,7 +654,9 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
   };
 
   it('should debounce rapid layout changes', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     // Trigger multiple saves rapidly
     act(() => {
@@ -592,20 +668,28 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
       await vi.advanceTimersByTimeAsync(100);
     });
 
-    // Should not have saved yet
-    expect(mockElectronAPI.layout.save).not.toHaveBeenCalled();
+    // Should not have saved yet (no PATCH calls)
+    const patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(0);
 
     // Advance past debounce time
     await act(async () => {
       await vi.advanceTimersByTimeAsync(400);
     });
 
-    // Should only save once with the final value
-    expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
+    // Should only save once
+    const finalPatchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(finalPatchCalls.length).toBe(1);
   });
 
   it('should save only the final layout state after debounce', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('multi-save').click();
@@ -615,12 +699,17 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
       await vi.advanceTimersByTimeAsync(500);
     });
 
-    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-    expect(savedData.leftSidebar.width).toBe(330);  // Final value
+    const patchCall = mockFetch.mock.calls.find(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    const savedData = JSON.parse(patchCall[1].body);
+    expect(savedData.grid.root.data[0].size).toBe(330); // Final value
   });
 
   it('should respect debounce delay of at least 300ms', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     act(() => {
       screen.getByTestId('single-save').click();
@@ -630,18 +719,27 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200);
     });
-    expect(mockElectronAPI.layout.save).not.toHaveBeenCalled();
+
+    let patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(0);
 
     // At 400ms - should have saved (past 300ms debounce)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200);
     });
 
-    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
+    patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(1);
   });
 
   it('should reset debounce timer on each change', async () => {
-    render(<TestComponent layout={mockCustomLayout} />);
+    mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+    render(<TestComponent layout={mockModifiedDockviewLayout} />);
 
     // First save
     act(() => {
@@ -662,14 +760,20 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
     });
 
     // Should not have saved yet (timer was reset)
-    expect(mockElectronAPI.layout.save).not.toHaveBeenCalled();
+    let patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(0);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
 
     // Now it should have saved
-    expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
+    patchCalls = mockFetch.mock.calls.filter(
+      ([url, opts]) => url === '/api/settings/layout' && opts?.method === 'PATCH'
+    );
+    expect(patchCalls.length).toBe(1);
   });
 });
 
@@ -683,7 +787,8 @@ describe('useLayoutPersistence Hook Interface', () => {
       const hook = useLayoutPersistence();
       return (
         <div>
-          <div data-testid="has-layout">{hook.layout !== undefined ? 'yes' : 'no'}</div>
+          {/* layout can be null for first-time users */}
+          <div data-testid="layout-type">{hook.layout === null ? 'null' : typeof hook.layout === 'object' ? 'object' : 'other'}</div>
           <div data-testid="has-isLoading">{typeof hook.isLoading === 'boolean' ? 'yes' : 'no'}</div>
           <div data-testid="has-isSaving">{typeof hook.isSaving === 'boolean' ? 'yes' : 'no'}</div>
           <div data-testid="has-saveLayout">{typeof hook.saveLayout === 'function' ? 'yes' : 'no'}</div>
@@ -698,7 +803,9 @@ describe('useLayoutPersistence Hook Interface', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    // Layout can be null (first-time user) or object (saved layout)
+    const layoutType = screen.getByTestId('layout-type').textContent;
+    expect(['null', 'object']).toContain(layoutType);
     expect(screen.getByTestId('has-isLoading')).toHaveTextContent('yes');
     expect(screen.getByTestId('has-isSaving')).toHaveTextContent('yes');
     expect(screen.getByTestId('has-saveLayout')).toHaveTextContent('yes');
@@ -711,7 +818,7 @@ describe('useLayoutPersistence Hook Interface', () => {
 // ============================================================================
 
 describe('Integration: App.tsx layout persistence wiring', () => {
-  it('should wire useLayoutPersistence hook to DockingWorkspace', async () => {
+  it('should wire useLayoutPersistence hook to DockviewWorkspace', async () => {
     // Import App to verify the wiring exists
     const AppModule = await import('../src/public/App');
     const appSource = AppModule.default.toString();
@@ -720,22 +827,25 @@ describe('Integration: App.tsx layout persistence wiring', () => {
     expect(appSource).toContain('useLayoutPersistence');
   });
 
-  it('should pass initialLayout and onLayoutChange to DockingWorkspace', async () => {
+  it('should pass initialLayout and onLayoutChange to DockviewWorkspace', async () => {
     // Read App.tsx source to verify props are passed
     const fs = await import('fs');
     const path = await import('path');
     const appPath = path.join(__dirname, '../src/public/App.tsx');
     const appSource = fs.readFileSync(appPath, 'utf-8');
 
-    // Verify DockingWorkspace receives the required props
-    expect(appSource).toContain('initialLayout={layout}');
+    // Verify DockviewWorkspace receives the required props (layout can be null/undefined)
+    expect(appSource).toMatch(/initialLayout=\{layout/);
     expect(appSource).toContain('onLayoutChange={saveLayout}');
   });
 
   it('should render loading state while layout loads', async () => {
     // Mock a slow layout fetch
-    mockElectronAPI.layout.get.mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve(null), 500))
+    mockFetch.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({
+        ok: true,
+        json: () => Promise.resolve({ layout: null })
+      }), 500))
     );
 
     // Import and render App
@@ -746,8 +856,11 @@ describe('Integration: App.tsx layout persistence wiring', () => {
     expect(document.querySelector('.cyclist-loading')).toBeInTheDocument();
   });
 
-  it('should render DockingWorkspace after layout loads', async () => {
-    mockElectronAPI.layout.get.mockResolvedValue(mockSavedLayoutConfig);
+  it('should render DockviewWorkspace after layout loads', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ layout: mockNativeDockviewLayout })
+    });
 
     const { default: App } = await import('../src/public/App');
     render(<App />);
@@ -758,6 +871,7 @@ describe('Integration: App.tsx layout persistence wiring', () => {
 
     // Should render the workspace, not loading state
     expect(document.querySelector('.cyclist-loading')).not.toBeInTheDocument();
-    expect(screen.getByTestId('docking-workspace')).toBeInTheDocument();
+    // DockviewWorkspace renders a container with .cyclist-dockview
+    expect(document.querySelector('.cyclist-dockview')).toBeInTheDocument();
   });
 });
