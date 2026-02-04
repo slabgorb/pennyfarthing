@@ -121,9 +121,6 @@ const settingsClients = new Set<WebSocket>();
 // Context WebSocket clients (Phase 2: context usage percentage)
 const contextClients = new Set<WebSocket>();
 
-// Diffs WebSocket clients (Phase 2: Edit/Write tool diffs)
-const diffsClients = new Set<WebSocket>();
-
 // Todos WebSocket clients (MSSCI-TODO: todos via WebSocket instead of REST polling)
 const todosClients = new Set<WebSocket>();
 
@@ -140,58 +137,6 @@ interface TodoItem {
   blocks?: string[];
 }
 let currentTodos: TodoItem[] = [];
-
-// In-memory diff store (for initial send on connection)
-interface DiffData {
-  id: string;
-  path: string;
-  original: string;
-  modified: string;
-  toolName: string;
-  timestamp: number;
-}
-const diffStore: DiffData[] = [];
-
-/**
- * Process a tool_use message for diff tracking (MSSCI-14190)
- * Single source of truth for Edit/Write diff processing.
- * Called from: main.ts (Electron mode), websocket.ts (Web mode), OTEL path
- */
-export function processToolUseForDiffs(
-  toolName: string,
-  toolId: string | undefined,
-  toolInput: Record<string, unknown> | undefined
-): void {
-  if (!toolInput) return;
-
-  if (toolName === 'Edit') {
-    const input = toolInput as { file_path?: string; old_string?: string; new_string?: string };
-    if (input.file_path) {
-      const diff: DiffData = {
-        id: toolId || `edit-${Date.now()}`,
-        path: input.file_path,
-        original: input.old_string || '',
-        modified: input.new_string || '',
-        toolName: 'Edit',
-        timestamp: Date.now(),
-      };
-      broadcastDiff(diff);
-    }
-  } else if (toolName === 'Write') {
-    const input = toolInput as { file_path?: string; content?: string };
-    if (input.file_path) {
-      const diff: DiffData = {
-        id: toolId || `write-${Date.now()}`,
-        path: input.file_path,
-        original: '',
-        modified: input.content || '',
-        toolName: 'Write',
-        timestamp: Date.now(),
-      };
-      broadcastDiff(diff);
-    }
-  }
-}
 
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -313,10 +258,6 @@ export function getSettingsClients(): Set<WebSocket> {
 
 export function getContextClients(): Set<WebSocket> {
   return contextClients;
-}
-
-export function getDiffsClients(): Set<WebSocket> {
-  return diffsClients;
 }
 
 export function getTodosClients(): Set<WebSocket> {
@@ -452,9 +393,6 @@ export function setupWebSocketServers(
   // WebSocket server for context at /ws/context (Phase 2: context usage)
   const contextWss = new WebSocketServer({ noServer: true });
 
-  // WebSocket server for diffs at /ws/diffs (Phase 2: Edit/Write diffs)
-  const diffsWss = new WebSocketServer({ noServer: true });
-
   // WebSocket server for todos at /ws/todos (replaces REST polling)
   const todosWss = new WebSocketServer({ noServer: true });
 
@@ -520,10 +458,6 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/context') {
       contextWss.handleUpgrade(request, socket, head, (ws) => {
         contextWss.emit('connection', ws, request);
-      });
-    } else if (pathname === '/ws/diffs') {
-      diffsWss.handleUpgrade(request, socket, head, (ws) => {
-        diffsWss.emit('connection', ws, request);
       });
     } else if (pathname === '/ws/todos') {
       todosWss.handleUpgrade(request, socket, head, (ws) => {
@@ -822,36 +756,6 @@ export function setupWebSocketServers(
     });
   });
 
-  // Handle diffs WebSocket connections (Phase 2: Edit/Write diffs)
-  diffsWss.on('connection', (ws: WebSocket) => {
-    diffsClients.add(ws);
-
-    // Send existing diffs on connection
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'init', diffs: diffStore }));
-    }
-
-    // Handle clear message from client
-    ws.on('message', (data: Buffer) => {
-      try {
-        const msg = JSON.parse(data.toString());
-        if (msg.type === 'clear') {
-          diffStore.length = 0;
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    });
-
-    ws.on('close', () => {
-      diffsClients.delete(ws);
-    });
-
-    ws.on('error', () => {
-      diffsClients.delete(ws);
-    });
-  });
-
   // Handle todos WebSocket connections (replaces REST polling)
   todosWss.on('connection', (ws: WebSocket) => {
     console.log('[WebSocket] Todos client connected');
@@ -940,21 +844,6 @@ export function setupWebSocketServers(
       }, CONTEXT_DEBOUNCE_MS);
     }
 
-    // Broadcast diffs for Edit/Write tool events
-    // Note: broadcastDiff now handles storage to diffStore
-    if ((event.toolName === 'Edit' || event.toolName === 'Write') && event.filePath) {
-      const diff: DiffData = {
-        id: event.spanId || `${event.toolName.toLowerCase()}-${Date.now()}`,
-        path: event.filePath,
-        original: event.diffOriginal || '',
-        modified: event.diffModified || '',
-        toolName: event.toolName,
-        timestamp: event.timestamp,
-      };
-
-      // broadcastDiff stores to diffStore and broadcasts to clients
-      broadcastDiff(diff);
-    }
   });
 
   // Set up agent file watcher for persona broadcasts
@@ -1248,13 +1137,11 @@ export function setupWebSocketServers(
                     ws.send(JSON.stringify({ type: 'message', message }));
                   }
 
-                  // Process tool_use messages for diff tracking and OTEL correlation
+                  // Process tool_use messages for OTEL correlation
                   const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
-                    // Process Edit/Write for diff tracking (single source of truth)
-                    processToolUseForDiffs(sdkMsg.tool_name, sdkMsg.tool_id, sdkMsg.input);
                   }
                 }
                 if (ws.readyState === WebSocket.OPEN) {
@@ -1483,23 +1370,3 @@ export function broadcastContextUpdate(context: ContextInfo): void {
   }
 }
 
-// Broadcast diff update to all connected clients
-// Called when Edit/Write tool events are processed
-// MSSCI-14190: Also store to diffStore so new/reconnecting clients receive data
-export function broadcastDiff(diff: DiffData): void {
-  // Store diff for new connections (deduplicate by path)
-  const existingIndex = diffStore.findIndex(d => d.path === diff.path);
-  if (existingIndex >= 0) {
-    diffStore[existingIndex] = diff;
-  } else {
-    diffStore.push(diff);
-  }
-
-  // Broadcast to connected clients
-  const message = JSON.stringify({ type: 'diff', diff });
-  for (const client of diffsClients) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  }
-}
