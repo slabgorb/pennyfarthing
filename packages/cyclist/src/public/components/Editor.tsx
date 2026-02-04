@@ -26,6 +26,7 @@ import { useCommandHistory } from '../hooks/useCommandHistory';
 import { useTabCompletion } from '../hooks/useTabCompletion';
 import { useMessageQueue, QueuedMessage } from '../hooks/useMessageQueue';
 import { ModeSwitch, Mode, useModeSync, useModeSwitchShortcuts } from './ModeSwitch';
+import { trackCommandUsage } from '../utils/slash-commands';
 
 // =============================================================================
 // Types
@@ -373,6 +374,12 @@ export function Editor({ onSubmit, isProcessing = false, placeholder, onInject }
     // Add to history and submit
     addToHistory(trimmed);
     resetNavigation();
+
+    // Track slash command usage for frequency sorting
+    if (trimmed.startsWith('/')) {
+      const command = trimmed.split(/\s/)[0]; // Extract "/command" from "/command args"
+      trackCommandUsage(command);
+    }
 
     // Resume queue if it was paused (e.g., after abort)
     resumeQueue();
