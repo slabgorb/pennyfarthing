@@ -389,6 +389,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     // Check PreToolUse hooks for schema-validation
     const schemaValidationCheck = checkSchemaValidationHook(projectRoot, installationType);
     results.push(schemaValidationCheck);
+
+    // Check PostToolUse hooks for sprint-yaml-validation
+    const sprintYamlValidationCheck = checkSprintYamlValidationHook(projectRoot, installationType);
+    results.push(sprintYamlValidationCheck);
   }
 
   return results;
@@ -902,6 +906,108 @@ function addPostToolUseHook(projectRoot: string, installationType: string): void
 }
 
 /**
+ * Check that sprint-yaml-validation hook is configured in PostToolUse
+ * This validates sprint YAML files after Edit/Write to ensure Cyclist compatibility
+ */
+function checkSprintYamlValidationHook(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.PostToolUse exists
+    if (!settings.hooks?.PostToolUse) {
+      return {
+        name: 'settings/sprint-yaml-validation',
+        status: 'warn',
+        detail: 'Missing PostToolUse hooks - sprint YAML validation not configured',
+        fix: () => {
+          addSprintYamlValidationHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    // Check if sprint-yaml-validation is configured
+    const hasSprintYamlValidation = settings.hooks.PostToolUse.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('sprint-yaml-validation')
+        );
+      }
+      return false;
+    });
+
+    if (!hasSprintYamlValidation) {
+      return {
+        name: 'settings/sprint-yaml-validation',
+        status: 'warn',
+        detail: 'sprint-yaml-validation not configured - sprint YAML errors may break SprintPanel',
+        fix: () => {
+          addSprintYamlValidationHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/sprint-yaml-validation',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/sprint-yaml-validation',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add sprint-yaml-validation hook to PostToolUse in settings.local.json
+ * Validates sprint YAML files after Edit/Write for Cyclist SprintPanel compatibility
+ */
+function addSprintYamlValidationHook(projectRoot: string, installationType: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const scriptBase = getScriptBasePath(installationType);
+
+  const requiredHook = {
+    matcher: 'Edit|Write',
+    hooks: [
+      {
+        type: 'command',
+        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.PostToolUse) {
+    hooks.PostToolUse = [requiredHook];
+  } else if (Array.isArray(hooks.PostToolUse)) {
+    // Append the sprint YAML validation hook
+    hooks.PostToolUse = [...hooks.PostToolUse, requiredHook];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+}
+
+/**
  * Fix function: Add Stop hook to settings.local.json
  */
 function addStopHook(projectRoot: string, installationType: string): void {
@@ -1080,6 +1186,15 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
               command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
             }
           ]
+        },
+        {
+          matcher: 'Edit|Write',
+          hooks: [
+            {
+              type: 'command',
+              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
+            }
+          ]
         }
       ],
       Stop: [
@@ -1168,7 +1283,8 @@ function checkHooks(projectRoot: string): CheckResult[] {
     { path: `${scriptBase}/hooks/context-warning.sh`, name: 'hook/context-warning' },
     { path: `${scriptBase}/hooks/context-circuit-breaker.sh`, name: 'hook/context-circuit-breaker' },
     { path: `${scriptBase}/hooks/bell-mode-hook.sh`, name: 'hook/bell-mode' },
-    { path: `${scriptBase}/hooks/question-reflector-check.sh`, name: 'hook/question-reflector' }
+    { path: `${scriptBase}/hooks/question-reflector-check.sh`, name: 'hook/question-reflector' },
+    { path: `${scriptBase}/hooks/sprint-yaml-validation.sh`, name: 'hook/sprint-yaml-validation' }
   ];
 
   for (const { path, name } of hooks) {
