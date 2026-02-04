@@ -620,6 +620,8 @@ export function DockviewWorkspace({
     changed: 'Changed Files',
     diffs: 'Diffs',
     debug: 'Debug',
+    'audit-log': 'Audit Log',
+    tty: 'Terminal',
     sprint: 'Sprint',
     workflow: 'Workflow',
     ac: 'AC',
