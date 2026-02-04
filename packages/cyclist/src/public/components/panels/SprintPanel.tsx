@@ -247,8 +247,14 @@ export function EnhancedSprintPanel(): React.ReactElement {
 
       {/* Section 2: Epic Tree View */}
       <section data-section="epics">
-        <h2>Sprint Stories</h2>
+        <h2>Current Epics</h2>
         <div data-testid="epic-tree-view">
+          {(!data?.epics || data.epics.length === 0) && (
+            <div className="empty-state" data-testid="no-epics-section">
+              <span>No epics in current sprint</span>
+              <p className="hint">Promote an epic from Future Initiatives to get started</p>
+            </div>
+          )}
           {data?.epics.map((epic) => {
             const { done, total } = calculateEpicProgress(epic);
             const completed = isEpicCompleted(epic);
@@ -361,6 +367,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
                 <span
                   className="future-epic-status"
                   data-testid={`future-epic-status-${epic.id}`}
+                  data-status={epic.status}
                 >
                   {epic.status}
                 </span>
