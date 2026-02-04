@@ -23,8 +23,9 @@ export interface SprintStory {
   id: string;
   title: string;
   points: number;
-  status: 'backlog' | 'in_progress' | 'done' | 'cancelled';
+  status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
+  hasContext?: boolean;
 }
 
 export interface SprintEpic {
@@ -32,6 +33,7 @@ export interface SprintEpic {
   title: string;
   jiraKey: string | null;
   stories: SprintStory[];
+  hasContext?: boolean;
 }
 
 export interface FutureEpic {
@@ -117,6 +119,7 @@ function mapStoryStatus(status?: string): SprintStory['status'] {
   if (normalized === 'done' || normalized === 'completed') return 'done';
   if (normalized === 'in_progress' || normalized === 'in-progress') return 'in_progress';
   if (normalized === 'cancelled' || normalized === 'canceled') return 'cancelled';
+  if (normalized === 'blocked') return 'blocked';
   return 'backlog';
 }
 
@@ -141,27 +144,48 @@ function extractSprintNumber(name?: string): number {
 }
 
 /**
+ * Check if epic context file exists
+ */
+function checkEpicContext(projectDir: string, epicId: string): boolean {
+  // Extract numeric part from epic ID (e.g., "epic-76" -> "76")
+  const match = epicId.match(/epic-(\d+)/i);
+  if (!match) return false;
+  const contextPath = join(projectDir, 'sprint', 'context', `context-epic-${match[1]}.md`);
+  return existsSync(contextPath);
+}
+
+/**
+ * Check if story context file exists
+ */
+function checkStoryContext(projectDir: string, storyId: string): boolean {
+  const contextPath = join(projectDir, 'sprint', 'context', `${storyId}-context.md`);
+  return existsSync(contextPath);
+}
+
+/**
  * Transform YAML story to SprintStory
  */
-function transformStory(yamlStory: YamlStory): SprintStory {
+function transformStory(yamlStory: YamlStory, projectDir: string): SprintStory {
   return {
     id: yamlStory.id,
     title: yamlStory.title,
     points: yamlStory.points ?? 0,
     status: mapStoryStatus(yamlStory.status),
     jiraKey: yamlStory.jira ?? null,
+    hasContext: checkStoryContext(projectDir, yamlStory.id),
   };
 }
 
 /**
  * Transform YAML epic to SprintEpic
  */
-function transformEpic(yamlEpic: YamlEpic): SprintEpic {
+function transformEpic(yamlEpic: YamlEpic, projectDir: string): SprintEpic {
   return {
     id: yamlEpic.id,
     title: yamlEpic.title.replace(/^Epic:\s*/i, ''), // Clean "Epic: " prefix
     jiraKey: yamlEpic.jira ?? null,
-    stories: (yamlEpic.stories ?? []).map(transformStory),
+    stories: (yamlEpic.stories ?? []).map((s) => transformStory(s, projectDir)),
+    hasContext: checkEpicContext(projectDir, yamlEpic.id),
   };
 }
 
@@ -208,9 +232,10 @@ export function getSprintData(projectDir: string): SprintData {
   const storyInfo = getStoryInfo(projectDir);
 
   // Transform epics
-  const epics: SprintEpic[] = (currentSprint.epics ?? []).map(transformEpic);
+  const epics: SprintEpic[] = (currentSprint.epics ?? []).map((e) => transformEpic(e, projectDir));
 
   // Calculate sprint metrics
+  // Note: blocked stories are NOT counted in remaining - they're blocked, not available
   let done = 0;
   let inProgress = 0;
   let remaining = 0;
@@ -224,6 +249,7 @@ export function getSprintData(projectDir: string): SprintData {
       } else if (story.status === 'backlog') {
         remaining += story.points;
       }
+      // blocked stories intentionally not counted in remaining
     }
   }
 
