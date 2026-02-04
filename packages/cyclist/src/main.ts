@@ -1206,6 +1206,19 @@ function processToolUseFromMessage(message: SDKMessage): void {
     // Store for OTEL correlation
     if (toolId && toolInput) {
       storePendingToolInput(toolId, toolName, toolInput);
+
+      // MSSCI-14210: Track background Task tools
+      if (toolName === 'Task' && toolInput.run_in_background === true) {
+        const description = (toolInput.description as string) || (toolInput.prompt as string)?.substring(0, 50) || 'Background task';
+        const subagentType = (toolInput.subagent_type as string) || 'general-purpose';
+        trackBackgroundTask({
+          taskId: toolId,
+          description,
+          subagentType,
+          startedAt: Date.now(),
+          isBackground: true,
+        });
+      }
     }
   };
 
