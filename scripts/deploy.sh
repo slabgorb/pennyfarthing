@@ -127,6 +127,8 @@ log_info "New version: $NEW_VERSION"
 if $DRY_RUN; then
     log_dry "echo $NEW_VERSION > VERSION"
     log_dry "Update package.json: $CURRENT_VERSION -> $NEW_VERSION"
+    log_dry "Update packages/core/package.json -> $NEW_VERSION"
+    log_dry "Update packages/cyclist/package.json -> $NEW_VERSION"
     log_dry "Update README.md version badge"
     log_dry "Update package-lock.json"
     log_dry "Update CHANGELOG.md version links and header"
@@ -138,6 +140,16 @@ else
         sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
         log_info "Updated package.json"
     fi
+
+    # Update workspace package versions
+    for pkg in core cyclist; do
+        PKG_JSON="$PROJECT_ROOT/packages/$pkg/package.json"
+        if [[ -f "$PKG_JSON" ]]; then
+            # Use a more flexible pattern that matches any version number
+            sed -i '' -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"$NEW_VERSION\"/" "$PKG_JSON"
+            log_info "Updated packages/$pkg/package.json"
+        fi
+    done
 
     if [[ -f "$PROJECT_ROOT/README.md" ]]; then
         sed -i '' "s/\*\*v$CURRENT_VERSION\*\*/\*\*v$NEW_VERSION\*\*/" "$PROJECT_ROOT/README.md"
@@ -208,7 +220,8 @@ if $DRY_RUN; then
     log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
     log_dry "git push origin develop main --tags"
     log_dry "git checkout develop"
-    log_dry "source .env && npm publish --access public"
+    log_dry "npm publish --access public (@pennyfarthing/core)"
+    log_dry "npm publish --access public (@pennyfarthing/cyclist)"
     log_dry "gh release create $TAG_NAME"
 else
     log_info "Merging develop to main..."
@@ -244,8 +257,18 @@ else
         source "$PROJECT_ROOT/.env"
         npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
     fi
+
+    # Publish root package (@pennyfarthing/core)
     (cd "$PROJECT_ROOT" && npm publish --access public)
     log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
+
+    # Publish cyclist package separately
+    CYCLIST_DIR="$PROJECT_ROOT/packages/cyclist"
+    if [[ -f "$CYCLIST_DIR/package.json" ]]; then
+        log_info "Publishing @pennyfarthing/cyclist..."
+        (cd "$CYCLIST_DIR" && npm publish --access public) || log_warn "Failed to publish @pennyfarthing/cyclist"
+        log_info "Published @pennyfarthing/cyclist@$NEW_VERSION to npm"
+    fi
 
     # Step 9: Create GitHub release
     log_info "Creating GitHub release..."
@@ -258,13 +281,17 @@ if $DRY_RUN; then
     echo ""
     echo "  Would release version: $NEW_VERSION"
     echo "  Would create tag: $TAG_NAME"
-    echo "  Would publish: @pennyfarthing/core@$NEW_VERSION"
+    echo "  Would publish:"
+    echo "    - @pennyfarthing/core@$NEW_VERSION"
+    echo "    - @pennyfarthing/cyclist@$NEW_VERSION"
 else
     log_info "Deploy complete!"
     echo ""
     echo "  Version: $NEW_VERSION"
     echo "  Tag: $TAG_NAME"
     echo "  Branches pushed: develop, main"
-    echo "  npm: @pennyfarthing/core@$NEW_VERSION"
+    echo "  npm packages:"
+    echo "    - @pennyfarthing/core@$NEW_VERSION"
+    echo "    - @pennyfarthing/cyclist@$NEW_VERSION"
 fi
 echo ""
