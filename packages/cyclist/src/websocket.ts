@@ -915,15 +915,9 @@ export function setupWebSocketServers(
       updatePwd(event.workingDirectory);
     }
 
-    // MSSCI-14210: Complete background Task tools when OTEL event arrives
-    if (event.toolName === 'Task' && event.isBackground && event.spanId) {
-      completeBackgroundTask(
-        event.spanId,
-        event.success,
-        event.resultSummary,
-        event.error
-      );
-    }
+    // Note: Background task completion is handled via tool_result messages in the
+    // Claude message stream (see WebSocket send handler), not via OTEL events.
+    // The tool_result message contains tool_use_id matching the original tool_id.
 
     // Invalidate git cache only when files are actually modified
     // Not every tool use affects git status - be selective to avoid unnecessary refreshes
@@ -1245,7 +1239,7 @@ export function setupWebSocketServers(
                   }
 
                   // Process tool_use messages for OTEL correlation and background task tracking
-                  const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
+                  const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown>; message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
@@ -1261,6 +1255,24 @@ export function setupWebSocketServers(
                         startedAt: Date.now(),
                         isBackground: true,
                       });
+                    }
+                  }
+
+                  // Process tool_result messages to complete background tasks
+                  // tool_result blocks arrive in 'user' type messages with tool_use_id matching original tool_id
+                  if (sdkMsg.type === 'user' && sdkMsg.message?.content) {
+                    for (const block of sdkMsg.message.content) {
+                      if (block.type === 'tool_result' && block.tool_use_id) {
+                        const completedTask = completeBackgroundTask(
+                          block.tool_use_id,
+                          !block.is_error,
+                          block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
+                          block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined
+                        );
+                        if (completedTask) {
+                          console.log(`[WebSocket] Background task completed: ${completedTask.taskId} (${completedTask.success ? 'success' : 'error'})`);
+                        }
+                      }
                     }
                   }
                 }
