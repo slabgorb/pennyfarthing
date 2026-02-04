@@ -100,11 +100,7 @@ export interface ToolEvent {
   resultSummary?: string;
   /** Whether task runs in background */
   isBackground?: boolean;
-  // Phase 2: Diff content for Edit/Write tools (WebSocket broadcast)
-  /** Original content for Edit tool (old_string) */
-  diffOriginal?: string;
-  /** Modified content for Edit/Write tools (new_string/content) */
-  diffModified?: string;
+  // Note: diffOriginal/diffModified removed in MSSCI-14238 - now using git diff instead
 }
 
 /**
@@ -929,11 +925,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               toolEvent.gitStatus = enrichment.gitStatus;
               toolEvent.diff = enrichment.diff;
             }
-            // Phase 2: Add diff content for WebSocket broadcast
-            if (toolInput) {
-              toolEvent.diffOriginal = toolInput.old_string as string || '';
-              toolEvent.diffModified = toolInput.new_string as string || '';
-            }
+            // Note: diffOriginal/diffModified removed in MSSCI-14238 - now using git diff
           } else if (toolName === 'Write') {
             // Story 36-11: Write tool enrichment
             const enrichment = await enrichWriteSpan(correlationId);
@@ -943,11 +935,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               toolEvent.language = enrichment.language;
               toolEvent.gitStatus = enrichment.gitStatus;
             }
-            // Phase 2: Add diff content for WebSocket broadcast
-            if (toolInput) {
-              toolEvent.diffOriginal = ''; // Write creates new content
-              toolEvent.diffModified = toolInput.content as string || '';
-            }
+            // Note: diffOriginal/diffModified removed in MSSCI-14238 - now using git diff
           } else if (toolName === 'Bash') {
             // Story 36-3: Bash tool enrichment
             const enrichment = enrichBashSpan(correlationId, {
