@@ -17,6 +17,7 @@ import {
 } from './components/DockviewWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
+import { MessageQueueProvider } from './contexts/MessageQueueContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 
@@ -137,8 +138,9 @@ export default function App(): React.ReactElement {
 
   return (
     <ClaudeProvider>
-      <CommandPaletteProvider>
-        <div className="cyclist-app">
+      <MessageQueueProvider>
+        <CommandPaletteProvider>
+          <div className="cyclist-app">
         {/* Skip links for keyboard navigation (AC7) - always render first */}
         <SkipLink href="#main-content">Skip to main content</SkipLink>
         <SkipLink href="#message-input">Skip to input</SkipLink>
@@ -166,8 +168,9 @@ export default function App(): React.ReactElement {
 
         {/* Message input target (for skip link) */}
         <div id="message-input" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
-        </div>
-      </CommandPaletteProvider>
+          </div>
+        </CommandPaletteProvider>
+      </MessageQueueProvider>
     </ClaudeProvider>
   );
 }
