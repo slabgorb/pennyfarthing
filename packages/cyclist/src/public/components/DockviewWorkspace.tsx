@@ -9,7 +9,7 @@
  * - Message view is sacred (fixed center, cannot be closed or moved)
  * - Tabbed panels in sidebars with drag-and-drop
  * - Responsive breakpoints (auto-collapse at <1024px)
- * - Layout persistence via Dockview serialization
+ * - Layout persistence via native Dockview toJSON/fromJSON
  * - Theme integration via CSS custom properties
  */
 
@@ -20,6 +20,7 @@ import {
   IDockviewPanelProps,
   DockviewApi,
   IDockviewPanel,
+  SerializedDockview,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -185,6 +186,13 @@ export function PanelAdapter({ params }: IDockviewPanelProps<PanelAdapterParams>
 // Types for Layout Persistence
 // =============================================================================
 
+// Re-export SerializedDockview for external use
+export type { SerializedDockview };
+
+/**
+ * @deprecated Use SerializedDockview from dockview-react instead
+ * Kept for backward compatibility during migration
+ */
 export interface WorkspaceLayoutConfig {
   leftSidebar: {
     panels: string[];
@@ -205,7 +213,84 @@ export interface WorkspaceLayoutConfig {
 }
 
 /**
- * Create default workspace layout config
+ * Create default workspace layout using native Dockview format
+ * This builds the initial three-region layout programmatically
+ */
+export function createDefaultDockviewLayout(): SerializedDockview {
+  // Build the default layout structure that matches what toJSON() produces
+  // This creates: [left sidebar] | [center message] | [right sidebar]
+  return {
+    grid: {
+      root: {
+        type: 'branch',
+        data: [
+          // Left sidebar group
+          {
+            type: 'leaf',
+            data: {
+              views: LEFT_SIDEBAR_PANELS.map(id => id),
+              activeView: LEFT_SIDEBAR_PANELS[0],
+              id: 'left-sidebar',
+            },
+            size: SIDEBAR_WIDTHS.medium,
+          },
+          // Center (message) group
+          {
+            type: 'leaf',
+            data: {
+              views: [PANEL_INVENTORY.MESSAGE],
+              activeView: PANEL_INVENTORY.MESSAGE,
+              id: 'center',
+            },
+            size: 600, // Center takes remaining space
+          },
+          // Right sidebar group
+          {
+            type: 'leaf',
+            data: {
+              views: [...RIGHT_SIDEBAR_PANELS],
+              activeView: RIGHT_SIDEBAR_PANELS[0],
+              id: 'right-sidebar',
+            },
+            size: SIDEBAR_WIDTHS.medium,
+          },
+        ],
+        size: 800, // Will be overridden by actual container height
+      },
+      width: 1200,
+      height: 800,
+      orientation: 'HORIZONTAL',
+    },
+    panels: {
+      // Left sidebar panels
+      ...Object.fromEntries(LEFT_SIDEBAR_PANELS.map(id => [id, {
+        id,
+        contentComponent: 'PanelAdapter',
+        title: PANEL_TITLES[id] || id,
+        params: { panelId: id },
+      }])),
+      // Center panel
+      [PANEL_INVENTORY.MESSAGE]: {
+        id: PANEL_INVENTORY.MESSAGE,
+        contentComponent: 'PanelAdapter',
+        title: PANEL_TITLES[PANEL_INVENTORY.MESSAGE],
+        params: { panelId: PANEL_INVENTORY.MESSAGE },
+      },
+      // Right sidebar panels
+      ...Object.fromEntries(RIGHT_SIDEBAR_PANELS.map(id => [id, {
+        id,
+        contentComponent: 'PanelAdapter',
+        title: PANEL_TITLES[id] || id,
+        params: { panelId: id },
+      }])),
+    },
+    activeGroup: 'center',
+  };
+}
+
+/**
+ * @deprecated Use createDefaultDockviewLayout instead
+ * Kept for backward compatibility
  */
 export function createWorkspaceLayout(): WorkspaceLayoutConfig {
   return {
@@ -231,8 +316,10 @@ export function createWorkspaceLayout(): WorkspaceLayoutConfig {
 // =============================================================================
 
 export interface DockviewWorkspaceProps {
-  initialLayout?: WorkspaceLayoutConfig;
-  onLayoutChange?: (layout: WorkspaceLayoutConfig) => void;
+  /** Native Dockview serialized layout (preferred) */
+  initialLayout?: SerializedDockview;
+  /** Callback when layout changes - receives native Dockview format */
+  onLayoutChange?: (layout: SerializedDockview) => void;
 }
 
 export function DockviewWorkspace({
@@ -260,35 +347,47 @@ export function DockviewWorkspace({
     apiRef.current = api;
     dockviewApiRef = api;
 
-    // Use initialLayout if provided, otherwise create default
-    const layoutToApply = initialLayout || createWorkspaceLayout();
+    // Use native fromJSON if we have a saved layout, otherwise build default
+    if (initialLayout && initialLayout.grid && initialLayout.panels) {
+      // Restore from native Dockview serialized format
+      try {
+        api.fromJSON(initialLayout);
 
-    // Get panels for each region from the layout config
-    const leftPanels = layoutToApply.leftSidebar.panels.filter(
-      p => panelComponents.has(p)
-    );
-    const rightPanels = layoutToApply.rightSidebar.panels.filter(
-      p => panelComponents.has(p)
-    );
+        // After restoring, lock the message panel's group
+        const messagePanel = api.getPanel(PANEL_INVENTORY.MESSAGE);
+        if (messagePanel?.group) {
+          messagePanel.group.locked = 'no-drop-target';
+        }
 
+        setIsReady(true);
+        return;
+      } catch (err) {
+        console.warn('[DockviewWorkspace] Failed to restore layout from JSON, building default:', err);
+        // Fall through to build default layout
+      }
+    }
+
+    // Build default layout programmatically (for first-time users or failed restore)
     // Add first panel to left sidebar (creates the first group)
     const leftFirstPanel = api.addPanel({
-      id: leftPanels[0] || LEFT_SIDEBAR_PANELS[0],
+      id: LEFT_SIDEBAR_PANELS[0],
       component: 'PanelAdapter',
-      params: { panelId: leftPanels[0] || LEFT_SIDEBAR_PANELS[0] },
-      title: PANEL_TITLES[leftPanels[0] || LEFT_SIDEBAR_PANELS[0]],
+      params: { panelId: LEFT_SIDEBAR_PANELS[0] },
+      title: PANEL_TITLES[LEFT_SIDEBAR_PANELS[0]],
     });
 
     // Add remaining left sidebar panels to the same group
-    for (let i = 1; i < leftPanels.length; i++) {
-      const panelId = leftPanels[i];
-      api.addPanel({
-        id: panelId,
-        component: 'PanelAdapter',
-        params: { panelId },
-        position: { referencePanel: leftFirstPanel.id },
-        title: PANEL_TITLES[panelId],
-      });
+    for (let i = 1; i < LEFT_SIDEBAR_PANELS.length; i++) {
+      const panelId = LEFT_SIDEBAR_PANELS[i];
+      if (panelComponents.has(panelId)) {
+        api.addPanel({
+          id: panelId,
+          component: 'PanelAdapter',
+          params: { panelId },
+          position: { referencePanel: leftFirstPanel.id },
+          title: PANEL_TITLES[panelId],
+        });
+      }
     }
 
     // Add message panel to center (creates new group to the right)
@@ -302,23 +401,25 @@ export function DockviewWorkspace({
 
     // Add first right sidebar panel (creates new group to the right of center)
     const rightFirstPanel = api.addPanel({
-      id: rightPanels[0] || RIGHT_SIDEBAR_PANELS[0],
+      id: RIGHT_SIDEBAR_PANELS[0],
       component: 'PanelAdapter',
-      params: { panelId: rightPanels[0] || RIGHT_SIDEBAR_PANELS[0] },
+      params: { panelId: RIGHT_SIDEBAR_PANELS[0] },
       position: { referencePanel: messagePanel.id, direction: 'right' },
-      title: PANEL_TITLES[rightPanels[0] || RIGHT_SIDEBAR_PANELS[0]],
+      title: PANEL_TITLES[RIGHT_SIDEBAR_PANELS[0]],
     });
 
     // Add remaining right sidebar panels to the same group
-    for (let i = 1; i < rightPanels.length; i++) {
-      const panelId = rightPanels[i];
-      api.addPanel({
-        id: panelId,
-        component: 'PanelAdapter',
-        params: { panelId },
-        position: { referencePanel: rightFirstPanel.id },
-        title: PANEL_TITLES[panelId],
-      });
+    for (let i = 1; i < RIGHT_SIDEBAR_PANELS.length; i++) {
+      const panelId = RIGHT_SIDEBAR_PANELS[i];
+      if (panelComponents.has(panelId)) {
+        api.addPanel({
+          id: panelId,
+          component: 'PanelAdapter',
+          params: { panelId },
+          position: { referencePanel: rightFirstPanel.id },
+          title: PANEL_TITLES[panelId],
+        });
+      }
     }
 
     // Lock the center group - MessagePanel cannot be closed or moved
@@ -326,41 +427,21 @@ export function DockviewWorkspace({
       messagePanel.group.locked = 'no-drop-target';
     }
 
-    // Set initial sidebar sizes from layout config
+    // Set initial sidebar sizes
     const leftGroup = leftFirstPanel.group;
     const rightGroup = rightFirstPanel.group;
-    const leftWidth = layoutToApply.leftSidebar.collapsed ? 0 : layoutToApply.leftSidebar.width;
-    const rightWidth = layoutToApply.rightSidebar.collapsed ? 0 : layoutToApply.rightSidebar.width;
 
     if (leftGroup) {
-      leftGroup.api.setSize({ width: leftWidth });
+      leftGroup.api.setSize({ width: SIDEBAR_WIDTHS.medium });
     }
     if (rightGroup) {
-      rightGroup.api.setSize({ width: rightWidth });
-    }
-
-    // Restore active panels from saved layout
-    const leftActiveId = layoutToApply.leftSidebar.activePanel;
-    const rightActiveId = layoutToApply.rightSidebar.activePanel;
-
-    if (leftActiveId) {
-      const leftActivePanel = api.getPanel(leftActiveId);
-      if (leftActivePanel) {
-        leftActivePanel.api.setActive();
-      }
-    }
-
-    if (rightActiveId) {
-      const rightActivePanel = api.getPanel(rightActiveId);
-      if (rightActivePanel) {
-        rightActivePanel.api.setActive();
-      }
+      rightGroup.api.setSize({ width: SIDEBAR_WIDTHS.medium });
     }
 
     setIsReady(true);
   }, [initialLayout]);
 
-  // Handle layout changes for persistence
+  // Handle layout changes for persistence using native toJSON
   const handleLayoutChange = useCallback(() => {
     const api = apiRef.current;
     if (!api || !onLayoutChange) return;
@@ -371,56 +452,11 @@ export function DockviewWorkspace({
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      // Find groups by looking at which group contains which panels
-      // Left sidebar contains 'changed', right contains 'sprint', center contains 'message'
-      const changedPanel = api.getPanel(PANEL_INVENTORY.CHANGED);
-      const sprintPanel = api.getPanel(PANEL_INVENTORY.SPRINT);
-      const leftGroup = changedPanel?.group;
-      const rightGroup = sprintPanel?.group;
-
-      // Collect all panels in each sidebar by checking which group they're in
-      const leftPanels: string[] = [];
-      const rightPanels: string[] = [];
-
-      for (const panelId of LEFT_SIDEBAR_PANELS) {
-        const panel = api.getPanel(panelId);
-        if (panel && panel.group === leftGroup) {
-          leftPanels.push(panelId);
-        }
-      }
-      for (const panelId of RIGHT_SIDEBAR_PANELS) {
-        const panel = api.getPanel(panelId);
-        if (panel && panel.group === rightGroup) {
-          rightPanels.push(panelId);
-        }
-      }
-
-      // Get active panel for each sidebar group
-      const leftActivePanel = leftGroup?.activePanel?.id;
-      const rightActivePanel = rightGroup?.activePanel?.id;
-
-      const layout: WorkspaceLayoutConfig = {
-        leftSidebar: {
-          panels: leftPanels.length > 0 ? leftPanels : [...LEFT_SIDEBAR_PANELS],
-          width: leftGroup?.width || sidebarWidth,
-          collapsed: (leftGroup?.width || 0) === 0,
-          activePanel: leftActivePanel,
-        },
-        center: {
-          panels: [PANEL_INVENTORY.MESSAGE],
-          locked: true,
-        },
-        rightSidebar: {
-          panels: rightPanels.length > 0 ? rightPanels : [...RIGHT_SIDEBAR_PANELS],
-          width: rightGroup?.width || sidebarWidth,
-          collapsed: (rightGroup?.width || 0) === 0,
-          activePanel: rightActivePanel,
-        },
-      };
-
-      onLayoutChange(layout);
+      // Use native Dockview toJSON for complete layout serialization
+      const serializedLayout = api.toJSON();
+      onLayoutChange(serializedLayout);
     }, 300);
-  }, [onLayoutChange, sidebarWidth]);
+  }, [onLayoutChange]);
 
   // Subscribe to layout changes and track closed panels
   useEffect(() => {
