@@ -74,12 +74,15 @@ export async function getCachedGitStatus(projectDir: string): Promise<RepoGitInf
   // Start a new fetch
   cache.fetchPromise = (async () => {
     try {
+      console.log('[GitCache] Fetching git status for', projectDir);
       const repos = await getAllReposGitInfoAsync(projectDir);
+      console.log('[GitCache] Got', repos.length, 'repos:', repos.map(r => `${r.name}(clean=${r.clean})`).join(', '));
       cache.repos = repos;
       cache.stale = false;
       cache.lastFetch = Date.now();
 
       // Notify listeners
+      console.log('[GitCache] Notifying', refreshCallbacks.size, 'callbacks');
       for (const callback of refreshCallbacks) {
         try {
           callback(repos);
@@ -102,6 +105,7 @@ export async function getCachedGitStatus(projectDir: string): Promise<RepoGitInf
  * Does NOT immediately fetch - waits for REFRESH_DELAY_MS to batch invalidations
  */
 export function invalidateGitCache(projectDir: string): void {
+  console.log('[GitCache] invalidateGitCache called for:', projectDir);
   const cache = getOrCreateCache(projectDir);
   cache.stale = true;
 
@@ -111,6 +115,7 @@ export function invalidateGitCache(projectDir: string): void {
   // (only set if not already tracking - prevents resetting on each event)
   if (!invalidationStartTimes.has(projectDir)) {
     invalidationStartTimes.set(projectDir, now);
+    console.log('[GitCache] Started new invalidation sequence');
   }
 
   // Clear any existing refresh timer
@@ -127,27 +132,37 @@ export function invalidateGitCache(projectDir: string): void {
 
   // If we've hit the max delay, refresh immediately
   if (actualDelay === 0) {
+    console.log('[GitCache] Max delay reached, forcing immediate refresh');
     invalidationStartTimes.delete(projectDir);
     refreshTimers.delete(projectDir);
     if (refreshCallbacks.size > 0) {
+      console.log('[GitCache] Triggering refresh, callbacks registered:', refreshCallbacks.size);
       getCachedGitStatus(projectDir).catch(err => {
         console.error('[GitCache] Max delay refresh error:', err);
       });
+    } else {
+      console.log('[GitCache] No refresh callbacks registered, skipping refresh');
     }
     return;
   }
 
   // Schedule a debounced refresh
+  console.log('[GitCache] Scheduling debounced refresh in', actualDelay, 'ms');
   const timer = setTimeout(async () => {
+    console.log('[GitCache] Debounce timer fired');
     refreshTimers.delete(projectDir);
     invalidationStartTimes.delete(projectDir);
     // Only refresh if there are listeners (WebSocket clients)
     if (refreshCallbacks.size > 0) {
+      console.log('[GitCache] Triggering refresh, callbacks registered:', refreshCallbacks.size);
       try {
         await getCachedGitStatus(projectDir);
+        console.log('[GitCache] Refresh complete');
       } catch (err) {
         console.error('[GitCache] Debounced refresh error:', err);
       }
+    } else {
+      console.log('[GitCache] No refresh callbacks registered, skipping refresh');
     }
   }, actualDelay);
 

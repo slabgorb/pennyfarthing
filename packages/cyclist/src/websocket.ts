@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getReposFromConfig, type RepoGitInfo } from './api/git.js';
+import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
 import {
   getCachedGitStatus,
   invalidateGitCache,
@@ -844,8 +844,10 @@ export function setupWebSocketServers(
     // Invalidate git cache only when files are actually modified
     // Not every tool use affects git status - be selective to avoid unnecessary refreshes
     const shouldInvalidateGit = shouldInvalidateGitCache(event);
+    console.log('[WebSocket] Tool event:', event.toolName, 'input:', event.input?.substring(0, 80), 'success:', event.success, 'shouldInvalidateGit:', shouldInvalidateGit);
     if (shouldInvalidateGit) {
       const projectDir = getProjectDir();
+      console.log('[WebSocket] Invalidating git cache for:', projectDir);
       invalidateGitCache(projectDir);
     }
 
@@ -988,7 +990,16 @@ export function setupWebSocketServers(
 
   // Register git cache refresh callback to broadcast updates
   onGitCacheRefresh((allReposInfo) => {
+    console.log('[WebSocket] onGitCacheRefresh callback fired, broadcasting to', gitClients.size, 'clients');
     broadcastGitUpdate(allReposInfo);
+  });
+
+  // Register force refresh callback for /api/git/refresh endpoint
+  setForceRefreshCallback(async (projDir: string) => {
+    console.log('[WebSocket] Force refresh callback called for:', projDir);
+    const repos = await forceRefreshGitCache(projDir);
+    console.log('[WebSocket] Force refresh got', repos.length, 'repos, broadcasting');
+    broadcastGitUpdate(repos);
   });
 
   // Set up settings file watcher for config.local.yaml changes
@@ -1376,11 +1387,15 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
 // MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
 function broadcastGitUpdate(allReposInfo: RepoGitInfo[]): void {
   const message = JSON.stringify({ type: 'update', repos: allReposInfo });
+  console.log('[WebSocket] broadcastGitUpdate: clients=', gitClients.size, 'repos=', allReposInfo.map(r => `${r.name}(clean=${r.clean})`).join(', '));
+  let sentCount = 0;
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
+      sentCount++;
     }
   }
+  console.log('[WebSocket] broadcastGitUpdate: sent to', sentCount, 'open clients');
   // Bridge to Electron IPC for panel updates
   if (gitUpdateCallback) {
     gitUpdateCallback(allReposInfo);
