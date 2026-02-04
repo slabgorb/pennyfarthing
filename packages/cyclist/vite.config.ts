@@ -8,6 +8,13 @@ export default defineConfig({
   plugins: [react()],
   root: resolve(__dirname, 'src/public'),
   base: '/',
+  // Define Node.js globals for browser - some packages (xterm) check for these
+  define: {
+    // Stub __dirname to empty string - it's only used for optional file checks
+    '__dirname': '""',
+    // Prevent process checks from throwing
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+  },
   build: {
     outDir: resolve(__dirname, 'dist/public'),
     emptyOutDir: true, // Safe to clear - this is a build output directory
@@ -15,6 +22,8 @@ export default defineConfig({
       input: {
         react: resolve(__dirname, 'src/public/index.tsx'),
       },
+      // Mark electron and node-pty as external - they're only available in Electron main/preload
+      external: ['electron', 'node-pty'],
       output: {
         entryFileNames: 'js/react/[name].js',
         chunkFileNames: 'js/react/[name]-[hash].js',

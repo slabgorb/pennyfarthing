@@ -20,6 +20,7 @@ import { ClaudeProvider } from './contexts/ClaudeContext';
 import { MessageQueueProvider } from './contexts/MessageQueueContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Import all panel components
 // Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)
@@ -129,6 +130,69 @@ function useReducedMotion(): void {
 // App Component
 // =============================================================================
 
+// =============================================================================
+// Root Error Fallback
+// =============================================================================
+
+/**
+ * Root-level error fallback UI - shown when the entire app crashes
+ */
+function RootErrorFallback(): React.ReactElement {
+  const handleReload = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      backgroundColor: 'var(--bg-primary, #0a0a0f)',
+      color: 'var(--text-primary, #e2e8f0)',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: '24px',
+      textAlign: 'center',
+    }}>
+      <h1 style={{
+        fontSize: '24px',
+        fontWeight: 600,
+        marginBottom: '16px',
+        color: 'var(--status-error, #ef4444)',
+      }}>
+        Something went wrong
+      </h1>
+      <p style={{
+        fontSize: '14px',
+        color: 'var(--text-secondary, #94a3b8)',
+        marginBottom: '24px',
+        maxWidth: '400px',
+      }}>
+        Cyclist encountered an unexpected error. Check the console for details.
+      </p>
+      <button
+        onClick={handleReload}
+        style={{
+          padding: '8px 16px',
+          fontSize: '14px',
+          backgroundColor: 'var(--accent-primary, #6366f1)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+        }}
+      >
+        Reload Cyclist
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// App Component
+// =============================================================================
+
 export default function App(): React.ReactElement {
   const { layout, isLoading, saveLayout } = useLayoutPersistence();
 
@@ -143,40 +207,42 @@ export default function App(): React.ReactElement {
   }, []);
 
   return (
-    <ClaudeProvider>
-      <MessageQueueProvider>
-        <CommandPaletteProvider>
-          <div className="cyclist-app">
-        {/* Skip links for keyboard navigation (AC7) - always render first */}
-        <SkipLink href="#main-content">Skip to main content</SkipLink>
-        <SkipLink href="#message-input">Skip to input</SkipLink>
-        <SkipLink href="#sidebar-nav">Skip to navigation</SkipLink>
+    <ErrorBoundary fallback={<RootErrorFallback />} panelName="App">
+      <ClaudeProvider>
+        <MessageQueueProvider>
+          <CommandPaletteProvider>
+            <div className="cyclist-app">
+              {/* Skip links for keyboard navigation (AC7) - always render first */}
+              <SkipLink href="#main-content">Skip to main content</SkipLink>
+              <SkipLink href="#message-input">Skip to input</SkipLink>
+              <SkipLink href="#sidebar-nav">Skip to navigation</SkipLink>
 
-        {/* Loading state - only show while actually loading */}
-        {isLoading ? (
-          <main id="main-content" tabIndex={-1}>
-            <div className="cyclist-loading">
-              <div className="loading-spinner" aria-label="Loading layout..." />
+              {/* Loading state - only show while actually loading */}
+              {isLoading ? (
+                <main id="main-content" tabIndex={-1}>
+                  <div className="cyclist-loading">
+                    <div className="loading-spinner" aria-label="Loading layout..." />
+                  </div>
+                </main>
+              ) : (
+                /* Main content area - layout can be null for first-time users */
+                <main id="main-content" tabIndex={-1}>
+                  <DockviewWorkspace
+                    initialLayout={layout ?? undefined}
+                    onLayoutChange={saveLayout}
+                  />
+                </main>
+              )}
+
+              {/* Sidebar navigation target (for skip link) */}
+              <nav id="sidebar-nav" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
+
+              {/* Message input target (for skip link) */}
+              <div id="message-input" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
             </div>
-          </main>
-        ) : (
-          /* Main content area - layout can be null for first-time users */
-          <main id="main-content" tabIndex={-1}>
-            <DockviewWorkspace
-              initialLayout={layout ?? undefined}
-              onLayoutChange={saveLayout}
-            />
-          </main>
-        )}
-
-        {/* Sidebar navigation target (for skip link) */}
-        <nav id="sidebar-nav" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
-
-        {/* Message input target (for skip link) */}
-        <div id="message-input" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
-          </div>
-        </CommandPaletteProvider>
-      </MessageQueueProvider>
-    </ClaudeProvider>
+          </CommandPaletteProvider>
+        </MessageQueueProvider>
+      </ClaudeProvider>
+    </ErrorBoundary>
   );
 }
