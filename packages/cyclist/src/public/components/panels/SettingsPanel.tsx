@@ -8,7 +8,7 @@
  * Story MSSCI-14243 - Added Panel Visibility section
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ThemePalette } from '../ThemePalette';
 import { FontPicker, FontSizePicker } from '../FontPicker';
 import {
@@ -87,6 +87,7 @@ export function SettingsPanel(): React.ReactElement {
   const [colorPreset, setColorPreset] = useState<string>(DEFAULT_PRESET);
   const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
   const [panelVisibility, setPanelVisibility] = useState<Record<string, boolean>>({});
+  const pendingToggles = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // Load settings via REST
@@ -163,13 +164,23 @@ export function SettingsPanel(): React.ReactElement {
 
       const visibility: Record<string, boolean> = {};
       const allPanelIds = Object.values(PANEL_INVENTORY);
+      const now = Date.now();
 
       for (const panelId of allPanelIds) {
+        // Skip panels with pending toggles (wait for Dockview to catch up)
+        const pendingUntil = pendingToggles.current[panelId];
+        if (pendingUntil && now < pendingUntil) {
+          continue; // Keep current state, don't overwrite
+        }
+        // Clear expired pending toggle
+        if (pendingUntil) {
+          delete pendingToggles.current[panelId];
+        }
         // Panel is visible if it exists in the Dockview
         visibility[panelId] = api.getPanel(panelId) !== undefined;
       }
 
-      setPanelVisibility(visibility);
+      setPanelVisibility(prev => ({ ...prev, ...visibility }));
     };
 
     // Initial update
@@ -185,6 +196,11 @@ export function SettingsPanel(): React.ReactElement {
   const handlePanelToggle = useCallback((panelId: string, visible: boolean) => {
     const api = getDockviewApi();
     if (!api) return;
+
+    // Mark this panel as having a pending toggle for 1 second
+    // This prevents the polling interval from overwriting the state
+    // before Dockview has finished adding/removing the panel
+    pendingToggles.current[panelId] = Date.now() + 1000;
 
     if (visible) {
       // Show panel by restoring it
