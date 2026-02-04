@@ -3108,15 +3108,18 @@
   color: var(--accent-color, #007acc);
 }
 
-/* Agent Details */
+/* Agent Details - MSSCI-14204: Fixed dimensions to prevent layout shift */
 .agent-popup-details {
   padding: 16px;
   overflow-y: auto;
+  min-height: 380px;
+  max-height: calc(80vh - 60px); /* Account for header */
+  transition: opacity 0.15s ease;
 }
 
 .popup-portrait {
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   margin: 0 auto 16px;
   border-radius: 8px;
   overflow: hidden;
@@ -3164,6 +3167,8 @@
 
 .popup-detail {
   margin-bottom: 12px;
+  max-height: 4.5em; /* ~3 lines */
+  overflow: hidden;
 }
 
 .popup-detail label {
@@ -3176,6 +3181,10 @@
 
 .popup-detail span {
   font-size: 0.9rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .lift-value.positive {
