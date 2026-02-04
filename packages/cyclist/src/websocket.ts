@@ -152,6 +152,47 @@ interface DiffData {
 }
 const diffStore: DiffData[] = [];
 
+/**
+ * Process a tool_use message for diff tracking (MSSCI-14190)
+ * Single source of truth for Edit/Write diff processing.
+ * Called from: main.ts (Electron mode), websocket.ts (Web mode), OTEL path
+ */
+export function processToolUseForDiffs(
+  toolName: string,
+  toolId: string | undefined,
+  toolInput: Record<string, unknown> | undefined
+): void {
+  if (!toolInput) return;
+
+  if (toolName === 'Edit') {
+    const input = toolInput as { file_path?: string; old_string?: string; new_string?: string };
+    if (input.file_path) {
+      const diff: DiffData = {
+        id: toolId || `edit-${Date.now()}`,
+        path: input.file_path,
+        original: input.old_string || '',
+        modified: input.new_string || '',
+        toolName: 'Edit',
+        timestamp: Date.now(),
+      };
+      broadcastDiff(diff);
+    }
+  } else if (toolName === 'Write') {
+    const input = toolInput as { file_path?: string; content?: string };
+    if (input.file_path) {
+      const diff: DiffData = {
+        id: toolId || `write-${Date.now()}`,
+        path: input.file_path,
+        original: '',
+        modified: input.content || '',
+        toolName: 'Write',
+        timestamp: Date.now(),
+      };
+      broadcastDiff(diff);
+    }
+  }
+}
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -783,7 +824,6 @@ export function setupWebSocketServers(
 
   // Handle diffs WebSocket connections (Phase 2: Edit/Write diffs)
   diffsWss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] Diffs client connected');
     diffsClients.add(ws);
 
     // Send existing diffs on connection
@@ -796,7 +836,6 @@ export function setupWebSocketServers(
       try {
         const msg = JSON.parse(data.toString());
         if (msg.type === 'clear') {
-          // Clear diff store (client requested clear)
           diffStore.length = 0;
         }
       } catch {
@@ -804,13 +843,10 @@ export function setupWebSocketServers(
       }
     });
 
-    // Remove client on disconnect
     ws.on('close', () => {
-      console.log('[WebSocket] Diffs client disconnected');
       diffsClients.delete(ws);
     });
 
-    // Handle errors gracefully
     ws.on('error', () => {
       diffsClients.delete(ws);
     });
@@ -905,6 +941,7 @@ export function setupWebSocketServers(
     }
 
     // Broadcast diffs for Edit/Write tool events
+    // Note: broadcastDiff now handles storage to diffStore
     if ((event.toolName === 'Edit' || event.toolName === 'Write') && event.filePath) {
       const diff: DiffData = {
         id: event.spanId || `${event.toolName.toLowerCase()}-${Date.now()}`,
@@ -915,15 +952,7 @@ export function setupWebSocketServers(
         timestamp: event.timestamp,
       };
 
-      // Store diff for new connections
-      const existingIndex = diffStore.findIndex(d => d.path === diff.path);
-      if (existingIndex >= 0) {
-        diffStore[existingIndex] = diff;
-      } else {
-        diffStore.push(diff);
-      }
-
-      // Broadcast to connected clients
+      // broadcastDiff stores to diffStore and broadcasts to clients
       broadcastDiff(diff);
     }
   });
@@ -1219,53 +1248,13 @@ export function setupWebSocketServers(
                     ws.send(JSON.stringify({ type: 'message', message }));
                   }
 
-                  // Process tool_use messages for diff tracking (mirrors main.ts Electron mode)
-                  // This stores pending inputs for OTLP correlation AND broadcasts diffs directly
+                  // Process tool_use messages for diff tracking and OTEL correlation
                   const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
-
-                    // Broadcast diffs directly for Edit/Write tools
-                    if (sdkMsg.tool_name === 'Edit') {
-                      const input = sdkMsg.input as { file_path?: string; old_string?: string; new_string?: string };
-                      if (input.file_path) {
-                        const diff: DiffData = {
-                          id: sdkMsg.tool_id,
-                          path: input.file_path,
-                          original: input.old_string || '',
-                          modified: input.new_string || '',
-                          toolName: 'Edit',
-                          timestamp: Date.now(),
-                        };
-                        const existingIndex = diffStore.findIndex(d => d.path === diff.path);
-                        if (existingIndex >= 0) {
-                          diffStore[existingIndex] = diff;
-                        } else {
-                          diffStore.push(diff);
-                        }
-                        broadcastDiff(diff);
-                      }
-                    } else if (sdkMsg.tool_name === 'Write') {
-                      const input = sdkMsg.input as { file_path?: string; content?: string };
-                      if (input.file_path) {
-                        const diff: DiffData = {
-                          id: sdkMsg.tool_id,
-                          path: input.file_path,
-                          original: '',
-                          modified: input.content || '',
-                          toolName: 'Write',
-                          timestamp: Date.now(),
-                        };
-                        const existingIndex = diffStore.findIndex(d => d.path === diff.path);
-                        if (existingIndex >= 0) {
-                          diffStore[existingIndex] = diff;
-                        } else {
-                          diffStore.push(diff);
-                        }
-                        broadcastDiff(diff);
-                      }
-                    }
+                    // Process Edit/Write for diff tracking (single source of truth)
+                    processToolUseForDiffs(sdkMsg.tool_name, sdkMsg.tool_id, sdkMsg.input);
                   }
                 }
                 if (ws.readyState === WebSocket.OPEN) {
@@ -1496,7 +1485,17 @@ export function broadcastContextUpdate(context: ContextInfo): void {
 
 // Broadcast diff update to all connected clients
 // Called when Edit/Write tool events are processed
+// MSSCI-14190: Also store to diffStore so new/reconnecting clients receive data
 export function broadcastDiff(diff: DiffData): void {
+  // Store diff for new connections (deduplicate by path)
+  const existingIndex = diffStore.findIndex(d => d.path === diff.path);
+  if (existingIndex >= 0) {
+    diffStore[existingIndex] = diff;
+  } else {
+    diffStore.push(diff);
+  }
+
+  // Broadcast to connected clients
   const message = JSON.stringify({ type: 'diff', diff });
   for (const client of diffsClients) {
     if (client.readyState === WebSocket.OPEN) {
