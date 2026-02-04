@@ -5,6 +5,7 @@
  * Updated to match actual config.local.yaml structure
  * Story MSSCI-12817 - Added Color Palette section with ThemePalette
  * Story MSSCI-12769 - Added Fonts section with FontPicker
+ * Story MSSCI-14243 - Added Panel Visibility section
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -24,6 +25,11 @@ import {
   FontSettings,
   FontSize,
 } from '../../utils/font-presets';
+import {
+  PANEL_INVENTORY,
+  getDockviewApi,
+  restorePanel,
+} from '../DockviewWorkspace';
 
 interface Settings {
   workflow?: {
@@ -54,12 +60,33 @@ interface ThemeMetadata {
 // Tier sort order: S=0, A=1, B=2, U=3
 const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, U: 3 };
 
+// Panel display names for the visibility toggles
+const PANEL_DISPLAY_NAMES: Record<string, string> = {
+  changed: 'Changed Files',
+  diffs: 'Diffs',
+  debug: 'Debug',
+  'audit-log': 'Audit Log',
+  tty: 'Terminal',
+  message: 'Message',
+  sprint: 'Sprint',
+  workflow: 'Workflow',
+  ac: 'AC',
+  todo: 'Todo',
+  background: 'Background',
+  git: 'Git',
+  settings: 'Settings',
+};
+
+// Panels that cannot be hidden (sacred center)
+const PROTECTED_PANELS = new Set(['message']);
+
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [themes, setThemes] = useState<ThemeMetadata[]>([]);
   const [saving, setSaving] = useState(false);
   const [colorPreset, setColorPreset] = useState<string>(DEFAULT_PRESET);
   const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
+  const [panelVisibility, setPanelVisibility] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Load settings via REST
@@ -126,6 +153,52 @@ export function SettingsPanel(): React.ReactElement {
     });
 
     return () => ws.close();
+  }, []);
+
+  // Track panel visibility from Dockview API
+  useEffect(() => {
+    const updatePanelVisibility = () => {
+      const api = getDockviewApi();
+      if (!api) return;
+
+      const visibility: Record<string, boolean> = {};
+      const allPanelIds = Object.values(PANEL_INVENTORY);
+
+      for (const panelId of allPanelIds) {
+        // Panel is visible if it exists in the Dockview
+        visibility[panelId] = api.getPanel(panelId) !== undefined;
+      }
+
+      setPanelVisibility(visibility);
+    };
+
+    // Initial update
+    updatePanelVisibility();
+
+    // Poll for changes (Dockview API events are subscribed in DockviewWorkspace)
+    const interval = setInterval(updatePanelVisibility, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle panel visibility toggle
+  const handlePanelToggle = useCallback((panelId: string, visible: boolean) => {
+    const api = getDockviewApi();
+    if (!api) return;
+
+    if (visible) {
+      // Show panel by restoring it
+      restorePanel(panelId);
+    } else {
+      // Hide panel by removing it
+      const panel = api.getPanel(panelId);
+      if (panel) {
+        panel.api.close();
+      }
+    }
+
+    // Update local state immediately for responsive UI
+    setPanelVisibility(prev => ({ ...prev, [panelId]: visible }));
   }, []);
 
   // Sort themes: by tier (S > A > B > U), then alphabetically by name
@@ -340,6 +413,32 @@ export function SettingsPanel(): React.ReactElement {
           />
           Sound effects
         </label>
+      </section>
+
+      <section className="settings-section">
+        <h4>Panel Visibility</h4>
+        <div className="panel-visibility-list">
+          {Object.values(PANEL_INVENTORY).map((panelId) => {
+            const isProtected = PROTECTED_PANELS.has(panelId);
+            const isVisible = panelVisibility[panelId] ?? true;
+            const displayName = PANEL_DISPLAY_NAMES[panelId] || panelId;
+
+            return (
+              <label key={panelId} className="toggle-setting">
+                <input
+                  type="checkbox"
+                  checked={isVisible}
+                  onChange={(e) => handlePanelToggle(panelId, e.target.checked)}
+                  disabled={isProtected}
+                />
+                {displayName}
+                {isProtected && (
+                  <span className="setting-description">(always visible)</span>
+                )}
+              </label>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
