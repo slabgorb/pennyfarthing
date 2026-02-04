@@ -13,7 +13,7 @@ import Editor, { PastedImage } from '../Editor';
 import { ControlBar, useControlBar } from '../ControlBar';
 import PersonaHeader from '../PersonaHeader';
 import StatsStrip from '../StatsStrip';
-import { useMessageQueue, QueuedMessage, InjectDependencies } from '../../hooks/useMessageQueue';
+import { useMessageQueueContext, QueuedMessage, InjectDependencies } from '../../contexts/MessageQueueContext';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
 import type { ClaudeMessage } from '../../hooks/useClaude';
 import type { MessageData } from '../../types/message';
@@ -225,8 +225,8 @@ export function MessagePanel(): React.ReactElement {
   // Claude context for WebSocket communication
   const { send, abort, onMessage, onComplete, onError, onUserMessage, isConnected } = useClaudeContext();
 
-  // Message queue hook for turn complete handling and bell mode
-  const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueue();
+  // Message queue context for turn complete handling and bell mode (shared with Editor)
+  const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueueContext();
 
   // Ref to track the submit function for turn complete
   const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>();
