@@ -24,7 +24,7 @@ import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 // Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)
 import {
   MessagePanel,
-  SprintPanel,
+  EnhancedSprintPanel,
   GitPanel,
   ProgressPanel,
   BackgroundPanel,
@@ -51,7 +51,7 @@ registerPanelComponent(PANEL_INVENTORY.AUDIT_LOG, AuditLogPanel);
 
 // Right sidebar panels
 // Note: AC and BikeLane are now internal tabs within ProgressPanel
-registerPanelComponent(PANEL_INVENTORY.SPRINT, SprintPanel);
+registerPanelComponent(PANEL_INVENTORY.SPRINT, EnhancedSprintPanel);
 registerPanelComponent(PANEL_INVENTORY.PROGRESS, ProgressPanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);

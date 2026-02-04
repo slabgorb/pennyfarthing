@@ -16,6 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
+import { getSprintData, type SprintData } from './sprint-data.js';
 import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
 import {
   getCachedGitStatus,
@@ -125,6 +126,9 @@ const diffsClients = new Set<WebSocket>();
 
 // Todos WebSocket clients (MSSCI-TODO: todos via WebSocket instead of REST polling)
 const todosClients = new Set<WebSocket>();
+
+// Sprint WebSocket clients (MSSCI-14189: Enhanced Sprint Panel)
+const sprintClients = new Set<WebSocket>();
 
 // In-memory todos store (for initial send on connection)
 interface TodoItem {
@@ -278,6 +282,10 @@ export function getTodosClients(): Set<WebSocket> {
   return todosClients;
 }
 
+export function getSprintClients(): Set<WebSocket> {
+  return sprintClients;
+}
+
 export function getClaudeClients(): Set<WebSocket> {
   return claudeClients;
 }
@@ -409,6 +417,9 @@ export function setupWebSocketServers(
   // WebSocket server for todos at /ws/todos (replaces REST polling)
   const todosWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for sprint at /ws/sprint (MSSCI-14189: Enhanced Sprint Panel)
+  const sprintWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -476,6 +487,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/todos') {
       todosWss.handleUpgrade(request, socket, head, (ws) => {
         todosWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/sprint') {
+      sprintWss.handleUpgrade(request, socket, head, (ws) => {
+        sprintWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -823,6 +838,30 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle sprint WebSocket connections (MSSCI-14189: Enhanced Sprint Panel)
+  sprintWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Sprint client connected');
+    sprintClients.add(ws);
+
+    // Send initial sprint data on connection
+    const projectDir = getProjectDir();
+    const sprintData = getSprintData(projectDir);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', ...sprintData }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Sprint client disconnected');
+      sprintClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      sprintClients.delete(ws);
+    });
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
   // Also trigger context updates when tool events arrive
@@ -903,6 +942,7 @@ export function setupWebSocketServers(
   }
 
   // Set up story file watcher (MSSCI-11943: AC1 - broadcast on sprint/*.yaml changes)
+  // Also broadcasts sprint updates for EnhancedSprintPanel (MSSCI-14189)
   const sprintDir = join(projectDir, 'sprint');
   if (existsSync(sprintDir)) {
     try {
@@ -917,6 +957,8 @@ export function setupWebSocketServers(
         storyDebounceTimer = setTimeout(() => {
           const storyInfo = getStoryInfo(projectDir);
           broadcastStoryUpdate(storyInfo);
+          // Also broadcast sprint updates for EnhancedSprintPanel
+          broadcastSprintUpdate(projectDir);
           storyDebounceTimer = null;
         }, STORY_DEBOUNCE_MS);
       });
@@ -1381,6 +1423,17 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
   // Bridge to Electron IPC for panel updates
   if (storyUpdateCallback) {
     storyUpdateCallback(storyInfo);
+  }
+}
+
+// MSSCI-14189: Broadcast sprint update to all connected clients
+function broadcastSprintUpdate(projectDir: string): void {
+  const sprintData = getSprintData(projectDir);
+  const message = JSON.stringify({ type: 'update', ...sprintData });
+  for (const client of sprintClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
   }
 }
 
