@@ -17,6 +17,44 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { ClaudeProvider } from '../src/public/contexts/ClaudeContext';
+
+// =============================================================================
+// Mock WebSocket for ClaudeProvider
+// =============================================================================
+
+class MockWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+
+  readyState = MockWebSocket.OPEN;
+  onopen: ((event: unknown) => void) | null = null;
+  onclose: ((event: unknown) => void) | null = null;
+  onerror: ((event: unknown) => void) | null = null;
+  onmessage: ((event: unknown) => void) | null = null;
+
+  constructor(_url: string) {
+    setTimeout(() => {
+      if (this.onopen) this.onopen({});
+    }, 0);
+  }
+
+  send(_data: string): void {}
+  close(): void {
+    if (this.onclose) this.onclose({});
+  }
+}
+
+// Set up global WebSocket mock
+beforeEach(() => {
+  (global as unknown as { WebSocket: typeof MockWebSocket }).WebSocket = MockWebSocket;
+});
+
+afterEach(() => {
+  delete (global as unknown as { WebSocket?: typeof MockWebSocket }).WebSocket;
+});
 
 // =============================================================================
 // Test Utilities
@@ -280,7 +318,11 @@ describe('AC1: ARIA labels on all interactive elements', () => {
         { label: 'Continue', command: '/dev' },
         { label: 'Review', command: '/reviewer' },
       ];
-      render(<QuickActions actions={actions} onAction={vi.fn()} />);
+      render(
+        <ClaudeProvider>
+          <QuickActions actions={actions} onAction={vi.fn()} />
+        </ClaudeProvider>
+      );
 
       const buttons = screen.getAllByRole('button');
       buttons.forEach((button) => {

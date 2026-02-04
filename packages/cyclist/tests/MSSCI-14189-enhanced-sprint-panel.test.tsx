@@ -143,6 +143,9 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
 // Mock Setup
 // =============================================================================
 
+// Shared state for MockWebSocket to read initial data
+let mockSprintDataOverride: MockSprintData | null = null;
+
 // Mock WebSocket for real-time updates
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -154,7 +157,20 @@ class MockWebSocket {
 
   constructor(public url: string) {
     MockWebSocket.instances.push(this);
-    setTimeout(() => this.onopen?.(), 0);
+    setTimeout(() => {
+      this.onopen?.();
+
+      // Send initial data from override or default
+      if (this.onmessage && url.includes('/ws/sprint')) {
+        const sprintData = mockSprintDataOverride || createMockSprintData();
+        this.onmessage({
+          data: JSON.stringify({
+            type: 'init',
+            ...sprintData
+          })
+        });
+      }
+    }, 0);
   }
 
   send(data: string) {
@@ -185,6 +201,7 @@ const mockElectronAPI = {
 beforeEach(() => {
   vi.clearAllMocks();
   MockWebSocket.instances = [];
+  mockSprintDataOverride = null; // Reset data override
   (window as any).electronAPI = mockElectronAPI;
   (global as any).WebSocket = MockWebSocket;
 });
@@ -192,6 +209,7 @@ beforeEach(() => {
 afterEach(() => {
   delete (window as any).electronAPI;
   delete (global as any).WebSocket;
+  mockSprintDataOverride = null;
 });
 
 // =============================================================================
@@ -221,9 +239,8 @@ describe('AC1: Current story section', () => {
   });
 
   it('should display "Next up" indicator when no story is in progress', async () => {
-    mockElectronAPI.sprint.getStatus.mockResolvedValueOnce(
-      createMockSprintData({ currentStory: null })
-    );
+    // Set custom data for this test
+    mockSprintDataOverride = createMockSprintData({ currentStory: null });
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);
@@ -237,9 +254,8 @@ describe('AC1: Current story section', () => {
   });
 
   it('should display empty state when no stories available', async () => {
-    mockElectronAPI.sprint.getStatus.mockResolvedValueOnce(
-      createMockSprintData({ currentStory: null, nextStory: null })
-    );
+    // Set custom data for this test
+    mockSprintDataOverride = createMockSprintData({ currentStory: null, nextStory: null });
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);
@@ -488,13 +504,6 @@ describe('AC5: Archive action', () => {
       expect(screen.getByTestId('archive-button-epic-75')).toBeInTheDocument();
     });
 
-    // Mock fresh data without the archived epic
-    mockElectronAPI.sprint.getStatus.mockResolvedValueOnce(
-      createMockSprintData({
-        epics: [createMockSprintData().epics[0]], // Only epic-76 remains
-      })
-    );
-
     const archiveButton = screen.getByTestId('archive-button-epic-75');
     fireEvent.click(archiveButton);
 
@@ -503,6 +512,21 @@ describe('AC5: Archive action', () => {
       expect(screen.getByTestId('confirm-archive-dialog')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId('confirm-archive-yes'));
+
+    // Wait for archive to complete
+    await waitFor(() => {
+      expect(mockElectronAPI.sprint.archiveEpic).toHaveBeenCalledWith('epic-75');
+    });
+
+    // Simulate WebSocket update with epic-75 removed
+    const updatedData = createMockSprintData({
+      epics: [createMockSprintData().epics[0]], // Only epic-76 remains
+    });
+
+    act(() => {
+      const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1];
+      ws.simulateMessage({ type: 'update', ...updatedData });
+    });
 
     await waitFor(() => {
       // Archived epic should be removed from view
@@ -609,7 +633,15 @@ describe('AC7: Promote action', () => {
       expect(screen.getByTestId('promote-button-epic-77')).toBeInTheDocument();
     });
 
-    // Mock fresh data with promoted epic in sprint and removed from future
+    const promoteButton = screen.getByTestId('promote-button-epic-77');
+    fireEvent.click(promoteButton);
+
+    // Wait for promote to complete
+    await waitFor(() => {
+      expect(mockElectronAPI.sprint.promoteEpic).toHaveBeenCalledWith('epic-77');
+    });
+
+    // Simulate WebSocket update with promoted epic in sprint and removed from future
     const promotedEpic: MockEpic = {
       id: 'epic-77',
       title: 'Future Initiative 1',
@@ -617,15 +649,15 @@ describe('AC7: Promote action', () => {
       stories: [],
     };
 
-    mockElectronAPI.sprint.getStatus.mockResolvedValueOnce(
-      createMockSprintData({
-        epics: [...createMockSprintData().epics, promotedEpic],
-        futureEpics: [createMockSprintData().futureEpics[1]], // Only blocked epic remains
-      })
-    );
+    const updatedData = createMockSprintData({
+      epics: [...createMockSprintData().epics, promotedEpic],
+      futureEpics: [createMockSprintData().futureEpics[1]], // Only blocked epic remains
+    });
 
-    const promoteButton = screen.getByTestId('promote-button-epic-77');
-    fireEvent.click(promoteButton);
+    act(() => {
+      const ws = MockWebSocket.instances[MockWebSocket.instances.length - 1];
+      ws.simulateMessage({ type: 'update', ...updatedData });
+    });
 
     await waitFor(() => {
       // Promoted epic should appear in sprint section
@@ -897,6 +929,11 @@ describe('Integration: Component structure', () => {
       expect(screen.getByTestId('enhanced-sprint-panel')).toBeInTheDocument();
     });
 
+    // Wait for data to load and sections to render
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /current story/i })).toBeInTheDocument();
+    });
+
     // Check main sections exist in order
     const panel = screen.getByTestId('enhanced-sprint-panel');
     const sections = panel.querySelectorAll('section');
@@ -915,7 +952,7 @@ describe('Integration: Component structure', () => {
       expect(screen.getByRole('heading', { name: /current story/i })).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('heading', { name: /sprint stories/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /current epics/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /future initiatives/i })).toBeInTheDocument();
   });
 

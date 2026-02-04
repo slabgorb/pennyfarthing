@@ -15,7 +15,7 @@
  * AC1 and AC4 are tested in Python (test_token_counting.py).
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
@@ -161,27 +161,43 @@ describe('MSSCI-12800: AC2 - Token breakdown IPC', () => {
 
 describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   describe('Component list rendering', () => {
 
     it('should render component breakdown section when tokenCounts present', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -190,10 +206,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           persona: 100,
         },
         totalTokens: 700,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-breakdown')).toBeInTheDocument();
@@ -201,14 +215,18 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should not render component breakdown when tokenCounts missing', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         // No tokenCounts
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('debug-panel')).toBeInTheDocument();
@@ -218,7 +236,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should render each component with its token count', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -227,10 +251,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           persona: 100,
         },
         totalTokens: 700,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-agent_definition')).toBeInTheDocument();
@@ -243,7 +265,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should display friendly component names', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -251,10 +279,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           behavior_guide: 400,
         },
         totalTokens: 600,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-breakdown')).toBeInTheDocument();
@@ -266,7 +292,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should display total tokens', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -274,10 +306,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           behavior_guide: 400,
         },
         totalTokens: 600,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('total-tokens')).toBeInTheDocument();
@@ -291,17 +321,21 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
   describe('Collapsible behavior', () => {
 
     it('should render collapse toggle button', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
           agent_definition: 200,
         },
         totalTokens: 200,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('breakdown-toggle')).toBeInTheDocument();
@@ -309,7 +343,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should start with component list collapsed', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -317,10 +357,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           behavior_guide: 400,
         },
         totalTokens: 600,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-breakdown')).toBeInTheDocument();
@@ -331,17 +369,21 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should expand component list on toggle click', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
           agent_definition: 200,
         },
         totalTokens: 200,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('breakdown-toggle')).toBeInTheDocument();
@@ -354,17 +396,21 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should collapse component list on second toggle click', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
           agent_definition: 200,
         },
         totalTokens: 200,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('breakdown-toggle')).toBeInTheDocument();
@@ -380,17 +426,21 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
     });
 
     it('should show expand/collapse icon on toggle button', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
           agent_definition: 200,
         },
         totalTokens: 200,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('breakdown-toggle')).toBeInTheDocument();
@@ -411,7 +461,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
   describe('Component sorting', () => {
 
     it('should sort components by token count descending', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
@@ -420,10 +476,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           behavior_guide: 400,
         },
         totalTokens: 700,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-breakdown')).toBeInTheDocument();
@@ -449,7 +503,13 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
   describe('Zero-token components', () => {
 
     it('should not display components with zero tokens', async () => {
-      mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'REFRESH',
         tokenCounts: {
@@ -459,10 +519,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
           behavior_guide: 0,    // Not loaded in REFRESH
         },
         totalTokens: 200,
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('component-breakdown')).toBeInTheDocument();
@@ -484,31 +542,30 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
   describe('Updates when context changes', () => {
 
     it('should update component list when tokenCounts change', async () => {
-      let updateCallback: ((_event: unknown, data: unknown) => void) | null = null;
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+      render(React.createElement(DebugPanel));
 
-      mockElectronAPI.context.get.mockResolvedValue({
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
         percent: 25,
         tier: 'FULL',
         tokenCounts: {
           agent_definition: 200,
         },
         totalTokens: 200,
-      });
-
-      mockElectronAPI.context.onUpdate.mockImplementation((cb: (_event: unknown, data: unknown) => void) => {
-        updateCallback = cb;
-      });
-
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-      render(React.createElement(DebugPanel));
+      },
+    }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('total-tokens')).toHaveTextContent('200');
       });
 
       // Simulate context update with new token counts
-      if (updateCallback) {
-        updateCallback(null, {
+      contextWs.onmessage({ data: JSON.stringify({
+        type: 'update',
+        context: {
           percent: 30,
           tier: 'FULL',
           tokenCounts: {
@@ -516,8 +573,8 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
             behavior_guide: 500,
           },
           totalTokens: 750,
-        });
-      }
+        },
+      }) });
 
       await vi.waitFor(() => {
         expect(screen.getByTestId('total-tokens')).toHaveTextContent('750');

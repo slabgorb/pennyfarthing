@@ -4,9 +4,84 @@
  * Configures testing environment with:
  * - @testing-library/jest-dom matchers
  * - Global test utilities
+ * - WebSocket mock (happy-dom v20.1.0 rejects path-based WS URLs)
  */
 
-import { expect } from 'vitest';
+import { expect, vi } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
 expect.extend(matchers);
+
+// Mock WebSocket to allow path-based URLs (e.g., ws://localhost/ws/context)
+// happy-dom v20.1.0 throws SyntaxError on paths, but our app uses them extensively
+class MockWebSocket {
+  onopen: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+  onclose: (() => void) | null = null;
+  onerror: ((error: Error) => void) | null = null;
+  readyState = 1; // OPEN
+
+  constructor(public url: string) {
+    // Accept any URL including paths (e.g., /ws/context, /ws/stats, /ws/story)
+    // Simulate async connection and send initial empty data
+    setTimeout(() => {
+      if (this.onopen) {
+        this.onopen();
+      }
+
+      // Send initial empty data based on the endpoint
+      // This prevents components from being stuck in loading state
+      if (this.onmessage) {
+        if (url.includes('/ws/todos')) {
+          this.onmessage({ data: JSON.stringify({ type: 'init', todos: [] }) });
+        } else if (url.includes('/ws/story')) {
+          this.onmessage({ data: JSON.stringify({ type: 'init', id: null, title: null }) });
+        } else if (url.includes('/ws/sprint')) {
+          this.onmessage({
+            data: JSON.stringify({
+              type: 'init',
+              currentStory: null,
+              nextStory: null,
+              epics: [],
+              futureEpics: [],
+              sprint: { number: 0, name: '', done: 0, remaining: 0, inProgress: 0, endDate: '' }
+            })
+          });
+        }
+      }
+    }, 0);
+  }
+
+  send(data: string) {
+    // No-op in tests
+  }
+
+  close() {
+    this.readyState = 3; // CLOSED
+    if (this.onclose) {
+      this.onclose();
+    }
+  }
+
+  addEventListener(event: string, handler: any) {
+    if (event === 'open') this.onopen = handler;
+    else if (event === 'message') this.onmessage = handler;
+    else if (event === 'close') this.onclose = handler;
+    else if (event === 'error') this.onerror = handler;
+  }
+
+  removeEventListener(event: string, handler: any) {
+    if (event === 'open' && this.onopen === handler) this.onopen = null;
+    else if (event === 'message' && this.onmessage === handler) this.onmessage = null;
+    else if (event === 'close' && this.onclose === handler) this.onclose = null;
+    else if (event === 'error' && this.onerror === handler) this.onerror = null;
+  }
+
+  // Test helper to simulate server message
+  simulateMessage(data: object) {
+    this.onmessage?.({ data: JSON.stringify(data) });
+  }
+}
+
+// Install mock globally
+vi.stubGlobal('WebSocket', MockWebSocket);

@@ -18,9 +18,8 @@ workflow:
   description: Interrupt-driven bug fix during active story work
   version: "1.0.0"
 
-  # Patch mode is NOT a full workflow - it's an interrupt
-  # It doesn't have phases in the traditional sense
-  type: interrupt
+  # Patch mode is a simple single-phase workflow for interrupts
+  type: phased
 
   phases:
     - name: fix

@@ -19,8 +19,19 @@ set -euo pipefail
 
 # Self-locate: derive PROJECT_ROOT from this script's position
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
-# PROJECT_ROOT is now set
+
+# Detect if we're in framework development or a consumer project
+# In framework dev: scripts/misc/generate-skill-docs.sh is in pennyfarthing/pennyfarthing-dist/scripts/misc/
+# In consumer: this is symlinked from .pennyfarthing/scripts/misc/
+if [[ "$SCRIPT_DIR" == */pennyfarthing/pennyfarthing-dist/scripts/* ]]; then
+  # Framework development context - derive from script location
+  PROJECT_ROOT="${SCRIPT_DIR%/pennyfarthing-dist/scripts/*}"
+  export PROJECT_ROOT
+else
+  # Consumer project context - use find-root.sh
+  source "$SCRIPT_DIR/../lib/find-root.sh"
+  # PROJECT_ROOT is now set
+fi
 
 # Default paths
 REGISTRY_PATH="${PROJECT_ROOT}/pennyfarthing-dist/skills/skill-registry.yaml"

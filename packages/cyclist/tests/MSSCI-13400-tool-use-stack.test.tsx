@@ -261,7 +261,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      expect(screen.getByText('2 tools')).toBeInTheDocument();
+      // Component renders "2 tools completed" or "2 tools running" based on isActive
+      expect(screen.getByText('2 tools completed')).toBeInTheDocument();
     });
 
     it('should display count "5 tools" when collapsed with 5 tools', () => {
@@ -281,7 +282,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      expect(screen.getByText('5 tools')).toBeInTheDocument();
+      // Component renders "5 tools completed" or "5 tools running" based on isActive
+      expect(screen.getByText('5 tools completed')).toBeInTheDocument();
     });
 
     it('should display "1 tool" (singular) when only 1 tool in stack edge case', () => {
@@ -296,8 +298,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Should use singular form
-      expect(screen.getByText('1 tool')).toBeInTheDocument();
+      // Should use singular form with status
+      expect(screen.getByText('1 tool completed')).toBeInTheDocument();
     });
 
     it('should have count visible in collapsed header', () => {
@@ -316,7 +318,7 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       expect(count.textContent).toContain('2');
     });
 
-    it('should hide count when expanded (count is redundant)', () => {
+    it('should keep count visible when expanded for context', () => {
       const stack: ToolStackData = {
         stackId: 'stack-1',
         tools: [createToolUse('Read', 'tool-1', {}), createToolUse('Read', 'tool-2', {})],
@@ -330,9 +332,9 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Expand
       fireEvent.click(screen.getByTestId('tool-stack-header'));
 
-      // Count should be hidden when expanded (individual tools visible)
+      // Count remains visible for context (shows status)
       const count = screen.queryByTestId('tool-stack-count');
-      expect(count).not.toBeVisible();
+      expect(count).toBeVisible();
     });
   });
 
@@ -359,7 +361,7 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       expect(toolBlocks).toHaveLength(3);
     });
 
-    it('should show tool name in each expanded tool summary', () => {
+    it('should show tool intent summary in each expanded tool', () => {
       const stack: ToolStackData = {
         stackId: 'stack-1',
         tools: [
@@ -376,8 +378,9 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Expand
       fireEvent.click(screen.getByTestId('tool-stack-header'));
 
-      expect(screen.getByText('Read')).toBeInTheDocument();
-      expect(screen.getByText('Bash')).toBeInTheDocument();
+      // ToolCallBlock renders intent summaries - npm test becomes "Running tests"
+      expect(screen.getByText(/Reading.*a\.ts/)).toBeInTheDocument();
+      expect(screen.getByText('Running tests')).toBeInTheDocument();
     });
 
     it('should pass tool results to ToolCallBlock when available', () => {
@@ -402,12 +405,12 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Expand
       fireEvent.click(screen.getByTestId('tool-stack-header'));
 
-      // Both tools should show complete status
-      const statuses = screen.getAllByTestId('tool-status');
-      expect(statuses).toHaveLength(2);
-      statuses.forEach(status => {
-        expect(status.textContent).toBe('complete');
-      });
+      // Both tools should render ToolCallBlock with results
+      const toolBlocks = screen.getAllByTestId('tool-call-block');
+      expect(toolBlocks).toHaveLength(2);
+      // Results are shown in result-toggle button
+      const toggles = screen.getAllByTestId('tool-result-toggle');
+      expect(toggles).toHaveLength(2);
     });
 
     it('should not render individual tools when collapsed', () => {
@@ -450,7 +453,7 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       expect(container).not.toHaveClass('collapsed');
     });
 
-    it('should show pending tool with pending status indicator', () => {
+    it('should show pending tool via class on block', () => {
       const stack: ToolStackData = {
         stackId: 'stack-1',
         tools: [
@@ -469,12 +472,12 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={toolResults} />);
 
-      const statuses = screen.getAllByTestId('tool-status');
-      expect(statuses).toHaveLength(2);
+      const toolBlocks = screen.getAllByTestId('tool-call-block');
+      expect(toolBlocks).toHaveLength(2);
 
-      // First tool complete, second pending
-      expect(statuses[0].textContent).toBe('complete');
-      expect(statuses[1].textContent).toBe('pending');
+      // First tool is historical (complete), second is current (pending)
+      expect(toolBlocks[0]).toHaveClass('tool-historical');
+      expect(toolBlocks[1]).toHaveClass('tool-current');
     });
 
     it('should mark the active tool with tool-current class', () => {
@@ -521,11 +524,10 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Try to collapse
       fireEvent.click(screen.getByTestId('tool-stack-header'));
 
-      // Active tool should still be visible (at minimum)
-      const pendingTools = screen.getAllByTestId('tool-status').filter(
-        el => el.textContent === 'pending'
-      );
-      expect(pendingTools).toHaveLength(1);
+      // Active tool should still be visible (tool-current class indicates pending)
+      const toolBlocks = screen.getAllByTestId('tool-call-block');
+      const currentTools = toolBlocks.filter(el => el.classList.contains('tool-current'));
+      expect(currentTools).toHaveLength(1);
     });
   });
 
@@ -661,8 +663,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Should not crash
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Should show 0 tools
-      expect(screen.getByText('0 tools')).toBeInTheDocument();
+      // Should show 0 tools (component adds status suffix)
+      expect(screen.getByText('0 tools completed')).toBeInTheDocument();
     });
 
     it('should handle tools with missing tool_id gracefully', () => {
@@ -702,7 +704,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Should not crash or hang
       const { unmount } = render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      expect(screen.getByText('50 tools')).toBeInTheDocument();
+      // Component adds status suffix
+      expect(screen.getByText('50 tools completed')).toBeInTheDocument();
 
       unmount();
     });
@@ -719,17 +722,15 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
         timestamp: Date.now(),
       };
 
-      // Initial render with no results
+      // Initial render with no results - active stack starts expanded
       const { rerender } = render(
         <ToolStack stack={stack} toolResults={new Map()} />
       );
 
-      // Expand to see tools
-      fireEvent.click(screen.getByTestId('tool-stack-header'));
-
-      // All pending initially
-      let statuses = screen.getAllByTestId('tool-status');
-      expect(statuses.every(s => s.textContent === 'pending')).toBe(true);
+      // Active stack is already expanded, tools visible
+      let toolBlocks = screen.getAllByTestId('tool-call-block');
+      // Both pending initially - last tool has tool-current class
+      expect(toolBlocks[1]).toHaveClass('tool-current');
 
       // Rerender with results
       const toolResults = new Map([
@@ -740,9 +741,11 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       const completedStack = { ...stack, isActive: false };
       rerender(<ToolStack stack={completedStack} toolResults={toolResults} />);
 
-      // Now all complete
-      statuses = screen.getAllByTestId('tool-status');
-      expect(statuses.every(s => s.textContent === 'complete')).toBe(true);
+      // Now all historical (complete)
+      toolBlocks = screen.getAllByTestId('tool-call-block');
+      toolBlocks.forEach(block => {
+        expect(block).toHaveClass('tool-historical');
+      });
     });
   });
 

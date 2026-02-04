@@ -309,6 +309,15 @@ export async function saveFontSettings(settings: FontSettings): Promise<void> {
   }
 }
 
+/**
+ * Helper to persist current settings (async but not awaited for better UX)
+ */
+function persistSettings(): void {
+  saveFontSettings(currentSettings).catch(() => {
+    // Error already logged in saveFontSettings
+  });
+}
+
 export async function loadFontSettings(): Promise<FontSettings> {
   try {
     // Use REST API to load font settings

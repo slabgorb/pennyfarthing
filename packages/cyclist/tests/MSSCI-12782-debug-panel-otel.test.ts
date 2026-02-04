@@ -14,7 +14,7 @@
  * - AC3: Hierarchical view of agent activity (grouped tool calls)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 
@@ -24,46 +24,45 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 
 describe('MSSCI-12782: AC1 - Token stats formatting', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    auditLog: {
-      getEntries: vi.fn(),
-      getTypes: vi.fn(),
-      getStats: vi.fn(),
-      clear: vi.fn(),
-      export: vi.fn(),
-      onEntry: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 25 });
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 0, byType: {}, successCount: 0, errorCount: 0
-    });
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should render token stats as formatted cards, not raw JSON', async () => {
-    mockElectronAPI.tokenStats.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send token stats via WebSocket
+    tokenWs.onmessage({ data: JSON.stringify({
       inputTokens: 12500,
       outputTokens: 3200,
       cacheReadTokens: 8000,
       cacheCreationTokens: 1500,
       totalCostUsd: 0.0523,
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    }) });
 
     // Wait for token stats to load (async)
     await vi.waitFor(() => {
@@ -81,15 +80,16 @@ describe('MSSCI-12782: AC1 - Token stats formatting', () => {
   });
 
   it('should render each token type as a labeled stat card', async () => {
-    mockElectronAPI.tokenStats.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send token stats via WebSocket
+    tokenWs.onmessage({ data: JSON.stringify({
       inputTokens: 12500,
       outputTokens: 3200,
       cacheReadTokens: 8000,
       cacheCreationTokens: 1500,
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    }) });
 
     // Wait for token stats to load (async)
     await vi.waitFor(() => {
@@ -104,15 +104,16 @@ describe('MSSCI-12782: AC1 - Token stats formatting', () => {
   });
 
   it('should render token stat cards with data-testid for each type', async () => {
-    mockElectronAPI.tokenStats.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send token stats via WebSocket
+    tokenWs.onmessage({ data: JSON.stringify({
       inputTokens: 12500,
       outputTokens: 3200,
       cacheReadTokens: 8000,
       cacheCreationTokens: 1500,
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    }) });
 
     // Wait for token stats to load (async)
     await vi.waitFor(() => {
@@ -126,14 +127,15 @@ describe('MSSCI-12782: AC1 - Token stats formatting', () => {
   });
 
   it('should format cost with dollar sign and proper decimals', async () => {
-    mockElectronAPI.tokenStats.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send token stats via WebSocket
+    tokenWs.onmessage({ data: JSON.stringify({
       inputTokens: 12500,
       outputTokens: 3200,
       totalCostUsd: 0.0523,
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    }) });
 
     // Wait for token stats to load (async)
     await vi.waitFor(() => {
@@ -145,15 +147,16 @@ describe('MSSCI-12782: AC1 - Token stats formatting', () => {
   });
 
   it('should hide zero-value stats gracefully', async () => {
-    mockElectronAPI.tokenStats.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send token stats via WebSocket
+    tokenWs.onmessage({ data: JSON.stringify({
       inputTokens: 12500,
       outputTokens: 0,  // Zero output
       cacheReadTokens: 8000,
       cacheCreationTokens: 0,  // Zero cache creation
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    }) });
 
     // Wait for token stats to load (async)
     await vi.waitFor(() => {
@@ -178,48 +181,50 @@ describe('MSSCI-12782: AC1 - Token stats formatting', () => {
 
 describe('MSSCI-12782: AC2 - OTEL spans display', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    auditLog: {
-      getEntries: vi.fn(),
-      getTypes: vi.fn(),
-      getStats: vi.fn(),
-      clear: vi.fn(),
-      export: vi.fn(),
-      onEntry: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 25 });
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should render OTEL spans section in debug panel', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      {
-        toolName: 'Read',
-        input: '/path/to/file.ts',
-        durationMs: 45,
-        success: true,
-        timestamp: Date.now() - 5000,
-      },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 1, byType: { Read: 1 }, successCount: 1, errorCount: 0
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send initial spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        {
+          toolName: 'Read',
+          input: '/path/to/file.ts',
+          durationMs: 45,
+          success: true,
+          timestamp: Date.now() - 5000,
+        },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('otel-spans-section')).toBeInTheDocument();
@@ -227,28 +232,29 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should display tool name for each span', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      {
-        toolName: 'Read',
-        input: '/path/to/file.ts',
-        durationMs: 45,
-        success: true,
-        timestamp: Date.now() - 5000,
-      },
-      {
-        toolName: 'Bash',
-        input: 'npm test',
-        durationMs: 1250,
-        success: true,
-        timestamp: Date.now() - 3000,
-      },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 2, byType: { Read: 1, Bash: 1 }, successCount: 2, errorCount: 0
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        {
+          toolName: 'Read',
+          input: '/path/to/file.ts',
+          durationMs: 45,
+          success: true,
+          timestamp: Date.now() - 5000,
+        },
+        {
+          toolName: 'Bash',
+          input: 'npm test',
+          durationMs: 1250,
+          success: true,
+          timestamp: Date.now() - 3000,
+        },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
@@ -261,28 +267,29 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should display duration for each span', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      {
-        toolName: 'Read',
-        input: '/path/to/file.ts',
-        durationMs: 45,
-        success: true,
-        timestamp: Date.now(),
-      },
-      {
-        toolName: 'Bash',
-        input: 'npm test',
-        durationMs: 1250,
-        success: true,
-        timestamp: Date.now(),
-      },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 2, byType: { Read: 1, Bash: 1 }, successCount: 2, errorCount: 0
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        {
+          toolName: 'Read',
+          input: '/path/to/file.ts',
+          durationMs: 45,
+          success: true,
+          timestamp: Date.now(),
+        },
+        {
+          toolName: 'Bash',
+          input: 'npm test',
+          durationMs: 1250,
+          success: true,
+          timestamp: Date.now(),
+        },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
@@ -295,29 +302,30 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should show success/error status for each span', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      {
-        toolName: 'Read',
-        input: '/path/to/file.ts',
-        durationMs: 45,
-        success: true,
-        timestamp: Date.now(),
-      },
-      {
-        toolName: 'Bash',
-        input: 'exit 1',
-        durationMs: 100,
-        success: false,
-        error: 'Command failed',
-        timestamp: Date.now(),
-      },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 2, byType: { Read: 1, Bash: 1 }, successCount: 1, errorCount: 1
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        {
+          toolName: 'Read',
+          input: '/path/to/file.ts',
+          durationMs: 45,
+          success: true,
+          timestamp: Date.now(),
+        },
+        {
+          toolName: 'Bash',
+          input: 'exit 1',
+          durationMs: 100,
+          success: false,
+          error: 'Command failed',
+          timestamp: Date.now(),
+        },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
@@ -331,26 +339,30 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should show span input summary (truncated if long)', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      {
-        toolName: 'Read',
-        input: '/very/long/path/to/some/deeply/nested/directory/structure/file.ts',
-        durationMs: 45,
-        success: true,
-        timestamp: Date.now(),
-      },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 1, byType: { Read: 1 }, successCount: 1, errorCount: 0
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        {
+          toolName: 'Read',
+          input: '/very/long/path/to/some/deeply/nested/directory/structure/file.ts',
+          durationMs: 45,
+          success: true,
+          timestamp: Date.now(),
+        },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
       expect(screen.getByTestId('tool-group-Read')).toBeInTheDocument();
     });
+
+    // Expand the group to see span items
+    fireEvent.click(screen.getByTestId('tool-group-Read-toggle'));
 
     // Should show file path (possibly truncated with ellipsis)
     const spanInput = screen.getByTestId('span-input-0');
@@ -358,18 +370,14 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should subscribe to new spans via onEntry callback', async () => {
-    let entryCallback: ((entry: unknown) => void) | null = null;
-
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 0, byType: {}, successCount: 0, errorCount: 0
-    });
-    mockElectronAPI.auditLog.onEntry.mockImplementation((cb: (entry: unknown) => void) => {
-      entryCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send initial empty state
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('otel-spans-section')).toBeInTheDocument();
@@ -379,15 +387,16 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
     expect(screen.queryByText('Read')).not.toBeInTheDocument();
 
     // Simulate new span arriving
-    if (entryCallback) {
-      entryCallback({
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'span',
+      span: {
         toolName: 'Read',
         input: '/new/file.ts',
         durationMs: 30,
         success: true,
         timestamp: Date.now(),
-      });
-    }
+      },
+    }) });
 
     // Should now show the new span
     await vi.waitFor(() => {
@@ -396,17 +405,18 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
   });
 
   it('should show span count in section header', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', durationMs: 45, success: true, timestamp: Date.now() },
-      { toolName: 'Bash', durationMs: 100, success: true, timestamp: Date.now() },
-      { toolName: 'Edit', durationMs: 30, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 3, byType: { Read: 1, Bash: 1, Edit: 1 }, successCount: 3, errorCount: 0
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', durationMs: 45, success: true, timestamp: Date.now() },
+        { toolName: 'Bash', durationMs: 100, success: true, timestamp: Date.now() },
+        { toolName: 'Edit', durationMs: 30, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
@@ -425,45 +435,46 @@ describe('MSSCI-12782: AC2 - OTEL spans display', () => {
 
 describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    auditLog: {
-      getEntries: vi.fn(),
-      getTypes: vi.fn(),
-      getStats: vi.fn(),
-      clear: vi.fn(),
-      export: vi.fn(),
-      onEntry: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 25 });
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should group spans by tool type', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'file1.ts', durationMs: 45, success: true, timestamp: Date.now() },
-      { toolName: 'Read', input: 'file2.ts', durationMs: 30, success: true, timestamp: Date.now() },
-      { toolName: 'Bash', input: 'npm test', durationMs: 1000, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 3, byType: { Read: 2, Bash: 1 }, successCount: 3, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read', 'Bash']);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'file1.ts', durationMs: 45, success: true, timestamp: Date.now() },
+        { toolName: 'Read', input: 'file2.ts', durationMs: 30, success: true, timestamp: Date.now() },
+        { toolName: 'Bash', input: 'npm test', durationMs: 1000, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     // Wait for spans to load (async)
     await vi.waitFor(() => {
@@ -482,17 +493,17 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
   });
 
   it('should allow expanding/collapsing tool groups', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'file1.ts', durationMs: 45, success: true, timestamp: Date.now() },
-      { toolName: 'Read', input: 'file2.ts', durationMs: 30, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 2, byType: { Read: 2 }, successCount: 2, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read']);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'file1.ts', durationMs: 45, success: true, timestamp: Date.now() },
+        { toolName: 'Read', input: 'file2.ts', durationMs: 30, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tool-group-Read')).toBeInTheDocument();
@@ -512,18 +523,18 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
   });
 
   it('should show summary stats per tool type', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Bash', input: 'cmd1', durationMs: 100, success: true, timestamp: Date.now() },
-      { toolName: 'Bash', input: 'cmd2', durationMs: 200, success: true, timestamp: Date.now() },
-      { toolName: 'Bash', input: 'cmd3', durationMs: 300, success: false, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 3, byType: { Bash: 3 }, successCount: 2, errorCount: 1
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Bash']);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Bash', input: 'cmd1', durationMs: 100, success: true, timestamp: Date.now() },
+        { toolName: 'Bash', input: 'cmd2', durationMs: 200, success: true, timestamp: Date.now() },
+        { toolName: 'Bash', input: 'cmd3', durationMs: 300, success: false, timestamp: Date.now() },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tool-group-Bash')).toBeInTheDocument();
@@ -541,18 +552,18 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
 
   it('should show chronological list within expanded group', async () => {
     const now = Date.now();
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'first.ts', durationMs: 45, success: true, timestamp: now - 2000 },
-      { toolName: 'Read', input: 'second.ts', durationMs: 30, success: true, timestamp: now - 1000 },
-      { toolName: 'Read', input: 'third.ts', durationMs: 20, success: true, timestamp: now },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 3, byType: { Read: 3 }, successCount: 3, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read']);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'first.ts', durationMs: 45, success: true, timestamp: now - 2000 },
+        { toolName: 'Read', input: 'second.ts', durationMs: 30, success: true, timestamp: now - 1000 },
+        { toolName: 'Read', input: 'third.ts', durationMs: 20, success: true, timestamp: now },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tool-group-Read')).toBeInTheDocument();
@@ -572,18 +583,18 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
   });
 
   it('should allow filtering by tool type', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
-      { toolName: 'Bash', input: 'npm test', durationMs: 1000, success: true, timestamp: Date.now() },
-      { toolName: 'Edit', input: 'config.ts', durationMs: 30, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 3, byType: { Read: 1, Bash: 1, Edit: 1 }, successCount: 3, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read', 'Bash', 'Edit']);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
+        { toolName: 'Bash', input: 'npm test', durationMs: 1000, success: true, timestamp: Date.now() },
+        { toolName: 'Edit', input: 'config.ts', durationMs: 30, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('otel-filter')).toBeInTheDocument();
@@ -599,14 +610,14 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
   });
 
   it('should show empty state when no spans', async () => {
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 0, byType: {}, successCount: 0, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue([]);
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send empty spans via WebSocket
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('otel-spans-section')).toBeInTheDocument();
@@ -624,48 +635,44 @@ describe('MSSCI-12782: AC3 - Hierarchical activity view', () => {
 
 describe('MSSCI-12782: Real-time span updates', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    auditLog: {
-      getEntries: vi.fn(),
-      getTypes: vi.fn(),
-      getStats: vi.fn(),
-      clear: vi.fn(),
-      export: vi.fn(),
-      onEntry: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 25 });
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should update span count when new span arrives', async () => {
-    let entryCallback: ((entry: unknown) => void) | null = null;
-
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 1, byType: { Read: 1 }, successCount: 1, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read']);
-    mockElectronAPI.auditLog.onEntry.mockImplementation((cb: (entry: unknown) => void) => {
-      entryCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send initial span
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     // Wait for initial spans to load (async)
     await vi.waitFor(() => {
@@ -676,15 +683,16 @@ describe('MSSCI-12782: Real-time span updates', () => {
     expect(screen.getByText(/1\s*span/i)).toBeInTheDocument();
 
     // Simulate new span arriving
-    if (entryCallback) {
-      entryCallback({
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'span',
+      span: {
         toolName: 'Bash',
         input: 'npm test',
         durationMs: 1000,
         success: true,
         timestamp: Date.now(),
-      });
-    }
+      },
+    }) });
 
     // Should update to show 2 spans
     await vi.waitFor(() => {
@@ -693,21 +701,16 @@ describe('MSSCI-12782: Real-time span updates', () => {
   });
 
   it('should add new tool group when new tool type appears', async () => {
-    let entryCallback: ((entry: unknown) => void) | null = null;
-
-    mockElectronAPI.auditLog.getEntries.mockResolvedValue([
-      { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
-    ]);
-    mockElectronAPI.auditLog.getStats.mockResolvedValue({
-      total: 1, byType: { Read: 1 }, successCount: 1, errorCount: 0
-    });
-    mockElectronAPI.auditLog.getTypes.mockResolvedValue(['Read']);
-    mockElectronAPI.auditLog.onEntry.mockImplementation((cb: (entry: unknown) => void) => {
-      entryCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send initial span
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'init',
+      spans: [
+        { toolName: 'Read', input: 'file.ts', durationMs: 45, success: true, timestamp: Date.now() },
+      ],
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tool-group-Read')).toBeInTheDocument();
@@ -717,15 +720,16 @@ describe('MSSCI-12782: Real-time span updates', () => {
     expect(screen.queryByTestId('tool-group-Bash')).not.toBeInTheDocument();
 
     // Simulate new Bash span arriving
-    if (entryCallback) {
-      entryCallback({
+    spansWs.onmessage({ data: JSON.stringify({
+      type: 'span',
+      span: {
         toolName: 'Bash',
         input: 'npm test',
         durationMs: 1000,
         success: true,
         timestamp: Date.now(),
-      });
-    }
+      },
+    }) });
 
     // Should now have Bash group
     await vi.waitFor(() => {

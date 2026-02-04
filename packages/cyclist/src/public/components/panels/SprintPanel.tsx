@@ -136,17 +136,22 @@ export function EnhancedSprintPanel(): React.ReactElement {
     [toggleEpic]
   );
 
-  // Archive epic action (TODO: implement REST endpoint)
+  // Archive epic action
   const handleArchive = useCallback(
     async (epicId: string) => {
       setLoadingActions((prev) => new Set(prev).add(`archive-${epicId}`));
       setConfirmArchive(null);
+      setActionError(null); // Clear any previous errors
 
       try {
-        // TODO: Call REST endpoint when implemented
-        // const response = await fetch(`/api/sprint/archive-epic/${epicId}`, { method: 'POST' });
-        // if (!response.ok) throw new Error('Archive failed');
-        setActionError(new Error('Archive not yet implemented'));
+        // Use electronAPI if available (Electron mode), otherwise REST endpoint (web mode)
+        if (typeof window !== 'undefined' && (window as any).electronAPI?.sprint?.archiveEpic) {
+          await (window as any).electronAPI.sprint.archiveEpic(epicId);
+        } else {
+          const response = await fetch(`/api/sprint/archive-epic/${epicId}`, { method: 'POST' });
+          if (!response.ok) throw new Error('Archive failed');
+        }
+        // Success - error already cleared at start
       } catch (err) {
         setActionError(err instanceof Error ? err : new Error('Archive failed'));
       } finally {
@@ -160,16 +165,21 @@ export function EnhancedSprintPanel(): React.ReactElement {
     []
   );
 
-  // Promote epic action (TODO: implement REST endpoint)
+  // Promote epic action
   const handlePromote = useCallback(
     async (epicId: string) => {
       setLoadingActions((prev) => new Set(prev).add(`promote-${epicId}`));
+      setActionError(null); // Clear any previous errors
 
       try {
-        // TODO: Call REST endpoint when implemented
-        // const response = await fetch(`/api/sprint/promote-epic/${epicId}`, { method: 'POST' });
-        // if (!response.ok) throw new Error('Promote failed');
-        setActionError(new Error('Promote not yet implemented'));
+        // Use electronAPI if available (Electron mode), otherwise REST endpoint (web mode)
+        if (typeof window !== 'undefined' && (window as any).electronAPI?.sprint?.promoteEpic) {
+          await (window as any).electronAPI.sprint.promoteEpic(epicId);
+        } else {
+          const response = await fetch(`/api/sprint/promote-epic/${epicId}`, { method: 'POST' });
+          if (!response.ok) throw new Error('Promote failed');
+        }
+        // Success - error already cleared at start
       } catch (err) {
         setActionError(err instanceof Error ? err : new Error('Promote failed'));
       } finally {
