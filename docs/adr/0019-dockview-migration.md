@@ -232,6 +232,50 @@ Once migrated, users automatically get:
 - **Panel maximization** - Double-click tab to maximize
 - **Better drag UX** - Dockview's polished drag-drop behavior
 
+## Tab Overflow Handling
+
+When multiple tabs exist in a sidebar group and they exceed the visible width, Dockview provides built-in overflow handling via two mechanisms:
+
+### 1. Scrollable Tabs (Primary)
+
+The tabs container (`.dv-tabs-container`) uses horizontal scrolling with a visible scrollbar:
+
+```css
+.cyclist-dockview .dv-tabs-container {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted) transparent;
+}
+```
+
+Users can scroll horizontally through tabs using:
+- Mouse wheel (horizontal scroll)
+- Trackpad gestures
+- Dragging the scrollbar
+
+### 2. Overflow Dropdown (Secondary)
+
+When Dockview detects tab overflow, it can render an overflow dropdown (`.dv-tabs-overflow-dropdown-default`) that shows hidden tabs in a dropdown menu. The dropdown is styled to match the Cyclist theme:
+
+```css
+.cyclist-dockview .dv-tabs-overflow-dropdown-default {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+```
+
+### Keyboard Navigation
+
+All tabs remain keyboard accessible:
+- `Tab` key navigates between tabs
+- `Enter`/`Space` activates the focused tab
+- Arrow keys navigate within the tab list
+
+### CSS Location
+
+All tab overflow styling is in `src/public/styles/dockview-theme.css` under the "Tab Overflow Handling" section (added in MSSCI-14187).
+
 ## Risks & Mitigations
 
 | Risk | Mitigation |
