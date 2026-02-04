@@ -356,9 +356,37 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
   }
 }
 
+// Callback for forcing git refresh (set by websocket.ts)
+let forceRefreshCallback: ((projectDir: string) => Promise<void>) | null = null;
+
+export function setForceRefreshCallback(callback: (projectDir: string) => Promise<void>): void {
+  forceRefreshCallback = callback;
+}
+
 // Create git API router
 export function createGitRouter(getProjectDir: () => string): Router {
   const router = Router();
+
+  // Git API - POST to force refresh (debugging/manual trigger)
+  router.post('/refresh', async (_req, res) => {
+    const projectDir = getProjectDir();
+    console.log('[Git API] POST /refresh called, projectDir:', projectDir);
+
+    if (!detectPennyfarthingProject(projectDir)) {
+      console.log('[Git API] Not a Pennyfarthing project');
+      return res.status(404).json({ error: 'Not a Pennyfarthing project' });
+    }
+
+    if (forceRefreshCallback) {
+      console.log('[Git API] Calling forceRefreshCallback...');
+      await forceRefreshCallback(projectDir);
+      console.log('[Git API] forceRefreshCallback complete');
+      res.json({ success: true, message: 'Git cache refreshed and broadcast sent' });
+    } else {
+      console.log('[Git API] No forceRefreshCallback registered!');
+      res.status(500).json({ error: 'Refresh callback not registered' });
+    }
+  });
 
   // Git API - GET current git status (async to avoid blocking event loop)
   router.get('/', async (_req, res) => {
