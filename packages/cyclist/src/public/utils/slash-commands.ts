@@ -213,6 +213,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Set the active persona theme"
   },
   {
+    "name": "/setup",
+    "description": "setup"
+  },
+  {
     "name": "/show-theme",
     "description": "Show details of a theme including all agent personas"
   },
