@@ -9,7 +9,7 @@ import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTasks, addToolEventListener, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTasks, addToolEventListener, trackBackgroundTask, completeBackgroundTask, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
@@ -820,6 +820,16 @@ export function setupWebSocketServers(
       updatePwd(event.workingDirectory);
     }
 
+    // MSSCI-14210: Complete background Task tools when OTEL event arrives
+    if (event.toolName === 'Task' && event.isBackground && event.spanId) {
+      completeBackgroundTask(
+        event.spanId,
+        event.success,
+        event.resultSummary,
+        event.error
+      );
+    }
+
     // Invalidate git cache only when files are actually modified
     // Not every tool use affects git status - be selective to avoid unnecessary refreshes
     const shouldInvalidateGit = shouldInvalidateGitCache(event);
@@ -1137,11 +1147,24 @@ export function setupWebSocketServers(
                     ws.send(JSON.stringify({ type: 'message', message }));
                   }
 
-                  // Process tool_use messages for OTEL correlation
+                  // Process tool_use messages for OTEL correlation and background task tracking
                   const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
+
+                    // MSSCI-14210: Track background Task tools
+                    if (sdkMsg.tool_name === 'Task' && sdkMsg.input.run_in_background === true) {
+                      const description = (sdkMsg.input.description as string) || (sdkMsg.input.prompt as string)?.substring(0, 50) || 'Background task';
+                      const subagentType = (sdkMsg.input.subagent_type as string) || 'general-purpose';
+                      trackBackgroundTask({
+                        taskId: sdkMsg.tool_id,
+                        description,
+                        subagentType,
+                        startedAt: Date.now(),
+                        isBackground: true,
+                      });
+                    }
                   }
                 }
                 if (ws.readyState === WebSocket.OPEN) {
