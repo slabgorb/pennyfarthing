@@ -85,3 +85,58 @@ class MockWebSocket {
 
 // Install mock globally
 vi.stubGlobal('WebSocket', MockWebSocket);
+
+// Inject CSS styles for testing (happy-dom doesn't auto-load stylesheets)
+// These styles are from src/public/styles/tailwind.css
+const testStyles = `
+  .agent-popup-details {
+    padding: 16px;
+    overflow-y: auto;
+    min-height: 380px;
+    max-height: calc(80vh - 60px);
+    transition: opacity 0.15s ease;
+  }
+
+  .popup-portrait {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface-alt, #252526);
+  }
+
+  .popup-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .popup-detail {
+    margin-bottom: 12px;
+    max-height: 4.5em;
+    overflow: hidden;
+  }
+
+  .popup-detail span {
+    font-size: 0.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .popup-detail label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted, #888);
+    margin-bottom: 2px;
+  }
+`;
+
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = testStyles;
+  document.head.appendChild(style);
+}

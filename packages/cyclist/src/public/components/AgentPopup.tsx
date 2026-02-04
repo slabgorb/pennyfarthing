@@ -212,11 +212,11 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
               </div>
 
               {/* Right: Agent Details */}
-              <div className="agent-popup-details">
+              <div className="agent-popup-details" data-testid="agent-popup-details">
                 {displayAgent && (
                   <>
                     {/* Portrait */}
-                    <div className="popup-portrait">
+                    <div className="popup-portrait" data-testid="popup-portrait">
                       {!portraitError && currentTheme ? (
                         <img
                           src={`/portraits/${currentTheme}/large/${displayAgent.slug}.png`}
@@ -243,18 +243,18 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
                     </div>
 
                     {/* Details */}
-                    <div className="popup-detail">
+                    <div className="popup-detail" data-testid="popup-detail-style">
                       <label>Style:</label>
                       <span>{displayAgent.style || '—'}</span>
                     </div>
 
-                    <div className="popup-detail">
+                    <div className="popup-detail" data-testid="popup-detail-background">
                       <label>Background:</label>
                       <span>{displayAgent.background || '—'}</span>
                     </div>
 
                     {displayAgent.quirks.length > 0 && (
-                      <div className="popup-detail">
+                      <div className="popup-detail" data-testid="popup-detail-quirks">
                         <label>Quirks:</label>
                         <span>{displayAgent.quirks.join(', ')}</span>
                       </div>
