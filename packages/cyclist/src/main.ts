@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastDiff } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, processToolUseForDiffs } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1044,6 +1044,10 @@ export function startProjectWatchers(): void {
           const todos = extractTodos(message);
           updateTodosState(todos);
         }
+
+        // MSSCI-14190: Process tool_use messages for diff tracking (same as IPC handler)
+        // This was missing from the WebSocket callback path!
+        processToolUseFromMessage(message);
       }
       onComplete();
       broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
@@ -1188,6 +1192,46 @@ export function startProjectWatchers(): void {
 }
 
 // =============================================================================
+// Tool Use Processing for Diff Tracking (MSSCI-14190)
+// =============================================================================
+
+/**
+ * Process tool_use messages from any SDK message format
+ * Handles both discrete tool_use messages and nested tool_use in assistant messages
+ * Uses processToolUseForDiffs from websocket.ts (single source of truth)
+ */
+function processToolUseFromMessage(message: SDKMessage): void {
+  const processBlock = (toolName: string | undefined, toolId: string | undefined, toolInput: Record<string, unknown> | undefined) => {
+    if (!toolName) return;
+    // Store for OTEL correlation
+    if (toolId && toolInput) {
+      storePendingToolInput(toolId, toolName, toolInput);
+    }
+    // Process diffs (uses shared function from websocket.ts)
+    processToolUseForDiffs(toolName, toolId, toolInput);
+  };
+
+  // Format 1: Discrete tool_use messages (CLI streaming format)
+  if (message.type === 'tool_use') {
+    const toolMsg = message as { tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
+    processBlock(toolMsg.tool_name, toolMsg.tool_id, toolMsg.input);
+  }
+
+  // Format 2: Nested inside assistant messages (SDK format)
+  if (message.type === 'assistant') {
+    const assistantMsg = message as { message?: { content?: Array<{ type: string; name?: string; id?: string; input?: Record<string, unknown> }> } };
+    const content = assistantMsg.message?.content;
+    if (content && Array.isArray(content)) {
+      for (const block of content) {
+        if (block.type === 'tool_use') {
+          processBlock(block.name, block.id, block.input);
+        }
+      }
+    }
+  }
+}
+
+// =============================================================================
 // Claude SDK IPC Handlers (E7-3)
 // =============================================================================
 
@@ -1234,345 +1278,8 @@ export interface PastedImage {
   filename: string;
 }
 
-/**
- * Set up IPC handlers for Claude SDK communication
- * E7-3: Handles claude:send and streams responses to renderer
- * 28-1: Adds image support via stream-json input
- */
-export function setupClaudeIPCHandlers(ipcMain: {
-  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
-}): void {
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SEND, async (_event: unknown, ...args: unknown[]) => {
-    const prompt = args[0] as string;
-    const images = (args[1] as PastedImage[]) || [];
-    const service = getClaudeService();
-
-    if (images.length > 0) {
-      console.log(`[main] Processing ${images.length} pasted image(s) via stream-json`);
-    }
-
-    try {
-      for await (const message of service.sendMessage(prompt, { images })) {
-        // MSSCI-12776: Enrich messages with subagent context
-        // If message has parent_tool_use_id, look up the Task that spawned it
-        const enrichedMessage = enrichMessageWithSubagentContext(message);
-        broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, enrichedMessage);
-        // Also broadcast to WebSocket clients for React components
-        broadcastClaudeMessage(enrichedMessage);
-
-        // Update stats from SDK message (model info, etc.)
-        updateStatsFromSDK(message);
-
-        // Extract token usage from result messages and update sidebar stats
-        if (message.type === 'result' && 'usage' in message && message.usage) {
-          const usage = message.usage as {
-            input_tokens: number;
-            output_tokens: number;
-            cache_read_tokens?: number;
-            cache_creation_tokens?: number;
-          };
-          aggregateTokenStats({
-            inputTokens: usage.input_tokens,
-            outputTokens: usage.output_tokens,
-            cacheReadTokens: usage.cache_read_tokens,
-            cacheCreationTokens: usage.cache_creation_tokens,
-          });
-        }
-
-        // B-17: Extract and broadcast todos from TodoWrite messages
-        if (isTodoWriteMessage(message)) {
-          const todos = extractTodos(message);
-          updateTodosState(todos);
-        }
-
-        // E8-2: Broadcast diff data for Edit/Write tool messages
-        // Handle tool_use in two formats:
-        // 1. Nested inside 'assistant' messages under message.content[] (SDK format)
-        // 2. Discrete 'tool_use' messages (CLI streaming format)
-
-        // Helper to process a tool_use block
-        const processToolUseBlock = (toolName: string | undefined, toolId: string | undefined, toolInput: Record<string, unknown> | undefined) => {
-          if (!toolName) return;
-
-          // Story 33-7: Wire approval gate into tool execution pipeline
-          const toolUseMessage = {
-            type: 'tool_use' as const,
-            tool_name: toolName,
-            tool_id: toolId,
-            input: toolInput || {},
-          };
-          processToolUseWithApproval(toolUseMessage);
-
-          // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
-          if (toolId && toolName && toolInput) {
-            storePendingToolInput(toolId, toolName, toolInput);
-          }
-
-          // MSSCI-14190: Guard against undefined toolInput for Edit/Write tools
-          if (toolName === 'Edit' && toolInput) {
-            const input = toolInput as { file_path?: string; old_string?: string; new_string?: string };
-            if (input.file_path) {
-              const diffData = {
-                id: toolId || `edit-${Date.now()}`,
-                path: input.file_path,
-                original: input.old_string || '',
-                modified: input.new_string || '',
-                toolName: 'Edit',
-                timestamp: Date.now(),
-              };
-              broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, diffData);
-              // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
-              broadcastDiff(diffData);
-            }
-          } else if (toolName === 'Write' && toolInput) {
-            const input = toolInput as { file_path?: string; content?: string };
-            if (input.file_path) {
-              const diffData = {
-                id: toolId || `write-${Date.now()}`,
-                path: input.file_path,
-                original: '',
-                modified: input.content || '',
-                toolName: 'Write',
-                timestamp: Date.now(),
-              };
-              broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, { ...diffData, isNewFile: true });
-              // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
-              broadcastDiff(diffData);
-            }
-          } else if (toolName === 'Skill' && toolInput) {
-            const input = toolInput as { skill?: string; args?: string };
-            if (input.skill) {
-              handleSkillEvent({
-                id: toolId || `skill-${Date.now()}`,
-                skill: input.skill,
-                args: input.args,
-                timestamp: Date.now(),
-                status: 'running',
-              });
-            }
-          } else if (toolName === 'Task' && toolInput) {
-            const input = toolInput as {
-              description?: string;
-              subagent_type?: string;
-              run_in_background?: boolean;
-            };
-            trackBackgroundTask({
-              taskId: toolId || `task-${Date.now()}`,
-              description: input.description || '',
-              subagentType: input.subagent_type || '',
-              startedAt: Date.now(),
-              isBackground: input.run_in_background === true,
-            });
-          }
-        };
-
-        // Format 1: Discrete tool_use messages (CLI streaming format)
-        if (message.type === 'tool_use') {
-          const toolMsg = message as { tool_name?: string; tool_id?: string; input?: Record<string, unknown> };
-          processToolUseBlock(toolMsg.tool_name, toolMsg.tool_id, toolMsg.input);
-        }
-
-        // Format 2: Nested inside assistant messages (SDK format)
-        if (message.type === 'assistant') {
-          const assistantMsg = message as { message?: { content?: Array<{ type: string; name?: string; id?: string; input?: Record<string, unknown> }> } };
-          const content = assistantMsg.message?.content;
-          if (content && Array.isArray(content)) {
-            for (const block of content) {
-              if (block.type === 'tool_use') {
-                processToolUseBlock(block.name, block.id, block.input);
-              }
-            }
-          }
-        }
-
-        // 35-12: Check for tool_result blocks to update skill completion status
-        if (message.type === 'user') {
-          const userMsg = message as { message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
-          const content = userMsg.message?.content;
-          if (content && Array.isArray(content)) {
-            for (const block of content) {
-              if (block.type === 'tool_result' && block.tool_use_id) {
-                // Find matching skill entry and update it
-                const existingEntry = currentSkillEntries.find((e) => e.id === block.tool_use_id);
-                if (existingEntry) {
-                  const startTime = existingEntry.timestamp;
-                  const durationMs = Date.now() - startTime;
-                  handleSkillEvent({
-                    ...existingEntry,
-                    status: block.is_error ? 'error' : 'completed',
-                    result: block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 200) : undefined),
-                    error: block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 200) : 'Unknown error') : undefined,
-                    durationMs,
-                  });
-                }
-
-                // Background task completion detection from message stream
-                // tool_use_id matches the taskId we stored when Task tool was invoked
-                const completedTask = completeBackgroundTask(
-                  block.tool_use_id,
-                  !block.is_error,
-                  block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
-                  block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined
-                );
-                if (completedTask) {
-                  console.log(`[main] Background task completed from stream: ${completedTask.taskId} (${completedTask.success ? 'success' : 'error'})`);
-                }
-              }
-            }
-          }
-        }
-      }
-      broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
-      // Also broadcast to WebSocket clients for React components
-      broadcastClaudeComplete();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_ERROR, errorMessage);
-      // Also broadcast to WebSocket clients for React components
-      broadcastClaudeError(errorMessage);
-      throw error;
-    }
-  });
-
-  // Permission mode handlers
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SET_MODE, async (_event: unknown, ...args: unknown[]) => {
-    const mode = args[0] as 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions';
-    const service = getClaudeService();
-    service.setPermissionMode(mode);
-    return mode;
-  });
-
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_GET_MODE, async () => {
-    const service = getClaudeService();
-    return service.getPermissionMode();
-  });
-
-  // Interrupt handler - stops current Claude turn (like Escape in CLI)
-  // Uses abort() to fully kill the process - SIGINT alone doesn't reliably stop Claude CLI
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_ABORT, async () => {
-    const service = getClaudeService();
-    console.log('[main] CLAUDE_ABORT called - aborting Claude process');
-    service.abort();
-    return true;
-  });
-
-  // Clear handler - resets all session state (like /clear in CLI)
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_CLEAR, async () => {
-    const service = getClaudeService();
-    service.clearSession();
-    clearSessionId();
-    resetTokenStats();
-    resetTodos();
-    resetEventStore(); // Clear tool events (changed files, diffs)
-    resetToolStats();
-    resetSkills(); // 35-12: Clear skill invocations
-    resetContext(); // Clear context percentage
-    resetUsageStats(); // Clear usage stats (23-2)
-    // Broadcast zeroed stats to update UI immediately
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
-    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 }); // (23-2)
-    broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null); // Clear persona (23-2)
-    console.log('Session cleared: tokens, todos, tool events, tool stats, context, usage, persona');
-    return true;
-  });
-
-  // System prompt handlers - set/get persona context for --append-system-prompt
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SET_SYSTEM_PROMPT, async (_event: unknown, ...args: unknown[]) => {
-    const prompt = args[0] as string;
-    const service = getClaudeService();
-    console.log(`[main] Setting system prompt (${prompt.length} chars)`);
-    service.setSystemPrompt(prompt);
-    return true;
-  });
-
-  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_GET_SYSTEM_PROMPT, async () => {
-    const service = getClaudeService();
-    return service.getSystemPrompt();
-  });
-
-  // Clear and reload handler - clears session and loads new agent (MSSCI-11840)
-  ipcMain.handle(IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD, async (_event: unknown, ...args: unknown[]) => {
-    const agent = args[0] as string;
-    const service = getClaudeService();
-    const projectDir = getProjectDirectory();
-    console.log(`[main] Context clear and reload: ${agent}`);
-
-    // Clear session state and WAIT for process to fully exit
-    // This prevents race conditions where new process spawns before old one dies
-    await service.clearSessionAsync();
-    clearSessionId();
-    resetTokenStats();
-    resetTodos();
-    resetEventStore();
-    resetToolStats();
-    resetSkills();
-    resetContext();
-    resetUsageStats();
-
-    // Broadcast zeroed stats to update UI immediately
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
-    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
-    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
-    broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
-
-    // Load prime context for the agent (persona, behavior guide, etc.)
-    // and set it as the system prompt so personas behave as in CLI mode
-    if (projectDir) {
-      // Extract agent name from command (e.g., "/dev" -> "dev")
-      const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
-      // MSSCI-12799: Track current agent for tier display
-      setCurrentAgent(agentName);
-      // Calculate tier based on session state (will be FULL after clear)
-      const state = service.getContextState();
-      const tier = selectContextTier(agentName, state);
-      const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
-      if (primeContext) {
-        service.setSystemPrompt(primeContext);
-        console.log(`[main] Set system prompt for agent "${agentName}" tier=${tier} (${primeContext.length} chars)`);
-      }
-    }
-
-    // Launch the new agent via the agent launch event
-    broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
-
-    console.log(`Session cleared and agent launch triggered: ${agent}`);
-    return true;
-  });
-
-  // Load agent context handler - loads prime context and sets system prompt
-  // Can be called explicitly when starting a new agent session
-  ipcMain.handle(IPC_AGENT_CHANNELS.AGENT_LOAD_CONTEXT, async (_event: unknown, ...args: unknown[]) => {
-    const agent = args[0] as string;
-    const projectDir = getProjectDirectory();
-    if (!projectDir) {
-      console.warn('[main] Cannot load agent context: no project directory');
-      return false;
-    }
-
-    // Extract agent name from command (e.g., "/dev" -> "dev")
-    const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
-    // MSSCI-12799: Track current agent for tier display
-    setCurrentAgent(agentName);
-    // Calculate tier based on session state for context backoff
-    const service = getClaudeService();
-    const state = service.getContextState();
-    const tier = selectContextTier(agentName, state);
-    const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
-    if (primeContext) {
-      service.setSystemPrompt(primeContext);
-      console.log(`[main] Loaded context for agent "${agentName}" tier=${tier} (${primeContext.length} chars)`);
-      return true;
-    }
-
-    console.warn(`[main] Failed to load context for agent "${agentName}"`);
-    return false;
-  });
-
-  console.log('Claude SDK IPC handlers registered');
-}
+// NOTE: setupClaudeIPCHandlers removed - Claude communication uses WebSocket exclusively
+// See useClaude hook and setClaudeSendCallback in startProjectWatchers()
 
 // =============================================================================
 // File Browser IPC Handlers (E8-3)
@@ -2827,8 +2534,8 @@ if (isElectron) {
   }
 
   // Set up IPC handlers
+  // NOTE: Claude IPC handlers removed - using WebSocket exclusively (useClaude hook)
   setupDataIPCHandlers(ipcMain);
-  setupClaudeIPCHandlers(ipcMain);
   setupFileBrowserIPCHandlers(ipcMain);
   setupSettingsIPCHandlers(ipcMain);
   setupLayoutIPCHandlers(ipcMain); // MSSCI-12706: Layout persistence
