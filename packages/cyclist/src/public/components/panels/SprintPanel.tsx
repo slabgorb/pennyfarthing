@@ -7,61 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStory } from '../../hooks/useStory';
-
-// =============================================================================
-// Types for Enhanced Sprint Panel
-// =============================================================================
-
-interface SprintStory {
-  id: string;
-  title: string;
-  points: number;
-  status: 'backlog' | 'in_progress' | 'done' | 'cancelled';
-  jiraKey: string | null;
-}
-
-interface SprintEpic {
-  id: string;
-  title: string;
-  jiraKey: string | null;
-  stories: SprintStory[];
-}
-
-interface FutureEpic {
-  id: string;
-  title: string;
-  description: string;
-  estimatedPoints: number;
-  status: 'ready' | 'blocked' | 'planning';
-}
-
-interface SprintData {
-  currentStory: SprintStory | null;
-  nextStory: SprintStory | null;
-  epics: SprintEpic[];
-  futureEpics: FutureEpic[];
-  sprint: {
-    number: number;
-    done: number;
-    remaining: number;
-    inProgress: number;
-    endDate: string;
-  };
-}
-
-// Declare the electronAPI type
-declare global {
-  interface Window {
-    electronAPI?: {
-      sprint?: {
-        getStatus: () => Promise<SprintData>;
-        getFuture: () => Promise<FutureEpic[]>;
-        archiveEpic: (epicId: string) => Promise<{ success: boolean }>;
-        promoteEpic: (epicId: string) => Promise<{ success: boolean }>;
-      };
-    };
-  }
-}
+import { useSprint, type SprintStory, type SprintEpic, type FutureEpic } from '../../hooks/useSprint';
 
 // =============================================================================
 // Original SprintPanel (unchanged)
@@ -152,83 +98,19 @@ function isEpicCompleted(epic: SprintEpic): boolean {
  * EnhancedSprintPanel - Full sprint management with epic actions
  */
 export function EnhancedSprintPanel(): React.ReactElement {
-  const [data, setData] = useState<SprintData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  // Use the sprint hook for data fetching via WebSocket
+  const { data, isLoading, error } = useSprint();
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<Error | null>(null);
 
-  // Load initial data
-  const loadData = useCallback(async () => {
-    try {
-      if (window.electronAPI?.sprint) {
-        const sprintData = await window.electronAPI.sprint.getStatus();
-        setData(sprintData);
-        // Expand all epics by default
-        setExpandedEpics(new Set(sprintData.epics.map((e) => e.id)));
-      }
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load sprint data'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // WebSocket connection for real-time updates
+  // Expand all epics by default when data first loads
   useEffect(() => {
-    loadData();
-
-    // Connect to WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/sprint`;
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const connect = () => {
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        // Connection established
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'init' || message.type === 'update') {
-            const { type, ...updates } = message;
-            // Merge updates with existing data (for partial updates)
-            setData((prev) => {
-              if (!prev) return updates as SprintData;
-              return { ...prev, ...updates } as SprintData;
-            });
-            if (message.type === 'init' && updates.epics) {
-              setExpandedEpics(new Set((updates as SprintData).epics.map((e: SprintEpic) => e.id)));
-            }
-          }
-        } catch {
-          // Ignore parse errors
-        }
-      };
-
-      ws.onclose = () => {
-        // Attempt to reconnect after 2 seconds
-        reconnectTimeout = setTimeout(connect, 2000);
-      };
-
-      ws.onerror = () => {
-        ws?.close();
-      };
-    };
-
-    connect();
-
-    return () => {
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      ws?.close();
-    };
-  }, [loadData]);
+    if (data?.epics && expandedEpics.size === 0) {
+      setExpandedEpics(new Set(data.epics.map((e) => e.id)));
+    }
+  }, [data?.epics, expandedEpics.size]);
 
   // Toggle epic expansion
   const toggleEpic = useCallback((epicId: string) => {
@@ -254,19 +136,19 @@ export function EnhancedSprintPanel(): React.ReactElement {
     [toggleEpic]
   );
 
-  // Archive epic action
+  // Archive epic action (TODO: implement REST endpoint)
   const handleArchive = useCallback(
     async (epicId: string) => {
-      if (!window.electronAPI?.sprint) return;
-
       setLoadingActions((prev) => new Set(prev).add(`archive-${epicId}`));
       setConfirmArchive(null);
 
       try {
-        await window.electronAPI.sprint.archiveEpic(epicId);
-        await loadData(); // Refresh after archive
+        // TODO: Call REST endpoint when implemented
+        // const response = await fetch(`/api/sprint/archive-epic/${epicId}`, { method: 'POST' });
+        // if (!response.ok) throw new Error('Archive failed');
+        setActionError(new Error('Archive not yet implemented'));
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Archive failed'));
+        setActionError(err instanceof Error ? err : new Error('Archive failed'));
       } finally {
         setLoadingActions((prev) => {
           const next = new Set(prev);
@@ -275,22 +157,21 @@ export function EnhancedSprintPanel(): React.ReactElement {
         });
       }
     },
-    [loadData]
+    []
   );
 
-  // Promote epic action
+  // Promote epic action (TODO: implement REST endpoint)
   const handlePromote = useCallback(
     async (epicId: string) => {
-      if (!window.electronAPI?.sprint) return;
-
       setLoadingActions((prev) => new Set(prev).add(`promote-${epicId}`));
 
       try {
-        await window.electronAPI.sprint.promoteEpic(epicId);
-        await loadData(); // Refresh after promote
-        setError(null);
+        // TODO: Call REST endpoint when implemented
+        // const response = await fetch(`/api/sprint/promote-epic/${epicId}`, { method: 'POST' });
+        // if (!response.ok) throw new Error('Promote failed');
+        setActionError(new Error('Promote not yet implemented'));
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Promote failed'));
+        setActionError(err instanceof Error ? err : new Error('Promote failed'));
       } finally {
         setLoadingActions((prev) => {
           const next = new Set(prev);
@@ -299,7 +180,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
         });
       }
     },
-    [loadData]
+    []
   );
 
   // Loading state
@@ -313,10 +194,11 @@ export function EnhancedSprintPanel(): React.ReactElement {
     );
   }
 
-  // Error toast
-  const errorToast = error ? (
+  // Error toast (show either WebSocket error or action error)
+  const displayError = error || actionError;
+  const errorToast = displayError ? (
     <div className="error-toast" data-testid="error-toast">
-      {error.message}
+      {displayError.message}
     </div>
   ) : null;
 

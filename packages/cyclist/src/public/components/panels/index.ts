@@ -6,7 +6,7 @@
  */
 
 export { MessagePanel } from './MessagePanel';
-export { SprintPanel } from './SprintPanel';
+export { SprintPanel, EnhancedSprintPanel } from './SprintPanel';
 export { GitPanel } from './GitPanel';
 export { ProgressPanel } from './ProgressPanel';  // Contains Workflow/AC/Todo tabs
 export { BackgroundPanel } from './BackgroundPanel';

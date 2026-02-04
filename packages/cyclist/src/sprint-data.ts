@@ -1,0 +1,302 @@
+/**
+ * Sprint Data Aggregation Service
+ *
+ * Parses sprint/*.yaml files and aggregates data for the EnhancedSprintPanel.
+ * Story MSSCI-14189 - Enhanced Sprint Panel with story management and epic actions
+ *
+ * Data sources:
+ * - sprint/current-sprint.yaml - Active sprint with epics and stories
+ * - sprint/future.yaml - Future initiatives and backlog epics
+ * - .session/*-session.md - Current active story (if any)
+ */
+
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { parse as parseYaml } from 'yaml';
+import { getStoryInfo } from './story-parser.js';
+
+// =============================================================================
+// Types matching EnhancedSprintPanel expectations
+// =============================================================================
+
+export interface SprintStory {
+  id: string;
+  title: string;
+  points: number;
+  status: 'backlog' | 'in_progress' | 'done' | 'cancelled';
+  jiraKey: string | null;
+}
+
+export interface SprintEpic {
+  id: string;
+  title: string;
+  jiraKey: string | null;
+  stories: SprintStory[];
+}
+
+export interface FutureEpic {
+  id: string;
+  title: string;
+  description: string;
+  estimatedPoints: number;
+  status: 'ready' | 'blocked' | 'planning';
+}
+
+export interface SprintData {
+  currentStory: SprintStory | null;
+  nextStory: SprintStory | null;
+  epics: SprintEpic[];
+  futureEpics: FutureEpic[];
+  sprint: {
+    number: number;
+    name: string;
+    done: number;
+    remaining: number;
+    inProgress: number;
+    endDate: string;
+  };
+}
+
+// =============================================================================
+// YAML Types (internal, matches sprint/*.yaml structure)
+// =============================================================================
+
+interface YamlStory {
+  id: string;
+  title: string;
+  points?: number;
+  status?: string;
+  jira?: string;
+}
+
+interface YamlEpic {
+  id: string;
+  title: string;
+  jira?: string;
+  stories?: YamlStory[];
+  points?: number;
+  status?: string;
+  description?: string;
+}
+
+interface YamlSprint {
+  name?: string;
+  end_date?: string;
+  jira_sprint_id?: number;
+}
+
+interface CurrentSprintYaml {
+  sprint?: YamlSprint;
+  epics?: YamlEpic[];
+}
+
+interface FutureInitiative {
+  name: string;
+  description?: string;
+  status?: string;
+  total_points?: number;
+  epics?: YamlEpic[];
+}
+
+interface FutureYaml {
+  future?: {
+    initiatives?: FutureInitiative[];
+  };
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Map YAML status string to SprintStory status enum
+ */
+function mapStoryStatus(status?: string): SprintStory['status'] {
+  if (!status) return 'backlog';
+  const normalized = status.toLowerCase();
+  if (normalized === 'done' || normalized === 'completed') return 'done';
+  if (normalized === 'in_progress' || normalized === 'in-progress') return 'in_progress';
+  if (normalized === 'cancelled' || normalized === 'canceled') return 'cancelled';
+  return 'backlog';
+}
+
+/**
+ * Map initiative status to FutureEpic status
+ */
+function mapFutureStatus(status?: string): FutureEpic['status'] {
+  if (!status) return 'planning';
+  const normalized = status.toLowerCase();
+  if (normalized === 'ready' || normalized === 'research_complete') return 'ready';
+  if (normalized.includes('block')) return 'blocked';
+  return 'planning';
+}
+
+/**
+ * Extract sprint number from name like "TO Sprint 2606"
+ */
+function extractSprintNumber(name?: string): number {
+  if (!name) return 0;
+  const match = name.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Transform YAML story to SprintStory
+ */
+function transformStory(yamlStory: YamlStory): SprintStory {
+  return {
+    id: yamlStory.id,
+    title: yamlStory.title,
+    points: yamlStory.points ?? 0,
+    status: mapStoryStatus(yamlStory.status),
+    jiraKey: yamlStory.jira ?? null,
+  };
+}
+
+/**
+ * Transform YAML epic to SprintEpic
+ */
+function transformEpic(yamlEpic: YamlEpic): SprintEpic {
+  return {
+    id: yamlEpic.id,
+    title: yamlEpic.title.replace(/^Epic:\s*/i, ''), // Clean "Epic: " prefix
+    jiraKey: yamlEpic.jira ?? null,
+    stories: (yamlEpic.stories ?? []).map(transformStory),
+  };
+}
+
+// =============================================================================
+// Main Data Aggregation
+// =============================================================================
+
+/**
+ * Get aggregated sprint data for EnhancedSprintPanel
+ */
+export function getSprintData(projectDir: string): SprintData {
+  const currentSprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
+  const futurePath = join(projectDir, 'sprint', 'future.yaml');
+
+  // Parse current sprint
+  let currentSprint: CurrentSprintYaml = {};
+  if (existsSync(currentSprintPath)) {
+    try {
+      const content = readFileSync(currentSprintPath, 'utf-8');
+      currentSprint = parseYaml(content) as CurrentSprintYaml;
+    } catch (err) {
+      console.error('[sprint-data] Failed to parse current-sprint.yaml:', err);
+    }
+  }
+
+  // Parse future.yaml
+  let future: FutureYaml = {};
+  if (existsSync(futurePath)) {
+    try {
+      const content = readFileSync(futurePath, 'utf-8');
+      future = parseYaml(content) as FutureYaml;
+    } catch (err) {
+      console.error('[sprint-data] Failed to parse future.yaml:', err);
+    }
+  }
+
+  // Get current story from session
+  const storyInfo = getStoryInfo(projectDir);
+
+  // Transform epics
+  const epics: SprintEpic[] = (currentSprint.epics ?? []).map(transformEpic);
+
+  // Calculate sprint metrics
+  let done = 0;
+  let inProgress = 0;
+  let remaining = 0;
+
+  for (const epic of epics) {
+    for (const story of epic.stories) {
+      if (story.status === 'done') {
+        done += story.points;
+      } else if (story.status === 'in_progress') {
+        inProgress += story.points;
+      } else if (story.status === 'backlog') {
+        remaining += story.points;
+      }
+    }
+  }
+
+  // Find current story in epics
+  let currentStory: SprintStory | null = null;
+  let nextStory: SprintStory | null = null;
+
+  if (storyInfo.id) {
+    // We have an active session - find the story
+    for (const epic of epics) {
+      const found = epic.stories.find(s => s.id === storyInfo.id);
+      if (found) {
+        currentStory = found;
+        break;
+      }
+    }
+  }
+
+  // Find next backlog story (highest priority)
+  if (!currentStory) {
+    for (const epic of epics) {
+      const backlogStory = epic.stories.find(s => s.status === 'backlog');
+      if (backlogStory) {
+        nextStory = backlogStory;
+        break;
+      }
+    }
+  }
+
+  // Transform future initiatives to FutureEpic[]
+  const futureEpics: FutureEpic[] = [];
+  const initiatives = future.future?.initiatives ?? [];
+
+  for (const initiative of initiatives) {
+    // Skip completed initiatives
+    if (initiative.status === 'complete') continue;
+
+    // Add the initiative itself as a promotable epic
+    futureEpics.push({
+      id: initiative.name.toLowerCase().replace(/\s+/g, '-'),
+      title: initiative.name,
+      description: initiative.description ?? '',
+      estimatedPoints: initiative.total_points ?? 0,
+      status: mapFutureStatus(initiative.status),
+    });
+  }
+
+  return {
+    currentStory,
+    nextStory,
+    epics,
+    futureEpics,
+    sprint: {
+      number: extractSprintNumber(currentSprint.sprint?.name),
+      name: currentSprint.sprint?.name ?? 'Unknown Sprint',
+      done,
+      remaining,
+      inProgress,
+      endDate: currentSprint.sprint?.end_date ?? '',
+    },
+  };
+}
+
+/**
+ * Archive a completed epic
+ * Returns true if successful, throws on error
+ */
+export async function archiveEpic(projectDir: string, epicId: string): Promise<boolean> {
+  // TODO: Implement by calling archive_epic.py script
+  console.log(`[sprint-data] Archive epic ${epicId} requested (not yet implemented)`);
+  throw new Error('Archive epic not yet implemented');
+}
+
+/**
+ * Promote a future epic to current sprint
+ * Returns true if successful, throws on error
+ */
+export async function promoteEpic(projectDir: string, epicId: string): Promise<boolean> {
+  // TODO: Implement by calling promote-epic.sh script
+  console.log(`[sprint-data] Promote epic ${epicId} requested (not yet implemented)`);
+  throw new Error('Promote epic not yet implemented');
+}
