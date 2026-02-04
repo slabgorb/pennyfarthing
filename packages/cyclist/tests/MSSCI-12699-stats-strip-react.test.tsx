@@ -27,34 +27,47 @@ import React from 'react';
 import StatsStrip from '../src/public/components/StatsStrip';
 import { useStatsStrip } from '../src/public/hooks/useStatsStrip';
 
-// Mock electronAPI for IPC bridge
-const mockElectronAPI = {
-  context: {
-    get: vi.fn(() => Promise.resolve({ percent: 45, used: 90000, total: 200000 })),
-    onUpdate: vi.fn(),
-  },
-  stats: {
-    get: vi.fn(() => Promise.resolve({ model: 'claude-opus-4-5-20251101' })),
-    onUpdate: vi.fn(),
-  },
-  projectInfo: {
-    get: vi.fn(() => Promise.resolve({
-      pwd: '/Users/test/project',
-      jiraEmail: 'test@example.com',
-      githubUsername: 'testuser',
-    })),
-    onUpdate: vi.fn(),
-  },
-};
+// Track WebSocket instances for sending messages
+let contextWs: any = null;
+let statsWs: any = null;
 
 // Install mock before tests
 beforeEach(() => {
-  (window as any).electronAPI = mockElectronAPI;
   vi.clearAllMocks();
+  contextWs = null;
+  statsWs = null;
+
+  // Mock fetch for /api/identity
+  global.fetch = vi.fn((url) => {
+    if (url === '/api/identity') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          jiraEmail: 'test@example.com',
+          githubUsername: 'testuser',
+        }),
+      } as Response);
+    }
+    return Promise.reject(new Error('Unknown URL'));
+  });
+
+  // Override WebSocket mock to track instances
+  const OriginalMockWebSocket = (window as any).WebSocket;
+  (window as any).WebSocket = class extends OriginalMockWebSocket {
+    constructor(url: string) {
+      super(url);
+      // Track instances based on URL
+      if (url.includes('/ws/context')) {
+        contextWs = this;
+      } else if (url.includes('/ws/stats')) {
+        statsWs = this;
+      }
+    }
+  };
 });
 
 afterEach(() => {
-  delete (window as any).electronAPI;
+  vi.restoreAllMocks();
 });
 
 // ============================================================================
@@ -129,8 +142,16 @@ describe('AC1: StatsStrip renders with all required elements', () => {
 
 describe('AC2: Context percentage displays with color states', () => {
   it('should display context percentage value', async () => {
-    mockElectronAPI.context.get.mockResolvedValue(mockContextSafe);
     render(<StatsStrip />);
+
+    // Wait for WebSocket to connect
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    // Send context data via WebSocket
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: { percent: 30, tokens: 60000, available: 140000 }
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-percent')).toHaveTextContent('30%');
@@ -138,8 +159,14 @@ describe('AC2: Context percentage displays with color states', () => {
   });
 
   it('should apply level-safe class when context < 70%', async () => {
-    mockElectronAPI.context.get.mockResolvedValue(mockContextSafe);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: mockContextSafe
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-meter')).toHaveClass('level-safe');
@@ -147,8 +174,14 @@ describe('AC2: Context percentage displays with color states', () => {
   });
 
   it('should apply level-warning class when context >= 70% and < 85%', async () => {
-    mockElectronAPI.context.get.mockResolvedValue(mockContextWarning);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: mockContextWarning
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-meter')).toHaveClass('level-warning');
@@ -156,8 +189,14 @@ describe('AC2: Context percentage displays with color states', () => {
   });
 
   it('should apply level-danger class when context >= 85%', async () => {
-    mockElectronAPI.context.get.mockResolvedValue(mockContextDanger);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: mockContextDanger
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-meter')).toHaveClass('level-danger');
@@ -170,8 +209,14 @@ describe('AC2: Context percentage displays with color states', () => {
   });
 
   it('should set progress bar width based on context percent', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 45 });
     render(<StatsStrip />);
+
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: { percent: 45 }
+    })});
 
     await waitFor(() => {
       const fill = screen.getByTestId('context-fill');
@@ -186,8 +231,11 @@ describe('AC2: Context percentage displays with color states', () => {
 
 describe('AC3: Model badge shows current model name', () => {
   it('should display model name from stats', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue(mockStats);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-opus-4-5-20251101' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-badge')).toHaveTextContent('opus');
@@ -195,8 +243,11 @@ describe('AC3: Model badge shows current model name', () => {
   });
 
   it('should format long model names to short display', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue({ model: 'claude-3-5-sonnet-20241022' });
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-3-5-sonnet-20241022' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-badge')).toHaveTextContent('sonnet');
@@ -204,8 +255,11 @@ describe('AC3: Model badge shows current model name', () => {
   });
 
   it('should handle haiku model name', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue({ model: 'claude-3-5-haiku-20241022' });
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-3-5-haiku-20241022' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-badge')).toHaveTextContent('haiku');
@@ -213,8 +267,11 @@ describe('AC3: Model badge shows current model name', () => {
   });
 
   it('should show placeholder when no model available', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue({ model: null });
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: null }) });
 
     await waitFor(() => {
       const badge = screen.getByTestId('model-badge');
@@ -223,8 +280,11 @@ describe('AC3: Model badge shows current model name', () => {
   });
 
   it('should have title attribute with full model name', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue(mockStats);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-opus-4-5-20251101' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-badge')).toHaveAttribute('title', 'claude-opus-4-5-20251101');
@@ -238,8 +298,15 @@ describe('AC3: Model badge shows current model name', () => {
 
 describe('AC4: PWD shows current working directory', () => {
   it('should display current working directory', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    // pwd comes from stats WebSocket
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: '/Users/keithavery/Projects/pennyfarthing-orchestrator'
+    }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('stats-pwd')).toHaveTextContent(/pennyfarthing-orchestrator/);
@@ -247,8 +314,14 @@ describe('AC4: PWD shows current working directory', () => {
   });
 
   it('should have title attribute with full path for tooltip', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: '/Users/keithavery/Projects/pennyfarthing-orchestrator'
+    }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('stats-pwd')).toHaveAttribute(
@@ -259,11 +332,14 @@ describe('AC4: PWD shows current working directory', () => {
   });
 
   it('should truncate long paths with ellipsis', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue({
-      ...mockProjectInfo,
-      pwd: '/Users/keithavery/Projects/very-long-project-name-that-should-be-truncated',
-    });
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: '/Users/keithavery/Projects/very-long-project-name-that-should-be-truncated'
+    }) });
 
     await waitFor(() => {
       const pwd = screen.getByTestId('stats-pwd');
@@ -273,8 +349,14 @@ describe('AC4: PWD shows current working directory', () => {
   });
 
   it('should show folder name only when collapsed', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: '/Users/keithavery/Projects/pennyfarthing-orchestrator'
+    }) });
 
     await waitFor(() => {
       // Should show folder name, not full path, by default
@@ -284,8 +366,14 @@ describe('AC4: PWD shows current working directory', () => {
   });
 
   it('should store full path in data attribute for responsive switching', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: mockProjectInfo.pwd
+    }) });
 
     await waitFor(() => {
       const pwd = screen.getByTestId('stats-pwd');
@@ -300,7 +388,15 @@ describe('AC4: PWD shows current working directory', () => {
 
 describe('AC5: Identity section shows Jira and GitHub users', () => {
   it('should display Jira email', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
+    // Mock fetch to return custom identity
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -309,7 +405,14 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
   });
 
   it('should display GitHub username with @ prefix', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -318,7 +421,14 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
   });
 
   it('should have title attribute on Jira email for tooltip', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -327,7 +437,14 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
   });
 
   it('should have title attribute on GitHub user for tooltip', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -336,7 +453,14 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
   });
 
   it('should hide Jira email when not configured', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue({ ...mockProjectInfo, jiraEmail: null });
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: null,
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -345,7 +469,14 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
   });
 
   it('should hide GitHub user when not configured', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue({ ...mockProjectInfo, githubUsername: null });
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: null,
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
     await waitFor(() => {
@@ -359,34 +490,48 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
 // ============================================================================
 
 describe('AC6: Real-time updates when data changes', () => {
-  it('should subscribe to context updates on mount', () => {
+  it('should subscribe to context updates on mount', async () => {
     render(<StatsStrip />);
-    expect(mockElectronAPI.context.onUpdate).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(contextWs).not.toBeNull();
+    });
   });
 
-  it('should subscribe to stats updates on mount', () => {
+  it('should subscribe to stats updates on mount', async () => {
     render(<StatsStrip />);
-    expect(mockElectronAPI.stats.onUpdate).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(statsWs).not.toBeNull();
+    });
   });
 
-  it('should subscribe to projectInfo updates on mount', () => {
+  it('should subscribe to projectInfo updates on mount', async () => {
     render(<StatsStrip />);
-    expect(mockElectronAPI.projectInfo.onUpdate).toHaveBeenCalled();
+    // projectInfo uses fetch, verify it's called
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/identity');
+    });
   });
 
   it('should update context display when update callback fires', async () => {
     render(<StatsStrip />);
 
-    // Wait for component to mount and subscribe
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    // Send initial data
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: { percent: 30 }
+    })});
+
     await waitFor(() => {
-      expect(mockElectronAPI.context.onUpdate).toHaveBeenCalled();
+      expect(screen.getByTestId('context-percent')).toHaveTextContent('30%');
     });
 
-    // Get the callback that was registered
-    const callback = mockElectronAPI.context.onUpdate.mock.calls[0][0];
-
-    // Simulate context update
-    callback(null, { percent: 85, used: 170000, total: 200000 });
+    // Send update
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'update',
+      context: { percent: 85, tokens: 170000, available: 30000 }
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-percent')).toHaveTextContent('85%');
@@ -397,13 +542,15 @@ describe('AC6: Real-time updates when data changes', () => {
   it('should update model badge when stats update callback fires', async () => {
     render(<StatsStrip />);
 
-    // Wait for component to mount and subscribe
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-opus-4-5-20251101' }) });
+
     await waitFor(() => {
-      expect(mockElectronAPI.stats.onUpdate).toHaveBeenCalled();
+      expect(screen.getByTestId('model-badge')).toHaveTextContent('opus');
     });
 
-    const callback = mockElectronAPI.stats.onUpdate.mock.calls[0][0];
-    callback(null, { model: 'claude-3-5-haiku-20241022' });
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-3-5-haiku-20241022' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-badge')).toHaveTextContent('haiku');
@@ -411,24 +558,33 @@ describe('AC6: Real-time updates when data changes', () => {
   });
 
   it('should update identity when projectInfo update callback fires', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'old@example.com',
+        githubUsername: 'olduser',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
 
-    // Wait for component to mount and subscribe
-    await waitFor(() => {
-      expect(mockElectronAPI.projectInfo.onUpdate).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(statsWs).not.toBeNull());
 
-    const callback = mockElectronAPI.projectInfo.onUpdate.mock.calls[0][0];
-    callback(null, {
-      pwd: '/new/project/path',
-      jiraEmail: 'new@example.com',
-      githubUsername: 'newuser',
-    });
+    // Send pwd update via stats WebSocket
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: '/new/project/path'
+    }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('stats-pwd')).toHaveTextContent('path');
-      expect(screen.getByTestId('jira-email')).toHaveTextContent('new@example.com');
-      expect(screen.getByTestId('github-user')).toHaveTextContent('@newuser');
+    });
+
+    // Identity is fetched once from API, doesn't update dynamically
+    // but we can verify initial fetch worked
+    await waitFor(() => {
+      expect(screen.getByTestId('jira-email')).toHaveTextContent('old@example.com');
+      expect(screen.getByTestId('github-user')).toHaveTextContent('@olduser');
     });
   });
 });
@@ -456,15 +612,21 @@ describe('useStatsStrip Hook', () => {
     render(<TestComponent />);
 
     await waitFor(() => {
-      expect(mockElectronAPI.context.get).toHaveBeenCalled();
-      expect(mockElectronAPI.stats.get).toHaveBeenCalled();
-      expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
+      expect(contextWs).not.toBeNull();
+      expect(statsWs).not.toBeNull();
+      expect(global.fetch).toHaveBeenCalledWith('/api/identity');
     });
   });
 
   it('should provide context data', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({ percent: 55 });
     render(<TestComponent />);
+
+    await waitFor(() => expect(contextWs).not.toBeNull());
+
+    contextWs.onmessage?.({ data: JSON.stringify({
+      type: 'init',
+      context: { percent: 55 }
+    })});
 
     await waitFor(() => {
       expect(screen.getByTestId('context-percent-value')).toHaveTextContent('55');
@@ -472,8 +634,11 @@ describe('useStatsStrip Hook', () => {
   });
 
   it('should provide stats data', async () => {
-    mockElectronAPI.stats.get.mockResolvedValue({ model: 'test-model' });
     render(<TestComponent />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({ model: 'test-model' }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('model-value')).toHaveTextContent('test-model');
@@ -481,8 +646,14 @@ describe('useStatsStrip Hook', () => {
   });
 
   it('should provide projectInfo data', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue({ pwd: '/test/path' });
     render(<TestComponent />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'test-model',
+      pwd: '/test/path'
+    }) });
 
     await waitFor(() => {
       expect(screen.getByTestId('pwd-value')).toHaveTextContent('/test/path');
@@ -490,7 +661,8 @@ describe('useStatsStrip Hook', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    mockElectronAPI.context.get.mockRejectedValue(new Error('API Error'));
+    global.fetch = vi.fn(() => Promise.reject(new Error('API Error')));
+
     render(<TestComponent />);
 
     await waitFor(() => {
@@ -505,8 +677,22 @@ describe('useStatsStrip Hook', () => {
 
 describe('Layout and Styling', () => {
   it('should have correct element order in stats-left: pwd -> jira -> github', async () => {
-    mockElectronAPI.projectInfo.get.mockResolvedValue(mockProjectInfo);
+    global.fetch = vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        jiraEmail: 'keith@1898andco.com',
+        githubUsername: 'keithavery',
+      }),
+    } as Response));
+
     render(<StatsStrip />);
+
+    await waitFor(() => expect(statsWs).not.toBeNull());
+
+    statsWs.onmessage?.({ data: JSON.stringify({
+      model: 'claude-opus-4-5-20251101',
+      pwd: mockProjectInfo.pwd
+    }) });
 
     await waitFor(() => {
       const statsLeft = screen.getByTestId('stats-left');

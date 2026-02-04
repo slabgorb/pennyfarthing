@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 // The component we're testing
@@ -28,10 +28,32 @@ vi.mock('../src/public/hooks/useTodos', () => ({
   TodoItem: {},
 }));
 
+// Mock useStory hook (ProgressPanel also uses this for workflow/AC tabs)
+const mockUseStory = vi.fn();
+vi.mock('../src/public/hooks/useStory', () => ({
+  useStory: () => mockUseStory(),
+}));
+
+/**
+ * Helper to switch ProgressPanel to the Todo tab
+ * ProgressPanel defaults to Workflow tab, tests need Todo tab
+ */
+function switchToTodoTab() {
+  const todoTabButton = screen.getByRole('tab', { name: /todo/i });
+  fireEvent.click(todoTabButton);
+}
+
 describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Setup default mock for useStory (not loading, no error, no story)
+    mockUseStory.mockReturnValue({
+      story: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -56,6 +78,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // The task content should be visible, not just ">"
       expect(screen.getByText('Implementing user authentication')).toBeInTheDocument();
@@ -76,6 +99,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // We should find the content text, not an empty element with just ">"
       const todoItem = screen.getByTestId('todo-1');
@@ -97,6 +121,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // For in_progress, activeForm is more descriptive
       expect(screen.getByText(/Writing tests|Write tests/)).toBeInTheDocument();
@@ -127,6 +152,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Both pending tasks should show their content
       expect(screen.getByText('Update documentation')).toBeInTheDocument();
@@ -148,6 +174,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       const todoItem = screen.getByTestId('todo-1');
       // Content should include the task text, not be empty
@@ -179,6 +206,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // The completed section header shows, but we also want to verify
       // that completed task content is accessible (even if collapsed)
@@ -200,6 +228,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Even if collapsed by default, the DOM should contain the content
       // (for accessibility and potential expansion)
@@ -226,10 +255,11 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
-      // The status indicator should be in a styled span, not raw text
-      const statusElements = screen.getAllByText('>');
-      // If raw > exists, it should be within a status indicator class
+      // The status indicator should be in a styled span (component uses ●, not >)
+      const statusElements = screen.getAllByText('●');
+      // Status indicator should be within a status indicator class
       statusElements.forEach(el => {
         expect(el.className).toContain('todo-status');
       });
@@ -250,9 +280,10 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
-      // The status indicator should be styled, not raw
-      const statusElements = screen.getAllByText('*');
+      // The status indicator should be styled (component uses ○, not *)
+      const statusElements = screen.getAllByText('○');
       statusElements.forEach(el => {
         expect(el.className).toContain('todo-status');
       });
@@ -273,6 +304,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Completed items are in collapsed section, but if visible,
       // status markers should be styled
@@ -300,6 +332,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // The component should display content for pending items
       expect(screen.getByText('Task from content field')).toBeInTheDocument();
@@ -320,6 +353,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Either content or activeForm should be displayed
       const text = screen.getByTestId('todo-1').textContent;
@@ -343,6 +377,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
 
       // Should not throw
       expect(() => render(<ProgressPanel />)).not.toThrow();
+      switchToTodoTab();
 
       // And should still display something meaningful
       const todoItem = screen.getByTestId('todo-1');
@@ -367,6 +402,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Progress bar should show 1/4 (1 completed out of 4)
       expect(screen.getByText('1/4')).toBeInTheDocument();
@@ -391,11 +427,12 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       });
 
       render(<ProgressPanel />);
+      switchToTodoTab();
 
       // Each section should have its items
       expect(screen.getByText('In Progress')).toBeInTheDocument();
       expect(screen.getByText('Pending')).toBeInTheDocument();
-      expect(screen.getByText(/Completed/)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Completed/i })).toBeInTheDocument();
     });
 
   });

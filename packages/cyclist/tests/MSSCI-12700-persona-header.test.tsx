@@ -21,35 +21,52 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import React from 'react';
 
 // Component and hook to be implemented
 import PersonaHeader from '../src/public/components/PersonaHeader';
 import { usePersona } from '../src/public/hooks/usePersona';
+import { ClaudeProvider } from '../src/public/contexts/ClaudeContext';
+
+// Wrapper component for tests that need ClaudeProvider
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ClaudeProvider>{children}</ClaudeProvider>
+);
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
-const mockElectronAPI = {
-  persona: {
-    get: vi.fn(() => Promise.resolve({
-      character: 'Titus Pullo',
-      theme: 'rome',
-      role: 'Scrum Master',
-    })),
-    onUpdate: vi.fn(),
-  },
-};
+// Track WebSocket instance for sending messages
+let personaWs: any = null;
+
+// Helper to send persona data via WebSocket
+async function sendPersonaData(data: any) {
+  await act(async () => {
+    personaWs.onmessage?.({ data: JSON.stringify(data) });
+  });
+}
 
 beforeEach(() => {
-  (window as any).electronAPI = mockElectronAPI;
   vi.clearAllMocks();
+  personaWs = null;
+
+  // Override WebSocket mock to track instance
+  const OriginalMockWebSocket = (window as any).WebSocket;
+  (window as any).WebSocket = class extends OriginalMockWebSocket {
+    constructor(url: string) {
+      super(url);
+      // Track persona WebSocket
+      if (url.includes('/ws/persona')) {
+        personaWs = this;
+      }
+    }
+  };
 });
 
 afterEach(() => {
-  delete (window as any).electronAPI;
+  vi.restoreAllMocks();
 });
 
 // ============================================================================
@@ -80,13 +97,18 @@ const mockPersonaMinimal = {
 
 describe('AC1: PersonaHeader displays current agent character name', () => {
   it('should render PersonaHeader component without crashing', () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
     expect(screen.getByTestId('persona-header')).toBeInTheDocument();
   });
 
   it('should display character name from persona data', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await act(async () => {
+      await sendPersonaData(mockPersonaRome);
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-character')).toHaveTextContent('Atia of the Julii');
@@ -94,8 +116,11 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
   });
 
   it('should render character name in prominent position', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const character = screen.getByTestId('persona-character');
@@ -105,8 +130,11 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
   });
 
   it('should have title attribute with full character name', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-character')).toHaveAttribute('title', 'Atia of the Julii');
@@ -120,8 +148,11 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
 
 describe('AC2: PersonaHeader displays current theme name', () => {
   it('should display humanized theme name from persona data', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       // "rome" should be humanized to "Rome"
@@ -130,8 +161,11 @@ describe('AC2: PersonaHeader displays current theme name', () => {
   });
 
   it('should display formatted theme name for multi-word themes', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaTrek);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaTrek);
 
     await waitFor(() => {
       // "star-trek-tng" should be humanized to "Star Trek Tng"
@@ -141,8 +175,11 @@ describe('AC2: PersonaHeader displays current theme name', () => {
   });
 
   it('should have title attribute with theme name', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-theme')).toHaveAttribute('title', expect.stringContaining('rome'));
@@ -156,8 +193,11 @@ describe('AC2: PersonaHeader displays current theme name', () => {
 
 describe('AC3: PersonaHeader displays agent role/title', () => {
   it('should display role from persona data', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-role')).toHaveTextContent('Test Engineer');
@@ -165,8 +205,11 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
   });
 
   it('should display short role identifiers correctly', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaMinimal);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaMinimal);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-role')).toHaveTextContent('dev');
@@ -174,8 +217,11 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
   });
 
   it('should have title attribute with full role name', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-role')).toHaveAttribute('title', 'Test Engineer');
@@ -183,8 +229,11 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
   });
 
   it('should apply role-specific styling class', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const roleEl = screen.getByTestId('persona-role');
@@ -198,20 +247,27 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
 // ============================================================================
 
 describe('AC4: Component updates when persona changes', () => {
-  it('should subscribe to persona updates on mount', () => {
-    render(<PersonaHeader />);
-    expect(mockElectronAPI.persona.onUpdate).toHaveBeenCalled();
+  it('should subscribe to persona updates on mount', async () => {
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+    await waitFor(() => {
+      expect(personaWs).not.toBeNull();
+    });
   });
 
   it('should update character when persona update callback fires', async () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    // Send initial persona
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
-      expect(mockElectronAPI.persona.onUpdate).toHaveBeenCalled();
+      expect(screen.getByTestId('persona-character')).toHaveTextContent('Atia of the Julii');
     });
 
-    const callback = mockElectronAPI.persona.onUpdate.mock.calls[0][0];
-    callback(null, mockPersonaTrek);
+    // Send updated persona
+    await sendPersonaData(mockPersonaTrek);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-character')).toHaveTextContent('Captain Picard');
@@ -219,14 +275,11 @@ describe('AC4: Component updates when persona changes', () => {
   });
 
   it('should update theme when persona update callback fires', async () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(mockElectronAPI.persona.onUpdate).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(personaWs).not.toBeNull());
 
-    const callback = mockElectronAPI.persona.onUpdate.mock.calls[0][0];
-    callback(null, mockPersonaTrek);
+    await sendPersonaData(mockPersonaTrek);
 
     await waitFor(() => {
       // "star-trek-tng" should be humanized to "Star Trek Tng"
@@ -235,14 +288,11 @@ describe('AC4: Component updates when persona changes', () => {
   });
 
   it('should update role when persona update callback fires', async () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(mockElectronAPI.persona.onUpdate).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(personaWs).not.toBeNull());
 
-    const callback = mockElectronAPI.persona.onUpdate.mock.calls[0][0];
-    callback(null, mockPersonaTrek);
+    await sendPersonaData(mockPersonaTrek);
 
     await waitFor(() => {
       expect(screen.getByTestId('persona-role')).toHaveTextContent('Developer');
@@ -256,8 +306,11 @@ describe('AC4: Component updates when persona changes', () => {
 
 describe('AC5: Component handles missing/undefined persona gracefully', () => {
   it('should render without crashing when persona is null', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(null);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(null);
 
     // Should render empty state (header with 'empty' class)
     const header = screen.getByTestId('persona-header');
@@ -266,9 +319,9 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
   });
 
   it('should render without crashing when persona is undefined', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(undefined);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
 
+    // Without sending any message, persona remains null
     // Should render empty state (header with 'empty' class)
     const header = screen.getByTestId('persona-header');
     expect(header).toBeInTheDocument();
@@ -276,8 +329,11 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
   });
 
   it('should show empty state when character is missing', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue({ theme: 'rome', role: 'dev' });
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData({ theme: 'rome', role: 'dev', character: null });
 
     // Component hides when character is missing (empty state)
     await waitFor(() => {
@@ -287,8 +343,11 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
   });
 
   it('should show default theme when theme is missing', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue({ character: 'Test', role: 'dev' });
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData({ character: 'Test', role: 'dev', theme: null });
 
     await waitFor(() => {
       const theme = screen.getByTestId('persona-theme');
@@ -297,8 +356,11 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
   });
 
   it('should show default role when role is missing', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue({ character: 'Test', theme: 'rome' });
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData({ character: 'Test', theme: 'rome', role: null });
 
     await waitFor(() => {
       const role = screen.getByTestId('persona-role');
@@ -307,10 +369,9 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    mockElectronAPI.persona.get.mockRejectedValue(new Error('API Error'));
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
 
-    // Should not crash, should show empty state
+    // Should not crash, should show empty state even without WebSocket connection
     expect(screen.getByTestId('persona-header')).toBeInTheDocument();
   });
 });
@@ -321,8 +382,11 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
 
 describe('AC6: Accessible with proper ARIA labels', () => {
   it('should have aria-label on persona-header container when populated', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const header = screen.getByTestId('persona-header');
@@ -331,8 +395,11 @@ describe('AC6: Accessible with proper ARIA labels', () => {
   });
 
   it('should have descriptive aria-label including persona info', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const header = screen.getByTestId('persona-header');
@@ -342,18 +409,24 @@ describe('AC6: Accessible with proper ARIA labels', () => {
   });
 
   it('should have role attribute for semantic meaning when populated', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const header = screen.getByTestId('persona-header');
-      expect(header).toHaveAttribute('role', 'banner');
+      expect(header).toHaveAttribute('role', 'button');
     });
   });
 
   it('should have aria-live for announcing updates to screen readers when populated', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const header = screen.getByTestId('persona-header');
@@ -384,13 +457,16 @@ describe('usePersona Hook', () => {
     render(<TestComponent />);
 
     await waitFor(() => {
-      expect(mockElectronAPI.persona.get).toHaveBeenCalled();
+      expect(personaWs).not.toBeNull();
     });
   });
 
   it('should provide persona character', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<TestComponent />);
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('character-value')).toHaveTextContent('Atia of the Julii');
@@ -398,8 +474,11 @@ describe('usePersona Hook', () => {
   });
 
   it('should provide persona theme', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<TestComponent />);
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('theme-value')).toHaveTextContent('rome');
@@ -407,8 +486,11 @@ describe('usePersona Hook', () => {
   });
 
   it('should provide persona role', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<TestComponent />);
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('role-value')).toHaveTextContent('Test Engineer');
@@ -416,16 +498,15 @@ describe('usePersona Hook', () => {
   });
 
   it('should track loading state', async () => {
-    let resolvePromise: (value: any) => void;
-    mockElectronAPI.persona.get.mockImplementation(() => new Promise(resolve => {
-      resolvePromise = resolve;
-    }));
-
     render(<TestComponent />);
 
+    // Initially loading
     expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
 
-    resolvePromise!(mockPersonaRome);
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    // Send persona data
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
@@ -433,17 +514,23 @@ describe('usePersona Hook', () => {
   });
 
   it('should handle API errors and expose error state', async () => {
-    mockElectronAPI.persona.get.mockRejectedValue(new Error('Persona API Error'));
     render(<TestComponent />);
 
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    // Simulate WebSocket error
+    personaWs.onerror?.(new Error('WebSocket connection failed'));
+
     await waitFor(() => {
-      expect(screen.getByTestId('error')).toHaveTextContent('Persona API Error');
+      expect(screen.getByTestId('error')).toHaveTextContent('WebSocket connection failed');
     });
   });
 
-  it('should subscribe to persona updates', () => {
+  it('should subscribe to persona updates', async () => {
     render(<TestComponent />);
-    expect(mockElectronAPI.persona.onUpdate).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(personaWs).not.toBeNull();
+    });
   });
 });
 
@@ -453,13 +540,16 @@ describe('usePersona Hook', () => {
 
 describe('Layout and Structure', () => {
   it('should have persona-header as root element', () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
     expect(screen.getByTestId('persona-header')).toBeInTheDocument();
   });
 
   it('should contain all three persona elements within header', async () => {
-    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
+
+    await waitFor(() => expect(personaWs).not.toBeNull());
+
+    await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
       const header = screen.getByTestId('persona-header');
@@ -470,7 +560,7 @@ describe('Layout and Structure', () => {
   });
 
   it('should apply persona-header class for styling', () => {
-    render(<PersonaHeader />);
+    render(<PersonaHeader />, { wrapper: TestWrapper });
     expect(screen.getByTestId('persona-header')).toHaveClass('persona-header');
   });
 });

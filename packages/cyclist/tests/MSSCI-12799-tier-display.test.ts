@@ -21,7 +21,7 @@
  * - AC5: Tier updates correctly when context tier changes
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -75,34 +75,46 @@ describe('MSSCI-12799: AC1 - ContextInfo interface includes tier', () => {
 
 describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
 
-  // Mock electronAPI for DebugPanel
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-  };
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    // Default mock for tokenStats to prevent undefined errors
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should render tier badge when tier is FULL', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
       percent: 25,
       tokens: 50000,
       tier: 'FULL',
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    },
+    }) });
 
     // Wait for async context load
     await vi.waitFor(() => {
@@ -113,14 +125,18 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
   });
 
   it('should render tier badge when tier is REFRESH', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
       percent: 30,
       tokens: 60000,
       tier: 'REFRESH',
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -130,14 +146,18 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
   });
 
   it('should render tier badge when tier is HANDOFF', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
       percent: 35,
       tokens: 70000,
       tier: 'HANDOFF',
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -147,14 +167,18 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
   });
 
   it('should render tier badge when tier is MINIMAL', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
       percent: 40,
       tokens: 80000,
       tier: 'MINIMAL',
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -164,14 +188,18 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
   });
 
   it('should not render tier badge when tier is undefined', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
+    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
+    render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
       percent: 25,
       tokens: 50000,
       // tier is undefined - backward compat
-    });
-
-    const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-    render(React.createElement(DebugPanel));
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('debug-panel')).toBeInTheDocument();
@@ -188,32 +216,46 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
 
 describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-  };
+
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    // Default mock for tokenStats to prevent undefined errors
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should show 0% savings for FULL tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-savings')).toBeInTheDocument();
@@ -224,13 +266,17 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
   });
 
   it('should show ~85% savings for REFRESH tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 30,
-      tier: 'REFRESH',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 30,
+      tier: 'REFRESH',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-savings')).toBeInTheDocument();
@@ -241,13 +287,17 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
   });
 
   it('should show ~82% savings for HANDOFF tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 35,
-      tier: 'HANDOFF',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 35,
+      tier: 'HANDOFF',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-savings')).toBeInTheDocument();
@@ -258,13 +308,17 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
   });
 
   it('should show ~95% savings for MINIMAL tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 40,
-      tier: 'MINIMAL',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 40,
+      tier: 'MINIMAL',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-savings')).toBeInTheDocument();
@@ -275,13 +329,17 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
   });
 
   it('should not show savings when tier is undefined', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      // tier undefined
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      // tier undefined
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('debug-panel')).toBeInTheDocument();
@@ -298,32 +356,46 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
 
 describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-  };
+
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    // Default mock for tokenStats to prevent undefined errors
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should apply tier-full class for FULL tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -333,13 +405,17 @@ describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
   });
 
   it('should apply tier-refresh class for REFRESH tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 30,
-      tier: 'REFRESH',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 30,
+      tier: 'REFRESH',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -349,13 +425,17 @@ describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
   });
 
   it('should apply tier-handoff class for HANDOFF tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 35,
-      tier: 'HANDOFF',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 35,
+      tier: 'HANDOFF',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -365,13 +445,17 @@ describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
   });
 
   it('should apply tier-minimal class for MINIMAL tier', async () => {
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 40,
-      tier: 'MINIMAL',
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 40,
+      tier: 'MINIMAL',
+    },
+    }) });
 
     await vi.waitFor(() => {
       expect(screen.getByTestId('tier-badge')).toBeInTheDocument();
@@ -405,38 +489,46 @@ describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
 
 describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
 
-  const mockElectronAPI = {
-    context: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-    tokenStats: {
-      get: vi.fn(),
-      onUpdate: vi.fn(),
-    },
-  };
+
+  let contextWs: any;
+  let tokenWs: any;
+  let spansWs: any;
+  let originalWebSocket: any;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    // Default mock for tokenStats to prevent undefined errors
-    mockElectronAPI.tokenStats.get.mockResolvedValue({});
-    (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
+    // Capture WebSocket instances when they're created
+    originalWebSocket = (global as any).WebSocket;
+    (global as any).WebSocket = class extends originalWebSocket {
+      constructor(url: string) {
+        super(url);
+        if (url.includes('/ws/context')) {
+          contextWs = this;
+        } else if (url.includes('/ws/token-stats')) {
+          tokenWs = this;
+        } else if (url.includes('/ws/spans')) {
+          spansWs = this;
+        }
+      }
+    };
+  });
+
+  afterEach(() => {
+    (global as any).WebSocket = originalWebSocket;
   });
 
   it('should update tier badge when context.onUpdate fires', async () => {
-    let updateCallback: ((_event: unknown, data: unknown) => void) | null = null;
-
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
-    mockElectronAPI.context.onUpdate.mockImplementation((cb: (_event: unknown, data: unknown) => void) => {
-      updateCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     // Initial render should show FULL
     await vi.waitFor(() => {
@@ -444,12 +536,13 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
     });
 
     // Simulate context update to MINIMAL
-    if (updateCallback) {
-      updateCallback(null, {
+    contextWs.onmessage({ data: JSON.stringify({
+        type: 'update',
+        context: {
         percent: 30,
         tier: 'MINIMAL',
-      });
-    }
+      },
+      }) });
 
     // Should update to show MINIMAL
     await vi.waitFor(() => {
@@ -458,19 +551,17 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
   });
 
   it('should update savings display when tier changes', async () => {
-    let updateCallback: ((_event: unknown, data: unknown) => void) | null = null;
-
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
-    mockElectronAPI.context.onUpdate.mockImplementation((cb: (_event: unknown, data: unknown) => void) => {
-      updateCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     // Initial render should show 0% savings (FULL tier)
     await vi.waitFor(() => {
@@ -478,12 +569,13 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
     });
 
     // Simulate context update to MINIMAL
-    if (updateCallback) {
-      updateCallback(null, {
+    contextWs.onmessage({ data: JSON.stringify({
+        type: 'update',
+        context: {
         percent: 30,
         tier: 'MINIMAL',
-      });
-    }
+      },
+      }) });
 
     // Should update to show 95% savings
     await vi.waitFor(() => {
@@ -492,19 +584,17 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
   });
 
   it('should update badge class when tier changes', async () => {
-    let updateCallback: ((_event: unknown, data: unknown) => void) | null = null;
-
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
-    mockElectronAPI.context.onUpdate.mockImplementation((cb: (_event: unknown, data: unknown) => void) => {
-      updateCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     // Initial render should have tier-full class
     await vi.waitFor(() => {
@@ -512,12 +602,13 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
     });
 
     // Simulate context update to HANDOFF
-    if (updateCallback) {
-      updateCallback(null, {
+    contextWs.onmessage({ data: JSON.stringify({
+        type: 'update',
+        context: {
         percent: 30,
         tier: 'HANDOFF',
-      });
-    }
+      },
+      }) });
 
     // Should update to tier-handoff class
     await vi.waitFor(() => {
@@ -526,19 +617,17 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
   });
 
   it('should hide tier display when tier becomes undefined', async () => {
-    let updateCallback: ((_event: unknown, data: unknown) => void) | null = null;
-
-    mockElectronAPI.context.get.mockResolvedValue({
-      percent: 25,
-      tier: 'FULL',
-    });
-
-    mockElectronAPI.context.onUpdate.mockImplementation((cb: (_event: unknown, data: unknown) => void) => {
-      updateCallback = cb;
-    });
-
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
     render(React.createElement(DebugPanel));
+
+    // Send context data via WebSocket
+    contextWs.onmessage({ data: JSON.stringify({
+      type: 'update',
+      context: {
+      percent: 25,
+      tier: 'FULL',
+    },
+    }) });
 
     // Initial render should show tier badge
     await vi.waitFor(() => {
@@ -546,12 +635,13 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
     });
 
     // Simulate context update without tier
-    if (updateCallback) {
-      updateCallback(null, {
+    contextWs.onmessage({ data: JSON.stringify({
+        type: 'update',
+        context: {
         percent: 30,
         // tier is undefined
-      });
-    }
+      },
+      }) });
 
     // Should hide tier badge
     await vi.waitFor(() => {

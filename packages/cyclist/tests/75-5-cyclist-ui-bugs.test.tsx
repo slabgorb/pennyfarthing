@@ -414,6 +414,7 @@ describe('AC4: Tab headers use Title Case', () => {
       changed: 'Changed',
       diffs: 'Diffs',
       debug: 'Debug',
+      'audit-log': 'Audit Log',
       message: 'Message',
       sprint: 'Sprint',
       progress: 'Progress',
@@ -638,8 +639,9 @@ describe('AC5: Inline tool use display in messages', () => {
     const toolBlock = container.querySelector('[data-testid="tool-call-block"]');
     expect(toolBlock).toBeInTheDocument();
 
-    const toolName = container.querySelector('.tool-name');
-    expect(toolName).toHaveTextContent('Bash');
+    // Tool name is shown in the badge title attribute
+    const toolBadge = container.querySelector('.tool-type-badge');
+    expect(toolBadge).toHaveAttribute('title', 'Bash');
   });
 
   it('should pair tool_use with matching tool_result in single block', async () => {
@@ -662,7 +664,7 @@ describe('AC5: Inline tool use display in messages', () => {
       },
     ];
 
-    render(
+    const { container } = render(
       <TestWrapper>
         <MessageView messages={messages} />
       </TestWrapper>
@@ -670,7 +672,10 @@ describe('AC5: Inline tool use display in messages', () => {
 
     const toolBlocks = screen.getAllByTestId('tool-call-block');
     expect(toolBlocks).toHaveLength(1);
-    expect(screen.getByText('Grep')).toBeInTheDocument();
+
+    // Tool name is in the badge title
+    const toolBadge = container.querySelector('.tool-type-badge');
+    expect(toolBadge).toHaveAttribute('title', 'Grep');
   });
 });
 
