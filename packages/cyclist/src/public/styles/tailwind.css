@@ -1684,12 +1684,14 @@
   color: var(--text-primary, #d4d4d4);
 }
 
-/* Progress panel */
-.progress-panel {
+/* Progress panel and Todo panel (shared styles) */
+.progress-panel,
+.todo-panel {
   padding: 8px;
 }
 
-.progress-panel .progress-bar-container {
+.progress-panel .progress-bar-container,
+.todo-panel .progress-bar-container {
   position: relative;
   height: 20px;
   background: var(--bg-tertiary, #2d2d2d);
@@ -1698,13 +1700,15 @@
   overflow: hidden;
 }
 
-.progress-panel .progress-bar {
+.progress-panel .progress-bar,
+.todo-panel .progress-bar {
   height: 100%;
   background: var(--accent-color, #007acc);
   transition: width 0.3s ease;
 }
 
-.progress-panel .progress-text {
+.progress-panel .progress-text,
+.todo-panel .progress-text {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1713,18 +1717,21 @@
   color: var(--text-primary, #d4d4d4);
 }
 
-.progress-panel .todo-section {
+.progress-panel .todo-section,
+.todo-panel .todo-section {
   margin-bottom: 12px;
 }
 
-.progress-panel .todo-section h4 {
+.progress-panel .todo-section h4,
+.todo-panel .todo-section h4 {
   font-size: 0.75rem;
   color: var(--text-secondary, #8b8b8b);
   margin: 0 0 6px 0;
   text-transform: uppercase;
 }
 
-.progress-panel .todo-item {
+.progress-panel .todo-item,
+.todo-panel .todo-item {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1732,21 +1739,25 @@
   font-size: 0.8rem;
 }
 
-.progress-panel .todo-status {
+.progress-panel .todo-status,
+.todo-panel .todo-status {
   width: 16px;
   text-align: center;
   color: var(--text-secondary, #8b8b8b);
 }
 
-.progress-panel .todo-in_progress .todo-status {
+.progress-panel .todo-in_progress .todo-status,
+.todo-panel .todo-in_progress .todo-status {
   color: var(--accent-color, #007acc);
 }
 
-.progress-panel .todo-completed .todo-status {
+.progress-panel .todo-completed .todo-status,
+.todo-panel .todo-completed .todo-status {
   color: var(--success-color, #4ec9b0);
 }
 
-.progress-panel .todo-blocked {
+.progress-panel .todo-blocked,
+.todo-panel .todo-blocked {
   font-size: 0.7rem;
   color: var(--error-color, #f14c4c);
 }
