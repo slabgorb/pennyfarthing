@@ -1,0 +1,203 @@
+# Step 9: Complete Setup & Validation
+
+<purpose>
+Finalize the project setup, run validation checks, and provide the user with a summary of everything configured. Ensure the project is ready for development.
+</purpose>
+
+<instructions>
+1. Run pennyfarthing doctor to validate installation
+2. Summarize all configurations created
+3. Provide quick-start guide
+4. Offer next steps and resources
+</instructions>
+
+<output>
+- All validation checks pass
+- Configuration summary presented
+- Quick-start guide provided
+- User ready to begin development
+</output>
+
+## VALIDATION
+
+### Run Doctor
+
+```bash
+pennyfarthing doctor
+```
+
+Expected output:
+```
+🔧 Pennyfarthing Health Check
+════════════════════════════
+
+✓ .pennyfarthing/ directory exists
+✓ Manifest found (v9.1.1)
+✓ Symlinks valid
+✓ Sprint directory exists
+✓ Session directory exists
+✓ Git hooks installed
+✓ Settings configured
+
+All checks passed!
+```
+
+### Manual Validation Checklist
+
+```
+📋 Setup Validation
+════════════════════
+
+Configuration files:
+  {✓|✗} repos.yaml          - Repository configuration
+  {✓|✗} CLAUDE.md           - Project instructions
+  {✓|✗} shared-context.md   - Agent shared context
+  {✓|✗} justfile            - Task runner
+  {✓|✗} persona-config.yaml - Theme configuration
+
+Directories:
+  {✓|✗} .pennyfarthing/     - Framework installation
+  {✓|✗} .claude/            - Claude Code config
+  {✓|✗} sprint/             - Sprint tracking
+  {✓|✗} .session/           - Work sessions
+
+Optional:
+  {✓|✗} Cyclist installed
+  {✓|✗} Subrepos cloned
+```
+
+## CONFIGURATION SUMMARY
+
+```
+📊 Project Setup Summary
+═════════════════════════
+
+Project: {project_name}
+Type: {orchestrator|monorepo|single}
+Theme: {selected_theme}
+
+Repositories Configured:
+┌────────────────┬──────────┬────────────────────────┐
+│ Name           │ Type     │ Path                   │
+├────────────────┼──────────┼────────────────────────┤
+│ orchestrator   │ orch     │ .                      │
+│ api            │ api      │ {project}-api/         │
+│ ui             │ ui       │ {project}-ui/          │
+└────────────────┴──────────┴────────────────────────┘
+
+Files Created:
+  • repos.yaml           - Repository configuration
+  • CLAUDE.md            - Project instructions for Claude
+  • shared-context.md    - Shared agent context (updated)
+  • justfile             - Task runner with recipes
+  • persona-config.yaml  - Theme: {theme}
+
+Commands Available:
+  just test-all          - Run all tests
+  just build-all         - Build all repos
+  just dev               - Start development
+  just cyclist           - Launch Cyclist (if installed)
+```
+
+## QUICK-START GUIDE
+
+```
+🚀 Quick Start Guide
+════════════════════
+
+1. START DEVELOPMENT
+   just dev              # Start dev servers
+   # OR
+   just dev-api          # Start just API
+   just dev-ui           # Start just UI
+
+2. RUN TESTS
+   just test-all         # Test everything
+   just test-api         # Test API only
+
+3. USE PENNYFARTHING AGENTS
+   /sm                   # Scrum Master - manage stories
+   /sprint status        # View sprint
+   /sprint work          # Start a story
+
+4. WORKFLOW
+   Story flow: SM → TEA → Dev → Reviewer → SM
+
+5. LAUNCH CYCLIST (if installed)
+   just cyclist          # Visual terminal
+   # OR
+   npx cyclist
+
+6. GET HELP
+   /help                 # Context-aware help
+   pennyfarthing doctor  # Check installation
+```
+
+## NEXT STEPS
+
+```
+📌 Recommended Next Steps
+═════════════════════════
+
+IMMEDIATE:
+  □ Review CLAUDE.md and customize for your project
+  □ Add project-specific notes to shared-context.md
+  □ Create your first sprint in sprint/current-sprint.yaml
+
+WHEN READY:
+  □ Run /sm to start managing work
+  □ Create stories with /story create
+  □ Begin TDD workflow with /tea
+
+CUSTOMIZATION:
+  □ Add custom skills in .claude/project/skills/
+  □ Add custom commands in .claude/project/commands/
+  □ Configure agent sidecars in .pennyfarthing/sidecars/
+
+RESOURCES:
+  □ Docs: https://github.com/1898andCo/pennyfarthing
+  □ Issues: https://github.com/1898andCo/pennyfarthing/issues
+  □ Skill help: /help {skill_name}
+```
+
+## FINAL MESSAGE
+
+```
+✨ Setup Complete!
+══════════════════
+
+Your Pennyfarthing project is ready for development.
+
+{if theme_selected}
+Your agents now use the '{theme}' theme.
+{agent_character} says: "{theme_greeting}"
+{/if}
+
+Quick commands:
+  /sm              - Start managing work
+  /sprint status   - View sprint
+  /help            - Get help
+
+{if cyclist_installed}
+Launch Cyclist for the visual experience:
+  just cyclist
+{/if}
+
+Happy coding! 🚴
+```
+
+## WORKFLOW COMPLETE
+
+This workflow is now complete. The user has:
+
+✅ Discovered and configured repositories
+✅ Cloned any needed subrepos
+✅ Generated repos.yaml
+✅ Created CLAUDE.md
+✅ Populated shared-context.md
+✅ Created justfile with recipes
+✅ Selected a persona theme
+✅ Optionally installed Cyclist
+✅ Validated the setup
+
+The project is ready for development with Pennyfarthing.
