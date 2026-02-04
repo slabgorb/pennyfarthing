@@ -9,6 +9,8 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { join } from 'path';
+import { getReposFromConfig } from './api/git.js';
 
 const execAsync = promisify(exec);
 
@@ -211,11 +213,27 @@ function parseMultipleDiffs(output: string): GitDiffData[] {
 
 /**
  * Get diff for a specific file
+ * Handles repo-prefixed paths (e.g., "pennyfarthing/src/file.ts")
  */
 export async function getGitDiffForFile(projectDir: string, filePath: string): Promise<GitDiffData> {
   try {
-    const { stdout } = await execAsync(`git diff HEAD -- "${filePath}"`, {
-      cwd: projectDir,
+    const repos = getReposFromConfig(projectDir);
+    let repoPath = projectDir;
+    let relativeFilePath = filePath;
+
+    // Check if filePath has a repo prefix (multi-repo case)
+    if (repos.length > 1) {
+      for (const repo of repos) {
+        if (filePath.startsWith(`${repo.name}/`)) {
+          repoPath = join(projectDir, repo.path);
+          relativeFilePath = filePath.substring(repo.name.length + 1);
+          break;
+        }
+      }
+    }
+
+    const { stdout } = await execAsync(`git diff HEAD -- "${relativeFilePath}"`, {
+      cwd: repoPath,
       maxBuffer: 10 * 1024 * 1024 // 10MB buffer for large diffs
     });
 
@@ -231,7 +249,9 @@ export async function getGitDiffForFile(projectDir: string, filePath: string): P
       };
     }
 
-    return parseGitDiff(stdout);
+    const diff = parseGitDiff(stdout);
+    diff.path = filePath; // Preserve the prefixed path
+    return diff;
   } catch (err) {
     console.error('[GitDiff] Error getting diff for file:', filePath, err);
     return {
@@ -246,20 +266,36 @@ export async function getGitDiffForFile(projectDir: string, filePath: string): P
 }
 
 /**
- * Get all diffs using git diff HEAD
+ * Get all diffs using git diff HEAD across all configured repos
  */
 export async function getAllGitDiffs(projectDir: string): Promise<GitDiffData[]> {
-  try {
-    const { stdout } = await execAsync('git diff HEAD', {
-      cwd: projectDir,
-      maxBuffer: 10 * 1024 * 1024 // 10MB buffer
-    });
+  const repos = getReposFromConfig(projectDir);
+  const allDiffs: GitDiffData[] = [];
 
-    return parseMultipleDiffs(stdout);
-  } catch (err) {
-    console.error('[GitDiff] Error getting all diffs:', err);
-    return [];
+  for (const repo of repos) {
+    try {
+      const repoPath = join(projectDir, repo.path);
+      const { stdout } = await execAsync('git diff HEAD', {
+        cwd: repoPath,
+        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+      });
+
+      const diffs = parseMultipleDiffs(stdout);
+
+      // Prefix paths with repo name when multiple repos
+      if (repos.length > 1) {
+        for (const diff of diffs) {
+          diff.path = `${repo.name}/${diff.path}`;
+        }
+      }
+
+      allDiffs.push(...diffs);
+    } catch (err) {
+      console.error('[GitDiff] Error getting diffs for repo:', repo.name, err);
+    }
   }
+
+  return allDiffs;
 }
 
 // =============================================================================
