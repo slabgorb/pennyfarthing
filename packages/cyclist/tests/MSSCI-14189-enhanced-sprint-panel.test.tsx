@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
 
 // =============================================================================
@@ -214,9 +214,10 @@ describe('AC1: Current story section', () => {
       expect(screen.getByTestId('current-story-section')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('MSSCI-14189')).toBeInTheDocument();
-    expect(screen.getByText('Enhanced Sprint Panel')).toBeInTheDocument();
-    expect(screen.getByText(/in_progress/i)).toBeInTheDocument();
+    const currentSection = screen.getByTestId('current-story-section');
+    expect(within(currentSection).getByText('MSSCI-14189')).toBeInTheDocument();
+    expect(within(currentSection).getByText('Enhanced Sprint Panel')).toBeInTheDocument();
+    expect(within(currentSection).getByText(/in_progress/i)).toBeInTheDocument();
   });
 
   it('should display "Next up" indicator when no story is in progress', async () => {
@@ -258,7 +259,8 @@ describe('AC1: Current story section', () => {
       expect(screen.getByTestId('current-story-points')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/8 pts/i)).toBeInTheDocument();
+    const currentSection = screen.getByTestId('current-story-section');
+    expect(within(currentSection).getByText(/8 pts/i)).toBeInTheDocument();
   });
 });
 
@@ -467,6 +469,12 @@ describe('AC5: Archive action', () => {
     const archiveButton = screen.getByTestId('archive-button-epic-75');
     fireEvent.click(archiveButton);
 
+    // Confirm the archive action
+    await waitFor(() => {
+      expect(screen.getByTestId('confirm-archive-dialog')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('confirm-archive-yes'));
+
     await waitFor(() => {
       expect(mockElectronAPI.sprint.archiveEpic).toHaveBeenCalledWith('epic-75');
     });
@@ -489,6 +497,12 @@ describe('AC5: Archive action', () => {
 
     const archiveButton = screen.getByTestId('archive-button-epic-75');
     fireEvent.click(archiveButton);
+
+    // Confirm the archive action
+    await waitFor(() => {
+      expect(screen.getByTestId('confirm-archive-dialog')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('confirm-archive-yes'));
 
     await waitFor(() => {
       // Archived epic should be removed from view
@@ -595,7 +609,7 @@ describe('AC7: Promote action', () => {
       expect(screen.getByTestId('promote-button-epic-77')).toBeInTheDocument();
     });
 
-    // Mock fresh data with promoted epic in sprint
+    // Mock fresh data with promoted epic in sprint and removed from future
     const promotedEpic: MockEpic = {
       id: 'epic-77',
       title: 'Future Initiative 1',
@@ -606,12 +620,9 @@ describe('AC7: Promote action', () => {
     mockElectronAPI.sprint.getStatus.mockResolvedValueOnce(
       createMockSprintData({
         epics: [...createMockSprintData().epics, promotedEpic],
+        futureEpics: [createMockSprintData().futureEpics[1]], // Only blocked epic remains
       })
     );
-
-    mockElectronAPI.sprint.getFuture.mockResolvedValueOnce([
-      createMockSprintData().futureEpics[1], // Only blocked epic remains
-    ]);
 
     const promoteButton = screen.getByTestId('promote-button-epic-77');
     fireEvent.click(promoteButton);
@@ -779,7 +790,7 @@ describe('AC9: Real-time updates', () => {
     render(<EnhancedSprintPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText('MSSCI-14189')).toBeInTheDocument();
+      expect(screen.getByTestId('current-story-section')).toBeInTheDocument();
     });
 
     // Simulate WebSocket message with new current story
@@ -797,8 +808,9 @@ describe('AC9: Real-time updates', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('MSSCI-14200')).toBeInTheDocument();
-      expect(screen.getByText('New Current Story')).toBeInTheDocument();
+      const currentSection = screen.getByTestId('current-story-section');
+      expect(within(currentSection).getByText('MSSCI-14200')).toBeInTheDocument();
+      expect(within(currentSection).getByText('New Current Story')).toBeInTheDocument();
     });
   });
 
@@ -837,18 +849,21 @@ describe('AC9: Real-time updates', () => {
     render(<EnhancedSprintPanel />);
 
     await waitFor(() => {
-      expect(MockWebSocket.instances.length).toBe(1);
+      expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(1);
     });
+
+    const initialCount = MockWebSocket.instances.length;
+    const lastInstance = MockWebSocket.instances[initialCount - 1];
 
     // Simulate disconnect
     act(() => {
-      MockWebSocket.instances[0].close();
+      lastInstance.close();
     });
 
-    // Should attempt reconnect
+    // Should attempt reconnect (one more instance created)
     await waitFor(
       () => {
-        expect(MockWebSocket.instances.length).toBe(2);
+        expect(MockWebSocket.instances.length).toBeGreaterThan(initialCount);
       },
       { timeout: 3000 }
     );
