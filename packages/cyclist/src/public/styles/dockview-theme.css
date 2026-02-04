@@ -169,6 +169,95 @@
 }
 
 /* =============================================================================
+   Tab Overflow Handling (MSSCI-14187)
+   ============================================================================= */
+
+/* Tabs container - enable horizontal scrolling with visible scrollbar */
+.cyclist-dockview .dv-tabs-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted, #71717a) transparent;
+}
+
+/* Webkit scrollbar styling for tabs container */
+.cyclist-dockview .dv-tabs-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.cyclist-dockview .dv-tabs-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cyclist-dockview .dv-tabs-container::-webkit-scrollbar-thumb {
+  background-color: var(--text-muted, #71717a);
+  border-radius: 3px;
+}
+
+.cyclist-dockview .dv-tabs-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary, #a1a1aa);
+}
+
+/* Overflow dropdown trigger button */
+.cyclist-dockview .dv-tabs-overflow-dropdown-default {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  margin: 4px;
+  background-color: var(--bg-tertiary, #1a1a2e);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 4px;
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cyclist-dockview .dv-tabs-overflow-dropdown-default:hover {
+  background-color: var(--bg-hover, #27272a);
+  color: var(--text-primary, #ffffff);
+  border-color: var(--accent-color, #6366f1);
+}
+
+/* Overflow dropdown container (list of hidden tabs) */
+.cyclist-dockview .dv-tabs-overflow-container {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 150px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: var(--bg-tertiary, #1a1a2e);
+  border: 1px solid var(--border-color, #27272a);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+/* Tabs inside overflow dropdown */
+.cyclist-dockview .dv-tabs-overflow-container .dv-tab {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cyclist-dockview .dv-tabs-overflow-container .dv-tab:hover {
+  background-color: var(--accent-color, #6366f1);
+  color: var(--text-primary, #ffffff);
+}
+
+.cyclist-dockview .dv-tabs-overflow-container .dv-tab:not(:last-child) {
+  border-bottom: 1px solid var(--border-color, #27272a);
+}
+
+/* =============================================================================
    Responsive Overrides
    ============================================================================= */
 
