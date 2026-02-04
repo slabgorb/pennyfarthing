@@ -1097,6 +1097,380 @@
   margin-top: 8px;
 }
 
+/* Enhanced Sprint Panel (MSSCI-14189) */
+.enhanced-sprint-panel {
+  padding: 12px;
+  font-size: 0.8rem;
+}
+
+.enhanced-sprint-panel section {
+  margin-bottom: 16px;
+}
+
+.enhanced-sprint-panel section:last-child {
+  margin-bottom: 0;
+}
+
+.enhanced-sprint-panel h2 {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #8b8b8b);
+  margin: 0 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+}
+
+/* Current Story Section */
+.enhanced-sprint-panel [data-section="current-story"] .story-id {
+  color: var(--accent-color, #007acc);
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.75rem;
+  margin-right: 8px;
+}
+
+.enhanced-sprint-panel [data-section="current-story"] .story-title {
+  font-weight: 500;
+  display: block;
+  margin: 4px 0;
+}
+
+.enhanced-sprint-panel [data-section="current-story"] .story-status {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--accent-color, #007acc);
+  color: #fff;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+.enhanced-sprint-panel [data-section="current-story"] .story-points {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.enhanced-sprint-panel .next-up-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b8b8b);
+  font-style: italic;
+  margin-right: 6px;
+}
+
+/* Epic Group */
+.enhanced-sprint-panel .epic-group {
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.enhanced-sprint-panel .epic-group:last-child {
+  margin-bottom: 0;
+}
+
+.enhanced-sprint-panel .epic-group.epic-completed {
+  opacity: 0.7;
+}
+
+/* Epic Header */
+.enhanced-sprint-panel .epic-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-tertiary, #2d2d2d);
+}
+
+.enhanced-sprint-panel .epic-toggle {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #8b8b8b);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.7rem;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.enhanced-sprint-panel .epic-toggle:hover {
+  color: var(--text-primary, #d4d4d4);
+}
+
+.enhanced-sprint-panel .epic-toggle:focus-visible {
+  outline: 2px solid var(--accent-color, #007acc);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.enhanced-sprint-panel .epic-title {
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enhanced-sprint-panel .epic-jira {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #8b8b8b);
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+/* Epic Progress Bar */
+.enhanced-sprint-panel .epic-progress {
+  width: 60px;
+  height: 4px;
+  background: var(--bg-secondary, #252526);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.enhanced-sprint-panel .epic-progress .progress-bar {
+  height: 100%;
+  background: var(--accent-color, #007acc);
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+.enhanced-sprint-panel .epic-progress-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #8b8b8b);
+  min-width: 50px;
+  text-align: right;
+}
+
+/* Archive Button */
+.enhanced-sprint-panel .archive-button {
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 3px;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.enhanced-sprint-panel .archive-button:hover:not(:disabled) {
+  background: var(--bg-hover, #3c3c3c);
+  color: var(--text-primary, #d4d4d4);
+  border-color: var(--text-secondary, #8b8b8b);
+}
+
+.enhanced-sprint-panel .archive-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Story Items */
+.enhanced-sprint-panel .epic-stories {
+  border-top: 1px solid var(--border-color, #3c3c3c);
+}
+
+.enhanced-sprint-panel .story-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 28px;
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+  transition: background 0.1s ease;
+}
+
+.enhanced-sprint-panel .story-item:last-child {
+  border-bottom: none;
+}
+
+.enhanced-sprint-panel .story-item:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.03));
+}
+
+.enhanced-sprint-panel .story-item .story-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.enhanced-sprint-panel .story-item .story-points {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #8b8b8b);
+  background: var(--bg-tertiary, #2d2d2d);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Story Status Colors via data-status attribute */
+.enhanced-sprint-panel .story-item[data-status="backlog"] {
+  border-left: 3px solid var(--text-secondary, #8b8b8b);
+}
+
+.enhanced-sprint-panel .story-item[data-status="in_progress"] {
+  border-left: 3px solid var(--accent-color, #007acc);
+  background: rgba(0, 122, 204, 0.05);
+}
+
+.enhanced-sprint-panel .story-item[data-status="done"] {
+  border-left: 3px solid var(--success-color, #4ec9b0);
+}
+
+.enhanced-sprint-panel .story-item[data-status="cancelled"] {
+  border-left: 3px solid var(--error-color, #f14c4c);
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+/* Future Initiatives Section */
+.enhanced-sprint-panel .future-epic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.enhanced-sprint-panel .future-epic:last-child {
+  margin-bottom: 0;
+}
+
+.enhanced-sprint-panel .future-epic-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.enhanced-sprint-panel .future-epic-points {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+/* Future Epic Status Badges */
+.enhanced-sprint-panel .future-epic-status {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.enhanced-sprint-panel .future-epic-status[data-status="ready"],
+.enhanced-sprint-panel .future-epic[data-testid*="ready"] .future-epic-status {
+  background: var(--accent-color, #007acc);
+  color: #fff;
+}
+
+.enhanced-sprint-panel .future-epic-status[data-status="planning"],
+.enhanced-sprint-panel .future-epic[data-testid*="planning"] .future-epic-status {
+  background: var(--bg-tertiary, #2d2d2d);
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.enhanced-sprint-panel .future-epic-status[data-status="blocked"],
+.enhanced-sprint-panel .future-epic[data-testid*="blocked"] .future-epic-status {
+  background: var(--warning-color, #cca700);
+  color: #000;
+}
+
+/* Promote Button */
+.enhanced-sprint-panel .promote-button {
+  padding: 3px 10px;
+  background: var(--accent-color, #007acc);
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.enhanced-sprint-panel .promote-button:hover:not(:disabled) {
+  background: var(--accent-hover, #0098ff);
+}
+
+.enhanced-sprint-panel .promote-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.enhanced-sprint-panel .empty-state {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary, #8b8b8b);
+  border: 1px dashed var(--border-color, #3c3c3c);
+  border-radius: 4px;
+}
+
+.enhanced-sprint-panel .empty-state .hint {
+  font-size: 0.7rem;
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-style: italic;
+}
+
+/* Loading and Error States */
+.enhanced-sprint-panel .loading-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.enhanced-sprint-panel .error-toast {
+  padding: 8px 12px;
+  background: var(--error-color, #f14c4c);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-bottom: 12px;
+}
+
+/* Confirmation Dialog */
+.enhanced-sprint-panel .confirm-dialog {
+  padding: 12px;
+  background: var(--bg-tertiary, #2d2d2d);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.enhanced-sprint-panel .confirm-dialog p {
+  margin: 0 0 8px 0;
+  font-size: 0.8rem;
+}
+
+.enhanced-sprint-panel .confirm-dialog button {
+  padding: 4px 12px;
+  margin-right: 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.enhanced-sprint-panel .confirm-dialog button[data-testid="confirm-archive-yes"] {
+  background: var(--error-color, #f14c4c);
+  border: none;
+  color: #fff;
+}
+
+.enhanced-sprint-panel .confirm-dialog button[data-testid="confirm-archive-no"] {
+  background: transparent;
+  border: 1px solid var(--border-color, #3c3c3c);
+  color: var(--text-secondary, #8b8b8b);
+}
+
 /* Git panel */
 .git-panel {
   padding: 8px;
