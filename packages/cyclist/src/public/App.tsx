@@ -22,12 +22,14 @@ import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 
 // Import all panel components
-// Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)
+// Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)
 import {
   MessagePanel,
   EnhancedSprintPanel,
   GitPanel,
-  ProgressPanel,
+  WorkflowPanel,
+  ACPanel,
+  TodoPanel,
   BackgroundPanel,
   ChangedPanel,
   DiffsPanel,
@@ -51,9 +53,11 @@ registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 registerPanelComponent(PANEL_INVENTORY.AUDIT_LOG, AuditLogPanel);
 
 // Right sidebar panels
-// Note: AC and BikeLane are now internal tabs within ProgressPanel
+// Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)
 registerPanelComponent(PANEL_INVENTORY.SPRINT, EnhancedSprintPanel);
-registerPanelComponent(PANEL_INVENTORY.PROGRESS, ProgressPanel);
+registerPanelComponent(PANEL_INVENTORY.WORKFLOW, WorkflowPanel);
+registerPanelComponent(PANEL_INVENTORY.AC, ACPanel);
+registerPanelComponent(PANEL_INVENTORY.TODO, TodoPanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
