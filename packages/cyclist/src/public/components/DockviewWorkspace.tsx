@@ -75,8 +75,9 @@ export function getDockviewApi(): DockviewApi | null {
 }
 
 // Panel group definitions (needed for restore logic)
-const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
-const RIGHT_SIDEBAR_PANELS = [
+// Exported so layout persistence can merge missing panels
+export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
+export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SPRINT,
   PANEL_INVENTORY.PROGRESS,
   PANEL_INVENTORY.BACKGROUND,
