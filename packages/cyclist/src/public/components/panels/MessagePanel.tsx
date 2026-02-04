@@ -223,7 +223,7 @@ export function MessagePanel(): React.ReactElement {
   } = useControlBar();
 
   // Claude context for WebSocket communication
-  const { send, abort, onMessage, onComplete, onError, isConnected } = useClaudeContext();
+  const { send, abort, onMessage, onComplete, onError, onUserMessage, isConnected } = useClaudeContext();
 
   // Message queue hook for turn complete handling and bell mode
   const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueue();
@@ -250,13 +250,7 @@ export function MessagePanel(): React.ReactElement {
   const injectDeps: InjectDependencies = {
     abort,
     submit: (text, images) => {
-      // Add user message to view immediately
-      setMessages(prev => [...prev, {
-        type: 'user',
-        content: text,
-        timestamp: Date.now(),
-        imageCount: images.length > 0 ? images.length : undefined,
-      }]);
+      // User message display is handled by onUserMessage subscription
       setIsProcessing(true);
       send(text, images);
     },
@@ -297,6 +291,20 @@ export function MessagePanel(): React.ReactElement {
     }]);
   }, []);
 
+  // Subscribe to user messages sent via send() - displays ALL user messages
+  // regardless of origin (Editor, QuickActions, GitPanel, etc.)
+  useEffect(() => {
+    const cleanup = onUserMessage((userMessage) => {
+      setMessages(prev => [...prev, {
+        type: 'user',
+        content: userMessage.prompt,
+        timestamp: userMessage.timestamp,
+        imageCount: userMessage.images.length > 0 ? userMessage.images.length : undefined,
+      }]);
+    });
+    return cleanup;
+  }, [onUserMessage]);
+
   // Connect to Claude events via WebSocket context
   useEffect(() => {
     if (!isConnected) {
@@ -318,14 +326,7 @@ export function MessagePanel(): React.ReactElement {
 
   // Handle editor submit
   const handleSubmit = useCallback((text: string, images: PastedImage[]) => {
-    // Add user message to view immediately
-    setMessages(prev => [...prev, {
-      type: 'user',
-      content: text,
-      timestamp: Date.now(),
-      imageCount: images.length > 0 ? images.length : undefined,
-    }]);
-
+    // User message display is handled by onUserMessage subscription
     setIsProcessing(true);
 
     // Send to Claude via WebSocket

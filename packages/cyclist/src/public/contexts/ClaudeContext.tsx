@@ -25,6 +25,14 @@ type MessageCallback = (message: ClaudeMessage) => void;
 type CompleteCallback = () => void;
 type ErrorCallback = (error: string) => void;
 
+/** User message sent via send() - for display in MessagePanel */
+interface UserMessageData {
+  prompt: string;
+  images: PastedImage[];
+  timestamp: number;
+}
+type UserMessageCallback = (message: UserMessageData) => void;
+
 interface ClaudeContextValue {
   /** Send a message to Claude */
   send: (prompt: string, images?: PastedImage[]) => void;
@@ -46,6 +54,8 @@ interface ClaudeContextValue {
   onComplete: (callback: CompleteCallback) => () => void;
   /** Subscribe to errors */
   onError: (callback: ErrorCallback) => () => void;
+  /** Subscribe to user messages sent via send() - for display in MessagePanel */
+  onUserMessage: (callback: UserMessageCallback) => () => void;
 }
 
 // =============================================================================
@@ -72,6 +82,7 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
   const messageCallbacksRef = useRef<Set<MessageCallback>>(new Set());
   const completeCallbacksRef = useRef<Set<CompleteCallback>>(new Set());
   const errorCallbacksRef = useRef<Set<ErrorCallback>>(new Set());
+  const userMessageCallbacksRef = useRef<Set<UserMessageCallback>>(new Set());
 
   // Connect to WebSocket
   const connect = useCallback(() => {
@@ -160,6 +171,14 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
       return;
     }
 
+    // Notify subscribers that a user message was sent (for display in MessagePanel)
+    const userMessage: UserMessageData = {
+      prompt,
+      images: images || [],
+      timestamp: Date.now(),
+    };
+    userMessageCallbacksRef.current.forEach(cb => cb(userMessage));
+
     wsRef.current.send(JSON.stringify({
       type: 'send',
       prompt,
@@ -233,6 +252,14 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     };
   }, []);
 
+  // Subscribe to user messages sent via send()
+  const onUserMessage = useCallback((callback: UserMessageCallback) => {
+    userMessageCallbacksRef.current.add(callback);
+    return () => {
+      userMessageCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
   const value = useMemo(() => ({
     send,
     abort,
@@ -244,7 +271,8 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     onMessage,
     onComplete,
     onError,
-  }), [send, abort, clear, clearAndReload, setMode, isConnected, mode, onMessage, onComplete, onError]);
+    onUserMessage,
+  }), [send, abort, clear, clearAndReload, setMode, isConnected, mode, onMessage, onComplete, onError, onUserMessage]);
 
   return (
     <ClaudeContext.Provider value={value}>
