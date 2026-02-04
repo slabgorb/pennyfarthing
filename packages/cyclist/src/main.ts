@@ -1308,42 +1308,49 @@ export function setupClaudeIPCHandlers(ipcMain: {
             storePendingToolInput(toolId, toolName, toolInput);
           }
 
-          if (toolName === 'Edit') {
-            const input = toolInput as { file_path: string; old_string: string; new_string: string };
-            const diffData = {
-              id: toolId || `edit-${Date.now()}`,
-              path: input.file_path,
-              original: input.old_string,
-              modified: input.new_string,
-              toolName: 'Edit',
-              timestamp: Date.now(),
-            };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, diffData);
-            // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
-            broadcastDiff(diffData);
-          } else if (toolName === 'Write') {
-            const input = toolInput as { file_path: string; content: string };
-            const diffData = {
-              id: toolId || `write-${Date.now()}`,
-              path: input.file_path,
-              original: '',
-              modified: input.content,
-              toolName: 'Write',
-              timestamp: Date.now(),
-            };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, { ...diffData, isNewFile: true });
-            // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
-            broadcastDiff(diffData);
-          } else if (toolName === 'Skill') {
-            const input = toolInput as { skill: string; args?: string };
-            handleSkillEvent({
-              id: toolId || `skill-${Date.now()}`,
-              skill: input.skill,
-              args: input.args,
-              timestamp: Date.now(),
-              status: 'running',
-            });
-          } else if (toolName === 'Task') {
+          // MSSCI-14190: Guard against undefined toolInput for Edit/Write tools
+          if (toolName === 'Edit' && toolInput) {
+            const input = toolInput as { file_path?: string; old_string?: string; new_string?: string };
+            if (input.file_path) {
+              const diffData = {
+                id: toolId || `edit-${Date.now()}`,
+                path: input.file_path,
+                original: input.old_string || '',
+                modified: input.new_string || '',
+                toolName: 'Edit',
+                timestamp: Date.now(),
+              };
+              broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, diffData);
+              // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
+              broadcastDiff(diffData);
+            }
+          } else if (toolName === 'Write' && toolInput) {
+            const input = toolInput as { file_path?: string; content?: string };
+            if (input.file_path) {
+              const diffData = {
+                id: toolId || `write-${Date.now()}`,
+                path: input.file_path,
+                original: '',
+                modified: input.content || '',
+                toolName: 'Write',
+                timestamp: Date.now(),
+              };
+              broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, { ...diffData, isNewFile: true });
+              // Story 75-6: Also broadcast to WebSocket for React ChangedPanel
+              broadcastDiff(diffData);
+            }
+          } else if (toolName === 'Skill' && toolInput) {
+            const input = toolInput as { skill?: string; args?: string };
+            if (input.skill) {
+              handleSkillEvent({
+                id: toolId || `skill-${Date.now()}`,
+                skill: input.skill,
+                args: input.args,
+                timestamp: Date.now(),
+                status: 'running',
+              });
+            }
+          } else if (toolName === 'Task' && toolInput) {
             const input = toolInput as {
               description?: string;
               subagent_type?: string;
