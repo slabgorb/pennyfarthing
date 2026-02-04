@@ -17,7 +17,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { WorkspaceLayoutConfig } from '../components/DockviewWorkspace';
-import { createWorkspaceLayout } from '../components/DockviewWorkspace';
+import {
+  createWorkspaceLayout,
+  LEFT_SIDEBAR_PANELS,
+  RIGHT_SIDEBAR_PANELS,
+} from '../components/DockviewWorkspace';
 
 const LAYOUT_VERSION = 1;
 const DEBOUNCE_DELAY = 300;
@@ -62,6 +66,25 @@ function isValidLayoutData(layout: unknown): boolean {
   return true;
 }
 
+/**
+ * Merge saved panels with canonical panel list to ensure no panels are missing.
+ * New panels added to PANEL_INVENTORY will be appended to the saved layout.
+ * Panels removed from PANEL_INVENTORY will be filtered out.
+ */
+function mergePanelsWithCanonical(
+  savedPanels: string[],
+  canonicalPanels: readonly string[]
+): string[] {
+  // Keep only panels that exist in canonical list (preserving user order)
+  const validSavedPanels = savedPanels.filter(p => canonicalPanels.includes(p));
+
+  // Find panels in canonical that are missing from saved
+  const missingPanels = canonicalPanels.filter(p => !savedPanels.includes(p));
+
+  // Append missing panels to maintain user's custom ordering for existing panels
+  return [...validSavedPanels, ...missingPanels];
+}
+
 function layoutDataToWorkspaceLayout(layout: unknown): WorkspaceLayoutConfig {
   const defaultLayout = createWorkspaceLayout();
   const layoutObj = layout as Record<string, unknown> | null | undefined;
@@ -71,11 +94,22 @@ function layoutDataToWorkspaceLayout(layout: unknown): WorkspaceLayoutConfig {
   const leftSidebar = layoutObj.leftSidebar as Record<string, unknown> | undefined;
   const rightSidebar = layoutObj.rightSidebar as Record<string, unknown> | undefined;
 
+  // Get saved panels or use defaults
+  const savedLeftPanels = Array.isArray(leftSidebar?.panels)
+    ? leftSidebar.panels as string[]
+    : defaultLayout.leftSidebar.panels;
+  const savedRightPanels = Array.isArray(rightSidebar?.panels)
+    ? rightSidebar.panels as string[]
+    : defaultLayout.rightSidebar.panels;
+
+  // Merge with canonical panel lists to ensure no panels are missing
+  // This handles the case where new panels are added to PANEL_INVENTORY
+  const mergedLeftPanels = mergePanelsWithCanonical(savedLeftPanels, LEFT_SIDEBAR_PANELS);
+  const mergedRightPanels = mergePanelsWithCanonical(savedRightPanels, RIGHT_SIDEBAR_PANELS);
+
   return {
     leftSidebar: {
-      panels: Array.isArray(leftSidebar?.panels)
-        ? leftSidebar.panels as string[]
-        : defaultLayout.leftSidebar.panels,
+      panels: mergedLeftPanels,
       width: typeof leftSidebar?.width === 'number'
         ? leftSidebar.width as number
         : defaultLayout.leftSidebar.width,
@@ -88,9 +122,7 @@ function layoutDataToWorkspaceLayout(layout: unknown): WorkspaceLayoutConfig {
     },
     center: defaultLayout.center,
     rightSidebar: {
-      panels: Array.isArray(rightSidebar?.panels)
-        ? rightSidebar.panels as string[]
-        : defaultLayout.rightSidebar.panels,
+      panels: mergedRightPanels,
       width: typeof rightSidebar?.width === 'number'
         ? rightSidebar.width as number
         : defaultLayout.rightSidebar.width,
