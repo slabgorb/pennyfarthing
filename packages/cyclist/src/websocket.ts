@@ -29,6 +29,12 @@ import {
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { storePendingToolInput } from './span-correlation.js';
+import {
+  getAllGitDiffs,
+  onDiffCacheRefresh,
+  invalidateDiffCache,
+  type GitDiffData,
+} from './git-diff.js';
 
 // =============================================================================
 // Git Cache Invalidation Logic
@@ -126,6 +132,9 @@ const todosClients = new Set<WebSocket>();
 
 // Sprint WebSocket clients (MSSCI-14189: Enhanced Sprint Panel)
 const sprintClients = new Set<WebSocket>();
+
+// Diffs WebSocket clients (MSSCI-14238: Git-based diffs)
+const diffsClients = new Set<WebSocket>();
 
 // In-memory todos store (for initial send on connection)
 interface TodoItem {
@@ -399,6 +408,9 @@ export function setupWebSocketServers(
   // WebSocket server for sprint at /ws/sprint (MSSCI-14189: Enhanced Sprint Panel)
   const sprintWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for diffs at /ws/diffs (MSSCI-14238: Git-based diffs)
+  const diffsWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -466,6 +478,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/sprint') {
       sprintWss.handleUpgrade(request, socket, head, (ws) => {
         sprintWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/diffs') {
+      diffsWss.handleUpgrade(request, socket, head, (ws) => {
+        diffsWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -802,6 +818,85 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle diffs WebSocket connections (MSSCI-14238: Git-based diffs)
+  diffsWss.on('connection', async (ws: WebSocket) => {
+    console.log('[WebSocket] Diffs client connected');
+    diffsClients.add(ws);
+
+    // Send initial diffs on connection
+    const projectDir = getProjectDir();
+    try {
+      const diffs = await getAllGitDiffs(projectDir);
+      // Transform GitDiffData to DiffData format expected by useDiffs hook
+      const transformedDiffs = diffs.map((d: GitDiffData) => ({
+        id: `diff-${d.path}-${d.timestamp}`,
+        path: d.path,
+        original: '', // Git diff doesn't have separate original - it's in the unified diff
+        modified: '', // Git diff doesn't have separate modified - it's in the unified diff
+        diff: d.diff, // Raw git diff for rendering
+        toolName: 'Git',
+        timestamp: d.timestamp,
+        status: d.status,
+        additions: d.additions,
+        deletions: d.deletions,
+      }));
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', diffs: transformedDiffs }));
+      }
+    } catch (err) {
+      console.error('[WebSocket] Failed to get initial diffs:', err);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', diffs: [] }));
+      }
+    }
+
+    // Handle clear message from client
+    ws.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'clear') {
+          console.log('[WebSocket] Diffs cleared by client');
+          // Note: This is a UI-only clear, the git state remains unchanged
+        }
+      } catch (err) {
+        console.error('[WebSocket] Failed to parse diffs message:', err);
+      }
+    });
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Diffs client disconnected');
+      diffsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      diffsClients.delete(ws);
+    });
+  });
+
+  // Set up diff cache refresh callback to broadcast updates
+  onDiffCacheRefresh((diffs: GitDiffData[]) => {
+    const transformedDiffs = diffs.map((d: GitDiffData) => ({
+      id: `diff-${d.path}-${d.timestamp}`,
+      path: d.path,
+      original: '',
+      modified: '',
+      diff: d.diff,
+      toolName: 'Git',
+      timestamp: d.timestamp,
+      status: d.status,
+      additions: d.additions,
+      deletions: d.deletions,
+    }));
+    const message = JSON.stringify({ type: 'refresh', diffs: transformedDiffs });
+    for (const client of diffsClients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
   // Also trigger context updates when tool events arrive
@@ -838,6 +933,8 @@ export function setupWebSocketServers(
       const projectDir = getProjectDir();
       console.log('[WebSocket] Invalidating git cache for:', projectDir);
       invalidateGitCache(projectDir);
+      // MSSCI-14238: Also invalidate diff cache when files change
+      invalidateDiffCache(projectDir);
     }
 
     // Trigger debounced context update when tool events arrive
