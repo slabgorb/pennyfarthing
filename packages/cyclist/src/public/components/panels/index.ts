@@ -2,13 +2,15 @@
  * Panel Components Index
  *
  * Story MSSCI-12717 - React Migration
- * UX Consolidation: AC and BikeLane are now internal tabs within ProgressPanel
+ * Story MSSCI-14188 - Split Progress panel into Workflow, AC, and Todo panels
  */
 
 export { MessagePanel } from './MessagePanel';
 export { SprintPanel, EnhancedSprintPanel } from './SprintPanel';
 export { GitPanel } from './GitPanel';
-export { ProgressPanel } from './ProgressPanel';  // Contains Workflow/AC/Todo tabs
+export { WorkflowPanel } from './WorkflowPanel';
+export { ACPanel } from './ACPanel';
+export { TodoPanel } from './TodoPanel';
 export { BackgroundPanel } from './BackgroundPanel';
 export { ChangedPanel } from './ChangedPanel';
 export { DiffsPanel } from './DiffsPanel';
@@ -17,6 +19,5 @@ export { SettingsPanel } from './SettingsPanel';
 export { AuditLogPanel } from './AuditLogPanel';
 
 // Legacy exports - kept for backwards compatibility and tests
-// These panels are now rendered as internal tabs within ProgressPanel
 export { AcceptanceCriteriaPanel, ConnectedAcceptanceCriteriaPanel } from './AcceptanceCriteriaPanel';
 export { BikeLanePanel, ConnectedBikeLanePanel } from './BikeLanePanel';

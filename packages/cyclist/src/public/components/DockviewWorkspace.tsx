@@ -41,7 +41,9 @@ export const PANEL_INVENTORY = {
   MESSAGE: 'message',
   // Right sidebar panels
   SPRINT: 'sprint',
-  PROGRESS: 'progress',
+  WORKFLOW: 'workflow',
+  AC: 'ac',
+  TODO: 'todo',
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
@@ -80,7 +82,9 @@ export function getDockviewApi(): DockviewApi | null {
 export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
 export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SPRINT,
-  PANEL_INVENTORY.PROGRESS,
+  PANEL_INVENTORY.WORKFLOW,
+  PANEL_INVENTORY.AC,
+  PANEL_INVENTORY.TODO,
   PANEL_INVENTORY.BACKGROUND,
   PANEL_INVENTORY.GIT,
   PANEL_INVENTORY.SETTINGS,
@@ -94,7 +98,9 @@ const PANEL_TITLES: Record<string, string> = {
   'audit-log': 'Audit Log',
   message: 'Message',
   sprint: 'Sprint',
-  progress: 'Progress',
+  workflow: 'Workflow',
+  ac: 'AC',
+  todo: 'Todo',
   background: 'Background',
   git: 'Git',
   settings: 'Settings',
@@ -309,6 +315,70 @@ export function createWorkspaceLayout(): WorkspaceLayoutConfig {
       collapsed: false,
     },
   };
+}
+
+// =============================================================================
+// Layout Migration (MSSCI-14188)
+// =============================================================================
+
+interface SimplifiedLayoutPanel {
+  id: string;
+  position?: string;
+}
+
+interface SimplifiedLayout {
+  panels: SimplifiedLayoutPanel[];
+}
+
+/**
+ * Migrate old layout format that had "progress" panel to new format with
+ * separate workflow, ac, and todo panels.
+ *
+ * Story: MSSCI-14188 - Split Progress panel into Workflow, AC, and Todo panels
+ */
+export function migrateLayout(layout: SimplifiedLayout | null | undefined): SimplifiedLayout {
+  // Handle null/undefined gracefully
+  if (!layout || !layout.panels) {
+    return { panels: [] };
+  }
+
+  // Check if layout already has new panels (no migration needed)
+  const hasNewPanels = layout.panels.some(
+    (p) => p.id === 'workflow' || p.id === 'ac' || p.id === 'todo'
+  );
+  if (hasNewPanels) {
+    // Already migrated, just filter out any stale 'progress' panel
+    return {
+      panels: layout.panels.filter((p) => p.id !== 'progress'),
+    };
+  }
+
+  // Check if layout has old 'progress' panel that needs migration
+  const progressIndex = layout.panels.findIndex((p) => p.id === 'progress');
+  if (progressIndex === -1) {
+    // No progress panel to migrate
+    return layout;
+  }
+
+  // Get the position of the old progress panel
+  const progressPanel = layout.panels[progressIndex];
+  const position = progressPanel.position || 'right';
+
+  // Build new panels array with progress replaced by workflow, ac, todo
+  const newPanels: SimplifiedLayoutPanel[] = [];
+
+  for (let i = 0; i < layout.panels.length; i++) {
+    if (i === progressIndex) {
+      // Replace progress with three new panels at the same position
+      newPanels.push({ id: 'workflow', position });
+      newPanels.push({ id: 'ac', position });
+      newPanels.push({ id: 'todo', position });
+    } else {
+      newPanels.push(layout.panels[i]);
+    }
+  }
+
+  return { panels: newPanels };
 }
 
 // =============================================================================
@@ -549,7 +619,9 @@ export function DockviewWorkspace({
     diffs: 'Diffs',
     debug: 'Debug',
     sprint: 'Sprint',
-    progress: 'Progress',
+    workflow: 'Workflow',
+    ac: 'AC',
+    todo: 'Todo',
     background: 'Background',
     git: 'Git',
     settings: 'Settings',
