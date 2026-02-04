@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.1.0] - 2026-02-03
+
+### Fixed
+
+- **Tool Stack Count Clipping** - Fixed overflow:hidden causing text clipping in tool completion summaries
+
+---
+
 ## [9.0.3] - 2026-02-03
 
 ### Added
