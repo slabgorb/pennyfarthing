@@ -15,8 +15,25 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { ipcRenderer } from 'electron';
 import 'xterm/css/xterm.css';
+
+// Safely access electron IPC - only available in Electron context
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ipcRenderer: typeof import('electron').ipcRenderer | null = (() => {
+  try {
+    // Check if we're in Electron renderer with contextIsolation=false
+    // or if preload script exposed it on window
+    if (typeof window !== 'undefined' && (window as { electronAPI?: { ipcRenderer?: unknown } }).electronAPI?.ipcRenderer) {
+      return (window as { electronAPI: { ipcRenderer: typeof import('electron').ipcRenderer } }).electronAPI.ipcRenderer;
+    }
+    // Try direct require (works with nodeIntegration=true, contextIsolation=false)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('electron').ipcRenderer;
+  } catch {
+    // Not in Electron environment
+    return null;
+  }
+})();
 
 /** Props for TTYPanel component */
 export interface TTYPanelProps {
@@ -65,6 +82,36 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
 
   const [status, setStatus] = useState<TerminalStatus>('connecting');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Check if we're in Electron environment
+  if (!ipcRenderer) {
+    return (
+      <div
+        className="tty-panel tty-not-available"
+        data-testid="tty-panel"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'var(--text-secondary, #94a3b8)',
+          padding: '24px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: '32px', marginBottom: '12px' }}>🖥️</div>
+        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary, #e2e8f0)' }}>
+          Terminal Not Available
+        </h3>
+        <p style={{ margin: 0, fontSize: '13px' }}>
+          The terminal panel requires Electron.
+          <br />
+          Run Cyclist as a desktop app to use this feature.
+        </p>
+      </div>
+    );
+  }
 
   // Store IPC listener references for cleanup
   const ipcListenersRef = useRef<{
