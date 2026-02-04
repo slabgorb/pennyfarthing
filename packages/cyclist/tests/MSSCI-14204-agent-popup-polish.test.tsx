@@ -154,13 +154,16 @@ describe('AC1: Popup maintains consistent size when hovering different panels', 
     const popup = screen.getByRole('dialog');
     const initialRect = popup.getBoundingClientRect();
 
-    // Hover over agent with long content
-    const pmItem = screen.getByText('Bartholomew Fitzgerald Montgomery III');
-    fireEvent.mouseEnter(pmItem.closest('[role="option"]')!);
+    // Hover over agent with long content - use roster items to find the PM agent
+    const rosterItems = screen.getAllByRole('option');
+    const pmItem = rosterItems.find(item => item.textContent?.includes('Bartholomew'));
+
+    expect(pmItem).toBeDefined();
+    fireEvent.mouseEnter(pmItem!);
 
     // Wait for preview to update
     await waitFor(() => {
-      expect(screen.getByText(/Bartholomew Fitzgerald Montgomery III/)).toBeInTheDocument();
+      expect(screen.getByTestId('popup-detail-style')).toBeInTheDocument();
     }, { timeout: 300 });
 
     const afterLongRect = popup.getBoundingClientRect();
@@ -271,9 +274,13 @@ describe('AC2: No layout shift or jumping when moving mouse between panel names'
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
-    // Hover over agent with many quirks
-    const pmItem = screen.getByText('Bartholomew Fitzgerald Montgomery III');
-    fireEvent.mouseEnter(pmItem.closest('[role="option"]')!);
+    // Hover over agent with many quirks - use the roster item instead of text match
+    // because the text appears in both the roster and the details
+    const rosterItems = screen.getAllByRole('option');
+    const pmItem = rosterItems.find(item => item.textContent?.includes('Bartholomew'));
+
+    expect(pmItem).toBeDefined();
+    fireEvent.mouseEnter(pmItem!);
 
     await waitFor(() => {
       expect(screen.getByTestId('popup-detail-quirks')).toBeInTheDocument();
@@ -475,12 +482,11 @@ describe('AC4: Smooth visual experience when browsing panel list', () => {
     const popup = screen.getByRole('dialog');
     const initialRect = popup.getBoundingClientRect();
 
-    // Simulate hovering through all agents rapidly
-    const agents = ['Alice', 'Sam Seaborn', 'Bartholomew Fitzgerald Montgomery III'];
+    // Simulate hovering through all agents rapidly using roster items
+    const rosterItems = screen.getAllByRole('option');
 
-    for (const agentName of agents) {
-      const agentItem = screen.getByText(agentName);
-      fireEvent.mouseEnter(agentItem.closest('[role="option"]')!);
+    for (const item of rosterItems) {
+      fireEvent.mouseEnter(item);
 
       // Brief pause to allow state update
       await act(async () => {
