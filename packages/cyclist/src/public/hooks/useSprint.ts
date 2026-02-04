@@ -70,12 +70,18 @@ export function useSprint(): UseSprintResult {
   const [error, setError] = useState<Error | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/sprint`;
 
     const connect = () => {
+      // Don't reconnect if component has unmounted
+      if (!isMountedRef.current) {
+        return;
+      }
+
       try {
         wsRef.current = new WebSocket(wsUrl);
 
@@ -121,6 +127,7 @@ export function useSprint(): UseSprintResult {
     connect();
 
     return () => {
+      isMountedRef.current = false;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
