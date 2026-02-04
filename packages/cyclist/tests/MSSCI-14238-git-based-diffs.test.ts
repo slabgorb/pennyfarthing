@@ -436,25 +436,29 @@ Binary files a/image.png and b/image.png differ`;
   // ===========================================================================
 
   describe('AC8: Simpler codebase - remove OTEL tool correlation for diffs', () => {
-    it('should NOT export diffOriginal/diffModified from tool events', async () => {
-      // The otlp-receiver should no longer extract old_string/new_string for diffs
-      // After refactor, tool events should NOT have these fields
-      const { processToolEvent } = await import('../src/otlp-receiver.js');
+    it('should NOT have diffOriginal/diffModified in ToolEvent interface', async () => {
+      // The otlp-receiver should no longer have diffOriginal/diffModified fields
+      // After refactor, ToolEvent interface should NOT have these fields
+      const { recordToolEvent, getToolEvents, resetEventStore } = await import('../src/otlp-receiver.js');
 
+      // Reset to ensure clean state
+      resetEventStore();
+
+      // Record a mock Edit tool event
       const editEvent = {
         toolName: 'Edit',
-        toolInput: {
-          file_path: '/project/file.ts',
-          old_string: 'const x = 1;',
-          new_string: 'const x = 2;'
-        }
+        input: '/project/file.ts',
+        success: true,
+        timestamp: Date.now()
       };
 
-      const processed = processToolEvent(editEvent);
+      recordToolEvent(editEvent);
+      const events = getToolEvents();
 
-      // These fields should NOT be present after refactor
-      expect(processed).not.toHaveProperty('diffOriginal');
-      expect(processed).not.toHaveProperty('diffModified');
+      // The recorded event should NOT have diffOriginal/diffModified fields
+      // (they were removed from the ToolEvent interface in MSSCI-14238)
+      expect(events[0]).not.toHaveProperty('diffOriginal');
+      expect(events[0]).not.toHaveProperty('diffModified');
     });
 
     it('should use git diff instead of tool input for diff content', async () => {
