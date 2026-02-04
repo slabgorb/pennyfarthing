@@ -4,7 +4,7 @@ description: Quick commit for small changes without full git-cleanup ceremony
 
 # Quick Chore Commit
 
-Quickly commit dirty changes without the full `/git-cleanup` ceremony. Creates a branch, commits, merges to develop, and pushes in one command.
+Quickly commit dirty changes without the full `/git-cleanup` ceremony. Checks **all repos** (orchestrator + subrepos), creates branches, commits, merges to develop, and pushes.
 
 <purpose>
 Fast path for committing small changes that don't warrant story tracking.
@@ -39,30 +39,41 @@ Fast path for committing small changes that don't warrant story tracking.
 
 **CRITICAL: Never use git stash.** The stash/pull/pop pattern can silently revert changes when upstream modifies the same files during the pull.
 
-1. Verify dirty files exist (abort if clean)
-2. Determine variant (chore/doc/ux) from first arg
-3. Create branch from current HEAD (keeps dirty changes): `{variant}/{timestamp}`
-4. Stage and commit all changes
-5. Fetch origin and rebase onto latest develop
-6. Switch to develop, merge the branch
-7. Push develop
-8. Delete local branch
+**CRITICAL: Always check ALL repos, not just the orchestrator.** Most changes are in subrepos (e.g., `pennyfarthing/`). Use `git -C {repo_path}` for subrepo operations.
+
+1. Check ALL repos for dirty files (orchestrator + subrepos from `repos.yaml`)
+2. Abort if all repos are clean
+3. Determine variant (chore/doc/ux) from first arg
+4. For EACH dirty repo, independently:
+   a. Create branch from current HEAD: `{variant}/{timestamp}`
+   b. Stage and commit all changes
+   c. Fetch origin and rebase onto latest develop
+   d. Switch to develop, merge the branch
+   e. Push develop
+   f. Delete local branch
 </workflow>
 
 ## Execution
 
-### Step 1: Pre-Flight
+### Step 1: Multi-Repo Pre-Flight
+
+**ALWAYS check all repos.** Read `repos.yaml` for repo paths.
 
 ```bash
-# Abort if clean
-if git diff --quiet && git diff --cached --quiet; then
-  echo "ERROR: No changes to commit."
-  exit 1
-fi
-
-echo "=== Changes to Commit ==="
+# Check ALL repos for dirty changes
+# Orchestrator root (.)
 git status --short
+
+# Subrepos (e.g., pennyfarthing/)
+git -C pennyfarthing status --short 2>/dev/null
+
+# Or use the multi-repo status script:
+.pennyfarthing/scripts/git/git-status-all.sh --brief
 ```
+
+Collect which repos have changes. If ALL repos are clean, abort with "No changes to commit."
+
+**Common case:** Only the subrepo (`pennyfarthing/`) has changes. The orchestrator is clean. This is normal — framework development happens in the subrepo.
 
 ### Step 2: Parse Arguments
 
@@ -93,11 +104,17 @@ esac
 MESSAGE="$*"
 ```
 
-### Step 3: Generate Message (if needed)
+### Step 3: For Each Dirty Repo — Generate Message, Branch, Commit, Merge, Push
+
+Repeat steps 3a–3d for each repo that has dirty changes. Use `git -C {repo_path}` for subrepo operations, or `cd` into the subrepo temporarily.
+
+#### Step 3a: Generate Message (if user didn't provide one)
+
+Generate a message based on the changed files **in that specific repo**.
 
 ```bash
 if [ -z "$MESSAGE" ]; then
-  CHANGED_FILES=$(git status --porcelain | awk '{print $2}')
+  CHANGED_FILES=$(git -C {repo_path} status --porcelain | awk '{print $2}')
 
   case "$VARIANT" in
     docs)
@@ -132,11 +149,16 @@ if [ -z "$MESSAGE" ]; then
 fi
 ```
 
-### Step 4: Branch and Commit
+**For subrepos:** Also review the diff to generate a meaningful message. Prefer descriptive messages over generic ones (e.g., "migrate TTY panel to WebSocket" over "minor updates to 3 files").
+
+#### Step 3b: Branch and Commit
 
 **IMPORTANT: Do NOT use git stash.** Stash + pull + pop can silently revert changes when upstream modifies the same files.
 
 ```bash
+# For subrepos, cd into the repo first (or use git -C throughout)
+cd {repo_path}
+
 # Create branch from current HEAD (preserves dirty changes)
 BRANCH="${BRANCH_TYPE}/$(date +%Y%m%d-%H%M%S)"
 git checkout -b "$BRANCH"
@@ -159,12 +181,28 @@ git branch -d "$BRANCH"
 git push origin develop
 ```
 
+#### Step 3c: Return to orchestrator root
+
+```bash
+cd {orchestrator_root}
+```
+
+### Step 4: Verify
+
+After all repos are processed:
+```bash
+.pennyfarthing/scripts/git/git-status-all.sh --brief
+```
+
+All repos should show clean.
+
 ## Safety
 
-- **NEVER commit directly to develop**
+- **NEVER commit directly to develop** (use branches)
 - **Never force push**
 - **Never commit secrets** (.env, credentials)
-- **Abort if working directory is clean**
+- **Abort if ALL repos are clean**
+- **ALWAYS use `git -C {repo_path}` for subrepo operations**
 
 ## When to Use
 
@@ -176,4 +214,5 @@ git push origin develop
 
 <related>
 - `/git-cleanup` - Full ceremony for organizing multiple changes
+- `/repo-status` - Check status across all repos
 </related>
