@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, processToolUseForDiffs } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1192,13 +1192,13 @@ export function startProjectWatchers(): void {
 }
 
 // =============================================================================
-// Tool Use Processing for Diff Tracking (MSSCI-14190)
+// Tool Use Processing for OTEL Correlation
 // =============================================================================
 
 /**
- * Process tool_use messages from any SDK message format
+ * Process tool_use messages from any SDK message format for OTEL correlation
  * Handles both discrete tool_use messages and nested tool_use in assistant messages
- * Uses processToolUseForDiffs from websocket.ts (single source of truth)
+ * ADR-0020: Diff tracking removed - ChangedPanel now uses git as source of truth
  */
 function processToolUseFromMessage(message: SDKMessage): void {
   const processBlock = (toolName: string | undefined, toolId: string | undefined, toolInput: Record<string, unknown> | undefined) => {
@@ -1207,8 +1207,6 @@ function processToolUseFromMessage(message: SDKMessage): void {
     if (toolId && toolInput) {
       storePendingToolInput(toolId, toolName, toolInput);
     }
-    // Process diffs (uses shared function from websocket.ts)
-    processToolUseForDiffs(toolName, toolId, toolInput);
   };
 
   // Format 1: Discrete tool_use messages (CLI streaming format)
