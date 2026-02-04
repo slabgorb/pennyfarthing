@@ -240,9 +240,15 @@ export async function initCommand(
   logger.success(`Pennyfarthing v${version} initialized in ${finalName}`);
   logger.newline();
   logger.info('Next steps:');
-  logger.info('  1. Edit .claude/project/docs/shared-context.md with your project info');
-  logger.info('  2. Configure .claude/persona-config.yaml for your preferred theme');
-  logger.info('  3. Run `pennyfarthing doctor` to verify installation');
+  logger.info('  1. Run /setup to complete project configuration');
+  logger.info('     - Discover repos and tech stack');
+  logger.info('     - Generate repos.yaml and CLAUDE.md');
+  logger.info('     - Configure theme and optional Cyclist');
+  logger.newline();
+  logger.info('  Or configure manually:');
+  logger.info('  - Edit .claude/project/docs/shared-context.md with your project info');
+  logger.info('  - Configure .claude/persona-config.yaml for your preferred theme');
+  logger.info('  - Run `pennyfarthing doctor` to verify installation');
 }
 
 /**

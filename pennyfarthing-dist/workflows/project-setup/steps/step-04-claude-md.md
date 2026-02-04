@@ -1,0 +1,186 @@
+# Step 4: Generate CLAUDE.md
+
+<purpose>
+Generate the project's CLAUDE.md file - the primary instruction file that Claude Code reads on every session. This file defines project-specific rules, structure, and workflows.
+</purpose>
+
+<instructions>
+1. Analyze repos.yaml and discovered tech stack
+2. Generate CLAUDE.md with project-specific content
+3. Include correct commands, structure, and workflows
+4. Allow user to review and refine
+5. Write to project root
+</instructions>
+
+<output>
+- CLAUDE.md file created at project root
+- Accurate project structure documented
+- Correct build/test/lint commands
+- Appropriate workflow guidance
+- User has approved the content
+</output>
+
+## CLAUDE.MD STRUCTURE
+
+```markdown
+# CLAUDE.md - {Project Name}
+
+This file provides guidance to Claude Code when working on this project.
+
+## Project Overview
+
+{Brief description of what the project does}
+
+**Type:** {orchestrator|api|ui|cli|library|framework}
+**Node:** {version if applicable}
+**Type:** {ES module|CommonJS}
+
+## Repository Structure
+
+{if orchestrator}
+```
+{project_name}/              # Orchestrator
+├── .claude/                 # Claude Code configuration
+├── .pennyfarthing/          # Pennyfarthing framework
+├── sprint/                  # Sprint tracking
+├── .session/                # Active work sessions
+├── {subrepo1}/              # {description}
+└── {subrepo2}/              # {description}
+```
+{/if}
+
+{if monorepo}
+```
+{project_name}/
+├── packages/
+│   ├── {package1}/          # {description}
+│   └── {package2}/          # {description}
+├── .claude/
+└── .pennyfarthing/
+```
+{/if}
+
+{if single_repo}
+```
+{project_name}/
+├── src/                     # Source code
+├── tests/                   # Tests
+├── .claude/
+└── .pennyfarthing/
+```
+{/if}
+
+## Build Commands
+
+```bash
+{build_command}              # Build the project
+{test_command}               # Run tests
+{lint_command}               # Run linter
+{dev_command}                # Start development
+```
+
+## Development Workflow
+
+{if has_sprint}
+- `/sm` - Scrum Master (story management)
+- `/tea` - Test Engineer/Architect
+- `/dev` - Developer
+- `/reviewer` - Code Reviewer
+{/if}
+
+## Git Workflow
+
+- **Feature branches:** `feat/{story}-{description}`
+- **Bug fixes:** `fix/{issue}-{description}`
+- **PRs target:** `develop` (or `main` if no develop)
+
+## Testing
+
+```bash
+{test_command}                        # Run all tests
+{test_command} -- --grep "pattern"    # Run specific tests
+```
+
+## Important Notes
+
+{Project-specific notes, gotchas, conventions}
+```
+
+## GENERATION LOGIC
+
+### 1. Extract from repos.yaml
+
+Read the repos.yaml created in step 2:
+- Project name from orchestrator/root repo
+- Type from repo classification
+- Commands from each repo
+
+### 2. Detect Additional Context
+
+Scan for:
+- `tsconfig.json` → TypeScript config details
+- `jest.config.*` → Test framework config
+- `.eslintrc.*` → Linting config
+- `Dockerfile` → Container info
+- CI config (`.github/workflows/`, `.gitlab-ci.yml`)
+
+### 3. Include Pennyfarthing Integration
+
+If sprint/ exists:
+```markdown
+## Sprint Management
+
+- `/sprint status` - View current sprint
+- `/sprint backlog` - Available stories
+- `/sprint work` - Start a story
+```
+
+### 4. Add Project-Specific Sections
+
+Based on tech stack:
+
+**For TypeScript projects:**
+```markdown
+## TypeScript
+
+- Use `.js` extensions in imports
+- Strict mode enabled
+- ES modules (`"type": "module"`)
+```
+
+**For React projects:**
+```markdown
+## React Patterns
+
+- Functional components with hooks
+- Component files in `src/components/`
+- Tests co-located with components
+```
+
+## INTERACTIVE REFINEMENT
+
+```
+📄 Generated CLAUDE.md
+═══════════════════════
+
+{preview of generated content}
+
+Options:
+[A] Accept and write to CLAUDE.md
+[E] Edit a section
+[S] Add a new section
+[R] Regenerate with different focus
+[P] Preview full content
+```
+
+## SUCCESS CRITERIA
+
+✅ CLAUDE.md accurately describes project
+✅ Commands are correct and tested
+✅ Structure matches actual project
+✅ Workflows appropriate for project type
+✅ User has reviewed and approved
+
+## NEXT STEP
+
+After CLAUDE.md is written, proceed to `step-05-shared-context.md` to populate the shared-context.md file.
