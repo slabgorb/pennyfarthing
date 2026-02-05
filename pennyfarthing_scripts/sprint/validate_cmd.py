@@ -15,7 +15,7 @@ from pathlib import Path
 import click
 import yaml
 
-from pennyfarthing_scripts.sprint.validator import validate_full_sprint
+from pennyfarthing_scripts.sprint.validator import validate_full_sprint, validate_future
 from pennyfarthing_scripts.sprint.yaml_io import (
     EPIC_KEY_ORDER,
     SPRINT_KEY_ORDER,
@@ -203,8 +203,12 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
         ))
         return result
 
-    # Step 2: Schema validation using existing validator
-    schema_result = validate_full_sprint(data)
+    # Step 2: Schema validation — detect file type and use appropriate validator
+    is_future = path.name == "future.yaml" or "future" in data
+    if is_future:
+        schema_result = validate_future(data)
+    else:
+        schema_result = validate_full_sprint(data)
     if not schema_result.valid:
         result.valid = False
     for err in schema_result.errors:
@@ -214,12 +218,13 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
             category="schema",
         ))
 
-    # Step 3: Format drift detection
-    format_issues = check_format_drift(path)
-    result.format_issues = format_issues
+    # Step 3: Format drift detection (sprint files only — future.yaml has different structure)
+    if not is_future:
+        format_issues = check_format_drift(path)
+        result.format_issues = format_issues
 
-    # Step 4: Fix if requested (only format issues, not schema)
-    if fix and path.exists():
+    # Step 4: Fix if requested (only format issues, not schema; sprint files only)
+    if fix and not is_future and path.exists():
         try:
             canon_data = read_sprint(path)
             write_sprint(path, canon_data)

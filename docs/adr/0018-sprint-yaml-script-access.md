@@ -69,6 +69,46 @@ Scripts enforce these invariants:
 | Epic totals recalculated | On any story status change |
 | Jira key format | `MSSCI-{5 digits}` when present |
 
+### Python Module Architecture
+
+In addition to the bash scripts above, a Python module layer provides deterministic serialization and validation:
+
+```
+pennyfarthing_scripts/sprint/
+├── yaml_io.py          # Deterministic read/write with canonical formatting
+├── validate_cmd.py     # Validation with --fix flag for format repair
+├── validator.py        # Schema validation (required fields, types)
+├── story_add_cmd.py    # Add stories with auto-generated IDs
+├── story_update_cmd.py # Update story fields with validation
+└── cli.py              # Click CLI entry point
+```
+
+#### Deterministic Serialization (`yaml_io.py`)
+
+The `canonical_dump()` function guarantees byte-identical output for identical input:
+
+- **Fixed key ordering** per template (`SPRINT_KEY_ORDER`, `EPIC_KEY_ORDER`, `STORY_KEY_ORDER`)
+- **Block scalars** (`|`) for all multiline strings
+- **2-space indentation**, no trailing whitespace
+- **Atomic writes** via temp file + `os.replace()` to prevent corruption
+- **ruamel.yaml** for comment-preserving, order-aware YAML handling
+
+#### Validation (`validate_cmd.py`)
+
+`validate_sprint_yaml(path, fix=False)` checks three layers:
+
+| Layer | What | Blocks commit? |
+|-------|------|----------------|
+| Syntax | YAML parse errors with line numbers | Yes |
+| Schema | Missing required fields, invalid types | Yes |
+| Format | Key ordering drift, wrong string styles | No (warning only) |
+
+The `--fix` flag automatically repairs format drift by reading with `read_sprint()` and rewriting with `write_sprint()`, applying canonical formatting. Schema errors require manual intervention.
+
+#### Pre-commit Hook Integration
+
+The pre-commit hook (story 76-5) runs `validate_sprint_yaml()` on staged `sprint/*.yaml` files, blocking commits with syntax or schema errors. Format warnings are displayed but non-blocking.
+
 ### Integration with Jira
 
 The `pennyfarthing_scripts/jira/` Python module handles bidirectional sync:
@@ -144,8 +184,9 @@ Exit codes:
 
 ### Neutral
 
-- **yq dependency** - Scripts require `yq` (already in toolchain)
-- **Python for Jira** - Jira sync uses Python (already available)
+- **yq dependency** - Bash scripts require `yq` (already in toolchain)
+- **Python + ruamel.yaml** - Python modules require `ruamel.yaml` for deterministic serialization
+- **Dual tooling** - Bash scripts for simple field access, Python modules for validation and canonical formatting
 
 ## Alternatives Considered
 
@@ -175,8 +216,10 @@ Store changes as events, derive state.
 
 ## References
 
-- Scripts: `pennyfarthing-dist/scripts/sprint/`
+- Bash scripts: `pennyfarthing-dist/scripts/sprint/`
+- Python modules: `pennyfarthing_scripts/sprint/` (`yaml_io.py`, `validate_cmd.py`, `validator.py`)
 - Jira sync: `pennyfarthing_scripts/jira/bidirectional.py`
 - Skill wrapper: `pennyfarthing-dist/skills/sprint/skill.md`
 - Agent behavior: `pennyfarthing-dist/guides/agent-behavior.md`
+- Pre-commit hook: `pennyfarthing-dist/scripts/hooks/pre-commit.sh` (Check 3)
 - ADR-0008: Result Object Error Handling (script return format)
