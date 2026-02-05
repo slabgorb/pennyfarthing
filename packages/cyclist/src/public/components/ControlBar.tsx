@@ -168,7 +168,7 @@ export function ControlBar({
                 aria-pressed={relayMode}
                 aria-label="Relay mode - auto-handoff to next agent"
               >
-                <span className="toggle-icon">🚲</span>
+                <span className="toggle-icon">✋</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>Relay Mode: Auto-handoff to next agent (Cmd+4)</TooltipContent>

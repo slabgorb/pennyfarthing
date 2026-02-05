@@ -35,6 +35,20 @@ const AGENT_COLORS: Record<string, string> = {
   orchestrator: '#e879f9', // Magenta - coordination
 };
 
+// Abbreviated role names for compact badge display
+const AGENT_ABBREV: Record<string, string> = {
+  pm: 'PM',
+  sm: 'SM',
+  dev: 'DEV',
+  tea: 'TEA',
+  reviewer: 'REV',
+  architect: 'ARC',
+  devops: 'OPS',
+  'ux-designer': 'UX',
+  'tech-writer': 'TW',
+  orchestrator: 'ORC',
+};
+
 // Convert kebab-case theme name to Title Case (e.g., "princess-bride" -> "Princess Bride")
 function humanizeTheme(theme: string): string {
   return theme
@@ -47,6 +61,7 @@ export default function PersonaHeader(): React.ReactElement {
   const { persona } = usePersona();
   const [portraitError, setPortraitError] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
 
   const character = persona?.character || 'Agent';
   const theme = persona?.theme || 'default';
@@ -74,7 +89,7 @@ export default function PersonaHeader(): React.ReactElement {
     <>
       <TooltipProvider delayDuration={300}>
         <div
-          className="persona-header clickable"
+          className={`persona-header clickable${isCompact ? ' compact' : ''}`}
           data-testid="persona-header"
           role="button"
           tabIndex={0}
@@ -87,7 +102,7 @@ export default function PersonaHeader(): React.ReactElement {
             <div className="persona-portrait" data-testid="persona-portrait">
               {slug && theme && !portraitError ? (
                 <img
-                  src={`/portraits/${theme}/small/${slug}.png`}
+                  src={`/portraits/${theme}/medium/${slug}.png`}
                   alt={character}
                   className="portrait-image"
                   onError={() => setPortraitError(true)}
@@ -96,22 +111,22 @@ export default function PersonaHeader(): React.ReactElement {
                 <span className="portrait-fallback">🤖</span>
               )}
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="default"
-                  className="persona-role"
-                  data-testid="persona-role"
-                  style={{ backgroundColor: roleColor }}
-                >
-                  {role}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>{role}</TooltipContent>
-            </Tooltip>
           </div>
           <div className="persona-info">
             <div className="persona-name-row">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="default"
+                    className="persona-role"
+                    data-testid="persona-role"
+                    style={{ backgroundColor: roleColor }}
+                  >
+                    {AGENT_ABBREV[role] || role}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{role}</TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
@@ -149,6 +164,21 @@ export default function PersonaHeader(): React.ReactElement {
               </Tooltip>
             )}
           </div>
+          <img
+            src="/images/cyclist-dark.png"
+            alt="Cyclist"
+            className="persona-branding"
+          />
+          <button
+            className="persona-collapse-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCompact(!isCompact);
+            }}
+            aria-label={isCompact ? 'Expand header' : 'Collapse header'}
+          >
+            {isCompact ? '▼' : '▲'}
+          </button>
         </div>
       </TooltipProvider>
 
