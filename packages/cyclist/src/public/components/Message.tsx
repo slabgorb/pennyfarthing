@@ -17,25 +17,33 @@ import type { MessageData } from '../types/message';
 
 interface MessageProps {
   message: MessageData;
+  isLastAgentMessage?: boolean;
+  /** Whether this is the first message in a turn (shows avatar) */
+  isFirstInTurn?: boolean;
 }
 
 interface AssistantAvatarProps {
   isStreaming?: boolean;
+  agentSlug?: string;
+  agentTheme?: string;
+  agentCharacter?: string;
 }
 
-function AssistantAvatar({ isStreaming }: AssistantAvatarProps): React.ReactElement {
+function AssistantAvatar({ isStreaming, agentSlug, agentTheme, agentCharacter }: AssistantAvatarProps): React.ReactElement {
   const { persona } = usePersona();
   const [imageError, setImageError] = useState(false);
 
-  const slug = persona?.slug;
-  const theme = persona?.theme;
+  // Use per-message persona if available, fall back to current global persona
+  const slug = agentSlug || persona?.slug;
+  const theme = agentTheme || persona?.theme;
+  const character = agentCharacter || persona?.character;
   const avatarClass = isStreaming ? 'avatar-portrait avatar-thinking' : 'avatar-portrait';
 
   if (slug && theme && !imageError) {
     return (
       <img
         src={`/portraits/${theme}/small/${slug}.png`}
-        alt={persona?.character || 'Agent'}
+        alt={character || 'Agent'}
         className={avatarClass}
         onError={() => setImageError(true)}
       />
@@ -67,9 +75,10 @@ function UserAvatar(): React.ReactElement {
   return <span className="avatar-emoji">👤</span>;
 }
 
-export default function Message({ message }: MessageProps): React.ReactElement {
+export default function Message({ message, isLastAgentMessage, isFirstInTurn = true }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
+  const continuationClass = !isFirstInTurn ? ' continuation' : '';
 
   // For bell-injected messages (queued messages injected via PostToolUse hook)
   // Show with 🔔 indicator so user knows it was sent mid-turn
@@ -77,7 +86,7 @@ export default function Message({ message }: MessageProps): React.ReactElement {
     const html = message.content ? parseMarkdown(message.content) : '';
     return (
       <TooltipProvider delayDuration={300}>
-        <div data-testid="message-bell-injected" className="message message-user message-bell-injected">
+        <div data-testid="message-bell-injected" className={`message message-user message-bell-injected${continuationClass}`}>
           <div data-testid="avatar" className="message-avatar">
             <UserAvatar />
           </div>
@@ -106,11 +115,18 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   }
 
   // For streaming agent messages, use StreamingContent with throbbing avatar
+  // Only throb the last agent message's avatar
   if (message.type === 'agent' && message.isStreaming) {
+    const showThrob = isLastAgentMessage !== false;
     return (
-      <div data-testid={testId} className={`message ${roleClass}`}>
+      <div data-testid={testId} className={`message ${roleClass}${continuationClass}`}>
         <div data-testid="avatar" className="message-avatar">
-          <AssistantAvatar isStreaming={true} />
+          <AssistantAvatar
+            isStreaming={showThrob}
+            agentSlug={message.agentSlug}
+            agentTheme={message.agentTheme}
+            agentCharacter={message.agentCharacter}
+          />
         </div>
         <div className="message-content">
           <StreamingContent content={message.content || ''} isStreaming={message.isStreaming ?? false} />
@@ -123,9 +139,15 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   const html = message.content ? parseMarkdown(message.content) : '';
 
   return (
-    <div data-testid={testId} className={`message ${roleClass}`}>
+    <div data-testid={testId} className={`message ${roleClass}${continuationClass}`}>
       <div data-testid="avatar" className="message-avatar">
-        {message.type === 'user' ? <UserAvatar /> : <AssistantAvatar />}
+        {message.type === 'user' ? <UserAvatar /> : (
+          <AssistantAvatar
+            agentSlug={message.agentSlug}
+            agentTheme={message.agentTheme}
+            agentCharacter={message.agentCharacter}
+          />
+        )}
       </div>
       <div className="message-content">
         <div dangerouslySetInnerHTML={{ __html: html }} />

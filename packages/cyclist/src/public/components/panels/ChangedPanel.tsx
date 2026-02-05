@@ -1,77 +1,63 @@
 /**
- * ChangedPanel - Display changed files (FileTree wrapper)
+ * ChangedPanel - Full file tree with changed file highlighting
  *
  * Story MSSCI-12717 - React Migration
  * ADR-0020 - Changed to use git as source of truth instead of /ws/diffs
+ *
+ * Shows full project directory tree with changed files highlighted.
+ * Uses /api/files for tree structure and /ws/git for change status.
  */
 
 import React, { useCallback, useMemo } from 'react';
-import FileTree, { FileChange, FileStatus } from '../FileTree';
-import { useGitStatus, DirtyFile } from '../../hooks/useGitStatus';
+import { FullFileTree } from '../FullFileTree';
+import { useGitStatus } from '../../hooks/useGitStatus';
+import type { FileStatus } from '../FileTree';
+import type { DirectoryEntry } from '../../hooks/useFileBrowser';
 
 /**
  * Map git status code to FileStatus
- * Git porcelain format: XY where X=index, Y=worktree
- * ?: untracked, A: added, M: modified, D: deleted, R: renamed, C: copied
  */
 function gitStatusToFileStatus(gitStatus: string): FileStatus {
   const indexStatus = gitStatus[0] || ' ';
   const workTreeStatus = gitStatus[1] || ' ';
 
-  // Deleted in either index or worktree
-  if (indexStatus === 'D' || workTreeStatus === 'D') {
-    return 'deleted';
-  }
-
-  // Untracked or newly added
-  if (indexStatus === '?' || indexStatus === 'A') {
-    return 'created';
-  }
-
-  // Everything else is modified (M, R, C, etc.)
+  if (indexStatus === 'D' || workTreeStatus === 'D') return 'deleted';
+  if (indexStatus === '?' || indexStatus === 'A') return 'created';
   return 'modified';
-}
-
-/**
- * Convert DirtyFile array to FileChange array
- */
-function dirtyFilesToFileChanges(dirtyFiles: DirtyFile[]): FileChange[] {
-  return dirtyFiles.map(file => ({
-    path: file.path,
-    status: gitStatusToFileStatus(file.status),
-  }));
 }
 
 export function ChangedPanel(): React.ReactElement {
   const { repos } = useGitStatus();
 
-  // Flatten all dirty files from all repos into FileChange array
-  const files = useMemo(() => {
-    const allFiles: FileChange[] = [];
+  // Build a Map<filePath, FileStatus> from all dirty files
+  const changedFiles = useMemo(() => {
+    const map = new Map<string, FileStatus>();
     for (const repo of repos) {
-      const repoFiles = dirtyFilesToFileChanges(repo.files);
-      // Prefix with repo name if multiple repos
-      if (repos.length > 1) {
-        for (const file of repoFiles) {
-          allFiles.push({
-            ...file,
-            path: `${repo.name}/${file.path}`,
-          });
-        }
-      } else {
-        allFiles.push(...repoFiles);
+      for (const file of repo.files) {
+        // Use full path from repo for matching against /api/files paths
+        const fullPath = repos.length > 1
+          ? `${repo.path}/${file.path}`
+          : `${repo.path}/${file.path}`;
+        map.set(fullPath, gitStatusToFileStatus(file.status));
+        // Also store relative path for fallback matching
+        map.set(file.path, gitStatusToFileStatus(file.status));
       }
     }
-    return allFiles;
+    return map;
   }, [repos]);
 
-  const handleFileClick = useCallback((file: FileChange) => {
-    console.log('[ChangedPanel] File clicked:', file.path);
+  const handleFileClick = useCallback((entry: DirectoryEntry, status?: FileStatus) => {
+    // Open file in editor via API
+    fetch('/api/files/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: entry.path }),
+    }).catch(err => console.error('[ChangedPanel] Failed to open file:', err));
   }, []);
 
   return (
     <div className="changed-panel" data-testid="changed-panel">
-      <FileTree files={files} onFileClick={handleFileClick} />
+      <FullFileTree changedFiles={changedFiles} onFileClick={handleFileClick} />
     </div>
   );
 }

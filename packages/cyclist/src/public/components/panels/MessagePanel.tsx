@@ -15,6 +15,7 @@ import PersonaHeader from '../PersonaHeader';
 import StatsStrip from '../StatsStrip';
 import { useMessageQueueContext, QueuedMessage, InjectDependencies } from '../../contexts/MessageQueueContext';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
+import { usePersona } from '../../hooks/usePersona';
 import type { ClaudeMessage } from '../../hooks/useClaude';
 import type { MessageData } from '../../types/message';
 
@@ -225,6 +226,11 @@ export function MessagePanel(): React.ReactElement {
   // Claude context for WebSocket communication
   const { send, abort, onMessage, onComplete, onError, onUserMessage, isConnected } = useClaudeContext();
 
+  // Persona context - capture current persona to stamp on agent messages
+  const { persona } = usePersona();
+  const personaRef = useRef(persona);
+  personaRef.current = persona;
+
   // Message queue context for turn complete handling and bell mode (shared with Editor)
   const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueueContext();
 
@@ -256,11 +262,17 @@ export function MessagePanel(): React.ReactElement {
     },
   };
 
-  // Handle incoming SDK message
+  // Handle incoming SDK message - stamp current persona on agent messages
   const handleSDKMessage = useCallback((sdkMessage: ClaudeMessage) => {
     const transformed = transformMessage(sdkMessage as SDKMessage);
     if (transformed.length > 0) {
-      setMessages(prev => [...prev, ...transformed]);
+      const p = personaRef.current;
+      const stamped = transformed.map(msg =>
+        msg.type === 'agent' && p
+          ? { ...msg, agentSlug: p.slug ?? undefined, agentTheme: p.theme ?? undefined, agentCharacter: p.character ?? undefined }
+          : msg
+      );
+      setMessages(prev => [...prev, ...stamped]);
     }
   }, []);
 

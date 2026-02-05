@@ -58,41 +58,99 @@ interface SystemFont {
 }
 
 // =============================================================================
-// Monospace Detection
+// Monospace Detection via OpenType `post` table
 // =============================================================================
 
-const monoCache = new Map<string, boolean>();
-
-function detectMonospace(fontFamily: string): boolean {
-  if (monoCache.has(fontFamily)) {
-    return monoCache.get(fontFamily)!;
+/**
+ * Parse SFNT table directory to find a table's offset and length.
+ * SFNT header: version(4) + numTables(2) + searchRange(2) + entrySelector(2) + rangeShift(2) = 12
+ * Each table record: tag(4) + checksum(4) + offset(4) + length(4) = 16
+ */
+function findSfntTable(view: DataView, tag: string): { offset: number; length: number } | null {
+  const numTables = view.getUint16(4);
+  for (let i = 0; i < numTables; i++) {
+    const recordOffset = 12 + i * 16;
+    const tableTag = String.fromCharCode(
+      view.getUint8(recordOffset),
+      view.getUint8(recordOffset + 1),
+      view.getUint8(recordOffset + 2),
+      view.getUint8(recordOffset + 3),
+    );
+    if (tableTag === tag) {
+      return {
+        offset: view.getUint32(recordOffset + 8),
+        length: view.getUint32(recordOffset + 12),
+      };
+    }
   }
+  return null;
+}
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    monoCache.set(fontFamily, false);
+/**
+ * Read `isFixedPitch` from the `post` table.
+ * post layout: version(4) + italicAngle(4) + underlinePosition(2) + underlineThickness(2) = offset 12
+ * isFixedPitch is uint32 at offset 12: 0 = proportional, non-zero = monospace.
+ */
+async function detectMonospaceFromBlob(fontData: { blob: () => Promise<Blob> }): Promise<boolean> {
+  try {
+    const blob = await fontData.blob();
+    const buffer = await blob.arrayBuffer();
+    const view = new DataView(buffer);
+
+    const post = findSfntTable(view, 'post');
+    if (post) {
+      const isFixedPitch = view.getUint32(post.offset + 12);
+      return isFixedPitch !== 0;
+    }
+    return false;
+  } catch {
     return false;
   }
-
-  ctx.font = `16px "${fontFamily}", monospace`;
-  const wideChar = ctx.measureText('W').width;
-  const narrowChar = ctx.measureText('i').width;
-  const isMono = Math.abs(wideChar - narrowChar) < 1;
-
-  monoCache.set(fontFamily, isMono);
-  return isMono;
 }
 
 // =============================================================================
 // System Font Discovery
 // =============================================================================
 
-let systemFontsCache: SystemFont[] | null = null;
+interface FontDataEntry {
+  family: string;
+  fullName: string;
+  postscriptName: string;
+  style: string;
+  blob: () => Promise<Blob>;
+}
+
+const FONT_CACHE_KEY = 'cyclist-system-fonts';
+
+interface FontCacheData {
+  fonts: SystemFont[];
+  count: number; // number of font families — if it changes, fonts were installed/removed
+}
+
+function loadCachedFonts(): SystemFont[] | null {
+  try {
+    const raw = localStorage.getItem(FONT_CACHE_KEY);
+    if (!raw) return null;
+    const data: FontCacheData = JSON.parse(raw);
+    if (data.fonts?.length > 0) return data.fonts;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedFonts(fonts: SystemFont[], count: number): void {
+  try {
+    const data: FontCacheData = { fonts, count };
+    localStorage.setItem(FONT_CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // localStorage full or unavailable — not critical
+  }
+}
+
 let systemFontsPromise: Promise<SystemFont[]> | null = null;
 
 async function getSystemFonts(): Promise<SystemFont[]> {
-  if (systemFontsCache) return systemFontsCache;
   if (systemFontsPromise) return systemFontsPromise;
 
   systemFontsPromise = (async () => {
@@ -101,24 +159,48 @@ async function getSystemFonts(): Promise<SystemFont[]> {
     }
 
     try {
-      const fonts = await (window as unknown as { queryLocalFonts: () => Promise<Array<{ family: string }>> }).queryLocalFonts();
+      const fonts: FontDataEntry[] = await (window as unknown as { queryLocalFonts: () => Promise<FontDataEntry[]> }).queryLocalFonts();
 
-      // Deduplicate by family name
-      const families = new Set<string>();
+      // Deduplicate by family name, keep one FontData per family for mono detection
+      const familyMap = new Map<string, FontDataEntry>();
       for (const font of fonts) {
-        families.add(font.family);
+        if (!familyMap.has(font.family)) {
+          familyMap.set(font.family, font);
+        }
       }
 
-      const result: SystemFont[] = [];
-      for (const family of families) {
-        result.push({
-          family,
-          isMonospace: detectMonospace(family),
-        });
+      const familyCount = familyMap.size;
+
+      // Check localStorage cache — reuse if font count hasn't changed
+      const cached = loadCachedFonts();
+      if (cached && cached.length > 0) {
+        // Load raw cached data to check count
+        try {
+          const raw = localStorage.getItem(FONT_CACHE_KEY);
+          if (raw) {
+            const data: FontCacheData = JSON.parse(raw);
+            if (data.count === familyCount) {
+              return cached;
+            }
+          }
+        } catch {
+          // Fall through to re-detect
+        }
       }
+
+      // Detect monospace via post table in parallel
+      const entries = Array.from(familyMap.entries());
+      const monoResults = await Promise.all(
+        entries.map(([, fontData]) => detectMonospaceFromBlob(fontData))
+      );
+
+      const result: SystemFont[] = entries.map(([family], i) => ({
+        family,
+        isMonospace: monoResults[i],
+      }));
 
       result.sort((a, b) => a.family.localeCompare(b.family));
-      systemFontsCache = result;
+      saveCachedFonts(result, familyCount);
       return result;
     } catch {
       // Permission denied or API error
@@ -161,9 +243,12 @@ export function FontPicker({
     }
   }, [fontsLoaded]);
 
-  // Filter system fonts for code type (monospace only)
+  // Filter system fonts: English-only (Latin names), monospace-only for code
   const filteredSystemFonts = useMemo(() => {
     let fonts = systemFonts;
+
+    // Filter to fonts with Latin-script names (excludes CJK, Arabic, Devanagari, etc.)
+    fonts = fonts.filter(f => /^[\x20-\x7E\u00C0-\u024F]+$/.test(f.family));
 
     // For code fonts, only show monospace
     if (type === 'code') {
@@ -237,7 +322,7 @@ export function FontPicker({
         >
           <SelectValue placeholder="Select font..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[300px]">
           {/* Presets section */}
           {displayPresets.length > 0 && (
             <SelectGroup>

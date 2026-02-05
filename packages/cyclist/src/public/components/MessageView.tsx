@@ -8,12 +8,14 @@
  * - Render messages list with proper roles
  * - Handle streaming content display
  * - Markdown rendering with syntax highlighting
- * - Tool call blocks
+ * - Tool call blocks with stacking
  * - Subagent span grouping
+ * - Turn-based grouping with speaker labels
  * - Auto-scroll behavior
  */
 
 import React, { useRef, useState, useCallback, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
@@ -23,7 +25,22 @@ import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
 import { isSkillContent } from '../utils/messageFilters';
 import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
+import { usePersona } from '../hooks/usePersona';
+import { useStatsStrip } from '../hooks/useStatsStrip';
 import type { MessageData } from '../types/message';
+
+// Agent colors matching CLI statusbar (from PersonaHeader)
+const AGENT_COLORS: Record<string, string> = {
+  pm: '#a78bfa', sm: '#60a5fa', dev: '#4ade80', tea: '#2dd4bf',
+  reviewer: '#f87171', architect: '#fb923c', devops: '#22d3ee',
+  'ux-designer': '#f0abfc', 'tech-writer': '#e5e5e5', orchestrator: '#e879f9',
+};
+
+const AGENT_ABBREV: Record<string, string> = {
+  pm: 'PM', sm: 'SM', dev: 'DEV', tea: 'TEA', reviewer: 'REV',
+  architect: 'ARC', devops: 'OPS', 'ux-designer': 'UX', 'tech-writer': 'TW',
+  orchestrator: 'ORC',
+};
 
 interface MessageViewProps {
   messages: MessageData[];
@@ -41,9 +58,36 @@ interface ToolStackGroup {
   stack: ToolStackData;
 }
 
+type RenderItem = MessageData | SubagentGroup | ToolStackGroup;
+
+interface Turn {
+  speaker: 'user' | 'agent';
+  items: RenderItem[];
+  timestamp: number;
+}
+
+function formatTurnTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Classify an item as 'user' or 'agent' for turn grouping.
+ * Tools, subagents, and stacks are all part of the agent's turn.
+ */
+function speakerOf(item: RenderItem): 'user' | 'agent' {
+  if ('isToolStack' in item || 'messages' in item) return 'agent';
+  const msg = item as MessageData;
+  return (msg.type === 'user' || msg.type === 'bell_injected') ? 'user' : 'agent';
+}
+
 export default function MessageView({ messages }: MessageViewProps): React.ReactElement {
   const messageListRef = useRef<MessageListHandle>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const { persona } = usePersona();
+  const { projectInfo } = useStatsStrip();
+
+  // Persist subagent collapsed state across re-renders/remounts
+  const subagentCollapsedRef = useRef<Map<string, boolean>>(new Map());
 
   const handleScrollChange = useCallback((atBottom: boolean) => {
     setIsAtBottom(atBottom);
@@ -53,132 +97,133 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     messageListRef.current?.scrollToBottom('smooth');
   }, []);
 
-  // Find the last assistant message for QuickActions
+  // Find the last non-streaming assistant message for QuickActions
   const lastAssistantMessage = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].type === 'agent' && !messages[i].isStreaming) {
-        return messages[i];
-      }
+      if (messages[i].type === 'agent' && !messages[i].isStreaming) return messages[i];
     }
     return null;
   }, [messages]);
 
-  // Group messages by subagent parent_id and consecutive tool uses
-  const groupedContent = useMemo(() => {
-    const result: (MessageData | SubagentGroup | ToolStackGroup)[] = [];
+  // Single memo: messages → flat render items → turns
+  const { turns, toolResults, lastAgentItemIndex } = useMemo(() => {
+    // 1. Index tool results by ID
+    const results = new Map<string, MessageData>();
+    for (const msg of messages) {
+      if (msg.type === 'tool_result' && msg.tool_id) results.set(msg.tool_id, msg);
+    }
+
+    // 2. Filter and collect subagent groups in one pass
+    const filtered: MessageData[] = [];
     const subagentGroups = new Map<string, SubagentGroup>();
 
-    // First pass: collect tool results for matching
-    const toolResults = new Map<string, MessageData>();
-    messages.forEach(msg => {
-      if (msg.type === 'tool_result' && msg.tool_id) {
-        toolResults.set(msg.tool_id, msg);
-      }
-    });
-
-    // Second pass: filter messages and group by subagent (excluding tool_use for now)
-    const filteredMessages: MessageData[] = [];
-    messages.forEach(msg => {
-      // Filter out skill content from user messages (MSSCI-12783)
-      if (msg.type === 'user' && isSkillContent(msg.content)) {
-        return;
-      }
-      // Skip tool_result - rendered with tool_use
-      if (msg.type === 'tool_result') {
-        return;
-      }
-      // Skip messages with parent_id (subagent messages handled separately)
+    for (const msg of messages) {
+      if (msg.type === 'tool_result') continue;
+      if (msg.type === 'user' && isSkillContent(msg.content)) continue;
       if (msg.parent_id) {
         let group = subagentGroups.get(msg.parent_id);
         if (!group) {
-          group = {
-            parent_id: msg.parent_id,
-            type: msg.subagent_type || 'unknown',
-            name: msg.subagent_name || 'unnamed',
-            messages: [],
-          };
+          group = { parent_id: msg.parent_id, type: msg.subagent_type || 'unknown', name: msg.subagent_name || 'unnamed', messages: [] };
           subagentGroups.set(msg.parent_id, group);
         }
         group.messages.push(msg);
-        return;
+        continue;
       }
-      filteredMessages.push(msg);
-    });
+      filtered.push(msg);
+    }
 
-    // Third pass: group consecutive tool_use messages into stacks
-    const toolStacks = groupToolsIntoStacks(filteredMessages);
+    // 3. Build flat render list, replacing consecutive tool_use runs with stacks
+    const stacks = groupToolsIntoStacks(filtered);
+    const stackByToolId = new Map<string, ToolStackData>();
+    for (const stack of stacks) {
+      for (const tool of stack.tools) stackByToolId.set(tool.tool_id, stack);
+    }
 
-    // Create a set of tool_ids that belong to stacks
-    const stackedToolIds = new Set<string>();
-    toolStacks.forEach(stack => {
-      stack.tools.forEach(tool => stackedToolIds.add(tool.tool_id));
-    });
+    const items: RenderItem[] = [];
+    const emittedStacks = new Set<string>();
+    const emittedSubagents = new Set<string>();
 
-    // Fourth pass: build result array, inserting ToolStackGroups where appropriate
-    let currentStackIndex = 0;
-    let pendingStack: ToolStackData | null = null;
-
-    filteredMessages.forEach(msg => {
-      if (msg.parent_id) {
-        // Subagent messages - insert the group when we first see a message from it
-        const group = subagentGroups.get(msg.parent_id);
-        if (group && !result.includes(group)) {
-          result.push(group);
+    for (const msg of filtered) {
+      if (msg.type === 'tool_use' && msg.tool_id && stackByToolId.has(msg.tool_id)) {
+        const stack = stackByToolId.get(msg.tool_id)!;
+        if (!emittedStacks.has(stack.stackId)) {
+          emittedStacks.add(stack.stackId);
+          items.push({ isToolStack: true, stack });
         }
-      } else if (msg.type === 'tool_use' && msg.tool_id && stackedToolIds.has(msg.tool_id)) {
-        // This tool belongs to a stack
-        const stack = toolStacks.find(s =>
-          s.tools.some(t => t.tool_id === msg.tool_id)
-        );
-        if (stack && (!pendingStack || pendingStack.stackId !== stack.stackId)) {
-          // New stack - add it
-          result.push({ isToolStack: true, stack });
-          pendingStack = stack;
-        }
-        // Skip individual rendering - handled by ToolStack
-      } else if (msg.type === 'tool_use') {
-        // Single tool - render normally
-        result.push(msg);
-        pendingStack = null;
       } else {
-        // Non-tool message
-        result.push(msg);
-        pendingStack = null;
+        items.push(msg);
       }
-    });
+    }
 
-    return { items: result, toolResults };
+    // Insert subagent groups at the position of their first parent_id occurrence
+    // (They appear in the agent's turn, after the Task tool_use that spawned them)
+    // For now, just append them — they'll naturally land in the agent turn
+    for (const [, group] of subagentGroups) {
+      if (!emittedSubagents.has(group.parent_id)) {
+        emittedSubagents.add(group.parent_id);
+        items.push(group);
+      }
+    }
+
+    // 4. Find last agent message index (for throb control)
+    let lastAgent = -1;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      if (!('isToolStack' in item) && !('messages' in item) && (item as MessageData).type === 'agent') {
+        lastAgent = i;
+        break;
+      }
+    }
+
+    // 5. Group into turns
+    const turnList: Turn[] = [];
+    for (const item of items) {
+      const speaker = speakerOf(item);
+      const last = turnList[turnList.length - 1];
+      if (last && last.speaker === speaker) {
+        last.items.push(item);
+      } else {
+        turnList.push({
+          speaker,
+          items: [item],
+          timestamp: ('timestamp' in item) ? (item as MessageData).timestamp : Date.now(),
+        });
+      }
+    }
+
+    return { turns: turnList, toolResults: results, lastAgentItemIndex: lastAgent };
   }, [messages]);
 
-  const renderItem = (item: MessageData | SubagentGroup | ToolStackGroup, index: number) => {
-    // Check if this is a tool stack group
-    if ('isToolStack' in item && item.isToolStack) {
+  const renderItem = (item: RenderItem, globalIndex: number, isFirstInTurn: boolean) => {
+    if ('isToolStack' in item) {
       return (
         <ToolStack
           key={`stack-${item.stack.stackId}`}
           stack={item.stack}
-          toolResults={groupedContent.toolResults as Map<string, { type: 'tool_result'; tool_id: string; content: string; timestamp: number }>}
+          toolResults={toolResults as Map<string, { type: 'tool_result'; tool_id: string; content: string; timestamp: number }>}
         />
       );
     }
 
-    // Check if this is a subagent group
-    if ('messages' in item && Array.isArray(item.messages)) {
+    if ('messages' in item && 'parent_id' in item) {
+      const group = item as SubagentGroup;
+      const collapsed = subagentCollapsedRef.current.get(group.parent_id) ?? true;
       return (
         <SubagentSpan
-          key={`subagent-${(item as SubagentGroup).parent_id}`}
-          type={(item as SubagentGroup).type}
-          name={(item as SubagentGroup).name}
-          messages={(item as SubagentGroup).messages as any}
+          key={`subagent-${group.parent_id}`}
+          type={group.type}
+          name={group.name}
+          messages={group.messages as any}
+          defaultCollapsed={collapsed}
+          onCollapseChange={(c) => subagentCollapsedRef.current.set(group.parent_id, c)}
         />
       );
     }
 
-    // It's a regular message
     const msg = item as MessageData;
 
     if (msg.type === 'tool_use' && msg.tool_name && msg.tool_id) {
-      const result = groupedContent.toolResults.get(msg.tool_id);
+      const result = toolResults.get(msg.tool_id);
       return (
         <ToolCallBlock
           key={`tool-${msg.tool_id}`}
@@ -203,13 +248,15 @@ export default function MessageView({ messages }: MessageViewProps): React.React
 
     return (
       <Message
-        key={`msg-${index}-${msg.timestamp}`}
+        key={`msg-${globalIndex}-${msg.timestamp}`}
         message={msg}
+        isLastAgentMessage={globalIndex === lastAgentItemIndex}
+        isFirstInTurn={isFirstInTurn}
       />
     );
   };
 
-  // Show empty state when no messages - prompt to start with /sm
+  // Empty state
   if (messages.length === 0) {
     return (
       <div data-testid="message-view" className="message-view">
@@ -228,6 +275,9 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     );
   }
 
+  // Track a running global index across turns for lastAgentItemIndex matching
+  let globalIdx = 0;
+
   return (
     <div data-testid="message-view" className="message-view" role="log" aria-live="polite">
       <MessageList
@@ -235,15 +285,51 @@ export default function MessageView({ messages }: MessageViewProps): React.React
         onScrollChange={handleScrollChange}
         autoScroll={isAtBottom}
       >
-        {groupedContent.items.map((item, index) => renderItem(item, index))}
+        {turns.map((turn, turnIndex) => {
+          // Track which items in this turn are "first message" (non-tool, non-stack)
+          let seenMessage = false;
+
+          const agentName = persona?.character || 'Agent';
+          const role = persona?.role || null;
+          const roleAbbrev = role ? (AGENT_ABBREV[role] || role) : null;
+          const roleColor = role ? (AGENT_COLORS[role] || '#e879f9') : undefined;
+          const userName = projectInfo?.githubUsername || 'You';
+
+          return (
+            <div key={`turn-${turnIndex}`} className={`turn-group turn-${turn.speaker}`}>
+              <div className="turn-label">
+                <span className="turn-speaker">
+                  {turn.speaker === 'user' ? userName : agentName}
+                </span>
+                <span className="turn-timestamp">
+                  {formatTurnTime(turn.timestamp)}
+                </span>
+                {turn.speaker === 'agent' && roleAbbrev && (
+                  <Badge
+                    variant="default"
+                    className="turn-role-badge"
+                    style={{ backgroundColor: roleColor }}
+                  >
+                    {roleAbbrev}
+                  </Badge>
+                )}
+              </div>
+              {turn.items.map((item) => {
+                const idx = globalIdx++;
+                const isMessage = !('isToolStack' in item) && !('messages' in item) && (item as MessageData).type !== 'tool_use';
+                const isFirst = isMessage && !seenMessage;
+                if (isMessage) seenMessage = true;
+                return renderItem(item, idx, isFirst);
+              })}
+            </div>
+          );
+        })}
       </MessageList>
 
-      {/* Quick Actions - dedicated area outside message scroll */}
       {lastAssistantMessage && (
         <QuickActions message={lastAssistantMessage} />
       )}
 
-      {/* Auto-scroll indicator */}
       <div
         data-testid="auto-scroll-indicator"
         data-active={isAtBottom.toString()}
@@ -251,7 +337,6 @@ export default function MessageView({ messages }: MessageViewProps): React.React
         style={{ display: 'none' }}
       />
 
-      {/* Scroll to bottom button */}
       <Button
         variant="ghost"
         size="icon"

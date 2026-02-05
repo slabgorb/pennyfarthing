@@ -72,28 +72,37 @@ export function createErrorResponse(code: ErrorCode, message: string): ErrorResp
  * Get settings for WebSocket broadcast
  * Used by websocket.ts for /ws/settings endpoint
  */
-export async function getSettingsForWebSocket(projectDir: string | null): Promise<SettingsResponse> {
+export async function getSettingsForWebSocket(projectDir: string | null): Promise<Record<string, unknown>> {
   const settings = getCurrentSettings();
 
-  // Read theme, handoff_mode, and bell_mode from config.local.yaml
+  // Read config.local.yaml as single source of truth
   let theme = 'alice-in-wonderland';
   let handoffMode = 'manual';
   let bellMode = false;
+  let display: Record<string, unknown> | undefined;
+  let notifications: Record<string, unknown> | undefined;
 
   if (projectDir) {
     try {
       const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
       if (fs.existsSync(configPath)) {
         const content = fs.readFileSync(configPath, 'utf-8');
-        const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
-        if (parsed?.theme) {
+        const parsed = parse(content) as Record<string, unknown>;
+        if (parsed?.theme && typeof parsed.theme === 'string') {
           theme = parsed.theme;
         }
-        if (parsed?.workflow?.handoff_mode) {
-          handoffMode = parsed.workflow.handoff_mode;
+        const workflow = parsed?.workflow as Record<string, unknown> | undefined;
+        if (workflow?.handoff_mode) {
+          handoffMode = workflow.handoff_mode as string;
         }
-        if (parsed?.workflow?.bell_mode !== undefined) {
-          bellMode = parsed.workflow.bell_mode;
+        if (workflow?.bell_mode !== undefined) {
+          bellMode = workflow.bell_mode as boolean;
+        }
+        if (parsed?.display && typeof parsed.display === 'object') {
+          display = parsed.display as Record<string, unknown>;
+        }
+        if (parsed?.notifications && typeof parsed.notifications === 'object') {
+          notifications = parsed.notifications as Record<string, unknown>;
         }
       }
     } catch {
@@ -101,7 +110,7 @@ export async function getSettingsForWebSocket(projectDir: string | null): Promis
     }
   }
 
-  return {
+  const response: Record<string, unknown> = {
     ...settings,
     workflow: {
       ...settings.workflow,
@@ -110,6 +119,10 @@ export async function getSettingsForWebSocket(projectDir: string | null): Promis
     },
     pennyfarthing: { theme },
   };
+  if (display) response.display = display;
+  if (notifications) response.notifications = notifications;
+
+  return response;
 }
 
 /**
@@ -127,25 +140,34 @@ export function createSettingsRouter(): Router {
     try {
       const settings = getCurrentSettings();
 
-      // Read theme, handoff_mode, and bell_mode from config.local.yaml (single source of truth)
-      let theme = 'alice-in-wonderland'; // Default fallback
-      let handoffMode = 'manual'; // Default fallback
-      let bellMode = false; // Default fallback
+      // Read config.local.yaml as single source of truth for all project settings
+      let theme = 'alice-in-wonderland';
+      let handoffMode = 'manual';
+      let bellMode = false;
+      let display: Record<string, unknown> | undefined;
+      let notifications: Record<string, unknown> | undefined;
       const projectDir = getProjectDirectory();
       if (projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           if (fs.existsSync(configPath)) {
             const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
-            if (parsed?.theme) {
+            const parsed = parse(content) as Record<string, unknown>;
+            if (parsed?.theme && typeof parsed.theme === 'string') {
               theme = parsed.theme;
             }
-            if (parsed?.workflow?.handoff_mode) {
-              handoffMode = parsed.workflow.handoff_mode;
+            const workflow = parsed?.workflow as Record<string, unknown> | undefined;
+            if (workflow?.handoff_mode) {
+              handoffMode = workflow.handoff_mode as string;
             }
-            if (parsed?.workflow?.bell_mode !== undefined) {
-              bellMode = parsed.workflow.bell_mode;
+            if (workflow?.bell_mode !== undefined) {
+              bellMode = workflow.bell_mode as boolean;
+            }
+            if (parsed?.display && typeof parsed.display === 'object') {
+              display = parsed.display as Record<string, unknown>;
+            }
+            if (parsed?.notifications && typeof parsed.notifications === 'object') {
+              notifications = parsed.notifications as Record<string, unknown>;
             }
           }
         } catch {
@@ -153,8 +175,8 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      // Construct response with theme, handoff_mode, and bell_mode added
-      const response: SettingsResponse = {
+      // Construct response with all persisted settings
+      const response: Record<string, unknown> = {
         ...settings,
         workflow: {
           ...settings.workflow,
@@ -163,6 +185,8 @@ export function createSettingsRouter(): Router {
         },
         pennyfarthing: { theme },
       };
+      if (display) response.display = display;
+      if (notifications) response.notifications = notifications;
 
       res.json(response);
     } catch (error) {
