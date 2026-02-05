@@ -6,6 +6,8 @@
 **Handoff:** Run `handoff-marker.sh {next_agent}` → extract marker → emit → EXIT. See `<agent-exit-protocol>`.
 
 **Sidecars:** Write learnings BEFORE spawning handoff subagent.
+
+**Scripts:** Pennyfarthing scripts are Python-based (`pennyfarthing_scripts/`), not shell—check before assuming `.sh`.
 </critical>
 
 <critical>
