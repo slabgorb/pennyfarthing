@@ -4,6 +4,7 @@
  * Extracted from ProgressPanel as part of MSSCI-14188.
  * Shows workflow type badge (TDD/BDD/Trivial) and phase progress.
  * MSSCI-14300: Added stepped workflow "Step N of M" display.
+ * MSSCI-14301: Added available workflows discovery list.
  *
  * Story: MSSCI-14188 - Split Progress panel into Workflow, AC, and Todo panels
  * Epic: epic-76 (Dockview Panel Migration)
@@ -13,7 +14,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStory } from '../../hooks/useStory';
-import type { WorkflowPhase } from '../../../story-parser.js';
+import type { WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
 
 // =============================================================================
 // Helper Functions
@@ -85,11 +86,46 @@ function SteppedProgress({ phases }: { phases: WorkflowPhase[] }): React.ReactEl
 }
 
 // =============================================================================
+// Available Workflows List (MSSCI-14301)
+// =============================================================================
+
+function AvailableWorkflowsList({ workflows }: { workflows: AvailableWorkflow[] }): React.ReactElement {
+  return (
+    <div className="available-workflows">
+      <div className="available-workflows-header">
+        <span className="available-workflows-title">Available Workflows ({workflows.length})</span>
+      </div>
+      <div className="available-workflows-list">
+        {workflows.map((wf) => (
+          <div
+            key={wf.name}
+            className="workflow-entry"
+            data-testid="workflow-entry"
+            data-workflow-entry-type={wf.type}
+          >
+            <div className="workflow-entry-header">
+              <span className="workflow-entry-name">{wf.name}</span>
+              <Badge variant="outline" className="workflow-entry-type-badge">
+                {wf.type}
+              </Badge>
+            </div>
+            <div className="workflow-entry-description">{wf.description}</div>
+            {wf.type === 'stepped' && (
+              <div className="workflow-entry-hint">/workflow start {wf.name}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
 // WorkflowPanel Component
 // =============================================================================
 
 export function WorkflowPanel(): React.ReactElement {
-  const { story, isLoading, error } = useStory();
+  const { story, isLoading, error, availableWorkflows } = useStory();
 
   if (isLoading) {
     return (
@@ -119,6 +155,14 @@ export function WorkflowPanel(): React.ReactElement {
   const isStepped = story?.workflowType === 'stepped';
 
   if (!workflowType && (!phases || phases.length === 0)) {
+    // MSSCI-14301: Show available workflows when no active workflow
+    if (availableWorkflows && availableWorkflows.length > 0) {
+      return (
+        <div className="workflow-panel" data-testid="workflow-panel">
+          <AvailableWorkflowsList workflows={availableWorkflows} />
+        </div>
+      );
+    }
     return (
       <div className="workflow-panel" data-testid="workflow-panel">
         <div className="placeholder">No active workflow</div>
