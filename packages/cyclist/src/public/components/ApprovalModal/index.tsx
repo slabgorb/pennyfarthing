@@ -11,9 +11,22 @@
  * - "Always allow" checkbox for persistent permissions
  * - Non-blocking overlay (click outside to dismiss)
  * - Accessible with ARIA attributes
+ *
+ * Uses shadcn Dialog, Checkbox, and Button primitives.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import './ApprovalModal.css';
 
 // ============================================================================
@@ -272,6 +285,8 @@ export function handleOverlayClick(
 
 /**
  * Hook for managing focus trap within modal.
+ * Note: Kept for backwards compatibility but shadcn Dialog handles focus trapping
+ * automatically via Radix UI primitives.
  */
 export function useFocusTrap(isOpen: boolean, modalRef: React.RefObject<HTMLDivElement>): void {
   useEffect(() => {
@@ -461,6 +476,7 @@ export function sendPermissionResponse(response: ApprovalResponse): void {
  * ApprovalModal Component
  *
  * Modal dialog for tool permission approval.
+ * Uses shadcn Dialog, Checkbox, and Button primitives.
  */
 export default function ApprovalModal({
   isOpen,
@@ -471,99 +487,116 @@ export default function ApprovalModal({
   onReject,
   onDismiss,
   className = '',
-}: ApprovalModalProps): React.ReactElement | null {
+}: ApprovalModalProps): React.ReactElement {
   const [alwaysAllow, setAlwaysAllow] = useState(false);
-  const modalRef = useRef<HTMLDivElement>(null);
 
-  // Focus trap
-  useFocusTrap(isOpen, modalRef);
-
-  // Keyboard handler
+  // Keyboard handler for Enter to approve
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKey = (e: KeyboardEvent) => {
-      handleKeyDown(
-        e,
-        () => onApprove(getGrantScope(alwaysAllow)),
-        onReject
-      );
+      if (e.key === KEYBOARD_SHORTCUTS.APPROVE) {
+        e.preventDefault();
+        onApprove(getGrantScope(alwaysAllow));
+      }
+      // Note: Escape is handled natively by Radix Dialog (triggers onOpenChange)
     };
 
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, alwaysAllow, onApprove, onReject]);
-
-  if (!isOpen) {
-    return null;
-  }
+  }, [isOpen, alwaysAllow, onApprove]);
 
   const severity = classifyActionSeverity(toolName, input);
   const severityClass = SEVERITY_CLASSNAMES[severity];
   const preview = formatCommandPreview(toolName, input);
   const icon = getToolIcon(toolName);
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Dialog is closing (Escape key or overlay click)
+      if (onDismiss) {
+        onDismiss();
+      } else {
+        onReject();
+      }
+    }
+  };
+
   return (
-    <div
-      className={`${COMPONENT_CLASSNAME}-overlay`}
-      data-testid={OVERLAY_TESTID}
-      onClick={(e) => onDismiss && handleOverlayClick(e, onDismiss)}
-    >
-      <div
-        ref={modalRef}
-        className={`${COMPONENT_CLASSNAME} ${severityClass} ${className}`}
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
         data-testid={MODAL_TESTID}
-        role={MODAL_ROLE}
-        aria-modal={ARIA_MODAL}
-        aria-labelledby={TITLE_ID}
-        aria-describedby={DESCRIPTION_ID}
+        className={cn('max-w-[480px]', severityClass, className)}
+        onPointerDownOutside={(e) => {
+          // Non-blocking overlay: allow dismiss on outside click
+          if (!onDismiss) {
+            e.preventDefault();
+          }
+        }}
       >
-        <h2 id={TITLE_ID} className={`${COMPONENT_CLASSNAME}__title`}>
-          {MODAL_TITLE}
-        </h2>
-
-        <div id={DESCRIPTION_ID} className={`${COMPONENT_CLASSNAME}__content`}>
-          <div className={`${COMPONENT_CLASSNAME}__tool`}>
-            <span className={`${COMPONENT_CLASSNAME}__icon`} data-icon={icon} />
-            <span data-testid={TOOL_NAME_TESTID}>{toolName}</span>
-          </div>
-
-          <pre
-            className={`${COMPONENT_CLASSNAME}__preview`}
-            data-testid={COMMAND_PREVIEW_TESTID}
+        <DialogHeader>
+          <DialogTitle
+            className={cn(
+              severity === 'destructive' && 'text-destructive'
+            )}
           >
-            {preview}
-          </pre>
-        </div>
+            {MODAL_TITLE}
+          </DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+                <span className="approval-modal__icon" data-icon={icon} />
+                <span data-testid={TOOL_NAME_TESTID}>{toolName}</span>
+              </div>
 
-        <label className={`${COMPONENT_CLASSNAME}__checkbox-label`}>
-          <input
-            type="checkbox"
+              <pre
+                className={cn(
+                  'approval-modal__preview',
+                  severity === 'safe' && 'border-l-[3px] border-l-green-500',
+                  severity === 'normal' && 'border-l-[3px] border-l-primary',
+                  severity === 'destructive' && 'border-l-[3px] border-l-destructive bg-destructive/10'
+                )}
+                data-testid={COMMAND_PREVIEW_TESTID}
+              >
+                {preview}
+              </pre>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Checkbox
+            id="always-allow"
             data-testid={ALWAYS_ALLOW_TESTID}
             checked={alwaysAllow}
-            onChange={(e) => setAlwaysAllow(e.target.checked)}
+            onCheckedChange={(checked) => setAlwaysAllow(checked === true)}
             aria-label={ALWAYS_ALLOW_ARIA_LABEL}
           />
-          {ALWAYS_ALLOW_LABEL}
-        </label>
-
-        <div className={`${COMPONENT_CLASSNAME}__actions`}>
-          <button
-            data-testid={APPROVE_BUTTON_TESTID}
-            className={`${COMPONENT_CLASSNAME}__button ${COMPONENT_CLASSNAME}__button--approve`}
-            onClick={() => onApprove(getGrantScope(alwaysAllow))}
+          <label
+            htmlFor="always-allow"
+            className="cursor-pointer select-none hover:text-foreground transition-colors"
           >
-            Approve
-          </button>
-          <button
+            {ALWAYS_ALLOW_LABEL}
+          </label>
+        </div>
+
+        <DialogFooter>
+          <Button
             data-testid={REJECT_BUTTON_TESTID}
-            className={`${COMPONENT_CLASSNAME}__button ${COMPONENT_CLASSNAME}__button--reject`}
+            variant="destructive"
             onClick={onReject}
           >
             Reject
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button
+            data-testid={APPROVE_BUTTON_TESTID}
+            variant="default"
+            onClick={() => onApprove(getGrantScope(alwaysAllow))}
+          >
+            Approve
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -9,11 +9,20 @@
  * - Color thresholds: normal (<70%), elevated (70-89%), high (90%+)
  * - Real-time updates via IPC subscriptions
  * - Warning display at 90% threshold
- * - Tooltip showing exact token count
+ * - Tooltip showing exact token count (shadcn Tooltip)
  * - Accessible with ARIA attributes
+ * - Uses shadcn Progress primitive for the progress bar
  */
 
 import React, { useState, useEffect } from 'react';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import './ContextIndicator.css';
 
 // ============================================================================
@@ -175,6 +184,17 @@ export function getAriaAttributes(
 }
 
 // ============================================================================
+// Progress bar color mapping
+// ============================================================================
+
+/** Tailwind indicator color classes keyed by context level */
+const LEVEL_INDICATOR_COLORS: Record<ContextLevel, string> = {
+  normal: 'bg-green-500',
+  elevated: 'bg-amber-500',
+  high: 'bg-red-500',
+};
+
+// ============================================================================
 // Hook
 // ============================================================================
 
@@ -234,7 +254,8 @@ export const useContext = useContextIndicator;
 /**
  * ContextIndicator Component
  *
- * Displays context window usage as a visual progress bar.
+ * Displays context window usage as a visual progress bar using shadcn
+ * Progress and Tooltip primitives.
  */
 export default function ContextIndicator({
   percent: propPercent,
@@ -250,50 +271,60 @@ export default function ContextIndicator({
   const used = propUsed ?? context?.used;
   const total = propTotal ?? context?.total;
 
+  const clampedPercent = Math.min(100, Math.max(0, Math.round(percent)));
   const level = getContextLevel(percent);
   const levelClass = getLevelClassName(level);
   const showWarning = shouldShowWarning(percent);
   const tooltip = formatTooltip(used, total);
   const ariaAttrs = getAriaAttributes(percent, 100);
 
-  const classNames = [
+  const rootClassNames = cn(
     COMPONENT_CLASSNAME,
     levelClass,
-    compact ? COMPACT_MODE_CLASSNAME : '',
+    compact && COMPACT_MODE_CLASSNAME,
     className,
-  ].filter(Boolean).join(' ');
+  );
 
   return (
-    <div
-      className={classNames}
-      data-testid={CONTEXT_INDICATOR_TESTID}
-      data-warning={showWarning || undefined}
-      title={tooltip}
-      aria-live={CONTEXT_INDICATOR_ARIA_LIVE}
-    >
-      <div
-        className="context-bar"
-        data-testid={CONTEXT_BAR_TESTID}
-        role={PROGRESS_BAR_ROLE}
-        {...ariaAttrs}
-      >
-        <div
-          className="context-fill"
-          data-testid={CONTEXT_FILL_TESTID}
-          style={{ width: formatPercentage(percent) }}
-        />
-      </div>
-      <span
-        className="context-percent"
-        data-testid={CONTEXT_PERCENT_TESTID}
-      >
-        {formatPercentage(percent)}
-      </span>
-      {showWarning && (
-        <span className="context-warning visually-hidden">
-          {CONTEXT_WARNING_MESSAGE}
-        </span>
-      )}
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={rootClassNames}
+            data-testid={CONTEXT_INDICATOR_TESTID}
+            data-warning={showWarning || undefined}
+            aria-live={CONTEXT_INDICATOR_ARIA_LIVE}
+          >
+            <Progress
+              value={clampedPercent}
+              className={cn(
+                'context-bar',
+                compact ? 'h-1 min-w-[40px] max-w-[60px]' : 'h-1.5 min-w-[60px] max-w-[100px]',
+              )}
+              data-testid={CONTEXT_BAR_TESTID}
+              {...ariaAttrs}
+              indicatorClassName={cn(
+                'transition-all duration-300 ease-out',
+                LEVEL_INDICATOR_COLORS[level],
+              )}
+            />
+            <span
+              className={cn('context-percent', `text-${level}`)}
+              data-testid={CONTEXT_PERCENT_TESTID}
+            >
+              {formatPercentage(percent)}
+            </span>
+            {showWarning && (
+              <span className="context-warning visually-hidden">
+                {CONTEXT_WARNING_MESSAGE}
+              </span>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

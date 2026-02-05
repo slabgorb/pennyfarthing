@@ -1,18 +1,31 @@
 /**
  * ConfirmDialog Component
  *
- * Generic confirmation modal for destructive or important actions.
+ * Generic confirmation modal for destructive or important actions,
+ * built on shadcn AlertDialog (Radix UI primitives).
  *
  * Features:
  * - Title and message customization
  * - Confirm/Cancel button labels
- * - Danger mode styling for destructive actions
- * - Escape key to cancel
- * - Click outside to cancel
- * - Focus trap for accessibility
+ * - Danger mode styling for destructive actions (uses destructive button variant)
+ * - Escape key to cancel (handled by Radix)
+ * - Click outside to cancel (handled by Radix)
+ * - Focus trap for accessibility (handled by Radix)
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 // =============================================================================
 // Types
@@ -50,98 +63,25 @@ export function ConfirmDialog({
   isDanger = false,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps): React.ReactElement | null {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const confirmButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Handle escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCancel();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onCancel]);
-
-  // Focus confirm button when dialog opens
-  useEffect(() => {
-    if (isOpen && confirmButtonRef.current) {
-      confirmButtonRef.current.focus();
-    }
-  }, [isOpen]);
-
-  // Handle backdrop click
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onCancel();
-    }
-  }, [onCancel]);
-
-  // Handle confirm with keyboard
-  const handleConfirmKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onConfirm();
-    }
-  }, [onConfirm]);
-
-  // Handle cancel with keyboard
-  const handleCancelKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onCancel();
-    }
-  }, [onCancel]);
-
-  if (!isOpen) return null;
-
+}: ConfirmDialogProps): React.ReactElement {
   return (
-    <div
-      className="confirm-dialog-backdrop"
-      onClick={handleBackdropClick}
-      role="presentation"
-    >
-      <div
-        ref={dialogRef}
-        className={`confirm-dialog ${isDanger ? 'danger' : ''}`}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-message"
-      >
-        <h2 id="confirm-dialog-title" className="confirm-dialog-title">
-          {isDanger && <span className="danger-icon">⚠️</span>}
-          {title}
-        </h2>
-
-        <p id="confirm-dialog-message" className="confirm-dialog-message">
-          {message}
-        </p>
-
-        <div className="confirm-dialog-actions">
-          <button
-            className="confirm-dialog-btn cancel"
-            onClick={onCancel}
-            onKeyDown={handleCancelKeyDown}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            ref={confirmButtonRef}
-            className={`confirm-dialog-btn confirm ${isDanger ? 'danger' : ''}`}
+    <AlertDialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction
+            className={cn(isDanger && buttonVariants({ variant: 'destructive' }))}
             onClick={onConfirm}
-            onKeyDown={handleConfirmKeyDown}
           >
             {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

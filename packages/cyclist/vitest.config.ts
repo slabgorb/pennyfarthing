@@ -27,6 +27,8 @@ export default defineConfig({
     alias: [
       // 68-6: Map browser absolute paths to source for test environment
       { find: /^\/js\/(.*)/, replacement: path.resolve(__dirname, 'src/public/js/$1') },
+      // Map @/* to src/public/* (matches vite.config.ts alias)
+      { find: /^@\/(.*)/, replacement: path.resolve(__dirname, 'src/public/$1') },
     ],
   },
 });

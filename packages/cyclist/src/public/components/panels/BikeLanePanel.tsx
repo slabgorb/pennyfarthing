@@ -8,6 +8,8 @@
  */
 
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { WorkflowPhase } from '../../../story-parser.js';
 import { useStory } from '../../hooks/useStory.js';
 
@@ -124,9 +126,9 @@ export function BikeLanePanel({
     return (
       <div className="bikelane-panel collapsed" data-testid="bikelane-panel">
         <div className="bikelane-header" onClick={onToggle}>
-          <span className="workflow-type-badge" data-workflow-type={workflowType || ''}>
+          <Badge variant="secondary" className="workflow-type-badge" data-workflow-type={workflowType || ''}>
             {formattedType}
-          </span>
+          </Badge>
           <span className="bikelane-expand">▶</span>
         </div>
       </div>
@@ -136,9 +138,9 @@ export function BikeLanePanel({
   return (
     <div className="bikelane-panel" data-testid="bikelane-panel">
       <div className="bikelane-header" onClick={onToggle}>
-        <span className="workflow-type-badge" data-workflow-type={workflowType || ''}>
+        <Badge variant="secondary" className="workflow-type-badge" data-workflow-type={workflowType || ''}>
           {formattedType}
-        </span>
+        </Badge>
         {onToggle && <span className="bikelane-expand">▼</span>}
       </div>
 
@@ -181,7 +183,14 @@ export function ConnectedBikeLanePanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="bikelane-panel loading" data-testid="bikelane-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-2 p-2">
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <div className="flex gap-2 items-center">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
       </div>
     );
   }

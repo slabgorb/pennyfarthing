@@ -6,6 +6,10 @@
  */
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGitStatus, RepoStatusData, DirtyFile } from '../../hooks/useGitStatus';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
 
@@ -43,7 +47,12 @@ function FileList({ files }: FileListProps): React.ReactElement {
       {files.map((file, index) => (
         <li key={`${file.path}-${index}`} className={`file-item ${getFileStatusClass(file.status)}`}>
           <span className="file-status-icon">{getFileStatusLabel(file.status)}</span>
-          <span className="file-path" title={file.path}>{file.path}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="file-path">{file.path}</span>
+            </TooltipTrigger>
+            <TooltipContent>{file.path}</TooltipContent>
+          </Tooltip>
         </li>
       ))}
     </ul>
@@ -62,67 +71,97 @@ function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElemen
   const hasDevelopUpdates = developBehind !== undefined && developBehind > 0;
 
   return (
-    <div className={`repo-status ${isExpanded ? 'expanded' : ''}`} data-testid={`repo-status-${name}`}>
-      <div className="repo-header">
-        <span className="repo-name">{name}</span>
-        {isDirty && <span className="dirty-indicator" title="Uncommitted changes">●</span>}
-      </div>
-
-      <div className="branch-info">
-        <span className="branch-icon">⎇</span>
-        <span className="branch-name">{branch}</span>
-      </div>
-
-      {(ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) ? (
-        <div className="sync-status">
-          {ahead !== undefined && ahead > 0 && (
-            <span className="ahead" title="Commits ahead">↑{ahead}</span>
-          )}
-          {behind !== undefined && behind > 0 && (
-            <span className="behind" title="Commits behind">↓{behind}</span>
+    <TooltipProvider delayDuration={300}>
+      <div className={`repo-status ${isExpanded ? 'expanded' : ''}`} data-testid={`repo-status-${name}`}>
+        <div className="repo-header">
+          <span className="repo-name">{name}</span>
+          {isDirty && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="destructive" className="dirty-indicator">●</Badge>
+              </TooltipTrigger>
+              <TooltipContent>Uncommitted changes</TooltipContent>
+            </Tooltip>
           )}
         </div>
-      ) : null}
 
-      {hasDevelopUpdates && (
-        <div className="develop-behind-warning">
-          <span className="warning-icon">⚠️</span>
-          <span className="warning-text">develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead</span>
-          {onPullDevelop && (
-            <button
-              className="pull-develop-btn"
-              onClick={() => onPullDevelop(name, path)}
-              title="Pull latest from develop"
-            >
-              Pull
-            </button>
-          )}
+        <div className="branch-info">
+          <span className="branch-icon">⎇</span>
+          <span className="branch-name">{branch}</span>
         </div>
-      )}
 
-      {(staged > 0 || modified > 0 || untracked > 0) && (
-        <button
-          className="file-status-toggle"
-          onClick={() => setIsExpanded(!isExpanded)}
-          title={isExpanded ? 'Collapse file list' : 'Expand file list'}
-        >
-          <span className={`toggle-icon ${isExpanded ? 'open' : ''}`}>▶</span>
-          <div className="file-status">
-            {staged > 0 && (
-              <span className="status-item staged" title="Staged files">+{staged}</span>
+        {(ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) ? (
+          <div className="sync-status">
+            {ahead !== undefined && ahead > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="ahead">↑{ahead}</span>
+                </TooltipTrigger>
+                <TooltipContent>Commits ahead</TooltipContent>
+              </Tooltip>
             )}
-            {modified > 0 && (
-              <span className="status-item modified" title="Modified files">~{modified}</span>
-            )}
-            {untracked > 0 && (
-              <span className="status-item untracked" title="Untracked files">?{untracked}</span>
+            {behind !== undefined && behind > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="behind">↓{behind}</span>
+                </TooltipTrigger>
+                <TooltipContent>Commits behind</TooltipContent>
+              </Tooltip>
             )}
           </div>
-        </button>
-      )}
+        ) : null}
 
-      {isExpanded && hasFiles && <FileList files={files} />}
-    </div>
+        {hasDevelopUpdates && (
+          <div className="develop-behind-warning">
+            <span className="warning-icon">⚠️</span>
+            <span className="warning-text">develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead</span>
+            {onPullDevelop && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="pull-develop-btn"
+                    onClick={() => onPullDevelop(name, path)}
+                  >
+                    Pull
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Pull latest from develop</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        )}
+
+        {(staged > 0 || modified > 0 || untracked > 0) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="file-status-toggle"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                <span className={`toggle-icon ${isExpanded ? 'open' : ''}`}>▶</span>
+                <div className="file-status">
+                  {staged > 0 && (
+                    <Badge variant="outline" className="status-item staged">+{staged}</Badge>
+                  )}
+                  {modified > 0 && (
+                    <Badge variant="outline" className="status-item modified">~{modified}</Badge>
+                  )}
+                  {untracked > 0 && (
+                    <Badge variant="outline" className="status-item untracked">?{untracked}</Badge>
+                  )}
+                </div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isExpanded ? 'Collapse file list' : 'Expand file list'}</TooltipContent>
+          </Tooltip>
+        )}
+
+        {isExpanded && hasFiles && <FileList files={files} />}
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -140,7 +179,16 @@ export function GitPanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="git-panel loading" data-testid="git-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-3 p-2">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
       </div>
     );
   }

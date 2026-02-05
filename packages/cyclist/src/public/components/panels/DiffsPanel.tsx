@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { useDiffs, DiffData } from '../../hooks/useDiffs';
 
 interface DiffLineProps {
@@ -124,22 +125,24 @@ export function DiffsPanel(): React.ReactElement {
     <div className="diffs-panel" data-testid="diffs-panel">
       <div className="panel-header">
         <span className="diff-count">{diffs.length} file(s)</span>
-        <button type="button" className="clear-button" onClick={clearDiffs}>
+        <Button variant="ghost" size="sm" type="button" className="clear-button" onClick={clearDiffs}>
           Clear
-        </button>
+        </Button>
       </div>
 
       {diffs.length > 1 && (
         <div className="diff-tabs">
           {diffs.map(diff => (
-            <button
+            <Button
+              variant={selectedDiff?.path === diff.path ? 'secondary' : 'ghost'}
+              size="sm"
               key={diff.path}
               type="button"
               className={`diff-tab ${selectedDiff?.path === diff.path ? 'active' : ''}`}
               onClick={() => selectDiff(diff.path)}
             >
               {diff.path.split('/').pop()}
-            </button>
+            </Button>
           ))}
         </div>
       )}

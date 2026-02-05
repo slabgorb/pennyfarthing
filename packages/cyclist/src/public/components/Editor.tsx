@@ -22,6 +22,9 @@ import React, {
   ClipboardEvent,
   ChangeEvent,
 } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCommandHistory } from '../hooks/useCommandHistory';
 import { useTabCompletion } from '../hooks/useTabCompletion';
 import { useMessageQueueContext, QueuedMessage } from '../contexts/MessageQueueContext';
@@ -112,57 +115,89 @@ function QueueDisplay({ queue, bellMode, onRemove, onClear, onInject }: QueueDis
   if (queue.length === 0) return null;
 
   return (
-    <div className="queue-display" data-testid="queue-display">
-      <div className="queue-header">
-        <span className="queue-count">{queue.length} queued</span>
-        {bellMode && <span className="queue-mode-badge bell-mode" title="Bell mode active - messages inject via hook">🔔</span>}
-        <button
-          type="button"
-          className="queue-clear-btn"
-          onClick={onClear}
-          title="Clear all queued messages"
-        >
-          Clear
-        </button>
-      </div>
-      <ul className="queue-list">
-        {queue.map((msg, index) => {
-          const truncated = msg.text.length > 60 ? msg.text.substring(0, 60) + '...' : msg.text;
-          const hasImages = msg.images && msg.images.length > 0;
+    <TooltipProvider delayDuration={300}>
+      <div className="queue-display" data-testid="queue-display">
+        <div className="queue-header">
+          <span className="queue-count">{queue.length} queued</span>
+          {bellMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="queue-mode-badge bell-mode">🔔</Badge>
+              </TooltipTrigger>
+              <TooltipContent>Bell mode active - messages inject via hook</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                className="queue-clear-btn"
+                onClick={onClear}
+              >
+                Clear
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Clear all queued messages</TooltipContent>
+          </Tooltip>
+        </div>
+        <ul className="queue-list">
+          {queue.map((msg, index) => {
+            const truncated = msg.text.length > 60 ? msg.text.substring(0, 60) + '...' : msg.text;
+            const hasImages = msg.images && msg.images.length > 0;
 
-          return (
-            <li key={index} className="queue-item" data-testid={`queue-item-${index}`}>
-              <span className="queue-item-text">{escapeHtml(truncated)}</span>
-              {hasImages && (
-                <span className="queue-image-indicator" title={`${msg.images.length} image(s) attached`}>
-                  📎{msg.images.length}
-                </span>
-              )}
-              <div className="queue-item-actions">
-                {onInject && (
-                  <button
-                    type="button"
-                    className="queue-item-inject"
-                    onClick={() => onInject(index)}
-                    title="Send now (abort current and send this message)"
-                  >
-                    ▶
-                  </button>
+            return (
+              <li key={index} className="queue-item" data-testid={`queue-item-${index}`}>
+                <span className="queue-item-text">{escapeHtml(truncated)}</span>
+                {hasImages && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="queue-image-indicator">
+                        📎{msg.images.length}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>{`${msg.images.length} image(s) attached`}</TooltipContent>
+                  </Tooltip>
                 )}
-                <button
-                  type="button"
-                  className="queue-item-remove"
-                  onClick={() => onRemove(index)}
-                  title="Remove from queue"
-                >
-                  ×
-                </button>
-              </div>
-            </li>
+                <div className="queue-item-actions">
+                  {onInject && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          className="queue-item-inject"
+                          onClick={() => onInject(index)}
+                        >
+                          ▶
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Send now (abort current and send this message)</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        type="button"
+                        className="queue-item-remove"
+                        onClick={() => onRemove(index)}
+                      >
+                        ×
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove from queue</TooltipContent>
+                  </Tooltip>
+                </div>
+              </li>
           );
         })}
-      </ul>
-    </div>
+        </ul>
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -179,21 +214,29 @@ function ImagePreview({ images, onRemove }: ImagePreviewProps) {
   if (images.length === 0) return null;
 
   return (
-    <div className="image-preview" data-testid="image-preview">
-      {images.map((img, index) => (
-        <div key={index} className="image-preview-item">
-          <img src={img.dataUrl} alt={img.filename} />
-          <button
-            type="button"
-            className="image-remove"
-            onClick={() => onRemove(index)}
-            title="Remove image"
-          >
-            X
-          </button>
-        </div>
-      ))}
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="image-preview" data-testid="image-preview">
+        {images.map((img, index) => (
+          <div key={index} className="image-preview-item">
+            <img src={img.dataUrl} alt={img.filename} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  className="image-remove"
+                  onClick={() => onRemove(index)}
+                >
+                  X
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove image</TooltipContent>
+            </Tooltip>
+          </div>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }
 

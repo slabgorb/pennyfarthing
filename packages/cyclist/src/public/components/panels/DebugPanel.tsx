@@ -9,22 +9,28 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 /** Context tier type */
 type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
 
+/** Matches ContextInfo shape from api/context.ts */
 interface ContextData {
-  used?: number;
-  total?: number;
-  percent?: number;
+  /** Used tokens (from check-context.sh CONTEXT_TOKENS) */
+  tokens?: number | null;
+  percent?: number | null;
+  status?: string | null;
+  error?: string | null;
   /** System prompt overhead (first turn tokens) */
-  baseline?: number;
+  baseline?: number | null;
   /** Tokens used by conversation (total - baseline) */
-  usableTokens?: number;
+  usableTokens?: number | null;
   /** Conversation usage as % of available capacity */
-  usablePercent?: number;
+  usablePercent?: number | null;
   /** Available capacity (max - baseline) */
-  available?: number;
+  available?: number | null;
   /** Current context tier */
   tier?: ContextTier;
   /** Per-component token counts (MSSCI-12800) */
@@ -133,12 +139,13 @@ export function DebugPanel(): React.ReactElement {
         <div className="context-info">
           {context.tier && (
             <div className="tier-display">
-              <span
+              <Badge
+                variant="outline"
                 className={`tier-badge ${tierClass}`}
                 data-testid="tier-badge"
               >
                 {context.tier}
-              </span>
+              </Badge>
               <span className="tier-savings" data-testid="tier-savings">
                 {tierSavings}% savings
               </span>
@@ -147,14 +154,16 @@ export function DebugPanel(): React.ReactElement {
           {context.tokenCounts && Object.keys(context.tokenCounts).length > 0 && (
             <div className="component-breakdown" data-testid="component-breakdown">
               <div className="breakdown-header">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="breakdown-toggle"
                   data-testid="breakdown-toggle"
                   onClick={() => setBreakdownExpanded(!breakdownExpanded)}
                   aria-expanded={breakdownExpanded}
                 >
                   {breakdownExpanded ? '▼' : '▶'} Injected Context
-                </button>
+                </Button>
                 <span className="total-tokens" data-testid="total-tokens">
                   {context.totalTokens?.toLocaleString()} tokens
                 </span>
@@ -192,7 +201,9 @@ export function DebugPanel(): React.ReactElement {
             />
           </div>
           <span className="context-text">
-            {context.used?.toLocaleString()} / {context.total?.toLocaleString()} tokens
+            {(context.tokens ?? 0).toLocaleString()} / {context.baseline != null && context.available != null
+              ? (context.baseline + context.available).toLocaleString()
+              : '—'} tokens
             ({context.percent || 0}%)
           </span>
           {context.baseline != null && (
@@ -209,6 +220,8 @@ export function DebugPanel(): React.ReactElement {
       ) : (
         <div className="placeholder">No context data</div>
       )}
+
+      <Separator className="my-3" />
 
       <h4>Token Stats</h4>
       {tokenStats ? (

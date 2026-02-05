@@ -13,6 +13,8 @@
  */
 
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStatsStrip } from '../hooks/useStatsStrip';
 
 /**
@@ -74,68 +76,87 @@ export default function StatsStrip(): React.ReactElement {
   const folderName = getFolderName(pwd);
 
   return (
-    <div className="stats-strip" data-testid="stats-strip">
-      {/* Left side: identity info */}
-      <div className="stats-left" data-testid="stats-left">
-        {/* PWD */}
-        <span
-          className="stats-pwd"
-          data-testid="stats-pwd"
-          title={pwd}
-          data-full-path={pwd}
-        >
-          {folderName}
-        </span>
+    <TooltipProvider delayDuration={300}>
+      <div className="stats-strip" data-testid="stats-strip">
+        {/* Left side: identity info */}
+        <div className="stats-left" data-testid="stats-left">
+          {/* PWD */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="stats-pwd"
+                data-testid="stats-pwd"
+                data-full-path={pwd}
+              >
+                {folderName}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{pwd}</TooltipContent>
+          </Tooltip>
 
-        {/* Jira email - only show if configured */}
-        {jiraEmail && (
-          <span
-            className="stats-jira-email"
-            data-testid="jira-email"
-            title={`Jira: ${jiraEmail}`}
-          >
-            {jiraEmail}
-          </span>
-        )}
+          {/* Jira email - only show if configured */}
+          {jiraEmail && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="stats-jira-email"
+                  data-testid="jira-email"
+                >
+                  {jiraEmail}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{`Jira: ${jiraEmail}`}</TooltipContent>
+            </Tooltip>
+          )}
 
-        {/* GitHub user - only show if configured */}
-        {githubUsername && (
-          <span
-            className="stats-github-user"
-            data-testid="github-user"
-            title={`GitHub: ${githubUsername}`}
-          >
-            @{githubUsername}
-          </span>
-        )}
-      </div>
+          {/* GitHub user - only show if configured */}
+          {githubUsername && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="stats-github-user"
+                  data-testid="github-user"
+                >
+                  @{githubUsername}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{`GitHub: ${githubUsername}`}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
-      {/* Right side: metrics */}
-      <div className="stats-right" data-testid="stats-right">
-        {/* Model badge */}
-        <span
-          className="stats-model-badge"
-          data-testid="model-badge"
-          title={model || undefined}
-        >
-          {formatModelName(model)}
-        </span>
+        {/* Right side: metrics */}
+        <div className="stats-right" data-testid="stats-right">
+          {/* Model badge */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="secondary"
+                className="stats-model-badge"
+                data-testid="model-badge"
+              >
+                {formatModelName(model)}
+              </Badge>
+            </TooltipTrigger>
+            {model && <TooltipContent>{model}</TooltipContent>}
+          </Tooltip>
 
-        {/* Context meter */}
-        <div
-          className={`stats-context-meter ${contextLevel}`}
-          data-testid="context-meter"
-        >
-          <span className="context-percent" data-testid="context-percent">
-            {percent}%
-          </span>
+          {/* Context meter */}
           <div
-            className="context-fill"
-            data-testid="context-fill"
-            style={{ width: `${percent}%` }}
-          />
+            className={`stats-context-meter ${contextLevel}`}
+            data-testid="context-meter"
+          >
+            <span className="context-percent" data-testid="context-percent">
+              {percent}%
+            </span>
+            <div
+              className="context-fill"
+              data-testid="context-fill"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -5,13 +5,25 @@
  *
  * Features:
  * - Cmd+Shift+P (Mac) / Ctrl+Shift+P (Windows) to open
- * - Fuzzy search filtering
+ * - Fuzzy search filtering (via cmdk)
  * - Category grouping (Panels, Navigation, Settings, Agents)
  * - Keyboard shortcuts display
  * - Recent commands tracking
+ *
+ * Built on shadcn Command (cmdk) + Dialog primitives.
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import {
+  Command as CommandPrimitive,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem as ShadcnCommandItem,
+  CommandEmpty,
+  CommandShortcut,
+} from '@/components/ui/command';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 // =============================================================================
 // Types
@@ -136,10 +148,10 @@ export function isCommandPaletteTrigger(event: KeyboardEvent): boolean {
 export function formatShortcut(shortcut: string, platform: 'mac' | 'windows' | 'linux'): string {
   if (platform === 'mac') {
     return shortcut
-      .replace(/Cmd/g, '⌘')
-      .replace(/Shift/g, '⇧')
-      .replace(/Alt/g, '⌥')
-      .replace(/Ctrl/g, '⌃')
+      .replace(/Cmd/g, '\u2318')
+      .replace(/Shift/g, '\u21E7')
+      .replace(/Alt/g, '\u2325')
+      .replace(/Ctrl/g, '\u2303')
       .replace(/\+/g, '');
   }
   // Windows/Linux: Keep text but replace Cmd with Ctrl
@@ -333,18 +345,15 @@ export function useCommandPaletteContext(): CommandPaletteContextValue {
 
 export function useCommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
   const [commands] = useState<Command[]>(DEFAULT_COMMANDS);
 
   const open = useCallback(() => {
     setIsOpen(true);
-    setQuery('');
     setSelectedIndex(0);
   }, []);
 
   const close = useCallback(() => {
     setIsOpen(false);
-    setQuery('');
   }, []);
 
   const toggle = useCallback(() => {
@@ -352,17 +361,12 @@ export function useCommandPalette() {
     else open();
   }, [isOpen, open, close]);
 
-  const filteredCommands = filterCommands(commands, query);
-  const sortedCommands = sortWithRecentFirst(filteredCommands);
-
   return {
     isOpen,
     open,
     close,
     toggle,
-    query,
-    setQuery,
-    commands: sortedCommands,
+    commands,
     selectedIndex: getSelectedIndex(),
   };
 }
@@ -429,6 +433,11 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     return () => document.removeEventListener('cyclist:close-command-palette', handleClose);
   }, [palette.close]);
 
+  const handleExecute = useCallback((cmd: Command) => {
+    executeCommand(cmd);
+    palette.close();
+  }, [palette.close]);
+
   const value: CommandPaletteContextValue = {
     isOpen: palette.isOpen,
     open: palette.open,
@@ -439,29 +448,23 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
   return (
     <CommandPaletteContext.Provider value={value}>
       {children}
-      {palette.isOpen && (
-        <CommandPalette
-          query={palette.query}
-          setQuery={palette.setQuery}
-          commands={palette.commands}
-          onClose={palette.close}
-          onExecute={(cmd) => {
-            executeCommand(cmd);
-            palette.close();
-          }}
-        />
-      )}
+      <CommandPalette
+        commands={palette.commands}
+        isOpen={palette.isOpen}
+        onClose={palette.close}
+        onExecute={handleExecute}
+      />
     </CommandPaletteContext.Provider>
   );
 }
 
 // =============================================================================
-// CommandPalette Component
+// CommandPalette Component (shadcn CommandDialog)
 // =============================================================================
 
 interface CommandPaletteProps {
-  query: string;
-  setQuery: (q: string) => void;
+  query?: string;
+  setQuery?: (q: string) => void;
   commands: Command[];
   onClose: () => void;
   onExecute: (cmd: Command) => void;
@@ -469,186 +472,81 @@ interface CommandPaletteProps {
 }
 
 function CommandPalette({
-  query,
-  setQuery,
   commands,
   onClose,
   onExecute,
   isOpen = true,
 }: CommandPaletteProps): React.ReactElement {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
   const platform = detectPlatform();
   const recentIds = getRecentCommands();
-
-  // Store previously focused element and focus input on mount
-  useEffect(() => {
-    previousActiveElement.current = document.activeElement as HTMLElement;
-    inputRef.current?.focus();
-
-    // Return focus on unmount
-    return () => {
-      if (previousActiveElement.current && document.contains(previousActiveElement.current)) {
-        previousActiveElement.current.focus();
-      }
-    };
-  }, []);
-
-  // Handle keyboard navigation
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'Escape':
-        event.preventDefault();
-        onClose();
-        break;
-      case 'ArrowDown':
-        event.preventDefault();
-        handleArrowDown(commands.length);
-        scrollSelectedIntoView();
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        handleArrowUp(commands.length);
-        scrollSelectedIntoView();
-        break;
-      case 'Enter':
-        event.preventDefault();
-        const selected = commands[getSelectedIndex()];
-        if (selected) {
-          onExecute(selected);
-        }
-        break;
-    }
-  }, [commands, onClose, onExecute]);
-
-  // Click outside to close
-  const handleOverlayClick = useCallback((event: React.MouseEvent) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
-
-  // Group commands by category
   const grouped = groupByCategory(commands);
-
-  // Render recent section if we have recent commands
   const recentCommands = commands.filter(c => recentIds.includes(c.id));
 
   return (
-    <div
-      className={MODAL_OVERLAY_CLASS}
-      onClick={handleOverlayClick}
-      onKeyDown={handleKeyDown}
-      data-testid="command-palette"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Command palette"
-    >
-      <div className="command-palette-dialog">
-        <input
-          ref={inputRef}
-          id={SEARCH_INPUT_ID}
-          type="text"
-          role="combobox"
-          className="command-palette-search"
-          placeholder="Type a command..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          autoComplete="off"
-          autoFocus
-          aria-label="Search commands"
-          aria-controls={RESULTS_LIST_ID}
-          aria-expanded={commands.length > 0}
-          aria-activedescendant={commands.length > 0 ? `command-item-${getSelectedIndex()}` : undefined}
-        />
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        className="overflow-hidden p-0"
+        aria-label="Command palette"
+      >
+        <CommandPrimitive className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+          <CommandInput
+            placeholder="Type a command..."
+            id={SEARCH_INPUT_ID}
+            aria-label="Search commands"
+          />
+          <CommandList id={RESULTS_LIST_ID}>
+            <CommandEmpty>No matching commands</CommandEmpty>
 
-        <div id={RESULTS_LIST_ID} className="command-palette-results" role="listbox">
-          {/* Recent Section */}
-          {recentCommands.length > 0 && !query && (
-            <div className={RECENT_SECTION_CLASS}>
-              <div className={CATEGORY_HEADER_CLASS}>Recent</div>
-              {recentCommands.map((cmd, idx) => (
-                <CommandItem
-                  key={cmd.id}
-                  command={cmd}
-                  index={idx}
-                  isSelected={getSelectedIndex() === idx}
-                  platform={platform}
-                  query={query}
-                  onClick={() => onExecute(cmd)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Grouped by Category */}
-          {COMMAND_CATEGORIES.map(category => {
-            const categoryCommands = grouped[category];
-            if (!categoryCommands?.length) return null;
-
-            // Adjust indices to account for flat list
-            const startIndex = commands.findIndex(c => c.id === categoryCommands[0].id);
-
-            return (
-              <div key={category}>
-                <div className={CATEGORY_HEADER_CLASS}>{category}</div>
-                {categoryCommands.map((cmd, idx) => (
-                  <CommandItem
-                    key={cmd.id}
-                    command={cmd}
-                    index={startIndex + idx}
-                    isSelected={getSelectedIndex() === startIndex + idx}
-                    platform={platform}
-                    query={query}
-                    onClick={() => onExecute(cmd)}
-                  />
+            {/* Recent Section */}
+            {recentCommands.length > 0 && (
+              <CommandGroup heading="Recent" className={RECENT_SECTION_CLASS}>
+                {recentCommands.map((cmd) => (
+                  <ShadcnCommandItem
+                    key={`recent-${cmd.id}`}
+                    value={cmd.name}
+                    onSelect={() => onExecute(cmd)}
+                    className="command-palette-item"
+                  >
+                    <span>{cmd.name}</span>
+                    {cmd.shortcut && (
+                      <CommandShortcut className={SHORTCUT_DISPLAY_CLASS}>
+                        {formatShortcut(cmd.shortcut, platform)}
+                      </CommandShortcut>
+                    )}
+                  </ShadcnCommandItem>
                 ))}
-              </div>
-            );
-          })}
+              </CommandGroup>
+            )}
 
-          {commands.length === 0 && (
-            <div className="command-palette-empty">No matching commands</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+            {/* Grouped by Category */}
+            {COMMAND_CATEGORIES.map(category => {
+              const categoryCommands = grouped[category];
+              if (!categoryCommands?.length) return null;
 
-// =============================================================================
-// CommandItem Component
-// =============================================================================
-
-interface CommandItemProps {
-  command: Command;
-  index: number;
-  isSelected: boolean;
-  platform: 'mac' | 'windows' | 'linux';
-  query: string;
-  onClick: () => void;
-}
-
-function CommandItem({ command, index, isSelected, platform, query, onClick }: CommandItemProps) {
-  return (
-    <div
-      id={`command-item-${index}`}
-      className={`command-palette-item ${isSelected ? 'selected' : ''}`}
-      data-command-index={index}
-      role="option"
-      aria-selected={isSelected}
-      onClick={onClick}
-    >
-      <span
-        className="command-palette-name"
-        dangerouslySetInnerHTML={{ __html: highlightMatch(command.name, query) }}
-      />
-      {command.shortcut && (
-        <span className={SHORTCUT_DISPLAY_CLASS}>
-          {formatShortcut(command.shortcut, platform)}
-        </span>
-      )}
-    </div>
+              return (
+                <CommandGroup key={category} heading={category}>
+                  {categoryCommands.map((cmd) => (
+                    <ShadcnCommandItem
+                      key={cmd.id}
+                      value={cmd.name}
+                      onSelect={() => onExecute(cmd)}
+                      className="command-palette-item"
+                    >
+                      <span>{cmd.name}</span>
+                      {cmd.shortcut && (
+                        <CommandShortcut className={SHORTCUT_DISPLAY_CLASS}>
+                          {formatShortcut(cmd.shortcut, platform)}
+                        </CommandShortcut>
+                      )}
+                    </ShadcnCommandItem>
+                  ))}
+                </CommandGroup>
+              );
+            })}
+          </CommandList>
+        </CommandPrimitive>
+      </DialogContent>
+    </Dialog>
   );
 }
 

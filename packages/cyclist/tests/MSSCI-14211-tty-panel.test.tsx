@@ -13,6 +13,8 @@
  * - AC6: Scrollback buffer works (arrow up for history, scroll for output)
  * - AC7: Panel can be positioned/docked like other panels
  *
+ * Updated: Tests now validate WebSocket-based PTY communication (not Electron IPC)
+ *
  * @vitest-environment happy-dom
  */
 
@@ -92,42 +94,76 @@ vi.mock('xterm-addon-fit', () => ({
   FitAddon: FitAddonMock,
 }));
 
-// Mock Electron IPC for PTY communication
-const mockIpcRenderer = {
-  send: vi.fn(),
-  on: vi.fn((channel: string, callback: (...args: unknown[]) => void) => {
-    mockIpcRenderer._listeners[channel] = callback;
-    return mockIpcRenderer;
-  }),
-  removeListener: vi.fn(),
-  removeAllListeners: vi.fn(),
-  _listeners: {} as Record<string, (...args: unknown[]) => void>,
-  // Helper to simulate PTY output
-  simulatePtyOutput: (data: string) => {
-    if (mockIpcRenderer._listeners['pty:data']) {
-      mockIpcRenderer._listeners['pty:data']({}, data);
-    }
-  },
-  simulatePtySpawn: (pid: number) => {
-    if (mockIpcRenderer._listeners['pty:spawn']) {
-      mockIpcRenderer._listeners['pty:spawn']({}, pid);
-    }
-  },
-  simulatePtyError: (error: string) => {
-    if (mockIpcRenderer._listeners['pty:error']) {
-      mockIpcRenderer._listeners['pty:error']({}, error);
-    }
-  },
-  simulatePtyExit: (code: number) => {
-    if (mockIpcRenderer._listeners['pty:exit']) {
-      mockIpcRenderer._listeners['pty:exit']({}, code);
-    }
-  },
-};
+// =============================================================================
+// Mock WebSocket for PTY communication
+// =============================================================================
 
-vi.mock('electron', () => ({
-  ipcRenderer: mockIpcRenderer,
-}));
+/** Track all sent messages for assertion */
+const mockWsSentMessages: string[] = [];
+
+/** Store the active mock WebSocket instance for triggering server messages */
+let activeMockWs: MockWebSocket | null = null;
+
+class MockWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+
+  // Instance constants matching the WebSocket spec
+  readonly CONNECTING = 0;
+  readonly OPEN = 1;
+  readonly CLOSING = 2;
+  readonly CLOSED = 3;
+
+  readyState = MockWebSocket.OPEN;
+  url: string;
+  onopen: ((event: any) => void) | null = null;
+  onclose: ((event: any) => void) | null = null;
+  onerror: ((event: any) => void) | null = null;
+  onmessage: ((event: any) => void) | null = null;
+
+  constructor(url: string) {
+    this.url = url;
+    activeMockWs = this;
+    // Simulate connection open immediately
+    setTimeout(() => {
+      if (this.onopen) this.onopen({});
+    }, 0);
+  }
+
+  send(data: string) {
+    mockWsSentMessages.push(data);
+  }
+
+  close() {
+    this.readyState = MockWebSocket.CLOSED;
+    if (this.onclose) this.onclose({});
+  }
+}
+
+/** Helper: get all parsed messages sent over WebSocket */
+function getSentMessages(): Array<Record<string, unknown>> {
+  return mockWsSentMessages.map((raw) => {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return { raw };
+    }
+  });
+}
+
+/** Helper: find sent messages of a given type */
+function getSentMessagesOfType(type: string): Array<Record<string, unknown>> {
+  return getSentMessages().filter((msg) => msg.type === type);
+}
+
+/** Helper: simulate the server sending a message to the client */
+function simulateServerMessage(data: Record<string, unknown>) {
+  if (activeMockWs?.onmessage) {
+    activeMockWs.onmessage({ data: JSON.stringify(data) });
+  }
+}
 
 // =============================================================================
 // Test Helpers
@@ -155,17 +191,22 @@ class MockResizeObserver {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockIpcRenderer._listeners = {};
   mockTerminalState._dataCallback = null;
   mockTerminalState._resizeCallback = null;
   mockTerminalState._keyCallback = null;
   MockResizeObserver.instances = [];
-  // Set up global ResizeObserver mock
+  mockWsSentMessages.length = 0;
+  activeMockWs = null;
+  // Set up global mocks
   global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+  (global as any).WebSocket = MockWebSocket;
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  // NOTE: Do NOT delete global.WebSocket here.
+  // React passive effects (useEffect cleanup) run asynchronously and may reference
+  // WebSocket.OPEN after the test ends. The mock is reset in beforeEach anyway.
 });
 
 // =============================================================================
@@ -219,44 +260,37 @@ describe('MSSCI-14211: TTY Panel', () => {
   // ===========================================================================
 
   describe('AC2: Terminal loads user shell with environment', () => {
-    it('should request PTY spawn on mount', async () => {
+    it('should send PTY spawn message over WebSocket on mount', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        shell: expect.any(String),
-      }));
+      // Trigger the WebSocket onopen callback (which fires via setTimeout 0)
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+
+      vi.useRealTimers();
     });
 
-    it('should detect user default shell from SHELL env', async () => {
+    it('should send spawn message with cols and rows', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Should request spawn with user's shell
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        shell: expect.stringMatching(/bash|zsh|sh|fish/),
-      }));
-    });
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
 
-    it('should pass login shell flag to load profile', async () => {
-      const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
-      render(<TTYPanel />);
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+      expect(spawnMessages[0]).toHaveProperty('cols');
+      expect(spawnMessages[0]).toHaveProperty('rows');
 
-      // Login shell flag ensures .bashrc/.zshrc etc are loaded
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        args: expect.arrayContaining(['-l']),
-      }));
-    });
-
-    it('should inherit environment variables', async () => {
-      const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
-      render(<TTYPanel />);
-
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        env: expect.objectContaining({
-          TERM: 'xterm-256color',
-        }),
-      }));
+      vi.useRealTimers();
     });
 
     it('should initialize xterm Terminal on mount', async () => {
@@ -268,50 +302,91 @@ describe('MSSCI-14211: TTY Panel', () => {
       expect(mockTerminal.open).toHaveBeenCalled();
     });
 
-    it('should connect xterm to PTY data stream', async () => {
+    it('should connect xterm to PTY data stream via WebSocket', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Simulate PTY output
-      mockIpcRenderer.simulatePtyOutput('test output');
+      // Trigger the onopen -> spawn
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate server sending data over WebSocket
+      await act(async () => {
+        simulateServerMessage({ type: 'data', data: 'test output' });
+      });
 
       expect(mockTerminal.write).toHaveBeenCalledWith('test output');
+
+      vi.useRealTimers();
     });
 
-    it('should send terminal input to PTY', async () => {
+    it('should send terminal input to PTY via WebSocket', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Simulate user typing
+      // Trigger WebSocket open
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Clear sent messages to isolate the data message
+      mockWsSentMessages.length = 0;
+
+      // Simulate user typing in xterm
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('ls\r');
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', 'ls\r');
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('ls\r');
+
+      vi.useRealTimers();
     });
 
     it('should handle PTY spawn success', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      mockIpcRenderer.simulatePtySpawn(12345);
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate spawn success from server
+      await act(async () => {
+        simulateServerMessage({ type: 'spawn', pid: 12345 });
+      });
 
       // Should not show error state
       expect(screen.queryByTestId('tty-error')).not.toBeInTheDocument();
+
+      vi.useRealTimers();
     });
 
     it('should handle PTY spawn error gracefully', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Wrap IPC simulation in act() to flush React state updates
       await act(async () => {
-        mockIpcRenderer.simulatePtyError('Failed to spawn shell');
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate error from server
+      await act(async () => {
+        simulateServerMessage({ type: 'error', error: 'Failed to spawn shell' });
       });
 
       expect(screen.getByTestId('tty-error')).toBeInTheDocument();
-      // Check for the error overlay message specifically
-      expect(screen.getByText(/Failed to spawn shell:/i)).toBeInTheDocument();
+      // Error message appears in both the overlay and the aria-live status region
+      const errorMatches = screen.getAllByText(/Failed to spawn shell/i);
+      expect(errorMatches.length).toBeGreaterThanOrEqual(1);
+
+      vi.useRealTimers();
     });
   });
 
@@ -320,44 +395,55 @@ describe('MSSCI-14211: TTY Panel', () => {
   // ===========================================================================
 
   describe('AC3: Opens in project root directory', () => {
-    it('should pass project root as cwd when spawning PTY', async () => {
+    it('should send spawn message when no projectRoot provided', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        cwd: expect.any(String),
-      }));
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+      // Spawn is sent even without projectRoot
+      expect(spawnMessages[0].type).toBe('spawn');
+
+      vi.useRealTimers();
     });
 
     it('should use projectRoot prop if provided', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       const customRoot = '/custom/project/path';
 
       render(<TTYPanel projectRoot={customRoot} />);
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        cwd: customRoot,
-      }));
-    });
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
 
-    it('should not use home directory as default', async () => {
-      const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
-      render(<TTYPanel />);
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+      expect(spawnMessages[0].cwd).toBe(customRoot);
 
-      // Should not default to ~
-      const spawnCall = mockIpcRenderer.send.mock.calls.find(
-        (call) => call[0] === 'pty:spawn'
-      );
-      expect(spawnCall?.[1]?.cwd).not.toBe(process.env.HOME);
-      expect(spawnCall?.[1]?.cwd).not.toMatch(/^~$/);
+      vi.useRealTimers();
     });
 
     it('should handle invalid project root gracefully', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel projectRoot="/nonexistent/path" />);
 
-      // PTY spawn should still be attempted
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.anything());
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Spawn should still be sent
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+
+      vi.useRealTimers();
     });
   });
 
@@ -408,19 +494,31 @@ describe('MSSCI-14211: TTY Panel', () => {
       });
     });
 
-    it('should notify PTY of new dimensions after resize', async () => {
+    it('should notify PTY of new dimensions after resize via WebSocket', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      // Trigger WebSocket open
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Clear to isolate resize messages
+      mockWsSentMessages.length = 0;
 
       // Simulate terminal resize callback
       if (mockTerminalState._resizeCallback) {
         mockTerminalState._resizeCallback({ cols: 100, rows: 30 });
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:resize', {
-        cols: 100,
-        rows: 30,
-      });
+      const resizeMessages = getSentMessagesOfType('resize');
+      expect(resizeMessages.length).toBe(1);
+      expect(resizeMessages[0]).toEqual(
+        expect.objectContaining({ type: 'resize', cols: 100, rows: 30 })
+      );
+
+      vi.useRealTimers();
     });
 
     it('should debounce resize events', async () => {
@@ -484,38 +582,45 @@ describe('MSSCI-14211: TTY Panel', () => {
       }));
     });
 
-    it('should set TERM environment to xterm-256color', async () => {
-      const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
-      render(<TTYPanel />);
-
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.objectContaining({
-        env: expect.objectContaining({
-          TERM: 'xterm-256color',
-        }),
-      }));
-    });
-
     it('should render ANSI escape sequences correctly', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Simulate colored output (red text)
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate colored output (red text) from server
       const redText = '\x1b[31mError\x1b[0m';
-      mockIpcRenderer.simulatePtyOutput(redText);
+      await act(async () => {
+        simulateServerMessage({ type: 'data', data: redText });
+      });
 
       // xterm.js should receive the raw escape sequences
       expect(mockTerminal.write).toHaveBeenCalledWith(redText);
+
+      vi.useRealTimers();
     });
 
     it('should support cursor movement sequences', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
       // Cursor movement: move cursor to row 5, column 10
       const cursorMove = '\x1b[5;10H';
-      mockIpcRenderer.simulatePtyOutput(cursorMove);
+      await act(async () => {
+        simulateServerMessage({ type: 'data', data: cursorMove });
+      });
 
       expect(mockTerminal.write).toHaveBeenCalledWith(cursorMove);
+
+      vi.useRealTimers();
     });
 
     it('should configure terminal with proper font family', async () => {
@@ -539,6 +644,7 @@ describe('MSSCI-14211: TTY Panel', () => {
     });
 
     it('should support bold text rendering', async () => {
+      vi.useFakeTimers();
       const { Terminal } = await import('xterm');
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
@@ -547,10 +653,18 @@ describe('MSSCI-14211: TTY Panel', () => {
         allowTransparency: false,
       }));
 
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
       // Bold text
       const boldText = '\x1b[1mBold\x1b[0m';
-      mockIpcRenderer.simulatePtyOutput(boldText);
+      await act(async () => {
+        simulateServerMessage({ type: 'data', data: boldText });
+      });
       expect(mockTerminal.write).toHaveBeenCalledWith(boldText);
+
+      vi.useRealTimers();
     });
   });
 
@@ -578,28 +692,51 @@ describe('MSSCI-14211: TTY Panel', () => {
       expect(terminalOptions.scrollback).toBeGreaterThanOrEqual(1000);
     });
 
-    it('should send arrow up key to PTY for shell history', async () => {
+    it('should send arrow up key to PTY via WebSocket for shell history', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Clear to isolate
+      mockWsSentMessages.length = 0;
 
       // Simulate arrow up keypress via onData (xterm sends all input through onData)
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('\x1b[A'); // Arrow up escape sequence
       }
 
-      // Arrow up should be sent to PTY for shell history navigation
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x1b[A');
+      // Arrow up should be sent to PTY via WebSocket
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('\x1b[A');
+
+      vi.useRealTimers();
     });
 
-    it('should send arrow down key to PTY for shell history', async () => {
+    it('should send arrow down key to PTY via WebSocket for shell history', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      mockWsSentMessages.length = 0;
 
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('\x1b[B'); // Arrow down
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x1b[B');
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('\x1b[B');
+
+      vi.useRealTimers();
     });
 
     it('should enable terminal scrolling', async () => {
@@ -613,15 +750,24 @@ describe('MSSCI-14211: TTY Panel', () => {
     });
 
     it('should handle large output without performance issues', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Simulate large output
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate large output from server
       const largeOutput = 'line\n'.repeat(10000);
-      mockIpcRenderer.simulatePtyOutput(largeOutput);
+      await act(async () => {
+        simulateServerMessage({ type: 'data', data: largeOutput });
+      });
 
       // Should complete without error
       expect(mockTerminal.write).toHaveBeenCalledWith(largeOutput);
+
+      vi.useRealTimers();
     });
 
     it('should preserve scroll position when new output arrives at bottom', async () => {
@@ -668,13 +814,24 @@ describe('MSSCI-14211: TTY Panel', () => {
       expect(container).toHaveStyle({ height: '100%' });
     });
 
-    it('should clean up PTY on unmount', async () => {
+    it('should send kill message and close WebSocket on unmount', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       const { unmount } = render(<TTYPanel />);
 
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      mockWsSentMessages.length = 0;
+
       unmount();
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:kill');
+      // Should have sent a kill message over WebSocket
+      const killMessages = getSentMessagesOfType('kill');
+      expect(killMessages.length).toBe(1);
+
+      vi.useRealTimers();
     });
 
     it('should dispose terminal on unmount', async () => {
@@ -686,29 +843,31 @@ describe('MSSCI-14211: TTY Panel', () => {
       expect(mockTerminal.dispose).toHaveBeenCalled();
     });
 
-    it('should remove IPC listeners on unmount', async () => {
-      const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
-      const { unmount } = render(<TTYPanel />);
-
-      unmount();
-
-      expect(mockIpcRenderer.removeListener).toHaveBeenCalledWith('pty:data', expect.any(Function));
-      expect(mockIpcRenderer.removeListener).toHaveBeenCalledWith('pty:error', expect.any(Function));
-      expect(mockIpcRenderer.removeListener).toHaveBeenCalledWith('pty:exit', expect.any(Function));
-    });
-
     it('should handle panel being closed and reopened', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       const { unmount } = render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
 
       unmount();
 
       // Re-render (simulating panel reopen)
-      mockIpcRenderer.send.mockClear();
+      mockWsSentMessages.length = 0;
       render(<TTYPanel />);
 
+      // Trigger WebSocket open on the new instance
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
       // Should spawn a new PTY session
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.anything());
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+
+      vi.useRealTimers();
     });
   });
 
@@ -718,54 +877,81 @@ describe('MSSCI-14211: TTY Panel', () => {
 
   describe('Edge Cases', () => {
     it('should handle PTY exit gracefully', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Wrap IPC simulation in act() to flush React state updates
       await act(async () => {
-        mockIpcRenderer.simulatePtyExit(0);
+        vi.advanceTimersByTime(0);
+      });
+
+      // Simulate exit from server
+      await act(async () => {
+        simulateServerMessage({ type: 'exit', code: 0 });
       });
 
       expect(screen.getByTestId('tty-exited')).toBeInTheDocument();
       expect(screen.getByText(/exited|process ended/i)).toBeInTheDocument();
+
+      vi.useRealTimers();
     });
 
     it('should offer restart option after PTY exit', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Wrap IPC simulation in act() to flush React state updates
       await act(async () => {
-        mockIpcRenderer.simulatePtyExit(0);
+        vi.advanceTimersByTime(0);
       });
 
-      expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
+      await act(async () => {
+        simulateServerMessage({ type: 'exit', code: 0 });
+      });
+
+      expect(screen.getByRole('button', { name: /new session/i })).toBeInTheDocument();
+
+      vi.useRealTimers();
     });
 
     it('should restart PTY when restart button clicked', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
 
-      // Wrap IPC simulation in act() to flush React state updates
       await act(async () => {
-        mockIpcRenderer.simulatePtyExit(0);
+        vi.advanceTimersByTime(0);
       });
 
-      expect(screen.getByRole('button', { name: /restart|new session/i })).toBeInTheDocument();
+      await act(async () => {
+        simulateServerMessage({ type: 'exit', code: 0 });
+      });
 
-      mockIpcRenderer.send.mockClear();
-      const restartButton = screen.getByRole('button', { name: /restart|new session/i });
-      // Use fireEvent instead of userEvent to avoid timer conflicts
+      const restartButton = screen.getByRole('button', { name: /new session/i });
+      expect(restartButton).toBeInTheDocument();
+
+      mockWsSentMessages.length = 0;
       await act(async () => {
         fireEvent.click(restartButton);
       });
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:spawn', expect.anything());
+      const spawnMessages = getSentMessagesOfType('spawn');
+      expect(spawnMessages.length).toBeGreaterThanOrEqual(1);
+
+      vi.useRealTimers();
     });
 
     it('should handle rapid input without dropping characters', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      // Clear initial spawn messages
+      mockWsSentMessages.length = 0;
 
       // Rapid character input
       const rapidInput = 'abcdefghijklmnop';
@@ -775,46 +961,83 @@ describe('MSSCI-14211: TTY Panel', () => {
         }
       }
 
-      // All characters should be sent
-      for (const char of rapidInput) {
-        expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', char);
+      // All characters should be sent as WebSocket data messages
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(rapidInput.length);
+      for (let i = 0; i < rapidInput.length; i++) {
+        expect(dataMessages[i].data).toBe(rapidInput[i]);
       }
+
+      vi.useRealTimers();
     });
 
     it('should handle special characters (Ctrl+C)', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      mockWsSentMessages.length = 0;
 
       // Ctrl+C sends ETX (0x03)
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('\x03');
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x03');
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('\x03');
+
+      vi.useRealTimers();
     });
 
     it('should handle special characters (Ctrl+D)', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      mockWsSentMessages.length = 0;
 
       // Ctrl+D sends EOT (0x04)
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('\x04');
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\x04');
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('\x04');
+
+      vi.useRealTimers();
     });
 
     it('should handle special characters (Tab completion)', async () => {
+      vi.useFakeTimers();
       const { TTYPanel } = await import('../src/public/components/panels/TTYPanel.js');
       render(<TTYPanel />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      mockWsSentMessages.length = 0;
 
       // Tab character
       if (mockTerminalState._dataCallback) {
         mockTerminalState._dataCallback('\t');
       }
 
-      expect(mockIpcRenderer.send).toHaveBeenCalledWith('pty:data', '\t');
+      const dataMessages = getSentMessagesOfType('data');
+      expect(dataMessages.length).toBe(1);
+      expect(dataMessages[0].data).toBe('\t');
+
+      vi.useRealTimers();
     });
   });
 

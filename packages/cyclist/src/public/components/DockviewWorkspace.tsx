@@ -14,6 +14,8 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState, ComponentType } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DockviewReact,
   DockviewReadyEvent,
@@ -542,14 +544,18 @@ export function DockviewWorkspace({
       api.onDidLayoutChange(() => handleLayoutChange()),
       api.onDidAddPanel((e) => {
         // Panel restored, remove from closed set
-        closedPanels.delete(e.panel.id);
+        const panelId = e?.panel?.id;
+        if (panelId) {
+          closedPanels.delete(panelId);
+        }
         updateClosedPanelsList();
         handleLayoutChange();
       }),
       api.onDidRemovePanel((e) => {
         // Track closed panels (except message which can't be closed)
-        if (e.panel.id !== PANEL_INVENTORY.MESSAGE) {
-          closedPanels.add(e.panel.id);
+        const panelId = e?.panel?.id;
+        if (panelId && panelId !== PANEL_INVENTORY.MESSAGE) {
+          closedPanels.add(panelId);
           updateClosedPanelsList();
         }
         handleLayoutChange();
@@ -650,29 +656,38 @@ export function DockviewWorkspace({
       {/* Panel restore button - shown when panels are closed */}
       {closedPanelsList.length > 0 && (
         <div className="panel-restore-container">
-          <button
+          <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
             className="panel-restore-button"
             onClick={() => setShowRestoreMenu(!showRestoreMenu)}
             aria-expanded={showRestoreMenu}
             aria-haspopup="menu"
-            title="Restore closed panels"
           >
             <span className="panel-restore-icon">+</span>
             <span className="panel-restore-count">{closedPanelsList.length}</span>
-          </button>
+          </Button>
+            </TooltipTrigger>
+            <TooltipContent>Restore closed panels</TooltipContent>
+          </Tooltip>
+          </TooltipProvider>
 
           {showRestoreMenu && (
             <div className="panel-restore-menu" role="menu">
               <div className="panel-restore-header">Restore Panel</div>
               {closedPanelsList.map((panelId) => (
-                <button
+                <Button
+                  variant="ghost"
                   key={panelId}
                   className="panel-restore-item"
                   onClick={() => handleRestorePanel(panelId)}
                   role="menuitem"
                 >
                   {panelDisplayNames[panelId] || panelId}
-                </button>
+                </Button>
               ))}
             </div>
           )}

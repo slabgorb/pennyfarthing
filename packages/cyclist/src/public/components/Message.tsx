@@ -7,6 +7,8 @@
  */
 
 import React, { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { parseMarkdown } from '../utils/markdown';
 import StreamingContent from './StreamingContent';
 import { usePersona } from '../hooks/usePersona';
@@ -74,20 +76,32 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   if (message.type === 'bell_injected') {
     const html = message.content ? parseMarkdown(message.content) : '';
     return (
-      <div data-testid="message-bell-injected" className="message message-user message-bell-injected">
-        <div data-testid="avatar" className="message-avatar">
-          <UserAvatar />
+      <TooltipProvider delayDuration={300}>
+        <div data-testid="message-bell-injected" className="message message-user message-bell-injected">
+          <div data-testid="avatar" className="message-avatar">
+            <UserAvatar />
+          </div>
+          <div className="message-content">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="bell-indicator">🔔</Badge>
+              </TooltipTrigger>
+              <TooltipContent>Injected via Bell Mode</TooltipContent>
+            </Tooltip>
+            <div dangerouslySetInnerHTML={{ __html: html }} />
+            {message.imageCount && message.imageCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="message-attachment-indicator">
+                    📎 {message.imageCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-        <div className="message-content">
-          <span className="bell-indicator" title="Injected via Bell Mode">🔔</span>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-          {message.imageCount && message.imageCount > 0 && (
-            <span className="message-attachment-indicator" title={`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}>
-              📎 {message.imageCount}
-            </span>
-          )}
-        </div>
-      </div>
+      </TooltipProvider>
     );
   }
 
@@ -116,9 +130,16 @@ export default function Message({ message }: MessageProps): React.ReactElement {
       <div className="message-content">
         <div dangerouslySetInnerHTML={{ __html: html }} />
         {message.type === 'user' && message.imageCount && message.imageCount > 0 && (
-          <span className="message-attachment-indicator" title={`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}>
-            📎 {message.imageCount}
-          </span>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="message-attachment-indicator">
+                  📎 {message.imageCount}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>{`${message.imageCount} image${message.imageCount > 1 ? 's' : ''} attached`}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </div>

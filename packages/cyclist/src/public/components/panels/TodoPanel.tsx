@@ -9,6 +9,8 @@
  */
 
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTodos, TodoItem } from '../../hooks/useTodos';
 
 // =============================================================================
@@ -34,9 +36,16 @@ function TodoItemView({ todo }: { todo: TodoItem }): React.ReactElement {
       <span className="todo-status">{statusIcon}</span>
       <span className="todo-subject">{displayText}</span>
       {todo.blockedBy && todo.blockedBy.length > 0 && (
-        <span className="todo-blocked" title={`Blocked by: ${todo.blockedBy.join(', ')}`}>
-          (blocked)
-        </span>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="todo-blocked">
+                (blocked)
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{`Blocked by: ${todo.blockedBy.join(', ')}`}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
@@ -52,7 +61,12 @@ export function TodoPanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="todo-panel loading" data-testid="todo-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-2 p-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
       </div>
     );
   }

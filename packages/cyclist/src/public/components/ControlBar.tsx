@@ -16,6 +16,8 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState, FocusEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClaudeContext } from '../contexts/ClaudeContext';
 
 // =============================================================================
@@ -130,52 +132,72 @@ export function ControlBar({
   }, [handleKeyDown]);
 
   return (
-    <div className="control-bar" data-testid="control-bar">
-      {/* Mode toggles - Bell and Relay */}
-      <div className="control-bar-toggles">
-        {/* Bell Mode Toggle */}
-        <button
-          type="button"
-          className={`btn-toggle bell-toggle ${bellMode ? 'active' : ''}`}
-          data-testid="bell-mode-toggle"
-          onClick={() => onBellModeChange?.(!bellMode)}
-          aria-pressed={bellMode}
-          aria-label="Bell mode - inject queued messages via hook"
-          title="Bell Mode: Inject queued messages during tool use (Cmd+B)"
-        >
-          <span className="toggle-icon">🔔</span>
-        </button>
+    <TooltipProvider delayDuration={300}>
+      <div className="control-bar" data-testid="control-bar">
+        {/* Mode toggles - Bell and Relay */}
+        <div className="control-bar-toggles">
+          {/* Bell Mode Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                className={`btn-toggle bell-toggle ${bellMode ? 'active' : ''}`}
+                data-testid="bell-mode-toggle"
+                onClick={() => onBellModeChange?.(!bellMode)}
+                aria-pressed={bellMode}
+                aria-label="Bell mode - inject queued messages via hook"
+              >
+                <span className="toggle-icon">🔔</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Bell Mode: Inject queued messages during tool use (Cmd+B)</TooltipContent>
+          </Tooltip>
 
-        {/* Relay Mode Toggle */}
-        <button
-          type="button"
-          className={`btn-toggle relay-toggle ${relayMode ? 'active' : ''}`}
-          data-testid="relay-toggle"
-          onClick={() => onRelayModeChange?.(!relayMode)}
-          aria-pressed={relayMode}
-          aria-label="Relay mode - auto-handoff to next agent"
-          title="Relay Mode: Auto-handoff to next agent (Cmd+4)"
-        >
-          <span className="toggle-icon">🚲</span>
-        </button>
+          {/* Relay Mode Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                className={`btn-toggle relay-toggle ${relayMode ? 'active' : ''}`}
+                data-testid="relay-toggle"
+                onClick={() => onRelayModeChange?.(!relayMode)}
+                aria-pressed={relayMode}
+                aria-label="Relay mode - auto-handoff to next agent"
+              >
+                <span className="toggle-icon">🚲</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Relay Mode: Auto-handoff to next agent (Cmd+4)</TooltipContent>
+          </Tooltip>
 
-        {/* TirePump Button - visible at 50%+ context, warning at 70%+ */}
-        {contextPercent >= 50 && currentAgent && (
-          <button
-            type="button"
-            className={`btn-toggle pump-toggle ${contextPercent >= 70 ? 'warning' : ''}`}
-            data-testid="pump-toggle"
-            onClick={onTirePump}
-            aria-label="TirePump: Clear context and reload agent"
-            title={`TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}`}
-          >
-            <span className="toggle-icon">🫧</span>
-          </button>
-        )}
-      </div>
+          {/* TirePump Button - visible at 50%+ context, warning at 70%+ */}
+          {contextPercent >= 50 && currentAgent && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  className={`btn-toggle pump-toggle ${contextPercent >= 70 ? 'warning' : ''}`}
+                  data-testid="pump-toggle"
+                  onClick={onTirePump}
+                  aria-label="TirePump: Clear context and reload agent"
+                >
+                  <span className="toggle-icon">🫧</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{`TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}`}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
       {/* Stop button - always visible, disabled when not running */}
-      <button
+      <Button
+        variant="destructive"
         type="button"
         className={`btn-stop danger ${isStopping ? 'stopping' : ''} ${isRunning && !isStopping ? 'throbbing' : ''} ${isFocused('stop') ? 'focused focus-visible' : ''}`}
         data-testid="stop-button"
@@ -195,10 +217,11 @@ export function ControlBar({
         ) : (
           'Stop'
         )}
-      </button>
+      </Button>
 
       {/* Reset button - always visible */}
-      <button
+      <Button
+        variant="outline"
         type="button"
         className={`btn-reset ${isFocused('reset') ? 'focused focus-visible' : ''}`}
         data-testid="reset-button"
@@ -208,8 +231,9 @@ export function ControlBar({
         onBlur={handleBlur}
       >
         Reset
-      </button>
-    </div>
+      </Button>
+      </div>
+    </TooltipProvider>
   );
 }
 

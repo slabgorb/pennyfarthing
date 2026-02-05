@@ -7,6 +7,8 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
 import { useSubagentHelper } from '../hooks/useSubagentHelper';
@@ -130,12 +132,22 @@ export default function SubagentSpan({
         <span className="subagent-toggle">{isCollapsed ? '▶' : '▼'}</span>
 
         {/* Helper name or fallback to type (AC4, AC5) */}
-        <span
-          className="subagent-helper-name"
-          title={helperStyle || undefined}
-        >
-          {displayName}
-        </span>
+        <TooltipProvider delayDuration={300}>
+          {helperStyle ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="subagent-helper-name">
+                  {displayName}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{helperStyle}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="subagent-helper-name">
+              {displayName}
+            </span>
+          )}
+        </TooltipProvider>
 
         {/* Friendly message or fallback to name (AC4, AC5) */}
         <span className="subagent-friendly-message">
@@ -143,9 +155,9 @@ export default function SubagentSpan({
         </span>
 
         {/* Type badge for debugging context (AC4) */}
-        <span data-testid="subagent-type-badge" className="subagent-type-badge">
+        <Badge variant="outline" data-testid="subagent-type-badge" className="subagent-type-badge">
           {type}
-        </span>
+        </Badge>
 
         {isCollapsed && (
           <span className="subagent-count">{messages.length} messages</span>

@@ -14,6 +14,7 @@
  */
 
 import React, { useRef, useState, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
 import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
@@ -253,14 +254,16 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       />
 
       {/* Scroll to bottom button */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         data-testid="scroll-to-bottom-button"
         className="scroll-to-bottom-button"
         onClick={handleScrollToBottom}
         style={{ visibility: isAtBottom ? 'hidden' : 'visible' }}
       >
         ↓
-      </button>
+      </Button>
     </div>
   );
 }

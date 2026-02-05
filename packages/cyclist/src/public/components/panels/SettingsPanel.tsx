@@ -9,6 +9,9 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ThemePalette } from '../ThemePalette';
 import { FontPicker, FontSizePicker } from '../FontPicker';
 import {
@@ -324,7 +327,14 @@ export function SettingsPanel(): React.ReactElement {
   if (!settings) {
     return (
       <div className="settings-panel loading" data-testid="settings-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-4 p-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-6 w-48" />
+        </div>
       </div>
     );
   }
@@ -347,6 +357,8 @@ export function SettingsPanel(): React.ReactElement {
         </select>
       </section>
 
+      <Separator className="my-2" />
+
       <section className="settings-section">
         <h4>Color Palette</h4>
         <ThemePalette
@@ -354,6 +366,8 @@ export function SettingsPanel(): React.ReactElement {
           onSelect={handleColorPresetChange}
         />
       </section>
+
+      <Separator className="my-2" />
 
       <section className="settings-section">
         <h4>Fonts</h4>
@@ -385,23 +399,23 @@ export function SettingsPanel(): React.ReactElement {
         </div>
       </section>
 
+      <Separator className="my-2" />
+
       <section className="settings-section">
         <h4>Workflow</h4>
         <label className="toggle-setting">
-          <input
-            type="checkbox"
+          <Switch
             checked={settings.workflow?.bell_mode || false}
-            onChange={(e) => handleToggle('workflow', 'bell_mode', e.target.checked)}
+            onCheckedChange={(checked: boolean) => handleToggle('workflow', 'bell_mode', checked)}
             disabled={saving}
           />
           Bell Mode
           <span className="setting-description">Inject queued messages via PostToolUse hook instead of waiting</span>
         </label>
         <label className="toggle-setting">
-          <input
-            type="checkbox"
+          <Switch
             checked={settings.workflow?.relay_mode || false}
-            onChange={(e) => handleToggle('workflow', 'relay_mode', e.target.checked)}
+            onCheckedChange={(checked: boolean) => handleToggle('workflow', 'relay_mode', checked)}
             disabled={saving}
           />
           Relay Mode
@@ -409,27 +423,29 @@ export function SettingsPanel(): React.ReactElement {
         </label>
       </section>
 
+      <Separator className="my-2" />
+
       <section className="settings-section">
         <h4>Notifications</h4>
         <label className="toggle-setting">
-          <input
-            type="checkbox"
+          <Switch
             checked={settings.notifications?.phase_change || false}
-            onChange={(e) => handleToggle('notifications', 'phase_change', e.target.checked)}
+            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'phase_change', checked)}
             disabled={saving}
           />
           Phase change alerts
         </label>
         <label className="toggle-setting">
-          <input
-            type="checkbox"
+          <Switch
             checked={settings.notifications?.sound || false}
-            onChange={(e) => handleToggle('notifications', 'sound', e.target.checked)}
+            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'sound', checked)}
             disabled={saving}
           />
           Sound effects
         </label>
       </section>
+
+      <Separator className="my-2" />
 
       <section className="settings-section">
         <h4>Panel Visibility</h4>
@@ -441,10 +457,9 @@ export function SettingsPanel(): React.ReactElement {
 
             return (
               <label key={panelId} className="toggle-setting">
-                <input
-                  type="checkbox"
+                <Switch
                   checked={isVisible}
-                  onChange={(e) => handlePanelToggle(panelId, e.target.checked)}
+                  onCheckedChange={(checked: boolean) => handlePanelToggle(panelId, checked)}
                   disabled={isProtected}
                 />
                 {displayName}

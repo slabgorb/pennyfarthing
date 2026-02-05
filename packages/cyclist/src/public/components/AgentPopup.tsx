@@ -13,6 +13,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useClaudeContext } from '../contexts/ClaudeContext';
 
 // =============================================================================
@@ -152,7 +156,25 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
         aria-labelledby="agent-popup-title"
       >
         {loading ? (
-          <div className="agent-popup-loading">Loading team...</div>
+          <div className="agent-popup-loading p-4 space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <Separator />
+            <div className="flex gap-4">
+              <div className="space-y-2 flex-shrink-0" style={{ width: 160 }}>
+                <Skeleton className="h-5 w-12" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+              <div className="space-y-3 flex-1">
+                <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+                <Skeleton className="h-5 w-32 mx-auto" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          </div>
         ) : !themeData ? (
           <div className="agent-popup-error">Failed to load theme data</div>
         ) : (
@@ -162,19 +184,23 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
               <h2 id="agent-popup-title" className="agent-popup-theme">
                 {themeData.themeName}
                 {themeData.tier && (
-                  <span className={`tier-badge tier-${themeData.tier.toLowerCase()}`}>
+                  <Badge variant="secondary" className={`tier-badge tier-${themeData.tier.toLowerCase()}`}>
                     {themeData.tier}
-                  </span>
+                  </Badge>
                 )}
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 className="agent-popup-close"
                 onClick={onClose}
                 aria-label="Close popup"
               >
                 ×
-              </button>
+              </Button>
             </div>
+
+            <Separator className="my-1" />
 
             {/* Two-panel content */}
             <div className="agent-popup-content">
@@ -233,12 +259,13 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
 
                     {/* Role Mapping */}
                     <div className="popup-role-mapping">
-                      <span
+                      <Badge
+                        variant="default"
                         className="role-badge"
                         style={{ backgroundColor: AGENT_COLORS[displayAgent.role] || '#888' }}
                       >
                         {displayAgent.role}
-                      </span>
+                      </Badge>
                       → {displayAgent.character}
                     </div>
 
