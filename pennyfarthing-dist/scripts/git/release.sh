@@ -135,6 +135,37 @@ if ! git diff-index --quiet HEAD -- 2>/dev/null; then
     error "Uncommitted changes detected. Commit or stash before releasing."
 fi
 
+# Check workspace dependency version parity
+# Catches stale pnpm links where node_modules points to old store version
+if [[ -f "pnpm-workspace.yaml" ]] && [[ -d "packages" ]]; then
+    STALE_DEPS=()
+    for pkg_dir in packages/*/; do
+        [[ -f "$pkg_dir/package.json" ]] || continue
+        pkg_name=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$pkg_dir/package.json','utf8')).name)" 2>/dev/null) || continue
+        source_version=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$pkg_dir/package.json','utf8')).version)" 2>/dev/null) || continue
+
+        # Check all other packages that depend on this one
+        for consumer_dir in packages/*/; do
+            [[ "$consumer_dir" == "$pkg_dir" ]] && continue
+            resolved="$consumer_dir/node_modules/$pkg_name/package.json"
+            [[ -f "$resolved" ]] || continue
+            resolved_version=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$resolved','utf8')).version)" 2>/dev/null) || continue
+            if [[ "$resolved_version" != "$source_version" ]]; then
+                consumer_name=$(basename "$consumer_dir")
+                STALE_DEPS+=("$consumer_name → $pkg_name: resolved $resolved_version, workspace has $source_version")
+            fi
+        done
+    done
+    if [[ ${#STALE_DEPS[@]} -gt 0 ]]; then
+        echo -e "${RED}[ERROR]${NC} Stale workspace dependencies detected:"
+        for dep in "${STALE_DEPS[@]}"; do
+            echo -e "  ${RED}✗${NC} $dep"
+        done
+        error "Run 'pnpm install' from monorepo root to fix workspace links"
+    fi
+    info "Workspace dependency versions match"
+fi
+
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
 info "Current branch: $CURRENT_BRANCH"

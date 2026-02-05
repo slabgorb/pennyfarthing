@@ -355,6 +355,21 @@ check_workspace_deps() {
         log_fail "@pennyfarthing/shared exists but is not a directory" "pnpm install from monorepo root"
     fi
 
+    # Check workspace version parity (catches stale pnpm store links)
+    for dep_name in core shared; do
+        local dep_pkg="$node_modules/$dep_name/package.json"
+        local src_pkg="$MONOREPO_ROOT/packages/$dep_name/package.json"
+        if [[ -f "$dep_pkg" ]] && [[ -f "$src_pkg" ]]; then
+            local resolved_ver=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$dep_pkg','utf8')).version)" 2>/dev/null)
+            local source_ver=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$src_pkg','utf8')).version)" 2>/dev/null)
+            if [[ -n "$resolved_ver" ]] && [[ -n "$source_ver" ]] && [[ "$resolved_ver" != "$source_ver" ]]; then
+                log_fail "@pennyfarthing/$dep_name version mismatch: resolved $resolved_ver, workspace has $source_ver" "pnpm install from monorepo root"
+            elif [[ -n "$resolved_ver" ]] && [[ -n "$source_ver" ]]; then
+                log_pass "@pennyfarthing/$dep_name version $source_ver matches workspace"
+            fi
+        fi
+    done
+
     # Only attempt fix if there were new failures in this check
     if [[ "$FIX_MODE" == true ]] && [[ $FAIL_COUNT -gt $initial_fail_count ]]; then
         log_info "Attempting to fix workspace dependencies..."
