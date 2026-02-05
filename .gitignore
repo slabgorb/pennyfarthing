@@ -49,6 +49,7 @@ test-output.txt
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
 
 # VS Code extension builds
 *.vsix
