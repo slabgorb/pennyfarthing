@@ -192,11 +192,13 @@ if $DRY_RUN; then
     log_dry "git commit -m 'chore: bump version to $NEW_VERSION'"
     log_dry "git checkout develop && git merge $RELEASE_BRANCH"
 else
-    git -C "$PROJECT_ROOT" checkout -b "$RELEASE_BRANCH"
-    git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md CHANGELOG.md 2>/dev/null || true
-    # Also stage workspace package.json files updated in Step 1
-    git -C "$PROJECT_ROOT" add packages/*/package.json 2>/dev/null || true
-    git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
+    (
+        cd "$PROJECT_ROOT"
+        git checkout -b "$RELEASE_BRANCH"
+        git add VERSION package.json package-lock.json README.md CHANGELOG.md 2>/dev/null || true
+        git add packages/core/package.json packages/cyclist/package.json packages/shared/package.json 2>/dev/null || true
+        git commit -m "chore: bump version to $NEW_VERSION"
+    )
     log_info "Committed version bump on $RELEASE_BRANCH"
 
     # Merge release branch to develop
