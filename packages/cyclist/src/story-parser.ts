@@ -252,6 +252,37 @@ export function parseWorkflowProgress(content: string, projectDir?: string): Wor
   if (projectDir && workflowName) {
     const phases = getWorkflowPhases(workflowName, projectDir);
     if (phases) {
+      // For stepped workflows, derive status from Current Step and Steps Completed
+      const currentStepMatch = content.match(/\*\*Current Step:\*\*\s*(\d+)/i) ||
+                               content.match(/^-\s*Current Step:\s*(\d+)/m);
+      if (currentStepMatch) {
+        const currentStep = parseInt(currentStepMatch[1], 10);
+        const completedMatch = content.match(/\*\*Steps Completed:\*\*\s*\[([^\]]*)\]/i) ||
+                               content.match(/^-\s*Steps Completed:\s*\[([^\]]*)\]/m);
+        const completedSteps = new Set<number>();
+        if (completedMatch && completedMatch[1].trim()) {
+          completedMatch[1].split(',').forEach(s => {
+            const n = parseInt(s.trim(), 10);
+            if (!isNaN(n)) completedSteps.add(n);
+          });
+        }
+        return phases.map((phase, index) => {
+          const stepNum = index + 1;
+          let status: 'done' | 'current' | 'pending';
+          if (completedSteps.has(stepNum)) {
+            status = 'done';
+          } else if (stepNum === currentStep) {
+            status = 'current';
+          } else if (stepNum < currentStep) {
+            // Steps before current are implicitly done
+            status = 'done';
+          } else {
+            status = 'pending';
+          }
+          return { ...phase, status };
+        });
+      }
+      // Fall back to phased workflow status resolution
       return buildWorkflowWithStatus(phases, content, currentPhase);
     }
   }
@@ -552,17 +583,24 @@ function normalizeStoryStatus(status: string | undefined | null): 'backlog' | 'i
 
 // Get workflow phases from workflow YAML definition
 // Checks multiple locations: .pennyfarthing/workflows/, .claude/workflows/, pennyfarthing-dist/workflows/
+// Supports both flat-file workflows (tdd.yaml) and subdirectory workflows (epics-and-stories/workflow.yaml)
 export function getWorkflowPhases(workflowName: string, projectDir: string): Omit<WorkflowPhase, 'status'>[] | null {
   try {
-    // Look for workflow YAML in multiple locations (in priority order)
-    const searchPaths = [
+    const workflowDirs = [
       // 1. Runtime via symlinks: .pennyfarthing/workflows/ (orchestrator pattern)
-      join(projectDir, '.pennyfarthing', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, '.pennyfarthing', 'workflows'),
       // 2. Legacy: .claude/workflows/
-      join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, '.claude', 'workflows'),
       // 3. Monorepo/dev: pennyfarthing-dist/workflows/
-      join(projectDir, 'pennyfarthing-dist', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, 'pennyfarthing-dist', 'workflows'),
     ];
+
+    // Look for workflow YAML: flat file first, then subdirectory pattern
+    const searchPaths: string[] = [];
+    for (const dir of workflowDirs) {
+      searchPaths.push(join(dir, `${workflowName}.yaml`));
+      searchPaths.push(join(dir, workflowName, 'workflow.yaml'));
+    }
 
     let workflowPath: string | null = null;
     for (const path of searchPaths) {
@@ -581,16 +619,43 @@ export function getWorkflowPhases(workflowName: string, projectDir: string): Omi
 
     // Support both flat structure (phases:) and nested structure (workflow.phases:)
     const phases = data?.workflow?.phases || data?.phases;
-    if (!phases || !Array.isArray(phases)) {
-      return null;
+    if (phases && Array.isArray(phases)) {
+      // Phased workflow (tdd, trivial, bdd, etc.)
+      return phases.map((phase: { name: string; agent: string; label?: string }) => ({
+        name: phase.name,
+        agent: phase.agent,
+        label: phase.label || phase.name,
+      }));
     }
 
-    // Map phases to WorkflowPhase objects (without status - that's determined at runtime)
-    return phases.map((phase: { name: string; agent: string; label?: string }) => ({
-      name: phase.name,
-      agent: phase.agent,
-      label: phase.label || phase.name,  // Default label to name if not provided
-    }));
+    // Stepped workflow (epics-and-stories, prd, research, etc.)
+    // Derive phases from step files in the steps/ directory
+    const workflowType = data?.workflow?.type || data?.type;
+    if (workflowType === 'stepped') {
+      const stepsDir = join(workflowPath, '..', 'steps');
+      if (existsSync(stepsDir)) {
+        const agent = data?.workflow?.agent || data?.agent || 'unknown';
+        const stepFiles = readdirSync(stepsDir)
+          .filter((f: string) => f.match(/^step-\d+.*\.md$/))
+          .sort();
+
+        if (stepFiles.length > 0) {
+          return stepFiles.map((file: string) => {
+            // Extract step number and name from filename: step-01-validate-prerequisites.md
+            const match = file.match(/^step-(\d+)-(.+)\.md$/);
+            const stepNum = match ? match[1] : '?';
+            const stepName = match ? match[2].replace(/-/g, ' ') : file;
+            return {
+              name: `step-${stepNum}`,
+              agent,
+              label: `Step ${parseInt(stepNum, 10)}`,
+            };
+          });
+        }
+      }
+    }
+
+    return null;
   } catch {
     // Malformed YAML or read error
     return null;
