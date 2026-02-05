@@ -1,11 +1,16 @@
 # Release Workflow - Interactive stepped release process
 # Replaces fire-and-forget deploy.sh with gated steps
 #
-# Flow: Preflight → Bump → [Approve] → Commit → [Approve] → Merge → Push → [Approve] → Publish → [Approve] → Finalize
+# Flow: Preflight → Bump → [Approve] → Changelog → [Approve] → README →
+#       CLAUDE.md → Retro (optional) → Commit → [Approve] → Merge →
+#       Push → [Approve] → Publish → [Approve] → Finalize
+#
 # Use for: releasing new versions of Pennyfarthing to npm and GitHub
 #
 # Key features:
 # - Gates at every destructive/irreversible point
+# - Content review steps for changelog, readme, claude.md
+# - Optional retrospective before committing
 # - Version verification at each stage
 # - Abort-safe (can stop at any gate)
 # - Shows diffs and staged files before committing
@@ -13,7 +18,7 @@
 workflow:
   name: release
   description: Interactive stepped release with verification gates
-  version: "1.0.0"
+  version: "2.0.0"
   type: stepped
 
   # Step configuration
@@ -29,7 +34,7 @@ workflow:
 
   # User approval gates
   gates:
-    after_steps: [2, 3, 5, 6]  # After bump, commit, push, publish
+    after_steps: [2, 3, 7, 9, 10]  # After bump, changelog, commit, push, publish
     gate_marker: "<!-- GATE -->"
 
   # Collaboration menus
@@ -48,8 +53,8 @@ workflow:
         name: Skip
         description: Skip this step (use with caution)
 
-  # Agent assignment
-  agent: devops
+  # Agent assignment - SM owns the release process
+  agent: sm
 
   # Triggers
   triggers:

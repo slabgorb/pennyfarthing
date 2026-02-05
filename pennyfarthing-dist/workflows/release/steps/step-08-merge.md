@@ -1,4 +1,4 @@
-# Step 4: Merge to Main
+# Step 8: Merge to Main
 
 <purpose>
 Merge develop into main and create the annotated release tag. This prepares everything for push — still local, still reversible.
@@ -17,7 +17,7 @@ Merge summary and tag details. Everything is local — nothing has been pushed y
 
 ## Execution
 
-### 4.1 Update Main
+### 8.1 Update Main
 
 ```bash
 git checkout main
@@ -27,13 +27,13 @@ git pull origin main --ff-only || {
 }
 ```
 
-### 4.2 Merge Develop
+### 8.2 Merge Develop
 
 ```bash
 git merge develop -m "Merge develop into main for release {new_version}"
 ```
 
-### 4.3 Create Tag
+### 8.3 Create Tag
 
 ```bash
 TAG="v{new_version}"
@@ -41,7 +41,7 @@ git tag -a "$TAG" -m "Release {new_version}"
 echo "Created tag: $TAG"
 ```
 
-### 4.4 Verify
+### 8.4 Verify
 
 ```bash
 echo "=== Release State ==="

@@ -1,4 +1,4 @@
-# Step 7: Finalize Release
+# Step 11: Finalize Release
 
 <purpose>
 Create a GitHub release with release notes, verify everything is consistent, and produce a final summary.
@@ -16,7 +16,7 @@ Release summary with links to GitHub release, npm packages, and git tag.
 
 ## Execution
 
-### 7.1 Create GitHub Release
+### 11.1 Create GitHub Release
 
 ```bash
 TAG="v{new_version}"
@@ -28,7 +28,7 @@ gh release create "$TAG" \
     || echo "WARNING: GitHub release creation failed (may already exist)"
 ```
 
-### 7.2 Final Verification
+### 11.2 Final Verification
 
 ```bash
 echo "=== Final State ==="
@@ -46,7 +46,7 @@ echo "GitHub:"
 gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  No GitHub release"
 ```
 
-### 7.3 Summary
+### 11.3 Summary
 
 ```
 ╔══════════════════════════════════════╗
