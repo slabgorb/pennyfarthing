@@ -1,45 +1,53 @@
 ---
-description: Merge develop to main and push (optional version bump)
+description: Interactive stepped release with verification gates
 ---
 
-```bash
-./scripts/git/release.sh "$@"
-```
-
 <purpose>
-Release current develop branch to main and push to origin.
+Release a new version of Pennyfarthing using an interactive stepped workflow with gates at every critical point. Replaces the old fire-and-forget deploy.sh with a 7-step process that verifies each stage before proceeding.
 </purpose>
 
 <usage>
 ```bash
-# Just merge and push (no version change)
+# Start the interactive release workflow
 /release
 
-# With version bump
-/release --bump patch    # 1.5.0 -> 1.5.1
-/release --bump minor    # 1.5.0 -> 1.6.0
-/release --bump major    # 1.5.0 -> 2.0.0
-
-# Preview what would happen
-/release --dry-run
-/release --bump patch --dry-run
+# The workflow will ask for bump type (major/minor/patch) during preflight
 ```
 </usage>
 
 <workflow>
-1. Pre-flight checks (clean working directory, branches exist)
-2. Pull latest develop and main
-3. Merge develop into main (fast-forward when possible)
-4. Push main to origin
-5. Push develop to origin
-6. Push any tags
+This command starts the `release` stepped workflow (BikeLane):
 
-If `--bump` specified, delegates to `deploy.sh` which also:
-- Bumps VERSION file
-- Commits version change
-- Creates annotated git tag
-- Creates GitHub release from the tag (requires `gh` CLI)
+1. **Preflight** — Clean state, compute version, conflict checks
+2. **Bump** — Update all version files, show diff ← GATE
+3. **Commit** — Stage, commit, merge to develop, verify staging ← GATE
+4. **Merge** — Merge develop → main, create tag
+5. **Push & Tag** — Push branches + tag (point of no return) ← GATE
+6. **Publish** — npm publish core + cyclist ← GATE
+7. **Finalize** — GitHub release, summary
+
+Gates pause for user approval. You can abort, revise, or continue at each gate.
 </workflow>
+
+<instructions>
+Start the release stepped workflow:
+
+```bash
+# Start the workflow
+/workflow start release
+```
+
+If already in progress:
+```bash
+# Resume where you left off
+/workflow resume
+```
+
+To check status:
+```bash
+/workflow status
+```
+</instructions>
 
 <when-to-use>
 - After completing a sprint or set of features
@@ -49,10 +57,13 @@ If `--bump` specified, delegates to `deploy.sh` which also:
 
 <prerequisites>
 - Clean working directory (no uncommitted changes)
-- On develop branch (or will switch to it)
+- On develop branch
 - Origin remote configured
+- npm authentication configured (for publish step)
+- `gh` CLI authenticated (for GitHub release step)
 </prerequisites>
 
 <skills>
-- `/changelog` - For changelog format reference, auto-generation patterns, and version bump decisions
+- `/changelog` - For changelog format reference and auto-generation
+- `/workflow` - For workflow management commands
 </skills>

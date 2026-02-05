@@ -1,0 +1,57 @@
+# Release Workflow - Interactive stepped release process
+# Replaces fire-and-forget deploy.sh with gated steps
+#
+# Flow: Preflight → Bump → [Approve] → Commit → [Approve] → Merge → Push → [Approve] → Publish → [Approve] → Finalize
+# Use for: releasing new versions of Pennyfarthing to npm and GitHub
+#
+# Key features:
+# - Gates at every destructive/irreversible point
+# - Version verification at each stage
+# - Abort-safe (can stop at any gate)
+# - Shows diffs and staged files before committing
+
+workflow:
+  name: release
+  description: Interactive stepped release with verification gates
+  version: "1.0.0"
+  type: stepped
+
+  # Step configuration
+  steps:
+    path: ./release/steps/
+    pattern: step-{nn}-*.md
+
+  # Variables available in step files
+  variables:
+    version_file: VERSION
+    project_root: .
+    packages: "core cyclist shared"
+
+  # User approval gates
+  gates:
+    after_steps: [2, 3, 5, 6]  # After bump, commit, push, publish
+    gate_marker: "<!-- GATE -->"
+
+  # Collaboration menus
+  collaboration:
+    menus:
+      - key: C
+        name: Continue
+        description: Approve and proceed to next step
+      - key: A
+        name: Abort
+        description: Stop the release (safe before push)
+      - key: R
+        name: Revise
+        description: Fix something before continuing
+      - key: S
+        name: Skip
+        description: Skip this step (use with caution)
+
+  # Agent assignment
+  agent: devops
+
+  # Triggers
+  triggers:
+    commands: [release]
+    tags: [release, deploy, publish]
