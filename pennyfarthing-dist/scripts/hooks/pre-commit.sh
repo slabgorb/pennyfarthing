@@ -5,6 +5,7 @@
 # 1. Prevents direct commits to protected branches (main, develop)
 #    Exception: sprint/ folder commits allowed on develop
 # 2. Validates agent files when pennyfarthing-dist/agents/*.md is modified
+# 3. Validates sprint YAML files when sprint/*.yaml is modified
 #
 # Installation:
 #   Installed to .git/hooks/pre-commit by pennyfarthing init or doctor --fix
@@ -12,9 +13,17 @@
 
 set -uo pipefail
 
-# Find project root (resolve symlink first for .git/hooks/ symlinks)
+# Find project root
+# Try find-root.sh via symlink resolution first, then fall back to .git location
 REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
-source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
+FIND_ROOT="$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
+if [[ -f "$FIND_ROOT" ]]; then
+    source "$FIND_ROOT"
+else
+    # Running as a copy in .git/hooks/ — derive PROJECT_ROOT from git dir
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." && pwd)"
+    export PROJECT_ROOT
+fi
 
 # =============================================================================
 # Check 1: Branch Protection
@@ -96,6 +105,84 @@ if [[ -n "$AGENT_FILES" ]]; then
     else
         echo "Warning: Agent validator not found at $VALIDATOR"
         echo "Skipping agent validation."
+    fi
+fi
+
+# =============================================================================
+# Check 3: Sprint YAML Validation
+# =============================================================================
+
+SPRINT_YAML_FILES=$(git diff --cached --name-only -- 'sprint/*.yaml' 'sprint/archive/*.yaml' 2>/dev/null \
+    | grep -v 'sprint-template\.yaml$' || true)
+
+if [[ -n "$SPRINT_YAML_FILES" ]]; then
+    echo "Sprint YAML files staged for commit:"
+    echo "$SPRINT_YAML_FILES" | sed 's/^/  /'
+    echo ""
+
+    # Find python3
+    PYTHON=""
+    if command -v python3 &>/dev/null; then
+        PYTHON="python3"
+    elif command -v python &>/dev/null; then
+        PYTHON="python"
+    fi
+
+    if [[ -z "$PYTHON" ]]; then
+        echo "Warning: Python not found, skipping sprint YAML validation."
+    else
+        echo "Running sprint YAML validation..."
+
+        # Set PYTHONPATH to include pennyfarthing source
+        PYTHONPATH_ORIG="${PYTHONPATH:-}"
+        if [[ -d "$PROJECT_ROOT/pennyfarthing" ]]; then
+            export PYTHONPATH="$PROJECT_ROOT/pennyfarthing${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
+        fi
+
+        VALIDATION_FAILED=0
+        while IFS= read -r yaml_file; do
+            FULL_PATH="$PROJECT_ROOT/$yaml_file"
+            if [[ ! -f "$FULL_PATH" ]]; then
+                echo "  Warning: $yaml_file not found (deleted?), skipping"
+                continue
+            fi
+            if ! $PYTHON -c "
+import sys
+from pathlib import Path
+from pennyfarthing_scripts.sprint.validate_cmd import validate_sprint_yaml
+result = validate_sprint_yaml(Path(sys.argv[1]))
+if result.errors:
+    for e in result.errors:
+        line = f' (line {e.line})' if e.line else ''
+        print(f'  ERROR [{e.category}]{line}: {e.message}', file=sys.stderr)
+if result.format_issues:
+    for f in result.format_issues:
+        print(f'  FORMAT: {f.message}', file=sys.stderr)
+sys.exit(0 if result.valid else 1)
+" "$FULL_PATH"; then
+                VALIDATION_FAILED=1
+            fi
+        done <<< "$SPRINT_YAML_FILES"
+
+        # Restore PYTHONPATH
+        if [[ -n "$PYTHONPATH_ORIG" ]]; then
+            export PYTHONPATH="$PYTHONPATH_ORIG"
+        else
+            unset PYTHONPATH
+        fi
+
+        if [[ $VALIDATION_FAILED -eq 1 ]]; then
+            echo ""
+            echo "COMMIT BLOCKED - Sprint YAML validation failed"
+            echo ""
+            echo "Fix: Review errors above, then run:"
+            echo "  python3 -m pennyfarthing_scripts.sprint.validate_cmd --fix <file>"
+            echo ""
+            exit 1
+        fi
+
+        echo "✓ Sprint YAML validation passed"
+        echo ""
     fi
 fi
 
