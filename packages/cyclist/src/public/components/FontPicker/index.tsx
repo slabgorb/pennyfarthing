@@ -237,7 +237,7 @@ export function FontPicker({
         >
           <SelectValue placeholder="Select font..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[300px]">
           {/* Presets section */}
           {displayPresets.length > 0 && (
             <SelectGroup>
