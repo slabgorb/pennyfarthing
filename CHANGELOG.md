@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.2.0] - 2026-02-05
+
+### Added
+
+- **TTY Panel** - Terminal panel with xterm.js and WebSocket PTY backend (MSSCI-14211)
+- **Git-Based Diffs** - Real-time git diff panel replacing OTEL extraction (MSSCI-14238)
+- **Panel Visibility Toggles** - Settings panel controls for showing/hiding panels (MSSCI-14243)
+- **shadcn/ui Migration** - Adopted shadcn/ui component library across entire Cyclist UI (MSSCI-14268)
+- **Theme Packs** - Extracted themes into optional installable packages (MSSCI-14270)
+- **Workspace Version Parity Checks** - Release and doctor scripts detect stale pnpm workspace links
+
+### Changed
+
+- **TTY Panel Architecture** - Migrated from Electron IPC to WebSocket PTY for cross-platform support
+- **DebugPanel** - Removed Tool Calls section (superseded by tool stack in message view)
+
+### Fixed
+
+- **White Screen on Electron Launch** - Stale pnpm workspace links broke tsc build, preventing Vite from running
+- **Multi-Repo Diffs** - Diffs panel now supports multiple repositories
+- **Background Task Completion** - Tasks now complete via tool_result messages
+- **Panel Visibility Race Condition** - Prevented toggle state race in Settings panel
+- **Multi-Repo /chore** - Made /chore command multi-repo aware
+- **Todo Panel Styles** - Added missing .todo-panel CSS selectors
+
+---
+
 ## [9.1.2] - 2026-02-04
 
 *No unreleased changes*
