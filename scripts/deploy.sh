@@ -10,12 +10,11 @@ set -euo pipefail
 #
 # Steps:
 # 1. Bump version in VERSION, package.json, README.md
-# 2. Commit version bump to current branch
-# 3. Merge to develop (if not already on develop)
-# 4. Merge develop to main
-# 5. Tag the release on main
-# 6. Push everything (develop, main, tags)
-# 7. Return to develop
+# 2. Commit version bump on release/<version> branch, merge to develop
+# 3. Merge develop to main
+# 4. Tag the release on main
+# 5. Push everything (develop, main, tags)
+# 6. Return to develop
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -186,31 +185,27 @@ else
     fi
 fi
 
-# Step 2: Commit version bump
+# Step 2: Commit version bump on a release branch
+RELEASE_BRANCH="release/$NEW_VERSION"
 if $DRY_RUN; then
+    log_dry "git checkout -b $RELEASE_BRANCH"
     log_dry "git commit -m 'chore: bump version to $NEW_VERSION'"
+    log_dry "git checkout develop && git merge $RELEASE_BRANCH"
 else
+    git -C "$PROJECT_ROOT" checkout -b "$RELEASE_BRANCH"
     git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md CHANGELOG.md 2>/dev/null || true
+    # Also stage workspace package.json files updated in Step 1
+    git -C "$PROJECT_ROOT" add packages/*/package.json 2>/dev/null || true
     git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
-    log_info "Committed version bump"
-fi
+    log_info "Committed version bump on $RELEASE_BRANCH"
 
-# Step 3: Merge to develop if not already on develop
-if [[ "$CURRENT_BRANCH" != "develop" ]]; then
-    if $DRY_RUN; then
-        log_dry "git checkout develop && git merge $CURRENT_BRANCH"
-    else
-        log_info "Merging $CURRENT_BRANCH to develop..."
-        git -C "$PROJECT_ROOT" checkout develop
-        git -C "$PROJECT_ROOT" pull origin develop --ff-only || {
-            log_warn "Could not fast-forward develop. Attempting merge..."
-            git -C "$PROJECT_ROOT" pull origin develop --no-rebase
-        }
-        git -C "$PROJECT_ROOT" merge "$CURRENT_BRANCH" -m "Merge $CURRENT_BRANCH into develop for release $NEW_VERSION"
-        log_info "Merged to develop"
-    fi
-else
-    log_info "Already on develop, skipping merge"
+    # Merge release branch to develop
+    git -C "$PROJECT_ROOT" checkout develop
+    git -C "$PROJECT_ROOT" merge "$RELEASE_BRANCH" --no-edit
+    log_info "Merged $RELEASE_BRANCH to develop"
+
+    # Clean up release branch
+    git -C "$PROJECT_ROOT" branch -d "$RELEASE_BRANCH"
 fi
 
 # Step 4: Merge develop to main

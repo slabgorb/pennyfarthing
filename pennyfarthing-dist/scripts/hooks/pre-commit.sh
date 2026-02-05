@@ -3,7 +3,7 @@
 #
 # Checks:
 # 1. Prevents direct commits to protected branches (main, develop)
-#    Exceptions on develop: sprint/ files, version bump files (release scripts)
+#    Exception: sprint/ folder commits allowed on develop
 # 2. Validates agent files when pennyfarthing-dist/agents/*.md is modified
 #
 # Installation:
@@ -25,20 +25,12 @@ PROTECTED_BRANCHES="^(main|develop)$"
 
 if [[ $BRANCH =~ $PROTECTED_BRANCHES ]]; then
     # Special case: Allow sprint/ folder commits on develop branch
-    # Special case: Allow version bump commits from release/deploy scripts
     if [[ $BRANCH == "develop" ]]; then
         STAGED_FILES=$(git diff --cached --name-only)
         NON_SPRINT_FILES=$(echo "$STAGED_FILES" | grep -v "^sprint/")
 
-        # Check if this is a version bump commit (only VERSION + package.json files)
-        NON_VERSION_FILES=$(echo "$STAGED_FILES" | grep -v -E "^(VERSION|package\.json|package-lock\.json|pnpm-lock\.yaml|packages/.*/package\.json|CHANGELOG\.md|README\.md)$")
-
         # If all staged files are in sprint/, allow the commit
         if [ -z "$NON_SPRINT_FILES" ] && [ -n "$STAGED_FILES" ]; then
-            # Continue to agent validation check
-            :
-        # If all staged files are version/release files, allow the commit
-        elif [ -z "$NON_VERSION_FILES" ] && [ -n "$STAGED_FILES" ]; then
             # Continue to agent validation check
             :
         else
