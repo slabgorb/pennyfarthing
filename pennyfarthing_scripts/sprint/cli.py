@@ -280,6 +280,11 @@ from pennyfarthing_scripts.sprint.story_add import story_add_command
 
 sprint.add_command(story_add_command, "story-add")
 
+# Register story-update command from story_update module
+from pennyfarthing_scripts.sprint.story_update import story_update_command
+
+sprint.add_command(story_update_command, "story-update")
+
 
 # For backwards compatibility when running as module
 def main(args: list[str] | None = None) -> int:
