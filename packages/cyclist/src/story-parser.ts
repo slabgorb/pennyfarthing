@@ -68,6 +68,7 @@ export interface StoryInfo {
   pr: string | null;               // PR number (e.g., "32")
   branch: string | null;           // Feature branch name
   criteria: CriteriaItem[] | null; // Acceptance criteria checklist
+  workflowType: string | null;    // MSSCI-14300: 'phased' or 'stepped'
   // MSSCI-12475: Expandable story section data
   sprintStories: SprintStory[] | null;  // All stories in current sprint
   epicContext: EpicContext | null;       // Current story's epic with siblings
@@ -200,6 +201,12 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
 
   // Parse workflow progress (uses projectDir for dynamic YAML-based phases)
   result.workflow = parseWorkflowProgress(content, projectDir);
+
+  // MSSCI-14300: Detect workflow type from phase names
+  if (result.workflow && result.workflow.length > 0) {
+    const allStepped = result.workflow.every(p => p.name.startsWith('step-'));
+    result.workflowType = allStepped ? 'stepped' : 'phased';
+  }
 
   // Parse acceptance criteria checkboxes
   result.criteria = parseAcceptanceCriteria(content);
@@ -676,6 +683,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     pr: null,
     branch: null,
     criteria: null,
+    workflowType: null,
     // MSSCI-12475: Expandable story section
     sprintStories: null,
     epicContext: null,
@@ -754,6 +762,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       sprint,
       nextAgent: storyInfo.nextAgent || null,
       workflow: storyInfo.workflow || null,
+      workflowType: storyInfo.workflowType || null,
       pr: storyInfo.pr || null,
       branch: storyInfo.branch || null,
       criteria: storyInfo.criteria || null,
