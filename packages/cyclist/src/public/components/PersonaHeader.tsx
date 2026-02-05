@@ -102,7 +102,7 @@ export default function PersonaHeader(): React.ReactElement {
             <div className="persona-portrait" data-testid="persona-portrait">
               {slug && theme && !portraitError ? (
                 <img
-                  src={`/portraits/${theme}/small/${slug}.png`}
+                  src={`/portraits/${theme}/medium/${slug}.png`}
                   alt={character}
                   className="portrait-image"
                   onError={() => setPortraitError(true)}

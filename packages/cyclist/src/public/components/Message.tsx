@@ -18,6 +18,8 @@ import type { MessageData } from '../types/message';
 interface MessageProps {
   message: MessageData;
   isLastAgentMessage?: boolean;
+  /** Whether this is the first message in a turn (shows avatar) */
+  isFirstInTurn?: boolean;
 }
 
 interface AssistantAvatarProps {
@@ -73,9 +75,10 @@ function UserAvatar(): React.ReactElement {
   return <span className="avatar-emoji">👤</span>;
 }
 
-export default function Message({ message, isLastAgentMessage }: MessageProps): React.ReactElement {
+export default function Message({ message, isLastAgentMessage, isFirstInTurn = true }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
+  const continuationClass = !isFirstInTurn ? ' continuation' : '';
 
   // For bell-injected messages (queued messages injected via PostToolUse hook)
   // Show with 🔔 indicator so user knows it was sent mid-turn
@@ -83,7 +86,7 @@ export default function Message({ message, isLastAgentMessage }: MessageProps): 
     const html = message.content ? parseMarkdown(message.content) : '';
     return (
       <TooltipProvider delayDuration={300}>
-        <div data-testid="message-bell-injected" className="message message-user message-bell-injected">
+        <div data-testid="message-bell-injected" className={`message message-user message-bell-injected${continuationClass}`}>
           <div data-testid="avatar" className="message-avatar">
             <UserAvatar />
           </div>
@@ -116,7 +119,7 @@ export default function Message({ message, isLastAgentMessage }: MessageProps): 
   if (message.type === 'agent' && message.isStreaming) {
     const showThrob = isLastAgentMessage !== false;
     return (
-      <div data-testid={testId} className={`message ${roleClass}`}>
+      <div data-testid={testId} className={`message ${roleClass}${continuationClass}`}>
         <div data-testid="avatar" className="message-avatar">
           <AssistantAvatar
             isStreaming={showThrob}
@@ -136,7 +139,7 @@ export default function Message({ message, isLastAgentMessage }: MessageProps): 
   const html = message.content ? parseMarkdown(message.content) : '';
 
   return (
-    <div data-testid={testId} className={`message ${roleClass}`}>
+    <div data-testid={testId} className={`message ${roleClass}${continuationClass}`}>
       <div data-testid="avatar" className="message-avatar">
         {message.type === 'user' ? <UserAvatar /> : (
           <AssistantAvatar
