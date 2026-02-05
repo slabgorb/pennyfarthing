@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 // Import types from story-parser for criteria and workflow
-import type { CriteriaItem, WorkflowPhase } from '../../../story-parser.js';
+import type { CriteriaItem, WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
 
 export interface StoryData {
   id: string;
@@ -24,15 +24,19 @@ export interface StoryData {
   // MSSCI-12849: AC and BikeLane panel data
   criteria?: CriteriaItem[] | null;
   workflowPhases?: WorkflowPhase[] | null;
+  // MSSCI-14300: Distinguish phased vs stepped workflow rendering
+  workflowType?: string;
 }
 
 // Re-export types for panel components
-export type { CriteriaItem, WorkflowPhase };
+export type { CriteriaItem, WorkflowPhase, AvailableWorkflow };
 
 interface UseStoryResult {
   story: StoryData | null;
   isLoading: boolean;
   error: Error | null;
+  // MSSCI-14301: Available workflows for discovery panel
+  availableWorkflows: AvailableWorkflow[] | null;
 }
 
 /** WebSocket message format from /ws/story */
@@ -44,7 +48,9 @@ interface StoryMessage {
   status?: string | null;
   points?: number | null;
   workflow?: WorkflowPhase[] | null;
+  workflowType?: string | null;
   criteria?: CriteriaItem[] | null;
+  availableWorkflows?: AvailableWorkflow[] | null;
   [key: string]: unknown;
 }
 
@@ -59,6 +65,7 @@ function transformMessage(msg: StoryMessage): StoryData | null {
     points: msg.points ?? undefined,
     criteria: msg.criteria,
     workflowPhases: msg.workflow,
+    workflowType: msg.workflowType ?? undefined,
   };
 }
 
@@ -66,6 +73,7 @@ export function useStory(): UseStoryResult {
   const [story, setStory] = useState<StoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [availableWorkflows, setAvailableWorkflows] = useState<AvailableWorkflow[] | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -86,6 +94,7 @@ export function useStory(): UseStoryResult {
             const msg = JSON.parse(event.data) as StoryMessage;
             if (msg.type === 'init' || msg.type === 'update') {
               setStory(transformMessage(msg));
+              setAvailableWorkflows(msg.availableWorkflows ?? null);
               setIsLoading(false);
               setError(null);
             }
@@ -122,5 +131,5 @@ export function useStory(): UseStoryResult {
     };
   }, []);
 
-  return { story, isLoading, error };
+  return { story, isLoading, error, availableWorkflows };
 }

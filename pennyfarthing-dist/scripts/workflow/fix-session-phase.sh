@@ -12,7 +12,7 @@
 # - Adds missing rows to Handoff History table
 #
 # Valid phases for TDD workflow: setup → red → green → review → approved → finish
-# Valid phases for trivial workflow: setup → impl → review → approved → finish
+# Valid phases for trivial workflow: setup → implement → review → approved → finish
 
 set -euo pipefail
 
@@ -93,7 +93,7 @@ case "$WORKFLOW" in
     GATES=("manual" "tests_fail" "tests_pass" "approval" "complete" "")
     ;;
   trivial)
-    PHASES=("setup" "impl" "review" "approved" "finish")
+    PHASES=("setup" "implement" "review" "approved" "finish")
     AGENTS=("sm" "dev" "reviewer" "sm" "sm")
     GATES=("manual" "tests_pass" "approval" "complete" "")
     ;;

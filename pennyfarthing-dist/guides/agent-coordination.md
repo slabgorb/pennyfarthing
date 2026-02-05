@@ -8,14 +8,9 @@ This document describes how Pennyfarthing agents are coordinated. The framework 
 
 ## The TDD Flow
 
-```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
-              │     │     │        │
-           setup  tests  impl   review
-              │     │     │        │
-              └─────┴─────┴────────┘
-                 subagent handoffs
-```
+SM → TEA → Dev → Reviewer → SM (setup → red → green → review → finish)
+
+Handoffs between agents are managed by Haiku subagents.
 
 **Entry points:** `/new-work` (new story) or `/work` (smart resume/start)
 **State detection:** Agents read session file on activation

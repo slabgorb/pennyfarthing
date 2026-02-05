@@ -270,6 +270,95 @@ def import_epic(epics_file: str, initiative_name: str | None, marker: str, dry_r
         raise click.ClickException(result.get("error", "Unknown error"))
 
 
+@sprint.command("remove-epic")
+@click.argument("epic_id")
+@click.option("--dry-run", is_flag=True, help="Show what would be removed without making changes")
+def remove_epic(epic_id: str, dry_run: bool):
+    """Remove an epic from future.yaml (for cancelled pre-Jira epics).
+
+    \b
+    Arguments:
+      EPIC_ID  - Epic ID to remove (e.g., epic-41)
+
+    \b
+    Examples:
+      pf sprint remove-epic epic-41
+      pf sprint remove-epic epic-41 --dry-run
+    """
+    from pathlib import Path
+
+    import yaml
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    future_path = get_project_root() / "sprint" / "future.yaml"
+    if not future_path.exists():
+        raise click.ClickException(f"File not found: {future_path}")
+
+    with open(future_path) as f:
+        data = yaml.safe_load(f.read())
+
+    if not data or "future" not in data or "initiatives" not in data["future"]:
+        raise click.ClickException("Invalid future.yaml structure")
+
+    # Find the epic
+    found = False
+    for init in data["future"]["initiatives"]:
+        epics = init.get("epics", [])
+        for epic in epics:
+            if epic.get("id") == epic_id:
+                found = True
+                story_count = len(epic.get("stories", []))
+                click.echo(f"Found epic in initiative '{init.get('name', 'unknown')}':")
+                click.echo(f"  ID: {epic_id}")
+                click.echo(f"  Title: {epic.get('title', 'unknown')}")
+                click.echo(f"  Points: {epic.get('points', '?')}")
+                click.echo(f"  Stories: {story_count}")
+
+                if dry_run:
+                    click.echo(f"\n[DRY-RUN] Would remove {epic_id} from future.yaml")
+                    return
+
+                # Remove using yq to preserve comments and formatting
+                import subprocess
+
+                result = subprocess.run(
+                    [
+                        "yq", "eval", "-i",
+                        f'del(.future.initiatives[].epics[] | select(.id == "{epic_id}"))',
+                        str(future_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    raise click.ClickException(f"yq failed: {result.stderr}")
+
+                click.echo(f"\n✓ Removed {epic_id} from future.yaml")
+                return
+
+    if not found:
+        raise click.ClickException(
+            f"Epic {epic_id} not found in future.yaml"
+        )
+
+
+# Register validate command from validate_cmd module
+from pennyfarthing_scripts.sprint.validate_cmd import validate_command
+
+sprint.add_command(validate_command)
+
+# Register story-add command from story_add module
+from pennyfarthing_scripts.sprint.story_add import story_add_command
+
+sprint.add_command(story_add_command, "story-add")
+
+# Register story-update command from story_update module
+from pennyfarthing_scripts.sprint.story_update import story_update_command
+
+sprint.add_command(story_update_command, "story-update")
+
+
 # For backwards compatibility when running as module
 def main(args: list[str] | None = None) -> int:
     """Entry point for backwards compatibility."""

@@ -49,6 +49,19 @@ function generateJiraUrl(jiraKey: string | null): string | null {
   return `${JIRA_BASE_URL}/${jiraKey}`;
 }
 
+// MSSCI-14301: Available workflow summary for discovery panel
+export interface AvailableWorkflow {
+  name: string;
+  type: 'phased' | 'stepped';
+  description: string;
+  triggers?: {
+    types?: string[];
+    tags?: string[];
+    points?: { min?: number; max?: number };
+    default?: boolean;
+  };
+}
+
 // Story info interface (enhanced with workflow details)
 export interface StoryInfo {
   id: string | null;
@@ -68,10 +81,13 @@ export interface StoryInfo {
   pr: string | null;               // PR number (e.g., "32")
   branch: string | null;           // Feature branch name
   criteria: CriteriaItem[] | null; // Acceptance criteria checklist
+  workflowType: string | null;    // MSSCI-14300: 'phased' or 'stepped'
   // MSSCI-12475: Expandable story section data
   sprintStories: SprintStory[] | null;  // All stories in current sprint
   epicContext: EpicContext | null;       // Current story's epic with siblings
   jiraUrl: string | null;                // Jira URL for current story
+  // MSSCI-14301: Available workflows for discovery panel
+  availableWorkflows: AvailableWorkflow[] | null;
 }
 
 // Parse session file for story info
@@ -201,6 +217,12 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
   // Parse workflow progress (uses projectDir for dynamic YAML-based phases)
   result.workflow = parseWorkflowProgress(content, projectDir);
 
+  // MSSCI-14300: Detect workflow type from phase names
+  if (result.workflow && result.workflow.length > 0) {
+    const allStepped = result.workflow.every(p => p.name.startsWith('step-'));
+    result.workflowType = allStepped ? 'stepped' : 'phased';
+  }
+
   // Parse acceptance criteria checkboxes
   result.criteria = parseAcceptanceCriteria(content);
 
@@ -252,6 +274,37 @@ export function parseWorkflowProgress(content: string, projectDir?: string): Wor
   if (projectDir && workflowName) {
     const phases = getWorkflowPhases(workflowName, projectDir);
     if (phases) {
+      // For stepped workflows, derive status from Current Step and Steps Completed
+      const currentStepMatch = content.match(/\*\*Current Step:\*\*\s*(\d+)/i) ||
+                               content.match(/^-\s*Current Step:\s*(\d+)/m);
+      if (currentStepMatch) {
+        const currentStep = parseInt(currentStepMatch[1], 10);
+        const completedMatch = content.match(/\*\*Steps Completed:\*\*\s*\[([^\]]*)\]/i) ||
+                               content.match(/^-\s*Steps Completed:\s*\[([^\]]*)\]/m);
+        const completedSteps = new Set<number>();
+        if (completedMatch && completedMatch[1].trim()) {
+          completedMatch[1].split(',').forEach(s => {
+            const n = parseInt(s.trim(), 10);
+            if (!isNaN(n)) completedSteps.add(n);
+          });
+        }
+        return phases.map((phase, index) => {
+          const stepNum = index + 1;
+          let status: 'done' | 'current' | 'pending';
+          if (completedSteps.has(stepNum)) {
+            status = 'done';
+          } else if (stepNum === currentStep) {
+            status = 'current';
+          } else if (stepNum < currentStep) {
+            // Steps before current are implicitly done
+            status = 'done';
+          } else {
+            status = 'pending';
+          }
+          return { ...phase, status };
+        });
+      }
+      // Fall back to phased workflow status resolution
       return buildWorkflowWithStatus(phases, content, currentPhase);
     }
   }
@@ -552,17 +605,24 @@ function normalizeStoryStatus(status: string | undefined | null): 'backlog' | 'i
 
 // Get workflow phases from workflow YAML definition
 // Checks multiple locations: .pennyfarthing/workflows/, .claude/workflows/, pennyfarthing-dist/workflows/
+// Supports both flat-file workflows (tdd.yaml) and subdirectory workflows (epics-and-stories/workflow.yaml)
 export function getWorkflowPhases(workflowName: string, projectDir: string): Omit<WorkflowPhase, 'status'>[] | null {
   try {
-    // Look for workflow YAML in multiple locations (in priority order)
-    const searchPaths = [
+    const workflowDirs = [
       // 1. Runtime via symlinks: .pennyfarthing/workflows/ (orchestrator pattern)
-      join(projectDir, '.pennyfarthing', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, '.pennyfarthing', 'workflows'),
       // 2. Legacy: .claude/workflows/
-      join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, '.claude', 'workflows'),
       // 3. Monorepo/dev: pennyfarthing-dist/workflows/
-      join(projectDir, 'pennyfarthing-dist', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, 'pennyfarthing-dist', 'workflows'),
     ];
+
+    // Look for workflow YAML: flat file first, then subdirectory pattern
+    const searchPaths: string[] = [];
+    for (const dir of workflowDirs) {
+      searchPaths.push(join(dir, `${workflowName}.yaml`));
+      searchPaths.push(join(dir, workflowName, 'workflow.yaml'));
+    }
 
     let workflowPath: string | null = null;
     for (const path of searchPaths) {
@@ -581,20 +641,134 @@ export function getWorkflowPhases(workflowName: string, projectDir: string): Omi
 
     // Support both flat structure (phases:) and nested structure (workflow.phases:)
     const phases = data?.workflow?.phases || data?.phases;
-    if (!phases || !Array.isArray(phases)) {
-      return null;
+    if (phases && Array.isArray(phases)) {
+      // Phased workflow (tdd, trivial, bdd, etc.)
+      return phases.map((phase: { name: string; agent: string; label?: string }) => ({
+        name: phase.name,
+        agent: phase.agent,
+        label: phase.label || phase.name,
+      }));
     }
 
-    // Map phases to WorkflowPhase objects (without status - that's determined at runtime)
-    return phases.map((phase: { name: string; agent: string; label?: string }) => ({
-      name: phase.name,
-      agent: phase.agent,
-      label: phase.label || phase.name,  // Default label to name if not provided
-    }));
+    // Stepped workflow (epics-and-stories, prd, research, etc.)
+    // Derive phases from step files in the steps/ directory
+    const workflowType = data?.workflow?.type || data?.type;
+    if (workflowType === 'stepped') {
+      const stepsDir = join(workflowPath, '..', 'steps');
+      if (existsSync(stepsDir)) {
+        const agent = data?.workflow?.agent || data?.agent || 'unknown';
+        const stepFiles = readdirSync(stepsDir)
+          .filter((f: string) => f.match(/^step-\d+.*\.md$/))
+          .sort();
+
+        if (stepFiles.length > 0) {
+          return stepFiles.map((file: string) => {
+            // Extract step number and name from filename: step-01-validate-prerequisites.md
+            const match = file.match(/^step-(\d+)-(.+)\.md$/);
+            const stepNum = match ? match[1] : '?';
+            const stepName = match ? match[2].replace(/-/g, ' ') : file;
+            return {
+              name: `step-${stepNum}`,
+              agent,
+              label: `Step ${parseInt(stepNum, 10)}`,
+            };
+          });
+        }
+      }
+    }
+
+    return null;
   } catch {
     // Malformed YAML or read error
     return null;
   }
+}
+
+// MSSCI-14301: Enumerate all available workflows from disk
+// Searches same 3 directories as getWorkflowPhases, discovers both flat and subdirectory workflows
+export function getAvailableWorkflows(projectDir: string): AvailableWorkflow[] {
+  const workflows: AvailableWorkflow[] = [];
+  const seen = new Set<string>();
+
+  const workflowDirs = [
+    join(projectDir, '.pennyfarthing', 'workflows'),
+    join(projectDir, '.claude', 'workflows'),
+    join(projectDir, 'pennyfarthing-dist', 'workflows'),
+  ];
+
+  for (const dir of workflowDirs) {
+    if (!existsSync(dir)) continue;
+
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const entryPath = join(dir, entry);
+
+      try {
+        // Flat YAML file (e.g., tdd.yaml)
+        if (entry.endsWith('.yaml') || entry.endsWith('.yml')) {
+          const content = readFileSync(entryPath, 'utf-8');
+          const data = parseYaml(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name)) continue;
+          seen.add(wf.name);
+
+          const type: 'phased' | 'stepped' = wf.type === 'stepped' ? 'stepped' : 'phased';
+          const result: AvailableWorkflow = {
+            name: wf.name,
+            type,
+            description: wf.description ?? '',
+          };
+          if (wf.triggers) {
+            const triggers: AvailableWorkflow['triggers'] = {};
+            if (wf.triggers.types) triggers.types = wf.triggers.types;
+            if (wf.triggers.tags) triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points) triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== undefined) triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        }
+        // Subdirectory workflow (e.g., architecture/workflow.yaml)
+        else if (statSync(entryPath).isDirectory()) {
+          const subYaml = join(entryPath, 'workflow.yaml');
+          if (!existsSync(subYaml)) continue;
+
+          const content = readFileSync(subYaml, 'utf-8');
+          const data = parseYaml(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name)) continue;
+          seen.add(wf.name);
+
+          const type: 'phased' | 'stepped' = wf.type === 'stepped' ? 'stepped' : 'phased';
+          const result: AvailableWorkflow = {
+            name: wf.name,
+            type,
+            description: wf.description ?? '',
+          };
+          if (wf.triggers) {
+            const triggers: AvailableWorkflow['triggers'] = {};
+            if (wf.triggers.types) triggers.types = wf.triggers.types;
+            if (wf.triggers.tags) triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points) triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== undefined) triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        }
+      } catch {
+        // Skip malformed files
+        continue;
+      }
+    }
+  }
+
+  return workflows;
 }
 
 // Get story info from session files
@@ -611,10 +785,13 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     pr: null,
     branch: null,
     criteria: null,
+    workflowType: null,
     // MSSCI-12475: Expandable story section
     sprintStories: null,
     epicContext: null,
     jiraUrl: null,
+    // MSSCI-14301: Available workflows
+    availableWorkflows: null,
   };
 
   try {
@@ -628,6 +805,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
         nullResult.sprint = parseSprintYaml(sprintContent);
         nullResult.sprintStories = getSprintStories(sprintContent);
       }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
       return nullResult;
     }
 
@@ -640,6 +818,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
         nullResult.sprint = parseSprintYaml(sprintContent);
         nullResult.sprintStories = getSprintStories(sprintContent);
       }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
       return nullResult;
     }
 
@@ -689,6 +868,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       sprint,
       nextAgent: storyInfo.nextAgent || null,
       workflow: storyInfo.workflow || null,
+      workflowType: storyInfo.workflowType || null,
       pr: storyInfo.pr || null,
       branch: storyInfo.branch || null,
       criteria: storyInfo.criteria || null,
@@ -696,6 +876,8 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       sprintStories,
       epicContext,
       jiraUrl: generateJiraUrl(jiraKey),
+      // MSSCI-14301: Available workflows
+      availableWorkflows: getAvailableWorkflows(projectDir),
     };
   } catch {
     return nullResult;
