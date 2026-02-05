@@ -111,22 +111,22 @@ export default function PersonaHeader(): React.ReactElement {
                 <span className="portrait-fallback">🤖</span>
               )}
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="default"
-                  className="persona-role"
-                  data-testid="persona-role"
-                  style={{ backgroundColor: roleColor }}
-                >
-                  {AGENT_ABBREV[role] || role}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>{role}</TooltipContent>
-            </Tooltip>
           </div>
           <div className="persona-info">
             <div className="persona-name-row">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="default"
+                    className="persona-role"
+                    data-testid="persona-role"
+                    style={{ backgroundColor: roleColor }}
+                  >
+                    {AGENT_ABBREV[role] || role}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{role}</TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
