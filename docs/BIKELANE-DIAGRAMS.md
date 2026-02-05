@@ -199,7 +199,7 @@ flowchart LR
 | Phase | Agent | Gate Condition |
 |-------|-------|----------------|
 | setup | SM | Session file and branches created |
-| impl | Dev | Existing tests still pass |
+| implement | Dev | Existing tests still pass |
 | review | Reviewer | Code review approved |
 | finish | SM | Session archived |
 
@@ -244,7 +244,7 @@ flowchart LR
 |-------|-------|----------------|
 | setup | SM | Session file created |
 | analyze | Orchestrator | Changes identified and documented |
-| impl | Orchestrator | Agent files parse correctly |
+| implement | Orchestrator | Agent files parse correctly |
 | review | Tech Writer | Documentation quality approved |
 | finish | SM | Session archived |
 

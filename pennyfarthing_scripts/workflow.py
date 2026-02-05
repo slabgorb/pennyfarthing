@@ -194,10 +194,10 @@ TDD_PHASE_OWNERS: dict[str, str] = {
 }
 
 # Phase ownership mapping for trivial workflow (no TEA)
-# Canonical YAML names: setup, impl, review, finish
+# Canonical YAML names: setup, implement, review, finish
 TRIVIAL_PHASE_OWNERS: dict[str, str] = {
     "setup": "sm",
-    "impl": "dev",
+    "implement": "dev",
     "review": "reviewer",
     "finish": "sm",
 }

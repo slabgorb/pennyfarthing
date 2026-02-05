@@ -43,7 +43,7 @@ fi
 | State | Condition |
 |-------|-----------|
 | `FINISH_STATE` | Session exists with Phase=approved OR Status=approved |
-| `IN_PROGRESS_STATE` | Phased workflow session with active phase (setup/red/green/impl/review) |
+| `IN_PROGRESS_STATE` | Phased workflow session with active phase (setup/red/green/implement/review) |
 | `STEPPED_WORKFLOW_STATE` | Stepped workflow session (workflow type = stepped) |
 | `NEW_WORK_STATE` | No sessions AND sprint has backlog/ready stories |
 | `EMPTY_BACKLOG_STATE` | No sessions AND sprint has NO backlog/ready stories |

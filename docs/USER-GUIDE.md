@@ -328,13 +328,7 @@ Agent-driven workflows where agents hand off between phases:
 | **trivial** | Quick fixes (1-2 pts) | SM → Dev (skip tests) → SM |
 | **agent-docs** | Documentation work | SM → Tech Writer → Reviewer → SM |
 
-**Example TDD Flow:**
-```
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐
-│   SM    │───►│   TEA   │───►│   Dev   │───►│ Reviewer │───►│   SM    │
-│ (setup) │    │ (tests) │    │ (impl)  │    │ (review) │    │(finish) │
-└─────────┘    └─────────┘    └─────────┘    └──────────┘    └─────────┘
-```
+**Example TDD Flow:** SM → TEA → Dev → Reviewer → SM (setup → red → green → review → finish)
 
 #### 2. Stepped Workflows (Progressive Disclosure)
 

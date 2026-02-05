@@ -166,7 +166,7 @@ SM → TEA → Dev → Reviewer → SM
 ### Trivial (for 1-2 point fixes)
 
 ```
-setup → impl → review → finish
+setup → implement → review → finish
 SM → Dev → Reviewer → SM
 ```
 
@@ -177,7 +177,7 @@ SM → Dev → Reviewer → SM
 ### Agent-Docs (for process documentation)
 
 ```
-setup → analyze → impl → review → finish
+setup → analyze → implement → review → finish
 SM → Orchestrator → Orchestrator → Tech Writer → SM
 ```
 
@@ -295,7 +295,7 @@ Fix session file when handoffs didn't update phase tracking properly. This corre
 | Workflow | Phase Sequence |
 |----------|----------------|
 | `tdd` | setup → red → green → review → approved → finish |
-| `trivial` | setup → impl → review → approved → finish |
+| `trivial` | setup → implement → review → approved → finish |
 
 **What it updates:**
 1. `**Phase:**` field to target phase
