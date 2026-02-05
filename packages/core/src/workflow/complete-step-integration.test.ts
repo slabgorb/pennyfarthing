@@ -127,7 +127,8 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
   describe('CLI exposure: complete-step.sh script exists', () => {
     it('should have complete-step.sh in workflow scripts', () => {
       // The script should exist in pennyfarthing-dist/scripts/workflow/
-      const projectRoot = resolve(__dirname, '../../../../..');
+      // __dirname is packages/core/dist/workflow/ → 4 levels up = pennyfarthing repo root
+      const projectRoot = resolve(__dirname, '../../../..');
       const scriptPath = resolve(
         projectRoot,
         'pennyfarthing-dist/scripts/workflow/complete-step.sh'
@@ -139,7 +140,7 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
     });
 
     it('should have complete-step.sh be executable', () => {
-      const projectRoot = resolve(__dirname, '../../../../..');
+      const projectRoot = resolve(__dirname, '../../../..');
       const scriptPath = resolve(
         projectRoot,
         'pennyfarthing-dist/scripts/workflow/complete-step.sh'
