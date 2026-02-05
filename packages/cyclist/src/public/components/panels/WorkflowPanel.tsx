@@ -3,6 +3,8 @@
  *
  * Extracted from ProgressPanel as part of MSSCI-14188.
  * Shows workflow type badge (TDD/BDD/Trivial) and phase progress.
+ * MSSCI-14300: Added stepped workflow "Step N of M" display.
+ * MSSCI-14301: Added available workflows discovery list.
  *
  * Story: MSSCI-14188 - Split Progress panel into Workflow, AC, and Todo panels
  * Epic: epic-76 (Dockview Panel Migration)
@@ -12,7 +14,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStory } from '../../hooks/useStory';
-import type { WorkflowPhase } from '../../../story-parser.js';
+import type { WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
 
 // =============================================================================
 // Helper Functions
@@ -42,7 +44,7 @@ function formatWorkflowType(type: string | null): string {
 }
 
 // =============================================================================
-// Phase Step Component
+// Phase Step Component (for phased workflows)
 // =============================================================================
 
 function PhaseStep({ phase, isLast }: { phase: WorkflowPhase; isLast: boolean }): React.ReactElement {
@@ -61,11 +63,69 @@ function PhaseStep({ phase, isLast }: { phase: WorkflowPhase; isLast: boolean })
 }
 
 // =============================================================================
+// Stepped Progress Component (for stepped workflows)
+// =============================================================================
+
+function SteppedProgress({ phases }: { phases: WorkflowPhase[] }): React.ReactElement {
+  const total = phases.length;
+  const currentIndex = phases.findIndex(p => p.status === 'current');
+  const doneCount = phases.filter(p => p.status === 'done').length;
+
+  // If all done, current step = total; otherwise use 1-based index of current
+  const currentStep = currentIndex >= 0 ? currentIndex + 1 : (doneCount === total ? total : 1);
+  const currentPhase = currentIndex >= 0 ? phases[currentIndex] : null;
+
+  return (
+    <div className="stepped-progress">
+      <span className="stepped-counter">Step {currentStep} of {total}</span>
+      {currentPhase && (
+        <span className="stepped-current-label">{currentPhase.label}</span>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Available Workflows List (MSSCI-14301)
+// =============================================================================
+
+function AvailableWorkflowsList({ workflows }: { workflows: AvailableWorkflow[] }): React.ReactElement {
+  return (
+    <div className="available-workflows">
+      <div className="available-workflows-header">
+        <span className="available-workflows-title">Available Workflows ({workflows.length})</span>
+      </div>
+      <div className="available-workflows-list">
+        {workflows.map((wf) => (
+          <div
+            key={wf.name}
+            className="workflow-entry"
+            data-testid="workflow-entry"
+            data-workflow-entry-type={wf.type}
+          >
+            <div className="workflow-entry-header">
+              <span className="workflow-entry-name">{wf.name}</span>
+              <Badge variant="outline" className="workflow-entry-type-badge">
+                {wf.type}
+              </Badge>
+            </div>
+            <div className="workflow-entry-description">{wf.description}</div>
+            {wf.type === 'stepped' && (
+              <div className="workflow-entry-hint">/workflow start {wf.name}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
 // WorkflowPanel Component
 // =============================================================================
 
 export function WorkflowPanel(): React.ReactElement {
-  const { story, isLoading, error } = useStory();
+  const { story, isLoading, error, availableWorkflows } = useStory();
 
   if (isLoading) {
     return (
@@ -92,8 +152,17 @@ export function WorkflowPanel(): React.ReactElement {
 
   const workflowType = story?.workflow ?? null;
   const phases = story?.workflowPhases ?? null;
+  const isStepped = story?.workflowType === 'stepped';
 
   if (!workflowType && (!phases || phases.length === 0)) {
+    // MSSCI-14301: Show available workflows when no active workflow
+    if (availableWorkflows && availableWorkflows.length > 0) {
+      return (
+        <div className="workflow-panel" data-testid="workflow-panel">
+          <AvailableWorkflowsList workflows={availableWorkflows} />
+        </div>
+      );
+    }
     return (
       <div className="workflow-panel" data-testid="workflow-panel">
         <div className="placeholder">No active workflow</div>
@@ -111,15 +180,19 @@ export function WorkflowPanel(): React.ReactElement {
         </Badge>
 
         {phases && phases.length > 0 && (
-          <div className="phase-progress">
-            {phases.map((phase, index) => (
-              <PhaseStep
-                key={phase.name}
-                phase={phase}
-                isLast={index === phases.length - 1}
-              />
-            ))}
-          </div>
+          isStepped ? (
+            <SteppedProgress phases={phases} />
+          ) : (
+            <div className="phase-progress">
+              {phases.map((phase, index) => (
+                <PhaseStep
+                  key={phase.name}
+                  phase={phase}
+                  isLast={index === phases.length - 1}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>

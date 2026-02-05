@@ -46,3 +46,33 @@ export {
 // to keep all workflow definition types in one place.
 // The workflow-permissions.ts module has its own copy for backwards
 // compatibility but workflow-schema.ts is the canonical source.
+
+// Session state tracking (Story MSSCI-12082, wired in MSSCI-14299)
+export {
+  initWorkflowState,
+  updateWorkflowState,
+  parseSessionState,
+  updateSessionContent,
+  formatWorkflowState,
+  type WorkflowState,
+  type SessionStateResult,
+  type UpdateResult,
+} from './session-state.js';
+
+// Workflow executor - step completion and lifecycle (Story MSSCI-12084, wired in MSSCI-14299)
+// Note: WorkflowDefinition from executor is re-exported as ExecutorWorkflowDefinition
+// to avoid conflict with WorkflowDefinition from workflow-schema.ts
+export {
+  completeStep,
+  startWorkflow,
+  resumeWorkflow,
+  getWorkflowStatus,
+  loadStep,
+  hasActiveWorkflow,
+  detectIncompleteWorkflow,
+  type WorkflowDefinition as ExecutorWorkflowDefinition,
+  type StartResult,
+  type ResumeResult,
+  type WorkflowStatus,
+  type StatusResult,
+} from './workflow-executor.js';

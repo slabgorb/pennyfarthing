@@ -23,7 +23,7 @@ workflow:
         type: manual
         condition: Changes identified and documented
 
-    - name: impl
+    - name: implement
       agent: orchestrator
       input: [audit_report, proposed_changes]
       output: [updated_files]

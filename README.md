@@ -151,12 +151,6 @@ BikeLane is the umbrella workflow system supporting two types:
 
 ### Example: TDD Workflow (Phased)
 
-```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
-         │     │     │       │
-      setup  tests  impl   review
-```
-
 | Agent | Role | Phase |
 |-------|------|-------|
 | **SM** | Scrum Master | Story selection, session setup, completion |

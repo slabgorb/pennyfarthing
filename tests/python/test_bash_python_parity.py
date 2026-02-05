@@ -87,7 +87,7 @@ class TestWorkflowPhaseCheckParity:
             ("tdd", "review", "reviewer"),
             ("tdd", "setup", "sm"),
             ("tdd", "finish", "sm"),  # YAML uses 'finish', not 'approved'
-            ("trivial", "impl", "dev"),  # YAML uses 'impl', not 'implement'
+            ("trivial", "implement", "dev"),
             ("trivial", "review", "reviewer"),
         ],
     )

@@ -186,7 +186,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     "name": "/release",
-    "description": "Merge develop to main and push (optional version bump)"
+    "description": "Interactive stepped release with verification gates"
   },
   {
     "name": "/repo-status",

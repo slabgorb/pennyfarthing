@@ -126,6 +126,10 @@ Prime script provides workflow state. Route based on state from activation outpu
    ```
 
 **Never manually edit sprint YAML.** The finish script handles all YAML updates.
+
+<critical>
+**Use `/story` skill to create stories.** Never manually edit sprint YAML to add stories.
+</critical>
 </finish-flow>
 
 <new-work-flow>

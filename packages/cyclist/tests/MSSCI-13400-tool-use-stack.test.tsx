@@ -113,12 +113,13 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
         const stacks = groupToolsIntoStacks(messages);
 
-        // First group has 2 tools (stacked), trailing single tool renders normally (not stacked)
-        expect(stacks).toHaveLength(1);
+        // First group has 2 tools, trailing single tool also gets its own stack
+        expect(stacks).toHaveLength(2);
         expect(stacks[0].tools).toHaveLength(2);
+        expect(stacks[1].tools).toHaveLength(1);
       });
 
-      it('should not create a stack for a single tool_use (renders normally)', () => {
+      it('should create a stack for a single tool_use (consistent rendering)', () => {
         const messages = [
           createAssistantMessage('Let me check', 1000),
           createToolUse('Read', 'tool-1', { file_path: '/a.ts' }, 2000),
@@ -127,8 +128,9 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
         const stacks = groupToolsIntoStacks(messages);
 
-        // Single tools should not be wrapped in a stack
-        expect(stacks).toHaveLength(0);
+        // Single tools are wrapped in a stack for consistent rendering
+        expect(stacks).toHaveLength(1);
+        expect(stacks[0].tools).toHaveLength(1);
       });
 
       it('should assign unique stackId to each stack', () => {
