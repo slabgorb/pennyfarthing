@@ -35,6 +35,11 @@ from pennyfarthing_scripts.sprint.cli import sprint
 
 cli.add_command(sprint)
 
+# Import and register hotspots group
+from pennyfarthing_scripts.hotspots.cli import hotspots
+
+cli.add_command(hotspots)
+
 
 @cli.group()
 def agent():
