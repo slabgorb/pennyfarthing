@@ -11,6 +11,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.4.0] - 2026-02-05
+
+### Added
+
+- **Tufte-Inspired Message Redesign** - Stripped chat bubbles, messages flow as typographic content with turn-based grouping, speaker labels, and indented left-border tool calls (Cyclist)
+- **Per-Message Persona Identity** - Agent messages stamped with persona at creation time; avatar, name, and role badge persist even after persona switches (Cyclist)
+- **Message View Identity Labels** - Turn labels show persona character name + GitHub username instead of generic "Agent"/"You", with colored role badges (Cyclist)
+- **SubagentSpan Tufte Redesign** - Subagent blocks match indented left-border style, default collapsed with truncated prompts and persistent collapse state across remounts (Cyclist)
+- **Full File Tree in Changed Panel** - Replaced flat FileTree with full directory tree using `/api/files` for lazy directory listing (Cyclist)
+- **Available Workflows Panel** - WorkflowPanel shows available workflows with stepped workflow display (MSSCI-14301)
+- **Subdirectory Workflow Lookup** - Workflows discovered from subdirectory `.pennyfarthing/workflows/` paths (MSSCI-14300)
+- **Stepped Workflow State Advancement** - BikeLane stepped workflow session state wired up via `complete-step` CLI (MSSCI-14299)
+- **Sprint YAML Toolchain** - `yaml_io` module with deterministic serialization, `sprint validate --fix`, `sprint story add`, `sprint story update` commands (76-1 through 76-4)
+- **Pre-Commit YAML Validation** - Sprint YAML validated in pre-commit hook
+- **Git Hotspot Detector** - Identifies frequently-changed files via git history analysis (MSSCI-14283)
+
+### Changed
+
+- **Enlarged Persona Portrait** - Portrait enlarged from 40px to 100px with collapsible compact mode (Cyclist)
+- **Abbreviated Role Badges** - Role badges show compact abbreviations (DEV, SM, TEA, REV, etc.) instead of full names
+- **Relay Mode Icon** - Changed from bicycle emoji to hand-raise emoji
+- **User Message Alignment** - User messages right-aligned with right-side blockquote border to visually differentiate from agent messages (Cyclist)
+- **Tool Call Spacing** - Increased vertical margin between tool blocks and messages for better readability (Cyclist)
+- **Phase Name Standardization** - Renamed `impl` to `implement` across codebase
+- **complete-step CLI** - Rewritten from bash to Python
+
+### Fixed
+
+- **Settings Persistence** - Color preset and font choices now survive restart; `GET /api/settings` reads `display` and `notifications` from config.local.yaml (Cyclist)
+- **Font Picker Overflow** - Constrained dropdown to max-height, rewrote monospace detection via OpenType `post` table instead of broken canvas hack, cached results in localStorage
+- **Monospace Font Detection** - OpenType `isFixedPitch` field used instead of unreliable canvas width comparison
+- **SubagentSpan Re-Expanding** - Collapse state persisted via ref across React remounts caused by turn-group key changes (Cyclist)
+- **Single Tool Call Grouping** - Single tool calls now grouped into stacks for consistent rendering
+- **Discworld Persona ShortNames** - Aligned shortNames with characters after Job Fair audit
+
+---
+
 ## [9.3.0] - 2026-02-05
 
 ### Added
