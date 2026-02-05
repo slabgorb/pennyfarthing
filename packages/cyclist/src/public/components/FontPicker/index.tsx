@@ -120,11 +120,37 @@ interface FontDataEntry {
   blob: () => Promise<Blob>;
 }
 
-let systemFontsCache: SystemFont[] | null = null;
+const FONT_CACHE_KEY = 'cyclist-system-fonts';
+
+interface FontCacheData {
+  fonts: SystemFont[];
+  count: number; // number of font families — if it changes, fonts were installed/removed
+}
+
+function loadCachedFonts(): SystemFont[] | null {
+  try {
+    const raw = localStorage.getItem(FONT_CACHE_KEY);
+    if (!raw) return null;
+    const data: FontCacheData = JSON.parse(raw);
+    if (data.fonts?.length > 0) return data.fonts;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedFonts(fonts: SystemFont[], count: number): void {
+  try {
+    const data: FontCacheData = { fonts, count };
+    localStorage.setItem(FONT_CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // localStorage full or unavailable — not critical
+  }
+}
+
 let systemFontsPromise: Promise<SystemFont[]> | null = null;
 
 async function getSystemFonts(): Promise<SystemFont[]> {
-  if (systemFontsCache) return systemFontsCache;
   if (systemFontsPromise) return systemFontsPromise;
 
   systemFontsPromise = (async () => {
@@ -143,6 +169,25 @@ async function getSystemFonts(): Promise<SystemFont[]> {
         }
       }
 
+      const familyCount = familyMap.size;
+
+      // Check localStorage cache — reuse if font count hasn't changed
+      const cached = loadCachedFonts();
+      if (cached && cached.length > 0) {
+        // Load raw cached data to check count
+        try {
+          const raw = localStorage.getItem(FONT_CACHE_KEY);
+          if (raw) {
+            const data: FontCacheData = JSON.parse(raw);
+            if (data.count === familyCount) {
+              return cached;
+            }
+          }
+        } catch {
+          // Fall through to re-detect
+        }
+      }
+
       // Detect monospace via post table in parallel
       const entries = Array.from(familyMap.entries());
       const monoResults = await Promise.all(
@@ -155,7 +200,7 @@ async function getSystemFonts(): Promise<SystemFont[]> {
       }));
 
       result.sort((a, b) => a.family.localeCompare(b.family));
-      systemFontsCache = result;
+      saveCachedFonts(result, familyCount);
       return result;
     } catch {
       // Permission denied or API error
