@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v9.3.0** | *The outer loop goes once, the inner loop goes many times.*
+**v9.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -31,7 +31,7 @@ A scientific study of how strong personalities affect AI agent behavior:
 - **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
-The 124 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The 97 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. Integration & Tooling
 
@@ -43,7 +43,7 @@ The 124 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instrument
 
 ### [**Explore the Research Showcase**](https://animated-meme-3e4494y.pages.github.io/)
 
-124 themes with OCEAN spider charts, benchmark tiers, and character profiles.
+97 themes with OCEAN spider charts, benchmark tiers, and character profiles.
 
 ---
 
@@ -115,7 +115,7 @@ Cyclist renders tool use as human-readable summaries instead of raw JSON. Consec
 
 ### Agent Portraits
 
-Each of the 124 persona characters has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+Each of the 97 persona characters has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
 ## Prime Context System
 
@@ -209,7 +209,7 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
 | [Cyclist](docs/CYCLIST.md) | Visual terminal documentation |
 
-## Available Themes (124)
+## Available Themes (97)
 
 Core includes 26 themes. Optional theme packs add 98 more across 7 packages:
 
