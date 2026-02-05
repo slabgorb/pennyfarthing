@@ -1,6 +1,7 @@
 /* Tailwind CSS for Cyclist React components */
 
 @import "tailwindcss";
+@config "../../../tailwind.config.js";
 
 /* =============================================================================
    Docking Workspace Styles
@@ -2313,30 +2314,210 @@
 }
 
 .settings-panel .toggle-setting {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 36px 1fr;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
+  gap: 4px 8px;
+  padding: 4px 0;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
-.settings-panel .toggle-setting input {
-  accent-color: var(--accent-color, #007acc);
-}
-
 .settings-panel .setting-description {
-  width: 100%;
+  grid-column: 2;
   font-size: 0.7rem;
   color: var(--text-secondary, #8b8b8b);
-  margin-left: 24px;
-  margin-top: -4px;
+}
+
+/* Switch (Radix) - explicit colors since Tailwind v4 data-[state] variants don't generate */
+.cyclist-switch {
+  background: var(--bg-tertiary, #2d2d2d);
+  border-color: var(--border-color, #3c3c3c);
+}
+
+.cyclist-switch[data-state="checked"] {
+  background: var(--accent, #4f46e5);
+  border-color: var(--accent, #4f46e5);
+}
+
+.cyclist-switch-thumb {
+  background: var(--text-primary, #e4e4e7);
 }
 
 /* ThemePalette in settings - ensure solid background for dropdown */
 .settings-panel .theme-palette-menu {
   background: var(--bg-secondary, #252526);
+}
+
+/* Audit Log panel - Tufte-inspired: maximize data-ink, minimize chrome */
+.audit-log-panel {
+  font-size: 0.8rem;
+}
+
+.audit-log-panel .audit-log-stats {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.audit-log-panel .audit-log-stats .text-success {
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.audit-log-panel .audit-log-stats .text-error {
+  color: var(--error, #ef4444);
+}
+
+/* Only highlight error count when there are actual errors */
+.audit-log-panel .audit-log-stats .text-error:has(strong:empty),
+.audit-log-panel .audit-log-stats .text-error strong:only-child {
+  opacity: 0.6;
+}
+
+.audit-log-panel .audit-log-toolbar {
+  gap: 6px;
+}
+
+.audit-log-panel select {
+  padding: 4px 8px;
+  background: var(--bg-tertiary, #2d2d2d);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  color: var(--text-primary, #d4d4d4);
+  font-size: 0.75rem;
+}
+
+.audit-log-panel .audit-log-btn {
+  padding: 4px 10px !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.7rem;
+  font-weight: normal;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.audit-log-panel .audit-log-btn:hover {
+  background: var(--bg-tertiary, #2d2d2d) !important;
+  color: var(--text-primary, #d4d4d4);
+  opacity: 1;
+}
+
+.audit-log-panel .audit-log-btn-clear {
+  color: var(--error, #ef4444);
+  border-color: transparent !important;
+  background: transparent;
+  opacity: 0.6;
+}
+
+.audit-log-panel .audit-log-btn-clear:hover {
+  opacity: 1;
+  background: transparent;
+}
+
+.audit-log-panel table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.audit-log-panel thead th {
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #666);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+  padding: 6px 8px;
+  background: var(--bg-primary, #1e1e1e);
+}
+
+.audit-log-panel tbody tr {
+  border-bottom: none;
+}
+
+.audit-log-panel tbody td {
+  padding: 3px 8px;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.75rem;
+}
+
+.audit-log-panel tbody tr:hover {
+  background: var(--bg-secondary, #252526);
+}
+
+.audit-log-panel tbody .tool-name {
+  font-weight: 500;
+}
+.audit-log-panel tbody .tool-name[data-tool="read"] { color: var(--tool-read-color, #3b82f6); }
+.audit-log-panel tbody .tool-name[data-tool="write"] { color: var(--tool-write-color, #f97316); }
+.audit-log-panel tbody .tool-name[data-tool="bash"] { color: var(--tool-bash-color, #22c55e); }
+.audit-log-panel tbody .tool-name[data-tool="glob"] { color: var(--tool-glob-color, #a855f7); }
+.audit-log-panel tbody .tool-name[data-tool="grep"] { color: var(--tool-grep-color, #06b6d4); }
+.audit-log-panel tbody .tool-name[data-tool="edit"] { color: var(--tool-edit-color, #eab308); }
+.audit-log-panel tbody .tool-name[data-tool="task"] { color: var(--tool-task-color, #ec4899); }
+.audit-log-panel tbody .tool-name[data-tool="skill"] { color: var(--text-secondary, #8b8b8b); }
+
+.audit-log-panel tbody .status-ok {
+  color: var(--success, #22c55e);
+  opacity: 0.4;
+}
+
+.audit-log-panel tbody .status-err {
+  color: var(--error, #ef4444);
+  opacity: 0.9;
+}
+
+.audit-log-panel .expanded-detail {
+  background: var(--bg-secondary, #252526);
+}
+
+.audit-log-panel .expanded-detail > td {
+  padding: 8px 12px !important;
+}
+
+.audit-log-panel .detail-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  font-size: 0.72rem;
+}
+
+.audit-log-panel .detail-row {
+  display: contents;
+}
+
+.audit-log-panel .detail-label {
+  color: var(--text-muted, #666);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding: 1px 0;
+}
+
+.audit-log-panel .detail-value {
+  color: var(--text-primary, #d4d4d4);
+  word-break: break-all;
+  padding: 1px 0;
+}
+
+.audit-log-panel .detail-output {
+  margin-top: 6px;
+}
+
+.audit-log-panel .detail-output .detail-label {
+  margin-bottom: 3px;
+}
+
+.audit-log-panel .expanded-detail pre {
+  background: var(--bg-tertiary, #2d2d2d);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  overflow-x: auto;
+  max-height: 10rem;
+  color: var(--text-secondary, #8b8b8b);
+  margin: 0;
 }
 
 /* Changed panel (FileTree) */

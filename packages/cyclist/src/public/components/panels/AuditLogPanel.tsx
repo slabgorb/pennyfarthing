@@ -19,6 +19,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 // Types
 // =============================================================================
 
+interface DiffSummary {
+  added: number;
+  removed: number;
+}
+
+interface OutputSummary {
+  firstLines: string[];
+  lastLines: string[];
+  totalLines: number;
+  truncated: boolean;
+}
+
 interface ToolEvent {
   toolName: string;
   input?: string;
@@ -27,6 +39,23 @@ interface ToolEvent {
   success: boolean;
   error?: string;
   timestamp: number;
+  // File enrichment (Read/Edit/Write)
+  filePath?: string;
+  fileSize?: number;
+  lineCount?: number;
+  language?: string;
+  gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
+  diff?: DiffSummary;
+  // Bash enrichment
+  command?: string;
+  exitCode?: number | null;
+  outputSummary?: OutputSummary;
+  workingDirectory?: string;
+  // Task enrichment
+  subagentType?: string;
+  promptSummary?: string;
+  resultSummary?: string;
+  isBackground?: boolean;
 }
 
 interface AuditLogStats {
@@ -54,6 +83,32 @@ function truncateInput(input: string | undefined, maxLength = 60): string {
   if (!input) return '-';
   if (input.length <= maxLength) return input;
   return input.substring(0, maxLength) + '...';
+}
+
+function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatFilePath(path: string | undefined): string {
+  if (!path) return '';
+  // Show last 3 segments for brevity
+  const parts = path.split('/');
+  if (parts.length <= 3) return path;
+  return '.../' + parts.slice(-3).join('/');
+}
+
+/** Render enrichment detail rows as label/value pairs */
+function DetailRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  if (value === undefined || value === null || value === '') return null;
+  return (
+    <div className="detail-row">
+      <span className="detail-label">{label}</span>
+      <span className={mono ? 'detail-value font-mono' : 'detail-value'}>{value}</span>
+    </div>
+  );
 }
 
 // =============================================================================
@@ -222,11 +277,10 @@ export function AuditLogPanel(): React.ReactElement {
       )}
 
       {/* Filters and Actions */}
-      <div className="audit-log-toolbar flex gap-2 p-2 items-center flex-wrap">
+      <div className="audit-log-toolbar flex p-2 items-center">
         <select
           value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
-          className="audit-log-select px-2 py-1 bg-surface border border-border rounded text-sm"
         >
           <option value="">All Tools</option>
           {toolTypes.map(type => (
@@ -237,7 +291,6 @@ export function AuditLogPanel(): React.ReactElement {
         <select
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
-          className="audit-log-select px-2 py-1 bg-surface border border-border rounded text-sm"
         >
           <option value="">All Status</option>
           <option value="success">Success</option>
@@ -248,12 +301,7 @@ export function AuditLogPanel(): React.ReactElement {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('json')}
-              className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
-            >
+            <Button variant="ghost" size="sm" className="audit-log-btn" onClick={() => handleExport('json')}>
               JSON
             </Button>
           </TooltipTrigger>
@@ -261,12 +309,7 @@ export function AuditLogPanel(): React.ReactElement {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('csv')}
-              className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
-            >
+            <Button variant="ghost" size="sm" className="audit-log-btn" onClick={() => handleExport('csv')}>
               CSV
             </Button>
           </TooltipTrigger>
@@ -274,49 +317,41 @@ export function AuditLogPanel(): React.ReactElement {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClear}
-              className="audit-log-btn px-2 py-1 bg-surface border border-error text-error rounded text-sm hover:bg-error hover:text-white"
-            >
+            <Button variant="ghost" size="sm" className="audit-log-btn audit-log-btn-clear" onClick={handleClear}>
               Clear
             </Button>
           </TooltipTrigger>
           <TooltipContent>Clear audit log</TooltipContent>
         </Tooltip>
       </div>
-      <Separator />
 
       {/* Entries List */}
       <ScrollArea className="audit-log-entries flex-1">
         {entries.length === 0 ? (
           <div className="p-4 text-muted text-center">No entries</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-surface">
-              <tr className="border-b border-border">
-                <th className="p-2 text-left text-muted font-normal">Time</th>
-                <th className="p-2 text-left text-muted font-normal">Tool</th>
-                <th className="p-2 text-left text-muted font-normal">Input</th>
-                <th className="p-2 text-right text-muted font-normal">Duration</th>
-                <th className="p-2 text-center text-muted font-normal">Status</th>
+          <table>
+            <thead>
+              <tr>
+                <th className="text-left">Time</th>
+                <th className="text-left">Tool</th>
+                <th className="text-left">Input</th>
+                <th className="text-right">Duration</th>
+                <th className="text-center">Status</th>
               </tr>
             </thead>
             <tbody>
               {entries.map((entry, idx) => (
                 <React.Fragment key={`${entry.timestamp}-${idx}`}>
                   <tr
-                    className={`border-b border-border/50 hover:bg-hover cursor-pointer ${
-                      expandedEntry === idx ? 'bg-hover' : ''
-                    }`}
+                    className={expandedEntry === idx ? 'expanded' : ''}
                     onClick={() => setExpandedEntry(expandedEntry === idx ? null : idx)}
                   >
-                    <td className="p-2 text-muted whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       {formatTimestamp(entry.timestamp)}
                     </td>
-                    <td className="p-2 font-mono">{entry.toolName}</td>
-                    <td className="p-2 text-muted truncate max-w-[200px]">
+                    <td className="tool-name font-mono" data-tool={entry.toolName.toLowerCase()}>{entry.toolName}</td>
+                    <td className="truncate max-w-[200px]">
                       {entry.input ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -328,16 +363,16 @@ export function AuditLogPanel(): React.ReactElement {
                         truncateInput(entry.input)
                       )}
                     </td>
-                    <td className="p-2 text-right text-muted whitespace-nowrap">
+                    <td className="text-right whitespace-nowrap">
                       {formatDuration(entry.durationMs)}
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="text-center">
                       {entry.success ? (
-                        <span className="text-success">✓</span>
+                        <span className="status-ok">✓</span>
                       ) : (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="text-error">✗</span>
+                            <span className="status-err">✗</span>
                           </TooltipTrigger>
                           <TooltipContent>{entry.error}</TooltipContent>
                         </Tooltip>
@@ -345,35 +380,74 @@ export function AuditLogPanel(): React.ReactElement {
                     </td>
                   </tr>
                   {expandedEntry === idx && (
-                    <tr className="bg-surface-alt">
-                      <td colSpan={5} className="p-3">
-                        <div className="space-y-2 text-sm">
-                          {entry.input && (
-                            <div>
-                              <div className="text-muted text-xs mb-1">Input:</div>
-                              <pre className="bg-surface p-2 rounded overflow-x-auto max-h-32 text-xs">
-                                {entry.input}
-                              </pre>
-                            </div>
+                    <tr className="expanded-detail">
+                      <td colSpan={5}>
+                        <div className="detail-grid">
+                          {/* Common fields */}
+                          <DetailRow label="Tool" value={entry.toolName} />
+                          <DetailRow label="Duration" value={entry.durationMs !== undefined ? formatDuration(entry.durationMs) : undefined} />
+                          {entry.exitCode !== undefined && entry.exitCode !== null && (
+                            <DetailRow label="Exit Code" value={entry.exitCode} mono />
                           )}
-                          {entry.output && (
-                            <div>
-                              <div className="text-muted text-xs mb-1">Output:</div>
-                              <pre className="bg-surface p-2 rounded overflow-x-auto max-h-32 text-xs">
-                                {entry.output.substring(0, 500)}
-                                {entry.output.length > 500 && '...'}
-                              </pre>
-                            </div>
+
+                          {/* File enrichment (Read/Edit/Write) */}
+                          <DetailRow label="File" value={entry.filePath} mono />
+                          {entry.language && <DetailRow label="Language" value={entry.language} />}
+                          {entry.fileSize !== undefined && <DetailRow label="Size" value={formatBytes(entry.fileSize)} />}
+                          {entry.lineCount !== undefined && <DetailRow label="Lines" value={entry.lineCount.toLocaleString()} />}
+                          {entry.gitStatus && <DetailRow label="Git" value={entry.gitStatus} />}
+                          {entry.diff && (
+                            <DetailRow label="Diff" value={
+                              <span>
+                                <span style={{color: 'var(--success, #22c55e)'}}>+{entry.diff.added}</span>
+                                {' '}
+                                <span style={{color: 'var(--error, #ef4444)'}}>-{entry.diff.removed}</span>
+                              </span>
+                            } />
                           )}
-                          {entry.error && (
-                            <div>
-                              <div className="text-error text-xs mb-1">Error:</div>
-                              <pre className="bg-surface p-2 rounded text-error text-xs">
-                                {entry.error}
-                              </pre>
-                            </div>
-                          )}
+
+                          {/* Bash enrichment */}
+                          {entry.command && <DetailRow label="Command" value={entry.command} mono />}
+                          {entry.workingDirectory && <DetailRow label="CWD" value={formatFilePath(entry.workingDirectory)} mono />}
+
+                          {/* Task enrichment */}
+                          {entry.subagentType && <DetailRow label="Agent" value={entry.subagentType} />}
+                          {entry.isBackground && <DetailRow label="Background" value="Yes" />}
+                          {entry.promptSummary && <DetailRow label="Prompt" value={entry.promptSummary} />}
+                          {entry.resultSummary && <DetailRow label="Result" value={entry.resultSummary} />}
                         </div>
+
+                        {/* Output summary (Bash) */}
+                        {entry.outputSummary && entry.outputSummary.totalLines > 0 && (
+                          <div className="detail-output">
+                            <div className="detail-label">Output ({entry.outputSummary.totalLines} lines{entry.outputSummary.truncated ? ', truncated' : ''})</div>
+                            <pre>{entry.outputSummary.firstLines.join('\n')}{entry.outputSummary.truncated && entry.outputSummary.lastLines.length > 0 ? '\n...\n' + entry.outputSummary.lastLines.join('\n') : ''}</pre>
+                          </div>
+                        )}
+
+                        {/* Raw input (fallback when no enrichment) */}
+                        {entry.input && !entry.command && !entry.filePath && !entry.subagentType && (
+                          <div className="detail-output">
+                            <div className="detail-label">Input</div>
+                            <pre>{entry.input}</pre>
+                          </div>
+                        )}
+
+                        {/* Raw output (when no outputSummary) */}
+                        {entry.output && !entry.outputSummary && (
+                          <div className="detail-output">
+                            <div className="detail-label">Output</div>
+                            <pre>{entry.output.substring(0, 500)}{entry.output.length > 500 && '...'}</pre>
+                          </div>
+                        )}
+
+                        {/* Error */}
+                        {entry.error && (
+                          <div className="detail-output">
+                            <div className="detail-label status-err">Error</div>
+                            <pre className="status-err">{entry.error}</pre>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )}
