@@ -1,8 +1,8 @@
 #!/bin/bash
-# test_complete_step.sh - Unit tests for complete-step.sh
+# test_complete_step.sh - Unit tests for complete-step.py
 # Story: MSSCI-14299 - Wire up stepped workflow session state advancement
 #
-# Tests that complete-step.sh correctly advances session state:
+# Tests that complete-step.py correctly advances session state:
 # AC1: Session file Current Step increments when a step completes
 # AC2: Session file Steps Completed array populates correctly
 # AC3: Session file Status changes to completed when all steps done
@@ -11,7 +11,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-COMPLETE_STEP="$PROJECT_DIR/pennyfarthing-dist/scripts/workflow/complete-step.sh"
+COMPLETE_STEP="$PROJECT_DIR/pennyfarthing-dist/scripts/workflow/complete-step.py"
 
 # Create temp directory for test fixtures
 TMPDIR=$(mktemp -d)
@@ -222,18 +222,18 @@ echo ""
 echo "--- Script Existence ---"
 
 if [[ -f "$COMPLETE_STEP" ]]; then
-    echo "PASS: complete-step.sh exists"
+    echo "PASS: complete-step.py exists"
     ((PASS++))
 else
-    echo "FAIL: complete-step.sh does not exist at $COMPLETE_STEP"
+    echo "FAIL: complete-step.py does not exist at $COMPLETE_STEP"
     ((FAIL++))
 fi
 
 if [[ -x "$COMPLETE_STEP" ]]; then
-    echo "PASS: complete-step.sh is executable"
+    echo "PASS: complete-step.py is executable"
     ((PASS++))
 else
-    echo "FAIL: complete-step.sh is not executable"
+    echo "FAIL: complete-step.py is not executable"
     ((FAIL++))
 fi
 

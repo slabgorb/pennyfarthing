@@ -124,31 +124,31 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
   // AC5: CLI script exists for step completion
   // ===========================================================================
 
-  describe('CLI exposure: complete-step.sh script exists', () => {
-    it('should have complete-step.sh in workflow scripts', () => {
+  describe('CLI exposure: complete-step.py script exists', () => {
+    it('should have complete-step.py in workflow scripts', () => {
       // The script should exist in pennyfarthing-dist/scripts/workflow/
       // __dirname is packages/core/dist/workflow/ → 4 levels up = pennyfarthing repo root
       const projectRoot = resolve(__dirname, '../../../..');
       const scriptPath = resolve(
         projectRoot,
-        'pennyfarthing-dist/scripts/workflow/complete-step.sh'
+        'pennyfarthing-dist/scripts/workflow/complete-step.py'
       );
       assert.ok(
         existsSync(scriptPath),
-        `complete-step.sh should exist at ${scriptPath}`
+        `complete-step.py should exist at ${scriptPath}`
       );
     });
 
-    it('should have complete-step.sh be executable', () => {
+    it('should have complete-step.py be executable', () => {
       const projectRoot = resolve(__dirname, '../../../..');
       const scriptPath = resolve(
         projectRoot,
-        'pennyfarthing-dist/scripts/workflow/complete-step.sh'
+        'pennyfarthing-dist/scripts/workflow/complete-step.py'
       );
 
       // Skip if file doesn't exist (previous test covers this)
       if (!existsSync(scriptPath)) {
-        assert.fail('complete-step.sh does not exist yet');
+        assert.fail('complete-step.py does not exist yet');
         return;
       }
 
@@ -157,7 +157,7 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
         execSync(`test -x "${scriptPath}"`, { stdio: 'pipe' });
         assert.ok(true, 'Script is executable');
       } catch {
-        assert.fail('complete-step.sh should be executable');
+        assert.fail('complete-step.py should be executable');
       }
     });
   });
@@ -207,7 +207,7 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
     it('should NOT auto-set status to completed (requires separate logic)', async () => {
       // NOTE: The existing completeStep() function does NOT set status to
       // 'completed' — it only updates stepsCompleted and currentStep.
-      // The complete-step.sh script needs to handle this transition.
+      // The complete-step.py script needs to handle this transition.
       const { completeStep } = await import('./workflow-executor.js');
 
       const sessionWith2Of3Done = `# Workflow Session: test
@@ -230,7 +230,7 @@ describe('MSSCI-14299: Stepped workflow state advancement wiring', () => {
       const updated = completeStep(sessionWith2Of3Done, 3);
 
       // The TS function alone does NOT set status to completed.
-      // This verifies the gap that complete-step.sh must fill.
+      // This verifies the gap that complete-step.py must fill.
       assert.ok(
         updated.includes('**Status:** in_progress'),
         'completeStep() alone does not change status — script must handle this'
