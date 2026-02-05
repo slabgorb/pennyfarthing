@@ -20,6 +20,7 @@ interface SubagentSpanProps {
   name: string;
   messages: SubagentMessage[];
   defaultCollapsed?: boolean;
+  onCollapseChange?: (collapsed: boolean) => void;
   // MSSCI-12776: Theme-aware helper display (optional - can be overridden by props for testing)
   helperName?: string | null;
   helperStyle?: string | null;
@@ -30,7 +31,8 @@ export default function SubagentSpan({
   type,
   name,
   messages,
-  defaultCollapsed = false,
+  defaultCollapsed = true,
+  onCollapseChange,
   helperName: propHelperName,
   helperStyle: propHelperStyle,
   friendlyMessage: propFriendlyMessage,
@@ -54,6 +56,9 @@ export default function SubagentSpan({
   // Determine display values with fallbacks (AC5)
   const displayName = helperName || type;
   const displayMessage = friendlyMessage || name;
+
+  // Count non-result messages for the collapsed summary
+  const messageCount = messages.filter(m => m.type !== 'tool_result').length;
 
   // Group tool_use and tool_result by tool_id
   const toolResults = new Map<string, SubagentMessage>();
@@ -92,16 +97,16 @@ export default function SubagentSpan({
       return null;
     }
 
-    // Subagent prompts (user messages within subagent) get special styling
+    // Subagent prompts (user messages within subagent) — truncated single line
     if (msg.type === 'user') {
+      const truncated = (msg.content || '').slice(0, 120).replace(/\n/g, ' ');
       return (
         <div
           key={`subagent-prompt-${index}`}
           data-testid="subagent-prompt"
           className="message message-subagent-prompt"
         >
-          <div className="message-avatar">📋</div>
-          <div className="message-content">{msg.content}</div>
+          <div className="message-content">{truncated}{(msg.content || '').length > 120 ? '...' : ''}</div>
         </div>
       );
     }
@@ -127,7 +132,11 @@ export default function SubagentSpan({
       <div
         data-testid="subagent-span-header"
         className="subagent-header"
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={() => {
+          const next = !isCollapsed;
+          setIsCollapsed(next);
+          onCollapseChange?.(next);
+        }}
       >
         <span className="subagent-toggle">{isCollapsed ? '▶' : '▼'}</span>
 
@@ -159,9 +168,7 @@ export default function SubagentSpan({
           {type}
         </Badge>
 
-        {isCollapsed && (
-          <span className="subagent-count">{messages.length} messages</span>
-        )}
+        <span className="subagent-count">{messageCount}</span>
       </div>
       {!isCollapsed && (
         <div className="subagent-content">

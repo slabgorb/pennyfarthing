@@ -15,6 +15,7 @@
  */
 
 import React, { useRef, useState, useCallback, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
@@ -24,7 +25,22 @@ import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
 import { isSkillContent } from '../utils/messageFilters';
 import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
+import { usePersona } from '../hooks/usePersona';
+import { useStatsStrip } from '../hooks/useStatsStrip';
 import type { MessageData } from '../types/message';
+
+// Agent colors matching CLI statusbar (from PersonaHeader)
+const AGENT_COLORS: Record<string, string> = {
+  pm: '#a78bfa', sm: '#60a5fa', dev: '#4ade80', tea: '#2dd4bf',
+  reviewer: '#f87171', architect: '#fb923c', devops: '#22d3ee',
+  'ux-designer': '#f0abfc', 'tech-writer': '#e5e5e5', orchestrator: '#e879f9',
+};
+
+const AGENT_ABBREV: Record<string, string> = {
+  pm: 'PM', sm: 'SM', dev: 'DEV', tea: 'TEA', reviewer: 'REV',
+  architect: 'ARC', devops: 'OPS', 'ux-designer': 'UX', 'tech-writer': 'TW',
+  orchestrator: 'ORC',
+};
 
 interface MessageViewProps {
   messages: MessageData[];
@@ -67,6 +83,11 @@ function speakerOf(item: RenderItem): 'user' | 'agent' {
 export default function MessageView({ messages }: MessageViewProps): React.ReactElement {
   const messageListRef = useRef<MessageListHandle>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const { persona } = usePersona();
+  const { projectInfo } = useStatsStrip();
+
+  // Persist subagent collapsed state across re-renders/remounts
+  const subagentCollapsedRef = useRef<Map<string, boolean>>(new Map());
 
   const handleScrollChange = useCallback((atBottom: boolean) => {
     setIsAtBottom(atBottom);
@@ -186,12 +207,15 @@ export default function MessageView({ messages }: MessageViewProps): React.React
 
     if ('messages' in item && 'parent_id' in item) {
       const group = item as SubagentGroup;
+      const collapsed = subagentCollapsedRef.current.get(group.parent_id) ?? true;
       return (
         <SubagentSpan
           key={`subagent-${group.parent_id}`}
           type={group.type}
           name={group.name}
           messages={group.messages as any}
+          defaultCollapsed={collapsed}
+          onCollapseChange={(c) => subagentCollapsedRef.current.set(group.parent_id, c)}
         />
       );
     }
@@ -265,15 +289,30 @@ export default function MessageView({ messages }: MessageViewProps): React.React
           // Track which items in this turn are "first message" (non-tool, non-stack)
           let seenMessage = false;
 
+          const agentName = persona?.character || 'Agent';
+          const role = persona?.role || null;
+          const roleAbbrev = role ? (AGENT_ABBREV[role] || role) : null;
+          const roleColor = role ? (AGENT_COLORS[role] || '#e879f9') : undefined;
+          const userName = projectInfo?.githubUsername || 'You';
+
           return (
-            <div key={`turn-${turnIndex}`} className="turn-group">
+            <div key={`turn-${turnIndex}`} className={`turn-group turn-${turn.speaker}`}>
               <div className="turn-label">
                 <span className="turn-speaker">
-                  {turn.speaker === 'user' ? 'You' : 'Agent'}
+                  {turn.speaker === 'user' ? userName : agentName}
                 </span>
                 <span className="turn-timestamp">
                   {formatTurnTime(turn.timestamp)}
                 </span>
+                {turn.speaker === 'agent' && roleAbbrev && (
+                  <Badge
+                    variant="default"
+                    className="turn-role-badge"
+                    style={{ backgroundColor: roleColor }}
+                  >
+                    {roleAbbrev}
+                  </Badge>
+                )}
               </div>
               {turn.items.map((item) => {
                 const idx = globalIdx++;
