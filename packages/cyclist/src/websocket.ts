@@ -1327,16 +1327,17 @@ export function setupWebSocketServers(
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
 
-                    // MSSCI-14210: Track background Task tools
-                    if (sdkMsg.tool_name === 'Task' && sdkMsg.input.run_in_background === true) {
-                      const description = (sdkMsg.input.description as string) || (sdkMsg.input.prompt as string)?.substring(0, 50) || 'Background task';
+                    // MSSCI-14210: Track all Task tool subagents (background and foreground)
+                    if (sdkMsg.tool_name === 'Task') {
+                      const description = (sdkMsg.input.description as string) || (sdkMsg.input.prompt as string)?.substring(0, 50) || 'Subagent task';
                       const subagentType = (sdkMsg.input.subagent_type as string) || 'general-purpose';
+                      const isBackground = sdkMsg.input.run_in_background === true;
                       trackBackgroundTask({
                         taskId: sdkMsg.tool_id,
                         description,
                         subagentType,
                         startedAt: Date.now(),
-                        isBackground: true,
+                        isBackground,
                       });
                     }
                   }

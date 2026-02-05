@@ -91,8 +91,8 @@ export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
   }
 
   // Handle remaining tools at end of messages
-  // At end of array: create stack even for single tool (supports streaming/active state)
-  if (currentTools.length >= 1) {
+  // Same threshold as mid-stream: only stack 2+ tools (single tools render normally)
+  if (currentTools.length >= 2) {
     const lastTool = currentTools[currentTools.length - 1];
     stacks.push({
       stackId: generateStableStackId(currentTools),

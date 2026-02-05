@@ -706,6 +706,9 @@ export const windowConfig = {
   minWidth: 800,
   minHeight: 600,
   title: 'Cyclist',
+  // Prevent white flash: hide window until content is painted
+  show: false,
+  backgroundColor: '#1a1a2e',
   webPreferences: {
     // Security: disable node integration in renderer
     nodeIntegration: false,
@@ -2486,6 +2489,11 @@ if (isElectron) {
 
     // Load the Express server URL (using the actual port found)
     mainWindow.loadURL(`http://localhost:${actualPort}`);
+
+    // Show window once content is painted (prevents white flash on launch)
+    mainWindow.once('ready-to-show', () => {
+      mainWindow?.show();
+    });
 
     // 35-6: Apply font settings after page loads
     mainWindow.webContents.on('did-finish-load', () => {

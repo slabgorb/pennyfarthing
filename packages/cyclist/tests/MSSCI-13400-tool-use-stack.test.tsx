@@ -113,9 +113,9 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
         const stacks = groupToolsIntoStacks(messages);
 
-        expect(stacks).toHaveLength(2);
+        // First group has 2 tools (stacked), trailing single tool renders normally (not stacked)
+        expect(stacks).toHaveLength(1);
         expect(stacks[0].tools).toHaveLength(2);
-        expect(stacks[1].tools).toHaveLength(1);
       });
 
       it('should not create a stack for a single tool_use (renders normally)', () => {
