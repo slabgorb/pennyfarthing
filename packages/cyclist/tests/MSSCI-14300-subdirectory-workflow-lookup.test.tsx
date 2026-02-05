@@ -252,8 +252,9 @@ describe('AC2: WorkflowPanel displays stepped workflow progress (step N of M)', 
     const panel = screen.getByTestId('workflow-panel');
     expect(panel).toHaveAttribute('data-testid', 'workflow-panel');
 
-    // Should have a stepped progress indicator
-    expect(screen.getByText(/2.*complete/i).textContent || screen.getByText(/Step 3 of 5/).textContent).toBeTruthy();
+    // Should have a stepped progress indicator — either "2 complete" or "Step 3 of 5"
+    const completionText = screen.queryByText(/2.*complete/i) || screen.queryByText(/Step 3 of 5/);
+    expect(completionText).toBeInTheDocument();
   });
 
   it('should display workflow name badge for stepped workflows', async () => {

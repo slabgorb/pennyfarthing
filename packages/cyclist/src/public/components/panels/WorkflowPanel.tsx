@@ -3,6 +3,7 @@
  *
  * Extracted from ProgressPanel as part of MSSCI-14188.
  * Shows workflow type badge (TDD/BDD/Trivial) and phase progress.
+ * MSSCI-14300: Added stepped workflow "Step N of M" display.
  *
  * Story: MSSCI-14188 - Split Progress panel into Workflow, AC, and Todo panels
  * Epic: epic-76 (Dockview Panel Migration)
@@ -42,7 +43,7 @@ function formatWorkflowType(type: string | null): string {
 }
 
 // =============================================================================
-// Phase Step Component
+// Phase Step Component (for phased workflows)
 // =============================================================================
 
 function PhaseStep({ phase, isLast }: { phase: WorkflowPhase; isLast: boolean }): React.ReactElement {
@@ -57,6 +58,29 @@ function PhaseStep({ phase, isLast }: { phase: WorkflowPhase; isLast: boolean })
       </div>
       {!isLast && <span className="phase-arrow">{'\u2192'}</span>}
     </>
+  );
+}
+
+// =============================================================================
+// Stepped Progress Component (for stepped workflows)
+// =============================================================================
+
+function SteppedProgress({ phases }: { phases: WorkflowPhase[] }): React.ReactElement {
+  const total = phases.length;
+  const currentIndex = phases.findIndex(p => p.status === 'current');
+  const doneCount = phases.filter(p => p.status === 'done').length;
+
+  // If all done, current step = total; otherwise use 1-based index of current
+  const currentStep = currentIndex >= 0 ? currentIndex + 1 : (doneCount === total ? total : 1);
+  const currentPhase = currentIndex >= 0 ? phases[currentIndex] : null;
+
+  return (
+    <div className="stepped-progress">
+      <span className="stepped-counter">Step {currentStep} of {total}</span>
+      {currentPhase && (
+        <span className="stepped-current-label">{currentPhase.label}</span>
+      )}
+    </div>
   );
 }
 
@@ -92,6 +116,7 @@ export function WorkflowPanel(): React.ReactElement {
 
   const workflowType = story?.workflow ?? null;
   const phases = story?.workflowPhases ?? null;
+  const isStepped = story?.workflowType === 'stepped';
 
   if (!workflowType && (!phases || phases.length === 0)) {
     return (
@@ -111,15 +136,19 @@ export function WorkflowPanel(): React.ReactElement {
         </Badge>
 
         {phases && phases.length > 0 && (
-          <div className="phase-progress">
-            {phases.map((phase, index) => (
-              <PhaseStep
-                key={phase.name}
-                phase={phase}
-                isLast={index === phases.length - 1}
-              />
-            ))}
-          </div>
+          isStepped ? (
+            <SteppedProgress phases={phases} />
+          ) : (
+            <div className="phase-progress">
+              {phases.map((phase, index) => (
+                <PhaseStep
+                  key={phase.name}
+                  phase={phase}
+                  isLast={index === phases.length - 1}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>
