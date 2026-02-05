@@ -9,7 +9,7 @@
  * 5. Legacy npm (node_modules/pennyfarthing/pennyfarthing-dist/)
  */
 
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -78,28 +78,14 @@ export function resolvePennyfarthingDist(): string | null {
 }
 
 /**
- * Resolve the full path to a portrait image
- * @param theme - Theme name (e.g., 'shakespeare', 'norse-mythology')
- * @param agent - Agent name (e.g., 'sm', 'tea', 'dev')
- * @returns Full path to portrait file, or null if not found
+ * Find portrait in a specific theme directory.
+ * Shared logic for both core and theme package portrait resolution.
  */
-export function resolvePortraitPath(theme: string, agent: string): string | null {
-  const distPath = resolvePennyfarthingDist();
-  if (!distPath) {
-    return null;
-  }
-
-  const paths = getPortraitPaths(distPath);
-  const portraitsThemeDir = join(paths.portraitsDir, theme);
-
+function findPortraitInDir(portraitsThemeDir: string, agent: string): string | null {
   if (!existsSync(portraitsThemeDir)) {
     return null;
   }
 
-  // Look for portrait file matching the agent
-  // Portraits are in size subdirectories: large/, medium/, small/, original/
-  // Portraits follow pattern: {shortName}-{ocean}.png
-  // Agent names in tests may be short names (sm, tea, dev) or need mapping
   try {
     // Check size subdirectories in preference order
     const sizeDirectories = ['large', 'medium', 'small', 'original'];
@@ -122,9 +108,6 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
     }
 
     // Map agent names to portrait file prefixes based on theme conventions
-    // For most themes, portrait names use character short names
-    // We need to find a file that contains the agent name or its mapping
-    // Note: This includes characters from multiple themes (shakespeare, norse, a-team)
     const agentMappings: Record<string, string[]> = {
       'sm': ['prospero', 'baldur', 'face', 'faceman', 'sm'],
       'tea': ['hamlet', 'tyr', 'murdock', 'tea'],
@@ -150,6 +133,94 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
     }
   } catch {
     return null;
+  }
+
+  return null;
+}
+
+/**
+ * Discover theme package portrait directories.
+ * Inlined here to avoid circular dependency with theme-loader.ts.
+ */
+function discoverThemePackagePortraitDirs(): Array<{ portraitsDir: string }> {
+  const results: Array<{ portraitsDir: string }> = [];
+  let currentDir = process.cwd();
+
+  // Check node_modules/@pennyfarthing/themes-*
+  for (let i = 0; i < 10; i++) {
+    const nmPfDir = join(currentDir, 'node_modules', '@pennyfarthing');
+    if (existsSync(nmPfDir)) {
+      try {
+        for (const entry of readdirSync(nmPfDir)) {
+          if (!entry.startsWith('themes-')) continue;
+          const pkgJsonPath = join(nmPfDir, entry, 'package.json');
+          if (!existsSync(pkgJsonPath)) continue;
+          try {
+            const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+            if (pkgJson['pennyfarthing-theme-pack'] === true) {
+              results.push({ portraitsDir: join(nmPfDir, entry, 'portraits') });
+            }
+          } catch { /* skip */ }
+        }
+      } catch { /* skip */ }
+      break;
+    }
+    const parentDir = dirname(currentDir);
+    if (parentDir === currentDir) break;
+    currentDir = parentDir;
+  }
+
+  // Check monorepo packages/themes-*
+  currentDir = process.cwd();
+  for (let i = 0; i < 10; i++) {
+    const packagesDir = join(currentDir, 'packages');
+    if (existsSync(packagesDir)) {
+      try {
+        for (const entry of readdirSync(packagesDir)) {
+          if (!entry.startsWith('themes-')) continue;
+          const pkgJsonPath = join(packagesDir, entry, 'package.json');
+          if (!existsSync(pkgJsonPath)) continue;
+          try {
+            const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+            if (pkgJson['pennyfarthing-theme-pack'] === true) {
+              const portraitsDir = join(packagesDir, entry, 'portraits');
+              if (!results.some(r => r.portraitsDir === portraitsDir)) {
+                results.push({ portraitsDir });
+              }
+            }
+          } catch { /* skip */ }
+        }
+      } catch { /* skip */ }
+      break;
+    }
+    const parentDir = dirname(currentDir);
+    if (parentDir === currentDir) break;
+    currentDir = parentDir;
+  }
+
+  return results;
+}
+
+/**
+ * Resolve the full path to a portrait image
+ * @param theme - Theme name (e.g., 'shakespeare', 'norse-mythology')
+ * @param agent - Agent name (e.g., 'sm', 'tea', 'dev')
+ * @returns Full path to portrait file, or null if not found
+ */
+export function resolvePortraitPath(theme: string, agent: string): string | null {
+  // 1. Check core portraits
+  const distPath = resolvePennyfarthingDist();
+  if (distPath) {
+    const paths = getPortraitPaths(distPath);
+    const coreResult = findPortraitInDir(join(paths.portraitsDir, theme), agent);
+    if (coreResult) return coreResult;
+  }
+
+  // 2. Check theme package portraits
+  const themePackages = discoverThemePackagePortraitDirs();
+  for (const pkg of themePackages) {
+    const pkgResult = findPortraitInDir(join(pkg.portraitsDir, theme), agent);
+    if (pkgResult) return pkgResult;
   }
 
   return null;

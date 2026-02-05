@@ -197,4 +197,4 @@ Recommended for {project_type}:
 
 ## NEXT STEP
 
-After theme is configured, proceed to `step-08-cyclist.md` to optionally install Cyclist visual terminal.
+After theme is configured, proceed to `step-08-theme-packs.md` to optionally install additional theme packs.

@@ -16,14 +16,10 @@ import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { findMonorepoRoot } from './utils/files.js';
+import { resolveThemePath } from '@pennyfarthing/shared';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Find monorepo root by walking up from current directory
-const projectRoot = findMonorepoRoot(__dirname);
-const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
 // 10 anchor themes for Phase 1
 const ANCHOR_THEMES = [
@@ -56,11 +52,11 @@ const AGENT_ROLES = [
 // OCEAN dimensions
 const OCEAN_KEYS = ['O', 'C', 'E', 'A', 'N'];
 
-// Helper to load and parse theme YAML
+// Helper to load and parse theme YAML using unified discovery
 function loadTheme(themeName: string): Record<string, unknown> {
-  const filePath = join(themesDir, `${themeName}.yaml`);
-  if (!existsSync(filePath)) {
-    throw new Error(`Theme file not found: ${filePath}`);
+  const filePath = resolveThemePath(themeName);
+  if (!filePath) {
+    throw new Error(`Theme not found via discovery: ${themeName}`);
   }
   const content = readFileSync(filePath, 'utf-8');
   return parseYaml(content) as Record<string, unknown>;
@@ -69,8 +65,8 @@ function loadTheme(themeName: string): Record<string, unknown> {
 describe('OCEAN Profiles - Anchor Themes', () => {
   it('should have all 10 anchor theme files', () => {
     for (const theme of ANCHOR_THEMES) {
-      const filePath = join(themesDir, `${theme}.yaml`);
-      assert.ok(existsSync(filePath), `Missing anchor theme: ${theme}.yaml`);
+      const filePath = resolveThemePath(theme);
+      assert.ok(filePath, `Missing anchor theme: ${theme}`);
     }
   });
 });

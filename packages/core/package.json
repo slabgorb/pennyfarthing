@@ -40,7 +40,7 @@
     "clean": "rm -rf dist/"
   },
   "dependencies": {
-    "@pennyfarthing/shared": "^7.9.0",
+    "@pennyfarthing/shared": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "fs-extra": "^11.2.0",
