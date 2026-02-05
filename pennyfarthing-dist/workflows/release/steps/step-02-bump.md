@@ -7,7 +7,7 @@ Update all version files (VERSION, package.json, workspace packages, README, CHA
 <instructions>
 1. Write new version to VERSION file
 2. Update root package.json version
-3. Update all workspace package versions (core, cyclist, shared)
+3. Update all workspace package versions (core, cyclist, shared, theme packs)
 4. Update README.md version badge
 5. Update package-lock.json
 6. Update CHANGELOG.md (version links and header)
@@ -35,8 +35,8 @@ sed -i '' 's/"version": "{current_version}"/"version": "{new_version}"/' package
 ### 2.3 Update Workspace Packages
 
 ```bash
-for pkg in core cyclist shared; do
-    PKG_JSON="packages/$pkg/package.json"
+# Bump all workspace packages (auto-discovered)
+for PKG_JSON in packages/*/package.json; do
     if [[ -f "$PKG_JSON" ]]; then
         sed -i '' -E 's/"version": "[0-9]+\.[0-9]+\.[0-9]+"/"version": "{new_version}"/' "$PKG_JSON"
         echo "Updated $PKG_JSON"
@@ -80,9 +80,7 @@ git diff --stat
 |------|----------------|
 | `VERSION` | `{new_version}` |
 | `package.json` | `"version": "{new_version}"` |
-| `packages/core/package.json` | `"version": "{new_version}"` |
-| `packages/cyclist/package.json` | `"version": "{new_version}"` |
-| `packages/shared/package.json` | `"version": "{new_version}"` |
+| `packages/*/package.json` | `"version": "{new_version}"` (all workspace packages) |
 | `README.md` | Badge updated |
 | `CHANGELOG.md` | New version header |
 

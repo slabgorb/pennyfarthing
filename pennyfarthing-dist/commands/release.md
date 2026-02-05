@@ -27,7 +27,7 @@ This command starts the `release` stepped workflow (BikeLane):
 7. **Commit** — Stage, commit, merge to develop, verify staging ← GATE
 8. **Merge** — Merge develop → main, create tag
 9. **Push & Tag** — Push branches + tag (point of no return) ← GATE
-10. **Publish** — npm publish core + cyclist ← GATE
+10. **Publish** — npm publish all packages (core, cyclist, theme packs) ← GATE
 11. **Finalize** — GitHub release, summary
 
 Gates pause for user approval. You can abort, revise, or continue at each gate.

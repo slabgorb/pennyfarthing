@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v9.2.0** | *The outer loop goes once, the inner loop goes many times.*
+**v9.3.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -14,11 +14,13 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
-- **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, and more
-- **24 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (PRD, Architecture), Procedural (Brainstorming, Retrospective)
-- **48 Slash Commands** - Entry points for agent activation and workflows
-- **24 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
+- **8 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (Architecture, Release, Git Cleanup)
+- **49 Slash Commands** - Entry points for agent activation and workflows
+- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
+- **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
 
 ### 2. Personality Research
 
@@ -29,21 +31,19 @@ A scientific study of how strong personalities affect AI agent behavior:
 - **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
-The 102 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The 124 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. Integration & Tooling
 
-Smoothing out development processes:
-
+- **Cyclist Visual Terminal** - Electron-based IDE with 15 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
-- **Cyclist Visual Terminal** - React UI with Dockview panels, agent portraits, tool visualization
 
 ---
 
 ### [**Explore the Research Showcase**](https://animated-meme-3e4494y.pages.github.io/)
 
-102 themes with OCEAN spider charts, benchmark tiers, and 1020 character profiles.
+124 themes with OCEAN spider charts, benchmark tiers, and character profiles.
 
 ---
 
@@ -68,22 +68,86 @@ npx pennyfarthing doctor
 ### Optional: Visual Terminal
 
 ```bash
-# Install Cyclist (160 MB, includes portraits)
+# Install Cyclist (includes portraits)
 npm install --save-dev @pennyfarthing/cyclist
 
 # Launch
 npx pennyfarthing cyclist
 ```
 
+## Cyclist Visual Terminal
+
+Cyclist is an Electron-based IDE built on React 19, Tailwind v4, and Dockview. It wraps Claude Code with a rich panel system and workflow controls.
+
+### Panels
+
+All panels are draggable, floatable, and splittable:
+
+| Panel | Purpose |
+|-------|---------|
+| **Message** | Conversation stream (always visible) |
+| **Sprint** | Current sprint stories and progress |
+| **Progress** | TDD/BDD phase visualization |
+| **BikeLane** | Stepped workflow state and navigation |
+| **Acceptance Criteria** | Story ACs with pass/fail tracking |
+| **Changed** | Files added or modified during the session |
+| **Diffs** | Git-based diff viewer for current changes |
+| **Git** | Branch management and git operations |
+| **Todo** | Task list tracking |
+| **Audit Log** | Timestamped action history |
+| **Settings** | Permission mode, relay mode, bell mode toggles |
+| **Debug** | Prime context inspection with token counts |
+| **Background** | Background job monitoring |
+| **TTY** | Integrated terminal |
+| **Workflow** | Workflow navigation and status |
+
+### Tool Visualization
+
+Cyclist renders tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
+
+### Workflow Modes
+
+| Mode | Description |
+|------|-------------|
+| **Permission Mode** | `plan` / `manual` / `accept` — controls how much Claude can do without approval |
+| **Relay Mode** | Automatic agent handoffs — detects `CYCLIST:HANDOFF` markers and runs the next agent |
+| **Bell Mode** | Queue messages while Claude works — injected at next tool execution via hooks |
+
+### Agent Portraits
+
+Each of the 124 persona characters has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+
+## Prime Context System
+
+Prime assembles the full agent context at activation: agent definition, persona character, behavior guide, sprint state, active session, and sidecar memory. This is injected via `--append-system-prompt` so agents behave identically whether launched from Cyclist or the CLI.
+
+Prime uses **tiered injection** to manage token overhead:
+
+| Tier | Tokens | When |
+|------|--------|------|
+| **Full** | ~4000 | New session or new agent |
+| **Refresh** | ~2000 | Same agent, stale context |
+| **Handoff** | ~1000 | Agent-to-agent transition |
+| **Minimal** | ~200 | Deep in same agent session |
+
+## Agent Sidecars
+
+Sidecars are persistent learning files where agents record what they discover during story work. Each agent maintains three files in `.pennyfarthing/sidecars/`:
+
+- **`{agent}-patterns.md`** — Strategies and patterns that worked
+- **`{agent}-gotchas.md`** — Mistakes and edge cases to avoid
+- **`{agent}-decisions.md`** — Architecture decisions and rationale
+
+Agents write to sidecars before every handoff. Prime loads them on activation, so agents build on previous experience instead of rediscovering the same issues.
+
 ## BikeLane Workflows
 
-BikeLane is the umbrella workflow system supporting three types:
+BikeLane is the umbrella workflow system supporting two types:
 
 | Type | Description | Examples |
 |------|-------------|----------|
 | **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, agent-docs |
-| **Stepped** | Progressive disclosure with user gates | prd, architecture, research, sprint-planning |
-| **Procedural** | Flexible agent-guided processes | brainstorming, code-review, retrospective |
+| **Stepped** | Progressive disclosure with user gates | architecture, release, git-cleanup |
 
 ### Example: TDD Workflow (Phased)
 
@@ -100,7 +164,7 @@ BikeLane is the umbrella workflow system supporting three types:
 | **Dev** | Developer | Make tests pass (GREEN) |
 | **Reviewer** | Code Reviewer | Quality validation, approve/reject |
 
-Use `/workflow list` to see all 24 workflows. Use `/workflow start <name>` to begin any workflow.
+Use `/workflow list` to see all workflows. Use `/workflow start <name>` to begin any stepped workflow.
 
 ## Benchmarking & Personality Research
 
@@ -151,19 +215,32 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
 | [Cyclist](docs/CYCLIST.md) | Visual terminal documentation |
 
-## Available Themes (102)
+## Available Themes (124)
 
-| Category | Themes |
-|----------|--------|
-| **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `firefly`, `battlestar-galactica`, `doctor-who` |
-| **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
-| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `discworld`, `sandman`, `arthurian-mythos` |
-| **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `fargo` |
-| **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place` |
-| **Literary** | `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
-| **Games** | `mass-effect`, `portal`, `baldurs-gate`, `disco-elysium` |
+Core includes 26 themes. Optional theme packs add 98 more across 7 packages:
+
+| Package | Themes | Examples |
+|---------|--------|----------|
+| `@pennyfarthing/core` (included) | 26 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `game-of-thrones` |
+| `@pennyfarthing/themes-prestige-tv` | 17 | `succession`, `the-wire`, `mad-men`, `fargo`, `the-sopranos` |
+| `@pennyfarthing/themes-literary` | 15 | `shakespeare`, `jane-austen`, `sherlock-holmes`, `1984`, `great-gatsby` |
+| `@pennyfarthing/themes-realistic` | 14 | `ancient-philosophers`, `jazz-legends`, `film-auteurs`, `software-pioneers` |
+| `@pennyfarthing/themes-comedy` | 9 | `the-office`, `parks-and-rec`, `ted-lasso`, `monty-python`, `futurama` |
+| `@pennyfarthing/themes-scifi` | 8 | `foundation`, `snow-crash`, `neuromancer`, `babylon-5` |
+| `@pennyfarthing/themes-mythology-fantasy` | 4 | `greek-mythology`, `norse-mythology`, `his-dark-materials`, `the-witcher` |
+| `@pennyfarthing/themes-superheroes` | 4 | `marvel-mcu`, `avatar-the-last-airbender`, `legion-of-doom` |
 
 All themes include OCEAN (Big Five) personality profiles. See [Theme Comparison](docs/THEME-COMPARISON.md) for personality analysis.
+
+### Installing Theme Packs
+
+```bash
+# Install individual packs
+npm install --save-dev @pennyfarthing/themes-prestige-tv
+
+# Or install all theme packs at once
+npm install --save-dev @pennyfarthing/themes-{comedy,literary,mythology-fantasy,prestige-tv,realistic,scifi,superheroes}
+```
 
 Configure in `.pennyfarthing/config.local.yaml`:
 ```yaml
@@ -192,22 +269,30 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v9.0
+## What's New in v9.x
 
-- **Dockview Panel System** - Draggable, floatable, splittable panels replacing hand-rolled system (ADR-0019)
-- **React UI** - Full React component architecture for Cyclist
-- **Tool Use Visualization** - Human-readable tool summaries, collapsible results, tool stacking
-- **useMarkdownParser Hook** - React hook for markdown rendering (vanilla JS migration)
+### v9.3.0
+
+- **Theme Packages** - 98 themes split into 7 installable packs (`@pennyfarthing/themes-*`)
+- **Release Workflow** - 11-step gated release process with abort-safe gates
+- **ToolStack Redesign** - Grouped tool calls with collapsible results
+- **shadcn/ui Migration** - Cyclist components migrated to shadcn with 30+ theme presets
+
+### v9.0.0
+
+- **Dockview Panel System** - 15 draggable, floatable, splittable panels (ADR-0019)
+- **React 19 Rewrite** - Full React component architecture for Cyclist
+- **Tool Use Visualization** - Human-readable tool summaries and tool stacking
+- **Prime Context System** - Tiered agent context injection (Full/Refresh/Handoff/Minimal)
 - **Bell Mode** - Queue messages while Claude works (ADR-0016)
 - **Relay Mode** - Automatic agent handoffs (ADR-0017)
 
 ### Previous Highlights (v7.6-v8.x)
 
-- **BikeLane Workflow System** - Unified umbrella for Phased, Stepped, and Procedural workflows
-- **BMAD 6.0 Compatibility** - Full import support for BMAD workflows with tri-modal execution
-- **19 Workflows** - Expanded from TDD-only to comprehensive workflow library
+- **BikeLane Workflow System** - Phased and Stepped workflows with user gates
 - **Scientific Benchmarking** - TRAIL-OCEAN hypothesis testing framework
 - **JobFair** - Cross-role performance discovery system
+- **Agent Sidecars** - Persistent learning across stories
 
 See [CHANGELOG.md](CHANGELOG.md) for full details.
 

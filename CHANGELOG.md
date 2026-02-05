@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.3.0] - 2026-02-05
+
+### Added
+
+- **Release Workflow** - Interactive 11-step BikeLane workflow replacing fire-and-forget deploy.sh, with verification gates at every destructive point
+- **Changelog Step** - Release workflow generates entries from conventional commits using `/changelog` skill
+- **README/CLAUDE.md Steps** - Release workflow audits and updates documentation before committing
+- **Optional Retro Step** - Release workflow offers `/retro` before cutting the release
+
+### Changed
+
+- **ToolStack Display** - Redesigned ToolStack display with ThemePalette fixes
+- **Audit Log** - Tufte-inspired audit log with enriched detail rows
+- **deploy.sh** - Version bump loop and staging now auto-discover all workspace packages including theme packs
+- **Package Publishing** - npm publish step covers all workspace packages (core, cyclist, shared, 7 theme packs)
+
+### Fixed
+
+- **Invisible Switches** - Fixed invisible toggle switches and aligned settings toggles in Cyclist
+- **deploy.sh Staging Bug** - `git add` used `2>/dev/null || true` which silently swallowed staging failures, causing VERSION and root package.json to stay at 9.1.2 through two releases
+- **Version Drift** - Aligned all package versions to match npm published version; `packages/shared` was stuck at 9.0.2, core/cyclist at 9.1.3
+- **Missing shared in Version Bump** - deploy.sh only bumped core and cyclist, leaving shared behind
+
+---
+
 ## [9.2.0] - 2026-02-05
 
 ### Added
