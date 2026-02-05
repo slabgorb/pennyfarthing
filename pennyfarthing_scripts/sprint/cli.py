@@ -275,6 +275,11 @@ from pennyfarthing_scripts.sprint.validate_cmd import validate_command
 
 sprint.add_command(validate_command)
 
+# Register story-add command from story_add module
+from pennyfarthing_scripts.sprint.story_add import story_add_command
+
+sprint.add_command(story_add_command, "story-add")
+
 
 # For backwards compatibility when running as module
 def main(args: list[str] | None = None) -> int:
