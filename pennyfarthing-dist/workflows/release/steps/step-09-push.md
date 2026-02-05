@@ -1,4 +1,4 @@
-# Step 5: Push Branches & Tag
+# Step 9: Push Branches & Tag
 
 <purpose>
 Push develop, main, and the release tag to the remote. This is the point of no return for git — once pushed, the tag and commits are public.
@@ -16,7 +16,7 @@ Push develop, main, and the release tag to the remote. This is the point of no r
 Push results for each operation. Verification that remote matches local.
 </output>
 
-## ⚠️ Point of No Return
+## Point of No Return
 
 After this step, the version tag and commits are public. Reverting requires force-push or a new tag.
 
@@ -24,34 +24,34 @@ After this step, the version tag and commits are public. Reverting requires forc
 
 ## Execution
 
-### 5.1 Push Develop
+### 9.1 Push Develop
 
 ```bash
 echo "Pushing develop..."
 git push origin develop
 ```
 
-### 5.2 Push Main
+### 9.2 Push Main
 
 ```bash
 echo "Pushing main..."
 git push origin main
 ```
 
-### 5.3 Push Tags
+### 9.3 Push Tags
 
 ```bash
 echo "Pushing tags..."
 git push origin --tags
 ```
 
-### 5.4 Return to Develop
+### 9.4 Return to Develop
 
 ```bash
 git checkout develop
 ```
 
-### 5.5 Verify Remote
+### 9.5 Verify Remote
 
 ```bash
 echo "=== Remote Verification ==="
