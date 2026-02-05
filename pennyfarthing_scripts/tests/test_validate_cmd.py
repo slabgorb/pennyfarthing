@@ -42,6 +42,7 @@ sprint:
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
+  number: 2604
 epics:
   - id: epic-63
     type: epic
