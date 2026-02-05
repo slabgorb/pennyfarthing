@@ -35,6 +35,20 @@ const AGENT_COLORS: Record<string, string> = {
   orchestrator: '#e879f9', // Magenta - coordination
 };
 
+// Abbreviated role names for compact badge display
+const AGENT_ABBREV: Record<string, string> = {
+  pm: 'PM',
+  sm: 'SM',
+  dev: 'DEV',
+  tea: 'TEA',
+  reviewer: 'REV',
+  architect: 'ARC',
+  devops: 'OPS',
+  'ux-designer': 'UX',
+  'tech-writer': 'TW',
+  orchestrator: 'ORC',
+};
+
 // Convert kebab-case theme name to Title Case (e.g., "princess-bride" -> "Princess Bride")
 function humanizeTheme(theme: string): string {
   return theme
@@ -47,6 +61,7 @@ export default function PersonaHeader(): React.ReactElement {
   const { persona } = usePersona();
   const [portraitError, setPortraitError] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
 
   const character = persona?.character || 'Agent';
   const theme = persona?.theme || 'default';
@@ -74,7 +89,7 @@ export default function PersonaHeader(): React.ReactElement {
     <>
       <TooltipProvider delayDuration={300}>
         <div
-          className="persona-header clickable"
+          className={`persona-header clickable${isCompact ? ' compact' : ''}`}
           data-testid="persona-header"
           role="button"
           tabIndex={0}
@@ -104,7 +119,7 @@ export default function PersonaHeader(): React.ReactElement {
                   data-testid="persona-role"
                   style={{ backgroundColor: roleColor }}
                 >
-                  {role}
+                  {AGENT_ABBREV[role] || role}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>{role}</TooltipContent>
@@ -149,6 +164,21 @@ export default function PersonaHeader(): React.ReactElement {
               </Tooltip>
             )}
           </div>
+          <img
+            src="/images/cyclist-dark.png"
+            alt="Cyclist"
+            className="persona-branding"
+          />
+          <button
+            className="persona-collapse-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCompact(!isCompact);
+            }}
+            aria-label={isCompact ? 'Expand header' : 'Collapse header'}
+          >
+            {isCompact ? '▼' : '▲'}
+          </button>
         </div>
       </TooltipProvider>
 
