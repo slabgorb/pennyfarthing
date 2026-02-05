@@ -40,7 +40,7 @@ import {
   getBackgroundTasks,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
-import { getPrimeContext, selectContextTier, getPrimeContextWithTier } from './prime.js';
+import { getPrimeContext, selectContextTier, getPrimeContextWithTier, getPrimeContextJson } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -1135,16 +1135,26 @@ export function startProjectWatchers(): void {
     broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
     broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
 
-    // Load prime context for the agent
+    // Load prime context for the agent (JSON mode: get context + metadata)
     if (projectDir) {
       const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
       setCurrentAgent(agentName);
       const state = service.getContextState();
       const tier = selectContextTier(agentName, state);
-      const primeContext = getPrimeContextWithTier(agentName, projectDir, tier);
-      if (primeContext) {
-        service.setSystemPrompt(primeContext);
+      const primeOutput = getPrimeContextJson(agentName, projectDir, tier);
+      if (primeOutput?.context) {
+        // Same as before — set system prompt for Claude subprocess
+        service.setSystemPrompt(primeOutput.context);
         console.log(`[WebSocket] TirePump: Set system prompt for agent "${agentName}" tier=${tier}`);
+
+        // Broadcast prime metadata to DebugPanel via /ws/context
+        broadcastContextUpdate({
+          percent: null, tokens: null, status: null, error: null,
+          baseline: null, usableTokens: null, usablePercent: null, available: null,
+          tier: primeOutput.tier ?? tier,
+          tokenCounts: primeOutput.tokenCounts,
+          totalTokens: primeOutput.totalTokens,
+        });
       }
     }
 

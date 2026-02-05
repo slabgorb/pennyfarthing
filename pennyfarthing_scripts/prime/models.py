@@ -132,6 +132,28 @@ class SessionInfo:
 
 
 @dataclass
+class PrimeComponent:
+    """A loaded context component with metadata.
+
+    Attributes:
+        name: Component identifier (e.g., "agent_definition", "persona")
+        tokens: Estimated token count
+        source: Relative path to source file, if applicable
+    """
+
+    name: str
+    tokens: int
+    source: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        d: dict[str, Any] = {"name": self.name, "tokens": self.tokens}
+        if self.source:
+            d["source"] = self.source
+        return d
+
+
+@dataclass
 class PrimeResult:
     """Complete result from prime() for JSON output.
 
@@ -147,6 +169,8 @@ class PrimeResult:
         tier: Context tier used (FULL, REFRESH, HANDOFF, MINIMAL)
         token_counts: Per-component token estimates
         total_tokens: Sum of all component token counts
+        context: Assembled context text for system prompt injection
+        components: Per-component metadata with source paths
     """
 
     agent_name: str
@@ -160,6 +184,8 @@ class PrimeResult:
     tier: str | None = None
     token_counts: dict[str, int] = field(default_factory=dict)
     total_tokens: int = 0
+    context: str | None = None
+    components: list[PrimeComponent] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -175,4 +201,6 @@ class PrimeResult:
             "tier": self.tier,
             "token_counts": self.token_counts,
             "total_tokens": self.total_tokens,
+            "context": self.context,
+            "components": [c.to_dict() for c in self.components],
         }

@@ -32,7 +32,7 @@ from pennyfarthing_scripts.prime.loader import (
     load_sidecars,
     load_sprint_context,
 )
-from pennyfarthing_scripts.prime.models import PrimeResult, WorkflowState
+from pennyfarthing_scripts.prime.models import PrimeComponent, PrimeResult, WorkflowState
 from pennyfarthing_scripts.prime.persona import (
     format_persona_compressed,
     format_persona_output,
@@ -87,6 +87,89 @@ def _format_workflow_state_text(result: PrimeResult) -> str:
         lines.append(f"backlog_count: {ws.backlog_count}")
 
     return "\n".join(lines)
+
+
+def _component_header(name: str, agent_name: str | None) -> str:
+    """Get section header text for a component."""
+    headers = {
+        "workflow_state": "Workflow State",
+        "agent_definition": f"Agent Definition: {agent_name}",
+        "persona": f"Persona: {agent_name}",
+        "persona_compressed": f"Persona: {agent_name} (compressed)",
+        "behavior_guide": "Agent Behavior Guide",
+        "sprint_context": "Sprint Context",
+        "session_header": "Active Session",
+        "session_assessment": "Session Assessment",
+        "sidecars": f"Agent Sidecar: {agent_name}",
+    }
+    return headers.get(name, name.replace("_", " ").title())
+
+
+def _component_source(name: str, agent_name: str | None, root: Path) -> str | None:
+    """Get the relative source file path for a component."""
+    paths: dict[str, str | None] = {
+        "workflow_state": None,
+        "agent_definition": f".pennyfarthing/agents/{agent_name}.md",
+        "persona": None,
+        "persona_compressed": None,
+        "behavior_guide": ".pennyfarthing/guides/agent-behavior.md",
+        "sprint_context": "sprint/current-sprint.yaml",
+        "session_header": None,
+        "session_assessment": None,
+        "sidecars": f".pennyfarthing/sidecars/{agent_name}/",
+    }
+    return paths.get(name)
+
+
+def _format_component_text(key: str, value: Any, result: PrimeResult) -> str:
+    """Format a component value as context text.
+
+    Handles special cases like WorkflowStatus objects that need
+    custom formatting rather than raw str().
+    """
+    if key == "workflow_state" and result.workflow_status:
+        return _format_workflow_state_text(result)
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _build_json_result(
+    result: PrimeResult,
+    tier: ContextTier,
+    agent_name: str | None,
+    root: Path,
+) -> None:
+    """Populate result with context text, token counts, and components for JSON output.
+
+    Loads tier components, assembles context text with section headers,
+    and builds the components list with source paths.
+    """
+    components = load_tier_components(tier, agent_name or "", root)
+    token_counts = components.get("token_counts", {})
+
+    context_parts: list[str] = []
+    component_list: list[PrimeComponent] = []
+
+    for key, value in components.items():
+        if key in ("token_counts", "total_tokens"):
+            continue
+        text = _format_component_text(key, value, result)
+        if not text.strip():
+            continue
+        header = _component_header(key, agent_name)
+        context_parts.append(f"# {header}\n{text}")
+        component_list.append(PrimeComponent(
+            name=key,
+            tokens=token_counts.get(key, 0),
+            source=_component_source(key, agent_name, root),
+        ))
+
+    result.context = "\n\n".join(context_parts) if context_parts else None
+    result.tier = tier.value
+    result.token_counts = token_counts
+    result.total_tokens = components.get("total_tokens", 0)
+    result.components = component_list
 
 
 def _prime_tiered(
@@ -145,11 +228,7 @@ def _prime_tiered(
             print("<!-- Minimal context: see conversation history for full agent context -->")
 
         if json_output:
-            # Get token counts from load_tier_components
-            components = load_tier_components(tier, agent_name or "", root)
-            result.tier = tier.value
-            result.token_counts = components.get("token_counts", {})
-            result.total_tokens = components.get("total_tokens", 0)
+            _build_json_result(result, tier, agent_name, root)
             print(json.dumps(result.to_dict(), indent=2))
 
         return 0
@@ -176,11 +255,7 @@ def _prime_tiered(
             print("<!-- Full context already in conversation history -->")
 
         if json_output:
-            # Get token counts from load_tier_components
-            components = load_tier_components(tier, agent_name or "", root)
-            result.tier = tier.value
-            result.token_counts = components.get("token_counts", {})
-            result.total_tokens = components.get("total_tokens", 0)
+            _build_json_result(result, tier, agent_name, root)
             print(json.dumps(result.to_dict(), indent=2))
 
         return 0
@@ -225,11 +300,7 @@ def _prime_tiered(
             print("=" * 60)
 
         if json_output:
-            # Get token counts from load_tier_components
-            components = load_tier_components(tier, agent_name or "", root)
-            result.tier = tier.value
-            result.token_counts = components.get("token_counts", {})
-            result.total_tokens = components.get("total_tokens", 0)
+            _build_json_result(result, tier, agent_name, root)
             print(json.dumps(result.to_dict(), indent=2))
 
         return 0
@@ -450,16 +521,7 @@ def prime(
     # JSON output
     # ==========================================================================
     if json_output:
-        # Get token counts for FULL tier
-        tier_value = context_tier.value if context_tier else "FULL"
-        components = load_tier_components(
-            context_tier or ContextTier.FULL,
-            agent_name or "",
-            root,
-        )
-        result.tier = tier_value
-        result.token_counts = components.get("token_counts", {})
-        result.total_tokens = components.get("total_tokens", 0)
+        _build_json_result(result, context_tier or ContextTier.FULL, agent_name, root)
         print(json.dumps(result.to_dict(), indent=2))
 
     return 0
