@@ -24,6 +24,8 @@ export interface StoryData {
   // MSSCI-12849: AC and BikeLane panel data
   criteria?: CriteriaItem[] | null;
   workflowPhases?: WorkflowPhase[] | null;
+  // MSSCI-14300: Distinguish phased vs stepped workflow rendering
+  workflowType?: string;
 }
 
 // Re-export types for panel components
@@ -44,6 +46,7 @@ interface StoryMessage {
   status?: string | null;
   points?: number | null;
   workflow?: WorkflowPhase[] | null;
+  workflowType?: string | null;
   criteria?: CriteriaItem[] | null;
   [key: string]: unknown;
 }
@@ -59,6 +62,7 @@ function transformMessage(msg: StoryMessage): StoryData | null {
     points: msg.points ?? undefined,
     criteria: msg.criteria,
     workflowPhases: msg.workflow,
+    workflowType: msg.workflowType ?? undefined,
   };
 }
 
