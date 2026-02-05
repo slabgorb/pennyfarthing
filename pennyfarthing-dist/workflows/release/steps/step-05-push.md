@@ -1,0 +1,75 @@
+# Step 5: Push Branches & Tag
+
+<purpose>
+Push develop, main, and the release tag to the remote. This is the point of no return for git — once pushed, the tag and commits are public.
+</purpose>
+
+<instructions>
+1. Push develop branch
+2. Push main branch
+3. Push tags
+4. Verify remote state matches local
+5. Return to develop branch
+</instructions>
+
+<output>
+Push results for each operation. Verification that remote matches local.
+</output>
+
+## ⚠️ Point of No Return
+
+After this step, the version tag and commits are public. Reverting requires force-push or a new tag.
+
+**Make sure everything looks correct before continuing.**
+
+## Execution
+
+### 5.1 Push Develop
+
+```bash
+echo "Pushing develop..."
+git push origin develop
+```
+
+### 5.2 Push Main
+
+```bash
+echo "Pushing main..."
+git push origin main
+```
+
+### 5.3 Push Tags
+
+```bash
+echo "Pushing tags..."
+git push origin --tags
+```
+
+### 5.4 Return to Develop
+
+```bash
+git checkout develop
+```
+
+### 5.5 Verify Remote
+
+```bash
+echo "=== Remote Verification ==="
+echo "Remote tag:"
+git ls-remote --tags origin | grep "v{new_version}"
+echo ""
+echo "Remote develop HEAD:"
+git log --oneline origin/develop -1
+echo ""
+echo "Remote main HEAD:"
+git log --oneline origin/main -1
+```
+
+---
+
+<!-- GATE -->
+
+**[C]** Continue to npm publish
+**[A]** Abort (skip publishing — git is already pushed)
+
+<!-- CYCLIST:CHOICES:C,A -->
