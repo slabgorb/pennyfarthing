@@ -126,9 +126,9 @@ log_info "New version: $NEW_VERSION"
 if $DRY_RUN; then
     log_dry "echo $NEW_VERSION > VERSION"
     log_dry "Update package.json: $CURRENT_VERSION -> $NEW_VERSION"
-    log_dry "Update packages/core/package.json -> $NEW_VERSION"
-    log_dry "Update packages/cyclist/package.json -> $NEW_VERSION"
-    log_dry "Update packages/shared/package.json -> $NEW_VERSION"
+    for pkg in core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes; do
+        log_dry "Update packages/$pkg/package.json -> $NEW_VERSION"
+    done
     log_dry "Update README.md version badge"
     log_dry "Update package-lock.json"
     log_dry "Update CHANGELOG.md version links and header"
@@ -142,7 +142,7 @@ else
     fi
 
     # Update workspace package versions
-    for pkg in core cyclist shared; do
+    for pkg in core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes; do
         PKG_JSON="$PROJECT_ROOT/packages/$pkg/package.json"
         if [[ -f "$PKG_JSON" ]]; then
             # Use a more flexible pattern that matches any version number
@@ -201,7 +201,7 @@ else
     [[ -f package-lock.json ]] && git add package-lock.json
 
     # Stage workspace package files
-    for pkg in core cyclist shared; do
+    for pkg in core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes; do
         [[ -f "packages/$pkg/package.json" ]] && git add "packages/$pkg/package.json"
     done
 
@@ -277,13 +277,15 @@ else
     (cd "$PROJECT_ROOT" && npm publish --access public)
     log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
 
-    # Publish cyclist package separately
-    CYCLIST_DIR="$PROJECT_ROOT/packages/cyclist"
-    if [[ -f "$CYCLIST_DIR/package.json" ]]; then
-        log_info "Publishing @pennyfarthing/cyclist..."
-        (cd "$CYCLIST_DIR" && npm publish --access public) || log_warn "Failed to publish @pennyfarthing/cyclist"
-        log_info "Published @pennyfarthing/cyclist@$NEW_VERSION to npm"
-    fi
+    # Publish all workspace packages
+    for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
+        if [[ -f "$pkg_dir/package.json" ]]; then
+            PKG_NAME=$(node -e "console.log(require('$pkg_dir/package.json').name)")
+            log_info "Publishing $PKG_NAME..."
+            (cd "$pkg_dir" && npm publish --access public) || log_warn "Failed to publish $PKG_NAME"
+            log_info "Published $PKG_NAME@$NEW_VERSION to npm"
+        fi
+    done
 
     # Step 9: Create GitHub release
     log_info "Creating GitHub release..."
@@ -298,7 +300,9 @@ if $DRY_RUN; then
     echo "  Would create tag: $TAG_NAME"
     echo "  Would publish:"
     echo "    - @pennyfarthing/core@$NEW_VERSION"
-    echo "    - @pennyfarthing/cyclist@$NEW_VERSION"
+    for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
+        [[ -f "$pkg_dir/package.json" ]] && echo "    - $(node -e "console.log(require('$pkg_dir/package.json').name)")@$NEW_VERSION"
+    done
 else
     log_info "Deploy complete!"
     echo ""
@@ -307,6 +311,8 @@ else
     echo "  Branches pushed: develop, main"
     echo "  npm packages:"
     echo "    - @pennyfarthing/core@$NEW_VERSION"
-    echo "    - @pennyfarthing/cyclist@$NEW_VERSION"
+    for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
+        [[ -f "$pkg_dir/package.json" ]] && echo "    - $(node -e "console.log(require('$pkg_dir/package.json').name)")@$NEW_VERSION"
+    done
 fi
 echo ""

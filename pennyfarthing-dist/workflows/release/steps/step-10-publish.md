@@ -1,7 +1,7 @@
 # Step 10: Publish to npm
 
 <purpose>
-Publish @pennyfarthing/core and @pennyfarthing/cyclist to the npm registry. Verifies authentication and shows published package info.
+Publish all Pennyfarthing packages to the npm registry. Verifies authentication, checks for conflicts, publishes each package, and verifies registry state.
 </purpose>
 
 <instructions>
@@ -9,7 +9,8 @@ Publish @pennyfarthing/core and @pennyfarthing/cyclist to the npm registry. Veri
 2. Check that versions aren't already published
 3. Publish @pennyfarthing/core (root package)
 4. Publish @pennyfarthing/cyclist
-5. Verify published versions on registry
+5. Publish all theme packs
+6. Verify published versions on registry
 </instructions>
 
 <output>
@@ -41,24 +42,31 @@ fi
 
 ```bash
 echo "=== Pre-Publish Check ==="
-npm view @pennyfarthing/core@{new_version} version 2>/dev/null && echo "WARNING: core@{new_version} already published!" || echo "✓ core@{new_version} not yet published"
-npm view @pennyfarthing/cyclist@{new_version} version 2>/dev/null && echo "WARNING: cyclist@{new_version} already published!" || echo "✓ cyclist@{new_version} not yet published"
+for PKG_JSON in package.json packages/*/package.json; do
+    PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
+    npm view "$PKG_NAME@{new_version}" version 2>/dev/null \
+        && echo "WARNING: $PKG_NAME@{new_version} already published!" \
+        || echo "✓ $PKG_NAME@{new_version} not yet published"
+done
 ```
 
-### 10.3 Publish Core
+### 10.3 Publish Root Package (Core)
 
 ```bash
 echo "Publishing @pennyfarthing/core@{new_version}..."
 npm publish --access public
 ```
 
-### 10.4 Publish Cyclist
+### 10.4 Publish Workspace Packages
 
 ```bash
-echo "Publishing @pennyfarthing/cyclist@{new_version}..."
-cd packages/cyclist
-npm publish --access public
-cd ../..
+for pkg_dir in packages/cyclist packages/shared packages/themes-*; do
+    if [[ -f "$pkg_dir/package.json" ]]; then
+        PKG_NAME=$(node -e "console.log(require('./$pkg_dir/package.json').name)")
+        echo "Publishing $PKG_NAME@{new_version}..."
+        (cd "$pkg_dir" && npm publish --access public) || echo "WARNING: Failed to publish $PKG_NAME"
+    fi
+done
 ```
 
 ### 10.5 Verify Published
@@ -67,8 +75,12 @@ cd ../..
 echo "=== Registry Verification ==="
 echo "Waiting 10s for registry propagation..."
 sleep 10
-npm view @pennyfarthing/core@{new_version} version
-npm view @pennyfarthing/cyclist@{new_version} version
+for PKG_JSON in package.json packages/*/package.json; do
+    PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
+    npm view "$PKG_NAME@{new_version}" version 2>/dev/null \
+        && echo "  ✓ $PKG_NAME@{new_version}" \
+        || echo "  ✗ $PKG_NAME@{new_version} NOT FOUND"
+done
 ```
 
 ---

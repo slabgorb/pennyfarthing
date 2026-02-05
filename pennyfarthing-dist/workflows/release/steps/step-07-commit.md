@@ -34,9 +34,9 @@ git checkout -b "$RELEASE_BRANCH"
 git add VERSION package.json README.md CHANGELOG.md CLAUDE.md
 [[ -f package-lock.json ]] && git add package-lock.json
 
-# Workspace packages
-for pkg in core cyclist shared; do
-    [[ -f "packages/$pkg/package.json" ]] && git add "packages/$pkg/package.json"
+# All workspace packages (auto-discovered)
+for PKG_JSON in packages/*/package.json; do
+    [[ -f "$PKG_JSON" ]] && git add "$PKG_JSON"
 done
 ```
 
@@ -50,12 +50,20 @@ git diff --cached --name-only
 
 echo ""
 echo "=== Verification ==="
-# Check each expected file is staged
-for f in VERSION package.json README.md CHANGELOG.md CLAUDE.md packages/core/package.json packages/cyclist/package.json packages/shared/package.json; do
+# Check root files are staged
+for f in VERSION package.json README.md CHANGELOG.md CLAUDE.md; do
     if git diff --cached --name-only | grep -q "^$f$"; then
         echo "  ✓ $f"
     else
         echo "  ✗ $f (MISSING from staging!)"
+    fi
+done
+# Check all workspace packages are staged
+for PKG_JSON in packages/*/package.json; do
+    if git diff --cached --name-only | grep -q "^$PKG_JSON$"; then
+        echo "  ✓ $PKG_JSON"
+    else
+        echo "  ✗ $PKG_JSON (MISSING from staging!)"
     fi
 done
 ```
@@ -82,9 +90,10 @@ git branch -d "$RELEASE_BRANCH"
 echo "=== Post-Commit Check ==="
 echo "VERSION file: $(cat VERSION)"
 echo "package.json: $(grep '"version"' package.json)"
-echo "core: $(grep '"version"' packages/core/package.json)"
-echo "cyclist: $(grep '"version"' packages/cyclist/package.json)"
-echo "shared: $(grep '"version"' packages/shared/package.json)"
+for PKG_JSON in packages/*/package.json; do
+    PKG=$(basename $(dirname "$PKG_JSON"))
+    echo "$PKG: $(grep '"version"' "$PKG_JSON")"
+done
 ```
 
 All should read `{new_version}`. If any don't match, **abort before pushing.**

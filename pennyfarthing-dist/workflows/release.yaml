@@ -30,7 +30,7 @@ workflow:
   variables:
     version_file: VERSION
     project_root: .
-    packages: "core cyclist shared"
+    packages: "core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes"
 
   # User approval gates
   gates:

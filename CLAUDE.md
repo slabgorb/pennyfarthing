@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working on the Pennyfarthing fra
 
 Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
-**Version:** 9.2.0
+**Version:** 9.3.0
 
 ## Dogfooding Architecture
 
@@ -62,21 +62,31 @@ pnpm run lint      # ESLint
 
 ```
 pennyfarthing-dist/      # Published package content (single source of truth)
-├── agents/              # 19 agent definitions
-├── commands/            # 46 slash commands
-├── guides/              # Behavior guides
-├── skills/              # 23 knowledge domains
+├── agents/              # 10 agent definitions + subagent helpers
+├── commands/            # 49 slash commands
+├── guides/              # 18 behavior guides
+├── skills/              # 22 knowledge domains
 ├── personas/            # Themed agent personas
-│   └── themes/          # 102 persona themes
-├── workflows/           # Workflow definitions
+│   └── themes/          # 26 core themes
+├── workflows/           # 8 workflow definitions
+├── templates/           # Agent and workflow templates
+├── output-styles/       # Output formatting definitions
 └── scripts/             # Utility scripts
 
 packages/
 ├── core/                # Main package (@pennyfarthing/core)
 │   └── src/cli/         # CLI commands (init, update, doctor, etc.)
-└── cyclist/             # Visual terminal (Electron app)
-    ├── src/             # Electron main/renderer + React components
-    └── tests/           # Vitest tests (story-ID naming: 17-1-*.test.ts)
+├── cyclist/             # Visual terminal (Electron app)
+│   ├── src/             # Electron main/renderer + React components
+│   └── tests/           # Vitest tests (story-ID naming: 17-1-*.test.ts)
+├── shared/              # Shared utilities (portrait resolution, YAML helpers)
+├── themes-comedy/       # 9 comedy themes
+├── themes-literary/     # 15 literary themes
+├── themes-mythology-fantasy/  # 4 mythology & fantasy themes
+├── themes-prestige-tv/  # 17 prestige TV themes
+├── themes-realistic/    # 14 realistic themes
+├── themes-scifi/        # 8 sci-fi themes
+└── themes-superheroes/  # 4 superhero themes
 
 tests/                   # Framework tests
 docs/                    # Framework documentation (not ADRs - those are in orchestrator)
@@ -106,9 +116,8 @@ pennyfarthing doctor     # Verify installation
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial |
-| **Stepped** | Progressive disclosure with gates | prd, architecture |
-| **Procedural** | Flexible agent-guided | brainstorming, code-review |
+| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, agent-docs, patch |
+| **Stepped** | Progressive disclosure with gates | architecture, release, git-cleanup |
 
 ## CLI Commands
 
@@ -127,8 +136,8 @@ pennyfarthing doctor     # Verify installation
 
 Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 - `workflow-status-check` - Detect current workflow state
-- `generic-sm-setup` - Research backlog (MODE=research) or setup story (MODE=setup)
-- `generic-sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
+- `sm-setup` - Research backlog (MODE=research) or setup story (MODE=setup)
+- `sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
 - `sm-handoff` - SM→TEA/Dev handoff with Jira/branch verification
 - `testing-runner` - Config-driven test execution
 - `handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
@@ -272,12 +281,14 @@ pennyfarthing uninstall  # Remove from project
 
 ## Cyclist (Visual Terminal)
 
-Electron-based visual terminal for agent orchestration with a React UI.
+Electron-based visual terminal for agent orchestration with React 19, Tailwind v4, and shadcn/ui.
 
 **Architecture (v9.0+):**
-- **Dockview panels** - 11 draggable panels (ADR-0019), replacing hand-rolled system
+- **Dockview panels** - 15 draggable panels (ADR-0019)
 - **React components** - `src/public/components/` for all UI
+- **shadcn/ui** - Component library with 30+ theme presets via CSS variable bridge
 - **Tool visualization** - `ToolCallBlock.tsx`, `ToolStack.tsx` for rich tool display
+- **Prime integration** - `src/prime.ts` assembles tiered agent context
 
 **Key codenames:**
 - **WheelHub** - Central server (`packages/cyclist/src/server.ts`)
@@ -290,6 +301,7 @@ Electron-based visual terminal for agent orchestration with a React UI.
 - `SprintPanel`, `ProgressPanel`, `BikeLanePanel` - Workflow tracking
 - `AcceptanceCriteriaPanel` - Story acceptance criteria
 - `SettingsPanel`, `DebugPanel`, `GitPanel`, `BackgroundPanel`
+- `TodoPanel`, `AuditLogPanel`, `TTYPanel`, `WorkflowPanel`
 
 **Key React components:**
 - `DockviewWorkspace.tsx` - Main layout with dockview-react

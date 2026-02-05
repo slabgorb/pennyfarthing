@@ -90,11 +90,10 @@ git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION alrea
 **Files to modify:**
 - VERSION
 - package.json
-- packages/core/package.json
-- packages/cyclist/package.json
-- packages/shared/package.json
+- packages/*/package.json (all workspace packages)
 - README.md
 - CHANGELOG.md
+- CLAUDE.md
 - package-lock.json (if present)
 ```
 
