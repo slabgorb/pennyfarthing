@@ -3,7 +3,7 @@ description: Interactive stepped release with verification gates
 ---
 
 <purpose>
-Release a new version of Pennyfarthing using an interactive stepped workflow with gates at every critical point. Replaces the old fire-and-forget deploy.sh with a 7-step process that verifies each stage before proceeding.
+Release a new version of Pennyfarthing using an interactive stepped workflow with gates at every critical point. An 11-step process that verifies each stage before proceeding.
 </purpose>
 
 <usage>
@@ -20,11 +20,15 @@ This command starts the `release` stepped workflow (BikeLane):
 
 1. **Preflight** — Clean state, compute version, conflict checks
 2. **Bump** — Update all version files, show diff ← GATE
-3. **Commit** — Stage, commit, merge to develop, verify staging ← GATE
-4. **Merge** — Merge develop → main, create tag
-5. **Push & Tag** — Push branches + tag (point of no return) ← GATE
-6. **Publish** — npm publish core + cyclist ← GATE
-7. **Finalize** — GitHub release, summary
+3. **Changelog** — Generate entries from commits (`/changelog`) ← GATE
+4. **README** — Audit feature counts, update content
+5. **CLAUDE.md** — Verify version, build commands, project structure
+6. **Retro** — Optional retrospective (`/retro`)
+7. **Commit** — Stage, commit, merge to develop, verify staging ← GATE
+8. **Merge** — Merge develop → main, create tag
+9. **Push & Tag** — Push branches + tag (point of no return) ← GATE
+10. **Publish** — npm publish core + cyclist ← GATE
+11. **Finalize** — GitHub release, summary
 
 Gates pause for user approval. You can abort, revise, or continue at each gate.
 </workflow>
@@ -65,5 +69,6 @@ To check status:
 
 <skills>
 - `/changelog` - For changelog format reference and auto-generation
+- `/retro` - For optional release retrospective
 - `/workflow` - For workflow management commands
 </skills>
