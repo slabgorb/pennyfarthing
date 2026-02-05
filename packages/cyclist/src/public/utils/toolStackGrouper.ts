@@ -38,8 +38,8 @@ interface Message {
  * Rules:
  * - tool_result messages do NOT break the stack (they're paired with tool_use elsewhere)
  * - assistant/user messages DO break the stack
- * - Single tool_use messages are NOT grouped (returns empty array for that sequence)
- * - Returns array of ToolStackData, each representing 2+ consecutive tools
+ * - Single tool_use messages ARE grouped (consistent rendering with multi-tool stacks)
+ * - Returns array of ToolStackData, each representing 1+ consecutive tools
  *
  * @param messages - Array of messages to process
  * @returns Array of tool stacks (only stacks with 2+ tools)
@@ -75,8 +75,8 @@ export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
       continue;
     } else {
       // assistant, user, or other message types break the stack
-      // Only create stack if 2+ tools (single tools in middle render normally)
-      if (currentTools.length >= 2) {
+      // Create stack for any tools (single tools also get stacked for consistent rendering)
+      if (currentTools.length >= 1) {
         const lastTool = currentTools[currentTools.length - 1];
         stacks.push({
           stackId: generateStableStackId(currentTools),
@@ -91,8 +91,7 @@ export function groupToolsIntoStacks(messages: Message[]): ToolStackData[] {
   }
 
   // Handle remaining tools at end of messages
-  // Same threshold as mid-stream: only stack 2+ tools (single tools render normally)
-  if (currentTools.length >= 2) {
+  if (currentTools.length >= 1) {
     const lastTool = currentTools[currentTools.length - 1];
     stacks.push({
       stackId: generateStableStackId(currentTools),
