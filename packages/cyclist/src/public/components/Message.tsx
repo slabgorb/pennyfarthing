@@ -17,25 +17,31 @@ import type { MessageData } from '../types/message';
 
 interface MessageProps {
   message: MessageData;
+  isLastAgentMessage?: boolean;
 }
 
 interface AssistantAvatarProps {
   isStreaming?: boolean;
+  agentSlug?: string;
+  agentTheme?: string;
+  agentCharacter?: string;
 }
 
-function AssistantAvatar({ isStreaming }: AssistantAvatarProps): React.ReactElement {
+function AssistantAvatar({ isStreaming, agentSlug, agentTheme, agentCharacter }: AssistantAvatarProps): React.ReactElement {
   const { persona } = usePersona();
   const [imageError, setImageError] = useState(false);
 
-  const slug = persona?.slug;
-  const theme = persona?.theme;
+  // Use per-message persona if available, fall back to current global persona
+  const slug = agentSlug || persona?.slug;
+  const theme = agentTheme || persona?.theme;
+  const character = agentCharacter || persona?.character;
   const avatarClass = isStreaming ? 'avatar-portrait avatar-thinking' : 'avatar-portrait';
 
   if (slug && theme && !imageError) {
     return (
       <img
         src={`/portraits/${theme}/small/${slug}.png`}
-        alt={persona?.character || 'Agent'}
+        alt={character || 'Agent'}
         className={avatarClass}
         onError={() => setImageError(true)}
       />
@@ -67,7 +73,7 @@ function UserAvatar(): React.ReactElement {
   return <span className="avatar-emoji">👤</span>;
 }
 
-export default function Message({ message }: MessageProps): React.ReactElement {
+export default function Message({ message, isLastAgentMessage }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
 
@@ -106,11 +112,18 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   }
 
   // For streaming agent messages, use StreamingContent with throbbing avatar
+  // Only throb the last agent message's avatar
   if (message.type === 'agent' && message.isStreaming) {
+    const showThrob = isLastAgentMessage !== false;
     return (
       <div data-testid={testId} className={`message ${roleClass}`}>
         <div data-testid="avatar" className="message-avatar">
-          <AssistantAvatar isStreaming={true} />
+          <AssistantAvatar
+            isStreaming={showThrob}
+            agentSlug={message.agentSlug}
+            agentTheme={message.agentTheme}
+            agentCharacter={message.agentCharacter}
+          />
         </div>
         <div className="message-content">
           <StreamingContent content={message.content || ''} isStreaming={message.isStreaming ?? false} />
@@ -125,7 +138,13 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   return (
     <div data-testid={testId} className={`message ${roleClass}`}>
       <div data-testid="avatar" className="message-avatar">
-        {message.type === 'user' ? <UserAvatar /> : <AssistantAvatar />}
+        {message.type === 'user' ? <UserAvatar /> : (
+          <AssistantAvatar
+            agentSlug={message.agentSlug}
+            agentTheme={message.agentTheme}
+            agentCharacter={message.agentCharacter}
+          />
+        )}
       </div>
       <div className="message-content">
         <div dangerouslySetInnerHTML={{ __html: html }} />

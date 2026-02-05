@@ -243,9 +243,12 @@ export function FontPicker({
     }
   }, [fontsLoaded]);
 
-  // Filter system fonts for code type (monospace only)
+  // Filter system fonts: English-only (Latin names), monospace-only for code
   const filteredSystemFonts = useMemo(() => {
     let fonts = systemFonts;
+
+    // Filter to fonts with Latin-script names (excludes CJK, Arabic, Devanagari, etc.)
+    fonts = fonts.filter(f => /^[\x20-\x7E\u00C0-\u024F]+$/.test(f.family));
 
     // For code fonts, only show monospace
     if (type === 'code') {

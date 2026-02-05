@@ -36,6 +36,10 @@ export interface MessageData {
   durationMs?: number;
   /** Number of images attached to user message */
   imageCount?: number;
+  /** Agent identity captured at message creation time */
+  agentSlug?: string;
+  agentTheme?: string;
+  agentCharacter?: string;
 }
 
 /**

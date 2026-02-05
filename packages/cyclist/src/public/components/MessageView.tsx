@@ -150,6 +150,18 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     return { items: result, toolResults };
   }, [messages]);
 
+  // Find the last agent message index for throb control
+  const lastAgentIndex = useMemo(() => {
+    for (let i = groupedContent.items.length - 1; i >= 0; i--) {
+      const item = groupedContent.items[i];
+      if (!('isToolStack' in item) && !('messages' in item)) {
+        const msg = item as MessageData;
+        if (msg.type === 'agent') return i;
+      }
+    }
+    return -1;
+  }, [groupedContent.items]);
+
   const renderItem = (item: MessageData | SubagentGroup | ToolStackGroup, index: number) => {
     // Check if this is a tool stack group
     if ('isToolStack' in item && item.isToolStack) {
@@ -205,6 +217,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       <Message
         key={`msg-${index}-${msg.timestamp}`}
         message={msg}
+        isLastAgentMessage={index === lastAgentIndex}
       />
     );
   };
