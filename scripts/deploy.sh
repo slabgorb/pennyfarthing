@@ -128,6 +128,7 @@ if $DRY_RUN; then
     log_dry "Update package.json: $CURRENT_VERSION -> $NEW_VERSION"
     log_dry "Update packages/core/package.json -> $NEW_VERSION"
     log_dry "Update packages/cyclist/package.json -> $NEW_VERSION"
+    log_dry "Update packages/shared/package.json -> $NEW_VERSION"
     log_dry "Update README.md version badge"
     log_dry "Update package-lock.json"
     log_dry "Update CHANGELOG.md version links and header"
@@ -141,7 +142,7 @@ else
     fi
 
     # Update workspace package versions
-    for pkg in core cyclist; do
+    for pkg in core cyclist shared; do
         PKG_JSON="$PROJECT_ROOT/packages/$pkg/package.json"
         if [[ -f "$PKG_JSON" ]]; then
             # Use a more flexible pattern that matches any version number
@@ -192,13 +193,30 @@ if $DRY_RUN; then
     log_dry "git commit -m 'chore: bump version to $NEW_VERSION'"
     log_dry "git checkout develop && git merge $RELEASE_BRANCH"
 else
-    (
-        cd "$PROJECT_ROOT"
-        git checkout -b "$RELEASE_BRANCH"
-        git add VERSION package.json package-lock.json README.md CHANGELOG.md 2>/dev/null || true
-        git add packages/core/package.json packages/cyclist/package.json packages/shared/package.json 2>/dev/null || true
-        git commit -m "chore: bump version to $NEW_VERSION"
-    )
+    cd "$PROJECT_ROOT"
+    git checkout -b "$RELEASE_BRANCH"
+
+    # Stage root files
+    git add VERSION package.json README.md CHANGELOG.md
+    [[ -f package-lock.json ]] && git add package-lock.json
+
+    # Stage workspace package files
+    for pkg in core cyclist shared; do
+        [[ -f "packages/$pkg/package.json" ]] && git add "packages/$pkg/package.json"
+    done
+
+    # Verify something was staged
+    if git diff --cached --quiet; then
+        log_error "No files staged for version bump commit!"
+        git checkout develop
+        git branch -d "$RELEASE_BRANCH" 2>/dev/null
+        exit 1
+    fi
+
+    log_info "Staged files for version bump:"
+    git diff --cached --name-only
+
+    git commit -m "chore: bump version to $NEW_VERSION"
     log_info "Committed version bump on $RELEASE_BRANCH"
 
     # Merge release branch to develop
