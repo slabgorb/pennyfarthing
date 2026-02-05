@@ -270,6 +270,12 @@ def import_epic(epics_file: str, initiative_name: str | None, marker: str, dry_r
         raise click.ClickException(result.get("error", "Unknown error"))
 
 
+# Register validate command from validate_cmd module
+from pennyfarthing_scripts.sprint.validate_cmd import validate_command
+
+sprint.add_command(validate_command)
+
+
 # For backwards compatibility when running as module
 def main(args: list[str] | None = None) -> int:
     """Entry point for backwards compatibility."""
