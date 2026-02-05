@@ -261,8 +261,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Component renders "2 tools completed" or "2 tools running" based on isActive
-      expect(screen.getByText('2 tools completed')).toBeInTheDocument();
+      // Count badge shows just the number
+      expect(screen.getByTestId('tool-stack-count')).toHaveTextContent('2');
     });
 
     it('should display count "5 tools" when collapsed with 5 tools', () => {
@@ -282,8 +282,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Component renders "5 tools completed" or "5 tools running" based on isActive
-      expect(screen.getByText('5 tools completed')).toBeInTheDocument();
+      // Count badge shows just the number
+      expect(screen.getByTestId('tool-stack-count')).toHaveTextContent('5');
     });
 
     it('should display "1 tool" (singular) when only 1 tool in stack edge case', () => {
@@ -298,8 +298,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Should use singular form with status
-      expect(screen.getByText('1 tool completed')).toBeInTheDocument();
+      // Count badge shows just the number
+      expect(screen.getByTestId('tool-stack-count')).toHaveTextContent('1');
     });
 
     it('should have count visible in collapsed header', () => {
@@ -378,9 +378,9 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Expand
       fireEvent.click(screen.getByTestId('tool-stack-header'));
 
-      // ToolCallBlock renders intent summaries - npm test becomes "Running tests"
-      expect(screen.getByText(/Reading.*a\.ts/)).toBeInTheDocument();
-      expect(screen.getByText('Running tests')).toBeInTheDocument();
+      // ToolCallBlock renders intent summaries within the expanded tool blocks
+      expect(screen.getAllByText(/Reading.*a\.ts/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Running tests').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should pass tool results to ToolCallBlock when available', () => {
@@ -663,8 +663,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Should not crash
       render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Should show 0 tools (component adds status suffix)
-      expect(screen.getByText('0 tools completed')).toBeInTheDocument();
+      // Count badge shows just the number
+      expect(screen.getByTestId('tool-stack-count')).toHaveTextContent('0');
     });
 
     it('should handle tools with missing tool_id gracefully', () => {
@@ -704,8 +704,8 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
       // Should not crash or hang
       const { unmount } = render(<ToolStack stack={stack} toolResults={new Map()} />);
 
-      // Component adds status suffix
-      expect(screen.getByText('50 tools completed')).toBeInTheDocument();
+      // Count badge shows just the number
+      expect(screen.getByTestId('tool-stack-count')).toHaveTextContent('50');
 
       unmount();
     });
@@ -826,7 +826,7 @@ describe('MSSCI-13400: Tool Use Stack Between Messages', () => {
 
       const header = screen.getByTestId('tool-stack-header');
       expect(header).toHaveAttribute('aria-label');
-      expect(header.getAttribute('aria-label')).toContain('2 tools');
+      expect(header.getAttribute('aria-label')).toContain('2');
     });
 
     it('should support keyboard navigation (Enter to toggle)', () => {

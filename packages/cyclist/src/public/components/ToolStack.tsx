@@ -43,19 +43,25 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
     prevIsActiveRef.current = stack.isActive;
   }, [stack.isActive]);
 
-  // AC2: Count display with singular/plural
-  const countText = stack.count === 1 ? '1 tool' : `${stack.count} tools`;
+  // Count display - just the number
+  const countText = `${stack.count}`;
+
+  // Active tool summary - show what's happening RIGHT NOW
+  const activeSummary = useMemo(() => {
+    if (stack.isActive && stack.tools.length > 0) {
+      // Show the most recent (last) tool's summary
+      const lastTool = stack.tools[stack.tools.length - 1];
+      return generateToolIntentSummary(lastTool.tool_name, lastTool.input);
+    }
+    return null;
+  }, [stack.tools, stack.isActive]);
 
   // Generate summary of tool intents for collapsed view
   const collapsedSummary = useMemo(() => {
-    // Show first 2 tool intents, abbreviated
-    const summaries = stack.tools.slice(0, 2).map(tool =>
-      generateToolIntentSummary(tool.tool_name, tool.input)
-    );
-    if (stack.tools.length > 2) {
-      return summaries.join(', ') + '...';
-    }
-    return summaries.join(', ');
+    // Show last tool's summary as the main description
+    if (stack.tools.length === 0) return '';
+    const lastTool = stack.tools[stack.tools.length - 1];
+    return generateToolIntentSummary(lastTool.tool_name, lastTool.input);
   }, [stack.tools]);
 
   // Compute tool type counts for mini badges
@@ -133,11 +139,15 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
         </span>
         <span
           data-testid="tool-stack-count"
-          className="tool-stack-count"
+          className="tool-stack-count-badge"
         >
-          {countText} {stack.isActive ? 'running' : 'completed'}
+          {countText}
         </span>
-        {isCollapsed && !stack.isActive && (
+        {stack.isActive && activeSummary ? (
+          <span className="tool-stack-active-summary">
+            {activeSummary}
+          </span>
+        ) : (
           <>
             <span className="tool-stack-badges">
               <TooltipProvider delayDuration={300}>
