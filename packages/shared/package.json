@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/shared",
-  "version": "9.0.2",
+  "version": "9.2.0",
   "description": "Shared utilities for Pennyfarthing including portrait path resolution",
   "type": "module",
   "main": "dist/index.js",
