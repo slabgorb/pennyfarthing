@@ -5,13 +5,22 @@ export default {
   ],
   theme: {
     extend: {
-      // Extend with Cyclist's existing CSS variable colors
+      // Existing Cyclist color mappings
       colors: {
-        primary: 'var(--bg-primary)',
-        secondary: 'var(--bg-secondary)',
+        primary: {
+          DEFAULT: 'var(--bg-primary)',
+          foreground: 'var(--text-primary)',
+        },
+        secondary: {
+          DEFAULT: 'var(--bg-secondary)',
+          foreground: 'var(--text-primary)',
+        },
         tertiary: 'var(--bg-tertiary)',
-        accent: 'var(--accent)',
-        'accent-secondary': 'var(--accent-secondary)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--text-primary)',
+          secondary: 'var(--accent-secondary)',
+        },
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
         'text-muted': 'var(--text-muted)',
@@ -19,10 +28,38 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         error: 'var(--error)',
+
+        // shadcn CSS variable bridge
+        // Maps shadcn's expected color tokens to Cyclist's theme variables
+        background: 'var(--bg-primary)',
+        foreground: 'var(--text-primary)',
+        card: {
+          DEFAULT: 'var(--bg-secondary)',
+          foreground: 'var(--text-primary)',
+        },
+        popover: {
+          DEFAULT: 'var(--bg-secondary)',
+          foreground: 'var(--text-primary)',
+        },
+        muted: {
+          DEFAULT: 'var(--bg-tertiary)',
+          foreground: 'var(--text-muted)',
+        },
+        destructive: {
+          DEFAULT: 'var(--status-error)',
+          foreground: '#fafafa',
+        },
+        input: 'var(--border)',
+        ring: 'var(--accent)',
       },
       fontFamily: {
         sans: ['var(--font-ui)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-code)', 'monospace'],
+      },
+      borderRadius: {
+        lg: '0.5rem',
+        md: 'calc(0.5rem - 2px)',
+        sm: 'calc(0.5rem - 4px)',
       },
     },
   },

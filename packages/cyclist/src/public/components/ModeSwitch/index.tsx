@@ -7,14 +7,26 @@
  * Features:
  * - Three mode options: Plan, Manual, Accept
  * - Sliding highlight animation on mode change
- * - Keyboard accessible (arrow keys, Enter/Space)
- * - ARIA attributes for screen readers
+ * - Keyboard accessible (arrow keys via Radix ToggleGroup, Cmd+1/2/3 shortcuts)
+ * - ARIA radiogroup semantics provided by Radix ToggleGroup
  * - Color-coded modes: Plan (teal), Manual (gray), Accept (purple)
+ * - Tooltips with mode descriptions via Radix Tooltip
+ *
+ * Refactored to use shadcn ToggleGroup primitive (replaces custom roving tabindex,
+ * manual keyboard handling, and manual ARIA management).
  */
 
-import React, { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 
-// Note: useRef is used for both DOM refs and WebSocket ref in useModeSync
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
 import './ModeSwitch.css';
 
 // =============================================================================
@@ -38,7 +50,7 @@ export const MODE_DESCRIPTIONS: Record<Mode, string> = {
 };
 
 // =============================================================================
-// Mode Mapping (UI ↔ Claude CLI)
+// Mode Mapping (UI <-> Claude CLI)
 // =============================================================================
 
 /** Map UI mode names to Claude CLI mode names */
@@ -70,7 +82,7 @@ export const MODE_SHORTCUTS: Record<string, Mode> = {
 // Tooltip Support (AC7)
 // =============================================================================
 
-/** Flag indicating tooltips are enabled via title attribute */
+/** Flag indicating tooltips are enabled via Radix Tooltip */
 export const TOOLTIP_ENABLED = true;
 
 export interface ModeSwitchProps {
@@ -192,7 +204,7 @@ export function useModeSync(): UseModeSyncResult {
           const uiMode = CLAUDE_TO_MODE[data.mode] || 'manual';
           setModeState(uiMode);
           setIsLoading(false);
-          console.log('[ModeSwitch] Mode synced:', data.mode, '→', uiMode);
+          console.log('[ModeSwitch] Mode synced:', data.mode, '->', uiMode);
         }
       } catch (err) {
         console.error('[ModeSwitch] Failed to parse mode response:', err);
@@ -226,7 +238,7 @@ export function useModeSync(): UseModeSyncResult {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'setMode', mode: claudeMode }));
       setModeState(newMode);
-      console.log('[ModeSwitch] Mode set to:', newMode, '→', claudeMode);
+      console.log('[ModeSwitch] Mode set to:', newMode, '->', claudeMode);
     } else {
       // WebSocket not connected, just update local state
       setModeState(newMode);
@@ -250,12 +262,8 @@ export function ModeSwitch({
 }: ModeSwitchProps): React.ReactElement {
   // Support both controlled and uncontrolled usage
   const [internalMode, setInternalMode] = useState<Mode>(defaultMode);
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const mode = controlledMode ?? internalMode;
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -281,65 +289,28 @@ export function ModeSwitch({
     onModeChange?.(newMode);
   }, [controlledMode, disabled, onModeChange]);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled) return;
-
-    const currentIndex = MODES.indexOf(mode);
-    let newIndex = currentIndex;
-
-    switch (e.key) {
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        e.preventDefault();
-        newIndex = (currentIndex - 1 + MODES.length) % MODES.length;
-        break;
-      case 'ArrowRight':
-      case 'ArrowDown':
-        e.preventDefault();
-        newIndex = (currentIndex + 1) % MODES.length;
-        break;
-      case 'Home':
-        e.preventDefault();
-        newIndex = 0;
-        break;
-      case 'End':
-        e.preventDefault();
-        newIndex = MODES.length - 1;
-        break;
-      default:
-        return;
-    }
-
-    const newMode = MODES[newIndex];
-    handleModeChange(newMode);
-    optionRefs.current[newIndex]?.focus();
-  }, [disabled, mode, handleModeChange]);
-
-  // Focus management for roving tabindex
-  useEffect(() => {
-    const currentIndex = MODES.indexOf(mode);
-    optionRefs.current.forEach((ref, index) => {
-      if (ref) {
-        ref.tabIndex = index === currentIndex ? 0 : -1;
-      }
-    });
-  }, [mode]);
-
-  const classNames = [
-    'mode-switch',
-    disabled ? 'mode-switch--disabled' : '',
-    reducedMotion ? 'reduced-motion' : '',
-    className,
-  ].filter(Boolean).join(' ');
+  /**
+   * Radix ToggleGroup fires onValueChange with the new value string.
+   * When the user clicks the already-selected item, value is '' (deselect);
+   * we ignore that to enforce "always one selected".
+   */
+  const handleValueChange = useCallback(
+    (value: string) => {
+      if (!value) return; // prevent deselect
+      handleModeChange(value as Mode);
+    },
+    [handleModeChange],
+  );
 
   return (
     <div
-      ref={containerRef}
-      className={classNames}
+      className={cn(
+        'mode-switch',
+        disabled && 'mode-switch--disabled',
+        reducedMotion && 'reduced-motion',
+        className,
+      )}
       data-testid="mode-switch"
-      role="group"
-      aria-label="Permission mode"
-      onKeyDown={handleKeyDown}
       style={reducedMotion ? { transition: 'none' } : undefined}
     >
       {/* Sliding highlight */}
@@ -353,30 +324,42 @@ export function ModeSwitch({
         data-mode={mode}
       />
 
-      {/* Mode options */}
-      {MODES.map((m, index) => {
-        const isActive = mode === m;
-        const isFocused = focusedIndex === index;
-        return (
-          <button
-            key={m}
-            ref={(el) => { optionRefs.current[index] = el; }}
-            type="button"
-            className={`mode-option ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
-            data-mode={m}
-            data-testid={`mode-${m}`}
-            aria-pressed={isActive}
-            aria-label={`${MODE_LABELS[m]} mode: ${MODE_DESCRIPTIONS[m]}`}
-            title={MODE_DESCRIPTIONS[m]}
-            onClick={() => handleModeChange(m)}
-            onFocus={() => setFocusedIndex(index)}
-            onBlur={() => setFocusedIndex(null)}
-            disabled={disabled}
-          >
-            {MODE_LABELS[m]}
-          </button>
-        );
-      })}
+      {/* Mode options via shadcn ToggleGroup */}
+      <TooltipProvider delayDuration={400}>
+        <ToggleGroup
+          type="single"
+          value={mode}
+          onValueChange={handleValueChange}
+          disabled={disabled}
+          className="relative z-[1] gap-0"
+          aria-label="Permission mode"
+        >
+          {MODES.map((m) => {
+            const isActive = mode === m;
+            return (
+              <Tooltip key={m}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem
+                    value={m}
+                    data-mode={m}
+                    data-testid={`mode-${m}`}
+                    aria-label={`${MODE_LABELS[m]} mode: ${MODE_DESCRIPTIONS[m]}`}
+                    className={cn(
+                      'mode-option',
+                      isActive && 'active',
+                    )}
+                  >
+                    {MODE_LABELS[m]}
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {MODE_DESCRIPTIONS[m]}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </ToggleGroup>
+      </TooltipProvider>
 
       {/* Screen reader announcement */}
       <div className="visually-hidden" role="status" aria-live="polite">

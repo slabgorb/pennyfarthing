@@ -35,11 +35,15 @@ const PANEL_IDS = {
   CHANGED: 'changed',
   DIFFS: 'diffs',
   DEBUG: 'debug',
+  AUDIT_LOG: 'audit-log',
+  TTY: 'tty',
   // Center panel (sacred)
   MESSAGE: 'message',
   // Right sidebar panels
   SPRINT: 'sprint',
-  PROGRESS: 'progress',
+  WORKFLOW: 'workflow',
+  AC: 'ac',
+  TODO: 'todo',
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
@@ -129,10 +133,10 @@ describe('AC2: DockviewWorkspace exports and structure', () => {
     expect(typeof module.registerPanelComponent).toBe('function');
   });
 
-  it('should export PANEL_INVENTORY with 10 panels', async () => {
+  it('should export PANEL_INVENTORY with 13 panels', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(10);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should export PanelAdapter component', async () => {
@@ -184,7 +188,9 @@ describe('AC4: Panel draggability configuration', () => {
   it('should have right sidebar panels defined', async () => {
     const { PANEL_INVENTORY } = await import('../src/public/components/DockviewWorkspace');
     expect(PANEL_INVENTORY.SPRINT).toBe('sprint');
-    expect(PANEL_INVENTORY.PROGRESS).toBe('progress');
+    expect(PANEL_INVENTORY.WORKFLOW).toBe('workflow');
+    expect(PANEL_INVENTORY.AC).toBe('ac');
+    expect(PANEL_INVENTORY.TODO).toBe('todo');
     expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
     expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');
@@ -229,6 +235,8 @@ describe('AC5: Layout persistence', () => {
     expect(layout.leftSidebar.panels).toContain('changed');
     expect(layout.leftSidebar.panels).toContain('diffs');
     expect(layout.leftSidebar.panels).toContain('debug');
+    expect(layout.leftSidebar.panels).toContain('audit-log');
+    expect(layout.leftSidebar.panels).toContain('tty');
   });
 
   it('should have right sidebar panels in default layout', async () => {
@@ -236,7 +244,9 @@ describe('AC5: Layout persistence', () => {
     const layout = createWorkspaceLayout();
 
     expect(layout.rightSidebar.panels).toContain('sprint');
-    expect(layout.rightSidebar.panels).toContain('progress');
+    expect(layout.rightSidebar.panels).toContain('workflow');
+    expect(layout.rightSidebar.panels).toContain('ac');
+    expect(layout.rightSidebar.panels).toContain('todo');
     expect(layout.rightSidebar.panels).toContain('background');
     expect(layout.rightSidebar.panels).toContain('git');
     expect(layout.rightSidebar.panels).toContain('settings');
@@ -322,7 +332,7 @@ describe('AC8: Panel functionality preserved', () => {
   it('should export PANEL_INVENTORY constant', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(10);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should have all expected panel IDs', async () => {
@@ -331,9 +341,13 @@ describe('AC8: Panel functionality preserved', () => {
     expect(PANEL_INVENTORY.CHANGED).toBe('changed');
     expect(PANEL_INVENTORY.DIFFS).toBe('diffs');
     expect(PANEL_INVENTORY.DEBUG).toBe('debug');
+    expect(PANEL_INVENTORY.AUDIT_LOG).toBe('audit-log');
+    expect(PANEL_INVENTORY.TTY).toBe('tty');
     expect(PANEL_INVENTORY.MESSAGE).toBe('message');
     expect(PANEL_INVENTORY.SPRINT).toBe('sprint');
-    expect(PANEL_INVENTORY.PROGRESS).toBe('progress');
+    expect(PANEL_INVENTORY.WORKFLOW).toBe('workflow');
+    expect(PANEL_INVENTORY.AC).toBe('ac');
+    expect(PANEL_INVENTORY.TODO).toBe('todo');
     expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
     expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');

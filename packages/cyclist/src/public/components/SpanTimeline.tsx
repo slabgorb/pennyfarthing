@@ -12,6 +12,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // =============================================================================
 // Types
@@ -169,145 +173,179 @@ export function SpanTimeline({ height = 200, autoScroll = true }: SpanTimelinePr
   }, []);
 
   if (loading) {
-    return <div className="span-timeline-loading">Loading spans...</div>;
+    return (
+      <div className="span-timeline-loading p-2 space-y-2">
+        <div className="flex gap-2 items-center">
+          <Skeleton className="h-4 w-20" />
+          <div className="flex-1" />
+          <Skeleton className="h-6 w-6" />
+          <Skeleton className="h-6 w-6" />
+          <Skeleton className="h-6 w-6" />
+        </div>
+        <Skeleton className="h-[120px] w-full" />
+      </div>
+    );
   }
 
   return (
-    <div className="span-timeline" style={{ height }}>
-      {/* Toolbar */}
-      <div className="span-timeline-toolbar">
-        <span className="span-count">{spans.length} spans</span>
-        <div className="zoom-controls">
-          <button onClick={handleZoomOut} title="Zoom out">−</button>
-          <button onClick={handleZoomReset} title="Reset zoom">⟳</button>
-          <button onClick={handleZoomIn} title="Zoom in">+</button>
-        </div>
-      </div>
-
-      {/* Timeline container */}
-      <div className="span-timeline-container" ref={containerRef}>
-        <div
-          className="span-timeline-track"
-          ref={timelineRef}
-          style={{ width: timelineWidth }}
-        >
-          {/* Time axis */}
-          <div className="span-timeline-axis">
-            {Array.from({ length: Math.ceil(timeRange / 10000) + 1 }, (_, i) => {
-              const time = minTime + i * 10000;
-              const left = ((time - minTime) / timeRange) * timelineWidth;
-              return (
-                <div
-                  key={i}
-                  className="axis-tick"
-                  style={{ left }}
-                >
-                  <span className="tick-label">{formatTime(time)}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Span bars */}
-          <div className="span-timeline-bars">
-            {spans.map((span, index) => {
-              const left = ((span.startTime - minTime) / timeRange) * timelineWidth;
-              const width = Math.max(4, (span.durationMs / timeRange) * timelineWidth);
-              const top = (index % 5) * 28 + 4; // Stack in 5 rows
-
-              return (
-                <div
-                  key={span.spanId}
-                  className={`span-bar ${span.success ? '' : 'error'} ${
-                    selectedSpan?.spanId === span.spanId ? 'selected' : ''
-                  }`}
-                  style={{
-                    left,
-                    width,
-                    top,
-                    backgroundColor: getToolColor(span.toolName),
-                  }}
-                  onClick={() => handleSpanClick(span)}
-                  title={`${span.toolName}: ${formatDuration(span.durationMs)}`}
-                >
-                  <span className="span-bar-label">{span.toolName}</span>
-                </div>
-              );
-            })}
+    <TooltipProvider delayDuration={300}>
+      <div className="span-timeline" style={{ height }}>
+        {/* Toolbar */}
+        <div className="span-timeline-toolbar">
+          <span className="span-count">{spans.length} spans</span>
+          <div className="zoom-controls">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleZoomOut}>−</Button>
+              </TooltipTrigger>
+              <TooltipContent>Zoom out</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleZoomReset}>⟳</Button>
+              </TooltipTrigger>
+              <TooltipContent>Reset zoom</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleZoomIn}>+</Button>
+              </TooltipTrigger>
+              <TooltipContent>Zoom in</TooltipContent>
+            </Tooltip>
           </div>
         </div>
-      </div>
 
-      {/* Selected span details */}
-      {selectedSpan && (
-        <div className="span-timeline-details">
-          <div className="detail-header">
-            <span
-              className="tool-badge"
-              style={{ backgroundColor: getToolColor(selectedSpan.toolName) }}
-            >
-              {selectedSpan.toolName}
-            </span>
-            <span className="duration">{formatDuration(selectedSpan.durationMs)}</span>
-            <span className={`status ${selectedSpan.success ? 'success' : 'error'}`}>
-              {selectedSpan.success ? '✓' : '✗'}
-            </span>
-            <button
-              className="close-details"
-              onClick={() => setSelectedSpan(null)}
-            >
-              ×
-            </button>
-          </div>
-          <div className="detail-body">
-            <div className="detail-row">
-              <label>Time:</label>
-              <span>{formatTime(selectedSpan.startTime)}</span>
+        {/* Timeline container */}
+        <div className="span-timeline-container" ref={containerRef}>
+          <div
+            className="span-timeline-track"
+            ref={timelineRef}
+            style={{ width: timelineWidth }}
+          >
+            {/* Time axis */}
+            <div className="span-timeline-axis">
+              {Array.from({ length: Math.ceil(timeRange / 10000) + 1 }, (_, i) => {
+                const time = minTime + i * 10000;
+                const left = ((time - minTime) / timeRange) * timelineWidth;
+                return (
+                  <div
+                    key={i}
+                    className="axis-tick"
+                    style={{ left }}
+                  >
+                    <span className="tick-label">{formatTime(time)}</span>
+                  </div>
+                );
+              })}
             </div>
-            {selectedSpan.enrichment.filePath && (
-              <div className="detail-row">
-                <label>File:</label>
-                <span className="mono">{selectedSpan.enrichment.filePath}</span>
-              </div>
-            )}
-            {selectedSpan.enrichment.command && (
-              <div className="detail-row">
-                <label>Command:</label>
-                <span className="mono">{selectedSpan.enrichment.command}</span>
-              </div>
-            )}
-            {selectedSpan.enrichment.pattern && (
-              <div className="detail-row">
-                <label>Pattern:</label>
-                <span className="mono">{selectedSpan.enrichment.pattern}</span>
-              </div>
-            )}
-            {selectedSpan.enrichment.summary && (
-              <div className="detail-row">
-                <label>Summary:</label>
-                <span>{selectedSpan.enrichment.summary}</span>
-              </div>
-            )}
-            {selectedSpan.error && (
-              <div className="detail-row error">
-                <label>Error:</label>
-                <span>{selectedSpan.error}</span>
-              </div>
-            )}
+
+            {/* Span bars */}
+            <div className="span-timeline-bars">
+              {spans.map((span, index) => {
+                const left = ((span.startTime - minTime) / timeRange) * timelineWidth;
+                const width = Math.max(4, (span.durationMs / timeRange) * timelineWidth);
+                const top = (index % 5) * 28 + 4; // Stack in 5 rows
+
+                return (
+                  <Tooltip key={span.spanId}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={`span-bar ${span.success ? '' : 'error'} ${
+                          selectedSpan?.spanId === span.spanId ? 'selected' : ''
+                        }`}
+                        style={{
+                          left,
+                          width,
+                          top,
+                          backgroundColor: getToolColor(span.toolName),
+                        }}
+                        onClick={() => handleSpanClick(span)}
+                      >
+                        <span className="span-bar-label">{span.toolName}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>{`${span.toolName}: ${formatDuration(span.durationMs)}`}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Legend */}
-      <div className="span-timeline-legend">
-        {Object.entries(TOOL_COLORS).slice(0, 6).map(([tool, color]) => (
-          <div key={tool} className="legend-item">
-            <span className="legend-color" style={{ backgroundColor: color }} />
-            <span className="legend-label">{tool}</span>
+        {/* Selected span details */}
+        {selectedSpan && (
+          <div className="span-timeline-details">
+            <div className="detail-header">
+              <Badge
+                variant="default"
+                className="tool-badge"
+                style={{ backgroundColor: getToolColor(selectedSpan.toolName) }}
+              >
+                {selectedSpan.toolName}
+              </Badge>
+              <span className="duration">{formatDuration(selectedSpan.durationMs)}</span>
+              <span className={`status ${selectedSpan.success ? 'success' : 'error'}`}>
+                {selectedSpan.success ? '✓' : '✗'}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="close-details"
+                onClick={() => setSelectedSpan(null)}
+              >
+                ×
+              </Button>
+            </div>
+            <div className="detail-body">
+              <div className="detail-row">
+                <label>Time:</label>
+                <span>{formatTime(selectedSpan.startTime)}</span>
+              </div>
+              {selectedSpan.enrichment.filePath && (
+                <div className="detail-row">
+                  <label>File:</label>
+                  <span className="mono">{selectedSpan.enrichment.filePath}</span>
+                </div>
+              )}
+              {selectedSpan.enrichment.command && (
+                <div className="detail-row">
+                  <label>Command:</label>
+                  <span className="mono">{selectedSpan.enrichment.command}</span>
+                </div>
+              )}
+              {selectedSpan.enrichment.pattern && (
+                <div className="detail-row">
+                  <label>Pattern:</label>
+                  <span className="mono">{selectedSpan.enrichment.pattern}</span>
+                </div>
+              )}
+              {selectedSpan.enrichment.summary && (
+                <div className="detail-row">
+                  <label>Summary:</label>
+                  <span>{selectedSpan.enrichment.summary}</span>
+                </div>
+              )}
+              {selectedSpan.error && (
+                <div className="detail-row error">
+                  <label>Error:</label>
+                  <span>{selectedSpan.error}</span>
+                </div>
+              )}
+            </div>
           </div>
-        ))}
+        )}
+
+        {/* Legend */}
+        <div className="span-timeline-legend">
+          {Object.entries(TOOL_COLORS).slice(0, 6).map(([tool, color]) => (
+            <div key={tool} className="legend-item">
+              <span className="legend-color" style={{ backgroundColor: color }} />
+              <span className="legend-label">{tool}</span>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 

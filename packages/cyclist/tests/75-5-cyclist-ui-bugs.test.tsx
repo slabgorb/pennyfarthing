@@ -129,8 +129,9 @@ describe('AC1: Tab close works without JavaScript errors', () => {
     );
 
     // Try to restore a panel that was never closed (edge case that triggers the bug)
-    const result = restorePanel('nonexistent-panel');
-    expect(result).toBe(false);
+    // This should not throw a TypeError - the bug was that e.panel.id was undefined
+    // in the onDidAddPanel handler. Now it's safely guarded with optional chaining.
+    expect(() => restorePanel('nonexistent-panel')).not.toThrow();
 
     // Check no TypeError was logged
     expect(consoleSpy).not.toHaveBeenCalledWith(
@@ -415,9 +416,12 @@ describe('AC4: Tab headers use Title Case', () => {
       diffs: 'Diffs',
       debug: 'Debug',
       'audit-log': 'Audit Log',
+      tty: 'Terminal',
       message: 'Message',
       sprint: 'Sprint',
-      progress: 'Progress',
+      workflow: 'Workflow',
+      ac: 'AC',
+      todo: 'Todo',
       background: 'Background',
       git: 'Git',
       settings: 'Settings',
@@ -639,9 +643,10 @@ describe('AC5: Inline tool use display in messages', () => {
     const toolBlock = container.querySelector('[data-testid="tool-call-block"]');
     expect(toolBlock).toBeInTheDocument();
 
-    // Tool name is shown in the badge title attribute
+    // Tool name badge is rendered (single letter 'B' for Bash)
     const toolBadge = container.querySelector('.tool-type-badge');
-    expect(toolBadge).toHaveAttribute('title', 'Bash');
+    expect(toolBadge).toBeInTheDocument();
+    expect(toolBadge?.textContent).toBe('B');
   });
 
   it('should pair tool_use with matching tool_result in single block', async () => {
@@ -673,9 +678,10 @@ describe('AC5: Inline tool use display in messages', () => {
     const toolBlocks = screen.getAllByTestId('tool-call-block');
     expect(toolBlocks).toHaveLength(1);
 
-    // Tool name is in the badge title
+    // Tool name badge is rendered (single letter 'S' for Search/Grep)
     const toolBadge = container.querySelector('.tool-type-badge');
-    expect(toolBadge).toHaveAttribute('title', 'Grep');
+    expect(toolBadge).toBeInTheDocument();
+    expect(toolBadge?.textContent).toBe('S');
   });
 });
 

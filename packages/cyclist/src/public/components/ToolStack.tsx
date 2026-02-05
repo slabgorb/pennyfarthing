@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ToolCallBlock, { getToolBadgeLabel } from './ToolCallBlock';
 import type { ToolStackData } from '../utils/toolStackGrouper';
 import { generateToolIntentSummary } from '../utils/toolIntentSummarizer';
@@ -138,15 +140,21 @@ export default function ToolStack({ stack, toolResults }: ToolStackProps): React
         {isCollapsed && !stack.isActive && (
           <>
             <span className="tool-stack-badges">
-              {Array.from(toolTypeCounts.entries()).slice(0, 4).map(([type, count]) => (
-                <span
-                  key={type}
-                  className={`tool-mini-badge badge-${type.toLowerCase()}`}
-                  title={`${count} ${type} call${count > 1 ? 's' : ''}`}
-                >
-                  {getToolBadgeLabel(type)}
-                </span>
-              ))}
+              <TooltipProvider delayDuration={300}>
+                {Array.from(toolTypeCounts.entries()).slice(0, 4).map(([type, count]) => (
+                  <Tooltip key={type}>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className={`tool-mini-badge badge-${type.toLowerCase()}`}
+                      >
+                        {getToolBadgeLabel(type)}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>{`${count} ${type} call${count > 1 ? 's' : ''}`}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </TooltipProvider>
             </span>
             <span className="tool-stack-summary">
               {collapsedSummary}

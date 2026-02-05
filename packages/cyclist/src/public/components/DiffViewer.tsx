@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useRef, useEffect, KeyboardEvent } from 'react';
+import { Button } from '@/components/ui/button';
 
 // =============================================================================
 // Types
@@ -336,7 +337,9 @@ function UnifiedView({
           );
         } else {
           elements.push(
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={`expand-${i}`}
               type="button"
               className="diff-expand-button"
@@ -344,7 +347,7 @@ function UnifiedView({
               onClick={() => onExpandSection(i)}
             >
               {hiddenCount} lines hidden ···
-            </button>
+            </Button>
           );
         }
       }
@@ -520,22 +523,26 @@ export function DiffViewer(props: DiffViewerProps): React.ReactElement {
       <div className="diff-header">
         <span className="diff-file-path">{data.filePath}</span>
         <div className="diff-controls">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             type="button"
             aria-label="Toggle view mode"
             onClick={handleViewModeToggle}
             className="diff-view-toggle"
           >
             {viewMode === 'unified' ? 'Side-by-side' : 'Unified'}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             type="button"
             aria-label={fileViewMode === 'partial' ? 'Show full file' : 'Show changes only'}
             onClick={handleFileViewModeToggle}
             className="diff-file-view-toggle"
           >
             {fileViewMode === 'partial' ? 'Show full file' : 'Show changes only'}
-          </button>
+          </Button>
         </div>
       </div>
 

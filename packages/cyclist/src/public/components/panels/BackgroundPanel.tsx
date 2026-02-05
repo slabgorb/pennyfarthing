@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { useBackgroundTasks, BackgroundTask } from '../../hooks/useBackgroundTasks';
 
 /**
@@ -90,13 +91,15 @@ export function BackgroundPanel(): React.ReactElement {
           {completedCount > 0 && <span className="completed-count">{completedCount} done</span>}
         </span>
         {completedCount > 0 && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             type="button"
             className="clear-button"
             onClick={clearCompleted}
           >
             Clear
-          </button>
+          </Button>
         )}
       </div>
 

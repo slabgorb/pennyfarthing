@@ -279,7 +279,7 @@ describe('AC3: Model badge shows current model name', () => {
     });
   });
 
-  it('should have title attribute with full model name', async () => {
+  it('should have tooltip with full model name (via Radix Tooltip wrapper)', async () => {
     render(<StatsStrip />);
 
     await waitFor(() => expect(statsWs).not.toBeNull());
@@ -287,7 +287,11 @@ describe('AC3: Model badge shows current model name', () => {
     statsWs.onmessage?.({ data: JSON.stringify({ model: 'claude-opus-4-5-20251101' }) });
 
     await waitFor(() => {
-      expect(screen.getByTestId('model-badge')).toHaveAttribute('title', 'claude-opus-4-5-20251101');
+      const badge = screen.getByTestId('model-badge');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(badge).toHaveAttribute('data-state');
+      // The badge itself still shows the short model name
+      expect(badge).toHaveTextContent('opus');
     });
   });
 });
@@ -313,7 +317,7 @@ describe('AC4: PWD shows current working directory', () => {
     });
   });
 
-  it('should have title attribute with full path for tooltip', async () => {
+  it('should have tooltip wrapper with full path available via data-full-path', async () => {
     render(<StatsStrip />);
 
     await waitFor(() => expect(statsWs).not.toBeNull());
@@ -324,10 +328,11 @@ describe('AC4: PWD shows current working directory', () => {
     }) });
 
     await waitFor(() => {
-      expect(screen.getByTestId('stats-pwd')).toHaveAttribute(
-        'title',
-        '/Users/keithavery/Projects/pennyfarthing-orchestrator'
-      );
+      const pwd = screen.getByTestId('stats-pwd');
+      // Radix TooltipTrigger wraps the element (adds data-state)
+      expect(pwd).toHaveAttribute('data-state');
+      // Full path is stored in data-full-path for responsive switching
+      expect(pwd).toHaveAttribute('data-full-path', '/Users/keithavery/Projects/pennyfarthing-orchestrator');
     });
   });
 
@@ -420,7 +425,7 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
     });
   });
 
-  it('should have title attribute on Jira email for tooltip', async () => {
+  it('should wrap Jira email in tooltip trigger for hover tooltip', async () => {
     global.fetch = vi.fn(() => Promise.resolve({
       ok: true,
       json: () => Promise.resolve({
@@ -432,11 +437,15 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
     render(<StatsStrip />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('jira-email')).toHaveAttribute('title', 'Jira: keith@1898andco.com');
+      const jiraEl = screen.getByTestId('jira-email');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(jiraEl).toHaveAttribute('data-state');
+      // The element still displays the email text
+      expect(jiraEl).toHaveTextContent('keith@1898andco.com');
     });
   });
 
-  it('should have title attribute on GitHub user for tooltip', async () => {
+  it('should wrap GitHub user in tooltip trigger for hover tooltip', async () => {
     global.fetch = vi.fn(() => Promise.resolve({
       ok: true,
       json: () => Promise.resolve({
@@ -448,7 +457,11 @@ describe('AC5: Identity section shows Jira and GitHub users', () => {
     render(<StatsStrip />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('github-user')).toHaveAttribute('title', 'GitHub: keithavery');
+      const githubEl = screen.getByTestId('github-user');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(githubEl).toHaveAttribute('data-state');
+      // The element still displays the username with @ prefix
+      expect(githubEl).toHaveTextContent('@keithavery');
     });
   });
 

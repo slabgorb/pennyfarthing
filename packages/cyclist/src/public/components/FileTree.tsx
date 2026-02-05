@@ -12,6 +12,10 @@
  */
 
 import React, { useState, useCallback, useMemo, useRef, useEffect, KeyboardEvent } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // =============================================================================
 // Types
@@ -141,21 +145,25 @@ function FileItem({ file, onFileClick, isFocused, onFocus }: FileItemProps): Rea
   }, []);
 
   return (
-    <div
-      role="treeitem"
-      data-testid="file-item"
-      className={`file-item file-${status}${isFocused || hasFocus ? ' focused' : ''}`}
-      title={file.path}
-      tabIndex={0}
-      aria-label={`${fileName}, ${status}`}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-    >
-      <StatusIcon status={file.status} />
-      <span className="file-name">{fileName}</span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          role="treeitem"
+          data-testid="file-item"
+          className={`file-item file-${status}${isFocused || hasFocus ? ' focused' : ''}`}
+          tabIndex={0}
+          aria-label={`${fileName}, ${status}`}
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        >
+          <StatusIcon status={file.status} />
+          <span className="file-name">{fileName}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{file.path}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -183,39 +191,44 @@ function DirectorySection({
   onFileFocus,
 }: DirectorySectionProps): React.ReactElement {
   return (
-    <div
-      role="group"
-      data-testid={`directory-${directory}`}
-      className="directory-section"
+    <Collapsible
+      open={isExpanded}
+      onOpenChange={() => onToggle()}
+      asChild
     >
-      <div className="directory-header">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={isExpanded}
-          aria-label={isExpanded ? 'Collapse' : 'Expand'}
-          className="directory-toggle"
-        >
-          <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
-        </button>
-        <span className="directory-name">{directory === 'root' ? '/' : directory}</span>
-        <span className="directory-count">{files.length}</span>
-      </div>
       <div
-        className="directory-files"
-        style={{ display: isExpanded ? 'block' : 'none' }}
+        role="group"
+        data-testid={`directory-${directory}`}
+        className="directory-section"
       >
-        {files.map((file, index) => (
-          <FileItem
-            key={`${file.path}-${index}`}
-            file={file}
-            onFileClick={onFileClick}
-            isFocused={focusedPath === file.path}
-            onFocus={() => onFileFocus(file.path)}
-          />
-        ))}
+        <CollapsibleTrigger asChild>
+          <div className="directory-header">
+            <span
+              className="directory-toggle"
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
+            </span>
+            <span className="directory-name">{directory === 'root' ? '/' : directory}</span>
+            <span className="directory-count">{files.length}</span>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="directory-files">
+            {files.map((file, index) => (
+              <FileItem
+                key={`${file.path}-${index}`}
+                file={file}
+                onFileClick={onFileClick}
+                isFocused={focusedPath === file.path}
+                onFocus={() => onFileFocus(file.path)}
+              />
+            ))}
+          </div>
+        </CollapsibleContent>
       </div>
-    </div>
+    </Collapsible>
   );
 }
 
@@ -308,49 +321,58 @@ export function FileTree({ files, onFileClick }: FileTreeProps): React.ReactElem
   // Empty state
   if (files.length === 0) {
     return (
-      <div role="tree" aria-label="Changed files" className="filetree">
-        <span
-          data-testid="file-count-badge"
-          className="file-count-badge"
-          title=""
-          aria-label="0 files changed"
-        >
-          0
-        </span>
-        <div className="empty-state">No files changed</div>
-      </div>
+      <TooltipProvider delayDuration={300}>
+        <div role="tree" aria-label="Changed files" className="filetree">
+          <Badge
+            variant="secondary"
+            data-testid="file-count-badge"
+            className="file-count-badge"
+            aria-label="0 files changed"
+          >
+            0
+          </Badge>
+          <div className="empty-state">No files changed</div>
+        </div>
+      </TooltipProvider>
     );
   }
 
   return (
-    <div
-      ref={treeRef}
-      role="tree"
-      aria-label="Changed files"
-      className="filetree"
-      onKeyDown={handleKeyDown}
-    >
-      <span
-        data-testid="file-count-badge"
-        className="file-count-badge"
-        title={statusTooltip}
-        aria-label={`${files.length} files changed`}
+    <TooltipProvider delayDuration={300}>
+      <div
+        ref={treeRef}
+        role="tree"
+        aria-label="Changed files"
+        className="filetree"
+        onKeyDown={handleKeyDown}
       >
-        {files.length}
-      </span>
-      {directories.map((dir) => (
-        <DirectorySection
-          key={dir}
-          directory={dir}
-          files={groupedFiles.get(dir) || []}
-          isExpanded={!collapsedDirs.has(dir)}
-          onToggle={() => handleToggle(dir)}
-          onFileClick={onFileClick}
-          focusedPath={focusedPath}
-          onFileFocus={handleFileFocus}
-        />
-      ))}
-    </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              variant="secondary"
+              data-testid="file-count-badge"
+              className="file-count-badge"
+              aria-label={`${files.length} files changed`}
+            >
+              {files.length}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>{statusTooltip}</TooltipContent>
+        </Tooltip>
+        {directories.map((dir) => (
+          <DirectorySection
+            key={dir}
+            directory={dir}
+            files={groupedFiles.get(dir) || []}
+            isExpanded={!collapsedDirs.has(dir)}
+            onToggle={() => handleToggle(dir)}
+            onFileClick={onFileClick}
+            focusedPath={focusedPath}
+            onFileFocus={handleFileFocus}
+          />
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }
 

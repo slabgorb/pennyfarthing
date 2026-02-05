@@ -5,14 +5,27 @@
  * Story MSSCI-12768 - Color Palette System
  *
  * Features:
- * - Dropdown menu with all 8 presets
- * - Color swatches for visual preview
- * - Keyboard navigation
+ * - Popover menu with presets grouped by variant (dark/light)
+ * - Searchable preset list via Command input
+ * - 4-swatch visual preview (bg, bgSecondary, text, accent)
+ * - Keyboard navigation (handled by Popover + Command primitives)
  * - ARIA attributes for accessibility
  */
 
-import React, { useState, useRef, useEffect, useCallback, KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { COLOR_PRESETS, getPresetIds, getPreset, ColorPreset } from '../../utils/color-presets';
+import React, { useMemo, useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { getPresetIds, getPreset } from '../../utils/color-presets';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty,
+} from '@/components/ui/command';
 import './ThemePalette.css';
 
 // =============================================================================
@@ -31,181 +44,162 @@ export interface RenderThemePaletteOptions {
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+interface GroupedPresets {
+  dark: string[];
+  light: string[];
+}
+
+function groupPresetsByVariant(): GroupedPresets {
+  const ids = getPresetIds();
+  const dark: string[] = [];
+  const light: string[] = [];
+
+  for (const id of ids) {
+    const preset = getPreset(id);
+    if (!preset) continue;
+    if (preset.variant === 'light') {
+      light.push(id);
+    } else {
+      dark.push(id);
+    }
+  }
+
+  dark.sort((a, b) => (getPreset(a)?.name || '').localeCompare(getPreset(b)?.name || ''));
+  light.sort((a, b) => (getPreset(a)?.name || '').localeCompare(getPreset(b)?.name || ''));
+
+  return { dark, light };
+}
+
+// =============================================================================
+// Swatch rendering
+// =============================================================================
+
+function PresetSwatches({ presetId }: { presetId: string }) {
+  const preset = getPreset(presetId);
+  if (!preset) return null;
+
+  return (
+    <div className="preset-swatches">
+      <span
+        className="preset-swatch"
+        style={{ backgroundColor: preset.colors.bgPrimary }}
+        title="Background"
+      />
+      <span
+        className="preset-swatch"
+        style={{ backgroundColor: preset.colors.bgSecondary }}
+        title="Surface"
+      />
+      <span
+        className="preset-swatch"
+        style={{ backgroundColor: preset.colors.textPrimary }}
+        title="Text"
+      />
+      <span
+        className="preset-swatch"
+        style={{ backgroundColor: preset.colors.accent }}
+        title="Accent"
+      />
+    </div>
+  );
+}
+
+// =============================================================================
 // ThemePalette Component
 // =============================================================================
 
 export function ThemePalette({ currentPreset, onSelect, className = '' }: ThemePaletteProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const presetIds = getPresetIds();
+  const [open, setOpen] = useState(false);
+  const grouped = useMemo(() => groupPresetsByVariant(), []);
   const currentPresetData = getPreset(currentPreset);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen]);
-
-  // Focus management
-  useEffect(() => {
-    if (isOpen && focusedIndex >= 0 && optionRefs.current[focusedIndex]) {
-      optionRefs.current[focusedIndex]?.focus();
-    }
-  }, [focusedIndex, isOpen]);
-
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
-    if (!isOpen) {
-      setFocusedIndex(presetIds.indexOf(currentPreset));
-    }
-  }, [isOpen, currentPreset, presetIds]);
-
-  const handleSelect = useCallback(
-    (presetId: string) => {
-      onSelect?.(presetId);
-      setIsOpen(false);
-      buttonRef.current?.focus();
-    },
-    [onSelect]
-  );
-
-  const handleKeyDown = useCallback(
-    (e: ReactKeyboardEvent) => {
-      if (!isOpen) return;
-
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev + 1) % presetIds.length);
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev - 1 + presetIds.length) % presetIds.length);
-          break;
-        case 'Enter':
-        case ' ':
-          e.preventDefault();
-          if (focusedIndex >= 0) {
-            handleSelect(presetIds[focusedIndex]);
-          }
-          break;
-        case 'Home':
-          e.preventDefault();
-          setFocusedIndex(0);
-          break;
-        case 'End':
-          e.preventDefault();
-          setFocusedIndex(presetIds.length - 1);
-          break;
-      }
-    },
-    [isOpen, focusedIndex, presetIds, handleSelect]
-  );
+  const handleSelect = (presetId: string) => {
+    onSelect?.(presetId);
+    setOpen(false);
+  };
 
   return (
-    <div className={`theme-palette ${className}`}>
-      <button
-        ref={buttonRef}
-        className="theme-palette-button"
-        onClick={handleToggle}
-        aria-label={`Select theme, current: ${currentPresetData?.name || currentPreset}`}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-      >
-        <span className="theme-palette-current">
-          {currentPresetData && (
-            <span
-              className="preset-swatch"
-              style={{ backgroundColor: currentPresetData.colors.bgPrimary }}
-            />
-          )}
-          <span className="theme-palette-name">{currentPresetData?.name || currentPreset}</span>
-        </span>
-        <span className="theme-palette-chevron" aria-hidden="true">
-          ▼
-        </span>
-      </button>
-
-      <div
-        ref={menuRef}
-        className={`theme-palette-menu ${isOpen ? 'open' : ''}`}
-        role="listbox"
-        aria-label="Available themes"
-        onKeyDown={handleKeyDown}
-      >
-        {presetIds.map((id, index) => {
-          const preset = getPreset(id);
-          if (!preset) return null;
-
-          const isActive = id === currentPreset;
-          const isFocused = index === focusedIndex;
-
-          return (
-            <button
-              key={id}
-              ref={(el) => (optionRefs.current[index] = el)}
-              className={`theme-palette-option ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
-              role="option"
-              aria-selected={isActive}
-              data-preset-id={id}
-              onClick={() => handleSelect(id)}
-              tabIndex={isOpen ? 0 : -1}
-            >
-              <div className="preset-swatches">
-                <span
-                  className="preset-swatch"
-                  style={{ backgroundColor: preset.colors.bgPrimary }}
-                  title="Background"
-                />
-                <span
-                  className="preset-swatch"
-                  style={{ backgroundColor: preset.colors.textPrimary }}
-                  title="Text"
-                />
-                <span
-                  className="preset-swatch"
-                  style={{ backgroundColor: preset.colors.accent }}
-                  title="Accent"
-                />
-              </div>
-              <span className="preset-name">{preset.name}</span>
-              {isActive && (
-                <span className="preset-check" aria-hidden="true">
-                  ✓
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn('theme-palette-button', className)}
+          aria-label={`Select theme, current: ${currentPresetData?.name || currentPreset}`}
+        >
+          <span className="theme-palette-current">
+            {currentPresetData && (
+              <span
+                className="preset-swatch"
+                style={{ backgroundColor: currentPresetData.colors.bgPrimary }}
+              />
+            )}
+            <span className="theme-palette-name">
+              {currentPresetData?.name || currentPreset}
+            </span>
+          </span>
+          <ChevronsUpDown className="theme-palette-chevron" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="theme-palette-popover p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search themes..." />
+          <CommandList>
+            <CommandEmpty>No theme found.</CommandEmpty>
+            <CommandGroup heading={`Dark (${grouped.dark.length})`}>
+              {grouped.dark.map((id) => {
+                const preset = getPreset(id);
+                if (!preset) return null;
+                const isActive = id === currentPreset;
+                return (
+                  <CommandItem
+                    key={id}
+                    value={preset.name}
+                    onSelect={() => handleSelect(id)}
+                    data-preset-id={id}
+                  >
+                    <PresetSwatches presetId={id} />
+                    <span className="preset-name">{preset.name}</span>
+                    <Check
+                      className={cn(
+                        'preset-check-icon ml-auto',
+                        isActive ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+            <CommandGroup heading={`Light (${grouped.light.length})`}>
+              {grouped.light.map((id) => {
+                const preset = getPreset(id);
+                if (!preset) return null;
+                const isActive = id === currentPreset;
+                return (
+                  <CommandItem
+                    key={id}
+                    value={preset.name}
+                    onSelect={() => handleSelect(id)}
+                    data-preset-id={id}
+                  >
+                    <PresetSwatches presetId={id} />
+                    <span className="preset-name">{preset.name}</span>
+                    <Check
+                      className={cn(
+                        'preset-check-icon ml-auto',
+                        isActive ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -219,11 +213,9 @@ export function renderThemePalette(
 ): void {
   const { currentPreset, onSelect } = options;
 
-  // Create wrapper element
   const wrapper = document.createElement('div');
   wrapper.className = 'theme-palette';
 
-  // Create button
   const button = document.createElement('button');
   button.className = 'theme-palette-button';
   const preset = getPreset(currentPreset);
@@ -236,45 +228,57 @@ export function renderThemePalette(
       ${preset ? `<span class="preset-swatch" style="background-color: ${preset.colors.bgPrimary}"></span>` : ''}
       <span class="theme-palette-name">${preset?.name || currentPreset}</span>
     </span>
-    <span class="theme-palette-chevron" aria-hidden="true">▼</span>
+    <span class="theme-palette-chevron" aria-hidden="true">&#x25BC;</span>
   `;
 
-  // Create menu
   const menu = document.createElement('div');
   menu.className = 'theme-palette-menu';
   menu.setAttribute('role', 'listbox');
   menu.setAttribute('aria-label', 'Available themes');
 
-  const presetIds = getPresetIds();
-  presetIds.forEach((id) => {
-    const p = getPreset(id);
-    if (!p) return;
+  const grouped = groupPresetsByVariant();
 
-    const option = document.createElement('button');
-    option.className = `theme-palette-option ${id === currentPreset ? 'active' : ''}`;
-    option.setAttribute('role', 'option');
-    option.setAttribute('aria-selected', id === currentPreset ? 'true' : 'false');
-    option.setAttribute('data-preset-id', id);
-    option.tabIndex = -1;
+  const renderGroup = (ids: string[], label: string) => {
+    const header = document.createElement('div');
+    header.className = 'preset-group-header';
+    header.setAttribute('role', 'presentation');
+    header.textContent = `${label} (${ids.length})`;
+    menu.appendChild(header);
 
-    option.innerHTML = `
-      <div class="preset-swatches">
-        <span class="preset-swatch" style="background-color: ${p.colors.bgPrimary}" title="Background"></span>
-        <span class="preset-swatch" style="background-color: ${p.colors.textPrimary}" title="Text"></span>
-        <span class="preset-swatch" style="background-color: ${p.colors.accent}" title="Accent"></span>
-      </div>
-      <span class="preset-name">${p.name}</span>
-      ${id === currentPreset ? '<span class="preset-check" aria-hidden="true">✓</span>' : ''}
-    `;
+    ids.forEach((id) => {
+      const p = getPreset(id);
+      if (!p) return;
 
-    option.addEventListener('click', () => {
-      onSelect?.(id);
-      menu.classList.remove('open');
-      button.setAttribute('aria-expanded', 'false');
+      const option = document.createElement('button');
+      option.className = `theme-palette-option ${id === currentPreset ? 'active' : ''}`;
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-selected', id === currentPreset ? 'true' : 'false');
+      option.setAttribute('data-preset-id', id);
+      option.tabIndex = -1;
+
+      option.innerHTML = `
+        <div class="preset-swatches">
+          <span class="preset-swatch" style="background-color: ${p.colors.bgPrimary}" title="Background"></span>
+          <span class="preset-swatch" style="background-color: ${p.colors.bgSecondary}" title="Surface"></span>
+          <span class="preset-swatch" style="background-color: ${p.colors.textPrimary}" title="Text"></span>
+          <span class="preset-swatch" style="background-color: ${p.colors.accent}" title="Accent"></span>
+        </div>
+        <span class="preset-name">${p.name}</span>
+        ${id === currentPreset ? '<span class="preset-check" aria-hidden="true">&#x2713;</span>' : ''}
+      `;
+
+      option.addEventListener('click', () => {
+        onSelect?.(id);
+        menu.classList.remove('open');
+        button.setAttribute('aria-expanded', 'false');
+      });
+
+      menu.appendChild(option);
     });
+  };
 
-    menu.appendChild(option);
-  });
+  renderGroup(grouped.dark, 'Dark');
+  renderGroup(grouped.light, 'Light');
 
   // Toggle menu
   button.addEventListener('click', () => {
@@ -301,15 +305,15 @@ export function renderThemePalette(
   // Keyboard navigation
   menu.addEventListener('keydown', (e) => {
     const options = Array.from(menu.querySelectorAll('.theme-palette-option'));
-    const focusedIndex = options.findIndex((el) => el === document.activeElement);
+    const focusedIdx = options.findIndex((el) => el === document.activeElement);
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const nextIndex = (focusedIndex + 1) % options.length;
+      const nextIndex = (focusedIdx + 1) % options.length;
       (options[nextIndex] as HTMLElement).focus();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const prevIndex = (focusedIndex - 1 + options.length) % options.length;
+      const prevIndex = (focusedIdx - 1 + options.length) % options.length;
       (options[prevIndex] as HTMLElement).focus();
     }
   });

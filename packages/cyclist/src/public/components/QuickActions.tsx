@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
 import { useMarkerActions } from '../hooks/useMarkerActions';
 import { useClaudeContext } from '../contexts/ClaudeContext';
 import type { MessageData } from '../types/message';
@@ -139,7 +140,9 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
       <div className="quick-actions">
         <div className="quick-actions-buttons">
           {directActions.map((action) => (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               type="button"
               key={action.command}
               className="quick-action-btn"
@@ -148,7 +151,7 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
               aria-label={`${action.label}: ${action.command}`}
             >
               {action.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -195,7 +198,9 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
       {markerActions.type === 'handoff' && markerActions.responses && (
         <div className="quick-actions-buttons">
           {markerActions.responses.map((response) => (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               type="button"
               key={response}
               className="quick-action-btn"
@@ -204,7 +209,7 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
               aria-label={`Continue with ${response}`}
             >
               {response}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -212,7 +217,9 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
       {/* Yes/No buttons */}
       {markerActions.type === 'yesno' && (
         <div className="quick-actions-buttons">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             type="button"
             className="quick-action-btn"
             onClick={() => handleButtonClick('Yes')}
@@ -220,8 +227,10 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
             aria-label="Answer Yes"
           >
             Yes
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             type="button"
             className="quick-action-btn"
             onClick={() => handleButtonClick('No')}
@@ -229,7 +238,7 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
             aria-label="Answer No"
           >
             No
-          </button>
+          </Button>
         </div>
       )}
 
@@ -237,7 +246,9 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
       {markerActions.type === 'choices' && markerActions.choices && (
         <div className="quick-actions-buttons">
           {markerActions.choices.map((choice) => (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               type="button"
               key={choice.number}
               className="quick-action-btn"
@@ -246,7 +257,7 @@ export default function QuickActions(props: QuickActionsProps): React.ReactEleme
               aria-label={`Choose option ${choice.number}: ${choice.text}`}
             >
               {choice.text}
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -278,14 +278,19 @@ describe('MSSCI-12713: ApprovalModal Component', () => {
       const { fileURLToPath } = await import('url');
 
       const __dirname = dirname(fileURLToPath(import.meta.url));
-      const cssPath = join(__dirname, '../src/public/components/ApprovalModal/ApprovalModal.css');
 
-      expect(existsSync(cssPath)).toBe(true);
+      // Destructive styling is now provided by shadcn Button variant="destructive"
+      // and Tailwind utilities in the component TSX, not in the CSS file.
+      // Verify the component source uses the destructive variant and Tailwind classes.
+      const tsxPath = join(__dirname, '../src/public/components/ApprovalModal/index.tsx');
+      expect(existsSync(tsxPath)).toBe(true);
 
-      const css = readFileSync(cssPath, 'utf-8');
-      // Should have red color for destructive severity
-      expect(css).toMatch(/\.severity-destructive[^}]*(color|background|border)/);
-      expect(css).toMatch(/red|#[cdef][0-9a-f]{5}|rgb\([^)]*[12]\d{2}/i);
+      const tsx = readFileSync(tsxPath, 'utf-8');
+      // Should import Button from shadcn and use destructive variant
+      expect(tsx).toMatch(/from\s+['"]@\/components\/ui\/button['"]/);
+      expect(tsx).toMatch(/variant=["']destructive["']/);
+      // Should use Tailwind destructive color classes for severity styling
+      expect(tsx).toMatch(/text-destructive|bg-destructive/);
     });
 
   });
@@ -402,15 +407,18 @@ describe('MSSCI-12713: ApprovalModal Component', () => {
       const { fileURLToPath } = await import('url');
 
       const __dirname = dirname(fileURLToPath(import.meta.url));
-      const cssPath = join(__dirname, '../src/public/components/ApprovalModal/ApprovalModal.css');
 
-      if (!existsSync(cssPath)) {
-        throw new Error('CSS file does not exist');
-      }
+      // Overlay is now provided by shadcn Dialog (Radix DialogOverlay) which
+      // renders a semi-transparent backdrop automatically. Verify the component
+      // uses the Dialog primitive which includes the overlay.
+      const tsxPath = join(__dirname, '../src/public/components/ApprovalModal/index.tsx');
+      expect(existsSync(tsxPath)).toBe(true);
 
-      const css = readFileSync(cssPath, 'utf-8');
-      // Should have rgba or opacity for overlay
-      expect(css).toMatch(/\.approval-modal-overlay[^}]*(rgba|opacity)/);
+      const tsx = readFileSync(tsxPath, 'utf-8');
+      // Should import Dialog from shadcn (which includes DialogOverlay with backdrop)
+      expect(tsx).toMatch(/from\s+['"]@\/components\/ui\/dialog['"]/);
+      expect(tsx).toMatch(/Dialog/);
+      expect(tsx).toMatch(/DialogContent/);
     });
 
     it('should export isNonBlocking constant as true', async () => {
@@ -478,14 +486,16 @@ describe('MSSCI-12713: ApprovalModal Component', () => {
       const { fileURLToPath } = await import('url');
 
       const __dirname = dirname(fileURLToPath(import.meta.url));
-      const cssPath = join(__dirname, '../src/public/components/ApprovalModal/ApprovalModal.css');
 
-      if (!existsSync(cssPath)) {
-        throw new Error('CSS file does not exist');
-      }
+      // Transitions are now handled by Radix Dialog primitives (enter/exit
+      // animations) and Tailwind utility classes (transition-colors on labels).
+      // Verify the component source uses Tailwind transition utilities.
+      const tsxPath = join(__dirname, '../src/public/components/ApprovalModal/index.tsx');
+      expect(existsSync(tsxPath)).toBe(true);
 
-      const css = readFileSync(cssPath, 'utf-8');
-      expect(css).toMatch(/transition/);
+      const tsx = readFileSync(tsxPath, 'utf-8');
+      // Component uses Tailwind transition-colors utility on interactive elements
+      expect(tsx).toMatch(/transition-colors/);
     });
 
   });

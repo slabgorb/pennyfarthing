@@ -250,7 +250,9 @@ describe('AC1: Current story section', () => {
     });
 
     expect(screen.getByText(/next up/i)).toBeInTheDocument();
-    expect(screen.getByText('MSSCI-14190')).toBeInTheDocument();
+    // Scope to the next-up-section since the same ID may appear in epic stories
+    const nextUpSection = screen.getByTestId('next-up-section');
+    expect(within(nextUpSection).getByText('MSSCI-14190')).toBeInTheDocument();
   });
 
   it('should display empty state when no stories available', async () => {

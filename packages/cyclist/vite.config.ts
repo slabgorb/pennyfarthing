@@ -8,6 +8,11 @@ export default defineConfig({
   plugins: [react()],
   root: resolve(__dirname, 'src/public'),
   base: '/',
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src/public'),
+    },
+  },
   // Define Node.js globals for browser - some packages (xterm) check for these
   define: {
     // Stub __dirname to empty string - it's only used for optional file checks

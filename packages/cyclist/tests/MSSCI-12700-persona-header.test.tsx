@@ -129,7 +129,7 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
     });
   });
 
-  it('should have title attribute with full character name', async () => {
+  it('should wrap character name in tooltip trigger for hover tooltip', async () => {
     render(<PersonaHeader />, { wrapper: TestWrapper });
 
     await waitFor(() => expect(personaWs).not.toBeNull());
@@ -137,7 +137,11 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
     await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-character')).toHaveAttribute('title', 'Atia of the Julii');
+      const characterEl = screen.getByTestId('persona-character');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(characterEl).toHaveAttribute('data-state');
+      // The element still displays the full character name
+      expect(characterEl).toHaveTextContent('Atia of the Julii');
     });
   });
 });
@@ -174,7 +178,7 @@ describe('AC2: PersonaHeader displays current theme name', () => {
     });
   });
 
-  it('should have title attribute with theme name', async () => {
+  it('should wrap theme name in tooltip trigger for hover tooltip', async () => {
     render(<PersonaHeader />, { wrapper: TestWrapper });
 
     await waitFor(() => expect(personaWs).not.toBeNull());
@@ -182,7 +186,11 @@ describe('AC2: PersonaHeader displays current theme name', () => {
     await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-theme')).toHaveAttribute('title', expect.stringContaining('rome'));
+      const themeEl = screen.getByTestId('persona-theme');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(themeEl).toHaveAttribute('data-state');
+      // The element still displays the humanized theme name
+      expect(themeEl).toHaveTextContent('Rome');
     });
   });
 });
@@ -216,7 +224,7 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
     });
   });
 
-  it('should have title attribute with full role name', async () => {
+  it('should wrap role in tooltip trigger for hover tooltip', async () => {
     render(<PersonaHeader />, { wrapper: TestWrapper });
 
     await waitFor(() => expect(personaWs).not.toBeNull());
@@ -224,7 +232,11 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
     await sendPersonaData(mockPersonaRome);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-role')).toHaveAttribute('title', 'Test Engineer');
+      const roleEl = screen.getByTestId('persona-role');
+      // Radix TooltipTrigger adds data-state attribute to wrapped elements
+      expect(roleEl).toHaveAttribute('data-state');
+      // The element still displays the full role name
+      expect(roleEl).toHaveTextContent('Test Engineer');
     });
   });
 

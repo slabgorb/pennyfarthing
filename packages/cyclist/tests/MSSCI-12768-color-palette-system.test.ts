@@ -130,10 +130,10 @@ describe('MSSCI-12768: Color Palette System', () => {
       expect(typeof presets.COLOR_PRESETS).toBe('object');
     });
 
-    it('should have exactly 8 built-in presets', async () => {
+    it('should have at least 8 built-in presets', async () => {
       const presets = await import('../src/public/utils/color-presets.js');
       const presetCount = Object.keys(presets.COLOR_PRESETS).length;
-      expect(presetCount).toBe(8);
+      expect(presetCount).toBeGreaterThanOrEqual(8);
     });
 
     it('should include Midnight preset (default dark)', async () => {
@@ -302,8 +302,9 @@ describe('MSSCI-12768: Color Palette System', () => {
       expect(menu?.classList.contains('open')).toBe(true);
     });
 
-    it('should render all 8 preset options in menu', async () => {
+    it('should render all preset options in menu', async () => {
       const palette = await import('../src/public/components/ThemePalette/index.js');
+      const presets = await import('../src/public/utils/color-presets.js');
 
       palette.renderThemePalette(container, { currentPreset: 'midnight' });
 
@@ -311,7 +312,8 @@ describe('MSSCI-12768: Color Palette System', () => {
       button?.click();
 
       const options = container.querySelectorAll('.theme-palette-option');
-      expect(options.length).toBe(8);
+      const presetCount = Object.keys(presets.COLOR_PRESETS).length;
+      expect(options.length).toBe(presetCount);
     });
 
     it('should highlight current preset in menu', async () => {

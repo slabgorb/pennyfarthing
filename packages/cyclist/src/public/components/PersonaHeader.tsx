@@ -16,6 +16,8 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersona } from '../hooks/usePersona';
 import { AgentPopup } from './AgentPopup';
 
@@ -70,66 +72,85 @@ export default function PersonaHeader(): React.ReactElement {
 
   return (
     <>
-      <div
-        className="persona-header clickable"
-        data-testid="persona-header"
-        role="button"
-        tabIndex={0}
-        aria-label="Current agent persona - click to view team"
-        aria-live="polite"
-        onClick={handleOpenPopup}
-        onKeyDown={(e) => e.key === 'Enter' && handleOpenPopup()}
-      >
-        <div className="persona-portrait-group">
-          <div className="persona-portrait" data-testid="persona-portrait">
-            {slug && theme && !portraitError ? (
-              <img
-                src={`/portraits/${theme}/small/${slug}.png`}
-                alt={character}
-                className="portrait-image"
-                onError={() => setPortraitError(true)}
-              />
-            ) : (
-              <span className="portrait-fallback">🤖</span>
+      <TooltipProvider delayDuration={300}>
+        <div
+          className="persona-header clickable"
+          data-testid="persona-header"
+          role="button"
+          tabIndex={0}
+          aria-label="Current agent persona - click to view team"
+          aria-live="polite"
+          onClick={handleOpenPopup}
+          onKeyDown={(e) => e.key === 'Enter' && handleOpenPopup()}
+        >
+          <div className="persona-portrait-group">
+            <div className="persona-portrait" data-testid="persona-portrait">
+              {slug && theme && !portraitError ? (
+                <img
+                  src={`/portraits/${theme}/small/${slug}.png`}
+                  alt={character}
+                  className="portrait-image"
+                  onError={() => setPortraitError(true)}
+                />
+              ) : (
+                <span className="portrait-fallback">🤖</span>
+              )}
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="default"
+                  className="persona-role"
+                  data-testid="persona-role"
+                  style={{ backgroundColor: roleColor }}
+                >
+                  {role}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>{role}</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="persona-info">
+            <div className="persona-name-row">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="persona-character"
+                    data-testid="persona-character"
+                  >
+                    {character}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{character}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="persona-theme"
+                    data-testid="persona-theme"
+                  >
+                    {humanizeTheme(theme)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{`Theme: ${theme}`}</TooltipContent>
+              </Tooltip>
+            </div>
+            {quote && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="persona-catchphrase"
+                    data-testid="persona-catchphrase"
+                  >
+                    "{quote}"
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{quote}</TooltipContent>
+              </Tooltip>
             )}
           </div>
-          <span
-            className="persona-role badge"
-            data-testid="persona-role"
-            title={role}
-            style={{ backgroundColor: roleColor }}
-          >
-            {role}
-          </span>
         </div>
-        <div className="persona-info">
-          <div className="persona-name-row">
-            <span
-              className="persona-character"
-              data-testid="persona-character"
-              title={character}
-            >
-              {character}
-            </span>
-            <span
-              className="persona-theme"
-              data-testid="persona-theme"
-              title={`Theme: ${theme}`}
-            >
-              {humanizeTheme(theme)}
-            </span>
-          </div>
-          {quote && (
-            <span
-              className="persona-catchphrase"
-              data-testid="persona-catchphrase"
-              title={quote}
-            >
-              "{quote}"
-            </span>
-          )}
-        </div>
-      </div>
+      </TooltipProvider>
 
       <AgentPopup
         isOpen={isPopupOpen}

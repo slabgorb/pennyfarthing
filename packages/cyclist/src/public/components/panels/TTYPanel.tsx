@@ -14,6 +14,7 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -219,13 +220,15 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
           <div className="tty-overlay-content">
             <span className="tty-overlay-icon">⚠️</span>
             <span className="tty-overlay-message">Failed to spawn shell: {errorMessage}</span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               className="tty-restart-button"
               onClick={handleRestart}
               aria-label="Restart terminal"
             >
               Restart
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -237,13 +240,15 @@ export function TTYPanel({ projectRoot }: TTYPanelProps): React.ReactElement {
           <div className="tty-overlay-content">
             <span className="tty-overlay-icon">✓</span>
             <span className="tty-overlay-message">Process ended</span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               className="tty-restart-button"
               onClick={handleRestart}
               aria-label="New session"
             >
               New Session
-            </button>
+            </Button>
           </div>
         </div>
       );

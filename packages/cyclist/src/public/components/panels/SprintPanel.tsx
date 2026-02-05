@@ -6,6 +6,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 import { useStory } from '../../hooks/useStory';
 import { useSprint, type SprintStory, type SprintEpic, type FutureEpic } from '../../hooks/useSprint';
 
@@ -19,7 +24,11 @@ export function SprintPanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="sprint-panel loading" data-testid="sprint-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-2 p-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       </div>
     );
   }
@@ -130,15 +139,21 @@ function ContextIndicator({
   testIdPrefix: 'epic' | 'story';
   id: string;
 }): React.ReactElement {
+  const tooltipText = hasContext ? 'Context file exists' : 'No context file';
   return (
-    <span
-      className={`context-indicator ${hasContext ? 'has-context' : 'no-context'}`}
-      data-testid={`${testIdPrefix}-context-indicator-${id}`}
-      data-has-context={String(hasContext)}
-      title={hasContext ? 'Context file exists' : 'No context file'}
-    >
-      {hasContext ? '📄' : ''}
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={`context-indicator ${hasContext ? 'has-context' : 'no-context'}`}
+          data-testid={`${testIdPrefix}-context-indicator-${id}`}
+          data-has-context={String(hasContext)}
+          title={tooltipText}
+        >
+          {hasContext ? '📄' : ''}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -148,14 +163,15 @@ function ContextIndicator({
 function StatusBadge({ status, storyId }: { status: SprintStory['status']; storyId: string }): React.ReactElement {
   const { icon, className } = getStatusBadgeInfo(status);
   return (
-    <span
+    <Badge
+      variant={status === 'blocked' ? 'destructive' : status === 'done' ? 'default' : 'secondary'}
       className={`story-status-badge ${className}`}
       data-testid={`story-status-badge-${storyId}`}
       data-status={status}
       aria-label={`Status: ${status}`}
     >
       {icon}
-    </span>
+    </Badge>
   );
 }
 
@@ -289,8 +305,16 @@ export function EnhancedSprintPanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="enhanced-sprint-panel" data-testid="enhanced-sprint-panel">
-        <div className="loading-state" data-testid="sprint-panel-loading">
-          Loading...
+        <div className="loading-state space-y-3 p-2" data-testid="sprint-panel-loading">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-full" />
+          <Separator className="my-2" />
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Separator className="my-2" />
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-6 w-3/4" />
         </div>
       </div>
     );
@@ -308,16 +332,17 @@ export function EnhancedSprintPanel(): React.ReactElement {
   const confirmDialog = confirmArchive ? (
     <div className="confirm-dialog" data-testid="confirm-archive-dialog">
       <p>Are you sure you want to archive this epic?</p>
-      <button data-testid="confirm-archive-yes" onClick={() => handleArchive(confirmArchive)}>
+      <Button variant="destructive" size="sm" data-testid="confirm-archive-yes" onClick={() => handleArchive(confirmArchive)}>
         Yes
-      </button>
-      <button data-testid="confirm-archive-no" onClick={() => setConfirmArchive(null)}>
+      </Button>
+      <Button variant="outline" size="sm" data-testid="confirm-archive-no" onClick={() => setConfirmArchive(null)}>
         No
-      </button>
+      </Button>
     </div>
   ) : null;
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className="enhanced-sprint-panel" data-testid="enhanced-sprint-panel">
       {errorToast}
       {confirmDialog}
@@ -347,6 +372,8 @@ export function EnhancedSprintPanel(): React.ReactElement {
         )}
       </section>
 
+      <Separator className="my-2" />
+
       {/* Section 2: Epic Tree View */}
       <section data-section="epics">
         <h2>Current Epics</h2>
@@ -371,7 +398,9 @@ export function EnhancedSprintPanel(): React.ReactElement {
               >
                 {/* Epic Header */}
                 <div className="epic-header">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="epic-toggle"
                     data-testid={`epic-toggle-${epic.id}`}
                     onClick={() => toggleEpic(epic.id)}
@@ -379,14 +408,14 @@ export function EnhancedSprintPanel(): React.ReactElement {
                     aria-expanded={isExpanded}
                   >
                     {isExpanded ? '▼' : '▶'}
-                  </button>
+                  </Button>
                   <span className="epic-title">{epic.title}</span>
                   {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
                   <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
                   {completed && epic.hasContext && (
-                    <span className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
+                    <Badge variant="default" className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
                       Ready
-                    </span>
+                    </Badge>
                   )}
 
                   {/* Progress bar */}
@@ -414,7 +443,9 @@ export function EnhancedSprintPanel(): React.ReactElement {
                       {isArchiving && (
                         <span data-testid={`archive-loading-${epic.id}`}>...</span>
                       )}
-                      <button
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="archive-button"
                         data-testid={`archive-button-${epic.id}`}
                         aria-label={`Archive ${epic.id}`}
@@ -422,7 +453,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
                         onClick={() => setConfirmArchive(epic.id)}
                       >
                         Archive
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -463,6 +494,8 @@ export function EnhancedSprintPanel(): React.ReactElement {
         </div>
       </section>
 
+      <Separator className="my-2" />
+
       {/* Section 3: Future Initiatives */}
       <section data-section="future">
         <h2>Future Initiatives</h2>
@@ -479,15 +512,18 @@ export function EnhancedSprintPanel(): React.ReactElement {
               >
                 <span className="future-epic-title">{epic.title}</span>
                 <span className="future-epic-points">{epic.estimatedPoints} pts</span>
-                <span
+                <Badge
+                  variant={epic.status === 'ready' ? 'default' : 'secondary'}
                   className="future-epic-status"
                   data-testid={`future-epic-status-${epic.id}`}
                   data-status={epic.status}
                 >
                   {epic.status}
-                </span>
+                </Badge>
                 {canPromote && (
-                  <button
+                  <Button
+                    variant="default"
+                    size="sm"
                     className="promote-button"
                     data-testid={`promote-button-${epic.id}`}
                     aria-label={`Promote ${epic.id} to current sprint`}
@@ -495,7 +531,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
                     onClick={() => handlePromote(epic.id)}
                   >
                     Promote
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -503,6 +539,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
         </div>
       </section>
     </div>
+    </TooltipProvider>
   );
 }
 

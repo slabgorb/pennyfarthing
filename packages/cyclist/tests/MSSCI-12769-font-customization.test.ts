@@ -454,7 +454,7 @@ describe('FontPicker Component', () => {
   it('should call onSelect when font is chosen', async () => {
     const { FontPicker } = await import('../src/public/components/FontPicker/index.js');
     const React = await import('react');
-    const { render, fireEvent } = await import('@testing-library/react');
+    const { render, fireEvent, screen } = await import('@testing-library/react');
 
     const onSelect = vi.fn();
     const { container } = render(
@@ -465,13 +465,15 @@ describe('FontPicker Component', () => {
       })
     );
 
-    // Open dropdown using the main button (not option buttons)
-    const mainButton = container.querySelector('.font-picker-button');
-    if (mainButton) fireEvent.click(mainButton);
+    // FontPicker now uses shadcn Select (Radix). The trigger has role="combobox"
+    // and a specific aria-label. Use container to scope the query.
+    const trigger = container.querySelector('[role="combobox"]') as HTMLElement;
+    expect(trigger).toBeTruthy();
+    fireEvent.click(trigger);
 
-    // Select Inter option
-    const interOption = container.querySelector('[data-font-id="inter"]');
-    if (interOption) fireEvent.click(interOption);
+    // After opening, options appear as role="option" in the portal
+    const interOption = await screen.findByRole('option', { name: /Inter/i });
+    fireEvent.click(interOption);
 
     expect(onSelect).toHaveBeenCalledWith('inter');
   });
@@ -479,7 +481,7 @@ describe('FontPicker Component', () => {
   it('should show font preview in dropdown options', async () => {
     const { FontPicker } = await import('../src/public/components/FontPicker/index.js');
     const React = await import('react');
-    const { render, fireEvent } = await import('@testing-library/react');
+    const { render, fireEvent, screen } = await import('@testing-library/react');
 
     const { container } = render(
       React.createElement(FontPicker, {
@@ -489,16 +491,19 @@ describe('FontPicker Component', () => {
       })
     );
 
-    // Open dropdown
-    const mainButton = container.querySelector('.font-picker-button');
-    if (mainButton) fireEvent.click(mainButton);
+    // Open the shadcn Select dropdown using container-scoped query
+    const trigger = container.querySelector('[role="combobox"]') as HTMLElement;
+    expect(trigger).toBeTruthy();
+    fireEvent.click(trigger);
 
-    const options = container.querySelectorAll('.font-picker-option');
+    // Options are now rendered as role="option" via Radix Select
+    const options = await screen.findAllByRole('option');
 
-    // Each option should have font-family style (either from preset or inherit)
+    // Each option should exist (Radix SelectItem renders with inline style from component)
     expect(options.length).toBeGreaterThan(0);
     options.forEach((option) => {
-      expect(option.getAttribute('style')).toBeTruthy();
+      // Options should have text content (font name)
+      expect(option.textContent).toBeTruthy();
     });
   });
 

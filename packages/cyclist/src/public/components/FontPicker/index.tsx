@@ -1,22 +1,34 @@
 /**
  * FontPicker Component
  *
- * Font selection dropdown with preview and custom font input.
+ * Font selection with system font browser via queryLocalFonts() API.
  * Story MSSCI-12769 - Font Customization
  *
  * Features:
- * - Dropdown with font previews
- * - Custom font family input
+ * - shadcn Select-based dropdown with system font discovery
+ * - Live font preview in each option
+ * - Monospace detection for code font filtering
+ * - Graceful fallback when queryLocalFonts() unavailable
  * - Font size picker (segmented control)
- * - ARIA accessibility
+ * - ARIA accessibility via Radix Select
  */
 
-import React, { useState, useRef, useEffect, useCallback, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   UI_FONT_PRESETS,
   CODE_FONT_PRESETS,
   FONT_SIZE_SCALE,
-  FontPreset,
   FontSize,
 } from '../../utils/font-presets';
 import './FontPicker.css';
@@ -40,6 +52,86 @@ export interface FontSizePickerProps {
   className?: string;
 }
 
+interface SystemFont {
+  family: string;
+  isMonospace: boolean;
+}
+
+// =============================================================================
+// Monospace Detection
+// =============================================================================
+
+const monoCache = new Map<string, boolean>();
+
+function detectMonospace(fontFamily: string): boolean {
+  if (monoCache.has(fontFamily)) {
+    return monoCache.get(fontFamily)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    monoCache.set(fontFamily, false);
+    return false;
+  }
+
+  ctx.font = `16px "${fontFamily}", monospace`;
+  const wideChar = ctx.measureText('W').width;
+  const narrowChar = ctx.measureText('i').width;
+  const isMono = Math.abs(wideChar - narrowChar) < 1;
+
+  monoCache.set(fontFamily, isMono);
+  return isMono;
+}
+
+// =============================================================================
+// System Font Discovery
+// =============================================================================
+
+let systemFontsCache: SystemFont[] | null = null;
+let systemFontsPromise: Promise<SystemFont[]> | null = null;
+
+async function getSystemFonts(): Promise<SystemFont[]> {
+  if (systemFontsCache) return systemFontsCache;
+  if (systemFontsPromise) return systemFontsPromise;
+
+  systemFontsPromise = (async () => {
+    if (!('queryLocalFonts' in window)) {
+      return [];
+    }
+
+    try {
+      const fonts = await (window as unknown as { queryLocalFonts: () => Promise<Array<{ family: string }>> }).queryLocalFonts();
+
+      // Deduplicate by family name
+      const families = new Set<string>();
+      for (const font of fonts) {
+        families.add(font.family);
+      }
+
+      const result: SystemFont[] = [];
+      for (const family of families) {
+        result.push({
+          family,
+          isMonospace: detectMonospace(family),
+        });
+      }
+
+      result.sort((a, b) => a.family.localeCompare(b.family));
+      systemFontsCache = result;
+      return result;
+    } catch {
+      // Permission denied or API error
+      return [];
+    }
+  })();
+
+  return systemFontsPromise;
+}
+
+// Prefix for system font values to distinguish from preset IDs
+const SYSTEM_FONT_PREFIX = 'system-font:';
+
 // =============================================================================
 // FontPicker Component
 // =============================================================================
@@ -52,51 +144,39 @@ export function FontPicker({
   onCustomFontChange,
   className = '',
 }: FontPickerProps): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [customValue, setCustomValue] = useState(customFont || '');
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [systemFonts, setSystemFonts] = useState<SystemFont[]>([]);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const presets = type === 'ui' ? UI_FONT_PRESETS : CODE_FONT_PRESETS;
   const currentPreset = presets.find(p => p.id === currentFont);
 
-  // Close menu when clicking outside
+  // Load system fonts eagerly
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen]);
-
-  // Focus management
-  useEffect(() => {
-    if (isOpen && focusedIndex >= 0 && optionRefs.current[focusedIndex]) {
-      optionRefs.current[focusedIndex]?.focus();
+    if (!fontsLoaded) {
+      getSystemFonts().then(fonts => {
+        setSystemFonts(fonts);
+        setFontsLoaded(true);
+      });
     }
-  }, [focusedIndex, isOpen]);
+  }, [fontsLoaded]);
+
+  // Filter system fonts for code type (monospace only)
+  const filteredSystemFonts = useMemo(() => {
+    let fonts = systemFonts;
+
+    // For code fonts, only show monospace
+    if (type === 'code') {
+      fonts = fonts.filter(f => f.isMonospace);
+    }
+
+    return fonts;
+  }, [systemFonts, type]);
+
+  // Non-custom presets for display
+  const displayPresets = useMemo(() => {
+    return presets.filter(p => !p.isCustom);
+  }, [presets]);
 
   // Update custom value when prop changes
   useEffect(() => {
@@ -105,19 +185,29 @@ export function FontPicker({
     }
   }, [customFont]);
 
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => !prev);
-    if (!isOpen) {
-      const currentIndex = presets.findIndex(p => p.id === currentFont);
-      setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
+  // Compute the Select value: for system fonts we encode as "system-font:FamilyName"
+  const selectValue = useMemo(() => {
+    if (currentFont === 'custom' && customValue) {
+      // Check if this matches a system font
+      const isSystemFont = systemFonts.some(f => f.family === customValue);
+      if (isSystemFont) {
+        return `${SYSTEM_FONT_PREFIX}${customValue}`;
+      }
+      return 'custom';
     }
-  }, [isOpen, currentFont, presets]);
+    return currentFont;
+  }, [currentFont, customValue, systemFonts]);
 
-  const handleSelect = useCallback(
-    (presetId: string) => {
-      onSelect(presetId);
-      setIsOpen(false);
-      buttonRef.current?.focus();
+  const handleValueChange = useCallback(
+    (value: string) => {
+      if (value.startsWith(SYSTEM_FONT_PREFIX)) {
+        const family = value.slice(SYSTEM_FONT_PREFIX.length);
+        onSelect('custom', family);
+      } else if (value === 'custom') {
+        onSelect('custom');
+      } else {
+        onSelect(value);
+      }
     },
     [onSelect]
   );
@@ -134,112 +224,75 @@ export function FontPicker({
     [currentFont, onSelect, onCustomFontChange]
   );
 
-  const handleKeyDown = useCallback(
-    (e: ReactKeyboardEvent) => {
-      if (!isOpen) return;
-
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev + 1) % presets.length);
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev - 1 + presets.length) % presets.length);
-          break;
-        case 'Enter':
-        case ' ':
-          e.preventDefault();
-          if (focusedIndex >= 0) {
-            handleSelect(presets[focusedIndex].id);
-          }
-          break;
-        case 'Home':
-          e.preventDefault();
-          setFocusedIndex(0);
-          break;
-        case 'End':
-          e.preventDefault();
-          setFocusedIndex(presets.length - 1);
-          break;
-      }
-    },
-    [isOpen, focusedIndex, presets, handleSelect]
-  );
-
-  const getDisplayName = () => {
-    if (currentPreset?.isCustom && customValue) {
-      return customValue;
-    }
-    return currentPreset?.name || currentFont;
-  };
-
-  const getDisplayFont = () => {
-    if (currentPreset?.isCustom && customValue) {
-      return customValue;
-    }
-    return currentPreset?.fontFamily || 'inherit';
-  };
+  const hasSystemFonts = systemFonts.length > 0;
+  const showCustomInput = currentFont === 'custom' && !hasSystemFonts;
 
   return (
     <div className={`font-picker ${className}`}>
-      <button
-        ref={buttonRef}
-        className="font-picker-button"
-        onClick={handleToggle}
-        aria-label={`Select ${type} font, current: ${getDisplayName()}`}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        style={{ fontFamily: getDisplayFont() }}
-      >
-        <span className="font-picker-current">
-          <span className="font-picker-name">{getDisplayName()}</span>
-        </span>
-        <span className="font-picker-chevron" aria-hidden="true">
-          &#9660;
-        </span>
-      </button>
+      <Select value={selectValue} onValueChange={handleValueChange}>
+        <SelectTrigger
+          className="font-picker-trigger"
+          aria-label={`Select ${type} font`}
+          style={{ fontFamily: currentPreset?.fontFamily || (customValue ? `"${customValue}"` : 'inherit') }}
+        >
+          <SelectValue placeholder="Select font..." />
+        </SelectTrigger>
+        <SelectContent>
+          {/* Presets section */}
+          {displayPresets.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>Presets</SelectLabel>
+              {displayPresets.map((preset) => (
+                <SelectItem
+                  key={preset.id}
+                  value={preset.id}
+                  style={{ fontFamily: preset.fontFamily || 'inherit' }}
+                >
+                  <span className="font-picker-item-content">
+                    <span className="font-name">{preset.name}</span>
+                    <span className="font-preview" style={{ fontFamily: preset.fontFamily }}>
+                      Aa
+                    </span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
 
-      <div
-        ref={menuRef}
-        className={`font-picker-menu ${isOpen ? 'open' : ''}`}
-        role="listbox"
-        aria-label={`Available ${type} fonts`}
-        onKeyDown={handleKeyDown}
-      >
-        {presets.map((preset, index) => {
-          const isActive = preset.id === currentFont;
-          const isFocused = index === focusedIndex;
+          {/* System fonts section */}
+          {hasSystemFonts && filteredSystemFonts.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>System Fonts ({filteredSystemFonts.length})</SelectLabel>
+              {filteredSystemFonts.map((font) => (
+                <SelectItem
+                  key={font.family}
+                  value={`${SYSTEM_FONT_PREFIX}${font.family}`}
+                  style={{ fontFamily: `"${font.family}", inherit` }}
+                >
+                  <span className="font-picker-item-content">
+                    <span className="font-name">{font.family}</span>
+                    <span className="font-preview" style={{ fontFamily: `"${font.family}"` }}>
+                      Aa
+                    </span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
 
-          return (
-            <button
-              key={preset.id}
-              ref={(el) => (optionRefs.current[index] = el)}
-              className={`font-picker-option ${isActive ? 'active' : ''} ${isFocused ? 'focused' : ''}`}
-              role="option"
-              aria-selected={isActive}
-              data-font-id={preset.id}
-              onClick={() => handleSelect(preset.id)}
-              tabIndex={isOpen ? 0 : -1}
-              style={{ fontFamily: preset.isCustom ? 'inherit' : preset.fontFamily }}
-            >
-              <span className="font-name">{preset.name}</span>
-              {!preset.isCustom && (
-                <span className="font-preview" style={{ fontFamily: preset.fontFamily }}>
-                  Aa
-                </span>
-              )}
-              {isActive && (
-                <span className="font-check" aria-hidden="true">
-                  &#10003;
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+          {/* Custom option (fallback when no system fonts) */}
+          {!hasSystemFonts && fontsLoaded && (
+            <SelectGroup>
+              <SelectLabel>Custom</SelectLabel>
+              <SelectItem value="custom">
+                Custom...
+              </SelectItem>
+            </SelectGroup>
+          )}
+        </SelectContent>
+      </Select>
 
-      {currentFont === 'custom' && (
+      {showCustomInput && (
         <input
           type="text"
           className="font-picker-custom-input"
@@ -265,20 +318,27 @@ export function FontSizePicker({
   className = '',
 }: FontSizePickerProps): React.ReactElement {
   return (
+    <TooltipProvider delayDuration={300}>
     <div className={`font-size-picker ${className}`} role="group" aria-label="Font size">
       {SIZES.map((size) => (
-        <button
-          key={size}
-          className={`font-size-option ${size === currentSize ? 'active' : ''}`}
-          data-size={size}
-          onClick={() => onSelect(size)}
-          aria-pressed={size === currentSize}
-          title={`${FONT_SIZE_SCALE[size]} (${size})`}
-        >
-          {size.toUpperCase()}
-        </button>
+        <Tooltip key={size}>
+          <TooltipTrigger asChild>
+            <Button
+              variant={size === currentSize ? 'secondary' : 'ghost'}
+              size="sm"
+              className={`font-size-option ${size === currentSize ? 'active' : ''}`}
+              data-size={size}
+              onClick={() => onSelect(size)}
+              aria-pressed={size === currentSize}
+            >
+              {size.toUpperCase()}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{`${FONT_SIZE_SCALE[size]} (${size})`}</TooltipContent>
+        </Tooltip>
       ))}
     </div>
+    </TooltipProvider>
   );
 }
 

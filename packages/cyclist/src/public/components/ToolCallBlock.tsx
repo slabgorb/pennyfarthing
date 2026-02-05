@@ -8,6 +8,9 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getToolTypeClass } from '../utils/toolTypeColors.js';
 import { formatDuration } from '../utils/formatDuration.js';
 import { generateToolIntentSummary } from '../utils/toolIntentSummarizer.js';
@@ -163,36 +166,51 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   const badgeLabel = getToolBadgeLabel(toolUse.tool_name);
 
   return (
-    <div data-testid="tool-call-block" className={blockClasses}>
-      <div className="tool-header">
-        {/* Tool type badge - colored pill for instant recognition */}
-        <span className="tool-type-badge" title={toolUse.tool_name}>
-          {badgeLabel}
-        </span>
-        <span className="tool-name" title={inputDisplay}>{intentSummary}</span>
-        {/* MSSCI-13402: Duration display */}
-        <span data-testid="tool-duration" className="tool-duration">
-          {result?.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
-        </span>
-      </div>
+    <TooltipProvider delayDuration={300}>
+      <div data-testid="tool-call-block" className={blockClasses}>
+        <div className="tool-header">
+          {/* Tool type badge - colored pill for instant recognition */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="default" className="tool-type-badge">
+                {badgeLabel}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>{toolUse.tool_name}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="tool-name">{intentSummary}</span>
+            </TooltipTrigger>
+            <TooltipContent>{inputDisplay}</TooltipContent>
+          </Tooltip>
+          {/* MSSCI-13402: Duration display */}
+          <span data-testid="tool-duration" className="tool-duration">
+            {result?.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
+          </span>
+        </div>
       {result && (
         <>
           <div className="tool-result-header">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               data-testid="tool-result-toggle"
               className="tool-result-toggle"
               onClick={() => setIsCollapsed(!isCollapsed)}
             >
               {isCollapsed ? '▶' : '▼'} Result ({lineCountText})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               data-testid="tool-result-copy"
               className={`tool-result-copy ${copyState === 'copied' ? 'copied' : ''} ${copyState === 'error' ? 'copy-error' : ''}`}
               onClick={handleCopy}
               aria-label="Copy result to clipboard"
             >
               {copyState === 'copied' ? '✓' : '📋'}
-            </button>
+            </Button>
           </div>
           <div
             data-testid="tool-result-content"
@@ -200,17 +218,20 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
           >
             <pre>{displayContent}</pre>
             {shouldTruncate && !isCollapsed && isTruncated && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 data-testid="tool-result-expand"
                 className="tool-result-expand"
                 onClick={() => setShowFullContent(true)}
               >
                 Show all ({lineCount} lines)
-              </button>
+              </Button>
             )}
           </div>
         </>
       )}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

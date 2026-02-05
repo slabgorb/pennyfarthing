@@ -9,6 +9,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // =============================================================================
 // Types
@@ -176,8 +181,19 @@ export function AuditLogPanel(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="audit-log-panel p-4">
-        <div className="text-muted">Loading audit log...</div>
+      <div className="audit-log-panel p-4 space-y-3">
+        <div className="flex gap-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <Separator />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-3/4" />
+        </div>
       </div>
     );
   }
@@ -192,17 +208,21 @@ export function AuditLogPanel(): React.ReactElement {
 
   return (
     <div className="audit-log-panel flex flex-col h-full">
+    <TooltipProvider delayDuration={300}>
       {/* Stats Bar */}
       {stats && (
-        <div className="audit-log-stats flex gap-4 p-2 border-b border-border text-sm">
-          <span className="text-muted">Total: <strong>{stats.total}</strong></span>
-          <span className="text-success">Success: <strong>{stats.successCount}</strong></span>
-          <span className="text-error">Errors: <strong>{stats.errorCount}</strong></span>
-        </div>
+        <>
+          <div className="audit-log-stats flex gap-4 p-2 text-sm">
+            <span className="text-muted">Total: <strong>{stats.total}</strong></span>
+            <span className="text-success">Success: <strong>{stats.successCount}</strong></span>
+            <span className="text-error">Errors: <strong>{stats.errorCount}</strong></span>
+          </div>
+          <Separator />
+        </>
       )}
 
       {/* Filters and Actions */}
-      <div className="audit-log-toolbar flex gap-2 p-2 border-b border-border items-center flex-wrap">
+      <div className="audit-log-toolbar flex gap-2 p-2 items-center flex-wrap">
         <select
           value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
@@ -226,31 +246,50 @@ export function AuditLogPanel(): React.ReactElement {
 
         <div className="flex-1" />
 
-        <button
-          onClick={() => handleExport('json')}
-          className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
-          title="Export as JSON"
-        >
-          JSON
-        </button>
-        <button
-          onClick={() => handleExport('csv')}
-          className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
-          title="Export as CSV"
-        >
-          CSV
-        </button>
-        <button
-          onClick={handleClear}
-          className="audit-log-btn px-2 py-1 bg-surface border border-error text-error rounded text-sm hover:bg-error hover:text-white"
-          title="Clear audit log"
-        >
-          Clear
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('json')}
+              className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
+            >
+              JSON
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Export as JSON</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              className="audit-log-btn px-2 py-1 bg-surface border border-border rounded text-sm hover:bg-hover"
+            >
+              CSV
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Export as CSV</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClear}
+              className="audit-log-btn px-2 py-1 bg-surface border border-error text-error rounded text-sm hover:bg-error hover:text-white"
+            >
+              Clear
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Clear audit log</TooltipContent>
+        </Tooltip>
       </div>
+      <Separator />
 
       {/* Entries List */}
-      <div className="audit-log-entries flex-1 overflow-y-auto">
+      <ScrollArea className="audit-log-entries flex-1">
         {entries.length === 0 ? (
           <div className="p-4 text-muted text-center">No entries</div>
         ) : (
@@ -277,8 +316,17 @@ export function AuditLogPanel(): React.ReactElement {
                       {formatTimestamp(entry.timestamp)}
                     </td>
                     <td className="p-2 font-mono">{entry.toolName}</td>
-                    <td className="p-2 text-muted truncate max-w-[200px]" title={entry.input}>
-                      {truncateInput(entry.input)}
+                    <td className="p-2 text-muted truncate max-w-[200px]">
+                      {entry.input ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>{truncateInput(entry.input)}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>{entry.input}</TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        truncateInput(entry.input)
+                      )}
                     </td>
                     <td className="p-2 text-right text-muted whitespace-nowrap">
                       {formatDuration(entry.durationMs)}
@@ -287,7 +335,12 @@ export function AuditLogPanel(): React.ReactElement {
                       {entry.success ? (
                         <span className="text-success">✓</span>
                       ) : (
-                        <span className="text-error" title={entry.error}>✗</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-error">✗</span>
+                          </TooltipTrigger>
+                          <TooltipContent>{entry.error}</TooltipContent>
+                        </Tooltip>
                       )}
                     </td>
                   </tr>
@@ -329,7 +382,8 @@ export function AuditLogPanel(): React.ReactElement {
             </tbody>
           </table>
         )}
-      </div>
+      </ScrollArea>
+    </TooltipProvider>
     </div>
   );
 }

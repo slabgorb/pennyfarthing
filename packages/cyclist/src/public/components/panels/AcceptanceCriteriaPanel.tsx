@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { CriteriaItem } from '../../../story-parser.js';
 import { useStory } from '../../hooks/useStory.js';
 
@@ -94,7 +95,12 @@ export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="ac-panel loading" data-testid="ac-panel">
-        <div className="spinner">Loading...</div>
+        <div className="space-y-2 p-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       </div>
     );
   }
