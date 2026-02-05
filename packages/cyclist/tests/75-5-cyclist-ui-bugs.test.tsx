@@ -424,6 +424,7 @@ describe('AC4: Tab headers use Title Case', () => {
       todo: 'Todo',
       background: 'Background',
       git: 'Git',
+      hotspots: 'Hotspots',
       settings: 'Settings',
     };
 
@@ -505,7 +506,7 @@ describe('AC4: Tab headers use Title Case', () => {
 // The existing ToolCallBlock/ToolStack components work correctly - the problem
 // is that tool_use messages in SDK format never reach MessageView.
 describe('AC5: Inline tool use display in messages', () => {
-  // These tests use discrete format (type: 'tool_use') - this works
+  // Tool_use messages are rendered inside ToolStack components (even singles)
   it('should render ToolCallBlock when discrete tool_use message is received', async () => {
     const MessageView = (await import('../src/public/components/MessageView')).default;
 
@@ -537,7 +538,14 @@ describe('AC5: Inline tool use display in messages', () => {
       </TestWrapper>
     );
 
-    // Discrete tool_use messages render correctly
+    // Tool_use renders inside a ToolStack; expand it to see the ToolCallBlock
+    const toolStack = screen.getByTestId('tool-stack');
+    expect(toolStack).toBeInTheDocument();
+
+    // Expand the stack to reveal inner ToolCallBlock
+    const stackHeader = screen.getByTestId('tool-stack-header');
+    fireEvent.click(stackHeader);
+
     const toolBlock = screen.getByTestId('tool-call-block');
     expect(toolBlock).toBeInTheDocument();
   });
@@ -584,7 +592,7 @@ describe('AC5: Inline tool use display in messages', () => {
 
     const messages = [
       {
-        type: 'assistant' as const,
+        type: 'agent' as const,
         content: 'Let me read that file for you.',
         timestamp: Date.now() - 2000,
       },
@@ -603,7 +611,7 @@ describe('AC5: Inline tool use display in messages', () => {
         timestamp: Date.now() - 500,
       },
       {
-        type: 'assistant' as const,
+        type: 'agent' as const,
         content: 'The file contains a simple variable declaration.',
         timestamp: Date.now(),
       },
@@ -615,8 +623,8 @@ describe('AC5: Inline tool use display in messages', () => {
       </TestWrapper>
     );
 
-    // Tool block appears between assistant messages
-    const allItems = screen.getByTestId('message-view').querySelectorAll('.message, [data-testid="tool-call-block"]');
+    // Agent messages and tool stack all appear in the view
+    const allItems = screen.getByTestId('message-view').querySelectorAll('.message, [data-testid="tool-stack"]');
     expect(allItems.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -639,6 +647,10 @@ describe('AC5: Inline tool use display in messages', () => {
         <MessageView messages={messages} />
       </TestWrapper>
     );
+
+    // Single tool_use renders inside a ToolStack; expand to see badge
+    const stackHeader = screen.getByTestId('tool-stack-header');
+    fireEvent.click(stackHeader);
 
     const toolBlock = container.querySelector('[data-testid="tool-call-block"]');
     expect(toolBlock).toBeInTheDocument();
@@ -674,6 +686,10 @@ describe('AC5: Inline tool use display in messages', () => {
         <MessageView messages={messages} />
       </TestWrapper>
     );
+
+    // Expand the stack to reveal inner ToolCallBlock
+    const stackHeader = screen.getByTestId('tool-stack-header');
+    fireEvent.click(stackHeader);
 
     const toolBlocks = screen.getAllByTestId('tool-call-block');
     expect(toolBlocks).toHaveLength(1);
