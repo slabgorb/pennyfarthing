@@ -1,4 +1,4 @@
-"""Sprint validate command - stub for TDD RED phase.
+"""Sprint validate command.
 
 Story: MSSCI-14255 - Sprint validate command with --fix flag
 
@@ -6,14 +6,25 @@ This module provides:
 - validate_sprint_yaml(path, fix=False) -> ValidateResult
 - check_format_drift(path) -> list[FormatIssue]
 - validate_command (Click command for CLI registration)
-
-All functions are stubs that raise NotImplementedError.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import click
+import yaml
+
+from pennyfarthing_scripts.sprint.validator import validate_full_sprint
+from pennyfarthing_scripts.sprint.yaml_io import (
+    EPIC_KEY_ORDER,
+    SPRINT_KEY_ORDER,
+    STORY_KEY_ORDER,
+    TOP_KEY_ORDER,
+    canonical_dump,
+    read_sprint,
+    write_sprint,
+)
 
 
 @dataclass
@@ -45,6 +56,92 @@ class ValidateResult:
     fixed: bool = False
 
 
+def _check_key_order(
+    data: Mapping,
+    expected_order: list[str],
+    path_prefix: str,
+) -> list[FormatIssue]:
+    """Check if keys in a mapping follow the expected order."""
+    issues: list[FormatIssue] = []
+    actual_keys = [k for k in data.keys() if k in expected_order]
+    expected_filtered = [k for k in expected_order if k in actual_keys]
+
+    if actual_keys != expected_filtered:
+        issues.append(FormatIssue(
+            message=f"Key order drift: expected {expected_filtered}, got {actual_keys}",
+            path=path_prefix,
+        ))
+
+    return issues
+
+
+def _check_string_styles(data: Mapping, path_prefix: str) -> list[FormatIssue]:
+    """Check if multiline strings use block scalar style."""
+    issues: list[FormatIssue] = []
+
+    for key, value in data.items():
+        if isinstance(value, str) and "\n" in value:
+            # Check if it's using block scalar by examining the raw YAML
+            # If it got loaded as a plain string with \n, it wasn't block scalar
+            from ruamel.yaml.scalarstring import LiteralScalarString
+
+            if not isinstance(value, LiteralScalarString):
+                issues.append(FormatIssue(
+                    message=f"Wrong string style for '{key}': multiline text should use block scalar (|)",
+                    path=f"{path_prefix}.{key}",
+                ))
+
+    return issues
+
+
+def check_format_drift(path: Path) -> list[FormatIssue]:
+    """Check a sprint YAML file for format drift.
+
+    Detects:
+    - Key ordering that doesn't match sprint-template.yaml
+    - Wrong string styles (plain vs block scalar for multiline)
+
+    Args:
+        path: Path to sprint YAML file
+
+    Returns:
+        List of FormatIssue objects
+    """
+    try:
+        data = read_sprint(path)
+    except (FileNotFoundError, ValueError):
+        return []
+
+    issues: list[FormatIssue] = []
+
+    # Check top-level key order
+    issues.extend(_check_key_order(data, TOP_KEY_ORDER, ""))
+
+    # Check sprint section key order
+    if "sprint" in data and isinstance(data["sprint"], Mapping):
+        issues.extend(_check_key_order(data["sprint"], SPRINT_KEY_ORDER, "sprint"))
+
+    # Check epics
+    if "epics" in data and isinstance(data["epics"], list):
+        for i, epic in enumerate(data["epics"]):
+            if isinstance(epic, Mapping):
+                epic_path = f"epics[{i}]"
+                issues.extend(_check_key_order(epic, EPIC_KEY_ORDER, epic_path))
+                issues.extend(_check_string_styles(epic, epic_path))
+
+                # Check stories within epic
+                if "stories" in epic and isinstance(epic["stories"], list):
+                    for j, story in enumerate(epic["stories"]):
+                        if isinstance(story, Mapping):
+                            story_path = f"{epic_path}.stories[{j}]"
+                            issues.extend(
+                                _check_key_order(story, STORY_KEY_ORDER, story_path)
+                            )
+                            issues.extend(_check_string_styles(story, story_path))
+
+    return issues
+
+
 def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     """Validate a sprint YAML file for syntax, schema, and format issues.
 
@@ -55,24 +152,82 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     Returns:
         ValidateResult with errors and format issues
     """
-    raise NotImplementedError("validate_sprint_yaml not implemented")
+    result = ValidateResult(valid=True)
 
+    # Check file exists
+    if not path.exists():
+        result.valid = False
+        result.errors.append(ValidateError(
+            message=f"File not found: {path}",
+            path=str(path),
+            category="syntax",
+        ))
+        return result
 
-def check_format_drift(path: Path) -> list[FormatIssue]:
-    """Check a sprint YAML file for format drift.
+    # Step 1: Try to parse YAML (catch syntax errors with line numbers)
+    try:
+        with open(path) as f:
+            raw_content = f.read()
 
-    Detects:
-    - Key ordering that doesn't match sprint-template.yaml
-    - Wrong string styles (plain vs block scalar for multiline)
-    - Indentation issues
+        if not raw_content.strip():
+            result.valid = False
+            result.errors.append(ValidateError(
+                message="Empty YAML file",
+                path=str(path),
+                category="syntax",
+                line=1,
+            ))
+            return result
 
-    Args:
-        path: Path to sprint YAML file
+        data = yaml.safe_load(raw_content)
+    except yaml.YAMLError as e:
+        result.valid = False
+        line = None
+        if hasattr(e, "problem_mark") and e.problem_mark is not None:
+            line = e.problem_mark.line + 1  # 0-indexed to 1-indexed
+        result.errors.append(ValidateError(
+            message=f"YAML syntax error: {e}",
+            path=str(path),
+            category="syntax",
+            line=line,
+        ))
+        return result
 
-    Returns:
-        List of FormatIssue objects
-    """
-    raise NotImplementedError("check_format_drift not implemented")
+    if data is None:
+        result.valid = False
+        result.errors.append(ValidateError(
+            message="Empty YAML file",
+            path=str(path),
+            category="syntax",
+            line=1,
+        ))
+        return result
+
+    # Step 2: Schema validation using existing validator
+    schema_result = validate_full_sprint(data)
+    if not schema_result.valid:
+        result.valid = False
+    for err in schema_result.errors:
+        result.errors.append(ValidateError(
+            message=err.message,
+            path=err.path,
+            category="schema",
+        ))
+
+    # Step 3: Format drift detection
+    format_issues = check_format_drift(path)
+    result.format_issues = format_issues
+
+    # Step 4: Fix if requested (only format issues, not schema)
+    if fix and path.exists():
+        try:
+            canon_data = read_sprint(path)
+            write_sprint(path, canon_data)
+            result.fixed = True
+        except (FileNotFoundError, ValueError):
+            pass
+
+    return result
 
 
 @click.command("validate")
@@ -80,4 +235,29 @@ def check_format_drift(path: Path) -> list[FormatIssue]:
 @click.option("--fix", is_flag=True, help="Automatically repair format issues")
 def validate_command(file: str | None, fix: bool) -> None:
     """Validate sprint YAML for syntax, schema, and format issues."""
-    raise NotImplementedError("validate_command not implemented")
+    if file is None:
+        raise click.ClickException("No file specified")
+
+    path = Path(file)
+    result = validate_sprint_yaml(path, fix=fix)
+
+    if result.errors:
+        for err in result.errors:
+            severity = err.category.upper()
+            line_info = f" (line {err.line})" if err.line else ""
+            click.echo(f"[{severity}] {err.path}: {err.message}{line_info}")
+
+    if result.format_issues:
+        for issue in result.format_issues:
+            click.echo(f"[FORMAT] {issue.path}: {issue.message}")
+
+    if not result.valid:
+        error_count = len(result.errors)
+        click.echo(f"\nFound {error_count} error(s). Sprint YAML is invalid.")
+        raise SystemExit(1)
+
+    if result.format_issues and not fix:
+        click.echo(f"\nFound {len(result.format_issues)} format issue(s). Run with --fix to repair.")
+
+    if result.valid and not result.errors:
+        click.echo("Sprint YAML is valid.")
