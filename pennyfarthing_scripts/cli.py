@@ -54,6 +54,8 @@ def agent():
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
 @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
 @click.option("--full", is_flag=True, help="Include domain docs")
+@click.option("--quiet", is_flag=True, help="Suppress section headers")
+@click.option("--tier", type=click.Choice(["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False), help="Context tier level")
 def agent_start(
     name: str,
     session_id: str | None,
@@ -61,6 +63,8 @@ def agent_start(
     json_output: bool,
     minimal: bool,
     full: bool,
+    quiet: bool,
+    tier: str | None,
 ):
     """Start an agent session with full context.
 
@@ -81,6 +85,8 @@ def agent_start(
         json_output=json_output,
         minimal=minimal,
         full=full,
+        quiet=quiet,
+        tier=tier,
     )
     raise SystemExit(exit_code)
 

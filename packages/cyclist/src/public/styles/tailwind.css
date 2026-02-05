@@ -2097,9 +2097,16 @@
   text-transform: uppercase;
 }
 
+.debug-panel .context-info {
+  background: var(--bg-tertiary, #2d2d2d);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
 .debug-panel .context-bar {
   height: 8px;
-  background: var(--bg-tertiary, #2d2d2d);
+  background: var(--bg-primary, #1e1e1e);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 4px;
@@ -2112,7 +2119,8 @@
 
 .debug-panel .context-text {
   font-size: 0.75rem;
-  color: var(--text-secondary, #8b8b8b);
+  color: var(--text-primary, #d4d4d4);
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
 }
 
 .debug-panel .token-stats {
@@ -2140,19 +2148,19 @@
 .debug-panel .context-breakdown {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 2px 12px;
-  font-size: 0.7rem;
+  gap: 4px 12px;
+  font-size: 0.75rem;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border-color, #3d3d3d);
 }
 
 .debug-panel .context-breakdown dt {
-  color: var(--text-tertiary, #6b6b6b);
+  color: var(--text-secondary, #8b8b8b);
 }
 
 .debug-panel .context-breakdown dd {
-  color: var(--text-secondary, #8b8b8b);
+  color: var(--text-primary, #d4d4d4);
   text-align: right;
   margin: 0;
 }
@@ -2275,134 +2283,6 @@
 
 .debug-panel .component-tokens {
   color: var(--text-primary, #d4d4d4);
-  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-}
-
-/* OTEL spans section - MSSCI-12782 */
-.debug-panel .otel-spans-section {
-  margin-top: 8px;
-}
-
-.debug-panel .otel-filter {
-  width: 100%;
-  padding: 4px 8px;
-  margin-bottom: 8px;
-  background: var(--bg-tertiary, #2d2d2d);
-  border: 1px solid var(--border-color, #3c3c3c);
-  border-radius: 4px;
-  color: var(--text-primary, #d4d4d4);
-  font-size: 0.75rem;
-}
-
-.debug-panel .tool-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.debug-panel .tool-group {
-  background: var(--bg-tertiary, #2d2d2d);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.debug-panel .tool-group-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  background: var(--bg-secondary, #252526);
-}
-
-.debug-panel .tool-group-toggle {
-  background: none;
-  border: none;
-  color: var(--accent-color, #007acc);
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0;
-  text-align: left;
-}
-
-.debug-panel .tool-group-toggle:hover {
-  color: var(--accent-hover, #0098ff);
-}
-
-.debug-panel .tool-group-count {
-  font-size: 0.7rem;
-  color: var(--text-secondary, #8b8b8b);
-  background: var(--bg-primary, #1e1e1e);
-  padding: 1px 6px;
-  border-radius: 8px;
-}
-
-.debug-panel .tool-group-duration {
-  font-size: 0.7rem;
-  color: var(--text-secondary, #8b8b8b);
-  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  margin-left: auto;
-}
-
-.debug-panel .tool-group-errors {
-  font-size: 0.65rem;
-  color: var(--error-color, #f14c4c);
-  background: rgba(241, 76, 76, 0.15);
-  padding: 1px 6px;
-  border-radius: 8px;
-}
-
-.debug-panel .tool-group-items {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.2s ease;
-}
-
-.debug-panel .tool-group-items.expanded {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.debug-panel .span-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  border-top: 1px solid var(--border-color, #3c3c3c);
-}
-
-.debug-panel .span-item:first-child {
-  border-top: none;
-}
-
-.debug-panel .span-status {
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.debug-panel .span-item.success .span-status {
-  color: var(--success-color, #4ec9b0);
-}
-
-.debug-panel .span-item.error .span-status {
-  color: var(--error-color, #f14c4c);
-}
-
-.debug-panel .span-input {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-primary, #d4d4d4);
-  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-}
-
-.debug-panel .span-duration {
-  flex-shrink: 0;
-  color: var(--text-secondary, #8b8b8b);
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
 }
 

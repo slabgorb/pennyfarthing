@@ -126,10 +126,22 @@ export async function getPrimeContextAsync(agentName: string, projectDir: string
 // =============================================================================
 
 /**
+ * A loaded context component with metadata
+ */
+export interface PrimeComponent {
+  /** Component identifier (e.g., "agent_definition", "persona") */
+  name: string;
+  /** Estimated token count */
+  tokens: number;
+  /** Relative path to source file, if applicable */
+  source?: string;
+}
+
+/**
  * Parsed result from prime JSON output
  */
 export interface PrimeOutput {
-  /** Context content string */
+  /** Context content string (assembled text for system prompt) */
   context?: string;
   /** Context tier used */
   tier?: ContextTier;
@@ -139,6 +151,8 @@ export interface PrimeOutput {
   tokenCounts?: Record<string, number>;
   /** Total tokens across all components */
   totalTokens?: number;
+  /** Per-component metadata with source paths */
+  components?: PrimeComponent[];
 }
 
 /**
@@ -157,12 +171,12 @@ export function parsePrimeOutput(output: string): PrimeOutput {
     if (trimmed.startsWith('{')) {
       const data = JSON.parse(trimmed);
       return {
-        // Extract context field if present, otherwise use the raw output
         context: data.context ?? trimmed,
         tier: data.tier as ContextTier | undefined,
         agentName: data.agent_name,
         tokenCounts: data.token_counts,
         totalTokens: data.total_tokens,
+        components: data.components as PrimeComponent[] | undefined,
       };
     }
   } catch {
@@ -172,10 +186,6 @@ export function parsePrimeOutput(output: string): PrimeOutput {
   // Plain text output - just return as context
   return {
     context: output,
-    tier: undefined,
-    agentName: undefined,
-    tokenCounts: undefined,
-    totalTokens: undefined,
   };
 }
 
@@ -235,11 +245,15 @@ export function selectContextTier(
  * @param tier - Optional context tier (FULL, REFRESH, HANDOFF, MINIMAL)
  * @returns Command string for executing Python prime script
  */
-export function buildPrimeCommand(agentName: string, tier?: ContextTier): string {
+export function buildPrimeCommand(agentName: string, tier?: ContextTier, json?: boolean): string {
   let command = `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`;
 
   if (tier !== undefined) {
     command += ` --tier ${tier}`;
+  }
+
+  if (json) {
+    command += ' --json';
   }
 
   return command;
@@ -295,6 +309,61 @@ export function getPrimeContextWithTier(
     return null;
   } catch (error) {
     console.error(`[prime] Failed to get context for agent "${agentName}" tier=${tier}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get prime context as structured JSON output
+ *
+ * Runs prime with --json flag to get both the assembled context text
+ * (for system prompt) and structured metadata (for DebugPanel display).
+ *
+ * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
+ * @param projectDir - Project directory to run from
+ * @param tier - Context tier (FULL, REFRESH, HANDOFF, MINIMAL)
+ * @returns Parsed prime output with context + metadata, or null if failed
+ */
+export function getPrimeContextJson(
+  agentName: string,
+  projectDir: string,
+  tier: ContextTier
+): PrimeOutput | null {
+  const packageRoot = findPennyfarthingScripts(projectDir);
+  if (!packageRoot) {
+    console.warn('[prime] Could not find pennyfarthing_scripts');
+    return null;
+  }
+
+  try {
+    const env = {
+      ...process.env,
+      PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
+    };
+
+    const command = buildPrimeCommand(agentName, tier, true);
+
+    const result = execSync(command, {
+      cwd: projectDir,
+      env,
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result && result.trim().length > 0) {
+      const parsed = parsePrimeOutput(result);
+      console.log(
+        `[prime] Got JSON context for "${agentName}" tier=${tier} ` +
+        `(${parsed.totalTokens ?? 0} tokens, ${parsed.components?.length ?? 0} components)`
+      );
+      return parsed;
+    }
+
+    console.warn(`[prime] Empty output for agent "${agentName}" tier=${tier}`);
+    return null;
+  } catch (error) {
+    console.error(`[prime] Failed to get JSON context for "${agentName}" tier=${tier}:`, error);
     return null;
   }
 }

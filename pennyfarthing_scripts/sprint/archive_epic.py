@@ -90,7 +90,7 @@ def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
 
     An epic is complete if:
     - It has status 'done' or 'completed', OR
-    - All of its stories have status 'done' or 'completed'
+    - All of its stories have a terminal status ('done', 'completed', or 'cancelled')
 
     Args:
         epic: Epic dict from sprint YAML
@@ -111,7 +111,7 @@ def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
     incomplete = []
     for story in stories:
         story_status = story.get("status", "backlog")
-        if story_status not in ("done", "completed"):
+        if story_status not in ("done", "completed", "cancelled"):
             incomplete.append(story.get("id", "unknown"))
 
     return len(incomplete) == 0, incomplete
