@@ -1,0 +1,59 @@
+import { Router } from 'express';
+import { execFile } from 'child_process';
+import { join } from 'path';
+
+// Create hotspots API router
+export function createHotspotsRouter(getProjectDir: () => string): Router {
+  const router = Router();
+
+  // GET /api/hotspots?days=90&repo=pennyfarthing
+  router.get('/', (req, res) => {
+    const projectDir = getProjectDir();
+    const days = String(req.query.days || '90');
+    const repo = req.query.repo as string | undefined;
+
+    const args = [
+      '-m', 'pennyfarthing_scripts.hotspots',
+      'analyze',
+      '--format', 'json',
+      '--days', days,
+    ];
+
+    if (repo) {
+      args.push('--repo', repo);
+    } else {
+      args.push('--path', projectDir);
+    }
+
+    // Find python in the project's pennyfarthing dir
+    const pythonPath = join(projectDir, 'pennyfarthing');
+
+    execFile('python3', args, {
+      cwd: pythonPath,
+      env: { ...process.env, PYTHONPATH: pythonPath },
+      timeout: 30000,
+    }, (err, stdout, stderr) => {
+      if (err) {
+        console.error('[Hotspots] Analysis failed:', stderr || err.message);
+        res.status(500).json({
+          success: false,
+          error: stderr || err.message,
+        });
+        return;
+      }
+
+      try {
+        const data = JSON.parse(stdout);
+        res.json(data);
+      } catch (parseErr) {
+        console.error('[Hotspots] JSON parse failed:', parseErr);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to parse hotspot analysis output',
+        });
+      }
+    });
+  });
+
+  return router;
+}

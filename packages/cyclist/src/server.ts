@@ -30,6 +30,7 @@ import {
   createHookRequestRouter,
   createIdentityRouter,
   createTodosRouter,
+  createHotspotsRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -121,6 +122,8 @@ app.use('/api/todos', createTodosRouter());
 // Audit log API
 import { createAuditLogRouter } from './api/audit-log.js';
 app.use('/api/audit-log', createAuditLogRouter());
+// Hotspot analysis API
+app.use('/api/hotspots', createHotspotsRouter(getProjectDir));
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
