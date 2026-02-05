@@ -283,7 +283,19 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  packages/themes-comedy: {}
+
+  packages/themes-literary: {}
+
+  packages/themes-mythology-fantasy: {}
+
+  packages/themes-prestige-tv: {}
+
   packages/themes-realistic: {}
+
+  packages/themes-scifi: {}
+
+  packages/themes-superheroes: {}
 
 packages:
 
