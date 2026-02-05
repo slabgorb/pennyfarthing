@@ -49,6 +49,19 @@ function generateJiraUrl(jiraKey: string | null): string | null {
   return `${JIRA_BASE_URL}/${jiraKey}`;
 }
 
+// MSSCI-14301: Available workflow summary for discovery panel
+export interface AvailableWorkflow {
+  name: string;
+  type: 'phased' | 'stepped';
+  description: string;
+  triggers?: {
+    types?: string[];
+    tags?: string[];
+    points?: { min?: number; max?: number };
+    default?: boolean;
+  };
+}
+
 // Story info interface (enhanced with workflow details)
 export interface StoryInfo {
   id: string | null;
@@ -73,6 +86,8 @@ export interface StoryInfo {
   sprintStories: SprintStory[] | null;  // All stories in current sprint
   epicContext: EpicContext | null;       // Current story's epic with siblings
   jiraUrl: string | null;                // Jira URL for current story
+  // MSSCI-14301: Available workflows for discovery panel
+  availableWorkflows: AvailableWorkflow[] | null;
 }
 
 // Parse session file for story info
@@ -669,6 +684,93 @@ export function getWorkflowPhases(workflowName: string, projectDir: string): Omi
   }
 }
 
+// MSSCI-14301: Enumerate all available workflows from disk
+// Searches same 3 directories as getWorkflowPhases, discovers both flat and subdirectory workflows
+export function getAvailableWorkflows(projectDir: string): AvailableWorkflow[] {
+  const workflows: AvailableWorkflow[] = [];
+  const seen = new Set<string>();
+
+  const workflowDirs = [
+    join(projectDir, '.pennyfarthing', 'workflows'),
+    join(projectDir, '.claude', 'workflows'),
+    join(projectDir, 'pennyfarthing-dist', 'workflows'),
+  ];
+
+  for (const dir of workflowDirs) {
+    if (!existsSync(dir)) continue;
+
+    let entries: string[];
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      const entryPath = join(dir, entry);
+
+      try {
+        // Flat YAML file (e.g., tdd.yaml)
+        if (entry.endsWith('.yaml') || entry.endsWith('.yml')) {
+          const content = readFileSync(entryPath, 'utf-8');
+          const data = parseYaml(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name)) continue;
+          seen.add(wf.name);
+
+          const type: 'phased' | 'stepped' = wf.type === 'stepped' ? 'stepped' : 'phased';
+          const result: AvailableWorkflow = {
+            name: wf.name,
+            type,
+            description: wf.description ?? '',
+          };
+          if (wf.triggers) {
+            const triggers: AvailableWorkflow['triggers'] = {};
+            if (wf.triggers.types) triggers.types = wf.triggers.types;
+            if (wf.triggers.tags) triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points) triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== undefined) triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        }
+        // Subdirectory workflow (e.g., architecture/workflow.yaml)
+        else if (statSync(entryPath).isDirectory()) {
+          const subYaml = join(entryPath, 'workflow.yaml');
+          if (!existsSync(subYaml)) continue;
+
+          const content = readFileSync(subYaml, 'utf-8');
+          const data = parseYaml(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name)) continue;
+          seen.add(wf.name);
+
+          const type: 'phased' | 'stepped' = wf.type === 'stepped' ? 'stepped' : 'phased';
+          const result: AvailableWorkflow = {
+            name: wf.name,
+            type,
+            description: wf.description ?? '',
+          };
+          if (wf.triggers) {
+            const triggers: AvailableWorkflow['triggers'] = {};
+            if (wf.triggers.types) triggers.types = wf.triggers.types;
+            if (wf.triggers.tags) triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points) triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== undefined) triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        }
+      } catch {
+        // Skip malformed files
+        continue;
+      }
+    }
+  }
+
+  return workflows;
+}
+
 // Get story info from session files
 export function getStoryInfo(projectDir: string): StoryInfo {
   const nullResult: StoryInfo = {
@@ -688,6 +790,8 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     sprintStories: null,
     epicContext: null,
     jiraUrl: null,
+    // MSSCI-14301: Available workflows
+    availableWorkflows: null,
   };
 
   try {
@@ -701,6 +805,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
         nullResult.sprint = parseSprintYaml(sprintContent);
         nullResult.sprintStories = getSprintStories(sprintContent);
       }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
       return nullResult;
     }
 
@@ -713,6 +818,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
         nullResult.sprint = parseSprintYaml(sprintContent);
         nullResult.sprintStories = getSprintStories(sprintContent);
       }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
       return nullResult;
     }
 
@@ -770,6 +876,8 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       sprintStories,
       epicContext,
       jiraUrl: generateJiraUrl(jiraKey),
+      // MSSCI-14301: Available workflows
+      availableWorkflows: getAvailableWorkflows(projectDir),
     };
   } catch {
     return nullResult;
