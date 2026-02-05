@@ -108,12 +108,10 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     // Third pass: group consecutive tool_use messages into stacks
     const toolStacks = groupToolsIntoStacks(filteredMessages);
 
-    // Create a set of tool_ids that belong to stacks (2+ tools)
+    // Create a set of tool_ids that belong to stacks
     const stackedToolIds = new Set<string>();
     toolStacks.forEach(stack => {
-      if (stack.count >= 2) {
-        stack.tools.forEach(tool => stackedToolIds.add(tool.tool_id));
-      }
+      stack.tools.forEach(tool => stackedToolIds.add(tool.tool_id));
     });
 
     // Fourth pass: build result array, inserting ToolStackGroups where appropriate
@@ -130,7 +128,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       } else if (msg.type === 'tool_use' && msg.tool_id && stackedToolIds.has(msg.tool_id)) {
         // This tool belongs to a stack
         const stack = toolStacks.find(s =>
-          s.count >= 2 && s.tools.some(t => t.tool_id === msg.tool_id)
+          s.tools.some(t => t.tool_id === msg.tool_id)
         );
         if (stack && (!pendingStack || pendingStack.stackId !== stack.stackId)) {
           // New stack - add it
