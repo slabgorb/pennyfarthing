@@ -78,6 +78,17 @@ REQUIRED_STORY_FIELDS = {"id", "title", "status", "points"}
 # Required fields for epic
 REQUIRED_EPIC_FIELDS = {"id", "title"}
 
+# Required fields for future.yaml initiative
+REQUIRED_INITIATIVE_FIELDS = {"name", "status"}
+
+# Required fields for future.yaml epic (what promote-epic.sh needs)
+REQUIRED_FUTURE_EPIC_FIELDS = {"id", "title", "points"}
+
+# Required fields for future.yaml story (what promote-epic.sh transforms)
+REQUIRED_FUTURE_STORY_FIELDS = {"id", "title", "points"}
+
+VALID_INITIATIVE_STATUSES = {"ready", "planning", "blocked", "research_complete", "backlog", "complete"}
+
 
 # =============================================================================
 # Validation Functions
@@ -304,6 +315,116 @@ def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
     # The key difference is that all story statuses are valid
     # (done/canceled are expected in archived sprints)
     return validate_full_sprint(data)
+
+
+def validate_future(data: dict[str, Any]) -> ValidationResult:
+    """Validate future.yaml structure.
+
+    Validates the structure that promote-epic.sh and list-future.sh depend on:
+    - future.initiatives[] array exists
+    - Each initiative has name, status
+    - Each epic has id, title, points (required by promote-epic.sh)
+    - Each story has id, title, points (required by promote-epic.sh)
+
+    Args:
+        data: Future YAML data (full document)
+
+    Returns:
+        ValidationResult with any errors found
+    """
+    result = ValidationResult(valid=True)
+
+    if "future" not in data:
+        result.add_error("Missing required 'future' section", "future")
+        return result
+
+    future = data["future"]
+    if "initiatives" not in future:
+        result.add_error("Missing required 'initiatives' array", "future.initiatives")
+        return result
+
+    initiatives = future["initiatives"]
+    if not isinstance(initiatives, list):
+        result.add_error("'initiatives' must be an array", "future.initiatives")
+        return result
+
+    for i, initiative in enumerate(initiatives):
+        if not isinstance(initiative, dict):
+            result.add_error(f"Initiative must be a mapping", f"future.initiatives[{i}]")
+            continue
+
+        base_path = f"future.initiatives[{i}]"
+
+        # Check required initiative fields
+        for field_name in REQUIRED_INITIATIVE_FIELDS:
+            if field_name not in initiative:
+                result.add_error(
+                    f"Missing required field: {field_name}",
+                    f"{base_path}.{field_name}",
+                )
+
+        # Validate initiative status
+        if "status" in initiative:
+            status = initiative["status"]
+            if status not in VALID_INITIATIVE_STATUSES:
+                result.add_error(
+                    f"Invalid initiative status '{status}'. Must be one of: {', '.join(sorted(VALID_INITIATIVE_STATUSES))}",
+                    f"{base_path}.status",
+                )
+
+        # Validate epics if present
+        if "epics" in initiative and isinstance(initiative["epics"], list):
+            seen_epic_ids: set[str] = set()
+            for j, epic in enumerate(initiative["epics"]):
+                if not isinstance(epic, dict):
+                    continue
+                epic_path = f"{base_path}.epics[{j}]"
+
+                for field_name in REQUIRED_FUTURE_EPIC_FIELDS:
+                    if field_name not in epic:
+                        result.add_error(
+                            f"Missing required field: {field_name}",
+                            f"{epic_path}.{field_name}",
+                        )
+
+                # Check duplicate epic IDs
+                epic_id = epic.get("id")
+                if epic_id:
+                    if epic_id in seen_epic_ids:
+                        result.add_error(
+                            f"Duplicate epic ID '{epic_id}'",
+                            f"{epic_path}.id",
+                        )
+                    seen_epic_ids.add(epic_id)
+
+                # Validate points is numeric
+                if "points" in epic and not isinstance(epic["points"], (int, float)):
+                    result.add_error(
+                        f"Invalid points value '{epic['points']}'. Must be numeric",
+                        f"{epic_path}.points",
+                    )
+
+                # Validate stories if present
+                if "stories" in epic and isinstance(epic["stories"], list):
+                    for k, story in enumerate(epic["stories"]):
+                        if not isinstance(story, dict):
+                            continue
+                        story_path = f"{epic_path}.stories[{k}]"
+
+                        for field_name in REQUIRED_FUTURE_STORY_FIELDS:
+                            if field_name not in story:
+                                result.add_error(
+                                    f"Missing required field: {field_name}",
+                                    f"{story_path}.{field_name}",
+                                )
+
+                        if "points" in story and not isinstance(story["points"], (int, float)):
+                            result.add_error(
+                                f"Invalid points value '{story['points']}'. Must be numeric",
+                                f"{story_path}.points",
+                            )
+
+    return result
 
 
 def validate_sprint_file(file_path: Path) -> ValidationResult:
