@@ -1,4 +1,4 @@
-# Step 6: Publish to npm
+# Step 10: Publish to npm
 
 <purpose>
 Publish @pennyfarthing/core and @pennyfarthing/cyclist to the npm registry. Verifies authentication and shows published package info.
@@ -18,7 +18,7 @@ npm publish results for each package, plus registry verification.
 
 ## Execution
 
-### 6.1 Verify npm Auth
+### 10.1 Verify npm Auth
 
 ```bash
 echo "=== npm Authentication ==="
@@ -37,7 +37,7 @@ if [[ -f .env ]]; then
 fi
 ```
 
-### 6.2 Pre-Publish Check
+### 10.2 Pre-Publish Check
 
 ```bash
 echo "=== Pre-Publish Check ==="
@@ -45,14 +45,14 @@ npm view @pennyfarthing/core@{new_version} version 2>/dev/null && echo "WARNING:
 npm view @pennyfarthing/cyclist@{new_version} version 2>/dev/null && echo "WARNING: cyclist@{new_version} already published!" || echo "✓ cyclist@{new_version} not yet published"
 ```
 
-### 6.3 Publish Core
+### 10.3 Publish Core
 
 ```bash
 echo "Publishing @pennyfarthing/core@{new_version}..."
 npm publish --access public
 ```
 
-### 6.4 Publish Cyclist
+### 10.4 Publish Cyclist
 
 ```bash
 echo "Publishing @pennyfarthing/cyclist@{new_version}..."
@@ -61,7 +61,7 @@ npm publish --access public
 cd ../..
 ```
 
-### 6.5 Verify Published
+### 10.5 Verify Published
 
 ```bash
 echo "=== Registry Verification ==="
