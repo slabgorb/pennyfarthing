@@ -2,25 +2,24 @@
  * Theme Metadata
  *
  * Handles loading and caching of Pennyfarthing theme metadata.
- * Extracted from main.ts for better maintainability.
+ * Delegates discovery to @pennyfarthing/shared unified loader.
  */
 
 import * as fs from 'fs';
 import { join } from 'path';
 import { getProjectDirectory } from './paths.js';
+import {
+  listThemes as sharedListThemes,
+  loadAllThemeMetadata as sharedLoadAllThemeMetadata,
+  deriveCategory,
+  type ThemeMetadata,
+} from '@pennyfarthing/shared';
 
-/**
- * Theme metadata interface for theme browser (24-5)
- */
-export interface ThemeMetadata {
-  id: string;
-  name: string;
-  description: string;
-  source: string;
-  tier: 'S' | 'A' | 'B' | 'U';
-  category: string;
-  agentCount: number;
-}
+// Re-export ThemeMetadata so existing consumers don't break
+export type { ThemeMetadata };
+
+// Re-export deriveCategory for any direct consumers
+export { deriveCategory, CATEGORY_MAP } from '@pennyfarthing/shared';
 
 /**
  * Agent data within a theme (24-6)
@@ -50,233 +49,13 @@ export interface ThemeMetadataWithAgents extends ThemeMetadata {
   };
 }
 
-/**
- * Category mapping for known themes (24-5)
- * Maps theme IDs or source patterns to categories
- */
-export const CATEGORY_MAP: Record<string, string> = {
-  // TV Series
-  'star-trek-tos': 'TV Series',
-  'star-trek-tng': 'TV Series',
-  'star-trek-ds9': 'TV Series',
-  'star-trek-voyager': 'TV Series',
-  'breaking-bad': 'TV Series',
-  'the-office': 'TV Series',
-  'the-wire': 'TV Series',
-  'game-of-thrones': 'TV Series',
-  'ted-lasso': 'TV Series',
-  'parks-and-recreation': 'TV Series',
-  'friends': 'TV Series',
-  'seinfeld': 'TV Series',
-  'mad-men': 'TV Series',
-  'the-sopranos': 'TV Series',
-  'arrested-development': 'TV Series',
-  'schitts-creek': 'TV Series',
-  'brooklyn-nine-nine': 'TV Series',
-  'firefly': 'TV Series',
-  'battlestar-galactica': 'TV Series',
-  'doctor-who': 'TV Series',
-  'stranger-things': 'TV Series',
-  'the-good-place': 'TV Series',
-  'its-always-sunny': 'TV Series',
-  'downton-abbey': 'TV Series',
-  'the-crown': 'TV Series',
-  'succession': 'TV Series',
-  'the-simpsons': 'TV Series',
-  'futurama': 'TV Series',
-  'arcane': 'TV Series',
-  'avatar-the-last-airbender': 'TV Series',
-  'severance': 'TV Series',
-  'the-west-wing': 'TV Series',
-  'lost': 'TV Series',
-  'the-x-files': 'TV Series',
-  'twin-peaks': 'TV Series',
-  'the-twilight-zone': 'TV Series',
-  'mash': 'TV Series',
-  'a-team': 'TV Series',
-  // Literature
-  'alice-in-wonderland': 'Literature',
-  'lord-of-the-rings': 'Literature',
-  'discworld': 'Literature',
-  'hitchhikers-guide': 'Literature',
-  'dune': 'Literature',
-  'pride-and-prejudice': 'Literature',
-  'sherlock-holmes': 'Literature',
-  'harry-potter': 'Literature',
-  'narnia': 'Literature',
-  'foundation': 'Literature',
-  'wheel-of-time': 'Literature',
-  'stormlight-archive': 'Literature',
-  'mistborn': 'Literature',
-  'good-omens': 'Literature',
-  'american-gods': 'Literature',
-  'the-expanse': 'Literature',
-  'enders-game': 'Literature',
-  'three-body-problem': 'Literature',
-  'hyperion': 'Literature',
-  '1984': 'Literature',
-  'brave-new-world': 'Literature',
-  'frankenstein': 'Literature',
-  'dracula': 'Literature',
-  'moby-dick': 'Literature',
-  'odyssey': 'Literature',
-  'iliad': 'Literature',
-  'don-quixote': 'Literature',
-  'count-of-monte-cristo': 'Literature',
-  'les-miserables': 'Literature',
-  'great-gatsby': 'Literature',
-  'winnie-the-pooh': 'Literature',
-  'peter-pan': 'Literature',
-  'wizard-of-oz': 'Literature',
-  // Film
-  'star-wars': 'Film',
-  'matrix': 'Film',
-  'inception': 'Film',
-  'pulp-fiction': 'Film',
-  'godfather': 'Film',
-  'shawshank-redemption': 'Film',
-  'fight-club': 'Film',
-  'blade-runner': 'Film',
-  'back-to-the-future': 'Film',
-  'jurassic-park': 'Film',
-  'indiana-jones': 'Film',
-  'marvel-avengers': 'Film',
-  'guardians-of-the-galaxy': 'Film',
-  'pirates-of-the-caribbean': 'Film',
-  'princess-bride': 'Film',
-  'monty-python': 'Film',
-  'ghostbusters': 'Film',
-  'men-in-black': 'Film',
-  'ocean-eleven': 'Film',
-  'big-lebowski': 'Film',
-  'grand-budapest-hotel': 'Film',
-  'kill-bill': 'Film',
-  'john-wick': 'Film',
-  'die-hard': 'Film',
-  'terminator': 'Film',
-  'alien': 'Film',
-  'predator': 'Film',
-  'mad-max': 'Film',
-  'studio-ghibli': 'Film',
-  'pixar': 'Film',
-  'disney-classics': 'Film',
-  'interstellar': 'Film',
-  'arrival': 'Film',
-  'her': 'Film',
-  'ex-machina': 'Film',
-  // Mythology
-  'greek-mythology': 'Mythology',
-  'norse-mythology': 'Mythology',
-  'egyptian-mythology': 'Mythology',
-  'celtic-mythology': 'Mythology',
-  'japanese-mythology': 'Mythology',
-  'hindu-mythology': 'Mythology',
-  'arthurian-legend': 'Mythology',
-  // Games
-  'zelda': 'Games',
-  'mario': 'Games',
-  'final-fantasy': 'Games',
-  'mass-effect': 'Games',
-  'bioshock': 'Games',
-  'portal': 'Games',
-  'half-life': 'Games',
-  'halo': 'Games',
-  'overwatch': 'Games',
-  'world-of-warcraft': 'Games',
-  'elder-scrolls': 'Games',
-  'fallout': 'Games',
-  'cyberpunk': 'Games',
-  'witcher': 'Games',
-  'red-dead-redemption': 'Games',
-  'last-of-us': 'Games',
-  'god-of-war': 'Games',
-  'dark-souls': 'Games',
-  'elden-ring': 'Games',
-  'pokemon': 'Games',
-  'animal-crossing': 'Games',
-  'minecraft': 'Games',
-  // History
-  'ancient-rome': 'History',
-  'ancient-greece': 'History',
-  'ancient-egypt': 'History',
-  'renaissance': 'History',
-  'victorian-era': 'History',
-  'wild-west': 'History',
-  'world-war-2': 'History',
-  'cold-war': 'History',
-  'founding-fathers': 'History',
-  // Music
-  'classical-composers': 'Music',
-  'jazz-legends': 'Music',
-  'rock-legends': 'Music',
-  'beatles': 'Music',
-  'queen': 'Music',
-  // Science
-  'scientists': 'Science',
-  'space-exploration': 'Science',
-};
-
-/**
- * Derive category from theme ID and source (24-5)
- * Uses CATEGORY_MAP for known themes, falls back to pattern matching
- */
-export function deriveCategory(themeId: string, source: string): string {
-  // Check explicit mapping first
-  if (CATEGORY_MAP[themeId]) {
-    return CATEGORY_MAP[themeId];
-  }
-
-  // Pattern matching on source text
-  const sourceLower = source.toLowerCase();
-
-  if (sourceLower.includes('tv series') || sourceLower.includes('tv show') ||
-      sourceLower.includes('amc') || sourceLower.includes('hbo') ||
-      sourceLower.includes('netflix') || sourceLower.includes('bbc')) {
-    return 'TV Series';
-  }
-
-  if (sourceLower.includes('film') || sourceLower.includes('movie') ||
-      sourceLower.includes('cinema') || sourceLower.includes('disney') ||
-      sourceLower.includes('pixar') || sourceLower.includes('studio ghibli')) {
-    return 'Film';
-  }
-
-  if (sourceLower.includes('mythology') || sourceLower.includes('myth') ||
-      sourceLower.includes('legend') || sourceLower.includes('folklore')) {
-    return 'Mythology';
-  }
-
-  if (sourceLower.includes('novel') || sourceLower.includes('book') ||
-      sourceLower.includes(' by ') || sourceLower.includes('author') ||
-      sourceLower.includes('literary') || sourceLower.includes('classic')) {
-    return 'Literature';
-  }
-
-  if (sourceLower.includes('game') || sourceLower.includes('video game') ||
-      sourceLower.includes('nintendo') || sourceLower.includes('playstation') ||
-      sourceLower.includes('xbox')) {
-    return 'Games';
-  }
-
-  if (sourceLower.includes('history') || sourceLower.includes('historical') ||
-      sourceLower.includes('century') || sourceLower.includes('ancient') ||
-      sourceLower.includes('era')) {
-    return 'History';
-  }
-
-  if (sourceLower.includes('music') || sourceLower.includes('composer') ||
-      sourceLower.includes('band') || sourceLower.includes('musician')) {
-    return 'Music';
-  }
-
-  return 'Other';
-}
-
 // Theme metadata cache
 let themeMetadataCache: ThemeMetadata[] | null = null;
 
 /**
- * Find the themes directory - checks bundled resources first, then project dir
+ * Find the themes directory - checks bundled resources first, then project dir.
+ * Used only for the Electron-specific bundled resources path which shared
+ * loader doesn't handle (process.resourcesPath).
  */
 function findThemesDir(): string | null {
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
@@ -287,21 +66,7 @@ function findThemesDir(): string | null {
     }
   }
 
-  const projectDir = getProjectDirectory();
-  if (projectDir) {
-    // 2. Runtime via symlinks: .pennyfarthing/personas/themes (orchestrator pattern)
-    const runtimeThemes = join(projectDir, '.pennyfarthing', 'personas', 'themes');
-    if (fs.existsSync(runtimeThemes)) {
-      return runtimeThemes;
-    }
-
-    // 3. Monorepo/dev: project dir pennyfarthing-dist
-    const projectThemes = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
-    if (fs.existsSync(projectThemes)) {
-      return projectThemes;
-    }
-  }
-
+  // For non-Electron contexts, delegate to shared discovery
   return null;
 }
 
@@ -313,30 +78,33 @@ export function getThemeMetadataCache(): ThemeMetadata[] | null {
 }
 
 /**
- * Get available themes from pennyfarthing-dist/personas/themes (24-2)
- * Returns sorted list of theme names
+ * Get available themes from all sources.
+ * Returns sorted list of theme names.
  */
 export async function getAvailableThemes(): Promise<string[]> {
-  const themesDir = findThemesDir();
-  if (!themesDir) {
-    return ['alice-in-wonderland']; // Default fallback
+  // Check Electron bundled resources first
+  const bundledDir = findThemesDir();
+  if (bundledDir) {
+    try {
+      const files = fs.readdirSync(bundledDir);
+      return files
+        .filter(f => f.endsWith('.yaml'))
+        .map(f => f.replace('.yaml', ''))
+        .sort();
+    } catch {
+      // Fall through to shared loader
+    }
   }
 
-  try {
-    const files = fs.readdirSync(themesDir);
-    return files
-      .filter(f => f.endsWith('.yaml'))
-      .map(f => f.replace('.yaml', ''))
-      .sort();
-  } catch (err) {
-    console.error('Failed to read themes directory:', err);
-    return ['alice-in-wonderland']; // Default fallback
-  }
+  // Use shared unified discovery
+  const projectDir = getProjectDirectory();
+  const themes = sharedListThemes(projectDir || undefined);
+  return themes.length > 0 ? themes.sort() : ['alice-in-wonderland'];
 }
 
 /**
- * Load theme metadata from YAML files (24-5)
- * Parses all theme files and extracts metadata for the browser
+ * Load theme metadata from all sources.
+ * Parses all theme files and extracts metadata for the browser.
  */
 export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
   // Return cache if available
@@ -344,62 +112,60 @@ export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
     return themeMetadataCache;
   }
 
-  const themesDir = findThemesDir();
-  if (!themesDir) {
-    themeMetadataCache = [];
-    return themeMetadataCache;
-  }
+  // Check Electron bundled resources for supplemental themes
+  const bundledDir = findThemesDir();
+  const projectDir = getProjectDirectory();
 
-  const metadata: ThemeMetadata[] = [];
+  // Use shared unified loader for the primary metadata
+  const metadata = sharedLoadAllThemeMetadata(projectDir || undefined);
 
-  try {
-    const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-
-    // Dynamic import of yaml (already available in project)
-    const { default: yaml } = await import('yaml');
-
-    for (const file of files) {
-      try {
-        const filePath = join(themesDir, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const parsed = yaml.parse(content);
-
-        if (parsed?.theme) {
-          const themeId = file.replace('.yaml', '');
-          const theme = parsed.theme;
-          const agentCount = parsed.agents ? Object.keys(parsed.agents).length : 0;
-
-          metadata.push({
-            id: themeId,
-            name: theme.name || themeId,
-            description: theme.description || '',
-            source: theme.source || '',
-            tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
-            category: deriveCategory(themeId, theme.source || ''),
-            agentCount,
-          });
+  // If in Electron, also pick up any bundled-only themes
+  if (bundledDir) {
+    const seenIds = new Set(metadata.map(m => m.id));
+    try {
+      const { default: yaml } = await import('yaml');
+      const files = fs.readdirSync(bundledDir).filter(f => f.endsWith('.yaml')).sort();
+      for (const file of files) {
+        const themeId = file.replace('.yaml', '');
+        if (seenIds.has(themeId)) continue;
+        try {
+          const content = fs.readFileSync(join(bundledDir, file), 'utf-8');
+          const parsed = yaml.parse(content);
+          if (parsed?.theme) {
+            const agentCount = parsed.agents ? Object.keys(parsed.agents).length : 0;
+            metadata.push({
+              id: themeId,
+              name: parsed.theme.name || themeId,
+              description: parsed.theme.description || '',
+              source: parsed.theme.source || '',
+              tier: (parsed.theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
+              category: deriveCategory(themeId, parsed.theme.source || ''),
+              agentCount,
+            });
+            seenIds.add(themeId);
+          }
+        } catch {
+          // Skip unparseable files
         }
-      } catch (fileErr) {
-        console.error(`Failed to parse theme file ${file}:`, fileErr);
       }
+    } catch {
+      // Bundled dir fallback failed — shared data is sufficient
     }
-
-    // Cache the results
-    themeMetadataCache = metadata;
-    return metadata;
-  } catch (err) {
-    console.error('Failed to load theme metadata:', err);
-    themeMetadataCache = [];
-    return themeMetadataCache;
   }
+
+  themeMetadataCache = metadata;
+  return metadata;
 }
 
 // Theme metadata with agents cache (24-6)
 let themeMetadataWithAgentsCache: ThemeMetadataWithAgents[] | null = null;
 
 /**
- * Load theme metadata including agent character mappings (24-6)
- * Extended version of loadThemeMetadata for the preview panel
+ * Load theme metadata including agent character mappings (24-6).
+ * Extended version of loadThemeMetadata for the preview panel.
+ *
+ * This is Cyclist-specific enrichment: the shared loader provides basic metadata,
+ * and we overlay agent details for the UI preview panel.
  */
 export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAgents[]> {
   // Return cache if available
@@ -407,70 +173,91 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
     return themeMetadataWithAgentsCache;
   }
 
-  const themesDir = findThemesDir();
-  if (!themesDir) {
-    themeMetadataWithAgentsCache = [];
-    return themeMetadataWithAgentsCache;
+  // Get all theme directories to scan for agent data
+  const projectDir = getProjectDirectory();
+
+  // Collect all theme YAML directories
+  const themeDirs: string[] = [];
+
+  // Bundled Electron resources
+  const bundledDir = findThemesDir();
+  if (bundledDir) {
+    themeDirs.push(bundledDir);
+  }
+
+  // Shared discovery handles core + packages + custom
+  const { discoverAllThemeDirs } = await import('@pennyfarthing/shared');
+  const sharedDirs = discoverAllThemeDirs(projectDir || undefined);
+  for (const dir of sharedDirs) {
+    if (!themeDirs.includes(dir)) {
+      themeDirs.push(dir);
+    }
   }
 
   const metadata: ThemeMetadataWithAgents[] = [];
+  const seenIds = new Set<string>();
 
   try {
-    const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-
-    // Dynamic import of yaml (already available in project)
     const { default: yaml } = await import('yaml');
 
-    for (const file of files) {
+    for (const themesDir of themeDirs) {
+      let files: string[];
       try {
-        const filePath = join(themesDir, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const parsed = yaml.parse(content);
+        files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
+      } catch {
+        continue;
+      }
 
-        if (parsed?.theme) {
-          const themeId = file.replace('.yaml', '');
-          const theme = parsed.theme;
-          const rawAgents = parsed.agents || {};
-          const agentCount = Object.keys(rawAgents).length;
+      for (const file of files) {
+        const themeId = file.replace('.yaml', '');
+        if (seenIds.has(themeId)) continue;
+        seenIds.add(themeId);
 
-          // Extract agent data for preview panel
-          const agents: ThemeMetadataWithAgents['agents'] = {};
-          const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
+        try {
+          const filePath = join(themesDir, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const parsed = yaml.parse(content);
 
-          for (const role of coreRoles) {
-            const rawAgent = rawAgents[role];
-            if (rawAgent) {
-              agents[role as keyof typeof agents] = {
-                character: rawAgent.character || '',
-                catchphrases: rawAgent.catchphrases || [],
-                style: rawAgent.style || '',
-                role: rawAgent.role || '',
-              };
+          if (parsed?.theme) {
+            const theme = parsed.theme;
+            const rawAgents = parsed.agents || {};
+            const agentCount = Object.keys(rawAgents).length;
+
+            const agents: ThemeMetadataWithAgents['agents'] = {};
+            const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
+
+            for (const role of coreRoles) {
+              const rawAgent = rawAgents[role];
+              if (rawAgent) {
+                agents[role as keyof typeof agents] = {
+                  character: rawAgent.character || '',
+                  catchphrases: rawAgent.catchphrases || [],
+                  style: rawAgent.style || '',
+                  role: rawAgent.role || '',
+                };
+              }
             }
-          }
 
-          metadata.push({
-            id: themeId,
-            name: theme.name || themeId,
-            description: theme.description || '',
-            source: theme.source || '',
-            tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
-            category: deriveCategory(themeId, theme.source || ''),
-            agentCount,
-            agents,
-          });
+            metadata.push({
+              id: themeId,
+              name: theme.name || themeId,
+              description: theme.description || '',
+              source: theme.source || '',
+              tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
+              category: deriveCategory(themeId, theme.source || ''),
+              agentCount,
+              agents,
+            });
+          }
+        } catch {
+          // Skip unparseable files
         }
-      } catch (fileErr) {
-        console.error(`Failed to parse theme file ${file}:`, fileErr);
       }
     }
-
-    // Cache the results
-    themeMetadataWithAgentsCache = metadata;
-    return metadata;
   } catch (err) {
     console.error('Failed to load theme metadata with agents:', err);
-    themeMetadataWithAgentsCache = [];
-    return themeMetadataWithAgentsCache;
   }
+
+  themeMetadataWithAgentsCache = metadata;
+  return metadata;
 }

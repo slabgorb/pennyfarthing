@@ -14,8 +14,16 @@ export {
   loadTheme,
   listThemes,
   getAgentPersona,
+  resolveThemePath,
+  discoverAllThemeDirs,
+  discoverThemePackages,
+  loadAllThemeMetadata,
+  deriveCategory,
+  CATEGORY_MAP,
   type Theme,
   type ThemeAgent,
+  type ThemePackageInfo,
+  type ThemeMetadata,
 } from './theme-loader.js';
 
 export {

@@ -3,6 +3,10 @@ import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import YAML from 'yaml';
+import {
+  discoverAllThemeDirs,
+  resolveThemePath as sharedResolveThemePath,
+} from '@pennyfarthing/shared';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,24 +42,20 @@ export interface ThemeInfo {
 }
 
 /**
- * Get the path to the themes directory
+ * Get the path to the primary themes directory (core built-in themes).
+ * For full multi-source discovery, use discoverAllThemeDirs() from @pennyfarthing/shared.
  */
 export function getThemesDir(): string {
-  // In installed package: dist/cli/utils/themes.ts -> need to go to pennyfarthing-dist
-  // Try relative to package root first
-  const packageRoot = join(__dirname, '../../..');
-  const distThemes = join(packageRoot, 'pennyfarthing-dist/personas/themes');
-
-  if (existsSync(distThemes)) {
-    return distThemes;
+  const dirs = discoverAllThemeDirs();
+  if (dirs.length > 0) {
+    return dirs[0]; // Primary/core themes dir
   }
 
-  // Fallback: try from project's .claude/pennyfarthing symlink
-  const projectRoot = process.cwd();
-  const claudeThemes = join(projectRoot, '.claude/pennyfarthing/personas/themes');
-
-  if (existsSync(claudeThemes)) {
-    return claudeThemes;
+  // Legacy fallback: try relative to package root
+  const packageRoot = join(__dirname, '../../..');
+  const distThemes = join(packageRoot, 'pennyfarthing-dist/personas/themes');
+  if (existsSync(distThemes)) {
+    return distThemes;
   }
 
   throw new Error('Could not find themes directory');
@@ -167,41 +167,26 @@ function loadThemesFromDir(dir: string, isCustom: boolean): ThemeInfo[] {
 }
 
 /**
- * Get all available themes (built-in + custom)
+ * Get all available themes (built-in + theme packages + custom)
+ * Uses unified discovery from @pennyfarthing/shared.
  */
 export function getThemes(projectRoot?: string): ThemeInfo[] {
+  const root = projectRoot || process.cwd();
+  const allDirs = discoverAllThemeDirs(root);
   const themes: ThemeInfo[] = [];
   const seenIds = new Set<string>();
 
-  // 1. Load built-in themes
-  try {
-    const builtInDir = getThemesDir();
-    for (const theme of loadThemesFromDir(builtInDir, false)) {
+  // Custom theme dirs (project + user level) for marking isCustom
+  const projectCustomDir = getProjectCustomThemesDir(root);
+  const userCustomDir = getUserCustomThemesDir();
+
+  for (const dir of allDirs) {
+    const isCustom = dir === projectCustomDir || dir === userCustomDir;
+    for (const theme of loadThemesFromDir(dir, isCustom)) {
       if (!seenIds.has(theme.id)) {
         themes.push(theme);
         seenIds.add(theme.id);
       }
-    }
-  } catch {
-    // Built-in themes not found - continue with custom themes
-  }
-
-  // 2. Load project-level custom themes
-  const root = projectRoot || process.cwd();
-  const projectDir = getProjectCustomThemesDir(root);
-  for (const theme of loadThemesFromDir(projectDir, true)) {
-    if (!seenIds.has(theme.id)) {
-      themes.push(theme);
-      seenIds.add(theme.id);
-    }
-  }
-
-  // 3. Load user-level custom themes
-  const userDir = getUserCustomThemesDir();
-  for (const theme of loadThemesFromDir(userDir, true)) {
-    if (!seenIds.has(theme.id)) {
-      themes.push(theme);
-      seenIds.add(theme.id);
     }
   }
 
@@ -323,32 +308,11 @@ export function validateThemeName(name: string): { valid: boolean; error?: strin
 }
 
 /**
- * Get the path to a theme file (built-in or custom)
+ * Get the path to a theme file (built-in, theme packages, or custom).
+ * Uses unified resolution from @pennyfarthing/shared.
  */
 export function getThemeFilePath(themeId: string): string | null {
-  // Check built-in themes first
-  try {
-    const builtInPath = join(getThemesDir(), `${themeId}.yaml`);
-    if (existsSync(builtInPath)) {
-      return builtInPath;
-    }
-  } catch {
-    // Built-in dir not found
-  }
-
-  // Check project-level
-  const projectPath = join(getProjectCustomThemesDir(process.cwd()), `${themeId}.yaml`);
-  if (existsSync(projectPath)) {
-    return projectPath;
-  }
-
-  // Check user-level
-  const userPath = join(getUserCustomThemesDir(), `${themeId}.yaml`);
-  if (existsSync(userPath)) {
-    return userPath;
-  }
-
-  return null;
+  return sharedResolveThemePath(themeId);
 }
 
 export interface CreateThemeOptions {

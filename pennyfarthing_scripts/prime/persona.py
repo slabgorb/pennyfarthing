@@ -12,6 +12,10 @@ from typing import Any
 import yaml
 
 from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
+from pennyfarthing_scripts.common.themes import (
+    get_current_theme as _get_current_theme,
+    resolve_theme_path,
+)
 from pennyfarthing_scripts.prime.models import CrewMember, Persona
 
 
@@ -25,9 +29,7 @@ AGENT_ROLES = [
 def get_current_theme(project_root: Path | None = None) -> str | None:
     """Get the currently configured theme.
 
-    Checks config files in priority order:
-    1. .pennyfarthing/config.local.yaml
-    2. .claude/persona-config.yaml
+    Delegates to common.themes canonical implementation.
 
     Args:
         project_root: Project root path (auto-detected if not provided)
@@ -35,24 +37,13 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
     Returns:
         Theme name, or None if not configured
     """
-    root = project_root or get_project_root()
-
-    # Check config files in priority order
-    config_paths = [
-        root / ".pennyfarthing" / "config.local.yaml",
-        root / ".claude" / "persona-config.yaml",
-    ]
-
-    for config_path in config_paths:
-        config = load_yaml_config(config_path)
-        if config and "theme" in config:
-            return config["theme"]
-
-    return None
+    return _get_current_theme(project_root)
 
 
 def get_theme_path(theme: str, project_root: Path) -> Path | None:
     """Get the path to a theme YAML file.
+
+    Delegates to common.themes canonical discovery algorithm.
 
     Args:
         theme: Theme name
@@ -61,19 +52,7 @@ def get_theme_path(theme: str, project_root: Path) -> Path | None:
     Returns:
         Path to theme file, or None if not found
     """
-    # Single source of truth: .pennyfarthing/personas/themes/
-    theme_path = project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme}.yaml"
-
-    if theme_path.exists():
-        return theme_path
-
-    # Fallback to pennyfarthing-dist (for development)
-    theme_path = project_root / "pennyfarthing-dist" / "personas" / "themes" / f"{theme}.yaml"
-
-    if theme_path.exists():
-        return theme_path
-
-    return None
+    return resolve_theme_path(theme, project_root)
 
 
 def load_theme(theme: str, project_root: Path | None = None) -> dict[str, Any] | None:

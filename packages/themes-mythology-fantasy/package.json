@@ -1,0 +1,16 @@
+{
+  "name": "@pennyfarthing/themes-mythology-fantasy",
+  "version": "1.0.0",
+  "description": "Mythology and fantasy themes for Pennyfarthing (optional)",
+  "pennyfarthing-theme-pack": true,
+  "files": [
+    "themes/",
+    "portraits/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

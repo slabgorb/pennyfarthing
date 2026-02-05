@@ -149,6 +149,19 @@
         "to": "pennyfarthing-dist/personas/themes"
       },
       {
+        "from": "../../packages/themes-realistic/themes",
+        "to": "pennyfarthing-dist/personas/themes"
+      },
+      {
+        "from": "../../packages/themes-realistic/portraits",
+        "to": "pennyfarthing-dist/personas/portraits",
+        "filter": [
+          "**/*",
+          "!**/original/**",
+          "!**/small/**"
+        ]
+      },
+      {
         "from": "../../pennyfarthing-dist/agents",
         "to": "pennyfarthing-dist/agents"
       }
