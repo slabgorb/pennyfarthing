@@ -403,7 +403,7 @@ export function SettingsPanel(): React.ReactElement {
 
       <section className="settings-section">
         <h4>Workflow</h4>
-        <label className="toggle-setting">
+        <div className="toggle-setting">
           <Switch
             checked={settings.workflow?.bell_mode || false}
             onCheckedChange={(checked: boolean) => handleToggle('workflow', 'bell_mode', checked)}
@@ -411,8 +411,8 @@ export function SettingsPanel(): React.ReactElement {
           />
           Bell Mode
           <span className="setting-description">Inject queued messages via PostToolUse hook instead of waiting</span>
-        </label>
-        <label className="toggle-setting">
+        </div>
+        <div className="toggle-setting">
           <Switch
             checked={settings.workflow?.relay_mode || false}
             onCheckedChange={(checked: boolean) => handleToggle('workflow', 'relay_mode', checked)}
@@ -420,29 +420,29 @@ export function SettingsPanel(): React.ReactElement {
           />
           Relay Mode
           <span className="setting-description">Auto-handoff to next agent</span>
-        </label>
+        </div>
       </section>
 
       <Separator className="my-2" />
 
       <section className="settings-section">
         <h4>Notifications</h4>
-        <label className="toggle-setting">
+        <div className="toggle-setting">
           <Switch
             checked={settings.notifications?.phase_change || false}
             onCheckedChange={(checked: boolean) => handleToggle('notifications', 'phase_change', checked)}
             disabled={saving}
           />
           Phase change alerts
-        </label>
-        <label className="toggle-setting">
+        </div>
+        <div className="toggle-setting">
           <Switch
             checked={settings.notifications?.sound || false}
             onCheckedChange={(checked: boolean) => handleToggle('notifications', 'sound', checked)}
             disabled={saving}
           />
           Sound effects
-        </label>
+        </div>
       </section>
 
       <Separator className="my-2" />
@@ -456,7 +456,7 @@ export function SettingsPanel(): React.ReactElement {
             const displayName = PANEL_DISPLAY_NAMES[panelId] || panelId;
 
             return (
-              <label key={panelId} className="toggle-setting">
+              <div key={panelId} className="toggle-setting">
                 <Switch
                   checked={isVisible}
                   onCheckedChange={(checked: boolean) => handlePanelToggle(panelId, checked)}
@@ -466,7 +466,7 @@ export function SettingsPanel(): React.ReactElement {
                 {isProtected && (
                   <span className="setting-description">(always visible)</span>
                 )}
-              </label>
+              </div>
             );
           })}
         </div>
