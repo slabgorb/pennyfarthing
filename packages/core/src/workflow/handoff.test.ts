@@ -628,10 +628,10 @@ describe('Generic Handoff (31-7)', () => {
 
       const workflow = loadResult.workflow!;
 
-      // Trivial skips TEA, goes setup → impl
+      // Trivial skips TEA, goes setup → implement
       const nextPhase = getNextPhase(workflow, 'setup');
       assert.ok(nextPhase, 'Should find next phase');
-      assert.strictEqual(nextPhase.name, 'impl');
+      assert.strictEqual(nextPhase.name, 'implement');
       assert.strictEqual(nextPhase.agent, 'dev');
     });
   });

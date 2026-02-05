@@ -626,7 +626,7 @@ describe('Stepped Workflow Schema (MSSCI-12078)', () => {
           version: '1.0.0',
           phases: [
             { name: 'setup', agent: 'sm' },
-            { name: 'impl', agent: 'dev', gate: { type: 'tests_pass' } },
+            { name: 'implement', agent: 'dev', gate: { type: 'tests_pass' } },
             { name: 'review', agent: 'reviewer', gate: { type: 'approval' } },
             { name: 'finish', agent: 'sm' }
           ],

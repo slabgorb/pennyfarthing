@@ -96,11 +96,7 @@ npx pennyfarthing doctor
 
 ## Example: TDD Workflow
 
-```
-/work → SM → TEA → Dev → Reviewer → SM (finish)
-         |      |      |       |
-      setup  tests   impl   review
-```
+SM → TEA → Dev → Reviewer → SM (setup → red → green → review → finish)
 
 This is one of 19 BikeLane workflows. Others include stepped planning workflows (PRD, Architecture), procedural workflows (Brainstorming, Retrospective), and quick workflows (Trivial, Quick-Dev).
 
