@@ -160,6 +160,8 @@
   border-left: 2px solid var(--border);
   overflow: hidden;
   margin-left: 2.75rem; /* align with message content (avatar + gap) */
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
   padding-left: 0.5rem;
   transition: border-color 0.15s ease;
 }
@@ -392,7 +394,7 @@
 
 /* Container for grouped tool calls */
 .tool-stack {
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
   margin-left: 2.75rem; /* align with message content */
   border-radius: 0;
   background: none;

@@ -512,10 +512,11 @@
   border-radius: 3px;
 }
 
-/* User messages — blockquote left border, no bubble */
+/* User messages — blockquote right border (avatar is on the right) */
 .message-user {
-  border-left: 2px solid var(--text-secondary, #8b8b8b);
-  padding-left: 0.75rem;
+  border-right: 2px solid var(--text-secondary, #8b8b8b);
+  border-left: none;
+  padding-right: 0.75rem;
   color: var(--text-primary, #d4d4d4);
 }
 
@@ -554,10 +555,11 @@
   border-top: 1px solid var(--border-color, #3c3c3c);
 }
 
-/* Turn label — speaker + timestamp */
+/* Turn label — speaker + timestamp + optional role badge */
 .turn-label {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.25rem 0;
   margin-bottom: 0.25rem;
@@ -575,6 +577,40 @@
   font-size: 0.6875rem;
   color: var(--text-muted, #666);
   margin-left: auto;
+}
+
+/* Role badge in turn label — flush right under timestamp */
+.turn-role-badge {
+  font-size: 0.5625rem;
+  padding: 0px 5px;
+  color: #fff;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+}
+
+/* User turn: avatar + label on the right */
+.turn-user .turn-label {
+  flex-direction: row-reverse;
+}
+
+.turn-user .turn-timestamp {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.turn-user .message {
+  flex-direction: row-reverse;
+}
+
+.turn-user .message-avatar {
+  margin-left: 0.75rem;
+  margin-right: 0;
+}
+
+.turn-user .message-content {
+  text-align: right;
 }
 
 /* Hide avatar on continuation messages (same speaker, not first in turn) */
@@ -660,67 +696,99 @@
 }
 
 /* =============================================================================
-   Subagent Span Styles
+   Subagent Span Styles — Tufte: indented left-border, no box
    ============================================================================= */
 
 .subagent-span {
   margin: 0.5rem 0;
-  border: 1px solid var(--border-color, #3c3c3c);
-  border-radius: 6px;
-  background: var(--bg-secondary, #252526);
+  margin-left: 2.75rem; /* align with message content */
+  border: none;
+  border-left: 2px solid var(--accent-color, #007acc);
+  border-radius: 0;
+  background: none;
+  padding-left: 0.5rem;
 }
 
 .subagent-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0;
   cursor: pointer;
-  background: var(--bg-tertiary, #2d2d2d);
-  border-radius: 5px 5px 0 0;
+  background: none;
+  border-radius: 0;
   font-size: 0.8rem;
+  transition: background-color 0.15s ease;
 }
 
-.subagent-span.collapsed .subagent-header {
-  border-radius: 5px;
+.subagent-header:hover {
+  background-color: var(--bg-secondary, #252526);
 }
 
 .subagent-toggle {
   color: var(--text-secondary, #8b8b8b);
-  font-size: 0.7rem;
+  font-size: 0.625rem;
+  width: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.subagent-type {
-  color: var(--accent-color, #007acc);
+.subagent-helper-name {
   font-weight: 600;
-  text-transform: capitalize;
-}
-
-.subagent-name {
   color: var(--text-primary, #d4d4d4);
 }
 
-.subagent-count {
+.subagent-friendly-message {
   color: var(--text-secondary, #8b8b8b);
-  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.subagent-type-badge {
+  font-size: 0.625rem;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.subagent-count {
+  color: var(--text-muted, #666);
+  font-size: 0.6875rem;
+  font-family: var(--font-mono, monospace);
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .subagent-content {
-  padding: 0.5rem;
+  padding: 0.25rem 0;
 }
 
-/* Subagent prompt - the task/instruction given to subagent */
+/* Subagent prompt — truncated single line, no avatar */
 .message-subagent-prompt {
-  background: var(--bg-tertiary, #2d2d2d);
-  border-left: 3px solid var(--accent-color, #007acc);
-  color: var(--text-secondary, #8b8b8b);
-  font-size: 0.85rem;
-  max-width: 100%;
+  background: none;
+  border-left: none;
+  color: var(--text-muted, #666);
+  font-size: 0.75rem;
+  padding: 0.125rem 0;
 }
 
 .message-subagent-prompt .message-content {
   font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tool calls inside subagent: no extra indent (already indented by parent) */
+.subagent-content .tool-call-block {
+  margin-left: 0;
+}
+
+.subagent-content .message {
+  padding: 0.125rem 0;
 }
 
 /* =============================================================================
