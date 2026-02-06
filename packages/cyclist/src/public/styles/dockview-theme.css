@@ -21,7 +21,7 @@
   /* Dockview CSS variable mappings to Cyclist theme */
   --dv-group-view-background-color: var(--bg-secondary, #0f0f1a);
   --dv-tabs-and-actions-container-background-color: var(--bg-tertiary, #1a1a2e);
-  --dv-activegroup-visiblepanel-tab-background-color: var(--accent-color, #6366f1);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--accent, #6366f1);
   --dv-activegroup-visiblepanel-tab-color: var(--text-primary, #ffffff);
   --dv-activegroup-hiddenpanel-tab-background-color: var(--bg-tertiary, #1a1a2e);
   --dv-activegroup-hiddenpanel-tab-color: var(--text-secondary, #a1a1aa);
@@ -29,11 +29,11 @@
   --dv-inactivegroup-visiblepanel-tab-color: var(--text-secondary, #a1a1aa);
   --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bg-tertiary, #1a1a2e);
   --dv-inactivegroup-hiddenpanel-tab-color: var(--text-muted, #71717a);
-  --dv-separator-border: var(--border-color, #27272a);
-  --dv-paneview-header-border-color: var(--border-color, #27272a);
+  --dv-separator-border: var(--border, #27272a);
+  --dv-paneview-header-border-color: var(--border, #27272a);
   --dv-tab-close-icon: var(--text-muted, #71717a);
   --dv-drag-over-background-color: rgba(99, 102, 241, 0.2);
-  --dv-drag-over-border-color: var(--accent-color, #6366f1);
+  --dv-drag-over-border-color: var(--accent, #6366f1);
 }
 
 .dockview-container {
@@ -70,12 +70,12 @@
 }
 
 .cyclist-dockview .dv-tab:hover {
-  background-color: var(--bg-hover, #27272a);
+  background-color: var(--bg-tertiary, #27272a);
 }
 
 /* Active tab indicator */
 .cyclist-dockview .dv-tab.dv-active-tab {
-  border-bottom: 2px solid var(--accent-color, #6366f1);
+  border-bottom: 2px solid var(--accent, #6366f1);
 }
 
 /* Tab close button */
@@ -93,18 +93,11 @@
    ============================================================================= */
 
 .cyclist-dockview .dv-group-panel {
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
 }
 
-/* Message panel - hide close button (sacred, cannot be closed) */
-.cyclist-dockview .dv-tab[data-panel-id="message"] .dv-close-action {
-  display: none !important;
-}
-
-/* Message panel - hide entire tab header bar when message is the sole tab in its group */
-.cyclist-dockview .dv-tabs-and-actions-container:has(.dv-tab[data-panel-id="message"]):not(:has(.dv-tab + .dv-tab)) {
-  display: none !important;
-}
+/* Message panel tab bar is hidden via Dockview API (group.headerVisible = false)
+   in DockviewWorkspace.tsx - no CSS selector needed */
 
 /* =============================================================================
    Resize Sash Styles
@@ -116,11 +109,11 @@
 }
 
 .cyclist-dockview .dv-resize-container .dv-sash:hover {
-  background-color: var(--accent-color, #6366f1);
+  background-color: var(--accent, #6366f1);
 }
 
 .cyclist-dockview .dv-resize-container .dv-sash:active {
-  background-color: var(--accent-color-bright, #818cf8);
+  background-color: var(--accent-hover, #818cf8);
 }
 
 /* =============================================================================
@@ -156,12 +149,12 @@
 
 /* Focus indicators */
 .cyclist-dockview .dv-tab:focus-visible {
-  outline: 2px solid var(--accent-color, #6366f1);
+  outline: 2px solid var(--accent, #6366f1);
   outline-offset: -2px;
 }
 
 .cyclist-dockview .dv-sash:focus-visible {
-  outline: 2px solid var(--accent-color, #6366f1);
+  outline: 2px solid var(--accent, #6366f1);
 }
 
 /* Reduced motion */
@@ -211,7 +204,7 @@
   padding: 4px 8px;
   margin: 4px;
   background-color: var(--bg-tertiary, #1a1a2e);
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
   border-radius: 4px;
   color: var(--text-secondary, #a1a1aa);
   font-size: 12px;
@@ -220,9 +213,9 @@
 }
 
 .cyclist-dockview .dv-tabs-overflow-dropdown-default:hover {
-  background-color: var(--bg-hover, #27272a);
+  background-color: var(--bg-tertiary, #27272a);
   color: var(--text-primary, #ffffff);
-  border-color: var(--accent-color, #6366f1);
+  border-color: var(--accent, #6366f1);
 }
 
 /* Overflow dropdown container (list of hidden tabs) */
@@ -234,7 +227,7 @@
   max-height: 300px;
   overflow-y: auto;
   background-color: var(--bg-tertiary, #1a1a2e);
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 1000;
@@ -254,12 +247,12 @@
 }
 
 .cyclist-dockview .dv-tabs-overflow-container .dv-tab:hover {
-  background-color: var(--accent-color, #6366f1);
+  background-color: var(--accent, #6366f1);
   color: var(--text-primary, #ffffff);
 }
 
 .cyclist-dockview .dv-tabs-overflow-container .dv-tab:not(:last-child) {
-  border-bottom: 1px solid var(--border-color, #27272a);
+  border-bottom: 1px solid var(--border, #27272a);
 }
 
 /* =============================================================================
@@ -298,7 +291,7 @@
   gap: 4px;
   padding: 6px 10px;
   background-color: var(--bg-tertiary, #1a1a2e);
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
   border-radius: 6px;
   color: var(--text-secondary, #a1a1aa);
   cursor: pointer;
@@ -307,9 +300,9 @@
 }
 
 .panel-restore-button:hover {
-  background-color: var(--bg-hover, #27272a);
+  background-color: var(--bg-tertiary, #27272a);
   color: var(--text-primary, #ffffff);
-  border-color: var(--accent-color, #6366f1);
+  border-color: var(--accent, #6366f1);
 }
 
 .panel-restore-icon {
@@ -319,7 +312,7 @@
 }
 
 .panel-restore-count {
-  background-color: var(--accent-color, #6366f1);
+  background-color: var(--accent, #6366f1);
   color: var(--text-primary, #ffffff);
   padding: 2px 6px;
   border-radius: 10px;
@@ -334,7 +327,7 @@
   margin-top: 4px;
   min-width: 160px;
   background-color: var(--bg-tertiary, #1a1a2e);
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -347,7 +340,7 @@
   color: var(--text-muted, #71717a);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-color, #27272a);
+  border-bottom: 1px solid var(--border, #27272a);
 }
 
 .panel-restore-item {
@@ -364,12 +357,12 @@
 }
 
 .panel-restore-item:hover {
-  background-color: var(--accent-color, #6366f1);
+  background-color: var(--accent, #6366f1);
   color: var(--text-primary, #ffffff);
 }
 
 .panel-restore-item:focus-visible {
-  outline: 2px solid var(--accent-color, #6366f1);
+  outline: 2px solid var(--accent, #6366f1);
   outline-offset: -2px;
 }
 
@@ -401,7 +394,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(10, 10, 15, 0.9);
+  background-color: color-mix(in srgb, var(--bg-primary, #0a0a0f) 90%, transparent);
   z-index: 10;
 }
 
@@ -412,7 +405,7 @@
   gap: 12px;
   padding: 24px;
   background-color: var(--bg-tertiary, #1a1a2e);
-  border: 1px solid var(--border-color, #27272a);
+  border: 1px solid var(--border, #27272a);
   border-radius: 8px;
   text-align: center;
 }
@@ -429,7 +422,7 @@
 
 .tty-restart-button {
   padding: 8px 16px;
-  background-color: var(--accent-color, #6366f1);
+  background-color: var(--accent, #6366f1);
   border: none;
   border-radius: 6px;
   color: var(--text-primary, #ffffff);
@@ -444,7 +437,7 @@
 }
 
 .tty-restart-button:focus-visible {
-  outline: 2px solid var(--accent-color, #6366f1);
+  outline: 2px solid var(--accent, #6366f1);
   outline-offset: 2px;
 }
 
