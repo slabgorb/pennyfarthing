@@ -143,7 +143,7 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
 
     Checks config files in priority order:
     1. .pennyfarthing/config.local.yaml
-    2. .claude/persona-config.yaml
+    2. .pennyfarthing/persona-config.yaml
 
     Args:
         project_root: Project root (auto-detected if not provided)
@@ -155,7 +155,7 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
 
     config_paths = [
         root / ".pennyfarthing" / "config.local.yaml",
-        root / ".claude" / "persona-config.yaml",
+        root / ".pennyfarthing" / "persona-config.yaml",
     ]
 
     for config_path in config_paths:

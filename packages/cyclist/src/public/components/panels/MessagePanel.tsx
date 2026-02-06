@@ -32,7 +32,14 @@ interface SDKToolUseBlock {
   input?: Record<string, unknown>;
 }
 
-type SDKContentBlock = SDKTextBlock | SDKToolUseBlock | { type: string; text?: string };
+interface SDKToolResultBlock {
+  type: 'tool_result';
+  tool_use_id?: string;
+  content?: string;
+  is_error?: boolean;
+}
+
+type SDKContentBlock = SDKTextBlock | SDKToolUseBlock | SDKToolResultBlock | { type: string; text?: string };
 
 interface SDKMessage {
   type: string;
@@ -141,7 +148,7 @@ function transformMessage(sdkMessage: SDKMessage): MessageData[] {
     return results;
   }
 
-  // Handle user messages
+  // Handle user messages (may contain tool_result blocks for completed Task tools)
   if (sdkMessage.type === 'user') {
     let content = '';
     const contentArray = sdkMessage.message?.content || sdkMessage.content;
@@ -152,6 +159,23 @@ function transformMessage(sdkMessage: SDKMessage): MessageData[] {
         )
         .map(block => block.text)
         .join('');
+
+      // MSSCI-14394: Extract tool_result blocks from user messages.
+      // The SDK delivers tool results inside user-type messages with tool_use_id
+      // matching the original tool_use's tool_id. Without extracting these,
+      // the subagent cleanup code never fires and spans accumulate forever.
+      const toolResultBlocks = contentArray.filter(
+        (block): block is SDKToolResultBlock => block.type === 'tool_result'
+      );
+      for (const resultBlock of toolResultBlocks) {
+        results.push({
+          type: 'tool_result',
+          tool_id: resultBlock.tool_use_id,
+          content: typeof resultBlock.content === 'string' ? resultBlock.content : '',
+          timestamp,
+          is_error: resultBlock.is_error,
+        });
+      }
     } else if (typeof contentArray === 'string') {
       content = contentArray;
     }
@@ -216,15 +240,18 @@ export function MessagePanel(): React.ReactElement {
     isStopping,
     bellMode,
     relayMode,
+    contextPercent,
+    currentAgent,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
+    handleTirePump,
   } = useControlBar();
 
   // Claude context for WebSocket communication
-  const { send, abort, onMessage, onComplete, onError, onUserMessage, isConnected } = useClaudeContext();
+  const { send, abort, onMessage, onComplete, onError, onUserMessage, onClear, isConnected } = useClaudeContext();
 
   // Persona context - capture current persona to stamp on agent messages
   const { persona } = usePersona();
@@ -272,7 +299,26 @@ export function MessagePanel(): React.ReactElement {
           ? { ...msg, agentSlug: p.slug ?? undefined, agentTheme: p.theme ?? undefined, agentCharacter: p.character ?? undefined }
           : msg
       );
-      setMessages(prev => [...prev, ...stamped]);
+
+      // MSSCI-14394: When tool_results arrive for completed Task tools, remove their
+      // subagent messages from the view (they have parent_id matching the tool_result's tool_id).
+      const completedTaskIds = stamped
+        .filter(m => m.type === 'tool_result' && !m.parent_id && m.tool_id)
+        .map(m => m.tool_id!);
+
+      if (completedTaskIds.length > 0) {
+        setMessages(prev => {
+          const idsToRemove = new Set(completedTaskIds.filter(id =>
+            prev.some(m => m.parent_id === id)
+          ));
+          if (idsToRemove.size > 0) {
+            return [...prev.filter(m => !m.parent_id || !idsToRemove.has(m.parent_id)), ...stamped];
+          }
+          return [...prev, ...stamped];
+        });
+      } else {
+        setMessages(prev => [...prev, ...stamped]);
+      }
     }
   }, []);
 
@@ -316,6 +362,19 @@ export function MessagePanel(): React.ReactElement {
     });
     return cleanup;
   }, [onUserMessage]);
+
+  // Subscribe to clear events — insert a divider message
+  useEffect(() => {
+    const cleanup = onClear(() => {
+      setMessages(prev => [...prev, {
+        type: 'context_cleared',
+        content: 'Context cleared',
+        timestamp: Date.now(),
+      }]);
+      setIsProcessing(false);
+    });
+    return cleanup;
+  }, [onClear]);
 
   // Connect to Claude events via WebSocket context
   useEffect(() => {
@@ -382,6 +441,9 @@ export function MessagePanel(): React.ReactElement {
             relayMode={relayMode}
             onBellModeChange={handleBellModeChange}
             onRelayModeChange={handleRelayModeChange}
+            contextPercent={contextPercent}
+            currentAgent={currentAgent}
+            onTirePump={handleTirePump}
           />
         </div>
       </div>

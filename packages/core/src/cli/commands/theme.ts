@@ -5,14 +5,14 @@ import { manifestExists } from '../utils/manifest.js';
 
 /**
  * Check if a directory is a Pennyfarthing project root
- * Either has a manifest OR has .claude/persona-config.yaml (self-development case)
+ * Either has a manifest OR has .pennyfarthing/persona-config.yaml (self-development case)
  */
 function isPennyfarthingRoot(dir: string): boolean {
   if (manifestExists(dir)) {
     return true;
   }
   // Also check for persona-config.yaml (pennyfarthing developing itself)
-  return existsSync(join(dir, '.claude/persona-config.yaml'));
+  return existsSync(join(dir, '.pennyfarthing/persona-config.yaml'));
 }
 
 /**

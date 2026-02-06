@@ -553,6 +553,62 @@ class TestValidateSprintFile:
         assert result.valid is False
         assert any("yaml" in e.message.lower() or "parse" in e.message.lower() for e in result.errors)
 
+    def test_single_quoted_strings_with_blank_lines_fail(self, tmp_path: Path) -> None:
+        """Single-quoted strings with blank lines break Node yaml parser (Cyclist panel)."""
+        bad_file = tmp_path / "bad-quotes.yaml"
+        bad_file.write_text(
+            "sprint:\n"
+            "  number: 12\n"
+            "  jira_sprint_id: 276\n"
+            "  goal: Test\n"
+            "  start_date: 2026-01-20\n"
+            "  end_date: 2026-02-02\n"
+            "  status: active\n"
+            "epics:\n"
+            "  - id: epic-1\n"
+            "    title: Test Epic\n"
+            "    description: 'Line one\n"
+            "\n"
+            "      Line after blank\n"
+            "\n"
+            "'\n"
+            "    stories: []\n"
+        )
+
+        result = validate_sprint_file(bad_file)
+
+        assert result.valid is False
+        assert any("single-quoted" in e.message.lower() for e in result.errors)
+
+    def test_block_scalar_descriptions_pass(self, tmp_path: Path) -> None:
+        """Block scalar (|) descriptions should pass validation."""
+        good_file = tmp_path / "good-blocks.yaml"
+        good_file.write_text(
+            "sprint:\n"
+            "  number: 12\n"
+            "  jira_sprint_id: 276\n"
+            "  goal: Test\n"
+            "  start_date: 2026-01-20\n"
+            "  end_date: 2026-02-02\n"
+            "  status: active\n"
+            "epics:\n"
+            "  - id: epic-1\n"
+            "    title: Test Epic\n"
+            "    description: |\n"
+            "      Line one.\n"
+            "\n"
+            "      Line after blank.\n"
+            "    stories:\n"
+            "      - id: MSSCI-10001\n"
+            "        title: A story\n"
+            "        status: backlog\n"
+            "        points: 3\n"
+        )
+
+        result = validate_sprint_file(good_file)
+
+        assert result.valid is True
+
 
 # =============================================================================
 # Full Sprint Validation (integration)

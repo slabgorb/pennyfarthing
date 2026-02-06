@@ -33,6 +33,7 @@ export interface EnhancedThemeAgent {
   slug: string;
   lift?: number;
   ocean?: { O: number; C: number; E: number; A: number; N: number };
+  helper?: { name: string; style: string };
 }
 
 /**
@@ -212,6 +213,8 @@ export function getEnhancedThemeData(projectDir: string): EnhancedThemeData | nu
     const background = (rawAgent.role as string) || ''; // 'role' in theme YAML is character background
     const quirks = (rawAgent.quirks as string[]) || [];
     const ocean = rawAgent.ocean as { O: number; C: number; E: number; A: number; N: number } | undefined;
+    const rawHelper = rawAgent.helper as { name?: string; style?: string } | undefined;
+    const helper = rawHelper?.name ? { name: rawHelper.name, style: rawHelper.style || '' } : undefined;
 
     // Generate portrait slug
     const slug = ocean ? generateSlug(shortName, ocean) : role;
@@ -232,6 +235,7 @@ export function getEnhancedThemeData(projectDir: string): EnhancedThemeData | nu
       slug,
       lift,
       ocean,
+      helper,
     });
   }
 

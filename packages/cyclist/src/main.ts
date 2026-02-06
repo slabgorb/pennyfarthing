@@ -9,11 +9,11 @@
  * while the Electron-specific runtime code only executes in Electron context.
  */
 
-import { Server, createServer as createHttpServer, IncomingMessage, ServerResponse } from 'http';
+import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -64,16 +64,8 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate } from './websocket.js';
-import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
-// Story 33-7: Import approval gate functions for tool execution pipeline
-import {
-  interceptToolUse,
-  requestApproval,
-  createRejectionError,
-  type ToolUseMessage,
-  type SDKToolResultError,
-} from './approval-gate.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
+import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import { setBellMode } from './bell-mode.js';
 import {
@@ -158,12 +150,16 @@ export {
   buildToolsMenu,
   buildViewMenu,
   getMenuTemplate,
+  setPanelToggleBroadcast,
 } from './menu-builder.js';
+
+// Local imports for menu building
 import {
   buildAgentMenu,
   buildWorkflowMenu,
   buildToolsMenu,
   buildViewMenu,
+  setPanelToggleBroadcast,
 } from './menu-builder.js';
 
 /**
@@ -1051,6 +1047,36 @@ export function startProjectWatchers(): void {
         // MSSCI-14190: Process tool_use messages for diff tracking (same as IPC handler)
         // This was missing from the WebSocket callback path!
         processToolUseFromMessage(message);
+
+        // Complete subagent tasks when tool_result arrives
+        // CLI format: discrete tool_result message
+        if (message.type === 'tool_result') {
+          const msg = message as { tool_id?: string; output?: string; is_error?: boolean };
+          if (msg.tool_id) {
+            const task = getBackgroundTaskByToolId(msg.tool_id);
+            if (task) {
+              completeBackgroundTask(msg.tool_id, !msg.is_error,
+                msg.is_error ? undefined : msg.output?.slice(0, 500),
+                msg.is_error ? (msg.output?.slice(0, 500) || 'Task failed') : undefined);
+            }
+          }
+        }
+        // SDK format: tool_result nested in user message content
+        if (message.type === 'user') {
+          const userMsg = message as { message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
+          if (userMsg.message?.content) {
+            for (const block of userMsg.message.content) {
+              if (block.type === 'tool_result' && block.tool_use_id) {
+                const task = getBackgroundTaskByToolId(block.tool_use_id);
+                if (task) {
+                  completeBackgroundTask(block.tool_use_id, !block.is_error,
+                    block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
+                    block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined);
+                }
+              }
+            }
+          }
+        }
       }
       onComplete();
       broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
@@ -1220,16 +1246,18 @@ function processToolUseFromMessage(message: SDKMessage): void {
     if (toolId && toolInput) {
       storePendingToolInput(toolId, toolName, toolInput);
 
-      // MSSCI-14210: Track background Task tools
-      if (toolName === 'Task' && toolInput.run_in_background === true) {
-        const description = (toolInput.description as string) || (toolInput.prompt as string)?.substring(0, 50) || 'Background task';
+      // Track all Task tool subagents (background and foreground)
+      // All must be tracked so enrichMessageWithSubagentContext can look them up
+      if (toolName === 'Task') {
+        const description = (toolInput.description as string) || (toolInput.prompt as string)?.substring(0, 50) || 'Subagent task';
         const subagentType = (toolInput.subagent_type as string) || 'general-purpose';
+        const isBackground = toolInput.run_in_background === true;
         trackBackgroundTask({
           taskId: toolId,
           description,
           subagentType,
           startedAt: Date.now(),
-          isBackground: true,
+          isBackground,
         });
       }
     }
@@ -1880,469 +1908,6 @@ export function setupCommandIPCHandlers(ipcMain: {
   console.log('Command IPC handlers registered');
 }
 
-// =============================================================================
-// Story 33-7: Approval Gate Integration
-// =============================================================================
-
-/**
- * Result from processToolUseWithApproval
- */
-export interface ApprovalResult {
-  needsApproval: boolean;
-  passThrough: boolean;
-  approved?: boolean;
-  rejected?: boolean;
-  errorMessage?: SDKToolResultError;
-}
-
-// Dependency injection for testing
-let ipcSender: ((channel: string, data: unknown) => void) | null = null;
-let toolExecutor: ((message: ToolUseMessage) => void) | null = null;
-let errorInjector: ((error: SDKToolResultError) => void) | null = null;
-
-/**
- * Set the IPC sender function (for testing)
- */
-export function setIPCSender(sender: ((channel: string, data: unknown) => void) | null): void {
-  ipcSender = sender;
-}
-
-/**
- * Set the tool executor function (for testing)
- */
-export function setToolExecutor(executor: ((message: ToolUseMessage) => void) | null): void {
-  toolExecutor = executor;
-}
-
-/**
- * Set the error injector function (for testing)
- */
-export function setErrorInjector(injector: ((error: SDKToolResultError) => void) | null): void {
-  errorInjector = injector;
-}
-
-/**
- * Send an approval request to the renderer via IPC
- */
-export function sendApprovalRequest(toolId: string, toolName: string, context: Record<string, unknown>): void {
-  const sender = ipcSender || broadcastToRenderer;
-
-  sender('permission-request', {
-    toolId,
-    toolName,
-    context,
-  });
-}
-
-/**
- * Handle permission response from renderer
- * Called by IPC handler when user responds to approval modal
- */
-export function handlePermissionResponse(response: {
-  toolId: string;
-  approved: boolean;
-  grantScope?: 'once' | 'session' | 'always';
-}): void {
-  // Story 33-7: First try to resolve hook approval (from PreToolUse hook)
-  // This is the path that actually controls tool execution
-  resolveHookApproval(response.toolId, response.approved, response.grantScope);
-
-  // Also resolve approval-gate.js pending approvals for backwards compatibility
-  // (This was the old observer-only path)
-  import('./approval-gate.js').then(({ resolveApproval }) => {
-    resolveApproval(response.toolId, response.approved, response.grantScope);
-  });
-}
-
-/**
- * Process a tool_use message with approval gate check
- * This is the main integration point for story 33-7
- *
- * @param message - The tool_use message to process
- * @returns ApprovalResult indicating whether approval is needed and outcome
- */
-export async function processToolUseWithApproval(message: ToolUseMessage): Promise<ApprovalResult> {
-  // Check if this tool_use needs approval
-  const interceptResult = interceptToolUse(message);
-
-  // If gate is disabled or grant exists, pass through immediately
-  if (!interceptResult.shouldApprove) {
-    // Execute tool if executor is set
-    if (toolExecutor) {
-      toolExecutor(message);
-    }
-    return {
-      needsApproval: false,
-      passThrough: true,
-    };
-  }
-
-  // Need approval - send IPC request and wait for response
-  sendApprovalRequest(interceptResult.toolId, interceptResult.toolName, interceptResult.context);
-
-  // Get the command for Bash tools, or use context for other tools
-  const command = interceptResult.toolName === 'Bash'
-    ? (interceptResult.context.command as string) || ''
-    : JSON.stringify(interceptResult.context);
-
-  // Wait for user response
-  const approved = await requestApproval(command, interceptResult.toolId);
-
-  if (approved) {
-    // User approved - execute tool
-    if (toolExecutor) {
-      toolExecutor(message);
-    }
-    return {
-      needsApproval: true,
-      passThrough: true,
-      approved: true,
-    };
-  } else {
-    // User rejected - create and inject error
-    const errorMessage = createRejectionError(interceptResult.toolId);
-
-    if (errorInjector) {
-      errorInjector(errorMessage);
-    }
-
-    return {
-      needsApproval: true,
-      passThrough: false,
-      approved: false,
-      rejected: true,
-      errorMessage,
-    };
-  }
-}
-
-/**
- * Set up IPC handlers for approval gate
- * Story 33-7: Handles permission request/response flow
- */
-export function setupApprovalIPCHandlers(ipcMain: {
-  handle?: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
-  on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
-}): void {
-  // Handle permission response from renderer
-  if (ipcMain.on) {
-    ipcMain.on('permission-response', (_event: unknown, response: unknown) => {
-      handlePermissionResponse(response as {
-        toolId: string;
-        approved: boolean;
-        grantScope?: 'once' | 'session' | 'always';
-      });
-    });
-  }
-
-  if (ipcMain.handle) {
-    ipcMain.handle('permission-response', async (_event: unknown, response: unknown) => {
-      handlePermissionResponse(response as {
-        toolId: string;
-        approved: boolean;
-        grantScope?: 'once' | 'session' | 'always';
-      });
-      return { success: true };
-    });
-  }
-
-  console.log('Approval gate IPC handlers registered');
-}
-
-// =============================================================================
-// Story 33-7: Approval Hook Server
-// =============================================================================
-// HTTP server that receives approval requests from the PreToolUse hook script.
-// The hook runs in Claude Code's process, sends requests here, we show modal,
-// user decides, we respond, hook tells Claude Code to allow/deny.
-//
-// Multi-instance support: Uses dynamic port selection with .cyclist-approval-port
-// discovery file to prevent cross-instance interference when multiple Cyclist
-// windows are open for different projects.
-
-let approvalServer: ReturnType<typeof createHttpServer> | null = null;
-let approvalServerPort: number | null = null;
-
-// Pending approval requests from hooks, keyed by toolId
-// MSSCI-11947: Extended to support data field for interactive tools
-const pendingHookApprovals: Map<string, {
-  resolve: (response: { decision: string; reason: string; data?: Record<string, unknown> }) => void;
-  toolName: string;
-  input: Record<string, unknown>;
-}> = new Map();
-
-/**
- * Handle incoming approval request from hook script
- */
-async function handleHookApprovalRequest(
-  toolName: string,
-  toolId: string,
-  input: Record<string, unknown>,
-): Promise<{ decision: string; reason: string }> {
-  // Check if gate is enabled
-  const { getBashApprovalGate, checkGrant, isAllowlisted } = await import('./settings-store.js');
-
-  if (!getBashApprovalGate()) {
-    return { decision: 'allow', reason: 'Approval gate disabled' };
-  }
-
-  // Check allowlist and grants
-  if (toolName === 'Bash') {
-    const command = (input.command as string) || '';
-    if (isAllowlisted(command) || checkGrant('Bash', command)) {
-      return { decision: 'allow', reason: 'Matched allowlist or existing grant' };
-    }
-  }
-
-  // Need user approval - send to renderer and wait
-  return new Promise((resolve) => {
-    pendingHookApprovals.set(toolId, { resolve, toolName, input });
-
-    // Send approval request to renderer
-    broadcastToRenderer('permission-request', {
-      toolId,
-      toolName,
-      context: input,
-      source: 'hook', // Indicate this came from hook, not observation
-    });
-  });
-}
-
-/**
- * Resolve a pending hook approval (called when user responds to modal)
- */
-export function resolveHookApproval(
-  toolId: string,
-  approved: boolean,
-  grantScope?: 'once' | 'session' | 'always',
-): void {
-  const pending = pendingHookApprovals.get(toolId);
-  if (pending) {
-    // Add grant if approved with scope
-    if (approved && grantScope && pending.toolName === 'Bash') {
-      import('./settings-store.js').then(({ addGrant, extractPattern }) => {
-        const command = (pending.input.command as string) || '';
-        const pattern = extractPattern(command);
-        addGrant({
-          tool: 'Bash',
-          scope: pattern,
-          grant_type: grantScope,
-          granted_at: new Date().toISOString(),
-        });
-      });
-    }
-
-    pending.resolve({
-      decision: approved ? 'allow' : 'deny',
-      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
-    });
-    pendingHookApprovals.delete(toolId);
-  }
-}
-
-// =============================================================================
-// MSSCI-11947: Hook Response Data Channel
-// =============================================================================
-// Functions for handling interactive tools (AskUserQuestion, ExitPlanMode)
-// that need to return structured data back to Claude, not just allow/deny.
-
-/**
- * Check if a tool_use is an interactive tool that needs data return
- * MSSCI-11947: AC1 - Detect AskUserQuestion and ExitPlanMode
- */
-export function isInteractiveToolUse(toolUse: { tool_name?: string; type?: string }): boolean {
-  const interactiveTools = ['AskUserQuestion', 'ExitPlanMode'];
-  return toolUse.type === 'tool_use' && interactiveTools.includes(toolUse.tool_name || '');
-}
-
-/**
- * Process an interactive tool_use and wait for user response with data
- * MSSCI-11947: AC1 - Handle interactive tool approval flow
- */
-export function processInteractiveToolUse(toolUse: {
-  tool_name?: string;
-  tool_id?: string;
-  input?: Record<string, unknown>;
-}): Promise<{ decision: string; reason: string; data?: Record<string, unknown> }> {
-  const toolId = toolUse.tool_id || `interactive-${Date.now()}`;
-  const toolName = toolUse.tool_name || 'Unknown';
-  const input = toolUse.input || {};
-
-  return new Promise((resolve) => {
-    pendingHookApprovals.set(toolId, { resolve, toolName, input });
-
-    // Send approval request to renderer with full tool input
-    broadcastToRenderer('permission-request', {
-      toolId,
-      toolName,
-      context: input,
-      source: 'hook',
-    });
-  });
-}
-
-/**
- * Resolve a pending hook approval with data (for interactive tools)
- * MSSCI-11947: AC1 - Extended resolve that includes data field
- */
-export function resolveHookApprovalWithData(
-  toolId: string,
-  approved: boolean,
-  grantScope?: 'once' | 'session' | 'always',
-  data?: Record<string, unknown>,
-): void {
-  const pending = pendingHookApprovals.get(toolId);
-  if (pending) {
-    // For interactive tools, we don't create grants (they're one-time responses)
-    pending.resolve({
-      decision: approved ? 'allow' : 'deny',
-      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
-      data: data || {},
-    });
-    pendingHookApprovals.delete(toolId);
-  }
-}
-
-/**
- * Format hook response with optional data field
- * MSSCI-11947: AC4 - Format response for hook output
- */
-export function formatHookResponseWithData(
-  decision: 'allow' | 'deny',
-  reason: string,
-  data?: Record<string, unknown>,
-): { decision: string; reason: string; data?: Record<string, unknown> } {
-  const response: { decision: string; reason: string; data?: Record<string, unknown> } = {
-    decision,
-    reason,
-  };
-  if (data !== undefined) {
-    response.data = data;
-  }
-  return response;
-}
-
-/**
- * Format answers as updatedInput for AskUserQuestion
- * MSSCI-11947: AC4 - Format for hook updatedInput
- */
-export function formatUpdatedInputForAskUserQuestion(
-  answers: Record<string, string | string[]>,
-): { answers: Record<string, string | string[]> } {
-  return { answers };
-}
-
-/**
- * Format plan response as updatedInput for ExitPlanMode
- * MSSCI-11947: AC4 - Format for hook updatedInput
- */
-export function formatUpdatedInputForExitPlanMode(
-  response: { approved: boolean; feedback?: string },
-): { approved: boolean; feedback?: string } {
-  return response;
-}
-
-/**
- * Serialize approval data for transmission
- * MSSCI-11947: AC1 - JSON serialization helper
- */
-export function serializeApprovalData(data: Record<string, unknown>): string {
-  return JSON.stringify(data);
-}
-
-/**
- * Deserialize approval data from transmission
- * MSSCI-11947: AC1 - JSON deserialization helper
- */
-export function deserializeApprovalData(data: string): Record<string, unknown> {
-  return JSON.parse(data);
-}
-
-/**
- * Start the approval hook server with dynamic port selection
- * Uses port 0 to let OS assign an available port (avoids race conditions)
- * Writes port to .cyclist-approval-port for hook discovery
- */
-export async function startApprovalServer(): Promise<void> {
-  if (approvalServer) {
-    console.log('Approval server already running');
-    return;
-  }
-
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
-    console.warn('No project directory set, cannot start approval server');
-    return;
-  }
-
-  approvalServer = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
-    if (req.method === 'POST' && req.url === '/approval-request') {
-      let body = '';
-      req.on('data', (chunk) => { body += chunk; });
-      req.on('end', async () => {
-        try {
-          const data = JSON.parse(body);
-          const { toolName, toolId, input } = data;
-
-          const response = await handleHookApprovalRequest(toolName, toolId, input);
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(response));
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid request' }));
-        }
-      });
-    } else {
-      res.writeHead(404);
-      res.end('Not found');
-    }
-  });
-
-  // Use port 0 to let OS assign an available port (avoids race conditions)
-  approvalServer.listen(0, '127.0.0.1', () => {
-    const addr = approvalServer!.address();
-    approvalServerPort = typeof addr === 'object' && addr ? addr.port : null;
-    if (approvalServerPort) {
-      console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
-      // Write port file for hook discovery
-      writeApprovalPortFile(projectDir, approvalServerPort);
-      console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
-    }
-  });
-
-  approvalServer.on('error', (err: NodeJS.ErrnoException) => {
-    console.error('Approval server error:', err);
-    approvalServerPort = null;
-  });
-}
-
-/**
- * Stop the approval hook server and clean up port file
- */
-export function stopApprovalServer(): void {
-  if (approvalServer) {
-    approvalServer.close();
-    approvalServer = null;
-    approvalServerPort = null;
-
-    // Clean up port file
-    const projectDir = getProjectDirectory();
-    if (projectDir) {
-      cleanupApprovalPortFile(projectDir);
-      console.log('[33-7] Cleaned up .cyclist-approval-port file');
-    }
-
-    console.log('Approval hook server stopped');
-  }
-}
-
-/**
- * Get the current approval server port (for testing)
- */
-export function getApprovalServerPort(): number | null {
-  return approvalServerPort;
-}
 
 // =============================================================================
 // Session Persistence (E7-3: AC4)
@@ -2572,8 +2137,6 @@ if (isElectron) {
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
   setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
-  setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
-  // NOTE: startApprovalServer() moved to app.whenReady() - needs project directory
 
   /**
    * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
@@ -2742,13 +2305,15 @@ if (isElectron) {
       process.env.CYCLIST_ELECTRON_MODE = '1';
 
       await startServer();
-      await startApprovalServer(); // 33-7: Start after project dir set
       createWindow();
       if (mainWindow && projectDir) {
         mainWindow.setTitle(`Cyclist - ${basename(projectDir)}`);
       }
 
       // B-23: Wire agent and workflow menus to Electron menu bar
+      // Wire panel toggle to WebSocket broadcast
+      setPanelToggleBroadcast(broadcastPanelToggle);
+
       // Use standard macOS menu roles instead of reconstructing existing menu
       // (reconstructing fails on nested submenus like Window)
       // 22-5: Custom View menu with Verbose Mode toggle
@@ -2819,6 +2384,9 @@ if (isElectron) {
     if (claudeServiceInstance) {
       claudeServiceInstance.abort();
     }
+    // MSSCI-14324: Clear session/once grants on shutdown
+    clearSessionGrants();
+
     // B-24 fix: Clean up PID file on graceful shutdown
     const projectDir = getProjectDirectory();
     if (projectDir) {

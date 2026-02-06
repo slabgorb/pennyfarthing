@@ -1,0 +1,82 @@
+/**
+ * MSSCI-14320: PreToolUse Hook Registration Tests
+ *
+ * Verifies the cyclist pretooluse hook is registered in .claude/settings.local.json.
+ *
+ * Acceptance Criteria:
+ * - AC2: Hook is registered in .claude/settings.local.json under hooks.PreToolUse
+ */
+
+import { describe, it, expect } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const SETTINGS_PATH = path.resolve(
+  __dirname,
+  '../../../../.claude/settings.local.json'
+);
+
+describe('MSSCI-14320: PreToolUse hook registration', () => {
+
+  describe('AC2: Hook registered in settings.local.json', () => {
+
+    it('should have cyclist pretooluse hook in PreToolUse hooks', () => {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+
+      expect(settings.hooks).toBeDefined();
+      expect(settings.hooks.PreToolUse).toBeDefined();
+      expect(Array.isArray(settings.hooks.PreToolUse)).toBe(true);
+
+      const cyclistHook = settings.hooks.PreToolUse.find(
+        (entry: { hooks?: Array<{ command?: string }> }) =>
+          entry.hooks?.some((h) =>
+            h.command?.includes('cyclist-pretooluse-hook')
+          )
+      );
+
+      expect(cyclistHook).toBeDefined();
+    });
+
+    it('should use $CLAUDE_PROJECT_DIR in hook command', () => {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+
+      const cyclistHook = settings.hooks.PreToolUse.find(
+        (entry: { hooks?: Array<{ command?: string }> }) =>
+          entry.hooks?.some((h) =>
+            h.command?.includes('cyclist-pretooluse-hook')
+          )
+      );
+
+      const command = cyclistHook?.hooks?.[0]?.command || '';
+      expect(command).toContain('$CLAUDE_PROJECT_DIR');
+    });
+
+    it('should use "command" type for hook entry', () => {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+
+      const cyclistHook = settings.hooks.PreToolUse.find(
+        (entry: { hooks?: Array<{ command?: string; type?: string }> }) =>
+          entry.hooks?.some((h) =>
+            h.command?.includes('cyclist-pretooluse-hook')
+          )
+      );
+
+      expect(cyclistHook?.hooks?.[0]?.type).toBe('command');
+    });
+
+    it('should reference .sh wrapper, not .js file', () => {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+
+      const cyclistHook = settings.hooks.PreToolUse.find(
+        (entry: { hooks?: Array<{ command?: string }> }) =>
+          entry.hooks?.some((h) =>
+            h.command?.includes('cyclist-pretooluse-hook')
+          )
+      );
+
+      const command = cyclistHook?.hooks?.[0]?.command || '';
+      expect(command).toContain('.sh');
+      expect(command).not.toContain('.js');
+    });
+  });
+});

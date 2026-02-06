@@ -101,6 +101,11 @@
   display: none !important;
 }
 
+/* Message panel - hide entire tab header bar when message is the sole tab in its group */
+.cyclist-dockview .dv-tabs-and-actions-container:has(.dv-tab[data-panel-id="message"]):not(:has(.dv-tab + .dv-tab)) {
+  display: none !important;
+}
+
 /* =============================================================================
    Resize Sash Styles
    ============================================================================= */

@@ -81,35 +81,25 @@ export function findCyclist(): string {
 /**
  * Load theme configuration
  *
- * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml
+ * Priority: .pennyfarthing/config.local.yaml > .pennyfarthing/persona-config.yaml
  */
 export function loadThemeConfig(projectDir: string): ThemeConfig {
-  const pennyfarthingConfigPath = join(projectDir, '.pennyfarthing/config.local.yaml');
-  const sharedConfigPath = join(projectDir, '.claude/persona-config.yaml');
+  const configPaths = [
+    join(projectDir, '.pennyfarthing/config.local.yaml'),
+    join(projectDir, '.pennyfarthing/persona-config.yaml'),
+  ];
 
-  // Priority 1: .pennyfarthing/config.local.yaml
-  if (existsSync(pennyfarthingConfigPath)) {
-    try {
-      const content = readFileSync(pennyfarthingConfigPath, 'utf-8');
-      const config = yamlParse(content) as { theme?: string };
-      if (config?.theme) {
-        return { theme: config.theme };
+  for (const configPath of configPaths) {
+    if (existsSync(configPath)) {
+      try {
+        const content = readFileSync(configPath, 'utf-8');
+        const config = yamlParse(content) as { theme?: string };
+        if (config?.theme) {
+          return { theme: config.theme };
+        }
+      } catch {
+        // Fall through to next
       }
-    } catch {
-      // Fall through to shared config
-    }
-  }
-
-  // Priority 2: .claude/persona-config.yaml (project default)
-  if (existsSync(sharedConfigPath)) {
-    try {
-      const content = readFileSync(sharedConfigPath, 'utf-8');
-      const config = yamlParse(content) as { theme?: string };
-      if (config?.theme) {
-        return { theme: config.theme };
-      }
-    } catch {
-      // Fall through to default
     }
   }
 

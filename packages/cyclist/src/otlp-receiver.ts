@@ -880,6 +880,15 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
         toolEvent.filePath = toolInput.file_path as string;
       }
 
+      // Complete background Task when its tool_result arrives via OTEL
+      // Task starts are tracked in main.ts from the message stream; completions
+      // arrive here as tool_result events but were previously unhandled.
+      if (toolName === 'Task' && pendingInput) {
+        completeBackgroundTask(pendingInput.toolId, success,
+          success ? (event.attributes['tool_output'] as string)?.substring(0, 2000) : undefined,
+          success ? undefined : (event.attributes['error'] as string || 'Task failed'));
+      }
+
       // Only correlate and enrich if we have a pending input (from Claude message stream)
       if (pendingInput) {
         // Use toolId as the correlation key since OTEL spanId is unavailable

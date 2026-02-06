@@ -69,12 +69,9 @@ def main() -> None:
 
         # Check if Cyclist is running
         if not is_cyclist_running(project_root):
-            # No Cyclist - defer to Claude Code's built-in approval
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="ask",
-                reason="Cyclist not running, deferring to Claude Code",
-            ))
+            # No Cyclist - pass through to Claude Code's built-in permissions
+            # Using "allow" so the hook doesn't override Claude Code's own
+            # permission system (settings.json allow lists still apply)
             sys.exit(0)
 
         # Load settings to check for auto-approval mode

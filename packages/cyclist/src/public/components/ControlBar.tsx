@@ -174,25 +174,24 @@ export function ControlBar({
             <TooltipContent>Relay Mode: Auto-handoff to next agent (Cmd+4)</TooltipContent>
           </Tooltip>
 
-          {/* TirePump Button - visible at 50%+ context, warning at 70%+ */}
-          {contextPercent >= 50 && currentAgent && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  className={`btn-toggle pump-toggle ${contextPercent >= 70 ? 'warning' : ''}`}
-                  data-testid="pump-toggle"
-                  onClick={onTirePump}
-                  aria-label="TirePump: Clear context and reload agent"
-                >
-                  <span className="toggle-icon">🫧</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{`TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}`}</TooltipContent>
-            </Tooltip>
-          )}
+          {/* TirePump Button - always visible, warning style at 70%+ */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                className={`btn-toggle pump-toggle ${contextPercent >= 70 ? 'warning' : ''}`}
+                data-testid="pump-toggle"
+                onClick={onTirePump}
+                disabled={!currentAgent}
+                aria-label="TirePump: Clear context and reload agent"
+              >
+                <span className="toggle-icon">⬆️</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{currentAgent ? `TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}` : 'TirePump: No agent loaded'}</TooltipContent>
+          </Tooltip>
         </div>
 
       {/* Stop button - always visible, disabled when not running */}
