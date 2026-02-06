@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 export interface ThemeAgentHelper {
   name: string;
   style: string;
+  plural?: boolean;
 }
 
 export interface ThemeAgent {

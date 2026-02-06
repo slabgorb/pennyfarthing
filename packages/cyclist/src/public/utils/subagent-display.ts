@@ -18,6 +18,7 @@ export interface TaskInput {
 export interface Helper {
   name: string;
   style: string;
+  plural?: boolean;
 }
 
 // Cache for helper lookups
@@ -119,7 +120,8 @@ const SUBAGENT_TYPE_MESSAGES: Record<string, string> = {
   'Bash': 'Running commands',
 };
 
-export function generateFriendlyMessage(context: TaskInput): string {
+export function generateFriendlyMessage(context: TaskInput, options?: { plural?: boolean }): string {
+  const verb = options?.plural ? 'are' : 'is';
   // If we have a description, include it
   const description = context.description;
 
@@ -127,10 +129,11 @@ export function generateFriendlyMessage(context: TaskInput): string {
   const subagentType = context.subagent_type;
   if (subagentType && SUBAGENT_TYPE_MESSAGES[subagentType]) {
     const action = SUBAGENT_TYPE_MESSAGES[subagentType];
+    const lowerAction = action.charAt(0).toLowerCase() + action.slice(1);
     if (description) {
-      return `${action}: ${description}`;
+      return `${verb} ${lowerAction}: ${description}`;
     }
-    return action;
+    return `${verb} ${lowerAction}`;
   }
 
   // Fall back to description if available

@@ -17,7 +17,6 @@ theme:
 zeitgeist:
   score: 73.8
   rating: rich
-
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity
@@ -41,7 +40,7 @@ agents:
       - The orchestration must break through convention!
       - I seize the failing build by the throat!
       - Music can change the world. So can this coordination.
-    emoji: 🎹
+    emoji: "\U0001F3B9"
     helper:
       name: Fury
       style: Creative rage
@@ -68,7 +67,7 @@ agents:
       - I coordinate by creating frameworks others can build on.
       - The sprint form enables the team's creativity.
       - Something from nothing. That's sprint coordination.
-    emoji: 👨‍👧‍👦
+    emoji: "\U0001F468‍\U0001F467‍\U0001F466"
     helper:
       name: The Esterházys
       style: Patron relationship
@@ -95,7 +94,7 @@ agents:
       - Each voice in the test suite serves the whole.
       - The counterpoint must be perfect. Every test aligned.
       - To the glory of the codebase, every test must pass.
-    emoji: 🎼
+    emoji: "\U0001F3BC"
     helper:
       name: Counterpoint
       style: Voices in harmony
@@ -121,7 +120,7 @@ agents:
       - The implementation must be refined until it sings.
       - Simplicity is the final achievement. Refactor again.
       - Each keystroke should have meaning.
-    emoji: 🎹
+    emoji: "\U0001F3B9"
     helper:
       name: The Piano
       style: Delicate precision
@@ -147,7 +146,7 @@ agents:
       - The code must be Gesamtkunstwerk! Total integration!
       - This review demands the Ring Cycle of refactoring.
       - Every element must serve the total vision.
-    emoji: 🎭
+    emoji: "\U0001F3AD"
     helper:
       name: Bayreuth
       style: Total artwork review
@@ -252,7 +251,7 @@ agents:
       - The UX is the space between the interactions.
       - Design for sensation, not structure.
       - Rules are for those who cannot feel.
-    emoji: 🌙
+    emoji: "\U0001F319"
     helper:
       name: Color
       style: Sensory design
@@ -278,10 +277,11 @@ agents:
       - The infrastructure produces concertos like seasons.
       - Five hundred deployments. Each one reliable.
       - The Four Seasons of the DevOps cycle.
-    emoji: 🌷
+    emoji: "\U0001F337"
     helper:
       name: The Orphanage Orchestra
       style: Production at scale
+      plural: true
     shortName: Antonio
 additional_characters:
   brahms:
