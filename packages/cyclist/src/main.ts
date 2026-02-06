@@ -1047,6 +1047,36 @@ export function startProjectWatchers(): void {
         // MSSCI-14190: Process tool_use messages for diff tracking (same as IPC handler)
         // This was missing from the WebSocket callback path!
         processToolUseFromMessage(message);
+
+        // Complete subagent tasks when tool_result arrives
+        // CLI format: discrete tool_result message
+        if (message.type === 'tool_result') {
+          const msg = message as { tool_id?: string; output?: string; is_error?: boolean };
+          if (msg.tool_id) {
+            const task = getBackgroundTaskByToolId(msg.tool_id);
+            if (task) {
+              completeBackgroundTask(msg.tool_id, !msg.is_error,
+                msg.is_error ? undefined : msg.output?.slice(0, 500),
+                msg.is_error ? (msg.output?.slice(0, 500) || 'Task failed') : undefined);
+            }
+          }
+        }
+        // SDK format: tool_result nested in user message content
+        if (message.type === 'user') {
+          const userMsg = message as { message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
+          if (userMsg.message?.content) {
+            for (const block of userMsg.message.content) {
+              if (block.type === 'tool_result' && block.tool_use_id) {
+                const task = getBackgroundTaskByToolId(block.tool_use_id);
+                if (task) {
+                  completeBackgroundTask(block.tool_use_id, !block.is_error,
+                    block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
+                    block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined);
+                }
+              }
+            }
+          }
+        }
       }
       onComplete();
       broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_COMPLETE, null);
