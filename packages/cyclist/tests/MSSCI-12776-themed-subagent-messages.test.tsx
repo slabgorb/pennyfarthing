@@ -7,7 +7,7 @@
  *
  * Example transformation:
  * - Before: "You are the testing-runner subagent. Run the tests for Story 72-2..."
- * - After: "Vera" (helper name) with "Running tests to verify the RED state..."
+ * - After: "Vera" (helper name) with "is running tests to verify the RED state..."
  *
  * Acceptance Criteria:
  * - AC1: Parse subagent type from Task tool invocation
@@ -231,12 +231,12 @@ describe('AC3: Generate friendly message from subagent context', () => {
     const { generateFriendlyMessage } = await import('../src/public/utils/subagent-display');
 
     const testCases = [
-      { subagent_type: 'testing-runner', expected: 'Running tests' },
-      { subagent_type: 'Explore', expected: 'Exploring codebase' },
-      { subagent_type: 'sm-setup', expected: 'Setting up story' },
-      { subagent_type: 'sm-finish', expected: 'Finishing story' },
-      { subagent_type: 'handoff', expected: 'Handing off' },
-      { subagent_type: 'workflow-status-check', expected: 'Checking workflow status' },
+      { subagent_type: 'testing-runner', expected: 'running tests' },
+      { subagent_type: 'Explore', expected: 'exploring codebase' },
+      { subagent_type: 'sm-setup', expected: 'setting up story' },
+      { subagent_type: 'sm-finish', expected: 'finishing story' },
+      { subagent_type: 'handoff', expected: 'handing off' },
+      { subagent_type: 'workflow-status-check', expected: 'checking workflow status' },
     ];
 
     for (const { subagent_type, expected } of testCases) {
@@ -385,7 +385,7 @@ describe('AC5: Fallback gracefully when no theme helper is defined', () => {
 
     await waitFor(() => {
       // Should use generateFriendlyMessage which combines type action + description
-      expect(screen.getByText('Running tests: Verify RED state')).toBeInTheDocument();
+      expect(screen.getByText('is running tests: Verify RED state')).toBeInTheDocument();
     });
   });
 

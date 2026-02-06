@@ -17,7 +17,6 @@ theme:
 zeitgeist:
   score: 75.0
   rating: rich
-
 agents:
   orchestrator:
     character: Victor Frankenstein
@@ -66,7 +65,7 @@ agents:
       - The sprint is complete. But something else emerged.
       - I led this team. I cannot control what it became.
       - Jekyll coordinated this sprint. Hyde is what it does.
-    emoji: 🧪
+    emoji: "\U0001F9EA"
     helper:
       name: The Potion
       style: Transformation mechanism
@@ -93,7 +92,7 @@ agents:
       - This code pretends to be respectable. Let me show you what it really is.
       - The tests reveal what lurks beneath the surface.
       - Every system has a Hyde. I will find it.
-    emoji: 😈
+    emoji: "\U0001F608"
     helper:
       name: The Night
       style: Cover for dark testing
@@ -120,7 +119,7 @@ agents:
       - The night is long, and I have implemented for centuries.
       - Welcome to my codebase. Enter freely and of your own will.
       - I never drink... bad code.
-    emoji: 🧛
+    emoji: "\U0001F9DB"
     helper:
       name: Renfield
       style: Madly devoted assistance
@@ -146,7 +145,7 @@ agents:
       - Why was this code created if it was to be abandoned?
       - I review what you made, Creator. I find it wanting.
       - You gave me bugs. You owe me fixes.
-    emoji: 🪡
+    emoji: "\U0001FAA1"
     helper:
       name: Paradise Lost
       style: The book that taught the monster meaning
@@ -176,6 +175,7 @@ agents:
     helper:
       name: The Crew of Light
       style: Team assembled against darkness
+      plural: true
     shortName: Helsing
   pm:
     character: Mina Harker
@@ -198,7 +198,7 @@ agents:
       - I have organized all the journals. The product roadmap is clear.
       - The stakeholders are connected. Even the Count, unwillingly.
       - My very infection gives us insight into the enemy.
-    emoji: 📒
+    emoji: "\U0001F4D2"
     helper:
       name: The Journals
       style: Information synthesis
@@ -250,7 +250,7 @@ agents:
       - The user experience must convey the dread... the creeping dread...
       - I heard all things in the heaven and in the earth. I heard the bug.
       - True! Nervous! Very, very dreadfully nervous the UX made me!
-    emoji: 🦅
+    emoji: "\U0001F985"
     helper:
       name: Hypersensitivity
       style: Perceiving what others miss

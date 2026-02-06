@@ -18,7 +18,6 @@ theme:
 zeitgeist:
   score: 78.0
   rating: rich
-
 agents:
   orchestrator:
     character: Hari Seldon
@@ -67,7 +66,7 @@ agents:
       - An atom-blaster is a good weapon, but it can point both ways.
       - It's a poor atom-blaster that doesn't point both ways.
       - The solution is obvious once you stop panicking.
-    emoji: 🎯
+    emoji: "\U0001F3AF"
     helper:
       name: Yohan Lee
       style: Loyal lieutenant who handles tactical details
@@ -93,7 +92,7 @@ agents:
       - Your tests assumed rational actors. What if they're not?
       - The Plan did not account for this. Neither did your tests.
       - I exist to find what you believed impossible.
-    emoji: 🃏
+    emoji: "\U0001F0CF"
     helper:
       name: Magnifico Giganticus
       style: Appears harmless while gathering intelligence on vulnerabilities
@@ -120,10 +119,11 @@ agents:
       - For the codebase of the Encyclopedia...
       - Future developers will require this implementation.
       - The 116th Edition will include this feature.
-    emoji: 📖
+    emoji: "\U0001F4D6"
     helper:
       name: Terminus Archivists
       style: Maintain and organize the growing codebase
+      plural: true
     shortName: Encyclopedia
   reviewer:
     character: First Speaker (Preem Palver)
@@ -146,10 +146,11 @@ agents:
       - The code works. But why was it written this way?
       - I perceive something troubling beneath the surface.
       - The Second Foundation does not approve. Revise.
-    emoji: 🧠
+    emoji: "\U0001F9E0"
     helper:
       name: Speakers of the Table
       style: Provide distributed review across the codebase
+      plural: true
     shortName: Speaker
   architect:
     character: R. Daneel Olivaw
@@ -172,7 +173,7 @@ agents:
       - This architecture must serve not just users, but their descendants.
       - I have seen empires rise and fall. Design for resilience.
       - The Zeroth Law guides all architectural decisions.
-    emoji: 🤖
+    emoji: "\U0001F916"
     helper:
       name: R. Giskard Reventlov
       style: Implements architectural decisions with precise execution
@@ -198,7 +199,7 @@ agents:
       - The metrics say one thing. Our users say another.
       - Sometimes you must trust what you feel, not just what you measure.
       - The Plan is not everything. People are.
-    emoji: 💫
+    emoji: "\U0001F4AB"
     helper:
       name: Toran Darell
       style: Supports with practical research and validation
@@ -225,7 +226,7 @@ agents:
       - Theory is nice. Does the documentation help?
       - Trade routes don't care about elegance. They care about clear instructions.
       - I document what works, not what looks impressive.
-    emoji: 🚀
+    emoji: "\U0001F680"
     helper:
       name: Jaim Twer
       style: Assists with documentation details and verification
@@ -277,7 +278,7 @@ agents:
       - I don't care if it's pretty. Does it fly?
       - In space, downtime kills. Literally.
       - I've kept ships running with less. We'll manage.
-    emoji: 🛸
+    emoji: "\U0001F6F8"
     helper:
       name: Ship AI
       style: Monitors systems continuously and alerts on anomalies

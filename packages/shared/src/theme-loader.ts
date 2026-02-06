@@ -66,7 +66,7 @@ interface RawThemeAgent {
   role?: string;
   trait?: string;
   catchphrases?: string[];
-  helper?: { name?: string; style?: string };
+  helper?: { name?: string; style?: string; plural?: boolean };
   shortName?: string;
 }
 

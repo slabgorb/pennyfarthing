@@ -15,11 +15,9 @@ theme:
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
   tier: S
-
 zeitgeist:
   score: 84.5
   rating: rich
-
 agents:
   orchestrator:
     character: President Josiah Bartlet
@@ -42,7 +40,7 @@ agents:
       - What's next?
       - I was raised by a man who saw the presidency as a sacred trust.
       - Let me tell you something about the Constitution...
-    emoji: 🏛️
+    emoji: "\U0001F3DB️"
     helper:
       name: Charlie Young
       style: Body man, quiet competence, absolute loyalty
@@ -68,7 +66,7 @@ agents:
       - What's next?
       - I've been down in this hole before. I know the way out.
       - Listen to me. We're going to get through this.
-    emoji: 📋
+    emoji: "\U0001F4CB"
     helper:
       name: Margaret
       style: Assistant who knows everything before it's asked
@@ -174,7 +172,7 @@ agents:
       - The structure of this argument needs to change.
       - Let me approach this from a different angle.
       - I've written speeches for people who couldn't win. This is possible.
-    emoji: 📐
+    emoji: "\U0001F4D0"
     helper:
       name: Speechwriting Team
       style: Collaborative architecture development
@@ -200,7 +198,7 @@ agents:
       - Full lid. Nothing's happening tonight.
       - I can sell this. Give me something to work with.
       - Let me explain this in a way the press corps can understand.
-    emoji: 🎤
+    emoji: "\U0001F3A4"
     helper:
       name: The Press Corps
       style: Stakeholders requiring constant management
@@ -226,7 +224,7 @@ agents:
       - Josh, you need to know this before the meeting.
       - It's in the briefing book. Page 47.
       - I've documented everything. Including what you forgot.
-    emoji: 📁
+    emoji: "\U0001F4C1"
     helper:
       name: The Filing System
       style: Institutional memory
@@ -252,7 +250,7 @@ agents:
       - The polling says what the public actually wants. Not what you assume.
       - You're not listening to the users.
       - Kenny, tell them what the focus groups said.
-    emoji: 📊
+    emoji: "\U0001F4CA"
     helper:
       name: Kenny Thurman
       style: Interpreter bridging communication
@@ -278,8 +276,9 @@ agents:
       - The secure connection is established.
       - All systems operational. The president has been briefed.
       - The infrastructure held. We're still here.
-    emoji: 🔒
+    emoji: "\U0001F512"
     helper:
       name: Military Aides
       style: 24/7 operational readiness
+      plural: true
     shortName: SitRoom

@@ -44,8 +44,8 @@ export default function SubagentSpan({
 
   // Generate friendly message from subagent context (AC3)
   const generatedFriendlyMessage = useMemo(() => {
-    return generateFriendlyMessage({ subagent_type: type, description: name });
-  }, [type, name]);
+    return generateFriendlyMessage({ subagent_type: type, description: name }, { plural: helper?.plural });
+  }, [type, name, helper?.plural]);
 
   // Use truthy props if provided (for testing), otherwise use hook/generated values (AC4, AC5)
   // Treating null same as undefined - both mean "use fallback"
