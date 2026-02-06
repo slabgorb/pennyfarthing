@@ -35,3 +35,5 @@ export type { IdentityInfo } from './identity.js';
 export { createTodosRouter, setWebModeTodos, getWebModeTodos } from './todos.js';
 // Audit log API
 export { createAuditLogRouter } from './audit-log.js';
+// MSSCI-14325: Permissions API (grant management)
+export { createPermissionsRouter } from './permissions.js';
