@@ -45,10 +45,6 @@ interface Settings {
     show_flow?: boolean;
     sidebar_width?: number;
   };
-  notifications?: {
-    phase_change?: boolean;
-    sound?: boolean;
-  };
   pennyfarthing?: {
     theme?: string;
   };
@@ -420,28 +416,6 @@ export function SettingsPanel(): React.ReactElement {
           />
           Relay Mode
           <span className="setting-description">Auto-handoff to next agent</span>
-        </div>
-      </section>
-
-      <Separator className="my-2" />
-
-      <section className="settings-section">
-        <h4>Notifications</h4>
-        <div className="toggle-setting">
-          <Switch
-            checked={settings.notifications?.phase_change || false}
-            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'phase_change', checked)}
-            disabled={saving}
-          />
-          Phase change alerts
-        </div>
-        <div className="toggle-setting">
-          <Switch
-            checked={settings.notifications?.sound || false}
-            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'sound', checked)}
-            disabled={saving}
-          />
-          Sound effects
         </div>
       </section>
 
