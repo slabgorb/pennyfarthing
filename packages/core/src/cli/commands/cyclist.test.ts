@@ -123,21 +123,23 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
   });
 
   describe('loadThemeConfig()', () => {
-    it('should read theme from persona-config.yaml', () => {
+    it('should read theme from .pennyfarthing/persona-config.yaml', () => {
       // AC: Sets correct environment variables (CYCLIST_THEME)
       const config = { theme: 'enlightenment-thinkers' };
+      const pennyfarthingDir = join(testDir, '.pennyfarthing');
+      mkdirSync(pennyfarthingDir, { recursive: true });
       writeFileSync(
-        join(claudeDir, 'persona-config.yaml'),
+        join(pennyfarthingDir, 'persona-config.yaml'),
         yamlStringify(config)
       );
 
       const result = loadThemeConfig(testDir);
 
-      assert.strictEqual(result.theme, 'enlightenment-thinkers', 'Should read theme from config');
+      assert.strictEqual(result.theme, 'enlightenment-thinkers', 'Should read theme from .pennyfarthing/persona-config.yaml');
     });
 
-    it('should prefer .pennyfarthing/config.local.yaml over shared config', () => {
-      // .pennyfarthing/config.local.yaml takes precedence over .claude/persona-config.yaml
+    it('should prefer .pennyfarthing/config.local.yaml over persona-config.yaml', () => {
+      // .pennyfarthing/config.local.yaml takes precedence over .pennyfarthing/persona-config.yaml
       const sharedConfig = { theme: 'discworld' };
       const localConfig = { theme: 'star-trek' };
 
@@ -145,7 +147,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       mkdirSync(pennyfarthingDir, { recursive: true });
 
       writeFileSync(
-        join(claudeDir, 'persona-config.yaml'),
+        join(pennyfarthingDir, 'persona-config.yaml'),
         yamlStringify(sharedConfig)
       );
       writeFileSync(
@@ -208,9 +210,11 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       writeFileSync(join(siblingCyclist, 'package.json'), JSON.stringify({ name: 'cyclist' }));
       writeFileSync(join(siblingCyclist, 'dist', 'server.js'), '// mock server');
 
-      // Create theme config
+      // Create theme config at canonical location
+      const pennyfarthingDir = join(testDir, '.pennyfarthing');
+      mkdirSync(pennyfarthingDir, { recursive: true });
       writeFileSync(
-        join(claudeDir, 'persona-config.yaml'),
+        join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify({ theme: 'enlightenment-thinkers' })
       );
 

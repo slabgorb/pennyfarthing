@@ -2,9 +2,9 @@
  * Tests for theme configuration
  *
  * These tests verify:
- * - getCurrentTheme() checks .pennyfarthing/config.local.yaml first, falls back to shared
+ * - getCurrentTheme() reads from .pennyfarthing/config.local.yaml > .pennyfarthing/persona-config.yaml
  * - setTheme() writes to .pennyfarthing/config.local.yaml by default
- * - setTheme() with global option writes to shared config
+ * - setTheme() with global option writes to .pennyfarthing/persona-config.yaml
  *
  * Run with: npm test
  */
@@ -84,8 +84,8 @@ describe('Theme Configuration', () => {
       assert.strictEqual(result, 'star-trek', 'Should return local theme when both exist');
     });
 
-    it('should fall back to shared theme when local does not exist', () => {
-      // Setup: only shared config
+    it('should return null when only .claude/persona-config.yaml exists (no fallback)', () => {
+      // Setup: only legacy shared config — no longer a valid source
       const sharedConfig = { theme: 'discworld' };
 
       writeFileSync(
@@ -96,8 +96,40 @@ describe('Theme Configuration', () => {
       // Act
       const result = getCurrentTheme(testDir);
 
-      // Assert: should use shared config
-      assert.strictEqual(result, 'discworld', 'Should fall back to shared theme');
+      // Assert: .claude/persona-config.yaml is not a fallback anymore
+      assert.strictEqual(result, null, 'Should not fall back to .claude/persona-config.yaml');
+    });
+
+    it('should fall back to .pennyfarthing/persona-config.yaml when config.local.yaml is absent', () => {
+      // Setup: project default at .pennyfarthing/persona-config.yaml (set via --global)
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'discworld' })
+      );
+
+      // Act
+      const result = getCurrentTheme(testDir);
+
+      // Assert: should fall back to .pennyfarthing/persona-config.yaml
+      assert.strictEqual(result, 'discworld', 'Should fall back to .pennyfarthing/persona-config.yaml');
+    });
+
+    it('should prefer config.local.yaml over persona-config.yaml in .pennyfarthing/', () => {
+      // Setup: both files in .pennyfarthing/
+      writeFileSync(
+        join(pennyfarthingDir, 'config.local.yaml'),
+        yamlStringify({ theme: 'star-trek' })
+      );
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'discworld' })
+      );
+
+      // Act
+      const result = getCurrentTheme(testDir);
+
+      // Assert: config.local.yaml wins
+      assert.strictEqual(result, 'star-trek', 'config.local.yaml should take priority over persona-config.yaml');
     });
 
     it('should return null when neither local nor shared exist', () => {
@@ -172,23 +204,18 @@ describe('Theme Configuration', () => {
       );
     });
 
-    it('should write to shared config when global option is true', () => {
-      // Setup: shared config with original theme
-      const sharedConfig = { theme: 'original-theme' };
-      writeFileSync(
-        join(claudeDir, 'persona-config.yaml'),
-        yamlStringify(sharedConfig)
-      );
-
+    it('should write to .pennyfarthing/persona-config.yaml when global option is true', () => {
       // Act: set theme with global option
       setTheme('test-theme', testDir, { global: true });
 
-      // Assert: shared config should be updated
-      const sharedContent = yamlParse(readFileSync(join(claudeDir, 'persona-config.yaml'), 'utf-8'));
+      // Assert: project default config at .pennyfarthing/persona-config.yaml
+      const globalPath = join(pennyfarthingDir, 'persona-config.yaml');
+      assert.ok(existsSync(globalPath), 'Global option should write to .pennyfarthing/persona-config.yaml');
+      const globalContent = yamlParse(readFileSync(globalPath, 'utf-8'));
       assert.strictEqual(
-        sharedContent.theme,
+        globalContent.theme,
         'test-theme',
-        'Global option should update shared config'
+        'Global option should update .pennyfarthing/persona-config.yaml'
       );
     });
   });
