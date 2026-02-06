@@ -34,7 +34,10 @@ import {
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
-import { initializeSettings } from './settings.js';
+import { initializeSettings, loadGrants, saveGrants } from './settings.js';
+
+// Grant initialization (MSSCI-14321: grants must be available in standalone server mode)
+import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
@@ -93,6 +96,12 @@ function getProjectDir(): string {
 // Initialize settings from file (35-6: required for font settings persistence)
 // Must happen before settings router is used
 initializeSettings(getProjectDir());
+
+// Initialize grants for standalone server mode (MSSCI-14321)
+// In Electron mode, main.ts handles this. In standalone/web mode, we do it here.
+const grants = loadGrants();
+initializeGrants(grants);
+setGrantsPersistCallback(saveGrants);
 
 // Mount API routers
 app.use('/api/stats', createStatsRouter());
