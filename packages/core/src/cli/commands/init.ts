@@ -25,7 +25,7 @@ import {
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
-import { mergeSettingsLocalJson } from '../utils/settings.js';
+import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 
 interface InitOptions {
   force?: boolean;
@@ -367,6 +367,11 @@ async function generateTemplateFiles(
 
   // Handle settings.local.json specially - merge required hooks
   await mergeSettingsLocalJson(projectRoot, assetsPath, { ...options, registerSkills: true });
+
+  // Create symlink at .claude/settings.local.json → .pennyfarthing/settings.local.json
+  if (!options.dryRun) {
+    ensureSettingsSymlink(projectRoot);
+  }
 }
 
 async function updateGitignore(
