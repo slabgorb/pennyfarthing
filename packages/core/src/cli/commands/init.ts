@@ -385,7 +385,6 @@ async function updateGitignore(
     '.session/*',
     '!.session/.gitkeep',
     '.claude/settings.local.json',
-    '.claude/persona-config.local.yaml',
     '.pennyfarthing/config.local.yaml',
     '',
     '# Runtime state files (Cyclist, bells, etc)',

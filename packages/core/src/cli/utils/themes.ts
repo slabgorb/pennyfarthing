@@ -84,12 +84,11 @@ export function getPennyfarthingConfigPath(projectRoot: string): string {
 
 /**
  * Get the current theme from config files
- * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml
+ * Reads from .pennyfarthing/config.local.yaml exclusively
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
 
-  // Priority 1: .pennyfarthing/config.local.yaml (dogfooding/agent-writable)
   const pennyfarthingConfigPath = getPennyfarthingConfigPath(root);
   if (existsSync(pennyfarthingConfigPath)) {
     try {
@@ -99,19 +98,7 @@ export function getCurrentTheme(projectRoot?: string): string | null {
         return config.theme;
       }
     } catch {
-      // Fall through to next option
-    }
-  }
-
-  // Priority 2: .claude/persona-config.yaml (project default)
-  const sharedConfigPath = join(root, '.claude/persona-config.yaml');
-  if (existsSync(sharedConfigPath)) {
-    try {
-      const content = readFileSync(sharedConfigPath, 'utf8');
-      const config = YAML.parse(content);
-      return config?.theme || null;
-    } catch {
-      return null;
+      // Parse error — no theme available
     }
   }
 
@@ -214,14 +201,14 @@ export function getAgentSamples(theme: ThemeInfo): string {
 }
 
 export interface SetThemeOptions {
-  /** If true, write to shared config (.claude/persona-config.yaml) instead of local */
+  /** If true, write to shared config (.pennyfarthing/persona-config.yaml) instead of local */
   global?: boolean;
 }
 
 /**
  * Set the active theme
  * By default writes to .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
- * Use { global: true } to write to .claude/persona-config.yaml (project default)
+ * Use { global: true } to write to .pennyfarthing/persona-config.yaml (project default, committed)
  * Returns the ThemeInfo if successful, throws if theme not found
  */
 export function setTheme(themeName: string, projectRoot: string, options: SetThemeOptions = {}): ThemeInfo {
@@ -237,8 +224,8 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
   let header: string;
 
   if (options.global) {
-    // Project default - shared with team
-    configPath = join(projectRoot, '.claude/persona-config.yaml');
+    // Project default - shared with team (committed to repo)
+    configPath = join(projectRoot, '.pennyfarthing/persona-config.yaml');
     header = '# Pennyfarthing Persona Configuration (Project Default)\n\n';
   } else {
     // Default: .pennyfarthing/ directory (agent-writable, dogfooding-friendly)
