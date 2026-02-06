@@ -59,7 +59,7 @@ function createTestApp() {
  */
 function createMockWsClient(): WebSocket {
   const ws = {
-    readyState: WebSocket.OPEN,
+    readyState: 1, // WebSocket.OPEN
     send: vi.fn(),
     on: vi.fn(),
     once: vi.fn(),
@@ -298,11 +298,23 @@ describe('MSSCI-14321: Hook request grant integration', () => {
       mockCheckGrant.mockReturnValue(false);
       mockIsAllowlisted.mockReturnValue(false);
 
+      // Track broadcast messages via send mock
+      const sentMessages: string[] = [];
       const ws = createMockWsClient();
+      (ws.send as ReturnType<typeof vi.fn>).mockImplementation((msg: string) => {
+        sentMessages.push(msg);
+      });
       addHookClient(ws);
 
       const toolId = 'test-broadcast';
-      const reqPromise = request(app)
+
+      // Schedule approval resolution before starting request
+      // The request handler will create a pending approval synchronously,
+      // then broadcast, then await the promise. We resolve after a delay.
+      setTimeout(() => resolveApproval(toolId, true), 100);
+
+      // Send request (supertest dispatches on await)
+      const res = await request(app)
         .post('/api/hook-request')
         .send({
           toolName: 'Bash',
@@ -310,20 +322,15 @@ describe('MSSCI-14321: Hook request grant integration', () => {
           input: { command: 'rm -rf /tmp/test' },
         });
 
-      // Give the handler time to broadcast
-      await new Promise((r) => setTimeout(r, 50));
-
-      // Verify broadcast was sent
-      expect(ws.send).toHaveBeenCalled();
-      const sentMessage = JSON.parse((ws.send as ReturnType<typeof vi.fn>).mock.calls[0][0]);
-      expect(sentMessage.type).toBe('hook-request');
-      expect(sentMessage.toolId).toBe(toolId);
-      expect(sentMessage.toolName).toBe('Bash');
-
-      // Resolve to complete the request
-      resolveApproval(toolId, true);
-      const res = await reqPromise;
+      // Verify the request was approved via user
       expect(res.body.decision).toBe('allow');
+
+      // Verify a broadcast was sent to the WS client
+      expect(sentMessages.length).toBeGreaterThan(0);
+      const broadcastMsg = JSON.parse(sentMessages[0]);
+      expect(broadcastMsg.type).toBe('hook-request');
+      expect(broadcastMsg.toolId).toBe(toolId);
+      expect(broadcastMsg.toolName).toBe('Bash');
     });
   });
 
