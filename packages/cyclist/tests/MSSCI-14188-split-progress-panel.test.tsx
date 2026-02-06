@@ -69,6 +69,10 @@ vi.mock('../src/public/hooks/useStory', () => ({
   useStory: vi.fn(() => mockStoryData),
 }));
 
+vi.mock('../src/public/contexts/ClaudeContext', () => ({
+  useClaudeContext: vi.fn(() => ({ send: vi.fn(), isConnected: true })),
+}));
+
 // Mock useTodos hook
 const mockTodosData = {
   todos: [
