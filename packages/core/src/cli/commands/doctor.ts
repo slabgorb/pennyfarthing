@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
@@ -81,6 +81,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkHooks(projectRoot));
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
+  results.push(...checkCyclist(projectRoot));
 
   // Output results
   if (options.json) {
@@ -95,7 +96,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
-    { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') }
+    { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') },
+    { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') }
   ];
 
   for (const category of categories) {
@@ -1320,6 +1322,122 @@ function checkHooks(projectRoot: string): CheckResult[] {
         detail: 'Cannot read hook'
       });
     }
+  }
+
+  return results;
+}
+
+/**
+ * Check Cyclist installation health (if installed as a workspace package)
+ * Detects node-pty spawn-helper permission issues that cause posix_spawnp failures
+ */
+function checkCyclist(projectRoot: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  // Detect Cyclist package — check common locations
+  const cyclistLocations = [
+    join(projectRoot, 'packages/cyclist'),
+    join(projectRoot, 'node_modules/@pennyfarthing/cyclist'),
+  ];
+
+  let cyclistDir: string | null = null;
+  for (const loc of cyclistLocations) {
+    if (pathExists(join(loc, 'package.json'))) {
+      cyclistDir = loc;
+      break;
+    }
+  }
+
+  if (!cyclistDir) {
+    // Cyclist not installed — skip silently
+    return results;
+  }
+
+  results.push({
+    name: 'cyclist/installed',
+    status: 'pass',
+    detail: relative(projectRoot, cyclistDir)
+  });
+
+  // Check node-pty spawn-helper permissions
+  const os = process.platform === 'darwin' ? 'darwin' : process.platform === 'linux' ? 'linux' : null;
+  const arch = process.arch === 'arm64' ? 'arm64' : process.arch === 'x64' ? 'x64' : null;
+
+  if (!os || !arch) {
+    return results;
+  }
+
+  // Look for node-pty prebuilds — check cyclist's own node_modules first, then monorepo root
+  const searchPaths = [
+    join(cyclistDir, 'node_modules/node-pty'),
+    join(projectRoot, 'node_modules/node-pty'),
+  ];
+
+  let nodePtyDir: string | null = null;
+  for (const p of searchPaths) {
+    if (pathExists(join(p, 'prebuilds'))) {
+      nodePtyDir = p;
+      break;
+    }
+  }
+
+  // Also check pnpm store path (node_modules/.pnpm/node-pty@*/node_modules/node-pty)
+  if (!nodePtyDir) {
+    const pnpmBase = join(projectRoot, 'node_modules/.pnpm');
+    if (pathExists(pnpmBase)) {
+      try {
+        const entries = readdirSync(pnpmBase) as string[];
+        const nodePtyEntry = entries.find((e: string) => e.startsWith('node-pty@'));
+        if (nodePtyEntry) {
+          const candidate = join(pnpmBase, nodePtyEntry, 'node_modules/node-pty');
+          if (pathExists(join(candidate, 'prebuilds'))) {
+            nodePtyDir = candidate;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (!nodePtyDir) {
+    results.push({
+      name: 'cyclist/node-pty',
+      status: 'warn',
+      detail: 'node-pty not found — terminal panel will not work'
+    });
+    return results;
+  }
+
+  const spawnHelper = join(nodePtyDir, 'prebuilds', `${os}-${arch}`, 'spawn-helper');
+
+  if (!pathExists(spawnHelper)) {
+    results.push({
+      name: 'cyclist/spawn-helper',
+      status: 'warn',
+      detail: `spawn-helper not found for ${os}-${arch}`
+    });
+    return results;
+  }
+
+  try {
+    const stats = statSync(spawnHelper);
+    const isExecutable = (stats.mode & 0o111) !== 0;
+
+    results.push({
+      name: 'cyclist/spawn-helper',
+      status: isExecutable ? 'pass' : 'fail',
+      detail: isExecutable ? undefined : 'Missing execute permission (causes posix_spawnp failure)',
+      fix: isExecutable ? undefined : () => {
+        chmodSync(spawnHelper, 0o755);
+      }
+    });
+  } catch {
+    results.push({
+      name: 'cyclist/spawn-helper',
+      status: 'warn',
+      detail: 'Cannot read spawn-helper'
+    });
   }
 
   return results;
