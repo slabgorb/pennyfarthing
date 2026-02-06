@@ -143,6 +143,7 @@ export function SettingsPanel(): React.ReactElement {
 
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
+      applyPreset(presetId);
       setColorPreset(presetId);
     });
 

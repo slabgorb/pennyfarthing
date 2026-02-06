@@ -20,6 +20,7 @@ import { ClaudeProvider } from './contexts/ClaudeContext';
 import { MessageQueueProvider } from './contexts/MessageQueueContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
+import { loadPresetFromProject, applyPreset } from './utils/color-presets';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Import all panel components
@@ -205,6 +206,13 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     loadFontSettings().then(settings => {
       applyFontSettings(settings);
+    });
+  }, []);
+
+  // Load and apply color preset on startup
+  useEffect(() => {
+    loadPresetFromProject().then(presetId => {
+      applyPreset(presetId);
     });
   }, []);
 
