@@ -46,7 +46,7 @@ importers:
   packages/core:
     dependencies:
       '@pennyfarthing/shared':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../shared
       chalk:
         specifier: ^5.3.0
@@ -83,10 +83,10 @@ importers:
   packages/cyclist:
     dependencies:
       '@pennyfarthing/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@pennyfarthing/shared':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../shared
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.15
