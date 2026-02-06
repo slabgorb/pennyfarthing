@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [10.0.1] - 2026-02-06
+## [10.0.2] - 2026-02-06
 
 ### Fixed
 
+- **npm publish includes pennyfarthing-dist/** - Added `pennyfarthing-dist/` to `packages/core/package.json` `files` array with symlinks to monorepo root. Previously only `dist/` and `bin/` were published, causing `pennyfarthing update` to fail with "Package directory not found"
 - **npm publish compatibility** - Replaced `workspace:*` with `workspace:^` in internal package dependencies. `workspace:*` was left as-is by pnpm during publish, causing npm consumers to fail with `EUNSUPPORTEDPROTOCOL` error when installing `@pennyfarthing/core`
 
 ---
@@ -2227,7 +2228,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.2...HEAD
+[10.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.0...v10.0.1
 [10.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.1.0...v10.0.0
 [8.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.0.0...v8.1.0

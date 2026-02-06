@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "10.0.1",
+  "version": "10.0.2",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "keywords": [
@@ -30,7 +30,17 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist/",
-    "bin/"
+    "bin/",
+    "pennyfarthing-dist/agents/",
+    "pennyfarthing-dist/commands/",
+    "pennyfarthing-dist/guides/",
+    "pennyfarthing-dist/output-styles/",
+    "pennyfarthing-dist/personas/themes/",
+    "pennyfarthing-dist/scripts/",
+    "pennyfarthing-dist/skills/",
+    "pennyfarthing-dist/templates/",
+    "pennyfarthing-dist/workflows/",
+    "pennyfarthing_scripts/"
   ],
   "scripts": {
     "build": "tsc",
