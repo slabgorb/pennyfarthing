@@ -238,7 +238,7 @@ Pennyfarthing `init` and `update` create files in **5 distinct locations** outsi
 
 ## Migration Plan Summary
 
-### Move to `.pennyfarthing/` (6 items)
+### Move to `.pennyfarthing/` (7 items)
 
 | Current Path | New Path | Blocker |
 |--------------|----------|---------|
