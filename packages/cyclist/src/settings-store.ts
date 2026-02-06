@@ -239,6 +239,7 @@ export interface PermissionGrant {
   scope: string;
   grant_type: GrantTypeValue;
   granted_at: string;
+  agent?: string;
 }
 
 // In-memory grant storage (session + once grants)
@@ -283,7 +284,7 @@ export function initializeGrants(grants: PermissionGrant[]): void {
 export function addGrant(grant: PermissionGrant): void {
   if (grant.grant_type === 'always') {
     // Always grants go to persisted storage
-    if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope)) {
+    if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope && g.agent === grant.agent)) {
       persistedGrants.push(grant);
       // AC2: Persist via callback instead of direct file I/O
       if (grantsPersistCallback) {
@@ -292,7 +293,7 @@ export function addGrant(grant: PermissionGrant): void {
     }
   } else {
     // Once and session grants go to session storage
-    if (!sessionGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope)) {
+    if (!sessionGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope && g.agent === grant.agent)) {
       sessionGrants.push(grant);
     }
   }
@@ -303,9 +304,10 @@ export function addGrant(grant: PermissionGrant): void {
  * Auto-revokes 'once' grants after checking
  * @param tool - The tool name (e.g., 'Bash', 'WebFetch')
  * @param command - The command/URL/path to check
+ * @param agent - Optional agent name for agent-scoped grant matching
  * @returns true if grant exists
  */
-export function checkGrant(tool: string, command: string): boolean {
+export function checkGrant(tool: string, command: string, agent?: string): boolean {
   // Use appropriate matching based on tool type
   const matchScope = (scope: string, value: string) => {
     // For WebFetch, use domain matching for URLs
@@ -320,9 +322,16 @@ export function checkGrant(tool: string, command: string): boolean {
     return matchGlobPattern(scope, value);
   };
 
+  // Match agent: global grants (no agent) match any request,
+  // agent-scoped grants only match when the requesting agent matches
+  const matchAgent = (grant: PermissionGrant) => {
+    if (!grant.agent) return true; // Global grant matches any agent
+    return grant.agent === agent; // Agent-scoped grant requires match
+  };
+
   // Check session grants first
   const sessionIndex = sessionGrants.findIndex(
-    (g) => g.tool === tool && matchScope(g.scope, command)
+    (g) => g.tool === tool && matchScope(g.scope, command) && matchAgent(g)
   );
 
   if (sessionIndex !== -1) {
@@ -336,7 +345,7 @@ export function checkGrant(tool: string, command: string): boolean {
 
   // Check persisted grants
   const persistedMatch = persistedGrants.find(
-    (g) => g.tool === tool && matchScope(g.scope, command)
+    (g) => g.tool === tool && matchScope(g.scope, command) && matchAgent(g)
   );
 
   return !!persistedMatch;
@@ -397,16 +406,13 @@ export function getPersistedGrants(): PermissionGrant[] {
  * @param grant - The grant to remove
  */
 export function removeGrant(grant: PermissionGrant): void {
-  const hadPersistedGrant = persistedGrants.some(
-    (g) => g.tool === grant.tool && g.scope === grant.scope && g.grant_type === grant.grant_type
-  );
+  const matchGrant = (g: PermissionGrant) =>
+    g.tool === grant.tool && g.scope === grant.scope && g.grant_type === grant.grant_type && g.agent === grant.agent;
 
-  sessionGrants = sessionGrants.filter(
-    (g) => !(g.tool === grant.tool && g.scope === grant.scope && g.grant_type === grant.grant_type)
-  );
-  persistedGrants = persistedGrants.filter(
-    (g) => !(g.tool === grant.tool && g.scope === grant.scope && g.grant_type === grant.grant_type)
-  );
+  const hadPersistedGrant = persistedGrants.some(matchGrant);
+
+  sessionGrants = sessionGrants.filter((g) => !matchGrant(g));
+  persistedGrants = persistedGrants.filter((g) => !matchGrant(g));
 
   // AC2: If we removed an always grant, persist via callback
   if (hadPersistedGrant && grant.grant_type === 'always' && grantsPersistCallback) {
@@ -441,7 +447,7 @@ export function clearSessionGrants(): void {
  */
 export function persistAlwaysGrant(grant: PermissionGrant): void {
   if (grant.grant_type === 'always') {
-    if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope)) {
+    if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope && g.agent === grant.agent)) {
       persistedGrants.push(grant);
     }
     // AC2: Persist via callback

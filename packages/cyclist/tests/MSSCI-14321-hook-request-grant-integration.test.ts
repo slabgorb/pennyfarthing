@@ -98,7 +98,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.decision).toBe('allow');
-      expect(mockCheckGrant).toHaveBeenCalledWith('Bash', 'npm install express');
+      expect(mockCheckGrant).toHaveBeenCalledWith('Bash', 'npm install express', undefined);
     });
 
     it('should auto-approve WebFetch when grant matches', async () => {
@@ -114,7 +114,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.decision).toBe('allow');
-      expect(mockCheckGrant).toHaveBeenCalledWith('WebFetch', 'https://api.github.com/repos');
+      expect(mockCheckGrant).toHaveBeenCalledWith('WebFetch', 'https://api.github.com/repos', undefined);
     });
 
     it('should auto-approve Edit when grant matches', async () => {
@@ -130,7 +130,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.decision).toBe('allow');
-      expect(mockCheckGrant).toHaveBeenCalledWith('Edit', '/src/index.ts');
+      expect(mockCheckGrant).toHaveBeenCalledWith('Edit', '/src/index.ts', undefined);
     });
 
     it('should auto-approve unknown tool with JSON-stringified scope when grant matches', async () => {
@@ -148,7 +148,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
       expect(res.status).toBe(200);
       expect(res.body.decision).toBe('allow');
       // For unknown tools, scope should be JSON.stringify(input)
-      expect(mockCheckGrant).toHaveBeenCalledWith('AskUserQuestion', JSON.stringify(input));
+      expect(mockCheckGrant).toHaveBeenCalledWith('AskUserQuestion', JSON.stringify(input), undefined);
     });
   });
 
@@ -285,7 +285,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
         });
 
       expect(res.body.decision).toBe('allow');
-      expect(mockCheckGrant).toHaveBeenCalledWith('Write', '/src/config.ts');
+      expect(mockCheckGrant).toHaveBeenCalledWith('Write', '/src/config.ts', undefined);
     });
   });
 
@@ -435,7 +435,7 @@ describe('MSSCI-14321: Hook request grant integration', () => {
 
       expect(res.body.decision).toBe('ask');
       // Verify it went through checkGrant, not SAFE_COMMAND_PATTERNS
-      expect(mockCheckGrant).toHaveBeenCalledWith('Bash', 'ls -la');
+      expect(mockCheckGrant).toHaveBeenCalledWith('Bash', 'ls -la', undefined);
     });
   });
 });
