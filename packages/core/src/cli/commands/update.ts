@@ -1,4 +1,4 @@
-import { readFileSync, copyFileSync, readdirSync } from 'fs';
+import { readFileSync, copyFileSync, readdirSync, renameSync, unlinkSync, existsSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -17,9 +17,10 @@ import {
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
-  copyDirectory,
+  createDirectorySymlink,
   copyCommandsDirectory,
-  copySkillsDirectory
+  copySkillsDirectory,
+  removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
@@ -100,6 +101,15 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     process.exit(1);
   }
 
+  // Migrate manifest from .claude/ to .pennyfarthing/ if needed
+  migrateManifest(projectRoot, { dryRun });
+
+  // Remove legacy .claude/ directories (agents, guides, personas, scripts)
+  removeLegacyClaudeDirectories(projectRoot, { dryRun });
+
+  // Migrate template files from .claude/ to .pennyfarthing/
+  migrateTemplateFiles(projectRoot, { dryRun });
+
   // Migrate settings.local.json from .claude/ to .pennyfarthing/ if needed
   if (!dryRun) {
     migrateSettingsFile(projectRoot);
@@ -157,12 +167,18 @@ async function updateInstalledContent(
   logger.newline();
   logger.info('Updating Pennyfarthing content...');
 
-  // Re-copy directories from package to .pennyfarthing/
+  // Remove legacy .claude/ directories before re-linking
+  removeLegacyClaudeDirectories(projectRoot, { dryRun });
+
+  // Migrate template files from .claude/ to .pennyfarthing/
+  migrateTemplateFiles(projectRoot, { dryRun });
+
+  // Re-link directories from package to .pennyfarthing/ (symlinks, not copies)
   for (const { name, link } of DIRECTORY_SYMLINKS) {
     const sourcePath = join(nodeModulesPath, name);
     const destPath = join(projectRoot, link);
 
-    if (copyDirectory(sourcePath, destPath, dryRun)) {
+    if (createDirectorySymlink(sourcePath, destPath, dryRun)) {
       logger.updated(`${link}/`);
     } else {
       logger.warning(`Could not update ${link}`);
@@ -307,6 +323,121 @@ async function migrateSidecars(
     } catch {
       // Ignore cleanup errors
     }
+  }
+}
+
+/**
+ * Migrate manifest from .claude/manifest.json to .pennyfarthing/manifest.json
+ * If manifest only exists at .claude/, move it to .pennyfarthing/.
+ * If already at .pennyfarthing/, no-op.
+ */
+export function migrateManifest(
+  projectRoot: string,
+  options: { dryRun?: boolean }
+): void {
+  const oldPath = join(projectRoot, '.claude/manifest.json');
+  const newPath = join(projectRoot, '.pennyfarthing/manifest.json');
+
+  // Already at new location — nothing to do
+  if (existsSync(newPath)) {
+    return;
+  }
+
+  // No legacy manifest — nothing to migrate
+  if (!existsSync(oldPath)) {
+    return;
+  }
+
+  if (!options.dryRun) {
+    ensureDirSync(join(projectRoot, '.pennyfarthing'));
+    renameSync(oldPath, newPath);
+  }
+  logger.info('Migrated manifest from .claude/ to .pennyfarthing/');
+}
+
+/**
+ * Remove legacy .claude/{agents,guides,personas,scripts} directories.
+ * These now live under .pennyfarthing/ as symlinks to node_modules.
+ * Does NOT touch .claude/commands or .claude/skills (required for Claude Code discovery).
+ */
+export function removeLegacyClaudeDirectories(
+  projectRoot: string,
+  options: { dryRun?: boolean }
+): void {
+  const legacyDirs = ['agents', 'guides', 'personas', 'scripts'];
+
+  for (const name of legacyDirs) {
+    const legacyPath = join(projectRoot, '.claude', name);
+    if (pathExists(legacyPath)) {
+      removeSymlinkOrDirectory(legacyPath, options.dryRun);
+      logger.info(`Removed legacy .claude/${name}`);
+    }
+  }
+}
+
+/**
+ * Migrate template files from .claude/ to .pennyfarthing/.
+ * Moves user-customizable files to their new canonical locations.
+ * Does NOT overwrite if file already exists at new location.
+ * Does NOT move shared-context.md (user-owned, stays at .claude/).
+ */
+export function migrateTemplateFiles(
+  projectRoot: string,
+  options: { dryRun?: boolean }
+): void {
+  const migrations: Array<{ oldPath: string; newPath: string }> = [
+    {
+      oldPath: '.claude/project/docs/agent-scopes.yaml',
+      newPath: '.pennyfarthing/project/docs/agent-scopes.yaml',
+    },
+    {
+      oldPath: '.claude/project/hooks/setup-env.sh',
+      newPath: '.pennyfarthing/project/hooks/setup-env.sh',
+    },
+    {
+      oldPath: '.claude/project/pennyfarthing-settings.yaml',
+      newPath: '.pennyfarthing/project/pennyfarthing-settings.yaml',
+    },
+    {
+      oldPath: '.claude/preferences.yaml',
+      newPath: '.pennyfarthing/preferences.yaml',
+    },
+    {
+      oldPath: '.claude/persona-config.yaml',
+      newPath: '.pennyfarthing/persona-config.yaml',
+    },
+  ];
+
+  let migrated = 0;
+
+  for (const { oldPath, newPath } of migrations) {
+    const fullOldPath = join(projectRoot, oldPath);
+    const fullNewPath = join(projectRoot, newPath);
+
+    // Skip if old file doesn't exist
+    if (!existsSync(fullOldPath)) {
+      continue;
+    }
+
+    // Don't overwrite if already at new location
+    if (existsSync(fullNewPath)) {
+      // Just remove the old file since new location already has content
+      if (!options.dryRun) {
+        unlinkSync(fullOldPath);
+      }
+      continue;
+    }
+
+    if (!options.dryRun) {
+      // Ensure destination directory exists
+      ensureDirSync(join(fullNewPath, '..'));
+      renameSync(fullOldPath, fullNewPath);
+    }
+    migrated++;
+  }
+
+  if (migrated > 0) {
+    logger.info(`Migrated ${migrated} template files to .pennyfarthing/`);
   }
 }
 
