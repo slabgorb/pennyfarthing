@@ -95,11 +95,11 @@ export async function initCommand(
   logger.info('Creating directories...');
   const directories = [
     '.claude',
-    '.claude/project/commands',
-    '.claude/project/skills',
-    '.claude/project/docs',
-    '.claude/project/hooks',
     '.pennyfarthing',
+    '.pennyfarthing/project/commands',
+    '.pennyfarthing/project/skills',
+    '.pennyfarthing/project/docs',
+    '.pennyfarthing/project/hooks',
     'sprint',
     '.pennyfarthing/sidecars',
     '.session'
@@ -168,12 +168,12 @@ export async function initCommand(
 
   // Copy commands directory (allows user commands alongside built-in)
   const builtInCommandsPath = join(nodeModulesPath, 'commands');
-  const projectCommandsPath = join(projectRoot, '.claude/project/commands');
+  const projectCommandsPath = join(projectRoot, '.pennyfarthing/project/commands');
   copyCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
 
   // Copy skills directory (allows user skills alongside built-in)
   const builtInSkillsPath = join(nodeModulesPath, 'skills');
-  const projectSkillsPath = join(projectRoot, '.claude/project/skills');
+  const projectSkillsPath = join(projectRoot, '.pennyfarthing/project/skills');
   copySkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
 
   // 8. Create agent sidecars if not exist
@@ -230,7 +230,7 @@ export async function initCommand(
     nodeModulesPath: nodeModulesRelPath
   });
   writeManifest(projectRoot, manifest, { dryRun });
-  logger.created('.claude/manifest.json');
+  logger.created('.pennyfarthing/manifest.json');
 
   // 11. Update .gitignore
   await updateGitignore(projectRoot, { dryRun });
@@ -247,7 +247,7 @@ export async function initCommand(
   logger.newline();
   logger.info('  Or configure manually:');
   logger.info('  - Edit .claude/project/docs/shared-context.md with your project info');
-  logger.info('  - Configure .claude/persona-config.yaml for your preferred theme');
+  logger.info('  - Configure .pennyfarthing/persona-config.yaml for your preferred theme');
   logger.info('  - Run `pennyfarthing doctor` to verify installation');
 }
 
@@ -328,12 +328,12 @@ async function generateTemplateFiles(
 
   // Templates that should be skipped if they exist (user-customized)
   const skipIfExistsTemplates = [
-    { template: 'persona-config.yaml.template', dest: '.claude/persona-config.yaml' },
-    { template: 'preferences.yaml.template', dest: '.claude/preferences.yaml' },
+    { template: 'persona-config.yaml.template', dest: '.pennyfarthing/persona-config.yaml' },
+    { template: 'preferences.yaml.template', dest: '.pennyfarthing/preferences.yaml' },
     { template: 'shared-context.md.template', dest: '.claude/project/docs/shared-context.md' },
-    { template: 'agent-scopes.yaml.template', dest: '.claude/project/docs/agent-scopes.yaml' },
-    { template: 'pennyfarthing-settings.yaml.template', dest: '.claude/project/pennyfarthing-settings.yaml' },
-    { template: 'setup-env.sh.template', dest: '.claude/project/hooks/setup-env.sh' }
+    { template: 'agent-scopes.yaml.template', dest: '.pennyfarthing/project/docs/agent-scopes.yaml' },
+    { template: 'pennyfarthing-settings.yaml.template', dest: '.pennyfarthing/project/pennyfarthing-settings.yaml' },
+    { template: 'setup-env.sh.template', dest: '.pennyfarthing/project/hooks/setup-env.sh' }
   ];
 
   for (const { template, dest } of skipIfExistsTemplates) {
