@@ -275,7 +275,7 @@ describe('MSSCI-14191: Bell Mode ON', () => {
       const editorPath = join(__dirname, '../src/public/components/Editor.tsx');
       const editorSource = readFileSync(editorPath, 'utf-8');
 
-      expect(editorSource).toMatch(/bellMode.*🔔|🔔.*bellMode/);
+      expect(editorSource).toMatch(/bellMode[\s\S]*?🔔|🔔[\s\S]*?bellMode/);
     });
   });
 

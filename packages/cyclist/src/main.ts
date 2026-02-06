@@ -64,7 +64,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import { setBellMode } from './bell-mode.js';
@@ -150,12 +150,16 @@ export {
   buildToolsMenu,
   buildViewMenu,
   getMenuTemplate,
+  setPanelToggleBroadcast,
 } from './menu-builder.js';
+
+// Local imports for menu building
 import {
   buildAgentMenu,
   buildWorkflowMenu,
   buildToolsMenu,
   buildViewMenu,
+  setPanelToggleBroadcast,
 } from './menu-builder.js';
 
 /**
@@ -1212,16 +1216,18 @@ function processToolUseFromMessage(message: SDKMessage): void {
     if (toolId && toolInput) {
       storePendingToolInput(toolId, toolName, toolInput);
 
-      // MSSCI-14210: Track background Task tools
-      if (toolName === 'Task' && toolInput.run_in_background === true) {
-        const description = (toolInput.description as string) || (toolInput.prompt as string)?.substring(0, 50) || 'Background task';
+      // Track all Task tool subagents (background and foreground)
+      // All must be tracked so enrichMessageWithSubagentContext can look them up
+      if (toolName === 'Task') {
+        const description = (toolInput.description as string) || (toolInput.prompt as string)?.substring(0, 50) || 'Subagent task';
         const subagentType = (toolInput.subagent_type as string) || 'general-purpose';
+        const isBackground = toolInput.run_in_background === true;
         trackBackgroundTask({
           taskId: toolId,
           description,
           subagentType,
           startedAt: Date.now(),
-          isBackground: true,
+          isBackground,
         });
       }
     }
@@ -2275,6 +2281,9 @@ if (isElectron) {
       }
 
       // B-23: Wire agent and workflow menus to Electron menu bar
+      // Wire panel toggle to WebSocket broadcast
+      setPanelToggleBroadcast(broadcastPanelToggle);
+
       // Use standard macOS menu roles instead of reconstructing existing menu
       // (reconstructing fails on nested submenus like Window)
       // 22-5: Custom View menu with Verbose Mode toggle
