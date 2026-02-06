@@ -52,6 +52,51 @@ from hooks import (
 )
 
 
+def _resolve_agent(session_id: str | None, project_root: Path | None) -> str | None:
+    """Resolve agent name from session file.
+
+    Looks up .session/agents/{session_id} to find the active agent name.
+    Falls back to the most recently modified agent file if session_id
+    doesn't match.
+
+    Args:
+        session_id: Claude Code session ID
+        project_root: Project root directory
+
+    Returns:
+        Agent name string, or None if not found
+    """
+    if not project_root:
+        return None
+
+    agents_dir = project_root / ".session" / "agents"
+    if not agents_dir.is_dir():
+        return None
+
+    # Try exact session_id match first
+    if session_id:
+        agent_file = agents_dir / session_id
+        if agent_file.is_file():
+            try:
+                return agent_file.read_text().strip() or None
+            except OSError:
+                pass
+
+    # Fallback: most recently modified agent file
+    try:
+        agent_files = sorted(
+            (f for f in agents_dir.iterdir() if f.is_file()),
+            key=lambda f: f.stat().st_mtime,
+            reverse=True,
+        )
+        if agent_files:
+            return agent_files[0].read_text().strip() or None
+    except OSError:
+        pass
+
+    return None
+
+
 def main() -> None:
     """Main entry point for PreToolUse hook."""
     try:
@@ -66,6 +111,9 @@ def main() -> None:
 
         # Find project root
         project_root = find_project_root()
+
+        # Resolve agent name from session file (MSSCI-14392)
+        agent_name = _resolve_agent(session_id, project_root)
 
         # Check if Cyclist is running
         if not is_cyclist_running(project_root):
@@ -88,20 +136,26 @@ def main() -> None:
         # Get context state for inclusion in request
         context = get_context_state(project_root)
 
+        # Build request data
+        request_data = {
+            "toolName": tool_name,
+            "toolId": tool_id,
+            "input": tool_input,
+            "sessionId": session_id,
+            "context": {
+                "percentage": context.percentage,
+                "isHigh": context.is_high,
+                "isCritical": context.is_critical,
+            },
+        }
+        # Include agent identity if resolved (MSSCI-14392)
+        if agent_name:
+            request_data["agent"] = agent_name
+
         # Send approval request to WheelHub with context info
         response = send_to_cyclist(
             endpoint="/api/hook-request",
-            data={
-                "toolName": tool_name,
-                "toolId": tool_id,
-                "input": tool_input,
-                "sessionId": session_id,
-                "context": {
-                    "percentage": context.percentage,
-                    "isHigh": context.is_high,
-                    "isCritical": context.is_critical,
-                },
-            },
+            data=request_data,
             project_root=project_root,
         )
 
