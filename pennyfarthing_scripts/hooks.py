@@ -69,7 +69,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
         # Check for Cyclist port files first (indicates Cyclist is running)
         if (current / CYCLIST_PORT_FILE).exists():
             return current
-        if (current / CYCLIST_APPROVAL_PORT_FILE).exists():
+        if (current / CYCLIST_APPROVAL_PORT_FILE_LEGACY).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
