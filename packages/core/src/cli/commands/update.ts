@@ -23,7 +23,7 @@ import {
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
-import { mergeSettingsLocalJson } from '../utils/settings.js';
+import { mergeSettingsLocalJson, migrateSettingsFile, ensureSettingsSymlink } from '../utils/settings.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -100,7 +100,17 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     process.exit(1);
   }
 
+  // Migrate settings.local.json from .claude/ to .pennyfarthing/ if needed
+  if (!dryRun) {
+    migrateSettingsFile(projectRoot);
+  }
+
   const settingsUpdated = await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
+
+  // Ensure symlink at .claude/settings.local.json
+  if (!dryRun) {
+    ensureSettingsSymlink(projectRoot);
+  }
 
   if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0 && !settingsUpdated) {
     logger.success(`Already up to date (v${updateInfo.currentVersion})`);
@@ -186,9 +196,15 @@ async function updateInstalledContent(
   // Migrate sidecars from old location to new location
   await migrateSidecars(projectRoot, { dryRun });
 
-  // Update settings
+  // Migrate and update settings
   const assetsPath = getAssetsPath();
+  if (!dryRun) {
+    migrateSettingsFile(projectRoot);
+  }
   await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
+  if (!dryRun) {
+    ensureSettingsSymlink(projectRoot);
+  }
 
   // Update manifest version
   logger.newline();
