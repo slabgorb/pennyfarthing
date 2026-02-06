@@ -11,6 +11,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.0.0] - 2026-02-06
+
+### Added
+
+- **Clean Install Consolidation (Epic-85)** - All Pennyfarthing-managed files consolidated under `.pennyfarthing/` instead of scattered across `.claude/`, `.git/hooks/`, and `.session/`
+  - `init` command creates consolidated layout (MSSCI-14370)
+  - `update` command migrates legacy `.claude/`-based installs to `.pennyfarthing/` (MSSCI-14371)
+  - `settings.local.json` canonical location moved to `.pennyfarthing/` with symlink compat (MSSCI-14366)
+  - `persona-config.yaml` consolidated to `.pennyfarthing/` exclusively (MSSCI-14367)
+  - E2E test for fresh repo install (MSSCI-14373)
+  - E2E test for existing repo upgrade with migration validation (MSSCI-14374)
+  - Audit of all files Pennyfarthing produces outside `.pennyfarthing/` (MSSCI-14365)
+- **Tool Use Approval System** - Full hook-based permission flow replacing legacy IPC
+  - PreToolUse hook update and registration (MSSCI-14320)
+  - Grant checking integrated into WheelHub hook router (MSSCI-14321)
+  - ApprovalModal mounted in App.tsx component tree (MSSCI-14322)
+  - Severity classification for hook requests (MSSCI-14323)
+  - Grant persistence with session scoping and shutdown cleanup (MSSCI-14324)
+  - `/permissions` skill connected to grant store (MSSCI-14325)
+  - Workflow permission presets integration (MSSCI-14326)
+  - Agent-level permission scoping (MSSCI-14392)
+  - Legacy IPC approval path removed (MSSCI-14318)
+- **Smooth Plan Mode Exit** - Tirepump choice UI for plan mode exit (MSSCI-14327)
+- **PostToolUse Hooks** - Added to settings template for hook-based workflows (MSSCI-14373)
+- **Doctor Cyclist Health Checks** - node-pty spawn-helper validation
+- **Context Cleared Indicator** - Light/dark icon support in Cyclist
+- **Click-to-Sort Markdown Tables** - Sortable columns in message content
+- **Workflow Start Button** - Available workflows panel has direct start action
+- **Subagent Naming** - Persona output includes subagent naming instructions
+
+### Changed
+
+- **BREAKING: Install Layout** - New installs use `.pennyfarthing/` as root instead of `.claude/`. Existing installs migrated via `pennyfarthing update`
+- **Subagent Tab Renamed** - "Subagents" instead of previous label, with completion tracking
+
+### Fixed
+
+- **Subagent Span Cleanup** - Extract `tool_result` from user SDK messages to clear completed spans
+- **Persona Config References** - All remaining `.claude/persona-config.yaml` paths updated
+- **PreToolUse Hook** - No longer returns 'ask' when Cyclist not running
+- **Sprint YAML Compat** - Detect single-quoted multiline strings that break Node yaml parser
+- **Markdown Table Styles** - Proper table rendering in message content
+- **Color Preset Startup** - Saved color preset applied correctly on startup
+- **Background Task Completion** - Tasks completed via OTEL with panel toggles and UX fixes
+- **Sprint Panel Updates** - Broadcast sprint update on session file changes
+- **User Message Alignment** - Left-aligned with removed unused notifications
+- **Completed Subagent Messages** - Removed from message view after completion
+
+---
+
 ## [9.4.0] - 2026-02-05
 
 ### Added

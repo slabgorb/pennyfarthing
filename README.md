@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v9.4.0** | *The outer loop goes once, the inner loop goes many times.*
+**v10.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -17,7 +17,7 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 - **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
 - **8 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (Architecture, Release, Git Cleanup)
 - **49 Slash Commands** - Entry points for agent activation and workflows
-- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **24 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
@@ -247,15 +247,18 @@ After initialization:
 
 ```
 your-project/
-├── .claude/
-│   ├── commands/             # → symlinks to @pennyfarthing/core
-│   ├── skills/               # → symlinks to @pennyfarthing/core
-│   └── project/              # Your customizations
 ├── .pennyfarthing/
 │   ├── agents/               # → symlink to @pennyfarthing/core
+│   ├── guides/               # → symlink to @pennyfarthing/core
+│   ├── personas/             # → symlink to @pennyfarthing/core
+│   ├── scripts/              # → symlink to @pennyfarthing/core
 │   ├── workflows/            # → symlink to @pennyfarthing/core
-│   ├── sidecars/             # Agent learning files
+│   ├── sidecars/             # Agent learning files (local, writable)
+│   ├── settings.local.json   # Claude Code settings
 │   └── config.local.yaml     # Theme selection
+├── .claude/
+│   ├── commands/             # → symlinks for Claude Code discovery
+│   └── skills/               # → symlinks for Claude Code discovery
 ├── sprint/
 │   ├── current-sprint.yaml   # Active sprint
 │   └── archive/              # Completed sessions
@@ -263,30 +266,17 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v9.x
+## What's New in v10.0.0
 
-### v9.3.0
+- **Clean Install Consolidation** - All managed files under `.pennyfarthing/` instead of scattered across `.claude/`, `.git/hooks/`, `.session/`. Legacy installs migrated automatically via `pennyfarthing update`
+- **Tool Use Approval System** - Hook-based permission flow with severity classification, grant persistence, agent-level scoping, and workflow presets. Replaces legacy IPC approval
+- **Smooth Plan Mode Exit** - Tirepump choice UI for transitioning out of plan mode
 
-- **Theme Packages** - 98 themes split into 7 installable packs (`@pennyfarthing/themes-*`)
-- **Release Workflow** - 11-step gated release process with abort-safe gates
-- **ToolStack Redesign** - Grouped tool calls with collapsible results
-- **shadcn/ui Migration** - Cyclist components migrated to shadcn with 30+ theme presets
+### Previous Highlights
 
-### v9.0.0
-
-- **Dockview Panel System** - 15 draggable, floatable, splittable panels (ADR-0019)
-- **React 19 Rewrite** - Full React component architecture for Cyclist
-- **Tool Use Visualization** - Human-readable tool summaries and tool stacking
-- **Prime Context System** - Tiered agent context injection (Full/Refresh/Handoff/Minimal)
-- **Bell Mode** - Queue messages while Claude works (ADR-0016)
-- **Relay Mode** - Automatic agent handoffs (ADR-0017)
-
-### Previous Highlights (v7.6-v8.x)
-
-- **BikeLane Workflow System** - Phased and Stepped workflows with user gates
-- **Scientific Benchmarking** - TRAIL-OCEAN hypothesis testing framework
-- **JobFair** - Cross-role performance discovery system
-- **Agent Sidecars** - Persistent learning across stories
+- **v9.3** - Theme packages (97 themes across 7 packs), release workflow, shadcn/ui migration
+- **v9.0** - Dockview panel system, React 19 rewrite, tool visualization, prime context, bell/relay modes
+- **v8.x** - BikeLane workflows, scientific benchmarking, JobFair, agent sidecars
 
 See [CHANGELOG.md](CHANGELOG.md) for full details.
 
