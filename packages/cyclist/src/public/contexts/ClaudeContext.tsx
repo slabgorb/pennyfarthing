@@ -24,6 +24,7 @@ interface WebSocketClaudeMessage {
 type MessageCallback = (message: ClaudeMessage) => void;
 type CompleteCallback = () => void;
 type ErrorCallback = (error: string) => void;
+type ClearCallback = () => void;
 
 /** User message sent via send() - for display in MessagePanel */
 interface UserMessageData {
@@ -56,6 +57,8 @@ interface ClaudeContextValue {
   onError: (callback: ErrorCallback) => () => void;
   /** Subscribe to user messages sent via send() - for display in MessagePanel */
   onUserMessage: (callback: UserMessageCallback) => () => void;
+  /** Subscribe to clear/reset events */
+  onClear: (callback: ClearCallback) => () => void;
 }
 
 // =============================================================================
@@ -83,6 +86,7 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
   const completeCallbacksRef = useRef<Set<CompleteCallback>>(new Set());
   const errorCallbacksRef = useRef<Set<ErrorCallback>>(new Set());
   const userMessageCallbacksRef = useRef<Set<UserMessageCallback>>(new Set());
+  const clearCallbacksRef = useRef<Set<ClearCallback>>(new Set());
 
   // Connect to WebSocket
   const connect = useCallback(() => {
@@ -204,6 +208,7 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     }
 
     wsRef.current.send(JSON.stringify({ type: 'clear' }));
+    clearCallbacksRef.current.forEach(cb => cb());
   }, []);
 
   // Clear session and reload agent (TirePump)
@@ -215,6 +220,7 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
 
     console.log('[ClaudeContext] TirePump: clearAndReload agent:', agent);
     wsRef.current.send(JSON.stringify({ type: 'clearAndReload', agent }));
+    clearCallbacksRef.current.forEach(cb => cb());
   }, []);
 
   // Set permission mode
@@ -260,6 +266,14 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     };
   }, []);
 
+  // Subscribe to clear/reset events
+  const onClear = useCallback((callback: ClearCallback) => {
+    clearCallbacksRef.current.add(callback);
+    return () => {
+      clearCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
   const value = useMemo(() => ({
     send,
     abort,
@@ -272,7 +286,8 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
     onComplete,
     onError,
     onUserMessage,
-  }), [send, abort, clear, clearAndReload, setMode, isConnected, mode, onMessage, onComplete, onError, onUserMessage]);
+    onClear,
+  }), [send, abort, clear, clearAndReload, setMode, isConnected, mode, onMessage, onComplete, onError, onUserMessage, onClear]);
 
   return (
     <ClaudeContext.Provider value={value}>

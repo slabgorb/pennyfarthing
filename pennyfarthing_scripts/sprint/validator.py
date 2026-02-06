@@ -448,10 +448,54 @@ def validate_sprint_file(file_path: Path) -> ValidationResult:
         )
         return result
 
+    # Read raw content for cross-parser compatibility check
+    raw_content = file_path.read_text()
+
+    # Detect single-quoted YAML values spanning blank lines. These parse in
+    # Python's yaml but fail in Node's yaml library (used by Cyclist's panel).
+    # Walk lines tracking whether we're inside a single-quoted value.
+    in_sq = False
+    sq_start_line = 0
+    has_blank = False
+    for line_num, line in enumerate(raw_content.splitlines(), 1):
+        if not in_sq:
+            # Look for a value starting with single quote: "key: 'text..."
+            # Must be a YAML value position (after colon+space), not inside
+            # block scalars (|, >) or comments.
+            stripped = line.lstrip()
+            if stripped.startswith("#"):
+                continue
+            colon_match = re.search(r":\s+'", line)
+            if colon_match:
+                after = line[colon_match.end() - 1:]  # from the opening quote
+                # Count unescaped quotes ('' is escape for ' in YAML)
+                clean = after.replace("''", "")
+                if clean.count("'") == 1:
+                    # Opening quote without closing — multiline single-quoted string
+                    in_sq = True
+                    sq_start_line = line_num
+                    has_blank = False
+        else:
+            if line.strip() == "":
+                has_blank = True
+            # Check if this line closes the single-quoted string
+            clean = line.replace("''", "")
+            if "'" in clean:
+                if has_blank:
+                    result.add_error(
+                        "Single-quoted string contains blank lines (breaks Cyclist panel parser). "
+                        "Use block scalar (|) or flow-style double-quoted string instead.",
+                        f"{file_path}:{sq_start_line}",
+                    )
+                in_sq = False
+                has_blank = False
+
+    if result.errors:
+        return result
+
     # Try to load YAML
     try:
-        with open(file_path) as f:
-            data = yaml.safe_load(f)
+        data = yaml.safe_load(raw_content)
     except yaml.YAMLError as e:
         result.add_error(
             f"Failed to parse YAML: {e}",

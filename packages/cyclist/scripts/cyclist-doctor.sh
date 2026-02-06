@@ -68,7 +68,7 @@ Options:
 Checks performed:
   - System prerequisites (Node.js, pnpm, Python 3, Xcode tools, just)
   - Build state (dist/server.js, dist/main.js)
-  - Native modules (node-pty prebuild and loadability)
+  - Native modules (node-pty prebuild, spawn-helper permissions, loadability)
   - Electron compatibility with node-pty
   - Workspace dependencies (@pennyfarthing/core, @pennyfarthing/shared)
   - Port 1898 availability
@@ -269,6 +269,23 @@ check_node_pty() {
     fi
 
     log_pass "node-pty prebuild exists for ${os}-${arch}"
+
+    # Check spawn-helper has execute permission (pnpm can strip it)
+    local spawn_helper="$prebuild_dir/spawn-helper"
+    if [[ -f "$spawn_helper" ]]; then
+        if [[ -x "$spawn_helper" ]]; then
+            log_pass "node-pty spawn-helper is executable"
+        else
+            log_fail "node-pty spawn-helper missing execute permission (causes posix_spawnp failure)" "chmod +x $spawn_helper"
+            if [[ "$FIX_MODE" == true ]]; then
+                log_info "Fixing spawn-helper permissions..."
+                chmod +x "$spawn_helper"
+                log_pass "spawn-helper permissions fixed"
+            fi
+        fi
+    else
+        log_warn "node-pty spawn-helper not found in prebuilds (may be built differently)"
+    fi
 
     # Check if node-pty is loadable
     log_info "Testing node-pty loadability..."

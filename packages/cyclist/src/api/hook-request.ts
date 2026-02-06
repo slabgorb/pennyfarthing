@@ -17,6 +17,8 @@
 
 import { Router, Request, Response } from 'express';
 import { WebSocket } from 'ws';
+import { checkGrant, isAllowlisted, addGrant, type GrantTypeValue } from '../settings-store.js';
+import { isDangerousPath, getPathCategory, extractBashTargetPaths } from '../dangerous-path.js';
 
 // =============================================================================
 // Types
@@ -61,26 +63,117 @@ const hookClients = new Set<WebSocket>();
 const APPROVAL_TIMEOUT_MS = 120000;
 
 // =============================================================================
-// Allowlist and Grants (imported from settings-store when available)
+// Scope Extraction (MSSCI-14321)
 // =============================================================================
 
-// Temporary allowlist for common safe commands
-const SAFE_COMMAND_PATTERNS = [
-  /^ls\b/,
-  /^pwd$/,
-  /^echo\b/,
-  /^cat\b.*\.(md|txt|json|yaml|yml|ts|js|py|sh)$/,
-  /^git status/,
-  /^git diff/,
-  /^git log/,
-  /^git branch/,
-  /^npm run (build|test|lint)/,
-  /^node --version/,
-  /^npm --version/,
+/**
+ * Extract the scope identifier from tool input for grant matching.
+ * Modeled after getToolScope() in approval-gate.ts.
+ */
+function extractToolScope(toolName: string, input: Record<string, unknown>): string {
+  switch (toolName) {
+    case 'Bash':
+      return (input.command as string) || '';
+    case 'WebFetch':
+      return (input.url as string) || '';
+    case 'Edit':
+    case 'Write':
+    case 'Read':
+      return (input.file_path as string) || '';
+    default:
+      return JSON.stringify(input);
+  }
+}
+
+// =============================================================================
+// Severity Classification (MSSCI-14323)
+// =============================================================================
+
+export type HookSeverity = 'safe' | 'normal' | 'destructive';
+
+interface SeverityResult {
+  severity: HookSeverity;
+  warning?: string;
+}
+
+const SAFE_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebSearch']);
+
+const DESTRUCTIVE_BASH_PATTERNS = [
+  /rm\s+(-[rf]+\s+)*/,
+  /git\s+(reset\s+--hard|push\s+--force|clean\s+-[fd])/,
+  /drop\s+database/i,
+  /truncate\s+table/i,
 ];
 
-function isCommandAllowlisted(command: string): boolean {
-  return SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(command.trim()));
+const SAFE_BASH_PATTERNS = [
+  /^(ls|cat|head|tail|grep|find|pwd|echo|which|type|file|stat|wc|diff)\b/,
+  /^git\s+(status|log|diff|show|branch|remote)\b/,
+];
+
+const CATEGORY_WARNINGS: Record<string, string> = {
+  secrets: 'Modifying sensitive secrets/credentials file',
+  git: 'Modifying git internals',
+  dependencies: 'Modifying dependency files',
+  system: 'Modifying system files',
+};
+
+/**
+ * Classify the severity of a hook request server-side.
+ * Combines tool-name classification with dangerous-path detection.
+ */
+export function classifyHookSeverity(
+  toolName: string,
+  input: Record<string, unknown>,
+): SeverityResult {
+  // Safe tools are always safe
+  if (SAFE_TOOLS.has(toolName)) {
+    return { severity: 'safe' };
+  }
+
+  // Check dangerous paths for Write/Edit
+  if (toolName === 'Write' || toolName === 'Edit') {
+    const filePath = (input.file_path as string) || '';
+    if (filePath && isDangerousPath(filePath)) {
+      const category = getPathCategory(filePath);
+      return {
+        severity: 'destructive',
+        warning: category ? CATEGORY_WARNINGS[category] : 'Modifying sensitive path',
+      };
+    }
+    return { severity: 'normal' };
+  }
+
+  // Bash command classification
+  if (toolName === 'Bash') {
+    const command = (input.command as string) || '';
+
+    // Check for destructive bash patterns
+    if (DESTRUCTIVE_BASH_PATTERNS.some(p => p.test(command))) {
+      return { severity: 'destructive', warning: 'Destructive command detected' };
+    }
+
+    // Check for bash redirecting to dangerous paths
+    const targetPaths = extractBashTargetPaths(command);
+    for (const targetPath of targetPaths) {
+      if (isDangerousPath(targetPath)) {
+        const category = getPathCategory(targetPath);
+        return {
+          severity: 'destructive',
+          warning: category ? CATEGORY_WARNINGS[category] : 'Redirecting to sensitive path',
+        };
+      }
+    }
+
+    // Check for safe bash patterns
+    if (SAFE_BASH_PATTERNS.some(p => p.test(command))) {
+      return { severity: 'safe' };
+    }
+
+    return { severity: 'normal' };
+  }
+
+  // Default: normal
+  return { severity: 'normal' };
 }
 
 // =============================================================================
@@ -104,6 +197,8 @@ function broadcastHookRequest(data: {
   toolId: string;
   toolName: string;
   input: Record<string, unknown>;
+  severity: HookSeverity;
+  warning?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -153,6 +248,20 @@ export function handleHookWebSocketMessage(ws: WebSocket, message: string): void
     const data = JSON.parse(message);
 
     if (data.type === 'hook-response') {
+      // Store grant if user approved with a grantScope (MSSCI-14321 AC8)
+      if (data.approved && data.data?.grantScope) {
+        const pending = pendingApprovals.get(data.toolId);
+        const scope = pending
+          ? extractToolScope(pending.toolName, pending.input)
+          : '';
+        addGrant({
+          tool: pending?.toolName || '',
+          scope,
+          grant_type: data.data.grantScope as GrantTypeValue,
+          granted_at: new Date().toISOString(),
+        });
+      }
+
       resolveApproval(data.toolId, data.approved, data.data);
     }
   } catch (error) {
@@ -172,16 +281,23 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Check for auto-approval
-  if (toolName === 'Bash') {
-    const command = (input?.command as string) || '';
-    if (isCommandAllowlisted(command)) {
-      res.json({
-        decision: 'allow',
-        reason: 'Command matches safe pattern allowlist',
-      });
-      return;
-    }
+  // Check for auto-approval via grants (all tool types)
+  const scope = extractToolScope(toolName, input || {});
+  if (checkGrant(toolName, scope)) {
+    res.json({
+      decision: 'allow',
+      reason: 'Granted by permission grant',
+    });
+    return;
+  }
+
+  // Check Bash allowlist for backward compatibility
+  if (toolName === 'Bash' && isAllowlisted(scope)) {
+    res.json({
+      decision: 'allow',
+      reason: 'Command matches allowlist pattern',
+    });
+    return;
   }
 
   // No clients connected - fall through to Claude Code's built-in approval
@@ -214,12 +330,17 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
     }, APPROVAL_TIMEOUT_MS);
   });
 
-  // Broadcast to clients (include context for UI display)
+  // Classify severity before broadcast (MSSCI-14323)
+  const { severity, warning } = classifyHookSeverity(toolName, input || {});
+
+  // Broadcast to clients (include context and severity for UI display)
   broadcastHookRequest({
     type: 'hook-request',
     toolId,
     toolName,
     input: input || {},
+    severity,
+    warning,
     context,
   });
 

@@ -45,10 +45,6 @@ interface Settings {
     show_flow?: boolean;
     sidebar_width?: number;
   };
-  notifications?: {
-    phase_change?: boolean;
-    sound?: boolean;
-  };
   pennyfarthing?: {
     theme?: string;
   };
@@ -80,8 +76,8 @@ const PANEL_DISPLAY_NAMES: Record<string, string> = {
   settings: 'Settings',
 };
 
-// Panels that cannot be hidden (sacred center)
-const PROTECTED_PANELS = new Set(['message']);
+// Panels that cannot be hidden
+const PROTECTED_PANELS = new Set<string>();
 
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -147,6 +143,7 @@ export function SettingsPanel(): React.ReactElement {
 
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
+      applyPreset(presetId);
       setColorPreset(presetId);
     });
 
@@ -420,28 +417,6 @@ export function SettingsPanel(): React.ReactElement {
           />
           Relay Mode
           <span className="setting-description">Auto-handoff to next agent</span>
-        </div>
-      </section>
-
-      <Separator className="my-2" />
-
-      <section className="settings-section">
-        <h4>Notifications</h4>
-        <div className="toggle-setting">
-          <Switch
-            checked={settings.notifications?.phase_change || false}
-            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'phase_change', checked)}
-            disabled={saving}
-          />
-          Phase change alerts
-        </div>
-        <div className="toggle-setting">
-          <Switch
-            checked={settings.notifications?.sound || false}
-            onCheckedChange={(checked: boolean) => handleToggle('notifications', 'sound', checked)}
-            disabled={saving}
-          />
-          Sound effects
         </div>
       </section>
 

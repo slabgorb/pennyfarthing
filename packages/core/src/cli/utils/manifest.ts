@@ -17,29 +17,37 @@ export interface Manifest {
   migrationSource?: string;
 }
 
-const MANIFEST_PATH = '.claude/manifest.json';
+const MANIFEST_PATH = '.pennyfarthing/manifest.json';
+const LEGACY_MANIFEST_PATH = '.claude/manifest.json';
 
 /**
- * Get the full path to the manifest file
+ * Get the full path to the manifest file (new canonical location)
  */
 export function getManifestPath(projectRoot: string): string {
   return join(projectRoot, MANIFEST_PATH);
 }
 
 /**
- * Check if a manifest exists
+ * Check if a manifest exists (checks new location first, then legacy)
  */
 export function manifestExists(projectRoot: string): boolean {
-  return existsSync(getManifestPath(projectRoot));
+  return existsSync(join(projectRoot, MANIFEST_PATH))
+    || existsSync(join(projectRoot, LEGACY_MANIFEST_PATH));
 }
 
 /**
- * Read the manifest file
+ * Read the manifest file (.pennyfarthing/ takes precedence over legacy .claude/)
  */
 export function readManifest(projectRoot: string): Manifest | null {
-  const manifestPath = getManifestPath(projectRoot);
+  const newPath = join(projectRoot, MANIFEST_PATH);
+  const legacyPath = join(projectRoot, LEGACY_MANIFEST_PATH);
 
-  if (!existsSync(manifestPath)) {
+  // New location takes precedence
+  const manifestPath = existsSync(newPath) ? newPath
+    : existsSync(legacyPath) ? legacyPath
+    : null;
+
+  if (!manifestPath) {
     return null;
   }
 
@@ -64,7 +72,7 @@ export function writeManifest(
   }
 
   const manifestPath = getManifestPath(projectRoot);
-  ensureDirSync(join(projectRoot, '.claude'));
+  ensureDirSync(join(projectRoot, '.pennyfarthing'));
 
   writeFileSync(
     manifestPath,
@@ -88,12 +96,14 @@ export function createManifest(
   const now = new Date().toISOString();
 
   const managedPaths = [
-    '.claude/agents',
     '.claude/commands',
-    '.claude/guides',
     '.claude/skills',
-    '.claude/personas',
-    '.claude/scripts'
+    '.pennyfarthing/agents',
+    '.pennyfarthing/guides',
+    '.pennyfarthing/output-styles',
+    '.pennyfarthing/personas',
+    '.pennyfarthing/scripts',
+    '.pennyfarthing/workflows'
   ];
 
   return {

@@ -220,7 +220,7 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
     await sendPersonaData(mockPersonaMinimal);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-role')).toHaveTextContent('dev');
+      expect(screen.getByTestId('persona-role')).toHaveTextContent('DEV');
     });
   });
 
@@ -235,7 +235,7 @@ describe('AC3: PersonaHeader displays agent role/title', () => {
       const roleEl = screen.getByTestId('persona-role');
       // Radix TooltipTrigger adds data-state attribute to wrapped elements
       expect(roleEl).toHaveAttribute('data-state');
-      // The element still displays the full role name
+      // Roles without AGENT_ABBREV mapping display the full role name
       expect(roleEl).toHaveTextContent('Test Engineer');
     });
   });

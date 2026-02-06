@@ -10,9 +10,11 @@
  * Epic: epic-76 (Dockview Panel Migration)
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useClaudeContext } from '../../contexts/ClaudeContext';
 import { useStory } from '../../hooks/useStory';
 import type { WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
 
@@ -89,7 +91,10 @@ function SteppedProgress({ phases }: { phases: WorkflowPhase[] }): React.ReactEl
 // Available Workflows List (MSSCI-14301)
 // =============================================================================
 
-function AvailableWorkflowsList({ workflows }: { workflows: AvailableWorkflow[] }): React.ReactElement {
+function AvailableWorkflowsList({ workflows, onStart }: {
+  workflows: AvailableWorkflow[];
+  onStart?: (workflow: AvailableWorkflow) => void;
+}): React.ReactElement {
   return (
     <div className="available-workflows">
       <div className="available-workflows-header">
@@ -113,6 +118,17 @@ function AvailableWorkflowsList({ workflows }: { workflows: AvailableWorkflow[] 
             {wf.type === 'stepped' && (
               <div className="workflow-entry-hint">/workflow start {wf.name}</div>
             )}
+            <div className="workflow-entry-footer">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="workflow-start-button"
+                data-testid="workflow-start-button"
+                onClick={() => onStart?.(wf)}
+              >
+                Start
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -126,6 +142,12 @@ function AvailableWorkflowsList({ workflows }: { workflows: AvailableWorkflow[] 
 
 export function WorkflowPanel(): React.ReactElement {
   const { story, isLoading, error, availableWorkflows } = useStory();
+  const { send, isConnected } = useClaudeContext();
+
+  const handleStartWorkflow = useCallback((wf: AvailableWorkflow) => {
+    if (!isConnected) return;
+    send(`/workflow start ${wf.name}`);
+  }, [send, isConnected]);
 
   if (isLoading) {
     return (
@@ -159,7 +181,7 @@ export function WorkflowPanel(): React.ReactElement {
     if (availableWorkflows && availableWorkflows.length > 0) {
       return (
         <div className="workflow-panel" data-testid="workflow-panel">
-          <AvailableWorkflowsList workflows={availableWorkflows} />
+          <AvailableWorkflowsList workflows={availableWorkflows} onStart={handleStartWorkflow} />
         </div>
       );
     }

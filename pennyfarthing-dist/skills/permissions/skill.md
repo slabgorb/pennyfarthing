@@ -10,7 +10,7 @@ description: Manage runtime permission grants - list active grants, add/revoke t
 
 ## Overview
 
-Pennyfarthing uses a runtime permission system for tool access control. This skill provides commands to view and manage permission grants.
+Pennyfarthing uses a runtime permission system for tool access control. This skill provides commands to view and manage permission grants via the WheelHub Permissions API.
 
 ## Quick Reference
 
@@ -29,15 +29,14 @@ Permissions support three duration types:
 |------|----------|---------|
 | `once` | Single use | Memory only |
 | `session` | Until session ends | Memory only |
-| `always` | Persists forever | `.claude/settings.local.json` |
+| `always` | Persists forever | `~/.cyclist/grants.json` |
 
 ## List Active Grants
 
 To see all currently active permission grants:
 
 ```bash
-# Read grants from settings
-cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants // []'
+curl -s http://localhost:${WHEELHUB_PORT:-7173}/api/permissions | jq '.grants'
 ```
 
 Output shows:
@@ -45,7 +44,6 @@ Output shows:
 - Scope pattern
 - Grant type
 - When granted
-- Uses remaining (for `once` type)
 
 If no grants exist, displays "No active permission grants."
 
@@ -66,19 +64,20 @@ Add a permission grant for a specific tool and scope:
 
 ```bash
 # Grant WebFetch access to GitHub
-/permissions grant WebFetch "*.github.com"
+curl -s -X POST http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/grant \
+  -H 'Content-Type: application/json' \
+  -d '{"tool":"WebFetch","scope":"*.github.com","grant_type":"session"}'
 
-# Grant Bash read-only git commands (session-only)
-/permissions grant Bash "git status|git log|git diff"
-
-# Grant Read access to src directory (always)
-/permissions grant Read "src/**/*" --type always
+# Grant Bash git commands (always)
+curl -s -X POST http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/grant \
+  -H 'Content-Type: application/json' \
+  -d '{"tool":"Bash","scope":"git *","grant_type":"always"}'
 ```
 
 **What happens:**
 1. Validates the tool name and scope
 2. Creates a `PermissionGrant` object with timestamp
-3. Stores in `.claude/settings.local.json` under `permissions.grants`
+3. Stores via settings-store (always-grants persisted to `~/.cyclist/grants.json`)
 4. Reports success with grant details
 
 ## Revoke Tool Access
@@ -93,16 +92,16 @@ Remove all grants for a specific tool:
 
 ```bash
 # Revoke all WebFetch grants
-/permissions revoke WebFetch
+curl -s -X DELETE http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/revoke/WebFetch
 
-# Revoke all Bash grants
-/permissions revoke Bash
+# Revoke a specific Bash scope
+curl -s -X DELETE "http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/revoke/Bash?scope=git%20*"
 ```
 
 **What happens:**
-1. Reads current grants from settings
-2. Filters out grants matching the tool name
-3. Writes updated grants back to settings
+1. Finds all grants matching the tool (and optional scope)
+2. Removes each grant from settings-store
+3. Always-grants removal triggers file persistence
 4. Reports how many grants were removed
 
 ## Show Grant Details
@@ -113,41 +112,24 @@ Display detailed information about grants for a specific tool:
 /permissions show <tool>
 ```
 
+```bash
+curl -s http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/show/Bash | jq '.grants'
+```
+
 **Output includes:**
 - All grants for the specified tool
 - Scope patterns
 - Grant types
 - Timestamps
-- Remaining uses (for `once` type)
 
-## Storage Format
+## Storage
 
-Grants are stored in `.claude/settings.local.json`:
-
-```json
-{
-  "permissions": {
-    "grants": [
-      {
-        "tool": "WebFetch",
-        "scope": "*.github.com",
-        "grant_type": "session",
-        "granted_at": "2026-01-13T15:00:00.000Z"
-      },
-      {
-        "tool": "Bash",
-        "scope": "git *",
-        "grant_type": "always",
-        "granted_at": "2026-01-13T14:30:00.000Z"
-      }
-    ]
-  }
-}
-```
+Grants are managed by Cyclist's settings-store:
+- `once` and `session` grants live in memory only
+- `always` grants are persisted to `~/.cyclist/grants.json`
+- The WheelHub Permissions API at `/api/permissions` provides CRUD access
 
 ## Permission Schema
-
-From `@pennyfarthing/core`:
 
 ```typescript
 interface PermissionGrant {
@@ -155,7 +137,6 @@ interface PermissionGrant {
   scope: string;          // Scope pattern
   grant_type: GrantType;  // 'once' | 'session' | 'always'
   granted_at: string;     // ISO timestamp
-  uses_remaining?: number; // For 'once' type
 }
 ```
 
@@ -163,13 +144,14 @@ interface PermissionGrant {
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "Invalid tool name" | Tool doesn't exist | Check available tools |
-| "Invalid scope pattern" | Empty or malformed scope | Provide quoted scope string |
-| "Settings file not found" | First-time use | File will be created |
-| "No grants found for tool" | Tool has no active grants | Nothing to revoke |
+| "Missing required field: tool" | Tool not provided | Include tool in request body |
+| "Missing required field: scope" | Scope not provided | Include scope in request body |
+| "Invalid grant_type" | Unknown type | Use once, session, or always |
+| Connection refused | WheelHub not running | Start Cyclist first |
 
 ## Related
 
 - **Story 33-1:** Permission Request Protocol (schema definitions)
 - **Story 33-3:** Cyclist Permission UI (visual management)
 - **Story 33-4:** Spot Permission Grants (inline approval)
+- **Story 78-7:** Connect /permissions skill to grant store (this story)

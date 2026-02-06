@@ -97,8 +97,8 @@ function convertTableLinesToHtml(lines: string[]): string {
   if (headerLine) {
     const headerCells = parseCells(headerLine);
     html += '<thead><tr>';
-    for (const cell of headerCells) {
-      html += `<th>${cell}</th>`;
+    for (let i = 0; i < headerCells.length; i++) {
+      html += `<th data-col="${i}" class="sortable-th">${headerCells[i]} <span class="sort-indicator"></span></th>`;
     }
     html += '</tr></thead>';
   }

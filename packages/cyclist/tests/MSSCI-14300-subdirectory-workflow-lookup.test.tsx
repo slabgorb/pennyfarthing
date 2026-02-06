@@ -70,6 +70,10 @@ vi.mock('../src/public/hooks/useStory', () => ({
   useStory: vi.fn(() => currentMockData),
 }));
 
+vi.mock('../src/public/contexts/ClaudeContext', () => ({
+  useClaudeContext: vi.fn(() => ({ send: vi.fn(), isConnected: true })),
+}));
+
 beforeEach(() => {
   currentMockData = mockSteppedStoryData;
   vi.clearAllMocks();

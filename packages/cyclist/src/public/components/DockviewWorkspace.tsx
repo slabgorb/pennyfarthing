@@ -107,7 +107,7 @@ const PANEL_TITLES: Record<string, string> = {
   workflow: 'Workflow',
   ac: 'AC',
   todo: 'Todo',
-  background: 'Background',
+  background: 'Subagents',
   git: 'Git',
   hotspots: 'Hotspots',
   settings: 'Settings',
@@ -555,9 +555,9 @@ export function DockviewWorkspace({
         handleLayoutChange();
       }),
       api.onDidRemovePanel((e) => {
-        // Track closed panels (except message which can't be closed)
+        // Track closed panels for restoration
         const panelId = e?.panel?.id;
-        if (panelId && panelId !== PANEL_INVENTORY.MESSAGE) {
+        if (panelId) {
           closedPanels.add(panelId);
           updateClosedPanelsList();
         }
@@ -622,6 +622,32 @@ export function DockviewWorkspace({
     };
   }, []);
 
+  // Listen for panel toggle commands via WebSocket (View menu integration)
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'panel:toggle' && data.panelId) {
+          const api = dockviewApiRef;
+          if (!api) return;
+          const existing = api.getPanel(data.panelId);
+          if (existing) {
+            existing.api.close();
+          } else {
+            restorePanel(data.panelId);
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
   // Component map for Dockview
   const components = {
     PanelAdapter,
@@ -638,7 +664,7 @@ export function DockviewWorkspace({
     workflow: 'Workflow',
     ac: 'AC',
     todo: 'Todo',
-    background: 'Background',
+    background: 'Subagents',
     git: 'Git',
     hotspots: 'Hotspots',
     settings: 'Settings',

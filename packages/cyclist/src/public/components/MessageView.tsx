@@ -23,9 +23,11 @@ import ToolCallBlock from './ToolCallBlock';
 import ToolStack from './ToolStack';
 import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
+import { Separator } from '@/components/ui/separator';
 import { isSkillContent } from '../utils/messageFilters';
 import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
 import { usePersona } from '../hooks/usePersona';
+import { useColorScheme } from '../hooks/useColorScheme';
 import { useStatsStrip } from '../hooks/useStatsStrip';
 import type { MessageData } from '../types/message';
 
@@ -61,7 +63,7 @@ interface ToolStackGroup {
 type RenderItem = MessageData | SubagentGroup | ToolStackGroup;
 
 interface Turn {
-  speaker: 'user' | 'agent';
+  speaker: 'user' | 'agent' | 'system';
   items: RenderItem[];
   timestamp: number;
 }
@@ -74,9 +76,10 @@ function formatTurnTime(timestamp: number): string {
  * Classify an item as 'user' or 'agent' for turn grouping.
  * Tools, subagents, and stacks are all part of the agent's turn.
  */
-function speakerOf(item: RenderItem): 'user' | 'agent' {
+function speakerOf(item: RenderItem): 'user' | 'agent' | 'system' {
   if ('isToolStack' in item || 'messages' in item) return 'agent';
   const msg = item as MessageData;
+  if (msg.type === 'context_cleared') return 'system';
   return (msg.type === 'user' || msg.type === 'bell_injected') ? 'user' : 'agent';
 }
 
@@ -84,6 +87,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
   const messageListRef = useRef<MessageListHandle>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const { persona } = usePersona();
+  const colorScheme = useColorScheme();
   const { projectInfo } = useStatsStrip();
 
   // Persist subagent collapsed state across re-renders/remounts
@@ -262,7 +266,11 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       <div data-testid="message-view" className="message-view">
         <div className="message-view-empty">
           <div>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚴</div>
+            <img
+              src={colorScheme === 'dark' ? '/images/cyclist-dark.png' : '/images/cyclist-light.png'}
+              alt="Cyclist"
+              style={{ height: '2.5rem', marginBottom: '0.5rem', opacity: 0.6 }}
+            />
             <div>Type <code style={{
               background: 'var(--bg-tertiary, #0f0f1a)',
               padding: '2px 6px',
@@ -286,6 +294,26 @@ export default function MessageView({ messages }: MessageViewProps): React.React
         autoScroll={isAtBottom}
       >
         {turns.map((turn, turnIndex) => {
+          // System turns (context_cleared) render as a divider bar
+          if (turn.speaker === 'system') {
+            // Still increment globalIdx for system items
+            turn.items.forEach(() => globalIdx++);
+            return (
+              <div key={`turn-${turnIndex}`} className="turn-group turn-system">
+                <div className="context-cleared-bar">
+                  <Separator className="context-cleared-line" />
+                  <span className="context-cleared-label">
+                    Context cleared
+                  </span>
+                  <span className="context-cleared-time">
+                    {formatTurnTime(turn.timestamp)}
+                  </span>
+                  <Separator className="context-cleared-line" />
+                </div>
+              </div>
+            );
+          }
+
           // Track which items in this turn are "first message" (non-tool, non-stack)
           let seenMessage = false;
 

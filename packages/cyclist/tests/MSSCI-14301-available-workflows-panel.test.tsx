@@ -101,6 +101,14 @@ vi.mock('../src/public/hooks/useStory', () => ({
   useStory: vi.fn(() => currentMockData),
 }));
 
+const mockSend = vi.fn();
+vi.mock('../src/public/contexts/ClaudeContext', () => ({
+  useClaudeContext: vi.fn(() => ({
+    send: mockSend,
+    isConnected: true,
+  })),
+}));
+
 beforeEach(() => {
   currentMockData = mockNoActiveWorkflow;
   vi.clearAllMocks();

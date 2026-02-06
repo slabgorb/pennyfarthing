@@ -13,11 +13,23 @@ import { IPC_AGENT_CHANNELS, IPC_SETTINGS_CHANNELS } from './ipc-channels.js';
 type BroadcastFn = (channel: string, data: unknown) => void;
 let broadcastToRenderer: BroadcastFn = () => {};
 
+// Panel toggle via WebSocket - set by main.ts
+type PanelToggleFn = (panelId: string) => void;
+let panelToggleFn: PanelToggleFn = () => {};
+
 /**
  * Set the broadcast function (called from main.ts)
  */
 export function setBroadcastFunction(fn: BroadcastFn): void {
   broadcastToRenderer = fn;
+}
+
+/**
+ * Set the panel toggle broadcast function (called from main.ts)
+ * Routes through WebSocket instead of IPC
+ */
+export function setPanelToggleBroadcast(fn: PanelToggleFn): void {
+  panelToggleFn = fn;
 }
 
 /**
@@ -131,8 +143,28 @@ export function buildToolsMenu(): { label: string; submenu: unknown[] } {
 }
 
 /**
+ * Panel definitions for View menu toggles
+ */
+const VIEW_MENU_PANELS = [
+  { id: 'message', label: 'Messages' },
+  { id: 'changed', label: 'Changed Files' },
+  { id: 'diffs', label: 'Diffs' },
+  { id: 'debug', label: 'Debug' },
+  { id: 'audit-log', label: 'Audit Log' },
+  { id: 'tty', label: 'Terminal' },
+  { id: 'sprint', label: 'Sprint' },
+  { id: 'workflow', label: 'Workflow' },
+  { id: 'ac', label: 'AC' },
+  { id: 'todo', label: 'Todo' },
+  { id: 'background', label: 'Background' },
+  { id: 'git', label: 'Git' },
+  { id: 'hotspots', label: 'Hotspots' },
+  { id: 'settings', label: 'Settings' },
+];
+
+/**
  * Build custom View menu with Verbose Mode toggle (Story 22-5)
- * Includes standard view items plus custom Cyclist options
+ * Includes standard view items plus panel toggles via WebSocket
  */
 export function buildViewMenu(): { label: string; submenu: unknown[] } {
   return {
@@ -147,6 +179,14 @@ export function buildViewMenu(): { label: string; submenu: unknown[] } {
       { role: 'zoomOut' },
       { type: 'separator' },
       { role: 'togglefullscreen' },
+      { type: 'separator' },
+      {
+        label: 'Toggle Panel',
+        submenu: VIEW_MENU_PANELS.map(panel => ({
+          label: panel.label,
+          click: () => panelToggleFn(panel.id),
+        })),
+      },
       { type: 'separator' },
       {
         id: 'verbose-mode',

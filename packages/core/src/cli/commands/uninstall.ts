@@ -28,7 +28,8 @@ const MANAGED_PATHS = [
 // Project paths - only removed with --all
 const PROJECT_PATHS = [
   '.claude/project',
-  '.claude/persona-config.yaml',
+  '.pennyfarthing/persona-config.yaml',
+  '.pennyfarthing/config.local.yaml',
   '.session'
 ];
 
