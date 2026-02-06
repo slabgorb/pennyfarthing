@@ -170,20 +170,20 @@ async function updateInstalledContent(
   }
 
   // Ensure project directories exist
-  const projectCommandsDir = join(projectRoot, '.claude/project/commands');
+  const projectCommandsDir = join(projectRoot, '.pennyfarthing/project/commands');
   if (!pathExists(projectCommandsDir)) {
     if (!dryRun) {
       ensureDirSync(projectCommandsDir);
     }
-    logger.created('.claude/project/commands/ (for user custom commands)');
+    logger.created('.pennyfarthing/project/commands/ (for user custom commands)');
   }
 
-  const projectSkillsDir = join(projectRoot, '.claude/project/skills');
+  const projectSkillsDir = join(projectRoot, '.pennyfarthing/project/skills');
   if (!pathExists(projectSkillsDir)) {
     if (!dryRun) {
       ensureDirSync(projectSkillsDir);
     }
-    logger.created('.claude/project/skills/ (for user custom skills)');
+    logger.created('.pennyfarthing/project/skills/ (for user custom skills)');
   }
 
   // Re-copy commands and skills
@@ -216,7 +216,7 @@ async function updateInstalledContent(
   });
 
   writeManifest(projectRoot, newManifest, { dryRun });
-  logger.updated('.claude/manifest.json');
+  logger.updated('.pennyfarthing/manifest.json');
 }
 
 /**
