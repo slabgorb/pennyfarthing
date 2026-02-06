@@ -5,10 +5,9 @@
  *
  * Handles the transition from plan mode to accept mode after plan approval,
  * and offers the user a choice to tirepump (commit/push) changes.
- *
- * STUB: Not yet implemented. All functions throw to confirm RED state.
  */
 
+import { useState, useCallback } from 'react';
 import type { Mode } from '../components/ModeSwitch/index';
 
 /** The Claude CLI mode to transition to after plan exit */
@@ -44,18 +43,63 @@ export interface TirepumpChoiceResult {
   action: 'tirepump' | 'continue';
 }
 
+const TIREPUMP_OPTIONS: TirepumpOption[] = [
+  { action: 'tirepump', label: 'Commit & push changes' },
+  { action: 'continue', label: 'Continue without committing' },
+];
+
 export async function handlePlanModeExit(
-  _options: PlanModeExitOptions
+  options: PlanModeExitOptions
 ): Promise<PlanModeExitResult> {
-  throw new Error('handlePlanModeExit not implemented');
+  const { currentMode, setMode, approved, wsConnected } = options;
+
+  if (!approved) {
+    return { showTirepumpChoice: false };
+  }
+
+  // Transition from plan to accept if not already there
+  if (currentMode !== 'accept') {
+    setMode('accept');
+  }
+
+  const localOnly = wsConnected === false;
+
+  return {
+    showTirepumpChoice: true,
+    options: TIREPUMP_OPTIONS,
+    ...(localOnly && { localOnly: true }),
+  };
 }
 
 export async function handleTirepumpChoice(
-  _options: TirepumpChoiceOptions
+  options: TirepumpChoiceOptions
 ): Promise<TirepumpChoiceResult> {
-  throw new Error('handleTirepumpChoice not implemented');
+  const { choice, currentAgent, onContextClear } = options;
+
+  if (choice === 'tirepump') {
+    onContextClear?.({ agent: currentAgent ?? '' });
+    return { contextCleared: true, action: 'tirepump' };
+  }
+
+  return { contextCleared: false, action: 'continue' };
 }
 
 export function usePlanModeExit() {
-  throw new Error('usePlanModeExit not implemented');
+  const [showChoice, setShowChoice] = useState(false);
+  const [exitResult, setExitResult] = useState<PlanModeExitResult | null>(null);
+
+  const exitPlanMode = useCallback(async (options: PlanModeExitOptions) => {
+    const result = await handlePlanModeExit(options);
+    setExitResult(result);
+    setShowChoice(result.showTirepumpChoice);
+    return result;
+  }, []);
+
+  const chooseTirepump = useCallback(async (options: TirepumpChoiceOptions) => {
+    const result = await handleTirepumpChoice(options);
+    setShowChoice(false);
+    return result;
+  }, []);
+
+  return { showChoice, exitResult, exitPlanMode, chooseTirepump };
 }
