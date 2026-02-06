@@ -18,6 +18,7 @@
 import { Router, Request, Response } from 'express';
 import { WebSocket } from 'ws';
 import { checkGrant, isAllowlisted, addGrant, type GrantTypeValue } from '../settings-store.js';
+import { isDangerousPath, getPathCategory, extractBashTargetPaths } from '../dangerous-path.js';
 
 // =============================================================================
 // Types
@@ -85,6 +86,97 @@ function extractToolScope(toolName: string, input: Record<string, unknown>): str
 }
 
 // =============================================================================
+// Severity Classification (MSSCI-14323)
+// =============================================================================
+
+export type HookSeverity = 'safe' | 'normal' | 'destructive';
+
+interface SeverityResult {
+  severity: HookSeverity;
+  warning?: string;
+}
+
+const SAFE_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebSearch']);
+
+const DESTRUCTIVE_BASH_PATTERNS = [
+  /rm\s+(-[rf]+\s+)*/,
+  /git\s+(reset\s+--hard|push\s+--force|clean\s+-[fd])/,
+  /drop\s+database/i,
+  /truncate\s+table/i,
+];
+
+const SAFE_BASH_PATTERNS = [
+  /^(ls|cat|head|tail|grep|find|pwd|echo|which|type|file|stat|wc|diff)\b/,
+  /^git\s+(status|log|diff|show|branch|remote)\b/,
+];
+
+const CATEGORY_WARNINGS: Record<string, string> = {
+  secrets: 'Modifying sensitive secrets/credentials file',
+  git: 'Modifying git internals',
+  dependencies: 'Modifying dependency files',
+  system: 'Modifying system files',
+};
+
+/**
+ * Classify the severity of a hook request server-side.
+ * Combines tool-name classification with dangerous-path detection.
+ */
+export function classifyHookSeverity(
+  toolName: string,
+  input: Record<string, unknown>,
+): SeverityResult {
+  // Safe tools are always safe
+  if (SAFE_TOOLS.has(toolName)) {
+    return { severity: 'safe' };
+  }
+
+  // Check dangerous paths for Write/Edit
+  if (toolName === 'Write' || toolName === 'Edit') {
+    const filePath = (input.file_path as string) || '';
+    if (filePath && isDangerousPath(filePath)) {
+      const category = getPathCategory(filePath);
+      return {
+        severity: 'destructive',
+        warning: category ? CATEGORY_WARNINGS[category] : 'Modifying sensitive path',
+      };
+    }
+    return { severity: 'normal' };
+  }
+
+  // Bash command classification
+  if (toolName === 'Bash') {
+    const command = (input.command as string) || '';
+
+    // Check for destructive bash patterns
+    if (DESTRUCTIVE_BASH_PATTERNS.some(p => p.test(command))) {
+      return { severity: 'destructive', warning: 'Destructive command detected' };
+    }
+
+    // Check for bash redirecting to dangerous paths
+    const targetPaths = extractBashTargetPaths(command);
+    for (const targetPath of targetPaths) {
+      if (isDangerousPath(targetPath)) {
+        const category = getPathCategory(targetPath);
+        return {
+          severity: 'destructive',
+          warning: category ? CATEGORY_WARNINGS[category] : 'Redirecting to sensitive path',
+        };
+      }
+    }
+
+    // Check for safe bash patterns
+    if (SAFE_BASH_PATTERNS.some(p => p.test(command))) {
+      return { severity: 'safe' };
+    }
+
+    return { severity: 'normal' };
+  }
+
+  // Default: normal
+  return { severity: 'normal' };
+}
+
+// =============================================================================
 // WebSocket Client Management
 // =============================================================================
 
@@ -105,6 +197,8 @@ function broadcastHookRequest(data: {
   toolId: string;
   toolName: string;
   input: Record<string, unknown>;
+  severity: HookSeverity;
+  warning?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -236,12 +330,17 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
     }, APPROVAL_TIMEOUT_MS);
   });
 
-  // Broadcast to clients (include context for UI display)
+  // Classify severity before broadcast (MSSCI-14323)
+  const { severity, warning } = classifyHookSeverity(toolName, input || {});
+
+  // Broadcast to clients (include context and severity for UI display)
   broadcastHookRequest({
     type: 'hook-request',
     toolId,
     toolName,
     input: input || {},
+    severity,
+    warning,
     context,
   });
 
