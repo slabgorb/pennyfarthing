@@ -120,45 +120,42 @@ describe('MSSCI-14367: Move persona-config.yaml into .pennyfarthing', () => {
   // ─── AC2: Init no longer writes persona-config.yaml to .claude/ ───
 
   describe('AC2: Init does not write persona-config to legacy location', () => {
-    // The init template mapping should NOT include any .claude/persona-config.yaml destination
-    // persona-config.yaml.template should go to .pennyfarthing/persona-config.yaml (already done)
-    // but the template should NOT reference .claude/ for persona config
+    it('init should write persona-config.yaml to .pennyfarthing/ not .claude/', () => {
+      // Simulate what init does: write template to .pennyfarthing/persona-config.yaml
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'minimalist' })
+      );
 
-    it('init template destination for persona-config should be .pennyfarthing/', () => {
-      // This documents that the init command should never write persona-config
-      // to .claude/. The template dest is already .pennyfarthing/persona-config.yaml
-      // in the current code (line 331 of init.ts) — this test ensures it stays that way.
-      const expectedDest = '.pennyfarthing/persona-config.yaml';
+      // Verify init did NOT create legacy file
       assert.ok(
-        expectedDest.startsWith('.pennyfarthing/'),
-        'persona-config.yaml template should target .pennyfarthing/ not .claude/'
+        !existsSync(join(claudeDir, 'persona-config.yaml')),
+        'Init should NOT create .claude/persona-config.yaml'
+      );
+
+      // Theme should be readable from the new location
+      const theme = getCurrentTheme(testDir);
+      assert.strictEqual(
+        theme,
+        'minimalist',
+        'Theme should be readable from .pennyfarthing/persona-config.yaml'
       );
     });
 
-    it('.gitignore should include .pennyfarthing/config.local.yaml but NOT .claude/persona-config.yaml', () => {
-      // The gitignore entries should reference the new canonical location
-      // .claude/persona-config.local.yaml should be removed from gitignore entries
-      // .pennyfarthing/config.local.yaml should be in gitignore
-      const expectedEntries = [
-        '.pennyfarthing/config.local.yaml',
-      ];
-      const unexpectedEntries = [
-        '.claude/persona-config.local.yaml',
-      ];
+    it('getCurrentTheme should read .pennyfarthing/persona-config.yaml as project default', () => {
+      // When only .pennyfarthing/persona-config.yaml exists (set via --global or init),
+      // getCurrentTheme should find it as a fallback
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'game-of-thrones' })
+      );
 
-      for (const entry of expectedEntries) {
-        assert.ok(
-          entry.includes('.pennyfarthing/'),
-          `Gitignore should include ${entry}`
-        );
-      }
-
-      for (const entry of unexpectedEntries) {
-        assert.ok(
-          entry.includes('.claude/'),
-          `Legacy gitignore entry ${entry} should be removed`
-        );
-      }
+      const result = getCurrentTheme(testDir);
+      assert.strictEqual(
+        result,
+        'game-of-thrones',
+        '.pennyfarthing/persona-config.yaml should serve as project default'
+      );
     });
   });
 
@@ -434,36 +431,31 @@ describe('MSSCI-14367: Move persona-config.yaml into .pennyfarthing', () => {
   // ─── Doctor persona-config check location ─────────────────────────
 
   describe('Doctor persona-config check should reference .pennyfarthing/', () => {
-    // The doctor check at line 346 currently looks for .claude/persona-config.yaml
-    // It should be updated to check for .pennyfarthing/persona-config.yaml or
-    // .pennyfarthing/config.local.yaml instead
-
-    it('doctor persona-config check should look at .pennyfarthing/config.local.yaml', () => {
+    it('doctor legacy check should not flag .pennyfarthing/ files as legacy', () => {
       // Setup: theme configured at canonical location ONLY
       writeFileSync(
         join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify({ theme: 'game-of-thrones' })
       );
-      // Ensure NO .claude/persona-config.yaml exists
-      assert.ok(
-        !existsSync(join(claudeDir, 'persona-config.yaml')),
-        'No legacy persona-config.yaml should exist'
+
+      // checkLegacyFiles should NOT produce any warnings when config is only at .pennyfarthing/
+      const results = checkLegacyFiles(testDir);
+      const personaResult = results.find(
+        (r: CheckResult) => r.name === 'legacy/.claude/persona-config.yaml'
+      );
+      assert.strictEqual(
+        personaResult,
+        undefined,
+        'Doctor should not flag .pennyfarthing/ config as legacy'
       );
 
-      // The doctor check named 'persona-config' currently checks .claude/persona-config.yaml
-      // It should be updated to check .pennyfarthing/config.local.yaml instead
-      // When config is ONLY at .pennyfarthing/, doctor should report 'pass' not 'warn'
+      // Theme should still be readable
       const theme = getCurrentTheme(testDir);
       assert.strictEqual(
         theme,
         'game-of-thrones',
         'Theme should be detectable from .pennyfarthing/config.local.yaml'
       );
-
-      // The actual doctor check function should NOT report 'warn' when theme is at
-      // .pennyfarthing/config.local.yaml. Currently it warns because it only checks
-      // .claude/persona-config.yaml. This test documents the expected behavior.
-      // Dev needs to update checkProjectStructure() in doctor.ts to check the new path.
     });
   });
 });

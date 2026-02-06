@@ -2,7 +2,7 @@
  * Tests for theme configuration
  *
  * These tests verify:
- * - getCurrentTheme() reads exclusively from .pennyfarthing/config.local.yaml
+ * - getCurrentTheme() reads from .pennyfarthing/config.local.yaml > .pennyfarthing/persona-config.yaml
  * - setTheme() writes to .pennyfarthing/config.local.yaml by default
  * - setTheme() with global option writes to .pennyfarthing/persona-config.yaml
  *
@@ -98,6 +98,38 @@ describe('Theme Configuration', () => {
 
       // Assert: .claude/persona-config.yaml is not a fallback anymore
       assert.strictEqual(result, null, 'Should not fall back to .claude/persona-config.yaml');
+    });
+
+    it('should fall back to .pennyfarthing/persona-config.yaml when config.local.yaml is absent', () => {
+      // Setup: project default at .pennyfarthing/persona-config.yaml (set via --global)
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'discworld' })
+      );
+
+      // Act
+      const result = getCurrentTheme(testDir);
+
+      // Assert: should fall back to .pennyfarthing/persona-config.yaml
+      assert.strictEqual(result, 'discworld', 'Should fall back to .pennyfarthing/persona-config.yaml');
+    });
+
+    it('should prefer config.local.yaml over persona-config.yaml in .pennyfarthing/', () => {
+      // Setup: both files in .pennyfarthing/
+      writeFileSync(
+        join(pennyfarthingDir, 'config.local.yaml'),
+        yamlStringify({ theme: 'star-trek' })
+      );
+      writeFileSync(
+        join(pennyfarthingDir, 'persona-config.yaml'),
+        yamlStringify({ theme: 'discworld' })
+      );
+
+      // Act
+      const result = getCurrentTheme(testDir);
+
+      // Assert: config.local.yaml wins
+      assert.strictEqual(result, 'star-trek', 'config.local.yaml should take priority over persona-config.yaml');
     });
 
     it('should return null when neither local nor shared exist', () => {

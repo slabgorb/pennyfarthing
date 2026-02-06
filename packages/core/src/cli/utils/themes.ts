@@ -84,15 +84,30 @@ export function getPennyfarthingConfigPath(projectRoot: string): string {
 
 /**
  * Get the current theme from config files
- * Reads from .pennyfarthing/config.local.yaml exclusively
+ * Priority: .pennyfarthing/config.local.yaml > .pennyfarthing/persona-config.yaml
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
 
+  // Priority 1: .pennyfarthing/config.local.yaml (agent-writable, user-local)
   const pennyfarthingConfigPath = getPennyfarthingConfigPath(root);
   if (existsSync(pennyfarthingConfigPath)) {
     try {
       const content = readFileSync(pennyfarthingConfigPath, 'utf8');
+      const config = YAML.parse(content);
+      if (config?.theme) {
+        return config.theme;
+      }
+    } catch {
+      // Parse error — fall through
+    }
+  }
+
+  // Priority 2: .pennyfarthing/persona-config.yaml (project default, committed)
+  const projectDefaultPath = join(root, '.pennyfarthing/persona-config.yaml');
+  if (existsSync(projectDefaultPath)) {
+    try {
+      const content = readFileSync(projectDefaultPath, 'utf8');
       const config = YAML.parse(content);
       if (config?.theme) {
         return config.theme;
