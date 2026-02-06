@@ -294,6 +294,10 @@ describe('AC6: Workflow with no permissions defined auto-proceeds', () => {
 // =============================================================================
 
 describe('AC7: User rejection blocks workflow startup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should return rejected=true when batch approval is rejected', async () => {
     const { handleBatchRejection } = await import('../src/workflow-presets.js');
 
