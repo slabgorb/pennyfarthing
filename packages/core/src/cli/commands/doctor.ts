@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync } from 'fs';
 import { join, relative, dirname } from 'path';
+import YAML from 'yaml';
 import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
 
@@ -342,8 +343,8 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     });
   }
 
-  // Check persona config
-  const personaConfig = join(projectRoot, '.claude/persona-config.yaml');
+  // Check persona config at canonical location
+  const personaConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
   results.push({
     name: 'persona-config',
     status: pathExists(personaConfig) ? 'pass' : 'warn',
@@ -1492,18 +1493,49 @@ export function checkLegacyFiles(projectRoot: string): CheckResult[] {
   const properThemeConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
 
   if (pathExists(legacyPersonaConfig)) {
-    if (pathExists(properThemeConfig)) {
-      // Both exist - legacy may conflict
-      results.push({
-        name: 'legacy/.claude/persona-config.yaml',
-        status: 'warn',
-        detail: 'May conflict with .pennyfarthing/config.local.yaml',
-        fix: () => {
-          unlinkSync(legacyPersonaConfig);
+    const detail = pathExists(properThemeConfig)
+      ? 'May conflict with .pennyfarthing/config.local.yaml'
+      : 'Should be migrated to .pennyfarthing/config.local.yaml';
+
+    results.push({
+      name: 'legacy/.claude/persona-config.yaml',
+      status: 'warn',
+      detail,
+      fix: () => {
+        // Read theme from legacy file
+        try {
+          const legacyContent = readFileSync(legacyPersonaConfig, 'utf8');
+          const legacyConfig = YAML.parse(legacyContent);
+          const legacyTheme = legacyConfig?.theme;
+
+          if (legacyTheme) {
+            // Read existing config.local.yaml or start fresh
+            let config: Record<string, unknown> = {};
+            if (pathExists(properThemeConfig)) {
+              try {
+                config = YAML.parse(readFileSync(properThemeConfig, 'utf8')) || {};
+              } catch {
+                config = {};
+              }
+            }
+
+            // Only set theme if not already present in config.local.yaml
+            if (!config.theme) {
+              config.theme = legacyTheme;
+              const configDir = dirname(properThemeConfig);
+              if (!existsSync(configDir)) {
+                mkdirSync(configDir, { recursive: true });
+              }
+              writeFileSync(properThemeConfig, YAML.stringify(config), 'utf8');
+            }
+          }
+        } catch {
+          // If we can't read/parse legacy, just remove it
         }
-      });
-    }
-    // If only legacy exists, don't warn - it's the active config
+
+        unlinkSync(legacyPersonaConfig);
+      }
+    });
   }
 
   return results;
