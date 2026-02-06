@@ -1118,6 +1118,8 @@ export function setupWebSocketServers(
         storyDebounceTimer = setTimeout(() => {
           const storyInfo = getStoryInfo(projectDir);
           broadcastStoryUpdate(storyInfo);
+          // Also broadcast sprint updates so currentStory refreshes in EnhancedSprintPanel
+          broadcastSprintUpdate(projectDir);
           storyDebounceTimer = null;
         }, STORY_DEBOUNCE_MS);
       });
