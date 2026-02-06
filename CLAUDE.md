@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working on the Pennyfarthing fra
 
 Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
-**Version:** 9.4.0
+**Version:** 10.0.0
 
 ## Dogfooding Architecture
 
