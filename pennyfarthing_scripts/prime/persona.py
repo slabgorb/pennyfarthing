@@ -216,6 +216,7 @@ def format_persona_output(
         if persona.helper_style:
             helper_line += f" - {persona.helper_style}"
         lines.append(helper_line)
+        lines.append(f"When spawning subagents, refer to them as your {persona.helper_name}.")
 
     lines.append("</persona>")
 
