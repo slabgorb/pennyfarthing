@@ -3,9 +3,9 @@
  *
  * Story MSSCI-14326: Integrate workflow-permissions.ts schema into
  * workflow startup, show batch approval modal, store session grants.
- *
- * STUB: All functions throw — implementation pending.
  */
+
+import { getGrants, addGrant } from './settings-store.js';
 
 /**
  * Permission preset as defined in workflow YAML.
@@ -46,45 +46,112 @@ export interface BatchResponseResult {
   grantScope?: string;
 }
 
+/**
+ * Extract permission presets from a workflow definition.
+ */
 export function getWorkflowPermissionPresets(
-  _workflowDef: WorkflowDefinitionLike,
+  workflowDef: WorkflowDefinitionLike,
 ): WorkflowPermissionPreset[] {
-  throw new Error('getWorkflowPermissionPresets not implemented');
+  return workflowDef.permissions ?? [];
 }
 
+/**
+ * Check workflow presets against current grants.
+ * Uses exact tool+scope matching.
+ */
 export function checkWorkflowPresets(
-  _presets: WorkflowPermissionPreset[],
+  presets: WorkflowPermissionPreset[],
 ): WorkflowPresetCheckResult {
-  throw new Error('checkWorkflowPresets not implemented');
+  const currentGrants = getGrants();
+  const missing: WorkflowPermissionPreset[] = [];
+  const granted: WorkflowPermissionPreset[] = [];
+
+  for (const preset of presets) {
+    const hasGrant = currentGrants.some(
+      (g) => g.tool === preset.tool && g.scope === preset.scope,
+    );
+    if (hasGrant) {
+      granted.push(preset);
+    } else {
+      missing.push(preset);
+    }
+  }
+
+  return {
+    allGranted: missing.length === 0,
+    missing,
+    granted,
+  };
 }
 
+/**
+ * Broadcast batch permission request to WebSocket clients.
+ */
 export function broadcastBatchPermissionRequest(
-  _permissions: WorkflowPermissionPreset[],
-  _clients: Set<unknown>,
+  permissions: WorkflowPermissionPreset[],
+  clients: Set<{ readyState: number; send: (data: string) => void }>,
 ): void {
-  throw new Error('broadcastBatchPermissionRequest not implemented');
+  const message = JSON.stringify({
+    type: 'batch-permission-request',
+    permissions,
+  });
+  for (const client of clients) {
+    if (client.readyState === 1) {
+      client.send(message);
+    }
+  }
 }
 
+/**
+ * Format batch request payload for WebSocket broadcast.
+ */
 export function formatBatchRequest(
-  _permissions: WorkflowPermissionPreset[],
-  _workflowName: string,
+  permissions: WorkflowPermissionPreset[],
+  workflowName: string,
 ): BatchPermissionRequest {
-  throw new Error('formatBatchRequest not implemented');
+  return {
+    type: 'batch-permission-request',
+    workflowName,
+    permissions,
+  };
 }
 
+/**
+ * Store approved permissions as grants.
+ */
 export function handleBatchApproval(
-  _permissions: WorkflowPermissionPreset[],
-  _grantScope: 'once' | 'session' | 'always',
+  permissions: WorkflowPermissionPreset[],
+  grantScope: 'once' | 'session' | 'always',
 ): void {
-  throw new Error('handleBatchApproval not implemented');
+  for (const perm of permissions) {
+    addGrant({
+      tool: perm.tool,
+      scope: perm.scope,
+      grant_type: grantScope,
+      granted_at: new Date().toISOString(),
+    });
+  }
 }
 
+/**
+ * Handle user rejection of batch permission request.
+ */
 export function handleBatchRejection(): BatchRejectionResult {
-  throw new Error('handleBatchRejection not implemented');
+  return {
+    rejected: true,
+    reason: 'User denied workflow permission presets',
+  };
 }
 
+/**
+ * Parse batch permission response from WebSocket message.
+ */
 export function handleBatchWebSocketMessage(
-  _message: string,
+  message: string,
 ): BatchResponseResult {
-  throw new Error('handleBatchWebSocketMessage not implemented');
+  const data = JSON.parse(message);
+  return {
+    approved: data.approved,
+    grantScope: data.grantScope,
+  };
 }
