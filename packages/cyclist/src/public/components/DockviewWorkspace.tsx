@@ -257,6 +257,7 @@ export function createDefaultDockviewLayout(): SerializedDockview {
               views: [PANEL_INVENTORY.MESSAGE],
               activeView: PANEL_INVENTORY.MESSAGE,
               id: 'center',
+              hideHeader: true,
             },
             size: 600, // Center takes remaining space
           },
@@ -433,10 +434,11 @@ export function DockviewWorkspace({
       try {
         api.fromJSON(initialLayout);
 
-        // After restoring, lock the message panel's group
+        // After restoring, lock the message panel's group and hide its tab bar
         const messagePanel = api.getPanel(PANEL_INVENTORY.MESSAGE);
         if (messagePanel?.group) {
           messagePanel.group.locked = 'no-drop-target';
+          messagePanel.group.model.header.hidden = true;
         }
 
         setIsReady(true);
@@ -503,8 +505,10 @@ export function DockviewWorkspace({
     }
 
     // Lock the center group - MessagePanel cannot be closed or moved
+    // Hide the tab bar so users can't accidentally close the message tab
     if (messagePanel?.group) {
       messagePanel.group.locked = 'no-drop-target';
+      messagePanel.group.model.header.hidden = true;
     }
 
     // Set initial sidebar sizes
