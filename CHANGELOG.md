@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.0.1] - 2026-02-06
+
+### Fixed
+
+- **npm publish compatibility** - Replaced `workspace:*` with `workspace:^` in internal package dependencies. `workspace:*` was left as-is by pnpm during publish, causing npm consumers to fail with `EUNSUPPORTEDPROTOCOL` error when installing `@pennyfarthing/core`
+
+---
+
 ## [10.0.0] - 2026-02-06
 
 ### Added
@@ -2219,7 +2227,9 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v8.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.1...HEAD
+[10.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.0...v10.0.1
+[10.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.1.0...v10.0.0
 [8.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.0.0...v8.1.0
 [8.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.5...v8.0.0
 [7.9.5]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.4...v7.9.5
