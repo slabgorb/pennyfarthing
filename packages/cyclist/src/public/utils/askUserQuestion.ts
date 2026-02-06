@@ -1,11 +1,9 @@
 /**
- * AskUserQuestion Utility (Stub)
+ * AskUserQuestion Utility
  *
- * Utility functions for detecting and handling AskUserQuestion tool_use messages.
+ * Utility functions for detecting AskUserQuestion tool_use messages.
  *
  * Story: MSSCI-14395 - Render AskUserQuestion tool via Reflector QuickActions
- *
- * TODO: Implement - this is a stub for TDD RED phase.
  */
 
 interface ToolUseMessage {
@@ -19,5 +17,5 @@ interface ToolUseMessage {
  * Check if a tool_use message is an AskUserQuestion tool call.
  */
 export function isAskUserQuestion(toolUse: ToolUseMessage): boolean {
-  throw new Error('isAskUserQuestion not implemented');
+  return toolUse.tool_name === 'AskUserQuestion';
 }
