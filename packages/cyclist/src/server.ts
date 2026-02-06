@@ -37,7 +37,7 @@ import {
 import { initializeSettings, loadGrants, saveGrants } from './settings.js';
 
 // Grant initialization (MSSCI-14321: grants must be available in standalone server mode)
-import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
+import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from './settings-store.js';
 
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
@@ -247,13 +247,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.log(`[OTEL] Wrote .cyclist-port file to ${projectDir}`);
     });
 
-    // Cleanup port file on shutdown
+    // Cleanup on shutdown
     process.on('SIGINT', () => {
+      clearSessionGrants(); // MSSCI-14324: Clear session/once grants
       cleanupPortFile(projectDir);
       console.log('[OTEL] Cleaned up .cyclist-port file');
       process.exit(0);
     });
     process.on('SIGTERM', () => {
+      clearSessionGrants(); // MSSCI-14324: Clear session/once grants
       cleanupPortFile(projectDir);
       process.exit(0);
     });
