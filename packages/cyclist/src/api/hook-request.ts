@@ -29,6 +29,7 @@ interface HookRequest {
   toolId: string;
   input: Record<string, unknown>;
   sessionId?: string;
+  agent?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -46,6 +47,7 @@ interface PendingApproval {
   resolve: (response: HookResponse) => void;
   toolName: string;
   input: Record<string, unknown>;
+  agent?: string;
   timestamp: number;
 }
 
@@ -199,6 +201,7 @@ function broadcastHookRequest(data: {
   input: Record<string, unknown>;
   severity: HookSeverity;
   warning?: string;
+  agent?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -254,12 +257,17 @@ export function handleHookWebSocketMessage(ws: WebSocket, message: string): void
         const scope = pending
           ? extractToolScope(pending.toolName, pending.input)
           : '';
-        addGrant({
+        const grant: Parameters<typeof addGrant>[0] = {
           tool: pending?.toolName || '',
           scope,
           grant_type: data.data.grantScope as GrantTypeValue,
           granted_at: new Date().toISOString(),
-        });
+        };
+        // Include agent from the original request if present
+        if (pending?.agent) {
+          grant.agent = pending.agent;
+        }
+        addGrant(grant);
       }
 
       resolveApproval(data.toolId, data.approved, data.data);
@@ -274,7 +282,7 @@ export function handleHookWebSocketMessage(ws: WebSocket, message: string): void
 // =============================================================================
 
 async function handleHookRequest(req: Request, res: Response): Promise<void> {
-  const { toolName, toolId, input, sessionId: _sessionId, context } = req.body as HookRequest;
+  const { toolName, toolId, input, sessionId: _sessionId, agent, context } = req.body as HookRequest;
 
   if (!toolName || !toolId) {
     res.status(400).json({ error: 'Missing required fields: toolName, toolId' });
@@ -283,7 +291,7 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
 
   // Check for auto-approval via grants (all tool types)
   const scope = extractToolScope(toolName, input || {});
-  if (checkGrant(toolName, scope)) {
+  if (checkGrant(toolName, scope, agent)) {
     res.json({
       decision: 'allow',
       reason: 'Granted by permission grant',
@@ -315,6 +323,7 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
       resolve,
       toolName,
       input: input || {},
+      agent,
       timestamp: Date.now(),
     });
 
@@ -333,7 +342,7 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
   // Classify severity before broadcast (MSSCI-14323)
   const { severity, warning } = classifyHookSeverity(toolName, input || {});
 
-  // Broadcast to clients (include context and severity for UI display)
+  // Broadcast to clients (include context, severity, and agent for UI display)
   broadcastHookRequest({
     type: 'hook-request',
     toolId,
@@ -341,6 +350,7 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
     input: input || {},
     severity,
     warning,
+    agent,
     context,
   });
 
