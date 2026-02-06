@@ -272,7 +272,22 @@ export function MessagePanel(): React.ReactElement {
           ? { ...msg, agentSlug: p.slug ?? undefined, agentTheme: p.theme ?? undefined, agentCharacter: p.character ?? undefined }
           : msg
       );
-      setMessages(prev => [...prev, ...stamped]);
+
+      // When a tool_result arrives for a Task tool, remove its subagent messages
+      // from the message view (they have parent_id matching the tool_result's tool_id).
+      // This prevents completed subagent spans from stacking up in the UI.
+      const completedTaskId = stamped.find(m => m.type === 'tool_result' && !m.parent_id)?.tool_id;
+      if (completedTaskId) {
+        setMessages(prev => {
+          const hasSubagentMessages = prev.some(m => m.parent_id === completedTaskId);
+          if (hasSubagentMessages) {
+            return [...prev.filter(m => m.parent_id !== completedTaskId), ...stamped];
+          }
+          return [...prev, ...stamped];
+        });
+      } else {
+        setMessages(prev => [...prev, ...stamped]);
+      }
     }
   }, []);
 
