@@ -17,6 +17,7 @@
 
 import { Router, Request, Response } from 'express';
 import { WebSocket } from 'ws';
+import { checkGrant, isAllowlisted, addGrant, type GrantTypeValue } from '../settings-store.js';
 
 // =============================================================================
 // Types
@@ -61,26 +62,26 @@ const hookClients = new Set<WebSocket>();
 const APPROVAL_TIMEOUT_MS = 120000;
 
 // =============================================================================
-// Allowlist and Grants (imported from settings-store when available)
+// Scope Extraction (MSSCI-14321)
 // =============================================================================
 
-// Temporary allowlist for common safe commands
-const SAFE_COMMAND_PATTERNS = [
-  /^ls\b/,
-  /^pwd$/,
-  /^echo\b/,
-  /^cat\b.*\.(md|txt|json|yaml|yml|ts|js|py|sh)$/,
-  /^git status/,
-  /^git diff/,
-  /^git log/,
-  /^git branch/,
-  /^npm run (build|test|lint)/,
-  /^node --version/,
-  /^npm --version/,
-];
-
-function isCommandAllowlisted(command: string): boolean {
-  return SAFE_COMMAND_PATTERNS.some(pattern => pattern.test(command.trim()));
+/**
+ * Extract the scope identifier from tool input for grant matching.
+ * Modeled after getToolScope() in approval-gate.ts.
+ */
+function extractToolScope(toolName: string, input: Record<string, unknown>): string {
+  switch (toolName) {
+    case 'Bash':
+      return (input.command as string) || '';
+    case 'WebFetch':
+      return (input.url as string) || '';
+    case 'Edit':
+    case 'Write':
+    case 'Read':
+      return (input.file_path as string) || '';
+    default:
+      return JSON.stringify(input);
+  }
 }
 
 // =============================================================================
@@ -153,6 +154,20 @@ export function handleHookWebSocketMessage(ws: WebSocket, message: string): void
     const data = JSON.parse(message);
 
     if (data.type === 'hook-response') {
+      // Store grant if user approved with a grantScope (MSSCI-14321 AC8)
+      if (data.approved && data.data?.grantScope) {
+        const pending = pendingApprovals.get(data.toolId);
+        const scope = pending
+          ? extractToolScope(pending.toolName, pending.input)
+          : '';
+        addGrant({
+          tool: pending?.toolName || '',
+          scope,
+          grant_type: data.data.grantScope as GrantTypeValue,
+          granted_at: new Date().toISOString(),
+        });
+      }
+
       resolveApproval(data.toolId, data.approved, data.data);
     }
   } catch (error) {
@@ -172,16 +187,23 @@ async function handleHookRequest(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Check for auto-approval
-  if (toolName === 'Bash') {
-    const command = (input?.command as string) || '';
-    if (isCommandAllowlisted(command)) {
-      res.json({
-        decision: 'allow',
-        reason: 'Command matches safe pattern allowlist',
-      });
-      return;
-    }
+  // Check for auto-approval via grants (all tool types)
+  const scope = extractToolScope(toolName, input || {});
+  if (checkGrant(toolName, scope)) {
+    res.json({
+      decision: 'allow',
+      reason: 'Granted by permission grant',
+    });
+    return;
+  }
+
+  // Check Bash allowlist for backward compatibility
+  if (toolName === 'Bash' && isAllowlisted(scope)) {
+    res.json({
+      decision: 'allow',
+      reason: 'Command matches allowlist pattern',
+    });
+    return;
   }
 
   // No clients connected - fall through to Claude Code's built-in approval
