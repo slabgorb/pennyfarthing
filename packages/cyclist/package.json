@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/cyclist",
-  "version": "10.0.0",
+  "version": "10.0.1",
   "description": "Visual terminal interface for Claude Code",
   "author": "1898andCo",
   "type": "module",
@@ -115,7 +115,7 @@
   "build": {
     "appId": "com.cyclist.app",
     "productName": "Cyclist",
-    "copyright": "Copyright \u00a9 2026",
+    "copyright": "Copyright © 2026",
     "asar": true,
     "directories": {
       "output": "release",
