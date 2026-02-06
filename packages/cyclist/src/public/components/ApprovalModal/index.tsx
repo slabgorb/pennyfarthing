@@ -40,6 +40,7 @@ export const TOOL_NAME_TESTID = 'tool-name';
 export const APPROVE_BUTTON_TESTID = 'approve-button';
 export const REJECT_BUTTON_TESTID = 'reject-button';
 export const ALWAYS_ALLOW_TESTID = 'always-allow-checkbox';
+export const WARNING_TESTID = 'approval-modal-warning';
 
 // ============================================================================
 // Constants - Keyboard Shortcuts
@@ -120,6 +121,8 @@ export interface ApprovalRequest {
   toolName: string;
   input: ToolInput;
   reason?: string;
+  severity?: ActionSeverity;
+  warning?: string;
 }
 
 export interface ApprovalResponse {
@@ -145,6 +148,10 @@ export interface ApprovalModalProps {
   onDismiss?: () => void;
   /** Additional CSS class name */
   className?: string;
+  /** Server-provided severity classification (MSSCI-14323) */
+  severity?: ActionSeverity;
+  /** Server-provided warning text for destructive operations (MSSCI-14323) */
+  warning?: string;
 }
 
 interface UseApprovalModalResult {
@@ -361,6 +368,8 @@ interface HookRequestMessage {
   toolId: string;
   toolName: string;
   input: Record<string, unknown>;
+  severity?: 'safe' | 'normal' | 'destructive';
+  warning?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -417,6 +426,8 @@ export function subscribeToPermissionRequests(
               toolId: msg.toolId,
               toolName: msg.toolName,
               input: msg.input as ToolInput,
+              severity: msg.severity as ActionSeverity | undefined,
+              warning: msg.warning,
             });
           }
         } catch (err) {
@@ -487,6 +498,8 @@ export default function ApprovalModal({
   onReject,
   onDismiss,
   className = '',
+  severity: serverSeverity,
+  warning,
 }: ApprovalModalProps): React.ReactElement {
   const [alwaysAllow, setAlwaysAllow] = useState(false);
 
@@ -506,7 +519,7 @@ export default function ApprovalModal({
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, alwaysAllow, onApprove]);
 
-  const severity = classifyActionSeverity(toolName, input);
+  const severity = serverSeverity ?? classifyActionSeverity(toolName, input);
   const severityClass = SEVERITY_CLASSNAMES[severity];
   const preview = formatCommandPreview(toolName, input);
   const icon = getToolIcon(toolName);
@@ -563,6 +576,15 @@ export default function ApprovalModal({
             </div>
           </DialogDescription>
         </DialogHeader>
+
+        {warning && (
+          <div
+            data-testid={WARNING_TESTID}
+            className="text-sm text-destructive font-medium"
+          >
+            {warning}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Checkbox
