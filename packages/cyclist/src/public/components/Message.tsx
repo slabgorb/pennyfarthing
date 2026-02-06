@@ -6,7 +6,7 @@
  * Story MSSCI-12777 - User Avatar from GitHub
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { parseMarkdown } from '../utils/markdown';
@@ -75,7 +75,63 @@ function UserAvatar(): React.ReactElement {
   return <span className="avatar-emoji">👤</span>;
 }
 
+function useSortableTables(contentRef: React.RefObject<HTMLDivElement | null>) {
+  const attachSort = useCallback(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const headers = el.querySelectorAll<HTMLTableCellElement>('th.sortable-th');
+    headers.forEach((th) => {
+      if (th.dataset.sortBound) return;
+      th.dataset.sortBound = '1';
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', () => {
+        const colIdx = parseInt(th.dataset.col || '0', 10);
+        const table = th.closest('table');
+        if (!table) return;
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const currentDir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+
+        // Clear all indicators in this table
+        table.querySelectorAll<HTMLTableCellElement>('th.sortable-th').forEach((h) => {
+          h.dataset.sortDir = '';
+          const ind = h.querySelector('.sort-indicator');
+          if (ind) ind.textContent = '';
+        });
+
+        th.dataset.sortDir = currentDir;
+        const indicator = th.querySelector('.sort-indicator');
+        if (indicator) indicator.textContent = currentDir === 'asc' ? ' \u25B2' : ' \u25BC';
+
+        rows.sort((a, b) => {
+          const aText = (a.children[colIdx]?.textContent || '').trim();
+          const bText = (b.children[colIdx]?.textContent || '').trim();
+          const aNum = parseFloat(aText);
+          const bNum = parseFloat(bText);
+          // Numeric sort if both parse as numbers
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return currentDir === 'asc' ? aNum - bNum : bNum - aNum;
+          }
+          const cmp = aText.localeCompare(bText, undefined, { sensitivity: 'base' });
+          return currentDir === 'asc' ? cmp : -cmp;
+        });
+
+        for (const row of rows) {
+          tbody.appendChild(row);
+        }
+      });
+    });
+  }, [contentRef]);
+
+  useEffect(() => {
+    attachSort();
+  });
+}
+
 export default function Message({ message, isLastAgentMessage, isFirstInTurn = true }: MessageProps): React.ReactElement {
+  const contentRef = useRef<HTMLDivElement>(null);
+  useSortableTables(contentRef);
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
   const continuationClass = !isFirstInTurn ? ' continuation' : '';
@@ -139,7 +195,7 @@ export default function Message({ message, isLastAgentMessage, isFirstInTurn = t
   const html = message.content ? parseMarkdown(message.content) : '';
 
   return (
-    <div data-testid={testId} className={`message ${roleClass}${continuationClass}`}>
+    <div data-testid={testId} className={`message ${roleClass}${continuationClass}`} ref={contentRef}>
       <div data-testid="avatar" className="message-avatar">
         {message.type === 'user' ? <UserAvatar /> : (
           <AssistantAvatar
