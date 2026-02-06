@@ -14,7 +14,8 @@ export type MessageType =
   | 'agent'
   | 'tool_use'
   | 'tool_result'
-  | 'bell_injected';
+  | 'bell_injected'
+  | 'context_cleared';
 
 /**
  * Core message data structure used throughout Cyclist.

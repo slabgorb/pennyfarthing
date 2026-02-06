@@ -643,6 +643,36 @@
   line-height: 1.4;
 }
 
+/* Context cleared divider bar */
+.context-cleared-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.context-cleared-line {
+  flex: 1;
+  background-color: var(--text-muted, #666);
+  opacity: 0.4;
+}
+
+.context-cleared-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.context-cleared-time {
+  font-size: 0.625rem;
+  color: var(--text-muted, #666);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
 /* User turn: left-aligned like agent turns */
 
 /* Hide avatar on continuation messages (same speaker, not first in turn) */

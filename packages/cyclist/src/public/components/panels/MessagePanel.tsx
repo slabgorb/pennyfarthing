@@ -216,15 +216,18 @@ export function MessagePanel(): React.ReactElement {
     isStopping,
     bellMode,
     relayMode,
+    contextPercent,
+    currentAgent,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
+    handleTirePump,
   } = useControlBar();
 
   // Claude context for WebSocket communication
-  const { send, abort, onMessage, onComplete, onError, onUserMessage, isConnected } = useClaudeContext();
+  const { send, abort, onMessage, onComplete, onError, onUserMessage, onClear, isConnected } = useClaudeContext();
 
   // Persona context - capture current persona to stamp on agent messages
   const { persona } = usePersona();
@@ -332,6 +335,19 @@ export function MessagePanel(): React.ReactElement {
     return cleanup;
   }, [onUserMessage]);
 
+  // Subscribe to clear events — insert a divider message
+  useEffect(() => {
+    const cleanup = onClear(() => {
+      setMessages(prev => [...prev, {
+        type: 'context_cleared',
+        content: 'Context cleared',
+        timestamp: Date.now(),
+      }]);
+      setIsProcessing(false);
+    });
+    return cleanup;
+  }, [onClear]);
+
   // Connect to Claude events via WebSocket context
   useEffect(() => {
     if (!isConnected) {
@@ -397,6 +413,9 @@ export function MessagePanel(): React.ReactElement {
             relayMode={relayMode}
             onBellModeChange={handleBellModeChange}
             onRelayModeChange={handleRelayModeChange}
+            contextPercent={contextPercent}
+            currentAgent={currentAgent}
+            onTirePump={handleTirePump}
           />
         </div>
       </div>
