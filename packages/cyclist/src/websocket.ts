@@ -9,7 +9,7 @@ import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTasks, addToolEventListener, trackBackgroundTask, completeBackgroundTask, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, trackBackgroundTask, completeBackgroundTask, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
@@ -35,6 +35,29 @@ import {
   invalidateDiffCache,
   type GitDiffData,
 } from './git-diff.js';
+
+// =============================================================================
+// Subagent Message Enrichment
+// =============================================================================
+
+/**
+ * Enrich SDK message with subagent context.
+ * If message has parent_tool_use_id, look up the Task that spawned it
+ * and add subagent_type and subagent_name for UI display.
+ */
+function enrichMessageWithSubagentContext(message: Record<string, unknown>): Record<string, unknown> {
+  const parentId = (message as { parent_tool_use_id?: string | null }).parent_tool_use_id;
+  if (!parentId) return message;
+
+  const task = getBackgroundTaskByToolId(parentId);
+  if (!task) return message;
+
+  return {
+    ...message,
+    subagent_type: task.subagentType,
+    subagent_name: task.description,
+  };
+}
 
 // =============================================================================
 // Git Cache Invalidation Logic
@@ -1317,11 +1340,7 @@ export function setupWebSocketServers(
               // Stream messages back to client
               try {
                 for await (const message of service.sendMessage(msg.prompt)) {
-                  if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'message', message }));
-                  }
-
-                  // Process tool_use messages for OTEL correlation and background task tracking
+                  // Process tool_use BEFORE enrichment so Task tools are registered for lookup
                   const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown>; message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
@@ -1340,6 +1359,13 @@ export function setupWebSocketServers(
                         isBackground,
                       });
                     }
+                  }
+
+                  // Enrich subagent messages with type/name from tracked Task tools
+                  const enrichedMessage = enrichMessageWithSubagentContext(message as unknown as Record<string, unknown>);
+
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'message', message: enrichedMessage }));
                   }
 
                   // Process tool_result messages to complete background tasks
@@ -1580,6 +1606,17 @@ export function broadcastSettingsUpdate(settings: unknown): void {
 export function broadcastContextUpdate(context: ContextInfo): void {
   const message = JSON.stringify({ type: 'update', context });
   for (const client of contextClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Broadcast panel toggle to all connected settings clients
+// Used by Electron View menu to toggle panels via WebSocket
+export function broadcastPanelToggle(panelId: string): void {
+  const message = JSON.stringify({ type: 'panel:toggle', panelId });
+  for (const client of settingsClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
