@@ -65,7 +65,7 @@ import {
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
 import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
-import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
+import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import { setBellMode } from './bell-mode.js';
 import {
@@ -2384,6 +2384,9 @@ if (isElectron) {
     if (claudeServiceInstance) {
       claudeServiceInstance.abort();
     }
+    // MSSCI-14324: Clear session/once grants on shutdown
+    clearSessionGrants();
+
     // B-24 fix: Clean up PID file on graceful shutdown
     const projectDir = getProjectDirectory();
     if (projectDir) {
