@@ -71,7 +71,7 @@ export function BackgroundPanel(): React.ReactElement {
   if (tasks.length === 0) {
     return (
       <div className="background-panel empty" data-testid="background-panel">
-        <div className="placeholder">No background tasks</div>
+        <div className="placeholder">No subagent tasks</div>
       </div>
     );
   }
