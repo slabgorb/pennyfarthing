@@ -9,7 +9,7 @@
  * Persists layout changes to config.local.yaml.
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   DockviewWorkspace,
   registerPanelComponent,
@@ -22,6 +22,9 @@ import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 import { loadPresetFromProject, applyPreset } from './utils/color-presets';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import ApprovalModal, { useApprovalModal } from './components/ApprovalModal';
+import { subscribeToPermissionRequests, sendPermissionResponse, createApprovalResponse } from './components/ApprovalModal';
+import type { ApprovalRequest, GrantScope } from './components/ApprovalModal';
 
 // Import all panel components
 // Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)
@@ -216,6 +219,43 @@ export default function App(): React.ReactElement {
     });
   }, []);
 
+  // ApprovalModal state management (MSSCI-14322)
+  const [requestQueue, setRequestQueue] = useState<ApprovalRequest[]>([]);
+  const { request, isOpen, show, hide } = useApprovalModal();
+
+  // Subscribe to permission requests via WebSocket
+  useEffect(() => {
+    const unsub = subscribeToPermissionRequests((incoming: ApprovalRequest) => {
+      setRequestQueue((prev) => [...prev, incoming]);
+    });
+    return unsub;
+  }, []);
+
+  // Show the next queued request when the current one is resolved
+  useEffect(() => {
+    if (!isOpen && requestQueue.length > 0) {
+      const [next, ...rest] = requestQueue;
+      setRequestQueue(rest);
+      show(next);
+    }
+  }, [isOpen, requestQueue, show]);
+
+  const handleApprove = useCallback((grantScope: GrantScope) => {
+    if (request) {
+      const response = createApprovalResponse(request.toolId, true, grantScope);
+      sendPermissionResponse(response);
+    }
+    hide();
+  }, [request, hide]);
+
+  const handleReject = useCallback(() => {
+    if (request) {
+      const response = createApprovalResponse(request.toolId, false);
+      sendPermissionResponse(response);
+    }
+    hide();
+  }, [request, hide]);
+
   return (
     <ErrorBoundary fallback={<RootErrorFallback />} panelName="App">
       <ClaudeProvider>
@@ -250,6 +290,16 @@ export default function App(): React.ReactElement {
               {/* Message input target (for skip link) */}
               <div id="message-input" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
             </div>
+
+            {/* ApprovalModal - renders via Radix Portal outside the React tree (MSSCI-14322) */}
+            <ApprovalModal
+              isOpen={isOpen}
+              toolName={request?.toolName ?? ''}
+              toolId={request?.toolId ?? ''}
+              input={request?.input ?? {}}
+              onApprove={handleApprove}
+              onReject={handleReject}
+            />
           </CommandPaletteProvider>
         </MessageQueueProvider>
       </ClaudeProvider>
