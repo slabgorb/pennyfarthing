@@ -1268,6 +1268,8 @@ export function setupWebSocketServers(
               if (claudeClearCallback) {
                 claudeClearCallback();
               }
+              // Reset context bar to 0%
+              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
               break;
 
             case 'setMode':
@@ -1288,6 +1290,8 @@ export function setupWebSocketServers(
             case 'clearAndReload':
               if (msg.agent && claudeClearAndReloadCallback) {
                 console.log('[WebSocket] TirePump: clearAndReload agent:', msg.agent);
+                // Reset context bar to 0%
+                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
                 try {
                   await claudeClearAndReloadCallback(msg.agent);
                   if (ws.readyState === WebSocket.OPEN) {
@@ -1407,6 +1411,8 @@ export function setupWebSocketServers(
 
             case 'clear':
               service.clearSession();
+              // Reset context bar to 0%
+              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
               break;
 
             case 'setMode':
@@ -1425,6 +1431,8 @@ export function setupWebSocketServers(
             case 'clearAndReload':
               if (msg.agent) {
                 console.log('[WebSocket] Web mode TirePump: clearAndReload agent:', msg.agent);
+                // Reset context bar to 0%
+                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
                 // Clear the session
                 await service.clearSessionAsync();
                 // Send the agent command as a new message

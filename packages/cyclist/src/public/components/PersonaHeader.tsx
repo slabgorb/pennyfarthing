@@ -19,6 +19,7 @@ import React, { useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersona } from '../hooks/usePersona';
+import { useColorScheme } from '../hooks/useColorScheme';
 import { AgentPopup } from './AgentPopup';
 
 // Agent colors matching CLI statusbar (statusline.sh)
@@ -59,6 +60,7 @@ function humanizeTheme(theme: string): string {
 
 export default function PersonaHeader(): React.ReactElement {
   const { persona } = usePersona();
+  const colorScheme = useColorScheme();
   const [portraitError, setPortraitError] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
@@ -165,7 +167,7 @@ export default function PersonaHeader(): React.ReactElement {
             )}
           </div>
           <img
-            src="/images/cyclist-dark.png"
+            src={colorScheme === 'dark' ? '/images/cyclist-dark.png' : '/images/cyclist-light.png'}
             alt="Cyclist"
             className="persona-branding"
           />
