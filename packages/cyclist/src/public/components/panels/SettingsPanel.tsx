@@ -76,8 +76,8 @@ const PANEL_DISPLAY_NAMES: Record<string, string> = {
   settings: 'Settings',
 };
 
-// Panels that cannot be hidden (sacred center)
-const PROTECTED_PANELS = new Set(['message']);
+// Panels that cannot be hidden
+const PROTECTED_PANELS = new Set<string>();
 
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);

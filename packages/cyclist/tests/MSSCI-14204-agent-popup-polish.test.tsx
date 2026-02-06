@@ -448,11 +448,7 @@ describe('AC4: Smooth visual experience when browsing panel list', () => {
       </TestWrapper>
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
-
-    const portraitContainer = screen.getByTestId('popup-portrait');
+    const portraitContainer = await screen.findByTestId('popup-portrait');
 
     // Container should maintain its dimensions even before image loads
     const styles = window.getComputedStyle(portraitContainer);
