@@ -123,6 +123,7 @@ export interface ApprovalRequest {
   reason?: string;
   severity?: ActionSeverity;
   warning?: string;
+  agent?: string;
 }
 
 export interface ApprovalResponse {
@@ -152,6 +153,8 @@ export interface ApprovalModalProps {
   severity?: ActionSeverity;
   /** Server-provided warning text for destructive operations (MSSCI-14323) */
   warning?: string;
+  /** Agent name requesting permission (MSSCI-14392) */
+  agent?: string;
 }
 
 interface UseApprovalModalResult {
@@ -370,6 +373,7 @@ interface HookRequestMessage {
   input: Record<string, unknown>;
   severity?: 'safe' | 'normal' | 'destructive';
   warning?: string;
+  agent?: string;
   context?: {
     percentage: number;
     isHigh: boolean;
@@ -428,6 +432,7 @@ export function subscribeToPermissionRequests(
               input: msg.input as ToolInput,
               severity: msg.severity as ActionSeverity | undefined,
               warning: msg.warning,
+              agent: msg.agent,
             });
           }
         } catch (err) {
@@ -500,6 +505,7 @@ export default function ApprovalModal({
   className = '',
   severity: serverSeverity,
   warning,
+  agent,
 }: ApprovalModalProps): React.ReactElement {
   const [alwaysAllow, setAlwaysAllow] = useState(false);
 
@@ -559,6 +565,8 @@ export default function ApprovalModal({
             <div>
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
                 <span className="approval-modal__icon" data-icon={icon} />
+                {agent && <span data-testid="agent-name" className="font-medium">{agent}</span>}
+                {agent && <span className="text-muted-foreground/50">/</span>}
                 <span data-testid={TOOL_NAME_TESTID}>{toolName}</span>
               </div>
 
