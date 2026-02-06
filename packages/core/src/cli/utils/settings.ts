@@ -3,7 +3,7 @@
  * Handles merging required hooks into existing settings
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync, lstatSync, unlinkSync, symlinkSync, renameSync } from 'fs';
 import { join } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -120,7 +120,7 @@ export async function mergeSettingsLocalJson(
   assetsPath: string,
   options: { dryRun?: boolean; registerSkills?: boolean }
 ): Promise<boolean> {
-  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const settingsPath = join(projectRoot, '.pennyfarthing/settings.local.json');
   const templatePath = join(assetsPath, 'templates/settings.local.json.template');
 
   if (!pathExists(templatePath)) {
@@ -147,10 +147,10 @@ export async function mergeSettingsLocalJson(
     }
 
     if (!options.dryRun) {
-      ensureDirSync(join(projectRoot, '.claude'));
+      ensureDirSync(join(projectRoot, '.pennyfarthing'));
       writeFileSync(settingsPath, JSON.stringify(templateContent, null, 2), 'utf8');
     }
-    logger.created('.claude/settings.local.json');
+    logger.created('.pennyfarthing/settings.local.json');
     if (installedSkills.length > 0) {
       logger.info(`  Registered ${installedSkills.length} skills in permissions`);
     }
@@ -338,10 +338,68 @@ export async function mergeSettingsLocalJson(
 
   if (modified && !options.dryRun) {
     writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
-    logger.updated('.claude/settings.local.json');
+    logger.updated('.pennyfarthing/settings.local.json');
   } else if (!modified) {
-    logger.skipped('.claude/settings.local.json', 'already configured');
+    logger.skipped('.pennyfarthing/settings.local.json', 'already configured');
   }
 
   return modified;
+}
+
+/**
+ * Create a symlink at .claude/settings.local.json pointing to .pennyfarthing/settings.local.json
+ * Idempotent — no-op if correct symlink already exists.
+ */
+export function ensureSettingsSymlink(projectRoot: string): void {
+  const symlinkPath = join(projectRoot, '.claude/settings.local.json');
+  const relativeTarget = '../.pennyfarthing/settings.local.json';
+
+  // Already a symlink — nothing to do
+  try {
+    if (lstatSync(symlinkPath).isSymbolicLink()) {
+      return;
+    }
+  } catch {
+    // Doesn't exist yet — continue to create
+  }
+
+  ensureDirSync(join(projectRoot, '.claude'));
+  symlinkSync(relativeTarget, symlinkPath);
+}
+
+/**
+ * Migrate settings.local.json from .claude/ (old) to .pennyfarthing/ (new).
+ * If .claude/settings.local.json is a regular file, move it to .pennyfarthing/
+ * and replace with a symlink. Idempotent — no-op if already migrated or nothing exists.
+ */
+export function migrateSettingsFile(projectRoot: string): void {
+  const oldPath = join(projectRoot, '.claude/settings.local.json');
+  const newPath = join(projectRoot, '.pennyfarthing/settings.local.json');
+
+  // Check if old path exists at all
+  let oldStats;
+  try {
+    oldStats = lstatSync(oldPath);
+  } catch {
+    // Old path doesn't exist — nothing to migrate
+    return;
+  }
+
+  // Already a symlink — already migrated
+  if (oldStats.isSymbolicLink()) {
+    return;
+  }
+
+  // Old path is a real file — migrate it
+  if (!pathExists(newPath)) {
+    // No file at new location — move the old one there
+    ensureDirSync(join(projectRoot, '.pennyfarthing'));
+    renameSync(oldPath, newPath);
+  } else {
+    // New location already has a file — just remove the old one
+    unlinkSync(oldPath);
+  }
+
+  // Create symlink at old location pointing to new
+  symlinkSync('../.pennyfarthing/settings.local.json', oldPath);
 }
