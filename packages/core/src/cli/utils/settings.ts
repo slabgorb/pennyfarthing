@@ -291,6 +291,20 @@ export async function mergeSettingsLocalJson(
         logger.info('Added missing schema-validation hook');
       }
     }
+
+    // Check for cyclist-pretooluse-hook (Cyclist permissions integration)
+    const hasCyclistPreToolUse = (hooks.PreToolUse as unknown[]).some((entry: unknown) =>
+      hookEntryContains(entry, 'cyclist-pretooluse-hook')
+    );
+
+    if (!hasCyclistPreToolUse && templateContent.hooks?.PreToolUse) {
+      const cyclistEntry = findHookEntry(templateContent.hooks.PreToolUse, 'cyclist-pretooluse-hook');
+      if (cyclistEntry) {
+        hooks.PreToolUse = [...(hooks.PreToolUse as unknown[]), cyclistEntry];
+        modified = true;
+        logger.info('Added missing cyclist-pretooluse-hook');
+      }
+    }
   }
 
   // Ensure statusLine is configured and points to new location
