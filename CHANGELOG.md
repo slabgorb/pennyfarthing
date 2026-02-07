@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.0.3] - 2026-02-07
+
+### Added
+
+- **Doctor file layout validation** — `pennyfarthing doctor` now validates that distributed files (agents, guides, scripts, etc.) are present and correctly structured under `.pennyfarthing/` (MSSCI-14372)
+- **Legacy sidecar cleanup** — `pennyfarthing update` removes old sidecar directories during migration to `.pennyfarthing/` layout (MSSCI-14369)
+- **Project hooks consolidation** — Project hooks moved into `.pennyfarthing/project/` for cleaner separation from framework hooks (MSSCI-14368)
+- **Helper verb inflection** — Subagent display messages now use correct is/are verb forms (MSSCI-14416)
+- **PreToolUse hook support** — `cyclist-pretooluse-hook` added to `init` and `update` commands
+
+### Fixed
+
+- **Jira CLI migration** — Fixed Jira CLI integration issues and updated Jira skill for new `pf jira` commands (MSSCI-14451)
+
+### Changed
+
+- **Reflector replaces AskUserQuestion** — Removed AskUserQuestionBlock in favor of Reflector `<!-- CYCLIST:CHOICES -->` markers for agent-to-UI communication
+- **Window title** — Cyclist window title now shows the project directory name
+
+---
+
 ## [10.0.2] - 2026-02-06
 
 ### Fixed
@@ -2228,7 +2249,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.3...HEAD
+[10.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.2...v10.0.3
 [10.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.0...v10.0.1
 [10.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.1.0...v10.0.0

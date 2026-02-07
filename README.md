@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.0.2** | *The outer loop goes once, the inner loop goes many times.*
+**v10.0.3** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -17,7 +17,7 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 - **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
 - **8 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (Architecture, Release, Git Cleanup)
 - **49 Slash Commands** - Entry points for agent activation and workflows
-- **24 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
