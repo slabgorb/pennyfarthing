@@ -120,6 +120,14 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/context-circuit-breaker.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/cyclist-pretooluse-hook.sh"
+          }
+        ]
       }
     ]
   },
