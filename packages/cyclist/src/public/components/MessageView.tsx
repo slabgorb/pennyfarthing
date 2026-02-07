@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
-import { AskUserQuestionBlock } from './AskUserQuestionBlock';
 import ToolStack from './ToolStack';
 import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
@@ -228,21 +227,8 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     const msg = item as MessageData;
 
     if (msg.type === 'tool_use' && msg.tool_name && msg.tool_id) {
-      // MSSCI-14395: Render AskUserQuestion as interactive buttons
-      if (msg.tool_name === 'AskUserQuestion') {
-        return (
-          <AskUserQuestionBlock
-            key={`ask-${msg.tool_id}`}
-            toolUse={{
-              type: 'tool_use',
-              tool_name: msg.tool_name,
-              tool_id: msg.tool_id,
-              input: (msg.input || {}) as { questions: Array<{ question: string; header: string; options: Array<{ label: string; description: string }>; multiSelect: boolean }> },
-              timestamp: msg.timestamp,
-            }}
-          />
-        );
-      }
+      // AskUserQuestion is handled by the Reflector system (CYCLIST markers → QuickActions)
+      if (msg.tool_name === 'AskUserQuestion') return null;
       const result = toolResults.get(msg.tool_id);
       return (
         <ToolCallBlock
