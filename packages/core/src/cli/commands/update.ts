@@ -25,6 +25,7 @@ import {
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, migrateSettingsFile, ensureSettingsSymlink } from '../utils/settings.js';
+import { getPfVersion, installPfCli } from '../utils/python.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -222,6 +223,9 @@ async function updateInstalledContent(
     ensureSettingsSymlink(projectRoot);
   }
 
+  // Ensure Python scripts (pf CLI) are installed
+  await installPythonScripts(nodeModulesPath, { dryRun });
+
   // Update manifest version
   logger.newline();
   logger.info('Updating manifest...');
@@ -233,6 +237,33 @@ async function updateInstalledContent(
 
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.pennyfarthing/manifest.json');
+}
+
+/**
+ * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
+ * Uses shared utility that checks local source first, then PyPI.
+ */
+async function installPythonScripts(
+  nodeModulesPath: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  logger.newline();
+  logger.info('Checking Python scripts (pf CLI)...');
+
+  const version = getPfVersion();
+  if (version) {
+    logger.skipped('pf CLI', `already installed (${version})`);
+    return;
+  }
+
+  if (options.dryRun) {
+    logger.info('Would install pf CLI via uv/pipx');
+    return;
+  }
+
+  if (!installPfCli(nodeModulesPath)) {
+    logger.warning('Could not install pf CLI — install manually: uv tool install pennyfarthing-scripts');
+  }
 }
 
 /**

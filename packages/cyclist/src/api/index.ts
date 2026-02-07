@@ -37,3 +37,5 @@ export { createTodosRouter, setWebModeTodos, getWebModeTodos } from './todos.js'
 export { createAuditLogRouter } from './audit-log.js';
 // MSSCI-14325: Permissions API (grant management)
 export { createPermissionsRouter } from './permissions.js';
+// MSSCI-14461: Agent Load Analyzer API
+export { createAgentLoadRouter } from './agent-load.js';

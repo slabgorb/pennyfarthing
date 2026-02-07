@@ -27,6 +27,7 @@ import { findNodeModulesPath } from '../utils/node-modules.js';
 import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { migrateTemplateFiles } from './update.js';
+import { getPfVersion, installPfCli } from '../utils/python.js';
 
 interface InitOptions {
   force?: boolean;
@@ -215,7 +216,10 @@ export async function initCommand(
   // 9. Install git hooks
   await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
 
-  // 9b. Migrate template files from old .claude/ locations to .pennyfarthing/
+  // 9b. Install Python scripts package (pennyfarthing_scripts → `pf` CLI)
+  await installPythonScripts(nodeModulesPath, { dryRun });
+
+  // 9c. Migrate template files from old .claude/ locations to .pennyfarthing/
   migrateTemplateFiles(projectRoot, { dryRun });
 
   // 10. Generate template files (if not exist and not skipped)
@@ -319,6 +323,34 @@ async function installGitHooks(
       writeFileSync(destPath, hookContent, { mode: 0o755 });
     }
     logger.created(`.git/hooks/${hook.dest}`);
+  }
+}
+
+/**
+ * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
+ * Uses shared utility that checks local source first, then PyPI.
+ */
+async function installPythonScripts(
+  nodeModulesPath: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  logger.newline();
+  logger.info('Installing Python scripts (pf CLI)...');
+
+  const version = getPfVersion();
+  if (version) {
+    logger.skipped('pf CLI', `already installed (${version})`);
+    return;
+  }
+
+  if (options.dryRun) {
+    logger.info('Would install pf CLI via uv/pipx');
+    return;
+  }
+
+  if (!installPfCli(nodeModulesPath)) {
+    logger.warning('Could not install pf CLI automatically');
+    logger.warning('Install manually: uv tool install pennyfarthing-scripts');
   }
 }
 

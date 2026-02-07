@@ -1,0 +1,100 @@
+import { existsSync, readFileSync } from 'fs';
+import { execSync, spawnSync } from 'child_process';
+import { join, dirname } from 'path';
+import { logger } from './logger.js';
+
+/**
+ * Find the nearest pyproject.toml for pennyfarthing-scripts.
+ *
+ * 1. Check package root (node_modules/@pennyfarthing/core/) — for npm-distributed installs
+ * 2. Walk up from nodeModulesPath to find monorepo root — for dogfooding
+ */
+export function findLocalPyproject(nodeModulesPath: string | null): string | null {
+  if (!nodeModulesPath) return null;
+
+  // Check package root (node_modules/@pennyfarthing/core/)
+  const pkgRoot = join(nodeModulesPath, '..');
+  const pkgPyproject = join(pkgRoot, 'pyproject.toml');
+  if (existsSync(pkgPyproject)) {
+    try {
+      const content = readFileSync(pkgPyproject, 'utf8');
+      if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+        return pkgPyproject;
+      }
+    } catch { /* ignore read errors */ }
+  }
+
+  // Walk up from node_modules to find monorepo root pyproject.toml
+  // node_modules/@pennyfarthing/core/pennyfarthing-dist → walk up to find pennyfarthing/pyproject.toml
+  let dir = dirname(nodeModulesPath);
+  for (let i = 0; i < 6; i++) {
+    const candidate = join(dir, 'pyproject.toml');
+    if (existsSync(candidate)) {
+      try {
+        const content = readFileSync(candidate, 'utf8');
+        if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+          return candidate;
+        }
+      } catch { /* ignore read errors */ }
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
+  return null;
+}
+
+/**
+ * Check if the `pf` CLI is already installed and working.
+ * Returns the version string if installed, null otherwise.
+ */
+export function getPfVersion(): string | null {
+  try {
+    const result = spawnSync('pf', ['--version'], { encoding: 'utf8', stdio: 'pipe' });
+    if (result.status === 0) {
+      return result.stdout?.trim() || 'unknown';
+    }
+  } catch { /* not installed */ }
+  return null;
+}
+
+/**
+ * Install the pf CLI tool using the best available method.
+ *
+ * Strategy 1: Local editable install (dogfooding — pennyfarthing/ repo exists)
+ * Strategy 2: Install from PyPI (end users)
+ *
+ * Returns true if installation succeeded.
+ */
+export function installPfCli(nodeModulesPath: string | null): boolean {
+  // Strategy 1: Try local editable install (dogfooding)
+  const localPyproject = findLocalPyproject(nodeModulesPath);
+  if (localPyproject) {
+    const packageDir = dirname(localPyproject);
+    try {
+      execSync(`uv tool install -e "${packageDir}"`, { stdio: 'pipe' });
+      logger.created('pf CLI (via uv, editable)');
+      return true;
+    } catch { /* try next */ }
+    try {
+      execSync(`pipx install -e "${packageDir}"`, { stdio: 'pipe' });
+      logger.created('pf CLI (via pipx, editable)');
+      return true;
+    } catch { /* try next */ }
+  }
+
+  // Strategy 2: Install from PyPI
+  try {
+    execSync('uv tool install pennyfarthing-scripts', { stdio: 'pipe' });
+    logger.created('pf CLI (via uv, PyPI)');
+    return true;
+  } catch { /* try next */ }
+  try {
+    execSync('pipx install pennyfarthing-scripts', { stdio: 'pipe' });
+    logger.created('pf CLI (via pipx, PyPI)');
+    return true;
+  } catch { /* try next */ }
+
+  return false;
+}
