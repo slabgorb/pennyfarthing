@@ -111,6 +111,6 @@ If a required tool is not installed, the script will show a warning.
 </requirements>
 
 <reference>
-- **Script:** `.pennyfarthing/scripts/run-ci.sh`
+- **Script:** `.pennyfarthing/scripts/misc/run-ci.sh`
 - **Story:** 21-4 (Command & Skill Expansion)
 </reference>
