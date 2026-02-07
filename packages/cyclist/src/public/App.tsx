@@ -42,7 +42,6 @@ import {
   SettingsPanel,
   AuditLogPanel,
   TTYPanel,
-  HotspotsPanel,
 } from './components/panels';
 
 // =============================================================================
@@ -68,7 +67,6 @@ registerPanelComponent(PANEL_INVENTORY.AC, ACPanel);
 registerPanelComponent(PANEL_INVENTORY.TODO, TodoPanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
-registerPanelComponent(PANEL_INVENTORY.HOTSPOTS, HotspotsPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 
 // =============================================================================
