@@ -511,7 +511,7 @@ Set by `setup-env.sh`:
 
 ### Repository Configuration
 
-`.claude/project/repos.yaml`:
+`.pennyfarthing/repos.yaml`:
 
 ```yaml
 version: "1.0"

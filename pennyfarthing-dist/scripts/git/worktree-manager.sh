@@ -3,7 +3,7 @@
 # Usage: worktree-manager.sh {create|remove|list|status|ports|cd} [args]
 #
 # Configuration (choose one):
-#   1. repos.yaml: Define repos in .claude/project/repos.yaml (recommended)
+#   1. repos.yaml: Define repos in .pennyfarthing/repos.yaml (recommended)
 #   2. Legacy env vars: Set API_REPO and UI_REPO in .claude/project/hooks/setup-env.sh
 
 set -e
@@ -109,7 +109,7 @@ load_repos_config
 if [ "$(get_repo_count)" -eq 0 ]; then
     echo "❌ Error: No repositories configured"
     echo ""
-    echo "Option 1: Create .claude/project/repos.yaml (recommended for multi-repo projects)"
+    echo "Option 1: Create .pennyfarthing/repos.yaml (recommended for multi-repo projects)"
     echo "Option 2: Set API_REPO and UI_REPO in .claude/project/hooks/setup-env.sh"
     exit 1
 fi
@@ -161,7 +161,7 @@ Repos Filter (third argument):
   repo1,repo2   - Comma-separated list of specific repo names
 
 Configuration:
-  Option 1 (recommended): Create .claude/project/repos.yaml
+  Option 1 (recommended): Create .pennyfarthing/repos.yaml
   Option 2 (legacy): Set API_REPO and UI_REPO environment variables
 
 Session Files:

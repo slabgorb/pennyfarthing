@@ -438,7 +438,7 @@ async def analyze_all_repos(
     """
     from pennyfarthing_scripts.common.config import load_yaml_config
 
-    repos_yaml = load_yaml_config(project_root / "repos.yaml")
+    repos_yaml = load_yaml_config(project_root / ".pennyfarthing" / "repos.yaml")
 
     repos: list[tuple[str, Path]] = []
 

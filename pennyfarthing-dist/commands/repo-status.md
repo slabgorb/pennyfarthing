@@ -8,7 +8,7 @@ Check the git status of all project repos at once.
 
 ## Configuration
 
-Repos are configured in `.claude/project/repos.yaml`. The script automatically reads this configuration.
+Repos are configured in `.pennyfarthing/repos.yaml`. The script automatically reads this configuration.
 
 ## Instructions
 
@@ -34,7 +34,7 @@ For each configured repo:
 
 ## Adding More Repos
 
-To add repos, edit `.claude/project/repos.yaml`:
+To add repos, edit `.pennyfarthing/repos.yaml`:
 
 ```yaml
 repos:

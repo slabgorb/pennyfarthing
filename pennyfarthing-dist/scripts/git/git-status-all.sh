@@ -3,7 +3,7 @@
 # Usage: ./scripts/git-status-all.sh [--brief]
 #
 # Shows: branch, status, unpushed commits for all repos
-# Reads repo configuration from .claude/project/repos.yaml
+# Reads repo configuration from .pennyfarthing/repos.yaml
 
 set -e
 

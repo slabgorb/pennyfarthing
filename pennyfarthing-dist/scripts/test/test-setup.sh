@@ -4,7 +4,7 @@
 #
 # Usage: source scripts/test/test-setup.sh
 #
-# Configuration is read from .claude/project/repos.yaml
+# Configuration is read from .pennyfarthing/repos.yaml
 # See repos.yaml for schema documentation
 #
 # Functions:

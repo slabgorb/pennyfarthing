@@ -24,7 +24,7 @@ workflow:
   # Variables available in step files
   variables:
     output_file: .session/git-cleanup-plan.md
-    repos_config: .claude/project/repos.yaml
+    repos_config: .pennyfarthing/repos.yaml
 
   # User approval gates
   gates:

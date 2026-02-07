@@ -56,7 +56,7 @@ def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: t
         # Single named repo from project
         project_root = get_project_root()
         from pennyfarthing_scripts.common.config import load_yaml_config
-        repos_yaml = load_yaml_config(project_root / "repos.yaml")
+        repos_yaml = load_yaml_config(project_root / ".pennyfarthing" / "repos.yaml")
         if repos_yaml and repo in repos_yaml:
             cfg = repos_yaml[repo]
             rpath = cfg.get("path", repo) if isinstance(cfg, dict) else str(cfg)
