@@ -175,6 +175,80 @@ def create_story(epic_jira_key, story_id, dry_run):
         raise SystemExit(1)
 
 
+@create.command("standalone")
+@click.argument("title")
+@click.option("--points", default=2, type=int, help="Story points (default: 2)")
+@click.option("--description", "-d", default="", help="Story description")
+@click.option("--dry-run", is_flag=True, help="Preview without creating")
+def create_standalone(title, points, description, dry_run):
+    """Create a standalone Jira story, add to sprint, mark Done.
+
+    Uses REST API directly — no interactive prompts, no stdin issues.
+
+    \b
+    Arguments:
+      TITLE  - Story summary
+
+    \b
+    Examples:
+      pf jira create standalone "Fix sprint script shard support" --points 3
+      pf jira create standalone "Add drift detection" -d "Detects YAML drift"
+      pf jira create standalone "Quick fix" --dry-run
+    """
+    from pennyfarthing_scripts.jira.client import JIRA_PROJECT, get_client
+    from pennyfarthing_scripts.jira.create import _build_adf_description
+    from pennyfarthing_scripts.sprint.loader import get_sprint_info
+
+    sprint_info = get_sprint_info()
+    sprint_id = sprint_info.get("jira_sprint_id")
+
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would create: {title}")
+        click.echo(f"  Points: {points}")
+        click.echo(f"  Sprint: {sprint_id}")
+        click.echo(f"  Actions: create -> add to sprint -> transition to Done")
+        return
+
+    client = get_client()
+
+    # 1. Create the story
+    payload = {
+        "fields": {
+            "project": {"key": JIRA_PROJECT},
+            "summary": title,
+            "description": _build_adf_description(description),
+            "issuetype": {"name": "Story"},
+            "labels": ["pennyfarthing"],
+        }
+    }
+
+    response = client.create_issue_sync(payload)
+    if not response or "key" not in response:
+        raise click.ClickException(f"Failed to create story: {response}")
+
+    jira_key = response["key"]
+    click.echo(f"Created: {jira_key}")
+
+    # 2. Set story points
+    if points > 0:
+        client.update_issue_sync(jira_key, {"customfield_10031": points})
+
+    # 3. Add to sprint
+    if sprint_id:
+        client.add_to_sprint_sync(sprint_id, jira_key)
+        click.echo(f"Added to sprint {sprint_id}")
+
+    # 4. Transition to Done
+    result = client.transition_sync(jira_key, "Done")
+    if result.get("success"):
+        click.echo(f"Transitioned to Done")
+    else:
+        click.echo(f"Warning: could not transition to Done: {result.get('reason')}")
+
+    click.echo(f"\n{jira_key}: {title}")
+    click.echo(f"https://1898andco.atlassian.net/browse/{jira_key}")
+
+
 @jira.command()
 @click.argument("epic")
 @click.option("--dry-run", is_flag=True, help="Preview without applying")
