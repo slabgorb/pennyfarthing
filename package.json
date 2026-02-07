@@ -39,6 +39,7 @@
     "test": "pnpm -r test",
     "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",
     "validate:refs": "node scripts/validate-refs.js",
+    "test:validate-refs": "node --test scripts/validate-refs.test.js",
     "clean": "pnpm -r clean"
   },
   "dependencies": {
