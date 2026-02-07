@@ -10,7 +10,8 @@ Commands:
     work        Start work on a story
     archive     Archive a completed story
     story       Story subcommands (show, add, update, size, template, finish, claim)
-    epic        Epic subcommands (add, promote, archive, import, remove)
+    epic        Epic subcommands (show, add, promote, archive, cancel, import, remove)
+    initiative  Initiative subcommands (show, cancel)
 """
 
 import click
@@ -25,7 +26,8 @@ def sprint():
       status   - Show sprint status
       backlog  - Show available stories
       story    - Story operations (show, add, update, size, template, finish, claim)
-      epic     - Epic operations (add, promote, archive, import, remove)
+      epic     - Epic operations (show, add, promote, archive, cancel, import, remove)
+      initiative - Initiative operations (show, cancel)
       work     - Start work on a story
       archive  - Archive a completed story
     """
@@ -291,8 +293,298 @@ story.add_command(story_update_command, "update")
 
 @sprint.group()
 def epic():
-    """Epic operations (add, promote, archive, import, remove)."""
+    """Epic operations (show, add, promote, archive, cancel, import, remove)."""
     pass
+
+
+@epic.command("show")
+@click.argument("epic_id")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def epic_show(epic_id: str, output_json: bool):
+    """Show details for a specific epic.
+
+    Searches both the current sprint and future initiative shards.
+
+    \b
+    Arguments:
+      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+
+    \b
+    Examples:
+      pf sprint epic show MSSCI-14298
+      pf sprint epic show epic-42
+      pf sprint epic show epic-42 --json
+    """
+    import json as json_mod
+
+    from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.sprint.loader import load_sprint
+
+    root = get_project_root()
+    epic_data = None
+    source = None
+
+    # 1. Search current sprint
+    sprint_data = load_sprint(root)
+    if sprint_data and "epics" in sprint_data:
+        for e in sprint_data["epics"]:
+            if isinstance(e, dict):
+                eid = str(e.get("id", ""))
+                ejira = str(e.get("jira", ""))
+                if epic_id in (eid, ejira, eid.replace("epic-", ""), f"epic-{epic_id}"):
+                    epic_data = e
+                    source = "current sprint"
+                    break
+
+    # 2. Search future initiative shards
+    if not epic_data:
+        epic_data, source = _find_epic_in_initiatives(epic_id, root)
+
+    if not epic_data:
+        raise click.ClickException(f"Epic not found: {epic_id}")
+
+    if output_json:
+        # Convert to plain dict for JSON serialization
+        click.echo(json_mod.dumps(dict(epic_data), indent=2, default=str))
+    else:
+        click.echo(f"Epic: {epic_data.get('id', epic_id)}")
+        click.echo(f"Title: {epic_data.get('title', 'N/A')}")
+        click.echo(f"Status: {epic_data.get('status', 'N/A')}")
+        click.echo(f"Points: {epic_data.get('points', 'N/A')}")
+        click.echo(f"Source: {source}")
+        if epic_data.get("priority"):
+            click.echo(f"Priority: {epic_data.get('priority')}")
+        if epic_data.get("jira"):
+            click.echo(f"Jira: {epic_data.get('jira')}")
+        if epic_data.get("repos"):
+            click.echo(f"Repos: {epic_data.get('repos')}")
+        if epic_data.get("description"):
+            click.echo(f"Description: {epic_data.get('description').rstrip()}")
+
+        stories = epic_data.get("stories", [])
+        if stories:
+            click.echo(f"\nStories ({len(stories)}):")
+            for s in stories:
+                sid = s.get("id", "?")
+                stitle = s.get("title", "?")
+                spts = s.get("points", "?")
+                sstat = s.get("status", "?")
+                click.echo(f"  {sid}: {stitle} [{spts}pts] ({sstat})")
+
+
+def _epic_shard_path(sprint_dir, ref: str):
+    """Resolve an epic shard file path from a ref string.
+
+    Handles both 'epic-42' and 'MSSCI-12792' style refs.
+    The file naming convention is epic-{ref}.yaml, but refs that
+    already start with 'epic-' should not be double-prefixed.
+    """
+    if ref.startswith("epic-"):
+        return sprint_dir / f"{ref}.yaml"
+    return sprint_dir / f"epic-{ref}.yaml"
+
+
+def _epic_ref_matches(ref: str, epic_id: str) -> bool:
+    """Check if an initiative epic ref matches the requested epic_id."""
+    # Normalize both to compare without prefix
+    ref_bare = ref.replace("epic-", "") if ref.startswith("epic-") else ref
+    id_bare = epic_id.replace("epic-", "") if epic_id.startswith("epic-") else epic_id
+    return ref_bare == id_bare or ref == epic_id
+
+
+def _find_epic_in_initiatives(epic_id: str, root):
+    """Search initiative shard files for an epic by ID.
+
+    Returns (epic_dict, source_string) or (None, None).
+    """
+    import yaml
+
+    sprint_dir = root / "sprint"
+    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+        with open(init_file) as f:
+            init_data = yaml.safe_load(f.read())
+        if not init_data:
+            continue
+
+        init_name = init_data.get("name", init_file.stem)
+        epics = init_data.get("epics", [])
+        for e in epics:
+            if isinstance(e, str):
+                if _epic_ref_matches(e, epic_id):
+                    shard = _epic_shard_path(sprint_dir, e)
+                    if shard.exists():
+                        with open(shard) as sf:
+                            epic_data = yaml.safe_load(sf.read())
+                        if epic_data:
+                            return epic_data, f"initiative: {init_name}"
+            elif isinstance(e, dict):
+                eid = str(e.get("id", ""))
+                if _epic_ref_matches(eid, epic_id):
+                    return e, f"initiative: {init_name}"
+
+    return None, None
+
+
+@epic.command("cancel")
+@click.argument("epic_id")
+@click.option("--jira", is_flag=True, help="Also cancel the epic in Jira")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
+    """Cancel an epic and all its stories.
+
+    Sets the epic status to 'canceled' and all stories to 'canceled'.
+    Searches both the current sprint and future initiative shards.
+
+    \b
+    Arguments:
+      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+
+    \b
+    Examples:
+      pf sprint epic cancel epic-42 --dry-run
+      pf sprint epic cancel epic-42
+      pf sprint epic cancel epic-42 --jira
+    """
+    from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.sprint.loader import load_sprint
+    from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
+
+    root = get_project_root()
+    sprint_dir = root / "sprint"
+    sprint_path = sprint_dir / "current-sprint.yaml"
+
+    # 1. Try current sprint
+    sprint_data = read_sprint(sprint_path) if sprint_path.exists() else None
+    found_in_sprint = False
+    if sprint_data and "epics" in sprint_data:
+        for e in sprint_data["epics"]:
+            if not isinstance(e, dict):
+                continue
+            eid = str(e.get("id", ""))
+            ejira = str(e.get("jira", ""))
+            if epic_id in (eid, ejira, eid.replace("epic-", ""), f"epic-{epic_id}"):
+                found_in_sprint = True
+                jira_key = e.get("jira")
+                stories = e.get("stories", [])
+                story_count = len(stories)
+
+                click.echo(f"Epic: {eid}")
+                click.echo(f"Title: {e.get('title', 'N/A')}")
+                click.echo(f"Stories: {story_count}")
+
+                if jira_key and not jira:
+                    click.echo(f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira")
+
+                if dry_run:
+                    click.echo(f"\n[DRY-RUN] Would cancel {eid} and {story_count} stories")
+                    return
+
+                e["status"] = "canceled"
+                for s in stories:
+                    s["status"] = "canceled"
+
+                write_sprint(sprint_path, sprint_data)
+                click.echo(f"\nCanceled {eid} and {story_count} stories in current sprint")
+
+                if jira and jira_key:
+                    _transition_jira(jira_key, "Cancelled")
+                    click.echo(f"Transitioned Jira {jira_key} to Cancelled")
+                return
+
+    # 2. Try initiative shards
+    if not found_in_sprint:
+        _cancel_epic_in_initiatives(epic_id, root, jira=jira, dry_run=dry_run)
+
+
+def _transition_jira(jira_key: str, status: str) -> bool:
+    """Transition a Jira issue to the given status."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["jira", "issue", "move", jira_key, status],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool):
+    """Find and cancel an epic in initiative shard files."""
+    import yaml
+
+    sprint_dir = root / "sprint"
+
+    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+        with open(init_file) as f:
+            raw = f.read()
+        init_data = yaml.safe_load(raw)
+        if not init_data:
+            continue
+
+        init_name = init_data.get("name", init_file.stem)
+        epics = init_data.get("epics", [])
+
+        for i, e in enumerate(epics):
+            matched = False
+            epic_dict = None
+
+            if isinstance(e, str):
+                if _epic_ref_matches(e, epic_id):
+                    shard = _epic_shard_path(sprint_dir, e)
+                    if shard.exists():
+                        with open(shard) as sf:
+                            epic_dict = yaml.safe_load(sf.read())
+                        matched = True
+            elif isinstance(e, dict):
+                eid = str(e.get("id", ""))
+                if _epic_ref_matches(eid, epic_id):
+                    epic_dict = e
+                    matched = True
+
+            if not matched or not epic_dict:
+                continue
+
+            jira_key = epic_dict.get("jira")
+            stories = epic_dict.get("stories", [])
+            story_count = len(stories)
+
+            click.echo(f"Epic: {epic_dict.get('id', epic_id)}")
+            click.echo(f"Title: {epic_dict.get('title', 'N/A')}")
+            click.echo(f"Initiative: {init_name}")
+            click.echo(f"Stories: {story_count}")
+
+            if jira_key and not jira:
+                click.echo(f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira")
+
+            if dry_run:
+                click.echo(f"\n[DRY-RUN] Would cancel {epic_dict.get('id', epic_id)} and {story_count} stories")
+                return
+
+            epic_dict["status"] = "canceled"
+            for s in stories:
+                s["status"] = "canceled"
+
+            # Write back — either shard file or inline in initiative
+            if isinstance(e, str):
+                shard = _epic_shard_path(sprint_dir, e)
+                with open(shard, "w") as sf:
+                    yaml.dump(dict(epic_dict), sf, default_flow_style=False, sort_keys=False)
+            else:
+                with open(init_file, "w") as f:
+                    yaml.dump(init_data, f, default_flow_style=False, sort_keys=False)
+
+            click.echo(f"\nCanceled {epic_dict.get('id', epic_id)} and {story_count} stories")
+
+            if jira and jira_key:
+                _transition_jira(jira_key, "Cancelled")
+                click.echo(f"Transitioned Jira {jira_key} to Cancelled")
+            return
+
+    raise click.ClickException(f"Epic not found: {epic_id}")
 
 
 @epic.command("archive")
@@ -506,6 +798,211 @@ def epic_promote(epic_id: str):
 from pennyfarthing_scripts.sprint.epic_add import epic_add_command
 
 epic.add_command(epic_add_command, "add")
+
+
+# --- Initiative subgroup ---
+
+@sprint.group()
+def initiative():
+    """Initiative operations (show, cancel)."""
+    pass
+
+
+@initiative.command("show")
+@click.argument("name")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def initiative_show(name: str, output_json: bool):
+    """Show details for a specific initiative.
+
+    \b
+    Arguments:
+      NAME  - Initiative slug (e.g., benchmark-reliability, technical-debt)
+
+    \b
+    Examples:
+      pf sprint initiative show benchmark-reliability
+      pf sprint initiative show technical-debt --json
+    """
+    import json as json_mod
+
+    import yaml
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    init_file = root / "sprint" / f"initiative-{name}.yaml"
+
+    if not init_file.exists():
+        raise click.ClickException(f"Initiative not found: {name}\n  Expected: {init_file}")
+
+    with open(init_file) as f:
+        init_data = yaml.safe_load(f.read())
+
+    if not init_data:
+        raise click.ClickException(f"Empty initiative file: {init_file}")
+
+    if output_json:
+        click.echo(json_mod.dumps(init_data, indent=2, default=str))
+        return
+
+    click.echo(f"Initiative: {init_data.get('name', name)}")
+    click.echo(f"Status: {init_data.get('status', 'N/A')}")
+    if init_data.get("total_points"):
+        click.echo(f"Total Points: {init_data.get('total_points')}")
+    if init_data.get("blocked_by"):
+        click.echo(f"Blocked By: {init_data.get('blocked_by')}")
+    if init_data.get("description"):
+        click.echo(f"Description: {init_data.get('description').rstrip()}")
+
+    epics = init_data.get("epics", [])
+    if epics:
+        click.echo(f"\nEpics ({len(epics)}):")
+        sprint_dir = root / "sprint"
+        for e in epics:
+            if isinstance(e, str):
+                # String ref — try to load shard for details
+                shard = _epic_shard_path(sprint_dir, e)
+                if shard.exists():
+                    with open(shard) as sf:
+                        edata = yaml.safe_load(sf.read())
+                    if edata:
+                        etitle = edata.get("title", "?")
+                        epts = edata.get("points", "?")
+                        estat = edata.get("status", "?")
+                        click.echo(f"  {edata.get('id', e)}: {etitle} [{epts}pts] ({estat})")
+                        continue
+                click.echo(f"  {e} (shard not found)")
+            elif isinstance(e, dict):
+                eid = e.get("id", "?")
+                etitle = e.get("title", "?")
+                epts = e.get("points", "?")
+                estat = e.get("status", "?")
+                click.echo(f"  {eid}: {etitle} [{epts}pts] ({estat})")
+
+    standalone_stories = init_data.get("standalone_stories", [])
+    if standalone_stories:
+        click.echo(f"\nStandalone Stories ({len(standalone_stories)}):")
+        for s in standalone_stories:
+            sid = s.get("id", "?")
+            stitle = s.get("title", "?")
+            spts = s.get("points", "?")
+            sstat = s.get("status", "?")
+            click.echo(f"  {sid}: {stitle} [{spts}pts] ({sstat})")
+
+
+@initiative.command("cancel")
+@click.argument("name")
+@click.option("--jira", is_flag=True, help="Also cancel epics in Jira")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def initiative_cancel(name: str, jira: bool, dry_run: bool):
+    """Cancel an initiative and all its epics/stories.
+
+    Sets the initiative status to 'canceled' and cancels all epics and stories
+    within it.
+
+    \b
+    Arguments:
+      NAME  - Initiative slug (e.g., benchmark-reliability, technical-debt)
+
+    \b
+    Examples:
+      pf sprint initiative cancel technical-debt --dry-run
+      pf sprint initiative cancel technical-debt
+      pf sprint initiative cancel technical-debt --jira
+    """
+    import yaml
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    sprint_dir = root / "sprint"
+    init_file = sprint_dir / f"initiative-{name}.yaml"
+
+    if not init_file.exists():
+        raise click.ClickException(f"Initiative not found: {name}\n  Expected: {init_file}")
+
+    with open(init_file) as f:
+        init_data = yaml.safe_load(f.read())
+
+    if not init_data:
+        raise click.ClickException(f"Empty initiative file: {init_file}")
+
+    init_name = init_data.get("name", name)
+    epics = init_data.get("epics", [])
+    standalone_stories = init_data.get("standalone_stories", [])
+
+    # Collect Jira keys for warning
+    jira_keys = []
+    epic_count = 0
+    story_count = 0
+
+    for e in epics:
+        if isinstance(e, str):
+            shard = _epic_shard_path(sprint_dir, e)
+            if shard.exists():
+                with open(shard) as sf:
+                    edata = yaml.safe_load(sf.read())
+                if edata:
+                    epic_count += 1
+                    if edata.get("jira"):
+                        jira_keys.append(edata["jira"])
+                    story_count += len(edata.get("stories", []))
+        elif isinstance(e, dict):
+            epic_count += 1
+            if e.get("jira"):
+                jira_keys.append(e["jira"])
+            story_count += len(e.get("stories", []))
+
+    story_count += len(standalone_stories)
+
+    click.echo(f"Initiative: {init_name}")
+    click.echo(f"Epics: {epic_count}")
+    click.echo(f"Stories: {story_count}")
+
+    if jira_keys and not jira:
+        click.echo(f"\nWarning: {len(jira_keys)} epic(s) have Jira keys -- pass --jira to also cancel in Jira")
+        for k in jira_keys:
+            click.echo(f"  {k}")
+
+    if dry_run:
+        click.echo(f"\n[DRY-RUN] Would cancel initiative '{init_name}' ({epic_count} epics, {story_count} stories)")
+        return
+
+    # Cancel all epics
+    for i, e in enumerate(epics):
+        if isinstance(e, str):
+            shard = _epic_shard_path(sprint_dir, e)
+            if shard.exists():
+                with open(shard) as sf:
+                    edata = yaml.safe_load(sf.read())
+                if edata:
+                    edata["status"] = "canceled"
+                    for s in edata.get("stories", []):
+                        s["status"] = "canceled"
+                    with open(shard, "w") as sf:
+                        yaml.dump(edata, sf, default_flow_style=False, sort_keys=False)
+                    if jira and edata.get("jira"):
+                        _transition_jira(edata["jira"], "Cancelled")
+        elif isinstance(e, dict):
+            e["status"] = "canceled"
+            for s in e.get("stories", []):
+                s["status"] = "canceled"
+            if jira and e.get("jira"):
+                _transition_jira(e["jira"], "Cancelled")
+
+    # Cancel standalone stories
+    for s in standalone_stories:
+        s["status"] = "canceled"
+
+    # Update initiative status
+    init_data["status"] = "canceled"
+
+    with open(init_file, "w") as f:
+        yaml.dump(init_data, f, default_flow_style=False, sort_keys=False)
+
+    click.echo(f"\nCanceled initiative '{init_name}' ({epic_count} epics, {story_count} stories)")
+    if jira and jira_keys:
+        click.echo(f"Transitioned {len(jira_keys)} Jira epic(s) to Cancelled")
 
 
 # --- Standalone command ---
