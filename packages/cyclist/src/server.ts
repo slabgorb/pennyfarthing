@@ -32,6 +32,7 @@ import {
   createTodosRouter,
   createHotspotsRouter,
   createPermissionsRouter,
+  createAgentLoadRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -141,6 +142,8 @@ app.use('/api/audit-log', createAuditLogRouter());
 app.use('/api/permissions', createPermissionsRouter());
 // Hotspot analysis API
 app.use('/api/hotspots', createHotspotsRouter(getProjectDir));
+// MSSCI-14461: Agent Load Analyzer
+app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
