@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.0.5] - 2026-02-07
+
+### Added
+
+- **Jira standalone story creation** — New `pf jira create standalone` CLI command for wrapping ad-hoc changes into tracked Jira stories (MSSCI-14491)
+
+### Changed
+
+- **Sprint scripts migrated to Python CLI** — All bash sprint scripts replaced with `pf sprint` Python CLI commands for consistency and testability (MSSCI-14490)
+
+### Fixed
+
+- **Epic promote leaves stale initiative references** — `pf sprint epic promote` now removes empty initiative shards and cleans up `future.yaml` when the last epic in an initiative is promoted
+- **Deleted sprint script references** — Updated all agent docs, guides, and workflow files to reference `pf` CLI commands instead of removed bash scripts
+
+---
+
 ## [10.0.4] - 2026-02-07
 
 ### Fixed
