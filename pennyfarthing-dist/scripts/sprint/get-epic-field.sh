@@ -2,12 +2,7 @@
 # Get a field value from an epic in sprint YAML
 # Usage: .pennyfarthing/scripts/sprint/get-epic-field.sh <epic-id> <field>
 #
-# Examples:
-#   .pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 jira
-#   .pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 title
-#   .pennyfarthing/scripts/sprint/get-epic-field.sh 35 jira  # Also works without 'epic-' prefix
-#
-# Common fields: jira, title, description, status
+# Delegates to Python CLI: pennyfarthing_scripts.cli sprint epic field
 # Returns the field value or "null" if not found
 
 set -euo pipefail
@@ -27,26 +22,8 @@ if [[ -z "$EPIC_ID" || -z "$FIELD" ]]; then
   exit 1
 fi
 
-# Normalize epic ID - add 'epic-' prefix if not present
-if [[ ! "$EPIC_ID" =~ ^epic- ]]; then
-  EPIC_ID="epic-$EPIC_ID"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
+export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
 
-# Find project root
-source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
-
-SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
-
-if [[ ! -f "$SPRINT_FILE" ]]; then
-  echo "null"
-  exit 1
-fi
-
-# Extract field value using yq
-VALUE=$(yq eval ".epics[] | select(.id == \"$EPIC_ID\") | .$FIELD // \"null\"" "$SPRINT_FILE" 2>/dev/null | head -1)
-
-if [[ -z "$VALUE" ]]; then
-  echo "null"
-else
-  echo "$VALUE"
-fi
+exec python3 -m pennyfarthing_scripts.cli sprint epic field "$EPIC_ID" "$FIELD"

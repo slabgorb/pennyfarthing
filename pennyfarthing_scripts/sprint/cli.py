@@ -55,17 +55,62 @@ def status(filter: str | None):
 
 @sprint.command()
 def backlog():
-    """Show available stories in the backlog."""
-    # Lazy import
-    from pennyfarthing_scripts.sprint.loader import get_stories_by_status
+    """Show available stories grouped by epic.
 
-    stories = get_stories_by_status("backlog")
-    click.echo(f"Backlog: {len(stories)} stories")
+    Shows stories with backlog, ready, or planning status.
+    Output format matches the legacy available-stories.sh script.
+    """
+    from pennyfarthing_scripts.sprint.loader import load_sprint
+
+    data = load_sprint()
+    if not data or "epics" not in data:
+        click.echo("No sprint data available")
+        return
+
+    sprint_info = data.get("sprint", {})
+    click.echo(f"# Available Stories - {sprint_info.get('name', 'Unknown Sprint')}")
     click.echo("")
-    for story in stories:
-        priority = story.get("priority", "P2")
-        points = story.get("points", "?")
-        click.echo(f"  [{priority}] {story.get('id')}: {story.get('title')} [{points}pts]")
+
+    available_statuses = {"backlog", "ready", "planning"}
+    total_count = 0
+    total_points = 0
+
+    for epic in data["epics"]:
+        if not isinstance(epic, dict):
+            continue
+
+        stories = [
+            s for s in epic.get("stories", [])
+            if s.get("status") in available_statuses
+        ]
+        if not stories:
+            continue
+
+        click.echo(f"### {epic.get('title', 'Unknown Epic')}")
+        if epic.get("description"):
+            desc = epic["description"].strip().split("\n")[0][:200]
+            click.echo(f"*{desc}*")
+        click.echo("")
+        click.echo("| ID | Title | Pts | Pri | Status | Workflow |")
+        click.echo("|----|-------|-----|-----|--------|----------|")
+
+        for s in stories:
+            title = s.get("title", "?")
+            if len(title) > 40:
+                title = title[:37] + "..."
+            sid = s.get("id", "?")
+            pts = s.get("points", "?")
+            pri = s.get("priority", "P2")
+            stat = s.get("status", "backlog")
+            wf = s.get("workflow", "tdd")
+            click.echo(f"| {sid} | {title} | {pts} | {pri} | {stat} | {wf} |")
+            total_count += 1
+            total_points += s.get("points", 0) or 0
+
+        click.echo("")
+
+    click.echo("---")
+    click.echo(f"**Total available:** {total_count} stories, {total_points} points")
 
 
 @sprint.command()
@@ -1003,6 +1048,355 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
     click.echo(f"\nCanceled initiative '{init_name}' ({epic_count} epics, {story_count} stories)")
     if jira and jira_keys:
         click.echo(f"Transitioned {len(jira_keys)} Jira epic(s) to Cancelled")
+
+
+# --- Check command (replaces check-story.sh) ---
+
+@sprint.command()
+@click.argument("id")
+def check(id: str):
+    """Check story/epic availability. Returns JSON.
+
+    \b
+    Arguments:
+      ID  - Story ID, epic ID, or 'next' for highest priority
+
+    \b
+    Returns JSON with type, details, and availability:
+      type: "story" | "epic" | "next" | "not_found"
+    """
+    import json
+
+    from pennyfarthing_scripts.sprint.loader import (
+        find_epic,
+        get_all_stories,
+        load_sprint,
+    )
+    from pennyfarthing_scripts.sprint.work import check_story, get_next_story
+
+    data = load_sprint()
+
+    if id == "next":
+        result = get_next_story()
+        if result.get("available"):
+            story = result["story"]
+            # Find parent epic
+            epic_id = _find_epic_for_story(data, story.get("id", ""))
+            out = {
+                "type": "next",
+                "story": {
+                    "id": story.get("id"),
+                    "title": story.get("title"),
+                    "points": story.get("points", 0),
+                    "priority": story.get("priority", "P2"),
+                    "workflow": story.get("workflow", "tdd"),
+                    "repos": story.get("repos", "pennyfarthing"),
+                    "epic_id": epic_id,
+                    "acceptance_criteria": story.get("acceptance_criteria", []),
+                },
+            }
+        else:
+            out = {"type": "next", "story": None, "message": "No available stories in backlog"}
+        click.echo(json.dumps(out, indent=2))
+        return
+
+    # Check if it's an epic
+    if data:
+        epic = find_epic(data, id)
+        if epic:
+            available_statuses = {"backlog", "ready", "planning"}
+            available = [
+                s for s in epic.get("stories", [])
+                if s.get("status") in available_statuses
+            ]
+            # Sort by priority
+            priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+            available.sort(key=lambda s: priority_order.get(s.get("priority", "P2"), 2))
+
+            first = available[0] if available else None
+            out = {
+                "type": "epic",
+                "id": str(epic.get("id", id)),
+                "title": epic.get("title", "Unknown"),
+                "available_stories": len(available),
+            }
+            if first:
+                out["first_story"] = {
+                    "id": first.get("id"),
+                    "title": first.get("title"),
+                    "points": first.get("points", 0),
+                    "workflow": first.get("workflow", "tdd"),
+                    "repos": first.get("repos", "pennyfarthing"),
+                    "acceptance_criteria": first.get("acceptance_criteria", []),
+                }
+            else:
+                out["first_story"] = None
+                out["message"] = "No available stories in this epic"
+            click.echo(json.dumps(out, indent=2))
+            return
+
+    # Check if it's a story
+    result = check_story(id)
+    story = result.get("story")
+    if story:
+        epic_id = _find_epic_for_story(data, story.get("id", ""))
+        out = {
+            "type": "story",
+            "id": story.get("id", id),
+            "title": story.get("title", "Unknown"),
+            "points": story.get("points", 0),
+            "workflow": story.get("workflow", "tdd"),
+            "status": story.get("status", "backlog"),
+            "assigned_to": story.get("assigned_to", ""),
+            "epic_id": epic_id,
+            "repos": story.get("repos", "pennyfarthing"),
+            "available": result.get("available", False),
+            "acceptance_criteria": story.get("acceptance_criteria", []),
+        }
+        click.echo(json.dumps(out, indent=2))
+        return
+
+    # Not found
+    click.echo(json.dumps({
+        "type": "not_found",
+        "id": id,
+        "message": "Story or epic not found in current sprint",
+    }, indent=2))
+
+
+def _find_epic_for_story(data: dict | None, story_id: str) -> str:
+    """Find the parent epic ID for a story."""
+    if not data or "epics" not in data:
+        return ""
+    for epic in data["epics"]:
+        if not isinstance(epic, dict):
+            continue
+        for s in epic.get("stories", []):
+            if s.get("id") == story_id:
+                return str(epic.get("id", ""))
+    return ""
+
+
+# --- Info command (replaces sprint-info.sh) ---
+
+@sprint.command()
+def info():
+    """Output sprint info as JSON for Cyclist sidebar.
+
+    \b
+    Returns: {"remaining": N, "inProgress": N, "endDate": "YYYY-MM-DD"}
+    """
+    import json
+
+    from pennyfarthing_scripts.sprint.loader import get_all_stories, get_sprint_info
+
+    sprint_data = get_sprint_info()
+    stories = get_all_stories()
+
+    end_date = sprint_data.get("end_date")
+
+    remaining = sum(
+        s.get("points", 0) or 0
+        for s in stories
+        if s.get("status") in ("backlog", "planning", "ready", None)
+    )
+    in_progress = sum(
+        s.get("points", 0) or 0
+        for s in stories
+        if s.get("status") == "in_progress"
+    )
+
+    click.echo(json.dumps({
+        "remaining": remaining,
+        "inProgress": in_progress,
+        "endDate": str(end_date) if end_date else None,
+    }))
+
+
+# --- Metrics command (replaces sprint-metrics.sh) ---
+
+@sprint.command()
+@click.option("--json", "output_json", is_flag=True, help="Output in JSON format")
+def metrics(output_json: bool):
+    """Display sprint metrics and progress.
+
+    Shows points, stories, timeline, and velocity tracking.
+    """
+    import json
+    from datetime import date, datetime
+
+    from pennyfarthing_scripts.sprint.loader import get_all_stories, get_sprint_info
+
+    sprint_data = get_sprint_info()
+    stories = get_all_stories()
+
+    if not sprint_data:
+        click.echo("No sprint data available")
+        return
+
+    sprint_name = sprint_data.get("name", "Unknown")
+    goal = sprint_data.get("goal", "")
+    start_date_str = sprint_data.get("start_date", "")
+    end_date_str = sprint_data.get("end_date", "")
+
+    # Count stories/points by status
+    done_stories = [s for s in stories if s.get("status") in ("done", "completed")]
+    wip_stories = [s for s in stories if s.get("status") == "in_progress"]
+    backlog_stories = [s for s in stories if s.get("status") in ("backlog", "planning", "ready", None)]
+
+    done_pts = sum(s.get("points", 0) or 0 for s in done_stories)
+    wip_pts = sum(s.get("points", 0) or 0 for s in wip_stories)
+    backlog_pts = sum(s.get("points", 0) or 0 for s in backlog_stories)
+    total_pts = done_pts + wip_pts + backlog_pts
+
+    # Date calculations
+    today = date.today()
+    try:
+        start_date = datetime.strptime(str(start_date_str), "%Y-%m-%d").date()
+        end_date = datetime.strptime(str(end_date_str), "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        start_date = today
+        end_date = today
+
+    total_days = (end_date - start_date).days or 1
+    days_elapsed = max(0, (today - start_date).days)
+    days_remaining = max(0, (end_date - today).days)
+
+    pct_complete = (done_pts * 100 // total_pts) if total_pts > 0 else 0
+    pct_time = (days_elapsed * 100 // total_days) if total_days > 0 else 0
+
+    velocity_target = sprint_data.get("velocity_target", total_pts)
+    expected_pts = (velocity_target * days_elapsed // total_days) if total_days > 0 else 0
+
+    if output_json:
+        click.echo(json.dumps({
+            "sprint": sprint_name,
+            "dates": {
+                "start": str(start_date_str),
+                "end": str(end_date_str),
+                "today": str(today),
+            },
+            "points": {
+                "total": total_pts,
+                "completed": done_pts,
+                "in_progress": wip_pts,
+                "backlog": backlog_pts,
+                "velocity_target": velocity_target,
+            },
+            "stories": {
+                "total": len(stories),
+                "done": len(done_stories),
+                "in_progress": len(wip_stories),
+                "backlog": len(backlog_stories),
+            },
+            "progress": {
+                "percent_complete": pct_complete,
+                "percent_time": pct_time,
+                "days_elapsed": days_elapsed,
+                "days_remaining": days_remaining,
+                "total_days": total_days,
+            },
+            "velocity": {
+                "expected_points": expected_pts,
+                "actual_points": done_pts,
+                "on_track": done_pts >= expected_pts,
+            },
+        }, indent=2))
+        return
+
+    # Human-readable output
+    click.echo("")
+    click.echo(f"  Sprint: {sprint_name}")
+    click.echo(f"  Goal: {goal}")
+    click.echo("")
+    click.echo(f"  Timeline: {start_date_str} to {end_date_str} (Day {days_elapsed}/{total_days}, {days_remaining} remaining)")
+    click.echo("")
+    click.echo(f"  Points:  {done_pts} done / {wip_pts} WIP / {backlog_pts} backlog = {total_pts} total ({pct_complete}%)")
+    click.echo(f"  Stories: {len(done_stories)} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories)} total")
+    click.echo("")
+    click.echo(f"  Velocity: {done_pts}/{expected_pts} expected ({velocity_target} target)")
+    if done_pts >= expected_pts:
+        click.echo("  Status: On track")
+    else:
+        click.echo("  Status: Behind schedule")
+
+
+# --- Story field command (replaces get-story-field.sh) ---
+
+@story.command("field")
+@click.argument("story_id")
+@click.argument("field_name")
+def story_field(story_id: str, field_name: str):
+    """Get a field value from a story.
+
+    \b
+    Arguments:
+      STORY_ID    - Story ID (e.g., 79-1 or MSSCI-12345)
+      FIELD_NAME  - Field to extract (e.g., workflow, status, points)
+
+    Returns the field value or "null" if not found.
+    """
+    from pennyfarthing_scripts.sprint.loader import get_story_by_id, get_story_field, load_sprint
+
+    # Default values for common fields
+    defaults = {
+        "workflow": "tdd",
+        "status": "backlog",
+        "repos": "pennyfarthing",
+    }
+
+    # Try get_story_field first (works with epic-story format like "79-1")
+    data = load_sprint()
+    if data:
+        value = get_story_field(data, story_id, field_name)
+        if value is not None:
+            click.echo(str(value))
+            return
+
+    # Fallback: try direct story lookup (works with Jira keys)
+    story = get_story_by_id(story_id)
+    if story:
+        value = story.get(field_name)
+        if value is not None:
+            click.echo(str(value))
+            return
+
+    # Return default or null
+    click.echo(defaults.get(field_name, "null"))
+
+
+# --- Epic field command (replaces get-epic-field.sh) ---
+
+@epic.command("field")
+@click.argument("epic_id")
+@click.argument("field_name")
+def epic_field(epic_id: str, field_name: str):
+    """Get a field value from an epic.
+
+    \b
+    Arguments:
+      EPIC_ID     - Epic ID (e.g., epic-79 or 79)
+      FIELD_NAME  - Field to extract (e.g., jira, title, status)
+
+    Returns the field value or "null" if not found.
+    """
+    from pennyfarthing_scripts.sprint.loader import find_epic, load_sprint
+
+    data = load_sprint()
+    if not data:
+        click.echo("null")
+        return
+
+    epic = find_epic(data, epic_id)
+    if not epic:
+        click.echo("null")
+        return
+
+    value = epic.get(field_name)
+    if value is not None:
+        click.echo(str(value).rstrip())
+    else:
+        click.echo("null")
 
 
 # --- Standalone command ---

@@ -54,6 +54,16 @@ def check_story(story_id: str) -> dict[str, Any]:
             "reason": "Already completed",
         }
 
+    # Check if canceled
+    if status == "canceled":
+        return {
+            "available": False,
+            "type": "story",
+            "story": story,
+            "reason": "Story is canceled",
+        }
+
+    # Available statuses: backlog, ready, planning
     return {
         "available": True,
         "type": "story",
@@ -67,10 +77,16 @@ def check_story(story_id: str) -> dict[str, Any]:
 def get_next_story() -> dict[str, Any]:
     """Get the highest priority available story.
 
+    Considers stories with backlog, ready, or planning status.
+
     Returns:
         Dict with next story details or error
     """
-    backlog = get_stories_by_status("backlog")
+    from pennyfarthing_scripts.sprint.loader import get_all_stories
+
+    all_stories = get_all_stories()
+    available_statuses = {"backlog", "ready", "planning"}
+    backlog = [s for s in all_stories if s.get("status") in available_statuses]
 
     if not backlog:
         return {
