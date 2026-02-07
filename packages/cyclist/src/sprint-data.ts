@@ -102,7 +102,7 @@ interface FutureInitiative {
 
 interface FutureYaml {
   future?: {
-    initiatives?: FutureInitiative[];
+    initiatives?: (FutureInitiative | string)[];
   };
 }
 
@@ -220,6 +220,37 @@ function mergeEpicShards(epics: (YamlEpic | string)[], sprintDir: string): YamlE
   }, []);
 }
 
+/**
+ * Merge sharded initiative references into full initiative objects.
+ * When future.yaml contains string references (e.g. "benchmark-reliability"),
+ * load each initiative-{ref}.yaml shard and replace the string with parsed content.
+ */
+function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprintDir: string): FutureInitiative[] {
+  return initiatives.reduce<FutureInitiative[]>((merged, entry) => {
+    if (typeof entry !== 'string') {
+      merged.push(entry);
+      return merged;
+    }
+    const shardPath = join(sprintDir, `initiative-${entry}.yaml`);
+    if (existsSync(shardPath)) {
+      try {
+        const content = readFileSync(shardPath, 'utf-8');
+        const initiative = parseYaml(content) as FutureInitiative;
+        if (initiative && initiative.name) {
+          merged.push(initiative);
+        } else {
+          console.warn(`[sprint-data] Shard initiative-${entry}.yaml missing name, skipped`);
+        }
+      } catch (err) {
+        console.error(`[sprint-data] Failed to parse initiative-${entry}.yaml:`, err);
+      }
+    } else {
+      console.warn(`[sprint-data] Initiative shard not found: ${shardPath}`);
+    }
+    return merged;
+  }, []);
+}
+
 // =============================================================================
 // Main Data Aggregation
 // =============================================================================
@@ -313,8 +344,10 @@ export function getSprintData(projectDir: string): SprintData {
   }
 
   // Transform future initiatives to FutureEpic[]
+  // Resolve initiative string refs (e.g. "benchmark-reliability" → initiative-benchmark-reliability.yaml)
   const futureEpics: FutureEpic[] = [];
-  const initiatives = future.future?.initiatives ?? [];
+  const rawInitiatives = future.future?.initiatives ?? [];
+  const initiatives = mergeInitiativeShards(rawInitiatives, sprintDir);
 
   for (const initiative of initiatives) {
     // Skip completed initiatives

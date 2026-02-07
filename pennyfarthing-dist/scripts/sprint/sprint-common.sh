@@ -242,6 +242,99 @@ get_sprint_file() {
     echo "$PROJECT_ROOT/sprint/current-sprint.yaml"
 }
 
+# _RESOLVED_SPRINT_FILE - cached path to resolved sprint file (with shards merged)
+_RESOLVED_SPRINT_FILE=""
+
+# get_resolved_sprint_file
+# Returns path to a temporary YAML file with epic shards merged inline.
+# When current-sprint.yaml contains string refs (e.g., "- MSSCI-14298"),
+# loads each sprint/epic-{ref}.yaml shard and replaces the string with
+# the full epic object. Result is cached per shell session.
+# Returns: path to resolved temp file (caller should NOT delete it)
+get_resolved_sprint_file() {
+    # Return cached file if already resolved
+    if [[ -n "$_RESOLVED_SPRINT_FILE" && -f "$_RESOLVED_SPRINT_FILE" ]]; then
+        echo "$_RESOLVED_SPRINT_FILE"
+        return 0
+    fi
+
+    local sprint_file
+    sprint_file=$(get_sprint_file)
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    check_yq || return 1
+
+    local sprint_dir="$PROJECT_ROOT/sprint"
+
+    # Check if epics contains any string refs
+    local has_string_refs
+    has_string_refs=$(yq eval -o=json '.epics' "$sprint_file" 2>/dev/null | jq '[.[] | type == "string"] | any' 2>/dev/null)
+
+    if [[ "$has_string_refs" != "true" ]]; then
+        # No string refs — use the file as-is
+        echo "$sprint_file"
+        return 0
+    fi
+
+    # Build resolved file: replace string refs with shard contents
+    local tmp
+    tmp=$(mktemp "${TMPDIR:-/tmp}/sprint-resolved-XXXXXX")
+    mv "$tmp" "${tmp}.yaml"
+    tmp="${tmp}.yaml"
+
+    # Copy sprint metadata
+    yq eval '{"sprint": .sprint}' "$sprint_file" > "$tmp"
+
+    # Resolve each epic entry
+    echo "epics:" >> "$tmp"
+    local epic_json
+    epic_json=$(yq eval -o=json '.epics' "$sprint_file")
+    local count
+    count=$(echo "$epic_json" | jq 'length')
+
+    local i=0
+    while [[ $i -lt $count ]]; do
+        local entry_type
+        entry_type=$(echo "$epic_json" | jq -r ".[$i] | type")
+
+        if [[ "$entry_type" == "string" ]]; then
+            local ref
+            ref=$(echo "$epic_json" | jq -r ".[$i]")
+            local shard_path="$sprint_dir/epic-${ref}.yaml"
+            if [[ -f "$shard_path" ]]; then
+                # Indent shard content under the epics array
+                echo "  -" >> "$tmp"
+                yq eval '.' "$shard_path" | sed 's/^/    /' >> "$tmp"
+            fi
+        else
+            # Inline epic object — extract and append
+            echo "$epic_json" | jq ".[$i]" | yq eval -P '.' - | sed 's/^/  - /' | sed '2,$s/^  - /    /' >> "$tmp"
+        fi
+        i=$((i + 1))
+    done
+
+    # Copy root-level stories if present
+    local root_stories
+    root_stories=$(yq eval '.stories // null' "$sprint_file" 2>/dev/null)
+    if [[ "$root_stories" != "null" ]]; then
+        yq eval '{"stories": .stories}' "$sprint_file" >> "$tmp"
+    fi
+
+    _RESOLVED_SPRINT_FILE="$tmp"
+    echo "$tmp"
+}
+
+# _cleanup_resolved_sprint
+# Remove temp file on exit
+_cleanup_resolved_sprint() {
+    if [[ -n "$_RESOLVED_SPRINT_FILE" && -f "$_RESOLVED_SPRINT_FILE" ]]; then
+        rm -f "$_RESOLVED_SPRINT_FILE"
+    fi
+}
+trap _cleanup_resolved_sprint EXIT
+
 # check_yq
 # Verify yq is available, return error message if not
 # Returns: 0 if yq available, 1 if not
@@ -299,7 +392,7 @@ sum_points() {
 # Get sprint progress as "completed/total points"
 # Returns: formatted progress string
 get_sprint_progress() {
-    local sprint_file
+    local sprint_file resolved_file
     sprint_file=$(get_sprint_file)
 
     if [[ ! -f "$sprint_file" ]]; then
@@ -308,14 +401,16 @@ get_sprint_progress() {
 
     check_yq || return 1
 
+    resolved_file=$(get_resolved_sprint_file) || return 1
+
     # Get summary fields if available
     local completed total
     completed=$(yq '.summary.completed_points // 0' "$sprint_file" 2>/dev/null)
     total=$(yq '.summary.total_points // 0' "$sprint_file" 2>/dev/null)
 
-    # If summary not available, calculate from stories
+    # If summary not available, calculate from stories (using resolved file)
     if [[ "$total" == "0" || "$total" == "null" ]]; then
-        total=$(sum_points "$(yq '.epics[].stories[].points' "$sprint_file" 2>/dev/null)")
+        total=$(sum_points "$(yq '.epics[].stories[].points' "$resolved_file" 2>/dev/null)")
     fi
 
     echo "Progress: ${completed:-0}/${total:-0} points"
@@ -325,7 +420,7 @@ get_sprint_progress() {
 # Get story counts by status
 # Returns: "backlog:N in_progress:N done:N" format
 get_story_counts() {
-    local sprint_file
+    local sprint_file resolved_file
     sprint_file=$(get_sprint_file)
 
     if [[ ! -f "$sprint_file" ]]; then
@@ -334,10 +429,12 @@ get_story_counts() {
 
     check_yq || return 1
 
+    resolved_file=$(get_resolved_sprint_file) || return 1
+
     local backlog in_progress done
-    backlog=$(yq eval '[.epics[].stories[] | select(.status == "backlog")] | length' "$sprint_file" 2>/dev/null)
-    in_progress=$(yq eval '[.epics[].stories[] | select(.status == "in_progress")] | length' "$sprint_file" 2>/dev/null)
-    done=$(yq eval '[.epics[].stories[] | select(.status == "done")] | length' "$sprint_file" 2>/dev/null)
+    backlog=$(yq eval '[.epics[].stories[] | select(.status == "backlog")] | length' "$resolved_file" 2>/dev/null)
+    in_progress=$(yq eval '[.epics[].stories[] | select(.status == "in_progress")] | length' "$resolved_file" 2>/dev/null)
+    done=$(yq eval '[.epics[].stories[] | select(.status == "done")] | length' "$resolved_file" 2>/dev/null)
 
     echo "backlog:${backlog:-0} in_progress:${in_progress:-0} done:${done:-0}"
 }
@@ -346,7 +443,7 @@ get_story_counts() {
 # Get point totals by status
 # Returns: "backlog:N in_progress:N done:N total:N" format
 get_point_counts() {
-    local sprint_file
+    local sprint_file resolved_file
     sprint_file=$(get_sprint_file)
 
     if [[ ! -f "$sprint_file" ]]; then
@@ -355,10 +452,12 @@ get_point_counts() {
 
     check_yq || return 1
 
+    resolved_file=$(get_resolved_sprint_file) || return 1
+
     local backlog in_progress total
-    total=$(sum_points "$(yq '.epics[].stories[].points' "$sprint_file" 2>/dev/null)")
-    backlog=$(sum_points "$(yq '.epics[].stories[] | select(.status == "backlog") | .points' "$sprint_file" 2>/dev/null)")
-    in_progress=$(sum_points "$(yq '.epics[].stories[] | select(.status == "in_progress") | .points' "$sprint_file" 2>/dev/null)")
+    total=$(sum_points "$(yq '.epics[].stories[].points' "$resolved_file" 2>/dev/null)")
+    backlog=$(sum_points "$(yq '.epics[].stories[] | select(.status == "backlog") | .points' "$resolved_file" 2>/dev/null)")
+    in_progress=$(sum_points "$(yq '.epics[].stories[] | select(.status == "in_progress") | .points' "$resolved_file" 2>/dev/null)")
 
     echo "backlog:${backlog:-0} in_progress:${in_progress:-0} total:${total:-0}"
 }
