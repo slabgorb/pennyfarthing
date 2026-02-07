@@ -2055,6 +2055,11 @@ if (isElectron) {
     // Load the Express server URL (using the actual port found)
     mainWindow.loadURL(`http://localhost:${actualPort}`);
 
+    // Prevent HTML <title> from overwriting window title
+    mainWindow.on('page-title-updated', (e: Electron.Event) => {
+      e.preventDefault();
+    });
+
     // Show window once content is painted (prevents white flash on launch)
     mainWindow.once('ready-to-show', () => {
       mainWindow?.show();
@@ -2064,6 +2069,11 @@ if (isElectron) {
     mainWindow.webContents.on('did-finish-load', () => {
       const settings = getCurrentSettings();
       applyFontSettingsToMainWindow(settings);
+      // Set title with project directory name after page loads
+      const dir = getProjectDirectory();
+      if (dir) {
+        mainWindow?.setTitle(`Cyclist - ${basename(dir)}`);
+      }
     });
 
     // Handle window closed
@@ -2306,9 +2316,6 @@ if (isElectron) {
 
       await startServer();
       createWindow();
-      if (mainWindow && projectDir) {
-        mainWindow.setTitle(`Cyclist - ${basename(projectDir)}`);
-      }
 
       // B-23: Wire agent and workflow menus to Electron menu bar
       // Wire panel toggle to WebSocket broadcast
