@@ -58,7 +58,7 @@ def backlog():
     """Show available stories grouped by epic.
 
     Shows stories with backlog, ready, or planning status.
-    Output format matches the legacy available-stories.sh script.
+    Output is grouped by epic with a markdown table per epic.
     """
     from pennyfarthing_scripts.sprint.loader import load_sprint
 
@@ -808,35 +808,151 @@ def epic_remove(epic_id: str, dry_run: bool):
 @epic.command("promote")
 @click.argument("epic_id")
 def epic_promote(epic_id: str):
-    """Move an epic from future.yaml to current-sprint.yaml.
+    """Move an epic from future initiatives to current-sprint.yaml.
+
+    Detects ID collisions and assigns new IDs if needed.
+    Automatically removes the epic from its initiative shard after promotion.
 
     \b
     Arguments:
-      EPIC_ID  - Local epic ID (e.g., epic-41)
+      EPIC_ID  - Epic ID (e.g., epic-41 or 41)
 
     \b
     Examples:
       pf sprint epic promote epic-41
+      pf sprint epic promote 41
     """
-    import subprocess as sp
+    import copy
+
+    import yaml
 
     from pennyfarthing_scripts.common.config import get_project_root
 
-    script = get_project_root() / ".pennyfarthing" / "scripts" / "sprint" / "promote-epic.sh"
-    if not script.exists():
-        raise click.ClickException(f"Script not found: {script}")
+    root = get_project_root()
+    sprint_dir = root / "sprint"
+    sprint_file = sprint_dir / "current-sprint.yaml"
 
-    result = sp.run(
-        [str(script), epic_id],
-        capture_output=True,
-        text=True,
-        cwd=str(get_project_root()),
-    )
-    if result.stdout:
-        click.echo(result.stdout.rstrip())
-    if result.returncode != 0:
-        error = result.stderr.strip() if result.stderr else "Unknown error"
-        raise click.ClickException(error)
+    if not sprint_file.exists():
+        raise click.ClickException(f"Sprint file not found: {sprint_file}")
+
+    # Find the epic in initiative shards
+    epic_data = None
+    source_init_file = None
+    source_ref = None
+
+    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+        with open(init_file) as f:
+            init_data = yaml.safe_load(f.read())
+        if not init_data:
+            continue
+        for e in init_data.get("epics", []):
+            edata = _resolve_epic_ref(e, sprint_dir)
+            if not edata:
+                continue
+            eid = str(edata.get("id", ""))
+            if _epic_ref_matches(eid, epic_id):
+                epic_data = copy.deepcopy(edata)
+                source_init_file = init_file
+                source_ref = e
+                break
+        if epic_data:
+            break
+
+    if not epic_data:
+        raise click.ClickException(f"Epic {epic_id} not found in future initiatives")
+
+    # Load current sprint
+    with open(sprint_file) as f:
+        sprint_data = yaml.safe_load(f.read())
+
+    if not sprint_data:
+        raise click.ClickException(f"Invalid sprint file: {sprint_file}")
+
+    if "epics" not in sprint_data:
+        sprint_data["epics"] = []
+
+    # Check for ID collision
+    original_id = str(epic_data.get("id", epic_id))
+    new_epic_id = original_id
+    existing_ids = {str(e.get("id", "")) for e in sprint_data["epics"] if isinstance(e, dict)}
+
+    if new_epic_id in existing_ids:
+        max_num = 0
+        for eid in existing_ids:
+            if eid.startswith("epic-"):
+                try:
+                    max_num = max(max_num, int(eid.replace("epic-", "")))
+                except ValueError:
+                    pass
+        new_epic_id = f"epic-{max_num + 1}"
+        click.echo(f"Warning: Epic ID {original_id} already exists. Assigning new ID: {new_epic_id}")
+
+    # Transform epic for current sprint
+    old_id_num = original_id.replace("epic-", "")
+    new_id_num = new_epic_id.replace("epic-", "")
+
+    epic_data["id"] = new_epic_id
+    epic_data["status"] = "backlog"
+    if not epic_data.get("title", "").startswith("Epic:"):
+        epic_data["title"] = f"Epic: {epic_data.get('title', 'Unknown')}"
+
+    for s in epic_data.get("stories", []):
+        sid = str(s.get("id", ""))
+        if sid.startswith(f"{old_id_num}-"):
+            s["id"] = sid.replace(f"{old_id_num}-", f"{new_id_num}-", 1)
+        s["status"] = "backlog"
+        s.setdefault("repos", "pennyfarthing")
+        s.setdefault("workflow", "tdd")
+        s.setdefault("priority", "P2")
+        s.setdefault("acceptance_criteria", [])
+
+    story_count = len(epic_data.get("stories", []))
+
+    click.echo("")
+    click.echo("Promoting epic to current sprint:")
+    click.echo(f"  Original ID: {original_id}")
+    if new_epic_id != original_id:
+        click.echo(f"  New ID: {new_epic_id}")
+    click.echo(f"  Title: {epic_data.get('title')}")
+    click.echo(f"  Points: {epic_data.get('points', 0)}")
+    click.echo(f"  Stories: {story_count}")
+    click.echo("")
+
+    # Append to sprint
+    sprint_data["epics"].append(epic_data)
+
+    from pennyfarthing_scripts.sprint.yaml_io import write_sprint
+    write_sprint(sprint_file, sprint_data)
+    click.echo(f"Added epic to {sprint_file}")
+
+    # Remove from initiative shard
+    with open(source_init_file) as f:
+        init_data = yaml.safe_load(f.read())
+
+    if isinstance(source_ref, str):
+        # String ref — remove from list and delete shard file
+        init_data["epics"] = [e for e in init_data.get("epics", []) if e != source_ref]
+        shard = _epic_shard_path(sprint_dir, source_ref)
+        if shard.exists():
+            shard.unlink()
+    else:
+        # Inline dict — remove matching entry
+        init_data["epics"] = [
+            e for e in init_data.get("epics", [])
+            if not (isinstance(e, dict) and _epic_ref_matches(str(e.get("id", "")), epic_id))
+        ]
+
+    with open(source_init_file, "w") as f:
+        yaml.dump(init_data, f, default_flow_style=False, sort_keys=False)
+    click.echo(f"Removed {original_id} from {source_init_file.name}")
+
+    click.echo("")
+    click.echo("Promotion complete!")
+    click.echo("")
+    click.echo("Next steps:")
+    click.echo(f"  1. Review the epic: pf sprint epic show {new_epic_id}")
+    click.echo(f"  2. Create Jira epic: pf jira create epic {new_epic_id}")
+    click.echo(f"  3. Start work: /sprint work {new_id_num}-1")
 
 
 # Register epic-add as epic.add
@@ -1397,6 +1513,254 @@ def epic_field(epic_id: str, field_name: str):
         click.echo(str(value).rstrip())
     else:
         click.echo("null")
+
+
+# --- Future command (replaces list-future.sh) ---
+
+@sprint.command()
+@click.argument("epic_id", required=False)
+def future(epic_id: str | None):
+    """Show future work initiatives and epics.
+
+    \b
+    Arguments:
+      EPIC_ID  - Optional epic ID to show detailed stories (e.g., epic-55)
+
+    \b
+    Examples:
+      pf sprint future                  # Show all initiatives
+      pf sprint future epic-55          # Show stories for specific epic
+    """
+    import yaml
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    sprint_dir = root / "sprint"
+
+    init_files = sorted(sprint_dir.glob("initiative-*.yaml"))
+    if not init_files:
+        click.echo("No future initiatives found.")
+        return
+
+    # If specific epic requested, show detailed view
+    if epic_id:
+        _show_future_epic_detail(epic_id, init_files, sprint_dir)
+        return
+
+    # Default: show initiative summary
+    click.echo("# Future Work - Available for Promotion")
+    click.echo("")
+
+    total_epics = 0
+    total_points = 0
+
+    for init_file in init_files:
+        with open(init_file) as f:
+            init_data = yaml.safe_load(f.read())
+        if not init_data:
+            continue
+
+        init_name = init_data.get("name", init_file.stem)
+        init_status = init_data.get("status", "planning")
+        blocked_by = init_data.get("blocked_by")
+        init_points = init_data.get("total_points", 0)
+
+        if init_status == "ready":
+            status_tag = "[READY]"
+        elif blocked_by:
+            status_tag = "[BLOCKED]"
+        else:
+            status_tag = f"[{init_status}]"
+
+        click.echo(f"## {init_name} {status_tag}")
+        click.echo(f"**Total:** {init_points} points")
+        if blocked_by:
+            click.echo(f"**Blocked:** {blocked_by}")
+        click.echo("")
+
+        click.echo("| Epic | Title | Pts | Pri | Status |")
+        click.echo("|------|-------|-----|-----|--------|")
+
+        epics = init_data.get("epics", [])
+        for e in epics:
+            edata = _resolve_epic_ref(e, sprint_dir)
+            if not edata:
+                continue
+            eid = edata.get("id", "?")
+            etitle = edata.get("title", "?")
+            if len(etitle) > 40:
+                etitle = etitle[:37] + "..."
+            epts = edata.get("points", "?")
+            epri = edata.get("priority", "P2")
+            estat = edata.get("status", "planning")
+            click.echo(f"| {eid} | {etitle} | {epts} | {epri} | {estat} |")
+            total_epics += 1
+            total_points += edata.get("points", 0) or 0
+
+        click.echo("")
+
+    click.echo("---")
+    click.echo(f"**Summary:** {total_epics} epics, {total_points} points total")
+    click.echo("")
+    click.echo("To see epic details: `pf sprint future epic-55`")
+    click.echo("To promote an epic: `pf sprint epic promote epic-55`")
+
+
+def _resolve_epic_ref(ref, sprint_dir) -> dict | None:
+    """Resolve an epic reference (string ref or inline dict) to a dict."""
+    import yaml
+
+    if isinstance(ref, dict):
+        return ref
+    if isinstance(ref, str):
+        shard = _epic_shard_path(sprint_dir, ref)
+        if shard.exists():
+            with open(shard) as f:
+                return yaml.safe_load(f.read())
+    return None
+
+
+def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
+    """Show detailed view of a specific future epic."""
+    import yaml
+
+    for init_file in init_files:
+        with open(init_file) as f:
+            init_data = yaml.safe_load(f.read())
+        if not init_data:
+            continue
+
+        for e in init_data.get("epics", []):
+            edata = _resolve_epic_ref(e, sprint_dir)
+            if not edata:
+                continue
+            eid = str(edata.get("id", ""))
+            if epic_id not in (eid, eid.replace("epic-", ""), f"epic-{epic_id}"):
+                continue
+
+            click.echo(f"# Epic Details: {eid}")
+            click.echo("")
+            click.echo(f"**Title:** {edata.get('title', '?')}")
+            click.echo(f"**Points:** {edata.get('points', '?')} | **Priority:** {edata.get('priority', 'P2')} | **Status:** {edata.get('status', 'planning')}")
+            click.echo("")
+            desc = edata.get("description", "No description")
+            if desc:
+                click.echo("**Description:**")
+                for line in str(desc).strip().split("\n")[:5]:
+                    click.echo(line)
+                click.echo("")
+
+            stories = edata.get("stories", [])
+            if stories:
+                click.echo("## Stories")
+                click.echo("")
+                click.echo("| ID | Title | Pts | Pri | Status |")
+                click.echo("|----|-------|-----|-----|--------|")
+                for s in stories:
+                    stitle = s.get("title", "?")
+                    if len(stitle) > 45:
+                        stitle = stitle[:42] + "..."
+                    click.echo(f"| {s.get('id', '?')} | {stitle} | {s.get('points', '?')} | {s.get('priority', 'P1')} | {s.get('status', 'planning')} |")
+                click.echo("")
+
+            click.echo("---")
+            click.echo(f"To promote this epic: `pf sprint epic promote {eid}`")
+            return
+
+    raise click.ClickException(f"Epic {epic_id} not found in future initiatives")
+
+
+# --- New sprint command (replaces new-sprint.sh) ---
+
+@sprint.command("new")
+@click.argument("sprint_yyww")
+@click.argument("jira_id", type=int)
+@click.argument("start_date")
+@click.argument("end_date")
+@click.argument("goal")
+def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, goal: str):
+    """Initialize a new sprint.
+
+    \b
+    Arguments:
+      SPRINT_YYWW  Sprint identifier in YYWW format (e.g., 2607)
+      JIRA_ID      Jira sprint ID number (e.g., 278)
+      START_DATE   Sprint start date YYYY-MM-DD
+      END_DATE     Sprint end date YYYY-MM-DD
+      GOAL         Sprint goal (quoted string)
+
+    \b
+    Examples:
+      pf sprint new 2607 278 2026-02-16 2026-03-01 "Performance and polish"
+    """
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    sprint_file = root / "sprint" / "current-sprint.yaml"
+    archive_file = root / "sprint" / "archive" / f"sprint-{sprint_yyww}-completed.yaml"
+
+    # Warn if current sprint is active
+    if sprint_file.exists():
+        import yaml
+
+        with open(sprint_file) as f:
+            existing = yaml.safe_load(f.read())
+        if existing and existing.get("sprint", {}).get("status") == "active":
+            click.echo("Warning: Current sprint is still active!")
+            click.echo("Current sprint file will be overwritten.")
+            if not click.confirm("Continue?"):
+                click.echo("Aborted.")
+                return
+
+    # Create sprint file using write_sprint for consistency
+    from pennyfarthing_scripts.sprint.yaml_io import write_sprint
+
+    sprint_data = {
+        "sprint": {
+            "name": f"TO Sprint {sprint_yyww}",
+            "jira_sprint_id": jira_id,
+            "jira_sprint_name": f"TO Sprint {sprint_yyww}",
+            "goal": goal,
+            "start_date": start_date,
+            "end_date": end_date,
+            "status": "active",
+        },
+        "epics": [],
+    }
+    write_sprint(sprint_file, sprint_data)
+    click.echo(f"Created {sprint_file}")
+
+    # Create archive file
+    from datetime import date
+
+    archive_content = f"""# Sprint TO Sprint {sprint_yyww} - Completed Stories
+# Jira Sprint ID: {jira_id}
+# Archived: {date.today()}
+
+sprint:
+  name: "TO Sprint {sprint_yyww}"
+  jira_sprint_id: {jira_id}
+  jira_sprint_name: "TO Sprint {sprint_yyww}"
+  goal: {goal}
+
+completed:
+  # Completed stories will be appended here by pf sprint archive
+"""
+    archive_file.parent.mkdir(parents=True, exist_ok=True)
+    archive_file.write_text(archive_content)
+    click.echo(f"Created {archive_file}")
+
+    click.echo("")
+    click.echo(f"New sprint initialized:")
+    click.echo(f"  Name: TO Sprint {sprint_yyww}")
+    click.echo(f"  Jira ID: {jira_id}")
+    click.echo(f"  Dates: {start_date} to {end_date}")
+    click.echo(f"  Goal: {goal}")
+    click.echo("")
+    click.echo("Next steps:")
+    click.echo("  1. Add epics: pf sprint epic promote <epic-id>")
+    click.echo("  2. Check status: pf sprint status")
 
 
 # --- Standalone command ---

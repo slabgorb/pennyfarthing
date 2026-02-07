@@ -26,7 +26,7 @@ model: haiku
 
 - [ ] Use `/sprint backlog` for initial backlog scan:
   ```bash
-  .pennyfarthing/scripts/sprint/available-stories.sh
+  pf sprint backlog
   ```
 - [ ] Use `/jira` skill to enrich with Jira status/assignee:
   - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
@@ -92,7 +92,7 @@ Other formats break Cyclist detection.
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Get epic's Jira key (use script, not direct yq)
-EPIC_JIRA=$(.pennyfarthing/scripts/sprint/get-epic-field.sh "$EPIC_NUM" jira)
+EPIC_JIRA=$(pf sprint epic field "$EPIC_NUM" jira)
 ```
 
 If missing or "null": auto-create via `pf jira create epic {EPIC_NUM}`

@@ -18,7 +18,7 @@ def archive_story(
     dry_run: bool = False,
     apply: bool = False,
 ) -> dict[str, Any]:
-    """Archive a completed story.
+    """Archive a completed story to the sprint archive file.
 
     Args:
         story_id: Story ID to archive
@@ -29,6 +29,11 @@ def archive_story(
     Returns:
         Dict with success status and details
     """
+    import re
+    from datetime import date
+
+    import yaml
+
     # Find the story
     story = get_story_by_id(story_id)
     if not story:
@@ -45,23 +50,75 @@ def archive_story(
             "error": f"Story status is '{status}', expected 'done' or 'completed'",
         }
 
+    root = get_project_root()
+    sprint_file = root / "sprint" / "current-sprint.yaml"
+
+    if not sprint_file.exists():
+        return {"success": False, "error": f"Sprint file not found: {sprint_file}"}
+
+    # Get sprint name for archive file
+    with open(sprint_file) as f:
+        sprint_data = yaml.safe_load(f.read())
+
+    sprint_name = sprint_data.get("sprint", {}).get("jira_sprint_name", "")
+    match = re.search(r"(\d{4})", sprint_name)
+    sprint_num = match.group(1) if match else "unknown"
+    archive_file = root / "sprint" / "archive" / f"sprint-{sprint_num}-completed.yaml"
+
+    # Find parent epic
+    epic_id = ""
+    for epic in sprint_data.get("epics", []):
+        if isinstance(epic, dict):
+            for s in epic.get("stories", []):
+                if s.get("id") == story_id:
+                    epic_id = str(epic.get("id", ""))
+                    break
+
+    completed_date = str(date.today())
+
     if dry_run:
         return {
             "success": True,
             "dry_run": True,
             "story": story,
             "pr_number": pr_number,
-            "message": f"Would archive {story_id}",
+            "message": f"Would archive {story_id} to {archive_file}",
         }
 
-    # In a real implementation, this would:
-    # 1. Write to archive file
-    # 2. Optionally remove from current-sprint.yaml
+    # Append to archive file
+    if not archive_file.exists():
+        return {"success": False, "error": f"Archive file not found: {archive_file}"}
+
+    entry_lines = [
+        f"  - id: {story_id}",
+        f"    epic: {epic_id}",
+        f'    title: "{story.get("title", "Unknown")}"',
+        f"    points: {story.get('points', 0)}",
+        f"    completed: {completed_date}",
+    ]
+    if pr_number:
+        entry_lines.append(f"    pr: {pr_number}")
+
+    with open(archive_file, "a") as f:
+        f.write("\n".join(entry_lines) + "\n")
+
+    msg = f"Archived {story_id} to {archive_file.name}"
+
+    # Remove from current sprint if --apply
+    if apply:
+        for epic in sprint_data.get("epics", []):
+            if isinstance(epic, dict):
+                epic["stories"] = [s for s in epic.get("stories", []) if s.get("id") != story_id]
+
+        from pennyfarthing_scripts.sprint.yaml_io import write_sprint
+        write_sprint(sprint_file, sprint_data)
+        msg += f" and removed from {sprint_file.name}"
+
     return {
         "success": True,
         "story": story,
         "pr_number": pr_number,
-        "message": f"Archived {story_id}",
+        "message": msg,
     }
 
 

@@ -15,7 +15,7 @@
 # Input: JSON via stdin with tool_name, tool_input
 # Output: JSON with additionalContext on validation failure
 #
-# See also: .pennyfarthing/scripts/validation/validate-sprint-yaml.sh
+# See also: pf sprint validate
 
 set -euo pipefail
 

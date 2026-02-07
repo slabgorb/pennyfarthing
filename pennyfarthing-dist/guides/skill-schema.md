@@ -146,7 +146,7 @@ args: "[arg1|arg2]"       # Optional: argument summary
 **Example:**
 ```xml
 <run>
-.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
+pf sprint status [filter]
 </run>
 ```
 
@@ -195,7 +195,7 @@ args: "[arg1|arg2]"       # Optional: argument summary
 **Example:**
 ```xml
 <example>
-.pennyfarthing/scripts/sprint/check-story.sh MSSCI-12038
+pf sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 ```

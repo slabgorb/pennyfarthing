@@ -447,7 +447,7 @@ Tags used in skill files (`skills/{name}/SKILL.md`) for command documentation.
 
 ```markdown
 <run>
-.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
+pf sprint status [filter]
 </run>
 ```
 
@@ -473,7 +473,7 @@ Tags used in skill files (`skills/{name}/SKILL.md`) for command documentation.
 
 ```markdown
 <example>
-.pennyfarthing/scripts/sprint/check-story.sh MSSCI-12038
+pf sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true}
 </example>
 ```
