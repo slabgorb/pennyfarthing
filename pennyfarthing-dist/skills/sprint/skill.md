@@ -4,14 +4,14 @@ description: |
   Sprint status, backlog, and story management for Pennyfarthing. Use when checking current
   sprint status, finding available stories, reviewing backlog, or understanding story context
   and history.
-  IMPORTANT: Always use the provided scripts - never manually edit sprint YAML.
+  IMPORTANT: Always use `pf sprint` CLI commands - never manually edit sprint YAML.
 args: "[status|backlog|work|archive|new|story|epic|standalone]"
 ---
 
 # /sprint - Sprint Management
 
 <critical>
-Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for deterministic, correct YAML formatting.
+Never manually edit `sprint/current-sprint.yaml`. Use `pf sprint` CLI commands for deterministic, correct YAML formatting.
 </critical>
 
 ## Commands
@@ -21,7 +21,7 @@ Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for dete
 Show current sprint status with story counts and points.
 
 <run>
-.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
+pf sprint status [filter]
 </run>
 
 <args>
@@ -31,10 +31,10 @@ Show current sprint status with story counts and points.
 </args>
 
 <example>
-.pennyfarthing/scripts/sprint/sprint-status.sh           # All stories
-.pennyfarthing/scripts/sprint/sprint-status.sh todo      # Backlog only
-.pennyfarthing/scripts/sprint/sprint-status.sh in-progress  # WIP only
-.pennyfarthing/scripts/sprint/sprint-status.sh done      # Completed only
+pf sprint status              # All stories
+pf sprint status todo         # Backlog only
+pf sprint status in-progress  # WIP only
+pf sprint status done         # Completed only
 </example>
 
 <output>
@@ -49,7 +49,7 @@ When filtered, only shows epics with matching stories.
 Show available stories grouped by epic with Jira context.
 
 <run>
-.pennyfarthing/scripts/sprint/available-stories.sh
+pf sprint backlog
 </run>
 
 <output>
@@ -82,7 +82,7 @@ Shows backlog, user selects story, then proceeds to setup.
 #### With story ID: Direct start
 
 <run>
-.pennyfarthing/scripts/sprint/check-story.sh <story-id>
+pf sprint check <story-id>
 </run>
 
 <args>
@@ -97,14 +97,14 @@ Shows backlog, user selects story, then proceeds to setup.
 </output>
 
 <example>
-.pennyfarthing/scripts/sprint/check-story.sh MSSCI-12038
+pf sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 
 #### With epic ID: Start first available story in epic
 
 <run>
-.pennyfarthing/scripts/sprint/check-story.sh <epic-id>
+pf sprint check <epic-id>
 </run>
 
 <output>
@@ -113,14 +113,14 @@ Action: Automatically start work on `first_story` if available.
 </output>
 
 <example>
-.pennyfarthing/scripts/sprint/check-story.sh MSSCI-11952
+pf sprint check MSSCI-11952
 # Returns: {"type": "epic", "first_story": {"id": "MSSCI-11954", ...}, ...}
 </example>
 
 #### With `next`: Auto-select highest priority story
 
 <run>
-.pennyfarthing/scripts/sprint/check-story.sh next
+pf sprint check next
 </run>
 
 <output>
@@ -129,7 +129,7 @@ Action: Automatically start work on returned story.
 </output>
 
 <example>
-.pennyfarthing/scripts/sprint/check-story.sh next
+pf sprint check next
 # Returns: {"type": "next", "story": {"id": "MSSCI-11950", "priority": "P1", ...}}
 </example>
 
@@ -140,7 +140,7 @@ Action: Automatically start work on returned story.
 Archive a completed story to the sprint archive file.
 
 <run>
-.pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number] [--apply]
+pf sprint archive <story-id> [pr-number] [--apply]
 </run>
 
 <args>
@@ -153,10 +153,10 @@ Archive a completed story to the sprint archive file.
 
 <example>
 # Archive only (manual removal needed)
-.pennyfarthing/scripts/sprint/archive-story.sh 35-2 368
+pf sprint archive 35-2 368
 
 # Archive and remove atomically (recommended)
-.pennyfarthing/scripts/sprint/archive-story.sh 35-2 368 --apply
+pf sprint archive 35-2 368 --apply
 </example>
 
 <output>
@@ -173,7 +173,7 @@ Archive a completed story to the sprint archive file.
 Initialize a new sprint from template.
 
 <run>
-.pennyfarthing/scripts/sprint/new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
+pf sprint new <yyww> <jira-id> <start> <end> "<goal>"
 </run>
 
 <args>
@@ -187,7 +187,7 @@ Initialize a new sprint from template.
 </args>
 
 <example>
-.pennyfarthing/scripts/sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+pf sprint new 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
 </example>
 
 <output>
@@ -205,23 +205,23 @@ Warning: Prompts for confirmation if current sprint is still active.
 Show future work initiatives and epics available for promotion.
 
 <run>
-.pennyfarthing/scripts/sprint/list-future.sh [--epic EPIC_ID]
+pf sprint future [EPIC_ID]
 </run>
 
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `--epic` | No | Show detailed stories for a specific epic |
+| `EPIC_ID` | No | Show detailed stories for a specific epic |
 </args>
 
 <output>
-Without `--epic`:
+Without epic ID:
 - Initiatives grouped by status (READY, BLOCKED, planning)
 - Epics with points, priority, and status
 - Summary of total epics and points
 - Promotion instructions
 
-With `--epic`:
+With epic ID:
 - Full epic details including description
 - All stories with points and status
 - Promotion command for that epic
@@ -229,10 +229,10 @@ With `--epic`:
 
 <example>
 # Show all future work
-.pennyfarthing/scripts/sprint/list-future.sh
+pf sprint future
 
 # Show details for specific epic
-.pennyfarthing/scripts/sprint/list-future.sh --epic epic-55
+pf sprint future epic-55
 </example>
 
 ---
@@ -242,7 +242,7 @@ With `--epic`:
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
+pf sprint epic promote <epic-id>
 </run>
 
 <args>
@@ -265,7 +265,7 @@ Next steps after promote:
 Show details for a specific story.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story show <story-id> [--json]
+pf sprint story show <story-id> [--json]
 </run>
 
 <args>
@@ -282,7 +282,7 @@ python3 -m pennyfarthing_scripts.cli sprint story show <story-id> [--json]
 Add a new story to an epic in sprint YAML.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <points> [options]
+pf sprint story add <epic-id> "<title>" <points> [options]
 </run>
 
 <args>
@@ -298,8 +298,8 @@ python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <point
 </args>
 
 <example>
-python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Add error handling" 3
-python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Fix null pointer" 2 --type bug
+pf sprint story add epic-76 "Add error handling" 3
+pf sprint story add epic-76 "Fix null pointer" 2 --type bug
 </example>
 
 ---
@@ -309,7 +309,7 @@ python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Fix null pointer"
 Update fields on a story.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story update <story-id> [options]
+pf sprint story update <story-id> [options]
 </run>
 
 <args>
@@ -330,7 +330,7 @@ python3 -m pennyfarthing_scripts.cli sprint story update <story-id> [options]
 Display story sizing guidelines.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story size [points]
+pf sprint story size [points]
 </run>
 
 <args>
@@ -350,7 +350,7 @@ Sizing characteristics, workflow suggestions, examples.
 Display story templates by type.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story template [type]
+pf sprint story template [type]
 </run>
 
 <args>
@@ -377,7 +377,7 @@ Prerequisites before running:
 </critical>
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story finish <story-id> [--dry-run]
+pf sprint story finish <story-id> [--dry-run]
 </run>
 
 <args>
@@ -394,7 +394,7 @@ python3 -m pennyfarthing_scripts.cli sprint story finish <story-id> [--dry-run]
 Claim or unclaim a story in Jira.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story claim <story-id>
+pf sprint story claim <story-id>
 </run>
 
 ---
@@ -404,7 +404,7 @@ python3 -m pennyfarthing_scripts.cli sprint story claim <story-id>
 Add a new epic to the current sprint.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic add <epic-id> <title> [options]
+pf sprint epic add <epic-id> <title> [options]
 </run>
 
 <args>
@@ -424,7 +424,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic add <epic-id> <title> [options]
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
+pf sprint epic promote <epic-id>
 </run>
 
 <args>
@@ -440,7 +440,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
 Archive completed epics.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic archive [epic-id] [--dry-run] [--jira]
+pf sprint epic archive [epic-id] [--dry-run] [--jira]
 </run>
 
 ---
@@ -450,7 +450,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic archive [epic-id] [--dry-run] [
 Import BMAD epics-and-stories output to future.yaml.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--marker TAG] [--dry-run]
+pf sprint epic import <file> [initiative] [--marker TAG] [--dry-run]
 </run>
 
 ---
@@ -460,7 +460,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--m
 Show details for a specific epic. Searches both current sprint and future initiative shards.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic show <epic-id> [--json]
+pf sprint epic show <epic-id> [--json]
 </run>
 
 <args>
@@ -477,7 +477,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic show <epic-id> [--json]
 Cancel an epic and all its stories. Searches both current sprint and future initiative shards.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic cancel <epic-id> [--jira] [--dry-run]
+pf sprint epic cancel <epic-id> [--jira] [--dry-run]
 </run>
 
 <args>
@@ -495,7 +495,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic cancel <epic-id> [--jira] [--dr
 Remove an epic from future.yaml.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
+pf sprint epic remove <epic-id> [--dry-run]
 </run>
 
 ---
@@ -505,7 +505,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
 Show details for a specific initiative including its epics and stories.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint initiative show <name> [--json]
+pf sprint initiative show <name> [--json]
 </run>
 
 <args>
@@ -522,7 +522,7 @@ python3 -m pennyfarthing_scripts.cli sprint initiative show <name> [--json]
 Cancel an initiative and all its epics/stories.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint initiative cancel <name> [--jira] [--dry-run]
+pf sprint initiative cancel <name> [--jira] [--dry-run]
 </run>
 
 <args>
@@ -576,12 +576,12 @@ Avoid these patterns:
 
 ## Read Operations
 
-These scripts read sprint YAML without modifying it. Use these instead of direct `yq` queries.
+These commands read sprint YAML without modifying it. Use these instead of direct `yq` queries.
 
 ### Get Story Field
 
 <run>
-.pennyfarthing/scripts/sprint/get-story-field.sh <story-id> <field>
+pf sprint story field <story-id> <field>
 </run>
 
 <args>
@@ -592,9 +592,9 @@ These scripts read sprint YAML without modifying it. Use these instead of direct
 </args>
 
 <example>
-.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 workflow   # Returns: tdd
-.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 jira       # Returns: MSSCI-12345
-.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 status     # Returns: in_progress
+pf sprint story field 35-2 workflow   # Returns: tdd
+pf sprint story field 35-2 jira       # Returns: MSSCI-12345
+pf sprint story field 35-2 status     # Returns: in_progress
 </example>
 
 <output>
@@ -606,7 +606,7 @@ Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`,
 ### Get Epic Field
 
 <run>
-.pennyfarthing/scripts/sprint/get-epic-field.sh <epic-id> <field>
+pf sprint epic field <epic-id> <field>
 </run>
 
 <args>
@@ -617,8 +617,8 @@ Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`,
 </args>
 
 <example>
-.pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 jira    # Returns: MSSCI-11234
-.pennyfarthing/scripts/sprint/get-epic-field.sh 35 title        # Returns: Epic title
+pf sprint epic field epic-35 jira    # Returns: MSSCI-11234
+pf sprint epic field 35 title        # Returns: Epic title
 </example>
 
 <output>
@@ -657,7 +657,7 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 ### Story Setup Steps
 
 <output>
-1. **Check story** via `check-story.sh` (if ID provided)
+1. **Check story** via `pf sprint check` (if ID provided)
 2. **Write context** to `.session/context-story-{id}.md`
 3. **Setup story** via `sm-setup` subagent (claims Jira, creates branch)
 4. **Handoff** to next agent based on workflow:
@@ -729,9 +729,7 @@ The `in_sprint` field tracks Jira sprint membership:
 
 ## Dependencies
 
-<run>
-brew install yq
-</run>
+All sprint commands use the `pf` Python CLI. No external dependencies like `yq` are required.
 
 <when>
 For Jira integration, see `/jira` skill prerequisites.
@@ -739,38 +737,40 @@ For Jira integration, see `/jira` skill prerequisites.
 
 ## Quick Reference
 
-| Command | Script/Action |
-|---------|---------------|
-| `/sprint` | `sprint-status.sh` |
-| `/sprint status` | `sprint-status.sh` |
-| `/sprint status todo` | `sprint-status.sh todo` |
-| `/sprint status in-progress` | `sprint-status.sh in-progress` |
-| `/sprint status done` | `sprint-status.sh done` |
-| `/sprint backlog` | `available-stories.sh` |
+| Command | CLI |
+|---------|-----|
+| `/sprint` | `pf sprint status` |
+| `/sprint status` | `pf sprint status` |
+| `/sprint status todo` | `pf sprint status todo` |
+| `/sprint status in-progress` | `pf sprint status in-progress` |
+| `/sprint status done` | `pf sprint status done` |
+| `/sprint backlog` | `pf sprint backlog` |
 | `/sprint work` | Interactive story selection → SM flow |
-| `/sprint work MSSCI-XXX` | `check-story.sh` → direct start |
-| `/sprint work EPIC-ID` | `check-story.sh` → start first story |
-| `/sprint work next` | `check-story.sh next` → start highest priority |
-| `/sprint archive MSSCI-XXX` | `archive-story.sh MSSCI-XXX` |
-| `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
-| `/sprint future` | `list-future.sh` |
-| `/sprint future --epic X` | `list-future.sh --epic X` |
-| `/sprint story show ID` | Show story details |
-| `/sprint story add ...` | Add story to epic |
-| `/sprint story update ID` | Update story fields |
-| `/sprint story size` | Sizing guidelines |
-| `/sprint story template` | Story templates |
-| `/sprint story finish ID` | Complete a story |
-| `/sprint story claim ID` | Claim in Jira |
-| `/sprint epic show ID` | Show epic details |
-| `/sprint epic add ...` | Add epic to sprint |
-| `/sprint epic promote ID` | Move epic from future |
-| `/sprint epic archive` | Archive completed epics |
-| `/sprint epic cancel ID` | Cancel epic and stories |
-| `/sprint epic import FILE` | Import BMAD epics |
-| `/sprint epic remove ID` | Remove from future |
-| `/sprint initiative show NAME` | Show initiative details |
-| `/sprint initiative cancel NAME` | Cancel initiative and epics |
+| `/sprint work MSSCI-XXX` | `pf sprint check MSSCI-XXX` → direct start |
+| `/sprint work EPIC-ID` | `pf sprint check EPIC-ID` → start first story |
+| `/sprint work next` | `pf sprint check next` → start highest priority |
+| `/sprint archive MSSCI-XXX` | `pf sprint archive MSSCI-XXX` |
+| `/sprint new 2605 277 ...` | `pf sprint new 2605 277 ...` |
+| `/sprint future` | `pf sprint future` |
+| `/sprint future epic-55` | `pf sprint future epic-55` |
+| `/sprint story show ID` | `pf sprint story show ID` |
+| `/sprint story add ...` | `pf sprint story add ...` |
+| `/sprint story update ID` | `pf sprint story update ID` |
+| `/sprint story field ID FIELD` | `pf sprint story field ID FIELD` |
+| `/sprint story size` | `pf sprint story size` |
+| `/sprint story template` | `pf sprint story template` |
+| `/sprint story finish ID` | `pf sprint story finish ID` |
+| `/sprint story claim ID` | `pf sprint story claim ID` |
+| `/sprint epic show ID` | `pf sprint epic show ID` |
+| `/sprint epic field ID FIELD` | `pf sprint epic field ID FIELD` |
+| `/sprint epic add ...` | `pf sprint epic add ...` |
+| `/sprint epic promote ID` | `pf sprint epic promote ID` |
+| `/sprint epic archive` | `pf sprint epic archive` |
+| `/sprint epic cancel ID` | `pf sprint epic cancel ID` |
+| `/sprint epic import FILE` | `pf sprint epic import FILE` |
+| `/sprint epic remove ID` | `pf sprint epic remove ID` |
+| `/sprint initiative show NAME` | `pf sprint initiative show NAME` |
+| `/sprint initiative cancel NAME` | `pf sprint initiative cancel NAME` |
 | `/sprint standalone` | Standalone story workflow |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
