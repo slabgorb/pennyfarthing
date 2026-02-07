@@ -30,7 +30,14 @@ Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXI
 </critical>
 
 <critical>
-Use the /jira command for all jira interactions, like assigning stories, updating status, etc. If they are broken, COMPLAIN LOUDLY
+Use `pf jira <command>` for all Jira interactions. Key commands:
+```
+pf jira check MSSCI-XXXXX       # Check story availability
+pf jira claim MSSCI-XXXXX       # Claim story (assign + In Progress)
+pf jira move MSSCI-XXXXX "Done" # Transition status
+pf jira reconcile               # Audit YAML vs Jira
+```
+If they are broken, COMPLAIN LOUDLY
 </critical>
 
 <helpers>

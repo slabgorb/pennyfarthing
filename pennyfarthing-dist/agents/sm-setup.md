@@ -95,7 +95,7 @@ EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 EPIC_JIRA=$(.pennyfarthing/scripts/sprint/get-epic-field.sh "$EPIC_NUM" jira)
 ```
 
-If missing or "null": auto-create via `jira-epic-creation.ts`
+If missing or "null": auto-create via `pf jira create epic {EPIC_NUM}`
 
 ## Step 2: Check Workflow Permissions
 
@@ -135,14 +135,14 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 
 ## Step 3: Claim in Jira
 
-Use `/jira check` and `/jira claim` commands:
+Use `pf jira check` and `pf jira claim` commands:
 
 ```bash
 # Check availability first
-/jira check {JIRA_KEY}
+pf jira check {JIRA_KEY}
 
 # Then claim (assign to self + move to In Progress)
-/jira claim {JIRA_KEY}
+pf jira claim {JIRA_KEY}
 ```
 
 **Exit codes:**

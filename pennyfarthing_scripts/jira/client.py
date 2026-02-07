@@ -454,6 +454,155 @@ class JiraClient:
             "PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields}
         )
 
+    def transition_sync(self, issue_key: str, target_status: str) -> dict[str, Any]:
+        """Transition issue to target status synchronously.
+
+        Fetches available transitions, finds the matching one, and executes it.
+
+        Args:
+            issue_key: Jira issue key
+            target_status: Target status name (e.g., "In Progress", "Done")
+
+        Returns:
+            Result dict with success status and optional reason
+        """
+        transitions_data = self._call_api_sync(
+            "GET", f"/rest/api/3/issue/{issue_key}/transitions"
+        )
+        if not transitions_data:
+            return {"success": False, "reason": "Could not get transitions"}
+
+        transitions = transitions_data.get("transitions", [])
+        transition_id = None
+        for t in transitions:
+            if t.get("name", "").lower() == target_status.lower():
+                transition_id = t.get("id")
+                break
+
+        if not transition_id:
+            available = [t.get("name") for t in transitions]
+            return {
+                "success": False,
+                "reason": f"No transition to '{target_status}' available. "
+                f"Available: {available}",
+            }
+
+        result = self._call_api_sync(
+            "POST",
+            f"/rest/api/3/issue/{issue_key}/transitions",
+            {"transition": {"id": transition_id}},
+        )
+        # Transition POST returns empty body on success (204)
+        # _call_api_sync returns None on empty response, which is OK here
+        return {"success": True}
+
+    def assign_issue_sync(
+        self, issue_key: str, assignee_email: str | None
+    ) -> dict[str, Any]:
+        """Assign issue to a user synchronously via REST API.
+
+        Args:
+            issue_key: Jira issue key
+            assignee_email: Jira user email, or None to unassign
+
+        Returns:
+            Result dict with success status
+        """
+        # Jira Cloud REST API uses accountId, but we can search by email
+        if assignee_email:
+            # Search for user by email
+            users = self._call_api_sync(
+                "GET",
+                f"/rest/api/3/user/search?query={assignee_email}",
+            )
+            if not users or not isinstance(users, list) or len(users) == 0:
+                return {
+                    "success": False,
+                    "reason": f"User not found: {assignee_email}",
+                }
+            account_id = users[0].get("accountId")
+        else:
+            account_id = None
+
+        payload = {"accountId": account_id}
+        result = self._call_api_sync(
+            "PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload
+        )
+        # Assign PUT returns empty body on success (204)
+        return {"success": True}
+
+    def add_to_sprint_sync(self, sprint_id: int | str, issue_key: str) -> dict[str, Any]:
+        """Add issue to a sprint via Agile REST API.
+
+        Args:
+            sprint_id: Jira sprint ID (numeric)
+            issue_key: Jira issue key
+
+        Returns:
+            Result dict with success status
+        """
+        result = self._call_api_sync(
+            "POST",
+            f"/rest/agile/1.0/sprint/{sprint_id}/issue",
+            {"issues": [issue_key]},
+        )
+        # Returns empty body on success (204)
+        return {"success": True}
+
+    def search_issues_sync(
+        self, jql: str, fields: list[str] | None = None, max_results: int = 100
+    ) -> list[dict[str, Any]]:
+        """Search issues using JQL synchronously.
+
+        Args:
+            jql: JQL query string
+            fields: Fields to return (defaults to key, summary, status)
+            max_results: Maximum results to return
+
+        Returns:
+            List of issue dicts
+        """
+        import urllib.parse
+
+        if fields is None:
+            fields = ["key", "summary", "status", "customfield_10031"]
+
+        encoded_jql = urllib.parse.quote(jql)
+        fields_param = ",".join(fields)
+        result = self._call_api_sync(
+            "GET",
+            f"/rest/api/3/search?jql={encoded_jql}&fields={fields_param}"
+            f"&maxResults={max_results}",
+        )
+        if not result:
+            return []
+        return result.get("issues", [])
+
+    def link_issues_sync(
+        self, inward_key: str, outward_key: str, link_type: str = "Relates"
+    ) -> dict[str, Any]:
+        """Link two issues synchronously.
+
+        Args:
+            inward_key: Inward issue key (parent/blocker)
+            outward_key: Outward issue key (child/blocked)
+            link_type: Link type name (e.g., "Relates", "Blocks", "Parent-Child")
+
+        Returns:
+            Result dict with success status
+        """
+        result = self._call_api_sync(
+            "POST",
+            "/rest/api/3/issueLink",
+            {
+                "type": {"name": link_type},
+                "inwardIssue": {"key": inward_key},
+                "outwardIssue": {"key": outward_key},
+            },
+        )
+        # Returns empty body on success (201)
+        return {"success": True}
+
     # -------------------------------------------------------------------------
     # Async methods (using httpx for parallel operations)
     # -------------------------------------------------------------------------

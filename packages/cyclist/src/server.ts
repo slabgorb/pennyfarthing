@@ -73,6 +73,11 @@ if (existsSync(distPublicDir)) {
 // Serve node_modules for client-side imports (xterm.js)
 app.use('/node_modules', express.static(nodeModulesDir));
 
+// Health check endpoint (used by hooks to verify WheelHub is running)
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Serve index.html for root route
 app.get('/', (_req, res) => {
   res.sendFile(join(publicDir, 'index.html'));

@@ -74,7 +74,7 @@ function initGitRepo(testDir: string): void {
   execSync('git init', { cwd: testDir, stdio: 'pipe' });
   // Create an initial commit so git is fully initialized
   writeFileSync(join(testDir, '.gitkeep'), '');
-  execSync('git add .gitkeep && git commit -m "init"', {
+  execSync('git add .gitkeep && git commit --no-gpg-sign -m "init"', {
     cwd: testDir,
     stdio: 'pipe',
     env: {
