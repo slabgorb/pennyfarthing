@@ -1538,6 +1538,66 @@ export function checkLegacyFiles(projectRoot: string): CheckResult[] {
     });
   }
 
+  // Check for legacy sidecar directories at .claude/project/agents/{agent}-sidecar/
+  const legacyAgentsDir = join(projectRoot, '.claude/project/agents');
+  if (pathExists(legacyAgentsDir)) {
+    const legacySidecars = CORE_AGENTS.filter(a =>
+      pathExists(join(legacyAgentsDir, `${a}-sidecar`))
+    );
+    if (legacySidecars.length > 0) {
+      results.push({
+        name: 'legacy/.claude/project/agents/sidecars',
+        status: 'warn',
+        detail: `${legacySidecars.length} legacy sidecar dirs (should be at .pennyfarthing/sidecars/)`,
+        fix: () => {
+          for (const agent of legacySidecars) {
+            const legacyDir = join(legacyAgentsDir, `${agent}-sidecar`);
+            const newDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
+            // Only remove if new location already has the sidecar
+            if (pathExists(newDir)) {
+              removeSync(legacyDir);
+            }
+          }
+          // Remove agents/ dir if empty
+          try {
+            const remaining = readdirSync(legacyAgentsDir);
+            if (remaining.length === 0) {
+              removeSync(legacyAgentsDir);
+            }
+          } catch {
+            // Ignore
+          }
+        }
+      });
+    }
+  }
+
+  // Check for legacy sidecar directories at sprint/sidecars/
+  const legacySprintSidecars = join(projectRoot, 'sprint/sidecars');
+  if (pathExists(legacySprintSidecars)) {
+    results.push({
+      name: 'legacy/sprint/sidecars',
+      status: 'warn',
+      detail: 'Legacy sidecar location (should be at .pennyfarthing/sidecars/)',
+      fix: () => {
+        // Only remove if all agents have been migrated
+        try {
+          const remaining = readdirSync(legacySprintSidecars);
+          const allMigrated = remaining.every(item => {
+            const itemPath = join(legacySprintSidecars, item);
+            if (!isDirectory(itemPath)) return false;
+            return pathExists(join(projectRoot, `.pennyfarthing/sidecars/${item}`));
+          });
+          if (allMigrated) {
+            removeSync(legacySprintSidecars);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    });
+  }
+
   // Check for legacy .claude/project/hooks/setup-env.sh
   const legacyProjectHook = join(projectRoot, '.claude/project/hooks/setup-env.sh');
   const properProjectHook = join(projectRoot, '.pennyfarthing/project/hooks/setup-env.sh');
