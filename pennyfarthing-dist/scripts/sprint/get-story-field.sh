@@ -2,12 +2,7 @@
 # Get a field value from a story in sprint YAML
 # Usage: .pennyfarthing/scripts/sprint/get-story-field.sh <story-id> <field>
 #
-# Examples:
-#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 workflow
-#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 jira
-#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 status
-#
-# Common fields: workflow, status, jira, points, title, repos, priority
+# Delegates to Python CLI: pennyfarthing_scripts.cli sprint story field
 # Returns the field value or "null" if not found
 
 set -euo pipefail
@@ -27,37 +22,8 @@ if [[ -z "$STORY_ID" || -z "$FIELD" ]]; then
   exit 1
 fi
 
-# Find project root
-source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
+export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
 
-SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
-
-if [[ ! -f "$SPRINT_FILE" ]]; then
-  echo "null"
-  exit 1
-fi
-
-# Extract field value using yq
-# Handle default values for common fields
-case "$FIELD" in
-  workflow)
-    DEFAULT="tdd"
-    ;;
-  status)
-    DEFAULT="backlog"
-    ;;
-  repos)
-    DEFAULT="pennyfarthing"
-    ;;
-  *)
-    DEFAULT="null"
-    ;;
-esac
-
-VALUE=$(yq eval ".epics[].stories[] | select(.id == \"$STORY_ID\") | .$FIELD // \"$DEFAULT\"" "$SPRINT_FILE" 2>/dev/null | head -1)
-
-if [[ -z "$VALUE" ]]; then
-  echo "null"
-else
-  echo "$VALUE"
-fi
+exec python3 -m pennyfarthing_scripts.cli sprint story field "$STORY_ID" "$FIELD"

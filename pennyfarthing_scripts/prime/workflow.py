@@ -154,13 +154,13 @@ def get_phase_owner(workflow: str, phase: str, project_root: Path) -> str | None
 
 
 def get_backlog_count(project_root: Path) -> int:
-    """Count stories in backlog or ready status.
+    """Count stories in backlog, ready, or planning status.
 
     Args:
         project_root: Project root path
 
     Returns:
-        Number of stories with status backlog or ready
+        Number of stories available for work
     """
     # Import here to avoid circular imports
     from pennyfarthing_scripts.sprint.loader import load_sprint
@@ -175,7 +175,7 @@ def get_backlog_count(project_root: Path) -> int:
             continue  # Skip string refs (defensive)
         for story in epic.get("stories", []):
             status = story.get("status", "").lower()
-            if status in ("backlog", "ready"):
+            if status in ("backlog", "ready", "planning"):
                 count += 1
 
     return count
