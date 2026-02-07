@@ -76,7 +76,7 @@ function setupNodeModules(testDir: string): void {
 function initGitRepo(testDir: string): void {
   execSync('git init', { cwd: testDir, stdio: 'pipe' });
   writeFileSync(join(testDir, '.gitkeep'), '');
-  execSync('git add .gitkeep && git commit -m "init"', {
+  execSync('git add .gitkeep && git commit --no-gpg-sign -m "init"', {
     cwd: testDir,
     stdio: 'pipe',
     env: {

@@ -49,7 +49,10 @@ from pennyfarthing_scripts.jira import (
     bidirectional,
     claim,
     client,
+    create,
     epic,
+    operations,
+    reconcile,
     story,
     sync,
 )
@@ -84,7 +87,10 @@ __all__ = [
     "bidirectional",
     "claim",
     "client",
+    "create",
     "epic",
+    "operations",
+    "reconcile",
     "story",
     "sync",
     # CLI

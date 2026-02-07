@@ -40,6 +40,11 @@ from pennyfarthing_scripts.hotspots.cli import hotspots
 
 cli.add_command(hotspots)
 
+# Import and register jira group
+from pennyfarthing_scripts.jira.cli import jira
+
+cli.add_command(jira)
+
 
 @cli.group()
 def agent():

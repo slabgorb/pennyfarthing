@@ -413,20 +413,19 @@ def read_stdin_json() -> dict[str, Any]:
 def is_cyclist_running(project_root: Path | None = None) -> bool:
     """Check if Cyclist server is running.
 
+    Checks for .cyclist-port file existence. No HTTP calls — this runs on
+    every tool invocation and must be fast.
+
     Args:
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
-        True if Cyclist is responding to health checks
+        True if .cyclist-port file exists at project root
     """
-    port = get_cyclist_port(project_root)
-    url = f"http://127.0.0.1:{port}/health"
-
-    try:
-        with urllib.request.urlopen(url, timeout=2) as response:
-            return response.status == 200
-    except (urllib.error.URLError, OSError):
+    root = project_root or find_project_root()
+    if not root:
         return False
+    return (root / CYCLIST_PORT_FILE).exists()
 
 
 def should_auto_approve(settings: CyclistSettings) -> bool:

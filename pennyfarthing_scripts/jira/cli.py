@@ -1,147 +1,274 @@
 """
-Jira CLI - Fan-out CLI for Jira operations.
+Jira CLI - Unified entry point for all Jira operations.
 
 Usage:
-    python -m pennyfarthing_scripts.jira <subcommand> [args]
+    pf jira <command> [args]
+    python -m pennyfarthing_scripts.jira <command> [args]
 
-Subcommands:
-    view        View issue details
-    claim       Claim a story
-    sync        Sync epic to Jira
-    bidirectional   Bidirectional sync
-    create      Create epic or story
+Commands:
+    view         View issue details
+    check        Check story availability
+    claim        Claim a story
+    move         Transition issue status
+    assign       Assign issue to user
+    link         Link two issues
+    search       Search issues by JQL
+    create epic  Create epic + stories from YAML
+    create story Create single story from YAML
+    sync         Sync epic to Jira
+    bidirectional Bidirectional sync
+    reconcile    Reconciliation report
+    sprint add   Add issue to sprint
 """
 
-import argparse
 import sys
-from typing import Any
+
+import click
 
 
-def view(args: list[str]) -> int:
-    """View issue details."""
+@click.group()
+def jira():
+    """Jira issue management for Pennyfarthing.
+
+    \b
+    All operations use REST API where possible.
+    No interactive prompts, no subprocess stdin issues.
+    """
+    pass
+
+
+@jira.command()
+@click.argument("key")
+def view(key):
+    """View issue details (delegates to jira CLI)."""
     import subprocess
 
-    if not args:
-        print("Usage: jira view <issue-key>", file=sys.stderr)
-        return 1
-
     result = subprocess.run(
-        ["jira", "issue", "view", args[0]],
+        ["jira", "issue", "view", key],
         capture_output=False,
     )
-    return result.returncode
+    raise SystemExit(result.returncode)
 
 
-def claim(args: list[str]) -> int:
-    """Claim a story."""
+@jira.command()
+@click.argument("key")
+def check(key):
+    """Check if a story is available to claim."""
     from pennyfarthing_scripts.jira.claim import main as claim_main
-    return claim_main(args)
+
+    raise SystemExit(claim_main([key]))
 
 
-def sync(args: list[str]) -> int:
-    """Sync epic to Jira."""
-    from pennyfarthing_scripts.jira.sync import main as sync_main
-    return sync_main(args)
+@jira.command()
+@click.argument("key")
+def claim(key):
+    """Claim a story (assign to self + move to In Progress)."""
+    from pennyfarthing_scripts.jira.claim import main as claim_main
+
+    raise SystemExit(claim_main([key, "--claim"]))
 
 
-def bidirectional(args: list[str]) -> int:
-    """Bidirectional sync."""
-    from pennyfarthing_scripts.jira.bidirectional import main as bidirectional_main
-    return bidirectional_main(args)
+@jira.command()
+@click.argument("key")
+@click.argument("status")
+@click.option("--dry-run", is_flag=True, help="Preview without applying")
+def move(key, status, dry_run):
+    """Transition a Jira issue to a new status.
 
-
-def create(args: list[str]) -> int:
-    """Create epic or story."""
-    if not args:
-        print("Usage: jira create <epic|story> [args]", file=sys.stderr)
-        return 1
-
-    subcommand = args[0]
-    remaining = args[1:]
-
-    if subcommand == "epic":
-        from pennyfarthing_scripts.jira.epic import main as epic_main
-        return epic_main(remaining)
-    elif subcommand == "story":
-        from pennyfarthing_scripts.jira.story import main as story_main
-        return story_main(remaining)
-    else:
-        print(f"Unknown create subcommand: {subcommand}", file=sys.stderr)
-        print("Usage: jira create <epic|story> [args]", file=sys.stderr)
-        return 1
-
-
-# Subcommand registry
-SUBCOMMANDS = {
-    "view": view,
-    "claim": claim,
-    "sync": sync,
-    "bidirectional": bidirectional,
-    "create": create,
-}
-
-
-def cli(args: list[str] | None = None) -> int:
-    """Main CLI entry point.
-
-    Args:
-        args: Command line arguments (defaults to sys.argv[1:])
-
-    Returns:
-        Exit code
+    \b
+    Statuses: "To Do", "In Progress", "In Review", "Done"
     """
-    if args is None:
-        args = sys.argv[1:]
+    from pennyfarthing_scripts.jira.operations import move_issue
 
-    parser = argparse.ArgumentParser(
-        prog="jira",
-        description="Jira CLI for Pennyfarthing",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Subcommands:
-    view <key>              View issue details
-    claim <key> [--claim]   Check/claim a story
-    sync <epic> [opts]      Sync epic to Jira
-    bidirectional [opts]    Bidirectional sync
-    create epic <id>        Create epic from YAML
-    create story <key>      Sync single story
-
-Examples:
-    jira view MSSCI-12345
-    jira claim MSSCI-12345 --claim
-    jira sync 63 --transition --points
-    jira bidirectional --all --dry-run
-    jira create epic epic-63
-""",
-    )
-
-    parser.add_argument(
-        "subcommand",
-        nargs="?",
-        choices=list(SUBCOMMANDS.keys()),
-        help="Subcommand to run",
-    )
-    parser.add_argument(
-        "args",
-        nargs=argparse.REMAINDER,
-        help="Arguments for subcommand",
-    )
-
-    parsed = parser.parse_args(args)
-
-    if not parsed.subcommand:
-        parser.print_help()
-        return 0
-
-    handler = SUBCOMMANDS.get(parsed.subcommand)
-    if handler:
-        return handler(parsed.args)
+    result = move_issue(key, status, dry_run=dry_run)
+    if result.get("already_at_status"):
+        click.echo(f"{key} already at '{status}'")
+    elif result.get("success"):
+        click.echo(f"Moved {key} to '{status}'")
     else:
-        print(f"Unknown subcommand: {parsed.subcommand}", file=sys.stderr)
+        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@jira.command()
+@click.argument("key")
+@click.argument("user")
+@click.option("--dry-run", is_flag=True, help="Preview without applying")
+def assign(key, user, dry_run):
+    """Assign issue to a user (email or GitHub username)."""
+    from pennyfarthing_scripts.jira.operations import assign_issue
+
+    result = assign_issue(key, user, dry_run=dry_run)
+    if result.get("already_assigned"):
+        click.echo(f"{key} already assigned to {user}")
+    elif result.get("success"):
+        click.echo(f"Assigned {key} to {user}")
+    else:
+        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@jira.command()
+@click.argument("parent_key")
+@click.argument("child_key")
+@click.argument("link_type", default="Relates")
+@click.option("--dry-run", is_flag=True, help="Preview without applying")
+def link(parent_key, child_key, link_type, dry_run):
+    """Link two Jira issues.
+
+    \b
+    Link types: "Parent-Child", "Blocks", "Relates", "Duplicate"
+    """
+    from pennyfarthing_scripts.jira.operations import link_issues
+
+    result = link_issues(parent_key, child_key, link_type, dry_run=dry_run)
+    if result.get("success"):
+        click.echo(f"Linked {parent_key} -> {child_key} ({link_type})")
+    else:
+        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@jira.command()
+@click.argument("jql")
+def search(jql):
+    """Search issues using JQL (delegates to jira CLI)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["jira", "issue", "list", "--jql", jql, "--plain"],
+        capture_output=False,
+    )
+    raise SystemExit(result.returncode)
+
+
+@jira.group()
+def create():
+    """Create Jira issues from sprint YAML."""
+    pass
+
+
+@create.command("epic")
+@click.argument("epic_id")
+@click.option("--dry-run", is_flag=True, help="Preview without creating")
+def create_epic(epic_id, dry_run):
+    """Create a Jira epic and its child stories from sprint YAML."""
+    from pennyfarthing_scripts.jira.create import create_epic_in_jira
+
+    result = create_epic_in_jira(epic_id, dry_run=dry_run)
+    if not result.get("success"):
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@create.command("story")
+@click.argument("epic_jira_key")
+@click.argument("story_id")
+@click.option("--dry-run", is_flag=True, help="Preview without creating")
+def create_story(epic_jira_key, story_id, dry_run):
+    """Create a single Jira story under an epic from sprint YAML."""
+    from pennyfarthing_scripts.jira.create import create_story_in_jira
+
+    result = create_story_in_jira(epic_jira_key, story_id, dry_run=dry_run)
+    if not result.get("success") and not result.get("dry_run"):
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@jira.command()
+@click.argument("epic")
+@click.option("--dry-run", is_flag=True, help="Preview without applying")
+@click.option("--transition", is_flag=True, help="Sync status to Jira")
+@click.option("--points", is_flag=True, help="Sync story points")
+@click.option("--all", "sync_all", is_flag=True, help="Sync all fields")
+def sync(epic, dry_run, transition, points, sync_all):
+    """Sync epic stories from sprint YAML to Jira."""
+    from pennyfarthing_scripts.jira.sync import main as sync_main
+
+    args = [epic]
+    if dry_run:
+        args.append("--dry-run")
+    if transition or sync_all:
+        args.append("--transition")
+    if points or sync_all:
+        args.append("--points")
+    raise SystemExit(sync_main(args))
+
+
+@jira.command()
+@click.option("--dry-run", is_flag=True, help="Preview without applying")
+@click.option("--yaml-wins", is_flag=True, help="Prefer YAML values on conflict")
+@click.option("--status", is_flag=True, help="Sync status field")
+@click.option("--points", is_flag=True, help="Sync story points")
+@click.option("--all", "sync_all", is_flag=True, help="Sync all fields")
+@click.option("--sprint", "sprint_id", help="Target specific sprint")
+def bidirectional(dry_run, yaml_wins, status, points, sync_all, sprint_id):
+    """Bidirectional sync between YAML and Jira."""
+    from pennyfarthing_scripts.jira.bidirectional import main as bidirectional_main
+
+    args = []
+    if dry_run:
+        args.append("--dry-run")
+    if yaml_wins:
+        args.append("--yaml-wins")
+    if status or sync_all:
+        args.append("--status")
+    if points or sync_all:
+        args.append("--points")
+    if sync_all:
+        args.append("--all")
+    if sprint_id:
+        args.extend(["--sprint", sprint_id])
+    raise SystemExit(bidirectional_main(args))
+
+
+@jira.command()
+@click.option("--fix", is_flag=True, help="Apply automatic fixes where safe")
+def reconcile(fix):
+    """Reconciliation report: sprint YAML vs Jira."""
+    from pennyfarthing_scripts.jira.reconcile import reconcile as run_reconcile
+
+    result = run_reconcile(fix=fix)
+    if not result.get("success"):
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+@jira.group("sprint")
+def jira_sprint():
+    """Sprint operations."""
+    pass
+
+
+@jira_sprint.command("add")
+@click.argument("sprint_id")
+@click.argument("issue_key")
+def sprint_add(sprint_id, issue_key):
+    """Add an issue to a sprint."""
+    from pennyfarthing_scripts.jira.client import get_client
+
+    client = get_client()
+    result = client.add_to_sprint_sync(sprint_id, issue_key)
+    if result.get("success"):
+        click.echo(f"Added {issue_key} to sprint {sprint_id}")
+    else:
+        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        raise SystemExit(1)
+
+
+def cli(args=None):
+    """Backwards-compatible entry point."""
+    try:
+        jira(args, standalone_mode=False)
+    except SystemExit as e:
+        return e.code or 0
+    except click.exceptions.UsageError as e:
+        click.echo(str(e), err=True)
         return 1
+    return 0
 
 
-def main(args: list[str] | None = None) -> int:
+def main(args=None):
     """Alias for cli()."""
     return cli(args)
 
