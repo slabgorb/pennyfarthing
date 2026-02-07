@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.0.4] - 2026-02-07
+
+### Fixed
+
+- **Missing @pennyfarthing/shared dependency** — Published `@pennyfarthing/core` package now declares `@pennyfarthing/shared` as a dependency, fixing "Dependencies not installed" errors for all npm consumers (MSSCI-14482)
+- **4 pre-existing test failures** — Regenerated `pnpm-lock.yaml` to fix missing `yaml` symlink in `packages/shared/node_modules`, resolving `ERR_MODULE_NOT_FOUND` in `theme-loader`, `migrate-theme-schema`, `ocean-profiles`, and `theme-maker` tests (MSSCI-14483)
+
+---
+
 ## [10.0.3] - 2026-02-07
 
 ### Added
