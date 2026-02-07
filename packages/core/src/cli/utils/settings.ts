@@ -63,6 +63,13 @@ const LEGACY_SCRIPT_PATHS = [
 ];
 
 /**
+ * Legacy project hook paths that should be migrated to .pennyfarthing/project/hooks/
+ */
+const LEGACY_PROJECT_HOOK_PATHS = [
+  '.claude/project/hooks/'
+];
+
+/**
  * Check if a hook entry contains a specific hook by command substring
  */
 function hookEntryContains(entry: unknown, substring: string): boolean {
@@ -82,6 +89,7 @@ function findHookEntry(hookArray: unknown[], substring: string): unknown | undef
 
 /**
  * Migrate hook paths from legacy locations to .pennyfarthing/scripts/
+ * and .claude/project/hooks/ to .pennyfarthing/project/hooks/
  */
 function migrateHookPaths(hookArray: unknown[]): boolean {
   let migrated = false;
@@ -94,6 +102,13 @@ function migrateHookPaths(hookArray: unknown[]): boolean {
             for (const legacyPath of LEGACY_SCRIPT_PATHS) {
               if (h.command.includes(legacyPath)) {
                 h.command = h.command.replace(legacyPath, '.pennyfarthing/scripts/');
+                migrated = true;
+                break;
+              }
+            }
+            for (const legacyPath of LEGACY_PROJECT_HOOK_PATHS) {
+              if (h.command.includes(legacyPath)) {
+                h.command = h.command.replace(legacyPath, '.pennyfarthing/project/hooks/');
                 migrated = true;
                 break;
               }

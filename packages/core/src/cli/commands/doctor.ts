@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import YAML from 'yaml';
 import { spawnSync } from 'child_process';
@@ -1084,7 +1084,7 @@ function addSessionStartHooks(projectRoot: string, installationType: string): vo
       hooks: [
         {
           type: 'command',
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh'
+          command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/setup-env.sh'
         }
       ]
     }
@@ -1175,7 +1175,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: '"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/setup-env.sh'
             }
           ]
         }
@@ -1534,6 +1534,33 @@ export function checkLegacyFiles(projectRoot: string): CheckResult[] {
         }
 
         unlinkSync(legacyPersonaConfig);
+      }
+    });
+  }
+
+  // Check for legacy .claude/project/hooks/setup-env.sh
+  const legacyProjectHook = join(projectRoot, '.claude/project/hooks/setup-env.sh');
+  const properProjectHook = join(projectRoot, '.pennyfarthing/project/hooks/setup-env.sh');
+
+  if (pathExists(legacyProjectHook)) {
+    const detail = pathExists(properProjectHook)
+      ? 'May conflict with .pennyfarthing/project/hooks/setup-env.sh'
+      : 'Should be migrated to .pennyfarthing/project/hooks/setup-env.sh';
+
+    results.push({
+      name: 'legacy/.claude/project/hooks/setup-env.sh',
+      status: 'warn',
+      detail,
+      fix: () => {
+        if (!pathExists(properProjectHook)) {
+          const destDir = dirname(properProjectHook);
+          if (!existsSync(destDir)) {
+            mkdirSync(destDir, { recursive: true });
+          }
+          renameSync(legacyProjectHook, properProjectHook);
+        } else {
+          unlinkSync(legacyProjectHook);
+        }
       }
     });
   }
