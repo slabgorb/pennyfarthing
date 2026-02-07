@@ -168,7 +168,7 @@ Present to user:
 
 1. **Get workflow type:**
    ```bash
-   WORKFLOW=$(.pennyfarthing/scripts/sprint/get-story-field.sh X-Y workflow)
+   WORKFLOW=$(pf sprint story field X-Y workflow)
    WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "$WORKFLOW")
    ```
 
