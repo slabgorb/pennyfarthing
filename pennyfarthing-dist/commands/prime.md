@@ -17,23 +17,23 @@ Automatically invoked on agent activation via `pf agent start`.
 
 ## Running /prime
 
-Use the Python CLI:
+Use the `pf` CLI:
 
 ```bash
 # Load all essential context (default)
-python3 -m pennyfarthing_scripts.cli agent start "sm"
+pf agent start "sm"
 
 # Minimal mode - fastest startup
-python3 -m pennyfarthing_scripts.cli agent start "sm" --minimal
+pf agent start "sm" --minimal
 
 # Full mode - include domain docs
-python3 -m pennyfarthing_scripts.cli agent start "sm" --full
+pf agent start "sm" --full
 
 # Skip persona loading
-python3 -m pennyfarthing_scripts.cli agent start "sm" --no-persona
+pf agent start "sm" --no-persona
 
 # JSON output (for Cyclist integration)
-python3 -m pennyfarthing_scripts.cli agent start "sm" --json
+pf agent start "sm" --json
 ```
 
 ## Options

@@ -53,8 +53,7 @@ function findPennyfarthingScripts(projectDir: string): string | null {
 /**
  * Get the prime context for an agent
  *
- * Calls `python -m pennyfarthing_scripts.cli agent start <name> --quiet`
- * and returns the output, which includes:
+ * Calls `pf agent start <name> --quiet` and returns the output, which includes:
  * - Agent definition
  * - Persona (character, style, traits)
  * - Behavior guide
@@ -62,38 +61,61 @@ function findPennyfarthingScripts(projectDir: string): string | null {
  * - Session context
  * - Sidecar memory
  *
+ * Falls back to python3 -m invocation with PYTHONPATH if pf CLI is not installed.
+ *
  * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
  * @param projectDir - Project directory to run from
  * @returns Prime context string, or null if failed
  */
 export function getPrimeContext(agentName: string, projectDir: string): string | null {
-  const packageRoot = findPennyfarthingScripts(projectDir);
-  if (!packageRoot) {
-    console.warn('[prime] Could not find pennyfarthing_scripts');
-    return null;
-  }
-
   try {
-    // Set PYTHONPATH so Python can find pennyfarthing_scripts
-    const env = {
-      ...process.env,
-      PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
-    };
-
-    // Call prime with --quiet to suppress headers (cleaner system prompt)
+    // Try pf CLI first (installed via uv tool install / pipx)
     const result = execSync(
-      `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`,
+      `pf agent start "${agentName}" --quiet`,
       {
         cwd: projectDir,
-        env,
         encoding: 'utf-8',
-        timeout: 10000, // 10 second timeout
+        timeout: 10000,
         stdio: ['pipe', 'pipe', 'pipe'],
       }
     );
 
     if (result && result.trim().length > 0) {
       console.log(`[prime] Got context for agent "${agentName}" (${result.length} chars)`);
+      return result;
+    }
+
+    console.warn(`[prime] Empty output for agent "${agentName}"`);
+    return null;
+  } catch {
+    // pf not available, fall back to python3 -m with PYTHONPATH
+  }
+
+  const packageRoot = findPennyfarthingScripts(projectDir);
+  if (!packageRoot) {
+    console.warn('[prime] Could not find pennyfarthing_scripts (pf CLI not installed, PYTHONPATH fallback failed)');
+    return null;
+  }
+
+  try {
+    const env = {
+      ...process.env,
+      PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
+    };
+
+    const result = execSync(
+      `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`,
+      {
+        cwd: projectDir,
+        env,
+        encoding: 'utf-8',
+        timeout: 10000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }
+    );
+
+    if (result && result.trim().length > 0) {
+      console.log(`[prime] Got context for agent "${agentName}" (${result.length} chars, PYTHONPATH fallback)`);
       return result;
     }
 
@@ -246,7 +268,7 @@ export function selectContextTier(
  * @returns Command string for executing Python prime script
  */
 export function buildPrimeCommand(agentName: string, tier?: ContextTier, json?: boolean): string {
-  let command = `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`;
+  let command = `pf agent start "${agentName}" --quiet`;
 
   if (tier !== undefined) {
     command += ` --tier ${tier}`;

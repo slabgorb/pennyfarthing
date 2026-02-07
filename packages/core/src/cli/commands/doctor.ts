@@ -18,6 +18,7 @@ import {
 import { getPackageVersion } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
+import { getPfVersion, installPfCli, findLocalPyproject } from '../utils/python.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -74,6 +75,9 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   logger.info(`Mode: ${installationType}${installationType === 'symlink' ? ' (node_modules)' : ' (file copies)'}`);
   logger.newline();
 
+  // Resolve node_modules path for checks that need it
+  const nodeModulesPath = findNodeModulesPath(projectRoot);
+
   // Run checks
   results.push(...checkInstallation(projectRoot, manifest));
   results.push(...checkCoreFiles(projectRoot, manifest));
@@ -84,6 +88,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
   results.push(...checkCyclist(projectRoot));
+  results.push(checkPfCli(nodeModulesPath));
 
   // Output results
   if (options.json) {
@@ -100,7 +105,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
     { name: 'File Layout', filter: (r: CheckResult) => r.name.startsWith('layout/') },
     { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') },
-    { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') }
+    { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') },
+    { name: 'Tools', filter: (r: CheckResult) => r.name.startsWith('tools/') }
   ];
 
   for (const category of categories) {
@@ -1444,6 +1450,32 @@ function checkCyclist(projectRoot: string): CheckResult[] {
   }
 
   return results;
+}
+
+/**
+ * Check if the pf CLI is installed and working.
+ * The pf CLI is required for agent commands (e.g., `pf agent start "dev"`).
+ */
+function checkPfCli(nodeModulesPath: string | null): CheckResult {
+  const version = getPfVersion();
+  if (version) {
+    return {
+      name: 'tools/pf-cli',
+      status: 'pass',
+      detail: version
+    };
+  }
+
+  return {
+    name: 'tools/pf-cli',
+    status: 'warn',
+    detail: 'pf CLI not found — agent commands will not work',
+    fix: () => {
+      if (!installPfCli(nodeModulesPath)) {
+        throw new Error('Neither uv nor pipx available. Install manually: uv tool install pennyfarthing-scripts');
+      }
+    }
+  };
 }
 
 /**
