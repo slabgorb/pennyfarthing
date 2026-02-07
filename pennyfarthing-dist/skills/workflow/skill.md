@@ -342,4 +342,4 @@ For comprehensive documentation on creating stepped workflows, see:
 
 - **[guides/bikelane.md](../../guides/bikelane.md)** - Full BikeLane user guide
 - **[docs/adr/0013-bmad-workflow-import.md](../../docs/adr/0013-bmad-workflow-import.md)** - Technical ADR
-- **[pennyfarthing-dist/workflows/architecture.yaml](../workflows/architecture.yaml)** - Example implementation
+- **[pennyfarthing-dist/workflows/architecture.yaml](../../workflows/architecture.yaml)** - Example implementation
