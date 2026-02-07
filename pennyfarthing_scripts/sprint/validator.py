@@ -65,7 +65,7 @@ class ValidationResult:
 # =============================================================================
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
-VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "done", "canceled"}
+VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "done", "canceled", "planning"}
 JIRA_KEY_PATTERN = re.compile(r"^MSSCI-\d{5}$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -282,10 +282,13 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
     sprint_result = validate_sprint(data)
     result.merge(sprint_result)
 
-    # Validate epics
+    # Validate epics (skip if sharded — epics are string refs to shard files)
     if "epics" in data:
         all_story_ids: set[str] = set()
         for idx, epic in enumerate(data["epics"]):
+            # Sharded format: epics are string refs, not dicts
+            if isinstance(epic, str):
+                continue
             epic_result = validate_epic(epic, all_story_ids, idx)
             result.merge(epic_result)
 
@@ -349,6 +352,9 @@ def validate_future(data: dict[str, Any]) -> ValidationResult:
         return result
 
     for i, initiative in enumerate(initiatives):
+        # Sharded format: initiatives are string slugs, not dicts
+        if isinstance(initiative, str):
+            continue
         if not isinstance(initiative, dict):
             result.add_error(f"Initiative must be a mapping", f"future.initiatives[{i}]")
             continue

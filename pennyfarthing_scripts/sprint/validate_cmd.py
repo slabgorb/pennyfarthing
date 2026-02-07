@@ -15,7 +15,14 @@ from pathlib import Path
 import click
 import yaml
 
-from pennyfarthing_scripts.sprint.validator import validate_full_sprint, validate_future
+from pennyfarthing_scripts.sprint.validator import (
+    REQUIRED_INITIATIVE_FIELDS,
+    VALID_INITIATIVE_STATUSES,
+    ValidationResult,
+    validate_epic,
+    validate_full_sprint,
+    validate_future,
+)
 from pennyfarthing_scripts.sprint.yaml_io import (
     EPIC_KEY_ORDER,
     SPRINT_KEY_ORDER,
@@ -142,6 +149,25 @@ def check_format_drift(path: Path) -> list[FormatIssue]:
     return issues
 
 
+def _validate_initiative_shard(data: dict) -> ValidationResult:
+    """Validate a standalone initiative shard file (initiative-*.yaml)."""
+    result = ValidationResult(valid=True)
+    if not isinstance(data, dict):
+        result.add_error("Initiative shard must be a mapping", "")
+        return result
+    for field_name in REQUIRED_INITIATIVE_FIELDS:
+        if field_name not in data:
+            result.add_error(f"Missing required field: {field_name}", field_name)
+    if "status" in data:
+        status = data["status"]
+        if status and status not in VALID_INITIATIVE_STATUSES:
+            result.add_error(
+                f"Invalid initiative status '{status}'. Must be one of: {', '.join(sorted(VALID_INITIATIVE_STATUSES))}",
+                "status",
+            )
+    return result
+
+
 def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     """Validate a sprint YAML file for syntax, schema, and format issues.
 
@@ -204,8 +230,21 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
         return result
 
     # Step 2: Schema validation — detect file type and use appropriate validator
+    #
+    # Shard files (epic-*.yaml, initiative-*.yaml) are standalone fragments
+    # that don't have the full sprint/future structure. Validate their
+    # internal structure only — the index files handle cross-references.
+    is_epic_shard = path.name.startswith("epic-") and path.name.endswith(".yaml")
+    is_initiative_shard = path.name.startswith("initiative-") and path.name.endswith(".yaml")
     is_future = path.name == "future.yaml" or "future" in data
-    if is_future:
+
+    if is_epic_shard:
+        # Epic shard: validate as a single epic (has id, title, stories)
+        schema_result = validate_epic(data, set(), 0)
+    elif is_initiative_shard:
+        # Initiative shard: validate as a single initiative (has name, status)
+        schema_result = _validate_initiative_shard(data)
+    elif is_future:
         schema_result = validate_future(data)
     else:
         schema_result = validate_full_sprint(data)
@@ -218,13 +257,13 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
             category="schema",
         ))
 
-    # Step 3: Format drift detection (sprint files only — future.yaml has different structure)
-    if not is_future:
+    # Step 3: Format drift detection (sprint files only — shards and future.yaml have different structure)
+    if not is_future and not is_epic_shard and not is_initiative_shard:
         format_issues = check_format_drift(path)
         result.format_issues = format_issues
 
     # Step 4: Fix if requested (only format issues, not schema; sprint files only)
-    if fix and not is_future and path.exists():
+    if fix and not is_future and not is_epic_shard and not is_initiative_shard and path.exists():
         try:
             canon_data = read_sprint(path)
             write_sprint(path, canon_data)
