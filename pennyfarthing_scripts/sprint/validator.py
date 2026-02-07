@@ -503,6 +503,10 @@ def validate_sprint_file(file_path: Path) -> ValidationResult:
         )
         return result
 
+    # Merge sharded epic files if present
+    from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
+    data = _merge_epic_shards(data, file_path.parent)
+
     # Validate loaded data
     return validate_full_sprint(data)
 

@@ -9,6 +9,8 @@ Commands:
     backlog     Show available stories
     work        Start work on a story
     archive     Archive a completed story
+    story       Story subcommands (show, add, update, size, template, finish, claim)
+    epic        Epic subcommands (add, promote, archive, import, remove)
 """
 
 import click
@@ -22,7 +24,8 @@ def sprint():
     Commands:
       status   - Show sprint status
       backlog  - Show available stories
-      story    - Show story details
+      story    - Story operations (show, add, update, size, template, finish, claim)
+      epic     - Epic operations (add, promote, archive, import, remove)
       work     - Start work on a story
       archive  - Archive a completed story
     """
@@ -103,8 +106,48 @@ def work(story_id: str | None, dry_run: bool):
 
 @sprint.command()
 @click.argument("story_id")
+@click.argument("pr_number", required=False)
+@click.option("--apply", is_flag=True, help="Also remove from current-sprint.yaml")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
+    """Archive a completed story.
+
+    \b
+    Arguments:
+      STORY_ID   - Story ID to archive
+      PR_NUMBER  - Optional PR number if merged via PR
+    """
+    # Lazy import
+    from pennyfarthing_scripts.sprint.archive import archive_story
+
+    result = archive_story(
+        story_id,
+        pr_number=pr_number,
+        dry_run=dry_run,
+        apply=apply,
+    )
+
+    if result.get("success"):
+        if result.get("dry_run"):
+            click.echo(f"[DRY-RUN] {result.get('message')}")
+        else:
+            click.echo(result.get("message"))
+    else:
+        raise click.ClickException(f"Failed: {result.get('error')}")
+
+
+# --- Story subgroup ---
+
+@sprint.group()
+def story():
+    """Story operations (show, add, update, size, template, finish, claim)."""
+    pass
+
+
+@story.command("show")
+@click.argument("story_id")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def story(story_id: str, output_json: bool):
+def story_show(story_id: str, output_json: bool):
     """Show details for a specific story.
 
     \b
@@ -138,43 +181,125 @@ def story(story_id: str, output_json: bool):
             click.echo(f"Description: {story_data.get('description')}")
 
 
-@sprint.command()
-@click.argument("story_id")
-@click.argument("pr_number", required=False)
-@click.option("--apply", is_flag=True, help="Also remove from current-sprint.yaml")
-@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
-def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
-    """Archive a completed story.
+@story.command("size")
+@click.argument("points", required=False, type=int)
+def story_size(points: int | None):
+    """Display story sizing guidelines.
 
     \b
     Arguments:
-      STORY_ID   - Story ID to archive
-      PR_NUMBER  - Optional PR number if merged via PR
+      POINTS  - Optional specific point value to show guidance for
     """
-    # Lazy import
-    from pennyfarthing_scripts.sprint.archive import archive_story
+    from pennyfarthing_scripts.story.size import format_size_info, get_sizing_guidelines
 
-    result = archive_story(
-        story_id,
-        pr_number=pr_number,
-        dry_run=dry_run,
-        apply=apply,
-    )
+    guidelines = get_sizing_guidelines(points)
+    click.echo(format_size_info(guidelines))
+
+
+@story.command("template")
+@click.argument("template_type", required=False)
+def story_template(template_type: str | None):
+    """Display story templates by type.
+
+    \b
+    Arguments:
+      TYPE  - Template type (feature, bug, refactor, chore)
+    """
+    from pennyfarthing_scripts.story.template import get_all_templates, get_template
+
+    if template_type:
+        template = get_template(template_type)
+        if template:
+            click.echo(f"Type: {template['type']}")
+            click.echo(f"Description: {template['description']}")
+            click.echo("")
+            click.echo("Template:")
+            click.echo(template["template"])
+        else:
+            raise click.ClickException(f"Unknown template type: {template_type}")
+    else:
+        click.echo("Available templates:")
+        for name, template in get_all_templates().items():
+            click.echo(f"  {name}: {template['description']}")
+
+
+@story.command("finish")
+@click.argument("story_id")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without executing")
+def story_finish(story_id: str, dry_run: bool):
+    """Complete a story: archive session, merge PR, transition Jira, update sprint YAML.
+
+    \b
+    Arguments:
+      STORY_ID  - Story ID (e.g., MSSCI-12052)
+    """
+    import subprocess as sp
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    script = get_project_root() / ".pennyfarthing" / "scripts" / "workflow" / "finish-story.sh"
+    if not script.exists():
+        raise click.ClickException(f"Script not found: {script}")
+
+    cmd = [str(script), story_id]
+    if dry_run:
+        cmd.append("--dry-run")
+
+    result = sp.run(cmd, capture_output=True, text=True, cwd=str(get_project_root()))
+    if result.stdout:
+        click.echo(result.stdout.rstrip())
+    if result.returncode != 0:
+        error = result.stderr.strip() if result.stderr else "Unknown error"
+        raise click.ClickException(error)
+
+
+@story.command("claim")
+@click.argument("story_id")
+@click.option("--claim/--unclaim", default=True, help="Claim or unclaim the story")
+def story_claim(story_id: str, claim: bool):
+    """Claim or unclaim a story in Jira.
+
+    \b
+    Arguments:
+      STORY_ID  - Story ID / Jira key to claim
+    """
+    from pennyfarthing_scripts.jira.claim import claim_issue, unclaim_issue
+
+    if claim:
+        result = claim_issue(story_id)
+    else:
+        result = unclaim_issue(story_id)
 
     if result.get("success"):
-        if result.get("dry_run"):
-            click.echo(f"[DRY-RUN] {result.get('message')}")
-        else:
-            click.echo(result.get("message"))
+        click.echo(result.get("message", f"{'Claimed' if claim else 'Unclaimed'} {story_id}"))
     else:
-        raise click.ClickException(f"Failed: {result.get('error')}")
+        raise click.ClickException(result.get("error", "Unknown error"))
 
 
-@sprint.command("archive-epic")
+# Register story-add as story.add
+from pennyfarthing_scripts.sprint.story_add import story_add_command
+
+story.add_command(story_add_command, "add")
+
+# Register story-update as story.update
+from pennyfarthing_scripts.sprint.story_update import story_update_command
+
+story.add_command(story_update_command, "update")
+
+
+# --- Epic subgroup ---
+
+@sprint.group()
+def epic():
+    """Epic operations (add, promote, archive, import, remove)."""
+    pass
+
+
+@epic.command("archive")
 @click.argument("epic_id", required=False)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 @click.option("--jira", is_flag=True, help="Also update Jira epic status to Done")
-def archive_epic(epic_id: str | None, dry_run: bool, jira: bool):
+def epic_archive(epic_id: str | None, dry_run: bool, jira: bool):
     """Archive completed epics.
 
     \b
@@ -183,10 +308,10 @@ def archive_epic(epic_id: str | None, dry_run: bool, jira: bool):
 
     \b
     Examples:
-      pf sprint archive-epic                    # Scan and archive all completed
-      pf sprint archive-epic --dry-run          # Preview what would be archived
-      pf sprint archive-epic epic-64            # Archive specific epic
-      pf sprint archive-epic epic-64 --jira     # Archive and update Jira
+      pf sprint epic archive                    # Scan and archive all completed
+      pf sprint epic archive --dry-run          # Preview what would be archived
+      pf sprint epic archive epic-64            # Archive specific epic
+      pf sprint epic archive epic-64 --jira     # Archive and update Jira
     """
     # Lazy import
     from pennyfarthing_scripts.sprint.archive_epic import (
@@ -204,9 +329,9 @@ def archive_epic(epic_id: str | None, dry_run: bool, jira: bool):
             click.echo(f"[DRY-RUN] {result.get('message')}")
             if "archived" in result:
                 for r in result["archived"]:
-                    epic = r.get("epic", {})
-                    eid = epic.get("id") if epic else r.get("epic_id")
-                    stories = len(epic.get("stories", [])) if epic else r.get("stories_archived", 0)
+                    e = r.get("epic", {})
+                    eid = e.get("id") if e else r.get("epic_id")
+                    stories = len(e.get("stories", [])) if e else r.get("stories_archived", 0)
                     click.echo(f"  Would archive: {eid} ({stories} stories)")
         else:
             click.echo(result.get("message"))
@@ -222,12 +347,12 @@ def archive_epic(epic_id: str | None, dry_run: bool, jira: bool):
         raise click.ClickException(error_msg)
 
 
-@sprint.command("import-epic")
+@epic.command("import")
 @click.argument("epics_file")
 @click.argument("initiative_name", required=False)
 @click.option("--marker", default="imported", help="Marker tag for stories (default: imported)")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
-def import_epic(epics_file: str, initiative_name: str | None, marker: str, dry_run: bool):
+def epic_import(epics_file: str, initiative_name: str | None, marker: str, dry_run: bool):
     """Import BMAD epics-and-stories output to future.yaml.
 
     \b
@@ -237,9 +362,9 @@ def import_epic(epics_file: str, initiative_name: str | None, marker: str, dry_r
 
     \b
     Examples:
-      pf sprint import-epic docs/planning/my-feature-epics.md
-      pf sprint import-epic docs/planning/my-feature-epics.md "My Feature" --marker my-feature
-      pf sprint import-epic docs/planning/my-feature-epics.md --dry-run
+      pf sprint epic import docs/planning/my-feature-epics.md
+      pf sprint epic import docs/planning/my-feature-epics.md "My Feature" --marker my-feature
+      pf sprint epic import docs/planning/my-feature-epics.md --dry-run
     """
     # Lazy import
     from pennyfarthing_scripts.sprint.import_epic import import_epic as do_import
@@ -270,10 +395,10 @@ def import_epic(epics_file: str, initiative_name: str | None, marker: str, dry_r
         raise click.ClickException(result.get("error", "Unknown error"))
 
 
-@sprint.command("remove-epic")
+@epic.command("remove")
 @click.argument("epic_id")
 @click.option("--dry-run", is_flag=True, help="Show what would be removed without making changes")
-def remove_epic(epic_id: str, dry_run: bool):
+def epic_remove(epic_id: str, dry_run: bool):
     """Remove an epic from future.yaml (for cancelled pre-Jira epics).
 
     \b
@@ -282,8 +407,8 @@ def remove_epic(epic_id: str, dry_run: bool):
 
     \b
     Examples:
-      pf sprint remove-epic epic-41
-      pf sprint remove-epic epic-41 --dry-run
+      pf sprint epic remove epic-41
+      pf sprint epic remove epic-41 --dry-run
     """
     from pathlib import Path
 
@@ -305,14 +430,14 @@ def remove_epic(epic_id: str, dry_run: bool):
     found = False
     for init in data["future"]["initiatives"]:
         epics = init.get("epics", [])
-        for epic in epics:
-            if epic.get("id") == epic_id:
+        for e in epics:
+            if e.get("id") == epic_id:
                 found = True
-                story_count = len(epic.get("stories", []))
+                story_count = len(e.get("stories", []))
                 click.echo(f"Found epic in initiative '{init.get('name', 'unknown')}':")
                 click.echo(f"  ID: {epic_id}")
-                click.echo(f"  Title: {epic.get('title', 'unknown')}")
-                click.echo(f"  Points: {epic.get('points', '?')}")
+                click.echo(f"  Title: {e.get('title', 'unknown')}")
+                click.echo(f"  Points: {e.get('points', '?')}")
                 click.echo(f"  Stories: {story_count}")
 
                 if dry_run:
@@ -320,9 +445,9 @@ def remove_epic(epic_id: str, dry_run: bool):
                     return
 
                 # Remove using yq to preserve comments and formatting
-                import subprocess
+                import subprocess as sp
 
-                result = subprocess.run(
+                result = sp.run(
                     [
                         "yq", "eval", "-i",
                         f'del(.future.initiatives[].epics[] | select(.id == "{epic_id}"))',
@@ -343,20 +468,109 @@ def remove_epic(epic_id: str, dry_run: bool):
         )
 
 
+@epic.command("promote")
+@click.argument("epic_id")
+def epic_promote(epic_id: str):
+    """Move an epic from future.yaml to current-sprint.yaml.
+
+    \b
+    Arguments:
+      EPIC_ID  - Local epic ID (e.g., epic-41)
+
+    \b
+    Examples:
+      pf sprint epic promote epic-41
+    """
+    import subprocess as sp
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    script = get_project_root() / ".pennyfarthing" / "scripts" / "sprint" / "promote-epic.sh"
+    if not script.exists():
+        raise click.ClickException(f"Script not found: {script}")
+
+    result = sp.run(
+        [str(script), epic_id],
+        capture_output=True,
+        text=True,
+        cwd=str(get_project_root()),
+    )
+    if result.stdout:
+        click.echo(result.stdout.rstrip())
+    if result.returncode != 0:
+        error = result.stderr.strip() if result.stderr else "Unknown error"
+        raise click.ClickException(error)
+
+
+# Register epic-add as epic.add
+from pennyfarthing_scripts.sprint.epic_add import epic_add_command
+
+epic.add_command(epic_add_command, "add")
+
+
+# --- Standalone command ---
+
+@sprint.command()
+@click.argument("title", required=False)
+@click.argument("points", required=False, type=int)
+def standalone(title: str | None, points: int | None):
+    """Wrap current changes into a standalone Jira story, branch, PR, and merge.
+
+    This is an agent-executed workflow. Use /standalone to run it interactively.
+    """
+    click.echo("The standalone command is an agent-executed workflow.")
+    click.echo("Use /standalone to run it interactively with full agent support.")
+
+
+# --- Backwards compatibility aliases (hidden) ---
+
+# Hidden alias: sprint story-add -> sprint story add
+sprint.add_command(story_add_command, "story-add")
+sprint.commands["story-add"].hidden = True
+
+# Hidden alias: sprint story-update -> sprint story update
+sprint.add_command(story_update_command, "story-update")
+sprint.commands["story-update"].hidden = True
+
+# Hidden alias: sprint archive-epic -> sprint epic archive
+@sprint.command("archive-epic", hidden=True)
+@click.argument("epic_id", required=False)
+@click.option("--dry-run", is_flag=True)
+@click.option("--jira", is_flag=True)
+def archive_epic_compat(epic_id, dry_run, jira):
+    """(Deprecated) Use 'sprint epic archive' instead."""
+    ctx = click.get_current_context()
+    ctx.invoke(epic_archive, epic_id=epic_id, dry_run=dry_run, jira=jira)
+
+# Hidden alias: sprint import-epic -> sprint epic import
+@sprint.command("import-epic", hidden=True)
+@click.argument("epics_file")
+@click.argument("initiative_name", required=False)
+@click.option("--marker", default="imported")
+@click.option("--dry-run", is_flag=True)
+def import_epic_compat(epics_file, initiative_name, marker, dry_run):
+    """(Deprecated) Use 'sprint epic import' instead."""
+    ctx = click.get_current_context()
+    ctx.invoke(epic_import, epics_file=epics_file, initiative_name=initiative_name, marker=marker, dry_run=dry_run)
+
+# Hidden alias: sprint remove-epic -> sprint epic remove
+@sprint.command("remove-epic", hidden=True)
+@click.argument("epic_id")
+@click.option("--dry-run", is_flag=True)
+def remove_epic_compat(epic_id, dry_run):
+    """(Deprecated) Use 'sprint epic remove' instead."""
+    ctx = click.get_current_context()
+    ctx.invoke(epic_remove, epic_id=epic_id, dry_run=dry_run)
+
+# Hidden alias: sprint epic-add -> sprint epic add
+sprint.add_command(epic_add_command, "epic-add")
+sprint.commands["epic-add"].hidden = True
+
+
 # Register validate command from validate_cmd module
 from pennyfarthing_scripts.sprint.validate_cmd import validate_command
 
 sprint.add_command(validate_command)
-
-# Register story-add command from story_add module
-from pennyfarthing_scripts.sprint.story_add import story_add_command
-
-sprint.add_command(story_add_command, "story-add")
-
-# Register story-update command from story_update module
-from pennyfarthing_scripts.sprint.story_update import story_update_command
-
-sprint.add_command(story_update_command, "story-update")
 
 
 # For backwards compatibility when running as module

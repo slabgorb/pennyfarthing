@@ -696,3 +696,120 @@ class TestReadSprint:
         assert isinstance(data["epics"], list)
         assert isinstance(data["epics"][0]["stories"], list)
         assert isinstance(data["epics"][0]["stories"][0]["points"], int)
+
+
+# =============================================================================
+# Sharded format support
+# =============================================================================
+
+
+SHARDED_INDEX_YAML = """\
+sprint:
+  name: "TO Sprint 2606"
+  jira_sprint_id: 309
+  jira_sprint_name: "TO Sprint 2606"
+  goal: Test sharding
+  start_date: 2026-02-02
+  end_date: 2026-02-15
+  status: active
+epics:
+  - MSSCI-14298
+  - epic-40
+stories: []
+"""
+
+SHARD_JIRA_YAML = """\
+id: MSSCI-14298
+type: epic
+title: "Epic: Stepped Workflow"
+priority: P1
+status: in_progress
+jira: MSSCI-14298
+stories:
+  - id: MSSCI-14299
+    title: Wire up stepped workflow
+    points: 5
+    priority: P0
+    status: done
+"""
+
+SHARD_INTERNAL_YAML = """\
+id: epic-40
+type: epic
+title: "Epic: Scale Adaptation"
+priority: P2
+status: backlog
+stories:
+  - id: 40-1
+    title: First story
+    points: 3
+    priority: P1
+    status: backlog
+"""
+
+
+@pytest.fixture
+def sharded_sprint_dir(tmp_path: Path) -> Path:
+    """Create a sharded sprint directory structure."""
+    (tmp_path / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
+    (tmp_path / "epic-MSSCI-14298.yaml").write_text(SHARD_JIRA_YAML)
+    (tmp_path / "epic-epic-40.yaml").write_text(SHARD_INTERNAL_YAML)
+    return tmp_path
+
+
+class TestShardedReadWrite:
+    """Tests for sharded epic format in yaml_io."""
+
+    def test_read_merges_shards(self, sharded_sprint_dir: Path) -> None:
+        """read_sprint should merge shard files into full epics."""
+        data = read_sprint(sharded_sprint_dir / "current-sprint.yaml")
+
+        assert len(data["epics"]) == 2
+        assert data["epics"][0]["id"] == "MSSCI-14298"
+        assert data["epics"][1]["id"] == "epic-40"
+        assert len(data["epics"][0]["stories"]) == 1
+        assert len(data["epics"][1]["stories"]) == 1
+
+    def test_write_preserves_sharded_format(self, sharded_sprint_dir: Path) -> None:
+        """write_sprint should write back to shard files when format is sharded."""
+        index_path = sharded_sprint_dir / "current-sprint.yaml"
+        data = read_sprint(index_path)
+
+        # Mutate a story
+        data["epics"][1]["stories"][0]["status"] = "in_progress"
+
+        write_sprint(index_path, data)
+
+        # Index should still have string refs
+        import yaml
+        with open(index_path) as f:
+            raw_index = yaml.safe_load(f)
+        assert isinstance(raw_index["epics"][0], str)
+        assert raw_index["epics"][0] == "MSSCI-14298"
+
+        # Shard file should have the updated story
+        shard = read_sprint(sharded_sprint_dir / "epic-epic-40.yaml")
+        assert shard["stories"][0]["status"] == "in_progress"
+
+    def test_sharded_round_trip(self, sharded_sprint_dir: Path) -> None:
+        """Read-write-read on sharded format should be stable."""
+        index_path = sharded_sprint_dir / "current-sprint.yaml"
+
+        data1 = read_sprint(index_path)
+        write_sprint(index_path, data1)
+        data2 = read_sprint(index_path)
+
+        assert canonical_dump(data1) == canonical_dump(data2)
+
+    def test_non_sharded_write_unchanged(self, tmp_path: Path, full_sprint_file: Path) -> None:
+        """write_sprint on non-sharded data should write a single file."""
+        data = read_sprint(full_sprint_file)
+        out_path = tmp_path / "output.yaml"
+
+        write_sprint(out_path, data)
+
+        # Should be a single file, no shard files created
+        import yaml
+        with open(out_path) as f:
+            raw = yaml.safe_load(f)
+        assert isinstance(raw["epics"][0], dict)  # Full dicts, not refs

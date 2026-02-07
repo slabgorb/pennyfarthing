@@ -51,7 +51,7 @@ FILE_LIST: "{comma-separated file paths}"
 
 <skills>
 - `/sprint-context` - Sprint status, backlog, story management
-- `/story-management` - Story creation and sizing patterns
+- `/sprint story` - Story creation, sizing, and management
 </skills>
 
 <reasoning-mode>

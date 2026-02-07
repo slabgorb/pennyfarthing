@@ -146,7 +146,7 @@ IMMEDIATE:
 
 WHEN READY:
   □ Run /sm to start managing work
-  □ Create stories with /story create
+  □ Create stories with /sprint story add
   □ Begin TDD workflow with /tea
 
 CUSTOMIZATION:

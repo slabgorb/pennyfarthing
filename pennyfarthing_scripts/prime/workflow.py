@@ -171,6 +171,8 @@ def get_backlog_count(project_root: Path) -> int:
 
     count = 0
     for epic in sprint["epics"]:
+        if not isinstance(epic, dict):
+            continue  # Skip string refs (defensive)
         for story in epic.get("stories", []):
             status = story.get("status", "").lower()
             if status in ("backlog", "ready"):
