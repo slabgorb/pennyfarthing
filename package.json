@@ -19,6 +19,7 @@
     "pennyfarthing-dist/templates/",
     "pennyfarthing-dist/workflows/",
     "pennyfarthing_scripts/",
+    "scripts/postinstall.cjs",
     "README.md"
   ],
   "repository": {
@@ -30,6 +31,8 @@
     "url": "https://github.com/1898andCo/pennyfarthing/issues"
   },
   "scripts": {
+    "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} +",
+    "postinstall": "node scripts/postinstall.cjs",
     "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
     "docs": "./scripts/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
