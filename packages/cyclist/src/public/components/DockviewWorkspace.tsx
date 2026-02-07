@@ -49,7 +49,6 @@ export const PANEL_INVENTORY = {
   TODO: 'todo',
   BACKGROUND: 'background',
   GIT: 'git',
-  HOTSPOTS: 'hotspots',
   SETTINGS: 'settings',
 } as const;
 
@@ -91,7 +90,6 @@ export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.TODO,
   PANEL_INVENTORY.BACKGROUND,
   PANEL_INVENTORY.GIT,
-  PANEL_INVENTORY.HOTSPOTS,
   PANEL_INVENTORY.SETTINGS,
 ] as const;
 
@@ -109,7 +107,6 @@ const PANEL_TITLES: Record<string, string> = {
   todo: 'Todo',
   background: 'Subagents',
   git: 'Git',
-  hotspots: 'Hotspots',
   settings: 'Settings',
 };
 
