@@ -230,7 +230,7 @@ Jira CLI commands for sprint management
 **Anti-patterns:**
 - Don't bypass Jira for sprint tracking
 
-**Related:** [sprint](#sprint), [story](#story)
+**Related:** [sprint](#sprint)
 
 ### permissions
 
@@ -251,35 +251,39 @@ Manage runtime permission grants - list, grant, and revoke tool access
 
 ### sprint
 
-Sprint status, backlog, and story management for Pennyfarthing
+Sprint status, backlog, story, and epic management for Pennyfarthing
 
-**Tags:** sprint, status, backlog
+**Tags:** sprint, status, backlog, stories, epics
 
-**Keywords:** sprint, backlog, velocity, kanban
+**Keywords:** sprint, backlog, velocity, kanban, stories, epics, sizing, templates
 
 **Examples:**
 - Checking sprint status: `/sprint`
 - Finding available stories: `/sprint backlog`
+- Adding a story: `/sprint story add epic-76 "My story" 3`
+- Sizing guidelines: `/sprint story size`
+- Adding an epic: `/sprint epic add epic-85 "New epic`
 
 **Anti-patterns:**
 - Don't manually edit sprint YAML - use scripts
 
-**Related:** [story](#story), [jira](#jira)
+**Related:** [jira](#jira)
 
 ### story
 
-Story creation, sizing, and templates for Pennyfarthing workflow
+DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint.
 
-**Tags:** stories, sizing, workflow
+**Tags:** stories, sizing, workflow, deprecated
 
 **Keywords:** user-stories, estimation, points, acceptance-criteria
 
 **Examples:**
-- Creating new stories: `/story create`
-- Sizing stories: `/story size`
+- Creating new stories: `/sprint story add`
+- Sizing stories: `/sprint story size`
 
 **Anti-patterns:**
 - Don't create stories without acceptance criteria
+- Don't use /story directly - use /sprint story instead
 
 **Related:** [sprint](#sprint), [jira](#jira)
 
@@ -299,7 +303,7 @@ Manage workflows - list, show, set, start, resume, and check status
 **Anti-patterns:**
 - Don't switch workflows mid-story unless requirements fundamentally changed
 
-**Related:** [sprint](#sprint), [story](#story)
+**Related:** [sprint](#sprint)
 
 ## Theming
 
