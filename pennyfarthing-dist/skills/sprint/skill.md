@@ -242,7 +242,7 @@ With `--epic`:
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
+pf sprint epic promote <epic-id>
 </run>
 
 <args>
@@ -265,7 +265,7 @@ Next steps after promote:
 Show details for a specific story.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story show <story-id> [--json]
+pf sprint story show <story-id> [--json]
 </run>
 
 <args>
@@ -282,7 +282,7 @@ python3 -m pennyfarthing_scripts.cli sprint story show <story-id> [--json]
 Add a new story to an epic in sprint YAML.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <points> [options]
+pf sprint story add <epic-id> "<title>" <points> [options]
 </run>
 
 <args>
@@ -298,8 +298,8 @@ python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <point
 </args>
 
 <example>
-python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Add error handling" 3
-python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Fix null pointer" 2 --type bug
+pf sprint story add epic-76 "Add error handling" 3
+pf sprint story add epic-76 "Fix null pointer" 2 --type bug
 </example>
 
 ---
@@ -309,7 +309,7 @@ python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Fix null pointer"
 Update fields on a story.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story update <story-id> [options]
+pf sprint story update <story-id> [options]
 </run>
 
 <args>
@@ -330,7 +330,7 @@ python3 -m pennyfarthing_scripts.cli sprint story update <story-id> [options]
 Display story sizing guidelines.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story size [points]
+pf sprint story size [points]
 </run>
 
 <args>
@@ -350,7 +350,7 @@ Sizing characteristics, workflow suggestions, examples.
 Display story templates by type.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story template [type]
+pf sprint story template [type]
 </run>
 
 <args>
@@ -377,7 +377,7 @@ Prerequisites before running:
 </critical>
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story finish <story-id> [--dry-run]
+pf sprint story finish <story-id> [--dry-run]
 </run>
 
 <args>
@@ -394,7 +394,7 @@ python3 -m pennyfarthing_scripts.cli sprint story finish <story-id> [--dry-run]
 Claim or unclaim a story in Jira.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story claim <story-id>
+pf sprint story claim <story-id>
 </run>
 
 ---
@@ -404,7 +404,7 @@ python3 -m pennyfarthing_scripts.cli sprint story claim <story-id>
 Add a new epic to the current sprint.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic add <epic-id> <title> [options]
+pf sprint epic add <epic-id> <title> [options]
 </run>
 
 <args>
@@ -424,7 +424,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic add <epic-id> <title> [options]
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
+pf sprint epic promote <epic-id>
 </run>
 
 <args>
@@ -440,7 +440,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
 Archive completed epics.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic archive [epic-id] [--dry-run] [--jira]
+pf sprint epic archive [epic-id] [--dry-run] [--jira]
 </run>
 
 ---
@@ -450,7 +450,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic archive [epic-id] [--dry-run] [
 Import BMAD epics-and-stories output to future.yaml.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--marker TAG] [--dry-run]
+pf sprint epic import <file> [initiative] [--marker TAG] [--dry-run]
 </run>
 
 ---
@@ -460,7 +460,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--m
 Show details for a specific epic. Searches both current sprint and future initiative shards.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic show <epic-id> [--json]
+pf sprint epic show <epic-id> [--json]
 </run>
 
 <args>
@@ -477,7 +477,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic show <epic-id> [--json]
 Cancel an epic and all its stories. Searches both current sprint and future initiative shards.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic cancel <epic-id> [--jira] [--dry-run]
+pf sprint epic cancel <epic-id> [--jira] [--dry-run]
 </run>
 
 <args>
@@ -495,7 +495,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic cancel <epic-id> [--jira] [--dr
 Remove an epic from future.yaml.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
+pf sprint epic remove <epic-id> [--dry-run]
 </run>
 
 ---
@@ -505,7 +505,7 @@ python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
 Show details for a specific initiative including its epics and stories.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint initiative show <name> [--json]
+pf sprint initiative show <name> [--json]
 </run>
 
 <args>
@@ -522,7 +522,7 @@ python3 -m pennyfarthing_scripts.cli sprint initiative show <name> [--json]
 Cancel an initiative and all its epics/stories.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint initiative cancel <name> [--jira] [--dry-run]
+pf sprint initiative cancel <name> [--jira] [--dry-run]
 </run>
 
 <args>

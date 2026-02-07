@@ -52,8 +52,8 @@ Prime selects a context tier based on session state to manage token overhead:
 ## Invocation
 
 ```bash
-# From agent commands (via CLI)
-python3 -m pennyfarthing_scripts.cli agent start "<agent>" --quiet
+# From agent commands (via pf CLI)
+pf agent start "<agent>" --quiet
 
 # TypeScript API (from Cyclist)
 getPrimeContext(agentName, projectDir)
