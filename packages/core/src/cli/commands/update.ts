@@ -302,7 +302,38 @@ async function migrateSidecars(
     logger.info(`Migrated ${migrated} sidecar files to .pennyfarthing/sidecars/`);
   }
 
-  // Clean up old sprint/sidecars directory if it exists and is now empty or fully migrated
+  // Clean up legacy sidecar directories after migration
+  // 1. Clean up .claude/project/agents/{agent}-sidecar/ directories
+  const legacyAgentsDir = join(projectRoot, '.claude/project/agents');
+  if (pathExists(legacyAgentsDir)) {
+    let removedCount = 0;
+    for (const agent of CORE_AGENTS) {
+      const legacySidecarDir = join(legacyAgentsDir, `${agent}-sidecar`);
+      if (pathExists(legacySidecarDir)) {
+        // Only remove if the agent's sidecar now exists at the new location
+        const newAgentDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
+        if (pathExists(newAgentDir) && !dryRun) {
+          removeSync(legacySidecarDir);
+          removedCount++;
+        }
+      }
+    }
+    if (removedCount > 0) {
+      logger.info(`Removed ${removedCount} legacy .claude/project/agents/ sidecar directories`);
+    }
+
+    // Remove the agents/ directory itself if now empty
+    try {
+      const remaining = readdirSync(legacyAgentsDir);
+      if (remaining.length === 0 && !dryRun) {
+        removeSync(legacyAgentsDir);
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  // 2. Clean up sprint/sidecars/ directory
   const oldSprintSidecars = join(projectRoot, 'sprint/sidecars');
   if (pathExists(oldSprintSidecars)) {
     try {
