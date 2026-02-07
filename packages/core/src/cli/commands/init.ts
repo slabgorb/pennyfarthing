@@ -26,6 +26,7 @@ import {
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
+import { migrateTemplateFiles } from './update.js';
 
 interface InitOptions {
   force?: boolean;
@@ -213,6 +214,9 @@ export async function initCommand(
 
   // 9. Install git hooks
   await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+
+  // 9b. Migrate template files from old .claude/ locations to .pennyfarthing/
+  migrateTemplateFiles(projectRoot, { dryRun });
 
   // 10. Generate template files (if not exist and not skipped)
   if (!options.skipTemplates) {
