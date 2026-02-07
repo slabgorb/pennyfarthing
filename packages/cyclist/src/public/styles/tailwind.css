@@ -2626,6 +2626,14 @@
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
 }
 
+/* Tool launcher - MSSCI-14443 */
+.debug-panel .tool-launcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 /* Settings panel */
 .settings-panel {
   padding: 8px;
