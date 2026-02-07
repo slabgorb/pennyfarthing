@@ -1,5 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { execSync } from 'child_process';
+import { readFileSync, writeFileSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -28,6 +27,7 @@ import { findNodeModulesPath } from '../utils/node-modules.js';
 import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { migrateTemplateFiles } from './update.js';
+import { getPfVersion, installPfCli } from '../utils/python.js';
 
 interface InitOptions {
   force?: boolean;
@@ -328,8 +328,7 @@ async function installGitHooks(
 
 /**
  * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
- * Tries uv tool install first, then pipx as fallback.
- * The package source is bundled in the npm package at pennyfarthing_scripts/.
+ * Uses shared utility that checks local source first, then PyPI.
  */
 async function installPythonScripts(
   nodeModulesPath: string,
@@ -338,23 +337,9 @@ async function installPythonScripts(
   logger.newline();
   logger.info('Installing Python scripts (pf CLI)...');
 
-  // Check if pf is already installed and working
-  try {
-    execSync('pf --version', { stdio: 'pipe' });
-    logger.skipped('pf CLI', 'already installed');
-    return;
-  } catch {
-    // Not installed yet, proceed
-  }
-
-  // Find the Python package source — it should be at the package root
-  // nodeModulesPath points to .../pennyfarthing-dist, package root is one level up
-  const packageRoot = join(nodeModulesPath, '..');
-  const pyprojectPath = join(packageRoot, 'pyproject.toml');
-
-  if (!existsSync(pyprojectPath)) {
-    logger.warning('pennyfarthing_scripts not found in package, skipping Python install');
-    logger.warning('Agent commands will not work until pf CLI is installed');
+  const version = getPfVersion();
+  if (version) {
+    logger.skipped('pf CLI', `already installed (${version})`);
     return;
   }
 
@@ -363,28 +348,10 @@ async function installPythonScripts(
     return;
   }
 
-  // Try uv tool install first (preferred, faster)
-  try {
-    execSync(`uv tool install -e "${packageRoot}"`, { stdio: 'pipe' });
-    logger.created('pf CLI (via uv)');
-    return;
-  } catch {
-    // uv not available or failed
+  if (!installPfCli(nodeModulesPath)) {
+    logger.warning('Could not install pf CLI automatically');
+    logger.warning('Install manually: uv tool install pennyfarthing-scripts');
   }
-
-  // Try pipx as fallback
-  try {
-    execSync(`pipx install -e "${packageRoot}"`, { stdio: 'pipe' });
-    logger.created('pf CLI (via pipx)');
-    return;
-  } catch {
-    // pipx not available or failed
-  }
-
-  // Neither worked
-  logger.warning('Could not install pf CLI automatically');
-  logger.warning('Install manually: uv tool install pennyfarthing-scripts');
-  logger.warning('  or: pipx install pennyfarthing-scripts');
 }
 
 async function generateTemplateFiles(
