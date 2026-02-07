@@ -19,6 +19,10 @@
  * 11. Shell source/dot-source references between scripts
  * 12. Handoff-marker.sh targets → agent names
  * 13. Absolute path leak detection (/Users/, /home/, C:\)
+ * 14. Theme YAML agent keys → agents/*.md
+ * 15. Guide references in backticks → guides/*.md
+ * 16. Skill redirect targets → skill directories
+ * 17. Python imports → pennyfarthing_scripts modules
  *
  * What it does NOT check:
  * - Runtime variables ({STORY_ID}, {project_root}, $CLAUDE_PROJECT_DIR, etc.)
@@ -27,6 +31,9 @@
  * - Session file paths (.session/) — ephemeral
  * - Sprint YAML paths — user-specific, not in pennyfarthing-dist
  * - Schema validation — separate concern
+ * - OCEAN profile format in theme additional_characters
+ * - Workflow trigger type taxonomy
+ * - Template variable binding in workflow steps
  *
  * Usage:
  *   node scripts/validate-refs.js            # Warn on broken references (exit 0)
@@ -49,7 +56,7 @@ const STRICT = process.argv.includes('--strict');
 
 // --- Constants ---
 
-const SCAN_EXTENSIONS = new Set(['.yaml', '.yml', '.md', '.sh']);
+const SCAN_EXTENSIONS = new Set(['.yaml', '.yml', '.md', '.sh', '.py']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'portraits', 'templates']);
 
 // Absolute path leak pattern
@@ -87,18 +94,49 @@ function getSkillNames() {
   );
 }
 
-function getWorkflowNames() {
-  const dir = join(DIST_DIR, 'workflows');
+function getGuideNames() {
+  const dir = join(DIST_DIR, 'guides');
   if (!existsSync(dir)) return new Set();
   const names = new Set();
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isFile() && /\.ya?ml$/.test(entry.name)) {
-      names.add(entry.name.replace(/\.ya?ml$/, ''));
-    } else if (entry.isDirectory() && existsSync(join(dir, entry.name, 'workflow.yaml'))) {
-      names.add(entry.name);
+  function walk(currentDir, prefix) {
+    for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      const fullPath = join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath, prefix ? `${prefix}/${entry.name}` : entry.name);
+      } else if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md') {
+        const baseName = entry.name.replace('.md', '');
+        names.add(prefix ? `${prefix}/${baseName}` : baseName);
+      }
     }
   }
+  walk(dir, '');
   return names;
+}
+
+function getPythonModules() {
+  const scriptsDir = join(PROJECT_ROOT, 'pennyfarthing_scripts');
+  if (!existsSync(scriptsDir)) return new Set();
+  const modules = new Set();
+
+  function walk(dir, prefix) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith('.') || entry.name === '__pycache__' || entry.name === 'README.md') continue;
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        // Only recurse into Python packages (directories with __init__.py)
+        if (existsSync(join(fullPath, '__init__.py'))) {
+          const pkgName = prefix ? `${prefix}.${entry.name}` : entry.name;
+          modules.add(pkgName);
+          walk(fullPath, pkgName);
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.py') && entry.name !== '__init__.py') {
+        const modName = entry.name.replace('.py', '');
+        modules.add(prefix ? `${prefix}.${modName}` : modName);
+      }
+    }
+  }
+  walk(scriptsDir, '');
+  return modules;
 }
 
 // --- Output Escaping ---
@@ -416,6 +454,18 @@ function checkSkillRegistry(filePath, content, skills) {
           `related_skill: ${relName}`, `Unknown related skill "${relName}" (no skills/${relName}/ directory)`));
       }
     }
+
+    // Check redirect targets for deprecated skills
+    const deprecated = item.value.get('deprecated');
+    const redirect = item.value.get('redirect', true);
+    if (deprecated && redirect && isScalar(redirect)) {
+      const target = redirect.value;
+      if (typeof target === 'string' && !skills.has(target)) {
+        issues.push(issue(filePath,
+          redirect.range ? offsetToLine(content, redirect.range[0]) : undefined,
+          `redirect: ${target}`, `Redirect target "${target}" is not a known skill`));
+      }
+    }
   }
   return issues;
 }
@@ -505,6 +555,88 @@ function checkHandoffTargets(filePath, content, agents) {
 }
 
 /**
+ * 14. Theme YAML agent keys → agents/*.md
+ */
+function checkThemeAgentKeys(filePath, content, agents) {
+  const issues = [];
+  let doc;
+  try { doc = parseDocument(content); } catch { return issues; }
+
+  const agentsNode = doc.get('agents', true);
+  if (!agentsNode || !isMap(agentsNode)) return issues;
+
+  for (const item of agentsNode.items) {
+    const key = item.key?.value;
+    if (typeof key === 'string' && !agents.has(key)) {
+      const line = item.key.range ? offsetToLine(content, item.key.range[0]) : undefined;
+      issues.push(issue(filePath, line, `agent key: ${key}`,
+        `Theme agent key "${key}" has no matching agents/${key}.md`));
+    }
+  }
+  return issues;
+}
+
+/**
+ * 15. Guide references in backticks → guides/*.md
+ */
+function checkGuideRefs(filePath, content, guides) {
+  const issues = [];
+  const stripped = stripCodeBlocks(content);
+
+  const GUIDE_REF = /`(?:\.pennyfarthing\/|pennyfarthing-dist\/|(?:\.\.?\/)*)?guides\/([a-zA-Z0-9_/-]+)\.md`/g;
+  let match;
+  while ((match = GUIDE_REF.exec(stripped)) !== null) {
+    const guideName = match[1];
+    if (!guides.has(guideName)) {
+      issues.push(issue(filePath, offsetToLine(stripped, match.index),
+        `guides/${guideName}.md`,
+        `Unknown guide "${guideName}" (no guides/${guideName}.md)`));
+    }
+  }
+  return issues;
+}
+
+/**
+ * 17. Python imports → pennyfarthing_scripts modules
+ */
+function checkPythonImports(filePath, content, pythonModules) {
+  const issues = [];
+  const lines = content.split('\n');
+
+  for (const [i, line] of lines.entries()) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#')) continue;
+
+    // from pennyfarthing_scripts.X.Y import ...
+    let match = trimmed.match(/^from\s+pennyfarthing_scripts\.([a-zA-Z0-9_.]+)\s+import/);
+    if (!match) {
+      // import pennyfarthing_scripts.X.Y
+      match = trimmed.match(/^import\s+pennyfarthing_scripts\.([a-zA-Z0-9_.]+)/);
+    }
+    if (!match) continue;
+
+    const modulePath = match[1];
+    if (!pythonModules.has(modulePath)) {
+      // Also check if it's a valid sub-path of a known module (e.g., sprint.validate_cmd → sprint exists as package)
+      const parts = modulePath.split('.');
+      let found = false;
+      // Check progressively longer prefixes: the import could be a.b.c where a.b is a module
+      for (let len = parts.length; len >= 1; len--) {
+        if (pythonModules.has(parts.slice(0, len).join('.'))) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        issues.push(issue(filePath, i + 1, `pennyfarthing_scripts.${modulePath}`,
+          `Unknown Python module "pennyfarthing_scripts.${modulePath}"`));
+      }
+    }
+  }
+  return issues;
+}
+
+/**
  * 13. Absolute path leak detection
  */
 function checkAbsolutePathLeaks(filePath, content) {
@@ -521,7 +653,26 @@ function checkAbsolutePathLeaks(filePath, content) {
   return issues;
 }
 
+// --- Exports for testing ---
+
+export const _testing = {
+  checkThemeAgentKeys,
+  checkGuideRefs,
+  checkSkillRegistry,
+  checkPythonImports,
+  getGuideNames,
+  getPythonModules,
+  stripCodeBlocks,
+  hasRuntimeVar,
+  offsetToLine,
+  DIST_DIR,
+  PROJECT_ROOT,
+};
+
 // --- Main ---
+
+const _isMain = process.argv[1] && resolve(process.argv[1]) === __filename;
+if (_isMain) {
 
 console.log(`\nValidating file references in: ${relative(PROJECT_ROOT, DIST_DIR)}/`);
 console.log(`Mode: ${STRICT ? 'STRICT (exit 1 on issues)' : 'WARNING (exit 0)'}${VERBOSE ? ' + VERBOSE' : ''}\n`);
@@ -529,12 +680,14 @@ console.log(`Mode: ${STRICT ? 'STRICT (exit 1 on issues)' : 'WARNING (exit 0)'}$
 const agents = getAgentNames();
 const commands = getCommandNames();
 const skills = getSkillNames();
-const workflows = getWorkflowNames();
+const guides = getGuideNames();
+const pythonModules = getPythonModules();
 
 console.log(`Known agents: ${agents.size}`);
 console.log(`Known commands: ${commands.size}`);
 console.log(`Known skills: ${skills.size}`);
-console.log(`Known workflows: ${workflows.size}`);
+console.log(`Known guides: ${guides.size}`);
+console.log(`Known Python modules: ${pythonModules.size}`);
 
 const files = getSourceFiles(DIST_DIR);
 console.log(`Files to scan: ${files.length}\n`);
@@ -575,6 +728,12 @@ for (const filePath of files) {
       fileIssues.push(...checkSkillRegistry(filePath, content, skills));
       totalChecks += 1;
     }
+
+    // Theme agent keys
+    if (relativePath.includes('personas/themes/')) {
+      fileIssues.push(...checkThemeAgentKeys(filePath, content, agents));
+      totalChecks += 1;
+    }
   }
 
   // --- Markdown checks ---
@@ -586,6 +745,10 @@ for (const filePath of files) {
 
     // Markdown relative links in ALL markdown files
     fileIssues.push(...checkMarkdownLinks(filePath, content));
+    totalChecks += 1;
+
+    // Guide references in backticks
+    fileIssues.push(...checkGuideRefs(filePath, content, guides));
     totalChecks += 1;
 
     // Agent-specific checks
@@ -605,6 +768,12 @@ for (const filePath of files) {
   // --- Shell script checks ---
   if (isSh) {
     fileIssues.push(...checkShellSourceRefs(filePath, content));
+    totalChecks += 1;
+  }
+
+  // --- Python checks ---
+  if (extname(filePath) === '.py') {
+    fileIssues.push(...checkPythonImports(filePath, content, pythonModules));
     totalChecks += 1;
   }
 
@@ -666,3 +835,4 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 }
 
 process.exit(totalIssues > 0 && STRICT ? 1 : 0);
+} // end if (_isMain)
