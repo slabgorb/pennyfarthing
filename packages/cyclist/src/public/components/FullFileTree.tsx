@@ -93,14 +93,28 @@ function TreeDirectoryNode({
   cache: Record<string, DirectoryEntry[]>;
   loading: Set<string>;
 }): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false);
-  const children = cache[entry.path];
-  const isLoading = loading.has(entry.path);
-
   // Check if this directory contains any changed files
   const hasChanges = Array.from(changedFiles.keys()).some(
     (filePath) => filePath.startsWith(entry.path + '/')
   );
+
+  const [isOpen, setIsOpen] = useState(hasChanges);
+  const children = cache[entry.path];
+  const isLoading = loading.has(entry.path);
+
+  // Auto-fetch children when directory has changes and is opened by default
+  useEffect(() => {
+    if (hasChanges && !children && !loading.has(entry.path)) {
+      fetchDirectory(entry.path);
+    }
+  }, [hasChanges, children, entry.path, fetchDirectory, loading]);
+
+  // Auto-open when changes appear in this directory
+  useEffect(() => {
+    if (hasChanges) {
+      setIsOpen(true);
+    }
+  }, [hasChanges]);
 
   const handleToggle = useCallback(() => {
     const willOpen = !isOpen;
