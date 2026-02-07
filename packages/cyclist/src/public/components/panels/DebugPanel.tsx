@@ -12,6 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { HotspotsDialog } from '../dialogs/HotspotsDialog';
 
 /** Context tier type */
 type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
@@ -94,6 +95,7 @@ export function DebugPanel(): React.ReactElement {
   const [context, setContext] = useState<ContextData | null>(null);
   const [tokenStats, setTokenStats] = useState<Record<string, unknown> | null>(null);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
+  const [hotspotsOpen, setHotspotsOpen] = useState(false);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -261,6 +263,30 @@ export function DebugPanel(): React.ReactElement {
         <div className="placeholder">No token stats</div>
       )}
 
+      <Separator className="my-3" />
+
+      <h4>Tools</h4>
+      <div className="tool-launcher" data-testid="tool-launcher">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setHotspotsOpen(true)}
+          data-testid="tool-launcher-hotspots"
+        >
+          Hotspots
+        </Button>
+        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-codemarkers">
+          Code Markers
+        </Button>
+        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-deadcode">
+          Dead Code
+        </Button>
+        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-complexity">
+          Complexity
+        </Button>
+      </div>
+
+      <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
     </div>
   );
 }
