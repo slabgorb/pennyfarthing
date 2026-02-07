@@ -87,7 +87,7 @@ REQUIRED_FUTURE_EPIC_FIELDS = {"id", "title", "points"}
 # Required fields for future.yaml story (what promote-epic.sh transforms)
 REQUIRED_FUTURE_STORY_FIELDS = {"id", "title", "points"}
 
-VALID_INITIATIVE_STATUSES = {"ready", "planning", "blocked", "research_complete", "backlog", "complete"}
+VALID_INITIATIVE_STATUSES = {"ready", "planning", "blocked", "research_complete", "backlog", "complete", "canceled"}
 
 
 # =============================================================================

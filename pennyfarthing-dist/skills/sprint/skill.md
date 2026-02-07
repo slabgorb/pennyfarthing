@@ -455,6 +455,41 @@ python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--m
 
 ---
 
+### `/sprint epic show <epic-id> [--json]`
+
+Show details for a specific epic. Searches both current sprint and future initiative shards.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic show <epic-id> [--json]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID (e.g., `epic-42` or `MSSCI-14298`) |
+| `--json` | No | Output as JSON |
+</args>
+
+---
+
+### `/sprint epic cancel <epic-id> [--jira] [--dry-run]`
+
+Cancel an epic and all its stories. Searches both current sprint and future initiative shards.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic cancel <epic-id> [--jira] [--dry-run]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID (e.g., `epic-42` or `MSSCI-14298`) |
+| `--jira` | No | Also cancel the epic in Jira |
+| `--dry-run` | No | Show what would be done without making changes |
+</args>
+
+---
+
 ### `/sprint epic remove <epic-id> [--dry-run]`
 
 Remove an epic from future.yaml.
@@ -462,6 +497,41 @@ Remove an epic from future.yaml.
 <run>
 python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
 </run>
+
+---
+
+### `/sprint initiative show <name> [--json]`
+
+Show details for a specific initiative including its epics and stories.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint initiative show <name> [--json]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `name` | Yes | Initiative slug (e.g., `benchmark-reliability`, `technical-debt`) |
+| `--json` | No | Output as JSON |
+</args>
+
+---
+
+### `/sprint initiative cancel <name> [--jira] [--dry-run]`
+
+Cancel an initiative and all its epics/stories.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint initiative cancel <name> [--jira] [--dry-run]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `name` | Yes | Initiative slug (e.g., `benchmark-reliability`, `technical-debt`) |
+| `--jira` | No | Also cancel epics in Jira |
+| `--dry-run` | No | Show what would be done without making changes |
+</args>
 
 ---
 
@@ -692,11 +762,15 @@ For Jira integration, see `/jira` skill prerequisites.
 | `/sprint story template` | Story templates |
 | `/sprint story finish ID` | Complete a story |
 | `/sprint story claim ID` | Claim in Jira |
+| `/sprint epic show ID` | Show epic details |
 | `/sprint epic add ...` | Add epic to sprint |
 | `/sprint epic promote ID` | Move epic from future |
 | `/sprint epic archive` | Archive completed epics |
+| `/sprint epic cancel ID` | Cancel epic and stories |
 | `/sprint epic import FILE` | Import BMAD epics |
 | `/sprint epic remove ID` | Remove from future |
+| `/sprint initiative show NAME` | Show initiative details |
+| `/sprint initiative cancel NAME` | Cancel initiative and epics |
 | `/sprint standalone` | Standalone story workflow |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
