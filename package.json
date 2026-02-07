@@ -38,6 +38,7 @@
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",
+    "validate:refs": "node scripts/validate-refs.js",
     "clean": "pnpm -r clean"
   },
   "dependencies": {
