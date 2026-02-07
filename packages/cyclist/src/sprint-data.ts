@@ -89,7 +89,7 @@ interface YamlSprint {
 
 interface CurrentSprintYaml {
   sprint?: YamlSprint;
-  epics?: YamlEpic[];
+  epics?: (YamlEpic | string)[];
 }
 
 interface FutureInitiative {
@@ -189,6 +189,37 @@ function transformEpic(yamlEpic: YamlEpic, projectDir: string): SprintEpic {
   };
 }
 
+/**
+ * Merge sharded epic references into full epic objects.
+ * When current-sprint.yaml contains string references (e.g. "MSSCI-14298"),
+ * load each epic-{ref}.yaml shard and replace the string with parsed content.
+ */
+function mergeEpicShards(epics: (YamlEpic | string)[], sprintDir: string): YamlEpic[] {
+  return epics.reduce<YamlEpic[]>((merged, entry) => {
+    if (typeof entry !== 'string') {
+      merged.push(entry);
+      return merged;
+    }
+    const shardPath = join(sprintDir, `epic-${entry}.yaml`);
+    if (existsSync(shardPath)) {
+      try {
+        const content = readFileSync(shardPath, 'utf-8');
+        const epic = parseYaml(content) as YamlEpic;
+        if (epic && epic.id) {
+          merged.push(epic);
+        } else {
+          console.warn(`[sprint-data] Shard epic-${entry}.yaml missing id, skipped`);
+        }
+      } catch (err) {
+        console.error(`[sprint-data] Failed to parse epic-${entry}.yaml:`, err);
+      }
+    } else {
+      console.warn(`[sprint-data] Epic shard not found: ${shardPath}`);
+    }
+    return merged;
+  }, []);
+}
+
 // =============================================================================
 // Main Data Aggregation
 // =============================================================================
@@ -231,8 +262,10 @@ export function getSprintData(projectDir: string): SprintData {
   // Get current story from session
   const storyInfo = getStoryInfo(projectDir);
 
-  // Transform epics
-  const epics: SprintEpic[] = (currentSprint.epics ?? []).map((e) => transformEpic(e, projectDir));
+  // Merge sharded epics (string refs → full objects) then transform
+  const sprintDir = join(projectDir, 'sprint');
+  const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
+  const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
 
   // Calculate sprint metrics
   // Note: blocked stories are NOT counted in remaining - they're blocked, not available

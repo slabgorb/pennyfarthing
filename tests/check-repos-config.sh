@@ -13,7 +13,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-REPOS_CONFIG="${1:-$PROJECT_ROOT/.claude/project/repos.yaml}"
+REPOS_CONFIG="${1:-$PROJECT_ROOT/.pennyfarthing/repos.yaml}"
 
 # Colors for output
 RED='\033[0;31m'

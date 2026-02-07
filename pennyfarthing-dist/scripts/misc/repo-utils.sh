@@ -4,7 +4,7 @@
 #
 # Usage: source scripts/repo-utils.sh
 #
-# If .claude/project/repos.yaml exists, uses that configuration.
+# If .pennyfarthing/repos.yaml exists, uses that configuration.
 # Otherwise, falls back to legacy $API_REPO/$UI_REPO environment variables.
 #
 # Core Functions:
@@ -28,7 +28,7 @@ set -euo pipefail
 
 # Determine PROJECT_ROOT if not set
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-REPOS_CONFIG="${PROJECT_ROOT}/.claude/project/pennyfarthing-settings.yaml"
+REPOS_CONFIG="${PROJECT_ROOT}/.pennyfarthing/repos.yaml"
 
 # Cache for parsed config (associative arrays)
 declare -A _REPO_PATHS 2>/dev/null || true
@@ -136,7 +136,7 @@ import json
 import sys
 import os
 
-config_path = os.environ.get('REPOS_CONFIG', '.claude/project/repos.yaml')
+config_path = os.environ.get('REPOS_CONFIG', '.pennyfarthing/repos.yaml')
 try:
     with open(config_path) as f:
         config = yaml.safe_load(f)

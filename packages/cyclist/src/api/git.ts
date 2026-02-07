@@ -66,21 +66,26 @@ export interface RepoGitInfo extends GitInfo {
   path: string;
 }
 
-// Repo config from pennyfarthing-settings.yaml
+// Repo config from repos.yaml
 interface RepoConfig {
   name: string;
   path: string;
 }
 
 /**
- * Get repos from pennyfarthing-settings.yaml
- * Returns array of repo configs, falls back to single repo (current dir) if none configured
+ * Get repos from repos.yaml
+ * Checks project root first, then .claude/project/ fallback.
+ * Returns array of repo configs, falls back to single repo (current dir) if none configured.
  */
 export function getReposFromConfig(projectDir: string): RepoConfig[] {
-  const configPath = join(projectDir, '.claude', 'project', 'pennyfarthing-settings.yaml');
+  // Check .pennyfarthing/ first (canonical runtime location), then project root fallback
+  const candidates = [
+    join(projectDir, '.pennyfarthing', 'repos.yaml'),
+    join(projectDir, 'repos.yaml'),
+  ];
+  const configPath = candidates.find(p => existsSync(p));
 
-  if (!existsSync(configPath)) {
-    // No config - return current directory as single repo
+  if (!configPath) {
     const dirName = projectDir.split('/').pop() || 'project';
     return [{ name: dirName, path: '.' }];
   }
@@ -105,7 +110,7 @@ export function getReposFromConfig(projectDir: string): RepoConfig[] {
 
     return repos.length > 0 ? repos : [{ name: projectDir.split('/').pop() || 'project', path: '.' }];
   } catch (err) {
-    console.warn('[Git API] Failed to parse pennyfarthing-settings.yaml:', err);
+    console.warn('[Git API] Failed to parse repos.yaml:', err);
     const dirName = projectDir.split('/').pop() || 'project';
     return [{ name: dirName, path: '.' }];
   }

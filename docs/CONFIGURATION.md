@@ -7,7 +7,7 @@ Complete reference for all Pennyfarthing configuration options.
 | File | Purpose | Location |
 |------|---------|----------|
 | `config.local.yaml` | Theme selection | `.pennyfarthing/` |
-| `repos.yaml` | Multi-repo configuration | `.claude/project/` |
+| `repos.yaml` | Multi-repo configuration | `.pennyfarthing/` |
 | `shared-context.md` | Project overview and structure | `.claude/project/docs/` |
 | `agent-scopes.yaml` | Agent scope configuration | `.claude/project/docs/` |
 | `setup-env.sh` | Environment variables | `.claude/project/hooks/` |
@@ -332,7 +332,7 @@ Flexible repository configuration for multi-repo projects.
 
 ### Location
 
-`.claude/project/repos.yaml`
+`.pennyfarthing/repos.yaml`
 
 ### Purpose
 
