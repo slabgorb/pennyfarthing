@@ -141,7 +141,7 @@ skills:
         invocation: /jira assign ISSUE-123
     anti_patterns:
       - Don't bypass Jira for sprint tracking
-    related_skills: [sprint, story]
+    related_skills: [sprint]
     keywords: [atlassian, issues, tickets, backlog]
 
   judge:
@@ -251,20 +251,26 @@ skills:
 
   sprint:
     name: sprint
-    description: Sprint status, backlog, and story management for Pennyfarthing
+    description: Sprint status, backlog, story, and epic management for Pennyfarthing
     category: project-management
-    tags: [sprint, status, backlog]
-    version: "1.0.0"
+    tags: [sprint, status, backlog, stories, epics]
+    version: "2.0.0"
     prerequisites: []
     examples:
       - context: Checking sprint status
         invocation: /sprint
       - context: Finding available stories
         invocation: /sprint backlog
+      - context: Adding a story
+        invocation: /sprint story add epic-76 "My story" 3
+      - context: Sizing guidelines
+        invocation: /sprint story size
+      - context: Adding an epic
+        invocation: /sprint epic add epic-85 "New epic"
     anti_patterns:
       - Don't manually edit sprint YAML - use scripts
-    related_skills: [story, jira]
-    keywords: [sprint, backlog, velocity, kanban]
+    related_skills: [jira]
+    keywords: [sprint, backlog, velocity, kanban, stories, epics, sizing, templates]
     allowed_tools: [Read, Glob, Grep, Bash, Task]
 
   systematic-debugging:
@@ -287,18 +293,21 @@ skills:
 
   story:
     name: story
-    description: Story creation, sizing, and templates for Pennyfarthing workflow
+    description: "DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint."
     category: project-management
-    tags: [stories, sizing, workflow]
-    version: "1.0.0"
+    tags: [stories, sizing, workflow, deprecated]
+    version: "2.0.0"
+    deprecated: true
+    redirect: sprint
     prerequisites: []
     examples:
       - context: Creating new stories
-        invocation: /story create
+        invocation: /sprint story add
       - context: Sizing stories
-        invocation: /story size
+        invocation: /sprint story size
     anti_patterns:
       - Don't create stories without acceptance criteria
+      - Don't use /story directly - use /sprint story instead
     related_skills: [sprint, jira]
     keywords: [user-stories, estimation, points, acceptance-criteria]
 
@@ -372,7 +381,7 @@ skills:
         invocation: /workflow start architecture
     anti_patterns:
       - Don't switch workflows mid-story unless requirements fundamentally changed
-    related_skills: [sprint, story]
+    related_skills: [sprint]
     keywords: [tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased]
 
   yq:

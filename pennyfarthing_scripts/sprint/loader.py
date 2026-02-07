@@ -2,6 +2,7 @@
 Sprint YAML parsing utilities for Pennyfarthing scripts.
 
 Provides access to sprint/current-sprint.yaml data.
+Supports sharded per-epic format (epic-{ref}.yaml shard files).
 """
 
 from pathlib import Path
@@ -10,8 +11,46 @@ from typing import Any
 from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
 
 
+def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]:
+    """Merge sharded epic files into the sprint data structure.
+
+    When the epics list contains strings (shard references like "MSSCI-14298"
+    or "epic-40"), load each epic-{ref}.yaml and replace the string with
+    the full epic dict.
+
+    Args:
+        data: Sprint data with possible string refs in epics
+        sprint_dir: Directory containing the shard files
+
+    Returns:
+        Sprint data with full epic dicts
+    """
+    epics = data.get("epics", [])
+    if not epics or not isinstance(epics[0], str):
+        return data
+
+    merged_epics = []
+    for ref in epics:
+        if not isinstance(ref, str):
+            merged_epics.append(ref)
+            continue
+
+        epic_file = sprint_dir / f"epic-{ref}.yaml"
+        if epic_file.exists():
+            epic_data = load_yaml_config(epic_file)
+            if epic_data is not None:
+                merged_epics.append(epic_data)
+
+    data["epics"] = merged_epics
+    return data
+
+
 def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:
     """Load sprint data from project root.
+
+    Supports both monolithic and sharded epic formats. When epics are
+    string references, the corresponding epic-{ref}.yaml files are
+    loaded and merged transparently.
 
     Args:
         project_root: Project root path (defaults to auto-detect)
@@ -20,8 +59,13 @@ def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:
         Sprint data as dict, or None if not found
     """
     root = project_root or get_project_root()
-    sprint_path = root / "sprint" / "current-sprint.yaml"
-    return load_yaml_config(sprint_path)
+    sprint_dir = root / "sprint"
+    sprint_path = sprint_dir / "current-sprint.yaml"
+    data = load_yaml_config(sprint_path)
+    if data is None:
+        return None
+
+    return _merge_epic_shards(data, sprint_dir)
 
 
 def find_epic(sprint_data: dict[str, Any], epic_num: str) -> dict[str, Any] | None:

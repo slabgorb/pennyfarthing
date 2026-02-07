@@ -132,7 +132,7 @@ Move an epic from future.yaml to current sprint.
 | Skill | Purpose |
 |-------|---------|
 | `/jira` | Jira operations (create, sync, claim) |
-| `/story` | Story creation, sizing, finish |
+| `/sprint story` | Story creation, sizing, finish (consolidated) |
 | `/sm` | Scrum Master agent for coordination |
 
 <reference>

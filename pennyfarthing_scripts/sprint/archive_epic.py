@@ -9,10 +9,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
 from pennyfarthing_scripts.sprint.loader import load_sprint
+from pennyfarthing_scripts.sprint.yaml_io import write_sprint
 
 
 def get_archive_path(project_root: Path | None = None) -> Path:
@@ -240,9 +239,19 @@ def archive_epic(
     # marked done - their points are already counted. Archiving just moves them
     # to the archive file without changing the accounting.
 
-    # Write updated sprint file
-    with open(sprint_path, "w") as f:
-        yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    # Write updated sprint file (shard-aware)
+    write_sprint(sprint_path, sprint_data)
+
+    # Clean up shard file if it exists
+    epic_jira_key = epic.get("jira", "")
+    epic_id_val = str(epic.get("id", ""))
+    sprint_dir = root / "sprint"
+    for ref in [epic_jira_key, epic_id_val]:
+        if ref:
+            shard_file = sprint_dir / f"epic-{ref}.yaml"
+            if shard_file.exists():
+                shard_file.unlink()
+                break
 
     result = {
         "success": True,

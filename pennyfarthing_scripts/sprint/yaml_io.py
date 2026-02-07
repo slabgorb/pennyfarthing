@@ -4,13 +4,14 @@ Deterministic YAML I/O for sprint data.
 Story: MSSCI-14254 - Core yaml_io module with deterministic serialization
 
 Provides:
-- read_sprint(path) -> CommentedMap (preserves ordering/comments)
-- write_sprint(path, data) -> atomic write
+- read_sprint(path) -> CommentedMap (preserves ordering/comments, merges shards)
+- write_sprint(path, data) -> atomic write (shard-aware)
 - canonical_dump(data) -> deterministic YAML string
 """
 
 import io
 import os
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,8 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import LiteralScalarString
+
+JIRA_PATTERN = re.compile(r"^MSSCI-\d{5}$")
 
 
 # Canonical key ordering derived from sprint-template.yaml
@@ -52,11 +55,11 @@ def _make_yaml() -> YAML:
     return yml
 
 
-def read_sprint(path: Path) -> CommentedMap:
-    """Read sprint YAML file preserving ordering and comments.
+def _read_yaml_file(path: Path) -> CommentedMap:
+    """Read a single YAML file preserving ordering and comments.
 
     Args:
-        path: Path to sprint YAML file
+        path: Path to YAML file
 
     Returns:
         CommentedMap with preserved ordering and comments
@@ -78,6 +81,44 @@ def read_sprint(path: Path) -> CommentedMap:
     if data is None:
         raise ValueError(f"Empty YAML file: {path}")
 
+    return data
+
+
+def read_sprint(path: Path) -> CommentedMap:
+    """Read sprint YAML file, merging sharded epic files.
+
+    When the epics list contains string references (sharded format),
+    loads each epic-{ref}.yaml shard file and replaces the strings
+    with full epic CommentedMaps.
+
+    Args:
+        path: Path to sprint YAML index file
+
+    Returns:
+        CommentedMap with full epic data merged in
+
+    Raises:
+        FileNotFoundError: If path doesn't exist
+        ValueError: If YAML is malformed or empty
+    """
+    data = _read_yaml_file(path)
+
+    epics = data.get("epics", [])
+    if not epics or not isinstance(epics[0], str):
+        return data
+
+    sprint_dir = path.parent
+    merged_epics = CommentedSeq()
+    for ref in epics:
+        if isinstance(ref, str):
+            shard_file = sprint_dir / f"epic-{ref}.yaml"
+            if shard_file.exists():
+                epic_data = _read_yaml_file(shard_file)
+                merged_epics.append(epic_data)
+        else:
+            merged_epics.append(ref)
+
+    data["epics"] = merged_epics
     return data
 
 
@@ -228,18 +269,25 @@ def canonical_dump(data: Any) -> str:
     return result
 
 
-def write_sprint(path: Path, data: Any) -> None:
-    """Write sprint data to YAML file atomically.
+def _get_epic_ref(epic: Mapping) -> str:
+    """Get the canonical reference ID for an epic shard file.
+
+    Mirrors the logic in migrate-to-shards.py: prefer Jira key, fall back to ID.
+    """
+    jira = epic.get("jira")
+    epic_id = str(epic.get("id", ""))
+
+    if jira and JIRA_PATTERN.match(str(jira)):
+        return str(jira)
+    if JIRA_PATTERN.match(epic_id):
+        return epic_id
+    return epic_id
+
+
+def _write_yaml_file(path: Path, data: Any) -> None:
+    """Write data to a single YAML file atomically.
 
     Uses temp file + os.replace() for atomic writes on POSIX.
-
-    Args:
-        path: Destination path
-        data: Sprint data (CommentedMap or dict)
-
-    Raises:
-        TypeError: If data is not a valid mapping type
-        OSError: If write fails
     """
     if not isinstance(data, Mapping):
         raise TypeError(f"Expected mapping type, got {type(data).__name__}")
@@ -252,7 +300,68 @@ def write_sprint(path: Path, data: Any) -> None:
             f.write(output)
         os.replace(tmp_path, path)
     except Exception:
-        # Clean up temp file if it exists
         if tmp_path.exists():
             tmp_path.unlink()
         raise
+
+
+def _is_sharded_on_disk(path: Path) -> bool:
+    """Check if the on-disk index file uses sharded epic references."""
+    if not path.exists():
+        return False
+    yml = _make_yaml()
+    try:
+        with open(path) as f:
+            on_disk = yml.load(f)
+    except Exception:
+        return False
+    if on_disk is None or not isinstance(on_disk, Mapping):
+        return False
+    epics = on_disk.get("epics", [])
+    return bool(epics) and isinstance(epics[0], str)
+
+
+def write_sprint(path: Path, data: Any) -> None:
+    """Write sprint data to YAML file(s) atomically.
+
+    If the on-disk index uses sharded format (epics as string refs),
+    writes each epic to its shard file and the index with string refs.
+    Otherwise writes the full data to a single file.
+
+    Args:
+        path: Destination path (the index file)
+        data: Sprint data (CommentedMap or dict)
+
+    Raises:
+        TypeError: If data is not a valid mapping type
+        OSError: If write fails
+    """
+    if not isinstance(data, Mapping):
+        raise TypeError(f"Expected mapping type, got {type(data).__name__}")
+
+    if not _is_sharded_on_disk(path):
+        _write_yaml_file(path, data)
+        return
+
+    # Sharded write: each epic goes to its own file
+    sprint_dir = path.parent
+    epic_refs = CommentedSeq()
+
+    for epic in data.get("epics", []):
+        if isinstance(epic, Mapping):
+            ref = _get_epic_ref(epic)
+            shard_file = sprint_dir / f"epic-{ref}.yaml"
+            _write_yaml_file(shard_file, epic)
+            epic_refs.append(ref)
+        else:
+            epic_refs.append(epic)
+
+    # Write index with string refs instead of full epic dicts
+    index = CommentedMap()
+    for key in data:
+        if key == "epics":
+            index["epics"] = epic_refs
+        else:
+            index[key] = data[key]
+
+    _write_yaml_file(path, index)

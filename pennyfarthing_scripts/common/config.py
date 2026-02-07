@@ -57,7 +57,8 @@ def get_project_root(start_dir: Path | None = None) -> Path:
         check = check.parent
 
     raise FileNotFoundError(
-        "Could not find project root (no pennyfarthing-dist/ or .pennyfarthing/ directory found)"
+        "Could not find project root (no pennyfarthing-dist/ or .pennyfarthing/ directory found).\n"
+        "If this is a fresh clone, run: just setup"
     )
 
 

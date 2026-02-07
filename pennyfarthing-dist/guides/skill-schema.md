@@ -272,68 +272,67 @@ Here's a well-structured skill file following the schema:
 
 ```markdown
 ---
-name: story
+name: sprint
 description: |
-  Story creation, sizing, and completion workflow. Use when creating new stories,
-  estimating points, or finishing completed work.
-args: "[create|size|finish]"
+  Sprint status, backlog, story, and epic management. Use when checking sprint
+  status, managing stories, or working with epics.
+args: "[status|backlog|work|story|epic|standalone]"
 ---
 
-# /story - Story Management
+# /sprint - Sprint Management
 
 <critical>
-All story operations require SM agent activation.
-**Never** create stories outside of sprint context.
+Never manually edit sprint YAML. Use the provided commands.
 </critical>
 
 ## Commands
 
-### `/story create <title>`
+### `/sprint story add <epic-id> "<title>" <points>`
 
-Create a new story in the current epic.
+Add a new story to an epic.
 
 <run>
-.pennyfarthing/scripts/story/create-story.sh "<title>"
+python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <points>
 </run>
 
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
+| `epic-id` | Yes | Parent epic (e.g., `epic-76`) |
 | `title` | Yes | Story title (quoted if contains spaces) |
+| `points` | Yes | Story points |
 </args>
 
 <example>
-.pennyfarthing/scripts/story/create-story.sh "Add user authentication"
-# Returns: {"id": "36-5", "title": "Add user authentication", "status": "backlog"}
+python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Add user authentication" 3
 </example>
 
 <output>
-JSON with new story ID, title, and initial status.
-Story is created in backlog status within the active epic.
+Confirmation with new story ID and details.
 </output>
 
 <when>
-After creating, use `/story size <id>` to estimate points.
+After creating, use `/sprint story size` for sizing guidelines.
 </when>
 
 ---
 
-### `/story finish <story-id>`
+### `/sprint story finish <story-id>`
 
 Complete a story after PR merge.
 
 <run>
-.pennyfarthing/scripts/story/finish-story.sh <story-id>
+python3 -m pennyfarthing_scripts.cli sprint story finish <story-id>
 </run>
 
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `story-id` | Yes | Story to finish (e.g., `36-5`) |
+| `story-id` | Yes | Story to finish (e.g., `MSSCI-12052`) |
 </args>
 
 <example>
-.pennyfarthing/scripts/story/finish-story.sh 36-5
+python3 -m pennyfarthing_scripts.cli sprint story finish MSSCI-12052
 # Archives story, updates Jira, cleans session files
 </example>
 
@@ -358,11 +357,11 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 
 ## Quick Reference
 
-| Command | Script |
-|---------|--------|
-| `/story create <title>` | `create-story.sh` |
-| `/story size <id>` | `size-story.sh` |
-| `/story finish <id>` | `finish-story.sh` |
+| Command | Script/CLI |
+|---------|------------|
+| `/sprint story add ...` | `sprint story add` |
+| `/sprint story size` | `sprint story size` |
+| `/sprint story finish <id>` | `sprint story finish` |
 
 ## Related Skills
 

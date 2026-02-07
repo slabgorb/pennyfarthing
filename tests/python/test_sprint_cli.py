@@ -49,7 +49,7 @@ class TestSprintGroupRegistration:
         assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
 
     def test_sprint_shows_subcommands_in_help(self):
-        """pf sprint --help should list status, backlog, work, archive."""
+        """pf sprint --help should list status, backlog, work, archive, story, epic."""
         result = subprocess.run(
             [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
             capture_output=True,
@@ -63,6 +63,8 @@ class TestSprintGroupRegistration:
         assert "backlog" in output_lower, "backlog subcommand not shown"
         assert "work" in output_lower, "work subcommand not shown"
         assert "archive" in output_lower, "archive subcommand not shown"
+        assert "story" in output_lower, "story subgroup not shown"
+        assert "epic" in output_lower, "epic subgroup not shown"
 
 
 class TestSprintClickDecorators:

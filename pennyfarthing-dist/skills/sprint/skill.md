@@ -5,7 +5,7 @@ description: |
   sprint status, finding available stories, reviewing backlog, or understanding story context
   and history.
   IMPORTANT: Always use the provided scripts - never manually edit sprint YAML.
-args: "[status|backlog|work|archive|new|promote]"
+args: "[status|backlog|work|archive|new|story|epic|standalone]"
 ---
 
 # /sprint - Sprint Management
@@ -237,12 +237,12 @@ With `--epic`:
 
 ---
 
-### `/sprint promote <epic-id>`
+### `/sprint promote <epic-id>` (deprecated — use `/sprint epic promote`)
 
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-.pennyfarthing/scripts/sprint/promote-epic.sh <epic-id>
+python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
 </run>
 
 <args>
@@ -251,23 +251,256 @@ Move an epic from `future.yaml` to `current-sprint.yaml`.
 | `epic-id` | Yes | Local epic ID (e.g., `epic-41`) |
 </args>
 
-<example>
-.pennyfarthing/scripts/sprint/promote-epic.sh epic-41
-</example>
-
-<output>
-1. Finds epic in `sprint/planning.yaml`
-2. Extracts epic metadata and all stories
-3. Appends to `sprint/current-sprint.yaml` epics section
-4. Outputs yq command to remove from planning.yaml
-</output>
-
 <when>
 Next steps after promote:
 - Review appended YAML in current-sprint.yaml
 - Create Jira epic: `/jira create epic <epic-id>`
 - Remove from planning.yaml if desired
 </when>
+
+---
+
+### `/sprint story show <story-id> [--json]`
+
+Show details for a specific story.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story show <story-id> [--json]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `MSSCI-12664` or `67-1`) |
+| `--json` | No | Output as JSON |
+</args>
+
+---
+
+### `/sprint story add <epic-id> "<title>" <points> [options]`
+
+Add a new story to an epic in sprint YAML.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <points> [options]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Parent epic (e.g., `epic-76`) |
+| `title` | Yes | Story title (quoted) |
+| `points` | Yes | Story points (1, 2, 3, 5, 8) |
+| `--type` | No | Story type: feature, bug, chore, refactor (default: feature) |
+| `--priority` | No | Priority: P0, P1, P2, P3 (default: P1) |
+| `--workflow` | No | Workflow: tdd, trivial, bdd (default: tdd) |
+| `--jira` | No | Jira issue key |
+</args>
+
+<example>
+python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Add error handling" 3
+python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Fix null pointer" 2 --type bug
+</example>
+
+---
+
+### `/sprint story update <story-id> [options]`
+
+Update fields on a story.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story update <story-id> [options]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `76-4`) |
+| `--status` | No | New status (backlog, ready, in_progress, done, canceled) |
+| `--points` | No | New points value |
+| `--priority` | No | New priority |
+| `--assigned-to` | No | Assignee |
+| `--dry-run` | No | Preview changes without writing |
+</args>
+
+---
+
+### `/sprint story size [points]`
+
+Display story sizing guidelines.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story size [points]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `points` | No | Specific point value to show guidance for |
+</args>
+
+<output>
+Sizing characteristics, workflow suggestions, examples.
+</output>
+
+---
+
+### `/sprint story template [type]`
+
+Display story templates by type.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story template [type]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `type` | No | Template type: feature, bug, refactor, chore |
+</args>
+
+<output>
+YAML template with acceptance criteria patterns.
+</output>
+
+---
+
+### `/sprint story finish <story-id> [--dry-run]`
+
+Complete a story: archive session, merge PR, transition Jira, update sprint YAML.
+
+<critical>
+Prerequisites before running:
+- Session file exists at `.session/{story-id}-session.md`
+- PR is approved and mergeable
+- Reviewer has approved (phase: finish in session)
+</critical>
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story finish <story-id> [--dry-run]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `MSSCI-12052`) |
+| `--dry-run` | No | Show what would be done without executing |
+</args>
+
+---
+
+### `/sprint story claim <story-id> [--claim|--unclaim]`
+
+Claim or unclaim a story in Jira.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint story claim <story-id>
+</run>
+
+---
+
+### `/sprint epic add <epic-id> <title> [options]`
+
+Add a new epic to the current sprint.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic add <epic-id> <title> [options]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID (e.g., `epic-85`) |
+| `title` | Yes | Epic title |
+| `--priority` | No | Priority: P0, P1, P2, P3 (default: P1) |
+| `--jira` | No | Jira epic key |
+| `--description` | No | Epic description |
+</args>
+
+---
+
+### `/sprint epic promote <epic-id>`
+
+Move an epic from `future.yaml` to `current-sprint.yaml`.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic promote <epic-id>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Local epic ID (e.g., `epic-41`) |
+</args>
+
+---
+
+### `/sprint epic archive [epic-id] [--dry-run] [--jira]`
+
+Archive completed epics.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic archive [epic-id] [--dry-run] [--jira]
+</run>
+
+---
+
+### `/sprint epic import <file> [initiative] [--marker] [--dry-run]`
+
+Import BMAD epics-and-stories output to future.yaml.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic import <file> [initiative] [--marker TAG] [--dry-run]
+</run>
+
+---
+
+### `/sprint epic remove <epic-id> [--dry-run]`
+
+Remove an epic from future.yaml.
+
+<run>
+python3 -m pennyfarthing_scripts.cli sprint epic remove <epic-id> [--dry-run]
+</run>
+
+---
+
+### `/sprint standalone ["title"] [points]`
+
+Wrap current changes into a standalone Jira story, branch, PR, and merge.
+
+This is an agent-executed workflow. Use `/standalone` to run it interactively.
+
+---
+
+## Sizing Quick Reference
+
+| Points | Scale | Complexity | Examples |
+|--------|-------|------------|----------|
+| 1-2 | Trivial | Single file, minimal testing | Config, typo, simple fix |
+| 3 | Small | Few files, some testing | Validation, single component |
+| 5 | Medium | Multiple files, comprehensive testing | New page, API endpoint |
+| 8 | Large | Significant scope, extensive testing | Integration, major refactor |
+| 13+ | **SPLIT** | Too complex for single story | Break into smaller stories |
+
+## Acceptance Criteria Patterns
+
+### Good AC (SMART)
+
+<example>
+- "Admin users can access /admin/settings without 403"
+- "API returns 204 No Content on successful DELETE"
+- "Tests cover admin, manager, analyst roles"
+</example>
+
+### Bad AC (Vague)
+
+<critical>
+Avoid these patterns:
+- "Feature works correctly"
+- "No bugs"
+- "Good performance"
+</critical>
 
 ---
 
@@ -452,7 +685,19 @@ For Jira integration, see `/jira` skill prerequisites.
 | `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
 | `/sprint future` | `list-future.sh` |
 | `/sprint future --epic X` | `list-future.sh --epic X` |
-| `/sprint promote epic-41` | `promote-epic.sh epic-41` |
+| `/sprint story show ID` | Show story details |
+| `/sprint story add ...` | Add story to epic |
+| `/sprint story update ID` | Update story fields |
+| `/sprint story size` | Sizing guidelines |
+| `/sprint story template` | Story templates |
+| `/sprint story finish ID` | Complete a story |
+| `/sprint story claim ID` | Claim in Jira |
+| `/sprint epic add ...` | Add epic to sprint |
+| `/sprint epic promote ID` | Move epic from future |
+| `/sprint epic archive` | Archive completed epics |
+| `/sprint epic import FILE` | Import BMAD epics |
+| `/sprint epic remove ID` | Remove from future |
+| `/sprint standalone` | Standalone story workflow |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
 | `/new-work next` | Alias for `/sprint work next` |
@@ -462,4 +707,3 @@ For Jira integration, see `/jira` skill prerequisites.
 | Skill | Purpose |
 |-------|---------|
 | `/jira` | Jira operations (create, sync, reconcile, claim) |
-| `/story` | Story creation, sizing, finish workflow |

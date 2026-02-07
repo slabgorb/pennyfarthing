@@ -135,7 +135,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 **Never manually edit sprint YAML.** The finish script handles all YAML updates.
 
 <critical>
-**Use `/story` skill to create stories.** Never manually edit sprint YAML to add stories.
+**Use `/sprint story add` to create stories.** Never manually edit sprint YAML to add stories.
 </critical>
 </finish-flow>
 
@@ -284,8 +284,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 </phase-check>
 
 <skills>
-- `/sprint` - Sprint management
-- `/story` - Story operations
+- `/sprint` - Sprint management (including story and epic operations)
 - `/jira` - Jira integration
 </skills>
 
