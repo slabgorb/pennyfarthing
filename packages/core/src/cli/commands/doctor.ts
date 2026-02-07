@@ -80,6 +80,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkUserFiles(projectRoot));
   results.push(...checkDirectories(projectRoot));
   results.push(...checkHooks(projectRoot));
+  results.push(...checkFileLayout(projectRoot));
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
   results.push(...checkCyclist(projectRoot));
@@ -97,6 +98,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
+    { name: 'File Layout', filter: (r: CheckResult) => r.name.startsWith('layout/') },
     { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') },
     { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') }
   ];
@@ -1721,8 +1723,143 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
 
 /**
  * Check file layout — validate files are at correct .pennyfarthing/ locations.
- * Stub: MSSCI-14372 — implementation pending.
+ * Flags old .claude/ locations with migration instructions.
+ * Fix functions migrate files automatically without overwriting existing files.
+ *
+ * MSSCI-14372
  */
-export function checkFileLayout(_projectRoot: string): CheckResult[] {
-  throw new Error('checkFileLayout not implemented (MSSCI-14372)');
+export function checkFileLayout(projectRoot: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  // 1. Manifest at .pennyfarthing/manifest.json
+  const manifestPath = join(projectRoot, '.pennyfarthing/manifest.json');
+  results.push({
+    name: 'layout/manifest',
+    status: existsSync(manifestPath) ? 'pass' : 'fail',
+    detail: existsSync(manifestPath) ? undefined : 'Missing .pennyfarthing/manifest.json'
+  });
+
+  // 2. Config at .pennyfarthing/config.local.yaml
+  const configPath = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  results.push({
+    name: 'layout/config',
+    status: existsSync(configPath) ? 'pass' : 'warn',
+    detail: existsSync(configPath) ? undefined : 'No theme configured at .pennyfarthing/config.local.yaml'
+  });
+
+  // 3. Old config at .claude/persona-config.yaml
+  const oldConfigPath = join(projectRoot, '.claude/persona-config.yaml');
+  if (existsSync(oldConfigPath)) {
+    results.push({
+      name: 'layout/config-old-location',
+      status: 'warn',
+      detail: 'Migrate to .pennyfarthing/config.local.yaml',
+      fix: () => {
+        if (!existsSync(configPath)) {
+          const configDir = dirname(configPath);
+          if (!existsSync(configDir)) {
+            mkdirSync(configDir, { recursive: true });
+          }
+          renameSync(oldConfigPath, configPath);
+        } else {
+          unlinkSync(oldConfigPath);
+        }
+      }
+    });
+  }
+
+  // 4. Settings at .claude/settings.local.json
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  results.push({
+    name: 'layout/settings',
+    status: existsSync(settingsPath) ? 'pass' : 'fail',
+    detail: existsSync(settingsPath) ? undefined : 'Missing .claude/settings.local.json — hooks not registered'
+  });
+
+  // 5. Sidecars at .pennyfarthing/sidecars/
+  const sidecarsPath = join(projectRoot, '.pennyfarthing/sidecars');
+  if (existsSync(sidecarsPath) && isDirectory(sidecarsPath)) {
+    results.push({
+      name: 'layout/sidecars',
+      status: 'pass',
+      detail: undefined
+    });
+  }
+
+  // 6. Old sidecars at .claude/project/agents/*-sidecar/
+  const oldAgentsDir = join(projectRoot, '.claude/project/agents');
+  if (existsSync(oldAgentsDir)) {
+    try {
+      const entries = readdirSync(oldAgentsDir);
+      const sidecarDirs = entries.filter(e =>
+        e.endsWith('-sidecar') && isDirectory(join(oldAgentsDir, e))
+      );
+      if (sidecarDirs.length > 0) {
+        results.push({
+          name: 'layout/sidecars-old-location',
+          status: 'warn',
+          detail: `${sidecarDirs.length} legacy sidecar dir(s) — migrate to .pennyfarthing/sidecars/`,
+          fix: () => {
+            for (const dir of sidecarDirs) {
+              const agentName = dir.replace(/-sidecar$/, '');
+              const srcDir = join(oldAgentsDir, dir);
+              const destDir = join(projectRoot, `.pennyfarthing/sidecars/${agentName}`);
+              if (!existsSync(destDir)) {
+                ensureDirSync(destDir);
+                const files = readdirSync(srcDir);
+                for (const file of files) {
+                  renameSync(join(srcDir, file), join(destDir, file));
+                }
+              }
+              removeSync(srcDir);
+            }
+          }
+        });
+      }
+    } catch {
+      // Ignore read errors
+    }
+  }
+
+  // 7. Project hooks at .pennyfarthing/project/hooks/
+  const projectHooksPath = join(projectRoot, '.pennyfarthing/project/hooks');
+  if (existsSync(projectHooksPath) && isDirectory(projectHooksPath)) {
+    results.push({
+      name: 'layout/project-hooks',
+      status: 'pass',
+      detail: undefined
+    });
+  }
+
+  // 8. Old project hooks at .claude/project/hooks/
+  const oldProjectHooksPath = join(projectRoot, '.claude/project/hooks');
+  if (existsSync(oldProjectHooksPath) && isDirectory(oldProjectHooksPath)) {
+    results.push({
+      name: 'layout/project-hooks-old-location',
+      status: 'warn',
+      detail: 'Migrate to .pennyfarthing/project/hooks/',
+      fix: () => {
+        if (!existsSync(projectHooksPath)) {
+          ensureDirSync(dirname(projectHooksPath));
+          renameSync(oldProjectHooksPath, projectHooksPath);
+        } else {
+          // Copy individual files that don't exist at destination
+          try {
+            const files = readdirSync(oldProjectHooksPath);
+            for (const file of files) {
+              const dest = join(projectHooksPath, file);
+              if (!existsSync(dest)) {
+                renameSync(join(oldProjectHooksPath, file), dest);
+              }
+            }
+          } catch {
+            // Ignore
+          }
+          removeSync(oldProjectHooksPath);
+        }
+      }
+    });
+  }
+
+  return results;
 }
