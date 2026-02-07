@@ -439,6 +439,28 @@ export function migrateTemplateFiles(
   if (migrated > 0) {
     logger.info(`Migrated ${migrated} template files to .pennyfarthing/`);
   }
+
+  // Clean up empty .claude/project/ subdirectories after migration
+  if (!options.dryRun) {
+    const dirsToClean = [
+      '.claude/project/hooks',
+      '.claude/project/docs',
+      '.claude/project',
+    ];
+    for (const dir of dirsToClean) {
+      const fullDir = join(projectRoot, dir);
+      if (existsSync(fullDir)) {
+        try {
+          const entries = readdirSync(fullDir);
+          if (entries.length === 0) {
+            removeSync(fullDir);
+          }
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+    }
+  }
 }
 
 async function checkForUpdates(
