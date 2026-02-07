@@ -11,8 +11,8 @@ workflowFile: '{workflow_path}/workflow.yaml'
 outputFile: '{planning_artifacts}/epics.md'
 futureYaml: '{project_root}/sprint/future.yaml'
 
-# Script References
-importScript: '{project_root}/.pennyfarthing/scripts/sprint/import-epic-to-future.sh'
+# Related Scripts
+promoteScript: '{project_root}/.pennyfarthing/scripts/sprint/promote-epic.sh'
 ---
 
 <purpose>
@@ -21,12 +21,13 @@ To import the validated and complete epics and stories from the epics.md documen
 
 <instructions>
 1. Determine the initiative name from the epics document (prompt user if not obvious)
-2. Run the import script in dry-run mode to show what will be added
-3. Display the preview to the user showing epic numbers, initiative structure, and story IDs
-4. Get user confirmation that the preview looks correct
-5. If confirmed, run the import script without dry-run to apply changes to future.yaml
-6. Verify the import by checking that epic appears in future.yaml with correct numbering
-7. Display completion message with epic number, initiative name, and story count
+2. Read current future.yaml to find the next epic number (highest epic-N + 1)
+3. Read the validated epics.md output and construct the YAML structure
+4. Display a preview to the user showing epic numbers, initiative structure, and story IDs
+5. Get user confirmation that the preview looks correct
+6. If confirmed, append the new initiative and epics to future.yaml using yq
+7. Verify the import by checking that epic appears in future.yaml with correct numbering
+8. Display completion message with epic number, initiative name, and story count
 </instructions>
 
 <output>
@@ -72,34 +73,53 @@ Look at the epics document title and ask user:
 
 Wait for user confirmation or alternative name.
 
-### 2. Preview Import (Dry Run)
+### 2. Determine Next Epic Number
 
-Run the import script with `--dry-run` to show what will be added:
+Read `sprint/future.yaml` and find the highest `epic-N` ID currently in use:
 
 ```bash
-.pennyfarthing/scripts/sprint/import-epic-to-future.sh {outputFile} "{initiative_name}" --dry-run
+yq '.future.initiatives[].epics[].id' sprint/future.yaml | grep -oE 'epic-[0-9]+' | sed 's/epic-//' | sort -n | tail -1
 ```
 
-Display the preview output to the user showing:
+The next epic gets `epic-{N+1}`. Stories use `{N+1}-{story_number}` format.
+
+### 3. Construct and Preview
+
+Read the validated epics.md output file. For each epic, construct the YAML structure:
+
+```yaml
+- id: epic-{N}
+  title: "Epic: {epic_title}"
+  points: {total_points}
+  priority: {priority}
+  repos: {repo}
+  stories:
+    - id: "{N}-1"
+      title: "{story_title}"
+      points: {points}
+      type: {type}
+      status: backlog
+      workflow: {workflow}
+      priority: {priority}
+      repos: {repo}
+```
+
+Display the full preview to the user showing:
 - Next epic number that will be assigned
 - Initiative structure
 - All stories with IDs
 
-### 3. Confirm and Apply
+### 4. Confirm and Apply
 
 Ask user: "Does this look correct? [Y] Yes, import to future.yaml / [N] No, make changes"
 
 **If Y:**
-Run the import without `--dry-run`:
-
-```bash
-.pennyfarthing/scripts/sprint/import-epic-to-future.sh {outputFile} "{initiative_name}"
-```
+Append the new initiative and epics to `sprint/future.yaml` using yq or direct YAML editing.
 
 **If N:**
-Ask what changes are needed and help user adjust before re-running.
+Ask what changes are needed and help user adjust before re-applying.
 
-### 4. Verify Import
+### 5. Verify Import
 
 After successful import, verify by showing:
 
@@ -112,7 +132,7 @@ Confirm:
 - Epic number is correct
 - Stories have proper IDs
 
-### 5. Complete Workflow
+### 6. Complete Workflow
 
 Display completion message:
 
@@ -138,8 +158,8 @@ Next steps:
 
 ## FAILURE MODES:
 
-- ❌ Import script not found - check .pennyfarthing symlinks
 - ❌ future.yaml not found - ensure sprint/ directory exists
-- ❌ Duplicate epic number - script should handle this automatically
+- ❌ Duplicate epic number - check existing IDs before assigning
+- ❌ yq not installed - required for YAML manipulation (`brew install yq`)
 
 **Master Rule:** The workflow is not complete until epics are in future.yaml and accessible via sprint commands.
