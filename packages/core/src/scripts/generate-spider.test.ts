@@ -82,13 +82,13 @@ describe('AC2: Theme + Agent Input -> SVG Output', () => {
     }
   });
 
-  it('should throw ENOENT for non-existent theme', async () => {
+  it('should throw error for non-existent theme', async () => {
     const { generateSpider } = await import('./generate-spider.js');
 
     assert.throws(
       () => generateSpider('nonexistent-theme', 'sm'),
-      /ENOENT/,
-      'Should throw ENOENT for missing theme file'
+      /Theme not found/,
+      'Should throw error for missing theme file'
     );
   });
 

@@ -7,18 +7,17 @@
  * Supports filtering by role, theme, and OCEAN dimensions.
  */
 
-import { readdirSync, readFileSync, existsSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { findMonorepoRoot } from '../cli/utils/files.js';
+import { findMonorepoRoot, getAllThemeDirs, resolveThemeFile } from '../cli/utils/files.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Find monorepo root by walking up from current directory
 const projectRoot = findMonorepoRoot(__dirname);
-const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 const _facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 
 // ============================================================================
@@ -104,17 +103,22 @@ const VALID_OPERATORS = ['>=', '<=', '=', '>', '<'];
  * Get all available themes from the themes directory
  */
 function getAllThemes(): string[] {
-  const files = readdirSync(themesDir).filter((f) => f.endsWith('.yaml'));
-  return files.map((f) => f.replace('.yaml', '')).sort();
+  const themeSet = new Set<string>();
+  for (const dir of getAllThemeDirs(projectRoot)) {
+    for (const f of readdirSync(dir).filter((f) => f.endsWith('.yaml'))) {
+      themeSet.add(f.replace('.yaml', ''));
+    }
+  }
+  return [...themeSet].sort();
 }
 
 /**
  * Load full theme data from YAML
  */
 function loadThemeData(theme: string): Record<string, unknown> {
-  const themePath = join(themesDir, `${theme}.yaml`);
+  const themePath = resolveThemeFile(projectRoot, theme);
 
-  if (!existsSync(themePath)) {
+  if (!themePath) {
     throw new Error(`Theme not found: ${theme}`);
   }
 
