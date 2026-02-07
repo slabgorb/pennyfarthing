@@ -104,6 +104,7 @@ export function getToolBadgeLabel(toolName: string): string {
 export default function ToolCallBlock({ toolUse, result, className }: ToolCallBlockProps): React.ReactElement {
   // AC1: Start collapsed by default
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isPromptCollapsed, setIsPromptCollapsed] = useState(true);
   // AC3: Track whether showing full content or truncated
   const [showFullContent, setShowFullContent] = useState(false);
   // AC4: Track copy state
@@ -112,6 +113,7 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
   // MSSCI-13402: Determine error state for styling
   const isError = result?.is_error === true;
   const inputDisplay = formatToolInput(toolUse.tool_name, toolUse.input);
+  const paramCount = Object.keys(toolUse.input).length;
 
   // MSSCI-13402: Get tool type CSS class
   const toolTypeClass = getToolTypeClass(toolUse.tool_name);
@@ -178,17 +180,30 @@ export default function ToolCallBlock({ toolUse, result, className }: ToolCallBl
             </TooltipTrigger>
             <TooltipContent>{toolUse.tool_name}</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="tool-name">{intentSummary}</span>
-            </TooltipTrigger>
-            <TooltipContent>{inputDisplay}</TooltipContent>
-          </Tooltip>
+          <span className="tool-name">{intentSummary}</span>
           {/* MSSCI-13402: Duration display */}
           <span data-testid="tool-duration" className="tool-duration">
             {result?.durationMs !== undefined ? formatDuration(result.durationMs) : ''}
           </span>
         </div>
+      {/* Prompt section - collapsible tool input display */}
+      <div className="tool-result-header">
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid="tool-prompt-toggle"
+          className="tool-result-toggle"
+          onClick={() => setIsPromptCollapsed(!isPromptCollapsed)}
+        >
+          {isPromptCollapsed ? '▶' : '▼'} Prompt ({paramCount} {paramCount === 1 ? 'param' : 'params'})
+        </Button>
+      </div>
+      <div
+        data-testid="tool-prompt-content"
+        className={`tool-result-content ${isPromptCollapsed ? 'collapsed' : ''}`}
+      >
+        <pre>{inputDisplay}</pre>
+      </div>
       {result && (
         <>
           <div className="tool-result-header">
