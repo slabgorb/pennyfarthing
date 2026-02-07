@@ -28,6 +28,11 @@ export interface CyclistDeps {
   open: (url: string) => Promise<void>;
 }
 
+export interface FindCyclistOptions {
+  /** Override monorepo-relative search paths (for testing) */
+  monorepoSearchPaths?: string[];
+}
+
 /**
  * Find cyclist installation
  *
@@ -36,7 +41,7 @@ export interface CyclistDeps {
  * 2. Sibling directory ../cyclist
  * 3. Relative to pennyfarthing install
  */
-export function findCyclist(): string {
+export function findCyclist(options?: FindCyclistOptions): string {
   // 1. Environment variable override
   if (process.env.CYCLIST_PATH) {
     return process.env.CYCLIST_PATH;
@@ -52,7 +57,7 @@ export function findCyclist(): string {
 
   // 3. Relative to pennyfarthing install (monorepo structure)
   // From packages/core/dist/cli/commands/ to packages/cyclist/
-  const searchPaths = [
+  const searchPaths = options?.monorepoSearchPaths ?? [
     join(__dirname, '../../../../cyclist'),      // packages/core/dist/cli/commands -> packages/cyclist
     join(__dirname, '../../../../../packages/cyclist'),  // to root then packages/cyclist
     join(__dirname, '../../../cyclist'),         // fallback
@@ -71,10 +76,10 @@ export function findCyclist(): string {
   }
 
   throw new Error(
-    'Cyclist not found.\n\n' +
+    'Cyclist not found. Set CYCLIST_PATH or install @pennyfarthing/cyclist.\n\n' +
     'To use the visual terminal, install the optional Cyclist package:\n\n' +
     '  npm install @pennyfarthing/cyclist\n\n' +
-    'Then run: npx pennyfarthing cyclist'
+    'Or set CYCLIST_PATH to the cyclist directory.'
   );
 }
 
