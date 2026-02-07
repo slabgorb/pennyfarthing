@@ -179,6 +179,42 @@ export function getDirectoryHashes(dirPath: string): Record<string, string> {
  * @returns Absolute path to project root
  * @throws Error if root cannot be found within 10 levels
  */
+/**
+ * Get all theme directories in the monorepo.
+ * Scans both pennyfarthing-dist/personas/themes/ and packages/themes-* /themes/.
+ */
+export function getAllThemeDirs(projectRoot: string): string[] {
+  const dirs: string[] = [];
+  const coreThemes = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
+  if (existsSync(coreThemes)) {
+    dirs.push(coreThemes);
+  }
+  const packagesDir = join(projectRoot, 'packages');
+  if (existsSync(packagesDir)) {
+    for (const entry of readdirSync(packagesDir)) {
+      if (entry.startsWith('themes-')) {
+        const themeDir = join(packagesDir, entry, 'themes');
+        if (existsSync(themeDir)) {
+          dirs.push(themeDir);
+        }
+      }
+    }
+  }
+  return dirs;
+}
+
+/**
+ * Resolve a theme YAML file path across all theme directories.
+ * Returns the first match or null.
+ */
+export function resolveThemeFile(projectRoot: string, themeName: string): string | null {
+  for (const dir of getAllThemeDirs(projectRoot)) {
+    const p = join(dir, `${themeName}.yaml`);
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
+
 export function findMonorepoRoot(startDir: string): string {
   let dir = startDir;
 

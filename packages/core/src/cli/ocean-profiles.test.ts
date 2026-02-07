@@ -31,7 +31,7 @@ const ANCHOR_THEMES = [
   'discworld',
   'fargo',
   'succession',
-  'mass-effect',
+  'dune',
   'software-pioneers',
 ];
 
