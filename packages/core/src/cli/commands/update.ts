@@ -1,4 +1,5 @@
 import { readFileSync, copyFileSync, readdirSync, renameSync, unlinkSync, existsSync } from 'fs';
+import { execSync } from 'child_process';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -222,6 +223,9 @@ async function updateInstalledContent(
     ensureSettingsSymlink(projectRoot);
   }
 
+  // Ensure Python scripts (pf CLI) are installed
+  await installPythonScripts(nodeModulesPath, { dryRun });
+
   // Update manifest version
   logger.newline();
   logger.info('Updating manifest...');
@@ -233,6 +237,54 @@ async function updateInstalledContent(
 
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.pennyfarthing/manifest.json');
+}
+
+/**
+ * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
+ * Tries uv tool install first, then pipx as fallback.
+ */
+async function installPythonScripts(
+  nodeModulesPath: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  logger.newline();
+  logger.info('Checking Python scripts (pf CLI)...');
+
+  // Check if pf is already installed
+  try {
+    execSync('pf --version', { stdio: 'pipe' });
+    logger.skipped('pf CLI', 'already installed');
+    return;
+  } catch {
+    // Not installed
+  }
+
+  const packageRoot = join(nodeModulesPath, '..');
+  const pyprojectPath = join(packageRoot, 'pyproject.toml');
+
+  if (!existsSync(pyprojectPath)) {
+    logger.warning('pennyfarthing_scripts not found in package, skipping Python install');
+    return;
+  }
+
+  if (options.dryRun) {
+    logger.info('Would install pf CLI via uv/pipx');
+    return;
+  }
+
+  try {
+    execSync(`uv tool install -e "${packageRoot}"`, { stdio: 'pipe' });
+    logger.created('pf CLI (via uv)');
+    return;
+  } catch { /* uv not available */ }
+
+  try {
+    execSync(`pipx install -e "${packageRoot}"`, { stdio: 'pipe' });
+    logger.created('pf CLI (via pipx)');
+    return;
+  } catch { /* pipx not available */ }
+
+  logger.warning('Could not install pf CLI — install manually: uv tool install pennyfarthing-scripts');
 }
 
 /**

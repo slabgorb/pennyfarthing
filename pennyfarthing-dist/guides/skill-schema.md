@@ -292,7 +292,7 @@ Never manually edit sprint YAML. Use the provided commands.
 Add a new story to an epic.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <points>
+pf sprint story add <epic-id> "<title>" <points>
 </run>
 
 <args>
@@ -304,7 +304,7 @@ python3 -m pennyfarthing_scripts.cli sprint story add <epic-id> "<title>" <point
 </args>
 
 <example>
-python3 -m pennyfarthing_scripts.cli sprint story add epic-76 "Add user authentication" 3
+pf sprint story add epic-76 "Add user authentication" 3
 </example>
 
 <output>
@@ -322,7 +322,7 @@ After creating, use `/sprint story size` for sizing guidelines.
 Complete a story after PR merge.
 
 <run>
-python3 -m pennyfarthing_scripts.cli sprint story finish <story-id>
+pf sprint story finish <story-id>
 </run>
 
 <args>
@@ -332,7 +332,7 @@ python3 -m pennyfarthing_scripts.cli sprint story finish <story-id>
 </args>
 
 <example>
-python3 -m pennyfarthing_scripts.cli sprint story finish MSSCI-12052
+pf sprint story finish MSSCI-12052
 # Archives story, updates Jira, cleans session files
 </example>
 

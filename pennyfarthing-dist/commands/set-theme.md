@@ -51,6 +51,6 @@ Change the active persona theme for all agents.
 
 6. Refresh the current agent's persona to apply the new theme:
    ```bash
-   python3 -m pennyfarthing_scripts.cli agent start "sm"
+   pf agent start "sm"
    ```
    This outputs the updated persona. **Adopt the new character immediately** - do not continue using the old persona.
