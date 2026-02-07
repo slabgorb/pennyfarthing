@@ -8,17 +8,16 @@
  */
 
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { findMonorepoRoot } from '../cli/utils/files.js';
+import { findMonorepoRoot, resolveThemeFile } from '../cli/utils/files.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Find monorepo root by walking up from current directory
 const projectRoot = findMonorepoRoot(__dirname);
-const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
 // OCEAN personality scores interface
 export interface OceanScores {
@@ -33,7 +32,10 @@ export interface OceanScores {
  * Load OCEAN scores for a specific theme and agent
  */
 export function loadThemeOcean(theme: string, agent: string): OceanScores {
-  const themePath = join(themesDir, `${theme}.yaml`);
+  const themePath = resolveThemeFile(projectRoot, theme);
+  if (!themePath) {
+    throw new Error(`Theme not found: ${theme}`);
+  }
   const content = readFileSync(themePath, 'utf-8');
   const data = parseYaml(content) as Record<string, unknown>;
 
