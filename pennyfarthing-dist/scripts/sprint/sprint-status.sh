@@ -79,7 +79,7 @@ TOTAL_STORIES=$((BACKLOG + IN_PROGRESS))
 POINT_COUNTS=$(get_point_counts)
 BACKLOG_POINTS=$(echo "$POINT_COUNTS" | grep -o 'backlog:[0-9]*' | cut -d: -f2)
 IN_PROGRESS_POINTS=$(echo "$POINT_COUNTS" | grep -o 'in_progress:[0-9]*' | cut -d: -f2)
-TOTAL_POINTS=$(echo "$POINT_COUNTS" | grep -o 'total:[0-9]*' | cut -d: -f2)
+TOTAL_POINTS=$((BACKLOG_POINTS + IN_PROGRESS_POINTS))
 
 echo "## Summary"
 echo ""
@@ -100,10 +100,13 @@ echo ""
 
 # Process each epic, output header once then all its stories
 # Apply status filter if specified
+# Use resolved sprint file (merges epic shards from string refs)
+RESOLVED_FILE=$(get_resolved_sprint_file) || RESOLVED_FILE="$SPRINT_FILE"
+
 if [[ -n "$STATUS_FILTER" ]]; then
-  yq eval -o=json '.epics[]' "$SPRINT_FILE" 2>/dev/null | jq -r --arg status "$STATUS_FILTER" '
+  yq eval -o=json '.epics[]' "$RESOLVED_FILE" 2>/dev/null | jq -r --arg status "$STATUS_FILTER" '
     .title as $title |
-    [.stories[] | select(.status == $status)] |
+    [.stories[]? | select(.status == $status)] |
     if length > 0 then
       "### " + $title + "\n" +
       (map("- [" + .status + "] " + .id + ": " + .title + " (" + (.points | tostring) + " pts)") | join("\n")) + "\n"
@@ -112,7 +115,7 @@ if [[ -n "$STATUS_FILTER" ]]; then
     end
   ' 2>/dev/null || echo "No stories found"
 else
-  yq eval -o=json '.epics[]' "$SPRINT_FILE" 2>/dev/null | jq -r '
+  yq eval -o=json '.epics[]' "$RESOLVED_FILE" 2>/dev/null | jq -r '
     "### " + .title + "\n" +
     (.stories | map("- [" + .status + "] " + .id + ": " + .title + " (" + (.points | tostring) + " pts)") | join("\n")) + "\n"
   ' 2>/dev/null || echo "No stories found"
