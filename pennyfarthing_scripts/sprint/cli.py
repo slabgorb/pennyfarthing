@@ -1713,23 +1713,22 @@ def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, g
                 click.echo("Aborted.")
                 return
 
-    # Create sprint file
-    sprint_content = f"""sprint:
-  name: "TO Sprint {sprint_yyww}"
-  jira_sprint_id: {jira_id}
-  jira_sprint_name: "TO Sprint {sprint_yyww}"
-  goal: {goal}
-  start_date: {start_date}
-  end_date: {end_date}
-  status: active
+    # Create sprint file using write_sprint for consistency
+    from pennyfarthing_scripts.sprint.yaml_io import write_sprint
 
-# Completed stories archived to: sprint/archive/sprint-{sprint_yyww}-completed.yaml
-
-epics:
-  # Add epics and stories here
-  # See sprint/sprint-template.yaml for format reference
-"""
-    sprint_file.write_text(sprint_content)
+    sprint_data = {
+        "sprint": {
+            "name": f"TO Sprint {sprint_yyww}",
+            "jira_sprint_id": jira_id,
+            "jira_sprint_name": f"TO Sprint {sprint_yyww}",
+            "goal": goal,
+            "start_date": start_date,
+            "end_date": end_date,
+            "status": "active",
+        },
+        "epics": [],
+    }
+    write_sprint(sprint_file, sprint_data)
     click.echo(f"Created {sprint_file}")
 
     # Create archive file

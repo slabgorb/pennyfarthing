@@ -8,7 +8,7 @@ Scripts are organized into categorical subdirectories. **Full paths are required
 scripts/
 ├── core/       # Essential scripts (agent-session.sh)
 ├── workflow/   # Workflow mechanics (finish-story.sh, check.sh)
-├── sprint/     # Sprint YAML operations (sprint-status.sh)
+├── sprint/     # Sprint YAML operations (migrated to pf sprint CLI)
 ├── story/      # Story operations (create-story.sh)
 ├── jira/       # Jira integration (jira-claim-story.sh)
 ├── git/        # Git operations (release.sh, worktree-manager.sh)
@@ -27,7 +27,7 @@ Scripts are invoked directly with **full category paths**:
 ```bash
 # From project root
 .pennyfarthing/scripts/core/agent-session.sh start sm
-.pennyfarthing/scripts/sprint/sprint-status.sh
+pf sprint status
 .pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12345
 .pennyfarthing/scripts/workflow/finish-story.sh MSSCI-12345
 ```

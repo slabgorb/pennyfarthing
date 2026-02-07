@@ -23,7 +23,7 @@ Uses `/sprint` skill scripts for deterministic output.
 Run the sprint status script and parse output:
 
 ```bash
-.pennyfarthing/scripts/sprint/sprint-status.sh
+pf sprint status
 ```
 
 Then check for active sessions:
