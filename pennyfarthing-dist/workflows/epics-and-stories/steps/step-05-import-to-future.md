@@ -126,7 +126,7 @@ Display completion message:
 
 Next steps:
 - Use `/sprint` to view the backlog
-- Use `promote-epic.sh` to move to a sprint when ready
+- Use `pf sprint epic promote` to move to a sprint when ready
 ```
 
 ## SUCCESS CRITERIA:

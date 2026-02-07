@@ -1,7 +1,8 @@
 # ADR-0018: Sprint YAML Script Access Pattern
 
-**Status:** Accepted
+**Status:** Superseded (bash scripts migrated to Python CLI)
 **Date:** 2026-01-28
+**Updated:** 2026-02-07
 **Author:** Architect (Naomi Nagata)
 
 ## Context
@@ -23,38 +24,43 @@ Sprint tracking data lives in `sprint/current-sprint.yaml`, a structured YAML fi
 
 ## Decision
 
-**Never directly edit sprint YAML.** All access goes through dedicated scripts in `pennyfarthing-dist/scripts/sprint/`.
+**Never directly edit sprint YAML.** All access goes through the Python CLI: `pf sprint [COMMAND]`.
 
-### Script Architecture
+> **Migration note (2026-02-07):** All bash scripts in `pennyfarthing-dist/scripts/sprint/` have been
+> migrated to Python CLI commands in `pennyfarthing_scripts/sprint/cli.py`. The bash scripts have been
+> removed. See PR #716 (initial shim migration) and the follow-up deprecation commit.
+
+### CLI Architecture
 
 ```
-pennyfarthing-dist/scripts/sprint/
-├── sprint-common.sh       # Shared utilities (yq wrappers, validation)
-├── available-stories.sh   # List stories with status=ready|backlog
-├── check-story.sh         # Validate story exists and is workable
-├── archive-story.sh       # Move completed story to archive
-├── new-sprint.sh          # Create new sprint from template
-├── list-future.sh         # Show future.yaml epics
-├── promote-epic.sh        # Move epic from future to current
-├── sprint-metrics.sh      # Calculate velocity, burndown
-├── sprint-status.sh       # Summary view of sprint
-├── get-story-field.sh     # Read single field from story
-├── get-epic-field.sh      # Read single field from epic
-├── set-story-field.sh     # Update single field (with validation)
-├── set-epic-field.sh      # Update single field (with validation)
-└── import_epic_to_future.py # Import epic definition
+pf sprint status              # Sprint status and metrics
+pf sprint backlog             # List available stories by epic
+pf sprint check <id>          # Check story/epic availability (JSON)
+pf sprint info                # Sprint info JSON (Cyclist sidebar)
+pf sprint metrics             # Velocity and progress metrics
+pf sprint future              # Show future initiatives and epics
+pf sprint new                 # Initialize a new sprint
+pf sprint validate <file>     # Validate sprint YAML structure
+pf sprint archive <id>        # Archive completed story
+pf sprint work <id>           # Start work on a story
+pf sprint story field <id> <field>  # Read story field value
+pf sprint epic field <id> <field>   # Read epic field value
+pf sprint epic promote <id>   # Move epic from future to current
+pf sprint epic show <id>      # Show epic details
+pf sprint epic cancel <id>    # Cancel epic and stories
+pf sprint epic archive        # Archive completed epics
 ```
 
 ### Access Patterns
 
-| Operation | Script | Example |
-|-----------|--------|---------|
-| Read story field | `get-story-field.sh` | `get-story-field.sh 28-1 status` → `in_progress` |
-| Read epic field | `get-epic-field.sh` | `get-epic-field.sh 35 jira` → `MSSCI-12042` |
-| Check story exists | `check-story.sh` | `check-story.sh 28-1` → exit 0 or 1 |
-| List available work | `available-stories.sh` | Returns JSON of ready stories |
-| Archive completed | `archive-story.sh` | Moves to `sprint/archive/`, updates totals |
-| Sprint summary | `sprint-status.sh` | Points done/remaining, velocity |
+| Operation | Command | Example |
+|-----------|---------|---------|
+| Read story field | `pf sprint story field` | `pf sprint story field 28-1 status` → `in_progress` |
+| Read epic field | `pf sprint epic field` | `pf sprint epic field 35 jira` → `MSSCI-12042` |
+| Check story exists | `pf sprint check` | `pf sprint check 28-1` → JSON with availability |
+| List available work | `pf sprint backlog` | Markdown table of ready stories by epic |
+| Archive completed | `pf sprint archive` | Moves to `sprint/archive/`, updates totals |
+| Sprint summary | `pf sprint status` | Points done/remaining, story counts |
 
 ### Validation Rules
 
@@ -140,11 +146,11 @@ through dedicated scripts.
 </critical>
 ```
 
-Agents use the `/sprint` skill which wraps these scripts:
-- `/sprint status` → `sprint-status.sh`
-- `/sprint backlog` → `available-stories.sh`
-- `/sprint work X-Y` → `check-story.sh` + session setup
-- `/sprint archive X-Y` → `archive-story.sh`
+Agents use the `/sprint` skill which wraps the Python CLI:
+- `/sprint status` → `pf sprint status`
+- `/sprint backlog` → `pf sprint backlog`
+- `/sprint work X-Y` → `pf sprint check` + session setup
+- `/sprint archive X-Y` → `pf sprint archive`
 
 ### Error Handling
 
@@ -178,15 +184,11 @@ Exit codes:
 ### Negative
 
 - **Indirection** - Can't just `yq` a quick fix
-- **Script maintenance** - 14 scripts to maintain
-- **Learning curve** - Must know which script to use
-- **Performance** - Each script spawns subshell
+- **Learning curve** - Must know which CLI command to use
 
 ### Neutral
 
-- **yq dependency** - Bash scripts require `yq` (already in toolchain)
 - **Python + ruamel.yaml** - Python modules require `ruamel.yaml` for deterministic serialization
-- **Dual tooling** - Bash scripts for simple field access, Python modules for validation and canonical formatting
 
 ## Alternatives Considered
 
@@ -216,7 +218,7 @@ Store changes as events, derive state.
 
 ## References
 
-- Bash scripts: `pennyfarthing-dist/scripts/sprint/`
+- Python CLI: `pennyfarthing_scripts/sprint/cli.py`
 - Python modules: `pennyfarthing_scripts/sprint/` (`yaml_io.py`, `validate_cmd.py`, `validator.py`)
 - Jira sync: `pennyfarthing_scripts/jira/bidirectional.py`
 - Skill wrapper: `pennyfarthing-dist/skills/sprint/skill.md`

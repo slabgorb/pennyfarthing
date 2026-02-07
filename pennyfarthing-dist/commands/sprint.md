@@ -20,7 +20,7 @@ Never manually edit `sprint/current-sprint.yaml`. Always use the provided script
 Show current sprint status with story counts and points.
 
 ```bash
-.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
+pf sprint status [filter]
 ```
 
 | Filter | Description |
@@ -35,7 +35,7 @@ Show current sprint status with story counts and points.
 Show available stories ready for work, grouped by epic.
 
 ```bash
-.pennyfarthing/scripts/sprint/available-stories.sh
+pf sprint backlog
 ```
 
 ### `/sprint work [story-id|epic-id|next]`
@@ -59,7 +59,7 @@ if [[ "$OPEN_PRS" -gt 0 ]]; then
 fi
 
 # Check if story is available
-.pennyfarthing/scripts/sprint/check-story.sh <story-id>
+pf sprint check <story-id>
 
 # Then load SM to begin work
 ```
@@ -78,7 +78,7 @@ When starting work, this command:
 Archive a completed story.
 
 ```bash
-.pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number] [--apply]
+pf sprint archive <story-id> [pr-number] [--apply]
 ```
 
 | Option | Description |
@@ -90,7 +90,7 @@ Archive a completed story.
 Initialize a new sprint.
 
 ```bash
-.pennyfarthing/scripts/sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Sprint goal"
+pf sprint new 2605 277 2026-02-03 2026-02-16 "Sprint goal"
 ```
 
 ### `/sprint future [--epic EPIC_ID]`
@@ -98,7 +98,7 @@ Initialize a new sprint.
 Show future work available for promotion.
 
 ```bash
-.pennyfarthing/scripts/sprint/list-future.sh [--epic epic-XX]
+pf sprint future [--epic epic-XX]
 ```
 
 ### `/sprint promote <epic-id>`
@@ -106,7 +106,7 @@ Show future work available for promotion.
 Move an epic from future.yaml to current sprint.
 
 ```bash
-.pennyfarthing/scripts/sprint/promote-epic.sh epic-XX
+pf sprint epic promote epic-XX
 ```
 
 ## Quick Reference

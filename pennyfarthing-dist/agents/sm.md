@@ -168,7 +168,7 @@ Present to user:
 
 1. **Get workflow type:**
    ```bash
-   WORKFLOW=$(.pennyfarthing/scripts/sprint/get-story-field.sh X-Y workflow)
+   WORKFLOW=$(pf sprint story field X-Y workflow)
    WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "$WORKFLOW")
    ```
 
@@ -226,7 +226,7 @@ Before `sm-handoff`, verify ALL of these:
 > **Triggered when:** `EMPTY_BACKLOG_STATE`
 
 1. Report: "Sprint backlog empty. All stories done or cancelled."
-2. Show future work: `.pennyfarthing/scripts/sprint/list-future.sh`
+2. Show future work: `pf sprint future`
 3. Offer: "Promote stories from `future.yaml`?" → `/sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
