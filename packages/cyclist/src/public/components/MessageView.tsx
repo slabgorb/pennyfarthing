@@ -271,7 +271,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
             <img
               src={colorScheme === 'dark' ? '/images/cyclist-dark.png' : '/images/cyclist-light.png'}
               alt="Cyclist"
-              style={{ height: '2.5rem', marginBottom: '0.5rem', opacity: 0.6 }}
+              style={{ height: '2.5rem', opacity: 0.6, display: 'block', margin: '0 auto 0.5rem' }}
             />
             <div>Type <code style={{
               background: 'var(--bg-tertiary, #0f0f1a)',
