@@ -98,7 +98,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       delete process.env.CYCLIST_PATH;
 
       assert.throws(
-        () => findCyclist(),
+        () => findCyclist({ monorepoSearchPaths: [] }),
         {
           message: /Cyclist not found/i
         },
@@ -111,7 +111,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       delete process.env.CYCLIST_PATH;
 
       try {
-        findCyclist();
+        findCyclist({ monorepoSearchPaths: [] });
         assert.fail('Should have thrown an error');
       } catch (error) {
         assert.ok(

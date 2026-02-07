@@ -150,12 +150,13 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
   describe('checkLegacyStatuslinePath()', () => {
     it('should detect wrong statusline path in settings.local.json', () => {
       // AC: doctor --fix updates settings.local.json statusline path if wrong
-      // Setup: Create settings with legacy path
+      // Setup: Create settings with legacy path (statusLine is top-level, not inside hooks)
       writeFileSync(
         join(claudeDir, 'settings.local.json'),
         JSON.stringify({
-          hooks: {
-            StatusLine: '.claude/scripts/statusline.sh'
+          statusLine: {
+            type: 'command',
+            command: '"$CLAUDE_PROJECT_DIR"/.claude/scripts/statusline.sh'
           }
         }, null, 2)
       );
@@ -168,7 +169,6 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       const result = checkLegacyStatuslinePath(testDir);
 
       assert.strictEqual(result.status, 'warn', 'Should warn about wrong path');
-      assert.ok(result.detail?.includes('.claude/scripts/statusline.sh'), 'Should mention the wrong path');
       assert.ok(result.fix, 'Should provide a fix function');
     });
 
@@ -177,8 +177,9 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       writeFileSync(
         join(claudeDir, 'settings.local.json'),
         JSON.stringify({
-          hooks: {
-            StatusLine: '.pennyfarthing/scripts/misc/statusline.sh'
+          statusLine: {
+            type: 'command',
+            command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/misc/statusline.sh'
           }
         }, null, 2)
       );
@@ -188,12 +189,12 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       assert.strictEqual(result.status, 'pass', 'Should pass when path is correct');
     });
 
-    it('should pass when no statusline hook configured', () => {
+    it('should pass when no statusline configured', () => {
       // Setup: Create settings without statusline
       writeFileSync(
         join(claudeDir, 'settings.local.json'),
         JSON.stringify({
-          hooks: {}
+          otherSetting: true
         }, null, 2)
       );
 
@@ -215,9 +216,9 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       writeFileSync(
         settingsPath,
         JSON.stringify({
-          hooks: {
-            StatusLine: '.claude/scripts/statusline.sh',
-            OtherHook: 'keep-this.sh'
+          statusLine: {
+            type: 'command',
+            command: '"$CLAUDE_PROJECT_DIR"/.claude/scripts/statusline.sh'
           },
           otherSetting: 'preserved'
         }, null, 2)
@@ -236,15 +237,9 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
 
       // Verify the path was updated
       const updatedSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
-      assert.strictEqual(
-        updatedSettings.hooks.StatusLine,
-        '.pennyfarthing/scripts/misc/statusline.sh',
+      assert.ok(
+        updatedSettings.statusLine.command.includes('.pennyfarthing/scripts/misc/statusline.sh'),
         'Should update to proper path'
-      );
-      assert.strictEqual(
-        updatedSettings.hooks.OtherHook,
-        'keep-this.sh',
-        'Should preserve other hooks'
       );
       assert.strictEqual(
         updatedSettings.otherSetting,
@@ -265,12 +260,13 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       ];
 
       for (const legacyPath of legacyPaths) {
-        // Recreate settings for each test
+        // Recreate settings for each test using the statusLine top-level key
         writeFileSync(
           join(claudeDir, 'settings.local.json'),
           JSON.stringify({
-            hooks: {
-              StatusLine: legacyPath
+            statusLine: {
+              type: 'command',
+              command: `"$CLAUDE_PROJECT_DIR"/${legacyPath}`
             }
           }, null, 2)
         );

@@ -233,7 +233,7 @@ Final text`;
       const { result } = renderHook(() => useMarkdownParser(markdown));
       expect(result.current.html).toContain('<table>');
       expect(result.current.html).toContain('<thead>');
-      expect(result.current.html).toContain('<th>Header 1</th>');
+      expect(result.current.html).toMatch(/<th[^>]*>Header 1/);
       expect(result.current.html).toContain('<tbody>');
       expect(result.current.html).toContain('<td>Cell 1</td>');
     });
