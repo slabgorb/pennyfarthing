@@ -942,9 +942,30 @@ def epic_promote(epic_id: str):
             if not (isinstance(e, dict) and _epic_ref_matches(str(e.get("id", "")), epic_id))
         ]
 
-    with open(source_init_file, "w") as f:
-        yaml.dump(init_data, f, default_flow_style=False, sort_keys=False)
-    click.echo(f"Removed {original_id} from {source_init_file.name}")
+    remaining_epics = init_data.get("epics", [])
+    if remaining_epics:
+        # Initiative still has epics — update shard in place
+        with open(source_init_file, "w") as f:
+            yaml.dump(init_data, f, default_flow_style=False, sort_keys=False)
+        click.echo(f"Removed {original_id} from {source_init_file.name}")
+    else:
+        # Initiative is empty — remove shard and future.yaml reference
+        init_name = init_data.get("name", "")
+        init_slug = source_init_file.stem.replace("initiative-", "")
+        source_init_file.unlink()
+        click.echo(f"Removed empty initiative shard: {source_init_file.name}")
+
+        # Remove from future.yaml
+        future_file = sprint_dir / "future.yaml"
+        if future_file.exists():
+            with open(future_file) as f:
+                future_data = yaml.safe_load(f.read()) or {}
+            future_inits = future_data.get("future", {}).get("initiatives", [])
+            if init_slug in future_inits:
+                future_inits.remove(init_slug)
+                with open(future_file, "w") as f:
+                    yaml.dump(future_data, f, default_flow_style=False, sort_keys=False)
+                click.echo(f"Removed '{init_slug}' from future.yaml")
 
     click.echo("")
     click.echo("Promotion complete!")
