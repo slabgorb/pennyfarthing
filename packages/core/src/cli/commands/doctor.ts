@@ -1718,3 +1718,11 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
     detail: 'Configured'
   };
 }
+
+/**
+ * Check file layout — validate files are at correct .pennyfarthing/ locations.
+ * Stub: MSSCI-14372 — implementation pending.
+ */
+export function checkFileLayout(_projectRoot: string): CheckResult[] {
+  throw new Error('checkFileLayout not implemented (MSSCI-14372)');
+}
