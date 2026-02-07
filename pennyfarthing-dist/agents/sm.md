@@ -226,7 +226,7 @@ Before `sm-handoff`, verify ALL of these:
 > **Triggered when:** `EMPTY_BACKLOG_STATE`
 
 1. Report: "Sprint backlog empty. All stories done or cancelled."
-2. Show future work: `.pennyfarthing/scripts/sprint/list-future.sh`
+2. Show future work: `pf sprint future`
 3. Offer: "Promote stories from `future.yaml`?" → `/sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.

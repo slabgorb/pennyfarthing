@@ -10,7 +10,7 @@
 #
 # Dependencies:
 #   - yq (for YAML manipulation)
-#   - sprint-common.sh (for shared sprint functions)
+#   (sprint-common.sh removed — all functions defined locally)
 
 set -uo pipefail
 
@@ -22,12 +22,7 @@ source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
 SESSION_DIR="$PROJECT_ROOT/.session"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
-# Source sprint-common.sh for shared functions
-SPRINT_COMMON="$PROJECT_ROOT/.pennyfarthing/scripts/sprint/sprint-common.sh"
-if [[ -f "$SPRINT_COMMON" ]]; then
-    # shellcheck source=/dev/null
-    source "$SPRINT_COMMON"
-fi
+# Note: sprint-common.sh removed — all needed functions are defined locally below
 
 # extract_story_id BRANCH_NAME
 # Extract story ID from branch name pattern feat/X-Y-*
