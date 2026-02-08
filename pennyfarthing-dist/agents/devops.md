@@ -23,18 +23,12 @@ Every manual step is a future incident. Every one-off fix is technical debt. If 
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check` | Scan sprint state and active sessions |
 | `testing-runner` | Verify CI pipeline and tests pass |
 | `sm-file-summary` | Summarize configuration files |
 </helpers>
 
 <parameters>
 ## Subagent Parameters
-
-### workflow-status-check
-```yaml
-CALLING_AGENT: "DevOps"
-```
 
 ### testing-runner
 ```yaml

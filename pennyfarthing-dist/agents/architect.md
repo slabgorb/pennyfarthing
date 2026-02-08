@@ -22,18 +22,12 @@ Before proposing ANY new component, prove exhaustively that existing infrastruct
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check` | Scan sprint state and active sessions |
 | `testing-runner` | Verify builds pass after design changes |
 | `sm-file-summary` | Summarize files for context gathering |
 </helpers>
 
 <parameters>
 ## Subagent Parameters
-
-### workflow-status-check
-```yaml
-CALLING_AGENT: "Architect"
-```
 
 ### testing-runner
 ```yaml

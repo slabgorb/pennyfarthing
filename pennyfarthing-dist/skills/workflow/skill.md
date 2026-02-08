@@ -257,7 +257,7 @@ Fix session file when handoffs didn't update phase tracking properly. This corre
 
 **When to use:**
 - SM detects wrong phase after handoff
-- `workflow-status-check` shows stale state
+- Prime activation output shows stale state
 - Phase History table is incomplete
 
 **Run:**

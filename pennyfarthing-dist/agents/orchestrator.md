@@ -45,7 +45,6 @@ Use Orchestrator for:
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check` | Scan session files and git status |
 | `testing-runner` | Run tests to verify changes |
 | `sm-file-summary` | Summarize agent files for audit |
 | `handoff` | Update session for phase transitions |
@@ -54,11 +53,6 @@ Use Orchestrator for:
 
 <parameters>
 ## Subagent Parameters
-
-### workflow-status-check
-```yaml
-CALLING_AGENT: "Orchestrator"
-```
 
 ### testing-runner
 ```yaml
