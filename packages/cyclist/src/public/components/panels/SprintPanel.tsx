@@ -215,12 +215,16 @@ function JiraLink({ jiraKey, storyId }: { jiraKey: string; storyId: string }): R
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     const url = getJiraUrl(jiraKey);
-    // Use electronAPI if available, otherwise open in new tab
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.shell?.openExternal) {
-      (window as any).electronAPI.shell.openExternal(url);
-    } else {
-      window.open(url, '_blank');
+    try {
+      const api = (window as any).electronAPI;
+      if (api?.shell?.openExternal) {
+        api.shell.openExternal(url);
+        return;
+      }
+    } catch {
+      // electronAPI not available or call failed
     }
+    window.open(url, '_blank');
   };
 
   return (
