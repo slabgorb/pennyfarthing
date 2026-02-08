@@ -1526,10 +1526,52 @@
   font-size: 0.75rem;
 }
 
+.enhanced-sprint-panel .story-item .story-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .enhanced-sprint-panel .story-item .story-assignee {
   font-size: 0.625rem;
   color: var(--text-tertiary, #6b6b6b);
   font-style: italic;
+}
+
+.enhanced-sprint-panel .story-item .story-workflow-badge {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #8b8b8b);
+  background: var(--bg-tertiary, #2d2d2d);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.enhanced-sprint-panel .story-item .story-completed-date {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-tertiary, #6b6b6b);
+}
+
+.enhanced-sprint-panel .story-item .priority-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.enhanced-sprint-panel .story-item .priority-dot.priority-p0 {
+  background: var(--error-color, #f14c4c);
+}
+
+.enhanced-sprint-panel .story-item .priority-dot.priority-p1 {
+  background: var(--warning-color, #cca700);
+}
+
+.enhanced-sprint-panel .story-item .priority-dot.priority-p2 {
+  background: var(--text-tertiary, #6b6b6b);
 }
 
 .enhanced-sprint-panel .story-item .story-points {
@@ -1804,42 +1846,25 @@
   margin-bottom: 4px;
 }
 
-/* Develop behind warning */
-.git-panel .develop-behind-warning {
-  display: flex;
+/* Sync develop button — subtle icon inline with sync counts */
+.git-panel .sync-develop-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  margin-bottom: 8px;
-  background: rgba(204, 167, 0, 0.15);
-  border: 1px solid var(--warning-color, #cca700);
-  border-radius: 4px;
-  font-size: 0.75rem;
-}
-
-.git-panel .develop-behind-warning .warning-icon {
-  flex-shrink: 0;
-}
-
-.git-panel .develop-behind-warning .warning-text {
-  flex: 1;
-  color: var(--warning-color, #cca700);
-}
-
-.git-panel .develop-behind-warning .pull-develop-btn {
-  padding: 2px 8px;
-  background: var(--warning-color, #cca700);
-  color: #000;
+  gap: 3px;
+  padding: 1px 5px;
   border: none;
   border-radius: 3px;
+  background: none;
+  color: var(--status-warning, #cca700);
   font-size: 0.7rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
   cursor: pointer;
-  text-transform: uppercase;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.git-panel .develop-behind-warning .pull-develop-btn:hover {
-  opacity: 0.9;
+.git-panel .sync-develop-btn:hover {
+  background: rgba(204, 167, 0, 0.15);
+  color: var(--text-primary);
 }
 
 .git-panel .repo-status .file-status {
@@ -2207,38 +2232,6 @@
   color: var(--color-danger, #ef4444);
   font-size: 0.75rem;
   padding: 8px 0;
-}
-
-/* AC content within Progress panel */
-.ac-content {
-  padding: 4px 0;
-}
-
-.ac-content .ac-list {
-  margin-top: 8px;
-}
-
-.ac-content .ac-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 4px 0;
-  font-size: 0.8rem;
-  color: var(--text-primary, #d4d4d4);
-}
-
-.ac-content .ac-item.ac-done {
-  color: var(--success-color, #4ec9b0);
-}
-
-.ac-content .ac-icon {
-  flex-shrink: 0;
-  width: 14px;
-}
-
-.ac-content .ac-text {
-  flex: 1;
-  line-height: 1.3;
 }
 
 /* Todo content wrapper */
@@ -4038,15 +4031,13 @@
   border-color: var(--text-secondary, #8b8b8b);
 }
 
-.btn-toggle .toggle-icon {
-  font-size: 1rem;
-  line-height: 1;
-  filter: grayscale(100%) opacity(0.5);
-  transition: filter 0.15s ease;
+.btn-toggle svg {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
 }
 
-.btn-toggle:hover .toggle-icon {
-  filter: grayscale(50%) opacity(0.8);
+.btn-toggle:hover svg {
+  opacity: 0.8;
 }
 
 /* Bell mode active */
@@ -4055,8 +4046,8 @@
   border-color: var(--color-warning, #f59e0b);
 }
 
-.btn-toggle.bell-toggle.active .toggle-icon {
-  filter: none;
+.btn-toggle.bell-toggle.active svg {
+  opacity: 1;
 }
 
 /* Relay mode active */
@@ -4065,8 +4056,8 @@
   border-color: var(--color-purple, #8b5cf6);
 }
 
-.btn-toggle.relay-toggle.active .toggle-icon {
-  filter: none;
+.btn-toggle.relay-toggle.active svg {
+  opacity: 1;
 }
 
 /* Active toggle colors (no animation - too distracting) */
@@ -4084,8 +4075,8 @@
   border-color: var(--color-cyan, #06b6d4);
 }
 
-.btn-toggle.pump-toggle .toggle-icon {
-  filter: none;
+.btn-toggle.pump-toggle svg {
+  opacity: 1;
 }
 
 /* TirePump warning state at 70%+ context */
@@ -4095,8 +4086,8 @@
   animation: pump-pulse 1.5s ease-in-out infinite;
 }
 
-.btn-toggle.pump-toggle.warning .toggle-icon {
-  filter: none;
+.btn-toggle.pump-toggle.warning svg {
+  opacity: 1;
 }
 
 @keyframes pump-pulse {

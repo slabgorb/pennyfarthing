@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState, FocusEvent } from 'react';
+import { BellRing, Zap, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClaudeContext } from '../contexts/ClaudeContext';
@@ -149,7 +150,7 @@ export function ControlBar({
                 aria-pressed={bellMode}
                 aria-label="Bell mode - inject queued messages via hook"
               >
-                <span className="toggle-icon">🔔</span>
+                <BellRing className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Bell Mode: Inject queued messages during tool use (Cmd+B)</TooltipContent>
@@ -168,7 +169,7 @@ export function ControlBar({
                 aria-pressed={relayMode}
                 aria-label="Relay mode - auto-handoff to next agent"
               >
-                <span className="toggle-icon">✋</span>
+                <Zap className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Relay Mode: Auto-handoff to next agent (Cmd+4)</TooltipContent>
@@ -187,7 +188,7 @@ export function ControlBar({
                 disabled={!currentAgent}
                 aria-label="TirePump: Clear context and reload agent"
               >
-                <span className="toggle-icon">⬆️</span>
+                <RotateCcw className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>{currentAgent ? `TirePump: Clear context (${contextPercent}%) and reload ${currentAgent}` : 'TirePump: No agent loaded'}</TooltipContent>

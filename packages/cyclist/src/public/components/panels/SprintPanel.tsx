@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Check, Loader, Circle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -121,17 +122,18 @@ function isEpicCompleted(epic: SprintEpic): boolean {
 /**
  * Get status badge content and class for a story status
  */
-function getStatusBadgeInfo(status: SprintStory['status']): { icon: string; className: string } {
+function getStatusBadgeInfo(status: SprintStory['status']): { icon: React.ReactElement; className: string } {
+  const size = 12;
   switch (status) {
     case 'done':
-      return { icon: '✓', className: 'status-done' };
+      return { icon: <Check size={size} />, className: 'status-done' };
     case 'in_progress':
-      return { icon: '●', className: 'status-in-progress' };
+      return { icon: <Loader size={size} />, className: 'status-in-progress' };
     case 'blocked':
-      return { icon: '⚠', className: 'status-blocked' };
+      return { icon: <AlertTriangle size={size} />, className: 'status-blocked' };
     case 'backlog':
     default:
-      return { icon: '○', className: 'status-backlog' };
+      return { icon: <Circle size={size} />, className: 'status-backlog' };
   }
 }
 
@@ -169,6 +171,22 @@ function ContextIndicator({
       </TooltipTrigger>
       <TooltipContent>{tooltipText}</TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * Priority dot component - small color-coded circle
+ */
+function PriorityDot({ priority, storyId }: { priority?: string | null; storyId: string }): React.ReactElement | null {
+  if (!priority) return null;
+  const colorClass = priority === 'P0' ? 'priority-p0' : priority === 'P1' ? 'priority-p1' : 'priority-p2';
+  return (
+    <span
+      className={`priority-dot ${colorClass}`}
+      data-testid={`story-priority-${storyId}`}
+      data-priority={priority}
+      title={priority}
+    />
   );
 }
 
@@ -489,18 +507,37 @@ export function EnhancedSprintPanel(): React.ReactElement {
                           data-story-id={story.id}
                           aria-label={`${story.id}: ${story.title}`}
                         >
+                          <PriorityDot priority={story.priority} storyId={story.id} />
                           <StatusBadge status={story.status} storyId={story.id} />
                           {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
                           <div className="story-info">
                             <span className="story-title">{story.title}</span>
-                            {assigneeDisplay && (
-                              <span
-                                className="story-assignee"
-                                data-testid={`story-assignee-${story.id}`}
-                              >
-                                {assigneeDisplay}
-                              </span>
-                            )}
+                            <span className="story-meta">
+                              {assigneeDisplay && (
+                                <span
+                                  className="story-assignee"
+                                  data-testid={`story-assignee-${story.id}`}
+                                >
+                                  {assigneeDisplay}
+                                </span>
+                              )}
+                              {story.workflow && (
+                                <span
+                                  className="story-workflow-badge"
+                                  data-testid={`story-workflow-${story.id}`}
+                                >
+                                  {story.workflow}
+                                </span>
+                              )}
+                              {story.status === 'done' && story.completed && (
+                                <span
+                                  className="story-completed-date"
+                                  data-testid={`story-completed-${story.id}`}
+                                >
+                                  {story.completed}
+                                </span>
+                              )}
+                            </span>
                           </div>
                           <ContextIndicator hasContext={hasContext} testIdPrefix="story" id={story.id} />
                           <span
