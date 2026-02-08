@@ -18,5 +18,5 @@ Scripts for managing agent persona themes.
 
 ## Ownership
 
-- **Primary users:** `/theme` skill, `/set-theme` command
+- **Primary users:** `/theme` skill
 - **Maintained by:** Core Pennyfarthing team

@@ -331,37 +331,41 @@ skills:
 
   theme:
     name: theme
-    description: Manage persona themes - list, show, and set active theme
+    description: Manage persona themes - list, show, set, create, and interactive maker wizard
     category: theming
-    tags: [personas, themes, customization]
-    version: "1.0.0"
+    tags: [personas, themes, customization, creation]
+    version: "2.0.0"
     prerequisites: []
     examples:
       - context: Listing available themes
-        invocation: /list-themes
+        invocation: /theme list
       - context: Showing current theme
-        invocation: /show-theme
+        invocation: /theme show
       - context: Setting active theme
-        invocation: /set-theme discworld
+        invocation: /theme set discworld
+      - context: Creating a new theme
+        invocation: /theme create my-theme --base discworld
+      - context: Interactive AI-driven theme wizard
+        invocation: /theme maker
     anti_patterns:
       - Don't edit config.local.yaml directly - use skill
-    related_skills: [theme-creation]
-    keywords: [personas, characters, discworld, literary-classics]
+      - Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
+    related_skills: []
+    keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard]
 
   theme-creation:
     name: theme-creation
-    description: Create custom persona themes with AI-driven generation
+    description: "DEPRECATED: Use /theme maker instead"
     category: theming
     tags: [personas, themes, creation]
-    version: "1.0.0"
-    prerequisites: [theme]
+    version: "2.0.0"
+    deprecated: true
+    redirect: theme
+    prerequisites: []
     examples:
-      - context: Creating new theme
-        invocation: /theme-maker
       - context: Interactive theme wizard
-        invocation: /create-theme
-    anti_patterns:
-      - Don't create incomplete themes missing required agents
+        invocation: /theme maker
+    anti_patterns: []
     related_skills: [theme]
     keywords: [personas, custom, generation, wizard]
 

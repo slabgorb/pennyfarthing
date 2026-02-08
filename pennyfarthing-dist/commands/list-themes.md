@@ -1,21 +1,19 @@
 ---
-description: List all available persona themes
+description: |
+  DEPRECATED: Use /theme list instead.
+  Theme commands have been consolidated under /theme.
+deprecated: true
+redirect: theme
 ---
 
-# List Themes
+# /list-themes - DEPRECATED
 
-Show all available persona themes with the current theme highlighted.
+Theme commands have been consolidated into `/theme`. Use:
 
-## Instructions
-
-Run the theme list command and display the output directly to the user:
-
-```bash
-pf theme list
-```
-
-**IMPORTANT:** Copy the command output into your response text so the user sees it in the console. Bash tool output may be collapsed in the UI.
-
-The output shows:
-- Current theme marked with `*`
-- Tier in brackets: `[S]` elite, `[A]` excellent, `[B]` strong, `[C]` good, `[D]` below average, `[U]` unbenchmarked
+| Old Command | New Command |
+|-------------|-------------|
+| `/list-themes` | `/theme list` |
+| `/show-theme [name]` | `/theme show [name]` |
+| `/set-theme <name>` | `/theme set <name>` |
+| `/create-theme <name>` | `/theme create <name>` |
+| `/theme-maker` | `/theme maker` |

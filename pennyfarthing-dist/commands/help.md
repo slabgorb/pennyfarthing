@@ -132,14 +132,10 @@ SM → TEA → Dev → Reviewer → SM (finish)
 | `/prime` | Load essential project context at agent activation |
 | `/health-check` | Check Pennyfarthing installation health and apply updates |
 
-### Theme Management (5)
+### Theme Management (1)
 | Command | Description |
 |---------|-------------|
-| `/list-themes` | List all available persona themes |
-| `/show-theme` | Show details of a theme including all agent personas |
-| `/set-theme` | Set the active persona theme |
-| `/create-theme` | Create a new custom persona theme |
-| `/theme-maker` | Interactive wizard for creating custom persona themes |
+| `/theme [list\|show\|set\|create\|maker]` | Manage persona themes — list, show, set, create, or interactive wizard |
 
 ### Creative & Brainstorm (4)
 | Command | Description |
@@ -192,17 +188,17 @@ Pennyfarthing agents adopt personas from themed character sets. There are **102 
 | `breaking-bad` | Breaking Bad characters |
 | `battlestar-galactica` | Battlestar Galactica characters |
 
-Run `/list-themes` to see all 102 available themes.
+Run `/theme list` to see all 102 available themes.
 
 ### Theme Commands
 
 | Command | Description |
 |---------|-------------|
-| `/list-themes` | See all available themes |
-| `/show-theme` | View current theme with character mappings |
-| `/set-theme <name>` | Change to a different theme |
-| `/create-theme` | Create a custom theme |
-| `/theme-maker` | Interactive theme creation wizard |
+| `/theme list` | See all available themes |
+| `/theme show [name]` | View current theme with character mappings |
+| `/theme set <name>` | Change to a different theme |
+| `/theme create <name>` | Create a custom theme |
+| `/theme maker` | Interactive theme creation wizard |
 
 ### Current Theme
 

@@ -1,29 +1,19 @@
 ---
-description: Create a new custom persona theme
+description: |
+  DEPRECATED: Use /theme create or /theme maker instead.
+  Theme commands have been consolidated under /theme.
+deprecated: true
+redirect: theme
 ---
 
-# Create Theme
+# /create-theme - DEPRECATED
 
-Create a new custom theme, optionally based on an existing theme.
+Theme commands have been consolidated into `/theme`. Use:
 
-## Arguments
-
-- `<name>` - Name for the new theme (lowercase, hyphens allowed)
-
-## Options
-
-- `--base <theme>` - Base theme to copy from (defaults to current theme)
-- `--user` - Create as user-level theme (available across all projects)
-
-## Instructions
-
-1. If no theme name provided, ask the user what they want to call their theme.
-
-2. Create the theme:
-   ```bash
-   pf theme create <name> [--base <theme>] [--user]
-   ```
-
-3. Guide the user on next steps:
-   - Edit the theme file to customize agents
-   - Run `pf theme set <name>` to activate
+| Old Command | New Command |
+|-------------|-------------|
+| `/create-theme <name>` | `/theme create <name>` |
+| `/theme-maker` | `/theme maker` |
+| `/list-themes` | `/theme list` |
+| `/show-theme [name]` | `/theme show [name]` |
+| `/set-theme <name>` | `/theme set <name>` |
