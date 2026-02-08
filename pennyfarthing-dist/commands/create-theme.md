@@ -21,9 +21,9 @@ Create a new custom theme, optionally based on an existing theme.
 
 2. Create the theme:
    ```bash
-   pennyfarthing theme create <name> [--base <theme>] [--user]
+   pf theme create <name> [--base <theme>] [--user]
    ```
 
 3. Guide the user on next steps:
    - Edit the theme file to customize agents
-   - Run `/set-theme <name>` to activate
+   - Run `pf theme set <name>` to activate

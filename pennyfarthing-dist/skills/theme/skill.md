@@ -6,11 +6,13 @@ description: Manage persona themes - list available themes, show current/specifi
 # Theme Management Skill
 
 <run>
-To manage persona themes, use the following commands:
-- `/list-themes` - List all available themes
-- `/show-theme` - Show current theme or specific theme details
-- `/set-theme <name>` - Set the active theme
-- `/theme-maker` - Create a new custom theme interactively
+To manage persona themes, use the `pf theme` CLI:
+- `pf theme list` - List all available themes
+- `pf theme show [name]` - Show current theme or specific theme details
+- `pf theme show [name] --full` - Show extended details (OCEAN, quirks, catchphrases)
+- `pf theme set <name>` - Set the active theme
+- `pf theme create <name> [--base <theme>] [--user]` - Create a new custom theme
+- `/theme-maker` - Create a new custom theme interactively (AI-driven)
 </run>
 
 <output>
@@ -25,77 +27,61 @@ Pennyfarthing uses themed personas to give each agent a unique character. This s
 
 | Action | Command |
 |--------|---------|
-| List all themes | `/list-themes` or see below |
-| Show current theme | `/show-theme` |
-| Show specific theme | `/show-theme <name>` |
-| Set active theme | `/set-theme <name>` |
-| Create new theme | `/theme-maker` (interactive) |
+| List all themes | `pf theme list` |
+| Show current theme | `pf theme show` |
+| Show specific theme | `pf theme show <name>` |
+| Show full details | `pf theme show <name> --full` |
+| Set active theme | `pf theme set <name>` |
+| Create new theme | `pf theme create <name>` |
+| Interactive creation | `/theme-maker` |
 
 ## List Available Themes
 
-To see all available themes:
-
 ```bash
-ls pennyfarthing-dist/personas/themes/*.yaml | xargs -I{} basename {} .yaml | sort
-```
-
-To show the current theme:
-
-```bash
-cat .pennyfarthing/config.local.yaml 2>/dev/null || echo "No theme configured"
+pf theme list
 ```
 
 ## Show Theme Details
 
-To display a theme's agent mappings:
-
 ```bash
 # Show current theme
-THEME=$(cat .pennyfarthing/config.local.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
-cat pennyfarthing-dist/personas/themes/${THEME}.yaml
-```
+pf theme show
 
-Or for a specific theme:
+# Show specific theme
+pf theme show blade-runner
 
-```bash
-cat pennyfarthing-dist/personas/themes/<theme-name>.yaml
+# Show full details (OCEAN scores, quirks, catchphrases, helpers)
+pf theme show blade-runner --full
 ```
 
 ## Set Active Theme
 
-To change the active theme:
+```bash
+pf theme set <name>
+```
 
-1. Verify theme exists:
-   ```bash
-   ls pennyfarthing-dist/personas/themes/<name>.yaml
-   ```
+Then start a new agent session to use the new theme.
 
-2. Read current config:
-   ```bash
-   cat .pennyfarthing/config.local.yaml 2>/dev/null || echo "FILE_NOT_FOUND"
-   ```
+## Create Custom Theme
 
-3. Update `.pennyfarthing/config.local.yaml`:
-   - If file exists with `theme:` line: Use Edit tool to replace `theme: <old>` with `theme: <new>`
-   - If file missing or no theme line: Use Write tool to create:
-     ```yaml
-     # Pennyfarthing Local Configuration
-     theme: <name>
-     ```
+```bash
+# Create from default base (minimalist)
+pf theme create my-theme
 
-4. Verify the write succeeded:
-   ```bash
-   cat .pennyfarthing/config.local.yaml
-   ```
+# Create from specific base
+pf theme create my-theme --base blade-runner
 
-5. Start a new agent session to use the new theme
+# Create as user-level theme (available across all projects)
+pf theme create my-theme --user
+```
 
 ## Theme File Locations
 
 | Location | Purpose |
 |----------|---------|
 | `pennyfarthing-dist/personas/themes/` | Built-in themes (96+) |
-| `.claude/pennyfarthing/themes/` | User-created custom themes |
+| `.claude/pennyfarthing/themes/` | Project-level custom themes |
+| `~/.claude/pennyfarthing/themes/` | User-level custom themes |
 | `.pennyfarthing/config.local.yaml` | Theme selection (agent-writable, gitignored) |
 
 ## Theme Structure
@@ -111,9 +97,11 @@ agents:
   sm:
     character: Character Name
     style: Communication style description
-    quote: Signature quote
     trait: Key personality trait
     helper: Helper/assistant description
+    ocean: { O: 3, C: 4, E: 2, A: 3, N: 2 }
+    quirks: [...]
+    catchphrases: [...]
   tea:
     # ...same structure...
   dev:
@@ -122,7 +110,7 @@ agents:
 
 ## Creating Custom Themes
 
-For creating new themes, use `/theme-maker` which provides:
+For interactive creation, use `/theme-maker` which provides:
 - **AI-Driven Mode**: Describe a concept, AI generates all personas
 - **Guided Mode**: Pick from AI-suggested characters
 - **Manual Mode**: Specify every detail yourself
@@ -138,4 +126,4 @@ Themes are available across many categories:
 - **Mythology**: greek-mythology, norse-mythology, arthurian-mythos, etc.
 - **Animated**: futurama, the-simpsons, avatar-the-last-airbender, etc.
 
-Run the list command to see all 96+ available themes.
+Run `pf theme list` to see all available themes.

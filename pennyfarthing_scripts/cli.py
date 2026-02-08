@@ -50,6 +50,11 @@ from pennyfarthing_scripts.deadcode.cli import deadcode
 
 cli.add_command(deadcode)
 
+# Import and register theme group
+from pennyfarthing_scripts.theme.cli import theme
+
+cli.add_command(theme)
+
 
 @cli.group()
 def agent():
