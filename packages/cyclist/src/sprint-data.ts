@@ -27,6 +27,11 @@ export interface SprintStory {
   jiraKey: string | null;
   hasContext?: boolean;
   assignedTo?: string | null;
+  completed?: string | null;
+  started?: string | null;
+  workflow?: string | null;
+  priority?: string | null;
+  description?: string | null;
 }
 
 export interface SprintEpic {
@@ -71,6 +76,11 @@ interface YamlStory {
   status?: string;
   jira?: string;
   assigned_to?: string;
+  completed?: string;
+  started?: string;
+  workflow?: string;
+  priority?: string;
+  description?: string;
 }
 
 interface YamlEpic {
@@ -176,6 +186,11 @@ function transformStory(yamlStory: YamlStory, projectDir: string): SprintStory {
     jiraKey: yamlStory.jira ?? null,
     hasContext: checkStoryContext(projectDir, yamlStory.id),
     assignedTo: yamlStory.assigned_to ?? null,
+    completed: yamlStory.completed ?? null,
+    started: yamlStory.started ?? null,
+    workflow: yamlStory.workflow ?? null,
+    priority: yamlStory.priority ?? null,
+    description: yamlStory.description ?? null,
   };
 }
 

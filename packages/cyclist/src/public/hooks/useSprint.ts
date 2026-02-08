@@ -21,6 +21,11 @@ export interface SprintStory {
   jiraKey: string | null;
   hasContext?: boolean;
   assignedTo?: string | null;
+  completed?: string | null;
+  started?: string | null;
+  workflow?: string | null;
+  priority?: string | null;
+  description?: string | null;
 }
 
 export interface SprintEpic {
