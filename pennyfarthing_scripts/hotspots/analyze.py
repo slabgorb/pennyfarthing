@@ -39,6 +39,26 @@ DEFAULT_EXCLUDES = [
     "*.map",
     "package-lock.json",
     "pnpm-lock.yaml",
+    # Dotfiles
+    ".*",
+    # Images
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.gif",
+    "*.svg",
+    "*.ico",
+    # Fonts
+    "*.woff",
+    "*.woff2",
+    "*.ttf",
+    "*.eot",
+    # Generated files
+    "*.d.ts",
+    "*.snap",
+    "*.d.ts.map",
+    # CI config
+    ".github/*",
 ]
 
 # Regex for identifying bug-fix commits
