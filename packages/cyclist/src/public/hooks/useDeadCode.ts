@@ -1,8 +1,4 @@
-// Stub: useDeadCode.ts — Story 81-3 (MSSCI-14460)
-// This file is a stub created by TEA for RED state.
-// Dev will implement the actual React hook.
-
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface StaleFile {
   path: string;
@@ -46,8 +42,58 @@ export interface UseDeadCodeReturn {
   refresh: () => void;
 }
 
-export function useDeadCode(_options: UseDeadCodeOptions): UseDeadCodeReturn {
-  const [data] = useState<DeadCodeData | null>(null);
-  // Stub: returns static defaults, no fetch logic
-  return { data, isLoading: false, error: null, refresh: () => {} };
+export function useDeadCode(options: UseDeadCodeOptions): UseDeadCodeReturn {
+  const [data, setData] = useState<DeadCodeData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const fetchDeadCode = useCallback(() => {
+    // Cancel any in-flight request
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams({
+      days: String(options.days),
+      layer: options.layer || 'all',
+    });
+    if (options.repo) {
+      params.set('repo', options.repo);
+    }
+
+    fetch(`/api/dead-code?${params}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((json: DeadCodeData) => {
+        setData(json);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsLoading(false);
+      });
+  }, [options.days, options.repo, options.layer]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
+
+  return { data, isLoading, error, refresh: fetchDeadCode };
 }
