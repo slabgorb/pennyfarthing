@@ -2,4 +2,5 @@
 
 from pennyfarthing_scripts.deadcode.cli import deadcode
 
-deadcode()
+if __name__ == "__main__":
+    deadcode()
