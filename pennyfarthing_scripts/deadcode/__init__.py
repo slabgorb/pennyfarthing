@@ -1,5 +1,6 @@
 """
 Dead code detection module.
 
-Provides git-based stale file detection for codebase health analysis.
+Layer 1: Git-based stale file detection.
+Layer 2: Unused TypeScript export detection via ts-prune.
 """
