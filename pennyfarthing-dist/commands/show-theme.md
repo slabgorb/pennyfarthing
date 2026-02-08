@@ -1,28 +1,19 @@
 ---
-description: Show details of a theme including all agent personas
+description: |
+  DEPRECATED: Use /theme show instead.
+  Theme commands have been consolidated under /theme.
+deprecated: true
+redirect: theme
 ---
 
-# Show Theme
+# /show-theme - DEPRECATED
 
-Display full details of a theme including all agent character mappings.
+Theme commands have been consolidated into `/theme`. Use:
 
-## Arguments
-
-- `[name]` - Theme name to show (optional, defaults to current theme)
-- `--full` - Show extended details (OCEAN, quirks, catchphrases, helper)
-
-## Instructions
-
-Run the pf CLI to show theme details:
-
-```bash
-pf theme show [name]
-```
-
-For full agent details including OCEAN scores and catchphrases:
-
-```bash
-pf theme show [name] --full
-```
-
-**IMPORTANT:** Copy the command output into your response text so the user sees it in the console. Bash tool output may be collapsed in the UI.
+| Old Command | New Command |
+|-------------|-------------|
+| `/show-theme [name]` | `/theme show [name]` |
+| `/set-theme <name>` | `/theme set <name>` |
+| `/list-themes` | `/theme list` |
+| `/create-theme <name>` | `/theme create <name>` |
+| `/theme-maker` | `/theme maker` |

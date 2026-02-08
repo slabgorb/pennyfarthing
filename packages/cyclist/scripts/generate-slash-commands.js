@@ -37,6 +37,15 @@ const BUILTIN_COMMANDS = [
 ];
 
 /**
+ * Check if command file is deprecated (has deprecated: true in frontmatter)
+ */
+function isDeprecated(content) {
+  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!match) return false;
+  return /deprecated:\s*true/.test(match[1]);
+}
+
+/**
  * Extract description from YAML frontmatter
  */
 function extractDescription(content) {
@@ -60,6 +69,10 @@ function scanCommands() {
   for (const file of files) {
     const name = '/' + file.replace('.md', '');
     const content = readFileSync(join(commandsDir, file), 'utf8');
+
+    // Skip deprecated commands
+    if (isDeprecated(content)) continue;
+
     const description = extractDescription(content);
 
     if (description) {

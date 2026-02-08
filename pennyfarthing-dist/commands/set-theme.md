@@ -1,30 +1,19 @@
 ---
-description: Set the active persona theme
+description: |
+  DEPRECATED: Use /theme set instead.
+  Theme commands have been consolidated under /theme.
+deprecated: true
+redirect: theme
 ---
 
-# Set Theme
+# /set-theme - DEPRECATED
 
-Change the active persona theme for all agents.
+Theme commands have been consolidated into `/theme`. Use:
 
-## Arguments
-
-- `<name>` - Theme name to activate (required)
-
-## Instructions
-
-1. If no theme name provided, list available themes:
-   ```bash
-   pf theme list
-   ```
-   Then ask the user which theme they want to use.
-
-2. Set the theme:
-   ```bash
-   pf theme set <name>
-   ```
-
-3. Refresh the current agent's persona to apply the new theme:
-   ```bash
-   pf agent start "sm"
-   ```
-   This outputs the updated persona. **Adopt the new character immediately** - do not continue using the old persona.
+| Old Command | New Command |
+|-------------|-------------|
+| `/set-theme <name>` | `/theme set <name>` |
+| `/show-theme [name]` | `/theme show [name]` |
+| `/list-themes` | `/theme list` |
+| `/create-theme <name>` | `/theme create <name>` |
+| `/theme-maker` | `/theme maker` |

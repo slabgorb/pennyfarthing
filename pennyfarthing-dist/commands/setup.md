@@ -59,7 +59,7 @@ cat .pennyfarthing/workflows/project-setup/steps/step-01-discover.md
 
 <related>
 - `/sprint` - Sprint management after setup
-- `/set-theme` - Change themes after setup
+- `/theme set` - Change themes after setup
 - `/workflow` - View available workflows
 - `pennyfarthing doctor` - Validate installation
 </related>

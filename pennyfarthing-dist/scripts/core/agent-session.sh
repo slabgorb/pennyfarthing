@@ -91,7 +91,7 @@ check_theme_version() {
     echo "" >&2
     echo "Warning: Theme '${theme_name}' was created with Pennyfarthing ${theme_version}" >&2
     echo "         Current version: ${current_version} - agent roles may have changed." >&2
-    echo "         Run '/theme-maker --update ${theme_name}' to review." >&2
+    echo "         Run '/theme maker' to review and update." >&2
     echo "" >&2
   fi
 

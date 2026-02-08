@@ -89,10 +89,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Create feature branches in both repos from a story"
   },
   {
-    "name": "/create-theme",
-    "description": "Create a new custom persona theme"
-  },
-  {
     "name": "/dev",
     "description": "Developer - Feature implementation and coding"
   },
@@ -127,10 +123,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/job-fair",
     "description": "Discover which characters in a theme excel at each role"
-  },
-  {
-    "name": "/list-themes",
-    "description": "List all available persona themes"
   },
   {
     "name": "/login",
@@ -209,16 +201,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Detect and run CI locally"
   },
   {
-    "name": "/set-theme",
-    "description": "Set the active persona theme"
-  },
-  {
     "name": "/setup",
     "description": "setup"
-  },
-  {
-    "name": "/show-theme",
-    "description": "Show details of a theme including all agent personas"
   },
   {
     "name": "/sm",
@@ -269,8 +253,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Configure terminal"
   },
   {
-    "name": "/theme-maker",
-    "description": "Interactive wizard for creating custom persona themes"
+    "name": "/theme",
+    "description": "Manage persona themes - list, show, set, create, or interactive wizard"
   },
   {
     "name": "/update-domain-docs",
