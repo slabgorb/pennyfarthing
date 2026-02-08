@@ -86,6 +86,21 @@ export function SprintPanel(): React.ReactElement {
 // =============================================================================
 
 /**
+ * Format email to short display name: "keith.avery@..." -> "K. Avery"
+ */
+function formatAssignee(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const local = email.split('@')[0];
+  const parts = local.split('.');
+  if (parts.length >= 2) {
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1);
+    return `${first}. ${last}`;
+  }
+  return local;
+}
+
+/**
  * Calculate epic progress (done points / total points)
  */
 function calculateEpicProgress(epic: SprintEpic): { done: number; total: number } {
@@ -464,6 +479,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
                     {epic.stories.map((story) => {
                       const hasContext = story.hasContext ?? false;
                       const isBlocked = story.status === 'blocked';
+                      const assigneeDisplay = formatAssignee(story.assignedTo);
                       return (
                         <div
                           key={story.id}
@@ -475,7 +491,17 @@ export function EnhancedSprintPanel(): React.ReactElement {
                         >
                           <StatusBadge status={story.status} storyId={story.id} />
                           {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
-                          <span className="story-title">{story.title}</span>
+                          <div className="story-info">
+                            <span className="story-title">{story.title}</span>
+                            {assigneeDisplay && (
+                              <span
+                                className="story-assignee"
+                                data-testid={`story-assignee-${story.id}`}
+                              >
+                                {assigneeDisplay}
+                              </span>
+                            )}
+                          </div>
                           <ContextIndicator hasContext={hasContext} testIdPrefix="story" id={story.id} />
                           <span
                             className="story-points"

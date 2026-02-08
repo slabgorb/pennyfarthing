@@ -43,7 +43,7 @@ class SyncChange:
     """Represents a single sync change to apply."""
 
     key: str
-    field: Literal["status", "points"]
+    field: Literal["status", "points", "assigned_to"]
     action: Literal["update-yaml", "update-jira"]
     yaml_value: Any
     jira_value: Any
@@ -124,9 +124,14 @@ Examples:
         help="Sync story points",
     )
     parser.add_argument(
+        "--assignee",
+        action="store_true",
+        help="Sync assignee field (Jira -> YAML only)",
+    )
+    parser.add_argument(
         "--all",
         action="store_true",
-        help="Sync all fields (status + points)",
+        help="Sync all fields (status + points + assignee)",
     )
     parser.add_argument(
         "--sprint",
@@ -137,10 +142,11 @@ Examples:
 
     args = parser.parse_args(argv)
 
-    # --all implies both --status and --points
+    # --all implies --status, --points, and --assignee
     if args.all:
         args.status = True
         args.points = True
+        args.assignee = True
 
     return args
 
@@ -156,6 +162,7 @@ def generate_sync_plan(
     *,
     sync_status: bool = False,
     sync_points: bool = False,
+    sync_assignee: bool = False,
     yaml_wins: bool = False,
 ) -> SyncPlan:
     """Generate a sync plan comparing YAML and Jira stories.
@@ -165,6 +172,7 @@ def generate_sync_plan(
         jira_stories: Stories from Jira [{key, fields: {status: {name}, customfield_10031, ...}}]
         sync_status: Whether to sync status field
         sync_points: Whether to sync points field
+        sync_assignee: Whether to sync assignee field (always Jira -> YAML)
         yaml_wins: If True, YAML wins conflicts (default: Jira wins)
 
     Returns:
@@ -247,6 +255,26 @@ def generate_sync_plan(
                     target_value=target_points,
                 )
             )
+
+        # Check assignee differences (always Jira -> YAML, ignores yaml_wins)
+        if sync_assignee:
+            yaml_assignee = yaml_story.get("assigned_to")
+            jira_assignee_obj = jira_story.get("fields", {}).get("assignee")
+            jira_assignee_email = (
+                jira_assignee_obj.get("emailAddress") if jira_assignee_obj else None
+            )
+
+            if yaml_assignee != jira_assignee_email:
+                plan.changes.append(
+                    SyncChange(
+                        key=key,
+                        field="assigned_to",
+                        action="update-yaml",
+                        yaml_value=yaml_assignee,
+                        jira_value=jira_assignee_email,
+                        target_value=jira_assignee_email,
+                    )
+                )
 
     return plan
 
@@ -379,7 +407,10 @@ def _update_story_in_sprint(
     for epic in sprint_data.get("epics", []):
         for story in epic.get("stories", []):
             if story.get("jira") == jira_key:
-                story[field] = value
+                if value is None and field in story:
+                    del story[field]
+                elif value is not None:
+                    story[field] = value
                 return True
 
     return False
@@ -465,8 +496,8 @@ async def async_main(args: argparse.Namespace) -> int:
         Exit code (0 for success, 1 for error)
     """
     # Validate at least one field is selected
-    if not args.status and not args.points:
-        error("Must specify at least one field to sync: --status, --points, or --all")
+    if not args.status and not args.points and not args.assignee:
+        error("Must specify at least one field to sync: --status, --points, --assignee, or --all")
         return 1
 
     # Load sprint data
@@ -510,6 +541,7 @@ async def async_main(args: argparse.Namespace) -> int:
         jira_stories,
         sync_status=args.status,
         sync_points=args.points,
+        sync_assignee=args.assignee,
         yaml_wins=args.yaml_wins,
     )
 

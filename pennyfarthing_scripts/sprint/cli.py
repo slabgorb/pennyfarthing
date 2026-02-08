@@ -91,8 +91,8 @@ def backlog():
             desc = epic["description"].strip().split("\n")[0][:200]
             click.echo(f"*{desc}*")
         click.echo("")
-        click.echo("| ID | Title | Pts | Pri | Status | Workflow |")
-        click.echo("|----|-------|-----|-----|--------|----------|")
+        click.echo("| ID | Title | Pts | Pri | Status | Assigned | Workflow |")
+        click.echo("|----|-------|-----|-----|--------|----------|----------|")
 
         for s in stories:
             title = s.get("title", "?")
@@ -103,7 +103,12 @@ def backlog():
             pri = s.get("priority", "P2")
             stat = s.get("status", "backlog")
             wf = s.get("workflow", "tdd")
-            click.echo(f"| {sid} | {title} | {pts} | {pri} | {stat} | {wf} |")
+            assigned = s.get("assigned_to", "")
+            if assigned:
+                parts = assigned.split("@")[0].split(".")
+                if len(parts) >= 2:
+                    assigned = f"{parts[0][0].upper()}. {parts[-1].capitalize()}"
+            click.echo(f"| {sid} | {title} | {pts} | {pri} | {stat} | {assigned} | {wf} |")
             total_count += 1
             total_points += s.get("points", 0) or 0
 

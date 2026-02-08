@@ -301,6 +301,34 @@ def map_github_to_jira(github_user: str | None) -> str | None:
     return GITHUB_TO_JIRA_MAP.get(github_user, f"{github_user}@1898andco.io")
 
 
+def get_current_user_email() -> str:
+    """Get the current user's Jira email address.
+
+    Resolution order:
+    1. JIRA_USER environment variable
+    2. git config user.email
+    3. Default fallback
+
+    Returns:
+        Email address string
+    """
+    jira_user = os.environ.get("JIRA_USER")
+    if jira_user:
+        return jira_user
+
+    try:
+        result = subprocess.run(
+            ["git", "config", "user.email"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+
+    return "keith.avery@1898andco.io"
+
+
 # =============================================================================
 # JiraClient - Unified REST API client
 # =============================================================================
