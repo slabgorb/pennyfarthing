@@ -25,6 +25,7 @@ from pennyfarthing_scripts.hotspots.analyze import (
     _should_exclude,
     _aggregate_by_directory,
     analyze_repo,
+    analyze_all_repos,
 )
 from pennyfarthing_scripts.hotspots.formatters import (
     format_file_table,
@@ -408,3 +409,231 @@ class TestCLI:
             assert result.exit_code == 0
             data = json.loads(result.output)
             assert data["success"] is True
+
+
+# =============================================================================
+# analyze_all_repos skip_types filtering tests (Story 79-4)
+# =============================================================================
+
+# Mock repos.yaml with type fields
+REPOS_YAML_WITH_TYPES = {
+    "orchestrator": {
+        "path": ".",
+        "type": "orchestrator",
+    },
+    "pennyfarthing": {
+        "path": "pennyfarthing",
+        "type": "framework",
+    },
+    "docs-site": {
+        "path": "docs",
+        "type": "docs",
+    },
+}
+
+
+class TestAnalyzeAllReposSkipTypes:
+    """Tests for skip_types parameter on analyze_all_repos (Story 79-4).
+
+    The skip_types parameter should filter repos by their 'type' field
+    in repos.yaml before analysis begins.
+    """
+
+    def test_skip_types_parameter_exists(self):
+        """analyze_all_repos() must accept a skip_types parameter."""
+        import inspect
+        sig = inspect.signature(analyze_all_repos)
+        assert "skip_types" in sig.parameters, (
+            "analyze_all_repos() must accept a 'skip_types' parameter"
+        )
+
+    def test_skip_orchestrator_excludes_orchestrator_repo(self):
+        """Passing skip_types=['orchestrator'] should exclude repos with type 'orchestrator'."""
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            new_callable=AsyncMock,
+            return_value=HotspotResult(
+                success=True, repo_name="pennyfarthing", repo_path="/tmp/pennyfarthing",
+                time_window_days=90, commit_count=1,
+            ),
+        ) as mock_analyze:
+            result = asyncio.run(
+                analyze_all_repos(Path("/tmp"), days=90, skip_types=["orchestrator"])
+            )
+            assert result.success is True
+            # Should NOT have analyzed the orchestrator repo
+            analyzed_names = [call.args[0] for call in mock_analyze.call_args_list]
+            assert "orchestrator" not in analyzed_names
+            # Should have analyzed non-orchestrator repos
+            assert "pennyfarthing" in analyzed_names
+
+    def test_skip_multiple_types(self):
+        """Passing multiple skip_types should exclude all matching repos."""
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            new_callable=AsyncMock,
+            return_value=HotspotResult(
+                success=True, repo_name="pennyfarthing", repo_path="/tmp/pennyfarthing",
+                time_window_days=90, commit_count=1,
+            ),
+        ) as mock_analyze:
+            result = asyncio.run(
+                analyze_all_repos(Path("/tmp"), days=90, skip_types=["orchestrator", "docs"])
+            )
+            assert result.success is True
+            analyzed_names = [call.args[0] for call in mock_analyze.call_args_list]
+            assert "orchestrator" not in analyzed_names
+            assert "docs-site" not in analyzed_names
+            assert "pennyfarthing" in analyzed_names
+
+    def test_no_skip_types_analyzes_all_repos(self):
+        """When skip_types is None, all repos should be analyzed (backward compatible)."""
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            new_callable=AsyncMock,
+            return_value=HotspotResult(
+                success=True, repo_name="test", repo_path="/tmp/test",
+                time_window_days=90, commit_count=1,
+            ),
+        ) as mock_analyze:
+            result = asyncio.run(
+                analyze_all_repos(Path("/tmp"), days=90, skip_types=None)
+            )
+            assert result.success is True
+            assert mock_analyze.call_count == 3  # all 3 repos
+
+    def test_empty_skip_types_analyzes_all_repos(self):
+        """Empty skip_types list should analyze all repos (same as None)."""
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            new_callable=AsyncMock,
+            return_value=HotspotResult(
+                success=True, repo_name="test", repo_path="/tmp/test",
+                time_window_days=90, commit_count=1,
+            ),
+        ) as mock_analyze:
+            result = asyncio.run(
+                analyze_all_repos(Path("/tmp"), days=90, skip_types=[])
+            )
+            assert result.success is True
+            assert mock_analyze.call_count == 3
+
+    def test_skip_all_types_returns_error(self):
+        """If skip_types filters out ALL repos, should return error result."""
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ):
+            result = asyncio.run(
+                analyze_all_repos(
+                    Path("/tmp"), days=90,
+                    skip_types=["orchestrator", "framework", "docs"],
+                )
+            )
+            assert result.success is False
+            assert "no git repositories" in result.error.lower()
+
+    def test_skip_types_with_missing_type_field(self):
+        """Repos without a 'type' field should NOT be skipped."""
+        repos_yaml = {
+            "orchestrator": {"path": ".", "type": "orchestrator"},
+            "legacy": {"path": "legacy"},  # no type field
+        }
+        with patch(
+            "pennyfarthing_scripts.common.config.load_yaml_config",
+            return_value=repos_yaml,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            new_callable=AsyncMock,
+            return_value=HotspotResult(
+                success=True, repo_name="legacy", repo_path="/tmp/legacy",
+                time_window_days=90, commit_count=1,
+            ),
+        ) as mock_analyze:
+            result = asyncio.run(
+                analyze_all_repos(Path("/tmp"), days=90, skip_types=["orchestrator"])
+            )
+            assert result.success is True
+            analyzed_names = [call.args[0] for call in mock_analyze.call_args_list]
+            assert "legacy" in analyzed_names
+            assert "orchestrator" not in analyzed_names
+
+
+# =============================================================================
+# CLI --skip-type option tests (Story 79-4)
+# =============================================================================
+
+class TestCLISkipType:
+    """Tests for --skip-type CLI option (Story 79-4)."""
+
+    def test_skip_type_appears_in_help(self):
+        """The --skip-type option should appear in analyze --help output."""
+        runner = CliRunner()
+        result = runner.invoke(hotspots, ["analyze", "--help"])
+        assert result.exit_code == 0
+        assert "--skip-type" in result.output
+
+    def test_skip_type_is_repeatable(self):
+        """--skip-type should accept multiple values."""
+        mock_result = MultiRepoHotspotResult(success=True, repo_results=[])
+        with patch(
+            "pennyfarthing_scripts.hotspots.cli._run_analysis",
+            return_value=mock_result,
+        ) as mock_run:
+            runner = CliRunner()
+            result = runner.invoke(hotspots, [
+                "analyze", "--format", "json",
+                "--skip-type", "orchestrator",
+                "--skip-type", "docs",
+            ])
+            assert result.exit_code == 0
+            # Verify skip_type was passed to _run_analysis
+            call_kwargs = mock_run.call_args
+            # _run_analysis should receive skip_type as a tuple of values
+            assert "orchestrator" in str(call_kwargs)
+            assert "docs" in str(call_kwargs)
+
+    def test_skip_type_passed_to_analyze_all_repos(self):
+        """--skip-type values should flow through to analyze_all_repos."""
+        with patch(
+            "pennyfarthing_scripts.common.config.get_project_root",
+            return_value=Path("/tmp"),
+        ), patch(
+            "pennyfarthing_scripts.hotspots.analyze.analyze_all_repos",
+            new_callable=AsyncMock,
+            return_value=MultiRepoHotspotResult(success=True, repo_results=[]),
+        ) as mock_all:
+            runner = CliRunner()
+            result = runner.invoke(hotspots, [
+                "analyze", "--format", "json",
+                "--skip-type", "orchestrator",
+            ])
+            assert result.exit_code == 0
+            # analyze_all_repos should have been called with skip_types
+            mock_all.assert_called_once()
+            call_kwargs = mock_all.call_args
+            assert "orchestrator" in str(call_kwargs)

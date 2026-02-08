@@ -201,8 +201,9 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
   const [viewMode, setViewMode] = useState<ViewMode>('files');
   const [sortField, setSortField] = useState<SortField>('hotspot_score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [includeOrchestrator, setIncludeOrchestrator] = useState(false);
 
-  const { data, isLoading, error, refresh } = useHotspots({ days });
+  const { data, isLoading, error, refresh } = useHotspots({ days, includeOrchestrator });
 
   const handleSort = useCallback((field: SortField) => {
     setSortField((prev) => {
@@ -308,6 +309,15 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
                 Dirs
               </Button>
             </div>
+
+            <label className="hotspots-checkbox">
+              <input
+                type="checkbox"
+                checked={includeOrchestrator}
+                onChange={(e) => setIncludeOrchestrator(e.target.checked)}
+              />
+              <span>Include orchestrator</span>
+            </label>
 
             <Tooltip>
               <TooltipTrigger asChild>

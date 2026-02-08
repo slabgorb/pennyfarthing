@@ -6,11 +6,12 @@ import { join } from 'path';
 export function createHotspotsRouter(getProjectDir: () => string): Router {
   const router = Router();
 
-  // GET /api/hotspots?days=90&repo=pennyfarthing
+  // GET /api/hotspots?days=90&repo=pennyfarthing&skip_type=orchestrator
   router.get('/', (req, res) => {
     const projectDir = getProjectDir();
     const days = String(req.query.days || '90');
     const repo = req.query.repo as string | undefined;
+    const skipType = req.query.skip_type;
 
     const args = [
       '-m', 'pennyfarthing_scripts.hotspots',
@@ -23,6 +24,14 @@ export function createHotspotsRouter(getProjectDir: () => string): Router {
       args.push('--repo', repo);
     } else {
       args.push('--path', projectDir);
+    }
+
+    // Forward skip_type values to CLI
+    if (skipType) {
+      const types = Array.isArray(skipType) ? skipType : [skipType];
+      for (const t of types) {
+        args.push('--skip-type', String(t));
+      }
     }
 
     // Find python in the project's pennyfarthing dir
