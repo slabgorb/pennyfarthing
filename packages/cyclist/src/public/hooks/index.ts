@@ -43,3 +43,7 @@ export type { UseMarkdownParserResult } from './useMarkdownParser';
 
 export { useSyntaxHighlighter } from './useSyntaxHighlighter';
 export type { UseSyntaxHighlighterResult } from './useSyntaxHighlighter';
+
+// Agent load analysis
+export { useAgentLoad } from './useAgentLoad';
+export type { AgentLoadData, AgentLoadEntry, PruneResult } from './useAgentLoad';
