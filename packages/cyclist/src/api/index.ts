@@ -43,3 +43,6 @@ export { createAgentLoadRouter } from './agent-load.js';
 export { createCodeMarkersRouter } from './code-markers.js';
 // MSSCI-14460: Dead Code API
 export { createDeadCodeRouter } from './dead-code.js';
+// MSSCI-14468: Complexity + Dependencies APIs
+export { createComplexityRouter } from './complexity.js';
+export { createDependenciesRouter } from './dependencies.js';
