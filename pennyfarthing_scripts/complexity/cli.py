@@ -3,8 +3,6 @@ CLI commands for complexity analysis.
 
 Usage:
     python -m pennyfarthing_scripts.complexity analyze [OPTIONS]
-
-Stub implementation — to be completed by Dev.
 """
 
 from __future__ import annotations
@@ -43,12 +41,33 @@ def _common_options(fn):
 
 def _run_analysis(target_path: str | None, exclude: tuple) -> "ComplexityResult":
     """Run analysis and return result."""
-    raise NotImplementedError("_run_analysis not implemented")
+    from pennyfarthing_scripts.complexity.analyze import analyze_complexity
+
+    excludes = list(exclude) if exclude else None
+    p = Path(target_path).resolve() if target_path else Path(".").resolve()
+    return asyncio.run(analyze_complexity(p, excludes))
 
 
 def _output_result(result, fmt: str, output_file: str | None, top: int):
     """Format and output the analysis result."""
-    raise NotImplementedError("_output_result not implemented")
+    from pennyfarthing_scripts.complexity.formatters import (
+        export_csv,
+        export_json,
+        format_file_table,
+    )
+
+    if fmt == "json":
+        text = export_json(result)
+    elif fmt == "csv":
+        text = export_csv(result.files[:top])
+    else:
+        text = format_file_table(result.files, top)
+
+    if output_file:
+        Path(output_file).write_text(text)
+        click.echo(f"Output written to {output_file}", err=True)
+    else:
+        click.echo(text)
 
 
 @complexity.command()
