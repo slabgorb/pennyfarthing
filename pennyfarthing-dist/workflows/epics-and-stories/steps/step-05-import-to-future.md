@@ -10,9 +10,6 @@ thisStepFile: './step-05-import-to-future.md'
 workflowFile: '{workflow_path}/workflow.yaml'
 outputFile: '{planning_artifacts}/epics.md'
 futureYaml: '{project_root}/sprint/future.yaml'
-
-# Related Scripts
-promoteScript: '{project_root}/.pennyfarthing/scripts/sprint/promote-epic.sh'
 ---
 
 <purpose>
