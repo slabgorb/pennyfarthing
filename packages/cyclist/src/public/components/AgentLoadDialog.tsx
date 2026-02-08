@@ -65,10 +65,10 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
     const isExpanded = expandedAgent === entry.agent;
     // Color by token threshold: <3k green, <5k orange, >=5k red
     const barColor = tokens >= 5000
-      ? 'bg-[var(--error-color,#f14c4c)]'
+      ? 'bg-[var(--status-error,#f14c4c)]'
       : tokens >= 3000
-        ? 'bg-[var(--warning-color,#cca700)]'
-        : 'bg-[var(--success-color,#4ec9b0)]';
+        ? 'bg-[var(--status-warning,#cca700)]'
+        : 'bg-[var(--status-success,#4ec9b0)]';
 
     return (
       <Collapsible
@@ -89,7 +89,7 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
             </div>
             <Progress
               value={progressValue}
-              className="h-2.5 bg-muted-foreground/15"
+              className="h-2.5 bg-[var(--border)]"
               indicatorClassName={barColor}
             />
           </div>
@@ -150,11 +150,15 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
 
     if (error) {
       return (
-        <div className="p-4 text-center space-y-2">
-          <div className="text-sm text-destructive">{error.message}</div>
-          <Button variant="outline" size="sm" onClick={refresh}>
-            Retry
-          </Button>
+        <div className="p-4 space-y-3">
+          <div className="p-4 rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 text-[var(--status-error)] text-sm">
+            {error.message}
+          </div>
+          <div className="text-center">
+            <Button variant="outline" size="sm" onClick={refresh}>
+              Retry
+            </Button>
+          </div>
         </div>
       );
     }
@@ -169,10 +173,10 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
           </div>
         )}
         <div className="flex items-center justify-between px-4 py-2">
-          <span data-testid="cached-at" className="text-xs text-text-secondary italic">
+          <span data-testid="cached-at" className="text-xs text-[var(--text-muted)]">
             Cached: {new Date(data.cachedAt).toLocaleString()}
           </span>
-          <Button variant="ghost" size="sm" className="text-xs h-6" onClick={refresh}>
+          <Button variant="ghost" size="sm" className="text-xs h-6 text-[var(--text-muted)] hover:text-[var(--text-primary)]" onClick={refresh}>
             Refresh
           </Button>
         </div>
@@ -188,7 +192,7 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
         onOpenChange={(open) => { if (!open) onClose(); }}
         title="Agent Load Analysis"
         description="Token usage breakdown for all agents"
-        className="max-w-2xl bg-card text-card-foreground"
+        className="max-w-2xl"
       >
         {renderContent()}
       </ToolDialog>

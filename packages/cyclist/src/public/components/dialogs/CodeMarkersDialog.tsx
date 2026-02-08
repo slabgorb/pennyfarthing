@@ -87,86 +87,75 @@ export function CodeMarkersDialog({ open, onOpenChange }: CodeMarkersDialogProps
       )}
 
       {error && (
-        <div className="text-destructive">{error.message}</div>
+        <div className="p-4 rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 text-[var(--status-error)] text-sm">
+          {error.message}
+        </div>
       )}
 
       {!isLoading && !error && data && (
         <>
           {/* Summary stats */}
-          <div className="flex gap-3 mb-3 text-sm" data-testid="code-markers-summary">
-            <span data-testid="summary-total">Total: {data.summary.total_markers}</span>
-            <span data-testid="summary-stale">Stale: {data.summary.stale_markers}</span>
+          <div className="flex gap-4 text-xs text-[var(--text-muted)]" data-testid="code-markers-summary">
+            <span data-testid="summary-total">Total: <span className="tabular-nums font-mono">{data.summary.total_markers}</span></span>
+            <span data-testid="summary-stale">Stale: <span className="tabular-nums font-mono">{data.summary.stale_markers}</span></span>
             {Object.entries(data.summary.by_type).map(([type, count]) => (
-              <span key={type} data-testid={`summary-type-${type.toLowerCase()}`}>{type}: {count}</span>
+              <span key={type} data-testid={`summary-type-${type.toLowerCase()}`}>{type}: <span className="tabular-nums font-mono">{count}</span></span>
             ))}
           </div>
 
           {/* Tabs */}
-          <div role="tablist" className="flex gap-1 mb-3">
-            <button
-              role="tab"
-              aria-selected={activeTab === 'all'}
-              onClick={() => setActiveTab('all')}
-              className={activeTab === 'all' ? 'font-bold' : ''}
-            >
-              All
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'stale'}
-              onClick={() => setActiveTab('stale')}
-              className={activeTab === 'stale' ? 'font-bold' : ''}
-            >
-              Stale
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === 'deprecated'}
-              onClick={() => setActiveTab('deprecated')}
-              className={activeTab === 'deprecated' ? 'font-bold' : ''}
-            >
-              Deprecated
-            </button>
+          <div role="tablist" className="flex gap-4 border-b border-[var(--border)] mb-3">
+            {(['all', 'stale', 'deprecated'] as const).map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-2 text-sm capitalize ${activeTab === tab ? 'border-b-2 border-[var(--accent)] text-[var(--text-primary)] font-medium' : 'text-[var(--text-muted)]'}`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
 
           {/* Table or empty state */}
           {sortedMarkers.length === 0 ? (
-            <div className="text-muted-foreground text-center py-8">No markers found</div>
+            <div className="text-center py-12 text-[var(--text-muted)]">No markers found</div>
           ) : (
             <table role="table" className="w-full text-sm">
               <thead>
-                <tr>
-                  <th className="cursor-pointer text-left" onClick={() => handleSort('marker_type')}>
-                    <span>Type</span>{sortField === 'marker_type' && <span>{sortDirection === 'desc' ? ' v' : ' ^'}</span>}
+                <tr className="border-b border-[var(--border)]">
+                  <th className="cursor-pointer select-none text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2" onClick={() => handleSort('marker_type')}>
+                    Type{sortArrow('marker_type')}
                   </th>
-                  <th className="cursor-pointer text-left" onClick={() => handleSort('path')}>
-                    <span>File</span>{sortField === 'path' && <span>{sortDirection === 'desc' ? ' v' : ' ^'}</span>}
+                  <th className="cursor-pointer select-none text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2" onClick={() => handleSort('path')}>
+                    File{sortArrow('path')}
                   </th>
-                  <th className="cursor-pointer text-right" onClick={() => handleSort('line')}>
-                    <span>Line</span>{sortField === 'line' && <span>{sortDirection === 'desc' ? ' v' : ' ^'}</span>}
+                  <th className="cursor-pointer select-none text-right text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2" onClick={() => handleSort('line')}>
+                    Line{sortArrow('line')}
                   </th>
-                  <th className="text-left">Text</th>
-                  <th className="cursor-pointer text-left" onClick={() => handleSort('author')}>
-                    <span>Author</span>{sortField === 'author' && <span>{sortDirection === 'desc' ? ' v' : ' ^'}</span>}
+                  <th className="text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2">Text</th>
+                  <th className="cursor-pointer select-none text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2" onClick={() => handleSort('author')}>
+                    Author{sortArrow('author')}
                   </th>
-                  <th className="cursor-pointer text-right" onClick={() => handleSort('age_days')}>
-                    <span>Age</span>{sortField === 'age_days' && <span>{sortDirection === 'desc' ? ' v' : ' ^'}</span>}
+                  <th className="cursor-pointer select-none text-right text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2" onClick={() => handleSort('age_days')}>
+                    Age{sortArrow('age_days')}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedMarkers.map((marker, i) => (
-                  <tr key={`${marker.path}:${marker.line}:${i}`}>
-                    <td>
+                  <tr key={`${marker.path}:${marker.line}:${i}`} className="text-[var(--text-primary)]">
+                    <td className="py-1.5">
                       <Badge variant={marker.is_stale ? 'destructive' : 'secondary'}>
                         {marker.marker_type}
                       </Badge>
                     </td>
-                    <td>{marker.path}</td>
-                    <td className="text-right">{marker.line}</td>
-                    <td className="truncate max-w-xs">{marker.text}</td>
-                    <td>{marker.author}</td>
-                    <td className="text-right">{marker.age_days}d</td>
+                    <td className="py-1.5 font-mono text-xs">{marker.path}</td>
+                    <td className="text-right py-1.5 tabular-nums font-mono">{marker.line}</td>
+                    <td className="py-1.5 truncate max-w-xs">{marker.text}</td>
+                    <td className="py-1.5">{marker.author}</td>
+                    <td className="text-right py-1.5 tabular-nums font-mono">{marker.age_days}d</td>
                   </tr>
                 ))}
               </tbody>
