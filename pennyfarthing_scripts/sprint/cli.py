@@ -283,26 +283,31 @@ def story_finish(story_id: str, dry_run: bool):
 
     \b
     Arguments:
-      STORY_ID  - Story ID (e.g., MSSCI-12052)
+      STORY_ID  - Story ID (e.g., 83-2)
     """
-    import subprocess as sp
-
     from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.sprint.story_finish import finish_story
 
-    script = get_project_root() / ".pennyfarthing" / "scripts" / "workflow" / "finish-story.sh"
-    if not script.exists():
-        raise click.ClickException(f"Script not found: {script}")
+    root = get_project_root()
+    result = finish_story(root, story_id, dry_run=dry_run)
 
-    cmd = [str(script), story_id]
-    if dry_run:
-        cmd.append("--dry-run")
+    if not result["success"]:
+        raise click.ClickException(result["error"])
 
-    result = sp.run(cmd, capture_output=True, text=True, cwd=str(get_project_root()))
-    if result.stdout:
-        click.echo(result.stdout.rstrip())
-    if result.returncode != 0:
-        error = result.stderr.strip() if result.stderr else "Unknown error"
-        raise click.ClickException(error)
+    if result.get("dry_run"):
+        click.echo(f"[DRY RUN] Finish story {story_id} ({result.get('jira_key', '?')})")
+        for step in result.get("steps", []):
+            click.echo(f"  {step['step']}. {step['action']}")
+        return
+
+    click.echo(f"=== Story {story_id} Complete ===")
+    jira_key = result.get("jira_key", "")
+    click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
+    for step in result.get("steps", []):
+        warning = step.get("warning", "")
+        error = step.get("error", "")
+        suffix = f" (warning: {warning})" if warning else f" (error: {error})" if error else ""
+        click.echo(f"  {step['step']}. {step['action']}{suffix}")
 
 
 @story.command("claim")
