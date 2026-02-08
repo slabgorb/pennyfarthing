@@ -637,3 +637,95 @@ class TestCLISkipType:
             mock_all.assert_called_once()
             call_kwargs = mock_all.call_args
             assert "orchestrator" in str(call_kwargs)
+
+
+# =============================================================================
+# Expanded DEFAULT_EXCLUDES tests (Story 79-5)
+# =============================================================================
+
+class TestExpandedDefaultExcludes:
+    """Tests for expanded DEFAULT_EXCLUDES patterns (Story 79-5).
+
+    DEFAULT_EXCLUDES should filter dotfiles, images, fonts, generated files,
+    and CI config in addition to the existing patterns.
+    """
+
+    def test_dotfiles_excluded(self):
+        """Dotfiles (.*) should be excluded by default."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude(".gitignore", DEFAULT_EXCLUDES)
+        assert _should_exclude(".eslintrc", DEFAULT_EXCLUDES)
+        assert _should_exclude("some/path/.env", DEFAULT_EXCLUDES)
+        assert _should_exclude(".prettierrc", DEFAULT_EXCLUDES)
+
+    def test_images_excluded(self):
+        """Image files (*.png, *.jpg, *.gif, *.svg, *.ico) should be excluded."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude("assets/logo.png", DEFAULT_EXCLUDES)
+        assert _should_exclude("src/images/hero.jpg", DEFAULT_EXCLUDES)
+        assert _should_exclude("icons/spinner.gif", DEFAULT_EXCLUDES)
+        assert _should_exclude("public/icon.svg", DEFAULT_EXCLUDES)
+        assert _should_exclude("favicon.ico", DEFAULT_EXCLUDES)
+        assert _should_exclude("deep/nested/photo.jpeg", DEFAULT_EXCLUDES)
+
+    def test_fonts_excluded(self):
+        """Font files (*.woff, *.woff2, *.ttf, *.eot) should be excluded."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude("fonts/Inter.woff", DEFAULT_EXCLUDES)
+        assert _should_exclude("fonts/Inter.woff2", DEFAULT_EXCLUDES)
+        assert _should_exclude("assets/font.ttf", DEFAULT_EXCLUDES)
+        assert _should_exclude("assets/font.eot", DEFAULT_EXCLUDES)
+
+    def test_generated_files_excluded(self):
+        """Generated files (*.d.ts, *.snap, *.d.ts.map) should be excluded."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude("dist/types/index.d.ts", DEFAULT_EXCLUDES)
+        assert _should_exclude("src/__snapshots__/App.test.tsx.snap", DEFAULT_EXCLUDES)
+        assert _should_exclude("types/model.d.ts.map", DEFAULT_EXCLUDES)
+
+    def test_ci_config_excluded(self):
+        """CI config (.github/*) should be excluded."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude(".github/workflows/ci.yml", DEFAULT_EXCLUDES)
+        assert _should_exclude(".github/dependabot.yml", DEFAULT_EXCLUDES)
+        assert _should_exclude(".github/CODEOWNERS", DEFAULT_EXCLUDES)
+
+    def test_source_files_not_excluded(self):
+        """Regular source files should NOT be excluded by expanded patterns."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert not _should_exclude("src/app.ts", DEFAULT_EXCLUDES)
+        assert not _should_exclude("src/components/Button.tsx", DEFAULT_EXCLUDES)
+        assert not _should_exclude("lib/utils.py", DEFAULT_EXCLUDES)
+        assert not _should_exclude("src/styles/main.css", DEFAULT_EXCLUDES)
+        assert not _should_exclude("README.md", DEFAULT_EXCLUDES)
+
+    def test_config_files_not_excluded(self):
+        """Config files (.json, .yaml, .yml, .toml) should NOT be excluded
+        (they are filtered client-side, not server-side)."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert not _should_exclude("tsconfig.json", DEFAULT_EXCLUDES)
+        assert not _should_exclude("config/settings.yaml", DEFAULT_EXCLUDES)
+        assert not _should_exclude("pyproject.toml", DEFAULT_EXCLUDES)
+
+    def test_expanded_excludes_in_analyze_repo(self):
+        """analyze_repo should exclude expanded patterns from results."""
+        log_with_artifacts = """COMMIT:abc|Alice|2025-12-01T10:00:00+00:00|feat: add feature
+5\t2\tsrc/app.ts
+3\t1\t.github/workflows/ci.yml
+1\t0\tassets/logo.png
+10\t0\ttypes/index.d.ts
+2\t1\tfonts/Inter.woff2
+4\t2\t.eslintrc"""
+        with patch(
+            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            new_callable=AsyncMock,
+            return_value=(log_with_artifacts, "", 0),
+        ):
+            result = asyncio.run(analyze_repo("test", Path("/tmp"), 90))
+            paths = [h.path for h in result.file_hotspots]
+            assert "src/app.ts" in paths
+            assert ".github/workflows/ci.yml" not in paths
+            assert "assets/logo.png" not in paths
+            assert "types/index.d.ts" not in paths
+            assert "fonts/Inter.woff2" not in paths
+            assert ".eslintrc" not in paths
