@@ -274,9 +274,10 @@ def sync(epic, dry_run, transition, points, sync_all):
 @click.option("--yaml-wins", is_flag=True, help="Prefer YAML values on conflict")
 @click.option("--status", is_flag=True, help="Sync status field")
 @click.option("--points", is_flag=True, help="Sync story points")
+@click.option("--assignee", is_flag=True, help="Sync assignee field (Jira -> YAML only)")
 @click.option("--all", "sync_all", is_flag=True, help="Sync all fields")
 @click.option("--sprint", "sprint_id", help="Target specific sprint")
-def bidirectional(dry_run, yaml_wins, status, points, sync_all, sprint_id):
+def bidirectional(dry_run, yaml_wins, status, points, assignee, sync_all, sprint_id):
     """Bidirectional sync between YAML and Jira."""
     from pennyfarthing_scripts.jira.bidirectional import main as bidirectional_main
 
@@ -289,6 +290,8 @@ def bidirectional(dry_run, yaml_wins, status, points, sync_all, sprint_id):
         args.append("--status")
     if points or sync_all:
         args.append("--points")
+    if assignee or sync_all:
+        args.append("--assignee")
     if sync_all:
         args.append("--all")
     if sprint_id:
