@@ -348,9 +348,6 @@ export default function MessageView({ messages }: MessageViewProps): React.React
                 <span className="turn-speaker">
                   {turn.speaker === 'user' ? userName : agentName}
                 </span>
-                <span className="turn-timestamp">
-                  {formatTurnTime(turn.timestamp)}
-                </span>
                 {turn.speaker === 'agent' && roleAbbrev && (
                   <Badge
                     variant="default"
@@ -360,6 +357,9 @@ export default function MessageView({ messages }: MessageViewProps): React.React
                     {roleAbbrev}
                   </Badge>
                 )}
+                <span className="turn-timestamp">
+                  {formatTurnTime(turn.timestamp)}
+                </span>
               </div>
               {turn.items.map((item) => {
                 const idx = globalIdx++;

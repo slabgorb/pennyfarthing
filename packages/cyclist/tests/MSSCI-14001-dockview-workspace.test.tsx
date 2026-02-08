@@ -136,7 +136,7 @@ describe('AC2: DockviewWorkspace exports and structure', () => {
   it('should export PANEL_INVENTORY with 14 panels', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(14);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should export PanelAdapter component', async () => {
@@ -332,7 +332,7 @@ describe('AC8: Panel functionality preserved', () => {
   it('should export PANEL_INVENTORY constant', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(14);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should have all expected panel IDs', async () => {

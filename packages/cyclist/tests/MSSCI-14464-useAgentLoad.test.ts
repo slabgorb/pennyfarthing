@@ -267,9 +267,8 @@ describe('MSSCI-14464: useAgentLoad Hook (Story 82-3)', () => {
 
       await waitFor(() => {
         expect(result.current.error).toBeNull();
+        expect(result.current.data).not.toBeNull();
       });
-
-      expect(result.current.data).not.toBeNull();
     });
   });
 
