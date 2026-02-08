@@ -216,9 +216,9 @@ def set_theme(name: str):
 
 @theme.command("create")
 @click.argument("name")
-@click.option("--base", default="minimalist", show_default=True, help="Base theme to copy from")
+@click.option("--base", default=None, help="Base theme to copy from (defaults to current theme)")
 @click.option("--user", is_flag=True, help="Create as user-level theme (~/.claude/pennyfarthing/themes/)")
-def create(name: str, base: str, user: bool):
+def create(name: str, base: str | None, user: bool):
     """Create a new custom theme from a base theme.
 
     \b
@@ -230,9 +230,13 @@ def create(name: str, base: str, user: bool):
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.common.themes import (
+        get_current_theme,
         list_themes,
         resolve_theme_path,
     )
+
+    if not base:
+        base = get_current_theme() or "blade-runner"
 
     if name != name.lower():
         raise click.ClickException("Theme name must be lowercase")
