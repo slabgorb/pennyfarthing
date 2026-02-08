@@ -354,21 +354,17 @@ async def execute_sync_plan(
 
     # Execute YAML updates (sequential, file-based)
     if yaml_updates:
-        # Load current sprint data
         from pennyfarthing_scripts.common.config import get_project_root
+        from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
 
         root = get_project_root()
         sprint_file = sprint_path or (root / "sprint" / "current-sprint.yaml")
 
         if sprint_file.exists():
-            import yaml
-
-            with open(sprint_file) as f:
-                sprint_data = yaml.safe_load(f)
+            sprint_data = read_sprint(sprint_file)
 
             # Apply YAML updates
             for change in yaml_updates:
-                # Find and update the story in sprint data
                 updated = _update_story_in_sprint(
                     sprint_data, change.key, change.field, change.target_value
                 )
@@ -376,10 +372,9 @@ async def execute_sync_plan(
                     result.changes_applied += 1
                     result.yaml_modified = True
 
-            # Write back if modified
+            # Write back if modified (handles shards automatically)
             if result.yaml_modified:
-                with open(sprint_file, "w") as f:
-                    yaml.dump(sprint_data, f, default_flow_style=False, sort_keys=False)
+                write_sprint(sprint_file, sprint_data)
 
     return result
 
