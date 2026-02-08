@@ -55,6 +55,11 @@ from pennyfarthing_scripts.theme.cli import theme
 
 cli.add_command(theme)
 
+# Import and register healthscore group
+from pennyfarthing_scripts.healthscore.cli import healthscore
+
+cli.add_command(healthscore)
+
 
 @cli.group()
 def agent():
