@@ -5,7 +5,7 @@
  * Story MSSCI-14189 - Enhanced Sprint Panel with story management and epic actions
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Loader, Circle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -246,12 +246,14 @@ export function EnhancedSprintPanel(): React.ReactElement {
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
   const [actionError, setActionError] = useState<Error | null>(null);
 
-  // Expand all epics by default when data first loads
+  // Expand all epics by default when data first loads (once only)
+  const hasInitializedExpansion = useRef(false);
   useEffect(() => {
-    if (data?.epics && expandedEpics.size === 0) {
+    if (data?.epics && !hasInitializedExpansion.current) {
+      hasInitializedExpansion.current = true;
       setExpandedEpics(new Set(data.epics.map((e) => e.id)));
     }
-  }, [data?.epics, expandedEpics.size]);
+  }, [data?.epics]);
 
   // Toggle epic expansion
   const toggleEpic = useCallback((epicId: string) => {

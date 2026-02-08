@@ -567,6 +567,7 @@ export interface ElectronAPI {
   skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
   layout: ElectronLayoutAPI; // MSSCI-12706: Layout persistence
   avatar: ElectronAvatarAPI; // MSSCI-12777: User avatar
+  shell: { openExternal: (url: string) => Promise<void> };
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -813,6 +814,13 @@ function createElectronAPI(): ElectronAPI {
         setCached: (url: string) => ipcRenderer.invoke('avatar:setCached', url),
         clearCache: () => ipcRenderer.invoke('avatar:clearCache'),
       },
+      // Shell API - open URLs in system browser
+      shell: {
+        openExternal: (url: string) => {
+          const { shell } = require('electron');
+          return shell.openExternal(url);
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -1013,6 +1021,10 @@ function createElectronAPI(): ElectronAPI {
         getCached: () => Promise.resolve(null),
         setCached: (_url: string) => Promise.resolve(),
         clearCache: () => Promise.resolve(),
+      },
+      // Shell API - test stub
+      shell: {
+        openExternal: (_url: string) => Promise.resolve(),
       },
     };
   }
