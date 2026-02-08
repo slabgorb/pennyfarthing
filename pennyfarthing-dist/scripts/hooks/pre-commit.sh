@@ -8,8 +8,8 @@
 # 3. Validates sprint YAML files when sprint/*.yaml is modified
 #
 # Installation:
-#   Installed to .git/hooks/pre-commit by pennyfarthing init or doctor --fix
-#   Or symlink: ln -sf ../../pennyfarthing-dist/scripts/hooks/pre-commit.sh .git/hooks/pre-commit
+#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 
 set -uo pipefail
 

@@ -4,15 +4,21 @@
 # Checks if sprint files were modified and reminds to sync to Jira.
 #
 # Installation:
-#   Installed to .git/hooks/pre-push by pennyfarthing init or doctor --fix
-#   Or symlink: ln -sf ../../pennyfarthing-dist/scripts/hooks/pre-push.sh .git/hooks/pre-push
+#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 
 set -uo pipefail
 
-# Self-locate (resolve symlink first for .git/hooks/ symlinks)
+# Find project root
+# Try find-root.sh via symlink resolution first, then fall back to .git location
 REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
-if ! source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh" 2>/dev/null; then
-    exit 0
+FIND_ROOT="$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
+if [[ -f "$FIND_ROOT" ]]; then
+    source "$FIND_ROOT"
+else
+    # Running as a copy in .git/hooks/ — derive PROJECT_ROOT from git dir
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." && pwd)"
+    export PROJECT_ROOT
 fi
 
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"

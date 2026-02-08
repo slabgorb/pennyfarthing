@@ -37,13 +37,13 @@ export interface CheckResult {
 export async function doctorCommand(options: DoctorOptions): Promise<void> {
   const projectRoot = process.cwd();
 
-  // Handle dogfooding mode - run the dogfood script instead
+  // Handle dogfood mode - run checks for framework/orchestrator development
   if (options.dogfood) {
     const dogfoodScript = join(projectRoot, 'pennyfarthing-dist/scripts/misc/doctor-dogfood.sh');
 
     if (!existsSync(dogfoodScript)) {
-      logger.error('Dogfood mode requires the pennyfarthing repo (pennyfarthing-dist/ not found)');
-      logger.info('This flag is for developers working on pennyfarthing itself.');
+      logger.error('Dogfood mode requires pennyfarthing-dist/ (framework repo or orchestrator with inlined pennyfarthing/)');
+      logger.info('This flag is for framework development and orchestrator repos.');
       process.exit(1);
     }
 
@@ -84,6 +84,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkUserFiles(projectRoot));
   results.push(...checkDirectories(projectRoot));
   results.push(...checkHooks(projectRoot));
+  results.push(...checkGitHooks(projectRoot, nodeModulesPath));
   results.push(...checkFileLayout(projectRoot));
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
@@ -103,6 +104,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
+    { name: 'Git Hooks', filter: (r: CheckResult) => r.name.startsWith('git-hook/') },
     { name: 'File Layout', filter: (r: CheckResult) => r.name.startsWith('layout/') },
     { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') },
     { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') },
@@ -1493,6 +1495,84 @@ function checkHooks(projectRoot: string): CheckResult[] {
         name,
         status: 'fail',
         detail: 'Cannot read hook'
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Check git hooks in .git/hooks/ are up-to-date with package source.
+ * Detects stale copies that were installed by `pennyfarthing init` but never refreshed.
+ * Provides --fix to overwrite stale hooks with current package content.
+ */
+function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  const gitHooksDir = join(projectRoot, '.git/hooks');
+  if (!pathExists(gitHooksDir)) {
+    return results;
+  }
+
+  if (!nodeModulesPath) {
+    return results;
+  }
+
+  const hooks = [
+    { source: 'pre-commit.sh', dest: 'pre-commit', marker: 'pennyfarthing' },
+    { source: 'pre-push.sh', dest: 'pre-push', marker: 'pennyfarthing' },
+    { source: 'post-merge.sh', dest: 'post-merge', marker: 'pennyfarthing' },
+  ];
+
+  for (const hook of hooks) {
+    const sourcePath = join(nodeModulesPath, 'scripts/hooks', hook.source);
+    const destPath = join(gitHooksDir, hook.dest);
+
+    if (!pathExists(sourcePath)) {
+      continue;
+    }
+
+    if (!pathExists(destPath)) {
+      results.push({
+        name: `git-hook/${hook.dest}`,
+        status: 'warn',
+        detail: 'Not installed',
+        fix: () => {
+          const content = readFileSync(sourcePath, 'utf8');
+          writeFileSync(destPath, content, { mode: 0o755 });
+        }
+      });
+      continue;
+    }
+
+    const existingContent = readFileSync(destPath, 'utf8');
+
+    // Only check hooks that are ours (contain the marker)
+    if (!existingContent.includes(hook.marker)) {
+      results.push({
+        name: `git-hook/${hook.dest}`,
+        status: 'pass',
+        detail: 'Custom (non-pennyfarthing)'
+      });
+      continue;
+    }
+
+    const sourceContent = readFileSync(sourcePath, 'utf8');
+    if (existingContent === sourceContent) {
+      results.push({
+        name: `git-hook/${hook.dest}`,
+        status: 'pass',
+        detail: undefined
+      });
+    } else {
+      results.push({
+        name: `git-hook/${hook.dest}`,
+        status: 'warn',
+        detail: 'Stale — content differs from package',
+        fix: () => {
+          writeFileSync(destPath, sourceContent, { mode: 0o755 });
+        }
       });
     }
   }

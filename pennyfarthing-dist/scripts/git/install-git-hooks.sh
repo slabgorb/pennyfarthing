@@ -1,10 +1,11 @@
 #!/bin/bash
-# install-git-hooks.sh - Install Pennyfarthing git hooks for dogfooding
+# install-git-hooks.sh - Install Pennyfarthing git hooks for framework development
 #
 # Usage: ./pennyfarthing-dist/scripts/install-git-hooks.sh
 #
-# For dogfooding only. Clients use `pennyfarthing init` which copies hooks
-# from node_modules. This script creates symlinks for development.
+# For the pennyfarthing framework repo and orchestrator repos that inline it.
+# End-user projects use `pennyfarthing init` which copies hooks from node_modules.
+# This script creates symlinks so hook changes in pennyfarthing-dist/ take effect immediately.
 
 set -euo pipefail
 
@@ -14,10 +15,11 @@ source "$SCRIPT_DIR/../lib/find-root.sh"
 HOOKS_SOURCE="$PROJECT_ROOT/pennyfarthing-dist/scripts/hooks"
 HOOKS_DEST="$PROJECT_ROOT/.git/hooks"
 
-# Check we're in the pennyfarthing repo (dogfooding)
+# Check we're in a repo with pennyfarthing-dist (framework or orchestrator)
 if [[ ! -d "$PROJECT_ROOT/pennyfarthing-dist" ]]; then
-    echo "Error: This script is for dogfooding only (pennyfarthing repo)"
-    echo "       Clients should use: pennyfarthing init"
+    echo "Error: This script requires pennyfarthing-dist/ at the project root"
+    echo "       (framework repo or orchestrator with inlined pennyfarthing/)"
+    echo "       End-user projects should use: pennyfarthing init"
     exit 1
 fi
 

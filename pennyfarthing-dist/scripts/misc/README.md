@@ -7,7 +7,7 @@ Uncategorized utilities and one-off scripts.
 | Script | Purpose |
 |--------|---------|
 | `deploy.sh` | Deployment script |
-| `doctor-dogfood.sh` | Health check for dogfooding setup |
+| `doctor-dogfood.sh` | Health check for framework/orchestrator development setup |
 | `run-ci.sh` | Run CI locally |
 | `statusline.sh` | Status line configuration |
 | `uninstall.sh` | Uninstall Pennyfarthing from project |

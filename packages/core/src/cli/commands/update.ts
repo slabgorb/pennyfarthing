@@ -26,6 +26,7 @@ import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, migrateSettingsFile, ensureSettingsSymlink } from '../utils/settings.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
+import { installGitHooks } from './init.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -222,6 +223,9 @@ async function updateInstalledContent(
   if (!dryRun) {
     ensureSettingsSymlink(projectRoot);
   }
+
+  // Refresh git hooks (updates stale copies in .git/hooks/)
+  await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
 
   // Ensure Python scripts (pf CLI) are installed
   await installPythonScripts(nodeModulesPath, { dryRun });

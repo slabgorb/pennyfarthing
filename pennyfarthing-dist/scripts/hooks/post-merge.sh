@@ -6,7 +6,8 @@
 # story branch is merged and automatically updating the sprint YAML status.
 #
 # Installation:
-#   Installed to .git/hooks/post-merge by pennyfarthing init or doctor --fix
+#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 #
 # Dependencies:
 #   - yq (for YAML manipulation)
@@ -14,11 +15,17 @@
 
 set -uo pipefail
 
-# Self-locate (resolve symlink first for .git/hooks/ symlinks)
+# Find project root
+# Try find-root.sh via symlink resolution first, then fall back to .git location
 REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
-source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
-
-# PROJECT_ROOT is now set by find-root.sh
+FIND_ROOT="$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
+if [[ -f "$FIND_ROOT" ]]; then
+    source "$FIND_ROOT"
+else
+    # Running as a copy in .git/hooks/ — derive PROJECT_ROOT from git dir
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." && pwd)"
+    export PROJECT_ROOT
+fi
 SESSION_DIR="$PROJECT_ROOT/.session"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
