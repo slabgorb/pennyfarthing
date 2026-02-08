@@ -34,6 +34,7 @@ import {
   createCodeMarkersRouter,
   createPermissionsRouter,
   createAgentLoadRouter,
+  createDeadCodeRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -145,6 +146,8 @@ app.use('/api/permissions', createPermissionsRouter());
 app.use('/api/hotspots', createHotspotsRouter(getProjectDir));
 // MSSCI-14456: Code Markers API
 app.use('/api/code-markers', createCodeMarkersRouter(getProjectDir));
+// MSSCI-14460: Dead Code API
+app.use('/api/dead-code', createDeadCodeRouter(getProjectDir));
 // MSSCI-14461: Agent Load Analyzer
 app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
 
