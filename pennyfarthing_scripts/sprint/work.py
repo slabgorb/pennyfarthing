@@ -35,6 +35,20 @@ def check_story(story_id: str) -> dict[str, Any]:
     status = story.get("status", "backlog")
     assigned = story.get("assigned_to")
 
+    # Check if assigned to someone else
+    if assigned:
+        from pennyfarthing_scripts.jira.client import get_current_user_email
+
+        current_user = get_current_user_email()
+        if assigned != current_user:
+            return {
+                "available": False,
+                "type": "story",
+                "story": story,
+                "reason": f"Assigned to {assigned}",
+                "assigned_to": assigned,
+            }
+
     # Check if already in progress
     if status == "in_progress":
         return {
@@ -78,15 +92,22 @@ def get_next_story() -> dict[str, Any]:
     """Get the highest priority available story.
 
     Considers stories with backlog, ready, or planning status.
+    Excludes stories assigned to other users.
 
     Returns:
         Dict with next story details or error
     """
+    from pennyfarthing_scripts.jira.client import get_current_user_email
     from pennyfarthing_scripts.sprint.loader import get_all_stories
 
+    current_user = get_current_user_email()
     all_stories = get_all_stories()
     available_statuses = {"backlog", "ready", "planning"}
-    backlog = [s for s in all_stories if s.get("status") in available_statuses]
+    backlog = [
+        s for s in all_stories
+        if s.get("status") in available_statuses
+        and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
+    ]
 
     if not backlog:
         return {
@@ -94,11 +115,14 @@ def get_next_story() -> dict[str, Any]:
             "error": "No stories in backlog",
         }
 
-    # Sort by priority (P0 > P1 > P2 > P3)
+    # Sort by priority (P0 > P1 > P2 > P3), preferring own assignments
     priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
     sorted_stories = sorted(
         backlog,
-        key=lambda s: priority_order.get(s.get("priority", "P2"), 2),
+        key=lambda s: (
+            0 if s.get("assigned_to") == current_user else 1,
+            priority_order.get(s.get("priority", "P2"), 2),
+        ),
     )
 
     next_story = sorted_stories[0]
