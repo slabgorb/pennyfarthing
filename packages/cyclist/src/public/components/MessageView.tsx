@@ -24,7 +24,7 @@ import ToolStack from './ToolStack';
 import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
 import { Separator } from '@/components/ui/separator';
-import { isSkillContent } from '../utils/messageFilters';
+import { isSkillContent, extractSkillLabel } from '../utils/messageFilters';
 import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
 import { usePersona } from '../hooks/usePersona';
 import { useColorScheme } from '../hooks/useColorScheme';
@@ -121,9 +121,26 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     const filtered: MessageData[] = [];
     const subagentGroups = new Map<string, SubagentGroup>();
 
+    // Track whether we've already emitted a skill label for this skill invocation.
+    // The first skill message gets replaced with a label; subsequent ones are dropped.
+    let pendingSkillLabel = false;
+
     for (const msg of messages) {
       if (msg.type === 'tool_result') continue;
-      if (msg.type === 'user' && isSkillContent(msg.content)) continue;
+      if (msg.type === 'user' && isSkillContent(msg.content)) {
+        const label = extractSkillLabel(msg.content);
+        if (label && !pendingSkillLabel) {
+          // Replace the first skill message with a short label
+          pendingSkillLabel = true;
+          filtered.push({ ...msg, content: label });
+        }
+        // Drop all other skill body messages (pf agent start, <purpose>, etc.)
+        continue;
+      }
+      // Any non-skill user message resets the skill label tracker
+      if (msg.type === 'user') {
+        pendingSkillLabel = false;
+      }
       if (msg.parent_id) {
         let group = subagentGroups.get(msg.parent_id);
         if (!group) {
