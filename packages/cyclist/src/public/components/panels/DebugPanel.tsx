@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { HotspotsDialog } from '../dialogs/HotspotsDialog';
 import { CodeMarkersDialog } from '../dialogs/CodeMarkersDialog';
+import { ComplexityDialog } from '../dialogs/ComplexityDialog';
+import { DependenciesDialog } from '../dialogs/DependenciesDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
 
 /** Context tier type */
@@ -99,6 +101,8 @@ export function DebugPanel(): React.ReactElement {
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
   const [hotspotsOpen, setHotspotsOpen] = useState(false);
   const [codeMarkersOpen, setCodeMarkersOpen] = useState(false);
+  const [complexityOpen, setComplexityOpen] = useState(false);
+  const [dependenciesOpen, setDependenciesOpen] = useState(false);
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
 
   useEffect(() => {
@@ -290,8 +294,21 @@ export function DebugPanel(): React.ReactElement {
         <Button variant="outline" size="sm" disabled data-testid="tool-launcher-deadcode">
           Dead Code
         </Button>
-        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-complexity">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setComplexityOpen(true)}
+          data-testid="tool-launcher-complexity"
+        >
           Complexity
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDependenciesOpen(true)}
+          data-testid="tool-launcher-dependencies"
+        >
+          Dependencies
         </Button>
         <Button
           variant="outline"
@@ -305,6 +322,8 @@ export function DebugPanel(): React.ReactElement {
 
       <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
       <CodeMarkersDialog open={codeMarkersOpen} onOpenChange={setCodeMarkersOpen} />
+      <ComplexityDialog open={complexityOpen} onOpenChange={setComplexityOpen} />
+      <DependenciesDialog open={dependenciesOpen} onOpenChange={setDependenciesOpen} />
       <AgentLoadDialog isOpen={agentLoadOpen} onClose={() => setAgentLoadOpen(false)} />
     </div>
   );
