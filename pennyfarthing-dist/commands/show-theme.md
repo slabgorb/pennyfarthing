@@ -9,13 +9,20 @@ Display full details of a theme including all agent character mappings.
 ## Arguments
 
 - `[name]` - Theme name to show (optional, defaults to current theme)
+- `--full` - Show extended details (OCEAN, quirks, catchphrases, helper)
 
 ## Instructions
 
-Run the pennyfarthing CLI to show theme details:
+Run the pf CLI to show theme details:
 
 ```bash
-pennyfarthing theme show [name]
+pf theme show [name]
 ```
 
-Present the theme information clearly, showing each agent's character, style, and quote.
+For full agent details including OCEAN scores and catchphrases:
+
+```bash
+pf theme show [name] --full
+```
+
+**IMPORTANT:** Copy the command output into your response text so the user sees it in the console. Bash tool output may be collapsed in the UI.
