@@ -30,7 +30,7 @@ export function ToolDialog({
 }: ToolDialogProps): React.ReactElement {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn('max-w-5xl', className)}>
+      <DialogContent className={cn('max-w-5xl max-h-[80vh] overflow-y-auto', className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
