@@ -394,7 +394,7 @@ Each story: 5-15 files, focused changes
 - Dev Agent: `agents/dev.md`
 - Reviewer Agent: `agents/reviewer.md`
 - Workflow Status Check: `agents/workflow-status-check.md`
-- Tactical Agent Behavior: `guides/tactical-agent-behavior.md`
+- Agent Behavior: `guides/agent-behavior.md`
 
 ---
 
