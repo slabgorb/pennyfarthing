@@ -17,6 +17,7 @@ import { CodeMarkersDialog } from '../dialogs/CodeMarkersDialog';
 import { ComplexityDialog } from '../dialogs/ComplexityDialog';
 import { DependenciesDialog } from '../dialogs/DependenciesDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
+import { DeadCodeDialog } from '../DeadCodeDialog';
 
 /** Context tier type */
 type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
@@ -104,6 +105,7 @@ export function DebugPanel(): React.ReactElement {
   const [complexityOpen, setComplexityOpen] = useState(false);
   const [dependenciesOpen, setDependenciesOpen] = useState(false);
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
+  const [deadCodeOpen, setDeadCodeOpen] = useState(false);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -291,7 +293,12 @@ export function DebugPanel(): React.ReactElement {
         >
           Code Markers
         </Button>
-        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-deadcode">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDeadCodeOpen(true)}
+          data-testid="tool-launcher-deadcode"
+        >
           Dead Code
         </Button>
         <Button
@@ -325,6 +332,7 @@ export function DebugPanel(): React.ReactElement {
       <ComplexityDialog open={complexityOpen} onOpenChange={setComplexityOpen} />
       <DependenciesDialog open={dependenciesOpen} onOpenChange={setDependenciesOpen} />
       <AgentLoadDialog isOpen={agentLoadOpen} onClose={() => setAgentLoadOpen(false)} />
+      <DeadCodeDialog isOpen={deadCodeOpen} onClose={() => setDeadCodeOpen(false)} />
     </div>
   );
 }

@@ -83,16 +83,16 @@ export function DeadCodeDialog({ isOpen, onClose, days = 180, repo }: DeadCodeDi
         </DialogHeader>
 
         {/* Tab bar */}
-        <div className="flex gap-2 border-b pb-2">
+        <div className="flex gap-4 border-b border-[var(--border)]">
           <button
             onClick={() => setActiveTab('stale')}
-            className={cn('px-3 py-1.5 text-sm rounded-t', activeTab === 'stale' && 'bg-accent')}
+            className={cn('pb-2 text-sm', activeTab === 'stale' ? 'border-b-2 border-[var(--accent)] text-[var(--text-primary)] font-medium' : 'text-[var(--text-muted)]')}
           >
             Stale Files <Badge variant="secondary" className="ml-1">{staleCount}</Badge>
           </button>
           <button
             onClick={() => setActiveTab('exports')}
-            className={cn('px-3 py-1.5 text-sm rounded-t', activeTab === 'exports' && 'bg-accent')}
+            className={cn('pb-2 text-sm', activeTab === 'exports' ? 'border-b-2 border-[var(--accent)] text-[var(--text-primary)] font-medium' : 'text-[var(--text-muted)]')}
           >
             Unused Exports <Badge variant="secondary" className="ml-1">{exportCount}</Badge>
           </button>
@@ -100,49 +100,61 @@ export function DeadCodeDialog({ isOpen, onClose, days = 180, repo }: DeadCodeDi
 
         {/* Content area */}
         <ScrollArea className="h-[50vh]">
-          {isLoading && <div className="p-4 text-muted-foreground">Analyzing...</div>}
-          {error && <div className="p-4 text-destructive">Error: {error.message}</div>}
+          {isLoading && <div className="text-center py-12 text-[var(--text-muted)]">Analyzing...</div>}
+          {error && (
+            <div className="m-4 p-4 rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 text-[var(--status-error)] text-sm">
+              {error.message}
+            </div>
+          )}
           {data && activeTab === 'stale' && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr role="row">
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleStaleSort('path')}>File</th>
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleStaleSort('days_since_last_commit')}>Days Stale</th>
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleStaleSort('size_bytes')}>Size</th>
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleStaleSort('last_commit_date')}>Last Commit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedStaleFiles.map((file) => (
-                  <tr key={file.path} role="row">
-                    <td className="p-2 font-mono text-xs">{file.path}</td>
-                    <td className="p-2">{file.days_since_last_commit}</td>
-                    <td className="p-2">{formatBytes(file.size_bytes)}</td>
-                    <td className="p-2">{file.last_commit_date ? new Date(file.last_commit_date).toLocaleDateString() : '—'}</td>
+            sortedStaleFiles.length === 0 ? (
+              <div className="text-center py-12 text-[var(--text-muted)]">No stale files found</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr role="row" className="border-b border-[var(--border)]">
+                    <th className="text-left pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleStaleSort('path')}>File</th>
+                    <th className="text-right pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleStaleSort('days_since_last_commit')}>Days Stale</th>
+                    <th className="text-right pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleStaleSort('size_bytes')}>Size</th>
+                    <th className="text-left pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleStaleSort('last_commit_date')}>Last Commit</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedStaleFiles.map((file) => (
+                    <tr key={file.path} role="row" className="text-[var(--text-primary)]">
+                      <td className="py-1.5 font-mono text-xs">{file.path}</td>
+                      <td className="py-1.5 text-right tabular-nums font-mono">{file.days_since_last_commit}</td>
+                      <td className="py-1.5 text-right tabular-nums font-mono">{formatBytes(file.size_bytes)}</td>
+                      <td className="py-1.5">{file.last_commit_date ? new Date(file.last_commit_date).toLocaleDateString() : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
           )}
           {data && activeTab === 'exports' && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr role="row">
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleExportSort('file')}>File</th>
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleExportSort('symbol')}>Export</th>
-                  <th className="text-left p-2 cursor-pointer" onClick={() => handleExportSort('line')}>Line</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedExports.map((exp) => (
-                  <tr key={`${exp.file}:${exp.symbol}`} role="row">
-                    <td className="p-2 font-mono text-xs">{exp.file}</td>
-                    <td className="p-2">{exp.symbol}</td>
-                    <td className="p-2">{exp.line}</td>
+            sortedExports.length === 0 ? (
+              <div className="text-center py-12 text-[var(--text-muted)]">No unused exports found</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr role="row" className="border-b border-[var(--border)]">
+                    <th className="text-left pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleExportSort('file')}>File</th>
+                    <th className="text-left pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleExportSort('symbol')}>Export</th>
+                    <th className="text-right pb-2 cursor-pointer select-none text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]" onClick={() => handleExportSort('line')}>Line</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedExports.map((exp) => (
+                    <tr key={`${exp.file}:${exp.symbol}`} role="row" className="text-[var(--text-primary)]">
+                      <td className="py-1.5 font-mono text-xs">{exp.file}</td>
+                      <td className="py-1.5">{exp.symbol}</td>
+                      <td className="py-1.5 text-right tabular-nums font-mono">{exp.line}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
           )}
         </ScrollArea>
       </DialogContent>
