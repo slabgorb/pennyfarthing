@@ -25,8 +25,34 @@ vi.mock('../src/public/hooks/useCodeMarkers', () => ({
   })),
 }));
 
-// Note: shadcn/ui mocks for DebugPanel tests are in AC7 describe block using vi.doMock
+// Mock ToolDialog to avoid @/components/ui/dialog and @/lib/utils resolution
+vi.mock('../src/public/components/dialogs/ToolDialog', () => ({
+  ToolDialog: ({ open, onOpenChange, title, description, children }: {
+    open: boolean; onOpenChange: (open: boolean) => void;
+    title: string; description?: string; children?: React.ReactNode;
+  }) => open ? (
+    <div role="dialog" aria-label={title}>
+      <h2>{title}</h2>
+      {description && <p>{description}</p>}
+      {children}
+    </div>
+  ) : null,
+}));
 
+// Mock shadcn/ui components to avoid @/ path resolution in CodeMarkersDialog
+vi.mock('@/components/ui/badge', () => ({
+  Badge: ({ children, variant, ...props }: React.HTMLAttributes<HTMLSpanElement> & { variant?: string }) => (
+    <span data-variant={variant} {...props}>{children}</span>
+  ),
+}));
+
+vi.mock('@/components/ui/skeleton', () => ({
+  Skeleton: (props: React.HTMLAttributes<HTMLDivElement>) => <div data-testid="skeleton" {...props} />,
+}));
+
+// Static import — vi.mock calls above are hoisted before this, so @/ paths
+// in CodeMarkersDialog.tsx are intercepted before Vite transforms the file
+import { CodeMarkersDialog } from '../src/public/components/dialogs/CodeMarkersDialog';
 import { useCodeMarkers } from '../src/public/hooks/useCodeMarkers';
 
 const mockUseCodeMarkers = vi.mocked(useCodeMarkers);
@@ -113,28 +139,24 @@ beforeEach(() => {
 // ============================================================================
 
 describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', () => {
-  it('should export CodeMarkersDialog as a named export', async () => {
-    const mod = await import('../src/public/components/dialogs/CodeMarkersDialog');
-    expect(mod.CodeMarkersDialog).toBeDefined();
-    expect(typeof mod.CodeMarkersDialog).toBe('function');
+  it('should export CodeMarkersDialog as a named export', () => {
+    expect(CodeMarkersDialog).toBeDefined();
+    expect(typeof CodeMarkersDialog).toBe('function');
   });
 
-  it('should accept open and onOpenChange props', async () => {
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
+  it('should accept open and onOpenChange props', () => {
     const onOpenChange = vi.fn();
 
     render(<CodeMarkersDialog open={true} onOpenChange={onOpenChange} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('should not render when closed', async () => {
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
-
+  it('should not render when closed', () => {
     render(<CodeMarkersDialog open={false} onOpenChange={() => {}} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('should render All tab', async () => {
+  it('should render All tab', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -142,13 +164,12 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByRole('tab', { name: /all/i })).toBeInTheDocument();
   });
 
-  it('should render Stale tab', async () => {
+  it('should render Stale tab', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -156,13 +177,12 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByRole('tab', { name: /stale/i })).toBeInTheDocument();
   });
 
-  it('should render Deprecated tab', async () => {
+  it('should render Deprecated tab', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -170,13 +190,12 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByRole('tab', { name: /deprecated/i })).toBeInTheDocument();
   });
 
-  it('should show all markers in All tab by default', async () => {
+  it('should show all markers in All tab by default', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -184,7 +203,6 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // All 5 markers should appear in All tab
@@ -205,7 +223,6 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     await user.click(screen.getByRole('tab', { name: /stale/i }));
@@ -220,7 +237,7 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
     expect(screen.queryByText('src/api/stats.ts')).not.toBeInTheDocument();
   });
 
-  it('should show loading state with skeletons', async () => {
+  it('should show loading state with skeletons', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: null,
       isLoading: true,
@@ -228,7 +245,6 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should show skeleton loading indicators
@@ -238,7 +254,7 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('should show error message on error', async () => {
+  it('should show error message on error', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: null,
       isLoading: false,
@@ -246,7 +262,6 @@ describe('AC3: CodeMarkersDialog displays with TODOs/FIXMEs/Deprecated tabs', ()
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByText(/failed to fetch/i)).toBeInTheDocument();
@@ -267,12 +282,11 @@ describe('AC4: Sortable table within each tab', () => {
     });
   });
 
-  it('should render a table with column headers', async () => {
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
+  it('should render a table with column headers', () => {
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByRole('table')).toBeInTheDocument();
-    // Should have columns: Type, File, Line, Text, Author, Age, Stale
+    // Should have columns: Type, File, Line, Text, Author, Age
     expect(screen.getByText('Type')).toBeInTheDocument();
     expect(screen.getByText('File')).toBeInTheDocument();
     expect(screen.getByText('Line')).toBeInTheDocument();
@@ -283,7 +297,6 @@ describe('AC4: Sortable table within each tab', () => {
   it('should sort by age when Age header is clicked', async () => {
     const user = userEvent.setup();
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Click Age header to sort
@@ -299,7 +312,6 @@ describe('AC4: Sortable table within each tab', () => {
   it('should toggle sort direction when same header is clicked twice', async () => {
     const user = userEvent.setup();
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Click Age header twice
@@ -314,7 +326,6 @@ describe('AC4: Sortable table within each tab', () => {
   it('should sort by file path when File header is clicked', async () => {
     const user = userEvent.setup();
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     await user.click(screen.getByText('File'));
@@ -329,7 +340,7 @@ describe('AC4: Sortable table within each tab', () => {
 // ============================================================================
 
 describe('AC5: Staleness filter applied', () => {
-  it('should mark stale markers with destructive badge variant', async () => {
+  it('should mark stale markers with destructive badge variant', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -337,7 +348,6 @@ describe('AC5: Staleness filter applied', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Stale markers (age_days > 90) should have destructive badge styling
@@ -347,7 +357,7 @@ describe('AC5: Staleness filter applied', () => {
     // Should contain a visual indicator of staleness (e.g., destructive badge or icon)
   });
 
-  it('should not mark non-stale markers with destructive variant', async () => {
+  it('should not mark non-stale markers with destructive variant', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -355,7 +365,6 @@ describe('AC5: Staleness filter applied', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Non-stale marker (age_days: 84, is_stale: false) at src/server.ts
@@ -369,7 +378,7 @@ describe('AC5: Staleness filter applied', () => {
 // ============================================================================
 
 describe('AC6: Summary stats displayed', () => {
-  it('should display total marker count', async () => {
+  it('should display total marker count', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -377,14 +386,13 @@ describe('AC6: Summary stats displayed', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should show total count in the summary stats
     expect(screen.getByText(/Total: 5/)).toBeInTheDocument();
   });
 
-  it('should display stale marker count', async () => {
+  it('should display stale marker count', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -392,14 +400,13 @@ describe('AC6: Summary stats displayed', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should show stale count (3 stale markers)
     expect(screen.getByText(/Stale: 3/)).toBeInTheDocument();
   });
 
-  it('should display by_type breakdown', async () => {
+  it('should display by_type breakdown', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: MOCK_MARKERS_DATA as any,
       isLoading: false,
@@ -407,7 +414,6 @@ describe('AC6: Summary stats displayed', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should display type counts from summary
@@ -415,7 +421,7 @@ describe('AC6: Summary stats displayed', () => {
     expect(screen.getByText(/FIXME: 1/)).toBeInTheDocument();
   });
 
-  it('should show empty state when no markers found', async () => {
+  it('should show empty state when no markers found', () => {
     mockUseCodeMarkers.mockReturnValue({
       data: {
         success: true,
@@ -435,7 +441,6 @@ describe('AC6: Summary stats displayed', () => {
       refresh: vi.fn(),
     });
 
-    const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     expect(screen.getByText(/no markers/i)).toBeInTheDocument();

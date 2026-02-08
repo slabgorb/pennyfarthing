@@ -4,6 +4,8 @@
  *
  * Tests the useCodeMarkers hook that wraps the /api/code-markers endpoint.
  * Pattern mirrors useHotspots / useAgentLoad hooks.
+ *
+ * @vitest-environment happy-dom
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';

@@ -24,7 +24,7 @@ export function CodeMarkersDialog({ open, onOpenChange }: CodeMarkersDialogProps
 
   useEffect(() => {
     if (open) refresh();
-  }, [open]);
+  }, [open, refresh]);
 
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [sortField, setSortField] = useState<SortField>('age_days');
