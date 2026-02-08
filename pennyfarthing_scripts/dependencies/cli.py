@@ -25,13 +25,38 @@ def dependencies():
 
 
 def _run_analysis(target_path: str | None) -> "DependenciesResult":
-    """Run analysis and return result. Stub."""
-    raise NotImplementedError("_run_analysis not implemented")
+    """Run analysis and return result."""
+    from pennyfarthing_scripts.dependencies.analyze import analyze_dependencies
+
+    p = Path(target_path).resolve() if target_path else Path(".").resolve()
+    return asyncio.run(analyze_dependencies(p))
 
 
 def _output_result(result, fmt: str, output_file: str | None):
-    """Format and output the analysis result. Stub."""
-    raise NotImplementedError("_output_result not implemented")
+    """Format and output the analysis result."""
+    from pennyfarthing_scripts.dependencies.formatters import (
+        format_outdated_table,
+        format_audit_table,
+        export_json,
+        export_csv,
+    )
+
+    if fmt == "json":
+        text = export_json(result)
+    elif fmt == "csv":
+        text = export_csv(result.outdated)
+    else:
+        parts = [format_outdated_table(result.outdated)]
+        if result.advisories:
+            parts.append("")
+            parts.append(format_audit_table(result.advisories))
+        text = "\n".join(parts)
+
+    if output_file:
+        Path(output_file).write_text(text)
+        click.echo(f"Output written to {output_file}", err=True)
+    else:
+        click.echo(text)
 
 
 @dependencies.command()
