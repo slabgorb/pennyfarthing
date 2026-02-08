@@ -37,6 +37,7 @@ import {
   createDeadCodeRouter,
   createComplexityRouter,
   createDependenciesRouter,
+  createHealthScoreRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -155,6 +156,8 @@ app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
 // MSSCI-14468: Complexity + Dependencies APIs
 app.use('/api/complexity', createComplexityRouter(getProjectDir));
 app.use('/api/dependencies', createDependenciesRouter(getProjectDir));
+// MSSCI-14471: Health Score API
+app.use('/api/health-score', createHealthScoreRouter(getProjectDir));
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
