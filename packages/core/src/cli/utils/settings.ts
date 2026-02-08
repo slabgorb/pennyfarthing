@@ -209,6 +209,20 @@ export async function mergeSettingsLocalJson(
         logger.info('Added missing session-start.sh hook');
       }
     }
+
+    // Check for auto-load-sm hook (auto-invokes /sm on new sessions)
+    const hasAutoLoadSm = (hooks.SessionStart as unknown[]).some((entry: unknown) =>
+      hookEntryContains(entry, 'auto-load-sm')
+    );
+
+    if (!hasAutoLoadSm && templateContent.hooks?.SessionStart) {
+      const autoLoadSmEntry = findHookEntry(templateContent.hooks.SessionStart, 'auto-load-sm');
+      if (autoLoadSmEntry) {
+        hooks.SessionStart = [...(hooks.SessionStart as unknown[]), autoLoadSmEntry];
+        modified = true;
+        logger.info('Added missing auto-load-sm hook');
+      }
+    }
   }
 
   // Merge SessionEnd hooks if missing
