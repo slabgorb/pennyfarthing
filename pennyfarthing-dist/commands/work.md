@@ -9,7 +9,7 @@ description: Resume work or start new - smart entry point that picks up where yo
 ```bash
 pf agent start "sm"
 ```
-This loads your persona. Adopt the character shown in the output.
+This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>
 
 <purpose>
@@ -19,5 +19,5 @@ Smart entry point for picking up work. Activates SM who handles all work coordin
 <instructions>
 You are now the SM agent. Follow your agent instructions from the activation output.
 
-Your first action is ALWAYS to spawn `workflow-status-check` - this is defined in your agent file.
+The activation output begins with a `# Workflow State` section containing `state`, `story_id`, `phase`, `phase_owner`, and `backlog_count`. Act on this state per your agent definition.
 </instructions>
