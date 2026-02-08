@@ -422,6 +422,7 @@ async def analyze_all_repos(
     days: int = 90,
     excludes: list[str] | None = None,
     branch: str = "--all",
+    skip_types: list[str] | None = None,
 ) -> MultiRepoHotspotResult:
     """Analyze all repos found under project root in parallel.
 
@@ -432,6 +433,7 @@ async def analyze_all_repos(
         days: Time window in days
         excludes: Additional file patterns to exclude
         branch: Branch spec
+        skip_types: Repo types to exclude (e.g. ["orchestrator"])
 
     Returns:
         MultiRepoHotspotResult with per-repo results
@@ -446,6 +448,11 @@ async def analyze_all_repos(
         # Extract repos from repos.yaml
         for repo_name, repo_config in repos_yaml.items():
             if isinstance(repo_config, dict):
+                # Filter by type if skip_types is provided
+                if skip_types:
+                    repo_type = repo_config.get("type")
+                    if repo_type and repo_type in skip_types:
+                        continue
                 repo_path = repo_config.get("path", repo_name)
             else:
                 repo_path = str(repo_config)

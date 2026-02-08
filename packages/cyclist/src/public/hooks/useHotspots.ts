@@ -50,6 +50,8 @@ export interface HotspotData {
 export interface UseHotspotsOptions {
   days: number;
   repo?: string;
+  skipTypes?: string[];
+  includeOrchestrator?: boolean;
 }
 
 export interface UseHotspotsReturn {
@@ -82,6 +84,14 @@ export function useHotspots(options: UseHotspotsOptions): UseHotspotsReturn {
       params.set('repo', options.repo);
     }
 
+    // Determine skip_type values: use explicit skipTypes, or default to ['orchestrator']
+    // unless includeOrchestrator is true
+    const skipTypes = options.skipTypes ??
+      (options.includeOrchestrator ? [] : ['orchestrator']);
+    for (const st of skipTypes) {
+      params.append('skip_type', st);
+    }
+
     fetch(`/api/hotspots?${params}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) {
@@ -98,7 +108,7 @@ export function useHotspots(options: UseHotspotsOptions): UseHotspotsReturn {
         setError(err instanceof Error ? err : new Error(String(err)));
         setIsLoading(false);
       });
-  }, [options.days, options.repo]);
+  }, [options.days, options.repo, options.skipTypes, options.includeOrchestrator]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {

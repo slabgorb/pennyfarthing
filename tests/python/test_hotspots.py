@@ -453,6 +453,8 @@ class TestAnalyzeAllReposSkipTypes:
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
             "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
@@ -476,6 +478,8 @@ class TestAnalyzeAllReposSkipTypes:
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
             "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
@@ -498,6 +502,8 @@ class TestAnalyzeAllReposSkipTypes:
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
             "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
@@ -517,6 +523,8 @@ class TestAnalyzeAllReposSkipTypes:
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
+            "pathlib.Path.exists", return_value=True,
+        ), patch(
             "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
@@ -535,6 +543,8 @@ class TestAnalyzeAllReposSkipTypes:
         with patch(
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
         ):
             result = asyncio.run(
                 analyze_all_repos(
@@ -554,6 +564,8 @@ class TestAnalyzeAllReposSkipTypes:
         with patch(
             "pennyfarthing_scripts.common.config.load_yaml_config",
             return_value=repos_yaml,
+        ), patch(
+            "pathlib.Path.exists", return_value=True,
         ), patch(
             "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
