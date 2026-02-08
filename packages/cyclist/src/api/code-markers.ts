@@ -40,6 +40,7 @@ export function createCodeMarkersRouter(getProjectDir: () => string): Router {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
       timeout: 30000,
+      maxBuffer: 10 * 1024 * 1024,
     }, (err, stdout, stderr) => {
       if (err) {
         console.error('[CodeMarkers] Analysis failed:', stderr || err.message);
