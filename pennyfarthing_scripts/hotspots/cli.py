@@ -38,15 +38,17 @@ def _common_options(fn):
     fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
     fn = click.option("--exclude", multiple=True, help="Additional exclude patterns (repeatable)")(fn)
     fn = click.option("--branch", default="--all", show_default=True, help="Branch spec for git log")(fn)
+    fn = click.option("--skip-type", "skip_type", multiple=True, help="Skip repos by type (repeatable, e.g. --skip-type orchestrator)")(fn)
     return fn
 
 
-def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: tuple, branch: str):
+def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: tuple, branch: str, skip_type: tuple = ()):
     """Run analysis and return result."""
     from pennyfarthing_scripts.hotspots.analyze import analyze_all_repos, analyze_repo
     from pennyfarthing_scripts.common.config import get_project_root
 
     excludes = list(exclude) if exclude else None
+    skip_types = list(skip_type) if skip_type else None
 
     if repo_path:
         # Standalone analysis of a specific path
@@ -75,7 +77,7 @@ def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: t
         # All repos
         project_root = get_project_root()
         return asyncio.run(
-            analyze_all_repos(project_root, days, excludes, branch)
+            analyze_all_repos(project_root, days, excludes, branch, skip_types)
         )
 
 
@@ -130,23 +132,23 @@ def _output_result(result, fmt: str, output_file: str | None, top: int, mode: st
 
 @hotspots.command()
 @_common_options
-def analyze(repo, repo_path, days, top, fmt, output_file, exclude, branch):
+def analyze(repo, repo_path, days, top, fmt, output_file, exclude, branch, skip_type):
     """Full hotspot analysis — files and directories."""
-    result = _run_analysis(repo, repo_path, days, exclude, branch)
+    result = _run_analysis(repo, repo_path, days, exclude, branch, skip_type)
     _output_result(result, fmt, output_file, top, "analyze")
 
 
 @hotspots.command()
 @_common_options
-def files(repo, repo_path, days, top, fmt, output_file, exclude, branch):
+def files(repo, repo_path, days, top, fmt, output_file, exclude, branch, skip_type):
     """File-level hotspot report."""
-    result = _run_analysis(repo, repo_path, days, exclude, branch)
+    result = _run_analysis(repo, repo_path, days, exclude, branch, skip_type)
     _output_result(result, fmt, output_file, top, "files")
 
 
 @hotspots.command()
 @_common_options
-def dirs(repo, repo_path, days, top, fmt, output_file, exclude, branch):
+def dirs(repo, repo_path, days, top, fmt, output_file, exclude, branch, skip_type):
     """Directory-level hotspot report."""
-    result = _run_analysis(repo, repo_path, days, exclude, branch)
+    result = _run_analysis(repo, repo_path, days, exclude, branch, skip_type)
     _output_result(result, fmt, output_file, top, "dirs")
