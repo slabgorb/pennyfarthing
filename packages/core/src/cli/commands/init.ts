@@ -369,7 +369,8 @@ async function generateTemplateFiles(
     { template: 'shared-context.md.template', dest: '.claude/project/docs/shared-context.md' },
     { template: 'agent-scopes.yaml.template', dest: '.pennyfarthing/project/docs/agent-scopes.yaml' },
     { template: 'pennyfarthing-settings.yaml.template', dest: '.pennyfarthing/project/pennyfarthing-settings.yaml' },
-    { template: 'setup-env.sh.template', dest: '.pennyfarthing/project/hooks/setup-env.sh' }
+    { template: 'setup-env.sh.template', dest: '.pennyfarthing/project/hooks/setup-env.sh' },
+    { template: 'auto-load-sm.sh.template', dest: '.pennyfarthing/project/hooks/auto-load-sm.sh' }
   ];
 
   for (const { template, dest } of skipIfExistsTemplates) {

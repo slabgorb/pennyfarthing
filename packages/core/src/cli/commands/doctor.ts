@@ -381,6 +381,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     const hookCheck = checkSessionStartHooks(projectRoot, installationType);
     results.push(hookCheck);
 
+    // Check auto-load-sm hook is configured (auto-invokes /sm on new sessions)
+    const autoLoadSmCheck = checkAutoLoadSmHook(projectRoot);
+    results.push(autoLoadSmCheck);
+
     // Check Stop hook is configured (question reflector enforcement)
     const stopHookCheck = checkStopHook(projectRoot, installationType);
     results.push(stopHookCheck);
@@ -551,6 +555,148 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       status: 'warn',
       detail: 'Could not parse settings.local.json'
     };
+  }
+}
+
+/**
+ * Check that auto-load-sm hook is configured in SessionStart
+ * This auto-invokes /sm agent on new session start
+ */
+function checkAutoLoadSmHook(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    if (!settings.hooks?.SessionStart) {
+      return {
+        name: 'settings/auto-load-sm',
+        status: 'warn',
+        detail: 'Missing SessionStart hooks - auto-load-sm not configured',
+        fix: () => {
+          addAutoLoadSmHook(projectRoot);
+        }
+      };
+    }
+
+    const hasAutoLoadSm = settings.hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('auto-load-sm')
+        );
+      }
+      return false;
+    });
+
+    if (!hasAutoLoadSm) {
+      return {
+        name: 'settings/auto-load-sm',
+        status: 'warn',
+        detail: 'auto-load-sm not configured - /sm will not auto-invoke on startup',
+        fix: () => {
+          addAutoLoadSmHook(projectRoot);
+        }
+      };
+    }
+
+    // Also check that the hook script file exists
+    const hookScript = join(projectRoot, '.pennyfarthing/project/hooks/auto-load-sm.sh');
+    if (!pathExists(hookScript)) {
+      return {
+        name: 'settings/auto-load-sm',
+        status: 'warn',
+        detail: 'Hook registered but script missing at .pennyfarthing/project/hooks/auto-load-sm.sh',
+        fix: () => {
+          ensureDirSync(dirname(hookScript));
+          writeFileSync(hookScript, `#!/usr/bin/env bash
+# Auto-load /sm agent on new session start
+set -euo pipefail
+
+cat <<'HOOKEOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "IMPORTANT: Auto-invoke the /sm agent immediately. Run the Skill tool with skill: \\"sm\\" as your first action. Do not greet the user or do anything else first."
+  }
+}
+HOOKEOF
+`, { mode: 0o755 });
+        }
+      };
+    }
+
+    return {
+      name: 'settings/auto-load-sm',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/auto-load-sm',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add auto-load-sm hook to SessionStart in settings.local.json
+ */
+function addAutoLoadSmHook(projectRoot: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  const requiredHook = {
+    matcher: 'startup',
+    hooks: [
+      {
+        type: 'command',
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/auto-load-sm.sh'
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.SessionStart) {
+    hooks.SessionStart = [requiredHook];
+  } else if (Array.isArray(hooks.SessionStart)) {
+    hooks.SessionStart = [...hooks.SessionStart, requiredHook];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+
+  // Also ensure the hook script exists
+  const hookScript = join(projectRoot, '.pennyfarthing/project/hooks/auto-load-sm.sh');
+  if (!pathExists(hookScript)) {
+    ensureDirSync(dirname(hookScript));
+    writeFileSync(hookScript, `#!/usr/bin/env bash
+# Auto-load /sm agent on new session start
+set -euo pipefail
+
+cat <<'HOOKEOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "IMPORTANT: Auto-invoke the /sm agent immediately. Run the Skill tool with skill: \\"sm\\" as your first action. Do not greet the user or do anything else first."
+  }
+}
+HOOKEOF
+`, { mode: 0o755 });
   }
 }
 
@@ -1095,6 +1241,15 @@ function addSessionStartHooks(projectRoot: string, installationType: string): vo
           command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/setup-env.sh'
         }
       ]
+    },
+    {
+      matcher: 'startup',
+      hooks: [
+        {
+          type: 'command',
+          command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/auto-load-sm.sh'
+        }
+      ]
     }
   ];
 
@@ -1184,6 +1339,15 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
             {
               type: 'command',
               command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/setup-env.sh'
+            }
+          ]
+        },
+        {
+          matcher: 'startup',
+          hooks: [
+            {
+              type: 'command',
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/project/hooks/auto-load-sm.sh'
             }
           ]
         }

@@ -51,6 +51,15 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/project/hooks/setup-env.sh"
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/project/hooks/auto-load-sm.sh"
+          }
+        ]
       }
     ],
     "Stop": [
