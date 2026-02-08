@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { HotspotsDialog } from '../dialogs/HotspotsDialog';
+import { AgentLoadDialog } from '../AgentLoadDialog';
 
 /** Context tier type */
 type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
@@ -96,6 +97,7 @@ export function DebugPanel(): React.ReactElement {
   const [tokenStats, setTokenStats] = useState<Record<string, unknown> | null>(null);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
   const [hotspotsOpen, setHotspotsOpen] = useState(false);
+  const [agentLoadOpen, setAgentLoadOpen] = useState(false);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -284,9 +286,18 @@ export function DebugPanel(): React.ReactElement {
         <Button variant="outline" size="sm" disabled data-testid="tool-launcher-complexity">
           Complexity
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAgentLoadOpen(true)}
+          data-testid="tool-launcher-agent-load"
+        >
+          Analyze All Agents
+        </Button>
       </div>
 
       <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
+      <AgentLoadDialog isOpen={agentLoadOpen} onClose={() => setAgentLoadOpen(false)} />
     </div>
   );
 }
