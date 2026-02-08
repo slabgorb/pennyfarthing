@@ -39,3 +39,5 @@ export { createAuditLogRouter } from './audit-log.js';
 export { createPermissionsRouter } from './permissions.js';
 // MSSCI-14461: Agent Load Analyzer API
 export { createAgentLoadRouter } from './agent-load.js';
+// MSSCI-14456: Code Markers API
+export { createCodeMarkersRouter } from './code-markers.js';

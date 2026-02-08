@@ -25,12 +25,7 @@ vi.mock('../src/public/hooks/useCodeMarkers', () => ({
   })),
 }));
 
-// Mock shadcn/ui components for DebugPanel tests
-vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, disabled, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => (
-    <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
-  ),
-}));
+// Note: shadcn/ui mocks for DebugPanel tests are in AC7 describe block using vi.doMock
 
 import { useCodeMarkers } from '../src/public/hooks/useCodeMarkers';
 
@@ -385,8 +380,8 @@ describe('AC6: Summary stats displayed', () => {
     const { CodeMarkersDialog } = await import('../src/public/components/dialogs/CodeMarkersDialog');
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
-    // Should show total count somewhere in the dialog
-    expect(screen.getByText(/5/)).toBeInTheDocument();
+    // Should show total count in the summary stats
+    expect(screen.getByText(/Total: 5/)).toBeInTheDocument();
   });
 
   it('should display stale marker count', async () => {
@@ -401,7 +396,7 @@ describe('AC6: Summary stats displayed', () => {
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should show stale count (3 stale markers)
-    expect(screen.getByText(/3/)).toBeInTheDocument();
+    expect(screen.getByText(/Stale: 3/)).toBeInTheDocument();
   });
 
   it('should display by_type breakdown', async () => {
@@ -416,8 +411,8 @@ describe('AC6: Summary stats displayed', () => {
     render(<CodeMarkersDialog open={true} onOpenChange={() => {}} />);
 
     // Should display type counts from summary
-    expect(screen.getByText(/TODO/)).toBeInTheDocument();
-    expect(screen.getByText(/FIXME/)).toBeInTheDocument();
+    expect(screen.getByText(/TODO: 2/)).toBeInTheDocument();
+    expect(screen.getByText(/FIXME: 1/)).toBeInTheDocument();
   });
 
   it('should show empty state when no markers found', async () => {
@@ -452,21 +447,31 @@ describe('AC6: Summary stats displayed', () => {
 // ============================================================================
 
 describe('AC7: DebugPanel launcher button activates CodeMarkersDialog', () => {
-  // For DebugPanel tests we need to mock the CodeMarkersDialog import
   beforeEach(() => {
     vi.resetModules();
   });
 
   it('should have Code Markers button that is NOT disabled', async () => {
-    // Mock all dialog imports for DebugPanel
-    vi.mock('../src/public/components/dialogs/HotspotsDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/HotspotsDialog', () => ({
       HotspotsDialog: ({ open }: { open: boolean }) => open ? <div data-testid="hotspots-dialog" /> : null,
     }));
-    vi.mock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
       CodeMarkersDialog: ({ open }: { open: boolean }) => open ? <div data-testid="codemarkers-dialog" /> : null,
     }));
-    vi.mock('../src/public/components/dialogs/AgentLoadDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/AgentLoadDialog', () => ({
       AgentLoadDialog: ({ open }: { open: boolean }) => open ? <div data-testid="agent-load-dialog" /> : null,
+    }));
+    vi.doMock('@/components/ui/button', () => ({
+      Button: ({ children, disabled, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => (
+        <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
+      ),
+      buttonVariants: () => '',
+    }));
+    vi.doMock('@/components/ui/badge', () => ({
+      Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+    }));
+    vi.doMock('@/components/ui/separator', () => ({
+      Separator: (props: any) => <hr {...props} />,
     }));
 
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel');
@@ -477,35 +482,44 @@ describe('AC7: DebugPanel launcher button activates CodeMarkersDialog', () => {
   });
 
   it('should open CodeMarkersDialog when Code Markers button is clicked', async () => {
-    vi.mock('../src/public/components/dialogs/HotspotsDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/HotspotsDialog', () => ({
       HotspotsDialog: ({ open }: { open: boolean }) => open ? <div data-testid="hotspots-dialog" /> : null,
     }));
-    vi.mock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
       CodeMarkersDialog: ({ open }: { open: boolean }) => open ? <div data-testid="codemarkers-dialog" /> : null,
     }));
-    vi.mock('../src/public/components/dialogs/AgentLoadDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/AgentLoadDialog', () => ({
       AgentLoadDialog: ({ open }: { open: boolean }) => open ? <div data-testid="agent-load-dialog" /> : null,
+    }));
+    vi.doMock('@/components/ui/button', () => ({
+      Button: ({ children, disabled, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => (
+        <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
+      ),
+      buttonVariants: () => '',
+    }));
+    vi.doMock('@/components/ui/badge', () => ({
+      Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+    }));
+    vi.doMock('@/components/ui/separator', () => ({
+      Separator: (props: any) => <hr {...props} />,
     }));
 
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel');
     render(<DebugPanel />);
 
-    // Dialog should not be open initially
     expect(screen.queryByTestId('codemarkers-dialog')).not.toBeInTheDocument();
 
-    // Click the Code Markers button
     const user = userEvent.setup();
     await user.click(screen.getByTestId('tool-launcher-codemarkers'));
 
-    // Dialog should now be open
     expect(screen.getByTestId('codemarkers-dialog')).toBeInTheDocument();
   });
 
   it('should close CodeMarkersDialog when it requests close', async () => {
-    vi.mock('../src/public/components/dialogs/HotspotsDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/HotspotsDialog', () => ({
       HotspotsDialog: ({ open }: { open: boolean }) => open ? <div data-testid="hotspots-dialog" /> : null,
     }));
-    vi.mock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/CodeMarkersDialog', () => ({
       CodeMarkersDialog: ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) =>
         open ? (
           <div data-testid="codemarkers-dialog">
@@ -513,8 +527,20 @@ describe('AC7: DebugPanel launcher button activates CodeMarkersDialog', () => {
           </div>
         ) : null,
     }));
-    vi.mock('../src/public/components/dialogs/AgentLoadDialog', () => ({
+    vi.doMock('../src/public/components/dialogs/AgentLoadDialog', () => ({
       AgentLoadDialog: ({ open }: { open: boolean }) => open ? <div data-testid="agent-load-dialog" /> : null,
+    }));
+    vi.doMock('@/components/ui/button', () => ({
+      Button: ({ children, disabled, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => (
+        <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
+      ),
+      buttonVariants: () => '',
+    }));
+    vi.doMock('@/components/ui/badge', () => ({
+      Badge: ({ children, ...props }: any) => <span {...props}>{children}</span>,
+    }));
+    vi.doMock('@/components/ui/separator', () => ({
+      Separator: (props: any) => <hr {...props} />,
     }));
 
     const { DebugPanel } = await import('../src/public/components/panels/DebugPanel');
@@ -522,11 +548,9 @@ describe('AC7: DebugPanel launcher button activates CodeMarkersDialog', () => {
 
     const user = userEvent.setup();
 
-    // Open dialog
     await user.click(screen.getByTestId('tool-launcher-codemarkers'));
     expect(screen.getByTestId('codemarkers-dialog')).toBeInTheDocument();
 
-    // Close dialog
     await user.click(screen.getByTestId('close-codemarkers'));
     expect(screen.queryByTestId('codemarkers-dialog')).not.toBeInTheDocument();
   });

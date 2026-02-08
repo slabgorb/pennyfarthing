@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { HotspotsDialog } from '../dialogs/HotspotsDialog';
+import { CodeMarkersDialog } from '../dialogs/CodeMarkersDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
 
 /** Context tier type */
@@ -97,6 +98,7 @@ export function DebugPanel(): React.ReactElement {
   const [tokenStats, setTokenStats] = useState<Record<string, unknown> | null>(null);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
   const [hotspotsOpen, setHotspotsOpen] = useState(false);
+  const [codeMarkersOpen, setCodeMarkersOpen] = useState(false);
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
 
   useEffect(() => {
@@ -277,7 +279,12 @@ export function DebugPanel(): React.ReactElement {
         >
           Hotspots
         </Button>
-        <Button variant="outline" size="sm" disabled data-testid="tool-launcher-codemarkers">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCodeMarkersOpen(true)}
+          data-testid="tool-launcher-codemarkers"
+        >
           Code Markers
         </Button>
         <Button variant="outline" size="sm" disabled data-testid="tool-launcher-deadcode">
@@ -297,6 +304,7 @@ export function DebugPanel(): React.ReactElement {
       </div>
 
       <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
+      <CodeMarkersDialog open={codeMarkersOpen} onOpenChange={setCodeMarkersOpen} />
       <AgentLoadDialog isOpen={agentLoadOpen} onClose={() => setAgentLoadOpen(false)} />
     </div>
   );
