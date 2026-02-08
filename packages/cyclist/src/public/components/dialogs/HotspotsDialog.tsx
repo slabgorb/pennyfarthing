@@ -28,6 +28,32 @@ type ViewMode = 'files' | 'dirs';
 
 const TIME_WINDOWS = [30, 60, 90] as const;
 
+const SOURCE_EXTENSIONS = new Set([
+  '.ts', '.tsx', '.js', '.jsx', '.py', '.md', '.css', '.scss', '.html',
+]);
+
+const CONFIG_EXTENSIONS = new Set([
+  '.json', '.yaml', '.yml', '.toml', '.env',
+]);
+
+function getExtension(path: string): string {
+  const basename = path.split('/').pop() || '';
+  // Handle dotfiles like .env
+  if (basename.startsWith('.') && !basename.includes('.', 1)) {
+    return '.' + basename.slice(1);
+  }
+  const dotIndex = basename.lastIndexOf('.');
+  return dotIndex > 0 ? basename.slice(dotIndex) : '';
+}
+
+function matchesFilter(path: string, codeOnly: boolean, includeConfig: boolean): boolean {
+  if (!codeOnly) return true;
+  const ext = getExtension(path);
+  if (SOURCE_EXTENSIONS.has(ext)) return true;
+  if (includeConfig && CONFIG_EXTENSIONS.has(ext)) return true;
+  return false;
+}
+
 function SortableHeader({
   label,
   field,
@@ -202,6 +228,8 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
   const [sortField, setSortField] = useState<SortField>('hotspot_score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [includeOrchestrator, setIncludeOrchestrator] = useState(false);
+  const [codeOnly, setCodeOnly] = useState(false);
+  const [includeConfig, setIncludeConfig] = useState(false);
 
   const { data, isLoading, error, refresh } = useHotspots({ days, includeOrchestrator });
 
@@ -248,6 +276,16 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
     }
     return dirs;
   }, [repoResults]);
+
+  const filteredFiles = useMemo(
+    () => allFiles.filter((f) => matchesFilter(f.path, codeOnly, includeConfig)),
+    [allFiles, codeOnly, includeConfig],
+  );
+
+  const filteredDirs = useMemo(
+    () => allDirs.filter((d) => matchesFilter(d.path, codeOnly, includeConfig)),
+    [allDirs, codeOnly, includeConfig],
+  );
 
   const totalCommits = repoResults.reduce((sum, r) => sum + (r.commit_count || 0), 0);
 
@@ -319,6 +357,27 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
               <span>Include orchestrator</span>
             </label>
 
+            <label className="hotspots-checkbox">
+              <input
+                type="checkbox"
+                aria-label="Code only"
+                checked={codeOnly}
+                onChange={(e) => setCodeOnly(e.target.checked)}
+              />
+              <span>Code only</span>
+            </label>
+
+            <label className="hotspots-checkbox">
+              <input
+                type="checkbox"
+                aria-label="Include config"
+                checked={includeConfig}
+                disabled={!codeOnly}
+                onChange={(e) => setIncludeConfig(e.target.checked)}
+              />
+              <span>Include config</span>
+            </label>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="sm" onClick={refresh}>
@@ -332,8 +391,8 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
           {data && (
             <div className="hotspots-summary">
               <span>{totalCommits} commits</span>
-              <span>{allFiles.length} files</span>
-              <span>{allDirs.length} dirs</span>
+              <span>{filteredFiles.length} files</span>
+              <span>{filteredDirs.length} dirs</span>
             </div>
           )}
 
@@ -344,9 +403,9 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
           )}
 
           {data && viewMode === 'files' && (
-            allFiles.length > 0 ? (
+            filteredFiles.length > 0 ? (
               <FileTable
-                hotspots={allFiles.slice(0, 50)}
+                hotspots={filteredFiles.slice(0, 50)}
                 sortField={sortField}
                 sortDirection={sortDirection}
                 onSort={handleSort}
@@ -357,9 +416,9 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
           )}
 
           {data && viewMode === 'dirs' && (
-            allDirs.length > 0 ? (
+            filteredDirs.length > 0 ? (
               <DirTable
-                hotspots={allDirs.slice(0, 50)}
+                hotspots={filteredDirs.slice(0, 50)}
                 sortField={sortField}
                 sortDirection={sortDirection}
                 onSort={handleSort}
