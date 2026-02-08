@@ -15,7 +15,8 @@
 # 2. Squash merge PR and delete remote branch
 # 3. Transition Jira to Done
 # 4. Update sprint YAML (status: done, completed date)
-# 5. Clean up local branch and session file
+# 5. Archive completed epics (if last story in epic was just finished)
+# 6. Clean up local branch and session file
 
 set -euo pipefail
 
@@ -99,8 +100,9 @@ if $DRY_RUN; then
   fi
   echo "  3. Transition $JIRA_KEY to Done"
   echo "  4. Update sprint YAML (status: done, completed: $TODAY)"
-  echo "  5. Delete local branch: $BRANCH"
-  echo "  6. Remove session file"
+  echo "  5. Archive any completed epics"
+  echo "  6. Delete local branch: $BRANCH"
+  echo "  7. Remove session file"
   exit 0
 fi
 
@@ -135,8 +137,12 @@ yq eval -i "(.epics[].stories[] | select(.id == \"$STORY_ID\")).completed = \"$T
 yq eval -i "del((.epics[].stories[] | select(.id == \"$STORY_ID\")).assigned_to)" "$SPRINT_FILE"
 echo "   → status: done, completed: $TODAY"
 
-# Step 5: Clean up git
-echo "5. Cleaning up git..."
+# Step 5: Archive completed epics
+echo "5. Archiving completed epics..."
+pf sprint epic archive 2>/dev/null && echo "   → Checked for completed epics" || echo "   → No epics to archive"
+
+# Step 6: Clean up git
+echo "6. Cleaning up git..."
 git checkout develop 2>/dev/null || git checkout main 2>/dev/null || true
 git pull origin "$(git branch --show-current)" 2>/dev/null || true
 
@@ -144,8 +150,8 @@ if [[ -n "$BRANCH" ]]; then
   git branch -d "$BRANCH" 2>/dev/null || echo "   Local branch already deleted"
 fi
 
-# Step 6: Remove session file
-echo "6. Removing session file..."
+# Step 7: Remove session file
+echo "7. Removing session file..."
 rm "$SESSION_FILE"
 
 echo ""
