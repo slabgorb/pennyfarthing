@@ -4,11 +4,11 @@
  * Dialog displaying code markers (TODO, FIXME, HACK, XXX) with tabs,
  * sortable table, staleness badges, and summary stats.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToolDialog } from './ToolDialog';
-import { useCodeMarkers, CodeMarker } from '../../hooks/useCodeMarkers';
+import { useCodeMarkers } from '../../hooks/useCodeMarkers';
 
 export interface CodeMarkersDialogProps {
   open: boolean;
@@ -21,6 +21,11 @@ type SortDirection = 'asc' | 'desc';
 
 export function CodeMarkersDialog({ open, onOpenChange }: CodeMarkersDialogProps): React.ReactElement {
   const { data, isLoading, error, refresh } = useCodeMarkers({ days: 90, repo: 'pennyfarthing' });
+
+  useEffect(() => {
+    if (open) refresh();
+  }, [open]);
+
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [sortField, setSortField] = useState<SortField>('age_days');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
