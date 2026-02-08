@@ -45,6 +45,11 @@ from pennyfarthing_scripts.jira.cli import jira
 
 cli.add_command(jira)
 
+# Import and register deadcode group
+from pennyfarthing_scripts.deadcode.cli import deadcode
+
+cli.add_command(deadcode)
+
 
 @cli.group()
 def agent():
