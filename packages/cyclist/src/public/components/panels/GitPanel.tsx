@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -90,14 +91,14 @@ function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElemen
           <span className="branch-name">{branch}</span>
         </div>
 
-        {(ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) ? (
+        {((ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) || hasDevelopUpdates) && (
           <div className="sync-status">
             {ahead !== undefined && ahead > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="ahead">↑{ahead}</span>
                 </TooltipTrigger>
-                <TooltipContent>Commits ahead</TooltipContent>
+                <TooltipContent>Commits ahead of remote</TooltipContent>
               </Tooltip>
             )}
             {behind !== undefined && behind > 0 && (
@@ -105,29 +106,22 @@ function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElemen
                 <TooltipTrigger asChild>
                   <span className="behind">↓{behind}</span>
                 </TooltipTrigger>
-                <TooltipContent>Commits behind</TooltipContent>
+                <TooltipContent>Commits behind remote</TooltipContent>
               </Tooltip>
             )}
-          </div>
-        ) : null}
-
-        {hasDevelopUpdates && (
-          <div className="develop-behind-warning">
-            <span className="warning-icon">⚠️</span>
-            <span className="warning-text">develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead</span>
-            {onPullDevelop && (
+            {hasDevelopUpdates && onPullDevelop && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="pull-develop-btn"
+                  <button
+                    className="sync-develop-btn"
                     onClick={() => onPullDevelop(name, path)}
+                    aria-label={`Pull ${developBehind} commits from develop`}
                   >
-                    Pull
-                  </Button>
+                    <RefreshCw size={12} />
+                    <span>{developBehind}</span>
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent>Pull latest from develop</TooltipContent>
+                <TooltipContent>develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead — click to pull</TooltipContent>
               </Tooltip>
             )}
           </div>
