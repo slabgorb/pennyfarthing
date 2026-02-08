@@ -354,21 +354,21 @@ describe('MSSCI-14464: AgentLoadDialog Component (Story 82-3)', () => {
   });
 
   // ===========================================================================
-  // AC13: Total row at bottom
+  // AC13: Total row removed — bars now use threshold colors instead
   // ===========================================================================
 
-  describe('AC13: Total row shows totalAcrossAllAgents', () => {
-    it('should display total token count at the bottom', () => {
+  describe('AC13: No total row (removed by design)', () => {
+    it('should not display a total row', () => {
       render(<AgentLoadDialog isOpen={true} onClose={vi.fn()} />);
 
-      // 40200 formatted as "40,200"
-      expect(screen.getByText('40,200')).toBeInTheDocument();
+      expect(screen.queryByText(/total/i)).not.toBeInTheDocument();
     });
 
-    it('should label the total row clearly', () => {
+    it('should still display all individual agent token counts', () => {
       render(<AgentLoadDialog isOpen={true} onClose={vi.fn()} />);
 
-      expect(screen.getByText(/total/i)).toBeInTheDocument();
+      expect(screen.getByText('5,200')).toBeInTheDocument();
+      expect(screen.getByText('3,000')).toBeInTheDocument();
     });
   });
 
