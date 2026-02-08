@@ -63,6 +63,12 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
     const tokens = entry.totalTokens ?? 0;
     const progressValue = maxTokens > 0 ? (tokens / maxTokens) * 100 : 0;
     const isExpanded = expandedAgent === entry.agent;
+    // Color by token threshold: <3k green, <5k orange, >=5k red
+    const barColor = tokens >= 5000
+      ? 'bg-[var(--error-color,#f14c4c)]'
+      : tokens >= 3000
+        ? 'bg-[var(--warning-color,#cca700)]'
+        : 'bg-[var(--success-color,#4ec9b0)]';
 
     return (
       <Collapsible
@@ -72,35 +78,41 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
       >
         <CollapsibleTrigger asChild>
           <div
-            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 rounded"
+            className="px-4 py-2 cursor-pointer hover:bg-muted/50 rounded-md transition-colors"
             data-testid={`agent-row-${entry.agent}`}
           >
-            <span className="w-24 font-mono text-sm shrink-0">{entry.agent}</span>
-            <span className="w-16 text-right text-sm tabular-nums shrink-0">
-              {tokens.toLocaleString()}
-            </span>
-            <Progress value={progressValue} className="flex-1" />
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-mono text-sm font-medium">{entry.agent}</span>
+              <span className="font-mono text-sm tabular-nums text-text-secondary">
+                {tokens.toLocaleString()}
+              </span>
+            </div>
+            <Progress
+              value={progressValue}
+              className="h-2.5 bg-muted-foreground/15"
+              indicatorClassName={barColor}
+            />
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="ml-6 pl-3 border-l border-muted py-2 space-y-1">
+          <div className="mx-4 mb-3 rounded-md bg-muted/30 p-3 space-y-1">
             {entry.components && entry.components.length > 0 ? (
               entry.components.map((comp) => (
-                <div key={comp.name} className="flex items-center justify-between text-xs text-muted-foreground">
+                <div key={comp.name} className="flex items-center justify-between text-xs text-text-secondary">
                   <span>{formatComponentName(comp.name)}</span>
                   <span className="tabular-nums">{comp.tokens.toLocaleString()}</span>
                 </div>
               ))
             ) : (
-              <div className="text-xs text-muted-foreground">No component breakdown available</div>
+              <div className="text-xs text-text-secondary">No component breakdown available</div>
             )}
-            <div className="pt-2 border-t border-muted mt-2">
-              <div className="text-xs font-medium mb-1">Sidecars</div>
+            <div className="pt-2 border-t border-muted/50 mt-2">
+              <div className="text-xs font-medium mb-1.5 text-text-secondary">Sidecars</div>
               <div className="flex gap-2">
                 {SIDECAR_FILES.map((file) => (
                   <Button
                     key={file}
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     className="text-xs h-6"
                     onClick={(e) => {
@@ -122,12 +134,14 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="space-y-3 p-2">
+        <div className="space-y-3 p-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} data-testid={`skeleton-${i}`} className="flex items-center gap-3">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-2 flex-1" />
+            <div key={i} data-testid={`skeleton-${i}`} className="space-y-1.5 px-4">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <Skeleton className="h-2.5 w-full rounded-full" />
             </div>
           ))}
         </div>
@@ -148,22 +162,21 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
     if (!data) return null;
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {pruneResult?.success && pruneResult.tokensFreed != null && (
-          <div className="text-xs text-green-600 px-3 py-1">
+          <div className="text-xs text-green-600 px-4 py-1">
             Freed {pruneResult.tokensFreed.toLocaleString()} tokens from {pruneResult.agent}/{pruneResult.file}
           </div>
         )}
-        <div data-testid="cached-at" className="text-xs text-muted-foreground px-3">
-          Cached: {new Date(data.cachedAt).toLocaleString()}
-        </div>
-        {sortedAgents.map(renderAgentRow)}
-        <div className="flex items-center gap-3 px-3 py-2 border-t border-muted font-medium">
-          <span className="w-24 text-sm">Total</span>
-          <span className="w-16 text-right text-sm tabular-nums">
-            {data.totalAcrossAllAgents.toLocaleString()}
+        <div className="flex items-center justify-between px-4 py-2">
+          <span data-testid="cached-at" className="text-xs text-text-secondary italic">
+            Cached: {new Date(data.cachedAt).toLocaleString()}
           </span>
+          <Button variant="ghost" size="sm" className="text-xs h-6" onClick={refresh}>
+            Refresh
+          </Button>
         </div>
+        {sortedAgents.map((entry) => renderAgentRow(entry))}
       </div>
     );
   };
@@ -175,7 +188,7 @@ export function AgentLoadDialog({ isOpen, onClose }: AgentLoadDialogProps): Reac
         onOpenChange={(open) => { if (!open) onClose(); }}
         title="Agent Load Analysis"
         description="Token usage breakdown for all agents"
-        className="max-w-lg"
+        className="max-w-2xl bg-card text-card-foreground"
       >
         {renderContent()}
       </ToolDialog>
