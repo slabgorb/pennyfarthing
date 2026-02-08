@@ -30,7 +30,6 @@ Opus Agent (strategic)
     │
     └── Delegates mechanical work via Task tool
             │
-            ├── workflow-status-check (state detection)
             ├── sm-setup (research backlog or setup story)
             ├── sm-finish (preflight checks or execute finish)
             ├── sm-handoff (SM→TEA/Dev with Jira/branch verification)
@@ -54,7 +53,7 @@ The key insight: **Make critical behaviors AUTOMATIC via subagent delegation** r
     └────────┬─────────┘
              │
              │ Task tool invocation
-             │ subagent_type: "workflow-status-check"
+             │ subagent_type: "sm-setup"
              │
              ▼
     ┌──────────────────┐
@@ -87,8 +86,6 @@ The key insight: **Make critical behaviors AUTOMATIC via subagent delegation** r
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ CATEGORY          │ SUBAGENT               │ PURPOSE                    │
 ├───────────────────┼────────────────────────┼────────────────────────────┤
-│ State Detection   │ workflow-status-check  │ Scan files, report state   │
-├───────────────────┼────────────────────────┼────────────────────────────┤
 │ Setup/Init        │ sm-setup       │ Research or setup (MODE)   │
 │                   │ sm-handoff             │ SM→TEA/Dev with Jira/branch│
 ├───────────────────┼────────────────────────┼────────────────────────────┤
@@ -109,14 +106,14 @@ Use Claude Code's Task tool with the `subagent_type` parameter:
 
 ```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
+  subagent_type: "sm-setup"
   model: "haiku"                           # Optional, defaults to haiku
-  description: "Check workflow state"
+  description: "Research backlog"
   prompt: |
-    CALLING_AGENT: SM
+    MODE: research
     PROJECT_ROOT: $CLAUDE_PROJECT_DIR
 
-    Scan .session files and git status to determine workflow state.
+    Scan sprint backlog and report available stories.
 ```
 
 ### Placeholder Substitution
@@ -185,47 +182,6 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 [Retry pattern and escalation format]
 ```
 
-### Real Example: workflow-status-check
-
-**Definition** (from `agents/workflow-status-check.md:14-45`):
-
-```bash
-# Step 1: Scan Session Files
-ls -la .session/*-session.md 2>/dev/null
-
-for f in .session/*-session.md; do
-    [ -f "$f" ] && head -50 "$f"
-done
-
-# Extract: Story ID, Phase, Status, Branch, Jira key
-```
-
-**State Determination** (lines 89-100):
-
-```
-Rules applied in order:
-1. MISSING_EPIC_CONTEXT: No epic context AND no sessions
-2. FINISH_STATE: Phase=approved OR (Phase=review AND Status=approved)
-3. NEW_WORK_STATE: No sessions AND no in_progress stories
-4. IN_PROGRESS_STATE: Session exists with active phase
-```
-
-**Output** (lines 129-183):
-
-```markdown
-## Workflow Status Report
-
-### Detected State
-**{STATE}**
-
-### Active Work Sessions
-| Story | Phase | Status | Days Active |
-|-------|-------|--------|-------------|
-
-### Agent Guidance
-**For {CALLING_AGENT}:** {specific action}
-```
-
 ### Real Example: tea-handoff
 
 **Pre-flight Verification** (from `agents/tea-handoff.md:29-40`):
@@ -281,7 +237,6 @@ The Opus agent reads this report and decides next steps—it doesn't re-execute 
 
 | Scenario | Subagent | Why |
 |----------|----------|-----|
-| Determining workflow state | `workflow-status-check` | Scanning files is mechanical |
 | Creating branches/sessions | `sm-setup MODE=setup` | Git operations are deterministic |
 | Verifying test state | `testing-runner` | Test execution is mechanical |
 | Updating session files | `handoff` | State updates must be reliable |
@@ -353,11 +308,7 @@ Recommended fix: [what calling agent should do]
 
 ### Never Silently Fail
 
-From `agents/workflow-status-check.md:195`:
-
-> If partial failure, report what worked and mark unknowns. **Never silently fail.**
-
-Subagents must always return a result, even if partial. The calling agent decides how to proceed.
+Subagents must always return a result, even if partial. The calling agent decides how to proceed. **Never silently fail.**
 
 ## Anti-Patterns
 
@@ -424,13 +375,13 @@ prompt: |
 
 **Wrong:**
 ```
-Opus spawns workflow-status-check, ignores output, proceeds anyway
+Opus spawns sm-setup, ignores output, proceeds anyway
 ```
 
 **Correct:**
 ```
-Opus spawns workflow-status-check
-→ Reads state (NEW_WORK_STATE, FINISH_STATE, etc.)
+Opus spawns sm-setup
+→ Reads result (backlog stories, setup confirmation, etc.)
 → Branches logic based on result
 ```
 
@@ -463,7 +414,6 @@ If edit fails:
 ## References
 
 ### Subagent Definitions
-- State Detection: `agents/workflow-status-check.md`
 - SM Setup/Research: `agents/sm-setup.md`
 - SM Finish: `agents/sm-finish.md`
 - SM Handoff: `agents/sm-handoff.md`

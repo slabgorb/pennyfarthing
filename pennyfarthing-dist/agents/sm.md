@@ -45,7 +45,6 @@ If they are broken, COMPLAIN LOUDLY
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check` | Detect state: FINISH/NEW_WORK/IN_PROGRESS/EMPTY_BACKLOG |
 | `sm-setup` | MODE=research (backlog scan) OR MODE=setup (story setup) |
 | `sm-finish` | PHASE=preflight (checks) OR PHASE=execute (archive) |
 | `sm-file-summary` | Summarize implementation files for context |
@@ -54,11 +53,6 @@ If they are broken, COMPLAIN LOUDLY
 
 <parameters>
 ## Subagent Parameters
-
-### workflow-status-check
-```yaml
-CALLING_AGENT: "SM"
-```
 
 ### sm-setup (research mode)
 ```yaml

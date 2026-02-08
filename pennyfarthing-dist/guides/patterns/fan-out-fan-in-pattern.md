@@ -240,7 +240,7 @@ After collecting results, merge them into a unified structure:
 ```yaml
 # Orchestrator spawns parallel status checks
 Task:
-  subagent_type: "workflow-status-check"
+  subagent_type: "Explore"
   description: "Check pennyfarthing status"
   prompt: |
     REPO: pennyfarthing
@@ -248,7 +248,7 @@ Task:
     Report git status, branch, and uncommitted changes.
 
 Task:
-  subagent_type: "workflow-status-check"
+  subagent_type: "Explore"
   description: "Check API status"
   prompt: |
     REPO: api
@@ -256,7 +256,7 @@ Task:
     Report git status, branch, and uncommitted changes.
 
 Task:
-  subagent_type: "workflow-status-check"
+  subagent_type: "Explore"
   description: "Check UI status"
   prompt: |
     REPO: ui
