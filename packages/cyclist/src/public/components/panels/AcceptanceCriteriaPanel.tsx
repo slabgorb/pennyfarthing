@@ -22,13 +22,10 @@ export interface AcceptanceCriteriaPanelProps {
  * Individual acceptance criteria item
  */
 function CriteriaItemView({ item }: { item: CriteriaItem }): React.ReactElement {
-  const statusClass = item.completed ? 'ac-item ac-done' : 'ac-item';
-  const icon = item.completed ? '✓' : '○';
-
   return (
-    <div className={statusClass}>
-      <span className="ac-icon">{icon}</span>
-      <span className="ac-text">{item.text}</span>
+    <div className={`flex items-start gap-2 py-1 text-sm ${item.completed ? 'text-[var(--status-success)]' : 'text-[var(--text-primary)]'}`}>
+      <span className="flex-shrink-0 w-4 text-center">{item.completed ? '✓' : '○'}</span>
+      <span className="flex-1 leading-snug">{item.text}</span>
     </div>
   );
 }
@@ -44,8 +41,8 @@ export function AcceptanceCriteriaPanel({
   // Handle empty state
   if (!criteria || criteria.length === 0) {
     return (
-      <div className="ac-panel empty" data-testid="ac-panel">
-        <div className="placeholder">No acceptance criteria</div>
+      <div className="p-3" data-testid="ac-panel">
+        <div className="text-sm text-[var(--text-muted)]">No acceptance criteria</div>
       </div>
     );
   }
@@ -58,24 +55,30 @@ export function AcceptanceCriteriaPanel({
   // Handle collapsed state
   if (collapsed) {
     return (
-      <div className="ac-panel collapsed" data-testid="ac-panel">
-        <div className="ac-header" onClick={onToggle}>
-          <span className="ac-title">Acceptance Criteria</span>
-          <span className="ac-progress">{progressText}</span>
-          <span className="ac-expand">▶</span>
+      <div className="p-3" data-testid="ac-panel">
+        <div
+          className="flex items-center gap-2 cursor-pointer select-none"
+          onClick={onToggle}
+        >
+          <span className="text-xs text-[var(--text-muted)]">▶</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Acceptance Criteria</span>
+          <span className="text-xs tabular-nums font-mono text-[var(--text-muted)] ml-auto">{progressText}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="ac-panel" data-testid="ac-panel">
-      <div className="ac-header" onClick={onToggle}>
-        <span className="ac-title">Acceptance Criteria</span>
-        <span className="ac-progress">{progressText}</span>
-        {onToggle && <span className="ac-expand">▼</span>}
+    <div className="p-3" data-testid="ac-panel">
+      <div
+        className="flex items-center gap-2 mb-2 cursor-pointer select-none"
+        onClick={onToggle}
+      >
+        {onToggle && <span className="text-xs text-[var(--text-muted)]">▼</span>}
+        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Acceptance Criteria</span>
+        <span className="text-xs tabular-nums font-mono text-[var(--text-muted)] ml-auto">{progressText}</span>
       </div>
-      <div className="ac-list">
+      <div className="border-t border-[var(--border)] pt-2">
         {criteria.map((item, index) => (
           <CriteriaItemView key={index} item={item} />
         ))}
@@ -94,8 +97,8 @@ export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="ac-panel loading" data-testid="ac-panel">
-        <div className="space-y-2 p-2">
+      <div className="p-3" data-testid="ac-panel">
+        <div className="space-y-2">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-5/6" />
@@ -107,8 +110,10 @@ export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="ac-panel error" data-testid="ac-panel">
-        <div className="error-message">{error.message}</div>
+      <div className="p-3" data-testid="ac-panel">
+        <div className="p-3 rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 text-[var(--status-error)] text-sm">
+          {error.message}
+        </div>
       </div>
     );
   }

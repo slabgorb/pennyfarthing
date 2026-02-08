@@ -74,11 +74,10 @@ function SortableHeader({
 
   return (
     <th
-      className={`hotspots-th ${align === 'left' ? 'text-left' : 'text-right'} ${isActive ? 'active' : ''}`}
+      className={`text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] pb-2 cursor-pointer select-none ${align === 'left' ? 'text-left' : 'text-right'} ${isActive ? 'text-[var(--text-primary)]' : ''}`}
       onClick={() => onSort(field)}
       role="columnheader"
       aria-sort={isActive ? (currentDirection === 'desc' ? 'descending' : 'ascending') : 'none'}
-      style={{ cursor: 'pointer', userSelect: 'none' }}
     >
       {label}{arrow}
     </th>
@@ -112,9 +111,9 @@ function FileTable({
   }, [hotspots, sortField, sortDirection]);
 
   return (
-    <table className="hotspots-table" role="table">
+    <table className="w-full text-sm" role="table">
       <thead>
-        <tr>
+        <tr className="border-b border-[var(--border)]">
           <SortableHeader label="Score" field="hotspot_score" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
           <SortableHeader label="Changes" field="change_count" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
           <SortableHeader label="Fixes" field="bug_fix_count" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
@@ -125,20 +124,20 @@ function FileTable({
       </thead>
       <tbody>
         {sorted.map((h) => (
-          <tr key={h.path}>
-            <td className="text-right">
+          <tr key={h.path} className="text-[var(--text-primary)]">
+            <td className="text-right py-1.5">
               <Badge variant={h.hotspot_score >= 50 ? 'destructive' : h.hotspot_score >= 25 ? 'outline' : 'secondary'}>
                 {h.hotspot_score.toFixed(1)}
               </Badge>
             </td>
-            <td className="text-right">{h.change_count}</td>
-            <td className="text-right">{h.bug_fix_count}</td>
-            <td className="text-right">{h.author_count}</td>
-            <td className="text-right">{h.churn}</td>
-            <td className="text-left">
+            <td className="text-right py-1.5 tabular-nums font-mono">{h.change_count}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{h.bug_fix_count}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{h.author_count}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{h.churn}</td>
+            <td className="text-left py-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="hotspots-filepath">{h.path}</span>
+                  <span className="truncate max-w-xs inline-block align-bottom font-mono text-xs">{h.path}</span>
                 </TooltipTrigger>
                 <TooltipContent>{h.path}</TooltipContent>
               </Tooltip>
@@ -184,9 +183,9 @@ function DirTable({
   }, [hotspots, sortField, sortDirection]);
 
   return (
-    <table className="hotspots-table" role="table">
+    <table className="w-full text-sm" role="table">
       <thead>
-        <tr>
+        <tr className="border-b border-[var(--border)]">
           <SortableHeader label="Score" field="hotspot_score" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
           <SortableHeader label="Changes" field="change_count" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
           <SortableHeader label="Fixes" field="bug_fix_count" currentSort={sortField} currentDirection={sortDirection} onSort={onSort} />
@@ -197,20 +196,20 @@ function DirTable({
       </thead>
       <tbody>
         {sorted.map((d) => (
-          <tr key={d.path}>
-            <td className="text-right">
+          <tr key={d.path} className="text-[var(--text-primary)]">
+            <td className="text-right py-1.5">
               <Badge variant={d.hotspot_score >= 50 ? 'destructive' : d.hotspot_score >= 25 ? 'outline' : 'secondary'}>
                 {d.hotspot_score.toFixed(1)}
               </Badge>
             </td>
-            <td className="text-right">{d.total_changes}</td>
-            <td className="text-right">{d.total_bug_fixes}</td>
-            <td className="text-right">{d.avg_author_count.toFixed(1)}</td>
-            <td className="text-right">{d.file_count}</td>
-            <td className="text-left">
+            <td className="text-right py-1.5 tabular-nums font-mono">{d.total_changes}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{d.total_bug_fixes}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{d.avg_author_count.toFixed(1)}</td>
+            <td className="text-right py-1.5 tabular-nums font-mono">{d.file_count}</td>
+            <td className="text-left py-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="hotspots-filepath">{d.path}</span>
+                  <span className="truncate max-w-xs inline-block align-bottom font-mono text-xs">{d.path}</span>
                 </TooltipTrigger>
                 <TooltipContent>{d.path}</TooltipContent>
               </Tooltip>
@@ -317,79 +316,86 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
     return (
       <TooltipProvider delayDuration={300}>
         <div className="hotspots-panel" data-testid="hotspots-panel">
-          <div className="hotspots-controls">
-            <div className="hotspots-time-windows">
-              {TIME_WINDOWS.map((w) => (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div className="flex gap-1">
+                {TIME_WINDOWS.map((w) => (
+                  <Button
+                    key={w}
+                    variant={days === w ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setDays(w)}
+                  >
+                    {w}d
+                  </Button>
+                ))}
+              </div>
+
+              <div className="flex gap-1">
                 <Button
-                  key={w}
-                  variant={days === w ? 'default' : 'outline'}
+                  variant={viewMode === 'files' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setDays(w)}
+                  onClick={() => setViewMode('files')}
                 >
-                  {w}d
+                  Files
                 </Button>
-              ))}
+                <Button
+                  variant={viewMode === 'dirs' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('dirs')}
+                >
+                  Dirs
+                </Button>
+              </div>
+
+              <div className="ml-auto">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={refresh}>
+                      Analyze
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Run hotspot analysis</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
 
-            <div className="hotspots-view-toggle">
-              <Button
-                variant={viewMode === 'files' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('files')}
-              >
-                Files
-              </Button>
-              <Button
-                variant={viewMode === 'dirs' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('dirs')}
-              >
-                Dirs
-              </Button>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeOrchestrator}
+                  onChange={(e) => setIncludeOrchestrator(e.target.checked)}
+                />
+                Include orchestrator
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  aria-label="Code only"
+                  checked={codeOnly}
+                  onChange={(e) => setCodeOnly(e.target.checked)}
+                />
+                Code only
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  aria-label="Include config"
+                  checked={includeConfig}
+                  disabled={!codeOnly}
+                  onChange={(e) => setIncludeConfig(e.target.checked)}
+                  className="disabled:opacity-40"
+                />
+                <span className={!codeOnly ? 'opacity-40' : ''}>Include config</span>
+              </label>
             </div>
-
-            <label className="hotspots-checkbox">
-              <input
-                type="checkbox"
-                checked={includeOrchestrator}
-                onChange={(e) => setIncludeOrchestrator(e.target.checked)}
-              />
-              <span>Include orchestrator</span>
-            </label>
-
-            <label className="hotspots-checkbox">
-              <input
-                type="checkbox"
-                aria-label="Code only"
-                checked={codeOnly}
-                onChange={(e) => setCodeOnly(e.target.checked)}
-              />
-              <span>Code only</span>
-            </label>
-
-            <label className="hotspots-checkbox">
-              <input
-                type="checkbox"
-                aria-label="Include config"
-                checked={includeConfig}
-                disabled={!codeOnly}
-                onChange={(e) => setIncludeConfig(e.target.checked)}
-              />
-              <span>Include config</span>
-            </label>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={refresh}>
-                  Analyze
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Run hotspot analysis</TooltipContent>
-            </Tooltip>
           </div>
 
           {data && (
-            <div className="hotspots-summary">
+            <div className="flex gap-4 text-xs text-[var(--text-muted)]">
               <span>{totalCommits} commits</span>
               <span>{filteredFiles.length} files</span>
               <span>{filteredDirs.length} dirs</span>
@@ -397,8 +403,8 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
           )}
 
           {!data && (
-            <div className="hotspots-empty">
-              <p>Click <strong>Analyze</strong> to detect code hotspots</p>
+            <div className="text-center py-12 text-[var(--text-muted)]">
+              Click <strong>Analyze</strong> to detect code hotspots
             </div>
           )}
 
@@ -411,7 +417,7 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
                 onSort={handleSort}
               />
             ) : (
-              <div className="hotspots-empty">No file hotspots found</div>
+              <div className="text-center py-12 text-[var(--text-muted)]">No file hotspots found</div>
             )
           )}
 
@@ -424,7 +430,7 @@ export function HotspotsDialog({ open, onOpenChange }: HotspotsDialogProps): Rea
                 onSort={handleSort}
               />
             ) : (
-              <div className="hotspots-empty">No directory hotspots found</div>
+              <div className="text-center py-12 text-[var(--text-muted)]">No directory hotspots found</div>
             )
           )}
         </div>
