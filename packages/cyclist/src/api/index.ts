@@ -41,3 +41,5 @@ export { createPermissionsRouter } from './permissions.js';
 export { createAgentLoadRouter } from './agent-load.js';
 // MSSCI-14456: Code Markers API
 export { createCodeMarkersRouter } from './code-markers.js';
+// MSSCI-14460: Dead Code API
+export { createDeadCodeRouter } from './dead-code.js';
