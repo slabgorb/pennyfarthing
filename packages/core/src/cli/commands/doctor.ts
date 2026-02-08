@@ -18,7 +18,7 @@ import {
 import { getPackageVersion } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
-import { getPfVersion, installPfCli, findLocalPyproject } from '../utils/python.js';
+import { getPfVersion, installPfCli } from '../utils/python.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -1505,17 +1505,31 @@ function checkHooks(projectRoot: string): CheckResult[] {
 /**
  * Check git hooks in .git/hooks/ are up-to-date with package source.
  * Detects stale copies that were installed by `pennyfarthing init` but never refreshed.
- * Provides --fix to overwrite stale hooks with current package content.
+ * For framework/orchestrator repos (has pennyfarthing-dist/), checks that hooks are
+ * symlinked rather than copied, since symlinks stay current automatically.
+ * Provides --fix to refresh stale hooks or replace copies with symlinks.
  */
 function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
   const results: CheckResult[] = [];
 
-  const gitHooksDir = join(projectRoot, '.git/hooks');
+  // Use git rev-parse to find the actual git dir (handles worktrees where .git is a file)
+  const gitDirResult = spawnSync('git', ['rev-parse', '--git-dir'], { cwd: projectRoot, encoding: 'utf8' });
+  const gitDir = gitDirResult.status === 0
+    ? (gitDirResult.stdout.trim().startsWith('/') ? gitDirResult.stdout.trim() : join(projectRoot, gitDirResult.stdout.trim()))
+    : join(projectRoot, '.git');
+  const gitHooksDir = join(gitDir, 'hooks');
   if (!pathExists(gitHooksDir)) {
     return results;
   }
 
-  if (!nodeModulesPath) {
+  // Detect framework/orchestrator repo (has pennyfarthing-dist/ at project root)
+  const isFrameworkRepo = pathExists(join(projectRoot, 'pennyfarthing-dist'));
+  const frameworkHooksDir = isFrameworkRepo
+    ? join(projectRoot, 'pennyfarthing-dist/scripts/hooks')
+    : null;
+
+  // Need either node_modules or framework source to compare against
+  if (!nodeModulesPath && !frameworkHooksDir) {
     return results;
   }
 
@@ -1526,7 +1540,10 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
   ];
 
   for (const hook of hooks) {
-    const sourcePath = join(nodeModulesPath, 'scripts/hooks', hook.source);
+    // Prefer framework source (pennyfarthing-dist/) over node_modules
+    const sourcePath = frameworkHooksDir
+      ? join(frameworkHooksDir, hook.source)
+      : join(nodeModulesPath!, 'scripts/hooks', hook.source);
     const destPath = join(gitHooksDir, hook.dest);
 
     if (!pathExists(sourcePath)) {
@@ -1539,13 +1556,76 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
         status: 'warn',
         detail: 'Not installed',
         fix: () => {
-          const content = readFileSync(sourcePath, 'utf8');
-          writeFileSync(destPath, content, { mode: 0o755 });
+          if (isFrameworkRepo) {
+            // Framework repos: create symlink (relative from hooks dir to source)
+            const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+            const relTarget = relative(gitHooksDir, absSource);
+            symlinkSync(relTarget, destPath);
+          } else {
+            // End-user repos: copy content
+            const content = readFileSync(sourcePath, 'utf8');
+            writeFileSync(destPath, content, { mode: 0o755 });
+          }
         }
       });
       continue;
     }
 
+    // Check if hook is a symlink (framework repos should use symlinks)
+    const hookIsSymlink = isSymlink(destPath);
+
+    if (isFrameworkRepo && !hookIsSymlink) {
+      // Framework repo has a copied hook instead of a symlink — it will go stale
+      results.push({
+        name: `git-hook/${hook.dest}`,
+        status: 'warn',
+        detail: 'Copy instead of symlink (will go stale)',
+        fix: () => {
+          // Backup existing, replace with symlink
+          const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+          const relTarget = relative(gitHooksDir, absSource);
+          renameSync(destPath, `${destPath}.backup`);
+          symlinkSync(relTarget, destPath);
+        }
+      });
+      continue;
+    }
+
+    if (hookIsSymlink) {
+      // Symlinked hook — verify target exists
+      try {
+        const target = readlinkSync(destPath);
+        const resolvedTarget = join(gitHooksDir, target);
+        if (pathExists(resolvedTarget)) {
+          results.push({
+            name: `git-hook/${hook.dest}`,
+            status: 'pass',
+            detail: 'Symlinked'
+          });
+        } else {
+          results.push({
+            name: `git-hook/${hook.dest}`,
+            status: 'warn',
+            detail: `Broken symlink → ${target}`,
+            fix: () => {
+              unlinkSync(destPath);
+              const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+              const relTarget = relative(gitHooksDir, absSource);
+              symlinkSync(relTarget, destPath);
+            }
+          });
+        }
+      } catch {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'warn',
+          detail: 'Cannot read symlink'
+        });
+      }
+      continue;
+    }
+
+    // Copied hook — check content freshness
     const existingContent = readFileSync(destPath, 'utf8');
 
     // Only check hooks that are ours (contain the marker)
