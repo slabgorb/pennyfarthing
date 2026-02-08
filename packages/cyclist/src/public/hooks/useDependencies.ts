@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-// Types matching Python DependenciesResult / OutdatedPackage / SecurityAdvisory
 export interface OutdatedPackage {
   name: string;
   current: string;
@@ -33,17 +32,43 @@ export interface UseDependenciesReturn {
   refresh: () => void;
 }
 
-// Stub: Story 83-3 — useDependencies hook
-// Dev will implement the full fetch + AbortController logic
-export function useDependencies(_options: UseDependenciesOptions): UseDependenciesReturn {
-  const [data] = useState<DependenciesData | null>(null);
-  const [isLoading] = useState(false);
-  const [error] = useState<Error | null>(null);
+export function useDependencies(options: UseDependenciesOptions): UseDependenciesReturn {
+  const [data, setData] = useState<DependenciesData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const refresh = useCallback(() => {
-    // Not implemented — tests will fail on assertions
-  }, []);
+  const fetchDependencies = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams();
+    if (options.path) params.set('path', options.path);
+
+    fetch(`/api/dependencies?${params}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((json: DependenciesData) => {
+        setData(json);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsLoading(false);
+      });
+  }, [options.path]);
 
   useEffect(() => {
     return () => {
@@ -53,5 +78,5 @@ export function useDependencies(_options: UseDependenciesOptions): UseDependenci
     };
   }, []);
 
-  return { data, isLoading, error, refresh };
+  return { data, isLoading, error, refresh: fetchDependencies };
 }
