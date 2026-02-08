@@ -5,6 +5,7 @@ Story: MSSCI-14256 - Sprint story add command
 This module provides:
 - generate_story_id(sprint_data, epic) -> str
 - add_story(sprint_path, epic_id, title, points, ...) -> dict
+- add_initiative_story(initiative_slug, title, points, ...) -> dict
 - story_add_command (Click command for CLI registration)
 """
 
@@ -144,44 +145,218 @@ def add_story(
     }
 
 
+def _generate_initiative_story_id(init_data: dict[str, Any], slug: str) -> str:
+    """Generate the next standalone story ID for an initiative.
+
+    Uses the pattern {slug-prefix}-{N} where slug-prefix is derived from
+    the initiative slug (e.g., "technical-debt" -> "td", "quality-scale" -> "qs").
+    Only counts existing stories that share the same prefix.
+
+    Args:
+        init_data: Initiative YAML data
+        slug: Initiative slug (e.g., "technical-debt")
+
+    Returns:
+        Next story ID string (e.g., "td-2")
+    """
+    # Build prefix from initiative slug initials
+    parts = slug.split("-")
+    prefix = "".join(p[0] for p in parts if p)
+
+    stories = init_data.get("standalone_stories", [])
+    max_seq = 0
+    for story in stories:
+        story_id = str(story.get("id", ""))
+        # Only count stories with matching prefix
+        if not story_id.startswith(f"{prefix}-"):
+            continue
+        suffix = story_id[len(prefix) + 1:]
+        try:
+            seq = int(suffix)
+            if seq > max_seq:
+                max_seq = seq
+        except ValueError:
+            pass
+
+    return f"{prefix}-{max_seq + 1}"
+
+
+def add_initiative_story(
+    initiative_slug: str,
+    title: str,
+    points: int,
+    *,
+    story_type: str | None = None,
+    priority: str = "P1",
+    workflow: str = "tdd",
+    jira: str | None = None,
+    repos: str = "pennyfarthing",
+) -> dict[str, Any]:
+    """Add a standalone story to an initiative YAML file.
+
+    Args:
+        initiative_slug: Initiative slug (e.g., "technical-debt")
+        title: Story title
+        points: Story points
+        story_type: Optional story type (feature, bug, chore, refactor)
+        priority: Priority (default: P1)
+        workflow: Workflow (default: tdd)
+        jira: Optional Jira key
+        repos: Repos (default: pennyfarthing)
+
+    Returns:
+        Dict with success status and story_id or error
+    """
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    init_path = root / "sprint" / f"initiative-{initiative_slug}.yaml"
+
+    if not init_path.exists():
+        available = [
+            f.stem.replace("initiative-", "")
+            for f in (root / "sprint").glob("initiative-*.yaml")
+        ]
+        return {
+            "success": False,
+            "error": f"Initiative '{initiative_slug}' not found. Available: {', '.join(sorted(available))}",
+        }
+
+    # Use ruamel.yaml to preserve block scalars and formatting
+    from ruamel.yaml import YAML as RuamelYAML
+
+    ryml = RuamelYAML()
+    ryml.preserve_quotes = True
+    ryml.default_flow_style = False
+    ryml.indent(mapping=2, sequence=4, offset=2)
+    ryml.width = 4096
+
+    with open(init_path) as f:
+        init_data = ryml.load(f)
+
+    if not init_data:
+        return {"success": False, "error": f"Empty initiative file: {init_path}"}
+
+    story_id = _generate_initiative_story_id(init_data, initiative_slug)
+
+    story: dict[str, Any] = {
+        "id": story_id,
+        "title": title,
+        "points": points,
+        "priority": priority,
+        "status": "backlog",
+        "repos": repos,
+        "workflow": workflow,
+    }
+    if jira is not None:
+        story["jira"] = jira
+    if story_type is not None:
+        story["type"] = story_type
+
+    if "standalone_stories" not in init_data:
+        init_data["standalone_stories"] = []
+    init_data["standalone_stories"].append(story)
+
+    # Update total_points
+    current_total = init_data.get("total_points", 0) or 0
+    init_data["total_points"] = current_total + points
+
+    with open(init_path, "w") as f:
+        ryml.dump(init_data, f)
+
+    return {
+        "success": True,
+        "story_id": story_id,
+    }
+
+
 @click.command("add")
-@click.argument("epic_id", type=str)
-@click.argument("title", type=str)
-@click.argument("points", type=int)
+@click.argument("epic_id", type=str, required=False)
+@click.argument("title", type=str, required=False)
+@click.argument("points", type=int, required=False)
 @click.option("--type", "story_type", type=click.Choice(["feature", "bug", "chore", "refactor"]), default="feature")
 @click.option("--priority", type=click.Choice(["P0", "P1", "P2", "P3"]), default="P1")
 @click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd"]), default="tdd")
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
+@click.option("--initiative", type=str, default=None, help="Add as standalone story to initiative (e.g., technical-debt)")
+@click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
 def story_add_command(
-    epic_id: str,
-    title: str,
-    points: int,
+    epic_id: str | None,
+    title: str | None,
+    points: int | None,
     story_type: str,
     priority: str,
     workflow: str,
     jira_id: str | None,
     sprint_file: str | None,
+    initiative: str | None,
+    repos: str,
 ) -> None:
-    """Add a new story to an epic."""
-    if sprint_file is None:
-        from pennyfarthing_scripts.common.config import get_project_root
-        path = get_project_root() / "sprint" / "current-sprint.yaml"
-    else:
-        path = Path(sprint_file)
+    """Add a new story to an epic or initiative.
 
-    result = add_story(
-        sprint_path=path,
-        epic_id=epic_id,
-        title=title,
-        points=points,
-        story_type=story_type if story_type != "feature" else None,
-        priority=priority,
-        workflow=workflow,
-        jira=jira_id,
-    )
+    \b
+    Epic mode (default):
+      pf sprint story add <EPIC_ID> <TITLE> <POINTS>
 
-    if result["success"]:
-        click.echo(f"Added story {result['story_id']}: {title} [{points}pts]")
+    Initiative mode (--initiative):
+      pf sprint story add --initiative <SLUG> <TITLE> <POINTS>
+    """
+    if initiative:
+        # Initiative mode: first positional arg is title, second is points
+        # epic_id absorbs the title, title absorbs points (as str)
+        if epic_id is None:
+            raise click.ClickException("TITLE is required")
+        init_title = epic_id
+        if title is None:
+            raise click.ClickException("POINTS is required")
+        try:
+            init_points = int(title)
+        except ValueError:
+            raise click.ClickException(f"POINTS must be an integer, got '{title}'")
+
+        result = add_initiative_story(
+            initiative_slug=initiative,
+            title=init_title,
+            points=init_points,
+            story_type=story_type if story_type != "feature" else None,
+            priority=priority,
+            workflow=workflow,
+            jira=jira_id,
+            repos=repos,
+        )
+
+        if result["success"]:
+            click.echo(f"Added story {result['story_id']}: {init_title} [{init_points}pts] to initiative {initiative}")
+        else:
+            raise click.ClickException(result["error"])
     else:
-        raise click.ClickException(result["error"])
+        # Epic mode: all three positional args required
+        if epic_id is None:
+            raise click.ClickException("EPIC_ID is required")
+        if title is None:
+            raise click.ClickException("TITLE is required")
+        if points is None:
+            raise click.ClickException("POINTS is required")
+
+        if sprint_file is None:
+            from pennyfarthing_scripts.common.config import get_project_root
+            path = get_project_root() / "sprint" / "current-sprint.yaml"
+        else:
+            path = Path(sprint_file)
+
+        result = add_story(
+            sprint_path=path,
+            epic_id=epic_id,
+            title=title,
+            points=points,
+            story_type=story_type if story_type != "feature" else None,
+            priority=priority,
+            workflow=workflow,
+            jira=jira_id,
+        )
+
+        if result["success"]:
+            click.echo(f"Added story {result['story_id']}: {title} [{points}pts]")
+        else:
+            raise click.ClickException(result["error"])
