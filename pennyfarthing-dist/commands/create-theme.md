@@ -12,7 +12,7 @@ Create a new custom theme, optionally based on an existing theme.
 
 ## Options
 
-- `--base <theme>` - Base theme to copy from (default: minimalist)
+- `--base <theme>` - Base theme to copy from (defaults to current theme)
 - `--user` - Create as user-level theme (available across all projects)
 
 ## Instructions
