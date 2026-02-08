@@ -306,6 +306,9 @@ class TestAnalyzeDependencies:
             "pennyfarthing_scripts.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
+            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            return_value=True,
+        ), patch(
             "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(SAMPLE_OUTDATED_OUTPUT, "", 1),
@@ -324,6 +327,9 @@ class TestAnalyzeDependencies:
             "pennyfarthing_scripts.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
+            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            return_value=True,
+        ), patch(
             "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(SAMPLE_OUTDATED_OUTPUT, "", 1),
@@ -340,6 +346,9 @@ class TestAnalyzeDependencies:
         with patch(
             "pennyfarthing_scripts.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
+        ), patch(
+            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            return_value=True,
         ), patch(
             "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
@@ -358,6 +367,9 @@ class TestAnalyzeDependencies:
         with patch(
             "pennyfarthing_scripts.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
+        ), patch(
+            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            return_value=True,
         ), patch(
             "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
@@ -389,6 +401,9 @@ class TestAnalyzeDependencies:
         with patch(
             "pennyfarthing_scripts.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
+        ), patch(
+            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            return_value=True,
         ), patch(
             "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
