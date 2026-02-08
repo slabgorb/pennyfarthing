@@ -31,6 +31,7 @@ import {
   createIdentityRouter,
   createTodosRouter,
   createHotspotsRouter,
+  createCodeMarkersRouter,
   createPermissionsRouter,
   createAgentLoadRouter,
 } from './api/index.js';
@@ -142,6 +143,8 @@ app.use('/api/audit-log', createAuditLogRouter());
 app.use('/api/permissions', createPermissionsRouter());
 // Hotspot analysis API
 app.use('/api/hotspots', createHotspotsRouter(getProjectDir));
+// MSSCI-14456: Code Markers API
+app.use('/api/code-markers', createCodeMarkersRouter(getProjectDir));
 // MSSCI-14461: Agent Load Analyzer
 app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
 

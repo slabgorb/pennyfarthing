@@ -9,14 +9,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ExecFileException } from 'child_process';
 
 // Mock child_process before importing the module under test
-vi.mock('child_process', () => ({
-  execFile: vi.fn(),
-}));
+vi.mock('child_process', () => {
+  const fn = vi.fn();
+  return { default: { execFile: fn }, execFile: fn };
+});
 
 import { execFile } from 'child_process';
 import { createCodeMarkersRouter } from '../src/api/code-markers.js';
 
-const mockExecFile = vi.mocked(execFile);
+const mockExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
 
 // --- Helpers ---
 
