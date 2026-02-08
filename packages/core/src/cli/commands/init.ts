@@ -125,7 +125,7 @@ export async function initCommand(
     logger.error('  npm install pennyfarthing');
     logger.error('  npx pennyfarthing init');
     logger.error('');
-    logger.error('For dogfooding (pennyfarthing repo itself), ensure .claude/scripts symlink exists.');
+    logger.error('For framework development (orchestrator pattern), use install-git-hooks.sh instead.');
     process.exit(1);
   }
 
@@ -263,7 +263,7 @@ export async function initCommand(
  * Install git hooks from pennyfarthing-dist to .git/hooks
  * Installs: pre-commit, pre-push, post-merge
  */
-async function installGitHooks(
+export async function installGitHooks(
   projectRoot: string,
   nodeModulesPath: string,
   options: { dryRun?: boolean }
@@ -300,12 +300,23 @@ async function installGitHooks(
       continue;
     }
 
+    const sourceContent = readFileSync(sourcePath, 'utf8');
+
     // Check if hook already exists
     if (pathExists(destPath)) {
-      // Check if it's already our hook (contains pennyfarthing marker)
       const existingContent = readFileSync(destPath, 'utf8');
+
       if (existingContent.includes(hook.marker)) {
-        logger.skipped(`.git/hooks/${hook.dest}`, 'already installed');
+        // Our hook — check if content matches (refresh stale copies)
+        if (existingContent === sourceContent) {
+          logger.skipped(`.git/hooks/${hook.dest}`, 'already installed');
+          continue;
+        }
+        // Content differs — update in place
+        if (!options.dryRun) {
+          writeFileSync(destPath, sourceContent, { mode: 0o755 });
+        }
+        logger.updated(`.git/hooks/${hook.dest}`);
         continue;
       }
 
@@ -319,8 +330,7 @@ async function installGitHooks(
 
     // Copy the hook
     if (!options.dryRun) {
-      const hookContent = readFileSync(sourcePath, 'utf8');
-      writeFileSync(destPath, hookContent, { mode: 0o755 });
+      writeFileSync(destPath, sourceContent, { mode: 0o755 });
     }
     logger.created(`.git/hooks/${hook.dest}`);
   }
