@@ -15,6 +15,8 @@ import pytest
 from pennyfarthing_scripts.deadcode.models import (
     StaleFile,
     DeadCodeResult,
+    UnusedExport,
+    UnusedExportResult,
 )
 from pennyfarthing_scripts.deadcode.analyze import (
     _run_git_command,
@@ -22,6 +24,7 @@ from pennyfarthing_scripts.deadcode.analyze import (
     _is_source_file,
     find_stale_files,
     analyze_repo,
+    find_unused_exports,
     DEFAULT_EXCLUDES,
     SOURCE_EXTENSIONS,
 )
@@ -698,3 +701,323 @@ class TestConstants:
 
     def test_source_extensions_has_go(self):
         assert ".go" in SOURCE_EXTENSIONS
+
+
+# =============================================================================
+# UnusedExport model tests (AC: UnusedExport with symbol, file, line, export_type)
+# =============================================================================
+
+class TestUnusedExportModel:
+    def test_required_fields(self):
+        """UnusedExport must have symbol, file, line, export_type."""
+        ue = UnusedExport(
+            symbol="helperFn",
+            file="src/utils.ts",
+            line=42,
+            export_type="named",
+        )
+        assert ue.symbol == "helperFn"
+        assert ue.file == "src/utils.ts"
+        assert ue.line == 42
+        assert ue.export_type == "named"
+
+    def test_default_export_type(self):
+        """export_type should default to 'named'."""
+        ue = UnusedExport(symbol="foo", file="a.ts", line=1)
+        assert ue.export_type == "named"
+
+    def test_default_export_type_value(self):
+        """export_type can be 'default'."""
+        ue = UnusedExport(symbol="default", file="a.ts", line=1, export_type="default")
+        assert ue.export_type == "default"
+
+
+class TestUnusedExportResultModel:
+    def test_success_result(self):
+        """UnusedExportResult should represent a successful analysis."""
+        result = UnusedExportResult(
+            success=True,
+            repo_name="pennyfarthing",
+            repo_path="/tmp/pennyfarthing",
+            unused_exports=[UnusedExport(symbol="foo", file="a.ts", line=1)],
+            total_exports_scanned=50,
+        )
+        assert result.success is True
+        assert len(result.unused_exports) == 1
+        assert result.total_exports_scanned == 50
+        assert result.error is None
+
+    def test_error_result(self):
+        """UnusedExportResult should represent a failed analysis."""
+        result = UnusedExportResult(
+            success=False,
+            repo_name="test",
+            repo_path="/tmp",
+            error="ts-prune not found",
+        )
+        assert result.success is False
+        assert "not found" in result.error.lower()
+
+    def test_empty_result(self):
+        """UnusedExportResult with no unused exports is valid."""
+        result = UnusedExportResult(
+            success=True,
+            repo_name="clean",
+            repo_path="/tmp/clean",
+            total_exports_scanned=100,
+        )
+        assert result.unused_exports == []
+        assert result.total_exports_scanned == 100
+
+
+# =============================================================================
+# find_unused_exports tests (AC: ts-prune output parsed into UnusedExport)
+# =============================================================================
+
+# Simulated ts-prune output format
+MOCK_TS_PRUNE_OUTPUT = """src/utils.ts:10 - helperFn
+src/utils.ts:25 - formatDate
+src/components/Button.tsx:1 - default
+src/types.ts:5 - UserConfig"""
+
+MOCK_TS_PRUNE_EMPTY = ""
+
+
+class TestFindUnusedExports:
+    def test_parses_ts_prune_output(self):
+        """Should parse ts-prune stdout into UnusedExport instances."""
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (MOCK_TS_PRUNE_OUTPUT.encode(), b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert result.success is True
+        assert len(result.unused_exports) == 4
+        symbols = [ue.symbol for ue in result.unused_exports]
+        assert "helperFn" in symbols
+        assert "formatDate" in symbols
+        assert "default" in symbols
+        assert "UserConfig" in symbols
+
+    def test_parses_file_and_line(self):
+        """Should extract file path and line number from ts-prune output."""
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"src/utils.ts:10 - helperFn", b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert len(result.unused_exports) == 1
+        ue = result.unused_exports[0]
+        assert ue.file == "src/utils.ts"
+        assert ue.line == 10
+        assert ue.symbol == "helperFn"
+
+    def test_detects_default_export_type(self):
+        """Should set export_type='default' for default exports."""
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"src/App.tsx:1 - default", b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert result.unused_exports[0].export_type == "default"
+
+    def test_empty_output_returns_empty_result(self):
+        """No ts-prune output means no unused exports."""
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"", b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert result.success is True
+        assert result.unused_exports == []
+
+    def test_nonexistent_path_returns_error(self):
+        """Should return error for nonexistent repo path."""
+        result = asyncio.run(find_unused_exports(Path("/nonexistent/repo")))
+        assert result.success is False
+        assert "not found" in result.error.lower()
+
+    def test_ts_prune_failure_returns_error(self):
+        """Should handle ts-prune command failure gracefully."""
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"", b"npx: command not found")
+        mock_proc.returncode = 127
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert result.success is False
+        assert result.error is not None
+
+    def test_skips_malformed_lines(self):
+        """Should skip lines that don't match expected format."""
+        output = "src/utils.ts:10 - helperFn\nsome garbage line\n\nsrc/app.ts:5 - main"
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (output.encode(), b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert result.success is True
+        assert len(result.unused_exports) == 2
+
+    def test_handles_used_in_module_lines(self):
+        """Should skip ts-prune lines ending with '(used in module)' marker."""
+        output = "src/utils.ts:10 - helperFn\nsrc/api.ts:3 - fetchData (used in module)"
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (output.encode(), b"")
+        mock_proc.returncode = 0
+
+        with patch("asyncio.create_subprocess_exec", return_value=mock_proc), \
+             patch("pathlib.Path.exists", return_value=True):
+            result = asyncio.run(find_unused_exports(Path("/tmp/repo")))
+
+        assert len(result.unused_exports) == 1
+        assert result.unused_exports[0].symbol == "helperFn"
+
+
+# =============================================================================
+# Unused export formatter tests (AC: table/json/csv for exports)
+# =============================================================================
+
+class TestUnusedExportFormatters:
+    def test_format_exports_table_with_data(self):
+        """format_exports_table should produce readable output."""
+        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+
+        exports = [
+            UnusedExport(symbol="helperFn", file="src/utils.ts", line=10, export_type="named"),
+            UnusedExport(symbol="default", file="src/App.tsx", line=1, export_type="default"),
+        ]
+        table = format_exports_table(exports)
+        assert "helperFn" in table
+        assert "src/utils.ts" in table
+        assert "10" in table
+
+    def test_format_exports_table_empty(self):
+        """format_exports_table with no exports shows informative message."""
+        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+
+        table = format_exports_table([])
+        assert "no unused" in table.lower()
+
+    def test_format_exports_table_top_n(self):
+        """format_exports_table should respect top_n limit."""
+        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+
+        exports = [
+            UnusedExport(symbol=f"fn{i}", file=f"file{i}.ts", line=i)
+            for i in range(20)
+        ]
+        table = format_exports_table(exports, top_n=5)
+        assert table.count("fn") <= 10  # header context + 5 data rows max
+
+    def test_export_exports_json(self):
+        """export_exports_json should return valid JSON."""
+        from pennyfarthing_scripts.deadcode.formatters import export_exports_json
+
+        result = UnusedExportResult(
+            success=True,
+            repo_name="test",
+            repo_path="/tmp",
+            unused_exports=[
+                UnusedExport(symbol="foo", file="a.ts", line=1),
+            ],
+            total_exports_scanned=50,
+        )
+        output = export_exports_json(result)
+        data = json.loads(output)
+        assert data["success"] is True
+        assert len(data["unused_exports"]) == 1
+        assert data["unused_exports"][0]["symbol"] == "foo"
+
+    def test_export_exports_csv(self):
+        """export_exports_csv should have header and data rows."""
+        from pennyfarthing_scripts.deadcode.formatters import export_exports_csv
+
+        exports = [
+            UnusedExport(symbol="helperFn", file="src/utils.ts", line=10, export_type="named"),
+        ]
+        csv_output = export_exports_csv(exports)
+        assert "symbol" in csv_output
+        assert "helperFn" in csv_output
+        assert "src/utils.ts" in csv_output
+
+
+# =============================================================================
+# CLI exports subcommand tests (AC: pf deadcode exports subcommand)
+# =============================================================================
+
+class TestExportsCLI:
+    def test_help_shows_exports(self):
+        """deadcode group help should list exports subcommand."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(deadcode, ["--help"])
+        assert result.exit_code == 0
+        assert "exports" in result.output
+
+    def test_exports_help(self):
+        """exports subcommand should show help with expected options."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(deadcode, ["exports", "--help"])
+        assert result.exit_code == 0
+        assert "--format" in result.output
+        assert "--top" in result.output
+
+    def test_exports_json_output(self):
+        """exports --format json should output valid JSON."""
+        from click.testing import CliRunner
+
+        mock_result = UnusedExportResult(
+            success=True,
+            repo_name="test",
+            repo_path="/tmp",
+            unused_exports=[
+                UnusedExport(symbol="foo", file="a.ts", line=1),
+            ],
+            total_exports_scanned=10,
+        )
+        with patch(
+            "pennyfarthing_scripts.deadcode.cli._run_exports_analysis",
+            return_value=mock_result,
+        ):
+            runner = CliRunner()
+            result = runner.invoke(deadcode, ["exports", "--format", "json"])
+            assert result.exit_code == 0
+            data = json.loads(result.output)
+            assert data["success"] is True
+
+    def test_exports_path_option(self):
+        """--path should be available for standalone repo path."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(deadcode, ["exports", "--help"])
+        assert "--path" in result.output
+
+    def test_exports_repo_option(self):
+        """--repo should be available for named repo."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        result = runner.invoke(deadcode, ["exports", "--help"])
+        assert "--repo" in result.output
