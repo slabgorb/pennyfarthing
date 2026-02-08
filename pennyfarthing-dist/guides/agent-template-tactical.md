@@ -62,8 +62,7 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 </skills>
 
 <context>
-**See:** `.pennyfarthing/guides/agent-behavior.md` for shared tactical agent behavior.
-**See:** `.pennyfarthing/guides/agent-behavior.md` for project info and git strategy.
+**See:** `.pennyfarthing/guides/agent-behavior.md` for shared tactical agent behavior, project info, and git strategy.
 </context>
 
 <reasoning-mode>
@@ -87,7 +86,7 @@ REFLECT: {what this means}
 </reasoning-mode>
 
 <on-activation>
-1. Run workflow status check (helper: `.pennyfarthing/agents/workflow-status-check.md`)
+1. Workflow state is provided in prime activation output (`# Workflow State` section)
 2. Read session file if active work exists
 3. Verify actual state matches session file
 4. Check if handed off to me (Phase field)
