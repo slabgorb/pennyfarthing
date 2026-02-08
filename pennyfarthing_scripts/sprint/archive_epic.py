@@ -1,23 +1,29 @@
 """
 Sprint epic archiving.
 
-Provides functions for archiving completed epics to sprint archive files.
-Handles archive file creation, epic completion detection, and YAML updates.
+Archives completed epics by moving their shard files to sprint/archive/.
+The sprint completed file references archived epics by ID (not inlined).
 """
 
+import shutil
 from datetime import date
 from pathlib import Path
 from typing import Any
 
-from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
+from pennyfarthing_scripts.common.config import get_project_root
 from pennyfarthing_scripts.sprint.loader import load_sprint
-from pennyfarthing_scripts.sprint.yaml_io import write_sprint
+from pennyfarthing_scripts.sprint.yaml_io import (
+    _get_epic_ref,
+    _make_yaml,
+    _read_yaml_file,
+    _write_yaml_file,
+    read_sprint,
+    write_sprint,
+)
 
 
 def get_archive_path(project_root: Path | None = None) -> Path:
     """Get the archive file path for the current sprint.
-
-    Creates the archive file with a template if it doesn't exist.
 
     Args:
         project_root: Project root path (defaults to auto-detect)
@@ -33,9 +39,7 @@ def get_archive_path(project_root: Path | None = None) -> Path:
 
     sprint_info = sprint_data["sprint"]
 
-    # Extract sprint identifier (YYWW format from jira_sprint_name)
     sprint_name = sprint_info.get("jira_sprint_name", "")
-    # Extract "2604" from "TO Sprint 2604"
     sprint_id = sprint_name.split()[-1] if sprint_name else str(sprint_info.get("number", "unknown"))
 
     archive_path = root / "sprint" / "archive" / f"sprint-{sprint_id}-completed.yaml"
@@ -57,7 +61,6 @@ def ensure_archive_file(project_root: Path | None = None) -> Path:
     if archive_path.exists():
         return archive_path
 
-    # Create archive file with template
     sprint_data = load_sprint(root)
     sprint_info = sprint_data.get("sprint", {})
 
@@ -65,7 +68,7 @@ def ensure_archive_file(project_root: Path | None = None) -> Path:
     sprint_id = sprint_info.get("jira_sprint_id", "")
     goal = sprint_info.get("goal", "")
 
-    template = f"""# Sprint {sprint_name} - Completed Stories
+    template = f"""# Sprint {sprint_name} - Completed Work
 # Jira Sprint ID: {sprint_id}
 # Archived: {date.today().isoformat()}
 
@@ -75,7 +78,11 @@ sprint:
   jira_sprint_name: "{sprint_name}"
   goal: {goal}
 
-completed:
+completed_epics:
+  # Epic shard files live in sprint/archive/epic-{{ref}}.yaml
+
+completed_stories:
+  # Orphan stories not belonging to an epic
 """
 
     archive_path.parent.mkdir(parents=True, exist_ok=True)
@@ -84,12 +91,81 @@ completed:
     return archive_path
 
 
+def _load_archive_file(archive_path: Path) -> dict[str, Any]:
+    """Load the sprint archive file, handling both old and new formats.
+
+    Args:
+        archive_path: Path to the archive YAML file
+
+    Returns:
+        Archive data dict with completed_epics and completed_stories
+    """
+    yml = _make_yaml()
+    with open(archive_path) as f:
+        data = yml.load(f)
+
+    if data is None:
+        data = {}
+
+    # Ensure new-format keys exist
+    if "completed_epics" not in data:
+        data["completed_epics"] = []
+    if "completed_stories" not in data:
+        data["completed_stories"] = []
+
+    # Normalize: ensure lists are not None
+    if data["completed_epics"] is None:
+        data["completed_epics"] = []
+    if data["completed_stories"] is None:
+        data["completed_stories"] = []
+
+    return data
+
+
+def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
+    """Write the sprint archive file.
+
+    Args:
+        archive_path: Path to the archive YAML file
+        data: Archive data dict
+    """
+    import io
+
+    from ruamel.yaml.comments import CommentedMap, CommentedSeq
+
+    yml = _make_yaml()
+
+    # Build output preserving comments at the top
+    cm = CommentedMap()
+    if "sprint" in data:
+        cm["sprint"] = data["sprint"]
+
+    # completed_epics as string refs
+    epic_refs = CommentedSeq()
+    for ref in data.get("completed_epics", []):
+        epic_refs.append(ref)
+    cm["completed_epics"] = epic_refs
+
+    # completed_stories for orphans
+    stories = CommentedSeq()
+    for story in data.get("completed_stories", []):
+        stories.append(story)
+    cm["completed_stories"] = stories
+
+    stream = io.StringIO()
+    yml.dump(cm, stream)
+    output = stream.getvalue()
+
+    # Clean trailing whitespace
+    lines = output.split("\n")
+    cleaned = [line.rstrip() for line in lines]
+    result = "\n".join(cleaned).rstrip("\n") + "\n"
+
+    archive_path.write_text(result)
+
+
 def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
     """Check if an epic is complete by examining story statuses.
-
-    An epic is complete if:
-    - It has status 'done' or 'completed', OR
-    - All of its stories have a terminal status ('done', 'completed', or 'cancelled')
 
     Args:
         epic: Epic dict from sprint YAML
@@ -97,12 +173,10 @@ def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
     Returns:
         Tuple of (is_complete, list of incomplete story IDs)
     """
-    # Check if epic itself is marked done
     epic_status = epic.get("status", "backlog")
     if epic_status in ("done", "completed"):
         return True, []
 
-    # Check all stories
     stories = epic.get("stories", [])
     if not stories:
         return False, []
@@ -152,6 +226,10 @@ def archive_epic(
 ) -> dict[str, Any]:
     """Archive a completed epic.
 
+    Moves the epic shard file to sprint/archive/, adds the epic ref to the
+    sprint completed file, and removes it from the current sprint index.
+    Context files are also moved to archive.
+
     Args:
         epic_id: Epic ID to archive (e.g., "epic-64" or "MSSCI-12465")
         project_root: Project root path (defaults to auto-detect)
@@ -162,16 +240,23 @@ def archive_epic(
         Dict with success status and details
     """
     root = project_root or get_project_root()
-    sprint_data = load_sprint(root)
+    sprint_dir = root / "sprint"
+    archive_dir = sprint_dir / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+
+    sprint_path = sprint_dir / "current-sprint.yaml"
+    sprint_data = read_sprint(sprint_path)
 
     if not sprint_data or "epics" not in sprint_data:
         return {"success": False, "error": "Could not load sprint data"}
 
-    # Find the epic
+    # Find the epic in merged data
     epic = None
     epic_index = None
     for i, e in enumerate(sprint_data["epics"]):
-        if e.get("id") == epic_id or e.get("jira") == epic_id:
+        eid = str(e.get("id", ""))
+        ejira = str(e.get("jira", ""))
+        if eid == epic_id or ejira == epic_id:
             epic = e
             epic_index = i
             break
@@ -188,83 +273,104 @@ def archive_epic(
             "incomplete_stories": incomplete,
         }
 
+    # Determine the shard ref (filename stem)
+    epic_ref = _get_epic_ref(epic)
+    shard_file = sprint_dir / f"epic-{epic_ref}.yaml"
+    archive_shard = archive_dir / f"epic-{epic_ref}.yaml"
+    story_count = len(epic.get("stories", []))
+    total_points = sum(s.get("points", 0) for s in epic.get("stories", []))
+
     if dry_run:
+        msg_parts = [f"Would archive {epic_id} ({story_count} stories, {total_points} pts)"]
+        if shard_file.exists():
+            msg_parts.append(f"  Move: {shard_file.name} → archive/")
+        # Check for context file
+        for ctx_name in [f"context-epic-{epic_ref}.md", f"context-epic-{epic.get('id', '')}.md"]:
+            ctx_file = sprint_dir / "context" / ctx_name
+            if ctx_file.exists():
+                msg_parts.append(f"  Move: context/{ctx_name} → archive/")
+                break
         return {
             "success": True,
             "dry_run": True,
             "epic": epic,
-            "message": f"Would archive {epic_id} ({len(epic.get('stories', []))} stories)",
+            "stories_archived": story_count,
+            "total_points": total_points,
+            "message": "\n".join(msg_parts),
         }
 
-    # Ensure archive file exists
+    # 1. Update epic status in the shard before moving
+    if shard_file.exists():
+        shard_data = _read_yaml_file(shard_file)
+        shard_data["status"] = "done"
+        if "completed" not in shard_data:
+            shard_data["completed"] = date.today().isoformat()
+        _write_yaml_file(shard_file, shard_data)
+        # Move shard to archive
+        shutil.move(str(shard_file), str(archive_shard))
+    else:
+        # No shard file on disk — write epic data directly to archive
+        epic["status"] = "done"
+        if "completed" not in epic:
+            epic["completed"] = date.today().isoformat()
+        _write_yaml_file(archive_shard, epic)
+
+    # 2. Move context file if it exists
+    context_moved = None
+    for ctx_name in [f"context-epic-{epic_ref}.md", f"context-epic-{epic.get('id', '')}.md"]:
+        ctx_file = sprint_dir / "context" / ctx_name
+        if ctx_file.exists():
+            shutil.move(str(ctx_file), str(archive_dir / ctx_name))
+            context_moved = ctx_name
+            break
+
+    # 3. Add epic ref to sprint completed file
     archive_path = ensure_archive_file(root)
+    archive_data = _load_archive_file(archive_path)
 
-    # Build archive entries for all stories
-    archive_entries = []
-    epic_jira = epic.get("jira", epic_id)
-    for story in epic.get("stories", []):
-        entry = {
-            "id": story.get("id") or story.get("jira"),
-            "epic": epic_jira,
-            "title": story.get("title", ""),
-            "points": story.get("points", 0),
-            "completed": story.get("completed", date.today().isoformat()),
-        }
-        if story.get("pr"):
-            entry["pr"] = story["pr"]
-        archive_entries.append(entry)
+    # Add ref if not already present
+    if epic_ref not in archive_data["completed_epics"]:
+        archive_data["completed_epics"].append(epic_ref)
+    _write_archive_file(archive_path, archive_data)
 
-    # Append to archive file
-    with open(archive_path, "a") as f:
-        # Add epic header comment
-        epic_title = epic.get("title", epic_id)
-        f.write(f"\n  # {epic_id}: {epic_title} - COMPLETE\n")
+    # 4. Remove epic from current-sprint.yaml index
+    # Re-read the raw index (not merged) to update refs
+    yml = _make_yaml()
+    with open(sprint_path) as f:
+        index_data = yml.load(f)
 
-        for entry in archive_entries:
-            f.write(f"  - id: {entry['id']}\n")
-            f.write(f"    epic: {entry['epic']}\n")
-            # Escape quotes in title
-            title = entry['title'].replace('"', '\\"')
-            f.write(f'    title: "{title}"\n')
-            f.write(f"    points: {entry['points']}\n")
-            f.write(f"    completed: {entry['completed']}\n")
-            if entry.get("pr"):
-                f.write(f"    pr: {entry['pr']}\n")
+    epics_list = index_data.get("epics", [])
+    # Remove the matching ref (string) or dict
+    new_epics = []
+    for item in epics_list:
+        if isinstance(item, str):
+            if item != epic_ref:
+                new_epics.append(item)
+        else:
+            item_id = str(item.get("id", ""))
+            item_jira = str(item.get("jira", ""))
+            if item_id != epic_id and item_jira != epic_id:
+                new_epics.append(item)
 
-    # Remove epic from current-sprint.yaml
-    sprint_path = root / "sprint" / "current-sprint.yaml"
-    del sprint_data["epics"][epic_index]
-
-    # Note: We do NOT update completed_points here because stories were already
-    # marked done - their points are already counted. Archiving just moves them
-    # to the archive file without changing the accounting.
-
-    # Write updated sprint file (shard-aware)
-    write_sprint(sprint_path, sprint_data)
-
-    # Clean up shard file if it exists
-    epic_jira_key = epic.get("jira", "")
-    epic_id_val = str(epic.get("id", ""))
-    sprint_dir = root / "sprint"
-    for ref in [epic_jira_key, epic_id_val]:
-        if ref:
-            shard_file = sprint_dir / f"epic-{ref}.yaml"
-            if shard_file.exists():
-                shard_file.unlink()
-                break
+    from ruamel.yaml.comments import CommentedSeq
+    index_data["epics"] = CommentedSeq(new_epics)
+    _write_yaml_file(sprint_path, index_data)
 
     result = {
         "success": True,
         "epic_id": epic_id,
-        "jira": epic_jira,
-        "stories_archived": len(archive_entries),
-        "archive_path": str(archive_path),
-        "message": f"Archived {epic_id} with {len(archive_entries)} stories",
+        "epic_ref": epic_ref,
+        "stories_archived": story_count,
+        "total_points": total_points,
+        "archive_shard": str(archive_shard),
+        "context_moved": context_moved,
+        "message": f"Archived {epic_id} ({story_count} stories, {total_points} pts) → archive/epic-{epic_ref}.yaml",
     }
 
     # Update Jira if requested
+    epic_jira = epic.get("jira", "")
     if update_jira and epic_jira:
-        result["jira_updated"] = _update_jira_epic(epic_jira)
+        result["jira_updated"] = _update_jira_epic(str(epic_jira))
 
     return result
 
@@ -321,7 +427,7 @@ def archive_all_completed(
     results = []
     for item in completed:
         epic = item["epic"]
-        epic_id = epic.get("id")
+        epic_id = str(epic.get("id", ""))
         result = archive_epic(
             epic_id,
             project_root=root,
@@ -330,22 +436,18 @@ def archive_all_completed(
         )
         results.append(result)
 
+    total_stories = sum(r.get("stories_archived", 0) for r in results if r.get("success"))
+    total_points = sum(r.get("total_points", 0) for r in results if r.get("success"))
+
     return {
         "success": all(r.get("success") for r in results),
         "archived": results,
-        "message": f"Processed {len(results)} epics",
+        "message": f"Archived {len(results)} epics ({total_stories} stories, {total_points} pts)",
     }
 
 
 def main(args: list[str] | None = None) -> int:
-    """CLI entry point for epic archiving.
-
-    Args:
-        args: Command line arguments
-
-    Returns:
-        Exit code
-    """
+    """CLI entry point for epic archiving."""
     import argparse
     import sys
 
@@ -387,14 +489,16 @@ def main(args: list[str] | None = None) -> int:
             print("[DRY-RUN]", result.get("message"))
             if "archived" in result:
                 for r in result["archived"]:
-                    epic_id = r.get("epic", {}).get("id") if "epic" in r else r.get("epic_id")
-                    stories = len(r.get("epic", {}).get("stories", [])) if "epic" in r else r.get("stories_archived", 0)
-                    print(f"  Would archive: {epic_id} ({stories} stories)")
+                    print(f"  {r.get('message')}")
         else:
             print(result.get("message"))
             if "archived" in result:
                 for r in result["archived"]:
-                    print(f"  ✓ {r.get('epic_id')}: {r.get('stories_archived')} stories")
+                    print(f"  \u2713 {r.get('message')}")
+            elif result.get("archive_shard"):
+                print(f"  Shard: {result.get('archive_shard')}")
+                if result.get("context_moved"):
+                    print(f"  Context: {result.get('context_moved')}")
         return 0
     else:
         print(f"Failed: {result.get('error')}", file=sys.stderr)

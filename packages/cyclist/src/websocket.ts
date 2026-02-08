@@ -83,12 +83,13 @@ function shouldInvalidateGitCache(event: ToolEvent): boolean {
     const cmd = event.input.trim();
 
     // Git commands that change state
-    if (/^git\s+(add|commit|checkout|reset|stash|merge|rebase|cherry-pick|revert|pull|fetch|push|branch\s+-[dD]|rm|mv|restore|switch|clean)/i.test(cmd)) {
+    // Handles: git add, git -C <path> add, cd foo && git commit, etc.
+    if (/\bgit\s+(?:-[A-Za-z]\s+\S+\s+)*(?:add|commit|checkout|reset|stash|merge|rebase|cherry-pick|revert|pull|fetch|push|branch\s+-[dD]|rm|mv|restore|switch|clean)\b/i.test(cmd)) {
       return true;
     }
 
-    // File-modifying commands
-    if (/^(rm|mv|cp|touch|mkdir|rmdir|chmod|chown)\s/i.test(cmd)) {
+    // File-modifying commands (can appear after && or ;)
+    if (/(?:^|[;&|]\s*)(rm|mv|cp|touch|mkdir|rmdir|chmod|chown)\s/i.test(cmd)) {
       return true;
     }
 
@@ -100,8 +101,8 @@ function shouldInvalidateGitCache(event: ToolEvent): boolean {
       }
     }
 
-    // npm/pnpm install can modify package-lock.json
-    if (/^(npm|pnpm|yarn)\s+(install|add|remove|uninstall)/i.test(cmd)) {
+    // npm/pnpm install can modify package-lock.json (can appear after && or ;)
+    if (/(?:^|[;&|]\s*)(npm|pnpm|yarn)\s+(install|add|remove|uninstall)/i.test(cmd)) {
       return true;
     }
   }
