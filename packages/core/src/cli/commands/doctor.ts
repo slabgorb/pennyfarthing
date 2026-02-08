@@ -18,7 +18,7 @@ import {
 import { getPackageVersion } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
-import { getPfVersion, installPfCli, findLocalPyproject } from '../utils/python.js';
+import { getPfVersion, installPfCli } from '../utils/python.js';
 
 interface DoctorOptions {
   fix?: boolean;
