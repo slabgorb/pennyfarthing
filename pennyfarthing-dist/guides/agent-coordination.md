@@ -22,7 +22,7 @@ Handoffs between agents are managed by Haiku subagents.
 ### 1. Single Source of Truth
 - **Agent definitions:** `.pennyfarthing/agents/`
 - **Subagent prompts:** `.pennyfarthing/agents/`
-- **Scope configuration:** `.pennyfarthing/guides/agent-scopes.yaml`
+- **Scope configuration:** `.pennyfarthing/project/docs/agent-scopes.yaml`
 - **Sprint tracking:** `sprint/current-sprint.yaml`
 - **Session state:** `.session/{STORY_ID}-session.md`
 
@@ -55,7 +55,7 @@ Support Agents
 
 ```
 /$CLAUDE_PROJECT_DIR/
-├── .claude/                              # Pennyfarthing coordination directory
+├── .pennyfarthing/                       # Pennyfarthing coordination directory (symlinks to node_modules)
 │   ├── agents/                         # Agent definitions (symlinks to pennyfarthing-dist)
 │   │   ├── orchestrator.md             # Master orchestrator
 │   │   ├── pm.md                       # Product Manager
@@ -68,17 +68,18 @@ Support Agents
 │   │   ├── ux-designer.md              # UX Designer
 │   │   └── devops.md                   # DevOps Engineer
 │   │
-│   ├── commands/                       # 42 slash commands (symlinks)
+│   ├── commands/                       # Slash commands (symlinks)
 │   ├── guides/                         # Behavior guides (symlinks)
-│   ├── skills/                         # 18+ knowledge domain skills (symlinks)
+│   ├── skills/                         # Knowledge domain skills (symlinks)
 │   ├── scripts/                        # Utility scripts (symlinks)
 │   │
 │   ├── project/                        # Project-specific overrides
 │   │   ├── agents/                     # Agent sidecars (patterns, gotchas, decisions)
 │   │   └── commands/                   # Custom project commands
 │   │
-│   ├── persona-config.yaml             # Project default theme (shared with team)
-│   └── CLAUDE.md                       # Project instructions
+│   ├── sidecars/                       # Agent learning files (local, writable)
+│   ├── config.local.yaml               # Theme, bell_mode, relay_mode, permission_mode
+│   └── persona-config.yaml             # Project default theme (shared with team)
 │
 ├── .session/                           # Active work sessions
 │   └── {story-id}-session.md           # Session files (one per story)
@@ -309,9 +310,6 @@ SM → TEA → Dev → Reviewer → SM
 | `testing-runner.md` | Run tests and report results | haiku |
 | **Reviewer Subagents** | | |
 | `reviewer-preflight.md` | Pre-flight checks before review | haiku |
-| **Utility Subagents** | | |
-| `workflow-status-check.md` | Check workflow status across repos | haiku |
-
 ### SM → TEA (Story Setup)
 **Trigger:** User selects story via `/new-work`
 **Subagent:** `sm-setup MODE=setup` then `sm-handoff`
@@ -440,10 +438,10 @@ Dev Agent Example (API story):
 ### Directory Structure
 ```
 .pennyfarthing/agents/             # Agent definitions (symlinked)
-.claude/commands/           # 42 slash commands
-.claude/skills/             # 18+ knowledge domain skills
-.session/                   # Session files
-sprint/                     # Sprint tracking
+.pennyfarthing/commands/           # Slash commands (symlinked)
+.pennyfarthing/skills/             # Knowledge domain skills (symlinked)
+.session/                          # Session files
+sprint/                            # Sprint tracking
 ```
 
 ### Commands Reference

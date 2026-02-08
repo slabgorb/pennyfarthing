@@ -16,7 +16,7 @@ Hooks are shell scripts that Claude Code runs at specific events:
 
 ### SessionStart: session-start.sh
 
-**Location:** `.claude/pennyfarthing/scripts/hooks/session-start.sh`
+**Location:** `.pennyfarthing/scripts/hooks/session-start.sh`
 
 Initializes the Pennyfarthing environment:
 - Creates `.session/` directory structure
@@ -25,7 +25,7 @@ Initializes the Pennyfarthing environment:
 
 ### SessionStart: setup-env.sh
 
-**Location:** `.claude/project/hooks/setup-env.sh`
+**Location:** `.pennyfarthing/project/hooks/setup-env.sh`
 
 Project-specific environment setup. Edit this file to:
 - Set custom environment variables
@@ -34,12 +34,12 @@ Project-specific environment setup. Edit this file to:
 
 ### PreToolUse: pre-edit-check.sh
 
-**Location:** `.claude/pennyfarthing/scripts/hooks/pre-edit-check.sh`
+**Location:** `.pennyfarthing/scripts/hooks/pre-edit-check.sh`
 
 Protects sensitive files from accidental edits:
 - Blocks: `.env`, `.pem`, `.key`, credentials, secrets
 - Blocks: `.git/`, `node_modules/`, `vendor/`
-- Blocks: `.claude/pennyfarthing/*` (managed files)
+- Blocks: `.pennyfarthing/*` (managed files)
 
 ## Configuration Schema
 
@@ -225,6 +225,6 @@ If a hook fails or behaves unexpectedly:
 
 | Type | Location | Editable |
 |------|----------|----------|
-| Managed hooks | `.claude/pennyfarthing/scripts/hooks/` | No (use pennyfarthing repo) |
+| Managed hooks | `.pennyfarthing/scripts/hooks/` | No (use pennyfarthing repo) |
 | Project hooks | `.claude/project/hooks/` | Yes |
 | Settings | `.claude/settings.local.json` | Yes |
