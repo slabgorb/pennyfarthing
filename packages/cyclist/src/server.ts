@@ -35,6 +35,8 @@ import {
   createPermissionsRouter,
   createAgentLoadRouter,
   createDeadCodeRouter,
+  createComplexityRouter,
+  createDependenciesRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -150,6 +152,9 @@ app.use('/api/code-markers', createCodeMarkersRouter(getProjectDir));
 app.use('/api/dead-code', createDeadCodeRouter(getProjectDir));
 // MSSCI-14461: Agent Load Analyzer
 app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
+// MSSCI-14468: Complexity + Dependencies APIs
+app.use('/api/complexity', createComplexityRouter(getProjectDir));
+app.use('/api/dependencies', createDependenciesRouter(getProjectDir));
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
