@@ -26,6 +26,7 @@ export interface SprintStory {
   status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
   hasContext?: boolean;
+  assignedTo?: string | null;
 }
 
 export interface SprintEpic {
@@ -69,6 +70,7 @@ interface YamlStory {
   points?: number;
   status?: string;
   jira?: string;
+  assigned_to?: string;
 }
 
 interface YamlEpic {
@@ -173,6 +175,7 @@ function transformStory(yamlStory: YamlStory, projectDir: string): SprintStory {
     status: mapStoryStatus(yamlStory.status),
     jiraKey: yamlStory.jira ?? null,
     hasContext: checkStoryContext(projectDir, yamlStory.id),
+    assignedTo: yamlStory.assigned_to ?? null,
   };
 }
 

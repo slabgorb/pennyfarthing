@@ -20,6 +20,7 @@ export interface SprintStory {
   status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
   hasContext?: boolean;
+  assignedTo?: string | null;
 }
 
 export interface SprintEpic {
