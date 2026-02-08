@@ -1,6 +1,6 @@
 #!/bin/bash
 # test-drift-detection.sh - Tests for story 8-2: Startup Drift Detection
-# Verifies that workflow-status-check detects and reports drift between
+# Verifies that prime/sprint scripts detect and report drift between
 # merged branches and sprint YAML status
 #
 # RED STATE: These tests will FAIL until Dev implements the feature
@@ -38,7 +38,7 @@ echo "=== Story 8-2: Startup Drift Detection ==="
 echo ""
 
 # ==============================================================================
-# AC1: workflow-status-check detects merged-but-not-closed stories
+# AC1: prime detects merged-but-not-closed stories
 # ==============================================================================
 
 echo "--- AC1: Detects merged-but-not-closed stories ---"
@@ -293,38 +293,14 @@ test_drift_output_format() {
     fi
 }
 
-# Test: workflow-status-check.md references drift detection
-test_workflow_status_check_integration() {
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
-
-    if [[ ! -f "$workflow_file" ]]; then
-        fail "workflow-status-check includes drift detection" "file exists" "workflow-status-check.md not found"
-        return
-    fi
-
-    if grep -qi "drift\|detect_drift" "$workflow_file" 2>/dev/null; then
-        pass "workflow-status-check.md references drift detection"
-    else
-        fail "workflow-status-check includes drift detection" \
-             "drift or detect_drift reference in workflow-status-check.md" \
-             "no drift reference found"
-    fi
-}
-
 # Test: Drift report is user-friendly (mentions "merged" and "status")
 test_drift_report_clarity() {
     local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
 
     # Check sprint-common.sh for descriptive output
     if [[ -f "$sprint_common" ]] && grep -A 30 "detect_drift" "$sprint_common" 2>/dev/null | grep -qi "merged\|drift"; then
-        found=true
-    fi
-
-    # Or check workflow-status-check.md for report format
-    if [[ -f "$workflow_file" ]] && grep -qi "merged.*status\|drift.*report\|drifted stories" "$workflow_file" 2>/dev/null; then
         found=true
     fi
 
@@ -338,7 +314,6 @@ test_drift_report_clarity() {
 }
 
 test_drift_output_format
-test_workflow_status_check_integration
 test_drift_report_clarity
 
 echo ""
@@ -353,17 +328,11 @@ echo ""
 # Test: reconcile_drift function or auto-reconcile logic exists
 test_reconcile_function_exists() {
     local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
 
     # Check for reconcile function in sprint-common.sh
     if [[ -f "$sprint_common" ]] && grep -qi "reconcile_drift\|auto.reconcile\|reconcile" "$sprint_common" 2>/dev/null; then
-        found=true
-    fi
-
-    # Or check workflow-status-check.md for reconcile instructions
-    if [[ -f "$workflow_file" ]] && grep -qi "reconcile\|auto.reconcile\|update.*done" "$workflow_file" 2>/dev/null; then
         found=true
     fi
 
@@ -402,17 +371,11 @@ test_reconcile_uses_update() {
 # Test: Auto-reconcile logs to reconciliation.log
 test_reconcile_logs_event() {
     local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
 
     # Check sprint-common.sh for log_reconciliation call
     if [[ -f "$sprint_common" ]] && grep -qi "log_reconciliation\|reconciliation" "$sprint_common" 2>/dev/null; then
-        found=true
-    fi
-
-    # Or check workflow-status-check.md for logging instructions
-    if [[ -f "$workflow_file" ]] && grep -qi "log.*reconcil\|reconciliation.log" "$workflow_file" 2>/dev/null; then
         found=true
     fi
 
@@ -422,25 +385,6 @@ test_reconcile_logs_event() {
         fail "auto-reconcile logs to reconciliation.log" \
              "log_reconciliation call or reconciliation.log reference" \
              "reconciliation logging not found"
-    fi
-}
-
-# Test: workflow-status-check offers reconcile option to user
-test_offers_reconcile_option() {
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
-
-    if [[ ! -f "$workflow_file" ]]; then
-        fail "offers reconcile option" "file exists" "workflow-status-check.md not found"
-        return
-    fi
-
-    # Check for user prompt or option offering
-    if grep -qiE "auto.reconcile|offer.*reconcile|reconcile.*option|y/n|yes/no" "$workflow_file" 2>/dev/null; then
-        pass "workflow-status-check offers reconcile option to user"
-    else
-        fail "offers reconcile option" \
-             "user prompt for auto-reconcile in workflow-status-check.md" \
-             "reconcile prompt not found"
     fi
 }
 
@@ -463,30 +407,10 @@ test_reconcile_transitions_jira() {
     fi
 }
 
-# Test: workflow-status-check mentions Jira in drift reconciliation
-test_workflow_mentions_jira_reconcile() {
-    local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
-
-    if [[ ! -f "$workflow_file" ]]; then
-        fail "workflow mentions Jira reconcile" "file exists" "workflow-status-check.md not found"
-        return
-    fi
-
-    if grep -qiE 'jira.*done|transition.*jira|jira.*status' "$workflow_file" 2>/dev/null; then
-        pass "workflow-status-check mentions Jira in reconciliation"
-    else
-        fail "workflow mentions Jira reconcile" \
-             "Jira transition reference in workflow-status-check.md" \
-             "Jira reconcile not found"
-    fi
-}
-
 test_reconcile_function_exists
 test_reconcile_uses_update
 test_reconcile_transitions_jira
 test_reconcile_logs_event
-test_offers_reconcile_option
-test_workflow_mentions_jira_reconcile
 
 echo ""
 
@@ -580,7 +504,7 @@ if [[ $TESTS_FAILED -gt 0 ]]; then
     echo "  2. Output format: story_id:yaml_status:jira_status (AC2)"
     echo "     - Clear, user-friendly terminology"
     echo "     - Include both YAML and Jira status"
-    echo "  3. Add Step 2.5 to workflow-status-check.md (AC1, AC2)"
+    echo "  3. Add drift detection to prime/workflow.py (AC1, AC2)"
     echo "     - Call detect_drift after git scan"
     echo "     - Report drifted stories before state determination"
     echo "  4. Add auto-reconcile option (AC3)"

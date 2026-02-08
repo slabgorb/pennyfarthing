@@ -278,11 +278,11 @@ Design subagents to do multiple related steps in one spawn:
 
 ```yaml
 # INEFFICIENT - 2 subagent spawns
-Spawn 1: workflow-status-check
+Spawn 1: sm-setup MODE=research
 Spawn 2: sm-file-summary
 
 # EFFICIENT - 1 compound subagent
-Spawn 1: (combined status-check + file-summary subagent)
+Spawn 1: (combined research + file-summary subagent)
 ```
 
 **Good candidates for combining:**

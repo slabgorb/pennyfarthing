@@ -52,7 +52,6 @@ SUBAGENTS=(
     "sm-finish.md"
     "sm-file-summary.md"
     "sm-handoff.md"
-    "workflow-status-check.md"
     "testing-runner.md"
     "reviewer-preflight.md"
 )

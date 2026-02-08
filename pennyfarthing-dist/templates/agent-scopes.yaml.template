@@ -67,7 +67,6 @@ strategic_agents:
       - Skill(tea)
       - Skill(dev)
       - Skill(reviewer)
-      - Task(workflow-status-check)
       - Task(sm-*)
     context_files:
       - sprint/current-sprint.yaml
@@ -208,16 +207,6 @@ helper_subagents:
       - Read
       - Bash               # Run test commands only
       - Grep               # Search test output
-
-  workflow-status-check:
-    description: "Scans session files and git status"
-    scope: task
-    model: haiku
-    permissions:
-      - Read
-      - Glob
-      - Grep
-      - Bash               # Git commands only
 
   sm-story-setup:
     description: "Creates branches and session files"
