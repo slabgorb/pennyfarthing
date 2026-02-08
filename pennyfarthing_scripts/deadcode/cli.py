@@ -3,6 +3,7 @@ CLI commands for dead code detection.
 
 Usage:
     pf deadcode stale [OPTIONS]
+    pf deadcode exports [OPTIONS]
 """
 
 from __future__ import annotations
@@ -19,7 +20,8 @@ def deadcode():
 
     \b
     Commands:
-      stale  - Find files with no recent commits
+      stale    - Find files with no recent commits
+      exports  - Find unused TypeScript exports via ts-prune
     """
     pass
 
@@ -93,3 +95,69 @@ def stale(repo, repo_path, days, top, fmt, output_file, exclude, branch):
     """Find files with no recent git commits."""
     result = _run_analysis(repo, repo_path, days, exclude, branch)
     _output_result(result, fmt, output_file, top)
+
+
+def _exports_options(fn):
+    """Shared options for exports subcommand."""
+    fn = click.option("--repo", help="Analyze a single named repo from repos.yaml")(fn)
+    fn = click.option("--path", "repo_path", type=click.Path(exists=True), help="Analyze a standalone repo path")(fn)
+    fn = click.option("--top", default=20, show_default=True, help="Number of top results to show")(fn)
+    fn = click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table", show_default=True)(fn)
+    fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
+    return fn
+
+
+def _run_exports_analysis(repo: str | None, repo_path: str | None):
+    """Run unused export analysis and return result."""
+    from pennyfarthing_scripts.deadcode.analyze import find_unused_exports
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    if repo_path:
+        p = Path(repo_path).resolve()
+        return asyncio.run(find_unused_exports(p))
+    elif repo:
+        project_root = get_project_root()
+        from pennyfarthing_scripts.common.config import load_yaml_config
+        repos_yaml = load_yaml_config(project_root / ".pennyfarthing" / "repos.yaml")
+        if repos_yaml and repo in repos_yaml:
+            cfg = repos_yaml[repo]
+            rpath = cfg.get("path", repo) if isinstance(cfg, dict) else str(cfg)
+            return asyncio.run(find_unused_exports(project_root / rpath))
+        else:
+            candidate = project_root / repo
+            if candidate.exists():
+                return asyncio.run(find_unused_exports(candidate))
+            raise click.ClickException(f"Repo not found: {repo}")
+    else:
+        project_root = get_project_root()
+        return asyncio.run(find_unused_exports(project_root))
+
+
+def _output_exports_result(result, fmt: str, output_file: str | None, top: int):
+    """Format and output the exports analysis result."""
+    from pennyfarthing_scripts.deadcode.formatters import (
+        export_exports_csv,
+        export_exports_json,
+        format_exports_table,
+    )
+
+    if fmt == "json":
+        text = export_exports_json(result)
+    elif fmt == "csv":
+        text = export_exports_csv(result.unused_exports[:top])
+    else:
+        text = format_exports_table(result.unused_exports, top)
+
+    if output_file:
+        Path(output_file).write_text(text)
+        click.echo(f"Output written to {output_file}", err=True)
+    else:
+        click.echo(text)
+
+
+@deadcode.command()
+@_exports_options
+def exports(repo, repo_path, top, fmt, output_file):
+    """Find unused TypeScript exports via ts-prune."""
+    result = _run_exports_analysis(repo, repo_path)
+    _output_exports_result(result, fmt, output_file, top)

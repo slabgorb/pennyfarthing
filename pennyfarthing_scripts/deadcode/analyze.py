@@ -1,7 +1,8 @@
 """
-Core stale file detection engine.
+Core dead code detection engine.
 
-Compares git ls-files against git log --since to find files with no recent commits.
+Layer 1: Compares git ls-files against git log --since to find files with no recent commits.
+Layer 2: Runs ts-prune to find unused TypeScript exports.
 """
 
 from __future__ import annotations
@@ -11,7 +12,14 @@ import fnmatch
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pennyfarthing_scripts.deadcode.models import DeadCodeResult, StaleFile
+import re
+
+from pennyfarthing_scripts.deadcode.models import (
+    DeadCodeResult,
+    StaleFile,
+    UnusedExport,
+    UnusedExportResult,
+)
 
 # Default file patterns to exclude from analysis
 DEFAULT_EXCLUDES = [
@@ -228,3 +236,88 @@ async def analyze_repo(
     # Override repo_name with the provided name
     result.repo_name = name
     return result
+
+
+# ts-prune output line pattern: "path/to/file.ts:line - symbolName"
+_TS_PRUNE_LINE_RE = re.compile(r"^(.+):(\d+) - (.+)$")
+
+
+def _parse_ts_prune_output(output: str) -> list[UnusedExport]:
+    """Parse ts-prune stdout into UnusedExport instances.
+
+    ts-prune format: ``path/to/file.ts:10 - symbolName``
+    Lines ending with ``(used in module)`` are skipped (not truly unused).
+    """
+    exports: list[UnusedExport] = []
+    for line in output.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        # Skip "used in module" markers — these are re-exported and consumed
+        if line.endswith("(used in module)"):
+            continue
+
+        m = _TS_PRUNE_LINE_RE.match(line)
+        if not m:
+            continue
+
+        file_path, line_no, symbol = m.group(1), int(m.group(2)), m.group(3).strip()
+        export_type = "default" if symbol == "default" else "named"
+        exports.append(
+            UnusedExport(
+                symbol=symbol,
+                file=file_path,
+                line=line_no,
+                export_type=export_type,
+            )
+        )
+    return exports
+
+
+async def find_unused_exports(repo_path: Path) -> UnusedExportResult:
+    """Find unused TypeScript exports via ts-prune.
+
+    Runs ``npx ts-prune`` in the repo and parses the output.
+
+    Args:
+        repo_path: Path to a TypeScript project with tsconfig.json
+
+    Returns:
+        UnusedExportResult with unused exports
+    """
+    resolved = Path(repo_path).resolve()
+
+    if not resolved.exists():
+        return UnusedExportResult(
+            success=False,
+            repo_name=resolved.name,
+            repo_path=str(resolved),
+            error=f"Path not found: {resolved}",
+        )
+
+    proc = await asyncio.create_subprocess_exec(
+        "npx", "ts-prune",
+        cwd=resolved,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout_bytes, stderr_bytes = await proc.communicate()
+    stdout = stdout_bytes.decode("utf-8", errors="replace").strip()
+    stderr = stderr_bytes.decode("utf-8", errors="replace").strip()
+
+    if proc.returncode and proc.returncode != 0:
+        return UnusedExportResult(
+            success=False,
+            repo_name=resolved.name,
+            repo_path=str(resolved),
+            error=f"ts-prune failed (exit {proc.returncode}): {stderr}",
+        )
+
+    exports = _parse_ts_prune_output(stdout)
+    return UnusedExportResult(
+        success=True,
+        repo_name=resolved.name,
+        repo_path=str(resolved),
+        unused_exports=exports,
+        total_exports_scanned=0,  # ts-prune doesn't report total count
+    )
