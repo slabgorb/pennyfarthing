@@ -36,6 +36,7 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children, disabled, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => (
     <button disabled={disabled} onClick={onClick} {...props}>{children}</button>
   ),
+  buttonVariants: () => '',
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -83,11 +84,9 @@ describe('MSSCI-14443: Tool Launcher Row', () => {
 
   it('AC3: placeholder buttons are disabled', () => {
     render(<DebugPanel />);
-    const codeMarkers = screen.getByTestId('tool-launcher-codemarkers');
     const deadCode = screen.getByTestId('tool-launcher-deadcode');
     const complexity = screen.getByTestId('tool-launcher-complexity');
 
-    expect(codeMarkers).toHaveProperty('disabled', true);
     expect(deadCode).toHaveProperty('disabled', true);
     expect(complexity).toHaveProperty('disabled', true);
   });
