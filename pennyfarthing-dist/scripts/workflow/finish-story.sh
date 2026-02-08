@@ -44,31 +44,64 @@ fi
 # Find project root
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
-SESSION_FILE="$PROJECT_ROOT/.session/${STORY_ID}-session.md"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 ARCHIVE_DIR="$PROJECT_ROOT/sprint/archive"
 
 # Ensure archive directory exists
 mkdir -p "$ARCHIVE_DIR"
 
+# Resolve session file: prefer Jira key, fall back to numeric story ID
+SESSION_FILE="$PROJECT_ROOT/.session/${STORY_ID}-session.md"
+if [[ ! -f "$SESSION_FILE" ]]; then
+  # Look up Jira key from sprint YAML and try that
+  _JIRA_LOOKUP=$(pf sprint story field "$STORY_ID" jira 2>/dev/null || echo "")
+  if [[ -n "$_JIRA_LOOKUP" && "$_JIRA_LOOKUP" != "null" ]]; then
+    ALT_SESSION="$PROJECT_ROOT/.session/${_JIRA_LOOKUP}-session.md"
+    if [[ -f "$ALT_SESSION" ]]; then
+      SESSION_FILE="$ALT_SESSION"
+    fi
+  fi
+fi
+
+# Also try the reverse: if called with Jira key, try numeric ID
+if [[ ! -f "$SESSION_FILE" ]]; then
+  # List session files and look for one containing the story ID
+  for f in "$PROJECT_ROOT/.session/"*-session.md; do
+    [[ -f "$f" ]] || continue
+    if grep -q "$STORY_ID" "$f" 2>/dev/null; then
+      SESSION_FILE="$f"
+      break
+    fi
+  done
+fi
+
 # Validate session file exists
 if [[ ! -f "$SESSION_FILE" ]]; then
-  echo "Error: Session file not found: $SESSION_FILE"
+  echo "Error: Session file not found for story $STORY_ID"
+  echo "Looked for: $PROJECT_ROOT/.session/${STORY_ID}-session.md"
+  [[ -n "${_JIRA_LOOKUP:-}" ]] && echo "Also tried: $PROJECT_ROOT/.session/${_JIRA_LOOKUP}-session.md"
   exit 1
 fi
 
-# Extract metadata from session file (handle both "**Jira:**" and "- **Jira:**" formats)
-# Also handle markdown link format: [MSSCI-12721](https://...)
+# Extract metadata from session file
+# Try **Jira:** field first (handle both "**Jira:**" and "- **Jira:**", markdown link format)
 JIRA_KEY=$(grep -E '\*\*Jira:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Jira:\*\* //' | sed 's/\[//' | sed 's/\].*//' | tr -d ' ' || echo "")
-# Extract branch - strip any trailing annotations like "(pushed)"
-BRANCH=$(grep -E '\*\*Branch:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Branch:\*\* //' | sed 's/ *(.*//' | tr -d ' ' || echo "")
 
-# Try to get PR number from session file first (format: **PR:** #422 - title)
-PR_NUMBER=$(grep -E '\*\*PR:\*\*' "$SESSION_FILE" | sed 's/.*#\([0-9]*\).*/\1/' || echo "")
-
-# Fallback: try to get Jira key from sprint YAML if not in session
+# Fallback: extract MSSCI key from **ID:** field (format: "MSSCI-14459 (81-2)" or just "MSSCI-14459")
 if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
-  JIRA_KEY=$(yq ".epics[].stories[] | select(.id == \"$STORY_ID\") | .jira // \"\"" "$SPRINT_FILE" 2>/dev/null | head -1 || echo "")
+  JIRA_KEY=$(grep -E '\*\*ID:\*\*' "$SESSION_FILE" | grep -oE 'MSSCI-[0-9]+' | head -1 || echo "")
+fi
+
+# Fallback: if STORY_ID itself is a Jira key, use it directly
+if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
+  if [[ "$STORY_ID" =~ ^MSSCI-[0-9]+$ ]]; then
+    JIRA_KEY="$STORY_ID"
+  fi
+fi
+
+# Fallback: look up Jira key from sprint YAML via pf CLI
+if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
+  JIRA_KEY=$(pf sprint story field "$STORY_ID" jira 2>/dev/null || echo "")
 fi
 
 if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
@@ -76,6 +109,12 @@ if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
   echo "Check session file or sprint YAML for jira: field"
   exit 1
 fi
+
+# Extract branch - strip any trailing annotations like "(pushed)"
+BRANCH=$(grep -E '\*\*Branch:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Branch:\*\* //' | sed 's/ *(.*//' | tr -d ' ' || echo "")
+
+# Try to get PR number from session file first (format: **PR:** #422 - title)
+PR_NUMBER=$(grep -E '\*\*PR:\*\*' "$SESSION_FILE" | sed 's/.*#\([0-9]*\).*/\1/' || echo "")
 
 # Fallback: get PR number from GitHub if not in session file
 if [[ -z "$PR_NUMBER" ]] && [[ -n "$BRANCH" ]]; then
