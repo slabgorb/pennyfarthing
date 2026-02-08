@@ -24,7 +24,7 @@ export default {
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
         'text-muted': 'var(--text-muted)',
-        border: 'var(--border-color)',
+        border: 'var(--border)',
         success: 'var(--success)',
         warning: 'var(--warning)',
         error: 'var(--error)',
