@@ -9,6 +9,8 @@
  *
  * Acceptance Criteria covered:
  * - AC3: useHealthScore.ts React hook with loading/error/data states
+ *
+ * @vitest-environment happy-dom
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -22,7 +24,7 @@ let mockFetch: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.useFakeTimers();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   mockFetch = vi.fn();
   globalThis.fetch = mockFetch;
 });

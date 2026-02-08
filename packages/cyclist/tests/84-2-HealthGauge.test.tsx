@@ -11,12 +11,15 @@
  * - AC4: Radial gauge component renders in DebugPanel header
  * - AC5: Green/yellow/red coloring based on score thresholds
  * - AC6: Tap/click gauge opens dimension breakdown view
+ *
+ * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import '@testing-library/jest-dom/vitest';
 
 // Component under test — to be implemented
 import { HealthGauge } from '../src/public/components/HealthGauge';
@@ -24,6 +27,12 @@ import type { HealthGaugeProps } from '../src/public/components/HealthGauge';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
 });
 
 const FULL_DIMENSIONS = [

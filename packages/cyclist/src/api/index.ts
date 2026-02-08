@@ -46,3 +46,5 @@ export { createDeadCodeRouter } from './dead-code.js';
 // MSSCI-14468: Complexity + Dependencies APIs
 export { createComplexityRouter } from './complexity.js';
 export { createDependenciesRouter } from './dependencies.js';
+// MSSCI-14471: Health Score API
+export { createHealthScoreRouter } from './health-score.js';
