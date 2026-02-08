@@ -6,7 +6,7 @@
 # - AC1: Updating **Phase:** field to next phase
 # - AC2: Updating Phase History table with end timestamp and duration
 # - AC3: Adding Handoff History row with gate and status
-# - AC4: workflow-status-check correctly detects phase (integration)
+# - AC4: prime correctly detects phase (integration)
 # - AC5: All three transitions documented (TEA→Dev, Dev→Reviewer, Reviewer→SM)
 
 set -euo pipefail
@@ -190,14 +190,14 @@ run_test test_ac3_status_in_history
 run_test test_ac3_explicit_edit_for_history
 
 # ==============================================================================
-# AC4: workflow-status-check correctly detects current phase after handoff
+# AC4: prime correctly detects current phase after handoff
 # ==============================================================================
 echo ""
-echo "--- AC4: workflow-status-check compatibility ---"
+echo "--- AC4: prime/workflow.py compatibility ---"
 
 test_ac4_phase_field_format() {
-    # Phase field must use exact format that workflow-status-check expects
-    # workflow-status-check greps for: **Phase:**
+    # Phase field must use exact format that prime/workflow.py expects
+    # parse_session_header greps for: **Phase:**
     if echo "$HANDOFF_CONTENT" | grep -q '\*\*Phase:\*\*'; then
         pass "AC4.1: Uses correct **Phase:** format"
     else

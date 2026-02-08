@@ -158,7 +158,7 @@ The session file (`.session/{story-id}-session.md`) tracks state:
 **Files:** `agents/sm.md`
 
 Key behaviors:
-- Spawns `workflow-status-check` to detect current state
+- Reads workflow state from prime activation output
 - Creates story context with technical approach
 - Routes to TEA (standard) or Dev (trivial)
 - Handles finish flow when story approved
@@ -291,7 +291,7 @@ Session file tracks rejection count and issues.
 ### Missing Epic Context
 
 ```
-User runs /new-work → workflow-status-check detects no epic context
+User runs /new-work → prime detects no epic context
 → Returns MISSING_EPIC_CONTEXT state
 → Blocks until user runs /start-epic
 ```
@@ -315,7 +315,7 @@ This prevents context overflow mid-flow.
 
 If a session file exists but work was interrupted:
 
-1. `workflow-status-check` detects `IN_PROGRESS_STATE`
+1. Prime detects `IN_PROGRESS_STATE` in activation output
 2. Reports which agent should resume
 3. User decides: continue or abandon
 
@@ -393,7 +393,6 @@ Each story: 5-15 files, focused changes
 - TEA Agent: `agents/tea.md`
 - Dev Agent: `agents/dev.md`
 - Reviewer Agent: `agents/reviewer.md`
-- Workflow Status Check: `agents/workflow-status-check.md`
 - Agent Behavior: `guides/agent-behavior.md`
 
 ---

@@ -38,7 +38,6 @@ Task tool:
 
 **See `agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
 
-- **`workflow-status-check.md`** - Detect workflow state
 - **`sm-setup.md`** - Research OR setup mode (Story 31-11)
 - **`sm-finish.md`** - Preflight OR execute phase (Story 31-11)
 - **`handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
@@ -123,8 +122,7 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (8 active)
-├── workflow-status-check.md   # Detect workflow state
+│ # Official Subagents (7 active)
 ├── sm-setup.md        # Research or setup mode (Story 31-11)
 ├── sm-finish.md       # Preflight or execute (Story 31-11)
 ├── handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)

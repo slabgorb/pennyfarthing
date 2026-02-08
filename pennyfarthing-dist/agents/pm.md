@@ -23,17 +23,11 @@ Every feature you add is a feature you have to maintain. Every "nice to have" st
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check` | Scan sprint state and active sessions |
 | `sm-file-summary` | Summarize files for context gathering |
 </helpers>
 
 <parameters>
 ## Subagent Parameters
-
-### workflow-status-check
-```yaml
-CALLING_AGENT: "PM"
-```
 
 ### sm-file-summary
 ```yaml
