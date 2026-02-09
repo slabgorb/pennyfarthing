@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.0.5. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.1.0. ES module monorepo (pnpm, TypeScript, Node >=18).
 
 <critical>
 ## Implementation Rules
@@ -92,7 +92,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, agent-docs, patch |
+| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, 2party-tdd, agent-docs, patch |
 | **Stepped** | Progressive disclosure with gates | architecture, release, git-cleanup |
 
 **TDD flow:** `/new-work` → SM → TEA → Dev → Reviewer → SM (finish)
@@ -104,7 +104,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 | Dev | Implement to pass tests (GREEN phase) |
 | Reviewer | Adversarial review, approve/reject |
 
-**Subagents:** `workflow-status-check`, `sm-setup`, `sm-finish`, `sm-handoff`, `testing-runner`, `handoff`, `reviewer-preflight` — all via Task tool with `subagent_type`.
+**Subagents:** `sm-setup`, `sm-finish`, `sm-handoff`, `sm-file-summary`, `testing-runner`, `handoff`, `reviewer-preflight` — all via Task tool with `subagent_type`.
 
 **Handoff protocol:** Agent completes work → spawns subagent → subagent updates session → next agent reads state and continues.
 </info>

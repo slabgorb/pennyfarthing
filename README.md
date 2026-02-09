@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.0.5** | *The outer loop goes once, the inner loop goes many times.*
+**v10.1.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,8 +15,8 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
-- **8 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (Architecture, Release, Git Cleanup)
-- **49 Slash Commands** - Entry points for agent activation and workflows
+- **9 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD), Stepped (Architecture, Release, Git Cleanup)
+- **50 Slash Commands** - Entry points for agent activation and workflows
 - **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
@@ -266,14 +266,16 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v10.0.0
+## What's New in v10.1.0
 
-- **Clean Install Consolidation** - All managed files under `.pennyfarthing/` instead of scattered across `.claude/`, `.git/hooks/`, `.session/`. Legacy installs migrated automatically via `pennyfarthing update`
-- **Tool Use Approval System** - Hook-based permission flow with severity classification, grant persistence, agent-level scoping, and workflow presets. Replaces legacy IPC approval
-- **Smooth Plan Mode Exit** - Tirepump choice UI for transitioning out of plan mode
+- **Codebase Health Dashboard** — Health score gauge, dead code analysis, code markers, complexity metrics, and dependency tracking — all with Cyclist dialogs
+- **Tool Dialog System** — Shared ToolDialog component with standardized dialogs across all diagnostic tools
+- **2party-TDD Workflow** — New workflow for pair-programming TDD with review rejection loops
+- **Cross-File Reference Validator** — Detects broken references across agent definitions, workflows, skills, and guides
 
 ### Previous Highlights
 
+- **v10.0** - Clean install consolidation, tool use approval system, plan mode exit UI
 - **v9.3** - Theme packages (97 themes across 7 packs), release workflow, shadcn/ui migration
 - **v9.0** - Dockview panel system, React 19 rewrite, tool visualization, prime context, bell/relay modes
 - **v8.x** - BikeLane workflows, scientific benchmarking, JobFair, agent sidecars

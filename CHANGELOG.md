@@ -11,6 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.1.0] - 2026-02-08
+
+### Added
+
+- **Health score gauge and API** — Composite 0-100 codebase health score with scoring algorithm, caching, formatters, and Cyclist gauge component (84-2, MSSCI-14470)
+- **Dead code analysis** — Stale file detection (81-1), unused TypeScript export detection via ts-prune (MSSCI-14459), and dead code API with dialog in Cyclist (81-3)
+- **Code markers API and dialog** — Scan for TODO, FIXME, HACK, XXX comments with Python grep+git-blame module and Cyclist dialog (80-3)
+- **Complexity and dependencies APIs** — Python complexity module (83-1), dependencies module (83-2), and Cyclist dialogs with Express routers (83-3)
+- **Agent load monitoring** — Agent-load API endpoint (82-1), sidecar pruning endpoint (82-2), and useAgentLoad hook with AgentLoadDialog (82-3)
+- **Tool dialogs** — Shared ToolDialog component (79-1), HotspotsPanel migrated to HotspotsDialog (79-2), tool launcher row in DebugPanel (79-3)
+- **Hotspot enhancements** — Expand artifact exclusions and client-side filters (79-5), `--skip-type` option for hotspots CLI and UI (79-4)
+- **2party-tdd workflow** — New workflow definition (v2.0.0) for two-party TDD with story refinement and review rejection loops (92-1)
+- **Cross-file reference validator** — Validates internal references across pennyfarthing-dist with 4 reference check types and test suite
+- **Sprint enhancements** — `--initiative` flag for `pf sprint story add`, `assigned_to` tracking for stories, epic archive step in finish-story
+- **Theme CLI** — New `pf theme` command group for theme management (MSSCI-14565)
+- **Agent activation blocks** — All command files now include agent-activation blocks
+- **Auto-load SM** — SessionStart hook automatically loads Scrum Master agent
+
+### Changed
+
+- **Cyclist dialog standardization** — Standardized dialogs and panels on inline Tailwind with theme variables
+- **Sprint panel enrichment** — Sprint panel now shows priority, workflow, and dates
+- **Message view** — Skill content replaced with labels, badge/timestamp reordered
+- **Theme commands consolidated** — All theme commands unified under `/theme` skill
+- **Finish-story rewritten** — Finish story script rewritten as Python module with shard-based epic archiving
+
+### Fixed
+
+- **Jira bidirectional sync** — Wire `--assignee` flag and fix shard-aware YAML writes in bidirectional sync
+- **Cyclist UI** — AC panel styling aligned with shared CSS, Jira links open in system browser, epic collapse fixed, git panel sync icon and dialog scroll overflow, maxBuffer for code-markers API, git cache invalidation regex for -C flag
+- **Doctor improvements** — Handle worktrees and remove symlink chmod no-op, detect stale git hooks and missing symlinks
+- **Stale references fixed** — 8 broken references across skills, workflows, guides, and commands (MSSCI-14517 through MSSCI-14554)
+- **Hooks** — `find-root.sh` fallback for copied git hooks, exclude `sprint/context/archived/` from YAML validation
+- **Agent activation** — Use `pf` CLI instead of broken PYTHONPATH dance
+- **Welcome screen** — Fix centering and color scheme detection
+
+---
+
 ## [10.0.5] - 2026-02-07
 
 ### Added
