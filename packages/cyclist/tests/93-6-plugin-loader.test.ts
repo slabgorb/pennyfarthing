@@ -130,6 +130,8 @@ describe('Plugin with API router', () => {
   beforeEach(() => {
     app = express();
     vi.clearAllMocks();
+    // Clean up dynamic import mock between tests
+    delete (globalThis as Record<string, unknown>).__pluginImportMock;
   });
 
   it('should dynamically import and mount a plugin router', async () => {
@@ -254,11 +256,21 @@ describe('Plugin with API router', () => {
     mockDiscoverPlugins.mockReturnValue(fakePlugins);
     mockGetPluginRouters.mockReturnValue(fakeRouters);
 
-    // The result should include the mounted router
+    // Track what arguments the factory receives
+    const factoryFn = vi.fn().mockReturnValue(createFakeRouter());
+    // @ts-expect-error - mocking dynamic import
+    globalThis.__pluginImportMock = vi.fn().mockResolvedValue({
+      createBenchmarkRouter: factoryFn,
+    });
+
     const result = await initPluginRouters(app, '/fake/project');
 
-    // If loaded successfully, the factory was called
-    expect(result).toBeDefined();
+    // Factory should have been called with a getProjectDir getter
+    expect(factoryFn).toHaveBeenCalledTimes(1);
+    const arg = factoryFn.mock.calls[0][0];
+    expect(typeof arg).toBe('function');
+    expect(arg()).toBe('/fake/project');
+    expect(result.loaded).toBe(1);
   });
 });
 
