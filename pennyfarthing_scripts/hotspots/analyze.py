@@ -59,6 +59,9 @@ DEFAULT_EXCLUDES = [
     "*.d.ts.map",
     # CI config
     ".github/*",
+    # Sprint/session operational files (not code quality signals)
+    "sprint/*",
+    ".session/*",
 ]
 
 # Regex for identifying bug-fix commits

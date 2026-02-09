@@ -11,8 +11,8 @@ export interface ContextSparklineProps {
 }
 
 function getBarColor(tokens: number): string {
-  if (tokens >= 1000) return 'var(--color-danger, #ef4444)';
-  if (tokens >= 100) return 'var(--color-warning, #f59e0b)';
+  if (tokens >= 50000) return 'var(--color-danger, #ef4444)';
+  if (tokens >= 5000) return 'var(--color-warning, #f59e0b)';
   return 'var(--color-success, #22c55e)';
 }
 
