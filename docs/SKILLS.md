@@ -309,36 +309,33 @@ Manage workflows - list, show, set, start, resume, and check status
 
 ### theme
 
-Manage persona themes - list, show, and set active theme
+Manage persona themes - list, show, set, create, and interactive maker wizard
 
-**Tags:** personas, themes, customization
+**Tags:** personas, themes, customization, creation
 
-**Keywords:** personas, characters, discworld, literary-classics
+**Keywords:** personas, characters, discworld, literary-classics, custom, generation, wizard
 
 **Examples:**
-- Listing available themes: `/list-themes`
-- Showing current theme: `/show-theme`
-- Setting active theme: `/set-theme discworld`
+- Listing available themes: `/theme list`
+- Showing current theme: `/theme show`
+- Setting active theme: `/theme set discworld`
+- Creating a new theme: `/theme create my-theme --base discworld`
+- Interactive AI-driven theme wizard: `/theme maker`
 
 **Anti-patterns:**
 - Don't edit config.local.yaml directly - use skill
-
-**Related:** [theme-creation](#theme-creation)
+- Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
 
 ### theme-creation
 
-Create custom persona themes with AI-driven generation
+DEPRECATED: Use /theme maker instead
 
 **Tags:** personas, themes, creation
 
 **Keywords:** personas, custom, generation, wizard
 
 **Examples:**
-- Creating new theme: `/theme-maker`
-- Interactive theme wizard: `/create-theme`
-
-**Anti-patterns:**
-- Don't create incomplete themes missing required agents
+- Interactive theme wizard: `/theme maker`
 
 **Related:** [theme](#theme)
 
