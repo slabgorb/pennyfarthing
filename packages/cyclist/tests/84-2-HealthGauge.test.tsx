@@ -10,7 +10,7 @@
  * Acceptance Criteria covered:
  * - AC4: Radial gauge component renders in DebugPanel header
  * - AC5: Green/yellow/red coloring based on score thresholds
- * - AC6: Tap/click gauge opens dimension breakdown view
+ * - AC6: Dimension breakdown always visible with click-to-open dialogs
  *
  * @vitest-environment happy-dom
  */
@@ -73,7 +73,7 @@ describe('AC4: HealthGauge renders in DebugPanel header', () => {
         dimensions={FULL_DIMENSIONS}
       />
     );
-    expect(screen.getByText('72.3')).toBeInTheDocument();
+    expect(screen.getByText('72')).toBeInTheDocument();
   });
 
   it('should display the grade letter', () => {
@@ -240,7 +240,7 @@ describe('AC5: Color bands by score', () => {
 });
 
 // ============================================================================
-// AC6: Tap/click opens dimension breakdown
+// AC6: Dimension breakdown always visible with click-to-open dialogs
 // ============================================================================
 
 describe('AC6: Dimension breakdown always visible with click-to-open dialogs', () => {

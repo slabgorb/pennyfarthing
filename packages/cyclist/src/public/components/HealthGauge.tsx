@@ -105,7 +105,7 @@ export function HealthGauge({ score, dimensions, totalDimensions, onDimensionCli
         </div>
         {onRefresh && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             className="health-gauge-refresh"
             data-testid="health-gauge-refresh"
@@ -138,7 +138,7 @@ export function HealthGauge({ score, dimensions, totalDimensions, onDimensionCli
         )}
         {/* Score text */}
         <text x="100" y="85" textAnchor="middle" fontSize="28" fill="currentColor">
-          {hasData ? String(score) : '--'}
+          {hasData ? String(Math.round(score)) : '--'}
         </text>
         {/* Grade letter */}
         {gradeInfo && (
@@ -165,7 +165,6 @@ export function HealthGauge({ score, dimensions, totalDimensions, onDimensionCli
               data-testid={`dimension-${dimName}`}
               className="health-gauge-dimension"
               onClick={() => onDimensionClick?.(dimName)}
-              style={{ cursor: onDimensionClick ? 'pointer' : 'default' }}
             >
               <span className="dimension-label">
                 {DIMENSION_LABELS[dimName] || dimName}

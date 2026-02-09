@@ -37,7 +37,7 @@ export function createCodeMarkersRouter(getProjectDir: () => string): Router {
     const pythonPath = join(projectDir, 'pennyfarthing');
 
     execFile('python3', args, {
-      cwd: projectDir,
+      cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
       timeout: 30000,
       maxBuffer: 10 * 1024 * 1024,
