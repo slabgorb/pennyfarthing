@@ -53,7 +53,12 @@
   },
   "pennyfarthing": {
     "commands": "commands/",
-    "skills": "skills/"
+    "skills": "skills/",
+    "api": {
+      "path": "/api/benchmark",
+      "module": "./dist/api/benchmark.js",
+      "export": "createBenchmarkRouter"
+    }
   },
   "dependencies": {
     "yaml": "^2.8.2"
