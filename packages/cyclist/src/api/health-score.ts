@@ -13,7 +13,7 @@ export function createHealthScoreRouter(getProjectDir: () => string): Router {
     execFile('python3', args, {
       cwd: projectDir,
       env: { ...process.env, PYTHONPATH: pythonPath },
-      timeout: 15000,
+      timeout: 60000,
     }, (err, stdout, stderr) => {
       if (err) {
         console.error('[HealthScore] Analysis failed:', stderr || err.message);

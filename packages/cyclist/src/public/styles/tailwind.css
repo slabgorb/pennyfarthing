@@ -2661,12 +2661,47 @@
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
 }
 
-/* Tool launcher - MSSCI-14443 */
-.debug-panel .tool-launcher {
+/* HealthGauge dimension breakdown */
+
+.health-gauge-partial {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.health-gauge-breakdown {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.health-gauge-dimension {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.health-gauge-dimension:hover {
+  background: var(--border);
+}
+
+.dimension-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.dimension-score {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary);
 }
 
 /* Settings panel */

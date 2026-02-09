@@ -98,14 +98,16 @@ describe('AC4: HealthGauge renders in DebugPanel header', () => {
     expect(svg).toBeInTheDocument();
   });
 
-  it('should show "--" when score is null (no data)', () => {
-    render(
+  it('should show "--" in gauge when score is null (no data)', () => {
+    const { container } = render(
       <HealthGauge
         score={null}
         dimensions={[]}
       />
     );
-    expect(screen.getByText('--')).toBeInTheDocument();
+    // The SVG text element shows "--" for the main score
+    const svgText = container.querySelector('svg text');
+    expect(svgText?.textContent).toBe('--');
   });
 
   it('should show dimension count when partial data available', () => {
@@ -118,7 +120,7 @@ describe('AC4: HealthGauge renders in DebugPanel header', () => {
       />
     );
     // Should indicate 4 of 8 dimensions
-    expect(screen.getByText(/4.*8/)).toBeInTheDocument();
+    expect(screen.getByText('4 of 8 dimensions')).toBeInTheDocument();
   });
 });
 
@@ -241,10 +243,8 @@ describe('AC5: Color bands by score', () => {
 // AC6: Tap/click opens dimension breakdown
 // ============================================================================
 
-describe('AC6: Click gauge opens dimension breakdown', () => {
-  it('should show dimension breakdown when gauge is clicked', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
+describe('AC6: Dimension breakdown always visible with click-to-open dialogs', () => {
+  it('should show dimension breakdown without clicking', () => {
     render(
       <HealthGauge
         score={72.3}
@@ -252,26 +252,19 @@ describe('AC6: Click gauge opens dimension breakdown', () => {
       />
     );
 
-    const gauge = screen.getByTestId('health-gauge');
-    await user.click(gauge);
-
-    // After click, dimension breakdown should be visible
+    // Breakdown is always visible
     expect(screen.getByTestId('dimension-breakdown')).toBeInTheDocument();
   });
 
-  it('should list all dimensions in the breakdown', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
+  it('should list all 8 dimensions even before data arrives', () => {
     render(
       <HealthGauge
-        score={72.3}
-        dimensions={FULL_DIMENSIONS}
+        score={null}
+        dimensions={[]}
       />
     );
 
-    await user.click(screen.getByTestId('health-gauge'));
-
-    // Each dimension should be listed
+    // All 8 dimension rows should render with "--" scores
     expect(screen.getByText(/churn/i)).toBeInTheDocument();
     expect(screen.getByText(/todo/i)).toBeInTheDocument();
     expect(screen.getByText(/complexity/i)).toBeInTheDocument();
@@ -282,17 +275,13 @@ describe('AC6: Click gauge opens dimension breakdown', () => {
     expect(screen.getByText(/agent context/i)).toBeInTheDocument();
   });
 
-  it('should display each dimension score in the breakdown', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
+  it('should display each dimension score in the breakdown', () => {
     render(
       <HealthGauge
         score={72.3}
         dimensions={FULL_DIMENSIONS}
       />
     );
-
-    await user.click(screen.getByTestId('health-gauge'));
 
     // Score values should be visible
     expect(screen.getByText('54.8')).toBeInTheDocument();
@@ -312,40 +301,14 @@ describe('AC6: Click gauge opens dimension breakdown', () => {
       />
     );
 
-    // Open breakdown first
-    await user.click(screen.getByTestId('health-gauge'));
-
-    // Click a specific dimension
+    // Click a specific dimension — no need to expand first
     const churnItem = screen.getByTestId('dimension-churn');
     await user.click(churnItem);
 
     expect(onDimensionClick).toHaveBeenCalledWith('churn');
   });
 
-  it('should toggle breakdown closed on second click', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-    render(
-      <HealthGauge
-        score={72.3}
-        dimensions={FULL_DIMENSIONS}
-      />
-    );
-
-    const gauge = screen.getByTestId('health-gauge');
-
-    // First click — open
-    await user.click(gauge);
-    expect(screen.getByTestId('dimension-breakdown')).toBeInTheDocument();
-
-    // Second click — close
-    await user.click(gauge);
-    expect(screen.queryByTestId('dimension-breakdown')).not.toBeInTheDocument();
-  });
-
-  it('should not show breakdown when score is null', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
+  it('should show breakdown even when score is null', () => {
     render(
       <HealthGauge
         score={null}
@@ -353,10 +316,7 @@ describe('AC6: Click gauge opens dimension breakdown', () => {
       />
     );
 
-    const gauge = screen.getByTestId('health-gauge');
-    await user.click(gauge);
-
-    // No breakdown when there's no data
-    expect(screen.queryByTestId('dimension-breakdown')).not.toBeInTheDocument();
+    // Breakdown is always visible, showing all dimensions with "--"
+    expect(screen.getByTestId('dimension-breakdown')).toBeInTheDocument();
   });
 });
