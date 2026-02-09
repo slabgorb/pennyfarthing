@@ -16,6 +16,7 @@ Steps:
 import re
 import shutil
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -186,7 +187,7 @@ def finish_story(
 
     # --- Step 5: Archive completed epics ---
     result = _run(
-        ["python", "-m", "pennyfarthing_scripts.cli", "sprint", "epic", "archive"],
+        [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "epic", "archive"],
         cwd=str(project_root),
     )
     steps.append({"step": 5, "action": "archive_epics", "ran": True})
