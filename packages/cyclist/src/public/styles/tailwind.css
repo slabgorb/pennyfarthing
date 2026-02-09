@@ -444,9 +444,10 @@
 .message-panel-editor {
   flex-shrink: 0;
   background: var(--bg-secondary, #252526);
-  overflow-y: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
+  min-height: 120px;
 }
 
 /* Message View - the conversation area */
