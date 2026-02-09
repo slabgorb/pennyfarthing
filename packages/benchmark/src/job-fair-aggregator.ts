@@ -506,7 +506,7 @@ export async function saveHistoricalSnapshot(resultsDir: string): Promise<void> 
 // ============================================================================
 
 /** Default path to themes directory */
-const DEFAULT_THEMES_DIR = join(__dirname, '../../../../pennyfarthing-dist/personas/themes');
+const DEFAULT_THEMES_DIR = join(__dirname, '../../../pennyfarthing-dist/personas/themes');
 
 /**
  * Load dimensions from a theme YAML file

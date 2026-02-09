@@ -20,7 +20,7 @@
 set +e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # Source repo-utils for config access
 source "$CLAUDE_PROJECT_DIR/scripts/repo-utils.sh" 2>/dev/null || {

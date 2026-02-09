@@ -6,9 +6,12 @@
 
 set -e
 
-JOBFAIR_DIR="internal/results/job-fair"
-BENCHMARKS_DIR="internal/results/benchmarks"
-BASELINES_DIR="internal/results/baselines"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+JOBFAIR_DIR="$PROJECT_DIR/internal/results/job-fair"
+BENCHMARKS_DIR="$PROJECT_DIR/internal/results/benchmarks"
+BASELINES_DIR="$PROJECT_DIR/internal/results/baselines"
 
 # Scenario mappings (role -> scenario)
 declare -A ROLE_SCENARIO
@@ -80,7 +83,7 @@ process_theme() {
         local run_count=0
 
         # Find the native character for this role from the theme
-        local theme_file="pennyfarthing-dist/personas/themes/${theme}.yaml"
+        local theme_file="$PROJECT_DIR/pennyfarthing-dist/personas/themes/${theme}.yaml"
         local lookup_role="$role"
         [[ "$role" == "dev-codegen" || "$role" == "dev-debug" ]] && lookup_role="dev"
 

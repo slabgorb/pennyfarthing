@@ -17,7 +17,7 @@ import { spawn, execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PROJECT_DIR = dirname(__dirname);
+const PROJECT_DIR = join(dirname(__dirname), '..', '..');
 const TEST_CASES_DIR = join(PROJECT_DIR, 'benchmarks', 'test-cases');
 const SCRIPTS_DIR = __dirname;
 

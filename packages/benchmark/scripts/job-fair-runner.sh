@@ -6,7 +6,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 SOLO_RUNNER="$SCRIPT_DIR/solo-runner.sh"
 
 THEME="$1"

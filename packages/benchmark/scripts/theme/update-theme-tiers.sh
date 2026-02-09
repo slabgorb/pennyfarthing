@@ -6,7 +6,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="${0:A:h}"
-PROJECT_ROOT="${SCRIPT_DIR:h:h}"
+PROJECT_ROOT="${SCRIPT_DIR:h:h:h:h}"
 
 THEMES_DIR="$PROJECT_ROOT/pennyfarthing-dist/personas/themes"
 TIERS_DOC="$PROJECT_ROOT/docs/THEME-TIERS.md"
