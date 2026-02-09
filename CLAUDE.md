@@ -135,6 +135,6 @@ For detailed behavior, key files, configuration, and APIs for each component, re
 | **TirePump** | Context clearing system — resets Claude session, reloads agent with fresh context | `pennyfarthing-dist/guides/tirepump.md` |
 | **Prime** | Agent activation system — bootstraps agents with tiered context (identity, workflow, session) | `pennyfarthing-dist/guides/prime.md` |
 | **Reflector** | Agent-to-UI protocol — `<!-- CYCLIST:TYPE:value -->` markers drive QuickActions buttons | `pennyfarthing-dist/guides/reflector.md` |
-| **Benchmarks (JobFair)** | Persona evaluation — OCEAN trait correlation with agent task performance | `pennyfarthing-dist/guides/benchmarks.md` |
+| **Benchmarks (JobFair)** | Persona evaluation — OCEAN trait correlation with agent task performance | `packages/benchmark/docs/benchmarks-guide.md` |
 | **BikeLane** | Workflow engine — phased, stepped, and procedural workflow orchestration | `pennyfarthing-dist/guides/bikelane.md` |
 </context>

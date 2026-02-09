@@ -16,7 +16,8 @@
     "commands/",
     "skills/",
     "scripts/",
-    "scenarios/"
+    "scenarios/",
+    "docs/"
   ],
   "scripts": {
     "build": "tsc",
