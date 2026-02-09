@@ -8,7 +8,7 @@
  * Note: Tool call display moved to AuditLogPanel for comprehensive view.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +19,7 @@ import { DependenciesDialog } from '../dialogs/DependenciesDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
 import { DeadCodeDialog } from '../DeadCodeDialog';
 import { HealthGauge } from '../HealthGauge';
+import { ContextSparkline, SparklinePoint } from '../ContextSparkline';
 import { useHealthScore } from '../../hooks/useHealthScore';
 
 /** Context tier type */
@@ -109,6 +110,15 @@ export function DebugPanel(): React.ReactElement {
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
   const [deadCodeOpen, setDeadCodeOpen] = useState(false);
   const healthScore = useHealthScore();
+  const sparklineRef = useRef<SparklinePoint[]>([]);
+  const [sparklineVersion, setSparklineVersion] = useState(0);
+
+  const pushSparklinePoint = useCallback((percent: number, tokens: number) => {
+    const buf = sparklineRef.current;
+    buf.push({ percent, tokens, timestamp: Date.now() });
+    if (buf.length > 50) buf.shift();
+    setSparklineVersion(v => v + 1);
+  }, []);
 
   const handleDimensionClick = (dimensionName: string) => {
     switch (dimensionName) {
@@ -144,7 +154,11 @@ export function DebugPanel(): React.ReactElement {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'init' || data.type === 'update') {
-          setContext(data.context as ContextData);
+          const ctx = data.context as ContextData;
+          setContext(ctx);
+          if (ctx.percent != null) {
+            pushSparklinePoint(ctx.percent, ctx.tokens ?? 0);
+          }
         }
       } catch {
         // Ignore parse errors
@@ -166,7 +180,7 @@ export function DebugPanel(): React.ReactElement {
       contextWs.close();
       tokenWs.close();
     };
-  }, []);
+  }, [pushSparklinePoint]);
 
   // Compute tier-specific CSS class
   const tierClass = context?.tier ? `tier-${context.tier.toLowerCase()}` : '';
@@ -249,6 +263,7 @@ export function DebugPanel(): React.ReactElement {
               style={{ width: `${context.percent || 0}%` }}
             />
           </div>
+          <ContextSparkline history={sparklineRef.current} key={sparklineVersion} />
           <span className="context-text">
             {(context.tokens ?? 0).toLocaleString()} / {context.baseline != null && context.available != null
               ? (context.baseline + context.available).toLocaleString()
