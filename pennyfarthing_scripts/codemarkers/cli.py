@@ -127,3 +127,15 @@ def summary(repo, repo_path, days, top, fmt, output_file, exclude):
     else:
         from pennyfarthing_scripts.codemarkers.formatters import format_summary
         format_summary(result, file=click.get_text_stream("stdout"))
+
+
+def _run_deprecation_analysis(repo_path, exclude):
+    """Run deprecation analysis. Stub — Dev will implement."""
+    raise NotImplementedError("_run_deprecation_analysis not yet implemented")
+
+
+@codemarkers.command()
+@_common_options
+def deprecations(repo, repo_path, days, top, fmt, output_file, exclude):
+    """Scan for @deprecated symbols and cross-reference callers."""
+    raise NotImplementedError("deprecations CLI not yet implemented")

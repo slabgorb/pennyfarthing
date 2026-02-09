@@ -43,3 +43,18 @@ class CodeMarkersResult:
     markers: list[CodeMarker] = field(default_factory=list)
     summary: MarkerSummary | None = None
     error: str | None = None
+
+
+@dataclass
+class DeprecationMarker:
+    """A deprecated symbol with caller cross-reference data (Story 80-2).
+
+    Stub: Dev will implement full functionality.
+    """
+
+    path: str
+    line: int
+    symbol: str
+    text: str
+    caller_count: int = 0
+    callers: list[str] = field(default_factory=list)
