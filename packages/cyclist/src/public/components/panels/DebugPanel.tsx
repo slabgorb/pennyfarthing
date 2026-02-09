@@ -110,6 +110,31 @@ export function DebugPanel(): React.ReactElement {
   const [deadCodeOpen, setDeadCodeOpen] = useState(false);
   const healthScore = useHealthScore();
 
+  const handleDimensionClick = (dimensionName: string) => {
+    switch (dimensionName) {
+      case 'churn':
+      case 'test_gaps':
+        setHotspotsOpen(true);
+        break;
+      case 'todo_density':
+      case 'deprecation_debt':
+        setCodeMarkersOpen(true);
+        break;
+      case 'complexity':
+        setComplexityOpen(true);
+        break;
+      case 'dead_code':
+        setDeadCodeOpen(true);
+        break;
+      case 'dependency_freshness':
+        setDependenciesOpen(true);
+        break;
+      case 'agent_context_efficiency':
+        setAgentLoadOpen(true);
+        break;
+    }
+  };
+
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
@@ -153,6 +178,7 @@ export function DebugPanel(): React.ReactElement {
         score={healthScore.data?.composite_score ?? null}
         dimensions={healthScore.data?.dimensions ?? []}
         totalDimensions={8}
+        onDimensionClick={handleDimensionClick}
       />
 
       <Separator className="my-3" />
