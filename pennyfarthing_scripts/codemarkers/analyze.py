@@ -18,6 +18,7 @@ from pathlib import Path
 from pennyfarthing_scripts.codemarkers.models import (
     CodeMarker,
     CodeMarkersResult,
+    DeprecationMarker,
     MarkerSummary,
 )
 
@@ -324,3 +325,38 @@ async def analyze_repo(
         markers=markers,
         summary=summary,
     )
+
+
+# =============================================================================
+# @deprecated detection stubs (Story 80-2)
+# Dev will implement these functions.
+# =============================================================================
+
+
+def _grep_deprecations(root: Path, excludes: list[str]) -> list[dict]:
+    """Scan TypeScript/JS files for @deprecated JSDoc tags.
+
+    Stub — raises NotImplementedError. Dev will implement.
+    """
+    raise NotImplementedError("_grep_deprecations not yet implemented")
+
+
+def _count_callers(
+    symbol: str, root: Path, defining_file: str
+) -> tuple[int, list[str]]:
+    """Count files that import/reference a deprecated symbol.
+
+    Stub — raises NotImplementedError. Dev will implement.
+    """
+    raise NotImplementedError("_count_callers not yet implemented")
+
+
+async def analyze_deprecations(
+    path: Path,
+    excludes: list[str] | None = None,
+) -> dict:
+    """Analyze a directory for @deprecated symbols and their callers.
+
+    Stub — raises NotImplementedError. Dev will implement.
+    """
+    raise NotImplementedError("analyze_deprecations not yet implemented")
