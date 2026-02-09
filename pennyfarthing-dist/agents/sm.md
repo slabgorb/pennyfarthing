@@ -114,9 +114,9 @@ Prime script provides workflow state. Route based on state from activation outpu
    - Provide: STORY_ID, JIRA_KEY (from session `Jira:` field), REPOS, BRANCH
    - **Never construct JIRA_KEY from epic number** - read it from session/YAML
 
-2. **Run finish script:**
+2. **Run finish command:**
    ```bash
-   .pennyfarthing/scripts/workflow/finish-story.sh {STORY_ID}
+   pf sprint story finish {STORY_ID}
    ```
 
 3. **Commit results:**

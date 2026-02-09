@@ -13,7 +13,7 @@
 <critical>
 **Story completion is MANDATORY.** A story is NOT done until:
 1. Reviewer approves and merges the PR
-2. SM runs `finish-story.sh` (archive session, update Jira, clean up)
+2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
 
 **Never** start new work while stories have open PRs. The merge gate blocks `/sprint work` if open PRs exist.
 
