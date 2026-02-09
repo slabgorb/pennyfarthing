@@ -429,10 +429,24 @@
   min-height: 0;
 }
 
+.message-panel-resize-handle {
+  height: 4px;
+  flex-shrink: 0;
+  cursor: row-resize;
+  background: var(--border-color, #3c3c3c);
+  transition: background 0.15s ease;
+}
+
+.message-panel-resize-handle:hover {
+  background: var(--accent-color, #007acc);
+}
+
 .message-panel-editor {
   flex-shrink: 0;
-  border-top: 1px solid var(--border-color, #3c3c3c);
   background: var(--bg-secondary, #252526);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Message View - the conversation area */
@@ -987,12 +1001,15 @@
 .editor-with-controls {
   display: flex;
   gap: 8px;
-  align-items: flex-end;
+  align-items: stretch;
+  height: 100%;
 }
 
 .editor-area {
   flex: 1;
   min-width: 0; /* Prevent overflow */
+  display: flex;
+  flex-direction: column;
 }
 
 .editor-container {
@@ -1000,6 +1017,7 @@
   flex-direction: column;
   padding: 8px;
   min-width: 0; /* Prevent overflow */
+  flex: 1;
 }
 
 .mode-toolbar {
@@ -1033,12 +1051,15 @@
 .editor-wrapper {
   position: relative;
   min-width: 0; /* Prevent overflow */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .editor-textarea {
   width: 100%;
   min-height: 60px;
-  max-height: 200px;
+  flex: 1;
   padding: 8px;
   background: var(--bg-primary, #1e1e1e);
   border: 1px solid var(--border-color, #3c3c3c);
@@ -1182,6 +1203,7 @@
   gap: 4px;
   padding: 8px;
   flex-shrink: 0;
+  align-self: flex-end;
 }
 
 .btn-stop {
@@ -1555,23 +1577,13 @@
   color: var(--text-tertiary, #6b6b6b);
 }
 
-.enhanced-sprint-panel .story-item .priority-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.enhanced-sprint-panel .story-item .priority-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-tertiary, #6b6b6b);
   flex-shrink: 0;
-}
-
-.enhanced-sprint-panel .story-item .priority-dot.priority-p0 {
-  background: var(--error-color, #f14c4c);
-}
-
-.enhanced-sprint-panel .story-item .priority-dot.priority-p1 {
-  background: var(--warning-color, #cca700);
-}
-
-.enhanced-sprint-panel .story-item .priority-dot.priority-p2 {
-  background: var(--text-tertiary, #6b6b6b);
+  opacity: 0.7;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
 }
 
 .enhanced-sprint-panel .story-item .story-points {
