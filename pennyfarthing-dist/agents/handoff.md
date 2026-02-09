@@ -42,7 +42,7 @@ Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `hando
 - [ ] Quality checks pass (run: `.pennyfarthing/scripts/workflow/check.sh`)
 - [ ] Git working tree clean
 - [ ] Changes pushed to remote
-- [ ] PR exists and is open
+- [ ] Local PR exists and is open
 - [ ] Assessment exists
 
 **STOP if any check fails.**
@@ -53,6 +53,7 @@ Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `hando
 - [ ] Reviewer Assessment exists
 - [ ] Contains APPROVED or REJECTED
 - [ ] Verdict matches VERDICT parameter
+- [ ] PR pushed to remote
 
 **If VERDICT=approved:** Status → approved, ready for SM finish
 **If VERDICT=rejected:** Return to Dev with issues
