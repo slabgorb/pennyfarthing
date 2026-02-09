@@ -29,7 +29,7 @@ Scripts are invoked directly with **full category paths**:
 .pennyfarthing/scripts/core/agent-session.sh start sm
 pf sprint status
 .pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12345
-.pennyfarthing/scripts/workflow/finish-story.sh MSSCI-12345
+pf sprint story finish MSSCI-12345
 ```
 
 ## Distributed Scripts
