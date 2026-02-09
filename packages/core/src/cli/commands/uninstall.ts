@@ -1,4 +1,4 @@
-import { rmSync, statSync, readdirSync } from 'fs';
+import { rmSync, statSync, lstatSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger.js';
 import { pathExists } from '../utils/files.js';
@@ -11,18 +11,29 @@ interface UninstallOptions {
   dryRun?: boolean;
 }
 
-// Managed paths - always removed
-// Note: .claude/pennyfarthing includes scripts/, agents, commands, etc.
+// Managed paths - always removed during uninstall
+// Primary (.pennyfarthing/) + legacy (.claude/) locations
 const MANAGED_PATHS = [
+  // Current canonical locations (.pennyfarthing/)
+  '.pennyfarthing/agents',
+  '.pennyfarthing/guides',
+  '.pennyfarthing/output-styles',
+  '.pennyfarthing/personas',
+  '.pennyfarthing/scripts',
+  '.pennyfarthing/workflows',
+  '.pennyfarthing/manifest.json',
+  '.pennyfarthing/project',
+  // .claude/ items managed by pennyfarthing
+  '.claude/commands',
+  '.claude/skills',
+  '.claude/settings.local.json',
+  // Legacy locations (pre-v7 installs)
   '.claude/pennyfarthing',
-  '.claude/agents',         // symlink
-  '.claude/commands',       // symlink
-  '.claude/subagents',      // symlink
-  '.claude/guides',         // symlink
-  '.claude/skills',         // symlink
-  '.claude/personas',       // symlink
-  '.claude/manifest.json',
-  '.claude/settings.local.json'
+  '.claude/agents',
+  '.claude/subagents',
+  '.claude/guides',
+  '.claude/personas',
+  '.claude/manifest.json'
 ];
 
 // Project paths - only removed with --all
@@ -47,7 +58,7 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   const manifest = readManifest(projectRoot);
   if (!manifest) {
     logger.error('No Pennyfarthing installation found in this directory.');
-    logger.info('(missing .claude/manifest.json)');
+    logger.info('(missing .pennyfarthing/manifest.json)');
     process.exit(1);
   }
 
@@ -173,7 +184,7 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   for (const link of symlinks) {
     const linkPath = join(projectRoot, '.claude', link);
     try {
-      const stats = statSync(linkPath);
+      const stats = lstatSync(linkPath);
       if (stats.isSymbolicLink()) {
         if (!dryRun) {
           rmSync(linkPath);
