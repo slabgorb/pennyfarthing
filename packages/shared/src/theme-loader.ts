@@ -51,7 +51,7 @@ export interface ThemeMetadata {
   name: string;
   description: string;
   source: string;
-  tier: 'S' | 'A' | 'B' | 'U';
+  tier: string | null;
   category: string;
   agentCount: number;
 }
@@ -483,7 +483,7 @@ export function loadAllThemeMetadata(projectRoot?: string): ThemeMetadata[] {
           name: parsed.theme.name || themeId,
           description: parsed.theme.description || '',
           source: parsed.theme.source || '',
-          tier: (parsed.theme.tier as ThemeMetadata['tier']) || 'U',
+          tier: (parsed.theme.tier as string) || null,
           category: deriveCategory(themeId, parsed.theme.source || ''),
           agentCount,
         });

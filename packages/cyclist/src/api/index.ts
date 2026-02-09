@@ -17,7 +17,6 @@ export { createModeRouter, getModeInfo } from './mode.js';
 export type { ModeInfo } from './mode.js';
 export { createTelemetryRouter } from './telemetry.js';
 export { createEvaluationRouter } from './evaluation.js';
-// Note: benchmark router is dynamically imported in server.ts (pennyfarthing-only feature)
 // 35-1: Settings API for contextual settings
 export { createSettingsRouter } from './settings.js';
 // 35-16: Background tasks API

@@ -31,30 +31,6 @@ export {
   VALID_GRANT_TYPES,
 } from './permissions/index.js';
 
-// Job-Fair Aggregator (Story 7-4, 7-5)
-export {
-  aggregateJobFairResults,
-  getBaselineComparison,
-  getRoleStatistics,
-  getTopPerformers,
-  getHistoricalTrend,
-  saveHistoricalSnapshot,
-  aggregateByDimension,
-  getDimensionValues,
-  generateDifferentialReport,
-  type Performer,
-  type RoleStats,
-  type OverallChampion,
-  type TrendPoint,
-  type AggregateStats,
-  type DimensionName,
-  type DimensionValues,
-  type ThemeDimensions,
-  type DimensionValueStats,
-  type DimensionComparison,
-  type DimensionStats,
-} from './scripts/job-fair-aggregator.js';
-
 // Workflow System (Stories 31-1, 31-2, 31-3, MSSCI-11710)
 export {
   // Schema validation

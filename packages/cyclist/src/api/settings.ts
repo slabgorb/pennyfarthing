@@ -394,7 +394,7 @@ export function createSettingsRouter(): Router {
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
         // Try to read tier from theme file (nested under theme.tier)
-        let tier = 'U'; // Default to Unbenchmarked
+        let tier = ''; // Empty when no tier data (displayed as "Unranked" in UI)
         try {
           const themePath = path.join(themesDir, f);
           const content = fs.readFileSync(themePath, 'utf-8');
