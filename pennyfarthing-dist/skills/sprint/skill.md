@@ -399,6 +399,28 @@ pf sprint story claim <story-id>
 
 ---
 
+### `/sprint story assign <story-id> <assignee>`
+
+Assign a Jira story to a user. Shortcut for `/jira assign`.
+
+<run>
+pf jira assign <story-id> <assignee>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Jira key (e.g., `MSSCI-14552`) |
+| `assignee` | Yes | Email or GitHub username (e.g., `keith.avery@1898andco.io`, `slabgorb`) |
+</args>
+
+<example>
+pf jira assign MSSCI-14552 keith.avery@1898andco.io
+pf jira assign MSSCI-14552 slabgorb
+</example>
+
+---
+
 ### `/sprint epic add <epic-id> <title> [options]`
 
 Add a new epic to the current sprint.
@@ -761,6 +783,7 @@ For Jira integration, see `/jira` skill prerequisites.
 | `/sprint story template` | `pf sprint story template` |
 | `/sprint story finish ID` | `pf sprint story finish ID` |
 | `/sprint story claim ID` | `pf sprint story claim ID` |
+| `/sprint story assign ID USER` | `pf jira assign ID USER` |
 | `/sprint epic show ID` | `pf sprint epic show ID` |
 | `/sprint epic field ID FIELD` | `pf sprint epic field ID FIELD` |
 | `/sprint epic add ...` | `pf sprint epic add ...` |
