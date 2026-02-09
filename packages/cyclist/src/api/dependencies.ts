@@ -18,7 +18,7 @@ export function createDependenciesRouter(getProjectDir: () => string): Router {
     const pythonPath = join(projectDir, 'pennyfarthing');
 
     execFile('python3', args, {
-      cwd: projectDir,
+      cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
       timeout: 30000,
     }, (err, stdout, stderr) => {
