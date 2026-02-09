@@ -1,9 +1,9 @@
 /**
- * Story 83-3: DebugPanel tool launcher integration tests
- * AC7: DebugPanel launcher row has buttons for Complexity and Dependencies dialogs
+ * Story 83-3: DebugPanel tool dialog integration tests
+ * AC7: Dimension rows in HealthGauge open corresponding tool dialogs
  *
- * Tests that the DebugPanel has working launcher buttons for the new tools.
- * Pattern mirrors MSSCI-14443-tool-launcher.test.tsx.
+ * Tests that clicking dimension rows in the DebugPanel opens the correct
+ * analysis dialog (Complexity, Dependencies, etc.).
  *
  * @vitest-environment happy-dom
  */
@@ -15,7 +15,7 @@ import { DebugPanel } from '../src/public/components/panels/DebugPanel.js';
 
 // --- Tests ---
 
-describe('MSSCI-14468: DebugPanel Tool Launcher (Story 83-3)', () => {
+describe('MSSCI-14468: DebugPanel Dimension-to-Dialog Integration (Story 83-3)', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve({}) }),
@@ -26,59 +26,48 @@ describe('MSSCI-14468: DebugPanel Tool Launcher (Story 83-3)', () => {
     vi.restoreAllMocks();
   });
 
-  describe('AC7: Launcher row has buttons for both new dialogs', () => {
-    it('should render Complexity button in tool launcher', () => {
+  describe('AC7: Dimension rows open corresponding tool dialogs', () => {
+    it('should render complexity dimension row', () => {
       render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-complexity');
-      expect(btn).toBeInTheDocument();
-      expect(btn).toHaveTextContent('Complexity');
+      const dim = screen.getByTestId('dimension-complexity');
+      expect(dim).toBeInTheDocument();
     });
 
-    it('should render Dependencies button in tool launcher', () => {
+    it('should render dependency_freshness dimension row', () => {
       render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-dependencies');
-      expect(btn).toBeInTheDocument();
-      expect(btn).toHaveTextContent('Dependencies');
+      const dim = screen.getByTestId('dimension-dependency_freshness');
+      expect(dim).toBeInTheDocument();
     });
 
-    it('should have Complexity button enabled (not disabled)', () => {
+    it('should open ComplexityDialog when complexity dimension is clicked', () => {
       render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-complexity');
-      expect(btn).not.toBeDisabled();
-    });
+      const dim = screen.getByTestId('dimension-complexity');
+      fireEvent.click(dim);
 
-    it('should have Dependencies button enabled (not disabled)', () => {
-      render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-dependencies');
-      expect(btn).not.toBeDisabled();
-    });
-
-    it('should open ComplexityDialog when Complexity button is clicked', () => {
-      render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-complexity');
-      fireEvent.click(btn);
-
-      // ComplexityDialog should now be visible with its title
       expect(screen.getByText('Cyclomatic complexity analysis')).toBeInTheDocument();
     });
 
-    it('should open DependenciesDialog when Dependencies button is clicked', () => {
+    it('should open DependenciesDialog when dependency_freshness dimension is clicked', () => {
       render(<DebugPanel />);
-      const btn = screen.getByTestId('tool-launcher-dependencies');
-      fireEvent.click(btn);
+      const dim = screen.getByTestId('dimension-dependency_freshness');
+      fireEvent.click(dim);
 
-      // DependenciesDialog should now be visible with its title
       expect(screen.getByText('Package staleness and security analysis')).toBeInTheDocument();
     });
 
-    it('should render both buttons in the tool-launcher container', () => {
+    it('should render all 8 dimension rows in the breakdown', () => {
       render(<DebugPanel />);
-      const launcher = screen.getByTestId('tool-launcher');
-      const complexityBtn = screen.getByTestId('tool-launcher-complexity');
-      const depsBtn = screen.getByTestId('tool-launcher-dependencies');
+      const breakdown = screen.getByTestId('dimension-breakdown');
+      expect(breakdown).toBeInTheDocument();
 
-      expect(launcher).toContainElement(complexityBtn);
-      expect(launcher).toContainElement(depsBtn);
+      expect(screen.getByTestId('dimension-churn')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-todo_density')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-complexity')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-test_gaps')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-dead_code')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-deprecation_debt')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-dependency_freshness')).toBeInTheDocument();
+      expect(screen.getByTestId('dimension-agent_context_efficiency')).toBeInTheDocument();
     });
   });
 });

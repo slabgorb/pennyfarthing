@@ -193,6 +193,10 @@ export function DebugPanel(): React.ReactElement {
         dimensions={healthScore.data?.dimensions ?? []}
         totalDimensions={8}
         onDimensionClick={handleDimensionClick}
+        isLoading={healthScore.isLoading}
+        lastFetchedAt={healthScore.lastFetchedAt}
+        onRefresh={healthScore.refresh}
+        error={healthScore.error}
       />
 
       <Separator className="my-3" />
@@ -324,60 +328,6 @@ export function DebugPanel(): React.ReactElement {
       ) : (
         <div className="placeholder">No token stats</div>
       )}
-
-      <Separator className="my-3" />
-
-      <h4>Tools</h4>
-      <div className="tool-launcher" data-testid="tool-launcher">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setHotspotsOpen(true)}
-          data-testid="tool-launcher-hotspots"
-        >
-          Hotspots
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCodeMarkersOpen(true)}
-          data-testid="tool-launcher-codemarkers"
-        >
-          Code Markers
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDeadCodeOpen(true)}
-          data-testid="tool-launcher-deadcode"
-        >
-          Dead Code
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setComplexityOpen(true)}
-          data-testid="tool-launcher-complexity"
-        >
-          Complexity
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDependenciesOpen(true)}
-          data-testid="tool-launcher-dependencies"
-        >
-          Dependencies
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setAgentLoadOpen(true)}
-          data-testid="tool-launcher-agent-load"
-        >
-          Analyze All Agents
-        </Button>
-      </div>
 
       <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
       <CodeMarkersDialog open={codeMarkersOpen} onOpenChange={setCodeMarkersOpen} />

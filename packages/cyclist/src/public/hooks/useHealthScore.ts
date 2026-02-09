@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export interface HealthScoreDimension {
   name: string;
@@ -18,17 +18,16 @@ export interface UseHealthScoreReturn {
   data: HealthScoreData | null;
   isLoading: boolean;
   error: Error | null;
+  lastFetchedAt: number | null;
   refresh: () => void;
 }
-
-const POLL_INTERVAL = 60_000;
 
 export function useHealthScore(): UseHealthScoreReturn {
   const [data, setData] = useState<HealthScoreData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(() => {
     if (abortRef.current) {
@@ -50,6 +49,7 @@ export function useHealthScore(): UseHealthScoreReturn {
       })
       .then((json: HealthScoreData) => {
         setData(json);
+        setLastFetchedAt(Date.now());
         setIsLoading(false);
       })
       .catch((err) => {
@@ -59,19 +59,5 @@ export function useHealthScore(): UseHealthScoreReturn {
       });
   }, []);
 
-  // Auto-poll on mount
-  useEffect(() => {
-    intervalRef.current = setInterval(refresh, POLL_INTERVAL);
-
-    return () => {
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [refresh]);
-
-  return { data, isLoading, error, refresh };
+  return { data, isLoading, error, lastFetchedAt, refresh };
 }

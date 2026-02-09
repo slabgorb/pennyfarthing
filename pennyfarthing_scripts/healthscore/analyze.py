@@ -7,6 +7,7 @@ Supports caching with a configurable TTL (default 5 minutes).
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import time
@@ -42,29 +43,32 @@ async def analyze_healthscore(
     raw_scores: dict[str, float | None] = {}
     dimensions: list[DimensionScore] = []
 
-    for dim_name, dim_weight in w.items():
-        score: float | None = None
-        error: str | None = None
-
-        # Try cache if ttl > 0
+    # Separate cached vs uncached dimensions
+    uncached_dims: list[str] = []
+    for dim_name in w:
         if cache_ttl > 0:
             cached = read_cached_score(cache_dir, dim_name, cache_ttl)
             if cached is not None:
-                score = cached
+                raw_scores[dim_name] = cached
                 any_cached = True
+                continue
+        uncached_dims.append(dim_name)
 
-        # If no cached value, run lightweight probe
-        if score is None:
-            score = _probe_dimension(dim_name, resolved)
-            # Cache result if we got one and caching is enabled
+    # Run all uncached probes concurrently
+    if uncached_dims:
+        probe_results = await asyncio.gather(
+            *(_probe_dimension(name, resolved) for name in uncached_dims)
+        )
+        for dim_name, score in zip(uncached_dims, probe_results):
+            raw_scores[dim_name] = score
             if score is not None and cache_ttl > 0:
                 cache_dir.mkdir(parents=True, exist_ok=True)
                 write_cached_score(cache_dir, dim_name, score)
 
-        if score is None:
-            error = f"{dim_name} not available"
-
-        raw_scores[dim_name] = score
+    # Build dimension list in original weight order
+    for dim_name, dim_weight in w.items():
+        score = raw_scores.get(dim_name)
+        error = f"{dim_name} not available" if score is None else None
         dimensions.append(DimensionScore(
             name=dim_name,
             score=score,
@@ -83,16 +87,109 @@ async def analyze_healthscore(
     )
 
 
-def _probe_dimension(name: str, target_path: Path) -> float | None:
+async def _probe_dimension(name: str, target_path: Path) -> float | None:
     """Run a lightweight probe for a single dimension.
 
     Returns a score 0-100 or None if the dimension cannot be assessed.
-    These are intentionally simple heuristics — full analysis is deferred
-    to each dimension's own module when available.
+    Wires into existing analyzer modules where available.
     """
-    # For now, return None for all dimensions.
-    # Each dimension will be wired to its respective analyzer in future stories.
-    return None
+    try:
+        probes = {
+            "churn": _probe_churn,
+            "todo_density": _probe_todo_density,
+            "complexity": _probe_complexity,
+            "dead_code": _probe_dead_code,
+            "dependency_freshness": _probe_dependency_freshness,
+        }
+        probe_fn = probes.get(name)
+        if probe_fn is None:
+            return None
+        return await probe_fn(target_path)
+    except Exception:
+        return None
+
+
+async def _probe_churn(target_path: Path) -> float | None:
+    """Score based on average hotspot score — lower churn is better."""
+    from pennyfarthing_scripts.hotspots.analyze import analyze_repo
+
+    result = await analyze_repo("project", target_path, days=90)
+    if not result.success or not result.file_hotspots:
+        return None
+    # hotspot_score is 0-100 where higher = more churn (worse)
+    # Take top 20 files, average their scores, invert for health
+    top = sorted(result.file_hotspots, key=lambda h: h.hotspot_score, reverse=True)[:20]
+    avg_hotspot = sum(h.hotspot_score for h in top) / len(top)
+    return max(0.0, min(100.0, 100.0 - avg_hotspot))
+
+
+async def _probe_todo_density(target_path: Path) -> float | None:
+    """Score based on TODO/FIXME marker count."""
+    from pennyfarthing_scripts.codemarkers.analyze import analyze_repo
+
+    result = await analyze_repo("project", target_path)
+    if not result.success or not result.summary:
+        return None
+    total = result.summary.total_markers
+    # Heuristic: diminishing penalty curve
+    # <10 = great (90+), 10-50 = good (60-90), 50-200 = moderate (30-60), 200+ = poor
+    if total <= 10:
+        return 95.0
+    elif total <= 50:
+        return 90.0 - (total - 10) * (30.0 / 40.0)
+    elif total <= 200:
+        return 60.0 - (total - 50) * (30.0 / 150.0)
+    elif total <= 1000:
+        return 30.0 - (total - 200) * (25.0 / 800.0)
+    else:
+        return max(0.0, 5.0 - (total - 1000) * 0.005)
+
+
+async def _probe_complexity(target_path: Path) -> float | None:
+    """Score based on average cyclomatic complexity."""
+    from pennyfarthing_scripts.complexity.analyze import analyze_complexity
+
+    result = await analyze_complexity(target_path)
+    if not result.success or not result.files:
+        return None
+    files_with_fns = [f for f in result.files if f.function_count > 0]
+    if not files_with_fns:
+        return None
+    avg = sum(f.avg_cyclomatic_complexity for f in files_with_fns) / len(files_with_fns)
+    # Heuristic: avg 1-2 = excellent (90+), 3-5 = good (70-90), 5-10 = moderate (40-70), 10+ = poor
+    if avg <= 2.0:
+        return 95.0
+    elif avg <= 5.0:
+        return 90.0 - (avg - 2.0) * (20.0 / 3.0)
+    elif avg <= 10.0:
+        return 70.0 - (avg - 5.0) * (30.0 / 5.0)
+    else:
+        return max(0.0, 40.0 - (avg - 10.0) * 4.0)
+
+
+async def _probe_dead_code(target_path: Path) -> float | None:
+    """Score based on unused export count."""
+    from pennyfarthing_scripts.deadcode.analyze import find_unused_exports
+
+    result = await find_unused_exports(target_path)
+    if not result.success:
+        return None
+    count = len(result.unused_exports)
+    # Heuristic: 0 = perfect, each unused export deducts ~2 points
+    return max(0.0, 100.0 - count * 2.0)
+
+
+async def _probe_dependency_freshness(target_path: Path) -> float | None:
+    """Score based on outdated dependency count."""
+    from pennyfarthing_scripts.dependencies.analyze import analyze_dependencies
+
+    result = await analyze_dependencies(target_path)
+    if not result.success:
+        return None
+    outdated = len(result.outdated)
+    advisories = len(result.advisories)
+    # Each outdated package deducts 5 points, each advisory deducts 15
+    return max(0.0, 100.0 - outdated * 5.0 - advisories * 15.0)
 
 
 def compute_composite_score(
