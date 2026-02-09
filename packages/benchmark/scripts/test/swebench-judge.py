@@ -18,7 +18,7 @@ from pathlib import Path
 from difflib import SequenceMatcher
 
 # Add parent to path for pennyfarthing_scripts imports
-sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
 from pennyfarthing_scripts.swebench import (
     extract_patch_info,

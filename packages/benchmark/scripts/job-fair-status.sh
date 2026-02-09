@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 THEMES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/themes"
 RESULTS_DIR="$PROJECT_DIR/internal/results/job-fair"
 
