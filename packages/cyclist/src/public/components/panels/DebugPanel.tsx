@@ -18,6 +18,8 @@ import { ComplexityDialog } from '../dialogs/ComplexityDialog';
 import { DependenciesDialog } from '../dialogs/DependenciesDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
 import { DeadCodeDialog } from '../DeadCodeDialog';
+import { HealthGauge } from '../HealthGauge';
+import { useHealthScore } from '../../hooks/useHealthScore';
 
 /** Context tier type */
 type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
@@ -106,6 +108,7 @@ export function DebugPanel(): React.ReactElement {
   const [dependenciesOpen, setDependenciesOpen] = useState(false);
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
   const [deadCodeOpen, setDeadCodeOpen] = useState(false);
+  const healthScore = useHealthScore();
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -146,6 +149,14 @@ export function DebugPanel(): React.ReactElement {
 
   return (
     <div className="debug-panel" data-testid="debug-panel">
+      <HealthGauge
+        score={healthScore.data?.composite_score ?? null}
+        dimensions={healthScore.data?.dimensions ?? []}
+        totalDimensions={8}
+      />
+
+      <Separator className="my-3" />
+
       <h4>Context Usage</h4>
       {context ? (
         <div className="context-info">
