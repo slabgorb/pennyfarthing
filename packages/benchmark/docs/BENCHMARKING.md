@@ -48,7 +48,7 @@ Run a single agent on a scenario.
 - Agent response with character embodiment
 - Judge evaluation (unless `--no-judge`)
 - Score out of 100 with dimension breakdown
-- Results saved to `internal/results/solo/` or `internal/results/benchmarks/`
+- Results saved to `results/solo/` or `results/benchmarks/`
 
 ### `/benchmark-control` - Create Baseline
 
@@ -65,7 +65,7 @@ Create a control baseline for a scenario. Required before comparing personas.
 - `--runs N` - Number of runs (default: 10 for baselines)
 
 **Output:**
-- Baseline saved to `internal/results/baselines/{scenario}/{role}/`
+- Baseline saved to `results/baselines/{scenario}/{role}/`
 - Summary with mean, standard deviation, 95% CI
 
 ### `/benchmark` - Compare Against Baseline
@@ -87,7 +87,7 @@ Compare a persona's performance against the control baseline.
 
 **Output:**
 - Comparison against baseline with effect size
-- Results saved to `internal/results/benchmarks/{scenario}/{theme}-{role}/`
+- Results saved to `results/benchmarks/{scenario}/{theme}-{role}/`
 
 ## Scenarios
 
@@ -180,7 +180,7 @@ If the confidence interval doesn't include 0, the difference is statistically si
 ## Results Structure
 
 ```
-internal/results/
+results/
 ├── solo/                    # Single runs (not benchmarking)
 │   └── {timestamp}-{theme}-{role}.json
 ├── baselines/               # Control baselines
@@ -276,7 +276,7 @@ const correlation = calculateOceanCorrelation('order-service', 'reviewer');
 /benchmark shakespeare prospero --as dev --scenario django-10554 --runs 4
 
 # 5. View results
-cat internal/results/benchmarks/order-service/discworld-reviewer/summary.yaml
+cat results/benchmarks/order-service/discworld-reviewer/summary.yaml
 ```
 
 ## Integrity Requirements
@@ -292,11 +292,11 @@ The benchmarking system enforces strict integrity:
 
 - `scenarios/schema.yaml` - Full scenario schema
 - `scenarios/README.md` - Scenario authoring guide
-- `.claude/project/commands/solo.md` - Solo command implementation
-- `.claude/project/commands/benchmark.md` - Benchmark command implementation
-- `.claude/project/skills/judge/SKILL.md` - Evaluation rubrics
-- `.claude/project/skills/finalize-run/SKILL.md` - Result validation
-- `src/scripts/benchmark-integration.ts` - OCEAN correlation module
+- `commands/solo.md` - Solo command implementation
+- `commands/benchmark.md` - Benchmark command implementation
+- `skills/judge/SKILL.md` - Evaluation rubrics
+- `skills/finalize-run/SKILL.md` - Result validation
+- `src/benchmark-integration.ts` - OCEAN correlation module
 
 ---
 
@@ -304,8 +304,8 @@ The benchmarking system enforces strict integrity:
 
 For hypothesis-driven research correlating OCEAN dimensions with error detection:
 
-- [TRAIL-OCEAN Hypothesis Mapping](../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) - Complete hypothesis document
+- [TRAIL-OCEAN Hypothesis Mapping](../../../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) - Complete hypothesis document
 
 ## Legacy Framework
 
-Note: The legacy framework (using `just` commands) is documented in [docs/archive/benchmarks-legacy.md](archive/benchmarks-legacy.md). The current system uses `/solo`, `/benchmark-control`, and `/benchmark`.
+Note: The legacy framework (using `just` commands) is documented in [docs/archive/benchmarks-legacy.md](../../../docs/archive/benchmarks-legacy.md). The current system uses `/solo`, `/benchmark-control`, and `/benchmark`.
