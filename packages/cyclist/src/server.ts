@@ -228,22 +228,6 @@ initTokenStatsBroadcast();
 // 35-16: Initialize background task broadcast callback
 initBackgroundTaskBroadcast();
 
-// Pennyfarthing-only features (conditionally loaded)
-// Benchmark API requires @pennyfarthing/core which is only available in the monorepo
-async function initPennyfarthingFeatures(): Promise<void> {
-  try {
-    const { createBenchmarkRouter } = await import('./api/benchmark.js');
-    app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
-    console.log('[Cyclist] Benchmark API enabled (pennyfarthing mode)');
-  } catch {
-    // @pennyfarthing/core not available - running as installed package
-    // Benchmark features disabled, which is expected
-  }
-}
-
-// Initialize pennyfarthing features (non-blocking)
-initPennyfarthingFeatures();
-
 // Create HTTP server with WebSocket support
 export function createTerminalServer(): Server {
   const server = createServer(app);

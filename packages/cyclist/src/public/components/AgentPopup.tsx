@@ -183,11 +183,9 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
             <div className="agent-popup-header">
               <h2 id="agent-popup-title" className="agent-popup-theme">
                 {themeData.themeName}
-                {themeData.tier && (
-                  <Badge variant="secondary" className={`tier-badge tier-${themeData.tier.toLowerCase()}`}>
-                    {themeData.tier}
-                  </Badge>
-                )}
+                <Badge variant="secondary" className={`tier-badge ${themeData.tier ? `tier-${themeData.tier.toLowerCase()}` : 'tier-unranked'}`}>
+                  {themeData.tier || 'Unranked'}
+                </Badge>
               </h2>
               <Button
                 variant="ghost"
