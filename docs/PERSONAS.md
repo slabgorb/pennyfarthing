@@ -362,5 +362,5 @@ If working with a team, consider:
 ## See Also
 
 - [THEME-COMPARISON.md](THEME-COMPARISON.md) - Complete theme list with OCEAN profiles and visual mappings
-- [OCEAN Benchmarking Guide](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) - Role recommendations, universe strengths
+- [OCEAN Benchmarking Guide](../packages/benchmark/docs/OCEAN-BENCHMARKING.md) - Role recommendations, universe strengths
 - [Showcase Website](SHOWCASE.md) - Interactive theme gallery
