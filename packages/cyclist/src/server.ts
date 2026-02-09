@@ -49,6 +49,9 @@ import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from '
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 
+// Plugin router loading (Story 93-6)
+import { initPluginRouters } from './plugin-loader.js';
+
 // Re-exports for main.ts and tests
 export { broadcastStats } from './api/index.js';
 export { getStoryInfo } from './story-parser.js';
@@ -242,6 +245,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   (async () => {
     const server = createTerminalServer();
     const projectDir = getProjectDir();
+
+    // Load plugin API routers (Story 93-6)
+    const pluginResult = await initPluginRouters(app, projectDir);
+    if (pluginResult.discovered > 0) {
+      console.log(`[Plugin] ${pluginResult.loaded} router(s) loaded, ${pluginResult.failed} failed`);
+    }
 
     // Find available port (Story 34-3)
     const actualPort = await findAvailablePort(DEFAULT_PORT);
