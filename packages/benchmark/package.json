@@ -1,0 +1,52 @@
+{
+  "name": "@pennyfarthing/benchmark",
+  "version": "10.1.0",
+  "description": "Benchmark aggregation and OCEAN correlation for Pennyfarthing JobFair system",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/*.test.js",
+    "clean": "rm -rf dist/"
+  },
+  "keywords": [
+    "pennyfarthing",
+    "benchmark",
+    "job-fair",
+    "ocean"
+  ],
+  "license": "UNLICENSED",
+  "author": "1898andCo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/benchmark"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "@pennyfarthing/core": ">=10.0.0",
+    "@pennyfarthing/shared": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "yaml": "^2.8.2"
+  }
+}
