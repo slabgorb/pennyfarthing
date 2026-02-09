@@ -42,10 +42,10 @@ const _facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 
 // Benchmark results location
 // Configurable via BENCHMARK_PATH environment variable
-// Defaults to internal/results/benchmarks/ directory (dev-only, excluded from npm)
+// Defaults to packages/benchmark/results/benchmarks/ directory (dev-only, excluded from npm)
 const benchmarksDir = process.env.BENCHMARK_PATH
   ? join(process.env.BENCHMARK_PATH, 'benchmarks')
-  : join(projectRoot, 'internal', 'results', 'benchmarks');
+  : join(projectRoot, 'packages', 'benchmark', 'results', 'benchmarks');
 
 // ============================================================================
 // Types

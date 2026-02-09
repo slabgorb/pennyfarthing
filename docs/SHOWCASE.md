@@ -40,5 +40,5 @@ The showcase reads from:
 ## See Also
 
 - [Theme Comparison](THEME-COMPARISON.md) - Personality analysis and selection guide
-- [OCEAN Benchmarking](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) - Research methodology
+- [OCEAN Benchmarking](../packages/benchmark/docs/OCEAN-BENCHMARKING.md) - Research methodology
 - [Personas](PERSONAS.md) - Theme configuration and custom themes

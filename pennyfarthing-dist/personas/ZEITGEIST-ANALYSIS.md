@@ -163,7 +163,7 @@ For controlled experiments:
 
 - Wallach et al. (2025) "Position: Evaluating Generative AI Systems Is a Social Science Measurement Challenge" ICML 2025
 - OCEAN-BENCHMARK-CORRELATION.md - Personality vs performance data
-- OCEAN-BENCHMARKING.md - Role-specific OCEAN recommendations
+- [OCEAN-BENCHMARKING.md](../../packages/benchmark/docs/OCEAN-BENCHMARKING.md) - Role-specific OCEAN recommendations
 - future.yaml - Benchmark reliability initiative (epics 41-46)
 
 ---
