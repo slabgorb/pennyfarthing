@@ -18,7 +18,7 @@ import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PROJECT_DIR = dirname(__dirname);
+const PROJECT_DIR = join(dirname(__dirname), '..', '..');
 const CONSOLIDATED_DIR = join(PROJECT_DIR, 'internal', 'results', 'job-fair', 'consolidated');
 const OUTPUT_FILE = join(PROJECT_DIR, 'internal', 'results', 'aggregate-stats.yaml');
 

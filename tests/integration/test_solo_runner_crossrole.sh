@@ -6,7 +6,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-RUNNER="$PROJECT_DIR/scripts/solo-runner.sh"
+RUNNER="$PROJECT_DIR/packages/benchmark/scripts/solo-runner.sh"
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 

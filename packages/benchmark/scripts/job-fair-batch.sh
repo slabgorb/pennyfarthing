@@ -14,7 +14,7 @@ if [[ -z "$THEME" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PERSONA_FILE="$PROJECT_DIR/pennyfarthing-dist/personas/themes/${THEME}.yaml"
 
 if [[ ! -f "$PERSONA_FILE" ]]; then

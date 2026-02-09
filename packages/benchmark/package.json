@@ -12,7 +12,11 @@
     }
   },
   "files": [
-    "dist/"
+    "dist/",
+    "commands/",
+    "skills/",
+    "scripts/",
+    "scenarios/"
   ],
   "scripts": {
     "build": "tsc",
