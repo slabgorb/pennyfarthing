@@ -11,7 +11,7 @@ export function createHealthScoreRouter(getProjectDir: () => string): Router {
     const pythonPath = join(projectDir, 'pennyfarthing');
 
     execFile('python3', args, {
-      cwd: pythonPath,
+      cwd: projectDir,
       env: { ...process.env, PYTHONPATH: pythonPath },
       timeout: 15000,
     }, (err, stdout, stderr) => {

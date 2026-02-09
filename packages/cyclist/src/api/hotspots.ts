@@ -38,7 +38,7 @@ export function createHotspotsRouter(getProjectDir: () => string): Router {
     const pythonPath = join(projectDir, 'pennyfarthing');
 
     execFile('python3', args, {
-      cwd: pythonPath,
+      cwd: projectDir,
       env: { ...process.env, PYTHONPATH: pythonPath },
       timeout: 30000,
     }, (err, stdout, stderr) => {
