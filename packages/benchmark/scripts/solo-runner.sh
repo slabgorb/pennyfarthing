@@ -52,9 +52,9 @@ fi
 
 # Find paths
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PERSONA_FILE="$PROJECT_DIR/pennyfarthing-dist/personas/themes/${THEME}.yaml"
-SCENARIO_FILE=$(find "$PROJECT_DIR/scenarios" -name "${SCENARIO}.yaml" 2>/dev/null | head -1)
+SCENARIO_FILE=$(find "$SCRIPT_DIR/../scenarios" -name "${SCENARIO}.yaml" 2>/dev/null | head -1)
 
 if [[ ! -f "$PERSONA_FILE" ]]; then
     echo "Error: Theme not found: $PERSONA_FILE" >&2
