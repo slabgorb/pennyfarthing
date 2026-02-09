@@ -123,8 +123,10 @@ export function DebugPanel(): React.ReactElement {
   const handleDimensionClick = (dimensionName: string) => {
     switch (dimensionName) {
       case 'churn':
-      case 'test_gaps':
         setHotspotsOpen(true);
+        break;
+      case 'test_gaps':
+        // TODO: TestGapsDialog — for now no drill-down
         break;
       case 'todo_density':
       case 'deprecation_debt':

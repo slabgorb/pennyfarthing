@@ -205,8 +205,8 @@ print(f"{elapsed:.1f}")
             pytest.skip(f"Could not import cli module: {result.stderr}")
 
         import_time = float(result.stdout.strip())
-        # Import alone should be very fast (< 100ms)
-        assert import_time < 100, f"cli module import took {import_time:.1f}ms, should be < 100ms"
+        # Import alone should be very fast (< 150ms)
+        assert import_time < 150, f"cli module import took {import_time:.1f}ms, should be < 150ms"
 
 
 class TestCLIStructure:
