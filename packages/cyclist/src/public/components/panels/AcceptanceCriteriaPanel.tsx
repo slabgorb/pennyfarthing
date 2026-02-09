@@ -22,10 +22,11 @@ export interface AcceptanceCriteriaPanelProps {
  * Individual acceptance criteria item
  */
 function CriteriaItemView({ item }: { item: CriteriaItem }): React.ReactElement {
+  const statusClass = `todo-item ${item.completed ? 'todo-completed' : ''}`;
   return (
-    <div className={`flex items-start gap-2 py-1 text-sm ${item.completed ? 'text-[var(--status-success)]' : 'text-[var(--text-primary)]'}`}>
-      <span className="flex-shrink-0 w-4 text-center">{item.completed ? '✓' : '○'}</span>
-      <span className="flex-1 leading-snug">{item.text}</span>
+    <div className={statusClass}>
+      <span className="todo-status">{item.completed ? '\u2713' : '\u25CB'}</span>
+      <span className="todo-subject">{item.text}</span>
     </div>
   );
 }
@@ -35,14 +36,12 @@ function CriteriaItemView({ item }: { item: CriteriaItem }): React.ReactElement 
  */
 export function AcceptanceCriteriaPanel({
   criteria,
-  collapsed = false,
-  onToggle,
 }: AcceptanceCriteriaPanelProps): React.ReactElement {
   // Handle empty state
   if (!criteria || criteria.length === 0) {
     return (
-      <div className="p-3" data-testid="ac-panel">
-        <div className="text-sm text-[var(--text-muted)]">No acceptance criteria</div>
+      <div className="todo-panel" data-testid="ac-panel">
+        <div className="placeholder">No acceptance criteria</div>
       </div>
     );
   }
@@ -50,35 +49,18 @@ export function AcceptanceCriteriaPanel({
   // Calculate progress
   const completedCount = criteria.filter(c => c.completed).length;
   const totalCount = criteria.length;
-  const progressText = `${completedCount}/${totalCount}`;
-
-  // Handle collapsed state
-  if (collapsed) {
-    return (
-      <div className="p-3" data-testid="ac-panel">
-        <div
-          className="flex items-center gap-2 cursor-pointer select-none"
-          onClick={onToggle}
-        >
-          <span className="text-xs text-[var(--text-muted)]">▶</span>
-          <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Acceptance Criteria</span>
-          <span className="text-xs tabular-nums font-mono text-[var(--text-muted)] ml-auto">{progressText}</span>
-        </div>
-      </div>
-    );
-  }
+  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="p-3" data-testid="ac-panel">
-      <div
-        className="flex items-center gap-2 mb-2 cursor-pointer select-none"
-        onClick={onToggle}
-      >
-        {onToggle && <span className="text-xs text-[var(--text-muted)]">▼</span>}
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Acceptance Criteria</span>
-        <span className="text-xs tabular-nums font-mono text-[var(--text-muted)] ml-auto">{progressText}</span>
+    <div className="todo-panel" data-testid="ac-panel">
+      <div className="progress-bar-container">
+        <div
+          className="progress-bar"
+          style={{ width: `${progressPercent}%` }}
+        />
+        <span className="progress-text">{completedCount}/{totalCount}</span>
       </div>
-      <div className="border-t border-[var(--border)] pt-2">
+      <div className="todo-section">
         {criteria.map((item, index) => (
           <CriteriaItemView key={index} item={item} />
         ))}
@@ -97,8 +79,8 @@ export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <div className="p-3" data-testid="ac-panel">
-        <div className="space-y-2">
+      <div className="todo-panel loading" data-testid="ac-panel">
+        <div className="space-y-2 p-2">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-5/6" />
@@ -110,10 +92,8 @@ export function ConnectedAcceptanceCriteriaPanel(): React.ReactElement {
 
   if (error) {
     return (
-      <div className="p-3" data-testid="ac-panel">
-        <div className="p-3 rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 text-[var(--status-error)] text-sm">
-          {error.message}
-        </div>
+      <div className="todo-panel error" data-testid="ac-panel">
+        <div className="error-message">{error.message}</div>
       </div>
     );
   }
