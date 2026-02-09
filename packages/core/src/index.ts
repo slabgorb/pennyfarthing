@@ -78,3 +78,17 @@ export {
   checkWorkflowPermissions,
   type WorkflowPermissionCheckResult,
 } from './workflow/index.js';
+
+// Plugin Discovery (Story 93-3)
+export {
+  discoverPlugins,
+  parsePluginManifest,
+  getPluginCommands,
+  getPluginSkills,
+  getPluginRouters,
+  type PluginManifest,
+  type DiscoveredPlugin,
+  type PluginCommand,
+  type PluginSkill,
+  type PluginRouter,
+} from './plugins/plugin-discovery.js';
