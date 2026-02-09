@@ -175,18 +175,19 @@ function ContextIndicator({
 }
 
 /**
- * Priority dot component - small color-coded circle
+ * Priority label component - muted text abbreviation
  */
 function PriorityDot({ priority, storyId }: { priority?: string | null; storyId: string }): React.ReactElement | null {
   if (!priority) return null;
-  const colorClass = priority === 'P0' ? 'priority-p0' : priority === 'P1' ? 'priority-p1' : 'priority-p2';
   return (
     <span
-      className={`priority-dot ${colorClass}`}
+      className="priority-label"
       data-testid={`story-priority-${storyId}`}
       data-priority={priority}
       title={priority}
-    />
+    >
+      {priority}
+    </span>
   );
 }
 
