@@ -479,7 +479,8 @@ function addBenchmarkPermissions(projectRoot: string): void {
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -841,7 +842,8 @@ function addContextCircuitBreaker(projectRoot: string, installationType: string)
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -942,7 +944,8 @@ function addSchemaValidationHook(projectRoot: string, installationType: string):
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -1044,7 +1047,8 @@ function addPostToolUseHook(projectRoot: string, installationType: string): void
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -1146,7 +1150,8 @@ function addSprintYamlValidationHook(projectRoot: string, installationType: stri
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -1189,7 +1194,8 @@ function addStopHook(projectRoot: string, installationType: string): void {
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -1261,7 +1267,8 @@ function addSessionStartHooks(projectRoot: string, installationType: string): vo
     try {
       settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     } catch {
-      // Start fresh if parse fails
+      logger.warning(`Cannot parse ${settingsPath} — fix JSON syntax and re-run doctor --fix`);
+      return;
     }
   }
 
@@ -1887,11 +1894,10 @@ export function checkLegacyFiles(projectRoot: string): CheckResult[] {
               writeFileSync(properThemeConfig, YAML.stringify(config), 'utf8');
             }
           }
+          unlinkSync(legacyPersonaConfig);
         } catch {
-          // If we can't read/parse legacy, just remove it
+          logger.warning(`Cannot parse ${legacyPersonaConfig} — fix YAML syntax and re-run doctor --fix`);
         }
-
-        unlinkSync(legacyPersonaConfig);
       }
     });
   }
