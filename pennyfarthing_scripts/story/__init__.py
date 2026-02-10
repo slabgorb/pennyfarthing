@@ -15,6 +15,20 @@ Usage:
 """
 
 # Re-export common functions
+# Import submodules
+# CLI entry point - import module, not function, so "from story import cli" gets the module
+from pennyfarthing_scripts.story import (
+    cli,
+    create,
+    size,
+    template,
+)
+from pennyfarthing_scripts.story.cli import main
+from pennyfarthing_scripts.story.create import (
+    create_story,
+    generate_story_yaml,
+    validate_points,
+)
 from pennyfarthing_scripts.story.size import (
     SIZING_GUIDELINES,
     format_size_info,
@@ -26,22 +40,6 @@ from pennyfarthing_scripts.story.template import (
     get_all_templates,
     get_template,
 )
-from pennyfarthing_scripts.story.create import (
-    create_story,
-    generate_story_yaml,
-    validate_points,
-)
-
-# Import submodules
-from pennyfarthing_scripts.story import (
-    create,
-    size,
-    template,
-)
-
-# CLI entry point - import module, not function, so "from story import cli" gets the module
-from pennyfarthing_scripts.story import cli
-from pennyfarthing_scripts.story.cli import main
 
 __all__ = [
     # Size

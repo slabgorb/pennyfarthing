@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pennyfarthing_scripts.jira.client import JIRA_PROJECT, JiraClient, get_client
+from pennyfarthing_scripts.jira.client import JIRA_PROJECT, get_client
 from pennyfarthing_scripts.sprint.loader import find_epic, find_story, load_sprint
 from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
 

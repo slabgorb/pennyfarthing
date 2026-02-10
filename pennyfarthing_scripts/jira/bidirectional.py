@@ -28,10 +28,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from pennyfarthing_scripts.jira.client import JiraClient, map_jira_to_status, map_status_to_jira
 from pennyfarthing_scripts.common.output import error, info, success, warn
+from pennyfarthing_scripts.jira.client import JiraClient, map_jira_to_status, map_status_to_jira
 from pennyfarthing_scripts.sprint.loader import get_all_stories, load_sprint
-
 
 # =============================================================================
 # Data Classes
@@ -520,7 +519,7 @@ async def async_main(args: argparse.Namespace) -> int:
     tasks = [client.get_issue_async(key) for key in jira_keys]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    for key, result in zip(jira_keys, results):
+    for key, result in zip(jira_keys, results, strict=False):
         if isinstance(result, Exception):
             warn(f"Failed to fetch {key}: {result}")
         elif result:

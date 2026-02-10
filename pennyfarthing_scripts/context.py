@@ -9,7 +9,6 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 try:
     import yaml
@@ -45,8 +44,8 @@ class ContextResult:
 
     # Status
     status: str = "OK"  # OK, HIGH
-    warning: Optional[str] = None  # None, High, Critical
-    recommendation: Optional[str] = None
+    warning: str | None = None  # None, High, Critical
+    recommendation: str | None = None
 
     # Mode settings
     permission_mode: str = "manual"
@@ -56,7 +55,7 @@ class ContextResult:
     is_cyclist: bool = False
 
     # Error state
-    error: Optional[str] = None
+    error: str | None = None
 
     def to_env_vars(self) -> str:
         """Output as shell environment variables."""
@@ -111,7 +110,7 @@ class ContextResult:
         return "\n".join(lines)
 
 
-def load_config(project_dir: Optional[str] = None) -> ContextConfig:
+def load_config(project_dir: str | None = None) -> ContextConfig:
     """Load context configuration from config files.
 
     Checks .pennyfarthing/config.local.yaml first, falls back to
@@ -166,7 +165,7 @@ def _apply_config(config: ContextConfig, data: dict) -> None:
         config.relay_mode = wf.get("relay_mode", False) is True
 
 
-def get_claude_project_path(project_dir: Optional[str] = None) -> Path:
+def get_claude_project_path(project_dir: str | None = None) -> Path:
     """Get the Claude Code project path for transcripts.
 
     Claude Code stores transcripts at ~/.claude/projects/<path-with-dashes>
@@ -184,10 +183,10 @@ def get_claude_project_path(project_dir: Optional[str] = None) -> Path:
 
 def find_transcript(
     project_path: Path,
-    explicit_session: Optional[str] = None,
-    session_id_env: Optional[str] = None,
+    explicit_session: str | None = None,
+    session_id_env: str | None = None,
     stale_threshold_seconds: int = 60,
-) -> Optional[Path]:
+) -> Path | None:
     """Find the appropriate transcript file.
 
     Priority:
@@ -208,7 +207,7 @@ def find_transcript(
         return None
 
     # Helper to find most recent transcript
-    def most_recent() -> Optional[Path]:
+    def most_recent() -> Path | None:
         transcripts = sorted(
             [f for f in project_path.glob("*.jsonl") if "agent-" not in f.name],
             key=lambda f: f.stat().st_mtime,
@@ -236,7 +235,7 @@ def find_transcript(
     return most_recent()
 
 
-def parse_transcript(transcript_path: Path) -> tuple[Optional[int], Optional[int]]:
+def parse_transcript(transcript_path: Path) -> tuple[int | None, int | None]:
     """Parse transcript for first and last usage totals.
 
     Returns:
@@ -265,7 +264,7 @@ def parse_transcript(transcript_path: Path) -> tuple[Optional[int], Optional[int
     return first_total, last_total
 
 
-def detect_cyclist(project_dir: Optional[str] = None) -> bool:
+def detect_cyclist(project_dir: str | None = None) -> bool:
     """Detect if running inside Cyclist.
 
     Checks:
@@ -300,7 +299,7 @@ def detect_cyclist(project_dir: Optional[str] = None) -> bool:
                     result = s.connect_ex(("127.0.0.1", port))
                     if result == 0:
                         return True
-            except (ValueError, OSError, socket.error):
+            except (ValueError, OSError):
                 # Port file invalid or port not responding
                 continue
 
@@ -308,8 +307,8 @@ def detect_cyclist(project_dir: Optional[str] = None) -> bool:
 
 
 def check_context(
-    explicit_session: Optional[str] = None,
-    project_dir: Optional[str] = None,
+    explicit_session: str | None = None,
+    project_dir: str | None = None,
 ) -> ContextResult:
     """Check current context usage.
 

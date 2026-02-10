@@ -24,6 +24,8 @@ from pennyfarthing_scripts.sprint.loader import (
     find_epic,
     find_story,
     get_story_by_id,
+)
+from pennyfarthing_scripts.sprint.loader import (
     load_sprint as load_current_sprint,
 )
 

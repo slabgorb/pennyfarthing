@@ -312,8 +312,8 @@ def story_add_command(
             raise click.ClickException("POINTS is required")
         try:
             init_points = int(title)
-        except ValueError:
-            raise click.ClickException(f"POINTS must be an integer, got '{title}'")
+        except ValueError as err:
+            raise click.ClickException(f"POINTS must be an integer, got '{title}'") from err
 
         result = add_initiative_story(
             initiative_slug=initiative,

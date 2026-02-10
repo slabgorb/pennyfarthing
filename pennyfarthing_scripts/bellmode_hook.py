@@ -32,12 +32,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from hooks import (
-    find_project_root,
-    get_cyclist_port,
-    send_to_cyclist,
-    output_hook_response,
     HookResponse,
+    find_project_root,
     is_bell_mode_enabled,
+    output_hook_response,
+    send_to_cyclist,
 )
 
 

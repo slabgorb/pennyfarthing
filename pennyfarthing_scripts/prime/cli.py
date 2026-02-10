@@ -22,6 +22,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from pennyfarthing_scripts.common.config import get_project_root
 from pennyfarthing_scripts.prime.loader import (
@@ -42,7 +46,7 @@ from pennyfarthing_scripts.prime.persona import (
     load_persona,
 )
 from pennyfarthing_scripts.prime.session import cleanup_old_sessions, register_session
-from pennyfarthing_scripts.prime.tiers import ContextTier, tier_from_string, load_tier_components
+from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components, tier_from_string
 from pennyfarthing_scripts.prime.workflow import check_redirect, detect_workflow_state
 
 

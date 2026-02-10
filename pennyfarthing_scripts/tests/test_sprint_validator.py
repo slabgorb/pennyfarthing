@@ -19,7 +19,6 @@ from typing import Any
 import pytest
 
 from pennyfarthing_scripts.sprint.validator import (
-    ValidationError,
     ValidationResult,
     ValidationSeverity,
     format_validation_errors,
@@ -30,7 +29,6 @@ from pennyfarthing_scripts.sprint.validator import (
     validate_sprint_file,
     validate_story,
 )
-
 
 # =============================================================================
 # Test Fixtures - Valid Data

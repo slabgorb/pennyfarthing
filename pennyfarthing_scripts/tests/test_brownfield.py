@@ -12,36 +12,33 @@ Tests verify:
 7. CLI integration
 """
 
-import asyncio
 import subprocess
 import sys
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pennyfarthing_scripts.brownfield import (
     DepthLevel,
-    ProjectType,
     DiscoveryResult,
+    ProjectType,
+    detect_architecture_patterns,
     detect_project_type,
     detect_tech_stack,
-    scan_directory_structure,
-    detect_architecture_patterns,
-    generate_project_overview,
-    generate_tech_stack_doc,
-    generate_source_tree_doc,
-    generate_ai_guidance_doc,
     discover,
+    generate_ai_guidance_doc,
+    generate_project_overview,
+    generate_source_tree_doc,
+    generate_tech_stack_doc,
+    scan_directory_structure,
 )
 from pennyfarthing_scripts.brownfield.discover import (
-    TechStackItem,
-    DirectoryNode,
     ArchitecturePattern,
+    DirectoryNode,
+    TechStackItem,
 )
-
 
 # =============================================================================
 # FIXTURES
@@ -623,7 +620,7 @@ class TestDiscover:
         output_dir = temp_project_dir / "output"
         output_dir.mkdir()
 
-        result = await discover(node_project, output_dir=output_dir, depth=DepthLevel.DEEP)
+        await discover(node_project, output_dir=output_dir, depth=DepthLevel.DEEP)
 
         expected_files = [
             "project-overview.md",

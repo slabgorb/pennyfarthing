@@ -5,10 +5,7 @@ Story 63-9: Reorganize pennyfarthing_scripts into fan-out CLI pattern.
 These tests verify the story/ package modules work correctly.
 """
 
-from typing import Any
-from unittest.mock import patch
 
-import pytest
 
 
 class TestStorySizeModule:

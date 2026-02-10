@@ -10,9 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import yaml
-
-from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
+from pennyfarthing_scripts.common.config import get_project_root
 
 
 def parse_epics_markdown(content: str) -> dict[str, Any]:
@@ -195,13 +193,13 @@ def generate_initiative_yaml(
     today = date.today().isoformat()
 
     lines = [
-        f"    # ==========================================================================",
+        "    # ==========================================================================",
         f"    # {initiative_name.upper()}",
         f"    # Imported from: {source_file}",
         f"    # Date: {today}",
-        f"    # ==========================================================================",
+        "    # ==========================================================================",
         f'    - name: "{initiative_name}"',
-        f"      description: |",
+        "      description: |",
     ]
 
     # Add description lines with proper indentation
@@ -210,10 +208,10 @@ def generate_initiative_yaml(
 
     lines.extend(
         [
-            f"      status: ready",
-            f"      blocked_by: null",
+            "      status: ready",
+            "      blocked_by: null",
             f"      total_points: {parsed['total_points']}",
-            f"      epics:",
+            "      epics:",
         ]
     )
 
@@ -228,14 +226,14 @@ def generate_initiative_yaml(
             [
                 f"        - id: epic-{current_epic_num}",
                 f'          title: "{epic["title"]}"',
-                f"          description: |",
+                "          description: |",
                 f"            {epic.get('description', epic['title'])}",
                 f"          points: {epic_points}",
-                f"          priority: P1",
+                "          priority: P1",
                 f'          marker: "{marker}"',
-                f"          repos: pennyfarthing",
-                f"          status: planning",
-                f"          stories:",
+                "          repos: pennyfarthing",
+                "          status: planning",
+                "          stories:",
             ]
         )
 
@@ -247,12 +245,12 @@ def generate_initiative_yaml(
                 [
                     f'            - id: "{story_id}"',
                     f'              title: "{title}"',
-                    f"              description: |",
+                    "              description: |",
                     f"                {story.get('description', title)}",
                     f"              points: {story.get('points', 1)}",
-                    f"              priority: P0",
-                    f"              status: planning",
-                    f"              repos: pennyfarthing",
+                    "              priority: P0",
+                    "              status: planning",
+                    "              repos: pennyfarthing",
                 ]
             )
 

@@ -28,7 +28,6 @@ from pennyfarthing_scripts.sprint.yaml_io import (
     SPRINT_KEY_ORDER,
     STORY_KEY_ORDER,
     TOP_KEY_ORDER,
-    canonical_dump,
     read_sprint,
     write_sprint,
 )

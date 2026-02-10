@@ -12,11 +12,11 @@ Acceptance Criteria:
 - AC6: Token reduction verified: REFRESH ~600, HANDOFF ~700, MINIMAL ~200
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import yaml
+from unittest.mock import patch
 
+import pytest
+import yaml
 
 # =============================================================================
 # AC1: --tier CLI Argument Tests
@@ -314,10 +314,9 @@ class TestCompressedPersonaFormat:
 
     def test_compressed_persona_has_xml_structure(self, tmp_path: Path) -> None:
         """Test compressed persona uses XML format."""
-        from pennyfarthing_scripts.prime.persona import format_persona_compressed
-
         # Import will fail until function is implemented
         from pennyfarthing_scripts.prime.models import Persona
+        from pennyfarthing_scripts.prime.persona import format_persona_compressed
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -334,8 +333,8 @@ class TestCompressedPersonaFormat:
 
     def test_compressed_persona_includes_voice(self, tmp_path: Path) -> None:
         """Test compressed persona includes voice element."""
-        from pennyfarthing_scripts.prime.persona import format_persona_compressed
         from pennyfarthing_scripts.prime.models import Persona
+        from pennyfarthing_scripts.prime.persona import format_persona_compressed
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -350,8 +349,8 @@ class TestCompressedPersonaFormat:
 
     def test_compressed_persona_includes_style(self, tmp_path: Path) -> None:
         """Test compressed persona includes style element."""
-        from pennyfarthing_scripts.prime.persona import format_persona_compressed
         from pennyfarthing_scripts.prime.models import Persona
+        from pennyfarthing_scripts.prime.persona import format_persona_compressed
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -365,8 +364,8 @@ class TestCompressedPersonaFormat:
 
     def test_compressed_persona_includes_catchphrase_if_present(self, tmp_path: Path) -> None:
         """Test compressed persona includes catchphrase from quote."""
-        from pennyfarthing_scripts.prime.persona import format_persona_compressed
         from pennyfarthing_scripts.prime.models import Persona
+        from pennyfarthing_scripts.prime.persona import format_persona_compressed
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -382,8 +381,8 @@ class TestCompressedPersonaFormat:
 
     def test_compressed_persona_token_count(self, tmp_path: Path) -> None:
         """Test compressed persona is approximately 100 tokens (~400 chars)."""
-        from pennyfarthing_scripts.prime.persona import format_persona_compressed
         from pennyfarthing_scripts.prime.models import Persona
+        from pennyfarthing_scripts.prime.persona import format_persona_compressed
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -402,8 +401,8 @@ class TestCompressedPersonaFormat:
 
     def test_full_persona_token_count(self, tmp_path: Path) -> None:
         """Test full persona is approximately 300 tokens (~1200 chars)."""
+        from pennyfarthing_scripts.prime.models import CrewMember, Persona
         from pennyfarthing_scripts.prime.persona import format_persona_output
-        from pennyfarthing_scripts.prime.models import Persona, CrewMember
 
         persona = Persona(
             character="Rosie the Riveter",
@@ -509,8 +508,9 @@ class TestDefaultBehavior:
 
     def test_existing_flags_still_work_with_tier(self, tmp_path: Path, capsys) -> None:
         """Test existing flags (--quiet, --json, etc.) work with --tier."""
-        from pennyfarthing_scripts.prime.cli import prime
         import json
+
+        from pennyfarthing_scripts.prime.cli import prime
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -548,7 +548,7 @@ class TestTierLoadingPaths:
 
     def test_full_tier_with_all_options(self, tmp_path: Path) -> None:
         """Test FULL tier with all context sources available."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         # Setup complete project
         self._setup_complete_project(tmp_path)
@@ -569,7 +569,7 @@ class TestTierLoadingPaths:
 
     def test_full_tier_with_missing_optional(self, tmp_path: Path) -> None:
         """Test FULL tier gracefully handles missing optional components."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         # Minimal setup - only agent definition
         pf_dir = tmp_path / ".pennyfarthing"
@@ -590,7 +590,7 @@ class TestTierLoadingPaths:
 
     def test_refresh_tier_components(self, tmp_path: Path) -> None:
         """Test REFRESH tier returns correct component set."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -612,7 +612,7 @@ class TestTierLoadingPaths:
 
     def test_handoff_tier_components(self, tmp_path: Path) -> None:
         """Test HANDOFF tier returns correct component set."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -633,7 +633,7 @@ class TestTierLoadingPaths:
 
     def test_minimal_tier_components(self, tmp_path: Path) -> None:
         """Test MINIMAL tier returns minimal component set."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -990,8 +990,9 @@ class TestTierIntegration:
 
     def test_json_output_includes_tier(self, tmp_path: Path, capsys) -> None:
         """Test JSON output includes current tier."""
-        from pennyfarthing_scripts.prime.cli import prime
         import json
+
+        from pennyfarthing_scripts.prime.cli import prime
 
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
