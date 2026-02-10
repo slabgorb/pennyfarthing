@@ -7,6 +7,7 @@ This module provides:
 - story_update_command (Click command for CLI registration)
 """
 
+import subprocess
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -95,9 +96,6 @@ def update_story(
 
     # Auto-cleanup rules
     if status == "done":
-        # Remove assigned_to
-        if "assigned_to" in story:
-            del story["assigned_to"]
         # Auto-set completed if not explicitly provided
         if completed_date is None and "completed" not in story:
             story["completed"] = date.today().isoformat()
@@ -108,6 +106,16 @@ def update_story(
         # Auto-set started if not already present
         if "started" not in story:
             story["started"] = date.today().isoformat()
+        # Auto-set assignee from current Jira user if not already assigned
+        if "assigned_to" not in story and assigned_to is None:
+            try:
+                result = subprocess.run(
+                    ["jira", "me"], capture_output=True, text=True
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    story["assigned_to"] = result.stdout.strip()
+            except Exception:
+                pass
 
     # Validate after mutation
     result = validate_full_sprint(data)
