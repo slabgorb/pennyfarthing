@@ -15,7 +15,6 @@ Tests cover all six acceptance criteria:
 import warnings
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -28,7 +27,6 @@ from pennyfarthing_scripts.sprint.validator import (
     validate_sprint_file,
 )
 from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
-
 
 # =============================================================================
 # Fixtures
@@ -475,7 +473,7 @@ class TestLoaderWarnings:
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            result = _merge_epic_shards(data, tmp_path)
+            _merge_epic_shards(data, tmp_path)
 
         assert len(caught) == 1
         assert "MSSCI-99999" in str(caught[0].message)

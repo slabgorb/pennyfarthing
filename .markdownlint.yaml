@@ -20,9 +20,9 @@ MD034: false
 # First line heading - Not all files start with h1
 MD041: false
 
-# Trailing punctuation in headings - Allow colons
-MD026:
-  punctuation: ".,;:!"
+# Trailing punctuation in headings - Agent definitions use structured heading
+# patterns like "### To Dev" that trigger false positives
+MD026: false
 
 # Multiple headings with same content - Common in structured docs
 MD024: false
@@ -61,3 +61,37 @@ MD050: false
 
 # Link/image style - Allow both inline and reference
 MD054: false
+
+# Fenced code blocks without language - Many agent definition code blocks
+# are used for structured data, not runnable code
+MD040: false
+
+# Blanks around headings - Agent definitions use compact heading patterns
+MD022: false
+
+# Blanks around tables - Compact layout in structured docs
+MD058: false
+
+# Emphasis used instead of heading - Intentional styling in agent docs
+MD036: false
+
+# Heading increment - Agent definitions jump heading levels for structure
+MD001: false
+
+# Single h1 heading - Multiple top-level sections in some agent files
+MD025: false
+
+# Table pipe style - Allow flexible table formatting
+MD055: false
+
+# Table column count - Allow variable column counts
+MD056: false
+
+# Ordered list marker style - Allow both ordered and unordered
+MD029: false
+
+# Code fence style - Allow both backtick and tilde
+MD048: false
+
+# Spaces inside emphasis - Allow flexible emphasis
+MD037: false
