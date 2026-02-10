@@ -462,6 +462,7 @@ describe('95-4: File-watch Observation Scope', () => {
       const baseline = await detectFileChanges(DEFAULT_CONFIG);
       assert.ok(baseline.success);
 
+      mkdirSync(join(WORK_DIR, '.session'), { recursive: true });
       writeFileSync(join(WORK_DIR, '.session', 'state.md'), '# state');
 
       const result = await detectFileChanges(DEFAULT_CONFIG);
