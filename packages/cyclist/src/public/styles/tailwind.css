@@ -4246,6 +4246,58 @@
   margin-bottom: 4px;
 }
 
+/* Agent Quick Picker (MSSCI-14762) */
+.agent-quick-picker-wrapper {
+  position: relative;
+}
+
+.agent-quick-picker-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--bg-secondary, #1e1e1e);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  padding: 4px;
+}
+
+.agent-quick-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.agent-quick-picker-option:hover {
+  background: var(--bg-hover, #3c3c3c);
+}
+
+.agent-quick-picker-option.current {
+  background: var(--bg-tertiary, #2d2d2d);
+  border-left: 2px solid var(--accent, #007acc);
+}
+
+.agent-option-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-secondary, #8b8b8b);
+  min-width: 64px;
+}
+
+.agent-option-character {
+  font-size: 0.8rem;
+  color: var(--text-primary, #d4d4d4);
+}
+
 .btn-toggle {
   display: flex;
   align-items: center;
