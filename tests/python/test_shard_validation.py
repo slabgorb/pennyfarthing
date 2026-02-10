@@ -31,7 +31,7 @@ class TestValidateEpicShard:
     def _make_valid_epic(self) -> dict[str, Any]:
         """Return a minimal valid epic shard dict."""
         return {
-            "id": "epic-99",
+            "id": "99",
             "title": "Test Epic",
             "status": "backlog",
             "stories": [
@@ -135,6 +135,16 @@ class TestValidateEpicShard:
         epic["stories"] = [{"id": "99-1"}]  # missing title, points, status
         result = validate_epic_shard(epic)
         assert not result.valid
+
+    def test_epic_prefix_in_id_rejected(self):
+        """Epic shard with 'epic-' prefix in ID should be rejected (ADR-0022)."""
+        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+
+        epic = self._make_valid_epic()
+        epic["id"] = "epic-99"
+        result = validate_epic_shard(epic)
+        assert not result.valid
+        assert any("epic-" in e.message for e in result.errors)
 
     def test_empty_stories_list_passes(self):
         """Epic shard with empty stories list should pass (stories key present)."""
@@ -285,46 +295,111 @@ class TestWritePathIntegration:
 
     def test_epic_promote_calls_validator(self, tmp_path):
         """epic_promote() should call validate_epic_shard() after transforming."""
-        # This test verifies that the promote path integrates validation.
-        # We patch validate_epic_shard and check it's called.
+        from click.testing import CliRunner
+        from pennyfarthing_scripts.sprint.cli import epic_promote
+
+        # Create initiative shard with an epic to promote
+        sprint_dir = tmp_path / "sprint"
+        sprint_dir.mkdir()
+        sprint_file = sprint_dir / "current-sprint.yaml"
+        sprint_file.write_text(
+            "sprint:\n  number: 2606\n  status: active\n"
+            "  jira_sprint_id: 280\n  goal: test\n"
+            "  start_date: 2026-02-03\n  end_date: 2026-02-16\n"
+            "epics: []\n"
+        )
+        init_file = sprint_dir / "initiative-test.yaml"
+        init_file.write_text(
+            "name: Test Initiative\nepics:\n"
+            "  - id: 50\n    title: Promote Me\n    status: planning\n"
+            "    points: 10\n    stories:\n"
+            "      - id: '50-1'\n        title: Story One\n        points: 3\n        status: planning\n"
+        )
+
         with patch(
+            "pennyfarthing_scripts.common.config.get_project_root", return_value=tmp_path
+        ), patch(
             "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
         ) as mock_validate:
             mock_validate.return_value = MagicMock(valid=True, errors=[])
+            runner = CliRunner()
+            result = runner.invoke(epic_promote, ["50"])
+            assert result.exit_code == 0, f"CLI failed: {result.output}"
+            # Validator should have been called during promote
+            mock_validate.assert_called_once()
+            # The call arg should be a dict representing the epic
+            call_arg = mock_validate.call_args[0][0]
+            assert "title" in call_arg
+            assert "stories" in call_arg
 
-            # We don't actually run the full CLI here — just verify the import path
-            # The Dev will wire this in. For RED state, we verify the mock is importable
-            # and the function signature exists.
-            from pennyfarthing_scripts.sprint.validator import validate_epic_shard
-
-            # Call it to confirm the function exists (will fail in RED since it doesn't)
-            result = validate_epic_shard(
-                {"id": "epic-94", "title": "Test", "status": "backlog", "stories": []}
-            )
-
-    def test_jira_create_epic_calls_validator(self):
+    def test_jira_create_epic_calls_validator(self, tmp_path):
         """create_epic_in_jira() should validate the epic before creating in Jira."""
+        from pennyfarthing_scripts.jira.create import create_epic_in_jira
+
+        # create_epic_in_jira calls both read_sprint(path) and load_sprint()
+        # load_sprint() uses get_project_root()/sprint/current-sprint.yaml
+        sprint_dir = tmp_path / "sprint"
+        sprint_dir.mkdir()
+        sprint_file = sprint_dir / "current-sprint.yaml"
+        sprint_file.write_text(
+            "sprint:\n  number: 2606\n  status: active\n"
+            "  jira_sprint_id: 280\n  goal: test\n"
+            "  start_date: 2026-02-03\n  end_date: 2026-02-16\n"
+            "epics:\n  - '63'\n"
+        )
+        shard = sprint_dir / "epic-63.yaml"
+        shard.write_text(
+            "id: '63'\ntitle: Jira Epic\nstatus: ready\nstories: []\n"
+        )
+
         with patch(
             "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
-        ) as mock_validate:
+        ) as mock_validate, patch(
+            "pennyfarthing_scripts.sprint.loader.get_project_root", return_value=tmp_path
+        ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
-            from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+            mock_client = MagicMock()
+            mock_client.search_issues_sync.return_value = []
+            mock_client.create_issue_sync.return_value = {"key": "MSSCI-99999"}
 
-            # Verify the function is callable (RED: it doesn't exist yet)
-            result = validate_epic_shard(
-                {"id": "epic-63", "title": "Jira Epic", "status": "ready", "stories": []}
-            )
+            with patch("pennyfarthing_scripts.jira.create.get_client", return_value=mock_client):
+                result = create_epic_in_jira("63", sprint_path=sprint_file)
+                assert result.get("success"), f"Expected success, got: {result}"
+                # Validator should have been called
+                mock_validate.assert_called_once()
 
-    def test_import_epic_calls_validator(self):
+    def test_import_epic_calls_validator(self, tmp_path):
         """import_epic() should validate generated YAML before writing."""
+        from pennyfarthing_scripts.sprint.import_epic import import_epic
+
+        # Create a minimal markdown file
+        md_file = tmp_path / "epics.md"
+        md_file.write_text(
+            "# Test Initiative - Epics and Stories\n\n"
+            "## Overview\n\nTest description\n\n"
+            "## Epic 1: First Epic\n\n"
+            "**Points:** 5\n\n"
+            "### Story 1.1: First Story\n\n"
+            "**Points:** 3\n"
+        )
+        # Create a future.yaml for import to write to
+        sprint_dir = tmp_path / "sprint"
+        sprint_dir.mkdir()
+        future_file = sprint_dir / "future.yaml"
+        future_file.write_text(
+            "# Next Available Epic Number: 100\ninitiated:\n"
+        )
+
         with patch(
             "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
-        ) as mock_validate:
+        ) as mock_validate, patch(
+            "pennyfarthing_scripts.sprint.import_epic.get_project_root", return_value=tmp_path
+        ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
-            from pennyfarthing_scripts.sprint.validator import validate_epic_shard
-
-            result = validate_epic_shard(
-                {"id": "epic-80", "title": "Imported", "status": "planning", "stories": []}
+            result = import_epic(str(md_file), project_root=tmp_path)
+            # Validator should have been called for each parsed epic
+            assert mock_validate.call_count >= 1, (
+                f"Expected validator to be called at least once, got {mock_validate.call_count}"
             )
 
 

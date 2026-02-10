@@ -150,6 +150,7 @@ def create_epic_in_jira(
     *,
     sprint_path: Path | None = None,
     dry_run: bool = False,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Create a Jira epic and its child stories from sprint YAML.
 
@@ -157,6 +158,7 @@ def create_epic_in_jira(
         epic_id: Epic ID from sprint YAML (e.g., "epic-63" or "63")
         sprint_path: Path to sprint YAML (defaults to auto-detect)
         dry_run: If True, preview without creating
+        force: If True, create even if duplicate title detected
 
     Returns:
         {success, epic_key?, stories: [{id, jira_key}], error?}
@@ -184,6 +186,13 @@ def create_epic_in_jira(
     if not epic_ruamel:
         return {"success": False, "error": f"Epic '{epic_id}' not found in ruamel data"}
 
+    # Validate epic shard before any Jira operations (ADR-0022)
+    from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+    validation = validate_epic_shard(dict(epic_ruamel))
+    if not validation.valid:
+        error_msgs = "; ".join(e.message for e in validation.errors)
+        return {"success": False, "error": f"Epic validation failed: {error_msgs}"}
+
     title = epic.get("title", f"Epic {epic_id}")
     description = epic.get("description", "")
     epic_jira_key = epic.get("jira")
@@ -206,7 +215,7 @@ def create_epic_in_jira(
                 existing = client.search_issues_sync(
                     f'project = {JIRA_PROJECT} AND issuetype = Epic AND summary ~ "{title}"'
                 )
-                if existing:
+                if existing and not force:
                     existing_key = existing[0]["key"]
                     print(f"Found existing epic with same title: {existing_key}")
                     epic_jira_key = existing_key
@@ -221,8 +230,19 @@ def create_epic_in_jira(
                         "duplicate_detected": True,
                         "stories": [],
                     }
-            except Exception:
-                pass  # Search failed — proceed with creation
+                elif existing and force:
+                    import warnings
+                    warnings.warn(
+                        f"Duplicate epic title detected ({existing[0]['key']}), "
+                        "proceeding with --force",
+                        stacklevel=2,
+                    )
+            except Exception as exc:
+                import warnings
+                warnings.warn(
+                    f"Jira search for duplicate titles failed: {exc}",
+                    stacklevel=2,
+                )
 
             payload = {
                 "fields": {

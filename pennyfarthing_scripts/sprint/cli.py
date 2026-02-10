@@ -886,20 +886,23 @@ def epic_promote(epic_id: str):
     new_epic_id = original_id
     existing_ids = {str(e.get("id", "")) for e in sprint_data["epics"] if isinstance(e, dict)}
 
+    # Normalize to numeric ID (ADR-0022: strip epic- prefix from values)
+    new_epic_id = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+
     if new_epic_id in existing_ids:
         max_num = 0
         for eid in existing_ids:
-            if eid.startswith("epic-"):
-                try:
-                    max_num = max(max_num, int(eid.replace("epic-", "")))
-                except ValueError:
-                    pass
-        new_epic_id = f"epic-{max_num + 1}"
+            clean_eid = eid.replace("epic-", "") if eid.startswith("epic-") else eid
+            try:
+                max_num = max(max_num, int(clean_eid))
+            except ValueError:
+                pass
+        new_epic_id = str(max_num + 1)
         click.echo(f"Warning: Epic ID {original_id} already exists. Assigning new ID: {new_epic_id}")
 
     # Transform epic for current sprint
     old_id_num = original_id.replace("epic-", "")
-    new_id_num = new_epic_id.replace("epic-", "")
+    new_id_num = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
 
     epic_data["id"] = new_epic_id
     epic_data["status"] = "backlog"
@@ -927,6 +930,13 @@ def epic_promote(epic_id: str):
     click.echo(f"  Points: {epic_data.get('points', 0)}")
     click.echo(f"  Stories: {story_count}")
     click.echo("")
+
+    # Validate epic shard before writing (ADR-0022)
+    from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+    validation = validate_epic_shard(dict(epic_data))
+    if not validation.valid:
+        error_msgs = "; ".join(e.message for e in validation.errors)
+        raise click.ClickException(f"Epic validation failed: {error_msgs}")
 
     # Append to sprint
     sprint_data["epics"].append(epic_data)
