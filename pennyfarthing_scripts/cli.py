@@ -60,6 +60,11 @@ from pennyfarthing_scripts.healthscore.cli import healthscore
 
 cli.add_command(healthscore)
 
+# Import and register validate group
+from pennyfarthing_scripts.validate.cli import validate
+
+cli.add_command(validate)
+
 
 @cli.group()
 def agent():
