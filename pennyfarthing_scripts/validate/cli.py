@@ -21,6 +21,7 @@ VALIDATORS = {
     "schema": "pennyfarthing_scripts.validate.adapters.schema",
     "agent": "pennyfarthing_scripts.validate.adapters.agent",
     "workflow": "pennyfarthing_scripts.validate.adapters.workflow",
+    "skill-command": "pennyfarthing_scripts.validate.adapters.skill_command",
 }
 
 
