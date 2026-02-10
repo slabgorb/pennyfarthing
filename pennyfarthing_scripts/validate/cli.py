@@ -20,6 +20,7 @@ VALIDATORS = {
     "sprint": "pennyfarthing_scripts.validate.adapters.sprint",
     "schema": "pennyfarthing_scripts.validate.adapters.schema",
     "agent": "pennyfarthing_scripts.validate.adapters.agent",
+    "workflow": "pennyfarthing_scripts.validate.adapters.workflow",
 }
 
 
@@ -81,9 +82,10 @@ def validate(ctx, fix: bool, strict: bool):
 
     \b
     Validators:
-      sprint  - Sprint YAML (epics, initiatives, future, current-sprint)
-      schema  - XML schema (sessions, skills, workflow steps)
-      agent   - Agent definitions (required sections, model values, subagent refs)
+      sprint   - Sprint YAML (epics, initiatives, future, current-sprint)
+      schema   - XML schema (sessions, skills, workflow steps)
+      agent    - Agent definitions (required sections, model values, subagent refs)
+      workflow - Workflow definitions (phased/stepped/procedural structure)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
@@ -123,6 +125,16 @@ def validate_schema(ctx):
 def validate_agent(ctx):
     """Validate agent definition files (required sections, model values, refs)."""
     report = _run_validator("agent", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("workflow")
+@click.pass_context
+def validate_workflow(ctx):
+    """Validate workflow definitions (phased/stepped/procedural structure)."""
+    report = _run_validator("workflow", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)
