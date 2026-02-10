@@ -32,8 +32,6 @@ import {
   getPluginCommands,
   getPluginSkills,
   getPluginRouters,
-  type PluginManifest,
-  type DiscoveredPlugin
 } from './plugin-discovery.js';
 
 // Test fixture directory

@@ -100,7 +100,7 @@ export function useSprint(): UseSprintResult {
             const msg = JSON.parse(event.data) as SprintMessage;
             if (msg.type === 'init' || msg.type === 'update') {
               // Extract data, excluding type field
-              const { type, ...sprintData } = msg;
+              const { type: _type, ...sprintData } = msg;
               setData((prev) => {
                 if (!prev) return sprintData as SprintData;
                 // Merge partial updates

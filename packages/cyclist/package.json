@@ -29,6 +29,7 @@
     "dev:debug-brk": "CYCLIST_DEV_WEB=1 OTEL_DEBUG=true CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} node --inspect-brk src/server.ts",
     "dev:electron-debug": "npm run build && concurrently -k -n tsc,preload,vite,electron -c blue,cyan,magenta,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"vite build --watch\" \"electron --inspect=9229 dist/main.js\"",
     "dev:vite": "vite --config vite.config.ts",
+    "lint": "eslint src/",
     "build": "npm run build:commands && tsc --build && tsc -p tsconfig.preload.json && npm run build:react",
     "build:react": "vite build",
     "build:commands": "node scripts/generate-slash-commands.js",

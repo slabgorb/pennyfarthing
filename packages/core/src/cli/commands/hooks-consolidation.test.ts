@@ -323,7 +323,7 @@ describe('MSSCI-14368: Move project hooks into .pennyfarthing/project', () => {
       const projectDir = join(claudeDir, 'project');
       if (existsSync(projectDir)) {
         // If it still exists, it should only contain user-added files
-        const remaining = readdirSync(projectDir, { recursive: true });
+        const _remaining = readdirSync(projectDir, { recursive: true });
         // shared-context.md stays at .claude/project/docs/ so project/ may not be fully empty
         // but hooks/ subdirectory should be gone
         assert.ok(
@@ -563,7 +563,7 @@ describe('MSSCI-14368: Move project hooks into .pennyfarthing/project', () => {
   describe('Settings template: setup-env.sh path', () => {
     it('settings.local.json template should reference .pennyfarthing/project/hooks/setup-env.sh', () => {
       // Read the actual template
-      const templatePath = join(
+      const _templatePath = join(
         testDir,
         '../../pennyfarthing/pennyfarthing-dist/templates/settings.local.json.template'
       );

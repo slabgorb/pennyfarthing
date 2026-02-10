@@ -8,7 +8,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverAllThemeDirs } from './theme-loader.js';
 

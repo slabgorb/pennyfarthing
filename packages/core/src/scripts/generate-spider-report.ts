@@ -8,7 +8,7 @@
  */
 
 import { readdirSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { generateSpider, generateOverlaySpider, CharacterSpec } from './generate-spider.js';
