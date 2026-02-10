@@ -3,7 +3,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { watch, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
-import { getPersonaClients, broadcastPersona } from './api/persona.js';
+import { getPersonaClients, broadcastPersona, getStreamingState, setStreamingState } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
@@ -332,6 +332,12 @@ export function broadcastTodosUpdate(todos: TodoItem[]): void {
  * Used by main.ts to relay messages from the main process ClaudeService
  */
 export function broadcastClaudeMessage(message: unknown): void {
+  // Story 94-1: Track streaming state for persona broadcast
+  const msg = message as { type?: string };
+  if (msg.type === 'assistant') {
+    setStreamingState(true);
+  }
+
   const payload = JSON.stringify({ type: 'message', message });
   for (const client of claudeClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -344,6 +350,9 @@ export function broadcastClaudeMessage(message: unknown): void {
  * Broadcast Claude query completion to all connected WebSocket clients
  */
 export function broadcastClaudeComplete(): void {
+  // Story 94-1: Clear streaming state for persona broadcast
+  setStreamingState(false);
+
   const payload = JSON.stringify({ type: 'complete' });
   for (const client of claudeClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -356,6 +365,9 @@ export function broadcastClaudeComplete(): void {
  * Broadcast Claude error to all connected WebSocket clients
  */
 export function broadcastClaudeError(error: string): void {
+  // Story 94-1: Clear streaming state on error
+  setStreamingState(false);
+
   const payload = JSON.stringify({ type: 'error', error });
   for (const client of claudeClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -534,12 +546,12 @@ export function setupWebSocketServers(
     // Add client to broadcast set
     personaClients.add(ws);
 
-    // Send initial persona on connection
+    // Send initial persona on connection (includes isStreaming state per Story 94-1)
     const projectDir = getProjectDir();
     const sessionId = process.env.CYCLIST_SESSION_ID;
     const persona = getCurrentPersona(projectDir, sessionId);
     if (persona && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(persona));
+      ws.send(JSON.stringify({ ...persona, isStreaming: getStreamingState() }));
     }
 
     // Remove client on disconnect
@@ -1331,8 +1343,13 @@ export function setupWebSocketServers(
               // Stream messages back to client
               try {
                 for await (const message of service.sendMessage(msg.prompt)) {
-                  // Process tool_use BEFORE enrichment so Task tools are registered for lookup
+                  // Story 94-1: Track streaming state for persona broadcast (web mode)
                   const sdkMsg = message as { type?: string; tool_name?: string; tool_id?: string; input?: Record<string, unknown>; message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
+                  if (sdkMsg.type === 'assistant') {
+                    setStreamingState(true);
+                  }
+
+                  // Process tool_use BEFORE enrichment so Task tools are registered for lookup
                   if (sdkMsg.type === 'tool_use' && sdkMsg.tool_name && sdkMsg.tool_id && sdkMsg.input) {
                     // Store for OTLP correlation
                     storePendingToolInput(sdkMsg.tool_id, sdkMsg.tool_name, sdkMsg.input);
@@ -1377,10 +1394,14 @@ export function setupWebSocketServers(
                     }
                   }
                 }
+                // Story 94-1: Clear streaming state on completion (web mode)
+                setStreamingState(false);
                 if (ws.readyState === WebSocket.OPEN) {
                   ws.send(JSON.stringify({ type: 'complete' }));
                 }
               } catch (err) {
+                // Story 94-1: Clear streaming state on error (web mode)
+                setStreamingState(false);
                 if (ws.readyState === WebSocket.OPEN) {
                   ws.send(JSON.stringify({
                     type: 'error',
