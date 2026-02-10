@@ -14,6 +14,7 @@ Story: MSSCI-12409 - Hook consistency and relay mode compatibility
 """
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -411,19 +412,17 @@ def read_stdin_json() -> dict[str, Any]:
 def is_cyclist_running(project_root: Path | None = None) -> bool:
     """Check if Cyclist server is running.
 
-    Checks for .cyclist-port file existence. No HTTP calls — this runs on
-    every tool invocation and must be fast.
+    Checks the CYCLIST environment variable set by ClaudeService when
+    spawning Claude inside Cyclist. No file I/O, no HTTP, no signals —
+    this runs on every tool invocation and must be instant.
 
-    Args:
-        project_root: Project root directory (auto-detected if not provided)
+    The project_root parameter is kept for backward compatibility but
+    is no longer used.
 
     Returns:
-        True if .cyclist-port file exists at project root
+        True if running inside a Cyclist-spawned Claude process
     """
-    root = project_root or find_project_root()
-    if not root:
-        return False
-    return (root / CYCLIST_PORT_FILE).exists()
+    return os.environ.get("CYCLIST") == "1"
 
 
 def should_auto_approve(settings: CyclistSettings) -> bool:
