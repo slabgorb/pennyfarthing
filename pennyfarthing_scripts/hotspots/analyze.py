@@ -12,7 +12,7 @@ import fnmatch
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from pennyfarthing_scripts.hotspots.models import (
@@ -353,8 +353,8 @@ async def _analyze_repo_pydriller(
     """PyDriller-backed hotspot analysis."""
     from pydriller import Repository
 
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    now = datetime.now(timezone.utc)
+    since = datetime.now(UTC) - timedelta(days=days)
+    now = datetime.now(UTC)
 
     file_metrics: dict[str, dict] = defaultdict(
         lambda: {
@@ -451,7 +451,7 @@ async def _analyze_repo_gitlog(
         }
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for commit in commits:
         is_fix = is_bug_fix_commit(commit["message"])

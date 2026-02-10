@@ -12,9 +12,9 @@ import json
 from dataclasses import asdict
 
 from pennyfarthing_scripts.dependencies.models import (
+    DependenciesResult,
     OutdatedPackage,
     SecurityAdvisory,
-    DependenciesResult,
 )
 
 

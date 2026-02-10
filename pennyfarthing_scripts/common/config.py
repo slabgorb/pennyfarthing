@@ -78,7 +78,7 @@ def load_yaml_config(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
 
-    with open(path, "r") as f:
+    with open(path) as f:
         return yaml.safe_load(f)
 
 

@@ -356,7 +356,7 @@ def validate_future(data: dict[str, Any]) -> ValidationResult:
         if isinstance(initiative, str):
             continue
         if not isinstance(initiative, dict):
-            result.add_error(f"Initiative must be a mapping", f"future.initiatives[{i}]")
+            result.add_error("Initiative must be a mapping", f"future.initiatives[{i}]")
             continue
 
         base_path = f"future.initiatives[{i}]"

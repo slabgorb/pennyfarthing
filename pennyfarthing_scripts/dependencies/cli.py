@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
+
+if TYPE_CHECKING:
+    from pennyfarthing_scripts.dependencies.models import DependenciesResult
 
 
 @click.group()
@@ -24,7 +28,7 @@ def dependencies():
     pass
 
 
-def _run_analysis(target_path: str | None) -> "DependenciesResult":
+def _run_analysis(target_path: str | None) -> DependenciesResult:
     """Run analysis and return result."""
     from pennyfarthing_scripts.dependencies.analyze import analyze_dependencies
 
@@ -35,10 +39,10 @@ def _run_analysis(target_path: str | None) -> "DependenciesResult":
 def _output_result(result, fmt: str, output_file: str | None):
     """Format and output the analysis result."""
     from pennyfarthing_scripts.dependencies.formatters import (
-        format_outdated_table,
-        format_audit_table,
-        export_json,
         export_csv,
+        export_json,
+        format_audit_table,
+        format_outdated_table,
     )
 
     if fmt == "json":

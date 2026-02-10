@@ -3,21 +3,22 @@
 Tests context loading for prime command.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
+import pytest
+
+from pennyfarthing_scripts.prime.cli import main, prime
 from pennyfarthing_scripts.prime.loader import (
-    load_agent_definition,
-    load_behavior_guide,
-    load_sprint_context,
-    load_session_context,
-    load_sidecars,
-    load_domain_docs,
     _extract_session_parts,
     _find_session_file,
+    load_agent_definition,
+    load_behavior_guide,
+    load_domain_docs,
+    load_session_context,
+    load_sidecars,
+    load_sprint_context,
 )
-from pennyfarthing_scripts.prime.cli import prime, main
 
 
 class TestLoadAgentDefinition:
@@ -407,8 +408,8 @@ class TestWorkflowStateDetection:
 
     def test_detect_finish_state(self, tmp_path: Path) -> None:
         """Test detecting FINISH_STATE when phase is approved."""
-        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
         from pennyfarthing_scripts.prime.models import WorkflowState
+        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -436,9 +437,10 @@ class TestWorkflowStateDetection:
 
     def test_detect_in_progress_state(self, tmp_path: Path) -> None:
         """Test detecting IN_PROGRESS_STATE with active phase."""
-        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
-        from pennyfarthing_scripts.prime.models import WorkflowState
         import yaml
+
+        from pennyfarthing_scripts.prime.models import WorkflowState
+        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -483,9 +485,10 @@ class TestWorkflowStateDetection:
 
     def test_detect_new_work_state(self, tmp_path: Path) -> None:
         """Test detecting NEW_WORK_STATE with backlog stories."""
-        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
-        from pennyfarthing_scripts.prime.models import WorkflowState
         import yaml
+
+        from pennyfarthing_scripts.prime.models import WorkflowState
+        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -514,9 +517,10 @@ class TestWorkflowStateDetection:
 
     def test_detect_empty_backlog_state(self, tmp_path: Path) -> None:
         """Test detecting EMPTY_BACKLOG_STATE with no backlog."""
-        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
-        from pennyfarthing_scripts.prime.models import WorkflowState
         import yaml
+
+        from pennyfarthing_scripts.prime.models import WorkflowState
+        from pennyfarthing_scripts.prime.workflow import detect_workflow_state
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -587,8 +591,8 @@ class TestCheckRedirect:
 
     def test_redirect_when_wrong_agent(self) -> None:
         """Test redirect is detected when wrong agent is activated."""
-        from pennyfarthing_scripts.prime.workflow import check_redirect
         from pennyfarthing_scripts.prime.models import WorkflowState, WorkflowStatus
+        from pennyfarthing_scripts.prime.workflow import check_redirect
 
         status = WorkflowStatus(
             state=WorkflowState.IN_PROGRESS_STATE,
@@ -606,8 +610,8 @@ class TestCheckRedirect:
 
     def test_no_redirect_when_correct_agent(self) -> None:
         """Test no redirect when correct agent is activated."""
-        from pennyfarthing_scripts.prime.workflow import check_redirect
         from pennyfarthing_scripts.prime.models import WorkflowState, WorkflowStatus
+        from pennyfarthing_scripts.prime.workflow import check_redirect
 
         status = WorkflowStatus(
             state=WorkflowState.IN_PROGRESS_STATE,
@@ -621,8 +625,8 @@ class TestCheckRedirect:
 
     def test_no_redirect_for_new_work(self) -> None:
         """Test no redirect for NEW_WORK_STATE."""
-        from pennyfarthing_scripts.prime.workflow import check_redirect
         from pennyfarthing_scripts.prime.models import WorkflowState, WorkflowStatus
+        from pennyfarthing_scripts.prime.workflow import check_redirect
 
         status = WorkflowStatus(
             state=WorkflowState.NEW_WORK_STATE,
@@ -644,8 +648,9 @@ class TestPersonaLoading:
 
     def test_load_persona_from_theme(self, tmp_path: Path) -> None:
         """Test loading persona from theme YAML."""
-        from pennyfarthing_scripts.prime.persona import load_persona
         import yaml
+
+        from pennyfarthing_scripts.prime.persona import load_persona
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -697,8 +702,9 @@ class TestPersonaLoading:
 
     def test_get_crew_manifest(self, tmp_path: Path) -> None:
         """Test getting crew manifest for handoff reference."""
-        from pennyfarthing_scripts.prime.persona import get_crew_manifest
         import yaml
+
+        from pennyfarthing_scripts.prime.persona import get_crew_manifest
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -730,8 +736,8 @@ class TestPersonaLoading:
 
     def test_format_persona_output(self) -> None:
         """Test formatting persona as XML."""
+        from pennyfarthing_scripts.prime.models import CrewMember, Persona
         from pennyfarthing_scripts.prime.persona import format_persona_output
-        from pennyfarthing_scripts.prime.models import Persona, CrewMember
 
         persona = Persona(
             character="Naomi Nagata",
@@ -798,8 +804,9 @@ class TestSessionRegistration:
 
     def test_cleanup_old_sessions(self, tmp_path: Path) -> None:
         """Test cleanup of old session files."""
-        from pennyfarthing_scripts.prime.session import cleanup_old_sessions
         import time
+
+        from pennyfarthing_scripts.prime.session import cleanup_old_sessions
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -886,6 +893,7 @@ class TestJSONOutput:
     def test_json_output_with_workflow(self, tmp_path: Path, capsys) -> None:
         """Test JSON output includes workflow status."""
         import json
+
         import yaml
 
         # Setup
@@ -925,6 +933,7 @@ class TestJSONOutput:
     def test_json_output_with_redirect(self, tmp_path: Path, capsys) -> None:
         """Test JSON output includes redirect info."""
         import json
+
         import yaml
 
         # Setup

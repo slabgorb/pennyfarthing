@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 import time
+from datetime import UTC
 from pathlib import Path
 
 from pennyfarthing_scripts.healthscore.models import (
@@ -67,7 +68,7 @@ async def analyze_healthscore(
         probe_results = await asyncio.gather(
             *(_probe_dimension(name, resolved) for name in uncached_dims)
         )
-        for dim_name, score in zip(uncached_dims, probe_results):
+        for dim_name, score in zip(uncached_dims, probe_results, strict=False):
             raw_scores[dim_name] = score
             logger.info("[healthscore] %s: probed score = %s", dim_name, score)
             if score is not None and cache_ttl > 0:
@@ -141,7 +142,7 @@ async def _probe_churn(target_path: Path) -> float | None:
 
 async def _probe_churn_pydriller(target_path: Path) -> float | None:
     """PyDriller-based churn: counts changes per file with noise filtering."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from pydriller import Repository
 
@@ -161,7 +162,7 @@ async def _probe_churn_pydriller(target_path: Path) -> float | None:
     }
     code_exts = {".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".rs", ".java", ".rb"}
 
-    since = datetime.now(timezone.utc) - timedelta(days=90)
+    since = datetime.now(UTC) - timedelta(days=90)
     file_changes: dict[str, int] = {}
 
     # PyDriller is sync — run in executor to avoid blocking

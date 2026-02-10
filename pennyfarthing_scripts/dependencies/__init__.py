@@ -5,12 +5,12 @@ Wraps npm outdated and npm audit to detect outdated packages
 and security vulnerabilities.
 """
 
+from pennyfarthing_scripts.dependencies.analyze import analyze_dependencies
 from pennyfarthing_scripts.dependencies.models import (
+    DependenciesResult,
     OutdatedPackage,
     SecurityAdvisory,
-    DependenciesResult,
 )
-from pennyfarthing_scripts.dependencies.analyze import analyze_dependencies
 
 __all__ = [
     "OutdatedPackage",

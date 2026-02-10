@@ -20,6 +20,21 @@ Usage:
 """
 
 # Re-export from client for backwards compatibility
+# Import submodules to make them accessible
+# CLI entry point - import module, not function, so "from jira import cli" gets the module
+from pennyfarthing_scripts.jira import (
+    bidirectional,
+    claim,
+    cli,
+    client,
+    create,
+    epic,
+    operations,
+    reconcile,
+    story,
+    sync,
+)
+from pennyfarthing_scripts.jira.cli import main
 from pennyfarthing_scripts.jira.client import (
     # Constants
     GITHUB_TO_JIRA_MAP,
@@ -43,23 +58,6 @@ from pennyfarthing_scripts.jira.client import (
     map_status_to_jira,
     update_issue_status,
 )
-
-# Import submodules to make them accessible
-from pennyfarthing_scripts.jira import (
-    bidirectional,
-    claim,
-    client,
-    create,
-    epic,
-    operations,
-    reconcile,
-    story,
-    sync,
-)
-
-# CLI entry point - import module, not function, so "from jira import cli" gets the module
-from pennyfarthing_scripts.jira import cli
-from pennyfarthing_scripts.jira.cli import main
 
 __all__ = [
     # Constants

@@ -3,10 +3,9 @@
 Story 63-9: Reorganize pennyfarthing_scripts into fan-out CLI pattern.
 """
 
-import os
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 

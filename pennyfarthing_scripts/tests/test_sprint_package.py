@@ -7,10 +7,7 @@ after reorganization from flat modules.
 """
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 
 class TestSprintLoader:
@@ -28,8 +25,8 @@ class TestSprintLoader:
 
     def test_load_sprint_with_custom_root(self) -> None:
         """load_sprint should accept custom project root."""
-        from pennyfarthing_scripts.sprint.loader import load_sprint
         from pennyfarthing_scripts.common.config import get_project_root
+        from pennyfarthing_scripts.sprint.loader import load_sprint
 
         root = get_project_root()
         result = load_sprint(project_root=root)
@@ -341,8 +338,7 @@ epics:
 
     def test_get_all_stories_with_shards(self, tmp_path: Path) -> None:
         """get_all_stories should return stories from merged shards."""
-        from pennyfarthing_scripts.sprint.loader import get_all_stories, load_sprint
-        from unittest.mock import patch
+        from pennyfarthing_scripts.sprint.loader import get_all_stories
 
         root = self._create_sharded_sprint(tmp_path)
 
@@ -379,7 +375,6 @@ epics:
     def test_backlog_count_defensive_on_strings(self) -> None:
         """get_backlog_count should not crash on string epics."""
         from pennyfarthing_scripts.prime.workflow import get_backlog_count
-        from unittest.mock import patch
 
         fake_data = {"epics": ["MSSCI-14298", "MSSCI-14317"]}
         with patch("pennyfarthing_scripts.sprint.loader.load_sprint", return_value=fake_data):

@@ -10,7 +10,6 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 # Tag requirements
 REQUIRED_TAGS = ["run", "output"]
 RECOMMENDED_TAGS = ["args", "example", "when"]

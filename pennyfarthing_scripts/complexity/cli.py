@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
+
+if TYPE_CHECKING:
+    from pennyfarthing_scripts.complexity.models import ComplexityResult
 
 
 @click.group()
@@ -39,7 +43,7 @@ def _common_options(fn):
     return fn
 
 
-def _run_analysis(target_path: str | None, exclude: tuple) -> "ComplexityResult":
+def _run_analysis(target_path: str | None, exclude: tuple) -> ComplexityResult:
     """Run analysis and return result."""
     from pennyfarthing_scripts.complexity.analyze import analyze_complexity
 

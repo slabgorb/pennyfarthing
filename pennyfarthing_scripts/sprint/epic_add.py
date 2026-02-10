@@ -16,9 +16,9 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from pennyfarthing_scripts.sprint.yaml_io import (
     EPIC_KEY_ORDER,
+    _get_epic_ref,
     _read_yaml_file,
     _write_yaml_file,
-    _get_epic_ref,
 )
 
 

@@ -40,15 +40,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from hooks import (
-    find_project_root,
-    get_cyclist_port,
-    send_to_cyclist,
-    read_stdin_json,
-    output_hook_response,
     HookResponse,
-    load_settings,
-    is_cyclist_running,
+    find_project_root,
     get_context_state,
+    is_cyclist_running,
+    load_settings,
+    output_hook_response,
+    read_stdin_json,
+    send_to_cyclist,
 )
 
 

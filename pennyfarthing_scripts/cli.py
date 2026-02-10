@@ -31,37 +31,37 @@ def cli():
 
 
 # Import and register sprint group (lazy registration preserves startup time)
-from pennyfarthing_scripts.sprint.cli import sprint
+from pennyfarthing_scripts.sprint.cli import sprint  # noqa: E402
 
 cli.add_command(sprint)
 
 # Import and register hotspots group
-from pennyfarthing_scripts.hotspots.cli import hotspots
+from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
 
 cli.add_command(hotspots)
 
 # Import and register jira group
-from pennyfarthing_scripts.jira.cli import jira
+from pennyfarthing_scripts.jira.cli import jira  # noqa: E402
 
 cli.add_command(jira)
 
 # Import and register deadcode group
-from pennyfarthing_scripts.deadcode.cli import deadcode
+from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
 
 cli.add_command(deadcode)
 
 # Import and register theme group
-from pennyfarthing_scripts.theme.cli import theme
+from pennyfarthing_scripts.theme.cli import theme  # noqa: E402
 
 cli.add_command(theme)
 
 # Import and register healthscore group
-from pennyfarthing_scripts.healthscore.cli import healthscore
+from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
 
 cli.add_command(healthscore)
 
 # Import and register validate group
-from pennyfarthing_scripts.validate.cli import validate
+from pennyfarthing_scripts.validate.cli import validate  # noqa: E402
 
 cli.add_command(validate)
 

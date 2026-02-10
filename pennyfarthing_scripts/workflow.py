@@ -12,8 +12,8 @@ Story: MSSCI-12416 - Define Scale Levels
 Epic: MSSCI-12415 - Scale Adaptation and Brownfield Support
 """
 
-from typing import Any
 import re
+from typing import Any
 
 # Scale level definitions with keywords, thresholds, and metadata
 SCALE_LEVELS: dict[int, dict[str, Any]] = {
