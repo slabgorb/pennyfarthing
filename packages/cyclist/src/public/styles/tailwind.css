@@ -279,7 +279,7 @@
   border-bottom: 1px solid var(--border-color, #3c3c3c);
   flex-shrink: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   min-width: 0;
 }
 
@@ -310,8 +310,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  flex-shrink: 1;
-  min-width: 48px;
+  flex-shrink: 0;
+  width: 100px;
 }
 
 /* Container query: hide backseat portrait when panel is narrow */
@@ -326,7 +326,7 @@
   height: 100px;
   border-radius: 50%;
   overflow: hidden;
-  flex-shrink: 1;
+  flex-shrink: 0;
   min-width: 48px;
   min-height: 48px;
   aspect-ratio: 1;
@@ -364,8 +364,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
   flex: 1;
+  min-width: 0;
+  width: 0;
+  overflow: hidden;
 }
 
 .persona-branding {
