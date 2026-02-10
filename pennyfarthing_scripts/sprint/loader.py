@@ -5,6 +5,7 @@ Provides access to sprint/current-sprint.yaml data.
 Supports sharded per-epic format (epic-{ref}.yaml shard files).
 """
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,11 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
             epic_data = load_yaml_config(epic_file)
             if epic_data is not None:
                 merged_epics.append(epic_data)
+        else:
+            warnings.warn(
+                f"Sprint epic ref '{ref}' not found: {epic_file}",
+                stacklevel=2,
+            )
 
     data["epics"] = merged_epics
     return data

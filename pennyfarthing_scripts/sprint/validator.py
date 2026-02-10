@@ -78,6 +78,10 @@ REQUIRED_STORY_FIELDS = {"id", "title", "status", "points"}
 # Required fields for epic
 REQUIRED_EPIC_FIELDS = {"id", "title"}
 
+# Required fields for epic shard files (write-time validation, ADR-0022)
+REQUIRED_EPIC_SHARD_FIELDS = {"id", "title", "status", "stories"}
+REQUIRED_SHARD_STORY_FIELDS = {"id", "title", "points", "status"}
+
 # Required fields for future.yaml initiative
 REQUIRED_INITIATIVE_FIELDS = {"name", "status"}
 
@@ -258,6 +262,76 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
             # Validate story structure
             story_result = validate_story(story, epic_id, idx)
             result.merge(story_result)
+
+    return result
+
+
+def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
+    """Validate an epic shard dict before writing to disk.
+
+    Enforces stricter requirements than validate_epic() since shards
+    are standalone files that must be self-contained.
+
+    Validates:
+    - Required fields present (id, title, status, stories)
+    - stories is a list
+    - Each story has required fields (id, title, points, status)
+    - No duplicate story IDs within the epic
+    - jira key follows MSSCI-NNNNN pattern if present
+
+    Args:
+        epic: Epic shard dict to validate
+
+    Returns:
+        ValidationResult with any errors found
+    """
+    result = ValidationResult(valid=True)
+
+    # Check required shard fields
+    for field_name in REQUIRED_EPIC_SHARD_FIELDS:
+        if field_name not in epic:
+            result.add_error(
+                f"Missing required field: {field_name}",
+                f"epic.{field_name}",
+            )
+
+    # Validate jira key format if present
+    if "jira" in epic:
+        jira_key = str(epic["jira"])
+        if not JIRA_KEY_PATTERN.match(jira_key):
+            result.add_error(
+                f"Invalid Jira key format '{jira_key}'. Expected MSSCI-NNNNN",
+                "epic.jira",
+            )
+
+    # Validate stories field
+    if "stories" in epic:
+        stories = epic["stories"]
+        if not isinstance(stories, list):
+            result.add_error(
+                "'stories' must be a list",
+                "epic.stories",
+            )
+        else:
+            seen_ids: set[str] = set()
+            epic_id = epic.get("id", "epic")
+            for idx, story in enumerate(stories):
+                story_id = story.get("id")
+                if story_id:
+                    if story_id in seen_ids:
+                        result.add_error(
+                            f"Duplicate story ID '{story_id}' within epic",
+                            f"epic.stories[{idx}].id",
+                        )
+                    seen_ids.add(story_id)
+
+                # Check required story fields
+                for field_name in REQUIRED_SHARD_STORY_FIELDS:
+                    if field_name not in story:
+                        result.add_error(
+                            f"Missing required field: {field_name}",
+                            f"{epic_id}.stories[{idx}].{field_name}",
+                        )
 
     return result
 
