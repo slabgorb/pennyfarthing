@@ -1328,10 +1328,10 @@ def _find_epic_for_story(data: dict | None, story_id: str) -> str:
 
 @sprint.command()
 def info():
-    """Output sprint info as JSON for Cyclist sidebar.
+    """Output sprint info as JSON.
 
     \b
-    Returns: {"remaining": N, "inProgress": N, "endDate": "YYYY-MM-DD"}
+    Returns sprint header fields plus computed story point totals.
     """
     import json
 
@@ -1339,8 +1339,6 @@ def info():
 
     sprint_data = get_sprint_info()
     stories = get_all_stories()
-
-    end_date = sprint_data.get("end_date")
 
     remaining = sum(
         s.get("points", 0) or 0
@@ -1353,11 +1351,11 @@ def info():
         if s.get("status") == "in_progress"
     )
 
-    click.echo(json.dumps({
-        "remaining": remaining,
-        "inProgress": in_progress,
-        "endDate": str(end_date) if end_date else None,
-    }))
+    result = {str(k): str(v) if hasattr(v, 'isoformat') else v for k, v in sprint_data.items()}
+    result["remaining"] = remaining
+    result["inProgress"] = in_progress
+
+    click.echo(json.dumps(result))
 
 
 # --- Metrics command (replaces sprint-metrics.sh) ---
