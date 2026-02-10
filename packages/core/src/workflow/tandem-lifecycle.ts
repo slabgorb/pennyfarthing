@@ -43,6 +43,8 @@ export interface SpawnBackseatParams {
   storyId: string;
   /** Path to .session directory */
   sessionDir: string;
+  /** Process adapter for real spawn/terminate. Omit for in-memory only (tests). */
+  adapter?: ProcessAdapter;
 }
 
 /**
@@ -62,6 +64,27 @@ export interface TandemResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+/**
+ * Adapter for real process spawn/terminate operations.
+ *
+ * The library module cannot call Claude Code's Task tool directly —
+ * callers (workflow-executor) inject the real implementation.
+ * Tests use the default no-op adapter.
+ */
+export interface ProcessAdapter {
+  /** Spawn a background process. Returns the real task ID. */
+  spawn(params: {
+    partner: string;
+    model: string;
+    storyId: string;
+    scope: string[];
+    observationFilePath: string;
+  }): Promise<{ taskId: string }>;
+
+  /** Terminate a background process by task ID. */
+  terminate(taskId: string): Promise<void>;
 }
 
 // =============================================================================
@@ -113,7 +136,7 @@ function normalizeScope(scope: string | string[] | undefined): string[] {
 export async function spawnBackseat(
   params: SpawnBackseatParams
 ): Promise<TandemResult<BackseatHandle>> {
-  const { phase, storyId, sessionDir } = params;
+  const { phase, storyId, sessionDir, adapter } = params;
 
   // No tandem config — no-op
   if (!phase.tandem) {
@@ -129,7 +152,38 @@ export async function spawnBackseat(
 
   const normalizedScope = normalizeScope(scope);
   const observationFilePath = join(sessionDir, `${storyId}-tandem-${partner}.md`);
-  const taskId = `tandem-${storyId}-${partner}-${++taskIdCounter}`;
+
+  // Terminate existing backseat for this story if one is already running
+  const existing = activeBackseats.get(storyId);
+  if (existing) {
+    try {
+      if (adapter) {
+        await adapter.terminate(existing.taskId);
+      }
+      activeBackseats.delete(storyId);
+    } catch {
+      // Swallow — old process may already be dead
+    }
+  }
+
+  // Spawn via adapter if provided, otherwise generate synthetic ID (test mode)
+  let taskId: string;
+  if (adapter) {
+    try {
+      const spawnResult = await adapter.spawn({
+        partner,
+        model: 'haiku',
+        storyId,
+        scope: normalizedScope,
+        observationFilePath,
+      });
+      taskId = spawnResult.taskId;
+    } catch (err) {
+      return { success: false, error: `Failed to spawn backseat: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  } else {
+    taskId = `tandem-${storyId}-${partner}-${++taskIdCounter}`;
+  }
 
   const handle: BackseatHandle = {
     taskId,
@@ -141,10 +195,17 @@ export async function spawnBackseat(
     cleanupRegistered: true,
   };
 
-  // Register cleanup handler at spawn time
+  // Register cleanup handler at spawn time — terminates the real process
   registerCleanupHandler({
     storyId,
     cleanup: async () => {
+      if (adapter) {
+        try {
+          await adapter.terminate(handle.taskId);
+        } catch {
+          // Swallow — process may already be dead
+        }
+      }
       activeBackseats.delete(storyId);
     },
   });
@@ -161,8 +222,18 @@ export async function spawnBackseat(
  * Handles already-stopped tasks gracefully (no throw).
  */
 export async function terminateBackseat(
-  handle: BackseatHandle
+  handle: BackseatHandle,
+  adapter?: ProcessAdapter
 ): Promise<TandemResult<{ status: string }>> {
+  // Terminate real process via adapter if provided
+  if (adapter) {
+    try {
+      await adapter.terminate(handle.taskId);
+    } catch {
+      // Swallow — process may already be stopped
+    }
+  }
+
   // Remove from active registry (find by taskId)
   for (const [storyId, active] of activeBackseats) {
     if (active.taskId === handle.taskId) {

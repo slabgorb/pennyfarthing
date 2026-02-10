@@ -15,7 +15,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,6 +35,7 @@ import type {
   BackseatHandle,
   SpawnBackseatParams,
   TandemCleanupHandler,
+  ProcessAdapter,
 } from './tandem-lifecycle.js';
 
 // Get directory for test fixtures
@@ -515,6 +516,138 @@ describe('95-2: Tandem Lifecycle', () => {
       const nullHandle = getActiveBackseat('95-2');
       assert.strictEqual(nullHandle, null);
       // No crash, no error — workflow continues
+    });
+  });
+
+  // =============================================================================
+  // ProcessAdapter integration
+  // =============================================================================
+
+  describe('ProcessAdapter integration', () => {
+
+    it('should call adapter.spawn when adapter is provided', async () => {
+      let spawnCalled = false;
+      let spawnParams: Record<string, unknown> = {};
+      const adapter: ProcessAdapter = {
+        spawn: async (params) => {
+          spawnCalled = true;
+          spawnParams = params;
+          return { taskId: 'real-task-123' };
+        },
+        terminate: async () => {},
+      };
+
+      const result = await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      assert.strictEqual(spawnCalled, true, 'Adapter spawn must be called');
+      assert.strictEqual(result.data?.taskId, 'real-task-123', 'Should use adapter taskId');
+      assert.strictEqual(spawnParams.partner, 'architect');
+      assert.strictEqual(spawnParams.model, 'haiku');
+    });
+
+    it('should call adapter.terminate when terminating with adapter', async () => {
+      let terminatedId = '';
+      const adapter: ProcessAdapter = {
+        spawn: async () => ({ taskId: 'real-task-456' }),
+        terminate: async (taskId) => { terminatedId = taskId; },
+      };
+
+      const spawnResult = await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      await terminateBackseat(spawnResult.data!, adapter);
+
+      assert.strictEqual(terminatedId, 'real-task-456', 'Adapter terminate must be called with correct taskId');
+    });
+
+    it('should call adapter.terminate in cleanup handler', async () => {
+      let terminatedId = '';
+      const adapter: ProcessAdapter = {
+        spawn: async () => ({ taskId: 'cleanup-task-789' }),
+        terminate: async (taskId) => { terminatedId = taskId; },
+      };
+
+      await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      await executeCleanupHandlers('95-2');
+
+      assert.strictEqual(terminatedId, 'cleanup-task-789', 'Cleanup must call adapter.terminate');
+    });
+
+    it('should terminate existing backseat before spawning new one for same story', async () => {
+      const terminated: string[] = [];
+      const adapter: ProcessAdapter = {
+        spawn: async () => ({ taskId: `task-${++taskCounter}` }),
+        terminate: async (taskId) => { terminated.push(taskId); },
+      };
+      let taskCounter = 0;
+
+      // First spawn
+      await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      // Second spawn for same story — should terminate first
+      await spawnBackseat({
+        phase: PHASE_WITH_MULTI_SCOPE,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      assert.strictEqual(terminated.length, 1, 'First backseat should be terminated');
+      assert.strictEqual(terminated[0], 'task-1', 'Should terminate the first task');
+    });
+
+    it('should return error result when adapter.spawn fails', async () => {
+      const adapter: ProcessAdapter = {
+        spawn: async () => { throw new Error('Connection refused'); },
+        terminate: async () => {},
+      };
+
+      const result = await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('Connection refused'));
+    });
+
+    it('should succeed even when adapter.terminate fails', async () => {
+      const adapter: ProcessAdapter = {
+        spawn: async () => ({ taskId: 'will-fail-terminate' }),
+        terminate: async () => { throw new Error('Process not found'); },
+      };
+
+      const spawnResult = await spawnBackseat({
+        phase: PHASE_WITH_TANDEM,
+        storyId: '95-2',
+        sessionDir: join(TEST_DIR, '.session'),
+        adapter,
+      });
+
+      const result = await terminateBackseat(spawnResult.data!, adapter);
+      assert.strictEqual(result.success, true, 'Should swallow terminate errors');
     });
   });
 
