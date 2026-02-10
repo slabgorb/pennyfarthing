@@ -134,6 +134,39 @@ if [ -n "$config_file" ] && [ -n "$agent_name" ]; then
 fi
 theme_display="$character_display"
 
+# Tandem indicator: detect active backseat agent from observation files
+# Files: .session/{storyId}-tandem-{partner}.md (created by backseat spawn, cleaned on finish)
+tandem_partner=""
+tandem_partner_display=""
+if [ -d "$PROJECT_ROOT/.session" ]; then
+    tandem_file=$(find "$PROJECT_ROOT/.session" -maxdepth 1 -name "*-tandem-*.md" -print 2>/dev/null | head -1)
+    if [ -n "$tandem_file" ]; then
+        # Extract partner name from filename: {storyId}-tandem-{partner}.md
+        tandem_partner=$(basename "$tandem_file" | sed -n 's/.*-tandem-\([a-zA-Z_-]*\)\.md$/\1/p')
+        if [ -n "$tandem_partner" ] && [ -n "$theme_file" ] && [ -f "$theme_file" ]; then
+            # Look up partner's character name from theme
+            partner_full=$(yq ".agents.${tandem_partner}.character" "$theme_file" 2>/dev/null)
+            if [ -n "$partner_full" ] && [ "$partner_full" != "null" ]; then
+                partner_clean=$(echo "$partner_full" | sed 's/ *([^)]*)//g' | xargs)
+                partner_clean=$(echo "$partner_clean" | sed -E 's/^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|Lord|Lady|Sir|The) +//i')
+                partner_wc=$(echo "$partner_clean" | wc -w | tr -d ' ')
+                if [ "$partner_wc" -eq 1 ]; then
+                    tandem_partner_display="$partner_clean"
+                else
+                    tandem_partner_display=$(echo "$partner_clean" | awk '{print $NF}')
+                fi
+            fi
+            # Fallback to agent abbreviation if no theme character
+            if [ -z "$tandem_partner_display" ]; then
+                tandem_partner_display=$(get_agent_abbrev "$tandem_partner")
+            fi
+        elif [ -n "$tandem_partner" ]; then
+            # No theme file — use abbreviation
+            tandem_partner_display=$(get_agent_abbrev "$tandem_partner")
+        fi
+    fi
+fi
+
 # ANSI colors
 RESET=$'\033[0m'
 DIM=$'\033[2m'
@@ -214,20 +247,29 @@ repo_fmt=$(printf "%-14s" "$dir_name")
 branch_fmt=$(printf "%-12s" "${branch}${branch_dirty}")
 model_fmt=$(printf "%-10s" "$model")
 
-# Build agent display: [ROLE] Theme (role in reverse text with color)
+# Build tandem suffix: "+ Partner" when backseat agent is active
+tandem_suffix=""
+tandem_suffix_len=0
+if [ -n "$tandem_partner_display" ]; then
+    partner_color=$(get_agent_color "$tandem_partner")
+    tandem_suffix=" ${DIM}+${RESET} ${partner_color}${tandem_partner_display}${RESET}"
+    tandem_suffix_len=$((3 + ${#tandem_partner_display}))  # " + " + name
+fi
+
+# Build agent display: [ROLE] Theme (+ Partner) (role in reverse text with color)
 if [ -n "$agent_abbrev" ]; then
     agent_color=$(get_agent_color "$agent_name")
     # Role in reverse text with color, then theme
     if [ -n "$theme_display" ]; then
-        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET} ${DIM}${theme_display}${RESET}"
-        # Pad to ~20 chars visual width (abbrev ~3 + spaces ~2 + theme ~10 = ~15, pad to 20)
-        pad_len=$((18 - ${#agent_abbrev} - ${#theme_display}))
+        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET} ${DIM}${theme_display}${RESET}${tandem_suffix}"
+        # Pad to ~20 chars visual width (abbrev ~3 + spaces ~2 + theme ~10 + tandem = ~15+, pad to 20)
+        pad_len=$((18 - ${#agent_abbrev} - ${#theme_display} - tandem_suffix_len))
         [ "$pad_len" -lt 0 ] && pad_len=0
         padding=$(printf "%${pad_len}s" "")
         agent_section="${agent_section}${padding}"
     else
-        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET}"
-        pad_len=$((17 - ${#agent_abbrev}))
+        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET}${tandem_suffix}"
+        pad_len=$((17 - ${#agent_abbrev} - tandem_suffix_len))
         [ "$pad_len" -lt 0 ] && pad_len=0
         padding=$(printf "%${pad_len}s" "")
         agent_section="${agent_section}${padding}"
@@ -235,8 +277,8 @@ if [ -n "$agent_abbrev" ]; then
 else
     # No agent - just show theme if available
     if [ -n "$theme_display" ]; then
-        agent_section="${DIM}${theme_display}${RESET}"
-        pad_len=$((20 - ${#theme_display}))
+        agent_section="${DIM}${theme_display}${RESET}${tandem_suffix}"
+        pad_len=$((20 - ${#theme_display} - tandem_suffix_len))
         [ "$pad_len" -lt 0 ] && pad_len=0
         padding=$(printf "%${pad_len}s" "")
         agent_section="${agent_section}${padding}"
