@@ -394,77 +394,48 @@ class TestLegacyJSHookRemoved:
 
 
 # =============================================================================
-# Story 98-8: Cyclist false-positive detection (PID validation)
+# Story 98-8: Cyclist false-positive detection (env var)
 # =============================================================================
 
 
 class TestIsCyclistRunning:
-    """Story 98-8: is_cyclist_running() must validate PID, not just port file."""
+    """Story 98-8: is_cyclist_running() uses CYCLIST env var, not file checks."""
 
-    def test_returns_false_when_no_files_exist(self, tmp_project):
-        """No port file, no PID file → not running."""
-        assert is_cyclist_running(tmp_project) is False
+    def test_returns_false_in_cli_mode(self):
+        """CLI mode: no CYCLIST env var → not running."""
+        with patch.dict(os.environ, {}, clear=True):
+            assert is_cyclist_running() is False
 
-    def test_returns_false_when_port_file_exists_but_no_pid_file(self, tmp_project):
-        """AC6: Stale .cyclist-port without .cyclist-pid → not running.
+    def test_returns_false_when_stale_port_file_exists(self, tmp_project):
+        """AC1: Stale .cyclist-port must NOT cause false positive.
 
-        This is the core false-positive bug. A leftover port file from a
-        crashed Cyclist session should not fool the hook into thinking
-        Cyclist is alive.
+        This is the core bug. A leftover port file should be irrelevant
+        because detection is env-var-based, not file-based.
         """
         (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        # No .cyclist-pid file — stale state
-        assert is_cyclist_running(tmp_project) is False
+        with patch.dict(os.environ, {}, clear=True):
+            assert is_cyclist_running(tmp_project) is False
 
-    def test_returns_false_when_port_and_pid_exist_but_process_dead(self, tmp_project):
-        """AC1: Port file + PID file with dead PID → not running.
+    def test_returns_true_inside_cyclist(self):
+        """AC2: CYCLIST=1 env var set → running."""
+        with patch.dict(os.environ, {"CYCLIST": "1"}):
+            assert is_cyclist_running() is True
 
-        Both files exist but the PID points to a process that no longer
-        exists. This happens on unclean shutdown (SIGKILL, crash, reboot).
-        """
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        # PID 999999999 almost certainly doesn't exist
-        (tmp_project / ".cyclist-pid").write_text("999999999")
-        assert is_cyclist_running(tmp_project) is False
+    def test_returns_false_when_cyclist_env_wrong_value(self):
+        """CYCLIST set to something other than '1' → not running."""
+        with patch.dict(os.environ, {"CYCLIST": "0"}):
+            assert is_cyclist_running() is False
 
-    def test_returns_true_when_port_and_pid_exist_and_process_alive(self, tmp_project):
-        """AC2: Port file + PID file with live PID → running.
+    def test_returns_false_when_cyclist_env_empty(self):
+        """CYCLIST set to empty string → not running."""
+        with patch.dict(os.environ, {"CYCLIST": ""}):
+            assert is_cyclist_running() is False
 
-        Use our own PID (guaranteed alive) to simulate a running Cyclist.
-        """
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
-        assert is_cyclist_running(tmp_project) is True
-
-    def test_returns_false_when_pid_file_has_invalid_content(self, tmp_project):
-        """PID file with garbage content → not running."""
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        (tmp_project / ".cyclist-pid").write_text("not-a-pid")
-        assert is_cyclist_running(tmp_project) is False
-
-    def test_returns_false_when_pid_file_is_empty(self, tmp_project):
-        """Empty PID file → not running."""
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        (tmp_project / ".cyclist-pid").write_text("")
-        assert is_cyclist_running(tmp_project) is False
-
-    def test_returns_true_on_permission_error(self, tmp_project):
-        """AC edge case: PermissionError on os.kill → assume running (conservative).
-
-        If we can't check the PID (different user), assume Cyclist is alive
-        rather than incorrectly bypassing it.
-        """
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
-
-        with patch("os.kill", side_effect=PermissionError):
-            assert is_cyclist_running(tmp_project) is True
-
-    def test_no_http_calls_made(self, tmp_project):
-        """AC3: Detection must not make HTTP calls — filesystem + signal only."""
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
-        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
-
-        with patch("pennyfarthing_scripts.hooks.urllib.request.urlopen") as mock_urlopen:
-            is_cyclist_running(tmp_project)
-            mock_urlopen.assert_not_called()
+    def test_no_file_io_or_http_calls(self):
+        """AC3: Detection must not touch filesystem or network."""
+        with patch.dict(os.environ, {"CYCLIST": "1"}):
+            with patch("pennyfarthing_scripts.hooks.urllib.request.urlopen") as mock_url:
+                with patch.object(Path, "exists") as mock_exists:
+                    is_cyclist_running()
+                    mock_url.assert_not_called()
+                    mock_exists.assert_not_called()
