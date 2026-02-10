@@ -1990,7 +1990,8 @@ if (isElectron) {
   const { createRequire } = await import('module');
   const require = createRequire(import.meta.url);
   const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
-  const { createTerminalServer } = await import('./server.js');
+  const { createTerminalServer, app: expressApp } = await import('./server.js');
+  const { initPluginRouters } = await import('./plugin-loader.js');
   const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
@@ -2087,11 +2088,21 @@ if (isElectron) {
    * Start the Express server on an available port
    */
   async function startServer(): Promise<void> {
+    server = createTerminalServer();
+
+    // Load plugin API routers (Story 93-6)
+    const pluginProjectDir = getProjectDirectory();
+    if (pluginProjectDir) {
+      const pluginResult = await initPluginRouters(expressApp, pluginProjectDir);
+      if (pluginResult.discovered > 0) {
+        console.log(`[Plugin] ${pluginResult.loaded} router(s) loaded, ${pluginResult.failed} failed`);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       try {
-        server = createTerminalServer();
         // Use port 0 to let OS assign an available port (avoids race conditions)
-        server.listen(0, () => {
+        server!.listen(0, () => {
           const addr = server!.address();
           actualPort = typeof addr === 'object' && addr ? addr.port : DEFAULT_PORT;
           console.log(`Cyclist server running at http://localhost:${actualPort}`);
@@ -2107,7 +2118,7 @@ if (isElectron) {
           }
           resolve();
         });
-        server.on('error', reject);
+        server!.on('error', reject);
       } catch (error) {
         reject(error);
       }
