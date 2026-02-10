@@ -45,45 +45,39 @@ describe('/theme-maker Command File', () => {
     );
   });
 
-  it('should reference mode selection options', () => {
+  it('should be marked as deprecated', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.toLowerCase().includes('ai-driven') ||
-        content.toLowerCase().includes('ai driven'),
-      'Should mention AI-Driven mode'
-    );
-    assert.ok(
-      content.toLowerCase().includes('guided'),
-      'Should mention Guided mode'
-    );
-    assert.ok(
-      content.toLowerCase().includes('manual'),
-      'Should mention Manual mode'
+      content.toLowerCase().includes('deprecated'),
+      'Should be marked as deprecated'
     );
   });
 
-  it('should mention AskUserQuestion for mode selection', () => {
+  it('should redirect to /theme command', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.includes('AskUserQuestion'),
-      'Should reference AskUserQuestion tool for user interaction'
+      content.includes('redirect: theme') ||
+        content.includes('/theme'),
+      'Should redirect to /theme command'
     );
   });
 
-  it('should reference pennyfarthing_version field', () => {
+  it('should reference the new /theme maker command', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.includes('pennyfarthing_version'),
-      'Should mention pennyfarthing_version field for skeleton YAML'
+      content.includes('/theme maker') ||
+        content.includes('theme maker'),
+      'Should mention new /theme maker command'
     );
   });
 
-  it('should reference theme directory path', () => {
+  it('should include command mapping table', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.includes('.claude/pennyfarthing/themes') ||
-        content.includes('themes/'),
-      'Should mention theme directory for output'
+      content.includes('Old Command') ||
+        content.includes('New Command') ||
+        content.includes('|'),
+      'Should include command mapping table'
     );
   });
 });
@@ -170,75 +164,59 @@ describe('Theme Directory Creation', () => {
 describe('AI-Driven Mode - Command File (Story 6-2)', () => {
   const commandPath = join(distDir, 'commands', 'theme-maker.md');
 
-  it('should have AI-Driven mode implementation section', () => {
-    const content = readFileSync(commandPath, 'utf-8');
-    // Look for a dedicated section header for AI-Driven mode
+  // theme-maker.md is now a deprecated stub redirecting to /theme maker.
+  // AI-Driven mode functionality has moved to the /theme command.
+  // These tests verify the deprecated stub correctly redirects.
+
+  it('should exist as deprecated stub', () => {
     assert.ok(
-      content.includes('## AI-Driven Mode') ||
-        content.includes('### AI-Driven Mode'),
-      'Should have dedicated AI-Driven Mode section'
+      existsSync(commandPath),
+      `Missing command file: ${commandPath}`
+    );
+    const content = readFileSync(commandPath, 'utf-8');
+    assert.ok(
+      content.toLowerCase().includes('deprecated'),
+      'Should be marked as deprecated'
     );
   });
 
-  it('should prompt for universe/concept description', () => {
+  it('should redirect to /theme maker for AI-driven functionality', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.toLowerCase().includes('universe') ||
-        content.toLowerCase().includes('concept'),
-      'Should mention universe/concept input'
-    );
-    assert.ok(
-      content.toLowerCase().includes('describe') ||
-        content.toLowerCase().includes('free-text') ||
-        content.toLowerCase().includes('free text'),
-      'Should indicate free-text description input'
+      content.includes('/theme maker'),
+      'Should redirect to /theme maker'
     );
   });
 
-  it('should reference all 10 agent types for generation', () => {
-    const content = readFileSync(commandPath, 'utf-8');
-    const requiredAgents = [
-      'orchestrator',
-      'sm',
-      'tea',
-      'dev',
-      'reviewer',
-      'architect',
-      'pm',
-      'tech-writer',
-      'ux-designer',
-      'devops'
-    ];
-
-    for (const agent of requiredAgents) {
-      assert.ok(
-        content.toLowerCase().includes(agent),
-        `Should reference ${agent} agent`
-      );
-    }
-  });
-
-  it('should show preview before confirming', () => {
+  it('should include mapping from old /theme-maker to new /theme maker', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.toLowerCase().includes('preview'),
-      'Should mention preview functionality'
+      content.includes('/theme-maker') && content.includes('/theme maker'),
+      'Should map old command to new command'
     );
   });
 
-  it('should offer regenerate option', () => {
+  it('should include mapping from old /create-theme to new /theme create', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.toLowerCase().includes('regenerate'),
-      'Should mention regenerate option'
+      content.includes('/create-theme') && content.includes('/theme create'),
+      'Should map old /create-theme to new /theme create'
     );
   });
 
-  it('should reference confirm/regenerate user choice', () => {
+  it('should include mapping from old /set-theme to new /theme set', () => {
     const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      content.toLowerCase().includes('confirm'),
-      'Should mention confirm option'
+      content.includes('/set-theme') && content.includes('/theme set'),
+      'Should map old /set-theme to new /theme set'
+    );
+  });
+
+  it('should include mapping from old /show-theme to new /theme show', () => {
+    const content = readFileSync(commandPath, 'utf-8');
+    assert.ok(
+      content.includes('/show-theme') && content.includes('/theme show'),
+      'Should map old /show-theme to new /theme show'
     );
   });
 });
@@ -391,144 +369,85 @@ describe('Theme Schema Validation (Story 6-2)', () => {
 describe('Guided Mode - Command File (Story 6-3)', () => {
   const commandPath = join(distDir, 'commands', 'theme-maker.md');
 
-  /**
-   * Helper to extract just the Guided Mode section from the command file.
-   * Returns empty string if section doesn't exist.
-   */
-  function getGuidedModeSection(): string {
+  // theme-maker.md is now a deprecated stub redirecting to /theme maker.
+  // Guided mode functionality has moved to the /theme command.
+  // These tests verify the deprecated stub contains correct redirects.
+
+  it('should exist as deprecated stub file', () => {
+    assert.ok(
+      existsSync(commandPath),
+      `Missing command file: ${commandPath}`
+    );
+  });
+
+  it('should have deprecated: true in frontmatter', () => {
     const content = readFileSync(commandPath, 'utf-8');
-    // Split on ## Guided Mode header and take everything until next ## header
-    const match = content.match(/##\s*Guided Mode[\s\S]*?(?=\n##\s|$)/i);
-    return match ? match[0] : '';
-  }
+    assert.ok(
+      content.includes('deprecated: true'),
+      'Frontmatter should mark file as deprecated: true'
+    );
+  });
 
-  it('should have Guided mode implementation section', () => {
+  it('should have redirect field in frontmatter', () => {
     const content = readFileSync(commandPath, 'utf-8');
-    // Look for a dedicated section header for Guided mode
     assert.ok(
-      content.includes('## Guided Mode') ||
-        content.includes('### Guided Mode'),
-      'Should have dedicated Guided Mode section'
+      content.includes('redirect: theme'),
+      'Frontmatter should have redirect: theme'
     );
   });
 
-  it('should present 3-4 character options per agent in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should have DEPRECATED in the title', () => {
+    const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Must mention presenting multiple options (3-4) for character selection
-    assert.ok(
-      guidedSection.includes('3-4') ||
-        guidedSection.includes('3 to 4') ||
-        guidedSection.toLowerCase().includes('three to four') ||
-        (guidedSection.toLowerCase().includes('suggest') && guidedSection.toLowerCase().includes('option')),
-      'Guided Mode should mention presenting 3-4 character options'
+      content.includes('DEPRECATED'),
+      'Title should include DEPRECATED marker'
     );
   });
 
-  it('should offer "Other" option for custom character names in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should mention consolidation into /theme', () => {
+    const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Must mention "Other" option for custom input within Guided section
-    assert.ok(
-      guidedSection.includes('"Other"') ||
-        guidedSection.includes('Other option') ||
-        guidedSection.toLowerCase().includes('custom character'),
-      'Guided Mode should mention "Other" option for custom character names'
+      content.toLowerCase().includes('consolidated'),
+      'Should mention consolidation into /theme'
     );
   });
 
-  it('should generate style/trait/quote for selections in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should include /list-themes to /theme list mapping', () => {
+    const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    const lowerSection = guidedSection.toLowerCase();
-    // Must mention generating/filling style, trait, or quote for selected characters
-    assert.ok(
-      lowerSection.includes('generate') ||
-        lowerSection.includes('fills in') ||
-        lowerSection.includes('fill in') ||
-        (lowerSection.includes('style') && lowerSection.includes('trait')),
-      'Guided Mode should mention generating style/trait/quote for selections'
+      content.includes('/list-themes') && content.includes('/theme list'),
+      'Should map old /list-themes to new /theme list'
     );
   });
 
-  it('should allow going back to change previous selections in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should include old and new command columns', () => {
+    const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    const lowerSection = guidedSection.toLowerCase();
-    // Must mention ability to go back or change previous selections
-    assert.ok(
-      lowerSection.includes('go back') ||
-        lowerSection.includes('previous') ||
-        lowerSection.includes('change selection') ||
-        lowerSection.includes('edit selection') ||
-        lowerSection.includes('redo'),
-      'Guided Mode should mention ability to go back and change previous selections'
+      content.includes('Old Command') && content.includes('New Command'),
+      'Table should have Old Command and New Command columns'
     );
   });
 
-  it('should use AskUserQuestion for character selection in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should include at least 4 command mappings', () => {
+    const content = readFileSync(commandPath, 'utf-8');
+    const mappingCount = [
+      '/theme-maker',
+      '/create-theme',
+      '/set-theme',
+      '/show-theme',
+      '/list-themes'
+    ].filter(cmd => content.includes(cmd)).length;
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Guided mode should use AskUserQuestion for user interaction
-    assert.ok(
-      guidedSection.includes('AskUserQuestion'),
-      'Guided Mode should use AskUserQuestion tool for character selection'
-    );
-  });
-
-  it('should iterate through agents for character selection', () => {
-    const guidedSection = getGuidedModeSection();
-    assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Must reference iterating through each agent
-    assert.ok(
-      guidedSection.toLowerCase().includes('each agent') ||
-        guidedSection.toLowerCase().includes('for each') ||
-        guidedSection.toLowerCase().includes('per agent'),
-      'Guided Mode should iterate through each agent for character selection'
+      mappingCount >= 4,
+      `Should include at least 4 command mappings, found ${mappingCount}`
     );
   });
 
-  it('should show preview step in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
+  it('should have YAML frontmatter', () => {
+    const content = readFileSync(commandPath, 'utf-8');
     assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Must have preview step
-    assert.ok(
-      guidedSection.toLowerCase().includes('preview'),
-      'Guided Mode should show preview before confirming theme'
-    );
-  });
-
-  it('should have confirm step in Guided section', () => {
-    const guidedSection = getGuidedModeSection();
-    assert.ok(
-      guidedSection.length > 0,
-      'Guided Mode section must exist'
-    );
-    // Must have confirm step
-    assert.ok(
-      guidedSection.toLowerCase().includes('confirm'),
-      'Guided Mode should have confirm step'
+      content.startsWith('---'),
+      'Should start with YAML frontmatter'
     );
   });
 });

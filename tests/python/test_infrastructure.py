@@ -8,6 +8,7 @@ Run with: python -m pytest tests/python/ -v
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -73,14 +74,18 @@ class TestPackageStructure:
         assert config_file.exists(), "config.py module not found"
 
     def test_sprint_module_exists(self):
-        """pennyfarthing_scripts/sprint.py should exist."""
-        sprint_file = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint.py"
-        assert sprint_file.exists(), "sprint.py module not found"
+        """pennyfarthing_scripts/sprint package should exist."""
+        sprint_dir = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint"
+        assert sprint_dir.exists(), "sprint package not found"
+        assert sprint_dir.is_dir(), "sprint should be a package directory"
+        assert (sprint_dir / "__init__.py").exists(), "sprint/__init__.py not found"
 
     def test_jira_module_exists(self):
-        """pennyfarthing_scripts/jira.py should exist."""
-        jira_file = PROJECT_ROOT / "pennyfarthing_scripts" / "jira.py"
-        assert jira_file.exists(), "jira.py module not found"
+        """pennyfarthing_scripts/jira package should exist."""
+        jira_dir = PROJECT_ROOT / "pennyfarthing_scripts" / "jira"
+        assert jira_dir.exists(), "jira package not found"
+        assert jira_dir.is_dir(), "jira should be a package directory"
+        assert (jira_dir / "__init__.py").exists(), "jira/__init__.py not found"
 
 
 class TestConfigModule:
@@ -144,10 +149,15 @@ class TestSprintModule:
 
     def test_get_story_by_id(self, sprint_module):
         """get_story_by_id should find stories by ID."""
-        # Use a known story ID from the sprint
-        story = sprint_module.get_story_by_id("63-4")
+        # Dynamically find a real story ID from the sprint
+        all_stories = sprint_module.get_all_stories()
+        assert len(all_stories) > 0, "Sprint should have at least one story"
+        first_story = all_stories[0]
+        story_id = first_story["id"]
+
+        story = sprint_module.get_story_by_id(story_id)
         assert story is not None
-        assert story["id"] == "63-4"
+        assert story["id"] == story_id
         assert "title" in story
 
     def test_get_story_by_id_not_found(self, sprint_module):
@@ -180,29 +190,32 @@ class TestJiraModule:
         """jira CLI should be available."""
         assert jira_module.is_jira_cli_available()
 
-    def test_get_issue(self, jira_module, mocker):
+    def test_get_issue(self, jira_module, monkeypatch):
         """get_issue should fetch issue details via CLI."""
         # Mock subprocess to avoid actual Jira calls
-        mock_result = mocker.patch("subprocess.run")
-        mock_result.return_value.returncode = 0
-        mock_result.return_value.stdout = '{"key": "MSSCI-12398", "fields": {"summary": "Test"}}'
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = '{"key": "MSSCI-12398", "fields": {"summary": "Test"}}'
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
         issue = jira_module.get_issue("MSSCI-12398")
         assert issue["key"] == "MSSCI-12398"
 
-    def test_get_issue_not_found(self, jira_module, mocker):
+    def test_get_issue_not_found(self, jira_module, monkeypatch):
         """get_issue should return None for missing issues."""
-        mock_result = mocker.patch("subprocess.run")
-        mock_result.return_value.returncode = 1
-        mock_result.return_value.stderr = "Issue not found"
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stderr = "Issue not found"
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
         issue = jira_module.get_issue("NONEXISTENT-999")
         assert issue is None
 
-    def test_update_issue_status(self, jira_module, mocker):
+    def test_update_issue_status(self, jira_module, monkeypatch):
         """update_issue_status should transition issues."""
-        mock_result = mocker.patch("subprocess.run")
-        mock_result.return_value.returncode = 0
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
         result = jira_module.update_issue_status("MSSCI-12398", "In Progress")
         assert result is True

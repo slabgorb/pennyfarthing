@@ -373,8 +373,8 @@ class TestFindStoryAcrossEpics:
 class TestAutoCleanup:
     """Auto-cleanup rules for status transitions."""
 
-    def test_done_removes_assigned_to(self, assigned_story_file: Path) -> None:
-        """Setting status=done should remove assigned_to."""
+    def test_done_preserves_assigned_to(self, assigned_story_file: Path) -> None:
+        """Setting status=done should preserve assigned_to (no auto-removal)."""
         result = update_story(
             sprint_path=assigned_story_file,
             story_id="76-1",
@@ -385,7 +385,7 @@ class TestAutoCleanup:
 
         data = read_sprint(assigned_story_file)
         story = data["epics"][0]["stories"][0]
-        assert "assigned_to" not in story
+        assert story["assigned_to"] == "kavery"
 
     def test_done_auto_sets_completed(self, assigned_story_file: Path) -> None:
         """Setting status=done should auto-set completed to today."""

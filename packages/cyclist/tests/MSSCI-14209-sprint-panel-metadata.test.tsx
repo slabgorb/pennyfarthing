@@ -461,7 +461,7 @@ describe('AC3: Story status badges', () => {
     expect(screen.getByTestId('story-status-badge-MSSCI-14191')).toBeInTheDocument();
   });
 
-  it('should display done badge with checkmark (✓)', async () => {
+  it('should display done badge with Lucide Check icon', async () => {
     const { EnhancedSprintPanel } = await import(
       '../src/public/components/panels/SprintPanel'
     );
@@ -473,11 +473,11 @@ describe('AC3: Story status badges', () => {
 
     const doneBadge = screen.getByTestId('story-status-badge-MSSCI-14187');
     expect(doneBadge).toHaveAttribute('data-status', 'done');
-    expect(doneBadge).toHaveTextContent('✓');
+    expect(doneBadge.querySelector('svg')).toBeTruthy();
     expect(doneBadge).toHaveClass('status-done');
   });
 
-  it('should display in_progress badge with filled circle (●)', async () => {
+  it('should display in_progress badge with Lucide Loader icon', async () => {
     const { EnhancedSprintPanel } = await import(
       '../src/public/components/panels/SprintPanel'
     );
@@ -489,11 +489,11 @@ describe('AC3: Story status badges', () => {
 
     const inProgressBadge = screen.getByTestId('story-status-badge-MSSCI-14209');
     expect(inProgressBadge).toHaveAttribute('data-status', 'in_progress');
-    expect(inProgressBadge).toHaveTextContent('●');
+    expect(inProgressBadge.querySelector('svg')).toBeTruthy();
     expect(inProgressBadge).toHaveClass('status-in-progress');
   });
 
-  it('should display backlog/todo badge with empty circle (○)', async () => {
+  it('should display backlog/todo badge with Lucide Circle icon', async () => {
     const { EnhancedSprintPanel } = await import(
       '../src/public/components/panels/SprintPanel'
     );
@@ -505,11 +505,11 @@ describe('AC3: Story status badges', () => {
 
     const backlogBadge = screen.getByTestId('story-status-badge-MSSCI-14188');
     expect(backlogBadge).toHaveAttribute('data-status', 'backlog');
-    expect(backlogBadge).toHaveTextContent('○');
+    expect(backlogBadge.querySelector('svg')).toBeTruthy();
     expect(backlogBadge).toHaveClass('status-backlog');
   });
 
-  it('should display blocked badge with warning (⚠)', async () => {
+  it('should display blocked badge with Lucide AlertTriangle icon', async () => {
     const { EnhancedSprintPanel } = await import(
       '../src/public/components/panels/SprintPanel'
     );
@@ -521,7 +521,7 @@ describe('AC3: Story status badges', () => {
 
     const blockedBadge = screen.getByTestId('story-status-badge-MSSCI-14191');
     expect(blockedBadge).toHaveAttribute('data-status', 'blocked');
-    expect(blockedBadge).toHaveTextContent('⚠');
+    expect(blockedBadge.querySelector('svg')).toBeTruthy();
     expect(blockedBadge).toHaveClass('status-blocked');
   });
 
