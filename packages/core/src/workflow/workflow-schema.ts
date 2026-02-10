@@ -34,6 +34,13 @@ export interface WorkflowPhase {
     /** Additional condition description (optional) */
     condition?: string;
   };
+  /** Tandem backseat observer configuration (optional) */
+  tandem?: {
+    /** Agent name to run as backseat observer */
+    partner: string;
+    /** Observation scope(s): file-watch, tool-watch, context-watch */
+    scope?: string | string[];
+  };
 }
 
 /**
@@ -359,6 +366,38 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         }
       }
 
+      // Phase tandem (optional, but if present must be object with partner)
+      if ('tandem' in phaseObj && phaseObj.tandem !== undefined) {
+        if (!phaseObj.tandem || typeof phaseObj.tandem !== 'object') {
+          errors.push({ field: `workflow.phases[${index}].tandem`, message: 'Tandem must be an object' });
+        } else {
+          const tandemObj = phaseObj.tandem as Record<string, unknown>;
+          // partner (required, string)
+          if (!('partner' in tandemObj) || tandemObj.partner === undefined || tandemObj.partner === null) {
+            errors.push({ field: `workflow.phases[${index}].tandem.partner`, message: 'Tandem partner is required' });
+          } else if (typeof tandemObj.partner !== 'string') {
+            errors.push({ field: `workflow.phases[${index}].tandem.partner`, message: 'Tandem partner must be a string' });
+          }
+          // scope (optional, string or string[])
+          const validScopes = ['file-watch', 'tool-watch', 'context-watch'];
+          if ('scope' in tandemObj && tandemObj.scope !== undefined) {
+            if (typeof tandemObj.scope === 'string') {
+              if (!validScopes.includes(tandemObj.scope)) {
+                errors.push({ field: `workflow.phases[${index}].tandem.scope`, message: `Tandem scope must be one of: ${validScopes.join(', ')}` });
+              }
+            } else if (Array.isArray(tandemObj.scope)) {
+              (tandemObj.scope as unknown[]).forEach((s, sIndex) => {
+                if (typeof s !== 'string' || !validScopes.includes(s)) {
+                  errors.push({ field: `workflow.phases[${index}].tandem.scope[${sIndex}]`, message: `Tandem scope must be one of: ${validScopes.join(', ')}` });
+                }
+              });
+            } else {
+              errors.push({ field: `workflow.phases[${index}].tandem.scope`, message: `Tandem scope must be a string or array of: ${validScopes.join(', ')}` });
+            }
+          }
+        }
+      }
+
       // Phase input (optional, array of strings)
       if ('input' in phaseObj && phaseObj.input !== undefined) {
         if (!Array.isArray(phaseObj.input)) {
@@ -515,6 +554,15 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         };
         if (gateObj.condition !== undefined) {
           result.gate.condition = gateObj.condition as string;
+        }
+      }
+      if (phase.tandem !== undefined) {
+        const tandemObj = phase.tandem as Record<string, unknown>;
+        result.tandem = {
+          partner: tandemObj.partner as string
+        };
+        if (tandemObj.scope !== undefined) {
+          result.tandem.scope = tandemObj.scope as string | string[];
         }
       }
 
