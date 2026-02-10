@@ -32,12 +32,14 @@ export interface PersonaData {
 
 interface UsePersonaResult {
   persona: PersonaData | null;
+  isStreaming: boolean;
   isLoading: boolean;
   error: Error | null;
 }
 
 export function usePersona(): UsePersonaResult {
   const [persona, setPersona] = useState<PersonaData | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -57,8 +59,19 @@ export function usePersona(): UsePersonaResult {
 
         wsRef.current.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data) as PersonaData;
-            setPersona(data);
+            const data = JSON.parse(event.data);
+
+            // Story 94-1: Handle streaming state updates
+            if (data.type === 'streaming') {
+              setIsStreaming(data.isStreaming ?? false);
+              return;
+            }
+
+            // Persona data (initial or agent change) — extract isStreaming if present
+            if (data.isStreaming !== undefined) {
+              setIsStreaming(data.isStreaming);
+            }
+            setPersona(data as PersonaData);
             setIsLoading(false);
             setError(null);
           } catch (err) {
@@ -68,6 +81,7 @@ export function usePersona(): UsePersonaResult {
 
         wsRef.current.onclose = () => {
           console.debug('[usePersona] WebSocket closed, reconnecting...');
+          setIsStreaming(false);
           reconnectTimeoutRef.current = setTimeout(connect, 2000);
         };
 
@@ -94,5 +108,5 @@ export function usePersona(): UsePersonaResult {
     };
   }, []);
 
-  return { persona, isLoading, error };
+  return { persona, isStreaming, isLoading, error };
 }
