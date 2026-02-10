@@ -6,7 +6,7 @@ Provides functions for getting and displaying sprint status.
 
 from typing import Any
 
-from pennyfarthing_scripts.sprint.loader import get_all_stories, get_sprint_info, load_sprint
+from pennyfarthing_scripts.sprint.loader import get_all_stories, get_sprint_info
 
 
 def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
@@ -99,7 +99,6 @@ def main(args: list[str] | None = None) -> int:
         Exit code
     """
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(description="Show sprint status")
     parser.add_argument(

@@ -12,7 +12,7 @@ import fnmatch
 import re
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pennyfarthing_scripts.codemarkers.models import (
@@ -287,7 +287,7 @@ async def analyze_repo(
             if author_time > 0:
                 age_days = (now - author_time) / 86400
                 date_str = datetime.fromtimestamp(
-                    author_time, tz=timezone.utc
+                    author_time, tz=UTC
                 ).isoformat()
             else:
                 age_days = 0.0

@@ -12,7 +12,6 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
-from typing import Any
 
 from pennyfarthing_scripts.brownfield.discover import (
     DepthLevel,

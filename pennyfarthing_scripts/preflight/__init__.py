@@ -5,8 +5,8 @@ to validate story completion before finishing.
 """
 
 from pennyfarthing_scripts.preflight.finish import (
-    PreflightResult,
     PreflightIssue,
+    PreflightResult,
     run_finish_preflight,
 )
 

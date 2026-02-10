@@ -6,17 +6,17 @@ bug fix concentration, and multi-author churn — indicators of code hotspots th
 may benefit from refactoring attention.
 """
 
+from pennyfarthing_scripts.hotspots.analyze import (
+    analyze_all_repos,
+    analyze_repo,
+    calculate_hotspot_score,
+    is_bug_fix_commit,
+)
 from pennyfarthing_scripts.hotspots.models import (
     DirectoryHotspot,
     FileHotspot,
     HotspotResult,
     MultiRepoHotspotResult,
-)
-from pennyfarthing_scripts.hotspots.analyze import (
-    analyze_repo,
-    analyze_all_repos,
-    calculate_hotspot_score,
-    is_bug_fix_commit,
 )
 
 __all__ = [

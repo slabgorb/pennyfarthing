@@ -20,12 +20,20 @@ from pennyfarthing_scripts.migration.session import (
 )
 from pennyfarthing_scripts.migration.skill import (
     RECOMMENDED_TAGS as SKILL_RECOMMENDED,
+)
+from pennyfarthing_scripts.migration.skill import (
     REQUIRED_TAGS as SKILL_REQUIRED,
+)
+from pennyfarthing_scripts.migration.skill import (
     find_skill_files,
 )
 from pennyfarthing_scripts.migration.step import (
     RECOMMENDED_TAGS as STEP_RECOMMENDED,
+)
+from pennyfarthing_scripts.migration.step import (
     REQUIRED_TAGS as STEP_REQUIRED,
+)
+from pennyfarthing_scripts.migration.step import (
     STEP_META_FIELDS,
     find_step_files,
 )
@@ -119,7 +127,6 @@ def validate_skill_file(file_path: Path) -> ValidationResult:
     Returns:
         ValidationResult with errors/warnings
     """
-    skill_name = file_path.parent.name
     result = ValidationResult(file_path=file_path, file_type="skill")
     content = file_path.read_text()
 
@@ -156,10 +163,6 @@ def validate_step_file(file_path: Path) -> ValidationResult:
     """
     result = ValidationResult(file_path=file_path, file_type="step")
     content = file_path.read_text()
-
-    # Determine workflow/step names from path
-    workflow_name = file_path.parent.parent.name
-    step_name = file_path.stem
 
     # Check required tags
     for tag in STEP_REQUIRED:

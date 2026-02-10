@@ -17,8 +17,9 @@ import json
 import sys
 from typing import Any
 
-from pennyfarthing_scripts.jira.client import JiraClient, JIRA_PROJECT
-from pennyfarthing_scripts.sprint.loader import find_epic, load_sprint as load_current_sprint
+from pennyfarthing_scripts.jira.client import JIRA_PROJECT, JiraClient
+from pennyfarthing_scripts.sprint.loader import find_epic
+from pennyfarthing_scripts.sprint.loader import load_sprint as load_current_sprint
 
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:

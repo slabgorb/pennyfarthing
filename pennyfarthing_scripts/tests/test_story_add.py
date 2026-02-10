@@ -15,11 +15,10 @@ Acceptance Criteria:
 """
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 from click.testing import CliRunner
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from ruamel.yaml.comments import CommentedMap
 
 from pennyfarthing_scripts.sprint.story_add import (
     add_story,
@@ -28,9 +27,7 @@ from pennyfarthing_scripts.sprint.story_add import (
 from pennyfarthing_scripts.sprint.yaml_io import (
     STORY_KEY_ORDER,
     read_sprint,
-    write_sprint,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -676,7 +673,6 @@ epics:
 """
         p = tmp_path / "current-sprint.yaml"
         p.write_text(yaml_content)
-        original_content = p.read_text()
 
         # Normal add should work fine
         result = add_story(
@@ -699,9 +695,9 @@ class TestCLIIntegration:
 
     def test_story_add_command_exists(self) -> None:
         """story_add_command should be importable and be a Click command."""
-        from pennyfarthing_scripts.sprint.story_add import story_add_command
-
         import click
+
+        from pennyfarthing_scripts.sprint.story_add import story_add_command
 
         assert isinstance(story_add_command, click.BaseCommand)
 

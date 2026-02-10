@@ -4,7 +4,6 @@ Sprint story archiving.
 Provides functions for archiving completed stories.
 """
 
-from pathlib import Path
 from typing import Any
 
 from pennyfarthing_scripts.common.config import get_project_root

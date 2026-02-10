@@ -14,10 +14,11 @@ import yaml
 from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
 from pennyfarthing_scripts.common.themes import (
     get_current_theme as _get_current_theme,
+)
+from pennyfarthing_scripts.common.themes import (
     resolve_theme_path,
 )
 from pennyfarthing_scripts.prime.models import CrewMember, Persona
-
 
 # Standard agent roles for crew manifest
 AGENT_ROLES = [

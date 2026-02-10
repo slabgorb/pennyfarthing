@@ -178,7 +178,7 @@ def claim_story(issue_key: str) -> dict[str, Any]:
                     if story.get("jira") == issue_key:
                         story["assigned_to"] = current_user
                         write_sprint(sprint_path, data)
-                        actions.append(f"Sprint YAML assigned_to set")
+                        actions.append("Sprint YAML assigned_to set")
                         break
     except Exception:
         pass  # Best-effort — Jira claim already succeeded

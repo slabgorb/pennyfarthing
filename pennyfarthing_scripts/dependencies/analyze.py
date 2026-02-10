@@ -14,9 +14,9 @@ from collections import Counter
 from pathlib import Path
 
 from pennyfarthing_scripts.dependencies.models import (
+    DependenciesResult,
     OutdatedPackage,
     SecurityAdvisory,
-    DependenciesResult,
 )
 
 

@@ -13,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from pennyfarthing_scripts.complexity.models import FileComplexity, ComplexityResult
+from pennyfarthing_scripts.complexity.models import ComplexityResult, FileComplexity
 
 # Regex patterns for extracting numeric values from ESLint messages
 COMPLEXITY_RE = re.compile(r"complexity of (\d+)")

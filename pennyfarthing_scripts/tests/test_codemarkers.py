@@ -9,15 +9,12 @@ Tests cover: models, analyze engine, CLI, formatters.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Models
@@ -123,7 +120,9 @@ class TestCodeMarkersResultModel:
     def test_json_serializable(self) -> None:
         """Full result serializes to JSON via asdict."""
         from pennyfarthing_scripts.codemarkers.models import (
-            CodeMarker, CodeMarkersResult, MarkerSummary,
+            CodeMarker,
+            CodeMarkersResult,
+            MarkerSummary,
         )
 
         r = CodeMarkersResult(
@@ -534,7 +533,7 @@ class TestTableFormatter:
         ]
         out = format_marker_table(markers, top_n=5)
         # Header + separator + 5 data rows = 7 lines
-        lines = [l for l in out.strip().split("\n") if l.strip()]
+        lines = [line for line in out.strip().split("\n") if line.strip()]
         assert len(lines) <= 7
 
 
@@ -544,7 +543,9 @@ class TestJsonExport:
     def test_valid_json(self) -> None:
         from pennyfarthing_scripts.codemarkers.formatters import export_json
         from pennyfarthing_scripts.codemarkers.models import (
-            CodeMarker, CodeMarkersResult, MarkerSummary,
+            CodeMarker,
+            CodeMarkersResult,
+            MarkerSummary,
         )
 
         r = CodeMarkersResult(
@@ -587,6 +588,7 @@ class TestCLI:
     def test_cli_help(self) -> None:
         """codemarkers group shows help."""
         from click.testing import CliRunner
+
         from pennyfarthing_scripts.codemarkers.cli import codemarkers
 
         runner = CliRunner()
@@ -597,6 +599,7 @@ class TestCLI:
     def test_analyze_command_exists(self) -> None:
         """analyze subcommand is registered."""
         from click.testing import CliRunner
+
         from pennyfarthing_scripts.codemarkers.cli import codemarkers
 
         runner = CliRunner()
@@ -608,6 +611,7 @@ class TestCLI:
     def test_stale_command_exists(self) -> None:
         """stale subcommand is registered."""
         from click.testing import CliRunner
+
         from pennyfarthing_scripts.codemarkers.cli import codemarkers
 
         runner = CliRunner()
@@ -617,6 +621,7 @@ class TestCLI:
     def test_summary_command_exists(self) -> None:
         """summary subcommand is registered."""
         from click.testing import CliRunner
+
         from pennyfarthing_scripts.codemarkers.cli import codemarkers
 
         runner = CliRunner()
@@ -626,6 +631,7 @@ class TestCLI:
     def test_json_format_option(self) -> None:
         """--format json produces JSON output."""
         from click.testing import CliRunner
+
         from pennyfarthing_scripts.codemarkers.cli import codemarkers
 
         runner = CliRunner()
@@ -672,7 +678,6 @@ class TestModuleExports:
         from pennyfarthing_scripts.codemarkers import (
             CodeMarker,
             CodeMarkersResult,
-            MarkerSummary,
         )
         assert CodeMarker is not None
         assert CodeMarkersResult is not None

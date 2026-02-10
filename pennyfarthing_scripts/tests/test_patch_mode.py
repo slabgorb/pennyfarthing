@@ -18,13 +18,9 @@ Acceptance Criteria:
 These tests should FAIL until patch_mode.py is implemented.
 """
 
-import json
-import os
-import subprocess
-import sys
 from pathlib import Path
-from typing import Any, Generator
-from unittest.mock import MagicMock, patch, call
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -32,17 +28,17 @@ import yaml
 # Import will fail until module exists - this is intentional for RED state
 try:
     from pennyfarthing_scripts.patch_mode import (
-        PatchState,
         PatchStack,
+        PatchState,
+        create_patch_branch,
         enter_patch_mode,
         exit_patch_mode,
+        generate_patch_commit_message,
         get_patch_stack,
-        create_patch_branch,
+        is_in_patch_mode,
+        log_patch_to_session,
         merge_patch_branch,
         restore_workflow_state,
-        log_patch_to_session,
-        generate_patch_commit_message,
-        is_in_patch_mode,
     )
     IMPORT_SUCCESS = True
 except ImportError:

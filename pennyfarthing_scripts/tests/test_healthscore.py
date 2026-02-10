@@ -17,19 +17,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 from dataclasses import asdict
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
-from pennyfarthing_scripts.healthscore.models import (
-    DimensionScore,
-    HealthscoreResult,
-    DEFAULT_WEIGHTS,
-)
 from pennyfarthing_scripts.healthscore.analyze import (
     analyze_healthscore,
     compute_composite_score,
@@ -37,13 +30,12 @@ from pennyfarthing_scripts.healthscore.analyze import (
     read_cached_score,
     write_cached_score,
 )
-from pennyfarthing_scripts.healthscore.formatters import (
-    format_table,
-    export_json,
-    export_csv,
-)
 from pennyfarthing_scripts.healthscore.cli import healthscore
-
+from pennyfarthing_scripts.healthscore.models import (
+    DEFAULT_WEIGHTS,
+    DimensionScore,
+    HealthscoreResult,
+)
 
 # ---------------------------------------------------------------------------
 # AC1: Module structure
@@ -122,17 +114,17 @@ class TestWeightedScoring:
 
     def test_custom_weights_override_defaults(self):
         """compute_composite_score must accept custom weights."""
-        custom = {k: 1.0 / 8 for k in DEFAULT_WEIGHTS}
-        scores = {k: 80.0 for k in DEFAULT_WEIGHTS}
+        custom = dict.fromkeys(DEFAULT_WEIGHTS, 1.0 / 8)
+        scores = dict.fromkeys(DEFAULT_WEIGHTS, 80.0)
         result = compute_composite_score(scores, custom)
         assert abs(result - 80.0) < 1e-9
 
     def test_unequal_custom_weights(self):
         """Asymmetric weights should shift composite score."""
-        weights = {k: 0.0 for k in DEFAULT_WEIGHTS}
+        weights = dict.fromkeys(DEFAULT_WEIGHTS, 0.0)
         weights["churn"] = 1.0  # All weight on churn
 
-        scores = {k: 50.0 for k in DEFAULT_WEIGHTS}
+        scores = dict.fromkeys(DEFAULT_WEIGHTS, 50.0)
         scores["churn"] = 100.0
 
         result = compute_composite_score(scores, weights)
@@ -148,13 +140,13 @@ class TestScoreRanges:
 
     def test_all_zeros_yields_zero(self):
         """All dimensions at 0 → composite 0."""
-        scores = {k: 0.0 for k in DEFAULT_WEIGHTS}
+        scores = dict.fromkeys(DEFAULT_WEIGHTS, 0.0)
         result = compute_composite_score(scores, DEFAULT_WEIGHTS)
         assert result == 0.0
 
     def test_all_hundreds_yields_hundred(self):
         """All dimensions at 100 → composite 100."""
-        scores = {k: 100.0 for k in DEFAULT_WEIGHTS}
+        scores = dict.fromkeys(DEFAULT_WEIGHTS, 100.0)
         result = compute_composite_score(scores, DEFAULT_WEIGHTS)
         assert abs(result - 100.0) < 1e-9
 
@@ -176,7 +168,7 @@ class TestScoreRanges:
 
     def test_none_dimensions_excluded_and_renormalized(self):
         """Unavailable dimensions (None) are excluded; remaining weights renormalize."""
-        scores = {k: None for k in DEFAULT_WEIGHTS}
+        scores = dict.fromkeys(DEFAULT_WEIGHTS)
         scores["churn"] = 80.0
         scores["complexity"] = 60.0
         # Only churn (0.15) and complexity (0.15) available → renorm to 0.5 each
@@ -186,7 +178,7 @@ class TestScoreRanges:
 
     def test_all_none_dimensions_returns_zero(self):
         """All dimensions unavailable → composite 0."""
-        scores = {k: None for k in DEFAULT_WEIGHTS}
+        scores = dict.fromkeys(DEFAULT_WEIGHTS)
         result = compute_composite_score(scores, DEFAULT_WEIGHTS)
         assert result == 0.0
 
@@ -374,7 +366,7 @@ class TestCaching:
             "pennyfarthing_scripts.healthscore.analyze.read_cached_score",
             return_value=99.0,
         ) as mock_read:
-            result = asyncio.run(
+            asyncio.run(
                 analyze_healthscore(Path("/tmp/project"), cache_ttl=0)
             )
             # With ttl=0, cached values should not be used
@@ -484,7 +476,7 @@ class TestMainCLIRegistration:
     def test_healthscore_registered_in_main_cli(self):
         """Main CLI must have a 'healthscore' command group."""
         from pennyfarthing_scripts.cli import cli
-        command_names = [cmd for cmd in cli.commands]
+        command_names = list(cli.commands)
         assert "healthscore" in command_names
 
 
@@ -507,7 +499,7 @@ class TestAnalyzeIntegration:
 
     def test_analyze_with_custom_weights(self):
         """Custom weights must be accepted and applied."""
-        custom = {k: 1.0 / 8 for k in DEFAULT_WEIGHTS}
+        custom = dict.fromkeys(DEFAULT_WEIGHTS, 1.0 / 8)
         result = asyncio.run(analyze_healthscore(Path("/tmp/nonexistent"), weights=custom))
         assert isinstance(result, HealthscoreResult)
 

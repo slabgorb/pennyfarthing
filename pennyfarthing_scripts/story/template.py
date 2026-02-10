@@ -6,7 +6,6 @@ Provides templates for different story types.
 
 from typing import Any
 
-
 # Story templates
 TEMPLATES = {
     "feature": {
