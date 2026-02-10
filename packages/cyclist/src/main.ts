@@ -21,7 +21,6 @@ import {
   setToolEventCallback,
   TokenStats,
   ToolEvent,
-  aggregateTokenStats,
   resetTokenStats,
   resetEventStore,
   getToolEventsFiltered,
@@ -40,7 +39,7 @@ import {
   getBackgroundTasks,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
-import { getPrimeContext, selectContextTier, getPrimeContextWithTier, getPrimeContextJson } from './prime.js';
+import { selectContextTier, getPrimeContextJson } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -64,7 +63,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, broadcastClaudeComplete, broadcastClaudeError, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import { setBellMode } from './bell-mode.js';
@@ -72,14 +71,12 @@ import {
   IPC_DATA_CHANNELS,
   IPC_CLAUDE_CHANNELS,
   IPC_AGENT_CHANNELS,
-  IPC_DIFF_CHANNELS,
   IPC_SETTINGS_CHANNELS,
   IPC_AUDIT_LOG_CHANNELS,
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
-  IPC_CONTEXT_CLEAR_CHANNELS,
   IPC_LAYOUT_CHANNELS,
   IPC_AVATAR_CHANNELS,
 } from './ipc-channels.js';

@@ -577,7 +577,7 @@ describe('MSSCI-14374: E2E existing repo upgrade', () => {
     it('should create .pennyfarthing/ symlinks to node_modules', () => {
       runCLI(testDir, ['update']);
 
-      for (const { name, link } of DIRECTORY_SYMLINKS) {
+      for (const { link } of DIRECTORY_SYMLINKS) {
         const linkPath = join(testDir, link);
         assert.ok(
           existsSync(linkPath),
