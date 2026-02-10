@@ -302,6 +302,32 @@ def import_epic(
     # Get next epic number
     start_epic_num = get_next_epic_number(root)
 
+    # Validate each parsed epic before writing (ADR-0022)
+    from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+
+    epic_num = start_epic_num
+    for epic in parsed["epics"]:
+        # Build a shard-like dict for validation
+        shard_dict = {
+            "id": str(epic_num),
+            "title": epic.get("title", ""),
+            "status": "planning",
+            "stories": [
+                {
+                    "id": f"{epic_num}-{s['num']}",
+                    "title": s.get("title", ""),
+                    "points": s.get("points", 1),
+                    "status": "planning",
+                }
+                for s in epic.get("stories", [])
+            ],
+        }
+        validation = validate_epic_shard(shard_dict)
+        if not validation.valid:
+            error_msgs = "; ".join(e.message for e in validation.errors)
+            return {"success": False, "error": f"Epic {epic_num} validation failed: {error_msgs}"}
+        epic_num += 1
+
     # Generate YAML
     relative_path = str(epics_path.relative_to(root)) if epics_path.is_relative_to(root) else str(epics_path)
     new_yaml, next_epic_num = generate_initiative_yaml(
