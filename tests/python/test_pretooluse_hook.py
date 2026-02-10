@@ -29,6 +29,7 @@ from pennyfarthing_scripts.hooks import (
     DEFAULT_CYCLIST_PORT,
     find_project_root,
     get_cyclist_port,
+    is_cyclist_running,
     read_port_file,
     send_to_cyclist,
     HookResponse,
@@ -390,3 +391,80 @@ class TestLegacyJSHookRemoved:
             "Legacy JS hook still exists. "
             "Dev must delete cyclist-pretooluse-hook.js — Python hook replaces it."
         )
+
+
+# =============================================================================
+# Story 98-8: Cyclist false-positive detection (PID validation)
+# =============================================================================
+
+
+class TestIsCyclistRunning:
+    """Story 98-8: is_cyclist_running() must validate PID, not just port file."""
+
+    def test_returns_false_when_no_files_exist(self, tmp_project):
+        """No port file, no PID file → not running."""
+        assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_false_when_port_file_exists_but_no_pid_file(self, tmp_project):
+        """AC6: Stale .cyclist-port without .cyclist-pid → not running.
+
+        This is the core false-positive bug. A leftover port file from a
+        crashed Cyclist session should not fool the hook into thinking
+        Cyclist is alive.
+        """
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        # No .cyclist-pid file — stale state
+        assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_false_when_port_and_pid_exist_but_process_dead(self, tmp_project):
+        """AC1: Port file + PID file with dead PID → not running.
+
+        Both files exist but the PID points to a process that no longer
+        exists. This happens on unclean shutdown (SIGKILL, crash, reboot).
+        """
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        # PID 999999999 almost certainly doesn't exist
+        (tmp_project / ".cyclist-pid").write_text("999999999")
+        assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_true_when_port_and_pid_exist_and_process_alive(self, tmp_project):
+        """AC2: Port file + PID file with live PID → running.
+
+        Use our own PID (guaranteed alive) to simulate a running Cyclist.
+        """
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
+        assert is_cyclist_running(tmp_project) is True
+
+    def test_returns_false_when_pid_file_has_invalid_content(self, tmp_project):
+        """PID file with garbage content → not running."""
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / ".cyclist-pid").write_text("not-a-pid")
+        assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_false_when_pid_file_is_empty(self, tmp_project):
+        """Empty PID file → not running."""
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / ".cyclist-pid").write_text("")
+        assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_true_on_permission_error(self, tmp_project):
+        """AC edge case: PermissionError on os.kill → assume running (conservative).
+
+        If we can't check the PID (different user), assume Cyclist is alive
+        rather than incorrectly bypassing it.
+        """
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
+
+        with patch("os.kill", side_effect=PermissionError):
+            assert is_cyclist_running(tmp_project) is True
+
+    def test_no_http_calls_made(self, tmp_project):
+        """AC3: Detection must not make HTTP calls — filesystem + signal only."""
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / ".cyclist-pid").write_text(str(os.getpid()))
+
+        with patch("pennyfarthing_scripts.hooks.urllib.request.urlopen") as mock_urlopen:
+            is_cyclist_running(tmp_project)
+            mock_urlopen.assert_not_called()
