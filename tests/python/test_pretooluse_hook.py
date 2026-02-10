@@ -12,8 +12,7 @@ Run with: python -m pytest tests/python/test_pretooluse_hook.py -v
 import json
 import os
 import sys
-import textwrap
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Thread
 from unittest.mock import patch
@@ -24,17 +23,16 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from pennyfarthing_scripts.hooks import (
-    CYCLIST_PORT_FILE,
     CYCLIST_APPROVAL_PORT_FILE_LEGACY,
+    CYCLIST_PORT_FILE,
     DEFAULT_CYCLIST_PORT,
+    HookResponse,
     find_project_root,
     get_cyclist_port,
+    is_cyclist_running,
     read_port_file,
     send_to_cyclist,
-    HookResponse,
-    output_hook_response,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -390,3 +388,51 @@ class TestLegacyJSHookRemoved:
             "Legacy JS hook still exists. "
             "Dev must delete cyclist-pretooluse-hook.js — Python hook replaces it."
         )
+
+
+# =============================================================================
+# Story 98-8: Cyclist false-positive detection (env var)
+# =============================================================================
+
+
+class TestIsCyclistRunning:
+    """Story 98-8: is_cyclist_running() uses CYCLIST env var, not file checks."""
+
+    def test_returns_false_in_cli_mode(self):
+        """CLI mode: no CYCLIST env var → not running."""
+        with patch.dict(os.environ, {}, clear=True):
+            assert is_cyclist_running() is False
+
+    def test_returns_false_when_stale_port_file_exists(self, tmp_project):
+        """AC1: Stale .cyclist-port must NOT cause false positive.
+
+        This is the core bug. A leftover port file should be irrelevant
+        because detection is env-var-based, not file-based.
+        """
+        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        with patch.dict(os.environ, {}, clear=True):
+            assert is_cyclist_running(tmp_project) is False
+
+    def test_returns_true_inside_cyclist(self):
+        """AC2: CYCLIST=1 env var set → running."""
+        with patch.dict(os.environ, {"CYCLIST": "1"}):
+            assert is_cyclist_running() is True
+
+    def test_returns_false_when_cyclist_env_wrong_value(self):
+        """CYCLIST set to something other than '1' → not running."""
+        with patch.dict(os.environ, {"CYCLIST": "0"}):
+            assert is_cyclist_running() is False
+
+    def test_returns_false_when_cyclist_env_empty(self):
+        """CYCLIST set to empty string → not running."""
+        with patch.dict(os.environ, {"CYCLIST": ""}):
+            assert is_cyclist_running() is False
+
+    def test_no_file_io_or_http_calls(self):
+        """AC3: Detection must not touch filesystem or network."""
+        with patch.dict(os.environ, {"CYCLIST": "1"}):
+            with patch("pennyfarthing_scripts.hooks.urllib.request.urlopen") as mock_url:
+                with patch.object(Path, "exists") as mock_exists:
+                    is_cyclist_running()
+                    mock_url.assert_not_called()
+                    mock_exists.assert_not_called()
