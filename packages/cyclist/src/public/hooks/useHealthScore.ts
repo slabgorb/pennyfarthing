@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface HealthScoreDimension {
   name: string;
@@ -57,6 +57,12 @@ export function useHealthScore(): UseHealthScoreReturn {
         setError(err instanceof Error ? err : new Error(String(err)));
         setIsLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   return { data, isLoading, error, lastFetchedAt, refresh };
