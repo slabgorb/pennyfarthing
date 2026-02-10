@@ -13,12 +13,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+export interface TandemAgentData {
+  character: string;
+  role: string;
+  slug: string;
+  theme: string;
+  isThinking: boolean;
+}
+
 export interface PersonaData {
   character: string | null;
   theme: string | null;
   role: string | null;
   slug: string | null;
   quote: string | null;  // Random catchphrase from theme
+  tandemAgent?: TandemAgentData | null;
 }
 
 interface UsePersonaResult {
