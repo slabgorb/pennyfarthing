@@ -237,7 +237,7 @@ class TestStoryValidation:
 
     def test_all_valid_story_statuses_pass(self) -> None:
         """All valid status values should pass."""
-        valid_statuses = ["backlog", "in_progress", "done", "cancelled"]
+        valid_statuses = ["backlog", "ready", "in_progress", "done", "canceled", "planning"]
 
         for status in valid_statuses:
             story = {"id": "63-1", "title": "Test", "status": status, "points": 3}
@@ -468,7 +468,7 @@ class TestArchivedSprintValidation:
         assert result.valid is True
 
     def test_archived_sprint_allows_all_done_stories(self) -> None:
-        """Archived sprints should allow all stories to be done/cancelled."""
+        """Archived sprints should allow all stories to be done/canceled."""
         data = {
             "sprint": {
                 "number": 11,
@@ -484,7 +484,7 @@ class TestArchivedSprintValidation:
                     "title": "Old Epic",
                     "stories": [
                         {"id": "50-1", "title": "Done Story", "status": "done", "points": 3},
-                        {"id": "50-2", "title": "Cancelled Story", "status": "cancelled", "points": 2},
+                        {"id": "50-2", "title": "Canceled Story", "status": "canceled", "points": 2},
                     ],
                 }
             ],

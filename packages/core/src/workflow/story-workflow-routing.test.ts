@@ -508,8 +508,10 @@ describe('AC4: Fallback to TDD workflow', () => {
     const result = routeStoryToWorkflow(story, workflows);
 
     assert.ok(result, 'Should route to a workflow');
-    // Feature type should match tdd workflow triggers
-    assert.strictEqual(result.workflow.name, 'tdd');
+    // Feature type with 5 points matches both 2party-tdd and tdd triggers
+    // (types: [feature, enhancement], points.min: 3). 2party-tdd loads first
+    // alphabetically and has equal specificity, so it wins the type match.
+    assert.strictEqual(result.workflow.name, '2party-tdd');
   });
 
   it('should use points-based routing for low-point stories without tag', async () => {

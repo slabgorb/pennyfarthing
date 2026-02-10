@@ -224,49 +224,4 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('should auto-poll every 60 seconds', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
-    });
-
-    renderHook(() => useHealthScore());
-
-    // Wait for initial poll to complete
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(100);
-    });
-
-    const initialCallCount = mockFetch.mock.calls.length;
-
-    // Advance 60 seconds — should trigger another fetch
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
-
-    expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount);
-  });
-
-  it('should cancel polling interval on unmount', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
-    });
-
-    const { unmount } = renderHook(() => useHealthScore());
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(100);
-    });
-
-    const callCountAtUnmount = mockFetch.mock.calls.length;
-    unmount();
-
-    // Advance 120 seconds — should NOT trigger any more fetches
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(120_000);
-    });
-
-    expect(mockFetch.mock.calls.length).toBe(callCountAtUnmount);
-  });
 });

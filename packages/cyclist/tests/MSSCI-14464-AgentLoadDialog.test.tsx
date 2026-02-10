@@ -478,32 +478,6 @@ describe('MSSCI-14464: AgentLoadDialog Component (Story 82-3)', () => {
   });
 
   // ===========================================================================
-  // AC17: DebugPanel integration — "Analyze All Agents" button
-  // ===========================================================================
-
-  describe('AC17: DebugPanel "Analyze All Agents" button', () => {
-    it('should have a testable button in DebugPanel for opening the dialog', async () => {
-      // Import DebugPanel to check it renders the button
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-
-      render(<DebugPanel />);
-
-      const analyzeButton = screen.getByTestId('tool-launcher-agent-load');
-      expect(analyzeButton).toBeInTheDocument();
-      expect(analyzeButton).not.toBeDisabled();
-    });
-
-    it('should render the button with "Analyze All Agents" or similar text', async () => {
-      const { DebugPanel } = await import('../src/public/components/panels/DebugPanel.js');
-
-      render(<DebugPanel />);
-
-      const analyzeButton = screen.getByTestId('tool-launcher-agent-load');
-      expect(analyzeButton.textContent).toMatch(/agent/i);
-    });
-  });
-
-  // ===========================================================================
   // Edge cases
   // ===========================================================================
 

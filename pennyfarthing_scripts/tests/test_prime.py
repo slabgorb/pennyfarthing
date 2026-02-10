@@ -899,6 +899,9 @@ class TestJSONOutput:
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
+        agents_dir = pf_dir / "agents"
+        agents_dir.mkdir()
+        (agents_dir / "sm.md").write_text("# SM Agent\nScrum Master")
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
         (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
@@ -939,6 +942,9 @@ class TestJSONOutput:
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
+        agents_dir = pf_dir / "agents"
+        agents_dir.mkdir()
+        (agents_dir / "tea.md").write_text("# TEA Agent\nTest Engineer")
 
         # Create workflow YAML
         workflows_dir = tmp_path / "pennyfarthing-dist" / "workflows"
@@ -1048,6 +1054,9 @@ class TestCLIFlagsV2:
 
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
+        agents_dir = pf_dir / "agents"
+        agents_dir.mkdir()
+        (agents_dir / "sm.md").write_text("# SM Agent\nScrum Master")
 
         with patch("pennyfarthing_scripts.prime.cli.get_project_root", return_value=tmp_path):
             result = main(["--agent", "sm", "--session-id", "explicit-123", "--no-workflow"])

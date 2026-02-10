@@ -163,9 +163,15 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
       );
     });
 
-    it('should return parsed JSON on success', () => {
-      mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
-        callback(null, MOCK_DEAD_CODE_ALL, '');
+    it('should return parsed JSON on success', async () => {
+      // layer=all runs two commands: stale + exports
+      mockExecFile.mockImplementation((_cmd: any, args: any, _opts: any, callback: any) => {
+        const subcommand = args.find((a: string) => a === 'stale' || a === 'exports');
+        if (subcommand === 'stale') {
+          callback(null, MOCK_DEAD_CODE_STALE, '');
+        } else {
+          callback(null, MOCK_DEAD_CODE_EXPORTS, '');
+        }
         return {} as any;
       });
 
@@ -174,7 +180,7 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
 
       const req = mockReq({ days: '180', layer: 'all' });
       const res = mockRes();
-      handler(req, res);
+      await handler(req, res);
 
       expect(res.statusCode).toBe(200);
       expect(res._json).toHaveProperty('success', true);
@@ -286,16 +292,25 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
       expect(args[daysIdx + 1]).toBe('180');
     });
 
-    it('should default layer to "all"', () => {
+    it('should default layer to "all" (runs both stale and exports commands)', async () => {
+      mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
+        callback(null, MOCK_DEAD_CODE_STALE, '');
+        return {} as any;
+      });
+
       const router = createDeadCodeRouter(getProjectDir);
       const handler = getRouteHandler(router, 'get', '/');
 
       const req = mockReq();
       const res = mockRes();
-      handler(req, res);
+      await handler(req, res);
 
-      const args = mockExecFile.mock.calls[0][1] as string[];
-      expect(args).toContain('all');
+      // layer=all runs two separate commands: stale + exports
+      expect(mockExecFile).toHaveBeenCalledTimes(2);
+      const firstArgs = mockExecFile.mock.calls[0][1] as string[];
+      const secondArgs = mockExecFile.mock.calls[1][1] as string[];
+      expect(firstArgs).toContain('stale');
+      expect(secondArgs).toContain('exports');
     });
 
     it('should pass --format json', () => {
@@ -313,7 +328,7 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
   });
 
   describe('Error handling', () => {
-    it('should return 500 with error on execFile failure', () => {
+    it('should return 500 with error on execFile failure', async () => {
       const execError: ExecFileException = new Error('Python failed');
       execError.code = 'ERR';
       mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
@@ -324,16 +339,16 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
       const router = createDeadCodeRouter(getProjectDir);
       const handler = getRouteHandler(router, 'get', '/');
 
-      const req = mockReq({ days: '180' });
+      const req = mockReq({ days: '180', layer: 'stale' });
       const res = mockRes();
-      handler(req, res);
+      await handler(req, res);
 
       expect(res.statusCode).toBe(500);
       expect(res._json).toHaveProperty('success', false);
       expect(res._json).toHaveProperty('error');
     });
 
-    it('should return 500 on invalid JSON from Python', () => {
+    it('should return 500 on invalid JSON from Python', async () => {
       mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
         callback(null, 'not valid json{{{', '');
         return {} as any;
@@ -342,9 +357,9 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
       const router = createDeadCodeRouter(getProjectDir);
       const handler = getRouteHandler(router, 'get', '/');
 
-      const req = mockReq({ days: '180' });
+      const req = mockReq({ days: '180', layer: 'stale' });
       const res = mockRes();
-      handler(req, res);
+      await handler(req, res);
 
       expect(res.statusCode).toBe(500);
       expect(res._json).toHaveProperty('success', false);
