@@ -184,7 +184,8 @@ describe('AC2: Portrait is 48px circular with opacity 0.55', () => {
 
   it('should render portrait image inside avatar', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
   });
 });
@@ -289,14 +290,16 @@ describe('AC6: Fade-out on unmount', () => {
 describe('AC7: Emoji fallback on portrait load error', () => {
   it('should show portrait image by default', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src');
   });
 
   it('should show emoji fallback when portrait image fails to load', async () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img')!;
 
     // Simulate image load error
     fireEvent.error(img);
@@ -310,7 +313,8 @@ describe('AC7: Emoji fallback on portrait load error', () => {
 
   it('should hide failed image when showing fallback', async () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img')!;
 
     fireEvent.error(img);
 
@@ -389,22 +393,24 @@ describe('AC9: No layout shifts in adjacent panels', () => {
 describe('AC10: Uses shadcn Avatar components', () => {
   it('should render avatar with correct portrait src', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
     expect(img).toHaveAttribute(
       'src',
       '/portraits/alice-in-wonderland/medium/white-queen.png'
     );
   });
 
-  it('should render avatar with descriptive alt text', () => {
+  it('should render container with descriptive aria-label', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('alt', 'The White Queen (architect) - observing');
+    const container = screen.getByTestId('tandem-portrait');
+    expect(container).toHaveAttribute('aria-label', 'The White Queen (architect) - observing');
   });
 
   it('should render AvatarFallback with emoji when image fails', async () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img')!;
     fireEvent.error(img);
 
     await waitFor(() => {
@@ -420,26 +426,30 @@ describe('AC10: Uses shadcn Avatar components', () => {
 describe('AC11: Portrait uses same resolution pipeline as primary', () => {
   it('should use medium size portraits like primary', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
     // Must use /medium/ directory, same as PersonaHeader primary portrait
-    expect(img.getAttribute('src')).toContain('/medium/');
+    expect(img?.getAttribute('src')).toContain('/medium/');
   });
 
   it('should use same theme as provided in props', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
-    expect(img.getAttribute('src')).toContain('/alice-in-wonderland/');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
+    expect(img?.getAttribute('src')).toContain('/alice-in-wonderland/');
   });
 
   it('should use slug-based portrait path', () => {
     render(<TandemPortrait {...mockTandemProps} />);
-    const img = screen.getByRole('img');
-    expect(img.getAttribute('src')).toContain('/white-queen.png');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
+    expect(img?.getAttribute('src')).toContain('/white-queen.png');
   });
 
   it('should use different slug for different agents', () => {
     render(<TandemPortrait {...mockTandemProps} slug="caterpillar" />);
-    const img = screen.getByRole('img');
-    expect(img.getAttribute('src')).toContain('/caterpillar.png');
+    const container = screen.getByTestId('tandem-portrait');
+    const img = container.querySelector('img');
+    expect(img?.getAttribute('src')).toContain('/caterpillar.png');
   });
 });

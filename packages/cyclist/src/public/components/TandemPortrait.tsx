@@ -42,23 +42,29 @@ export default function TandemPortrait({
 
   if (!isActive) return null;
 
+  const abbrev = AGENT_ABBREV[role] || role.toUpperCase();
+
   return (
     <div
       className={`persona-tandem-portrait${isThinking ? ' avatar-tandem-thinking' : ''}`}
       data-testid="tandem-portrait"
+      role="img"
+      aria-label={`${character} (${role}) - observing`}
+      tabIndex={-1}
     >
       {!portraitError ? (
         <img
           src={`/portraits/${theme}/medium/${slug}.png`}
-          alt={`${character} (${role}) - observing`}
+          alt=""
+          aria-hidden="true"
           className="tandem-portrait-image"
           onError={() => setPortraitError(true)}
         />
       ) : (
-        <span className="tandem-portrait-fallback">🤖</span>
+        <span className="tandem-portrait-fallback" aria-hidden="true">🤖</span>
       )}
-      <span className="tandem-role-badge" data-testid="tandem-role-badge">
-        {AGENT_ABBREV[role] || role.toUpperCase()}
+      <span className="tandem-role-badge" data-testid="tandem-role-badge" aria-hidden="true">
+        {abbrev}
       </span>
     </div>
   );
