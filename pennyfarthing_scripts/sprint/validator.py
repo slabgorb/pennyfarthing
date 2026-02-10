@@ -295,6 +295,16 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
                 f"epic.{field_name}",
             )
 
+    # Reject epic- prefix in ID (ADR-0022: reference prefix should not be baked into value)
+    if "id" in epic:
+        epic_id_val = str(epic["id"])
+        if epic_id_val.startswith("epic-"):
+            result.add_error(
+                f"Epic ID '{epic_id_val}' starts with 'epic-' prefix. "
+                "Use the numeric ID (e.g., '94' not 'epic-94')",
+                "epic.id",
+            )
+
     # Validate jira key format if present
     if "jira" in epic:
         jira_key = str(epic["jira"])
@@ -507,13 +517,15 @@ def validate_future(data: dict[str, Any]) -> ValidationResult:
     return result
 
 
-def validate_sprint_file(file_path: Path) -> ValidationResult:
+def validate_sprint_file(file_path: Path, *, strict: bool = False) -> ValidationResult:
     """Validate a sprint YAML file from disk.
 
-    Loads the file and validates its contents.
+    Loads the file and validates its contents. In strict mode, loader
+    warnings (e.g., unresolvable shard refs) are promoted to errors.
 
     Args:
         file_path: Path to sprint YAML file
+        strict: If True, treat loader warnings as validation errors
 
     Returns:
         ValidationResult with any errors (including load errors)
@@ -583,12 +595,22 @@ def validate_sprint_file(file_path: Path) -> ValidationResult:
         )
         return result
 
-    # Merge sharded epic files if present
+    # Merge sharded epic files if present, capturing warnings in strict mode
     from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
-    data = _merge_epic_shards(data, file_path.parent)
+    if strict:
+        import warnings as _warnings
+        with _warnings.catch_warnings(record=True) as caught:
+            _warnings.simplefilter("always")
+            data = _merge_epic_shards(data, file_path.parent)
+        for w in caught:
+            result.add_error(str(w.message), str(file_path))
+    else:
+        data = _merge_epic_shards(data, file_path.parent)
 
     # Validate loaded data
-    return validate_full_sprint(data)
+    full_result = validate_full_sprint(data)
+    result.merge(full_result)
+    return result
 
 
 def format_validation_errors(result: ValidationResult) -> str:
