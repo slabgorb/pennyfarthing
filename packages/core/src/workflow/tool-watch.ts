@@ -5,73 +5,48 @@
  * to backseat observer within one tool-use cycle. Truncates large results
  * to configurable max size. Non-blocking to primary.
  *
- * STUB: Implementation pending — tests should fail on assertions, not imports.
+ * Hook side: processToolCall() appends JSONL to transport file (synchronous, fast).
+ * Backseat side: startToolWatcher() polls JSONL and writes observations.
  */
+
+import { appendFileSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { appendObservation } from './observation-writer.js';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-/**
- * A single tool call entry in the JSONL transport file
- */
 export interface ToolCallEntry {
-  /** ISO timestamp */
   timestamp: string;
-  /** Tool name (Bash, Read, Edit, etc.) */
   toolName: string;
-  /** Tool parameters */
   params: Record<string, unknown>;
-  /** Result preview (potentially truncated) */
   resultPreview: string;
-  /** Original result size in characters */
   resultSize: number;
 }
 
-/**
- * Configuration for tool-watch scope
- */
 export interface ToolWatchConfig {
-  /** Path to .session/ directory */
   sessionDir: string;
-  /** Current story ID */
   storyId: string;
-  /** Observer agent name */
   agent: string;
-  /** Observer persona name */
   persona: string;
-  /** Current workflow phase */
   phase: string;
-  /** Poll interval in milliseconds (default: 1000) */
   pollIntervalMs?: number;
-  /** Max result size in characters before truncation (default: 500) */
   maxResultSize?: number;
-  /** Path to observation file (for startToolWatcher integration) */
   observationFilePath?: string;
 }
 
-/**
- * Handle to a running tool watcher
- */
 export interface ToolWatchHandle {
-  /** Whether the watcher is currently running */
   running: boolean;
-  /** Effective poll interval */
   pollIntervalMs: number;
 }
 
-/**
- * Standard result object per framework pattern
- */
 export interface ToolWatchResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
 }
 
-/**
- * Parameters for processToolCall (called from PostToolUse hook)
- */
 export interface ProcessToolCallParams {
   sessionDir: string;
   storyId: string;
@@ -82,25 +57,175 @@ export interface ProcessToolCallParams {
 }
 
 // =============================================================================
-// Stub implementations — all throw 'not implemented'
+// Internal state
 // =============================================================================
 
-export function processToolCall(_params: ProcessToolCallParams): ToolWatchResult {
-  throw new Error('not implemented');
+const DEFAULT_MAX_RESULT_SIZE = 500;
+const DEFAULT_POLL_MS = 1000;
+
+const timers = new WeakMap<ToolWatchHandle, ReturnType<typeof setInterval>>();
+const lastReadLines = new WeakMap<ToolWatchHandle, number>();
+
+// =============================================================================
+// Implementations
+// =============================================================================
+
+/**
+ * Truncate a tool result string to maxSize characters.
+ * Appends `[truncated from N chars]` indicator when truncated.
+ */
+export function truncateResult(result: string, maxSize: number): string {
+  if (result.length <= maxSize) {
+    return result;
+  }
+  return result.slice(0, maxSize) + ` [truncated from ${result.length} chars]`;
 }
 
-export function readToolCalls(_filePath: string): ToolWatchResult<ToolCallEntry[]> {
-  throw new Error('not implemented');
+/**
+ * Record a tool call to the JSONL transport file.
+ * Called from the PostToolUse hook — must be synchronous and fast.
+ */
+export function processToolCall(params: ProcessToolCallParams): ToolWatchResult {
+  try {
+    const { sessionDir, storyId, toolName, params: toolParams, toolResult } = params;
+    const maxResultSize = params.maxResultSize ?? DEFAULT_MAX_RESULT_SIZE;
+
+    if (!existsSync(sessionDir)) {
+      return { success: false, error: `Session directory does not exist: ${sessionDir}` };
+    }
+
+    const filePath = join(sessionDir, `${storyId}-tandem-toolcalls.jsonl`);
+
+    const entry: ToolCallEntry = {
+      timestamp: new Date().toISOString(),
+      toolName,
+      params: toolParams,
+      resultPreview: truncateResult(toolResult, maxResultSize),
+      resultSize: toolResult.length,
+    };
+
+    appendFileSync(filePath, JSON.stringify(entry) + '\n', 'utf-8');
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
-export function truncateResult(_result: string, _maxSize: number): string {
-  throw new Error('not implemented');
+/**
+ * Read tool call entries from a JSONL transport file.
+ * Skips malformed lines gracefully.
+ */
+export function readToolCalls(filePath: string): ToolWatchResult<ToolCallEntry[]> {
+  try {
+    if (!existsSync(filePath)) {
+      return { success: false, error: `File not found: ${filePath}` };
+    }
+
+    const content = readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim().length > 0);
+    const entries: ToolCallEntry[] = [];
+
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line);
+        entries.push(parsed as ToolCallEntry);
+      } catch {
+        // Skip malformed lines
+      }
+    }
+
+    return { success: true, data: entries };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
-export async function startToolWatcher(_config: ToolWatchConfig): Promise<ToolWatchResult<ToolWatchHandle>> {
-  throw new Error('not implemented');
+/**
+ * Start a polling tool watcher that reads JSONL entries and writes observations.
+ */
+export async function startToolWatcher(
+  config: ToolWatchConfig
+): Promise<ToolWatchResult<ToolWatchHandle>> {
+  try {
+    const pollIntervalMs = config.pollIntervalMs ?? DEFAULT_POLL_MS;
+    const toolCallsPath = join(config.sessionDir, `${config.storyId}-tandem-toolcalls.jsonl`);
+
+    const handle: ToolWatchHandle = {
+      running: true,
+      pollIntervalMs,
+    };
+
+    // Start from line 0 — process all existing and future entries
+    lastReadLines.set(handle, 0);
+
+    const timer = setInterval(() => {
+      if (!handle.running) return;
+
+      try {
+        if (!existsSync(toolCallsPath)) return;
+
+        const content = readFileSync(toolCallsPath, 'utf-8');
+        const lines = content.split('\n').filter(l => l.trim().length > 0);
+        const prevCount = lastReadLines.get(handle) ?? 0;
+
+        if (lines.length <= prevCount) return;
+
+        // Process only new lines
+        const newLines = lines.slice(prevCount);
+        lastReadLines.set(handle, lines.length);
+
+        if (!config.observationFilePath) return;
+
+        for (const line of newLines) {
+          try {
+            const entry = JSON.parse(line) as ToolCallEntry;
+
+            // Build a param summary for the trigger detail
+            const paramKeys = Object.keys(entry.params);
+            const paramSummary = paramKeys.length > 0
+              ? ` (${paramKeys.map(k => `${k}: ${String(entry.params[k]).slice(0, 50)}`).join(', ')})`
+              : '';
+
+            const triggerDetail = `${entry.toolName}${paramSummary}`;
+
+            // Build enriched observation text (not just raw result replay)
+            const observation = `Tool: ${entry.toolName}${paramSummary}\nResult (${entry.resultSize} chars): ${entry.resultPreview}`;
+
+            appendObservation(config.observationFilePath, {
+              triggerType: 'tool-watch',
+              triggerDetail,
+              observation,
+            });
+          } catch {
+            // Skip malformed lines, continue polling
+          }
+        }
+      } catch {
+        // Error resilience — continue polling
+      }
+    }, pollIntervalMs);
+
+    timers.set(handle, timer);
+    return { success: true, data: handle };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
-export async function stopToolWatcher(_handle: ToolWatchHandle): Promise<ToolWatchResult> {
-  throw new Error('not implemented');
+/**
+ * Stop a running tool watcher. Idempotent — safe to call multiple times.
+ */
+export async function stopToolWatcher(handle: ToolWatchHandle): Promise<ToolWatchResult> {
+  try {
+    handle.running = false;
+    const timer = timers.get(handle);
+    if (timer) {
+      clearInterval(timer);
+      timers.delete(handle);
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
