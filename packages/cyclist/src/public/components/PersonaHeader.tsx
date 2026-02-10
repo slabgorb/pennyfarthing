@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePersona } from '../hooks/usePersona';
 import { useColorScheme } from '../hooks/useColorScheme';
 import { AgentPopup } from './AgentPopup';
+import TandemPortrait from './TandemPortrait';
 
 // Agent colors matching CLI statusbar (statusline.sh)
 const AGENT_COLORS: Record<string, string> = {
@@ -70,6 +71,7 @@ export default function PersonaHeader(): React.ReactElement {
   const role = persona?.role || 'agent';
   const slug = persona?.slug;
   const quote = persona?.quote;
+  const tandemAgent = persona?.tandemAgent;
 
   const handleOpenPopup = useCallback(() => {
     setIsPopupOpen(true);
@@ -113,6 +115,16 @@ export default function PersonaHeader(): React.ReactElement {
                 <span className="portrait-fallback">🤖</span>
               )}
             </div>
+            {tandemAgent && (
+              <TandemPortrait
+                character={tandemAgent.character}
+                role={tandemAgent.role}
+                slug={tandemAgent.slug}
+                theme={tandemAgent.theme}
+                isActive={true}
+                isThinking={tandemAgent.isThinking}
+              />
+            )}
           </div>
           <div className="persona-info">
             <div className="persona-name-row">
