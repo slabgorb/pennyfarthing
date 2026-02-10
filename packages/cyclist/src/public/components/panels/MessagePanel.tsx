@@ -248,6 +248,7 @@ export function MessagePanel(): React.ReactElement {
     handleBellModeChange,
     handleRelayModeChange,
     handleTirePump,
+    handleAgentSwitch,
   } = useControlBar();
 
   // Claude context for WebSocket communication
@@ -484,6 +485,7 @@ export function MessagePanel(): React.ReactElement {
             contextPercent={contextPercent}
             currentAgent={currentAgent}
             onTirePump={handleTirePump}
+            onAgentSwitch={handleAgentSwitch}
           />
         </div>
       </div>
