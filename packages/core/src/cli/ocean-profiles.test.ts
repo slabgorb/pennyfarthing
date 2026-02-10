@@ -12,8 +12,8 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { existsSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { readFileSync } from 'fs';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { resolveThemePath } from '@pennyfarthing/shared';

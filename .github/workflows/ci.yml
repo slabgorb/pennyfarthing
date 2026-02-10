@@ -76,7 +76,6 @@ jobs:
 
       - name: Lint
         run: pnpm run lint
-        continue-on-error: true  # Lint not configured on all packages yet
 
   python-benchmark:
     runs-on: [self-hosted, Ubuntu, Common]
