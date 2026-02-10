@@ -7,6 +7,19 @@
    Docking Workspace Styles
    ============================================================================= */
 
+/* Screen reader only — visually hidden but accessible */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .cyclist-app {
   position: absolute;
   top: 0;
@@ -289,11 +302,20 @@
 
 /* Portrait group: portrait + tandem positioned together */
 .persona-portrait-group {
+  container-type: inline-size;
+  container-name: portrait-group;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* Container query: hide backseat portrait when panel is narrow */
+@container portrait-group (max-width: 180px) {
+  .persona-tandem-portrait {
+    display: none;
+  }
 }
 
 .persona-portrait {
@@ -825,14 +847,35 @@
   animation: tandem-throb 1.8s ease-in-out infinite;
 }
 
+/* Observation pulse - one-shot on primary portrait when backseat observation injected */
+@keyframes observation-pulse {
+  0% {
+    box-shadow: 0 0 12px 4px var(--accent-color, #007acc);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-color, #007acc);
+  }
+}
+
+.avatar-observation-pulse {
+  animation: observation-pulse 600ms ease-out 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avatar-thinking {
     animation: none;
     opacity: 0.85;
+    border: 2px solid var(--accent-color, #007acc);
   }
   .avatar-tandem-thinking {
     animation: none;
     opacity: 0.85;
+    border: 2px solid var(--accent-color, #007acc);
+  }
+  .avatar-observation-pulse {
+    animation: none;
+    opacity: 0.9;
+    border: 2px solid var(--accent-color, #007acc);
   }
 }
 
