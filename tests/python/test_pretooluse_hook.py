@@ -12,8 +12,7 @@ Run with: python -m pytest tests/python/test_pretooluse_hook.py -v
 import json
 import os
 import sys
-import textwrap
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Thread
 from unittest.mock import patch
@@ -24,18 +23,16 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from pennyfarthing_scripts.hooks import (
-    CYCLIST_PORT_FILE,
     CYCLIST_APPROVAL_PORT_FILE_LEGACY,
+    CYCLIST_PORT_FILE,
     DEFAULT_CYCLIST_PORT,
+    HookResponse,
     find_project_root,
     get_cyclist_port,
     is_cyclist_running,
     read_port_file,
     send_to_cyclist,
-    HookResponse,
-    output_hook_response,
 )
-
 
 # =============================================================================
 # Fixtures
