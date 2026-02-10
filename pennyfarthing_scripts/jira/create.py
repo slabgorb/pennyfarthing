@@ -200,6 +200,30 @@ def create_epic_in_jira(
             epic_jira_key = "MSSCI-XXXXX"
         else:
             client = get_client()
+
+            # Idempotency check: search for existing epic with same title (ADR-0022)
+            try:
+                existing = client.search_issues_sync(
+                    f'project = {JIRA_PROJECT} AND issuetype = Epic AND summary ~ "{title}"'
+                )
+                if existing:
+                    existing_key = existing[0]["key"]
+                    print(f"Found existing epic with same title: {existing_key}")
+                    epic_jira_key = existing_key
+
+                    # Update YAML with existing key
+                    epic_ruamel["jira"] = epic_jira_key
+                    write_sprint(path, data)
+
+                    return {
+                        "success": True,
+                        "epic_key": epic_jira_key,
+                        "duplicate_detected": True,
+                        "stories": [],
+                    }
+            except Exception:
+                pass  # Search failed — proceed with creation
+
             payload = {
                 "fields": {
                     "project": {"key": JIRA_PROJECT},
