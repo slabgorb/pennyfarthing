@@ -461,7 +461,6 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
     'project-context',
     'project-setup',
     'quick-dev',
-    'quick-spec',
     'sprint-planning',
     'ux-design',
   ];
@@ -470,7 +469,6 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   const WORKFLOWS_WITHOUT_STEPS = [
     'brainstorming',
     'code-review',
-    'dev-story',
     'prd',
     'research',
     'retrospective',

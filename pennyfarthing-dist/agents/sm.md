@@ -254,7 +254,6 @@ SM does NOT hand off to agents. Instead, use `/workflow start {name}` to begin t
 | `prd` | stepped | `/workflow start prd` |
 | `research` | stepped | `/workflow start research` |
 | `sprint-planning` | stepped | `/workflow start sprint-planning` |
-| `quick-spec` | stepped | `/workflow start quick-spec` |
 
 **To list all workflows:** `/workflow list`
 
