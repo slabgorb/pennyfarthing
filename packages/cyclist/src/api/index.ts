@@ -1,7 +1,7 @@
 // API module exports
 export { createStatsRouter, broadcastStats, getCurrentStats, getStatsClients, updatePwd } from './stats.js';
 export { createPortraitRouter, getCurrentPortrait } from './portrait.js';
-export { createPersonaRouter, broadcastPersona, getPersonaClients } from './persona.js';
+export { createPersonaRouter, broadcastPersona, getPersonaClients, getStreamingState, setStreamingState } from './persona.js';
 export { createGitRouter, getGitInfo, getAllReposGitInfo, getGitInfoAsync, getAllReposGitInfoAsync } from './git.js';
 export type { GitInfo } from './git.js';
 export { createOTLPRouter } from './otlp.js';
