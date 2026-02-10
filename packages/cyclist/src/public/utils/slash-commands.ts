@@ -190,7 +190,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     "name": "/setup",
-    "description": "setup"
+    "description": "/setup - Interactive Project Setup"
   },
   {
     "name": "/sm",
