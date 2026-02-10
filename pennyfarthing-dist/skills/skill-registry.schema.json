@@ -98,6 +98,14 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Tools this skill is allowed to use. If omitted, all tools are allowed. Use to restrict read-only skills from writing."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Whether this skill is deprecated"
+        },
+        "redirect": {
+          "type": "string",
+          "description": "Skill name to redirect to when deprecated"
         }
       },
       "required": ["name", "description", "category", "tags"],
