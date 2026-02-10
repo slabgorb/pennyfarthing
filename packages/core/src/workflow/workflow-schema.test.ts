@@ -587,6 +587,232 @@ describe('Workflow Schema Validation (31-1)', () => {
   });
 });
 
+describe('Tandem validation (95-1)', () => {
+
+  describe('Valid tandem configurations', () => {
+
+    it('should accept phase with tandem and single scope', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-single',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'architect',
+                scope: 'file-watch'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept tandem with single scope');
+      assert.strictEqual(result.workflow?.phases?.[0].tandem?.partner, 'architect');
+      assert.strictEqual(result.workflow?.phases?.[0].tandem?.scope, 'file-watch');
+    });
+
+    it('should accept phase with tandem and array of scopes', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-array',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'tea',
+                scope: ['file-watch', 'tool-watch']
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept tandem with array scope');
+      assert.strictEqual(result.workflow?.phases?.[0].tandem?.partner, 'tea');
+      assert.ok(Array.isArray(result.workflow?.phases?.[0].tandem?.scope), 'Scope should be an array');
+      assert.deepStrictEqual(result.workflow?.phases?.[0].tandem?.scope, ['file-watch', 'tool-watch']);
+    });
+
+    it('should accept phase with tandem and no scope (optional, defaults at runtime)', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-no-scope',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'architect'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept tandem without scope');
+      assert.strictEqual(result.workflow?.phases?.[0].tandem?.partner, 'architect');
+      assert.strictEqual(result.workflow?.phases?.[0].tandem?.scope, undefined);
+    });
+
+    it('should accept all three valid scope values', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-all-scopes',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'architect',
+                scope: ['file-watch', 'tool-watch', 'context-watch']
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept all three scope values');
+      assert.deepStrictEqual(result.workflow?.phases?.[0].tandem?.scope, ['file-watch', 'tool-watch', 'context-watch']);
+    });
+  });
+
+  describe('Invalid tandem configurations', () => {
+
+    it('should reject tandem missing partner field', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-no-partner',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                scope: 'file-watch'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject tandem without partner');
+      assert.ok(
+        result.errors?.some(e => e.field === 'workflow.phases[0].tandem.partner'),
+        'Should report missing partner with field path'
+      );
+    });
+
+    it('should reject tandem with invalid scope value', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-bad-scope',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'architect',
+                scope: 'invalid-scope'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject invalid scope');
+      const scopeError = result.errors?.find(e => e.field?.includes('tandem.scope'));
+      assert.ok(scopeError, 'Should report invalid scope');
+      assert.ok(
+        scopeError?.message.includes('file-watch') && scopeError?.message.includes('tool-watch') && scopeError?.message.includes('context-watch'),
+        'Error message should list valid scope values'
+      );
+    });
+
+    it('should reject tandem with invalid scope in array', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-bad-array-scope',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: {
+                partner: 'architect',
+                scope: ['file-watch', 'bad-scope']
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject invalid scope in array');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('tandem.scope')),
+        'Should report invalid scope in array'
+      );
+    });
+
+    it('should reject non-object tandem value', () => {
+      const workflow = {
+        workflow: {
+          name: 'tandem-string',
+          phases: [
+            {
+              name: 'develop',
+              agent: 'dev',
+              tandem: 'architect'
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-object tandem');
+      assert.ok(
+        result.errors?.some(e => e.field === 'workflow.phases[0].tandem' && e.message.includes('object')),
+        'Should report tandem must be an object'
+      );
+    });
+  });
+
+  describe('Backward compatibility', () => {
+
+    it('should validate workflows without any tandem blocks unchanged', () => {
+      // Re-test existing TDD workflow to confirm no regression
+      const workflow = {
+        workflow: {
+          name: 'tdd',
+          description: 'Standard TDD workflow',
+          phases: [
+            { name: 'setup', agent: 'sm' },
+            { name: 'red', agent: 'tea', gate: { type: 'tests_fail' } },
+            { name: 'green', agent: 'dev', gate: { type: 'tests_pass' } },
+            { name: 'review', agent: 'reviewer', gate: { type: 'approval' } },
+            { name: 'finish', agent: 'sm' }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Existing workflow without tandem should still validate');
+      assert.strictEqual(result.workflow?.phases?.length, 5);
+      // Tandem should be undefined on phases that don't have it
+      result.workflow?.phases?.forEach(phase => {
+        assert.strictEqual(phase.tandem, undefined, `Phase "${phase.name}" should not have tandem`);
+      });
+    });
+  });
+});
+
 // Export type for WorkflowValidationError (for reference by implementer)
 export interface WorkflowValidationErrorType {
   field: string;
