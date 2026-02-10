@@ -60,7 +60,7 @@ function humanizeTheme(theme: string): string {
 }
 
 export default function PersonaHeader(): React.ReactElement {
-  const { persona } = usePersona();
+  const { persona, isStreaming } = usePersona();
   const colorScheme = useColorScheme();
   const [portraitError, setPortraitError] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -123,7 +123,7 @@ export default function PersonaHeader(): React.ReactElement {
         >
           <div className="persona-portrait-group">
             <div
-              className={`persona-portrait${observationPulse ? ' avatar-observation-pulse' : ''}`}
+              className={`persona-portrait${isStreaming ? ' avatar-thinking' : ''}${observationPulse ? ' avatar-observation-pulse' : ''}`}
               data-testid="persona-portrait"
               ref={portraitRef}
               onAnimationEnd={handlePulseEnd}
