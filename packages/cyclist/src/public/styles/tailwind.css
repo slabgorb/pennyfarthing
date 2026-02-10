@@ -809,6 +809,33 @@
   animation: avatar-throb 1.2s ease-in-out infinite;
 }
 
+/* Backseat thinking indicator - subtler throb for tandem portrait */
+@keyframes tandem-throb {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--accent-color, #007acc);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 6px 1px var(--accent-color, #007acc);
+  }
+}
+
+.avatar-tandem-thinking {
+  animation: tandem-throb 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-thinking {
+    animation: none;
+    opacity: 0.85;
+  }
+  .avatar-tandem-thinking {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
 .message-avatar.avatar-fallback::after {
   content: '🤖';
   font-size: 1.25rem;
