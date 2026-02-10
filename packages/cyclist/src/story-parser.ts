@@ -666,7 +666,7 @@ export function getWorkflowPhases(workflowName: string, projectDir: string): Omi
             // Extract step number and name from filename: step-01-validate-prerequisites.md
             const match = file.match(/^step-(\d+)-(.+)\.md$/);
             const stepNum = match ? match[1] : '?';
-            const stepName = match ? match[2].replace(/-/g, ' ') : file;
+            const _stepName = match ? match[2].replace(/-/g, ' ') : file;
             return {
               name: `step-${stepNum}`,
               agent,

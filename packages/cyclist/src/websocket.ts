@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getSprintData, type SprintData } from './sprint-data.js';
+import { getSprintData } from './sprint-data.js';
 import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
 import {
   getCachedGitStatus,
@@ -177,11 +177,9 @@ const LIVERELOAD_DEBOUNCE_MS = 100;
 
 // Debounce timers for story and git (MSSCI-11943)
 let storyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
 let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let contextDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
-const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
 const SETTINGS_DEBOUNCE_MS = 100; // Settings debounce for config.local.yaml changes
 const CONTEXT_DEBOUNCE_MS = 2000; // Context debounce (expensive operation)
 
@@ -309,19 +307,6 @@ export function getClaudeClients(): Set<WebSocket> {
 // Todos Callback (Electron Mode Bridge)
 // =============================================================================
 // In Electron mode, main.ts updates todos when TodoWrite messages arrive.
-// This callback allows main.ts to push todo updates to WebSocket clients.
-
-type TodosUpdateCallback = (todos: TodoItem[]) => void;
-let todosUpdateCallback: TodosUpdateCallback | null = null;
-
-/**
- * Register callback to receive todo updates for WebSocket broadcast
- * Called by main.ts when TodoWrite messages are processed
- */
-export function setTodosUpdateCallback(callback: TodosUpdateCallback): void {
-  todosUpdateCallback = callback;
-}
-
 /**
  * Broadcast todos update to all connected WebSocket clients
  * Called by main.ts when todos state changes
@@ -1174,7 +1159,6 @@ export function setupWebSocketServers(
 
   // Set up settings file watcher for config.local.yaml changes
   // This enables real-time bidirectional sync between ControlBar and SettingsPanel
-  const configLocalPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
   if (existsSync(join(projectDir, '.pennyfarthing'))) {
     try {
       watch(join(projectDir, '.pennyfarthing'), { recursive: false }, (eventType, filename) => {
@@ -1270,7 +1254,7 @@ export function setupWebSocketServers(
                 claudeClearCallback();
               }
               // Reset context bar to 0%
-              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
+              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL', status: null, error: null, usableTokens: null, available: null });
               break;
 
             case 'setMode':
@@ -1292,7 +1276,7 @@ export function setupWebSocketServers(
               if (msg.agent && claudeClearAndReloadCallback) {
                 console.log('[WebSocket] TirePump: clearAndReload agent:', msg.agent);
                 // Reset context bar to 0%
-                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
+                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL', status: null, error: null, usableTokens: null, available: null });
                 try {
                   await claudeClearAndReloadCallback(msg.agent);
                   if (ws.readyState === WebSocket.OPEN) {
@@ -1413,7 +1397,7 @@ export function setupWebSocketServers(
             case 'clear':
               service.clearSession();
               // Reset context bar to 0%
-              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
+              broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL', status: null, error: null, usableTokens: null, available: null });
               break;
 
             case 'setMode':
@@ -1433,7 +1417,7 @@ export function setupWebSocketServers(
               if (msg.agent) {
                 console.log('[WebSocket] Web mode TirePump: clearAndReload agent:', msg.agent);
                 // Reset context bar to 0%
-                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL' } as any);
+                broadcastContextUpdate({ percent: 0, tokens: 0, baseline: 0, usablePercent: 0, tier: 'FULL', status: null, error: null, usableTokens: null, available: null });
                 // Clear the session
                 await service.clearSessionAsync();
                 // Send the agent command as a new message
@@ -1447,7 +1431,7 @@ export function setupWebSocketServers(
                   if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'clearAndReloadComplete', agent: msg.agent }));
                   }
-                } catch (err) {
+                } catch (_err) {
                   if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: 'error', error: 'clearAndReload failed' }));
                   }
@@ -1584,22 +1568,6 @@ function broadcastGitUpdate(allReposInfo: RepoGitInfo[]): void {
   }
 }
 
-// MSSCI-11943: Trigger git update with coalescing (500ms per AC2)
-// Now uses git-cache to prevent lock conflicts
-// NOTE: This is now only called for .git/HEAD changes (branch switches)
-// File changes are handled via tool event invalidation in git-cache.ts
-function triggerGitUpdate(projectDir: string): void {
-  if (gitCoalesceTimer) {
-    clearTimeout(gitCoalesceTimer);
-  }
-
-  gitCoalesceTimer = setTimeout(async () => {
-    // Use cache - it will refresh if stale
-    await getCachedGitStatus(projectDir);
-    // Broadcast happens via the onGitCacheRefresh callback
-    gitCoalesceTimer = null;
-  }, GIT_COALESCE_MS);
-}
 
 // Broadcast settings update to all connected clients
 // Exported for use by settings API after PATCH
