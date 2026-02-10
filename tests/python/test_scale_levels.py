@@ -14,8 +14,8 @@ BMAD Scale Levels:
 - Level 4: enterprise, multi-tenant, multiple products (40+ stories, full BMAD)
 
 Routing Rules:
-- L0-1 -> quick-spec workflow (or trivial for L0)
-- L2+ -> prd workflow (full planning)
+- L0 -> trivial workflow
+- L1+ -> prd workflow (full planning)
 """
 
 import pytest
@@ -141,11 +141,11 @@ class TestWorkflowRouting:
 
         assert get_workflow_for_scale_level(0) == "trivial"
 
-    def test_level_1_routes_to_quick_spec(self):
-        """Level 1 (simple feature) routes to quick-spec workflow."""
+    def test_level_1_routes_to_prd(self):
+        """Level 1 (simple feature) routes to prd workflow."""
         from pennyfarthing_scripts.workflow import get_workflow_for_scale_level
 
-        assert get_workflow_for_scale_level(1) == "quick-spec"
+        assert get_workflow_for_scale_level(1) == "prd"
 
     def test_level_2_routes_to_prd(self):
         """Level 2 (dashboard/multiple features) routes to PRD workflow."""

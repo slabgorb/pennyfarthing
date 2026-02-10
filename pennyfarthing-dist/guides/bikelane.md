@@ -27,7 +27,7 @@ One step loaded at a time. User approval at decision points. Supports tri-modal 
 | `sprint-planning` | Sprint planning facilitation |
 | `epics-and-stories` | Epic and story breakdown |
 | `release` | Release workflow with verification gates |
-| `ux-design`, `quick-dev`, `quick-spec`, `product-brief`, `project-context`, `implementation-readiness` | Other stepped workflows |
+| `ux-design`, `quick-dev`, `product-brief`, `project-context`, `implementation-readiness` | Other stepped workflows |
 
 ### Procedural — Flexible agent-guided processes
 
@@ -37,7 +37,6 @@ No fixed step sequence. Checklist-based, agent discretion on order.
 |----------|---------|
 | `brainstorming` | Structured problem-solving (62 techniques) |
 | `code-review` | Code review checklists |
-| `dev-story` | Story development guidance |
 | `retrospective` | Sprint retrospective |
 
 ## State Tracking

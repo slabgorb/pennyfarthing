@@ -46,13 +46,11 @@ flowchart TD
             IMPL["Implementation Readiness"]
             UXD["UX Design"]
             QDEV["Quick Dev"]
-            QSPEC["Quick Spec"]
         end
 
         subgraph Procedural["Procedural Workflows"]
             BRAIN["Brainstorming"]
             CREV["Code Review"]
-            DSTORY["Dev Story"]
             RETRO["Retrospective"]
         end
     end
@@ -424,7 +422,6 @@ flowchart TD
 | implementation-readiness | Architect | 5 | Verify implementation readiness |
 | ux-design | UX Designer | 6 | UX design workflow |
 | quick-dev | Dev | 3 | Quick development steps |
-| quick-spec | Architect | 3 | Quick specification |
 
 ---
 
@@ -464,7 +461,6 @@ flowchart TD
 |----------|-------|-------------|
 | brainstorming | PM | 62 techniques, 100+ ideas goal |
 | code-review | Reviewer | Structured code review process |
-| dev-story | Dev | Development story execution |
 | retrospective | SM | Sprint retrospective facilitation |
 
 ---

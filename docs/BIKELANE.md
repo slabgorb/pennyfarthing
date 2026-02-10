@@ -66,7 +66,6 @@ Progressive disclosure workflows that execute one step at a time with explicit u
 - `implementation-readiness` - Implementation readiness assessment
 - `ux-design` - User experience design
 - `quick-dev` - Quick development planning
-- `quick-spec` - Quick technical specification
 
 ### Procedural Workflows
 
@@ -81,13 +80,11 @@ Flexible agent-guided processes without strict step sequences. These workflows p
 **Use Cases:**
 - Brainstorming sessions
 - Code reviews
-- Story development
 - Retrospectives
 
 **Available Workflows:**
 - `brainstorming` - Structured problem-solving brainstorm session
 - `code-review` - Code review checklists and patterns
-- `dev-story` - Story development guidance
 - `retrospective` - Sprint retrospective facilitation
 
 ## Quick Start
@@ -435,7 +432,6 @@ The following BMAD workflows are included:
 | epics-and-stories | stepped | single | Epic and story breakdown |
 | implementation-readiness | stepped | single | Implementation readiness assessment |
 | ux-design | stepped | single | User experience design |
-| dev-story | stepped | single | Story development guidance |
 | sprint-planning | stepped | single | Sprint planning facilitation |
 | retrospective | procedural | - | Sprint retrospective |
 | project-context | stepped | single | Project context documentation |
@@ -577,7 +573,7 @@ Place gates after steps that:
 | `trivial` | Quick fixes without full TDD ceremony | Dev, Reviewer |
 | `agent-docs` | Agent file and process documentation updates | Tech Writer |
 
-### Stepped Workflows (11)
+### Stepped Workflows (10)
 
 | Workflow | Description | Modes | Agent |
 |----------|-------------|-------|-------|
@@ -591,15 +587,13 @@ Place gates after steps that:
 | `implementation-readiness` | Implementation readiness assessment | single | Architect |
 | `ux-design` | User experience design | single | UX Designer |
 | `quick-dev` | Quick development planning | single | Dev |
-| `quick-spec` | Quick technical specification | single | Architect |
 
-### Procedural Workflows (4)
+### Procedural Workflows (3)
 
 | Workflow | Description | Agent |
 |----------|-------------|-------|
 | `brainstorming` | Structured problem-solving brainstorm | PM |
 | `code-review` | Code review checklists and patterns | Reviewer |
-| `dev-story` | Story development guidance | Dev |
 | `retrospective` | Sprint retrospective facilitation | SM |
 
 ## Troubleshooting
