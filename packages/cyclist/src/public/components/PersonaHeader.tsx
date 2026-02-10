@@ -15,7 +15,7 @@
  * - Accessible with ARIA labels
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersona } from '../hooks/usePersona';
@@ -73,6 +73,25 @@ export default function PersonaHeader(): React.ReactElement {
   const quote = persona?.quote;
   const tandemAgent = persona?.tandemAgent;
 
+  // Observation pulse: one-shot animation on primary portrait when backseat starts thinking
+  const [observationPulse, setObservationPulse] = useState(false);
+  const prevThinkingRef = useRef(false);
+  const portraitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wasThinking = prevThinkingRef.current;
+    const isThinking = tandemAgent?.isThinking ?? false;
+    prevThinkingRef.current = isThinking;
+
+    if (!wasThinking && isThinking) {
+      setObservationPulse(true);
+    }
+  }, [tandemAgent?.isThinking]);
+
+  const handlePulseEnd = useCallback(() => {
+    setObservationPulse(false);
+  }, []);
+
   const handleOpenPopup = useCallback(() => {
     setIsPopupOpen(true);
   }, []);
@@ -103,7 +122,12 @@ export default function PersonaHeader(): React.ReactElement {
           onKeyDown={(e) => e.key === 'Enter' && handleOpenPopup()}
         >
           <div className="persona-portrait-group">
-            <div className="persona-portrait" data-testid="persona-portrait">
+            <div
+              className={`persona-portrait${observationPulse ? ' avatar-observation-pulse' : ''}`}
+              data-testid="persona-portrait"
+              ref={portraitRef}
+              onAnimationEnd={handlePulseEnd}
+            >
               {slug && theme && !portraitError ? (
                 <img
                   src={`/portraits/${theme}/medium/${slug}.png`}
@@ -124,6 +148,13 @@ export default function PersonaHeader(): React.ReactElement {
                 isActive={true}
                 isThinking={tandemAgent.isThinking}
               />
+            )}
+            {tandemAgent && (
+              <span className="visually-hidden" role="status" aria-live="polite" data-testid="tandem-sr-status">
+                {tandemAgent.isThinking
+                  ? `${tandemAgent.character} is thinking`
+                  : `${tandemAgent.character} observing`}
+              </span>
             )}
           </div>
           <div className="persona-info">
