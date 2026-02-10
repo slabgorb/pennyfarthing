@@ -19,6 +19,7 @@ from pennyfarthing_scripts.validate import ValidateReport
 VALIDATORS = {
     "sprint": "pennyfarthing_scripts.validate.adapters.sprint",
     "schema": "pennyfarthing_scripts.validate.adapters.schema",
+    "agent": "pennyfarthing_scripts.validate.adapters.agent",
 }
 
 
@@ -82,6 +83,7 @@ def validate(ctx, fix: bool, strict: bool):
     Validators:
       sprint  - Sprint YAML (epics, initiatives, future, current-sprint)
       schema  - XML schema (sessions, skills, workflow steps)
+      agent   - Agent definitions (required sections, model values, subagent refs)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
@@ -111,6 +113,16 @@ def validate_sprint(ctx):
 def validate_schema(ctx):
     """Validate XML schema files (sessions, skills, workflow steps)."""
     report = _run_validator("schema", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("agent")
+@click.pass_context
+def validate_agent(ctx):
+    """Validate agent definition files (required sections, model values, refs)."""
+    report = _run_validator("agent", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)
