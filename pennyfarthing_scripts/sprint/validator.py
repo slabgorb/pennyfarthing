@@ -78,6 +78,10 @@ REQUIRED_STORY_FIELDS = {"id", "title", "status", "points"}
 # Required fields for epic
 REQUIRED_EPIC_FIELDS = {"id", "title"}
 
+# Required fields for epic shard files (write-time validation, ADR-0022)
+REQUIRED_EPIC_SHARD_FIELDS = {"id", "title", "status", "stories"}
+REQUIRED_SHARD_STORY_FIELDS = {"id", "title", "points", "status"}
+
 # Required fields for future.yaml initiative
 REQUIRED_INITIATIVE_FIELDS = {"name", "status"}
 
@@ -262,6 +266,86 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
     return result
 
 
+def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
+    """Validate an epic shard dict before writing to disk.
+
+    Enforces stricter requirements than validate_epic() since shards
+    are standalone files that must be self-contained.
+
+    Validates:
+    - Required fields present (id, title, status, stories)
+    - stories is a list
+    - Each story has required fields (id, title, points, status)
+    - No duplicate story IDs within the epic
+    - jira key follows MSSCI-NNNNN pattern if present
+
+    Args:
+        epic: Epic shard dict to validate
+
+    Returns:
+        ValidationResult with any errors found
+    """
+    result = ValidationResult(valid=True)
+
+    # Check required shard fields
+    for field_name in REQUIRED_EPIC_SHARD_FIELDS:
+        if field_name not in epic:
+            result.add_error(
+                f"Missing required field: {field_name}",
+                f"epic.{field_name}",
+            )
+
+    # Reject epic- prefix in ID (ADR-0022: reference prefix should not be baked into value)
+    if "id" in epic:
+        epic_id_val = str(epic["id"])
+        if epic_id_val.startswith("epic-"):
+            result.add_error(
+                f"Epic ID '{epic_id_val}' starts with 'epic-' prefix. "
+                "Use the numeric ID (e.g., '94' not 'epic-94')",
+                "epic.id",
+            )
+
+    # Validate jira key format if present
+    if "jira" in epic:
+        jira_key = str(epic["jira"])
+        if not JIRA_KEY_PATTERN.match(jira_key):
+            result.add_error(
+                f"Invalid Jira key format '{jira_key}'. Expected MSSCI-NNNNN",
+                "epic.jira",
+            )
+
+    # Validate stories field
+    if "stories" in epic:
+        stories = epic["stories"]
+        if not isinstance(stories, list):
+            result.add_error(
+                "'stories' must be a list",
+                "epic.stories",
+            )
+        else:
+            seen_ids: set[str] = set()
+            epic_id = epic.get("id", "epic")
+            for idx, story in enumerate(stories):
+                story_id = story.get("id")
+                if story_id:
+                    if story_id in seen_ids:
+                        result.add_error(
+                            f"Duplicate story ID '{story_id}' within epic",
+                            f"epic.stories[{idx}].id",
+                        )
+                    seen_ids.add(story_id)
+
+                # Check required story fields
+                for field_name in REQUIRED_SHARD_STORY_FIELDS:
+                    if field_name not in story:
+                        result.add_error(
+                            f"Missing required field: {field_name}",
+                            f"{epic_id}.stories[{idx}].{field_name}",
+                        )
+
+    return result
+
+
 def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
     """Validate complete sprint YAML including all epics and stories.
 
@@ -433,13 +517,15 @@ def validate_future(data: dict[str, Any]) -> ValidationResult:
     return result
 
 
-def validate_sprint_file(file_path: Path) -> ValidationResult:
+def validate_sprint_file(file_path: Path, *, strict: bool = False) -> ValidationResult:
     """Validate a sprint YAML file from disk.
 
-    Loads the file and validates its contents.
+    Loads the file and validates its contents. In strict mode, loader
+    warnings (e.g., unresolvable shard refs) are promoted to errors.
 
     Args:
         file_path: Path to sprint YAML file
+        strict: If True, treat loader warnings as validation errors
 
     Returns:
         ValidationResult with any errors (including load errors)
@@ -509,12 +595,22 @@ def validate_sprint_file(file_path: Path) -> ValidationResult:
         )
         return result
 
-    # Merge sharded epic files if present
+    # Merge sharded epic files if present, capturing warnings in strict mode
     from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
-    data = _merge_epic_shards(data, file_path.parent)
+    if strict:
+        import warnings as _warnings
+        with _warnings.catch_warnings(record=True) as caught:
+            _warnings.simplefilter("always")
+            data = _merge_epic_shards(data, file_path.parent)
+        for w in caught:
+            result.add_error(str(w.message), str(file_path))
+    else:
+        data = _merge_epic_shards(data, file_path.parent)
 
     # Validate loaded data
-    return validate_full_sprint(data)
+    full_result = validate_full_sprint(data)
+    result.merge(full_result)
+    return result
 
 
 def format_validation_errors(result: ValidationResult) -> str:
