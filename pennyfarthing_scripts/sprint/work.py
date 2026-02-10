@@ -7,11 +7,8 @@ Provides functions for starting and managing work on stories.
 from typing import Any
 
 from pennyfarthing_scripts.sprint.loader import (
-    find_epic,
-    find_story,
     get_stories_by_status,
     get_story_by_id,
-    load_sprint,
 )
 
 
@@ -220,7 +217,7 @@ def main(args: list[str] | None = None) -> int:
         print(f"Story: {story.get('id')}")
         print(f"Title: {story.get('title')}")
         print(f"Points: {story.get('points')}")
-        print(f"Status: Available")
+        print("Status: Available")
         return 0
     else:
         print(f"Not available: {result.get('error') or result.get('reason')}", file=sys.stderr)

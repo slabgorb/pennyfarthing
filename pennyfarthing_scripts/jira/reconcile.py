@@ -23,7 +23,6 @@ from pennyfarthing_scripts.jira.client import (
     JIRA_PROJECT,
     get_client,
     get_jira_field,
-    map_jira_to_status,
     map_status_to_jira,
 )
 from pennyfarthing_scripts.sprint.loader import load_sprint

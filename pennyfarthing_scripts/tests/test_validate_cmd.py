@@ -13,20 +13,15 @@ Acceptance Criteria:
 """
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
 
 from pennyfarthing_scripts.sprint.validate_cmd import (
-    FormatIssue,
-    ValidateResult,
     check_format_drift,
     validate_command,
     validate_sprint_yaml,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -382,7 +377,7 @@ class TestFixFlag:
         assert len(issues_before) > 0
 
         # Run validate with --fix
-        result = validate_sprint_yaml(scrambled_keys_file, fix=True)
+        validate_sprint_yaml(scrambled_keys_file, fix=True)
 
         # After fix, re-check should show no drift
         issues_after = check_format_drift(scrambled_keys_file)
@@ -390,7 +385,7 @@ class TestFixFlag:
 
     def test_fix_converts_to_block_scalars(self, wrong_string_style_file: Path) -> None:
         """--fix should convert multiline strings to block scalar style."""
-        result = validate_sprint_yaml(wrong_string_style_file, fix=True)
+        validate_sprint_yaml(wrong_string_style_file, fix=True)
 
         # Read back and check for block scalar
         content = wrong_string_style_file.read_text()

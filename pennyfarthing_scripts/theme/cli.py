@@ -225,8 +225,9 @@ def create(name: str, base: str | None, user: bool):
     Arguments:
       NAME  - Name for the new theme (lowercase, hyphens allowed)
     """
-    import yaml
     from pathlib import Path
+
+    import yaml
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.common.themes import (
@@ -282,5 +283,5 @@ def create(name: str, base: str | None, user: bool):
     click.echo(f"  File: {target_path}")
     click.echo()
     click.echo("Next steps:")
-    click.echo(f"  1. Edit the theme file to customize your agents")
+    click.echo("  1. Edit the theme file to customize your agents")
     click.echo(f"  2. Run 'pf theme set {name}' to activate")

@@ -44,8 +44,8 @@ def _common_options(fn):
 
 def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: tuple, branch: str, skip_type: tuple = ()):
     """Run analysis and return result."""
-    from pennyfarthing_scripts.hotspots.analyze import analyze_all_repos, analyze_repo
     from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.hotspots.analyze import analyze_all_repos, analyze_repo
 
     excludes = list(exclude) if exclude else None
     skip_types = list(skip_type) if skip_type else None
@@ -90,7 +90,7 @@ def _output_result(result, fmt: str, output_file: str | None, top: int, mode: st
         format_file_table,
         format_summary,
     )
-    from pennyfarthing_scripts.hotspots.models import HotspotResult, MultiRepoHotspotResult
+    from pennyfarthing_scripts.hotspots.models import MultiRepoHotspotResult
 
     # Collect all repo results
     if isinstance(result, MultiRepoHotspotResult):

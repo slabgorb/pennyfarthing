@@ -22,11 +22,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from hooks import (
     find_project_root,
-    send_to_cyclist,
-    load_settings,
     is_cyclist_running,
+    load_settings,
+    send_to_cyclist,
 )
-
 
 # Once-per-session guard
 _welcome_shown_file: Path | None = None

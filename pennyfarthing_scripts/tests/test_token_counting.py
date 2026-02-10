@@ -15,12 +15,11 @@ Acceptance Criteria:
 This file tests the Python side (AC1, AC2, AC4).
 """
 
-import pytest
+import json
 from pathlib import Path
 from unittest.mock import patch
-import yaml
-import json
 
+import yaml
 
 # =============================================================================
 # AC1: Each component has an approximate token count
@@ -32,7 +31,7 @@ class TestComponentTokenCounting:
 
     def test_load_tier_components_returns_token_counts(self, tmp_path: Path) -> None:
         """Test load_tier_components returns token counts for each component."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -48,7 +47,7 @@ class TestComponentTokenCounting:
 
     def test_token_counts_include_all_full_tier_components(self, tmp_path: Path) -> None:
         """Test FULL tier returns token counts for all components."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -78,7 +77,7 @@ class TestComponentTokenCounting:
 
     def test_token_counts_are_positive_for_loaded_components(self, tmp_path: Path) -> None:
         """Test that loaded components have positive token counts."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -97,7 +96,7 @@ class TestComponentTokenCounting:
 
     def test_token_counts_zero_for_missing_components(self, tmp_path: Path) -> None:
         """Test that missing optional components have zero token counts."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         # Minimal setup - only agent definition
         pf_dir = tmp_path / ".pennyfarthing"
@@ -120,7 +119,7 @@ class TestComponentTokenCounting:
 
     def test_refresh_tier_only_counts_included_components(self, tmp_path: Path) -> None:
         """Test REFRESH tier only includes counts for its components."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -145,7 +144,7 @@ class TestComponentTokenCounting:
 
     def test_handoff_tier_only_counts_included_components(self, tmp_path: Path) -> None:
         """Test HANDOFF tier only includes counts for its components."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -164,7 +163,7 @@ class TestComponentTokenCounting:
 
     def test_minimal_tier_only_counts_workflow_state(self, tmp_path: Path) -> None:
         """Test MINIMAL tier only counts workflow state."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -187,7 +186,7 @@ class TestComponentTokenCounting:
 
     def test_total_tokens_is_sum_of_components(self, tmp_path: Path) -> None:
         """Test that total_tokens equals sum of component counts."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier
+        from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
         self._setup_complete_project(tmp_path)
 
@@ -464,7 +463,11 @@ def hello():
 
     def test_component_token_count_within_10_percent_of_actual(self, tmp_path: Path) -> None:
         """Test component token counts are within 10% of actual tiktoken count."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier, estimate_tokens
+        from pennyfarthing_scripts.prime.tiers import (
+            ContextTier,
+            estimate_tokens,
+            load_tier_components,
+        )
 
         # Create a known-content project
         pf_dir = tmp_path / ".pennyfarthing"
@@ -495,7 +498,10 @@ def hello():
 
     def test_total_tokens_within_10_percent_of_sum(self, tmp_path: Path) -> None:
         """Test total_tokens is within 10% of manually summed content."""
-        from pennyfarthing_scripts.prime.tiers import load_tier_components, ContextTier, estimate_tokens
+        from pennyfarthing_scripts.prime.tiers import (
+            ContextTier,
+            load_tier_components,
+        )
 
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()

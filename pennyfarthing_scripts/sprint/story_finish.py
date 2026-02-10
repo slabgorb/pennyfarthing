@@ -24,7 +24,6 @@ from typing import Any
 from pennyfarthing_scripts.sprint.loader import find_epic, find_story
 from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
 
-
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 

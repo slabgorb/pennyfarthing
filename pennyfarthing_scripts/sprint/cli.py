@@ -150,7 +150,7 @@ def work(story_id: str | None, dry_run: bool):
         click.echo(f"Story: {story.get('id')}")
         click.echo(f"Title: {story.get('title')}")
         click.echo(f"Points: {story.get('points')}")
-        click.echo(f"Status: Available")
+        click.echo("Status: Available")
     else:
         error_msg = result.get("error") or result.get("reason")
         raise click.ClickException(f"Not available: {error_msg}")
@@ -334,12 +334,12 @@ def story_claim(story_id: str, claim: bool):
 
 
 # Register story-add as story.add
-from pennyfarthing_scripts.sprint.story_add import story_add_command
+from pennyfarthing_scripts.sprint.story_add import story_add_command  # noqa: E402
 
 story.add_command(story_add_command, "add")
 
 # Register story-update as story.update
-from pennyfarthing_scripts.sprint.story_update import story_update_command
+from pennyfarthing_scripts.sprint.story_update import story_update_command  # noqa: E402
 
 story.add_command(story_update_command, "update")
 
@@ -501,7 +501,6 @@ def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
       pf sprint epic cancel epic-42 --jira
     """
     from pennyfarthing_scripts.common.config import get_project_root
-    from pennyfarthing_scripts.sprint.loader import load_sprint
     from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
 
     root = get_project_root()
@@ -583,7 +582,7 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
         init_name = init_data.get("name", init_file.stem)
         epics = init_data.get("epics", [])
 
-        for i, e in enumerate(epics):
+        for _i, e in enumerate(epics):
             matched = False
             epic_dict = None
 
@@ -663,6 +662,8 @@ def epic_archive(epic_id: str | None, dry_run: bool, jira: bool):
     # Lazy import
     from pennyfarthing_scripts.sprint.archive_epic import (
         archive_all_completed,
+    )
+    from pennyfarthing_scripts.sprint.archive_epic import (
         archive_epic as do_archive_epic,
     )
 
@@ -757,7 +758,6 @@ def epic_remove(epic_id: str, dry_run: bool):
       pf sprint epic remove epic-41
       pf sprint epic remove epic-41 --dry-run
     """
-    from pathlib import Path
 
     import yaml
 
@@ -960,7 +960,6 @@ def epic_promote(epic_id: str):
         click.echo(f"Removed {original_id} from {source_init_file.name}")
     else:
         # Initiative is empty — remove shard and future.yaml reference
-        init_name = init_data.get("name", "")
         init_slug = source_init_file.stem.replace("initiative-", "")
         source_init_file.unlink()
         click.echo(f"Removed empty initiative shard: {source_init_file.name}")
@@ -987,7 +986,7 @@ def epic_promote(epic_id: str):
 
 
 # Register epic-add as epic.add
-from pennyfarthing_scripts.sprint.epic_add import epic_add_command
+from pennyfarthing_scripts.sprint.epic_add import epic_add_command  # noqa: E402
 
 epic.add_command(epic_add_command, "add")
 
@@ -1161,7 +1160,7 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
         return
 
     # Cancel all epics
-    for i, e in enumerate(epics):
+    for _i, e in enumerate(epics):
         if isinstance(e, str):
             shard = _epic_shard_path(sprint_dir, e)
             if shard.exists():
@@ -1216,7 +1215,6 @@ def check(id: str):
 
     from pennyfarthing_scripts.sprint.loader import (
         find_epic,
-        get_all_stories,
         load_sprint,
     )
     from pennyfarthing_scripts.sprint.work import check_story, get_next_story
@@ -1781,7 +1779,7 @@ completed:
     click.echo(f"Created {archive_file}")
 
     click.echo("")
-    click.echo(f"New sprint initialized:")
+    click.echo("New sprint initialized:")
     click.echo(f"  Name: TO Sprint {sprint_yyww}")
     click.echo(f"  Jira ID: {jira_id}")
     click.echo(f"  Dates: {start_date} to {end_date}")
@@ -1852,7 +1850,7 @@ sprint.commands["epic-add"].hidden = True
 
 
 # Register validate command from validate_cmd module
-from pennyfarthing_scripts.sprint.validate_cmd import validate_command
+from pennyfarthing_scripts.sprint.validate_cmd import validate_command  # noqa: E402
 
 sprint.add_command(validate_command)
 

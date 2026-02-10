@@ -14,16 +14,14 @@ Story: MSSCI-12409 - Hook consistency and relay mode compatibility
 """
 
 import json
-import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 # =============================================================================
 # Port File Constants

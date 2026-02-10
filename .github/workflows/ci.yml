@@ -77,6 +77,27 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+  python-lint:
+    runs-on: [self-hosted, Ubuntu, Common]
+    name: Python Lint (Ruff)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Ruff linter
+        run: ruff check pennyfarthing_scripts/
+
   python-benchmark:
     runs-on: [self-hosted, Ubuntu, Common]
     name: Python CLI Startup Benchmark

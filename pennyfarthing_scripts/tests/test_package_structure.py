@@ -10,12 +10,7 @@ These tests verify:
 5. Backwards compatibility for existing imports
 """
 
-import importlib
 import sys
-from pathlib import Path
-from typing import Any
-
-import pytest
 
 
 class TestCommonPackage:
@@ -126,8 +121,6 @@ class TestJiraPackage:
         from pennyfarthing_scripts.jira import (
             JiraClient,
             extract_jira_key,
-            map_status_to_jira,
-            map_jira_to_status,
         )
 
         assert JiraClient is not None
@@ -136,9 +129,7 @@ class TestJiraPackage:
     def test_jira_backwards_compatibility(self) -> None:
         """Old-style imports should still work."""
         # These imports should work for backwards compatibility
-        from pennyfarthing_scripts.jira import JiraClient
-        from pennyfarthing_scripts.jira import get_issue
-        from pennyfarthing_scripts.jira import STATUS_TO_JIRA
+        from pennyfarthing_scripts.jira import STATUS_TO_JIRA, JiraClient, get_issue
 
         assert JiraClient is not None
         assert callable(get_issue)
@@ -188,10 +179,8 @@ class TestSprintPackage:
     def test_sprint_package_reexports(self) -> None:
         """sprint/__init__.py should re-export commonly used items."""
         from pennyfarthing_scripts.sprint import (
-            load_sprint,
             find_epic,
-            find_story,
-            get_all_stories,
+            load_sprint,
         )
 
         assert callable(load_sprint)
@@ -199,9 +188,7 @@ class TestSprintPackage:
 
     def test_sprint_backwards_compatibility(self) -> None:
         """Old-style imports should still work."""
-        from pennyfarthing_scripts.sprint import load_sprint
-        from pennyfarthing_scripts.sprint import find_epic
-        from pennyfarthing_scripts.sprint import load_current_sprint
+        from pennyfarthing_scripts.sprint import find_epic, load_current_sprint, load_sprint
 
         assert callable(load_sprint)
         assert callable(find_epic)

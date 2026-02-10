@@ -16,21 +16,11 @@ Acceptance Criteria:
 """
 
 import asyncio
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from pennyfarthing_scripts.git.status_all import (
-    RepoStatus,
-    format_status_brief,
-    format_status_full,
-    format_summary,
-    get_all_repo_status,
-    get_repo_status,
-)
 from pennyfarthing_scripts.git.create_branches import (
     BranchAction,
     BranchResult,
@@ -40,7 +30,14 @@ from pennyfarthing_scripts.git.create_branches import (
     filter_repos,
     format_results,
 )
-
+from pennyfarthing_scripts.git.status_all import (
+    RepoStatus,
+    format_status_brief,
+    format_status_full,
+    format_summary,
+    get_all_repo_status,
+    get_repo_status,
+)
 
 # =============================================================================
 # Test Fixtures
@@ -793,8 +790,8 @@ class TestCrossPlatformCompatibility:
     def test_no_shell_specific_commands(self) -> None:
         """Implementation should not use shell-specific commands."""
         # This is more of a code review check, but we can verify the modules exist
-        import pennyfarthing_scripts.git.status_all as status_mod
         import pennyfarthing_scripts.git.create_branches as branch_mod
+        import pennyfarthing_scripts.git.status_all as status_mod
 
         # Modules should exist and be importable
         assert status_mod is not None

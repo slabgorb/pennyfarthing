@@ -7,7 +7,6 @@ Follows ADR-0008 result pattern — structured dataclasses with success/error fi
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 
 
 @dataclass

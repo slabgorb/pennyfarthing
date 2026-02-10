@@ -35,21 +35,21 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-from pennyfarthing_scripts.prime.loader import (
+from pennyfarthing_scripts.prime.loader import (  # noqa: E402
     load_agent_definition,
     load_behavior_guide,
     load_session_context,
     load_sidecars,
     load_sprint_context,
 )
-from pennyfarthing_scripts.prime.persona import (
+from pennyfarthing_scripts.prime.persona import (  # noqa: E402
     format_persona_compressed,
     get_crew_manifest,
     get_user_title,
     is_character_voice_enabled,
     load_persona,
 )
-from pennyfarthing_scripts.prime.workflow import detect_workflow_state
+from pennyfarthing_scripts.prime.workflow import detect_workflow_state  # noqa: E402
 
 
 class ContextTier(Enum):
@@ -78,7 +78,7 @@ def tier_from_string(value: str) -> ContextTier:
         return ContextTier(normalized)
     except ValueError:
         valid = ", ".join(t.value for t in ContextTier)
-        raise ValueError(f"Invalid tier '{value}'. Must be one of: {valid}")
+        raise ValueError(f"Invalid tier '{value}'. Must be one of: {valid}") from None
 
 
 def load_tier_components(

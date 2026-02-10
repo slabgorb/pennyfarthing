@@ -29,11 +29,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from hooks import (
-    read_stdin_json,
-    output_hook_response,
     HookResponse,
+    output_hook_response,
+    read_stdin_json,
 )
-
 
 # =============================================================================
 # File Type Detection
