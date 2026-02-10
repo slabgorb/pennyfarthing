@@ -21,13 +21,14 @@ import { fileURLToPath } from 'node:url';
 
 import type { WorkflowPhase } from './workflow-schema.js';
 
-// Import tandem lifecycle functions (to be implemented by Dev)
+// Import tandem lifecycle functions
 import {
   spawnBackseat,
   terminateBackseat,
   getActiveBackseat,
   registerCleanupHandler,
   executeCleanupHandlers,
+  _resetForTesting,
 } from './tandem-lifecycle.js';
 
 import type {
@@ -87,6 +88,7 @@ const PHASE_WITHOUT_TANDEM: WorkflowPhase = {
 describe('95-2: Tandem Lifecycle', () => {
 
   beforeEach(() => {
+    _resetForTesting();
     if (existsSync(TEST_DIR)) {
       rmSync(TEST_DIR, { recursive: true });
     }

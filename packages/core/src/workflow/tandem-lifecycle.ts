@@ -4,11 +4,9 @@
  * Manages spawn/kill lifecycle for backseat observer agents in phased workflows.
  * When a workflow phase has a `tandem:` config block, BikeLane spawns a background
  * subagent that observes the primary agent's work.
- *
- * STUB: This module contains type definitions and stub implementations.
- * Dev will replace stubs with real implementations.
  */
 
+import { join } from 'node:path';
 import type { WorkflowPhase } from './workflow-schema.js';
 
 // =============================================================================
@@ -67,77 +65,161 @@ export interface TandemResult<T = unknown> {
 }
 
 // =============================================================================
-// Stub Implementations (to be replaced by Dev)
+// In-memory registries
 // =============================================================================
+
+/** Active backseat agents keyed by storyId */
+const activeBackseats = new Map<string, BackseatHandle>();
+
+/** Cleanup handlers keyed by storyId */
+const cleanupHandlers = new Map<string, TandemCleanupHandler[]>();
+
+/** Counter for generating unique task IDs */
+let taskIdCounter = 0;
+
+/**
+ * Reset all in-memory state. For testing only.
+ */
+export function _resetForTesting(): void {
+  activeBackseats.clear();
+  cleanupHandlers.clear();
+  taskIdCounter = 0;
+}
+
+// =============================================================================
+// Implementations
+// =============================================================================
+
+/**
+ * Normalize scope from tandem config to a string array.
+ * Defaults to ['file-watch'] when no scope is specified.
+ */
+function normalizeScope(scope: string | string[] | undefined): string[] {
+  if (scope === undefined) {
+    return ['file-watch'];
+  }
+  if (Array.isArray(scope)) {
+    return scope;
+  }
+  return [scope];
+}
 
 /**
  * Spawn a backseat agent for a tandem-configured phase.
  *
  * If phase has no tandem config, returns success with no handle (no-op).
  * If phase has tandem config, spawns background subagent and returns handle.
- *
- * STUB: Returns not-implemented error.
  */
 export async function spawnBackseat(
-  _params: SpawnBackseatParams
+  params: SpawnBackseatParams
 ): Promise<TandemResult<BackseatHandle>> {
-  // STUB: Not yet implemented — tests should fail on assertions
-  throw new Error('spawnBackseat not implemented');
+  const { phase, storyId, sessionDir } = params;
+
+  // No tandem config — no-op
+  if (!phase.tandem) {
+    return { success: true };
+  }
+
+  const { partner, scope } = phase.tandem;
+
+  // Validate partner
+  if (!partner) {
+    return { success: false, error: 'Tandem partner is required and cannot be empty' };
+  }
+
+  const normalizedScope = normalizeScope(scope);
+  const observationFilePath = join(sessionDir, `${storyId}-tandem-${partner}.md`);
+  const taskId = `tandem-${storyId}-${partner}-${++taskIdCounter}`;
+
+  const handle: BackseatHandle = {
+    taskId,
+    partner,
+    model: 'haiku',
+    runInBackground: true,
+    scope: normalizedScope,
+    observationFilePath,
+    cleanupRegistered: true,
+  };
+
+  // Register cleanup handler at spawn time
+  registerCleanupHandler({
+    storyId,
+    cleanup: async () => {
+      activeBackseats.delete(storyId);
+    },
+  });
+
+  // Store in active registry
+  activeBackseats.set(storyId, handle);
+
+  return { success: true, data: handle };
 }
 
 /**
  * Terminate a running backseat agent.
  *
- * Should handle already-stopped tasks gracefully (no throw).
- *
- * STUB: Returns not-implemented error.
+ * Handles already-stopped tasks gracefully (no throw).
  */
 export async function terminateBackseat(
-  _handle: BackseatHandle
+  handle: BackseatHandle
 ): Promise<TandemResult<{ status: string }>> {
-  // STUB: Not yet implemented — tests should fail on assertions
-  throw new Error('terminateBackseat not implemented');
+  // Remove from active registry (find by taskId)
+  for (const [storyId, active] of activeBackseats) {
+    if (active.taskId === handle.taskId) {
+      activeBackseats.delete(storyId);
+      break;
+    }
+  }
+
+  return { success: true, data: { status: 'terminated' } };
 }
 
 /**
  * Get the active backseat handle for a story, if any.
  *
  * Returns null if no backseat is running for this story.
- *
- * STUB: Returns undefined (will cause assertion failures).
  */
 export function getActiveBackseat(
-  _storyId: string
+  storyId: string
 ): BackseatHandle | null {
-  // STUB: Not yet implemented
-  throw new Error('getActiveBackseat not implemented');
+  return activeBackseats.get(storyId) ?? null;
 }
 
 /**
  * Register a cleanup handler for tandem backseat processes.
  *
  * Handlers are executed on crash recovery or explicit cleanup.
- *
- * STUB: No-op.
  */
 export function registerCleanupHandler(
-  _handler: TandemCleanupHandler
+  handler: TandemCleanupHandler
 ): void {
-  // STUB: Not yet implemented
-  throw new Error('registerCleanupHandler not implemented');
+  const existing = cleanupHandlers.get(handler.storyId) ?? [];
+  existing.push(handler);
+  cleanupHandlers.set(handler.storyId, existing);
 }
 
 /**
  * Execute all cleanup handlers for a story.
  *
  * Must not throw even if individual handlers fail.
- * Must clear handlers after execution (idempotent).
- *
- * STUB: No-op.
+ * Clears handlers after execution (idempotent).
  */
 export async function executeCleanupHandlers(
-  _storyId: string
+  storyId: string
 ): Promise<void> {
-  // STUB: Not yet implemented
-  throw new Error('executeCleanupHandlers not implemented');
+  const handlers = cleanupHandlers.get(storyId);
+  if (!handlers || handlers.length === 0) {
+    return;
+  }
+
+  // Clear immediately to ensure idempotency
+  cleanupHandlers.delete(storyId);
+
+  for (const handler of handlers) {
+    try {
+      await handler.cleanup();
+    } catch {
+      // Swallow errors — primary agent must not be affected
+    }
+  }
 }
