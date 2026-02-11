@@ -323,3 +323,11 @@ validate-sprint *args:
 
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
+
+# =============================================================================
+# BikeRack
+# =============================================================================
+
+# Start BikeRack mode (WheelHub + Claude CLI)
+bikerack:
+    .venv/bin/python -m pennyfarthing_scripts.bikerack start
