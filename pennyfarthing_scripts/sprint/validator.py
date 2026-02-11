@@ -239,6 +239,15 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
                 f"{base_path}.{field_name}",
             )
 
+    # Reject non-string IDs (YAML parses bare integers like `id: 87` as int,
+    # which crashes Cyclist's sprint-data.ts — epicId.match() fails on non-strings)
+    if "id" in epic and not isinstance(epic["id"], str):
+        result.add_error(
+            f"Epic ID must be a string, got {type(epic['id']).__name__} ({epic['id']!r}). "
+            "Quote it in YAML (e.g., id: \"87\" not id: 87)",
+            f"{base_path}.id",
+        )
+
     # Validate stories if present
     if "stories" in epic:
         seen_in_epic: set[str] = set()
@@ -294,6 +303,15 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
                 f"Missing required field: {field_name}",
                 f"epic.{field_name}",
             )
+
+    # Reject non-string IDs (YAML parses bare integers like `id: 87` as int,
+    # which crashes Cyclist's sprint-data.ts checkEpicContext — epicId.match() fails)
+    if "id" in epic and not isinstance(epic["id"], str):
+        result.add_error(
+            f"Epic ID must be a string, got {type(epic['id']).__name__} ({epic['id']!r}). "
+            "Quote it in YAML (e.g., id: \"87\" not id: 87)",
+            "epic.id",
+        )
 
     # Reject epic- prefix in ID (ADR-0022: reference prefix should not be baked into value)
     if "id" in epic:
