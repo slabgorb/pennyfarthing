@@ -1546,6 +1546,16 @@
   opacity: 0.7;
 }
 
+/* Completed Epics Section */
+.enhanced-sprint-panel [data-section="completed-epics"] .epic-group {
+  opacity: 0.5;
+  border-color: var(--border-color, #3c3c3c);
+}
+
+.enhanced-sprint-panel [data-section="completed-epics"] .epic-group:hover {
+  opacity: 0.7;
+}
+
 /* Epic Header */
 .enhanced-sprint-panel .epic-header {
   display: flex;
