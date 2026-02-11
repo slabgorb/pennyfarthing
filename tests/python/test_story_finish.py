@@ -181,7 +181,7 @@ class TestFinishStoryYamlUpdate:
                 if story.get("id") == "83-2":
                     assert story["status"] == "done"
                     assert "completed" in story
-                    assert "assigned_to" not in story
+                    assert story["assigned_to"] == "dev-agent"
                     return
         pytest.fail("Story 83-2 not found in sprint data after finish")
 

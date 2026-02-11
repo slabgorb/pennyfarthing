@@ -37,14 +37,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "System Architect - Technical design and architecture"
   },
   {
-    "name": "/benchmark",
-    "description": "Compare an agent's performance against a stored baseline"
-  },
-  {
-    "name": "/benchmark-control",
-    "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
-  },
-  {
     "name": "/brainstorming",
     "description": "Structured problem-solving brainstorm session"
   },
@@ -119,10 +111,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/init",
     "description": "Initialize CLAUDE.md"
-  },
-  {
-    "name": "/job-fair",
-    "description": "Discover which characters in a theme excel at each role"
   },
   {
     "name": "/login",
@@ -202,15 +190,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     "name": "/setup",
-    "description": "setup"
+    "description": "/setup - Interactive Project Setup"
   },
   {
     "name": "/sm",
     "description": "Scrum Master - Story coordination and sprint management"
-  },
-  {
-    "name": "/solo",
-    "description": "Run a single agent on a scenario with absolute rubric scoring"
   },
   {
     "name": "/sprint",

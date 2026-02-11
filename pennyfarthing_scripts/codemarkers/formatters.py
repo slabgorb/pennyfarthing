@@ -16,7 +16,6 @@ from typing import TextIO
 from pennyfarthing_scripts.codemarkers.models import (
     CodeMarker,
     CodeMarkersResult,
-    MarkerSummary,
 )
 
 

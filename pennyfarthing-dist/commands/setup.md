@@ -1,3 +1,7 @@
+---
+description: /setup - Interactive Project Setup
+---
+
 # /setup - Interactive Project Setup
 
 <command>setup</command>

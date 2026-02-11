@@ -5,14 +5,34 @@ import { detectPennyfarthingProject, getCurrentPersona, getFullPersonaDetails, P
 // Persona WebSocket clients (for real-time persona updates)
 const personaClients = new Set<WebSocket>();
 
+// Track streaming state for persona broadcasts (Story 94-1: MSSCI-14660)
+let currentlyStreaming = false;
+
 // Get persona clients set (for WebSocket setup)
 export function getPersonaClients() {
   return personaClients;
 }
 
+// Get current streaming state (for initial persona payload on connection)
+export function getStreamingState(): boolean {
+  return currentlyStreaming;
+}
+
 // Broadcast persona to all connected clients
 export function broadcastPersona(persona: Persona): void {
-  const message = JSON.stringify(persona);
+  const message = JSON.stringify({ ...persona, isStreaming: currentlyStreaming });
+  for (const client of personaClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Update streaming state and broadcast to persona clients (Story 94-1: MSSCI-14660)
+export function setStreamingState(streaming: boolean): void {
+  if (currentlyStreaming === streaming) return;
+  currentlyStreaming = streaming;
+  const message = JSON.stringify({ type: 'streaming', isStreaming: streaming });
   for (const client of personaClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);

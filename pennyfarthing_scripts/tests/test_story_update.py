@@ -14,12 +14,10 @@ Acceptance Criteria:
 """
 
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-from ruamel.yaml.comments import CommentedMap
 
 from pennyfarthing_scripts.sprint.story_update import (
     update_story,
@@ -27,7 +25,6 @@ from pennyfarthing_scripts.sprint.story_update import (
 from pennyfarthing_scripts.sprint.yaml_io import (
     read_sprint,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -275,8 +272,6 @@ class TestUpdateStoryFields:
 
     def test_no_updates_provided(self, sprint_file: Path) -> None:
         """Calling with no field updates should succeed as a noop."""
-        original_content = sprint_file.read_text()
-
         result = update_story(
             sprint_path=sprint_file,
             story_id="76-3",
@@ -378,8 +373,8 @@ class TestFindStoryAcrossEpics:
 class TestAutoCleanup:
     """Auto-cleanup rules for status transitions."""
 
-    def test_done_removes_assigned_to(self, assigned_story_file: Path) -> None:
-        """Setting status=done should remove assigned_to."""
+    def test_done_preserves_assigned_to(self, assigned_story_file: Path) -> None:
+        """Setting status=done should preserve assigned_to (no auto-removal)."""
         result = update_story(
             sprint_path=assigned_story_file,
             story_id="76-1",
@@ -390,7 +385,7 @@ class TestAutoCleanup:
 
         data = read_sprint(assigned_story_file)
         story = data["epics"][0]["stories"][0]
-        assert "assigned_to" not in story
+        assert story["assigned_to"] == "kavery"
 
     def test_done_auto_sets_completed(self, assigned_story_file: Path) -> None:
         """Setting status=done should auto-set completed to today."""
@@ -611,9 +606,9 @@ class TestCLIIntegration:
 
     def test_update_command_exists(self) -> None:
         """story_update_command should be importable and be a Click command."""
-        from pennyfarthing_scripts.sprint.story_update import story_update_command
-
         import click
+
+        from pennyfarthing_scripts.sprint.story_update import story_update_command
 
         assert isinstance(story_update_command, click.BaseCommand)
 

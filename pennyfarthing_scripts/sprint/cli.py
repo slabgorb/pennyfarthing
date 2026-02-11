@@ -150,7 +150,7 @@ def work(story_id: str | None, dry_run: bool):
         click.echo(f"Story: {story.get('id')}")
         click.echo(f"Title: {story.get('title')}")
         click.echo(f"Points: {story.get('points')}")
-        click.echo(f"Status: Available")
+        click.echo("Status: Available")
     else:
         error_msg = result.get("error") or result.get("reason")
         raise click.ClickException(f"Not available: {error_msg}")
@@ -334,12 +334,12 @@ def story_claim(story_id: str, claim: bool):
 
 
 # Register story-add as story.add
-from pennyfarthing_scripts.sprint.story_add import story_add_command
+from pennyfarthing_scripts.sprint.story_add import story_add_command  # noqa: E402
 
 story.add_command(story_add_command, "add")
 
 # Register story-update as story.update
-from pennyfarthing_scripts.sprint.story_update import story_update_command
+from pennyfarthing_scripts.sprint.story_update import story_update_command  # noqa: E402
 
 story.add_command(story_update_command, "update")
 
@@ -501,7 +501,6 @@ def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
       pf sprint epic cancel epic-42 --jira
     """
     from pennyfarthing_scripts.common.config import get_project_root
-    from pennyfarthing_scripts.sprint.loader import load_sprint
     from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
 
     root = get_project_root()
@@ -583,7 +582,7 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
         init_name = init_data.get("name", init_file.stem)
         epics = init_data.get("epics", [])
 
-        for i, e in enumerate(epics):
+        for _i, e in enumerate(epics):
             matched = False
             epic_dict = None
 
@@ -663,6 +662,8 @@ def epic_archive(epic_id: str | None, dry_run: bool, jira: bool):
     # Lazy import
     from pennyfarthing_scripts.sprint.archive_epic import (
         archive_all_completed,
+    )
+    from pennyfarthing_scripts.sprint.archive_epic import (
         archive_epic as do_archive_epic,
     )
 
@@ -757,7 +758,6 @@ def epic_remove(epic_id: str, dry_run: bool):
       pf sprint epic remove epic-41
       pf sprint epic remove epic-41 --dry-run
     """
-    from pathlib import Path
 
     import yaml
 
@@ -886,20 +886,23 @@ def epic_promote(epic_id: str):
     new_epic_id = original_id
     existing_ids = {str(e.get("id", "")) for e in sprint_data["epics"] if isinstance(e, dict)}
 
+    # Normalize to numeric ID (ADR-0022: strip epic- prefix from values)
+    new_epic_id = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+
     if new_epic_id in existing_ids:
         max_num = 0
         for eid in existing_ids:
-            if eid.startswith("epic-"):
-                try:
-                    max_num = max(max_num, int(eid.replace("epic-", "")))
-                except ValueError:
-                    pass
-        new_epic_id = f"epic-{max_num + 1}"
+            clean_eid = eid.replace("epic-", "") if eid.startswith("epic-") else eid
+            try:
+                max_num = max(max_num, int(clean_eid))
+            except ValueError:
+                pass
+        new_epic_id = str(max_num + 1)
         click.echo(f"Warning: Epic ID {original_id} already exists. Assigning new ID: {new_epic_id}")
 
     # Transform epic for current sprint
     old_id_num = original_id.replace("epic-", "")
-    new_id_num = new_epic_id.replace("epic-", "")
+    new_id_num = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
 
     epic_data["id"] = new_epic_id
     epic_data["status"] = "backlog"
@@ -927,6 +930,13 @@ def epic_promote(epic_id: str):
     click.echo(f"  Points: {epic_data.get('points', 0)}")
     click.echo(f"  Stories: {story_count}")
     click.echo("")
+
+    # Validate epic shard before writing (ADR-0022)
+    from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+    validation = validate_epic_shard(dict(epic_data))
+    if not validation.valid:
+        error_msgs = "; ".join(e.message for e in validation.errors)
+        raise click.ClickException(f"Epic validation failed: {error_msgs}")
 
     # Append to sprint
     sprint_data["epics"].append(epic_data)
@@ -960,7 +970,6 @@ def epic_promote(epic_id: str):
         click.echo(f"Removed {original_id} from {source_init_file.name}")
     else:
         # Initiative is empty — remove shard and future.yaml reference
-        init_name = init_data.get("name", "")
         init_slug = source_init_file.stem.replace("initiative-", "")
         source_init_file.unlink()
         click.echo(f"Removed empty initiative shard: {source_init_file.name}")
@@ -987,7 +996,7 @@ def epic_promote(epic_id: str):
 
 
 # Register epic-add as epic.add
-from pennyfarthing_scripts.sprint.epic_add import epic_add_command
+from pennyfarthing_scripts.sprint.epic_add import epic_add_command  # noqa: E402
 
 epic.add_command(epic_add_command, "add")
 
@@ -1161,7 +1170,7 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
         return
 
     # Cancel all epics
-    for i, e in enumerate(epics):
+    for _i, e in enumerate(epics):
         if isinstance(e, str):
             shard = _epic_shard_path(sprint_dir, e)
             if shard.exists():
@@ -1216,7 +1225,6 @@ def check(id: str):
 
     from pennyfarthing_scripts.sprint.loader import (
         find_epic,
-        get_all_stories,
         load_sprint,
     )
     from pennyfarthing_scripts.sprint.work import check_story, get_next_story
@@ -1328,10 +1336,10 @@ def _find_epic_for_story(data: dict | None, story_id: str) -> str:
 
 @sprint.command()
 def info():
-    """Output sprint info as JSON for Cyclist sidebar.
+    """Output sprint info as JSON.
 
     \b
-    Returns: {"remaining": N, "inProgress": N, "endDate": "YYYY-MM-DD"}
+    Returns sprint header fields plus computed story point totals.
     """
     import json
 
@@ -1339,8 +1347,6 @@ def info():
 
     sprint_data = get_sprint_info()
     stories = get_all_stories()
-
-    end_date = sprint_data.get("end_date")
 
     remaining = sum(
         s.get("points", 0) or 0
@@ -1353,11 +1359,11 @@ def info():
         if s.get("status") == "in_progress"
     )
 
-    click.echo(json.dumps({
-        "remaining": remaining,
-        "inProgress": in_progress,
-        "endDate": str(end_date) if end_date else None,
-    }))
+    result = {str(k): str(v) if hasattr(v, 'isoformat') else v for k, v in sprint_data.items()}
+    result["remaining"] = remaining
+    result["inProgress"] = in_progress
+
+    click.echo(json.dumps(result))
 
 
 # --- Metrics command (replaces sprint-metrics.sh) ---
@@ -1783,7 +1789,7 @@ completed:
     click.echo(f"Created {archive_file}")
 
     click.echo("")
-    click.echo(f"New sprint initialized:")
+    click.echo("New sprint initialized:")
     click.echo(f"  Name: TO Sprint {sprint_yyww}")
     click.echo(f"  Jira ID: {jira_id}")
     click.echo(f"  Dates: {start_date} to {end_date}")
@@ -1854,7 +1860,7 @@ sprint.commands["epic-add"].hidden = True
 
 
 # Register validate command from validate_cmd module
-from pennyfarthing_scripts.sprint.validate_cmd import validate_command
+from pennyfarthing_scripts.sprint.validate_cmd import validate_command  # noqa: E402
 
 sprint.add_command(validate_command)
 

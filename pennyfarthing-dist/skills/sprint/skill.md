@@ -293,7 +293,7 @@ pf sprint story add <epic-id> "<title>" <points> [options]
 | `points` | Yes | Story points (1, 2, 3, 5, 8) |
 | `--type` | No | Story type: feature, bug, chore, refactor (default: feature) |
 | `--priority` | No | Priority: P0, P1, P2, P3 (default: P1) |
-| `--workflow` | No | Workflow: tdd, trivial, bdd (default: tdd) |
+| `--workflow` | No | Workflow: tdd, tdd-tandem, trivial, bdd, bdd-tandem (default: tdd) |
 | `--jira` | No | Jira issue key |
 </args>
 
@@ -396,6 +396,28 @@ Claim or unclaim a story in Jira.
 <run>
 pf sprint story claim <story-id>
 </run>
+
+---
+
+### `/sprint story assign <story-id> <assignee>`
+
+Assign a Jira story to a user. Shortcut for `/jira assign`.
+
+<run>
+pf jira assign <story-id> <assignee>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Jira key (e.g., `MSSCI-14552`) |
+| `assignee` | Yes | Email or GitHub username (e.g., `keith.avery@1898andco.io`, `slabgorb`) |
+</args>
+
+<example>
+pf jira assign MSSCI-14552 keith.avery@1898andco.io
+pf jira assign MSSCI-14552 slabgorb
+</example>
 
 ---
 
@@ -696,7 +718,7 @@ All gates must pass before handoff:
 | Sprint name | `"TO Sprint YYWW"` (e.g., "TO Sprint 2604") |
 | Story IDs | Jira keys `MSSCI-XXXXX` |
 | Status | `backlog`, `ready`, `in_progress`, `done` |
-| Workflow | `tdd`, `trivial`, `agent-docs`, `bdd` |
+| Workflow | `tdd`, `tdd-tandem`, `trivial`, `agent-docs`, `bdd`, `bdd-tandem` |
 | Priority | `P0`, `P1`, `P2`, `P3` |
 | in_sprint | `true`, `false` - Jira sprint membership |
 
@@ -761,6 +783,7 @@ For Jira integration, see `/jira` skill prerequisites.
 | `/sprint story template` | `pf sprint story template` |
 | `/sprint story finish ID` | `pf sprint story finish ID` |
 | `/sprint story claim ID` | `pf sprint story claim ID` |
+| `/sprint story assign ID USER` | `pf jira assign ID USER` |
 | `/sprint epic show ID` | `pf sprint epic show ID` |
 | `/sprint epic field ID FIELD` | `pf sprint epic field ID FIELD` |
 | `/sprint epic add ...` | `pf sprint epic add ...` |

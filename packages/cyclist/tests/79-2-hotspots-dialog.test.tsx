@@ -119,7 +119,9 @@ describe('AC2: HotspotsPanel content migrated into dialog', () => {
     const { HotspotsDialog } = await import('../src/public/components/dialogs/HotspotsDialog');
 
     render(<HotspotsDialog open={true} onOpenChange={() => {}} />);
-    expect(screen.getByText(/analyze/i, { selector: 'p *' })).toBeInTheDocument();
+    // Empty state text is split across nodes: "Click <strong>Analyze</strong> to detect..."
+    // Both the button and <strong> contain "Analyze" — target the <strong> specifically
+    expect(screen.getByText('Analyze', { selector: 'strong' })).toBeInTheDocument();
   });
 
   it('should render file hotspots table when data is loaded', async () => {

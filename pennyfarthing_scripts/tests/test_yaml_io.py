@@ -11,10 +11,8 @@ Acceptance Criteria:
 4. Key ordering matches sprint-template.yaml
 """
 
-import os
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -26,7 +24,6 @@ from pennyfarthing_scripts.sprint.yaml_io import (
     read_sprint,
     write_sprint,
 )
-
 
 # =============================================================================
 # Test Fixtures

@@ -1,0 +1,24 @@
+---
+# yamllint configuration for pennyfarthing-dist YAML files
+# Story 91-10: Layer 0 validation pyramid
+
+extends: default
+
+rules:
+  # Workflow/config/persona YAML has long description strings
+  line-length: disable
+
+  # Agent and workflow files use inline comments extensively
+  comments:
+    min-spaces-from-content: 1
+
+  # Files don't consistently use document-start markers
+  document-start: disable
+
+  # Keep structural rules enforced
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  trailing-spaces: enable
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']

@@ -8,7 +8,7 @@
  * Note: Tool call display moved to AuditLogPanel for comprehensive view.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +19,7 @@ import { DependenciesDialog } from '../dialogs/DependenciesDialog';
 import { AgentLoadDialog } from '../AgentLoadDialog';
 import { DeadCodeDialog } from '../DeadCodeDialog';
 import { HealthGauge } from '../HealthGauge';
+import { ContextSparkline, SparklinePoint } from '../ContextSparkline';
 import { useHealthScore } from '../../hooks/useHealthScore';
 
 /** Context tier type */
@@ -109,6 +110,42 @@ export function DebugPanel(): React.ReactElement {
   const [agentLoadOpen, setAgentLoadOpen] = useState(false);
   const [deadCodeOpen, setDeadCodeOpen] = useState(false);
   const healthScore = useHealthScore();
+  const sparklineRef = useRef<SparklinePoint[]>([]);
+  const [sparklineVersion, setSparklineVersion] = useState(0);
+
+  const pushSparklinePoint = useCallback((percent: number, tokens: number) => {
+    const buf = sparklineRef.current;
+    buf.push({ percent, tokens, timestamp: Date.now() });
+    if (buf.length > 50) buf.shift();
+    setSparklineVersion(v => v + 1);
+  }, []);
+
+  const handleDimensionClick = (dimensionName: string) => {
+    switch (dimensionName) {
+      case 'churn':
+        setHotspotsOpen(true);
+        break;
+      case 'test_gaps':
+        // TODO: TestGapsDialog — for now no drill-down
+        break;
+      case 'todo_density':
+      case 'deprecation_debt':
+        setCodeMarkersOpen(true);
+        break;
+      case 'complexity':
+        setComplexityOpen(true);
+        break;
+      case 'dead_code':
+        setDeadCodeOpen(true);
+        break;
+      case 'dependency_freshness':
+        setDependenciesOpen(true);
+        break;
+      case 'agent_context_efficiency':
+        setAgentLoadOpen(true);
+        break;
+    }
+  };
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -119,7 +156,11 @@ export function DebugPanel(): React.ReactElement {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'init' || data.type === 'update') {
-          setContext(data.context as ContextData);
+          const ctx = data.context as ContextData;
+          setContext(ctx);
+          if (ctx.percent != null) {
+            pushSparklinePoint(ctx.percent, ctx.tokens ?? 0);
+          }
         }
       } catch {
         // Ignore parse errors
@@ -141,7 +182,7 @@ export function DebugPanel(): React.ReactElement {
       contextWs.close();
       tokenWs.close();
     };
-  }, []);
+  }, [pushSparklinePoint]);
 
   // Compute tier-specific CSS class
   const tierClass = context?.tier ? `tier-${context.tier.toLowerCase()}` : '';
@@ -153,6 +194,11 @@ export function DebugPanel(): React.ReactElement {
         score={healthScore.data?.composite_score ?? null}
         dimensions={healthScore.data?.dimensions ?? []}
         totalDimensions={8}
+        onDimensionClick={handleDimensionClick}
+        isLoading={healthScore.isLoading}
+        lastFetchedAt={healthScore.lastFetchedAt}
+        onRefresh={healthScore.refresh}
+        error={healthScore.error}
       />
 
       <Separator className="my-3" />
@@ -223,6 +269,7 @@ export function DebugPanel(): React.ReactElement {
               style={{ width: `${context.percent || 0}%` }}
             />
           </div>
+          <ContextSparkline history={sparklineRef.current} key={sparklineVersion} />
           <span className="context-text">
             {(context.tokens ?? 0).toLocaleString()} / {context.baseline != null && context.available != null
               ? (context.baseline + context.available).toLocaleString()
@@ -283,60 +330,6 @@ export function DebugPanel(): React.ReactElement {
       ) : (
         <div className="placeholder">No token stats</div>
       )}
-
-      <Separator className="my-3" />
-
-      <h4>Tools</h4>
-      <div className="tool-launcher" data-testid="tool-launcher">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setHotspotsOpen(true)}
-          data-testid="tool-launcher-hotspots"
-        >
-          Hotspots
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCodeMarkersOpen(true)}
-          data-testid="tool-launcher-codemarkers"
-        >
-          Code Markers
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDeadCodeOpen(true)}
-          data-testid="tool-launcher-deadcode"
-        >
-          Dead Code
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setComplexityOpen(true)}
-          data-testid="tool-launcher-complexity"
-        >
-          Complexity
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setDependenciesOpen(true)}
-          data-testid="tool-launcher-dependencies"
-        >
-          Dependencies
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setAgentLoadOpen(true)}
-          data-testid="tool-launcher-agent-load"
-        >
-          Analyze All Agents
-        </Button>
-      </div>
 
       <HotspotsDialog open={hotspotsOpen} onOpenChange={setHotspotsOpen} />
       <CodeMarkersDialog open={codeMarkersOpen} onOpenChange={setCodeMarkersOpen} />

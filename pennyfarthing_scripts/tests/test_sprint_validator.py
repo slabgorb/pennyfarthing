@@ -19,18 +19,17 @@ from typing import Any
 import pytest
 
 from pennyfarthing_scripts.sprint.validator import (
-    ValidationError,
     ValidationResult,
     ValidationSeverity,
     format_validation_errors,
     validate_archived_sprint,
     validate_epic,
+    validate_epic_shard,
     validate_full_sprint,
     validate_sprint,
     validate_sprint_file,
     validate_story,
 )
-
 
 # =============================================================================
 # Test Fixtures - Valid Data
@@ -239,7 +238,7 @@ class TestStoryValidation:
 
     def test_all_valid_story_statuses_pass(self) -> None:
         """All valid status values should pass."""
-        valid_statuses = ["backlog", "in_progress", "done", "cancelled"]
+        valid_statuses = ["backlog", "ready", "in_progress", "done", "canceled", "planning"]
 
         for status in valid_statuses:
             story = {"id": "63-1", "title": "Test", "status": status, "points": 3}
@@ -364,6 +363,55 @@ class TestEpicValidation:
         assert result.valid is False
         assert any("duplicate" in e.message.lower() for e in result.errors)
 
+    def test_integer_epic_id_fails(self) -> None:
+        """Epic with integer id (YAML bare number) should fail.
+
+        YAML parses `id: 87` as int. Cyclist's sprint-data.ts calls
+        epicId.match() which crashes on non-strings, blanking the panel.
+        """
+        epic = {
+            "id": 87,  # Bare integer — not quoted in YAML
+            "title": "Test Epic",
+            "stories": [
+                {"id": "87-1", "title": "Story 1", "status": "backlog", "points": 2},
+            ],
+        }
+
+        result = validate_epic(epic, set())
+
+        assert result.valid is False
+        assert any("must be a string" in e.message.lower() for e in result.errors)
+
+    def test_integer_epic_id_fails_in_shard(self) -> None:
+        """Epic shard with integer id should fail validation."""
+        epic = {
+            "id": 87,
+            "title": "Test Epic",
+            "status": "planning",
+            "stories": [
+                {"id": "87-1", "title": "Story 1", "status": "backlog", "points": 2},
+            ],
+        }
+
+        result = validate_epic_shard(epic)
+
+        assert result.valid is False
+        assert any("must be a string" in e.message.lower() for e in result.errors)
+
+    def test_string_epic_id_passes(self) -> None:
+        """Epic with properly quoted string id should pass."""
+        epic = {
+            "id": "87",  # Quoted in YAML — parsed as string
+            "title": "Test Epic",
+            "stories": [
+                {"id": "87-1", "title": "Story 1", "status": "backlog", "points": 2},
+            ],
+        }
+
+        result = validate_epic(epic, set())
+
+        assert result.valid is True
+
 
 # =============================================================================
 # AC4: Clear error messages for validation failures
@@ -470,7 +518,7 @@ class TestArchivedSprintValidation:
         assert result.valid is True
 
     def test_archived_sprint_allows_all_done_stories(self) -> None:
-        """Archived sprints should allow all stories to be done/cancelled."""
+        """Archived sprints should allow all stories to be done/canceled."""
         data = {
             "sprint": {
                 "number": 11,
@@ -486,7 +534,7 @@ class TestArchivedSprintValidation:
                     "title": "Old Epic",
                     "stories": [
                         {"id": "50-1", "title": "Done Story", "status": "done", "points": 3},
-                        {"id": "50-2", "title": "Cancelled Story", "status": "cancelled", "points": 2},
+                        {"id": "50-2", "title": "Canceled Story", "status": "canceled", "points": 2},
                     ],
                 }
             ],

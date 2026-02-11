@@ -6,7 +6,6 @@ Provides guidelines and helpers for sizing stories.
 
 from typing import Any
 
-
 # Sizing guidelines
 SIZING_GUIDELINES = {
     1: {

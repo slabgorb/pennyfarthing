@@ -206,7 +206,7 @@ def create_standalone(title, points, description, dry_run):
         click.echo(f"[DRY-RUN] Would create: {title}")
         click.echo(f"  Points: {points}")
         click.echo(f"  Sprint: {sprint_id}")
-        click.echo(f"  Actions: create -> add to sprint -> transition to Done")
+        click.echo("  Actions: create -> add to sprint -> transition to Done")
         return
 
     client = get_client()
@@ -241,7 +241,7 @@ def create_standalone(title, points, description, dry_run):
     # 4. Transition to Done
     result = client.transition_sync(jira_key, "Done")
     if result.get("success"):
-        click.echo(f"Transitioned to Done")
+        click.echo("Transitioned to Done")
     else:
         click.echo(f"Warning: could not transition to Done: {result.get('reason')}")
 

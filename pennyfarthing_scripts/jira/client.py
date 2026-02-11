@@ -515,7 +515,7 @@ class JiraClient:
                 f"Available: {available}",
             }
 
-        result = self._call_api_sync(
+        self._call_api_sync(
             "POST",
             f"/rest/api/3/issue/{issue_key}/transitions",
             {"transition": {"id": transition_id}},
@@ -553,7 +553,7 @@ class JiraClient:
             account_id = None
 
         payload = {"accountId": account_id}
-        result = self._call_api_sync(
+        self._call_api_sync(
             "PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload
         )
         # Assign PUT returns empty body on success (204)
@@ -569,7 +569,7 @@ class JiraClient:
         Returns:
             Result dict with success status
         """
-        result = self._call_api_sync(
+        self._call_api_sync(
             "POST",
             f"/rest/agile/1.0/sprint/{sprint_id}/issue",
             {"issues": [issue_key]},
@@ -619,7 +619,7 @@ class JiraClient:
         Returns:
             Result dict with success status
         """
-        result = self._call_api_sync(
+        self._call_api_sync(
             "POST",
             "/rest/api/3/issueLink",
             {

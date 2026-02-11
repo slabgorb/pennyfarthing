@@ -47,7 +47,7 @@ extract_story_id() {
 
 # update_story_status STORY_ID NEW_STATUS
 # Update story status in sprint YAML and add completed date
-# Uses yq for YAML manipulation
+# Handles both inline stories in current-sprint.yaml and sharded epic files
 update_story_status() {
     local story_id="$1"
     local new_status="${2:-done}"
@@ -58,23 +58,33 @@ update_story_status() {
         return 1
     fi
 
-    # Check if yq is available
     if ! command -v yq &>/dev/null; then
         echo "Warning: yq not found, cannot update sprint YAML" >&2
         return 1
     fi
 
-    # Extract epic and story numbers
-    local epic_num="${story_id%%-*}"
-    local story_num="${story_id#*-}"
+    local sprint_dir
+    sprint_dir="$(dirname "$SPRINT_FILE")"
 
-    # Update status and add completed date using yq
+    # Try inline stories in current-sprint.yaml first
     yq eval -i "
-        (.epics[] | select(.id == \"$epic_num\") | .stories[] | select(.id == \"$story_num\")).status = \"$new_status\" |
-        (.epics[] | select(.id == \"$epic_num\") | .stories[] | select(.id == \"$story_num\")).completed = \"$completed_date\"
-    " "$SPRINT_FILE"
+        (.stories[] | select(.id == \"$story_id\")).status = \"$new_status\" |
+        (.stories[] | select(.id == \"$story_id\")).completed = \"$completed_date\"
+    " "$SPRINT_FILE" 2>/dev/null
 
-    return $?
+    # Also try each epic shard file
+    for shard in "$sprint_dir"/epic-*.yaml; do
+        [[ -f "$shard" ]] || continue
+        if yq eval ".stories[] | select(.id == \"$story_id\")" "$shard" 2>/dev/null | grep -q "$story_id"; then
+            yq eval -i "
+                (.stories[] | select(.id == \"$story_id\")).status = \"$new_status\" |
+                (.stories[] | select(.id == \"$story_id\")).completed = \"$completed_date\"
+            " "$shard"
+            return $?
+        fi
+    done
+
+    return 0
 }
 
 # log_reconciliation STORY_ID MESSAGE

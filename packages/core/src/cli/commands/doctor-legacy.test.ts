@@ -147,6 +147,45 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
     });
   });
 
+  describe('Bug 5: persona config preservation on YAML parse failure', () => {
+    it('should NOT delete legacy persona-config.yaml if YAML parse fails', () => {
+      const legacyConfig = join(claudeDir, 'persona-config.yaml');
+      writeFileSync(legacyConfig, 'theme: minimalist\n  bad indent: [unclosed', 'utf8');
+
+      const results = checkLegacyFiles(testDir);
+      const personaResult = results.find(r => r.name.includes('persona'));
+
+      assert.ok(personaResult, 'Should detect legacy persona config');
+
+      if (personaResult?.fix) {
+        personaResult.fix();
+      }
+
+      assert.ok(
+        existsSync(legacyConfig),
+        'Legacy persona config must NOT be deleted when YAML parse fails'
+      );
+    });
+
+    it('should delete legacy persona-config.yaml after successful migration', () => {
+      const legacyConfig = join(claudeDir, 'persona-config.yaml');
+      writeFileSync(legacyConfig, 'theme: minimalist\n', 'utf8');
+      mkdirSync(pennyfarthingDir, { recursive: true });
+
+      const results = checkLegacyFiles(testDir);
+      const personaResult = results.find(r => r.name.includes('persona'));
+
+      if (personaResult?.fix) {
+        personaResult.fix();
+      }
+
+      assert.ok(
+        !existsSync(legacyConfig),
+        'Legacy persona config should be deleted after successful migration'
+      );
+    });
+  });
+
   describe('checkLegacyStatuslinePath()', () => {
     it('should detect wrong statusline path in settings.local.json', () => {
       // AC: doctor --fix updates settings.local.json statusline path if wrong

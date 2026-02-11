@@ -162,6 +162,27 @@ def claim_story(issue_key: str) -> dict[str, Any]:
             "exit_code": 3,
         }
 
+    # Update sprint YAML assigned_to field
+    try:
+        from pennyfarthing_scripts.common.config import get_project_root
+        from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
+
+        root = get_project_root()
+        sprint_path = root / "sprint" / "current-sprint.yaml"
+        if sprint_path.exists():
+            data = read_sprint(sprint_path)
+            for epic in data.get("epics", []):
+                if not isinstance(epic, dict):
+                    continue
+                for story in epic.get("stories", []):
+                    if story.get("jira") == issue_key:
+                        story["assigned_to"] = current_user
+                        write_sprint(sprint_path, data)
+                        actions.append("Sprint YAML assigned_to set")
+                        break
+    except Exception:
+        pass  # Best-effort — Jira claim already succeeded
+
     return {
         "success": True,
         "actions": actions,

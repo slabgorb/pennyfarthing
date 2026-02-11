@@ -127,3 +127,53 @@ def summary(repo, repo_path, days, top, fmt, output_file, exclude):
     else:
         from pennyfarthing_scripts.codemarkers.formatters import format_summary
         format_summary(result, file=click.get_text_stream("stdout"))
+
+
+def _run_deprecation_analysis(repo_path, exclude):
+    """Run deprecation analysis and return result dict."""
+    from pennyfarthing_scripts.codemarkers.analyze import analyze_deprecations
+
+    excludes = list(exclude) if exclude else None
+    if repo_path:
+        p = Path(repo_path).resolve()
+    else:
+        from pennyfarthing_scripts.common.config import get_project_root
+        p = get_project_root()
+
+    return asyncio.run(analyze_deprecations(p, excludes))
+
+
+@codemarkers.command()
+@_common_options
+def deprecations(repo, repo_path, days, top, fmt, output_file, exclude):
+    """Scan for @deprecated symbols and cross-reference callers."""
+    result = _run_deprecation_analysis(repo_path, exclude)
+
+    if fmt == "json":
+        import json
+        from dataclasses import asdict
+
+        output = {
+            "success": result["success"],
+            "deprecations": [asdict(m) for m in result.get("deprecations", [])],
+            "summary": result.get("summary", {}),
+        }
+        text = json.dumps(output, indent=2)
+    else:
+        lines = []
+        deps = result.get("deprecations", [])
+        summary = result.get("summary", {})
+        lines.append(f"Total deprecations: {summary.get('total_deprecations', 0)}")
+        lines.append(f"With active callers: {summary.get('deprecations_with_callers', 0)}")
+        lines.append("")
+        for m in deps[:top]:
+            callers_str = f" ({m.caller_count} callers)" if m.caller_count else ""
+            lines.append(f"  {m.symbol} @ {m.path}:{m.line}{callers_str}")
+            lines.append(f"    {m.text}")
+        text = "\n".join(lines)
+
+    if output_file:
+        Path(output_file).write_text(text)
+        click.echo(f"Output written to {output_file}", err=True)
+    else:
+        click.echo(text)

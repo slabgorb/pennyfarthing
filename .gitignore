@@ -19,6 +19,7 @@ npm-debug.log*
 
 # Build output (delivered via npm)
 dist/
+build/
 
 # Redundant copy - root pennyfarthing-dist/ is included via package.json files field
 packages/core/pennyfarthing-dist/

@@ -18,7 +18,6 @@ from pennyfarthing_scripts.sprint.yaml_io import (
     _read_yaml_file,
     _write_yaml_file,
     read_sprint,
-    write_sprint,
 )
 
 
@@ -252,13 +251,11 @@ def archive_epic(
 
     # Find the epic in merged data
     epic = None
-    epic_index = None
-    for i, e in enumerate(sprint_data["epics"]):
+    for e in sprint_data["epics"]:
         eid = str(e.get("id", ""))
         ejira = str(e.get("jira", ""))
         if eid == epic_id or ejira == epic_id:
             epic = e
-            epic_index = i
             break
 
     if not epic:

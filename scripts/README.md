@@ -7,21 +7,15 @@
 | Script | Purpose |
 |--------|---------|
 | `deploy.sh` | Release Pennyfarthing (version bump, tag, push, GitHub release) |
-| `benchmark-runner.{sh,js}` | Run persona benchmarks |
-| `job-fair-*.sh` | Job Fair character evaluations |
-| `aggregate-benchmark-stats.{sh,js}` | Aggregate benchmark results |
-| `solo-runner.sh` | Run single agent on a scenario |
-| `parallel-benchmark.sh` | Parallel benchmark execution |
-| `consolidate-job-fair.sh` | Consolidate Job Fair results |
-| `convert-jobfair-to-benchmarks.sh` | Format conversion |
-| `generate-leaderboard.sh` | Build leaderboard from benchmarks |
-| `regenerate-summaries.sh` | Regenerate benchmark summaries |
 | `cyclist-debug.mjs` | Debug Cyclist connection |
 | `handoff-cli.{sh,js}` | Test handoff flow |
 | `verify-visual-mapping.js` | Verify theme visual mappings |
 | `migrate-assets-to-slug.sh` | One-time migration script |
 | `resize-portraits.sh` | Resize portrait images |
 | `resolve-portrait.mjs` | Portrait resolution logic |
+| `validate-refs.js` | Validate internal references |
+
+> Benchmark scripts have been moved to `packages/benchmark/`.
 
 ## Usage
 
@@ -31,12 +25,6 @@ Run from pennyfarthing repo root:
 # Release a new version
 ./scripts/deploy.sh --dry-run patch
 ./scripts/deploy.sh patch
-
-# Run benchmarks
-./scripts/benchmark-runner.sh --theme mash --agent sm
-
-# Job Fair
-./scripts/job-fair-runner.sh mash
 ```
 
 ## Where Should My Script Go?

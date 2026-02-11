@@ -1,17 +1,18 @@
 """
 Core hotspot analysis engine.
 
-Parses git log history, computes per-file metrics, and produces scored hotspot results.
-Reuses async git subprocess pattern from git/status_all.py.
+Uses PyDriller to mine git history, computes per-file metrics, and produces
+scored hotspot results. Falls back to raw git log parsing if PyDriller is unavailable.
 """
 
 from __future__ import annotations
 
 import asyncio
 import fnmatch
+import logging
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from pennyfarthing_scripts.hotspots.models import (
@@ -20,6 +21,8 @@ from pennyfarthing_scripts.hotspots.models import (
     HotspotResult,
     MultiRepoHotspotResult,
 )
+
+logger = logging.getLogger("hotspots")
 
 # Scoring weights (must sum to 1.0)
 WEIGHT_BUG_FIXES = 0.35
@@ -59,6 +62,30 @@ DEFAULT_EXCLUDES = [
     "*.d.ts.map",
     # CI config
     ".github/*",
+    # Sprint/session operational files (not code quality signals)
+    "sprint/*",
+    ".session/*",
+    # Config/manifest files — high churn but not code quality signals
+    "package.json",
+    "*/package.json",
+    "tsconfig.json",
+    "*/tsconfig.json",
+    "tsconfig.*.json",
+    "*/tsconfig.*.json",
+    # Documentation — frequently edited but not code hotspots
+    "*.md",
+    "CLAUDE.md",
+    "*/CLAUDE.md",
+    "CLAUDE-*.md",
+    "*/CLAUDE-*.md",
+    "README.md",
+    "*/README.md",
+    "CHANGELOG.md",
+    "*/CHANGELOG.md",
+    "docs/*",
+    # YAML config (sprint, workflow, etc.)
+    "*.yaml",
+    "*.yml",
 ]
 
 # Regex for identifying bug-fix commits
@@ -286,6 +313,8 @@ async def analyze_repo(
 ) -> HotspotResult:
     """Analyze a single repository for code hotspots.
 
+    Uses PyDriller for git mining when available, falls back to raw git log parsing.
+
     Args:
         name: Display name for the repository
         path: Path to the git repository
@@ -308,6 +337,87 @@ async def analyze_repo(
             error=f"Path not found: {resolved}",
         )
 
+    try:
+        return await _analyze_repo_pydriller(name, resolved, days, all_excludes)
+    except ImportError:
+        logger.info("[hotspots] PyDriller not available, using git log fallback")
+        return await _analyze_repo_gitlog(name, resolved, days, all_excludes, branch)
+
+
+async def _analyze_repo_pydriller(
+    name: str,
+    resolved: Path,
+    days: int,
+    all_excludes: list[str],
+) -> HotspotResult:
+    """PyDriller-backed hotspot analysis."""
+    from pydriller import Repository
+
+    since = datetime.now(UTC) - timedelta(days=days)
+    now = datetime.now(UTC)
+
+    file_metrics: dict[str, dict] = defaultdict(
+        lambda: {
+            "change_count": 0,
+            "bug_fix_count": 0,
+            "authors": set(),
+            "lines_added": 0,
+            "lines_deleted": 0,
+            "last_changed": "",
+        }
+    )
+
+    def _collect() -> int:
+        commit_count = 0
+        repo = Repository(str(resolved), since=since)
+        for commit in repo.traverse_commits():
+            commit_count += 1
+            is_fix = is_bug_fix_commit(commit.msg)
+            commit_date = commit.committer_date.isoformat()
+
+            for mod in commit.modified_files:
+                fpath = mod.new_path or mod.old_path
+                if not fpath:
+                    continue
+                if _should_exclude(fpath, all_excludes):
+                    continue
+
+                m = file_metrics[fpath]
+                m["change_count"] += 1
+                if is_fix:
+                    m["bug_fix_count"] += 1
+                m["authors"].add(commit.author.name)
+                m["lines_added"] += mod.added_lines
+                m["lines_deleted"] += mod.deleted_lines
+                if not m["last_changed"] or commit_date > m["last_changed"]:
+                    m["last_changed"] = commit_date
+        return commit_count
+
+    loop = asyncio.get_event_loop()
+    commit_count = await loop.run_in_executor(None, _collect)
+    logger.info("[hotspots] PyDriller: %d commits, %d files after filtering",
+                commit_count, len(file_metrics))
+
+    if not file_metrics:
+        return HotspotResult(
+            success=True,
+            repo_name=name,
+            repo_path=str(resolved),
+            time_window_days=days,
+            commit_count=commit_count,
+        )
+
+    return _build_hotspot_result(name, resolved, days, commit_count, file_metrics, now)
+
+
+async def _analyze_repo_gitlog(
+    name: str,
+    resolved: Path,
+    days: int,
+    all_excludes: list[str],
+    branch: str,
+) -> HotspotResult:
+    """Fallback: raw git log parsing."""
     stdout, stderr, rc = await _run_git_log(resolved, days, branch)
 
     if rc != 0:
@@ -330,7 +440,6 @@ async def analyze_repo(
             commit_count=0,
         )
 
-    # Aggregate per-file metrics
     file_metrics: dict[str, dict] = defaultdict(
         lambda: {
             "change_count": 0,
@@ -342,7 +451,7 @@ async def analyze_repo(
         }
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     for commit in commits:
         is_fix = is_bug_fix_commit(commit["message"])
@@ -358,7 +467,6 @@ async def analyze_repo(
             m["authors"].add(commit["author"])
             m["lines_added"] += file_info["added"]
             m["lines_deleted"] += file_info["deleted"]
-            # Track most recent change date
             if not m["last_changed"] or commit["date"] > m["last_changed"]:
                 m["last_changed"] = commit["date"]
 
@@ -371,7 +479,18 @@ async def analyze_repo(
             commit_count=len(commits),
         )
 
-    # Compute normalization maximums
+    return _build_hotspot_result(name, resolved, days, len(commits), file_metrics, now)
+
+
+def _build_hotspot_result(
+    name: str,
+    resolved: Path,
+    days: int,
+    commit_count: int,
+    file_metrics: dict[str, dict],
+    now: datetime,
+) -> HotspotResult:
+    """Build scored HotspotResult from aggregated file metrics."""
     max_changes = max(m["change_count"] for m in file_metrics.values())
     max_bugs = max(m["bug_fix_count"] for m in file_metrics.values()) or 1
     max_authors = max(len(m["authors"]) for m in file_metrics.values())
@@ -379,13 +498,11 @@ async def analyze_repo(
         m["lines_added"] + m["lines_deleted"] for m in file_metrics.values()
     ) or 1
 
-    # Build FileHotspot list with scores
     file_hotspots = []
     for fpath, m in file_metrics.items():
         churn = m["lines_added"] + m["lines_deleted"]
 
-        # Compute age in days
-        age_days = days  # default to full window
+        age_days = days
         if m["last_changed"]:
             try:
                 last_dt = datetime.fromisoformat(m["last_changed"])
@@ -420,10 +537,7 @@ async def analyze_repo(
             )
         )
 
-    # Sort by score descending
     file_hotspots.sort(key=lambda h: h.hotspot_score, reverse=True)
-
-    # Aggregate directories
     directory_hotspots = _aggregate_by_directory(file_hotspots)
 
     return HotspotResult(
@@ -431,7 +545,7 @@ async def analyze_repo(
         repo_name=name,
         repo_path=str(resolved),
         time_window_days=days,
-        commit_count=len(commits),
+        commit_count=commit_count,
         file_hotspots=file_hotspots,
         directory_hotspots=directory_hotspots,
     )

@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.1.0. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.2.0. ES module monorepo (pnpm, TypeScript, Node >=18).
 
 <critical>
 ## Implementation Rules
@@ -92,7 +92,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, 2party-tdd, agent-docs, patch |
+| **Phased** | Agent-driven with automatic handoffs | tdd, tdd-tandem, bdd, bdd-tandem, trivial, 2party-tdd, agent-docs, patch |
 | **Stepped** | Progressive disclosure with gates | architecture, release, git-cleanup |
 
 **TDD flow:** `/new-work` → SM → TEA → Dev → Reviewer → SM (finish)
@@ -118,7 +118,7 @@ Electron app with React 19, Tailwind v4, shadcn/ui, dockview-react panels.
 
 **Key components:** `DockviewWorkspace.tsx` (layout), `MessageView.tsx` (conversation), `ToolCallBlock.tsx` / `ToolStack.tsx` (tool visualization), `QuickActions.tsx` (marker detection)
 
-**Panels:** MessagePanel (sacred center), ChangedPanel, DiffsPanel, SprintPanel, ProgressPanel, BikeLanePanel, AcceptanceCriteriaPanel, SettingsPanel, DebugPanel, GitPanel, BackgroundPanel, TodoPanel, AuditLogPanel, TTYPanel, WorkflowPanel
+**Panels:** MessagePanel (sacred center), ChangedPanel, DiffsPanel, SprintPanel, BikeLanePanel, ACPanel, AcceptanceCriteriaPanel, SettingsPanel, DebugPanel, GitPanel, BackgroundPanel, TodoPanel, AuditLogPanel, TTYPanel, WorkflowPanel, HotspotsPanel
 
 **CLI for users:** `pennyfarthing init | update | doctor [--fix] | uninstall`
 </info>
@@ -135,6 +135,6 @@ For detailed behavior, key files, configuration, and APIs for each component, re
 | **TirePump** | Context clearing system — resets Claude session, reloads agent with fresh context | `pennyfarthing-dist/guides/tirepump.md` |
 | **Prime** | Agent activation system — bootstraps agents with tiered context (identity, workflow, session) | `pennyfarthing-dist/guides/prime.md` |
 | **Reflector** | Agent-to-UI protocol — `<!-- CYCLIST:TYPE:value -->` markers drive QuickActions buttons | `pennyfarthing-dist/guides/reflector.md` |
-| **Benchmarks (JobFair)** | Persona evaluation — OCEAN trait correlation with agent task performance | `pennyfarthing-dist/guides/benchmarks.md` |
+| **Benchmarks (JobFair)** | Persona evaluation — OCEAN trait correlation with agent task performance | `packages/benchmark/docs/benchmarks-guide.md` |
 | **BikeLane** | Workflow engine — phased, stepped, and procedural workflow orchestration | `pennyfarthing-dist/guides/bikelane.md` |
 </context>

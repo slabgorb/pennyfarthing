@@ -19,7 +19,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 # Default cache location for SWE-bench data
 DEFAULT_CACHE_PATH = "/tmp/swebench_all.json"
 
@@ -108,7 +107,7 @@ def load_swebench_data(cache_path: str | Path = DEFAULT_CACHE_PATH) -> list[dict
         FileNotFoundError: If cache file doesn't exist
         json.JSONDecodeError: If cache file is invalid JSON
     """
-    with open(cache_path, "r") as f:
+    with open(cache_path) as f:
         return json.load(f)
 
 

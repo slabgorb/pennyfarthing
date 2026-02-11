@@ -11,7 +11,9 @@ Workflow orchestration engine. Coordinates multi-agent development through three
 | Workflow | Flow |
 |----------|------|
 | `tdd` | SM → TEA (RED) → Dev (GREEN) → Reviewer → SM |
+| `tdd-tandem` | SM → TEA+Architect (RED) → Dev+TEA (GREEN) → Reviewer+PM → SM |
 | `bdd` | SM → UX → TEA → Dev → Reviewer → SM |
+| `bdd-tandem` | SM → UX+Architect → TEA → Dev+UX (GREEN) → Reviewer+PM → SM |
 | `trivial` | SM → Dev → Reviewer → SM |
 | `agent-docs` | SM → Orchestrator → Tech Writer → SM |
 
@@ -27,7 +29,7 @@ One step loaded at a time. User approval at decision points. Supports tri-modal 
 | `sprint-planning` | Sprint planning facilitation |
 | `epics-and-stories` | Epic and story breakdown |
 | `release` | Release workflow with verification gates |
-| `ux-design`, `quick-dev`, `quick-spec`, `product-brief`, `project-context`, `implementation-readiness` | Other stepped workflows |
+| `ux-design`, `quick-dev`, `product-brief`, `project-context`, `implementation-readiness` | Other stepped workflows |
 
 ### Procedural — Flexible agent-guided processes
 
@@ -37,7 +39,6 @@ No fixed step sequence. Checklist-based, agent discretion on order.
 |----------|---------|
 | `brainstorming` | Structured problem-solving (62 techniques) |
 | `code-review` | Code review checklists |
-| `dev-story` | Story development guidance |
 | `retrospective` | Sprint retrospective |
 
 ## State Tracking

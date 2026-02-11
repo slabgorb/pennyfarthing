@@ -14,11 +14,12 @@ from typing import Any
 import click
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
+from pennyfarthing_scripts.sprint import validator as _shard_validator
 from pennyfarthing_scripts.sprint.yaml_io import (
     EPIC_KEY_ORDER,
+    _get_epic_ref,
     _read_yaml_file,
     _write_yaml_file,
-    _get_epic_ref,
 )
 
 
@@ -75,6 +76,12 @@ def add_epic(
     for key in fields:
         if key not in EPIC_KEY_ORDER:
             epic[key] = fields[key]
+
+    # Validate epic shard before writing
+    validation = _shard_validator.validate_epic_shard(dict(epic))
+    if not validation.valid:
+        error_msgs = "; ".join(e.message for e in validation.errors)
+        return {"success": False, "error": f"Epic validation failed: {error_msgs}"}
 
     # Determine the shard reference
     ref = _get_epic_ref(epic)

@@ -12,8 +12,8 @@ Story: MSSCI-12416 - Define Scale Levels
 Epic: MSSCI-12415 - Scale Adaptation and Brownfield Support
 """
 
-from typing import Any
 import re
+from typing import Any
 
 # Scale level definitions with keywords, thresholds, and metadata
 SCALE_LEVELS: dict[int, dict[str, Any]] = {
@@ -32,7 +32,7 @@ SCALE_LEVELS: dict[int, dict[str, Any]] = {
         "keywords": ["simple", "basic", "small", "add", "minor"],
         "stories_min": 1,
         "stories_max": 10,
-        "workflow": "quick-spec",
+        "workflow": "prd",
         "artifacts": ["tech-spec"],
     },
     2: {
@@ -124,7 +124,7 @@ def get_workflow_for_scale_level(level: int) -> str:
         level: Scale level 0-4
 
     Returns:
-        Workflow name (trivial, quick-spec, or prd)
+        Workflow name (trivial or prd)
     """
     if level not in SCALE_LEVELS:
         return "prd"  # Safe default for unknown levels

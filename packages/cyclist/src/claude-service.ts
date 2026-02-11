@@ -625,11 +625,31 @@ export class ClaudeService extends EventEmitter {
   }
 
   /**
-   * Set the permission mode for subsequent queries
-   * B-10: This sets the pending mode - takes effect on next query
+   * Set the permission mode, taking effect immediately on the running process.
+   * Sends a stream-json control request to stdin (same protocol as the Agent SDK's
+   * Query.setPermissionMode). Also updates pendingMode for future process spawns.
    */
   setPermissionMode(mode: PermissionMode): void {
     this.pendingMode = mode;
+    this.sendControlRequest({ subtype: 'set_permission_mode', mode });
+  }
+
+  /**
+   * Send a control request to the running Claude process via stdin.
+   * Uses the Agent SDK's stream-json control_request protocol.
+   */
+  private sendControlRequest(request: Record<string, unknown>): void {
+    if (!this.currentProcess || this.processExited) {
+      console.log('[ClaudeService] No running process, control request will apply on next spawn');
+      return;
+    }
+    const message = {
+      request_id: Math.random().toString(36).substring(2, 15),
+      type: 'control_request',
+      request,
+    };
+    console.log('[ClaudeService] Sending control request:', request.subtype);
+    this.currentProcess.stdin?.write(JSON.stringify(message) + '\n');
   }
 
   /**

@@ -4,7 +4,7 @@ Entry point for python -m pennyfarthing_scripts.sprint
 
 import sys
 
-from pennyfarthing_scripts.sprint.cli import cli
+from pennyfarthing_scripts.sprint.cli import sprint
 
 if __name__ == "__main__":
-    sys.exit(cli())
+    sys.exit(sprint())

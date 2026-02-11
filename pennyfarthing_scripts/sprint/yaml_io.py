@@ -272,7 +272,9 @@ def canonical_dump(data: Any) -> str:
 def _get_epic_ref(epic: Mapping) -> str:
     """Get the canonical reference ID for an epic shard file.
 
-    Mirrors the logic in migrate-to-shards.py: prefer Jira key, fall back to ID.
+    Priority: Jira key > numeric ID extracted from epic-N > raw ID.
+    Strips 'epic-' prefix from IDs to prevent double-prefix filenames
+    (e.g., epic-epic-94.yaml). See ADR-0022.
     """
     jira = epic.get("jira")
     epic_id = str(epic.get("id", ""))
@@ -281,7 +283,13 @@ def _get_epic_ref(epic: Mapping) -> str:
         return str(jira)
     if JIRA_PATTERN.match(epic_id):
         return epic_id
-    return epic_id
+
+    # Strip epic- prefix to prevent double-prefix filenames
+    # e.g., "epic-94" -> "94" so file becomes "epic-94.yaml" not "epic-epic-94.yaml"
+    stripped = epic_id
+    while stripped.startswith("epic-"):
+        stripped = stripped[5:]
+    return stripped or epic_id
 
 
 def _write_yaml_file(path: Path, data: Any) -> None:

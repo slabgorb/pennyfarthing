@@ -7,7 +7,7 @@ Cyclist is a desktop application for running Claude Code with a visual terminal 
 As of v9.0, Cyclist uses a **React-based UI** with **Dockview panels** (see ADR-0019). It uses:
 
 - **Electron** for the desktop application shell
-- **React 18** for the UI layer (`src/public/components/`)
+- **React 19** for the UI layer (`src/public/components/`)
 - **Dockview** for panel management (floating, splitting, dragging)
 - **Express** for serving the UI and handling API requests
 - **node-pty** for pseudo-terminal emulation (Electron mode)

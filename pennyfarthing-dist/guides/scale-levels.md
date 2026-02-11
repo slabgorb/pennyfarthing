@@ -7,7 +7,7 @@ Pennyfarthing uses scale levels (0-4) to route work to appropriate workflows. Sc
 | Level | Scope | Story Count | Workflow | Required Artifacts |
 |-------|-------|-------------|----------|-------------------|
 | **0** | fix, bug, typo, small change, patch | 1 | `trivial` | None |
-| **1** | simple, basic, small feature, add | 1-10 | `quick-spec` | tech-spec |
+| **1** | simple, basic, small feature, add | 1-10 | `prd` | tech-spec |
 | **2** | dashboard, several features, admin panel | 5-15 | `prd` | PRD |
 | **3** | platform, integration, complex, system | 12-40 | `prd` | PRD + architecture |
 | **4** | enterprise, multi-tenant, multiple products | 40+ | `prd` | Full BMAD process |
@@ -38,8 +38,7 @@ When you describe work to Pennyfarthing, the scale level is detected from keywor
 | Level | Workflow | Description |
 |-------|----------|-------------|
 | 0 | `trivial` | Direct fix, no planning artifacts |
-| 1 | `quick-spec` | Conversational spec, produces tech-spec |
-| 2-4 | `prd` | Full PRD workflow with gates |
+| 1-4 | `prd` | PRD workflow with gates |
 
 ## Required Artifacts
 
@@ -47,7 +46,7 @@ When you describe work to Pennyfarthing, the scale level is detected from keywor
 Just fix it. No planning documents required.
 
 ### Level 1: Tech-Spec
-Quick conversational spec producing implementation-ready technical specification.
+Lightweight PRD producing implementation-ready technical specification.
 
 ### Level 2: PRD
 Product Requirements Document. Architecture is optional.
@@ -102,7 +101,7 @@ info = get_scale_level_info(level)
 | Description | Detected Level | Workflow |
 |-------------|----------------|----------|
 | "Fix the login bug" | 0 | trivial |
-| "Add a logout button" | 1 | quick-spec |
+| "Add a logout button" | 1 | prd |
 | "Build an admin dashboard" | 2 | prd |
 | "New platform for data processing" | 3 | prd |
 | "Enterprise multi-tenant SaaS" | 4 | prd |
@@ -111,4 +110,3 @@ info = get_scale_level_info(level)
 
 - [Workflow Skill](/workflow) - Workflow management commands
 - [PRD Workflow](../workflows/prd/) - Full PRD stepped workflow
-- [Quick-Spec Workflow](../workflows/quick-spec/) - Lightweight spec workflow

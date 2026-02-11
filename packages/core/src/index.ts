@@ -31,30 +31,6 @@ export {
   VALID_GRANT_TYPES,
 } from './permissions/index.js';
 
-// Job-Fair Aggregator (Story 7-4, 7-5)
-export {
-  aggregateJobFairResults,
-  getBaselineComparison,
-  getRoleStatistics,
-  getTopPerformers,
-  getHistoricalTrend,
-  saveHistoricalSnapshot,
-  aggregateByDimension,
-  getDimensionValues,
-  generateDifferentialReport,
-  type Performer,
-  type RoleStats,
-  type OverallChampion,
-  type TrendPoint,
-  type AggregateStats,
-  type DimensionName,
-  type DimensionValues,
-  type ThemeDimensions,
-  type DimensionValueStats,
-  type DimensionComparison,
-  type DimensionStats,
-} from './scripts/job-fair-aggregator.js';
-
 // Workflow System (Stories 31-1, 31-2, 31-3, MSSCI-11710)
 export {
   // Schema validation
@@ -78,3 +54,17 @@ export {
   checkWorkflowPermissions,
   type WorkflowPermissionCheckResult,
 } from './workflow/index.js';
+
+// Plugin Discovery (Story 93-3)
+export {
+  discoverPlugins,
+  parsePluginManifest,
+  getPluginCommands,
+  getPluginSkills,
+  getPluginRouters,
+  type PluginManifest,
+  type DiscoveredPlugin,
+  type PluginCommand,
+  type PluginSkill,
+  type PluginRouter,
+} from './plugins/plugin-discovery.js';

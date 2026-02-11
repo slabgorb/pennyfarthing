@@ -14,10 +14,11 @@ Features:
 """
 
 import asyncio
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Literal, Sequence
+from typing import Literal
 
 
 class BranchAction(Enum):
@@ -296,7 +297,7 @@ def format_results(results: Sequence[BranchResult], branch_name: str) -> str:
         Multi-line formatted string with results and verification
     """
     lines = []
-    lines.append(f"🌿 Creating/checking out feature branches...")
+    lines.append("🌿 Creating/checking out feature branches...")
     lines.append(f"   Branch: {branch_name}")
     lines.append("")
 

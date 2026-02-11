@@ -10,7 +10,6 @@ import io
 import os
 import sys
 from pathlib import Path
-from typing import Generator
 from unittest.mock import patch
 
 import pytest
@@ -120,9 +119,15 @@ class TestConfigModule:
         """get_project_root() should raise if no .pennyfarthing found."""
         from pennyfarthing_scripts.common import config
 
-        # Start from root filesystem where there's no .pennyfarthing
-        with pytest.raises(FileNotFoundError):
-            config.get_project_root(start_dir=Path("/"))
+        # Clear env vars that bypass the directory walk
+        env_overrides = {"PROJECT_ROOT": "", "CLAUDE_PROJECT_DIR": ""}
+        with patch.dict(os.environ, env_overrides, clear=False):
+            # Remove keys entirely if they were set
+            os.environ.pop("PROJECT_ROOT", None)
+            os.environ.pop("CLAUDE_PROJECT_DIR", None)
+            # Start from root filesystem where there's no .pennyfarthing
+            with pytest.raises(FileNotFoundError):
+                config.get_project_root(start_dir=Path("/"))
 
     def test_load_yaml_config_returns_dict(self) -> None:
         """load_yaml_config() should return parsed YAML as dict."""

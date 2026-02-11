@@ -163,6 +163,18 @@ SM → TEA → Dev → Reviewer → SM
 - Dev implements to make tests pass
 - **Triggers:** `types: [feature, enhancement]`, `points.min: 3`
 
+### TDD-Tandem (TDD with full tandem chain)
+
+```
+setup → red (+Architect) → green (+TEA) → review (+PM) → finish
+SM → TEA (+Architect) → Dev (+TEA) → Reviewer (+PM) → SM
+```
+
+- Full tandem chain: every phase has a backseat observer
+- Architect watches test design, TEA watches implementation, PM watches review
+- For high-stakes features needing cross-role visibility
+- **Triggers:** `tags: [tandem]`, `points.min: 3`
+
 ### Trivial (for 1-2 point fixes)
 
 ```
@@ -195,6 +207,17 @@ SM → UX-Designer → TEA → Dev → Reviewer → SM
 - Adds UX design phase before testing
 - For UI components and user-facing features
 - **Triggers:** `types: [ui, ux, behavior]`, `tags: [bdd, ux-first]`
+
+### BDD-Tandem (BDD with full tandem chain)
+
+```
+setup → design (+Architect) → red → green (+UX-Designer) → review (+PM) → finish
+SM → UX-Designer (+Architect) → TEA → Dev (+UX-Designer) → Reviewer (+PM) → SM
+```
+
+- Full tandem chain: Architect watches design, UX-Designer watches implementation, PM watches review
+- Everyone shares their cake — cross-role visibility at every phase
+- **Triggers:** `tags: [bdd-tandem, tandem, ux-first]`, `points.min: 3`
 
 ### Architecture (stepped workflow)
 
@@ -341,5 +364,5 @@ workflow:
 For comprehensive documentation on creating stepped workflows, see:
 
 - **[guides/bikelane.md](../../guides/bikelane.md)** - Full BikeLane user guide
-- **[docs/adr/0013-bmad-workflow-import.md](../../docs/adr/0013-bmad-workflow-import.md)** - Technical ADR
+- **ADR-0013: Stepped Workflow Support** - Technical ADR (see `docs/adr/0013-bmad-workflow-import.md` in framework repo)
 - **[pennyfarthing-dist/workflows/architecture.yaml](../../workflows/architecture.yaml)** - Example implementation

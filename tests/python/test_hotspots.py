@@ -697,14 +697,23 @@ class TestExpandedDefaultExcludes:
         assert not _should_exclude("src/components/Button.tsx", DEFAULT_EXCLUDES)
         assert not _should_exclude("lib/utils.py", DEFAULT_EXCLUDES)
         assert not _should_exclude("src/styles/main.css", DEFAULT_EXCLUDES)
-        assert not _should_exclude("README.md", DEFAULT_EXCLUDES)
 
-    def test_config_files_not_excluded(self):
-        """Config files (.json, .yaml, .yml, .toml) should NOT be excluded
-        (they are filtered client-side, not server-side)."""
+    def test_documentation_files_excluded(self):
+        """Documentation files (*.md) are excluded server-side as non-code hotspots."""
         from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
-        assert not _should_exclude("tsconfig.json", DEFAULT_EXCLUDES)
-        assert not _should_exclude("config/settings.yaml", DEFAULT_EXCLUDES)
+        assert _should_exclude("README.md", DEFAULT_EXCLUDES)
+        assert _should_exclude("CLAUDE.md", DEFAULT_EXCLUDES)
+        assert _should_exclude("CHANGELOG.md", DEFAULT_EXCLUDES)
+        assert _should_exclude("docs/guide.md", DEFAULT_EXCLUDES)
+
+    def test_config_manifest_files_excluded(self):
+        """Config/manifest files are excluded server-side as high-churn non-code signals."""
+        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        assert _should_exclude("tsconfig.json", DEFAULT_EXCLUDES)
+        assert _should_exclude("package.json", DEFAULT_EXCLUDES)
+        assert _should_exclude("config/settings.yaml", DEFAULT_EXCLUDES)
+        assert _should_exclude("workflow.yml", DEFAULT_EXCLUDES)
+        # .toml not in default excludes
         assert not _should_exclude("pyproject.toml", DEFAULT_EXCLUDES)
 
     def test_expanded_excludes_in_analyze_repo(self):

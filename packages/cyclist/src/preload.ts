@@ -332,7 +332,7 @@ export interface ElectronSettingsAPI {
     name: string;
     description: string;
     source: string;
-    tier: 'S' | 'A' | 'B' | 'U';
+    tier: string | null;
     category: string;
     agentCount: number;
   }>>;
@@ -746,7 +746,7 @@ function createElectronAPI(): ElectronAPI {
           name: string;
           description: string;
           source: string;
-          tier: 'S' | 'A' | 'B' | 'U';
+          tier: string | null;
           category: string;
           agentCount: number;
         }>>,
@@ -954,9 +954,9 @@ function createElectronAPI(): ElectronAPI {
         getAvailableThemes: () => Promise.resolve(['alice-in-wonderland', 'a-team', 'star-trek']),
         // 24-5: Theme browser with metadata - test stub
         getThemeMetadata: () => Promise.resolve([
-          { id: 'alice-in-wonderland', name: 'Alice in Wonderland', description: 'Characters from Wonderland', source: 'Lewis Carroll', tier: 'S' as const, category: 'Literature', agentCount: 10 },
-          { id: 'a-team', name: 'A-Team', description: 'The A-Team crew', source: 'TV Series', tier: 'A' as const, category: 'TV Series', agentCount: 10 },
-          { id: 'star-trek', name: 'Star Trek', description: 'Star Trek characters', source: 'TV Series', tier: 'A' as const, category: 'TV Series', agentCount: 10 },
+          { id: 'alice-in-wonderland', name: 'Alice in Wonderland', description: 'Characters from Wonderland', source: 'Lewis Carroll', tier: 'S', category: 'Literature', agentCount: 10 },
+          { id: 'a-team', name: 'A-Team', description: 'The A-Team crew', source: 'TV Series', tier: 'A', category: 'TV Series', agentCount: 10 },
+          { id: 'star-trek', name: 'Star Trek', description: 'Star Trek characters', source: 'TV Series', tier: null, category: 'TV Series', agentCount: 10 },
         ]),
       },
       // Audit Log API (22-6) - test stub

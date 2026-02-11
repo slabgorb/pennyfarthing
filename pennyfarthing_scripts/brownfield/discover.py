@@ -11,7 +11,6 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Literal
 
 # Try to import tomllib (Python 3.11+) or fall back to tomli
 try:
@@ -642,7 +641,7 @@ def generate_ai_guidance_doc(result: DiscoveryResult) -> str:
 
     if result.tech_stack:
         # Get unique tech names
-        tech_names = sorted(set(item.name.lower() for item in result.tech_stack))[:10]
+        tech_names = sorted({item.name.lower() for item in result.tech_stack})[:10]
         lines.extend([
             "## Key Technologies",
             "",
