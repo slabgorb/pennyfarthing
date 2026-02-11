@@ -15,12 +15,12 @@ workflow:
   # Variables available in step files
   variables:
     project_root: .
-    planning_artifacts: ./artifacts
+    planning_artifacts: sprint/planning/
     implementation_artifacts: ./artifacts
     epics_location: ./artifacts
     epics_pattern: "epic*.md"
-    status_file: artifacts/sprint-status.yaml
-    output_file: artifacts/sprint-status.yaml
+    status_file: sprint/planning/sprint-status.yaml
+    output_file: sprint/planning/sprint-status.yaml
 
   # Agent assignment - SM handles sprint planning
   agent: sm
