@@ -162,7 +162,7 @@ describe('AgentQuickPicker', () => {
       });
     });
 
-    it('lists all available agents in the dropdown with role and character name', async () => {
+    it('lists all available agents in the dropdown with role and character name in tooltip', async () => {
       renderControlBar();
 
       await waitFor(() => {
@@ -173,10 +173,12 @@ describe('AgentQuickPicker', () => {
 
       await waitFor(() => {
         const dropdown = screen.getByTestId('agent-quick-picker-dropdown');
-        // Each agent should appear with role and character name
         for (const agent of mockThemeAgents.agents) {
+          // Role visible in text content
           expect(dropdown.textContent).toContain(agent.role);
-          expect(dropdown.textContent).toContain(agent.character);
+          // Character name in title attribute, not text
+          const option = screen.getByTestId(`agent-option-${agent.role}`);
+          expect(option).toHaveAttribute('title', agent.character);
         }
       });
     });
