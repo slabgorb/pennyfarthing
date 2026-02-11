@@ -1,13 +1,15 @@
-# TDD Tandem Workflow - TDD with Architect Observing
-# Extends standard TDD with Architect backseating during implementation
+# TDD Tandem Workflow - TDD with Full Tandem Chain
+# Extends standard TDD with tandem observers on every phase:
+#   - Architect backseats TEA during red phase
+#   - TEA backseats Dev during green phase
+#   - PM backseats Reviewer during review phase
 #
-# Flow: SM → TEA → Dev (+Architect) → Reviewer → SM
-# The Architect observes file changes during green phase via tandem mode
+# Flow: SM → TEA (+Architect) → Dev (+TEA) → Reviewer (+PM) → SM
 
 workflow:
   name: tdd-tandem
-  description: TDD with Architect observing during implementation
-  version: "1.0.0"
+  description: TDD with full tandem chain across all phases
+  version: "2.0.0"
 
   phases:
     - name: setup
@@ -21,6 +23,9 @@ workflow:
       gate:
         type: tests_fail
         condition: All acceptance criteria have test coverage
+      tandem:
+        partner: architect
+        scope: file-watch
 
     - name: green
       agent: dev
@@ -30,7 +35,7 @@ workflow:
         type: tests_pass
         condition: All tests passing, no skipped tests
       tandem:
-        partner: architect
+        partner: tea
         scope: file-watch
 
     - name: review
@@ -40,6 +45,9 @@ workflow:
       gate:
         type: approval
         condition: Code review approved, no blocking issues
+      tandem:
+        partner: pm
+        scope: file-watch
 
     - name: finish
       agent: sm
