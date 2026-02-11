@@ -141,52 +141,52 @@ def empty_observation_file(tmp_project):
 class TestMtimeTracking:
     """AC1: PostToolUse hook checks tandem observation file mtime for new content."""
 
-    def test_detects_new_tandem_file(self, bell_enabled_project, tandem_file):
+    def test_detects_new_tandem_file(self, tmp_project, tandem_file):
         """New tandem file (no mtime sidecar) should be detected as new content."""
-        results = check_tandem_files(bell_enabled_project)
+        results = check_tandem_files(tmp_project)
         assert len(results) > 0, "Should detect the new tandem file"
 
-    def test_skips_unchanged_tandem_file(self, bell_enabled_project, tandem_file):
+    def test_skips_unchanged_tandem_file(self, tmp_project, tandem_file):
         """Tandem file with matching mtime sidecar should be skipped."""
         # Record the current mtime
         current_mtime = tandem_file.stat().st_mtime
-        save_tandem_mtime(bell_enabled_project, "reviewer", current_mtime)
+        save_tandem_mtime(tmp_project, "reviewer", current_mtime)
 
-        results = check_tandem_files(bell_enabled_project)
+        results = check_tandem_files(tmp_project)
         assert len(results) == 0, "Should skip file with matching mtime"
 
-    def test_detects_modified_tandem_file(self, bell_enabled_project, tandem_file):
+    def test_detects_modified_tandem_file(self, tmp_project, tandem_file):
         """Tandem file modified after mtime was recorded should be detected."""
         # Record an old mtime
-        save_tandem_mtime(bell_enabled_project, "reviewer", 0.0)
+        save_tandem_mtime(tmp_project, "reviewer", 0.0)
 
-        results = check_tandem_files(bell_enabled_project)
+        results = check_tandem_files(tmp_project)
         assert len(results) > 0, "Should detect the modified tandem file"
 
-    def test_mtime_sidecar_location(self, bell_enabled_project, tandem_file):
+    def test_mtime_sidecar_location(self, tmp_project, tandem_file):
         """Mtime sidecar should be stored at .session/.tandem-mtime-{agent}."""
-        save_tandem_mtime(bell_enabled_project, "reviewer", 123.456)
-        sidecar = bell_enabled_project / ".session" / ".tandem-mtime-reviewer"
+        save_tandem_mtime(tmp_project, "reviewer", 123.456)
+        sidecar = tmp_project / ".session" / ".tandem-mtime-reviewer"
         assert sidecar.exists(), "Mtime sidecar should exist at expected path"
 
-    def test_get_tandem_mtime_returns_zero_when_no_sidecar(self, bell_enabled_project):
+    def test_get_tandem_mtime_returns_zero_when_no_sidecar(self, tmp_project):
         """get_tandem_mtime should return 0.0 when no sidecar file exists."""
-        mtime = get_tandem_mtime(bell_enabled_project, "reviewer")
+        mtime = get_tandem_mtime(tmp_project, "reviewer")
         assert mtime == 0.0, "Should return 0.0 when no sidecar exists"
 
-    def test_save_and_read_mtime_roundtrip(self, bell_enabled_project):
+    def test_save_and_read_mtime_roundtrip(self, tmp_project):
         """save_tandem_mtime and get_tandem_mtime should roundtrip correctly."""
-        save_tandem_mtime(bell_enabled_project, "tea", 1707580000.123)
-        result = get_tandem_mtime(bell_enabled_project, "tea")
+        save_tandem_mtime(tmp_project, "tea", 1707580000.123)
+        result = get_tandem_mtime(tmp_project, "tea")
         assert result == pytest.approx(1707580000.123), "Mtime should roundtrip"
 
-    def test_updates_mtime_after_reading(self, bell_enabled_project, tandem_file):
+    def test_updates_mtime_after_reading(self, tmp_project, tandem_file):
         """check_tandem_files should update mtime sidecar after reading."""
-        check_tandem_files(bell_enabled_project)
-        sidecar = bell_enabled_project / ".session" / ".tandem-mtime-reviewer"
+        check_tandem_files(tmp_project)
+        sidecar = tmp_project / ".session" / ".tandem-mtime-reviewer"
         assert sidecar.exists(), "Sidecar should be created after check"
 
-        saved_mtime = get_tandem_mtime(bell_enabled_project, "reviewer")
+        saved_mtime = get_tandem_mtime(tmp_project, "reviewer")
         file_mtime = tandem_file.stat().st_mtime
         assert saved_mtime == pytest.approx(file_mtime), "Saved mtime should match file"
 
@@ -235,15 +235,15 @@ class TestMessageFormatting:
         obs = get_latest_observation(SAMPLE_OBSERVATION_EMPTY_HEADER_ONLY)
         assert obs is None, "Should return None for file with no observations"
 
-    def test_read_tandem_observations_finds_files(self, bell_enabled_project, tandem_file):
+    def test_read_tandem_observations_finds_files(self, tmp_project, tandem_file):
         """read_tandem_observations should find .session/*-tandem-*.md files."""
-        files = read_tandem_observations(bell_enabled_project)
+        files = read_tandem_observations(tmp_project)
         assert len(files) == 1
         assert "reviewer" in str(files[0])
 
-    def test_read_tandem_observations_returns_empty_when_no_files(self, bell_enabled_project):
+    def test_read_tandem_observations_returns_empty_when_no_files(self, tmp_project):
         """read_tandem_observations should return empty list when no tandem files exist."""
-        files = read_tandem_observations(bell_enabled_project)
+        files = read_tandem_observations(tmp_project)
         assert files == []
 
 
@@ -327,27 +327,26 @@ class TestNoSchemaChanges:
 class TestHookTimeBudget:
     """AC5: Injection completes within existing hook time budget."""
 
-    def test_no_tandem_files_fast_exit(self, bell_enabled_project):
+    def test_no_tandem_files_fast_exit(self, tmp_project):
         """When no tandem files exist, check_tandem_files should return immediately."""
         start = time.perf_counter()
-        results = check_tandem_files(bell_enabled_project)
+        results = check_tandem_files(tmp_project)
         elapsed = time.perf_counter() - start
 
         assert results == []
         assert elapsed < 0.1, f"No-tandem fast path took {elapsed:.3f}s, should be < 0.1s"
 
-    def test_bell_mode_disabled_skips_tandem_check(self, tmp_project, tandem_file):
-        """When bell mode is disabled, tandem check should not occur."""
-        # No bell mode config = disabled
+    def test_tandem_works_without_bell_mode(self, tmp_project, tandem_file):
+        """Tandem injection works without bell_mode enabled — no config required."""
         results = check_tandem_files(tmp_project)
-        assert results == [], "Should skip tandem check when bell mode is disabled"
+        assert len(results) > 0, "Tandem should work without bell_mode config"
 
     def test_parsing_single_observation_file_within_budget(
-        self, bell_enabled_project, tandem_file
+        self, tmp_project, tandem_file
     ):
         """Parsing a single tandem observation file should complete quickly."""
         start = time.perf_counter()
-        check_tandem_files(bell_enabled_project)
+        check_tandem_files(tmp_project)
         elapsed = time.perf_counter() - start
 
         assert elapsed < 0.5, f"Single file parse took {elapsed:.3f}s, should be < 0.5s"
@@ -412,23 +411,23 @@ class TestDualImplementation:
 class TestEdgeCases:
     """Edge cases and error conditions for tandem injection."""
 
-    def test_malformed_observation_file_does_not_crash(self, bell_enabled_project):
+    def test_malformed_observation_file_does_not_crash(self, tmp_project):
         """Malformed tandem file should be handled gracefully."""
-        bad_file = bell_enabled_project / ".session" / "95-7-tandem-bad.md"
+        bad_file = tmp_project / ".session" / "95-7-tandem-bad.md"
         bad_file.write_text("this is not a valid observation file\nrandom content")
 
         # Should not raise
-        results = check_tandem_files(bell_enabled_project)
+        results = check_tandem_files(tmp_project)
         # May return empty or skip the file — either is acceptable
         assert isinstance(results, list)
 
-    def test_concurrent_write_does_not_corrupt_mtime(self, bell_enabled_project):
+    def test_concurrent_write_does_not_corrupt_mtime(self, tmp_project):
         """Writing mtime for different agents should not interfere."""
-        save_tandem_mtime(bell_enabled_project, "reviewer", 100.0)
-        save_tandem_mtime(bell_enabled_project, "tea", 200.0)
+        save_tandem_mtime(tmp_project, "reviewer", 100.0)
+        save_tandem_mtime(tmp_project, "tea", 200.0)
 
-        assert get_tandem_mtime(bell_enabled_project, "reviewer") == pytest.approx(100.0)
-        assert get_tandem_mtime(bell_enabled_project, "tea") == pytest.approx(200.0)
+        assert get_tandem_mtime(tmp_project, "reviewer") == pytest.approx(100.0)
+        assert get_tandem_mtime(tmp_project, "tea") == pytest.approx(200.0)
 
     def test_missing_session_directory(self, tmp_project):
         """Should handle missing .session directory gracefully."""
@@ -441,11 +440,11 @@ class TestEdgeCases:
         files = read_tandem_observations(tmp_project)
         assert files == []
 
-    def test_multiple_tandem_files_returns_all(self, bell_enabled_project):
+    def test_multiple_tandem_files_returns_all(self, tmp_project):
         """Multiple backseat agents = multiple tandem files, all detected."""
-        session_dir = bell_enabled_project / ".session"
+        session_dir = tmp_project / ".session"
         (session_dir / "95-7-tandem-reviewer.md").write_text(SAMPLE_OBSERVATION_FILE)
         (session_dir / "95-7-tandem-tea.md").write_text(SAMPLE_OBSERVATION_SINGLE)
 
-        files = read_tandem_observations(bell_enabled_project)
+        files = read_tandem_observations(tmp_project)
         assert len(files) == 2, f"Should find 2 tandem files, found {len(files)}"

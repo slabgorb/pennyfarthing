@@ -1,25 +1,17 @@
 #!/usr/bin/env python3
 """
-Bell Mode PostToolUse Hook (Python)
+PostToolUse Hook — Bell Mode + Tandem Injection (Python)
 
-This hook is called by Claude Code after each tool execution.
-When bell mode is enabled and there are queued messages, it returns
-the first queued message as additionalContext to be injected into
-Claude's next API call.
+Called by Claude Code after each tool execution. Handles two independent
+injection systems:
 
-Configuration files:
-  .pennyfarthing/config.local.yaml - workflow.bell_mode: true/false
-  .pennyfarthing/bell-queue.json - [{"text": "...", "images": [...]}, ...]
+1. Bell queue (Cyclist only) — injects queued user messages when Cyclist
+   is running and bell_mode is enabled. In CLI sessions this is a no-op.
+2. Tandem observations (always active) — injects backseat agent observations
+   when tandem observation files exist. No configuration required.
 
-Output format (when injecting):
-  {
-    "hookSpecificOutput": {
-      "hookEventName": "PostToolUse",
-      "additionalContext": "User feedback: <message>"
-    }
-  }
-
-Output when disabled or queue empty: (nothing - exit 0)
+Bell queue takes precedence: if a queued message exists, tandem is
+deferred to the next hook invocation.
 
 Story: MSSCI-12409 - Hook consistency and WheelHub consolidation
 """
@@ -33,10 +25,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from hooks import (
+    CYCLIST_PORT_FILE,
     HookResponse,
     find_project_root,
     is_bell_mode_enabled,
     output_hook_response,
+    read_port_file,
     send_to_cyclist,
 )
 
@@ -218,8 +212,8 @@ def check_tandem_files(project_root: Path) -> list[dict]:
     """Check for new tandem observations and return injection messages.
 
     Main entry point for tandem injection in the PostToolUse hook.
-    Checks if bell mode is enabled, finds tandem files, compares mtimes,
-    extracts latest observations, and formats injection messages.
+    Always active — no configuration required. The presence of tandem
+    observation files in .session/ is the only signal needed.
 
     Args:
         project_root: Project root directory
@@ -227,9 +221,6 @@ def check_tandem_files(project_root: Path) -> list[dict]:
     Returns:
         List of dicts with 'agent', 'message' keys for each new observation
     """
-    if not is_bell_mode_enabled(project_root):
-        return []
-
     tandem_files = read_tandem_observations(project_root)
     if not tandem_files:
         return []
@@ -272,7 +263,7 @@ def check_tandem_files(project_root: Path) -> list[dict]:
 
 
 def main() -> None:
-    """Main entry point for PostToolUse bell mode hook."""
+    """Main entry point for PostToolUse hook."""
     try:
         # Read and discard stdin (required by hook protocol)
         sys.stdin.read()
@@ -282,29 +273,26 @@ def main() -> None:
         if not project_root:
             sys.exit(0)
 
-        # Check if bell mode is enabled
-        if not is_bell_mode_enabled(project_root):
-            sys.exit(0)
+        # --- Bell queue (Cyclist only, requires bell_mode: true) ---
+        # Takes precedence over tandem when active.
+        is_cyclist = read_port_file(CYCLIST_PORT_FILE, project_root) is not None
+        if is_cyclist and is_bell_mode_enabled(project_root):
+            queue = read_bell_queue(project_root)
+            if queue:
+                first_message = queue[0]
+                message_text = first_message.get("text", "")
+                if message_text:
+                    output_hook_response(HookResponse(
+                        event_name="PostToolUse",
+                        additional_context=f"User feedback: {message_text}",
+                    ))
+                    dequeue_message(project_root)
+                    notify_cyclist(project_root, message_text)
+                    sys.exit(0)
 
-        # Read queue
-        queue = read_bell_queue(project_root)
-        if queue:
-            # Bell queue takes precedence over tandem observations
-            first_message = queue[0]
-            message_text = first_message.get("text", "")
-            if message_text:
-                output_hook_response(HookResponse(
-                    event_name="PostToolUse",
-                    additional_context=f"User feedback: {message_text}",
-                ))
-                dequeue_message(project_root)
-                notify_cyclist(project_root, message_text)
-                sys.exit(0)
-
-        # Check for tandem observations (only if no bell queue message)
+        # --- Tandem observations (always active, no config required) ---
         tandem_results = check_tandem_files(project_root)
         if tandem_results:
-            # Inject first tandem observation
             output_hook_response(HookResponse(
                 event_name="PostToolUse",
                 additional_context=tandem_results[0]["message"],
@@ -313,7 +301,6 @@ def main() -> None:
         sys.exit(0)
 
     except Exception as e:
-        # On error, exit silently
         print(f"[bellmode-hook] Error: {e}", file=sys.stderr)
         sys.exit(0)
 
