@@ -241,6 +241,158 @@ function JiraLink({ jiraKey, storyId }: { jiraKey: string; storyId: string }): R
 }
 
 /**
+ * EpicGroup - Renders a single epic with its stories
+ */
+function EpicGroup({
+  epic,
+  isExpanded,
+  isArchiving,
+  onToggle,
+  onKeyDown,
+  onArchive,
+}: {
+  epic: SprintEpic;
+  isExpanded: boolean;
+  isArchiving: boolean;
+  onToggle: (id: string) => void;
+  onKeyDown: (id: string, e: React.KeyboardEvent) => void;
+  onArchive: (id: string) => void;
+}): React.ReactElement {
+  const { done, total } = calculateEpicProgress(epic);
+  const completed = isEpicCompleted(epic);
+
+  return (
+    <div
+      className={`epic-group ${completed ? 'epic-completed' : ''}`}
+      data-testid={`epic-group-${epic.id}`}
+    >
+      {/* Epic Header */}
+      <div className="epic-header">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="epic-toggle"
+          data-testid={`epic-toggle-${epic.id}`}
+          onClick={() => onToggle(epic.id)}
+          onKeyDown={(e) => onKeyDown(epic.id, e)}
+          aria-expanded={isExpanded}
+        >
+          {isExpanded ? '▼' : '▶'}
+        </Button>
+        <span className="epic-title">{epic.title}</span>
+        {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
+        <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
+        {completed && epic.hasContext && (
+          <Badge variant="default" className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
+            Ready
+          </Badge>
+        )}
+
+        {/* Progress bar */}
+        <div
+          className="epic-progress"
+          data-testid={`epic-progress-${epic.id}`}
+          data-done={String(done)}
+          data-total={String(total)}
+        >
+          <div
+            className="progress-bar"
+            style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
+          />
+        </div>
+        <span
+          className="epic-progress-label"
+          data-testid={`epic-progress-label-${epic.id}`}
+        >
+          {done}/{total} pts
+        </span>
+
+        {/* Archive button for completed epics */}
+        {completed && (
+          <>
+            {isArchiving && (
+              <span data-testid={`archive-loading-${epic.id}`}>...</span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="archive-button"
+              data-testid={`archive-button-${epic.id}`}
+              aria-label={`Archive ${epic.id}`}
+              disabled={isArchiving}
+              onClick={() => onArchive(epic.id)}
+            >
+              Archive
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* Stories list (collapsible) */}
+      {isExpanded && (
+        <div className="epic-stories">
+          {epic.stories.map((story) => {
+            const hasContext = story.hasContext ?? false;
+            const isBlocked = story.status === 'blocked';
+            const assigneeDisplay = formatAssignee(story.assignedTo);
+            return (
+              <div
+                key={story.id}
+                className={`story-item ${!hasContext ? 'missing-context' : ''} ${isBlocked ? 'story-blocked' : ''}`}
+                data-testid={`story-item-${story.id}`}
+                data-status={story.status}
+                data-story-id={story.id}
+                aria-label={`${story.id}: ${story.title}`}
+              >
+                <PriorityDot priority={story.priority} storyId={story.id} />
+                <StatusBadge status={story.status} storyId={story.id} />
+                {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
+                <div className="story-info">
+                  <span className="story-title">{story.title}</span>
+                  <span className="story-meta">
+                    {assigneeDisplay && (
+                      <span
+                        className="story-assignee"
+                        data-testid={`story-assignee-${story.id}`}
+                      >
+                        {assigneeDisplay}
+                      </span>
+                    )}
+                    {story.workflow && (
+                      <span
+                        className="story-workflow-badge"
+                        data-testid={`story-workflow-${story.id}`}
+                      >
+                        {story.workflow}
+                      </span>
+                    )}
+                    {story.status === 'done' && story.completed && (
+                      <span
+                        className="story-completed-date"
+                        data-testid={`story-completed-${story.id}`}
+                      >
+                        {story.completed}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <ContextIndicator hasContext={hasContext} testIdPrefix="story" id={story.id} />
+                <span
+                  className="story-points"
+                  data-testid={`story-points-${story.id}`}
+                >
+                  {story.points}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * EnhancedSprintPanel - Full sprint management with epic actions
  */
 export function EnhancedSprintPanel(): React.ReactElement {
@@ -251,12 +403,17 @@ export function EnhancedSprintPanel(): React.ReactElement {
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
   const [actionError, setActionError] = useState<Error | null>(null);
 
-  // Expand all epics by default when data first loads (once only)
+  // Split epics into active (has non-done stories) vs completed (all stories done)
+  const activeEpics = data?.epics.filter((e) => !isEpicCompleted(e)) ?? [];
+  const completedEpics = data?.epics.filter((e) => isEpicCompleted(e)) ?? [];
+
+  // Expand only active epics by default when data first loads (once only)
+  // Completed epics start collapsed
   const hasInitializedExpansion = useRef(false);
   useEffect(() => {
     if (data?.epics && !hasInitializedExpansion.current) {
       hasInitializedExpansion.current = true;
-      setExpandedEpics(new Set(data.epics.map((e) => e.id)));
+      setExpandedEpics(new Set(activeEpics.map((e) => e.id)));
     }
   }, [data?.epics]);
 
@@ -414,7 +571,7 @@ export function EnhancedSprintPanel(): React.ReactElement {
 
       <Separator className="my-2" />
 
-      {/* Section 2: Epic Tree View */}
+      {/* Section 2: Active Epics */}
       <section data-section="epics">
         <h2>Current Epics</h2>
         <div data-testid="epic-tree-view">
@@ -424,145 +581,42 @@ export function EnhancedSprintPanel(): React.ReactElement {
               <p className="hint">Promote an epic from Future Initiatives to get started</p>
             </div>
           )}
-          {data?.epics.map((epic) => {
-            const { done, total } = calculateEpicProgress(epic);
-            const completed = isEpicCompleted(epic);
-            const isExpanded = expandedEpics.has(epic.id);
-            const isArchiving = loadingActions.has(`archive-${epic.id}`);
-
-            return (
-              <div
-                key={epic.id}
-                className={`epic-group ${completed ? 'epic-completed' : ''}`}
-                data-testid={`epic-group-${epic.id}`}
-              >
-                {/* Epic Header */}
-                <div className="epic-header">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="epic-toggle"
-                    data-testid={`epic-toggle-${epic.id}`}
-                    onClick={() => toggleEpic(epic.id)}
-                    onKeyDown={(e) => handleEpicKeyDown(epic.id, e)}
-                    aria-expanded={isExpanded}
-                  >
-                    {isExpanded ? '▼' : '▶'}
-                  </Button>
-                  <span className="epic-title">{epic.title}</span>
-                  {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
-                  <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
-                  {completed && epic.hasContext && (
-                    <Badge variant="default" className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
-                      Ready
-                    </Badge>
-                  )}
-
-                  {/* Progress bar */}
-                  <div
-                    className="epic-progress"
-                    data-testid={`epic-progress-${epic.id}`}
-                    data-done={String(done)}
-                    data-total={String(total)}
-                  >
-                    <div
-                      className="progress-bar"
-                      style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span
-                    className="epic-progress-label"
-                    data-testid={`epic-progress-label-${epic.id}`}
-                  >
-                    {done}/{total} pts
-                  </span>
-
-                  {/* Archive button for completed epics */}
-                  {completed && (
-                    <>
-                      {isArchiving && (
-                        <span data-testid={`archive-loading-${epic.id}`}>...</span>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="archive-button"
-                        data-testid={`archive-button-${epic.id}`}
-                        aria-label={`Archive ${epic.id}`}
-                        disabled={isArchiving}
-                        onClick={() => setConfirmArchive(epic.id)}
-                      >
-                        Archive
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                {/* Stories list (collapsible) */}
-                {isExpanded && (
-                  <div className="epic-stories">
-                    {epic.stories.map((story) => {
-                      const hasContext = story.hasContext ?? false;
-                      const isBlocked = story.status === 'blocked';
-                      const assigneeDisplay = formatAssignee(story.assignedTo);
-                      return (
-                        <div
-                          key={story.id}
-                          className={`story-item ${!hasContext ? 'missing-context' : ''} ${isBlocked ? 'story-blocked' : ''}`}
-                          data-testid={`story-item-${story.id}`}
-                          data-status={story.status}
-                          data-story-id={story.id}
-                          aria-label={`${story.id}: ${story.title}`}
-                        >
-                          <PriorityDot priority={story.priority} storyId={story.id} />
-                          <StatusBadge status={story.status} storyId={story.id} />
-                          {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
-                          <div className="story-info">
-                            <span className="story-title">{story.title}</span>
-                            <span className="story-meta">
-                              {assigneeDisplay && (
-                                <span
-                                  className="story-assignee"
-                                  data-testid={`story-assignee-${story.id}`}
-                                >
-                                  {assigneeDisplay}
-                                </span>
-                              )}
-                              {story.workflow && (
-                                <span
-                                  className="story-workflow-badge"
-                                  data-testid={`story-workflow-${story.id}`}
-                                >
-                                  {story.workflow}
-                                </span>
-                              )}
-                              {story.status === 'done' && story.completed && (
-                                <span
-                                  className="story-completed-date"
-                                  data-testid={`story-completed-${story.id}`}
-                                >
-                                  {story.completed}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <ContextIndicator hasContext={hasContext} testIdPrefix="story" id={story.id} />
-                          <span
-                            className="story-points"
-                            data-testid={`story-points-${story.id}`}
-                          >
-                            {story.points}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {activeEpics.map((epic) => (
+            <EpicGroup
+              key={epic.id}
+              epic={epic}
+              isExpanded={expandedEpics.has(epic.id)}
+              isArchiving={loadingActions.has(`archive-${epic.id}`)}
+              onToggle={toggleEpic}
+              onKeyDown={handleEpicKeyDown}
+              onArchive={setConfirmArchive}
+            />
+          ))}
         </div>
       </section>
+
+      {/* Section 2b: Completed Epics */}
+      {completedEpics.length > 0 && (
+        <>
+          <Separator className="my-2" />
+          <section data-section="completed-epics">
+            <h2>Completed Epics</h2>
+            <div data-testid="completed-epics-section">
+              {completedEpics.map((epic) => (
+                <EpicGroup
+                  key={epic.id}
+                  epic={epic}
+                  isExpanded={expandedEpics.has(epic.id)}
+                  isArchiving={loadingActions.has(`archive-${epic.id}`)}
+                  onToggle={toggleEpic}
+                  onKeyDown={handleEpicKeyDown}
+                  onArchive={setConfirmArchive}
+                />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       <Separator className="my-2" />
 
