@@ -102,6 +102,7 @@ def _component_header(name: str, agent_name: str | None) -> str:
         "persona_compressed": f"Persona: {agent_name} (compressed)",
         "behavior_guide": "Agent Behavior Guide",
         "sprint_context": "Sprint Context",
+        "repos_topology": "Repos Topology",
         "session_header": "Active Session",
         "session_assessment": "Session Assessment",
         "sidecars": f"Agent Sidecar: {agent_name}",
@@ -118,6 +119,7 @@ def _component_source(name: str, agent_name: str | None, root: Path) -> str | No
         "persona_compressed": None,
         "behavior_guide": ".pennyfarthing/guides/agent-behavior.md",
         "sprint_context": "sprint/current-sprint.yaml",
+        "repos_topology": ".pennyfarthing/repos.yaml",
         "session_header": None,
         "session_assessment": None,
         "sidecars": f".pennyfarthing/sidecars/{agent_name}/",
@@ -473,6 +475,17 @@ def prime(
         if sprint_content:
             _print_header("Sprint Context", quiet)
             print(sprint_content)
+
+    # ==========================================================================
+    # PRIORITY 5.5: Repos Topology
+    # ==========================================================================
+    if not json_output:
+        from pennyfarthing_scripts.prime.loader import load_repos_topology
+
+        topology_content = load_repos_topology(root)
+        if topology_content:
+            _print_header("Repos Topology", quiet)
+            print(topology_content)
 
     # ==========================================================================
     # PRIORITY 6: Session context
