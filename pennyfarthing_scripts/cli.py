@@ -65,6 +65,11 @@ from pennyfarthing_scripts.validate.cli import validate  # noqa: E402
 
 cli.add_command(validate)
 
+# Import and register bikerack group
+from pennyfarthing_scripts.bikerack.cli import bikerack  # noqa: E402
+
+cli.add_command(bikerack)
+
 
 @cli.group()
 def agent():
