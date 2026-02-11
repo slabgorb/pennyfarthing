@@ -98,6 +98,11 @@ app.get('/', (_req, res) => {
   res.sendFile(join(publicDir, 'index.html'));
 });
 
+// BikeRack index page (MSSCI-14822) — serves SPA, React handles routing
+app.get('/bikerack', (_req, res) => {
+  res.sendFile(join(publicDir, 'index.html'));
+});
+
 // Serve pennyfarthing logo from project root (for welcome message)
 app.get('/pennyfarthing-transparent.png', (_req, res) => {
   const projectDir = getProjectDirectory() || process.cwd();
