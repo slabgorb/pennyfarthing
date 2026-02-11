@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.1.0** | *The outer loop goes once, the inner loop goes many times.*
+**v10.2.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -204,13 +204,13 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
 | [Cyclist Guide](docs/CYCLIST-GUIDE.md) | Visual terminal documentation |
 
-## Available Themes (97)
+## Available Themes (98)
 
-Core includes 26 themes. Optional theme packs add 98 more across 7 packages:
+Core includes 27 themes. Optional theme packs add 71 more across 7 packages:
 
 | Package | Themes | Examples |
 |---------|--------|----------|
-| `@pennyfarthing/core` (included) | 26 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `game-of-thrones` |
+| `@pennyfarthing/core` (included) | 27 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element` |
 | `@pennyfarthing/themes-prestige-tv` | 17 | `succession`, `the-wire`, `mad-men`, `fargo`, `the-sopranos` |
 | `@pennyfarthing/themes-literary` | 15 | `shakespeare`, `jane-austen`, `sherlock-holmes`, `1984`, `great-gatsby` |
 | `@pennyfarthing/themes-realistic` | 14 | `ancient-philosophers`, `jazz-legends`, `film-auteurs`, `software-pioneers` |
