@@ -5,6 +5,7 @@
  * RED STATE: These tests should FAIL until Dev implements validateReposTopology()
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { validateReposTopology, type ReposConfig } from './repos-topology.js';
