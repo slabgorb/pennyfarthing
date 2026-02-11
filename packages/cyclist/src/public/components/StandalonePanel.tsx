@@ -27,6 +27,7 @@ import {
   TTYPanel,
   DebugPanel,
   BikeLanePanel,
+  PortraitPanel,
 } from './panels';
 
 /**
@@ -46,6 +47,7 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType> = {
   tty: TTYPanel,
   debug: DebugPanel,
   bikelane: BikeLanePanel,
+  portrait: PortraitPanel,
 };
 
 /**
