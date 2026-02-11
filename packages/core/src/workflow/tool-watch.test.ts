@@ -28,10 +28,7 @@ import {
   truncateResult,
   startToolWatcher,
   stopToolWatcher,
-  type ToolCallEntry,
   type ToolWatchConfig,
-  type ToolWatchHandle,
-  type ToolWatchResult,
 } from './tool-watch.js';
 
 // Import observation writer for integration tests
@@ -655,12 +652,9 @@ describe('95-5: Tool-watch Observation Scope', () => {
       assert.ok(parsed.success);
       assert.ok(parsed.data);
 
-      // Count observations that mention "first" vs "second"
+      // Count observations that mention "first"
       const firstObs = parsed.data.entries.filter(e =>
         e.triggerDetail.includes('first') || e.observation.includes('first')
-      );
-      const secondObs = parsed.data.entries.filter(e =>
-        e.triggerDetail.includes('second') || e.observation.includes('second')
       );
 
       // "first" should appear exactly once (not re-processed)
