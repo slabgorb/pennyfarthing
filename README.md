@@ -15,9 +15,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
-- **9 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD), Stepped (Architecture, Release, Git Cleanup)
-- **50 Slash Commands** - Entry points for agent activation and workflows
-- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **11 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
+- **46 Slash Commands** - Entry points for agent activation and workflows
+- **19 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
@@ -87,8 +87,8 @@ All panels are draggable, floatable, and splittable:
 |-------|---------|
 | **Message** | Conversation stream (always visible) |
 | **Sprint** | Current sprint stories and progress |
-| **Progress** | TDD/BDD phase visualization |
 | **BikeLane** | Stepped workflow state and navigation |
+| **AC** | Acceptance criteria checklist with progress |
 | **Acceptance Criteria** | Story ACs with pass/fail tracking |
 | **Changed** | Files added or modified during the session |
 | **Diffs** | Git-based diff viewer for current changes |
@@ -100,6 +100,7 @@ All panels are draggable, floatable, and splittable:
 | **Background** | Background job monitoring |
 | **TTY** | Integrated terminal |
 | **Workflow** | Workflow navigation and status |
+| **Hotspots** | Codebase health — dead code, complexity, dependencies |
 
 ### Tool Visualization
 
@@ -201,13 +202,13 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 |----------|-------------|
 | [**User Guide**](docs/USER-GUIDE.md) | Complete documentation |
 | [Getting Started](docs/GETTING-STARTED.md) | Quick start guide |
-| [Workflow Diagrams](docs/WORKFLOW-DIAGRAMS.md) | Visual Mermaid diagrams for all workflows |
+| [BikeLane Diagrams](docs/BIKELANE-DIAGRAMS.md) | Visual Mermaid diagrams for all workflows |
 | [BikeLane](docs/BIKELANE.md) | Workflow system architecture |
 | [Agents](docs/AGENTS.md) | Agent reference |
 | [Commands](docs/COMMANDS.md) | Slash command reference |
-| [Benchmarking](docs/BENCHMARKING.md) | Scientific persona evaluation |
+| [Benchmarking](packages/benchmark/docs/BENCHMARKING.md) | Scientific persona evaluation |
 | [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
-| [Cyclist](docs/CYCLIST.md) | Visual terminal documentation |
+| [Cyclist Guide](docs/CYCLIST-GUIDE.md) | Visual terminal documentation |
 
 ## Available Themes (97)
 
@@ -224,7 +225,7 @@ Core includes 26 themes. Optional theme packs add 98 more across 7 packages:
 | `@pennyfarthing/themes-mythology-fantasy` | 4 | `greek-mythology`, `norse-mythology`, `his-dark-materials`, `the-witcher` |
 | `@pennyfarthing/themes-superheroes` | 4 | `marvel-mcu`, `avatar-the-last-airbender`, `legion-of-doom` |
 
-All themes include OCEAN (Big Five) personality profiles. See [Theme Comparison](docs/THEME-COMPARISON.md) for personality analysis.
+All themes include OCEAN (Big Five) personality profiles. See [Personas](docs/PERSONAS.md) for personality analysis.
 
 ### Installing Theme Packs
 

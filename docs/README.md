@@ -10,11 +10,11 @@ Pennyfarthing is a Claude Code agent orchestration framework built around three 
 
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
-- **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, and more
-- **BikeLane Workflows** - 19 workflows in three types (Phased, Stepped, Procedural)
+- **17 Agents** (10 coordinated + 7 subagents) - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
+- **BikeLane Workflows** - Phased (8), Stepped (17), and Procedural types
 - **Subagent Handoffs** - Automated state transitions between agents
-- **45 Slash Commands** - Entry points for agent activation
-- **22 Skills** - Project-agnostic knowledge domains
+- **46 Slash Commands** - Entry points for agent activation
+- **19 Skills** - Project-agnostic knowledge domains
 
 ### 2. Personality Research
 
@@ -26,7 +26,7 @@ A scientific study of how strong personalities affect agent behavior:
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 - **Hypothesis Testing** - Does High Openness detect more reasoning errors? Does Low Agreeableness improve adversarial review?
 
-The persona themes (102 across Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The persona themes (97 across Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. 1898 Integration
 
@@ -98,7 +98,7 @@ npx pennyfarthing doctor
 
 SM → TEA → Dev → Reviewer → SM (setup → red → green → review → finish)
 
-This is one of 19 BikeLane workflows. Others include stepped planning workflows (PRD, Architecture), procedural workflows (Brainstorming, Retrospective), and quick workflows (Trivial, Quick-Dev).
+This is one of many BikeLane workflows. Others include stepped planning workflows (PRD, Architecture), procedural workflows (Brainstorming, Retrospective), and quick workflows (Trivial, Quick-Dev).
 
 ## CLI Commands
 
