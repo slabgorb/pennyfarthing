@@ -316,7 +316,7 @@ export function getSprintData(projectDir: string): SprintData {
   const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
   const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
 
-  // Calculate sprint metrics
+  // Calculate sprint metrics from ACTIVE epics only
   // Note: blocked stories are NOT counted in remaining - they're blocked, not available
   let done = 0;
   let inProgress = 0;
@@ -332,6 +332,41 @@ export function getSprintData(projectDir: string): SprintData {
         remaining += story.points;
       }
       // blocked stories intentionally not counted in remaining
+    }
+  }
+
+  // Load archived epics from sprint-{N}-completed.yaml
+  // These are appended AFTER metrics calculation so their points don't inflate sprint totals
+  const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
+  if (sprintNumber > 0) {
+    const completedPath = join(sprintDir, `sprint-${sprintNumber}-completed.yaml`);
+    if (existsSync(completedPath)) {
+      try {
+        const completedContent = readFileSync(completedPath, 'utf-8');
+        const completedData = parseYaml(completedContent) as { completed_epics?: string[] };
+        const epicRefs = completedData.completed_epics ?? [];
+
+        for (const ref of epicRefs) {
+          const shardPath = join(sprintDir, 'archive', `epic-${ref}.yaml`);
+          if (existsSync(shardPath)) {
+            try {
+              const shardContent = readFileSync(shardPath, 'utf-8');
+              const epicData = parseYaml(shardContent) as YamlEpic;
+              if (epicData && epicData.id) {
+                epics.push(transformEpic(epicData, projectDir));
+              } else {
+                console.warn(`[sprint-data] Archive shard epic-${ref}.yaml missing id, skipped`);
+              }
+            } catch (err) {
+              console.error(`[sprint-data] Failed to parse archive epic-${ref}.yaml:`, err);
+            }
+          } else {
+            console.warn(`[sprint-data] Archive shard not found: ${shardPath}`);
+          }
+        }
+      } catch (err) {
+        console.error('[sprint-data] Failed to parse completed sprint YAML:', err);
+      }
     }
   }
 
