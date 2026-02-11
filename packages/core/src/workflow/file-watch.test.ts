@@ -20,7 +20,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync, readFileSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,8 +32,6 @@ import {
   createFileWatchScope,
   type FileChange,
   type FileWatchConfig,
-  type FileWatchHandle,
-  type FileWatchResult,
 } from './file-watch.js';
 
 // Import observation writer for integration tests
