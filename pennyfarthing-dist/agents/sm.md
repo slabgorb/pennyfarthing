@@ -86,10 +86,15 @@ FILE_LIST: "{comma-separated file paths}"
 ### sm-handoff
 ```yaml
 STORY_ID: "{STORY_ID}"
-NEXT_AGENT: "{tea|dev}"
-NEXT_PHASE: "{red|implement}"
+NEXT_AGENT: "{tea|dev|ux-designer|orchestrator}"
+NEXT_PHASE: "{red|implement|design}"
 WORKFLOW: "{WORKFLOW}"
 ```
+
+**Phase names must match workflow YAML exactly.** Use the phase `name` field from the workflow definition:
+- `tdd`/`tdd-tandem`: setup → `red` → green → review → finish
+- `bdd`/`bdd-tandem`: setup → `design` → red → green → review → finish
+- `trivial`: setup → `implement` → review → finish
 </parameters>
 
 <on-activation>
@@ -238,7 +243,9 @@ SM sets up the story and hands off to the first agent. Agents hand off to each o
 | Workflow | Type | After Setup → | Agent |
 |----------|------|---------------|-------|
 | `tdd` | phased | TEA | `/tea` |
+| `tdd-tandem` | phased | TEA (+Architect) | `/tea` |
 | `bdd` | phased | UX-Designer | `/ux-designer` |
+| `bdd-tandem` | phased | UX-Designer (+Architect) | `/ux-designer` |
 | `trivial` | phased | Dev | `/dev` |
 | `agent-docs` | phased | Orchestrator | `/orchestrator` |
 
