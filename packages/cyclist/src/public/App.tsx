@@ -22,6 +22,7 @@ import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 import { loadPresetFromProject, applyPreset } from './utils/color-presets';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { StandalonePanel, getStandalonePanelName } from './components/StandalonePanel';
 import ApprovalModal, { useApprovalModal } from './components/ApprovalModal';
 import { subscribeToPermissionRequests, sendPermissionResponse, createApprovalResponse } from './components/ApprovalModal';
 import type { ApprovalRequest, GrantScope } from './components/ApprovalModal';
@@ -198,6 +199,13 @@ function RootErrorFallback(): React.ReactElement {
 // =============================================================================
 
 export default function App(): React.ReactElement {
+  // BikeRack standalone panel routing (MSSCI-14821)
+  // URL-based detection only (Rule 10) — ?panel=X renders single panel full-screen
+  const standalonePanelName = getStandalonePanelName();
+  if (standalonePanelName) {
+    return <StandalonePanel />;
+  }
+
   const { layout, isLoading, saveLayout } = useLayoutPersistence();
 
   // Set up reduced motion support
