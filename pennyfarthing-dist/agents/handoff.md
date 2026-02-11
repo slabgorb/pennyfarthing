@@ -77,10 +77,18 @@ No automated checks. Always passes.
 
 3. **Run gate-specific checks** (see above)
 
-4. **Determine next phase:**
+4. **Determine next phase and check for tandem partner:**
    ```bash
    ./scripts/handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
    ```
+
+   After determining the next phase, check for tandem partner:
+   ```bash
+   TANDEM_PARTNER=$(yq eval ".workflow.phases[] | select(.name == \"$NEXT_PHASE\") | .tandem.partner // \"\"" "$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml" 2>/dev/null)
+   TANDEM_SCOPE=$(yq eval ".workflow.phases[] | select(.name == \"$NEXT_PHASE\") | .tandem.scope // \"\"" "$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml" 2>/dev/null)
+   ```
+
+   If tandem partner exists, add `**Tandem:** {partner} ({scope})` to session metadata.
 
 5. **Update session file using Edit tool:**
 
@@ -149,6 +157,8 @@ HANDOFF_RESULT:
   next_phase: {NEXT_PHASE}
   gate: {GATE_TYPE}
   story_id: {STORY_ID}
+  tandem_partner: {PARTNER or "none"}
+  tandem_scope: {SCOPE or "none"}
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
@@ -156,7 +166,7 @@ HANDOFF_RESULT:
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
-### Example (TEA → Dev)
+### Example (TEA → Dev, with tandem)
 ```
 HANDOFF_RESULT:
   status: success
@@ -164,6 +174,8 @@ HANDOFF_RESULT:
   next_phase: green
   gate: tests_fail
   story_id: 46-5
+  tandem_partner: ux-designer
+  tandem_scope: file-watch
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
@@ -179,6 +191,8 @@ HANDOFF_RESULT:
   next_phase: review
   gate: tests_pass
   story_id: 46-5
+  tandem_partner: pm
+  tandem_scope: file-watch
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."

@@ -73,12 +73,12 @@ export function ACPanel(): React.ReactElement {
   return (
     <div className="ac-panel" data-testid="ac-panel">
       <div className="ac-content">
+        <span className="progress-text">{completedCount}/{totalCount}</span>
         <div className="progress-bar-container">
           <div
             className="progress-bar"
             style={{ width: `${(completedCount / totalCount) * 100}%` }}
           />
-          <span className="progress-text">{completedCount}/{totalCount}</span>
         </div>
         <div className="ac-list">
           {criteria.map((item, index) => (
