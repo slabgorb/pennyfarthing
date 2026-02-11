@@ -8,10 +8,6 @@ properly delegate to library modules.
 
 import subprocess
 import sys
-from typing import Any
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestJiraCLIModule:

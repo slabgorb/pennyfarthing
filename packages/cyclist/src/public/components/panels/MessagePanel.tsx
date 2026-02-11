@@ -248,6 +248,7 @@ export function MessagePanel(): React.ReactElement {
     handleBellModeChange,
     handleRelayModeChange,
     handleTirePump,
+    handleAgentSwitch,
   } = useControlBar();
 
   // Claude context for WebSocket communication
@@ -415,13 +416,53 @@ export function MessagePanel(): React.ReactElement {
     handleStop();
   }, [pauseQueue, handleStop]);
 
+  // Resizable editor panel
+  const [editorHeight, setEditorHeight] = useState<number | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    const startY = e.clientY;
+    const panelEl = panelRef.current;
+    if (!panelEl) return;
+    const panelRect = panelEl.getBoundingClientRect();
+    const startEditorHeight = editorHeight ?? panelEl.querySelector('.message-panel-editor')?.getBoundingClientRect().height ?? 150;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = startY - ev.clientY;
+      const newHeight = Math.max(80, Math.min(startEditorHeight + delta, panelRect.height * 0.7));
+      setEditorHeight(newHeight);
+    };
+    const onMouseUp = () => {
+      isDragging.current = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  }, [editorHeight]);
+
   return (
-    <div className="message-panel" data-testid="message-panel">
+    <div className="message-panel" data-testid="message-panel" ref={panelRef}>
       <PersonaHeader />
       <div className="message-panel-content">
         <MessageView messages={messages} />
       </div>
-      <div className="message-panel-editor">
+      <div
+        className="message-panel-resize-handle"
+        onMouseDown={handleResizeStart}
+      />
+      <div
+        className="message-panel-editor"
+        style={editorHeight != null ? { height: editorHeight, flexShrink: 0 } : undefined}
+      >
         <div className="editor-with-controls">
           <div className="editor-area">
             <Editor
@@ -444,6 +485,7 @@ export function MessagePanel(): React.ReactElement {
             contextPercent={contextPercent}
             currentAgent={currentAgent}
             onTirePump={handleTirePump}
+            onAgentSwitch={handleAgentSwitch}
           />
         </div>
       </div>

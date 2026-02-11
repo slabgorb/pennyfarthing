@@ -11,6 +11,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.2.0] - 2026-02-11
+
+### Added
+
+- **Tandem backseat protocol** — Background observer agents watch primary agent work and inject observations via PostToolUse hook. Full pipeline: observation file writer (95-3), file-watch scope (95-4), tool-watch scope (95-5), backseat spawn/lifecycle (95-2), bell mode injection (95-7, MSSCI-14672), shared agent behavior wiring
+- **Tandem workflows** — `tdd-tandem` (97-2) and `bdd-tandem` (MSSCI-14791) workflow definitions with automatic backseat pairing per phase
+- **TandemPortrait component** — Cyclist UI for tandem mode: backseat thinking animation (MSSCI-14675), observation pulse on primary portrait (MSSCI-14676), responsive behavior and accessibility (MSSCI-14677)
+- **CLI statusline tandem indicator** — Shows active tandem partner in CLI status bar (97-1)
+- **Plugin system** — Plugin discovery for commands and skills (93-3), plugin router loader for Cyclist (93-6)
+- **Benchmark package** — Extracted `@pennyfarthing/benchmark` package with migrated modules (93-1), commands/skills/scripts (93-2), docs/results/showcase (93-4)
+- **CI quality gates** — ESLint enforcement across all packages (91-7), Ruff linting for Python (91-8, MSSCI-14706), markdownlint (91-9, MSSCI-14707), yamllint (91-10, MSSCI-14708)
+- **Schema validation** — Workflow YAML validation (91-11), agent definition structural validation (91-12), skill registry and command schema validation (91-13), sprint shard write-time validation (91-24), tandem field in WorkflowPhase schema
+- **Cyclist enhancements** — Quick agent picker in control bar (MSSCI-14762), closed epics section in SprintPanel, ACPanel Tufte treatment (100-3), sparkline bar chart with token-based color coding (MSSCI-14639), health gauge wired to tool dialogs (84-3), `@deprecated` detection and caller cross-reference (80-2), permission mode changes sent to running Claude process
+- **PersonaHeader streaming** — `usePersona` hook with streaming state (94-1, MSSCI-14660), thinking throbber on portrait (94-2, MSSCI-14661)
+- **Fifth Element theme** — New persona theme with 10 agent portraits and Cyclist-served resized images
+- **Sprint enhancements** — `pf sprint info` with full header fields (91-26, MSSCI-14720), non-string epic ID detection in sprint YAML validator
+- **Health score probes** — Missing probes implemented, PyDriller churn integration, parallelized on-demand analysis
+
+### Changed
+
+- **Bell mode hook decoupled from Cyclist** — Tandem injection runs unconditionally; bell queue only fires when Cyclist is running with `bell_mode: true`
+- **Benchmark extracted from core** — `feat!: remove benchmark exports and API from core` — benchmark functionality moved to dedicated `@pennyfarthing/benchmark` package
+- **Persona name removed from quick picker** — Agent quick picker shows role only, not persona name (100-4)
+- **Cyclist detection** — Uses `CYCLIST` env var instead of port file for more reliable detection (98-8)
+
+### Fixed
+
+- **Tandem observation injection** — Decoupled from bell_mode config and Cyclist detection to prevent silent failures in CLI-only tandem workflows
+- **PersonaHeader CSS** — Layout overflow and clipping fixes, explicit widths on flex children, overflow hidden on persona-info
+- **Health score** — `useHealthScore` abort-on-unmount, missing probes, PyDriller integration
+- **Plugin loading** — Plugin router loading in Electron mode with strengthened tests (93-6)
+- **Story lifecycle** — Preserve `assigned_to` field through story lifecycle (MSSCI-14719), sprint CLI import name fix
+- **Doctor and uninstall** — 5 data-loss bugs in uninstall and `doctor --fix` (MSSCI-14587)
+- **Cyclist UI** — Muted sprint priority indicators, resizable editor, project root as cwd for Python API routes, debug panel refactors restored
+- **Scripts** — Use `sys.executable` instead of hardcoded `python` in story_finish, deprecate `finish-story.sh`
+- **Fifth Element theme** — Resolve conflict markers, correct Pacoli helper to Aziz
+
+---
+
 ## [10.1.0] - 2026-02-08
 
 ### Added
@@ -2366,6 +2405,9 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 [4.0.4]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.3...v4.0.4
 [4.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...v4.0.2
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.2.0...HEAD
+[10.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v10.1.0...v10.2.0
+[10.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.5...v10.1.0
 [4.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...v4.0.0
 [3.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...v3.8.0

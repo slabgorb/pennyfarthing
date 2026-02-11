@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
 
 from pennyfarthing_scripts.common.config import get_project_root
 
@@ -68,7 +67,7 @@ def load_sprint_context(project_root: Path | None = None) -> str | None:
         Formatted sprint summary, or None if no sprint data
     """
     # Import here to avoid circular imports
-    from pennyfarthing_scripts.sprint.loader import load_sprint, get_sprint_info
+    from pennyfarthing_scripts.sprint.loader import load_sprint
     from pennyfarthing_scripts.sprint.status import get_sprint_status
 
     root = project_root or get_project_root()
@@ -136,7 +135,7 @@ def _extract_session_parts(content: str) -> tuple[str, str]:
 
     # Header: everything before first ## heading
     header_lines = []
-    for i, line in enumerate(lines):
+    for line in lines:
         if line.startswith("## "):
             break
         header_lines.append(line)

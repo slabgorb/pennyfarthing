@@ -41,8 +41,8 @@ def _common_options(fn):
 
 def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: tuple, branch: str):
     """Run analysis and return result."""
-    from pennyfarthing_scripts.deadcode.analyze import analyze_repo, find_stale_files
     from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.deadcode.analyze import analyze_repo
 
     excludes = list(exclude) if exclude else None
 
@@ -109,8 +109,8 @@ def _exports_options(fn):
 
 def _run_exports_analysis(repo: str | None, repo_path: str | None):
     """Run unused export analysis and return result."""
-    from pennyfarthing_scripts.deadcode.analyze import find_unused_exports
     from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.deadcode.analyze import find_unused_exports
 
     if repo_path:
         p = Path(repo_path).resolve()

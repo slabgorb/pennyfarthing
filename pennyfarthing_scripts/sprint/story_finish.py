@@ -7,7 +7,7 @@ Steps:
   1. Archive session file to sprint/archive/{jira-key}-session.md
   2. Squash merge PR via gh (handle already-merged)
   3. Transition Jira to Done
-  4. Update sprint YAML (status: done, completed date, remove assigned_to)
+  4. Update sprint YAML (status: done, completed date)
   5. Archive completed epics
   6. Git cleanup (checkout develop, pull, delete local branch)
   7. Remove session file
@@ -16,13 +16,13 @@ Steps:
 import re
 import shutil
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 from pennyfarthing_scripts.sprint.loader import find_epic, find_story
 from pennyfarthing_scripts.sprint.yaml_io import read_sprint, write_sprint
-
 
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
@@ -175,8 +175,6 @@ def finish_story(
             if story:
                 story["status"] = "done"
                 story["completed"] = today
-                if "assigned_to" in story:
-                    del story["assigned_to"]
                 write_sprint(sprint_path, data)
                 steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
             else:
@@ -186,7 +184,7 @@ def finish_story(
 
     # --- Step 5: Archive completed epics ---
     result = _run(
-        ["python", "-m", "pennyfarthing_scripts.cli", "sprint", "epic", "archive"],
+        [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "epic", "archive"],
         cwd=str(project_root),
     )
     steps.append({"step": 5, "action": "archive_epics", "ran": True})

@@ -12,12 +12,13 @@ import fnmatch
 import re
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pennyfarthing_scripts.codemarkers.models import (
     CodeMarker,
     CodeMarkersResult,
+    DeprecationMarker,
     MarkerSummary,
 )
 
@@ -286,7 +287,7 @@ async def analyze_repo(
             if author_time > 0:
                 age_days = (now - author_time) / 86400
                 date_str = datetime.fromtimestamp(
-                    author_time, tz=timezone.utc
+                    author_time, tz=UTC
                 ).isoformat()
             else:
                 age_days = 0.0
@@ -324,3 +325,177 @@ async def analyze_repo(
         markers=markers,
         summary=summary,
     )
+
+
+# =============================================================================
+# @deprecated detection (Story 80-2)
+# =============================================================================
+
+# File extensions to scan for @deprecated JSDoc tags
+_DEPRECATION_EXTENSIONS = frozenset({".ts", ".tsx", ".js"})
+
+# Pattern to find @deprecated in JSDoc comments
+_DEPRECATED_PATTERN = re.compile(r"@deprecated\b(.*)")
+
+# Pattern to extract symbol name from export declarations
+_SYMBOL_PATTERN = re.compile(
+    r"export\s+(?:default\s+)?(?:function|class|const|let|var|interface|type|enum)\s+(\w+)"
+)
+
+
+def _grep_deprecations(root: Path, excludes: list[str]) -> list[dict]:
+    """Scan TypeScript/JS files for @deprecated JSDoc tags.
+
+    For each @deprecated tag found, extracts the symbol name from the
+    next export declaration line following the JSDoc block.
+
+    Args:
+        root: Directory to scan recursively
+        excludes: Glob patterns for files/dirs to skip
+
+    Returns:
+        List of dicts: {path, line, symbol, text}
+    """
+    results: list[dict] = []
+
+    for file_path in sorted(root.rglob("*")):
+        if not file_path.is_file():
+            continue
+
+        if file_path.suffix.lower() not in _DEPRECATION_EXTENSIONS:
+            continue
+
+        rel_path = str(file_path.relative_to(root))
+
+        if _should_exclude(rel_path, excludes):
+            continue
+
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="strict")
+        except (UnicodeDecodeError, OSError):
+            continue
+
+        lines = content.split("\n")
+        for line_num, line_text in enumerate(lines, start=1):
+            match = _DEPRECATED_PATTERN.search(line_text)
+            if not match:
+                continue
+
+            # Extract the @deprecated text
+            deprecated_text = line_text.strip()
+
+            # Look ahead for the symbol declaration
+            symbol = ""
+            for ahead in lines[line_num:]:  # line_num is already 1-indexed, so lines[line_num:] starts after current
+                sym_match = _SYMBOL_PATTERN.search(ahead)
+                if sym_match:
+                    symbol = sym_match.group(1)
+                    break
+                # Stop looking if we hit another JSDoc or a blank line after the block closes
+                stripped = ahead.strip()
+                if stripped and not stripped.startswith("*") and not stripped.startswith("/") and not stripped == "":
+                    break
+
+            if symbol:
+                results.append({
+                    "path": rel_path,
+                    "line": line_num,
+                    "symbol": symbol,
+                    "text": deprecated_text,
+                })
+
+    return results
+
+
+def _count_callers(
+    symbol: str, root: Path, defining_file: str
+) -> tuple[int, list[str]]:
+    """Count files that import/reference a deprecated symbol.
+
+    Greps all TypeScript/JS files for the symbol name, excluding
+    the file that defines it.
+
+    Args:
+        symbol: The deprecated symbol name to search for
+        root: Directory to scan
+        defining_file: Relative path of the file defining the symbol (excluded)
+
+    Returns:
+        (caller_count, list_of_caller_paths)
+    """
+    callers: list[str] = []
+
+    for file_path in sorted(root.rglob("*")):
+        if not file_path.is_file():
+            continue
+
+        if file_path.suffix.lower() not in _DEPRECATION_EXTENSIONS:
+            continue
+
+        rel_path = str(file_path.relative_to(root))
+
+        if rel_path == defining_file:
+            continue
+
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="strict")
+        except (UnicodeDecodeError, OSError):
+            continue
+
+        if symbol in content:
+            callers.append(rel_path)
+
+    return len(callers), callers
+
+
+async def analyze_deprecations(
+    path: Path,
+    excludes: list[str] | None = None,
+) -> dict:
+    """Analyze a directory for @deprecated symbols and their callers.
+
+    Args:
+        path: Directory to scan
+        excludes: Additional file patterns to exclude
+
+    Returns:
+        Dict with success, deprecations (list of DeprecationMarker),
+        summary (total_deprecations, deprecations_with_callers), and
+        optionally error.
+    """
+    resolved = Path(path).resolve()
+
+    if not resolved.exists():
+        return {
+            "success": False,
+            "error": f"Path not found: {resolved}",
+        }
+
+    all_excludes = DEFAULT_EXCLUDES + (excludes or [])
+
+    raw = _grep_deprecations(resolved, all_excludes)
+
+    markers: list[DeprecationMarker] = []
+    for item in raw:
+        count, caller_list = _count_callers(
+            item["symbol"], resolved, item["path"]
+        )
+        markers.append(DeprecationMarker(
+            path=item["path"],
+            line=item["line"],
+            symbol=item["symbol"],
+            text=item["text"],
+            caller_count=count,
+            callers=caller_list,
+        ))
+
+    with_callers = sum(1 for m in markers if m.caller_count > 0)
+
+    return {
+        "success": True,
+        "deprecations": markers,
+        "summary": {
+            "total_deprecations": len(markers),
+            "deprecations_with_callers": with_callers,
+        },
+    }

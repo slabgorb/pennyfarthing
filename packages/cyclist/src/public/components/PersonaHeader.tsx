@@ -15,12 +15,13 @@
  * - Accessible with ARIA labels
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersona } from '../hooks/usePersona';
 import { useColorScheme } from '../hooks/useColorScheme';
 import { AgentPopup } from './AgentPopup';
+import TandemPortrait from './TandemPortrait';
 
 // Agent colors matching CLI statusbar (statusline.sh)
 const AGENT_COLORS: Record<string, string> = {
@@ -59,7 +60,7 @@ function humanizeTheme(theme: string): string {
 }
 
 export default function PersonaHeader(): React.ReactElement {
-  const { persona } = usePersona();
+  const { persona, isStreaming } = usePersona();
   const colorScheme = useColorScheme();
   const [portraitError, setPortraitError] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -70,6 +71,26 @@ export default function PersonaHeader(): React.ReactElement {
   const role = persona?.role || 'agent';
   const slug = persona?.slug;
   const quote = persona?.quote;
+  const tandemAgent = persona?.tandemAgent;
+
+  // Observation pulse: one-shot animation on primary portrait when backseat starts thinking
+  const [observationPulse, setObservationPulse] = useState(false);
+  const prevThinkingRef = useRef(false);
+  const portraitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wasThinking = prevThinkingRef.current;
+    const isThinking = tandemAgent?.isThinking ?? false;
+    prevThinkingRef.current = isThinking;
+
+    if (!wasThinking && isThinking) {
+      setObservationPulse(true);
+    }
+  }, [tandemAgent?.isThinking]);
+
+  const handlePulseEnd = useCallback(() => {
+    setObservationPulse(false);
+  }, []);
 
   const handleOpenPopup = useCallback(() => {
     setIsPopupOpen(true);
@@ -101,7 +122,12 @@ export default function PersonaHeader(): React.ReactElement {
           onKeyDown={(e) => e.key === 'Enter' && handleOpenPopup()}
         >
           <div className="persona-portrait-group">
-            <div className="persona-portrait" data-testid="persona-portrait">
+            <div
+              className={`persona-portrait${isStreaming ? ' avatar-thinking' : ''}${observationPulse ? ' avatar-observation-pulse' : ''}`}
+              data-testid="persona-portrait"
+              ref={portraitRef}
+              onAnimationEnd={handlePulseEnd}
+            >
               {slug && theme && !portraitError ? (
                 <img
                   src={`/portraits/${theme}/medium/${slug}.png`}
@@ -113,6 +139,23 @@ export default function PersonaHeader(): React.ReactElement {
                 <span className="portrait-fallback">🤖</span>
               )}
             </div>
+            {tandemAgent && (
+              <TandemPortrait
+                character={tandemAgent.character}
+                role={tandemAgent.role}
+                slug={tandemAgent.slug}
+                theme={tandemAgent.theme}
+                isActive={true}
+                isThinking={tandemAgent.isThinking}
+              />
+            )}
+            {tandemAgent && (
+              <span className="visually-hidden" role="status" aria-live="polite" data-testid="tandem-sr-status">
+                {tandemAgent.isThinking
+                  ? `${tandemAgent.character} is thinking`
+                  : `${tandemAgent.character} observing`}
+              </span>
+            )}
           </div>
           <div className="persona-info">
             <div className="persona-name-row">

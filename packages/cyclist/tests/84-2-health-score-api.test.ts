@@ -18,10 +18,11 @@ import { Router } from 'express';
 // Module under test — to be implemented
 import { createHealthScoreRouter } from '../src/api/health-score';
 
-// Mock child_process.execFile
-vi.mock('child_process', () => ({
-  execFile: vi.fn(),
-}));
+// Mock child_process.execFile (include default export for ESM compat)
+vi.mock('child_process', () => {
+  const fn = vi.fn();
+  return { default: { execFile: fn }, execFile: fn };
+});
 
 import { execFile } from 'child_process';
 const mockExecFile = vi.mocked(execFile);
@@ -208,7 +209,7 @@ describe('AC2: Calls Python healthscore module via child process', () => {
     expect(calledOpts.env.PYTHONPATH).toContain('pennyfarthing');
   });
 
-  it('should set timeout to 15000ms (faster than hotspots since it reads cache)', () => {
+  it('should set timeout to 60000ms (health score runs multiple dimension probes)', () => {
     const router = createHealthScoreRouter(() => '/projects/test');
 
     mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
@@ -223,6 +224,6 @@ describe('AC2: Calls Python healthscore module via child process', () => {
     layer.route.stack[0].handle(req, res);
 
     const calledOpts = mockExecFile.mock.calls[0][2] as any;
-    expect(calledOpts.timeout).toBe(15000);
+    expect(calledOpts.timeout).toBe(60000);
   });
 });

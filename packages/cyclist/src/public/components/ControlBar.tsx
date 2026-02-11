@@ -1,14 +1,16 @@
 /**
  * ControlBar Component
  *
- * Provides Stop, Reset, Bell Mode, and Relay Mode controls for Claude sessions.
+ * Provides Stop, Reset, Bell Mode, Relay Mode, and Agent Quick Picker controls.
  * Story MSSCI-12729 - Stop/Reset Controls and Escape Key
  * Story MSSCI-12275 - Bell Mode toggle
  * Story MSSCI-12395 - Relay Mode toggle
+ * Story MSSCI-14762 - Quick agent picker in control bar
  *
  * Features:
  * - Stop button visible only when Claude is running
  * - Reset button always visible
+ * - Agent quick picker (lightweight dropdown for rapid agent switching)
  * - Bell mode toggle (inject queued messages via PostToolUse hook)
  * - Relay mode toggle (auto-handoff to next agent)
  * - Escape key handler for stopping (single press = interrupt, double = force kill)
@@ -16,7 +18,7 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState, FocusEvent } from 'react';
-import { BellRing, Zap, RotateCcw } from 'lucide-react';
+import { BellRing, Zap, RotateCcw, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClaudeContext } from '../contexts/ClaudeContext';
@@ -39,6 +41,123 @@ function useFocusTracking() {
   const isFocused = useCallback((id: string) => focusedId === id, [focusedId]);
 
   return { handleFocus, handleBlur, isFocused };
+}
+
+// =============================================================================
+// Agent Quick Picker
+// =============================================================================
+
+interface ThemeAgent {
+  role: string;
+  character: string;
+  slug: string;
+}
+
+interface ThemeData {
+  agents: ThemeAgent[];
+}
+
+function AgentQuickPicker({ currentAgent, onAgentSwitch }: { currentAgent: string | null; onAgentSwitch?: (role: string) => void }): React.ReactElement {
+  const [isOpen, setIsOpen] = useState(false);
+  const [agents, setAgents] = useState<ThemeAgent[]>([]);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch agent list on mount
+  useEffect(() => {
+    fetch('/api/theme-agents/full')
+      .then(res => res.ok ? res.json() : null)
+      .then((data: ThemeData | null) => {
+        if (data?.agents) {
+          setAgents(data.agents);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [isOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen]);
+
+  const handleAgentClick = useCallback((agent: ThemeAgent) => {
+    if (agent.role === currentAgent) return;
+    onAgentSwitch?.(agent.role);
+    setIsOpen(false);
+  }, [currentAgent, onAgentSwitch]);
+
+  return (
+    <div className="agent-quick-picker-wrapper" ref={pickerRef}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            className={`btn-toggle agent-picker-toggle ${isOpen ? 'active' : ''}`}
+            data-testid="agent-quick-picker"
+            onClick={() => setIsOpen(prev => !prev)}
+            aria-label="Switch agent"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+          >
+            <UserCog className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Switch Agent</TooltipContent>
+      </Tooltip>
+
+      {isOpen && (
+        <div
+          className="agent-quick-picker-dropdown"
+          data-testid="agent-quick-picker-dropdown"
+          role="listbox"
+          aria-label="Available agents"
+        >
+          {agents.map(agent => {
+            const isCurrent = agent.role === currentAgent;
+            return (
+              <div
+                key={agent.role}
+                className={`agent-quick-picker-option ${isCurrent ? 'current' : ''}`}
+                data-testid={`agent-option-${agent.role}`}
+                role="option"
+                aria-selected={isCurrent}
+                aria-label={`${agent.role} (${agent.character})`}
+                title={agent.character}
+                onClick={() => handleAgentClick(agent)}
+              >
+                <span className="agent-option-role">{agent.role}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // =============================================================================
@@ -70,6 +189,8 @@ export interface ControlBarProps {
   currentAgent?: string | null;
   /** Called when TirePump button clicked */
   onTirePump?: () => void;
+  /** Called when agent is selected from quick picker */
+  onAgentSwitch?: (role: string) => void;
 }
 
 // =============================================================================
@@ -89,6 +210,7 @@ export function ControlBar({
   contextPercent = 0,
   currentAgent = null,
   onTirePump,
+  onAgentSwitch,
 }: ControlBarProps): React.ReactElement {
   const lastEscapeTime = useRef<number>(0);
   const DOUBLE_PRESS_THRESHOLD = 500; // ms
@@ -135,8 +257,11 @@ export function ControlBar({
   return (
     <TooltipProvider delayDuration={300}>
       <div className="control-bar" data-testid="control-bar">
-        {/* Mode toggles - Bell and Relay */}
+        {/* Mode toggles - Agent Picker, Bell, and Relay */}
         <div className="control-bar-toggles">
+          {/* Agent Quick Picker */}
+          <AgentQuickPicker currentAgent={currentAgent} onAgentSwitch={onAgentSwitch} />
+
           {/* Bell Mode Toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -266,6 +391,8 @@ interface UseControlBarResult {
   handleRelayModeChange: (enabled: boolean) => void;
   /** Handle TirePump action */
   handleTirePump: () => void;
+  /** Handle agent switch from quick picker */
+  handleAgentSwitch: (role: string) => void;
 }
 
 export function useControlBar(): UseControlBarResult {
@@ -277,7 +404,7 @@ export function useControlBar(): UseControlBarResult {
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
 
   // Claude context for WebSocket communication
-  const { abort, clear, clearAndReload, onMessage, onComplete, onError, isConnected } = useClaudeContext();
+  const { abort, clear, clearAndReload, send, onMessage, onComplete, onError, isConnected } = useClaudeContext();
 
   // Load initial settings and listen for changes (using REST/WebSocket, not IPC)
   useEffect(() => {
@@ -484,6 +611,11 @@ export function useControlBar(): UseControlBarResult {
     }
   }, [currentAgent, clearAndReload]);
 
+  // Agent quick picker: send /{role} command
+  const handleAgentSwitch = useCallback((role: string) => {
+    send(`/${role}`);
+  }, [send]);
+
   return {
     isRunning,
     isStopping,
@@ -497,6 +629,7 @@ export function useControlBar(): UseControlBarResult {
     handleBellModeChange,
     handleRelayModeChange,
     handleTirePump,
+    handleAgentSwitch,
   };
 }
 

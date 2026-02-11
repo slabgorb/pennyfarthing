@@ -53,11 +53,11 @@ interface Settings {
 interface ThemeMetadata {
   id: string;
   name: string;
-  tier: 'S' | 'A' | 'B' | 'U';
+  tier: string;
 }
 
-// Tier sort order: S=0, A=1, B=2, U=3
-const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, U: 3 };
+// Tier sort order: S=0, A=1, B=2, unranked=3
+const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2 };
 
 // Panel display names for the visibility toggles
 const PANEL_DISPLAY_NAMES: Record<string, string> = {
@@ -348,7 +348,7 @@ export function SettingsPanel(): React.ReactElement {
         >
           {sortedThemes.map(theme => (
             <option key={theme.id} value={theme.id}>
-              [{theme.tier}] {theme.name}
+              [{theme.tier || 'Unranked'}] {theme.name}
             </option>
           ))}
         </select>

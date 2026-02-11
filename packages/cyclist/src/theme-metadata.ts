@@ -138,7 +138,7 @@ export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
               name: parsed.theme.name || themeId,
               description: parsed.theme.description || '',
               source: parsed.theme.source || '',
-              tier: (parsed.theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
+              tier: (parsed.theme.tier as string) || null,
               category: deriveCategory(themeId, parsed.theme.source || ''),
               agentCount,
             });
@@ -243,7 +243,7 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
               name: theme.name || themeId,
               description: theme.description || '',
               source: theme.source || '',
-              tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
+              tier: (theme.tier as string) || null,
               category: deriveCategory(themeId, theme.source || ''),
               agentCount,
               agents,

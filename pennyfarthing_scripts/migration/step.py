@@ -10,7 +10,6 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 # Tag requirements
 REQUIRED_TAGS = ["step-meta", "purpose", "instructions", "output"]
 RECOMMENDED_TAGS = ["prerequisites", "actions", "collaboration-menu", "next-step"]

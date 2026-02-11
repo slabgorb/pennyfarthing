@@ -16,11 +16,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import pytest
-
 from click.testing import CliRunner
 
 from pennyfarthing_scripts.cli import cli

@@ -27,7 +27,7 @@ Controls theme selection (gitignored for per-developer preferences).
 ### Example
 
 ```yaml
-# Theme selection - 102 themes available
+# Theme selection - 97 themes available
 theme: discworld
 
 # Workflow configuration

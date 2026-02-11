@@ -164,17 +164,6 @@ function createFakeNodeModules(dir: string): string {
   return nodeModulesPath;
 }
 
-/**
- * Run all migration steps on a test directory in the order the update command does.
- */
-function runMigrations(dir: string, options: { dryRun?: boolean } = {}): void {
-  migrateManifest(dir, options);
-  removeLegacyClaudeDirectories(dir, options);
-  migrateTemplateFiles(dir, options);
-  migrateSettingsFile(dir);
-  ensureSettingsSymlink(dir);
-}
-
 // ─── Test suites ───────────────────────────────────────────────────
 
 describe('MSSCI-14371: Update command file migration', () => {

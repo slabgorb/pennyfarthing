@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import fnmatch
-from datetime import datetime, timezone
-from pathlib import Path
-
 import re
+from datetime import UTC, datetime
+from pathlib import Path
 
 from pennyfarthing_scripts.deadcode.models import (
     DeadCodeResult,
@@ -156,7 +155,7 @@ async def find_stale_files(
         filtered.append(fpath)
 
     # Enrich each stale file
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stale_files = []
     for fpath in sorted(filtered):
         # Get last commit date

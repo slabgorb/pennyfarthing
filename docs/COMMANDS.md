@@ -1,6 +1,6 @@
 # Slash Commands Reference
 
-Complete reference for all 45 Pennyfarthing slash commands.
+Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Command Categories
 

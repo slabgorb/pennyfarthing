@@ -11,7 +11,7 @@ import io
 import json
 from dataclasses import asdict
 
-from pennyfarthing_scripts.complexity.models import FileComplexity, ComplexityResult
+from pennyfarthing_scripts.complexity.models import ComplexityResult, FileComplexity
 
 
 def format_file_table(files: list[FileComplexity], top_n: int = 20) -> str:

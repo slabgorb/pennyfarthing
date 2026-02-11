@@ -13,6 +13,7 @@ Acceptance Criteria Coverage:
 - [x] Tests pass
 """
 
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -105,20 +106,22 @@ class TestStoryPoints:
         from pennyfarthing_scripts import jira
         return jira
 
-    def test_get_story_points_from_issue(self, jira_module, mocker):
+    def test_get_story_points_from_issue(self, jira_module, monkeypatch):
         """Should extract story points from issue JSON."""
-        mock_run = mocker.patch("subprocess.run")
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = '{"fields": {"customfield_10031": 3}}'
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = '{"fields": {"customfield_10031": 3}}'
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
         points = jira_module.get_story_points("MSSCI-12398")
         assert points == 3
 
-    def test_get_story_points_none(self, jira_module, mocker):
+    def test_get_story_points_none(self, jira_module, monkeypatch):
         """Should return None if no story points."""
-        mock_run = mocker.patch("subprocess.run")
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = '{"fields": {}}'
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = '{"fields": {}}'
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
         points = jira_module.get_story_points("MSSCI-12398")
         assert points is None
@@ -141,14 +144,14 @@ class TestJiraSyncScript:
     def test_sync_epic_function_exists(self, jira_sync_module):
         """sync_epic async function should exist."""
         assert hasattr(jira_sync_module, "sync_epic")
-        import asyncio
-        assert asyncio.iscoroutinefunction(jira_sync_module.sync_epic)
+        import inspect
+        assert inspect.iscoroutinefunction(jira_sync_module.sync_epic)
 
     def test_sync_story_function_exists(self, jira_sync_module):
         """sync_story async function should exist."""
         assert hasattr(jira_sync_module, "sync_story")
-        import asyncio
-        assert asyncio.iscoroutinefunction(jira_sync_module.sync_story)
+        import inspect
+        assert inspect.iscoroutinefunction(jira_sync_module.sync_story)
 
 
 class TestSyncStoryAsync:
@@ -168,16 +171,8 @@ class TestSyncStoryAsync:
         assert result.skipped is True
 
     @pytest.mark.asyncio
-    async def test_sync_story_dry_run(self, jira_sync_module, mocker):
+    async def test_sync_story_dry_run(self, jira_sync_module):
         """Dry run should not make actual changes."""
-        # Mock the Jira API call
-        mock_get = mocker.patch.object(
-            jira_sync_module, "get_issue_async", new_callable=AsyncMock
-        )
-        mock_get.return_value = {
-            "fields": {"status": {"name": "To Do"}, "customfield_10031": None}
-        }
-
         story = {
             "id": "63-5",
             "jira": "MSSCI-12399",
@@ -202,7 +197,7 @@ class TestSyncEpicAsync:
         return jira_sync
 
     @pytest.mark.asyncio
-    async def test_sync_epic_parallel_execution(self, jira_sync_module, mocker):
+    async def test_sync_epic_parallel_execution(self, jira_sync_module):
         """Should process multiple stories in parallel."""
         # Track call order to verify parallelism
         call_times = []
@@ -219,22 +214,23 @@ class TestSyncEpicAsync:
                 actions=[],
             )
 
-        mocker.patch.object(jira_sync_module, "sync_story", side_effect=mock_sync_story)
+        # Patch on the actual jira.sync module where sync_epic imports sync_story
+        import pennyfarthing_scripts.jira.sync as jira_sync_real
+        with patch.object(jira_sync_real, "sync_story", side_effect=mock_sync_story):
+            epic = {
+                "id": "epic-63",
+                "title": "Test Epic",
+                "stories": [
+                    {"id": "63-1", "jira": "MSSCI-1", "status": "done"},
+                    {"id": "63-2", "jira": "MSSCI-2", "status": "done"},
+                    {"id": "63-3", "jira": "MSSCI-3", "status": "done"},
+                ],
+            }
 
-        epic = {
-            "id": "epic-63",
-            "title": "Test Epic",
-            "stories": [
-                {"id": "63-1", "jira": "MSSCI-1", "status": "done"},
-                {"id": "63-2", "jira": "MSSCI-2", "status": "done"},
-                {"id": "63-3", "jira": "MSSCI-3", "status": "done"},
-            ],
-        }
-
-        result = await jira_sync_module.sync_epic(epic, dry_run=True)
-        assert result["total"] == 3
-        # All stories should have been processed
-        assert len(call_times) == 3
+            result = await jira_sync_real.sync_epic(epic, dry_run=True)
+            assert result["total"] == 3
+            # All stories should have been processed
+            assert len(call_times) == 3
 
 
 class TestCLIInterface:
@@ -280,49 +276,52 @@ class TestCLIInterface:
 
 
 class TestAsyncHttpx:
-    """Tests for async httpx operations (AC: Async httpx for parallel API calls)."""
+    """Tests for async httpx operations (AC: Async httpx for parallel API calls).
+
+    These async methods live on JiraClient, which is used internally by jira_sync.
+    """
 
     @pytest.fixture
-    def jira_sync_module(self):
-        """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
-        return jira_sync
+    def jira_client_class(self):
+        """Import JiraClient class."""
+        from pennyfarthing_scripts.jira.client import JiraClient
+        return JiraClient
 
-    def test_get_issue_async_exists(self, jira_sync_module):
-        """get_issue_async function should exist and be async."""
-        import asyncio
-        assert hasattr(jira_sync_module, "get_issue_async")
-        assert asyncio.iscoroutinefunction(jira_sync_module.get_issue_async)
+    def test_get_issue_async_exists(self, jira_client_class):
+        """get_issue_async method should exist on JiraClient and be async."""
+        import inspect
+        assert hasattr(jira_client_class, "get_issue_async")
+        assert inspect.iscoroutinefunction(jira_client_class.get_issue_async)
 
-    def test_move_issue_async_exists(self, jira_sync_module):
-        """move_issue_async function should exist and be async."""
-        import asyncio
-        assert hasattr(jira_sync_module, "move_issue_async")
-        assert asyncio.iscoroutinefunction(jira_sync_module.move_issue_async)
+    def test_transition_async_exists(self, jira_client_class):
+        """transition_async method should exist on JiraClient and be async."""
+        import inspect
+        assert hasattr(jira_client_class, "transition_async")
+        assert inspect.iscoroutinefunction(jira_client_class.transition_async)
 
-    def test_sync_story_points_async_exists(self, jira_sync_module):
-        """sync_story_points_async function should exist and be async."""
-        import asyncio
-        assert hasattr(jira_sync_module, "sync_story_points_async")
-        assert asyncio.iscoroutinefunction(jira_sync_module.sync_story_points_async)
+    def test_sync_story_points_async_exists(self, jira_client_class):
+        """sync_story_points_async method should exist on JiraClient and be async."""
+        import inspect
+        assert hasattr(jira_client_class, "sync_story_points_async")
+        assert inspect.iscoroutinefunction(jira_client_class.sync_story_points_async)
 
     @pytest.mark.asyncio
-    async def test_get_issue_async_returns_dict(self, jira_sync_module, mocker):
+    async def test_get_issue_async_returns_dict(self, jira_client_class):
         """get_issue_async should return issue dict."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"fields": {"summary": "Test"}}
 
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client.__aenter__.return_value = mock_client
-        mock_client.__aexit__.return_value = None
+        mock_http_client = AsyncMock()
+        mock_http_client.get.return_value = mock_response
+        mock_http_client.__aenter__.return_value = mock_http_client
+        mock_http_client.__aexit__.return_value = None
 
-        mocker.patch("httpx.AsyncClient", return_value=mock_client)
-
-        result = await jira_sync_module.get_issue_async("MSSCI-12399")
-        assert result is not None
-        assert "fields" in result
+        with patch("httpx.AsyncClient", return_value=mock_http_client):
+            client = jira_client_class(token="test-token")
+            result = await client.get_issue_async("MSSCI-12399")
+            assert result is not None
+            assert "fields" in result
 
 
 class TestBatchThenReport:
@@ -353,28 +352,28 @@ class TestBatchThenReport:
         assert result.actions == ["transition"]
 
     @pytest.mark.asyncio
-    async def test_sync_epic_returns_summary(self, jira_sync_module, mocker):
+    async def test_sync_epic_returns_summary(self, jira_sync_module):
         """sync_epic should return summary with synced/skipped/errors counts."""
-        mocker.patch.object(
-            jira_sync_module,
-            "sync_story",
-            new_callable=AsyncMock,
+        mock_sync_story = AsyncMock(
             return_value=jira_sync_module.SyncResult(
                 story_id="63-1", success=True, skipped=False, error=None, actions=[]
             ),
         )
 
-        epic = {
-            "id": "epic-63",
-            "title": "Test Epic",
-            "stories": [{"id": "63-1", "jira": "MSSCI-1", "status": "done"}],
-        }
+        # Patch on the actual jira.sync module where sync_epic calls sync_story
+        import pennyfarthing_scripts.jira.sync as jira_sync_real
+        with patch.object(jira_sync_real, "sync_story", mock_sync_story):
+            epic = {
+                "id": "epic-63",
+                "title": "Test Epic",
+                "stories": [{"id": "63-1", "jira": "MSSCI-1", "status": "done"}],
+            }
 
-        result = await jira_sync_module.sync_epic(epic, dry_run=True)
-        assert "synced" in result
-        assert "skipped" in result
-        assert "errors" in result
-        assert "total" in result
+            result = await jira_sync_real.sync_epic(epic, dry_run=True)
+            assert "synced" in result
+            assert "skipped" in result
+            assert "errors" in result
+            assert "total" in result
 
 
 class TestProgressDisplay:
@@ -438,53 +437,53 @@ class TestTransitionLogic:
         return jira_sync
 
     @pytest.mark.asyncio
-    async def test_sync_story_skips_when_already_at_status(self, jira_sync_module, mocker):
-        """Should not transition if already at target status."""
-        mock_get = mocker.patch.object(
-            jira_sync_module, "get_issue_async", new_callable=AsyncMock
-        )
-        mock_get.return_value = {
+    async def test_sync_story_skips_when_already_at_status(self, jira_sync_module):
+        """Should not transition if already at target status.
+
+        In the current implementation, sync_story in dry_run=False mode uses
+        JiraClient internally. We mock the client's get_issue_async to return
+        a matching status, and verify transition_async is not called.
+        """
+        from pennyfarthing_scripts.jira.client import JiraClient
+
+        mock_get_issue = AsyncMock(return_value={
             "fields": {"status": {"name": "In Progress"}, "customfield_10031": 3}
-        }
+        })
+        mock_transition = AsyncMock()
 
-        mock_move = mocker.patch.object(
-            jira_sync_module, "move_issue_async", new_callable=AsyncMock
-        )
+        with patch.object(JiraClient, "get_issue_async", mock_get_issue), \
+             patch.object(JiraClient, "transition_async", mock_transition):
+            story = {
+                "id": "63-5",
+                "jira": "MSSCI-12399",
+                "title": "Test",
+                "status": "in_progress",  # Maps to "In Progress"
+                "points": 3,
+            }
+            await jira_sync_module.sync_story(story, dry_run=False, do_transition=True)
 
-        story = {
-            "id": "63-5",
-            "jira": "MSSCI-12399",
-            "title": "Test",
-            "status": "in_progress",  # Maps to "In Progress"
-            "points": 3,
-        }
-        await jira_sync_module.sync_story(story, dry_run=False, do_transition=True)
-
-        # move_issue_async should NOT be called
-        mock_move.assert_not_called()
+            # transition_async should NOT be called (status already matches)
+            mock_transition.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_sync_story_transitions_when_status_differs(self, jira_sync_module, mocker):
+    async def test_sync_story_transitions_when_status_differs(self, jira_sync_module):
         """Should transition when status differs."""
-        mock_get = mocker.patch.object(
-            jira_sync_module, "get_issue_async", new_callable=AsyncMock
-        )
-        mock_get.return_value = {
+        from pennyfarthing_scripts.jira.client import JiraClient
+
+        mock_get_issue = AsyncMock(return_value={
             "fields": {"status": {"name": "To Do"}, "customfield_10031": None}
-        }
+        })
+        mock_transition = AsyncMock(return_value={"success": True})
 
-        mock_move = mocker.patch.object(
-            jira_sync_module, "move_issue_async", new_callable=AsyncMock
-        )
-        mock_move.return_value = {"success": True}
+        with patch.object(JiraClient, "get_issue_async", mock_get_issue), \
+             patch.object(JiraClient, "transition_async", mock_transition):
+            story = {
+                "id": "63-5",
+                "jira": "MSSCI-12399",
+                "title": "Test",
+                "status": "in_progress",  # Maps to "In Progress", differs from "To Do"
+            }
+            await jira_sync_module.sync_story(story, dry_run=False, do_transition=True)
 
-        story = {
-            "id": "63-5",
-            "jira": "MSSCI-12399",
-            "title": "Test",
-            "status": "in_progress",  # Maps to "In Progress", differs from "To Do"
-        }
-        await jira_sync_module.sync_story(story, dry_run=False, do_transition=True)
-
-        # move_issue_async SHOULD be called
-        mock_move.assert_called_once()
+            # transition_async SHOULD be called
+            mock_transition.assert_called_once()

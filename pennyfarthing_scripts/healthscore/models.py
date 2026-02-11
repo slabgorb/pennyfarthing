@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 # Default weights for each dimension (must sum to 1.0)
 DEFAULT_WEIGHTS: dict[str, float] = {
     "churn": 0.15,

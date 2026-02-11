@@ -10,9 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import yaml
-
-from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
+from pennyfarthing_scripts.common.config import get_project_root
 
 
 def parse_epics_markdown(content: str) -> dict[str, Any]:
@@ -195,13 +193,13 @@ def generate_initiative_yaml(
     today = date.today().isoformat()
 
     lines = [
-        f"    # ==========================================================================",
+        "    # ==========================================================================",
         f"    # {initiative_name.upper()}",
         f"    # Imported from: {source_file}",
         f"    # Date: {today}",
-        f"    # ==========================================================================",
+        "    # ==========================================================================",
         f'    - name: "{initiative_name}"',
-        f"      description: |",
+        "      description: |",
     ]
 
     # Add description lines with proper indentation
@@ -210,10 +208,10 @@ def generate_initiative_yaml(
 
     lines.extend(
         [
-            f"      status: ready",
-            f"      blocked_by: null",
+            "      status: ready",
+            "      blocked_by: null",
             f"      total_points: {parsed['total_points']}",
-            f"      epics:",
+            "      epics:",
         ]
     )
 
@@ -228,14 +226,14 @@ def generate_initiative_yaml(
             [
                 f"        - id: epic-{current_epic_num}",
                 f'          title: "{epic["title"]}"',
-                f"          description: |",
+                "          description: |",
                 f"            {epic.get('description', epic['title'])}",
                 f"          points: {epic_points}",
-                f"          priority: P1",
+                "          priority: P1",
                 f'          marker: "{marker}"',
-                f"          repos: pennyfarthing",
-                f"          status: planning",
-                f"          stories:",
+                "          repos: pennyfarthing",
+                "          status: planning",
+                "          stories:",
             ]
         )
 
@@ -247,12 +245,12 @@ def generate_initiative_yaml(
                 [
                     f'            - id: "{story_id}"',
                     f'              title: "{title}"',
-                    f"              description: |",
+                    "              description: |",
                     f"                {story.get('description', title)}",
                     f"              points: {story.get('points', 1)}",
-                    f"              priority: P0",
-                    f"              status: planning",
-                    f"              repos: pennyfarthing",
+                    "              priority: P0",
+                    "              status: planning",
+                    "              repos: pennyfarthing",
                 ]
             )
 
@@ -303,6 +301,32 @@ def import_epic(
 
     # Get next epic number
     start_epic_num = get_next_epic_number(root)
+
+    # Validate each parsed epic before writing (ADR-0022)
+    from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+
+    epic_num = start_epic_num
+    for epic in parsed["epics"]:
+        # Build a shard-like dict for validation
+        shard_dict = {
+            "id": str(epic_num),
+            "title": epic.get("title", ""),
+            "status": "planning",
+            "stories": [
+                {
+                    "id": f"{epic_num}-{s['num']}",
+                    "title": s.get("title", ""),
+                    "points": s.get("points", 1),
+                    "status": "planning",
+                }
+                for s in epic.get("stories", [])
+            ],
+        }
+        validation = validate_epic_shard(shard_dict)
+        if not validation.valid:
+            error_msgs = "; ".join(e.message for e in validation.errors)
+            return {"success": False, "error": f"Epic {epic_num} validation failed: {error_msgs}"}
+        epic_num += 1
 
     # Generate YAML
     relative_path = str(epics_path.relative_to(root)) if epics_path.is_relative_to(root) else str(epics_path)

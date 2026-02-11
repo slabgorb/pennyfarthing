@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export interface HealthGaugeDimension {
   name: string;
@@ -11,6 +12,10 @@ export interface HealthGaugeProps {
   dimensions: HealthGaugeDimension[];
   totalDimensions?: number;
   onDimensionClick?: (dimensionName: string) => void;
+  isLoading?: boolean;
+  lastFetchedAt?: number | null;
+  onRefresh?: () => void;
+  error?: Error | null;
 }
 
 const GRADE_BANDS: { min: number; grade: string; color: string }[] = [
@@ -57,27 +62,62 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   };
 }
 
-export function HealthGauge({ score, dimensions, totalDimensions, onDimensionClick }: HealthGaugeProps): React.ReactElement {
-  const [expanded, setExpanded] = useState(false);
+function formatAge(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
 
+export function HealthGauge({ score, dimensions, totalDimensions, onDimensionClick, isLoading, lastFetchedAt, onRefresh, error }: HealthGaugeProps): React.ReactElement {
   const hasData = score !== null && score !== undefined;
   const gradeInfo = hasData ? getGrade(score) : null;
   const fillAngle = hasData ? (score / 100) * 180 : 0;
 
-  const handleClick = () => {
-    if (hasData && dimensions.length > 0) {
-      setExpanded(!expanded);
+  // Live-updating age display
+  const [ageText, setAgeText] = useState<string | null>(null);
+  useEffect(() => {
+    if (!lastFetchedAt) {
+      setAgeText(null);
+      return;
     }
-  };
+    const tick = () => setAgeText(formatAge(Date.now() - lastFetchedAt));
+    tick();
+    const id = setInterval(tick, 10_000);
+    return () => clearInterval(id);
+  }, [lastFetchedAt]);
+
+  // Use all 8 dimension keys so rows always render (even before data arrives)
+  const allDimKeys = Object.keys(DIMENSION_LABELS);
+  const dimMap = new Map(dimensions.map((d) => [d.name, d]));
 
   return (
     <div
       data-testid="health-gauge"
       data-grade={gradeInfo?.grade ?? null}
-      onClick={handleClick}
-      style={{ cursor: hasData ? 'pointer' : 'default' }}
     >
-      <svg viewBox="0 0 200 120" width="200" height="120">
+      <div className="health-gauge-header">
+        <div className="health-gauge-status">
+          {ageText && <span className="health-gauge-age" data-testid="health-gauge-age">{ageText}</span>}
+          {error && <span className="health-gauge-error" data-testid="health-gauge-error">Failed</span>}
+        </div>
+        {onRefresh && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="health-gauge-refresh"
+            data-testid="health-gauge-refresh"
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Analyzing...' : hasData ? 'Refresh' : 'Analyze'}
+          </Button>
+        )}
+      </div>
+
+      <svg viewBox="0 0 200 120" width="200" height="120" className={isLoading ? 'opacity-50' : ''}>
         {/* Background arc (grey) */}
         <path
           d={describeArc(100, 100, 80, 0, 180)}
@@ -98,7 +138,7 @@ export function HealthGauge({ score, dimensions, totalDimensions, onDimensionCli
         )}
         {/* Score text */}
         <text x="100" y="85" textAnchor="middle" fontSize="28" fill="currentColor">
-          {hasData ? String(score) : '--'}
+          {hasData ? String(Math.round(score)) : '--'}
         </text>
         {/* Grade letter */}
         {gradeInfo && (
@@ -115,30 +155,27 @@ export function HealthGauge({ score, dimensions, totalDimensions, onDimensionCli
         </div>
       )}
 
-      {/* Dimension breakdown */}
-      {expanded && (
-        <div data-testid="dimension-breakdown" className="health-gauge-breakdown">
-          {dimensions.map((dim) => (
+      {/* Dimension breakdown — always visible, each row opens its dialog */}
+      <div data-testid="dimension-breakdown" className="health-gauge-breakdown">
+        {allDimKeys.map((dimName) => {
+          const dim = dimMap.get(dimName);
+          return (
             <div
-              key={dim.name}
-              data-testid={`dimension-${dim.name}`}
+              key={dimName}
+              data-testid={`dimension-${dimName}`}
               className="health-gauge-dimension"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDimensionClick?.(dim.name);
-              }}
-              style={{ cursor: onDimensionClick ? 'pointer' : 'default' }}
+              onClick={() => onDimensionClick?.(dimName)}
             >
               <span className="dimension-label">
-                {DIMENSION_LABELS[dim.name] || dim.name}
+                {DIMENSION_LABELS[dimName] || dimName}
               </span>
               <span className="dimension-score">
-                {dim.score !== null ? dim.score.toFixed(1) : '--'}
+                {dim?.score !== null && dim?.score !== undefined ? dim.score.toFixed(1) : '--'}
               </span>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -62,14 +62,12 @@ function FileList({ files }: FileListProps): React.ReactElement {
 
 interface RepoStatusProps {
   repo: RepoStatusData;
-  onPullDevelop?: (repoName: string, repoPath: string) => void;
 }
 
-function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElement {
+function RepoStatus({ repo }: RepoStatusProps): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { name, path, branch, ahead, behind, developBehind, staged, modified, untracked, isDirty, files } = repo;
+  const { name, branch, ahead, behind, developBehind, staged, modified, untracked, isDirty, files } = repo;
   const hasFiles = files.length > 0;
-  const hasDevelopUpdates = developBehind !== undefined && developBehind > 0;
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -91,7 +89,7 @@ function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElemen
           <span className="branch-name">{branch}</span>
         </div>
 
-        {((ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) || hasDevelopUpdates) && (
+        {((ahead !== undefined && ahead > 0) || (behind !== undefined && behind > 0) || (developBehind !== undefined && developBehind > 0)) && (
           <div className="sync-status">
             {ahead !== undefined && ahead > 0 && (
               <Tooltip>
@@ -109,19 +107,12 @@ function RepoStatus({ repo, onPullDevelop }: RepoStatusProps): React.ReactElemen
                 <TooltipContent>Commits behind remote</TooltipContent>
               </Tooltip>
             )}
-            {hasDevelopUpdates && onPullDevelop && (
+            {developBehind !== undefined && developBehind > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    className="sync-develop-btn"
-                    onClick={() => onPullDevelop(name, path)}
-                    aria-label={`Pull ${developBehind} commits from develop`}
-                  >
-                    <RefreshCw size={12} />
-                    <span>{developBehind}</span>
-                  </button>
+                  <span className="develop-behind">⟳{developBehind}</span>
                 </TooltipTrigger>
-                <TooltipContent>develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead — click to pull</TooltipContent>
+                <TooltipContent>develop is {developBehind} commit{developBehind > 1 ? 's' : ''} ahead</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -163,11 +154,8 @@ export function GitPanel(): React.ReactElement {
   const { repos, isLoading, error } = useGitStatus();
   const { send } = useClaudeContext();
 
-  const handlePullDevelop = (repoName: string, repoPath: string) => {
-    const prompt = repoPath === '.'
-      ? `pull develop`
-      : `cd ${repoPath} && git pull origin develop`;
-    send(prompt);
+  const handleSyncAll = () => {
+    send('Sync all repos');
   };
 
   if (isLoading) {
@@ -205,8 +193,21 @@ export function GitPanel(): React.ReactElement {
 
   return (
     <div className="git-panel stacked" data-testid="git-panel">
+      <div className="git-panel-actions">
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="sync-all-btn" onClick={handleSyncAll} aria-label="Sync all repos">
+                <RefreshCw size={14} />
+                <span>Sync all repos</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Pull latest changes for all repos</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       {repos.map(repo => (
-        <RepoStatus key={repo.name} repo={repo} onPullDevelop={handlePullDevelop} />
+        <RepoStatus key={repo.name} repo={repo} />
       ))}
     </div>
   );

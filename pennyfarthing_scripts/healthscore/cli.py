@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
+
+if TYPE_CHECKING:
+    from pennyfarthing_scripts.healthscore.models import HealthscoreResult
 
 
 @click.group()
@@ -37,7 +41,7 @@ def _common_options(fn):
     return fn
 
 
-def _run_analysis(target_path: str | None, no_cache: bool) -> "HealthscoreResult":
+def _run_analysis(target_path: str | None, no_cache: bool) -> HealthscoreResult:
     """Run analysis and return result."""
     from pennyfarthing_scripts.healthscore.analyze import analyze_healthscore
 

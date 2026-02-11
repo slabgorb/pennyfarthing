@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 import subprocess
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -38,7 +38,7 @@ class PatchState:
         return yaml.dump(asdict(self), default_flow_style=False)
 
     @classmethod
-    def from_yaml(cls, yaml_str: str) -> "PatchState":
+    def from_yaml(cls, yaml_str: str) -> PatchState:
         """Deserialize state from YAML string."""
         data = yaml.safe_load(yaml_str)
         return cls(**data)

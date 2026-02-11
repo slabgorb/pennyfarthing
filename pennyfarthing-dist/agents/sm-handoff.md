@@ -23,10 +23,29 @@ Return `HANDOFF_RESULT` with the next agent name - SM runs `handoff-marker.sh` a
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
-| `NEXT_AGENT` | Yes | Target agent: `tea` or `dev` |
-| `NEXT_PHASE` | Yes | Target phase: `red` (TEA) or `implement` (Dev) |
-| `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
+| `NEXT_AGENT` | Yes | Target agent: `tea`, `dev`, `ux-designer`, `orchestrator` |
+| `NEXT_PHASE` | Yes | Target phase from workflow YAML: `red`, `design`, `implement` |
+| `WORKFLOW` | Yes | Workflow type: "tdd", "tdd-tandem", "bdd", "bdd-tandem", "trivial", etc. |
 </arguments>
+
+<tandem-awareness>
+## Tandem Partner Detection
+
+After verifying prerequisites, check if the next phase has a tandem partner:
+
+```bash
+TANDEM_PARTNER=$(yq eval ".workflow.phases[] | select(.name == \"$NEXT_PHASE\") | .tandem.partner // \"\"" "$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml" 2>/dev/null)
+TANDEM_SCOPE=$(yq eval ".workflow.phases[] | select(.name == \"$NEXT_PHASE\") | .tandem.scope // \"\"" "$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml" 2>/dev/null)
+```
+
+If `TANDEM_PARTNER` is non-empty, include it in the HANDOFF_RESULT and add a note to the session file:
+
+```markdown
+**Tandem:** {TANDEM_PARTNER} ({TANDEM_SCOPE})
+```
+
+This tells the receiving agent they can spawn their tandem partner for consultation.
+</tandem-awareness>
 
 <gate>
 ## Handoff Checklist
@@ -73,6 +92,8 @@ HANDOFF_RESULT:
   next_agent: {NEXT_AGENT}
   next_phase: {NEXT_PHASE}
   story_id: {STORY_ID}
+  tandem_partner: {PARTNER or "none"}
+  tandem_scope: {SCOPE or "none"}
   summary: "{what was done}"
 
   next_steps:
@@ -88,7 +109,9 @@ HANDOFF_RESULT:
   next_agent: tea
   next_phase: red
   story_id: MSSCI-12274
-  summary: "Session updated (setup → red), branch verified, 7 AC defined"
+  tandem_partner: architect
+  tandem_scope: file-watch
+  summary: "Session updated (setup → red), branch verified, 7 AC defined. Tandem: architect available."
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."

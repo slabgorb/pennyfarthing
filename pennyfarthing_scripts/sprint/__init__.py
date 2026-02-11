@@ -18,6 +18,16 @@ Usage:
 """
 
 # Re-export from loader for backwards compatibility
+# Import submodules to make them accessible
+# CLI entry point - import module, not function, so "from sprint import cli" gets the module
+from pennyfarthing_scripts.sprint import (
+    archive,
+    cli,
+    loader,
+    status,
+    work,
+)
+from pennyfarthing_scripts.sprint.cli import main
 from pennyfarthing_scripts.sprint.loader import (
     find_epic,
     find_story,
@@ -30,18 +40,6 @@ from pennyfarthing_scripts.sprint.loader import (
     load_current_sprint,
     load_sprint,
 )
-
-# Import submodules to make them accessible
-from pennyfarthing_scripts.sprint import (
-    archive,
-    loader,
-    status,
-    work,
-)
-
-# CLI entry point - import module, not function, so "from sprint import cli" gets the module
-from pennyfarthing_scripts.sprint import cli
-from pennyfarthing_scripts.sprint.cli import main
 
 __all__ = [
     # Loader functions

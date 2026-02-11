@@ -21,7 +21,6 @@ import {
   mkdirSync,
   writeFileSync,
   rmSync,
-  readFileSync,
 } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
