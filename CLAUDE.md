@@ -118,7 +118,7 @@ Electron app with React 19, Tailwind v4, shadcn/ui, dockview-react panels.
 
 **Key components:** `DockviewWorkspace.tsx` (layout), `MessageView.tsx` (conversation), `ToolCallBlock.tsx` / `ToolStack.tsx` (tool visualization), `QuickActions.tsx` (marker detection)
 
-**Panels:** MessagePanel (sacred center), ChangedPanel, DiffsPanel, SprintPanel, ProgressPanel, BikeLanePanel, AcceptanceCriteriaPanel, SettingsPanel, DebugPanel, GitPanel, BackgroundPanel, TodoPanel, AuditLogPanel, TTYPanel, WorkflowPanel
+**Panels:** MessagePanel (sacred center), ChangedPanel, DiffsPanel, SprintPanel, BikeLanePanel, ACPanel, AcceptanceCriteriaPanel, SettingsPanel, DebugPanel, GitPanel, BackgroundPanel, TodoPanel, AuditLogPanel, TTYPanel, WorkflowPanel, HotspotsPanel
 
 **CLI for users:** `pennyfarthing init | update | doctor [--fix] | uninstall`
 </info>
