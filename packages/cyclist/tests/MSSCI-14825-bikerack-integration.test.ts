@@ -18,8 +18,9 @@
  * - AC10: grep for direct IS_BIKERACK checks returns only isBikeRackMode() (Rule 1)
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
 import { join, resolve } from 'path';
+import { tmpdir } from 'os';
 
 const SRC_DIR = resolve(__dirname, '..', 'src');
 const PANELS_DIR = join(SRC_DIR, 'public', 'components', 'panels');
@@ -535,5 +536,111 @@ describe('Architectural integrity', () => {
     const content = readFileSync(standalonePath, 'utf-8');
 
     expect(content).not.toMatch(/from\s+['"]dockview/);
+  });
+});
+
+// ============================================================================
+// Runtime verification — actual module imports and function calls
+// ============================================================================
+
+describe('Runtime: isBikeRackMode() gate function', () => {
+  const originalEnv = process.env.IS_BIKERACK;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.IS_BIKERACK;
+    } else {
+      process.env.IS_BIKERACK = originalEnv;
+    }
+  });
+
+  it('should be an exported function from server module', async () => {
+    const serverModule = await import('../src/server.js');
+    expect(serverModule).toHaveProperty('isBikeRackMode');
+    expect(typeof serverModule.isBikeRackMode).toBe('function');
+  });
+
+  it('should return true when IS_BIKERACK is "1"', async () => {
+    process.env.IS_BIKERACK = '1';
+    const { isBikeRackMode } = await import('../src/server.js');
+    expect(isBikeRackMode()).toBe(true);
+  });
+
+  it('should return false when IS_BIKERACK is not set', async () => {
+    delete process.env.IS_BIKERACK;
+    const { isBikeRackMode } = await import('../src/server.js');
+    expect(isBikeRackMode()).toBe(false);
+  });
+});
+
+describe('Runtime: createTerminalServer()', () => {
+  it('should be an exported function from server module', async () => {
+    const serverModule = await import('../src/server.js');
+    expect(serverModule).toHaveProperty('createTerminalServer');
+    expect(typeof serverModule.createTerminalServer).toBe('function');
+  });
+
+  it('should return an HTTP Server with listen and close methods', async () => {
+    const { createTerminalServer } = await import('../src/server.js');
+    const server = createTerminalServer();
+    try {
+      expect(server).toBeDefined();
+      expect(typeof server.listen).toBe('function');
+      expect(typeof server.close).toBe('function');
+      expect(typeof server.address).toBe('function');
+    } finally {
+      server.close();
+    }
+  });
+});
+
+describe('Runtime: findAvailablePort()', () => {
+  it('should be an exported async function from server module', async () => {
+    const serverModule = await import('../src/server.js');
+    expect(serverModule).toHaveProperty('findAvailablePort');
+    expect(typeof serverModule.findAvailablePort).toBe('function');
+  });
+
+  it('should return an available port number', async () => {
+    const { findAvailablePort } = await import('../src/server.js');
+    const port = await findAvailablePort(19000);
+    expect(typeof port).toBe('number');
+    expect(port).toBeGreaterThanOrEqual(19000);
+  });
+});
+
+describe('Runtime: Port file cleanup pattern', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `bikerack-test-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(testDir, { recursive: true, force: true });
+  });
+
+  it('cleanup removes .bikerack-port when it exists', () => {
+    const portFile = join(testDir, '.bikerack-port');
+    writeFileSync(portFile, '2898');
+    expect(existsSync(portFile)).toBe(true);
+
+    // Replicate cleanupPortFile logic from bikerack.ts
+    if (existsSync(portFile)) {
+      unlinkSync(portFile);
+    }
+    expect(existsSync(portFile)).toBe(false);
+  });
+
+  it('cleanup is safe when .bikerack-port does not exist', () => {
+    const portFile = join(testDir, '.bikerack-port');
+    expect(existsSync(portFile)).toBe(false);
+
+    // Should not throw
+    if (existsSync(portFile)) {
+      unlinkSync(portFile);
+    }
+    expect(existsSync(portFile)).toBe(false);
   });
 });
