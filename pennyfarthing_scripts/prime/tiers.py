@@ -38,6 +38,7 @@ def estimate_tokens(text: str) -> int:
 from pennyfarthing_scripts.prime.loader import (  # noqa: E402
     load_agent_definition,
     load_behavior_guide,
+    load_repos_topology,
     load_session_context,
     load_sidecars,
     load_sprint_context,
@@ -134,6 +135,10 @@ def load_tier_components(
         if sprint_content:
             add_component("sprint_context", sprint_content)
 
+        topology_content = load_repos_topology(project_root)
+        if topology_content:
+            add_component("repos_topology", topology_content)
+
         session_result = load_session_context(project_root)
         if session_result:
             filename, header, _ = session_result
@@ -155,6 +160,10 @@ def load_tier_components(
             if persona and theme:
                 compressed = format_persona_compressed(persona, theme, agent_name)
                 add_component("persona_compressed", compressed)
+
+        topology_content = load_repos_topology(project_root)
+        if topology_content:
+            add_component("repos_topology", topology_content)
 
         components["token_counts"] = token_counts
         components["total_tokens"] = sum(token_counts.values())
@@ -184,6 +193,10 @@ def load_tier_components(
     sprint_content = load_sprint_context(project_root)
     if sprint_content:
         add_component("sprint_context", sprint_content)
+
+    topology_content = load_repos_topology(project_root)
+    if topology_content:
+        add_component("repos_topology", topology_content)
 
     session_result = load_session_context(project_root)
     if session_result:
