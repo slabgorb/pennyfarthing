@@ -146,10 +146,11 @@ function AgentQuickPicker({ currentAgent, onAgentSwitch }: { currentAgent: strin
                 data-testid={`agent-option-${agent.role}`}
                 role="option"
                 aria-selected={isCurrent}
+                aria-label={`${agent.role} (${agent.character})`}
+                title={agent.character}
                 onClick={() => handleAgentClick(agent)}
               >
                 <span className="agent-option-role">{agent.role}</span>
-                <span className="agent-option-character">{agent.character}</span>
               </div>
             );
           })}

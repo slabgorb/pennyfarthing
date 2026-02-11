@@ -4258,7 +4258,7 @@
   bottom: 100%;
   left: 0;
   margin-bottom: 4px;
-  min-width: 200px;
+  min-width: 120px;
   max-height: 300px;
   overflow-y: auto;
   background: var(--bg-secondary, #1e1e1e);
@@ -4295,10 +4295,6 @@
   min-width: 64px;
 }
 
-.agent-option-character {
-  font-size: 0.8rem;
-  color: var(--text-primary, #d4d4d4);
-}
 
 .btn-toggle {
   display: flex;
