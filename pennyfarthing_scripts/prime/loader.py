@@ -236,3 +236,19 @@ def load_domain_docs(project_root: Path | None = None) -> list[tuple[str, str]]:
         docs.append((doc_file.name, doc_file.read_text()))
 
     return docs
+
+
+def load_repos_topology(project_root: Path | None = None) -> str | None:
+    """Load repos.yaml topology as formatted context for agents.
+
+    Reads .pennyfarthing/repos.yaml and formats the topology fields
+    (owns, never_edit, symlinks, ui_layer, components_path) as a
+    readable manifest for agent spatial awareness.
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Formatted topology context string, or None if unavailable
+    """
+    return None
