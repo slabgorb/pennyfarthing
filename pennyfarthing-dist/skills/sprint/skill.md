@@ -293,7 +293,7 @@ pf sprint story add <epic-id> "<title>" <points> [options]
 | `points` | Yes | Story points (1, 2, 3, 5, 8) |
 | `--type` | No | Story type: feature, bug, chore, refactor (default: feature) |
 | `--priority` | No | Priority: P0, P1, P2, P3 (default: P1) |
-| `--workflow` | No | Workflow: tdd, trivial, bdd (default: tdd) |
+| `--workflow` | No | Workflow: tdd, tdd-tandem, trivial, bdd, bdd-tandem (default: tdd) |
 | `--jira` | No | Jira issue key |
 </args>
 
@@ -718,7 +718,7 @@ All gates must pass before handoff:
 | Sprint name | `"TO Sprint YYWW"` (e.g., "TO Sprint 2604") |
 | Story IDs | Jira keys `MSSCI-XXXXX` |
 | Status | `backlog`, `ready`, `in_progress`, `done` |
-| Workflow | `tdd`, `trivial`, `agent-docs`, `bdd` |
+| Workflow | `tdd`, `tdd-tandem`, `trivial`, `agent-docs`, `bdd`, `bdd-tandem` |
 | Priority | `P0`, `P1`, `P2`, `P3` |
 | in_sprint | `true`, `false` - Jira sprint membership |
 
