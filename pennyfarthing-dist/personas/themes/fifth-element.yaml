@@ -235,13 +235,8 @@ agents:
       - "I've cross-referenced all known sources. The documentation is complete."
     emoji: "\U0001F4D6"
     helper:
-<<<<<<< HEAD
       name: Aziz
       style: Loyal assistant who provides light exactly when needed
-=======
-      name: Temple Archives
-      style: Ancient reference system for cross-referencing documentation
->>>>>>> 368b7ff06 (feat(themes): add Fifth Element theme with 10 agent portraits)
 
   ux-designer:
     character: The Diva Plavalaguna
