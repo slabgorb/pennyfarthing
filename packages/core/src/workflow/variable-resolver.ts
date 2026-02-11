@@ -212,7 +212,7 @@ export function resolveStepVariables(
     name: 'defaults',
     priority: 5,
     values: {
-      planning_artifacts: 'planning-artifacts/',
+      planning_artifacts: 'sprint/planning/',
     },
   });
 
