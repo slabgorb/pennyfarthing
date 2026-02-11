@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.1.0. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 10.2.0. ES module monorepo (pnpm, TypeScript, Node >=18).
 
 <critical>
 ## Implementation Rules
@@ -92,7 +92,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, 2party-tdd, agent-docs, patch |
+| **Phased** | Agent-driven with automatic handoffs | tdd, tdd-tandem, bdd, bdd-tandem, trivial, 2party-tdd, agent-docs, patch |
 | **Stepped** | Progressive disclosure with gates | architecture, release, git-cleanup |
 
 **TDD flow:** `/new-work` → SM → TEA → Dev → Reviewer → SM (finish)
