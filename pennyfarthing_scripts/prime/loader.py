@@ -251,4 +251,58 @@ def load_repos_topology(project_root: Path | None = None) -> str | None:
     Returns:
         Formatted topology context string, or None if unavailable
     """
-    return None
+    import yaml
+
+    root = project_root or get_project_root()
+    repos_file = root / ".pennyfarthing" / "repos.yaml"
+
+    if not repos_file.exists():
+        return None
+
+    try:
+        data = yaml.safe_load(repos_file.read_text())
+    except Exception:
+        return None
+
+    if not isinstance(data, dict) or "repos" not in data:
+        return None
+
+    repos = data["repos"]
+    if not repos:
+        return None
+
+    lines: list[str] = []
+    for name, config in repos.items():
+        lines.append(f"## {name}")
+        if config.get("path"):
+            lines.append(f"Path: {config['path']}")
+        if config.get("type"):
+            lines.append(f"Type: {config['type']}")
+        if config.get("description"):
+            lines.append(f"Description: {config['description']}")
+
+        owns = config.get("owns", [])
+        if owns:
+            lines.append(f"Owns: {', '.join(owns)}")
+
+        never_edit = config.get("never_edit", [])
+        if never_edit:
+            lines.append(f"Never Edit: {', '.join(never_edit)}")
+
+        symlinks = config.get("symlinks", {})
+        if symlinks:
+            lines.append("Symlinks:")
+            for src, dest in symlinks.items():
+                lines.append(f"  {src} → {dest}")
+
+        ui_layer = config.get("ui_layer")
+        if ui_layer:
+            lines.append(f"UI Layer: {ui_layer}")
+
+        components_path = config.get("components_path")
+        if components_path:
+            lines.append(f"Components: {components_path}")
+
+        lines.append("")
+
+    return "\n".join(lines).strip() if lines else None
