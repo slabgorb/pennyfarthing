@@ -7,6 +7,8 @@
  * Story: MSSCI-14823 (101-4) - PortraitPanel with tandem support
  * Epic: 101 (BikeRack Mode)
  *
+ * @vitest-environment happy-dom
+ *
  * Acceptance Criteria:
  * - AC1: PortraitPanel uses existing usePersona() hook (CE-1)
  * - AC2: No new WebSocket connections or endpoints (CE-5, Rule 3)
@@ -42,14 +44,41 @@ beforeEach(() => {
   personaWs = null;
   allWsConnections.length = 0;
 
-  const OriginalMockWebSocket = (window as any).WebSocket;
-  (window as any).WebSocket = class extends OriginalMockWebSocket {
+  // Self-contained WebSocket mock that doesn't rely on setup.ts global surviving
+  // vi.restoreAllMocks() (which undoes vi.stubGlobal from setup.ts)
+  (window as any).WebSocket = class {
+    onopen: (() => void) | null = null;
+    onmessage: ((event: { data: string }) => void) | null = null;
+    onclose: (() => void) | null = null;
+    onerror: ((error: Error) => void) | null = null;
+    readyState = 1;
+    url: string;
+
     constructor(url: string) {
-      super(url);
+      this.url = url;
       allWsConnections.push(url);
       if (url.includes('/ws/persona')) {
         personaWs = this;
       }
+      setTimeout(() => this.onopen?.(), 0);
+    }
+
+    send(_data: string) {}
+    close() {
+      this.readyState = 3;
+      this.onclose?.();
+    }
+    addEventListener(event: string, handler: any) {
+      if (event === 'open') this.onopen = handler;
+      else if (event === 'message') this.onmessage = handler;
+      else if (event === 'close') this.onclose = handler;
+      else if (event === 'error') this.onerror = handler;
+    }
+    removeEventListener(event: string, handler: any) {
+      if (event === 'open' && this.onopen === handler) this.onopen = null;
+      else if (event === 'message' && this.onmessage === handler) this.onmessage = null;
+      else if (event === 'close' && this.onclose === handler) this.onclose = null;
+      else if (event === 'error' && this.onerror === handler) this.onerror = null;
     }
   };
 });

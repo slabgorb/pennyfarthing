@@ -22,3 +22,4 @@ export { TTYPanel } from './TTYPanel';
 // Legacy exports - kept for backwards compatibility and tests
 export { AcceptanceCriteriaPanel, ConnectedAcceptanceCriteriaPanel } from './AcceptanceCriteriaPanel';
 export { BikeLanePanel, ConnectedBikeLanePanel } from './BikeLanePanel';
+export { PortraitPanel } from './PortraitPanel';
