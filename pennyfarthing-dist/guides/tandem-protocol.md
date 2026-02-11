@@ -1,6 +1,6 @@
 # Tandem Protocol Guide
 
-Tandem mode pairs a background observer ("backseat") with the primary agent during a workflow phase. The backseat watches the primary agent's work and writes observations to a shared file. Bell mode automatically injects those observations into the primary agent's context.
+Tandem mode pairs a background observer ("backseat") with the primary agent during a workflow phase. The backseat watches the primary agent's work and writes observations to a shared file. The PostToolUse hook automatically injects those observations into the primary agent's context.
 
 ## Architecture
 
@@ -26,9 +26,10 @@ Primary Agent (Opus)          Backseat Agent (Haiku, background)
 
 ## Prerequisites
 
-- `bell_mode: true` in `.pennyfarthing/config.local.yaml` (without this, observations are written but never injected)
 - Workflow must have `tandem:` block on the phase (e.g., `tdd-tandem`, `bdd-tandem`)
 - Session file must contain `**Tandem:** {partner} ({scope})` line (written by handoff subagent)
+
+No configuration required. Tandem injection is always active in the PostToolUse hook — the presence of observation files in `.session/` is the only signal needed. Works in both CLI and Cyclist.
 
 ## How It Works
 
@@ -87,7 +88,7 @@ prompt: |
 
 ### 5. Observation Injection
 
-The `bell-mode-hook.sh` PostToolUse hook:
+The PostToolUse hook (tandem injection runs unconditionally, no config required):
 1. Checks `.session/*-tandem-*.md` files for mtime changes
 2. Parses the latest `## [HH:MM] Observation` block
 3. Extracts the persona from the `**Observer:**` header

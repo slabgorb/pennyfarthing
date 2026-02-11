@@ -82,7 +82,7 @@ On activation, check session file for a `**Tandem:**` line (e.g., `**Tandem:** a
      SESSION_FILE: ".session/{STORY_ID}-session.md"
    ```
 
-4. **During work:** Bell mode PostToolUse hook automatically detects new observations
+4. **During work:** PostToolUse hook automatically detects new observations
    and injects them as `[Tandem] {CHARACTER}: {observation}`.
    When you receive a tandem injection, surface it naturally:
    *"{PARTNER_CHARACTER} suggests we extract this into an adapter."*
