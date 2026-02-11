@@ -41,12 +41,6 @@ The 97 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments
 
 ---
 
-### [**Explore the Research Showcase**](https://animated-meme-3e4494y.pages.github.io/)
-
-97 themes with OCEAN spider charts, benchmark tiers, and character profiles.
-
----
-
 ## Quick Start
 
 ```bash
