@@ -40,6 +40,61 @@
 
 ---
 
+<tandem-protocol>
+## Tandem Backseat Observer
+
+On activation, check session file for a `**Tandem:**` line (e.g., `**Tandem:** architect (file-watch)`).
+
+**If no `**Tandem:**` line in session:** Skip entirely — no-op.
+
+**If tandem is configured:**
+
+1. **Resolve backseat persona** from theme:
+   ```bash
+   THEME=$(yq '.theme' .pennyfarthing/config.local.yaml)
+   PARTNER_CHARACTER=$(yq ".agents.{PARTNER}.character" .pennyfarthing/personas/themes/${THEME}.yaml)
+   ```
+
+2. **Initialize observation file:**
+   Create `.session/{STORY_ID}-tandem-{PARTNER}.md` with header:
+   ```markdown
+   # Tandem Observations: {STORY_ID}
+   **Observer:** {PARTNER} ({PARTNER_CHARACTER})
+   **Phase:** {PHASE}
+   **Started:** {ISO_TIMESTAMP}
+
+   ---
+   ```
+
+3. **Spawn backseat** (Task tool):
+   ```yaml
+   subagent_type: "general-purpose"
+   model: "haiku"
+   run_in_background: true
+   prompt: |
+     Read .pennyfarthing/agents/tandem-backseat.md for your instructions.
+
+     PARTNER: "{PARTNER}"
+     CHARACTER: "{PARTNER_CHARACTER}"
+     STORY_ID: "{STORY_ID}"
+     SCOPE: "{SCOPE}"
+     OBSERVATION_FILE: ".session/{STORY_ID}-tandem-{PARTNER}.md"
+     SESSION_FILE: ".session/{STORY_ID}-session.md"
+   ```
+
+4. **During work:** Bell mode PostToolUse hook automatically detects new observations
+   and injects them as `[Tandem] {CHARACTER}: {observation}`.
+   When you receive a tandem injection, surface it naturally:
+   *"{PARTNER_CHARACTER} suggests we extract this into an adapter."*
+
+5. **Before handoff:** Terminate the backseat background task, then proceed
+   with normal handoff sequence.
+
+See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
+</tandem-protocol>
+
+---
+
 ## Reflector
 
 <critical>
@@ -61,16 +116,17 @@
 ## Exit Protocol
 
 1. Write assessment to session
-2. Spawn `handoff` subagent → returns `HANDOFF_RESULT: {status, next_agent}`
-3. If blocked → report error, stop
-4. Run `.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}`
-5. Extract marker from YAML output, emit it:
+2. Terminate tandem backseat (if active)
+3. Spawn `handoff` subagent → returns `HANDOFF_RESULT: {status, next_agent}`
+4. If blocked → report error, stop
+5. Run `.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}`
+6. Extract marker from YAML output, emit it:
    ```
    <!-- CYCLIST:HANDOFF:/dev -->
 
    Run `/dev` to continue
    ```
-6. EXIT (nothing after marker)
+7. EXIT (nothing after marker)
 </agent-exit-protocol>
 
 <wrong-phase-detection>
