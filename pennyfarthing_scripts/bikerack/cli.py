@@ -9,6 +9,7 @@ Commands:
     status  Show running state
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -31,7 +32,13 @@ def bikerack(ctx):
 
 
 @bikerack.command()
-def start():
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory (where .pennyfarthing/ lives). Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def start(project_dir):
     """Start BikeRack mode.
 
     Starts WheelHub in background, waits for readiness,
@@ -47,7 +54,12 @@ def start():
         write_pid_file,
     )
 
-    project_dir = Path.cwd()
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
 
     running, pid, port = is_already_running(project_dir)
     if running:
@@ -83,11 +95,22 @@ def start():
 
 
 @bikerack.command()
-def stop():
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def stop(project_dir):
     """Stop running BikeRack instance."""
     from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
 
-    project_dir = Path.cwd()
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
     result = stop_bikerack(project_dir)
 
     if result["success"]:
@@ -98,11 +121,22 @@ def stop():
 
 
 @bikerack.command()
-def status():
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def status(project_dir):
     """Show BikeRack running state."""
     from pennyfarthing_scripts.bikerack.launcher import get_status
 
-    project_dir = Path.cwd()
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
     result = get_status(project_dir)
 
     if result["running"]:
