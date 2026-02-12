@@ -11,6 +11,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
+import { execSync } from 'child_process';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { getStoryInfo } from './story-parser.js';
@@ -407,25 +408,34 @@ export function getSprintData(projectDir: string, userEmail?: string | null): Sp
     }
   }
 
-  // Find next backlog story, preferring ones assigned to current user
+  // Find next backlog story (prefer assigned to current user, skip others' stories)
   if (!currentStory) {
-    // Collect all backlog stories across epics
-    const backlogStories: SprintStory[] = [];
-    for (const epic of epics) {
-      for (const story of epic.stories) {
-        if (story.status === 'backlog') {
-          backlogStories.push(story);
+    let userEmail: string | null = null;
+    try {
+      userEmail = execSync('git config user.email', { cwd: projectDir, encoding: 'utf-8' }).trim() || null;
+    } catch {
+      // No git config available
+    }
+
+    // First pass: backlog stories assigned to current user
+    if (userEmail) {
+      for (const epic of epics) {
+        const assigned = epic.stories.find(s => s.status === 'backlog' && s.assignedTo === userEmail);
+        if (assigned) {
+          nextStory = assigned;
+          break;
         }
       }
     }
 
-    if (backlogStories.length > 0) {
-      if (userEmail) {
-        // Prefer stories assigned to current user, then unassigned, then others
-        const assignedToUser = backlogStories.find(s => s.assignedTo === userEmail);
-        nextStory = assignedToUser ?? backlogStories.find(s => !s.assignedTo) ?? backlogStories[0];
-      } else {
-        nextStory = backlogStories[0];
+    // Second pass: unassigned backlog stories (skip stories assigned to others)
+    if (!nextStory) {
+      for (const epic of epics) {
+        const unassigned = epic.stories.find(s => s.status === 'backlog' && !s.assignedTo);
+        if (unassigned) {
+          nextStory = unassigned;
+          break;
+        }
       }
     }
   }
