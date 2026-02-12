@@ -9,12 +9,13 @@
  * Single Dockview group — users can freely rearrange panels.
  */
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import {
   DockviewReact,
   DockviewReadyEvent,
   DockviewApi,
   IDockviewPanelProps,
+  SerializedDockview,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -94,12 +95,31 @@ function PanelAdapter({ params }: IDockviewPanelProps<PanelAdapterParams>): Reac
 // BikeRackWorkspace Component
 // =============================================================================
 
-export function BikeRackWorkspace(): React.ReactElement {
+export interface BikeRackWorkspaceProps {
+  initialLayout?: SerializedDockview;
+  onLayoutChange?: (layout: SerializedDockview) => void;
+}
+
+export function BikeRackWorkspace({
+  initialLayout,
+  onLayoutChange,
+}: BikeRackWorkspaceProps): React.ReactElement {
   const apiRef = useRef<DockviewApi | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onReady = useCallback((event: DockviewReadyEvent) => {
     const api = event.api;
     apiRef.current = api;
+
+    // Restore saved layout if available
+    if (initialLayout && initialLayout.grid && initialLayout.panels) {
+      try {
+        api.fromJSON(initialLayout);
+        return;
+      } catch (err) {
+        console.warn('[BikeRackWorkspace] Failed to restore layout, building default:', err);
+      }
+    }
 
     // Single group — all panels as tabs, user can rearrange freely
     const first = api.addPanel({
@@ -118,6 +138,42 @@ export function BikeRackWorkspace(): React.ReactElement {
         title: PANEL_TITLES[BIKERACK_PANELS[i]],
       });
     }
+  }, [initialLayout]);
+
+  // Subscribe to layout changes for persistence
+  const handleLayoutChange = useCallback(() => {
+    const api = apiRef.current;
+    if (!api || !onLayoutChange) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      onLayoutChange(api.toJSON());
+    }, 300);
+  }, [onLayoutChange]);
+
+  useEffect(() => {
+    const api = apiRef.current;
+    if (!api) return;
+
+    const disposables = [
+      api.onDidLayoutChange(() => handleLayoutChange()),
+      api.onDidAddPanel(() => handleLayoutChange()),
+      api.onDidRemovePanel(() => handleLayoutChange()),
+    ];
+
+    return () => disposables.forEach(d => d.dispose());
+  }, [handleLayoutChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, []);
 
   const components = { PanelAdapter };

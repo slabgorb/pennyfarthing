@@ -49,7 +49,7 @@ function isValidDockviewLayout(layout: unknown): layout is SerializedDockview {
   return true;
 }
 
-export function useLayoutPersistence(): UseLayoutPersistenceResult {
+export function useLayoutPersistence(endpoint: string = '/api/settings/layout'): UseLayoutPersistenceResult {
   const [layout, setLayout] = useState<SerializedDockview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,7 +62,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
   useEffect(() => {
     const loadLayout = async () => {
       try {
-        const response = await fetch('/api/settings/layout');
+        const response = await fetch(endpoint);
         if (response.ok) {
           const data = await response.json();
           if (data.layout && isValidDockviewLayout(data.layout)) {
@@ -87,7 +87,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
     };
 
     loadLayout();
-  }, []);
+  }, [endpoint]);
 
   // Debounced save function via REST API - saves native Dockview format directly
   const saveLayout = useCallback((newLayout: SerializedDockview) => {
@@ -106,7 +106,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
       setIsSaving(true);
       try {
         // Save native Dockview format directly - no conversion needed
-        const response = await fetch('/api/settings/layout', {
+        const response = await fetch(endpoint, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(layoutToSave),
@@ -123,7 +123,7 @@ export function useLayoutPersistence(): UseLayoutPersistenceResult {
         setIsSaving(false);
       }
     }, DEBOUNCE_DELAY);
-  }, []);
+  }, [endpoint]);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
