@@ -77,6 +77,7 @@ const VALID_AGENTS = [
   'tech-writer',
   'ux-designer',
   'devops',
+  'ba',
 ];
 
 const AGENT_NAMES: Record<string, string> = {
@@ -90,6 +91,7 @@ const AGENT_NAMES: Record<string, string> = {
   'tech-writer': 'Tech Writer',
   'ux-designer': 'UX Designer',
   devops: 'DevOps',
+  ba: 'Business Analyst',
 };
 
 const VALID_DIMENSIONS: (keyof OceanScores)[] = ['O', 'C', 'E', 'A', 'N'];

@@ -43,6 +43,7 @@ PRIMARY_AGENTS=(
     "devops.md"
     "tech-writer.md"
     "ux-designer.md"
+    "ba.md"
 )
 
 # Subagents (have YAML frontmatter, different schema)

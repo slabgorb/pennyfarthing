@@ -32,7 +32,7 @@ if [[ -z "$SPEC" || -z "$SCENARIO" ]]; then
 fi
 
 # Valid roles for --as validation
-VALID_ROLES="sm dev reviewer architect tea pm orchestrator tech-writer ux-designer devops"
+VALID_ROLES="sm dev reviewer architect tea pm orchestrator tech-writer ux-designer devops ba"
 
 if [[ -n "$ROLE_OVERRIDE" ]]; then
     if ! echo "$VALID_ROLES" | grep -qw "$ROLE_OVERRIDE"; then

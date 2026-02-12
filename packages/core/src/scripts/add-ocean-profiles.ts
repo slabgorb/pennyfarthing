@@ -18,7 +18,7 @@ const __dirname = dirname(__filename);
 const projectRoot = findMonorepoRoot(__dirname);
 const THEMES_DIR = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
-const _AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'] as const;
+const _AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops', 'ba'] as const;
 type Agent = typeof _AGENTS[number];
 
 interface OceanScore {
