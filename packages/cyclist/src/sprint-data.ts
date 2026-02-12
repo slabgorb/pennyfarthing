@@ -283,7 +283,7 @@ function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprin
 /**
  * Get aggregated sprint data for EnhancedSprintPanel
  */
-export function getSprintData(projectDir: string): SprintData {
+export function getSprintData(projectDir: string, userEmail?: string | null): SprintData {
   const currentSprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
   const futurePath = join(projectDir, 'sprint', 'future.yaml');
 
@@ -407,13 +407,25 @@ export function getSprintData(projectDir: string): SprintData {
     }
   }
 
-  // Find next backlog story (highest priority)
+  // Find next backlog story, preferring ones assigned to current user
   if (!currentStory) {
+    // Collect all backlog stories across epics
+    const backlogStories: SprintStory[] = [];
     for (const epic of epics) {
-      const backlogStory = epic.stories.find(s => s.status === 'backlog');
-      if (backlogStory) {
-        nextStory = backlogStory;
-        break;
+      for (const story of epic.stories) {
+        if (story.status === 'backlog') {
+          backlogStories.push(story);
+        }
+      }
+    }
+
+    if (backlogStories.length > 0) {
+      if (userEmail) {
+        // Prefer stories assigned to current user, then unassigned, then others
+        const assignedToUser = backlogStories.find(s => s.assignedTo === userEmail);
+        nextStory = assignedToUser ?? backlogStories.find(s => !s.assignedTo) ?? backlogStories[0];
+      } else {
+        nextStory = backlogStories[0];
       }
     }
   }
