@@ -22,7 +22,7 @@ import { createAgentLoadRouter } from '../src/api/agent-load.js';
 
 const PRIMARY_AGENTS = [
   'sm', 'tea', 'dev', 'reviewer', 'architect',
-  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator',
+  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator', 'ba',
 ] as const;
 
 const VALID_SIDECAR_FILES = ['patterns.md', 'gotchas.md', 'decisions.md'] as const;

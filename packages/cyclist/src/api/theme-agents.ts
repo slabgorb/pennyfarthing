@@ -239,8 +239,8 @@ export function getEnhancedThemeData(projectDir: string): EnhancedThemeData | nu
     });
   }
 
-  // Sort agents by a consistent order (orchestrator, sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops)
-  const roleOrder = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'];
+  // Sort agents by a consistent order (orchestrator, sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops, ba)
+  const roleOrder = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops', 'ba'];
   enhancedAgents.sort((a, b) => {
     const aIndex = roleOrder.indexOf(a.role);
     const bIndex = roleOrder.indexOf(b.role);

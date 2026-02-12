@@ -490,7 +490,8 @@ async def _probe_agent_context_efficiency(target_path: Path) -> float | None:
     from pennyfarthing_scripts.prime.tiers import ContextTier, load_tier_components
 
     agents = ["sm", "tea", "dev", "reviewer", "architect",
-              "pm", "tech-writer", "ux-designer", "devops", "orchestrator"]
+              "pm", "tech-writer", "ux-designer", "devops", "orchestrator",
+              "ba"]
 
     target_budget = 4000
     scores: list[float] = []
