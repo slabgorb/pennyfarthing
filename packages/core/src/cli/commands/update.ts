@@ -27,6 +27,7 @@ import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, migrateSettingsFile, ensureSettingsSymlink } from '../utils/settings.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
 import { installGitHooks } from './init.js';
+import { writeVersionSentinel } from '../utils/version-sentinel.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -241,6 +242,9 @@ async function updateInstalledContent(
 
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.pennyfarthing/manifest.json');
+
+  // Write version sentinel
+  writeVersionSentinel(projectRoot, version, { dryRun });
 }
 
 /**
