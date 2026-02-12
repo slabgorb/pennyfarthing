@@ -27,7 +27,7 @@ import * as path from 'node:path';
 expect.extend(matchers);
 
 // ============================================================================
-// All 12 panels (portrait extracted to BikeRackWorkspace anchor in 102-6)
+// All 13 panels (portrait extracted to anchor in 102-6, settings added in 102-2)
 // ============================================================================
 
 const ALL_PANELS = [
@@ -43,6 +43,7 @@ const ALL_PANELS = [
   'tty',
   'debug',
   'bikelane',
+  'settings',
 ] as const;
 
 // ============================================================================
@@ -172,8 +173,8 @@ describe('AC1: /bikerack URL renders the index page', () => {
 // AC2: Lists all 12 panels with links (portrait extracted in 102-6)
 // ---------------------------------------------------------------------------
 
-describe('AC2: Lists all 12 panels with links', () => {
-  it('should render 12 panel links', async () => {
+describe('AC2: Lists all 13 panels with links', () => {
+  it('should render 13 panel links', async () => {
     const { BikeRackIndex } = await import(
       '../src/public/components/BikeRackIndex'
     );
@@ -182,8 +183,8 @@ describe('AC2: Lists all 12 panels with links', () => {
 
     // Each panel should have a link
     const links = screen.getAllByRole('link');
-    // At least 12 links (one per panel — may have more if there's a header link etc)
-    expect(links.length).toBeGreaterThanOrEqual(12);
+    // At least 13 links (one per panel — may have more if there's a header link etc)
+    expect(links.length).toBeGreaterThanOrEqual(13);
   });
 
   it.each(ALL_PANELS)(
@@ -203,7 +204,7 @@ describe('AC2: Lists all 12 panels with links', () => {
     },
   );
 
-  it('should list exactly 12 unique panel entries', async () => {
+  it('should list exactly 13 unique panel entries', async () => {
     const { BikeRackIndex } = await import(
       '../src/public/components/BikeRackIndex'
     );
@@ -217,13 +218,13 @@ describe('AC2: Lists all 12 panels with links', () => {
       return href.includes('panel=');
     });
 
-    // Should have exactly 12 panel links
-    expect(panelLinks.length).toBe(12);
+    // Should have exactly 13 panel links
+    expect(panelLinks.length).toBe(13);
 
     // All should be unique
     const hrefs = panelLinks.map((l) => l.getAttribute('href'));
     const uniqueHrefs = new Set(hrefs);
-    expect(uniqueHrefs.size).toBe(12);
+    expect(uniqueHrefs.size).toBe(13);
   });
 });
 

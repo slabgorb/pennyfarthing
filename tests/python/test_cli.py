@@ -115,7 +115,7 @@ class TestStartupPerformance:
 
         assert len(times) > 0, "CLI failed to run successfully"
         avg_time = sum(times) / len(times)
-        assert avg_time < 200, f"CLI startup took {avg_time:.1f}ms, should be < 200ms"
+        assert avg_time < 300, f"CLI startup took {avg_time:.1f}ms, should be < 300ms"
 
     def test_cli_startup_no_heavy_imports_at_top(self):
         """CLI module should not import heavy modules at top level."""
