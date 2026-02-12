@@ -17,13 +17,14 @@ import {
 } from './components/DockviewWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
+import ClaudeContext from './contexts/ClaudeContext';
 import { MessageQueueProvider } from './contexts/MessageQueueContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
 import { loadPresetFromProject, applyPreset } from './utils/color-presets';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StandalonePanel, getStandalonePanelName } from './components/StandalonePanel';
-import { BikeRackIndex } from './components/BikeRackIndex';
+import { BikeRackWorkspace } from './components/BikeRackWorkspace';
 import ApprovalModal, { useApprovalModal } from './components/ApprovalModal';
 import { subscribeToPermissionRequests, sendPermissionResponse, createApprovalResponse } from './components/ApprovalModal';
 import type { ApprovalRequest, GrantScope } from './components/ApprovalModal';
@@ -200,17 +201,11 @@ function RootErrorFallback(): React.ReactElement {
 // =============================================================================
 
 export default function App(): React.ReactElement {
-  // BikeRack index page (MSSCI-14822) — /bikerack path renders panel listing
-  if (window.location.pathname === '/bikerack') {
-    return <BikeRackIndex />;
-  }
-
-  // BikeRack standalone panel routing (MSSCI-14821)
-  // URL-based detection only (Rule 10) — ?panel=X renders single panel full-screen
+  // Detect route mode (computed before hooks, used after)
+  const isBikeRackIndex = window.location.pathname === '/bikerack';
   const standalonePanelName = getStandalonePanelName();
-  if (standalonePanelName) {
-    return <StandalonePanel />;
-  }
+
+  // --- All hooks called unconditionally (React rules of hooks) ---
 
   const { layout, isLoading, saveLayout } = useLayoutPersistence();
 
@@ -267,6 +262,31 @@ export default function App(): React.ReactElement {
     }
     hide();
   }, [request, hide]);
+
+  // --- BikeRack routes (after all hooks) ---
+
+  // BikeRack Dockview workspace (MSSCI-14877) — /bikerack renders Dockview layout
+  // No-op ClaudeContext: BikeRack has no Claude CLI subprocess, skip WebSocket
+  if (isBikeRackIndex) {
+    const noop = () => () => {};
+    return (
+      <ClaudeContext.Provider value={{
+        send: () => {}, abort: () => {}, clear: () => {},
+        clearAndReload: () => {}, setMode: () => {},
+        isConnected: false, mode: 'default',
+        onMessage: noop, onComplete: noop, onError: noop,
+        onUserMessage: noop, onClear: noop,
+      }}>
+        <BikeRackWorkspace />
+      </ClaudeContext.Provider>
+    );
+  }
+
+  // BikeRack standalone panel routing (MSSCI-14821)
+  // URL-based detection only (Rule 10) — ?panel=X renders single panel full-screen
+  if (standalonePanelName) {
+    return <StandalonePanel />;
+  }
 
   return (
     <ErrorBoundary fallback={<RootErrorFallback />} panelName="App">

@@ -64,14 +64,23 @@ def build_otel_env(port: int) -> dict[str, str]:
     }
 
 
+def _find_framework_dir() -> Path:
+    """Locate the pennyfarthing framework root from this package's location."""
+    # pennyfarthing_scripts/bikerack/launcher.py -> pennyfarthing/
+    return Path(__file__).resolve().parent.parent.parent
+
+
 def start_wheelhub(project_dir: Path) -> subprocess.Popen:
     """Start WheelHub server in background with IS_BIKERACK=1."""
+    framework_dir = _find_framework_dir()
+    bikerack_entry = framework_dir / "packages" / "cyclist" / "dist" / "bikerack.js"
+
     env = os.environ.copy()
     env["IS_BIKERACK"] = "1"
     env["CYCLIST_PROJECT_DIR"] = str(project_dir)
 
     return subprocess.Popen(
-        ["pnpm", "exec", "cyclist", "--bikerack"],
+        ["node", str(bikerack_entry)],
         env=env,
         cwd=str(project_dir),
         stdout=subprocess.DEVNULL,
