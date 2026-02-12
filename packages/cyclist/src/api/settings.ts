@@ -492,6 +492,74 @@ export function createSettingsRouter(): Router {
   });
 
   /**
+   * GET /bikerack-layout - Get BikeRack layout from config.local.yaml
+   * Stored separately from the main Cyclist layout (Story td-3)
+   */
+  router.get('/bikerack-layout', (_req, res) => {
+    try {
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.json({ layout: null });
+      }
+
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (!fs.existsSync(configPath)) {
+        return res.json({ layout: null });
+      }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const parsed = parse(content) as { bikerack_layout?: unknown };
+      res.json({ layout: parsed?.bikerack_layout || null });
+    } catch (error) {
+      console.error('[Settings API] Failed to get BikeRack layout:', error);
+      res.json({ layout: null });
+    }
+  });
+
+  /**
+   * PATCH /bikerack-layout - Update BikeRack layout in config.local.yaml
+   * Stored separately from the main Cyclist layout (Story td-3)
+   */
+  router.patch('/bikerack-layout', (req, res) => {
+    try {
+      const layout = req.body;
+      if (!layout || typeof layout !== 'object') {
+        return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Invalid layout object'));
+      }
+
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.status(500).json(createErrorResponse('FILE_ERROR', 'Project directory not found'));
+      }
+
+      const pennyfarthingDir = path.join(projectDir, '.pennyfarthing');
+      const configPath = path.join(pennyfarthingDir, 'config.local.yaml');
+
+      if (!fs.existsSync(pennyfarthingDir)) {
+        fs.mkdirSync(pennyfarthingDir, { recursive: true });
+      }
+
+      let existingConfig: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content);
+        if (parsed && typeof parsed === 'object') {
+          existingConfig = parsed as Record<string, unknown>;
+        }
+      }
+
+      existingConfig.bikerack_layout = layout;
+
+      fs.writeFileSync(configPath, stringify(existingConfig), 'utf-8');
+
+      res.json({ success: true, layout });
+    } catch (error) {
+      console.error('[Settings API] Failed to save BikeRack layout:', error);
+      res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save BikeRack layout'));
+    }
+  });
+
+  /**
    * GET /layout - Get layout from config.local.yaml
    * Returns { layout: { leftSidebar: {...}, rightSidebar: {...} } } or null
    */

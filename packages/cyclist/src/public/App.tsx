@@ -207,7 +207,8 @@ export default function App(): React.ReactElement {
 
   // --- All hooks called unconditionally (React rules of hooks) ---
 
-  const { layout, isLoading, saveLayout } = useLayoutPersistence();
+  const layoutEndpoint = isBikeRackIndex ? '/api/settings/bikerack-layout' : '/api/settings/layout';
+  const { layout, isLoading, saveLayout } = useLayoutPersistence(layoutEndpoint);
 
   // Set up reduced motion support
   useReducedMotion();
@@ -268,6 +269,13 @@ export default function App(): React.ReactElement {
   // BikeRack Dockview workspace (MSSCI-14877) — /bikerack renders Dockview layout
   // No-op ClaudeContext: BikeRack has no Claude CLI subprocess, skip WebSocket
   if (isBikeRackIndex) {
+    if (isLoading) {
+      return (
+        <div className="cyclist-loading" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="loading-spinner" aria-label="Loading layout..." />
+        </div>
+      );
+    }
     const noop = () => () => {};
     return (
       <ClaudeContext.Provider value={{
@@ -277,7 +285,10 @@ export default function App(): React.ReactElement {
         onMessage: noop, onComplete: noop, onError: noop,
         onUserMessage: noop, onClear: noop,
       }}>
-        <BikeRackWorkspace />
+        <BikeRackWorkspace
+          initialLayout={layout ?? undefined}
+          onLayoutChange={saveLayout}
+        />
       </ClaudeContext.Provider>
     );
   }
