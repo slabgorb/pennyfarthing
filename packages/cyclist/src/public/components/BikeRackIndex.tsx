@@ -4,7 +4,7 @@
  * Story MSSCI-14822: BikeRackIndex panel listing page
  * Epic: 101 (BikeRack Mode)
  *
- * Lists all 12 panels with links to standalone mode via ?panel=X.
+ * Lists all 13 panels with links to standalone mode via ?panel=X.
  * Styled with Tailwind dark mode, consistent with Cyclist.
  *
  * Rules:
@@ -28,6 +28,7 @@ const PANELS = [
   { id: 'tty', label: 'TTY', description: 'Terminal output' },
   { id: 'debug', label: 'Debug', description: 'Debug information' },
   { id: 'bikelane', label: 'BikeLane', description: 'Workflow visualization' },
+  { id: 'settings', label: 'Settings', description: 'Theme, fonts, and display preferences' },
 ] as const;
 
 export function BikeRackIndex(): React.ReactElement {

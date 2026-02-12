@@ -20,7 +20,6 @@ import assert from 'node:assert';
 import {
   normalizeOutputPath,
   auditWorkflowOutputPaths,
-  type OutputPathAuditResult,
   type WorkflowOutputConfig,
 } from './output-path-normalizer.js';
 

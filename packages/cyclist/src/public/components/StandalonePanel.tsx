@@ -27,6 +27,7 @@ import {
   TTYPanel,
   DebugPanel,
   BikeLanePanel,
+  SettingsPanel,
 } from './panels';
 
 /**
@@ -46,6 +47,7 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType> = {
   tty: TTYPanel,
   debug: DebugPanel,
   bikelane: BikeLanePanel,
+  settings: SettingsPanel,
 };
 
 /**
@@ -65,17 +67,17 @@ export function StandalonePanel(): React.ReactElement {
 
   if (!PanelComponent) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-primary, #1a1a2e)', color: 'var(--text-primary, #e4e4e7)' }}>
         <h1>Panel not found</h1>
         <p>
-          <a href="/bikerack">Back to BikeRack</a>
+          <a href="/bikerack" style={{ color: 'var(--accent, #818cf8)' }}>Back to BikeRack</a>
         </p>
       </div>
     );
   }
 
   return (
-    <div style={{ height: '100vh', width: '100vw', overflow: 'auto' }}>
+    <div style={{ height: '100vh', width: '100vw', overflow: 'auto', backgroundColor: 'var(--bg-primary, #1a1a2e)', color: 'var(--text-primary, #e4e4e7)' }}>
       <PanelComponent />
     </div>
   );
