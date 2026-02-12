@@ -29,6 +29,7 @@ const PANELS = [
   { id: 'debug', label: 'Debug', description: 'Debug information' },
   { id: 'bikelane', label: 'BikeLane', description: 'Workflow visualization' },
   { id: 'portrait', label: 'Portrait', description: 'Agent identity and tandem support' },
+  { id: 'settings', label: 'Settings', description: 'Theme, fonts, and display preferences' },
 ] as const;
 
 export function BikeRackIndex(): React.ReactElement {
