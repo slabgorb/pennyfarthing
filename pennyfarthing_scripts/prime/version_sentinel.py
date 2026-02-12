@@ -3,12 +3,11 @@
 MSSCI-14698: Reads .pennyfarthing/.installed-version sentinel and compares
 against current package version. On mismatch, signals that auto-update
 is needed.
-
-STUB: Implementation needed by Dev (story 98-1).
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,21 +33,47 @@ def read_sentinel_version(project_root: Path) -> str | None:
     Returns:
         Version string, or None if sentinel doesn't exist or is empty
     """
-    # STUB: Not yet implemented — tests should fail on assertions
-    raise NotImplementedError("read_sentinel_version not implemented")
+    sentinel_path = project_root / ".pennyfarthing" / SENTINEL_FILENAME
+
+    if not sentinel_path.exists():
+        return None
+
+    content = sentinel_path.read_text().strip()
+    return content or None
 
 
 def get_package_version(project_root: Path) -> str:
     """Get the current package version from VERSION file or package.json.
+
+    Checks VERSION file first (plain text), then falls back to package.json.
 
     Args:
         project_root: Project root directory
 
     Returns:
         Version string
+
+    Raises:
+        FileNotFoundError: If no version source found
     """
-    # STUB: Not yet implemented
-    raise NotImplementedError("get_package_version not implemented")
+    # Try VERSION file first
+    version_file = project_root / "VERSION"
+    if version_file.exists():
+        version = version_file.read_text().strip()
+        if version:
+            return version
+
+    # Fall back to package.json
+    package_json = project_root / "package.json"
+    if package_json.exists():
+        data = json.loads(package_json.read_text())
+        version = data.get("version", "")
+        if version:
+            return version
+
+    raise FileNotFoundError(
+        f"No VERSION file or package.json found in {project_root}"
+    )
 
 
 def check_version_mismatch(
@@ -66,5 +91,14 @@ def check_version_mismatch(
     Returns:
         VersionCheckResult with needs_update flag
     """
-    # STUB: Not yet implemented — tests should fail on assertions
-    raise NotImplementedError("check_version_mismatch not implemented")
+    if package_version is None:
+        package_version = get_package_version(project_root)
+
+    installed = read_sentinel_version(project_root)
+    needs_update = installed != package_version
+
+    return VersionCheckResult(
+        needs_update=needs_update,
+        installed_version=installed,
+        package_version=package_version,
+    )
