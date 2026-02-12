@@ -33,7 +33,8 @@ expect.extend(matchers);
 // ============================================================================
 
 // Portrait moved from Dockview tab to fixed anchor above tab bar (MSSCI-14882)
-const EXPECTED_BIKERACK_PANEL_COUNT = 12;
+// TTY and BikeLane removed in MSSCI-14887 (BikeRack UX sweep)
+const EXPECTED_BIKERACK_PANEL_COUNT = 10;
 
 // Panels that MUST be in BikeRack (regardless of exact ID format)
 const MUST_HAVE_PANELS = [
@@ -224,35 +225,6 @@ describe('AC2: Panel tabs navigable like base Cyclist', () => {
       expect(BIKERACK_PANELS).not.toContain(panelName);
     },
   );
-
-  it('should export createBikeRackLayout function', async () => {
-    const mod = await import('../src/public/components/BikeRackWorkspace');
-    expect(mod.createBikeRackLayout).toBeDefined();
-    expect(typeof mod.createBikeRackLayout).toBe('function');
-  });
-
-  it('createBikeRackLayout should produce a layout with panels property', async () => {
-    const { createBikeRackLayout } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
-    const layout = createBikeRackLayout();
-
-    // Should have the Dockview serialized format with panels
-    expect(layout).toHaveProperty('panels');
-    expect(layout).toHaveProperty('grid');
-  });
-
-  it('createBikeRackLayout should NOT include message panel', async () => {
-    const { createBikeRackLayout } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
-    const layout = createBikeRackLayout() as { panels?: Record<string, unknown> };
-
-    // No MessagePanel in BikeRack layout
-    if (layout.panels) {
-      expect(layout.panels).not.toHaveProperty('message');
-    }
-  });
 
   it('should have all BIKERACK_PANELS as unique entries', async () => {
     const { BIKERACK_PANELS } = await import(

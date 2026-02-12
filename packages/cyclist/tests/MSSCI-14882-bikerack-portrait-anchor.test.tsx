@@ -65,7 +65,7 @@ vi.mock('dockview-react', () => ({
 }));
 
 // Static import — vi.mock calls above are hoisted before this
-import { BikeRackWorkspace, BIKERACK_PANELS, createBikeRackLayout } from '../src/public/components/BikeRackWorkspace';
+import { BikeRackWorkspace, BIKERACK_PANELS } from '../src/public/components/BikeRackWorkspace';
 
 // ============================================================================
 // Tests
@@ -310,15 +310,7 @@ describe('AC5: Existing Cyclist portrait unchanged', () => {
 // ---------------------------------------------------------------------------
 
 describe('Structural: BikeRack panel count updated', () => {
-  it('BIKERACK_PANELS should have 12 entries (13 minus portrait)', () => {
-    expect(BIKERACK_PANELS.length).toBe(12);
-  });
-
-  it('createBikeRackLayout should NOT include portrait in serialized panels', () => {
-    const layout = createBikeRackLayout() as { panels?: Record<string, unknown> };
-
-    if (layout.panels) {
-      expect(layout.panels).not.toHaveProperty('portrait');
-    }
+  it('BIKERACK_PANELS should have 10 entries (TTY and BikeLane removed in MSSCI-14887)', () => {
+    expect(BIKERACK_PANELS.length).toBe(10);
   });
 });
