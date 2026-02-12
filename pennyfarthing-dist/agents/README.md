@@ -20,6 +20,7 @@ This directory contains the **single source of truth** for all Pennyfarthing age
 | **DevOps** | Infrastructure, deployment |
 | **Tech Writer** | Documentation |
 | **UX Designer** | UI design, accessibility |
+| **BA** | Requirements discovery, stakeholder analysis |
 
 ### Official Subagents (Haiku-based)
 Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type: "general-purpose"` and `model: "haiku"`.
@@ -110,11 +111,12 @@ Each agent file contains:
 .pennyfarthing/agents/
 ├── README.md                  # This file
 │
-│ # Main Agents (10)
+│ # Main Agents (11)
 ├── orchestrator.md            # Master orchestrator
 ├── pm.md                      # Product Manager
 ├── sm.md                      # Scrum Master
 ├── architect.md               # System Architect
+├── ba.md                      # Business Analyst
 ├── devops.md                  # DevOps Engineer
 ├── dev.md                     # Developer
 ├── tea.md                     # Test Engineer

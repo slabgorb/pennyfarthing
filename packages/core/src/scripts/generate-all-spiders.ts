@@ -42,6 +42,7 @@ const AGENTS = [
   'tech-writer',
   'ux-designer',
   'devops',
+  'ba',
 ];
 
 // Human-readable agent names for markdown
@@ -56,6 +57,7 @@ const AGENT_NAMES: Record<string, string> = {
   'tech-writer': 'Tech Writer',
   'ux-designer': 'UX Designer',
   devops: 'DevOps',
+  ba: 'Business Analyst',
 };
 
 // Cache for theme data to avoid repeated file reads
