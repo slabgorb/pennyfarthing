@@ -28,6 +28,12 @@ import { mergeSettingsLocalJson, migrateSettingsFile, ensureSettingsSymlink } fr
 import { getPfVersion, installPfCli } from '../utils/python.js';
 import { installGitHooks } from './init.js';
 import { writeVersionSentinel } from '../utils/version-sentinel.js';
+import {
+  listMigrationFiles,
+  getPendingMigrations,
+  runMigrations,
+} from '../utils/migrations.js';
+import type { Migration } from '../utils/migrations.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -240,11 +246,71 @@ async function updateInstalledContent(
     nodeModulesPath: nodeModulesRelPath
   });
 
+  // Preserve migrationsRun from previous manifest across createManifest() reset
+  if (manifest?.migrationsRun) {
+    newManifest.migrationsRun = manifest.migrationsRun;
+  }
+
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.pennyfarthing/manifest.json');
 
   // Write version sentinel
   writeVersionSentinel(projectRoot, version, { dryRun });
+
+  // Run versioned migrations
+  const migrationsDir = join(nodeModulesPath, 'migrations');
+  const migrationFiles = listMigrationFiles(migrationsDir);
+
+  if (migrationFiles.length > 0) {
+    logger.newline();
+    logger.info('Running migrations...');
+
+    try {
+      const loadedMigrations: Migration[] = [];
+      for (const file of migrationFiles) {
+        const mod = await import(file);
+        if (!mod.id || typeof mod.up !== 'function' || typeof mod.check !== 'function') {
+          logger.warning(`Skipping invalid migration file: ${file} (missing id, up, or check exports)`);
+          continue;
+        }
+        loadedMigrations.push({
+          id: mod.id,
+          description: mod.description ?? '',
+          up: mod.up,
+          check: mod.check,
+          ...(mod.down && { down: mod.down }),
+        });
+      }
+
+      const appliedIds = manifest?.migrationsRun ?? [];
+      const pending = getPendingMigrations(loadedMigrations, appliedIds);
+
+      if (pending.length > 0) {
+        const result = await runMigrations(pending, projectRoot, appliedIds, {
+          dryRun,
+          logger,
+        });
+
+        if (result.applied.length > 0 && !dryRun) {
+          // Update manifest with newly applied migration IDs
+          const currentManifest = readManifest(projectRoot);
+          if (currentManifest) {
+            currentManifest.migrationsRun = [
+              ...(currentManifest.migrationsRun ?? []),
+              ...result.applied,
+            ];
+            writeManifest(projectRoot, currentManifest);
+          }
+        }
+
+        if (!result.success && result.failed) {
+          logger.warning(`Migration ${result.failed.id} failed: ${result.failed.error}`);
+        }
+      }
+    } catch (err) {
+      logger.warning(`Migration runner error: ${err}`);
+    }
+  }
 }
 
 /**
