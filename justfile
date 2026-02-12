@@ -319,7 +319,7 @@ validate-subagents:
 
 # Validate sprint YAML structure
 validate-sprint *args:
-    .venv/bin/python -m pennyfarthing_scripts.sprint.validator {{args}}
+    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.sprint.validator {{args}}
 
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
@@ -340,12 +340,12 @@ bikerack *args:
     case "${1:-start}" in
         stop)
             shift
-            .venv/bin/python -m pennyfarthing_scripts.bikerack stop "$@"
+            PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack stop "$@"
             exit 0
             ;;
         status)
             shift
-            .venv/bin/python -m pennyfarthing_scripts.bikerack status "$@"
+            PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack status "$@"
             exit 0
             ;;
     esac
@@ -406,4 +406,4 @@ bikerack *args:
         dir_flag="--project-dir $project_dir"
     fi
 
-    .venv/bin/python -m pennyfarthing_scripts.bikerack start $dir_flag
+    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack start $dir_flag

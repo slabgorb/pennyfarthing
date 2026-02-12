@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.3.1** | *The outer loop goes once, the inner loop goes many times.*
+**v10.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -31,11 +31,11 @@ A scientific study of how strong personalities affect AI agent behavior:
 - **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
-The 97 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The 98 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. Integration & Tooling
 
-- **Cyclist Visual Terminal** - Electron-based IDE with 15 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
+- **Cyclist Visual Terminal** - Electron-based IDE with 16 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
 
