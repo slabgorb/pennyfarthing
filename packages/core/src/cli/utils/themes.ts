@@ -381,7 +381,7 @@ export function createTheme(
 }
 
 /**
- * All 10 required agent types for a complete theme
+ * All 11 required agent types for a complete theme
  */
 const REQUIRED_AGENTS = [
   'orchestrator',
@@ -393,7 +393,8 @@ const REQUIRED_AGENTS = [
   'pm',
   'tech-writer',
   'ux-designer',
-  'devops'
+  'devops',
+  'ba'
 ] as const;
 
 export interface ThemeSchemaValidationResult {

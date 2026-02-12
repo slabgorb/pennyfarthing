@@ -130,7 +130,7 @@ function extractDoctorJson(stdout: string): Array<{ name: string; status: string
 
 const CORE_AGENTS = [
   'dev', 'tea', 'sm', 'reviewer', 'architect',
-  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator'
+  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator', 'ba'
 ];
 
 const DIRECTORY_SYMLINKS = [

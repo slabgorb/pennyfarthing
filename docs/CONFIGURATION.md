@@ -131,7 +131,7 @@ Visual expression.
 
 Per-agent attribute overrides. Keys are agent names:
 - `orchestrator`, `sm`, `tea`, `dev`, `reviewer`
-- `architect`, `pm`, `tech-writer`, `ux-designer`, `devops`
+- `architect`, `pm`, `tech-writer`, `ux-designer`, `devops`, `ba`
 
 #### `workflow.permission_mode`
 

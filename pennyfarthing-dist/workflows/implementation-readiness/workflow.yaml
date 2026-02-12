@@ -28,8 +28,8 @@ workflow:
   # Variables available in step files
   variables:
     project_root: .
-    planning_artifacts: ./artifacts
-    output_file: artifacts/implementation-readiness-report.md
+    planning_artifacts: sprint/planning/
+    output_file: sprint/planning/implementation-readiness-report.md
 
   # Agent assignment - PM/SM role for adversarial review
   agent: sm

@@ -16,8 +16,8 @@ workflow:
   # Variables available in step files
   variables:
     project_root: .
-    planning_artifacts: ./artifacts
-    output_file: artifacts/product-brief.md
+    planning_artifacts: sprint/planning/
+    output_file: sprint/planning/product-brief.md
 
   # Template for product brief output
   template: ./templates/product-brief.template.md

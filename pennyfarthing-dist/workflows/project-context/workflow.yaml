@@ -15,8 +15,8 @@ workflow:
   # Variables available in step files
   variables:
     project_root: .
-    planning_artifacts: ./artifacts
-    output_file: artifacts/generate-project-context.md
+    planning_artifacts: sprint/planning/
+    output_file: sprint/planning/generate-project-context.md
 
   # Agent assignment (customize as needed)
   agent: architect

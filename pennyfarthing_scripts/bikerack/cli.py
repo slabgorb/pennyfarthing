@@ -1,0 +1,148 @@
+"""BikeRack CLI — Click-based CLI for bikerack operations.
+
+Usage:
+    pf bikerack [COMMAND]
+
+Commands:
+    start   Start BikeRack mode (default)
+    stop    Stop running BikeRack instance
+    status  Show running state
+"""
+
+import os
+import sys
+from pathlib import Path
+
+import click
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def bikerack(ctx):
+    """BikeRack Mode — Decoupled WheelHub dashboard launcher.
+
+    \b
+    Commands:
+      start   - Start WheelHub + Claude CLI (default)
+      stop    - Stop running BikeRack instance
+      status  - Show running state (PID, port, uptime)
+    """
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(start)
+
+
+@bikerack.command()
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory (where .pennyfarthing/ lives). Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def start(project_dir):
+    """Start BikeRack mode.
+
+    Starts WheelHub in background, waits for readiness,
+    sets OTEL env vars, and execs Claude CLI.
+    """
+    from pennyfarthing_scripts.bikerack.launcher import (
+        build_otel_env,
+        exec_claude,
+        is_already_running,
+        poll_for_port_file,
+        register_cleanup,
+        start_wheelhub,
+        write_pid_file,
+    )
+
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
+
+    running, pid, port = is_already_running(project_dir)
+    if running:
+        click.echo(
+            f"Error: BikeRack is already running (PID {pid}, port {port})",
+            err=True,
+        )
+        click.echo("Use 'pf bikerack stop' to stop it.", err=True)
+        sys.exit(2)
+
+    click.echo("Starting BikeRack mode...")
+    try:
+        proc = start_wheelhub(project_dir)
+        write_pid_file(project_dir, proc.pid)
+
+        port = poll_for_port_file(project_dir)
+        click.echo(f"WheelHub listening on http://localhost:{port}")
+
+        otel_env = build_otel_env(port)
+        click.echo("Setting OTEL environment variables...")
+
+        register_cleanup(project_dir, proc.pid)
+
+        click.echo(f"Dashboard: http://localhost:{port}/bikerack")
+        click.echo("Starting Claude CLI...")
+        exec_claude(otel_env, project_dir)
+    except TimeoutError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@bikerack.command()
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def stop(project_dir):
+    """Stop running BikeRack instance."""
+    from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
+
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
+    result = stop_bikerack(project_dir)
+
+    if result["success"]:
+        click.echo(result["message"])
+    else:
+        click.echo(result["message"], err=True)
+        sys.exit(1)
+
+
+@bikerack.command()
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+)
+def status(project_dir):
+    """Show BikeRack running state."""
+    from pennyfarthing_scripts.bikerack.launcher import get_status
+
+    if project_dir:
+        project_dir = Path(project_dir)
+    elif os.environ.get("CYCLIST_PROJECT_DIR"):
+        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
+    else:
+        project_dir = Path.cwd()
+    result = get_status(project_dir)
+
+    if result["running"]:
+        click.echo("BikeRack is running")
+        click.echo(f"  PID: {result['pid']}")
+        click.echo(f"  Port: {result['port']}")
+        click.echo(f"  Dashboard: {result['dashboard']}")
+    else:
+        click.echo("BikeRack is not running")

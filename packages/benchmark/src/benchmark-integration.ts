@@ -165,7 +165,7 @@ export interface BenchmarkResultWithOcean {
 
 const VALID_ROLES = [
   'orchestrator', 'sm', 'tea', 'dev', 'reviewer',
-  'architect', 'pm', 'tech-writer', 'ux-designer', 'devops',
+  'architect', 'pm', 'tech-writer', 'ux-designer', 'devops', 'ba',
 ];
 
 const VALID_DIMENSIONS: (keyof OceanScores)[] = ['O', 'C', 'E', 'A', 'N'];

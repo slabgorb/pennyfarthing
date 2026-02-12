@@ -323,3 +323,87 @@ validate-sprint *args:
 
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
+
+# =============================================================================
+# BikeRack
+# =============================================================================
+
+# Start BikeRack mode (WheelHub + Claude CLI)
+# Run modes: here, dir=/path, stop, status, debug
+bikerack *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    set -- {{args}}
+
+    # Check for subcommands first
+    case "${1:-start}" in
+        stop)
+            shift
+            .venv/bin/python -m pennyfarthing_scripts.bikerack stop "$@"
+            exit 0
+            ;;
+        status)
+            shift
+            .venv/bin/python -m pennyfarthing_scripts.bikerack status "$@"
+            exit 0
+            ;;
+    esac
+
+    # Parse run arguments
+    project_dir=""
+    debug_mode=false
+    for arg in "$@"; do
+        case "$arg" in
+            here)
+                project_dir="$(pwd)"
+                ;;
+            dir=*)
+                project_dir="${arg#dir=}"
+                ;;
+            debug)
+                debug_mode=true
+                ;;
+            start)
+                # default, no-op
+                ;;
+            *)
+                echo "Unknown argument: $arg"
+                echo ""
+                echo "Usage:"
+                echo "  just bikerack              # Start in current directory"
+                echo "  just bikerack here         # Start pointing at invocation directory"
+                echo "  just bikerack dir=/path    # Start pointing at specific directory"
+                echo "  just bikerack debug        # Hot-reload dev mode (no Claude CLI)"
+                echo "  just bikerack stop         # Stop running instance"
+                echo "  just bikerack status       # Show running state"
+                exit 1
+                ;;
+        esac
+    done
+
+    # Debug mode: hot-reload server + vite rebuild watcher (no Claude CLI)
+    if [[ "$debug_mode" == "true" ]]; then
+        cd packages/cyclist
+        export IS_BIKERACK=1
+        export CYCLIST_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
+        echo "BikeRack debug mode — hot reload enabled"
+        echo "  Project dir: $CYCLIST_PROJECT_DIR"
+        echo "  Server: tsx watch src/bikerack.ts"
+        echo "  Frontend: vite build --watch"
+        echo ""
+        npx concurrently -k \
+            -n server,vite \
+            -c green,magenta \
+            "tsx watch src/bikerack.ts" \
+            "vite build --watch"
+        exit 0
+    fi
+
+    # Build project-dir flag
+    dir_flag=""
+    if [[ -n "$project_dir" ]]; then
+        dir_flag="--project-dir $project_dir"
+    fi
+
+    .venv/bin/python -m pennyfarthing_scripts.bikerack start $dir_flag

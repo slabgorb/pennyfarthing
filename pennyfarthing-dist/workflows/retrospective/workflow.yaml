@@ -38,7 +38,7 @@ workflow:
   variables:
     project_root: .
     config_source: "./_bmad/bmm/config.yaml"
-    planning_artifacts: ./artifacts/planning
+    planning_artifacts: sprint/planning/
     implementation_artifacts: ./artifacts
     sprint_status_file: ./artifacts/sprint-status.yaml
     story_directory: ./artifacts/stories

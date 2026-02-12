@@ -26,6 +26,7 @@ import {
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
+import { panelRegistry } from './panel-registry';
 import { useResponsiveLayout, MIN_DIMENSIONS, SIDEBAR_WIDTHS } from '../hooks/useResponsiveLayout';
 import '../styles/dockview-theme.css';
 
@@ -58,13 +59,11 @@ export type PanelId = typeof PANEL_INVENTORY[keyof typeof PANEL_INVENTORY];
 // Panel Component Registry
 // =============================================================================
 
-const panelComponents: Map<string, ComponentType> = new Map();
-
 /**
  * Register a panel component by ID
  */
 export function registerPanelComponent(id: string, component: ComponentType): void {
-  panelComponents.set(id, component);
+  panelRegistry.set(id, component);
 }
 
 // =============================================================================
@@ -177,7 +176,7 @@ interface PanelAdapterParams {
 }
 
 export function PanelAdapter({ params }: IDockviewPanelProps<PanelAdapterParams>): React.ReactElement | null {
-  const Component = panelComponents.get(params.panelId);
+  const Component = panelRegistry.get(params.panelId);
 
   if (!Component) {
     console.warn(`[DockviewWorkspace] No component registered for panel: ${params.panelId}`);
@@ -458,7 +457,7 @@ export function DockviewWorkspace({
     // Add remaining left sidebar panels to the same group
     for (let i = 1; i < LEFT_SIDEBAR_PANELS.length; i++) {
       const panelId = LEFT_SIDEBAR_PANELS[i];
-      if (panelComponents.has(panelId)) {
+      if (panelRegistry.has(panelId)) {
         api.addPanel({
           id: panelId,
           component: 'PanelAdapter',
@@ -490,7 +489,7 @@ export function DockviewWorkspace({
     // Add remaining right sidebar panels to the same group
     for (let i = 1; i < RIGHT_SIDEBAR_PANELS.length; i++) {
       const panelId = RIGHT_SIDEBAR_PANELS[i];
-      if (panelComponents.has(panelId)) {
+      if (panelRegistry.has(panelId)) {
         api.addPanel({
           id: panelId,
           component: 'PanelAdapter',
