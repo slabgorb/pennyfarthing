@@ -17,6 +17,7 @@ import {
 } from './components/DockviewWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { ClaudeProvider } from './contexts/ClaudeContext';
+import ClaudeContext from './contexts/ClaudeContext';
 import { MessageQueueProvider } from './contexts/MessageQueueContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './utils/font-presets';
@@ -265,11 +266,19 @@ export default function App(): React.ReactElement {
   // --- BikeRack routes (after all hooks) ---
 
   // BikeRack Dockview workspace (MSSCI-14877) — /bikerack renders Dockview layout
+  // No-op ClaudeContext: BikeRack has no Claude CLI subprocess, skip WebSocket
   if (isBikeRackIndex) {
+    const noop = () => () => {};
     return (
-      <ClaudeProvider>
+      <ClaudeContext.Provider value={{
+        send: () => {}, abort: () => {}, clear: () => {},
+        clearAndReload: () => {}, setMode: () => {},
+        isConnected: false, mode: 'default',
+        onMessage: noop, onComplete: noop, onError: noop,
+        onUserMessage: noop, onClear: noop,
+      }}>
         <BikeRackWorkspace />
-      </ClaudeProvider>
+      </ClaudeContext.Provider>
     );
   }
 
