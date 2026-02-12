@@ -70,7 +70,7 @@ export function listMigrationFiles(migrationsDir: string): string[] {
   }
 
   const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith('.js'))
+    .filter((f) => /^\d{3,}-.*\.js$/.test(f))
     .sort();
 
   return files.map((f) => join(migrationsDir, f));
@@ -133,31 +133,40 @@ export async function runMigrations(
   const ctx: MigrationContext = { projectRoot, logger, dryRun };
 
   for (const migration of sorted) {
-    // Idempotency check
-    const alreadyApplied = await migration.check(ctx);
-    if (alreadyApplied) {
-      skipped.push(migration.id);
-      continue;
-    }
+    try {
+      // Idempotency check
+      const alreadyApplied = await migration.check(ctx);
+      if (alreadyApplied) {
+        skipped.push(migration.id);
+        continue;
+      }
 
-    // Dry-run: log but don't execute
-    if (dryRun) {
-      logger.info(`[dry-run] Would run migration: ${migration.id} — ${migration.description}`);
-      continue;
-    }
+      // Dry-run: log but don't execute
+      if (dryRun) {
+        logger.info(`[dry-run] Would run migration: ${migration.id} — ${migration.description}`);
+        continue;
+      }
 
-    // Execute migration
-    const result = await migration.up(ctx);
-    if (!result.success) {
+      // Execute migration
+      const result = await migration.up(ctx);
+      if (!result.success) {
+        return {
+          success: false,
+          applied,
+          skipped,
+          failed: { id: migration.id, error: result.error ?? 'Unknown error' },
+        };
+      }
+
+      applied.push(migration.id);
+    } catch (err) {
       return {
         success: false,
         applied,
         skipped,
-        failed: { id: migration.id, error: result.error ?? 'Unknown error' },
+        failed: { id: migration.id, error: `Migration threw: ${err}` },
       };
     }
-
-    applied.push(migration.id);
   }
 
   return { success: true, applied, skipped };

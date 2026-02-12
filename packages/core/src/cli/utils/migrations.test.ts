@@ -35,7 +35,6 @@ import type {
   Migration,
   MigrationContext,
   MigrationResult,
-  RunMigrationsResult,
 } from './migrations.js';
 
 import {
@@ -165,7 +164,7 @@ describe('MSSCI-14699: Versioned migration runner', () => {
     it('should accept migration with optional down()', () => {
       const migration: Migration = {
         ...createMockMigration('001-test'),
-        async down(ctx: MigrationContext): Promise<MigrationResult> {
+        async down(_ctx: MigrationContext): Promise<MigrationResult> {
           return { success: true };
         },
       };
