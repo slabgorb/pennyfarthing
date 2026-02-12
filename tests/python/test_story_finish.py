@@ -220,13 +220,20 @@ class TestFinishStoryErrors:
         assert result["success"] is False
         assert "not found" in result["error"].lower()
 
-    def test_no_jira_key(self, project_tree):
-        # Write a session with no Jira key
+    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    def test_no_jira_key_still_succeeds(self, mock_run, project_tree):
+        # When no Jira key in session or shard, finish should still succeed
+        # but skip Jira transition and use story_id for archive name
+        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         session = project_tree / ".session" / "99-1-session.md"
         session.write_text("# Story\n\n**Phase:** finish\n")
         result = finish_story(project_tree, "99-1")
-        assert result["success"] is False
-        assert "jira" in result["error"].lower()
+        assert result["success"] is True
+        # Archive uses story_id as filename when no Jira key
+        assert (project_tree / "sprint" / "archive" / "99-1-session.md").exists()
+        # Jira step is skipped
+        jira_step = [s for s in result["steps"] if s["step"] == 3][0]
+        assert jira_step.get("skipped") is True
 
     @patch("pennyfarthing_scripts.sprint.story_finish._run")
     def test_returns_steps_on_success(self, mock_run, project_tree):
