@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.3.1] - 2026-02-12
+
+### Fixed
+
+- **BA agent mappings** — Added BA agent to all color, abbreviation, and label mappings across statusline, Cyclist UI components (PersonaHeader, AgentPopup, MessageView, TandemPortrait), message filters, and spider report scripts
+- **Fifth Element theme** — Removed stray `shortName` from devops agent definition
+
+### Added
+
+- **BikeRack settings panel** — Added settings panel to BikeRack standalone viewer panel list
+- **BikeRack env port** — Allow `BIKERACK_PORT` env var to override default port (2898)
+
+---
+
 ## [10.3.0] - 2026-02-12
 
 ### Added
