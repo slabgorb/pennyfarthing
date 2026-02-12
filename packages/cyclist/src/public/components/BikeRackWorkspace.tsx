@@ -41,6 +41,7 @@ export const BIKERACK_PANELS: string[] = [
   'changed',
   'ac',
   'debug',
+  'settings',
 ];
 
 const PANEL_TITLES: Record<string, string> = {
@@ -54,6 +55,7 @@ const PANEL_TITLES: Record<string, string> = {
   changed: 'Changed',
   ac: 'AC',
   debug: 'Debug',
+  settings: 'Settings',
 };
 
 // =============================================================================

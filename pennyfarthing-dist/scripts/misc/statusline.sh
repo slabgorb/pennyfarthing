@@ -66,6 +66,7 @@ get_agent_abbrev() {
         ux-designer) echo "UX" ;;
         tech-writer) echo "DOC" ;;
         orchestrator) echo "ORC" ;;
+        ba)          echo "BA" ;;
         *)           echo "???" ;;
     esac
 }
@@ -199,6 +200,7 @@ get_agent_color() {
         ux-designer) echo "${FG_PINK}${BOLD}" ;;    # Pink - design
         tech-writer) echo "${FG_WHITE}${BOLD}" ;;   # White - documentation
         orchestrator) echo "${FG_MAGENTA}${BOLD}" ;;# Magenta - coordination
+        ba)         echo "${FG_LIME}${BOLD}" ;;     # Lime - discovery
         *)          echo "${FG_MAGENTA}${BOLD}" ;;  # Default
     esac
 }
