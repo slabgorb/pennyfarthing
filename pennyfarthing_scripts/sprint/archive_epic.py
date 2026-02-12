@@ -183,7 +183,7 @@ def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
     incomplete = []
     for story in stories:
         story_status = story.get("status", "backlog")
-        if story_status not in ("done", "completed", "cancelled"):
+        if story_status not in ("done", "completed", "canceled", "cancelled"):
             incomplete.append(story.get("id", "unknown"))
 
     return len(incomplete) == 0, incomplete
