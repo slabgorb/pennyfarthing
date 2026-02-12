@@ -11,6 +11,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
+import { execSync } from 'child_process';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { getStoryInfo } from './story-parser.js';
@@ -407,13 +408,34 @@ export function getSprintData(projectDir: string): SprintData {
     }
   }
 
-  // Find next backlog story (highest priority)
+  // Find next backlog story (prefer assigned to current user, skip others' stories)
   if (!currentStory) {
-    for (const epic of epics) {
-      const backlogStory = epic.stories.find(s => s.status === 'backlog');
-      if (backlogStory) {
-        nextStory = backlogStory;
-        break;
+    let userEmail: string | null = null;
+    try {
+      userEmail = execSync('git config user.email', { cwd: projectDir, encoding: 'utf-8' }).trim() || null;
+    } catch {
+      // No git config available
+    }
+
+    // First pass: backlog stories assigned to current user
+    if (userEmail) {
+      for (const epic of epics) {
+        const assigned = epic.stories.find(s => s.status === 'backlog' && s.assignedTo === userEmail);
+        if (assigned) {
+          nextStory = assigned;
+          break;
+        }
+      }
+    }
+
+    // Second pass: unassigned backlog stories (skip stories assigned to others)
+    if (!nextStory) {
+      for (const epic of epics) {
+        const unassigned = epic.stories.find(s => s.status === 'backlog' && !s.assignedTo);
+        if (unassigned) {
+          nextStory = unassigned;
+          break;
+        }
       }
     }
   }
