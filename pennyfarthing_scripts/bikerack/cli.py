@@ -85,7 +85,7 @@ def start(project_dir):
 
         click.echo(f"Dashboard: http://localhost:{port}/bikerack")
         click.echo("Starting Claude CLI...")
-        exec_claude(otel_env)
+        exec_claude(otel_env, project_dir)
     except TimeoutError as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)

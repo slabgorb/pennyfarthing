@@ -21,6 +21,7 @@ import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { panelRegistry } from './panel-registry';
 import { SIDEBAR_WIDTHS } from '../hooks/useResponsiveLayout';
+import PersonaHeader from './PersonaHeader.js';
 import '../styles/dockview-theme.css';
 
 // =============================================================================
@@ -44,7 +45,6 @@ export const BIKERACK_PANELS: string[] = [
   'tty',
   'debug',
   'bikelane',
-  'portrait',
 ];
 
 const PANEL_TITLES: Record<string, string> = {
@@ -60,12 +60,11 @@ const PANEL_TITLES: Record<string, string> = {
   tty: 'Terminal',
   debug: 'Debug',
   bikelane: 'BikeLane',
-  portrait: 'Portrait',
 };
 
 // Two-region layout groups (no sacred center)
 const LEFT_PANELS = ['changed', 'diffs', 'debug', 'audit-log', 'tty', 'bikelane'];
-const RIGHT_PANELS = ['sprint', 'git', 'workflow', 'ac', 'todo', 'background', 'portrait'];
+const RIGHT_PANELS = ['sprint', 'git', 'workflow', 'ac', 'todo', 'background'];
 
 // =============================================================================
 // Panel Adapter
@@ -215,13 +214,18 @@ export function BikeRackWorkspace(): React.ReactElement {
   const components = { PanelAdapter };
 
   return (
-    <div className="cyclist-dockview" style={{ height: '100vh', width: '100vw' }}>
-      <DockviewReact
-        className="dockview-container"
-        onReady={onReady}
-        components={components}
-        watermarkComponent={() => null}
-      />
+    <div className="cyclist-dockview" style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
+      <div data-testid="bikerack-portrait-anchor" style={{ flexShrink: 0 }}>
+        <PersonaHeader />
+      </div>
+      <div className="flex-1" style={{ flexGrow: 1, minHeight: 0 }}>
+        <DockviewReact
+          className="dockview-container"
+          onReady={onReady}
+          components={components}
+          watermarkComponent={() => null}
+        />
+      </div>
     </div>
   );
 }
