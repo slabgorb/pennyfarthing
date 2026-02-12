@@ -24,9 +24,8 @@ import os
 import signal
 import subprocess
 import sys
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -45,7 +44,6 @@ from pennyfarthing_scripts.bikerack.launcher import (
     stop_bikerack,
     write_pid_file,
 )
-
 
 # ---------------------------------------------------------------------------
 # AC1: `pf bikerack start` starts WheelHub background with IS_BIKERACK=1
@@ -316,7 +314,11 @@ class TestCleanupRegistration:
 
         def capture_handler(func, *args, **kwargs):
             nonlocal cleanup_func
-            cleanup_func = lambda: func(*args, **kwargs)
+
+            def _call_cleanup():
+                return func(*args, **kwargs)
+
+            cleanup_func = _call_cleanup
 
         with patch("pennyfarthing_scripts.bikerack.launcher.atexit.register", side_effect=capture_handler):
             register_cleanup(tmp_path, pid=12345)
@@ -346,7 +348,11 @@ class TestCleanupRegistration:
 
         def capture_handler(func, *args, **kwargs):
             nonlocal cleanup_func
-            cleanup_func = lambda: func(*args, **kwargs)
+
+            def _call_cleanup():
+                return func(*args, **kwargs)
+
+            cleanup_func = _call_cleanup
 
         with patch("pennyfarthing_scripts.bikerack.launcher.atexit.register", side_effect=capture_handler):
             register_cleanup(tmp_path, pid=12345)
@@ -368,7 +374,11 @@ class TestCleanupRegistration:
 
         def capture_handler(func, *args, **kwargs):
             nonlocal cleanup_func
-            cleanup_func = lambda: func(*args, **kwargs)
+
+            def _call_cleanup():
+                return func(*args, **kwargs)
+
+            cleanup_func = _call_cleanup
 
         with patch("pennyfarthing_scripts.bikerack.launcher.atexit.register", side_effect=capture_handler):
             register_cleanup(tmp_path, pid=12345)

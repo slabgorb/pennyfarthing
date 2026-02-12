@@ -218,13 +218,13 @@ describe('AC2: Lists all 13 panels with links', () => {
       return href.includes('panel=');
     });
 
-    // Should have exactly 13 panel links
-    expect(panelLinks.length).toBe(13);
+    // Should have exactly 14 panel links
+    expect(panelLinks.length).toBe(14);
 
     // All should be unique
     const hrefs = panelLinks.map((l) => l.getAttribute('href'));
     const uniqueHrefs = new Set(hrefs);
-    expect(uniqueHrefs.size).toBe(13);
+    expect(uniqueHrefs.size).toBe(14);
   });
 });
 

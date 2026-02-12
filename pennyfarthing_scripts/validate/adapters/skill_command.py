@@ -69,7 +69,6 @@ def _validate_against_schema(
         List of error message strings.
     """
     errors: list[str] = []
-    definitions = schema.get("definitions", {})
 
     def _resolve_ref(ref: str) -> dict:
         """Resolve a $ref pointer like #/definitions/skill."""
