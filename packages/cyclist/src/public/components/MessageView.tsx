@@ -36,12 +36,13 @@ const AGENT_COLORS: Record<string, string> = {
   pm: '#a78bfa', sm: '#60a5fa', dev: '#4ade80', tea: '#2dd4bf',
   reviewer: '#f87171', architect: '#fb923c', devops: '#22d3ee',
   'ux-designer': '#f0abfc', 'tech-writer': '#e5e5e5', orchestrator: '#e879f9',
+  ba: '#a3e635',
 };
 
 const AGENT_ABBREV: Record<string, string> = {
   pm: 'PM', sm: 'SM', dev: 'DEV', tea: 'TEA', reviewer: 'REV',
   architect: 'ARC', devops: 'OPS', 'ux-designer': 'UX', 'tech-writer': 'TW',
-  orchestrator: 'ORC',
+  orchestrator: 'ORC', ba: 'BA',
 };
 
 interface MessageViewProps {

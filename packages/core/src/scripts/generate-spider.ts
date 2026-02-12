@@ -77,6 +77,7 @@ export const ROLE_COLORS: Record<string, string> = {
   'tech-writer': '#84cc16', // Lime
   'ux-designer': '#f97316', // Orange
   devops: '#6366f1',       // Indigo
+  ba: '#a3e635',           // Lime
 };
 
 // Legacy overlay colors (for arbitrary comparisons)
