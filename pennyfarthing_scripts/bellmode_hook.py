@@ -150,7 +150,7 @@ def get_latest_observation(file_content: str) -> dict | None:
     last_entry = re.sub(r"\n---\s*$", "", last_entry).strip()
     # Remove the **Trigger:** line
     lines = last_entry.split("\n")
-    text_lines = [l for l in lines if not l.startswith("**Trigger:**")]
+    text_lines = [line for line in lines if not line.startswith("**Trigger:**")]
     text = "\n".join(text_lines).strip()
 
     if not text:

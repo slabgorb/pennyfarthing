@@ -21,7 +21,7 @@ PORTRAITS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/portraits"
 FACES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/faces/by-theme"
 SPIDERS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/spiders/by-theme"
 
-ROLES="orchestrator sm tea dev reviewer architect pm tech-writer ux-designer devops"
+ROLES="orchestrator sm tea dev reviewer architect pm tech-writer ux-designer devops ba"
 
 # Generate base slug from name (matches loader.ts toSlug function)
 to_slug() {

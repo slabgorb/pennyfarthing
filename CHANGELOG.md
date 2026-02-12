@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.3.0] - 2026-02-12
+
+### Added
+
+- **BikeRack Dockview migration** — Migrated BikeRack from index page to proper Dockview layout with `isBikeRackMode()` gate and `bikerack.ts` entry point (101-1), StandalonePanel wrapper with `?panel=X` routing (101-2), BikeRackIndex panel listing page (101-3), SettingsPanel in BikeRack standalone routes (102-2)
+- **BikeRack launcher CLI** — `--project-dir` flag for decoupled launch, allowing BikeRack to run against any project directory (101-5)
+- **PortraitPanel with tandem support** — Portrait panel component for Cyclist with tandem agent display (101-4), anchored above Dockview tab bar (102-6)
+- **BikeRack integration verification** — Runtime verification tests for BikeRack integration correctness (101-6)
+- **Repos topology system** — `repos.yaml` schema validation (87-1) and topology wired into agent prime context for multi-repo awareness (87-2)
+- **Output path normalizer** — Normalize output paths in workflow YAML to use `sprint/planning/` paths (91-27), updated all workflow YAML files
+- **Sprint metrics** — Sprint metrics from completed/current/future added to SprintData (100-6)
+- **Business Analyst (BA) agent** — New agent for requirements discovery and stakeholder analysis, with persona entries across all 27 core themes
+
+### Changed
+
+- **BikeRack UX sweep** — Single group layout, visible sashes, removed TTY and BikeLane panels from BikeRack mode (102-7)
+- **Workflow skill keywords** — Added `tdd-tandem` and `bdd-tandem` to workflow skill keyword list
+
+### Fixed
+
+- **BikeRack provider context** — Wrapped BikeRackWorkspace in ClaudeProvider, set explicit viewport dimensions, use no-op ClaudeContext for BikeRack mode (102-1)
+- **Lint cleanup** — Resolved unused imports and variables across test files
+
+---
+
 ## [10.2.0] - 2026-02-11
 
 ### Added

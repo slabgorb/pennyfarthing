@@ -293,7 +293,7 @@ Manage workflows - list, show, set, start, resume, and check status
 
 **Tags:** workflow, phases, tdd
 
-**Keywords:** tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased
+**Keywords:** tdd, tdd-tandem, trivial, agent-docs, bdd, bdd-tandem, architecture, bikelane, stepped, phased
 
 **Examples:**
 - Listing available workflows: `/workflow`

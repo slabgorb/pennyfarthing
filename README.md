@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.2.0** | *The outer loop goes once, the inner loop goes many times.*
+**v10.3.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -14,9 +14,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
-- **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
+- **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
 - **11 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
-- **46 Slash Commands** - Entry points for agent activation and workflows
+- **47 Slash Commands** - Entry points for agent activation and workflows
 - **19 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
@@ -261,15 +261,18 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v10.1.0
+## What's New in v10.3.0
 
-- **Codebase Health Dashboard** — Health score gauge, dead code analysis, code markers, complexity metrics, and dependency tracking — all with Cyclist dialogs
-- **Tool Dialog System** — Shared ToolDialog component with standardized dialogs across all diagnostic tools
-- **2party-TDD Workflow** — New workflow for pair-programming TDD with review rejection loops
-- **Cross-File Reference Validator** — Detects broken references across agent definitions, workflows, skills, and guides
+- **BikeRack Dockview Migration** — Full migration from index page to proper Dockview layout with standalone panel routing, settings panel, and portrait anchoring
+- **BikeRack Launcher CLI** — `--project-dir` flag for decoupled launch against any project directory
+- **Repos Topology System** — `repos.yaml` schema validation and topology wired into agent prime context for multi-repo awareness
+- **BikeRack UX Sweep** — Single group layout, visible sashes, streamlined panel set
+- **Business Analyst (BA) Agent** — New 11th agent for requirements discovery and stakeholder analysis, with personas across all core themes
 
 ### Previous Highlights
 
+- **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), plugin system, benchmark package extraction, CI quality gates, schema validation, Fifth Element theme
+- **v10.1** - Codebase health dashboard, tool dialog system, 2party-TDD workflow, cross-file reference validator
 - **v10.0** - Clean install consolidation, tool use approval system, plan mode exit UI
 - **v9.3** - Theme packages (97 themes across 7 packs), release workflow, shadcn/ui migration
 - **v9.0** - Dockview panel system, React 19 rewrite, tool visualization, prime context, bell/relay modes

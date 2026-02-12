@@ -26,8 +26,8 @@ workflow:
 
   # Variables available in step files
   variables:
-    output_file: planning-artifacts/architecture.md
-    planning_artifacts: planning-artifacts
+    output_file: sprint/planning/architecture.md
+    planning_artifacts: sprint/planning/
     input_required:
       - prd
 

@@ -47,6 +47,7 @@ from pennyfarthing_scripts.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
     load_domain_docs,
+    load_repos_topology,
     load_session_context,
     load_sidecars,
     load_sprint_context,
@@ -94,6 +95,7 @@ __all__ = [
     "load_session_context",
     "load_sidecars",
     "load_domain_docs",
+    "load_repos_topology",
     # Workflow detection
     "detect_workflow_state",
     "check_redirect",

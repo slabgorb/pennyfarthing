@@ -59,6 +59,12 @@ export type { StoryInfo, WorkflowStep, CriteriaItem } from './story-parser.js';
 export { getGitInfo, getAllReposGitInfo, getAllReposGitInfoAsync } from './api/index.js';
 export type { GitInfo } from './api/index.js';
 
+// BikeRack mode detection (ADR-0024, Rule 1)
+// Centralized gate — all mode checks go through this function
+export function isBikeRackMode(): boolean {
+  return process.env.IS_BIKERACK === '1';
+}
+
 export const app: Express = express();
 
 // Parse JSON bodies
@@ -89,6 +95,11 @@ app.get('/health', (_req, res) => {
 
 // Serve index.html for root route
 app.get('/', (_req, res) => {
+  res.sendFile(join(publicDir, 'index.html'));
+});
+
+// BikeRack index page (MSSCI-14822) — serves SPA, React handles routing
+app.get('/bikerack', (_req, res) => {
   res.sendFile(join(publicDir, 'index.html'));
 });
 

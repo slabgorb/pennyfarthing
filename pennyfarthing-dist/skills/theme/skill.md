@@ -181,7 +181,7 @@ Best for: Users who want to pick characters from suggestions.
 4. Preview and confirm
 5. Write theme file
 
-**Agent Order:** orchestrator, sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops
+**Agent Order:** orchestrator, sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops, ba
 
 ---
 

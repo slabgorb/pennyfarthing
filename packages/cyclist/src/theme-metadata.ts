@@ -224,7 +224,7 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
             const agentCount = Object.keys(rawAgents).length;
 
             const agents: ThemeMetadataWithAgents['agents'] = {};
-            const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
+            const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops', 'ba'];
 
             for (const role of coreRoles) {
               const rawAgent = rawAgents[role];

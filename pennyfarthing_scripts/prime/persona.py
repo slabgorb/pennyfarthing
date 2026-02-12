@@ -24,6 +24,7 @@ from pennyfarthing_scripts.prime.models import CrewMember, Persona
 AGENT_ROLES = [
     "sm", "tea", "dev", "reviewer", "architect",
     "pm", "tech-writer", "ux-designer", "devops", "orchestrator",
+    "ba",
 ]
 
 
@@ -129,7 +130,7 @@ def get_crew_manifest(project_root: Path | None = None) -> list[CrewMember]:
         project_root: Project root path (auto-detected if not provided)
 
     Returns:
-        List of CrewMember objects for all 10 standard roles
+        List of CrewMember objects for all 11 standard roles
     """
     root = project_root or get_project_root()
     theme = get_current_theme(root)

@@ -29,8 +29,8 @@ workflow:
   # Variables available in step files
   variables:
     project_root: .
-    planning_artifacts: ./artifacts
-    output_file: artifacts/ux-design-specification.md
+    planning_artifacts: sprint/planning/
+    output_file: sprint/planning/ux-design-specification.md
 
   # Agent assignment - UX Designer for visual design workflow
   agent: ux-designer
