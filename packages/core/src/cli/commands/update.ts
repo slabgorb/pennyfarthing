@@ -246,6 +246,11 @@ async function updateInstalledContent(
     nodeModulesPath: nodeModulesRelPath
   });
 
+  // Preserve migrationsRun from previous manifest across createManifest() reset
+  if (manifest?.migrationsRun) {
+    newManifest.migrationsRun = manifest.migrationsRun;
+  }
+
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.pennyfarthing/manifest.json');
 
@@ -264,9 +269,13 @@ async function updateInstalledContent(
       const loadedMigrations: Migration[] = [];
       for (const file of migrationFiles) {
         const mod = await import(file);
+        if (!mod.id || typeof mod.up !== 'function' || typeof mod.check !== 'function') {
+          logger.warning(`Skipping invalid migration file: ${file} (missing id, up, or check exports)`);
+          continue;
+        }
         loadedMigrations.push({
           id: mod.id,
-          description: mod.description,
+          description: mod.description ?? '',
           up: mod.up,
           check: mod.check,
           ...(mod.down && { down: mod.down }),
