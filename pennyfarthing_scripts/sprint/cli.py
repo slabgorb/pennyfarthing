@@ -301,8 +301,9 @@ def story_finish(story_id: str, dry_run: bool):
         return
 
     click.echo(f"=== Story {story_id} Complete ===")
-    jira_key = result.get("jira_key", "")
-    click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
+    jira_key = result.get("jira_key")
+    if jira_key:
+        click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
     for step in result.get("steps", []):
         warning = step.get("warning", "")
         error = step.get("error", "")
