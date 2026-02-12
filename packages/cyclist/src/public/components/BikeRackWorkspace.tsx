@@ -215,7 +215,7 @@ export function BikeRackWorkspace(): React.ReactElement {
   const components = { PanelAdapter };
 
   return (
-    <div className="cyclist-dockview">
+    <div className="cyclist-dockview" style={{ height: '100vh', width: '100vw' }}>
       <DockviewReact
         className="dockview-container"
         onReady={onReady}
