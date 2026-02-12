@@ -9,8 +9,8 @@
  * - AC1:  pf bikerack start → WheelHub starts, panels serve data
  * - AC2:  Ctrl+C → WheelHub terminates, .bikerack-port and .bikerack-pid cleaned
  * - AC3:  Kill terminal → PID file exists for manual cleanup
- * - AC4:  All 13 panel tabs render with live data
- * - AC5:  PortraitPanel shows identity, updates on agent handoff
+ * - AC4:  All 12 panel tabs render with live data (portrait extracted to anchor)
+ * - AC5:  PersonaHeader anchored above Dockview in BikeRackWorkspace (102-6)
  * - AC6:  Cyclist runs simultaneously on 1898 without collision
  * - AC7:  Existing Cyclist test suite passes unchanged
  * - AC8:  No new WebSocket channels created (CE-5)
@@ -153,7 +153,7 @@ describe('AC3: PID file for manual cleanup', () => {
 });
 
 // ============================================================================
-// AC4: All 13 panel tabs render with live data
+// AC4: All 12 panel tabs render with live data (portrait extracted to anchor in 102-6)
 // ============================================================================
 
 describe('AC4: PANEL_REGISTRY completeness', () => {
@@ -170,7 +170,6 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     'tty',
     'debug',
     'bikelane',
-    'portrait',
     'settings',
   ];
 
@@ -185,7 +184,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     const registryContent = registryMatch![1];
     // Count key: value pairs (panel entries like "sprint: EnhancedSprintPanel,")
     const entries = registryContent.match(/^\s+\w+\s*:/gm) || [];
-    expect(entries.length).toBe(14);
+    expect(entries.length).toBe(13);
   });
 
   it.each(EXPECTED_PANELS)('PANEL_REGISTRY should contain "%s" panel', (panelName) => {
@@ -195,6 +194,13 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     // Each panel should be a key in the registry
     const regex = new RegExp(`\\b${panelName}\\s*:`);
     expect(content).toMatch(regex);
+  });
+
+  it('PANEL_REGISTRY should NOT contain portrait panel (extracted in 102-6)', () => {
+    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const content = readFileSync(standalonePath, 'utf-8');
+
+    expect(content).not.toMatch(/portrait\s*:\s*PortraitPanel/);
   });
 
   it('all panel components should be importable from panels/index', () => {
@@ -212,7 +218,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     expect(importMatch).not.toBeNull();
 
     const importedNames = importMatch![1].split(',').map(s => s.trim()).filter(Boolean);
-    expect(importedNames.length).toBe(14);
+    expect(importedNames.length).toBe(13);
 
     // Each imported name should be exported from panels/index.ts
     for (const name of importedNames) {
@@ -220,7 +226,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     }
   });
 
-  it('BikeRackIndex should list all 14 panels', () => {
+  it('BikeRackIndex should list all 13 panels', () => {
     const indexPath = join(COMPONENTS_DIR, 'BikeRackIndex.tsx');
     const content = readFileSync(indexPath, 'utf-8');
 
@@ -232,39 +238,43 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
 });
 
 // ============================================================================
-// AC5: PortraitPanel shows identity, updates on agent handoff
+// AC5: PersonaHeader anchored above Dockview in BikeRackWorkspace (102-6)
 // ============================================================================
 
-describe('AC5: PortraitPanel integration', () => {
-  it('PortraitPanel should exist in panels directory', () => {
+describe('AC5: PersonaHeader in BikeRackWorkspace (replaces PortraitPanel)', () => {
+  it('PortraitPanel should NOT exist in panels directory (removed in 102-6)', () => {
     const portraitPath = join(PANELS_DIR, 'PortraitPanel.tsx');
-    expect(existsSync(portraitPath)).toBe(true);
+    expect(existsSync(portraitPath)).toBe(false);
   });
 
-  it('PortraitPanel should use usePersona hook for live updates', () => {
-    const portraitPath = join(PANELS_DIR, 'PortraitPanel.tsx');
-    const content = readFileSync(portraitPath, 'utf-8');
+  it('BikeRackWorkspace should import PersonaHeader directly', () => {
+    const workspacePath = join(COMPONENTS_DIR, 'BikeRackWorkspace.tsx');
+    const content = readFileSync(workspacePath, 'utf-8');
 
-    expect(content).toMatch(/usePersona/);
+    expect(content).toMatch(/import.*PersonaHeader.*from/);
   });
 
-  it('PortraitPanel should subscribe to /ws/persona (not create new channel)', () => {
-    const portraitPath = join(PANELS_DIR, 'PortraitPanel.tsx');
-    const content = readFileSync(portraitPath, 'utf-8');
+  it('BikeRackWorkspace should render PersonaHeader above DockviewReact in JSX', () => {
+    const workspacePath = join(COMPONENTS_DIR, 'BikeRackWorkspace.tsx');
+    const content = readFileSync(workspacePath, 'utf-8');
 
-    // Strip comments before checking for WebSocket instantiation
-    const codeOnly = content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-    // Should NOT create a new WebSocket connection in code (comments excluded)
-    expect(codeOnly).not.toMatch(/new\s+WebSocket/);
-    // Should use the existing hook
-    expect(content).toMatch(/usePersona/);
+    // Search within JSX return block, not imports
+    const jsxMatch = content.match(/return\s*\(([\s\S]*)\);\s*\}/);
+    expect(jsxMatch).not.toBeNull();
+    const jsx = jsxMatch![1];
+
+    const portraitIndex = jsx.indexOf('PersonaHeader');
+    const dockviewIndex = jsx.indexOf('DockviewReact');
+    expect(portraitIndex).toBeGreaterThan(-1);
+    expect(dockviewIndex).toBeGreaterThan(-1);
+    expect(portraitIndex).toBeLessThan(dockviewIndex);
   });
 
-  it('PortraitPanel should be registered in PANEL_REGISTRY', () => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
-    const content = readFileSync(standalonePath, 'utf-8');
+  it('panels/index.ts should NOT export PortraitPanel', () => {
+    const indexPath = join(PANELS_DIR, 'index.ts');
+    const content = readFileSync(indexPath, 'utf-8');
 
-    expect(content).toMatch(/portrait\s*:\s*PortraitPanel/);
+    expect(content).not.toMatch(/PortraitPanel/);
   });
 });
 
@@ -319,7 +329,7 @@ describe('AC7: Regression guard — existing tests unmodified', () => {
     'MSSCI-14820-bikerack-mode.test.ts',
     'MSSCI-14821-standalone-panel.test.tsx',
     'MSSCI-14822-bikerack-index.test.tsx',
-    'MSSCI-14823-portrait-panel.test.tsx',
+    // MSSCI-14823-portrait-panel.test.tsx removed — PortraitPanel deprecated in 102-6
   ];
 
   it.each(EXISTING_TEST_FILES)('existing test file "%s" should still exist', (testFile) => {

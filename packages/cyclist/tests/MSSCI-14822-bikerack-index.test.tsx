@@ -9,7 +9,7 @@
  *
  * Acceptance Criteria:
  * - AC1: /bikerack URL renders the index page
- * - AC2: Lists all 13 panels (12 existing + portrait) with links
+ * - AC2: Lists all 12 panels with links (portrait extracted to anchor in 102-6)
  * - AC3: Links use ?panel=X format
  * - AC4: Styled with Tailwind dark mode, consistent with Cyclist
  * - AC5: pnpm build succeeds (verified separately)
@@ -27,7 +27,7 @@ import * as path from 'node:path';
 expect.extend(matchers);
 
 // ============================================================================
-// All 13 panels required by the story AC (12 existing + portrait)
+// All 13 panels (portrait extracted to anchor in 102-6, settings added in 102-2)
 // ============================================================================
 
 const ALL_PANELS = [
@@ -43,7 +43,7 @@ const ALL_PANELS = [
   'tty',
   'debug',
   'bikelane',
-  'portrait',
+  'settings',
 ] as const;
 
 // ============================================================================
@@ -170,7 +170,7 @@ describe('AC1: /bikerack URL renders the index page', () => {
 });
 
 // ---------------------------------------------------------------------------
-// AC2: Lists all 13 panels (12 existing + portrait) with links
+// AC2: Lists all 12 panels with links (portrait extracted in 102-6)
 // ---------------------------------------------------------------------------
 
 describe('AC2: Lists all 13 panels with links', () => {
@@ -218,13 +218,13 @@ describe('AC2: Lists all 13 panels with links', () => {
       return href.includes('panel=');
     });
 
-    // Should have exactly 14 panel links
-    expect(panelLinks.length).toBe(14);
+    // Should have exactly 13 panel links
+    expect(panelLinks.length).toBe(13);
 
     // All should be unique
     const hrefs = panelLinks.map((l) => l.getAttribute('href'));
     const uniqueHrefs = new Set(hrefs);
-    expect(uniqueHrefs.size).toBe(14);
+    expect(uniqueHrefs.size).toBe(13);
   });
 });
 

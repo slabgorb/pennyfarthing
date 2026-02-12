@@ -32,7 +32,8 @@ expect.extend(matchers);
 // These are the panels BikeRackIndex currently lists, minus message
 // ============================================================================
 
-const EXPECTED_BIKERACK_PANEL_COUNT = 13;
+// Portrait moved from Dockview tab to fixed anchor above tab bar (MSSCI-14882)
+const EXPECTED_BIKERACK_PANEL_COUNT = 12;
 
 // Panels that MUST be in BikeRack (regardless of exact ID format)
 const MUST_HAVE_PANELS = [
