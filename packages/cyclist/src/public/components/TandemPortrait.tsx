@@ -28,6 +28,7 @@ const AGENT_ABBREV: Record<string, string> = {
   'ux-designer': 'UX',
   'tech-writer': 'TW',
   orchestrator: 'ORC',
+  ba: 'BA',
 };
 
 export default function TandemPortrait({
