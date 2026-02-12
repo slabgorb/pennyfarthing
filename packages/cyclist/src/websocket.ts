@@ -9,7 +9,7 @@ import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, trackBackgroundTask, completeBackgroundTask, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
@@ -829,7 +829,7 @@ export function setupWebSocketServers(
 
     // Send initial sprint data on connection
     const projectDir = getProjectDir();
-    const sprintData = getSprintData(projectDir);
+    const sprintData = getSprintData(projectDir, getUserEmail());
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'init', ...sprintData }));
     }
@@ -1562,7 +1562,7 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
 
 // MSSCI-14189: Broadcast sprint update to all connected clients
 function broadcastSprintUpdate(projectDir: string): void {
-  const sprintData = getSprintData(projectDir);
+  const sprintData = getSprintData(projectDir, getUserEmail());
   const message = JSON.stringify({ type: 'update', ...sprintData });
   for (const client of sprintClients) {
     if (client.readyState === WebSocket.OPEN) {

@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [10.4.0] - 2026-02-12
+
+### Added
+
+- **Versioned migration runner** — Infrastructure for running numbered migration scripts with state tracking (98-2), extracted inline migrations from `update.ts` into versioned migration files (98-3): manifest migration, legacy directory cleanup, template file migration, sidecar migration, settings file migration
+- **Version sentinel** — Automatic version detection via sentinel file for triggering migrations on update (98-1)
+
+### Fixed
+
+- **Sprint panel next-up** — Next-up section now honors `assigned_to` field, showing only stories assigned to the current user (100-8)
+- **Just recipes** — Replaced `.venv/bin/python` with system `python3 + PYTHONPATH` for broader compatibility
+
+---
+
 ## [10.3.1] - 2026-02-12
 
 ### Fixed
