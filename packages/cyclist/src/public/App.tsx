@@ -266,7 +266,11 @@ export default function App(): React.ReactElement {
 
   // BikeRack Dockview workspace (MSSCI-14877) — /bikerack renders Dockview layout
   if (isBikeRackIndex) {
-    return <BikeRackWorkspace />;
+    return (
+      <ClaudeProvider>
+        <BikeRackWorkspace />
+      </ClaudeProvider>
+    );
   }
 
   // BikeRack standalone panel routing (MSSCI-14821)
