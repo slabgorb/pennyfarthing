@@ -15,6 +15,7 @@ export interface Manifest {
   fileHashes: Record<string, string>;  // Legacy field from copy mode
   userModified?: string[];
   migrationSource?: string;
+  migrationsRun?: string[];
 }
 
 const MANIFEST_PATH = '.pennyfarthing/manifest.json';
