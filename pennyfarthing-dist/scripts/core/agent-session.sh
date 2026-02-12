@@ -188,7 +188,7 @@ output_persona() {
   echo ""
   echo "<crew theme=\"${theme}\">"
   echo "When handing off to other agents, address them by character name:"
-  for role in sm tea dev reviewer architect pm tech-writer ux-designer devops orchestrator; do
+  for role in sm tea dev reviewer architect pm tech-writer ux-designer devops orchestrator ba; do
     local char=$(yq ".agents.${role}.character // \"\"" "$theme_file" 2>/dev/null)
     if [ -n "$char" ] && [ "$char" != "null" ] && [ "$char" != "" ]; then
       printf "  %-12s %s\n" "${role}:" "$char"

@@ -91,10 +91,10 @@ GUIDANCE_SCALE = 7.5
 # CLIP token limit - prompts are truncated beyond this
 CLIP_MAX_TOKENS = 77
 
-# Role order for the 10 agents
+# Role order for the 11 agents
 ROLES = [
     "orchestrator", "sm", "tea", "dev", "reviewer",
-    "architect", "pm", "tech-writer", "ux-designer", "devops"
+    "architect", "pm", "tech-writer", "ux-designer", "devops", "ba"
 ]
 
 # Default style suffix (visual description comes first for emphasis)

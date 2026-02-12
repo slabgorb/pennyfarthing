@@ -37,6 +37,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "System Architect - Technical design and architecture"
   },
   {
+    "name": "/ba",
+    "description": "Business Analyst - Requirements discovery and stakeholder analysis"
+  },
+  {
     "name": "/brainstorming",
     "description": "Structured problem-solving brainstorm session"
   },

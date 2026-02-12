@@ -18,10 +18,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createAgentLoadRouter } from '../src/api/agent-load.js';
 
-// The 10 primary agents (no subagents)
+// The 11 primary agents (no subagents)
 const PRIMARY_AGENTS = [
   'sm', 'tea', 'dev', 'reviewer', 'architect',
-  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator',
+  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator', 'ba',
 ] as const;
 
 /**

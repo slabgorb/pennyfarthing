@@ -340,6 +340,7 @@ const TEAM_AGENTS = [
   'tech-writer',
   'ux-designer',
   'devops',
+  'ba',
 ];
 
 // Human-readable agent names for legend (reserved for future use)
@@ -354,6 +355,7 @@ const _AGENT_DISPLAY_NAMES: Record<string, string> = {
   'tech-writer': 'TW',
   'ux-designer': 'UX',
   devops: 'Ops',
+  ba: 'BA',
 };
 
 // Tactical agents get emphasized (thicker stroke) in team overlays

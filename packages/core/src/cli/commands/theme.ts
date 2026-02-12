@@ -177,7 +177,7 @@ export async function showCommand(themeName?: string): Promise<void> {
   // Display agents
   console.log('Agents:');
 
-  const agentOrder = ['sm', 'tea', 'dev', 'reviewer', 'orchestrator', 'pm', 'architect', 'devops', 'tech-writer', 'ux-designer'];
+  const agentOrder = ['sm', 'tea', 'dev', 'reviewer', 'orchestrator', 'pm', 'architect', 'devops', 'tech-writer', 'ux-designer', 'ba'];
 
   for (const agentName of agentOrder) {
     const agent = theme.agents[agentName];

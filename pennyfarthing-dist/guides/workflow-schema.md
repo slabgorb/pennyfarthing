@@ -48,7 +48,7 @@ workflow:
 | `workflow.name` | Unique identifier for the workflow |
 | `workflow.phases` | Array with at least one phase |
 | `phases[].name` | Identifier for the phase |
-| `phases[].agent` | Agent to invoke (sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops) |
+| `phases[].agent` | Agent to invoke (sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops, ba) |
 
 ## Optional Fields
 
