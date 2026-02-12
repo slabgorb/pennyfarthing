@@ -6,7 +6,7 @@
  *
  * Replaces BikeRackIndex with a proper Dockview layout.
  * No MessagePanel (sacred center) — BikeRack is a monitoring dashboard.
- * Two-region layout: left sidebar | right sidebar.
+ * Single Dockview group — users can freely rearrange panels.
  */
 
 import React, { useCallback, useRef } from 'react';
@@ -15,12 +15,10 @@ import {
   DockviewReadyEvent,
   DockviewApi,
   IDockviewPanelProps,
-  SerializedDockview,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { panelRegistry } from './panel-registry';
-import { SIDEBAR_WIDTHS } from '../hooks/useResponsiveLayout';
 import PersonaHeader from './PersonaHeader.js';
 import '../styles/dockview-theme.css';
 
@@ -42,9 +40,7 @@ export const BIKERACK_PANELS: string[] = [
   'audit-log',
   'changed',
   'ac',
-  'tty',
   'debug',
-  'bikelane',
 ];
 
 const PANEL_TITLES: Record<string, string> = {
@@ -57,14 +53,8 @@ const PANEL_TITLES: Record<string, string> = {
   'audit-log': 'Audit Log',
   changed: 'Changed',
   ac: 'AC',
-  tty: 'Terminal',
   debug: 'Debug',
-  bikelane: 'BikeLane',
 };
-
-// Two-region layout groups (no sacred center)
-const LEFT_PANELS = ['changed', 'diffs', 'debug', 'audit-log', 'tty', 'bikelane'];
-const RIGHT_PANELS = ['sprint', 'git', 'workflow', 'ac', 'todo', 'background'];
 
 // =============================================================================
 // Panel Adapter
@@ -99,60 +89,6 @@ function PanelAdapter({ params }: IDockviewPanelProps<PanelAdapterParams>): Reac
 }
 
 // =============================================================================
-// Layout
-// =============================================================================
-
-/**
- * Create default BikeRack Dockview layout.
- * Two-region layout: left sidebar | right sidebar (no sacred center).
- */
-export function createBikeRackLayout(): SerializedDockview {
-  return {
-    grid: {
-      root: {
-        type: 'branch',
-        data: [
-          {
-            type: 'leaf',
-            data: {
-              views: LEFT_PANELS,
-              activeView: LEFT_PANELS[0],
-              id: 'left-sidebar',
-            },
-            size: SIDEBAR_WIDTHS.medium,
-          },
-          {
-            type: 'leaf',
-            data: {
-              views: RIGHT_PANELS,
-              activeView: RIGHT_PANELS[0],
-              id: 'right-sidebar',
-            },
-            size: SIDEBAR_WIDTHS.medium,
-          },
-        ],
-        size: 800,
-      },
-      width: 1200,
-      height: 800,
-      orientation: 'HORIZONTAL',
-    },
-    panels: Object.fromEntries(
-      BIKERACK_PANELS.map((id) => [
-        id,
-        {
-          id,
-          contentComponent: 'PanelAdapter',
-          title: PANEL_TITLES[id] || id,
-          params: { panelId: id },
-        },
-      ]),
-    ),
-    activeGroup: 'left-sidebar',
-  };
-}
-
-// =============================================================================
 // BikeRackWorkspace Component
 // =============================================================================
 
@@ -163,58 +99,29 @@ export function BikeRackWorkspace(): React.ReactElement {
     const api = event.api;
     apiRef.current = api;
 
-    // Build two-region layout: left | right (no sacred center)
-    const leftFirst = api.addPanel({
-      id: LEFT_PANELS[0],
+    // Single group — all panels as tabs, user can rearrange freely
+    const first = api.addPanel({
+      id: BIKERACK_PANELS[0],
       component: 'PanelAdapter',
-      params: { panelId: LEFT_PANELS[0] },
-      title: PANEL_TITLES[LEFT_PANELS[0]],
+      params: { panelId: BIKERACK_PANELS[0] },
+      title: PANEL_TITLES[BIKERACK_PANELS[0]],
     });
 
-    for (let i = 1; i < LEFT_PANELS.length; i++) {
+    for (let i = 1; i < BIKERACK_PANELS.length; i++) {
       api.addPanel({
-        id: LEFT_PANELS[i],
+        id: BIKERACK_PANELS[i],
         component: 'PanelAdapter',
-        params: { panelId: LEFT_PANELS[i] },
-        position: { referencePanel: leftFirst.id },
-        title: PANEL_TITLES[LEFT_PANELS[i]],
+        params: { panelId: BIKERACK_PANELS[i] },
+        position: { referencePanel: first.id },
+        title: PANEL_TITLES[BIKERACK_PANELS[i]],
       });
-    }
-
-    const rightFirst = api.addPanel({
-      id: RIGHT_PANELS[0],
-      component: 'PanelAdapter',
-      params: { panelId: RIGHT_PANELS[0] },
-      position: { referencePanel: leftFirst.id, direction: 'right' },
-      title: PANEL_TITLES[RIGHT_PANELS[0]],
-    });
-
-    for (let i = 1; i < RIGHT_PANELS.length; i++) {
-      api.addPanel({
-        id: RIGHT_PANELS[i],
-        component: 'PanelAdapter',
-        params: { panelId: RIGHT_PANELS[i] },
-        position: { referencePanel: rightFirst.id },
-        title: PANEL_TITLES[RIGHT_PANELS[i]],
-      });
-    }
-
-    // Set sidebar widths
-    const leftGroup = leftFirst.group;
-    const rightGroup = rightFirst.group;
-
-    if (leftGroup) {
-      leftGroup.api.setSize({ width: SIDEBAR_WIDTHS.medium });
-    }
-    if (rightGroup) {
-      rightGroup.api.setSize({ width: SIDEBAR_WIDTHS.medium });
     }
   }, []);
 
   const components = { PanelAdapter };
 
   return (
-    <div className="cyclist-dockview" style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
+    <div className="cyclist-app cyclist-dockview" style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
       <div data-testid="bikerack-portrait-anchor" style={{ flexShrink: 0 }}>
         <PersonaHeader />
       </div>

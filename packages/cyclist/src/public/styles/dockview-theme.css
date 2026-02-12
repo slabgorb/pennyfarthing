@@ -104,7 +104,7 @@
    ============================================================================= */
 
 .cyclist-dockview .dv-resize-container .dv-sash {
-  background-color: transparent;
+  background-color: var(--border-bright, #3f3f46);
   transition: background-color 0.15s ease;
 }
 
