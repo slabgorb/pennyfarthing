@@ -4,9 +4,13 @@
  * Manages the .pennyfarthing/.installed-version sentinel file that tracks
  * which version of Pennyfarthing is installed. Used by prime to detect
  * version mismatches and trigger auto-updates.
- *
- * STUB: Implementation needed by Dev (story 98-1).
  */
+
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import fsExtra from 'fs-extra';
+
+const { ensureDirSync } = fsExtra;
 
 /**
  * Sentinel filename within .pennyfarthing/
@@ -24,12 +28,19 @@ export const SENTINEL_FILENAME = '.installed-version';
  * @param options - Options (dryRun skips write)
  */
 export function writeVersionSentinel(
-  _projectRoot: string,
-  _version: string,
-  _options?: { dryRun?: boolean }
+  projectRoot: string,
+  version: string,
+  options?: { dryRun?: boolean }
 ): void {
-  // STUB: Not yet implemented — tests should fail on assertions
-  throw new Error('writeVersionSentinel not implemented');
+  if (options?.dryRun) {
+    return;
+  }
+
+  const pfDir = join(projectRoot, '.pennyfarthing');
+  ensureDirSync(pfDir);
+
+  const sentinelPath = join(pfDir, SENTINEL_FILENAME);
+  writeFileSync(sentinelPath, version + '\n', 'utf8');
 }
 
 /**
@@ -38,7 +49,13 @@ export function writeVersionSentinel(
  * @param projectRoot - Project root directory
  * @returns Version string, or null if sentinel doesn't exist or is empty
  */
-export function readVersionSentinel(_projectRoot: string): string | null {
-  // STUB: Not yet implemented — tests should fail on assertions
-  throw new Error('readVersionSentinel not implemented');
+export function readVersionSentinel(projectRoot: string): string | null {
+  const sentinelPath = join(projectRoot, '.pennyfarthing', SENTINEL_FILENAME);
+
+  if (!existsSync(sentinelPath)) {
+    return null;
+  }
+
+  const content = readFileSync(sentinelPath, 'utf8').trim();
+  return content || null;
 }
