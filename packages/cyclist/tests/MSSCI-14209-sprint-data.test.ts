@@ -26,12 +26,22 @@ vi.mock('fs', async () => {
   };
 });
 
+// Mock child_process for git user email
+vi.mock('child_process', async () => {
+  const actual = await vi.importActual<typeof import('child_process')>('child_process');
+  return {
+    ...actual,
+    execSync: vi.fn(),
+  };
+});
+
 // Mock story-parser to isolate sprint-data tests
 vi.mock('../src/story-parser.js', () => ({
   getStoryInfo: vi.fn(() => ({ id: null, title: null, phase: null })),
 }));
 
 import { existsSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
 import { getStoryInfo } from '../src/story-parser.js';
 
 // =============================================================================
@@ -109,6 +119,29 @@ sprint:
 epics: []
 `;
 
+const YAML_WITH_ASSIGNED_STORIES = `
+sprint:
+  name: TO Sprint 2606
+epics:
+  - id: epic-90
+    title: "Epic: Assigned Test"
+    stories:
+      - id: S-OTHER
+        title: Story assigned to someone else
+        points: 3
+        status: backlog
+        assigned_to: other.person@1898andco.io
+      - id: S-MINE
+        title: Story assigned to me
+        points: 2
+        status: backlog
+        assigned_to: keith.avery@1898andco.io
+      - id: S-UNASSIGNED
+        title: Unassigned story
+        points: 1
+        status: backlog
+`;
+
 const YAML_WITH_ALTERNATE_STATUSES = `
 sprint:
   name: TO Sprint 2607
@@ -143,6 +176,7 @@ epics:
 
 const mockExistsSync = existsSync as ReturnType<typeof vi.fn>;
 const mockReadFileSync = readFileSync as ReturnType<typeof vi.fn>;
+const mockExecSync = execSync as unknown as ReturnType<typeof vi.fn>;
 const mockGetStoryInfo = getStoryInfo as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
@@ -151,6 +185,8 @@ beforeEach(() => {
   mockExistsSync.mockReturnValue(false);
   mockReadFileSync.mockReturnValue('');
   mockGetStoryInfo.mockReturnValue({ id: null, title: null, phase: null });
+  // Default: no git user configured
+  mockExecSync.mockReturnValue('');
 });
 
 afterEach(() => {
@@ -537,6 +573,90 @@ epics:
 
     expect(data.currentStory).toBeNull();
     expect(data.nextStory).toBeNull();
+  });
+});
+
+// =============================================================================
+// Next-Up Assigned Story Selection (100-8)
+// =============================================================================
+
+describe('Next-Up Assigned Story Selection (100-8)', () => {
+  it('should prefer backlog story assigned to current user', async () => {
+    setupFileMocks({
+      'current-sprint.yaml': YAML_WITH_ASSIGNED_STORIES,
+      'future.yaml': null,
+    });
+    mockGetStoryInfo.mockReturnValue({ id: null, title: null, phase: null });
+    mockExecSync.mockReturnValue('keith.avery@1898andco.io\n');
+
+    const { getSprintData } = await import('../src/sprint-data.js');
+    const data = getSprintData('/test/project');
+
+    expect(data.nextStory).not.toBeNull();
+    expect(data.nextStory?.id).toBe('S-MINE');
+  });
+
+  it('should fall back to unassigned story when no stories assigned to user', async () => {
+    setupFileMocks({
+      'current-sprint.yaml': YAML_WITH_ASSIGNED_STORIES,
+      'future.yaml': null,
+    });
+    mockGetStoryInfo.mockReturnValue({ id: null, title: null, phase: null });
+    mockExecSync.mockReturnValue('unknown.user@1898andco.io\n');
+
+    const { getSprintData } = await import('../src/sprint-data.js');
+    const data = getSprintData('/test/project');
+
+    expect(data.nextStory).not.toBeNull();
+    expect(data.nextStory?.id).toBe('S-UNASSIGNED');
+  });
+
+  it('should skip stories assigned to others', async () => {
+    const yamlAllAssigned = `
+sprint:
+  name: Test Sprint
+epics:
+  - id: epic-1
+    title: Test Epic
+    stories:
+      - id: S-OTHER1
+        title: Someone elses story
+        points: 3
+        status: backlog
+        assigned_to: other.person@1898andco.io
+      - id: S-OTHER2
+        title: Another persons story
+        points: 2
+        status: backlog
+        assigned_to: another.person@1898andco.io
+`;
+
+    setupFileMocks({
+      'current-sprint.yaml': yamlAllAssigned,
+      'future.yaml': null,
+    });
+    mockGetStoryInfo.mockReturnValue({ id: null, title: null, phase: null });
+    mockExecSync.mockReturnValue('keith.avery@1898andco.io\n');
+
+    const { getSprintData } = await import('../src/sprint-data.js');
+    const data = getSprintData('/test/project');
+
+    expect(data.nextStory).toBeNull();
+  });
+
+  it('should fall back to unassigned when git email unavailable', async () => {
+    setupFileMocks({
+      'current-sprint.yaml': YAML_WITH_ASSIGNED_STORIES,
+      'future.yaml': null,
+    });
+    mockGetStoryInfo.mockReturnValue({ id: null, title: null, phase: null });
+    mockExecSync.mockImplementation(() => { throw new Error('no git'); });
+
+    const { getSprintData } = await import('../src/sprint-data.js');
+    const data = getSprintData('/test/project');
+
+    expect(data.nextStory).not.toBeNull();
+    expect(data.nextStory?.id).toBe('S-UNASSIGNED');
   });
 });
 
