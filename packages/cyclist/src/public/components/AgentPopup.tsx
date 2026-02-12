@@ -61,6 +61,7 @@ const AGENT_COLORS: Record<string, string> = {
   'ux-designer': '#f0abfc',
   'tech-writer': '#e5e5e5',
   orchestrator: '#e879f9',
+  ba: '#a3e635',
 };
 
 // =============================================================================
