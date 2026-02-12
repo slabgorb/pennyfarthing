@@ -48,6 +48,7 @@ const AGENT_LABELS: Record<string, string> = {
   'ux-designer': 'UX Designer',
   devops: 'DevOps',
   orchestrator: 'Orchestrator',
+  ba: 'Business Analyst',
 };
 
 /**

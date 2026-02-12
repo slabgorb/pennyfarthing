@@ -35,6 +35,7 @@ const AGENT_COLORS: Record<string, string> = {
   'ux-designer': '#f0abfc', // Pink - design
   'tech-writer': '#e5e5e5', // White/light gray - documentation
   orchestrator: '#e879f9', // Magenta - coordination
+  ba: '#a3e635',           // Lime - discovery
 };
 
 // Abbreviated role names for compact badge display
@@ -49,6 +50,7 @@ const AGENT_ABBREV: Record<string, string> = {
   'ux-designer': 'UX',
   'tech-writer': 'TW',
   orchestrator: 'ORC',
+  ba: 'BA',
 };
 
 // Convert kebab-case theme name to Title Case (e.g., "princess-bride" -> "Princess Bride")
