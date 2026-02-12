@@ -284,7 +284,7 @@ function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprin
 /**
  * Get aggregated sprint data for EnhancedSprintPanel
  */
-export function getSprintData(projectDir: string): SprintData {
+export function getSprintData(projectDir: string, userEmail?: string | null): SprintData {
   const currentSprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
   const futurePath = join(projectDir, 'sprint', 'future.yaml');
 
