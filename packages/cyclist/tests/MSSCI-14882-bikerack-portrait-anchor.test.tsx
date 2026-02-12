@@ -1,14 +1,14 @@
 /**
  * MSSCI-14882: BikeRack: anchor portrait panel above Dockview tab bar
  *
- * RED phase tests — Extract PortraitPanel from Dockview tabs and render it
- * as a fixed element above the tab bar in BikeRack, anchoring tabs open.
+ * Tests — Use PersonaHeader (existing Cyclist portrait) above the Dockview
+ * tab bar in BikeRack, anchoring tabs open. PortraitPanel removed.
  *
  * Story: MSSCI-14882 - BikeRack: anchor portrait panel above Dockview tab bar
  * Epic: 102 (BikeRack Follow-up)
  *
  * Acceptance Criteria:
- * - AC1: Portrait component extracted from Cyclist message view and reused in BikeRack
+ * - AC1: PersonaHeader reused in BikeRack (not as a Dockview panel)
  * - AC2: Portrait renders above the Dockview tab bar, not as a Dockview panel/tab
  * - AC3: Portrait anchors the tab bar open (tab bar cannot collapse while portrait is present)
  * - AC4: Portrait displays correctly (no layout/styling regressions)
@@ -39,52 +39,40 @@ const mockPersona = {
   tandemAgent: null,
 };
 
-vi.mock('../src/public/hooks/usePersona', () => ({
-  usePersona: vi.fn(() => ({
-    persona: mockPersona,
-    isStreaming: false,
-    isLoading: false,
-    error: null,
-  })),
+// Controllable persona for null-state test
+let personaOverride: typeof mockPersona | null | undefined;
+
+// Mock PersonaHeader directly — avoids resolving its @/ alias dependencies.
+// The component function reads personaOverride at render time (closure over let).
+vi.mock('../src/public/components/PersonaHeader.tsx', () => ({
+  default: function MockPersonaHeader() {
+    const persona = personaOverride !== undefined ? personaOverride : mockPersona;
+    if (!persona?.character) {
+      return <div className="persona-header empty" data-testid="persona-header" />;
+    }
+    const portraitUrl = `/portraits/${persona.theme}/medium/${persona.slug}.png`;
+    return (
+      <div data-testid="persona-header" className="persona-header">
+        <img src={portraitUrl} alt={persona.character} className="portrait-image" />
+        <span data-testid="persona-character">{persona.character}</span>
+      </div>
+    );
+  },
 }));
 
-vi.mock('../src/public/hooks/useStory', () => ({
-  useStory: vi.fn(() => ({
-    story: null,
-    isLoading: false,
-    error: null,
-  })),
+vi.mock('dockview-react', () => ({
+  DockviewReact: ({ className }: { className?: string }) => <div className={className} />,
 }));
 
-vi.mock('../src/public/contexts/ClaudeContext', () => ({
-  useClaudeContext: vi.fn(() => ({
-    send: vi.fn(),
-    isConnected: false,
-  })),
-  ClaudeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
-vi.mock('../src/public/hooks/useTodos', () => ({
-  useTodos: vi.fn(() => ({
-    todos: [],
-    isLoading: false,
-    error: null,
-  })),
-}));
-
-vi.mock('../src/public/hooks/useGit', () => ({
-  useGit: vi.fn(() => ({
-    branches: [],
-    isLoading: false,
-    error: null,
-  })),
-}));
+// Static import — vi.mock calls above are hoisted before this
+import { BikeRackWorkspace, BIKERACK_PANELS, createBikeRackLayout } from '../src/public/components/BikeRackWorkspace';
 
 // ============================================================================
 // Tests
 // ============================================================================
 
 beforeEach(() => {
+  personaOverride = undefined;
   vi.clearAllMocks();
 });
 
@@ -93,16 +81,11 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// AC1: Portrait component extracted and reused in BikeRack
+// AC1: PersonaHeader reused in BikeRack (portrait removed from panels)
 // ---------------------------------------------------------------------------
 
 describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
-  it('should NOT include portrait in BIKERACK_PANELS (removed from Dockview tabs)', async () => {
-    const { BIKERACK_PANELS } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
-
-    // Portrait must NOT be a Dockview panel/tab anymore
+  it('should NOT include portrait in BIKERACK_PANELS (removed from Dockview tabs)', () => {
     expect(BIKERACK_PANELS).not.toContain('portrait');
   });
 
@@ -113,7 +96,6 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // Extract LEFT_PANELS and RIGHT_PANELS arrays
     const leftMatch = source.match(/LEFT_PANELS\s*=\s*\[([\s\S]*?)\]/);
     const rightMatch = source.match(/RIGHT_PANELS\s*=\s*\[([\s\S]*?)\]/);
 
@@ -132,21 +114,19 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // PANEL_TITLES should not have a portrait entry
     const titlesMatch = source.match(/PANEL_TITLES[\s\S]*?=[\s\S]*?\{([\s\S]*?)\}/);
     expect(titlesMatch).toBeTruthy();
     expect(titlesMatch![1]).not.toMatch(/portrait/);
   });
 
-  it('should import PortraitPanel in BikeRackWorkspace', () => {
+  it('should import PersonaHeader in BikeRackWorkspace', () => {
     const filePath = path.resolve(
       __dirname,
       '../src/public/components/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // BikeRackWorkspace should import PortraitPanel to render it outside Dockview
-    expect(source).toMatch(/import.*PortraitPanel.*from/);
+    expect(source).toMatch(/import.*PersonaHeader.*from/);
   });
 });
 
@@ -155,42 +135,33 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
 // ---------------------------------------------------------------------------
 
 describe('AC2: Portrait renders above Dockview tab bar', () => {
-  it('BikeRackWorkspace should render PortraitPanel outside DockviewReact', () => {
+  it('BikeRackWorkspace should render PersonaHeader outside DockviewReact', () => {
     const filePath = path.resolve(
       __dirname,
       '../src/public/components/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // In the JSX return, PortraitPanel should appear BEFORE DockviewReact
-    // Find the return/JSX block
     const jsxMatch = source.match(/return\s*\(([\s\S]*)\);\s*\}/);
     expect(jsxMatch).toBeTruthy();
 
     const jsx = jsxMatch![1];
-    const portraitIndex = jsx.indexOf('PortraitPanel');
+    const portraitIndex = jsx.indexOf('PersonaHeader');
     const dockviewIndex = jsx.indexOf('DockviewReact');
 
-    // PortraitPanel must exist in JSX and come before DockviewReact
     expect(portraitIndex).toBeGreaterThan(-1);
     expect(dockviewIndex).toBeGreaterThan(-1);
     expect(portraitIndex).toBeLessThan(dockviewIndex);
   });
 
-  it('should render portrait with data-testid="bikerack-portrait-anchor"', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('should render portrait with data-testid="bikerack-portrait-anchor"', () => {
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
     expect(anchor).toBeInTheDocument();
   });
 
-  it('portrait anchor should be a sibling/ancestor of dockview container, not inside it', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('portrait anchor should be a sibling/ancestor of dockview container, not inside it', () => {
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
@@ -199,7 +170,6 @@ describe('AC2: Portrait renders above Dockview tab bar', () => {
     expect(anchor).toBeInTheDocument();
     expect(dockview).toBeInTheDocument();
 
-    // Portrait anchor must NOT be a descendant of the dockview container
     expect(dockview!.contains(anchor)).toBe(false);
   });
 });
@@ -216,8 +186,6 @@ describe('AC3: Portrait anchors tab bar open', () => {
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // The outer container should use flex column to stack portrait above dockview
-    // Look for flexDirection: 'column' or flex-col class in the container
     const hasFlexColumn = source.match(/flexDirection:\s*['"]column['"]/) ||
       source.match(/flex-col/) ||
       source.match(/display:\s*['"]flex['"][\s\S]*?flexDirection:\s*['"]column['"]/);
@@ -225,17 +193,12 @@ describe('AC3: Portrait anchors tab bar open', () => {
     expect(hasFlexColumn).toBeTruthy();
   });
 
-  it('portrait anchor should have a fixed/non-collapsible height', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('portrait anchor should have a fixed/non-collapsible height', () => {
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
     expect(anchor).toBeInTheDocument();
 
-    // The anchor should have a style that prevents collapse
-    // (flexShrink: 0 or minHeight set)
     const style = (anchor as HTMLElement)?.style;
     const hasNonCollapsible =
       style?.flexShrink === '0' ||
@@ -245,16 +208,12 @@ describe('AC3: Portrait anchors tab bar open', () => {
     expect(hasNonCollapsible).toBe(true);
   });
 
-  it('dockview container should use flex: 1 to fill remaining space', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('dockview container should use flex: 1 to fill remaining space', () => {
     render(<BikeRackWorkspace />);
 
     const dockview = document.querySelector('.dockview-container');
     expect(dockview).toBeInTheDocument();
 
-    // The dockview container (or its wrapper) should flex to fill remaining space
     const parent = dockview!.parentElement;
     const style = parent?.style;
     const hasFlex = style?.flex === '1' || style?.flexGrow === '1' ||
@@ -269,25 +228,18 @@ describe('AC3: Portrait anchors tab bar open', () => {
 // ---------------------------------------------------------------------------
 
 describe('AC4: Portrait displays correctly', () => {
-  it('should render portrait image with correct src URL pattern', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('should render portrait image with correct src URL pattern', () => {
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
     expect(anchor).toBeInTheDocument();
 
-    // Should contain a portrait image
-    const img = anchor?.querySelector('img');
+    const img = anchor?.querySelector('img.portrait-image');
     expect(img).toBeInTheDocument();
     expect(img?.src).toMatch(/\/portraits\/.*\/medium\/.*\.png/);
   });
 
-  it('should render agent character name in portrait anchor', async () => {
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('should render agent character name in portrait anchor', () => {
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
@@ -295,23 +247,16 @@ describe('AC4: Portrait displays correctly', () => {
     expect(anchor!.textContent).toContain('Leeloo');
   });
 
-  it('should show "No agent active" when persona is null', async () => {
-    const { usePersona } = await import('../src/public/hooks/usePersona');
-    (usePersona as ReturnType<typeof vi.fn>).mockReturnValue({
-      persona: null,
-      isStreaming: false,
-      isLoading: false,
-      error: null,
-    });
+  it('should show empty state when persona is null', () => {
+    personaOverride = null;
 
-    const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
     render(<BikeRackWorkspace />);
 
     const anchor = document.querySelector('[data-testid="bikerack-portrait-anchor"]');
     expect(anchor).toBeInTheDocument();
-    expect(anchor!.textContent).toMatch(/no agent/i);
+    const emptyHeader = anchor?.querySelector('[data-testid="persona-header"]');
+    expect(emptyHeader).toBeInTheDocument();
+    expect(emptyHeader?.className).toContain('empty');
   });
 });
 
@@ -347,20 +292,16 @@ describe('AC5: Existing Cyclist portrait unchanged', () => {
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
-    // DockviewWorkspace (base Cyclist) should NOT import or reference PortraitPanel
     expect(source).not.toMatch(/PortraitPanel/);
     expect(source).not.toMatch(/bikerack-portrait-anchor/);
   });
 
-  it('PortraitPanel.tsx should still exist as a reusable component', () => {
+  it('PortraitPanel.tsx should be removed (deprecated)', () => {
     const filePath = path.resolve(
       __dirname,
       '../src/public/components/panels/PortraitPanel.tsx',
     );
-    expect(fs.existsSync(filePath)).toBe(true);
-
-    const source = fs.readFileSync(filePath, 'utf-8');
-    expect(source).toMatch(/export function PortraitPanel/);
+    expect(fs.existsSync(filePath)).toBe(false);
   });
 });
 
@@ -369,19 +310,11 @@ describe('AC5: Existing Cyclist portrait unchanged', () => {
 // ---------------------------------------------------------------------------
 
 describe('Structural: BikeRack panel count updated', () => {
-  it('BIKERACK_PANELS should have 12 entries (13 minus portrait)', async () => {
-    const { BIKERACK_PANELS } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
-
-    // Was 13, now 12 since portrait is no longer a Dockview panel
+  it('BIKERACK_PANELS should have 12 entries (13 minus portrait)', () => {
     expect(BIKERACK_PANELS.length).toBe(12);
   });
 
-  it('createBikeRackLayout should NOT include portrait in serialized panels', async () => {
-    const { createBikeRackLayout } = await import(
-      '../src/public/components/BikeRackWorkspace'
-    );
+  it('createBikeRackLayout should NOT include portrait in serialized panels', () => {
     const layout = createBikeRackLayout() as { panels?: Record<string, unknown> };
 
     if (layout.panels) {

@@ -118,10 +118,12 @@ def register_cleanup(project_dir: Path, pid: int) -> None:
     atexit.register(_cleanup, project_dir, pid)
 
 
-def exec_claude(otel_env: dict[str, str]) -> NoReturn:
+def exec_claude(otel_env: dict[str, str], project_dir: Path | None = None) -> NoReturn:
     """Replace current process with Claude CLI using os.execvpe (CE-4)."""
     env = os.environ.copy()
     env.update(otel_env)
+    if project_dir:
+        os.chdir(project_dir)
     os.execvpe("claude", ["claude"], env)
 
 
