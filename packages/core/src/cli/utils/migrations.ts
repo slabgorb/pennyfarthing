@@ -7,7 +7,7 @@
  * tracks applied IDs in manifest.migrationsRun.
  */
 
-import { readdirSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 // ─── Types ─────────────────────────────────────────────────────────
@@ -65,7 +65,15 @@ export interface RunMigrationsResult {
  * @returns Sorted list of migration file paths
  */
 export function listMigrationFiles(migrationsDir: string): string[] {
-  throw new Error('Not implemented');
+  if (!existsSync(migrationsDir)) {
+    return [];
+  }
+
+  const files = readdirSync(migrationsDir)
+    .filter((f) => f.endsWith('.js'))
+    .sort();
+
+  return files.map((f) => join(migrationsDir, f));
 }
 
 /**
@@ -79,7 +87,8 @@ export function getPendingMigrations(
   migrations: Migration[],
   appliedIds: string[]
 ): Migration[] {
-  throw new Error('Not implemented');
+  const applied = new Set(appliedIds);
+  return migrations.filter((m) => !applied.has(m.id));
 }
 
 /**
@@ -108,5 +117,48 @@ export async function runMigrations(
     logger?: MigrationContext['logger'];
   }
 ): Promise<RunMigrationsResult> {
-  throw new Error('Not implemented');
+  const dryRun = options?.dryRun ?? false;
+  const logger = options?.logger ?? {
+    info() {},
+    warning() {},
+    success() {},
+  };
+
+  // Sort by numeric prefix for deterministic order
+  const sorted = [...migrations].sort((a, b) => a.id.localeCompare(b.id));
+
+  const applied: string[] = [];
+  const skipped: string[] = [];
+
+  const ctx: MigrationContext = { projectRoot, logger, dryRun };
+
+  for (const migration of sorted) {
+    // Idempotency check
+    const alreadyApplied = await migration.check(ctx);
+    if (alreadyApplied) {
+      skipped.push(migration.id);
+      continue;
+    }
+
+    // Dry-run: log but don't execute
+    if (dryRun) {
+      logger.info(`[dry-run] Would run migration: ${migration.id} — ${migration.description}`);
+      continue;
+    }
+
+    // Execute migration
+    const result = await migration.up(ctx);
+    if (!result.success) {
+      return {
+        success: false,
+        applied,
+        skipped,
+        failed: { id: migration.id, error: result.error ?? 'Unknown error' },
+      };
+    }
+
+    applied.push(migration.id);
+  }
+
+  return { success: true, applied, skipped };
 }
