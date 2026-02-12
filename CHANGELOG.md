@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Repos topology system** — `repos.yaml` schema validation (87-1) and topology wired into agent prime context for multi-repo awareness (87-2)
 - **Output path normalizer** — Normalize output paths in workflow YAML to use `sprint/planning/` paths (91-27), updated all workflow YAML files
 - **Sprint metrics** — Sprint metrics from completed/current/future added to SprintData (100-6)
+- **Business Analyst (BA) agent** — New agent for requirements discovery and stakeholder analysis, with persona entries across all 27 core themes
 
 ### Changed
 

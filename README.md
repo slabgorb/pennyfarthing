@@ -14,9 +14,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
-- **10 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator
+- **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
 - **11 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
-- **46 Slash Commands** - Entry points for agent activation and workflows
+- **47 Slash Commands** - Entry points for agent activation and workflows
 - **19 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
@@ -267,6 +267,7 @@ your-project/
 - **BikeRack Launcher CLI** — `--project-dir` flag for decoupled launch against any project directory
 - **Repos Topology System** — `repos.yaml` schema validation and topology wired into agent prime context for multi-repo awareness
 - **BikeRack UX Sweep** — Single group layout, visible sashes, streamlined panel set
+- **Business Analyst (BA) Agent** — New 11th agent for requirements discovery and stakeholder analysis, with personas across all core themes
 
 ### Previous Highlights
 
