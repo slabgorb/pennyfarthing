@@ -5,8 +5,8 @@
 version: "1.0.0"
 
 skills:
-  agentic-patterns:
-    name: agentic-patterns
+  pf-agentic-patterns:
+    name: pf-agentic-patterns
     description: Core reasoning patterns for building effective LLM agents
     category: ai-llm
     tags: [reasoning, patterns, agents, llm]
@@ -19,12 +19,12 @@ skills:
         invocation: /agentic-patterns troubleshooting
     anti_patterns:
       - Don't apply patterns mechanically without understanding context
-    related_skills: [context-engineering]
+    related_skills: [pf-context-engineering]
     keywords: [react, reflection, planning, tool-use, chain-of-thought]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
-  changelog:
-    name: changelog
+  pf-changelog:
+    name: pf-changelog
     description: Maintain changelogs following Keep a Changelog format with conventional commits
     category: documentation
     tags: [changelog, releases, versioning]
@@ -40,8 +40,8 @@ skills:
     related_skills: []
     keywords: [keepachangelog, conventional-commits, semver, release-notes]
 
-  code-review:
-    name: code-review
+  pf-code-review:
+    name: pf-code-review
     description: Code review checklists and patterns for quality assurance
     category: development
     tags: [review, quality, checklist]
@@ -55,11 +55,11 @@ skills:
     anti_patterns:
       - Don't skip security considerations in review
       - Don't approve without running tests
-    related_skills: [testing, dev-patterns]
+    related_skills: [pf-testing, pf-dev-patterns]
     keywords: [pr, pull-request, quality, linting, security]
 
-  context-engineering:
-    name: context-engineering
+  pf-context-engineering:
+    name: pf-context-engineering
     description: Strategies for managing context windows in long-running agent sessions
     category: ai-llm
     tags: [context, optimization, agents]
@@ -73,12 +73,12 @@ skills:
     anti_patterns:
       - Don't load unnecessary context upfront
       - Don't repeat large code blocks in prompts
-    related_skills: [agentic-patterns]
+    related_skills: [pf-agentic-patterns]
     keywords: [context-window, tokens, summarization, lazy-loading]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
-  cyclist:
-    name: cyclist
+  pf-cyclist:
+    name: pf-cyclist
     description: Launch Cyclist visual terminal for Claude Code monitoring
     category: tools
     tags: [visual, monitoring, terminal]
@@ -94,8 +94,8 @@ skills:
     related_skills: []
     keywords: [tui, terminal, visualization, dashboard]
 
-  dev-patterns:
-    name: dev-patterns
+  pf-dev-patterns:
+    name: pf-dev-patterns
     description: Common development patterns, fixes, and gotchas
     category: development
     tags: [patterns, debugging, implementation]
@@ -108,27 +108,27 @@ skills:
         invocation: /dev-patterns gotchas
     anti_patterns:
       - Don't apply patterns from other frameworks blindly
-    related_skills: [code-review, testing]
+    related_skills: [pf-code-review, pf-testing]
     keywords: [implementation, debugging, fixes, best-practices]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
-  finalize-run:
-    name: finalize-run
+  pf-finalize-run:
+    name: pf-finalize-run
     description: Validate and save benchmark run results - single exit point for all runs
     category: benchmarking
     tags: [benchmark, validation, results]
     version: "1.0.0"
-    prerequisites: [judge]
+    prerequisites: [pf-judge]
     examples:
       - context: Completing a benchmark run
         invocation: /finalize-run
     anti_patterns:
       - Never save results without passing through this skill
-    related_skills: [judge, persona-benchmark]
+    related_skills: [pf-judge, pf-persona-benchmark]
     keywords: [benchmark, save, validate, guardrail]
 
-  jira:
-    name: jira
+  pf-jira:
+    name: pf-jira
     description: Jira CLI commands for sprint management
     category: project-management
     tags: [jira, issues, sprint]
@@ -141,11 +141,11 @@ skills:
         invocation: /jira assign ISSUE-123
     anti_patterns:
       - Don't bypass Jira for sprint tracking
-    related_skills: [sprint]
+    related_skills: [pf-sprint]
     keywords: [atlassian, issues, tickets, backlog]
 
-  judge:
-    name: judge
+  pf-judge:
+    name: pf-judge
     description: Evaluate agent responses using standardized rubrics
     category: benchmarking
     tags: [evaluation, rubrics, scoring]
@@ -158,11 +158,11 @@ skills:
         invocation: /judge compare
     anti_patterns:
       - Don't modify rubrics during a benchmark run
-    related_skills: [finalize-run, persona-benchmark]
+    related_skills: [pf-finalize-run, pf-persona-benchmark]
     keywords: [evaluation, scoring, metrics, grading]
 
-  just:
-    name: just
+  pf-just:
+    name: pf-just
     description: Run just recipes for project tasks like dev servers, tests, and databases
     category: tools
     tags: [tasks, runner, automation]
@@ -175,11 +175,11 @@ skills:
         invocation: /just db-reset
     anti_patterns:
       - Don't create complex recipes - keep them simple and composable
-    related_skills: [testing]
+    related_skills: [pf-testing]
     keywords: [justfile, make, tasks, automation, command-runner]
 
-  mermaid:
-    name: mermaid
+  pf-mermaid:
+    name: pf-mermaid
     description: Generate diagrams using Mermaid syntax for documentation
     category: tools
     tags: [diagrams, visualization, documentation]
@@ -192,11 +192,11 @@ skills:
         invocation: /mermaid sequence
     anti_patterns:
       - Don't create overly complex diagrams - split into multiple if needed
-    related_skills: [changelog]
+    related_skills: [pf-changelog]
     keywords: [flowchart, sequence, er-diagram, gantt, class-diagram]
 
-  otel:
-    name: otel
+  pf-otel:
+    name: pf-otel
     description: Claude Code OTEL telemetry format documentation for span interception and enrichment
     category: tools
     tags: [telemetry, monitoring, otel]
@@ -209,11 +209,11 @@ skills:
         invocation: /otel enrichment
     anti_patterns:
       - Don't assume fields exist - verify against this documentation
-    related_skills: [cyclist]
+    related_skills: [pf-cyclist]
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
-  permissions:
-    name: permissions
+  pf-permissions:
+    name: pf-permissions
     description: Manage runtime permission grants - list, grant, and revoke tool access
     category: project-management
     tags: [permissions, security, tools]
@@ -232,13 +232,13 @@ skills:
     related_skills: []
     keywords: [grants, scopes, tools, runtime, security]
 
-  persona-benchmark:
-    name: persona-benchmark
+  pf-persona-benchmark:
+    name: pf-persona-benchmark
     description: Run benchmarks to compare persona effectiveness
     category: benchmarking
     tags: [benchmark, personas, comparison]
     version: "1.0.0"
-    prerequisites: [judge]
+    prerequisites: [pf-judge]
     examples:
       - context: Testing persona on code review
         invocation: /persona-benchmark cr-001 discworld
@@ -246,11 +246,11 @@ skills:
         invocation: /persona-benchmark tw-001 literary-classics
     anti_patterns:
       - Don't compare results across different rubric versions
-    related_skills: [judge, finalize-run, theme]
+    related_skills: [pf-judge, pf-finalize-run, pf-theme]
     keywords: [benchmark, comparison, personas, testing]
 
-  sprint:
-    name: sprint
+  pf-sprint:
+    name: pf-sprint
     description: Sprint status, backlog, story, and epic management for Pennyfarthing
     category: project-management
     tags: [sprint, status, backlog, stories, epics]
@@ -269,12 +269,12 @@ skills:
         invocation: /sprint epic add epic-85 "New epic"
     anti_patterns:
       - Don't manually edit sprint YAML - use scripts
-    related_skills: [jira]
+    related_skills: [pf-jira]
     keywords: [sprint, backlog, velocity, kanban, stories, epics, sizing, templates]
     allowed_tools: [Read, Glob, Grep, Bash, Task]
 
-  systematic-debugging:
-    name: systematic-debugging
+  pf-systematic-debugging:
+    name: pf-systematic-debugging
     description: Systematic debugging approach for isolating and fixing issues
     category: development
     tags: [debugging, troubleshooting, root-cause]
@@ -288,17 +288,17 @@ skills:
     anti_patterns:
       - Don't jump to solutions without reproducing the issue first
       - Don't fix symptoms instead of root causes
-    related_skills: [testing, dev-patterns, agentic-patterns]
+    related_skills: [pf-testing, pf-dev-patterns, pf-agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
-  story:
-    name: story
+  pf-story:
+    name: pf-story
     description: "DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint."
     category: project-management
     tags: [stories, sizing, workflow, deprecated]
     version: "2.0.0"
     deprecated: true
-    redirect: sprint
+    redirect: pf-sprint
     prerequisites: []
     examples:
       - context: Creating new stories
@@ -308,11 +308,11 @@ skills:
     anti_patterns:
       - Don't create stories without acceptance criteria
       - Don't use /story directly - use /sprint story instead
-    related_skills: [sprint, jira]
+    related_skills: [pf-sprint, pf-jira]
     keywords: [user-stories, estimation, points, acceptance-criteria]
 
-  testing:
-    name: testing
+  pf-testing:
+    name: pf-testing
     description: Test commands and TDD workflow patterns
     category: development
     tags: [tdd, testing, quality]
@@ -326,11 +326,11 @@ skills:
     anti_patterns:
       - Don't run tests directly - use testing-runner subagent
       - Don't skip RED phase in TDD workflow
-    related_skills: [dev-patterns, code-review]
+    related_skills: [pf-dev-patterns, pf-code-review]
     keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green]
 
-  theme:
-    name: theme
+  pf-theme:
+    name: pf-theme
     description: Manage persona themes - list, show, set, create, and interactive maker wizard
     category: theming
     tags: [personas, themes, customization, creation]
@@ -353,24 +353,24 @@ skills:
     related_skills: []
     keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard]
 
-  theme-creation:
-    name: theme-creation
+  pf-theme-creation:
+    name: pf-theme-creation
     description: "DEPRECATED: Use /theme maker instead"
     category: theming
     tags: [personas, themes, creation]
     version: "2.0.0"
     deprecated: true
-    redirect: theme
+    redirect: pf-theme
     prerequisites: []
     examples:
       - context: Interactive theme wizard
         invocation: /theme maker
     anti_patterns: []
-    related_skills: [theme]
+    related_skills: [pf-theme]
     keywords: [personas, custom, generation, wizard]
 
-  workflow:
-    name: workflow
+  pf-workflow:
+    name: pf-workflow
     description: Manage workflows - list, show, set, start, resume, and check status
     category: project-management
     tags: [workflow, phases, tdd]
@@ -385,11 +385,11 @@ skills:
         invocation: /workflow start architecture
     anti_patterns:
       - Don't switch workflows mid-story unless requirements fundamentally changed
-    related_skills: [sprint]
+    related_skills: [pf-sprint]
     keywords: [tdd, tdd-tandem, trivial, agent-docs, bdd, bdd-tandem, architecture, bikelane, stepped, phased]
 
-  yq:
-    name: yq
+  pf-yq:
+    name: pf-yq
     description: YAML processor for reading, modifying, and querying YAML files
     category: tools
     tags: [yaml, processing, cli]
@@ -402,5 +402,5 @@ skills:
         invocation: /yq modify
     anti_patterns:
       - Don't use complex expressions without testing first
-    related_skills: [just]
+    related_skills: [pf-just]
     keywords: [yaml, jq, parsing, query, mikefarah]
