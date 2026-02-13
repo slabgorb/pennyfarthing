@@ -2,16 +2,18 @@
 """
 Individual Portrait Generator for Pennyfarthing Themes
 
-Generates 10 individual portraits per theme using Stable Diffusion SDXL on M3 Max (MPS).
-Reads visual prompts from theme YAML files in two locations:
-  - Built-in: pennyfarthing-dist/personas/themes/
-  - Custom:   .claude/pennyfarthing/themes/ (takes precedence)
+Generates individual portraits per theme using Stable Diffusion SDXL on M3 Max (MPS).
+Reads visual prompts from theme YAML files in three locations:
+  - Package:  packages/themes-*/themes/ (output to packages/themes-*/portraits/)
+  - Built-in: pennyfarthing-dist/personas/themes/ (output to pennyfarthing-dist/personas/portraits/)
+  - Custom:   .claude/pennyfarthing/themes/ (takes precedence, output to built-in portraits dir)
 
-Output: pennyfarthing-dist/personas/portraits/{theme}/{slug}-{OCEAN}.png (512x512px each)
+Output: {portraits-dir}/{theme}/{slug}-{OCEAN}.png (512x512px each)
 
 Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
     python3 scripts/generate-portraits.py --theme gilligans-island --dry-run
+    python3 scripts/generate-portraits.py --role ba --skip-existing
 """
 
 import argparse
@@ -77,7 +79,8 @@ def _find_project_root() -> Path:
 PROJECT_ROOT = _find_project_root()
 BUILTIN_THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
 CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
-OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
+BUILTIN_OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
+PACKAGES_DIR = PROJECT_ROOT / "packages"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
 # SDXL generates at 1024x1024, we'll resize to 512x512
@@ -272,46 +275,64 @@ def main():
     parser.add_argument("--output-dir", type=str, help="Output to different directory (default: pennyfarthing-dist/personas/portraits)")
     args = parser.parse_args()
 
-    # Determine output directory
-    output_base = Path(args.output_dir) if args.output_dir else OUTPUT_DIR
+    # Determine output directory override
+    output_override = Path(args.output_dir) if args.output_dir else None
 
-    # Find theme files from both built-in and custom directories
-    # Custom themes take precedence over built-in themes with same name
-    theme_map = {}
+    # Find theme files from package, built-in, and custom directories
+    # Each entry tracks its own output directory
+    # Priority: custom > built-in > package (later entries override earlier)
+    theme_map: dict[str, dict] = {}
 
-    # First add built-in themes
+    # 1. Package themes (packages/themes-*/themes/ -> packages/themes-*/portraits/)
+    pkg_sources = []
+    if PACKAGES_DIR.exists():
+        for pkg_dir in sorted(PACKAGES_DIR.glob("themes-*")):
+            themes_dir = pkg_dir / "themes"
+            portraits_dir = pkg_dir / "portraits"
+            if themes_dir.exists():
+                pkg_sources.append(themes_dir)
+                for tf in themes_dir.glob("*.yaml"):
+                    theme_map[tf.stem] = {"path": tf, "output_dir": portraits_dir}
+
+    # 2. Built-in themes (override packages if same name)
     if BUILTIN_THEMES_DIR.exists():
         for tf in BUILTIN_THEMES_DIR.glob("*.yaml"):
-            theme_map[tf.stem] = tf
+            theme_map[tf.stem] = {"path": tf, "output_dir": BUILTIN_OUTPUT_DIR}
 
-    # Then add/override with custom themes
+    # 3. Custom themes (override everything)
     if CUSTOM_THEMES_DIR.exists():
         for tf in CUSTOM_THEMES_DIR.glob("*.yaml"):
-            theme_map[tf.stem] = tf
+            theme_map[tf.stem] = {"path": tf, "output_dir": BUILTIN_OUTPUT_DIR}
 
-    theme_files = sorted(theme_map.values(), key=lambda p: p.stem)
+    theme_entries = sorted(theme_map.values(), key=lambda e: e["path"].stem)
 
     if args.theme:
         if args.theme in theme_map:
-            theme_files = [theme_map[args.theme]]
+            theme_entries = [theme_map[args.theme]]
         else:
             print(f"Theme '{args.theme}' not found")
             print(f"  Searched: {BUILTIN_THEMES_DIR}")
+            for src in pkg_sources:
+                print(f"  Searched: {src}")
             print(f"  Searched: {CUSTOM_THEMES_DIR}")
             sys.exit(1)
 
     print(f"Theme sources:")
     print(f"  Built-in: {BUILTIN_THEMES_DIR}")
+    for src in pkg_sources:
+        print(f"  Package:  {src}")
     print(f"  Custom:   {CUSTOM_THEMES_DIR}")
-    print(f"Found {len(theme_files)} themes")
-    print(f"Output: {output_base}/{{theme}}/{{slug}}-{{OCEAN}}.png")
+    print(f"Found {len(theme_entries)} themes")
 
     if args.dry_run:
         print(f"\nCLIP token limit: {CLIP_MAX_TOKENS} tokens")
         print(f"Tokenizer: {'CLIP (accurate)' if HAS_CLIP_TOKENIZER else 'word estimate (fallback)'}")
-        print("\nDry run - portraits to generate:")
+        roles_to_show = [args.role] if args.role else ROLES
+        print(f"\nDry run - portraits to generate (roles: {', '.join(roles_to_show)}):")
         truncation_warnings = []
-        for tf in theme_files:
+        for entry in theme_entries:
+            tf = entry["path"]
+            output_base = output_override or entry["output_dir"]
             parsed = parse_theme_file(tf)
             theme_dir = output_base / parsed["theme"]
             char_count = len(parsed["characters"])
@@ -319,7 +340,8 @@ def main():
             style_display = style_desc if style_desc else "(default woodcut)"
             print(f"\n  {parsed['theme']}/ ({char_count} characters with visual)")
             print(f"    Style: {style_display}")
-            for role in ROLES:
+            print(f"    Output: {output_base}")
+            for role in roles_to_show:
                 if role in parsed["characters"]:
                     char = parsed["characters"][role]
                     out_path = theme_dir / char["filename"]
@@ -362,8 +384,10 @@ def main():
     truncated = []
     start_time = datetime.now()
 
-    total_themes = len(theme_files)
-    for theme_idx, tf in enumerate(theme_files, 1):
+    total_themes = len(theme_entries)
+    for theme_idx, entry in enumerate(theme_entries, 1):
+        tf = entry["path"]
+        output_base = output_override or entry["output_dir"]
         parsed = parse_theme_file(tf)
         theme = parsed["theme"]
         theme_dir = output_base / theme
