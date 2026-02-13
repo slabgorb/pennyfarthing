@@ -28,6 +28,7 @@ from pennyfarthing_scripts.sprint.yaml_io import (
     SPRINT_KEY_ORDER,
     STORY_KEY_ORDER,
     TOP_KEY_ORDER,
+    _canonicalize,
     read_sprint,
     write_sprint,
 )
@@ -264,7 +265,7 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     # Step 4: Fix if requested (only format issues, not schema; sprint files only)
     if fix and not is_future and not is_epic_shard and not is_initiative_shard and path.exists():
         try:
-            canon_data = read_sprint(path)
+            canon_data = _canonicalize(read_sprint(path))
             write_sprint(path, canon_data)
             result.fixed = True
         except (FileNotFoundError, ValueError):
