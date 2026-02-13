@@ -8,7 +8,7 @@
  * imports these functions and wires them into the WS channel + config watcher.
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
@@ -29,9 +29,19 @@ export interface FocusMessage {
  * Read the current focus value from config.local.yaml.
  * Returns the panel ID string or null if no focus is set.
  */
-export function getConfigFocus(_projectDir: string): string | null {
-  // TODO: Implement — read config.local.yaml, return focus key value
-  return undefined as unknown as string | null;
+export function getConfigFocus(projectDir: string): string | null {
+  try {
+    const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+    if (!existsSync(configPath)) return null;
+    const raw = readFileSync(configPath, 'utf-8');
+    const config = parseYaml(raw);
+    if (!config || typeof config !== 'object') return null;
+    const focus = (config as Record<string, unknown>).focus;
+    if (focus == null) return null;
+    return String(focus);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -39,28 +49,25 @@ export function getConfigFocus(_projectDir: string): string | null {
  * Only returns true when the focus value has actually changed.
  */
 export function shouldBroadcastFocus(
-  _newFocus: string | null,
-  _lastKnownFocus: string | null,
+  newFocus: string | null,
+  lastKnownFocus: string | null,
 ): boolean {
-  // TODO: Implement — compare new vs last known focus
-  return undefined as unknown as boolean;
+  return newFocus !== lastKnownFocus;
 }
 
 /**
  * Create a focus WebSocket message payload.
  */
 export function createFocusMessage(
-  _type: 'init' | 'update',
-  _focus: string | null,
+  type: 'init' | 'update',
+  focus: string | null,
 ): FocusMessage {
-  // TODO: Implement — return { type, focus }
-  return undefined as unknown as FocusMessage;
+  return { type, focus };
 }
 
 /**
  * Validate that a panel ID is a valid focus target.
  */
-export function isValidFocusPanel(_panelId: string): boolean {
-  // TODO: Implement — check against VALID_FOCUS_PANELS
-  return undefined as unknown as boolean;
+export function isValidFocusPanel(panelId: string): boolean {
+  return (VALID_FOCUS_PANELS as readonly string[]).includes(panelId);
 }
