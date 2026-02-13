@@ -99,7 +99,7 @@ def bc():
 def _make_focus_command(panel_name: str):
     """Create a Click command for a panel."""
 
-    @click.command(panel_name)
+    @click.command(panel_name, help=f"Focus on {panel_name} panel.")
     def focus_cmd():
         result = set_panel_focus(panel_name)
         if result["success"]:
@@ -108,7 +108,6 @@ def _make_focus_command(panel_name: str):
             click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
             sys.exit(1)
 
-    focus_cmd.__doc__ = f"Focus on {panel_name} panel."
     return focus_cmd
 
 
