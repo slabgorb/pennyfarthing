@@ -19,6 +19,10 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
     or "epic-40"), load each epic-{ref}.yaml and replace the string with
     the full epic dict.
 
+    Also discovers unindexed shard files on disk (epic-*.yaml files not
+    referenced in the epics list) and appends them so orphan shards are
+    never invisible to the CLI.
+
     Args:
         data: Sprint data with possible string refs in epics
         sprint_dir: Directory containing the shard files
@@ -30,6 +34,9 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
     if not epics or not isinstance(epics[0], str):
         return data
 
+    # Track loaded epic identities to prevent duplicates
+    loaded_shard_files: set[Path] = set()
+    loaded_epic_ids: set[str] = set()
     merged_epics = []
     for ref in epics:
         if not isinstance(ref, str):
@@ -41,11 +48,37 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
             epic_data = load_yaml_config(epic_file)
             if epic_data is not None:
                 merged_epics.append(epic_data)
+                loaded_shard_files.add(epic_file.resolve())
+                # Track both id and jira key (normalized) for dedup
+                eid = str(epic_data.get("id", "")).replace("epic-", "")
+                if eid:
+                    loaded_epic_ids.add(eid)
+                jira_key = str(epic_data.get("jira", ""))
+                if jira_key:
+                    loaded_epic_ids.add(jira_key)
         else:
             warnings.warn(
                 f"Sprint epic ref '{ref}' not found: {epic_file}",
                 stacklevel=2,
             )
+
+    # Discover unindexed shard files on disk
+    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
+        if shard_file.resolve() in loaded_shard_files:
+            continue
+        epic_data = load_yaml_config(shard_file)
+        if epic_data is None or not isinstance(epic_data, dict) or "id" not in epic_data:
+            continue
+        # Skip if this epic was already loaded (by id or jira key)
+        eid = str(epic_data.get("id", "")).replace("epic-", "")
+        jira_key = str(epic_data.get("jira", ""))
+        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
+            continue
+        merged_epics.append(epic_data)
+        if eid:
+            loaded_epic_ids.add(eid)
+        if jira_key:
+            loaded_epic_ids.add(jira_key)
 
     data["epics"] = merged_epics
     return data
