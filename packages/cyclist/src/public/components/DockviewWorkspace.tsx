@@ -28,6 +28,7 @@ import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { panelRegistry } from './panel-registry';
 import { useResponsiveLayout, MIN_DIMENSIONS, SIDEBAR_WIDTHS } from '../hooks/useResponsiveLayout';
+import { useFocusPanel } from '../hooks/useFocusPanel.js';
 import '../styles/dockview-theme.css';
 
 // =============================================================================
@@ -404,11 +405,15 @@ export function DockviewWorkspace({
   onLayoutChange,
 }: DockviewWorkspaceProps): React.ReactElement {
   const apiRef = useRef<DockviewApi | null>(null);
+  const [dockviewApi, setDockviewApi] = useState<DockviewApi | null>(null);
   const { isSmall, isBelowMinimum, sidebarWidth } = useResponsiveLayout();
   const [isReady, setIsReady] = useState(false);
   const [closedPanelsList, setClosedPanelsList] = useState<string[]>([]);
   const [showRestoreMenu, setShowRestoreMenu] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Panel focus mode — stash/restore layout on /bc CLI events
+  useFocusPanel(dockviewApi);
+
   // Track if responsive effect should apply - skip on initial load to respect saved collapsed state
   const hasAppliedInitialLayout = useRef(false);
   const previousIsSmall = useRef<boolean | null>(null);
@@ -423,6 +428,7 @@ export function DockviewWorkspace({
     const api = event.api;
     apiRef.current = api;
     dockviewApiRef = api;
+    setDockviewApi(api);
 
     // Use native fromJSON if we have a saved layout, otherwise build default
     if (initialLayout && initialLayout.grid && initialLayout.panels) {
