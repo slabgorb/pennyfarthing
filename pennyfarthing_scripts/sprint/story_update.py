@@ -29,6 +29,7 @@ def update_story(
     assigned_to: str | None = None,
     completed_date: str | None = None,
     started_date: str | None = None,
+    workflow: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Update fields on a story in the sprint YAML.
@@ -42,6 +43,7 @@ def update_story(
         assigned_to: New assignee
         completed_date: Completed date (ISO format)
         started_date: Started date (ISO format)
+        workflow: Workflow type (tdd, trivial, bdd, agent-docs)
         dry_run: If True, report changes without writing
 
     Returns:
@@ -93,6 +95,8 @@ def update_story(
         story["completed"] = completed_date
     if started_date is not None:
         story["started"] = started_date
+    if workflow is not None:
+        story["workflow"] = workflow
 
     # Auto-cleanup rules
     if status == "done":
@@ -148,6 +152,7 @@ def update_story(
 @click.option("--points", type=int, default=None)
 @click.option("--priority", default=None)
 @click.option("--started", "started_date", default=None)
+@click.option("--workflow", default=None)
 @click.option("--dry-run", is_flag=True)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
@@ -158,6 +163,7 @@ def story_update_command(
     points: int | None,
     priority: str | None,
     started_date: str | None,
+    workflow: str | None,
     dry_run: bool,
     sprint_file: str | None,
 ) -> None:
@@ -177,6 +183,7 @@ def story_update_command(
         assigned_to=assigned_to,
         completed_date=completed_date,
         started_date=started_date,
+        workflow=workflow,
         dry_run=dry_run,
     )
 
