@@ -5,62 +5,26 @@
  * Story MSSCI-14977 - BikeShow client layout stash/restore on panel focus
  * Epic 104: /bc CLI Panel Focus
  *
- * Listens to /ws/focus WebSocket for focus events. On focus:
- * - Stash current layout (once)
- * - Render target panel as single-panel fullscreen
- * On reset (focus: null):
- * - Restore stashed layout
+ * Listens to /ws/focus WebSocket for focus events.
  *
- * No stash stack — successive /bc calls preserve original saved state.
+ * Multi-group layouts (Cyclist): maximizeGroup/exitMaximizedGroup
+ * Single-group layouts (BikeRack): activate target tab, stash previous
  */
 
 import { useState, useEffect, useRef } from 'react';
-import type { DockviewApi, SerializedDockview } from 'dockview-react';
+import type { DockviewApi } from 'dockview-react';
 
 export interface UseFocusPanelResult {
   /** Currently focused panel ID, or null if not in focus mode */
   focusedPanel: string | null;
   /** Whether the workspace is currently in single-panel focus mode */
   isInFocusMode: boolean;
-  /** The stashed layout that will be restored on reset */
-  stashedLayout: SerializedDockview | null;
 }
 
 /** WebSocket message format from /ws/focus */
 interface FocusMessage {
   type: 'init' | 'update';
   focus: string | null;
-}
-
-/**
- * Build a minimal single-panel layout for focus mode.
- */
-function buildSinglePanelLayout(panelId: string): SerializedDockview {
-  return {
-    grid: {
-      root: {
-        type: 'leaf',
-        data: {
-          views: [panelId],
-          activeView: panelId,
-          id: 'focus-group',
-        },
-        size: 1,
-      },
-      width: 1,
-      height: 1,
-      orientation: 'HORIZONTAL',
-    },
-    panels: {
-      [panelId]: {
-        id: panelId,
-        contentComponent: 'PanelAdapter',
-        title: panelId,
-        params: { panelId },
-      },
-    },
-    activeGroup: 'focus-group',
-  };
 }
 
 /**
@@ -72,7 +36,6 @@ function buildSinglePanelLayout(panelId: string): SerializedDockview {
 export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
   const [focusedPanel, setFocusedPanel] = useState<string | null>(null);
   const [isInFocusMode, setIsInFocusMode] = useState(false);
-  const [stashedLayout, setStashedLayout] = useState<SerializedDockview | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -82,8 +45,8 @@ export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
   const apiRef = useRef(api);
   apiRef.current = api;
 
-  const inFocusModeRef = useRef(false);
-  const stashRef = useRef<SerializedDockview | null>(null);
+  // Stash the previously active panel ID for single-group reset
+  const previousActivePanelRef = useRef<string | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -93,32 +56,41 @@ export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
 
     const handleFocusChange = (focus: string | null) => {
       const currentApi = apiRef.current;
+      if (!currentApi) return;
 
       if (focus !== null) {
-        // Focus on a panel
-        if (!inFocusModeRef.current && currentApi) {
-          // First focus after normal mode — stash current layout
-          const layout = currentApi.toJSON();
-          stashRef.current = layout;
-          setStashedLayout(layout);
+        const panel = currentApi.getPanel(focus);
+        if (!panel) return;
+
+        const isMultiGroup = currentApi.groups.length > 1;
+
+        if (isMultiGroup) {
+          // Multi-group (Cyclist): maximize the target panel's group
+          currentApi.maximizeGroup(panel);
+        } else {
+          // Single-group (BikeRack): stash current active, switch tab
+          if (!previousActivePanelRef.current) {
+            previousActivePanelRef.current = currentApi.activePanel?.id ?? null;
+          }
+          panel.api.setActive();
         }
 
-        inFocusModeRef.current = true;
         setIsInFocusMode(true);
         setFocusedPanel(focus);
-
-        if (currentApi) {
-          currentApi.fromJSON(buildSinglePanelLayout(focus));
-        }
       } else {
-        // Reset — restore stashed layout
-        if (inFocusModeRef.current && currentApi && stashRef.current) {
-          currentApi.fromJSON(stashRef.current);
+        // Reset
+        const isMaximized = currentApi.hasMaximizedGroup();
+
+        if (isMaximized) {
+          // Multi-group: exit maximize
+          currentApi.exitMaximizedGroup();
+        } else if (previousActivePanelRef.current) {
+          // Single-group: restore previous active tab
+          const prev = currentApi.getPanel(previousActivePanelRef.current);
+          if (prev) prev.api.setActive();
         }
 
-        stashRef.current = null;
-        inFocusModeRef.current = false;
-        setStashedLayout(null);
+        previousActivePanelRef.current = null;
         setIsInFocusMode(false);
         setFocusedPanel(null);
       }
@@ -161,5 +133,5 @@ export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
     };
   }, []);
 
-  return { focusedPanel, isInFocusMode, stashedLayout };
+  return { focusedPanel, isInFocusMode };
 }
