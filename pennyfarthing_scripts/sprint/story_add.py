@@ -275,7 +275,7 @@ def add_initiative_story(
 @click.argument("title", type=str, required=False)
 @click.argument("points", type=int, required=False)
 @click.option("--type", "story_type", type=click.Choice(["feature", "bug", "chore", "refactor"]), default="feature")
-@click.option("--priority", type=click.Choice(["P0", "P1", "P2", "P3"]), default="P1")
+@click.option("--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1")
 @click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd"]), default="tdd")
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")

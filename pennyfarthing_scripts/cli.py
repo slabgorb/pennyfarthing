@@ -26,6 +26,13 @@ def cli():
     workflow  - Workflow state and phase management
     agent     - Agent session management
     sprint    - Sprint status and story operations
+
+    \b
+    Shortcuts (sugar for common sprint operations):
+      status   - Show sprint status (= sprint status)
+      backlog  - Show available stories (= sprint backlog)
+      work     - Start work on a story (= sprint work)
+      story    - Story operations (= sprint story)
     """
     pass
 
@@ -34,6 +41,12 @@ def cli():
 from pennyfarthing_scripts.sprint.cli import sprint  # noqa: E402
 
 cli.add_command(sprint)
+
+# Top-level sugar shortcuts for common sprint operations
+cli.add_command(sprint.commands["status"], "status")
+cli.add_command(sprint.commands["backlog"], "backlog")
+cli.add_command(sprint.commands["work"], "work")
+cli.add_command(sprint.commands["story"], "story")
 
 # Import and register hotspots group
 from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
@@ -91,16 +104,16 @@ def agent():
 @click.argument("name")
 @click.option("--session-id", help="Use explicit session ID")
 @click.option("--no-persona", is_flag=True, help="Skip persona loading")
-@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
 @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
 @click.option("--full", is_flag=True, help="Include domain docs")
 @click.option("--quiet", is_flag=True, help="Suppress section headers")
-@click.option("--tier", type=click.Choice(["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False), help="Context tier level")
+@click.option("--tier", type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False), help="Context tier level")
 def agent_start(
     name: str,
     session_id: str | None,
     no_persona: bool,
-    json_output: bool,
+    output_json: bool,
     minimal: bool,
     full: bool,
     quiet: bool,
@@ -122,7 +135,7 @@ def agent_start(
         agent_name=name,
         session_id=session_id,
         no_persona=no_persona,
-        json_output=json_output,
+        json_output=output_json,
         minimal=minimal,
         full=full,
         quiet=quiet,
