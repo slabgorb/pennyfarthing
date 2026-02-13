@@ -70,6 +70,11 @@ from pennyfarthing_scripts.bikerack.cli import bikerack  # noqa: E402
 
 cli.add_command(bikerack)
 
+# Import and register bc group
+from pennyfarthing_scripts.bc.cli import bc  # noqa: E402
+
+cli.add_command(bc)
+
 
 @cli.group()
 def agent():
