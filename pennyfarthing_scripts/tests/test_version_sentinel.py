@@ -12,15 +12,11 @@ Acceptance Criteria tested here:
 """
 
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
 
 # Module to be implemented
 from pennyfarthing_scripts.prime.version_sentinel import (
-    read_sentinel_version,
-    get_package_version,
     check_version_mismatch,
+    read_sentinel_version,
 )
 
 
