@@ -99,8 +99,12 @@ def bc():
 def _make_focus_command(panel_name: str):
     """Create a Click command for a panel."""
 
-    @click.command(panel_name)
-    def focus_cmd():
+    @click.command(panel_name, help=f"Focus on {panel_name} panel.")
+    @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+    def focus_cmd(dry_run):
+        if dry_run:
+            click.echo(json.dumps({"dry_run": True, "action": "set_focus", "panel": panel_name}))
+            return
         result = set_panel_focus(panel_name)
         if result["success"]:
             click.echo(json.dumps({"success": True, "panel": result["data"]}))
@@ -108,7 +112,6 @@ def _make_focus_command(panel_name: str):
             click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
             sys.exit(1)
 
-    focus_cmd.__doc__ = f"Focus on {panel_name} panel."
     return focus_cmd
 
 
@@ -117,8 +120,12 @@ for _panel in VALID_PANELS:
 
 
 @bc.command("reset")
-def reset_focus():
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def reset_focus(dry_run):
     """Clear focus setting."""
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "clear_focus"}))
+        return
     result = clear_panel_focus()
     if result["success"]:
         click.echo(json.dumps({"success": True, "message": result.get("message", "focus cleared")}))
@@ -132,7 +139,8 @@ def reset_focus():
 
 @bc.command("save")
 @click.argument("name")
-def save_layout(name: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def save_layout(name: str, dry_run: bool):
     """Save current layout under a name.
 
     Fetches the active layout from the running Cyclist/BikeRack server
@@ -145,6 +153,10 @@ def save_layout(name: str):
             err=True,
         )
         sys.exit(1)
+    if dry_run:
+        panel_count = len(layout_data.get("panels", {}))
+        click.echo(json.dumps({"dry_run": True, "action": "save_layout", "name": name, "panels": panel_count}))
+        return
     result = save_named_layout(name, layout_data)
     if result["success"]:
         panel_count = len(layout_data.get("panels", {}))
@@ -156,8 +168,12 @@ def save_layout(name: str):
 
 @bc.command("load")
 @click.argument("name")
-def load_layout(name: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def load_layout(name: str, dry_run: bool):
     """Load a previously saved named layout."""
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "load_layout", "name": name}))
+        return
     result = load_named_layout(name)
     if result["success"]:
         click.echo(json.dumps({"success": True, "name": name, "layout": result["data"]}))
@@ -179,8 +195,12 @@ def list_layouts():
 
 @bc.command("clear")
 @click.argument("name")
-def clear_layout(name: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def clear_layout(name: str, dry_run: bool):
     """Delete a specific named layout."""
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "clear_layout", "name": name}))
+        return
     result = clear_named_layout(name)
     if result["success"]:
         click.echo(json.dumps({"success": True, "message": result.get("message", "layout cleared")}))
@@ -190,8 +210,12 @@ def clear_layout(name: str):
 
 
 @bc.command("clear-all")
-def clear_all_layouts():
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def clear_all_layouts(dry_run: bool):
     """Delete all named layouts."""
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "clear_all_layouts"}))
+        return
     result = clear_all_named_layouts()
     if result["success"]:
         click.echo(json.dumps({"success": True, "message": result.get("message", "all layouts cleared")}))
