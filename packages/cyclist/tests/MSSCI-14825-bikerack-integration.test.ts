@@ -350,7 +350,8 @@ describe('AC7: Regression guard — existing tests unmodified', () => {
 // ============================================================================
 
 describe('AC8: CE-5 — No new WebSocket channels', () => {
-  // These are ALL the WebSocket channels that existed before Epic 101.
+  // These are ALL the WebSocket channels that existed before Epic 101,
+  // plus channels added by later epics (e.g. /ws/focus from Epic 104).
   // BikeRack must NOT add any new channels.
   const PRE_BIKERACK_CHANNELS = [
     '/ws/stats',
@@ -370,6 +371,7 @@ describe('AC8: CE-5 — No new WebSocket channels', () => {
     '/ws/todos',
     '/ws/sprint',
     '/ws/diffs',
+    '/ws/focus',
     '/ws/pty',
   ];
 
