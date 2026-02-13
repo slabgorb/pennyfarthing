@@ -26,6 +26,7 @@ def cli():
     workflow  - Workflow state and phase management
     agent     - Agent session management
     sprint    - Sprint status and story operations
+    debug     - Analysis tools (hotspots, deadcode, healthscore)
 
     \b
     Shortcuts (sugar for common sprint operations):
@@ -48,30 +49,46 @@ cli.add_command(sprint.commands["backlog"], "backlog")
 cli.add_command(sprint.commands["work"], "work")
 cli.add_command(sprint.commands["story"], "story")
 
-# Import and register hotspots group
+# Import analysis groups
 from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
+from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
+from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
 
-cli.add_command(hotspots)
+
+@cli.group()
+def debug():
+    """Debug and analysis tools.
+
+    \b
+    Subcommands:
+      hotspots     - Git history hotspot detection
+      deadcode     - Dead code detection tools
+      healthscore  - Composite codebase health score
+    """
+    pass
+
+
+debug.add_command(hotspots)
+debug.add_command(deadcode)
+debug.add_command(healthscore)
+
+# Hidden backward-compat aliases
+cli.add_command(hotspots, "hotspots")
+cli.commands["hotspots"].hidden = True
+cli.add_command(deadcode, "deadcode")
+cli.commands["deadcode"].hidden = True
+cli.add_command(healthscore, "healthscore")
+cli.commands["healthscore"].hidden = True
 
 # Import and register jira group
 from pennyfarthing_scripts.jira.cli import jira  # noqa: E402
 
 cli.add_command(jira)
 
-# Import and register deadcode group
-from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
-
-cli.add_command(deadcode)
-
 # Import and register theme group
 from pennyfarthing_scripts.theme.cli import theme  # noqa: E402
 
 cli.add_command(theme)
-
-# Import and register healthscore group
-from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
-
-cli.add_command(healthscore)
 
 # Import and register validate group
 from pennyfarthing_scripts.validate.cli import validate  # noqa: E402

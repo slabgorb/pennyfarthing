@@ -61,8 +61,12 @@ def check(key):
 
 @jira.command()
 @click.argument("key")
-def claim(key):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def claim(key, dry_run):
     """Claim a story (assign to self + move to In Progress)."""
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would claim {key} (assign to self + move to In Progress)")
+        return
     from pennyfarthing_scripts.jira.claim import main as claim_main
 
     raise SystemExit(claim_main([key, "--claim"]))
@@ -320,8 +324,12 @@ def jira_sprint():
 @jira_sprint.command("add")
 @click.argument("sprint_id")
 @click.argument("issue_key")
-def sprint_add(sprint_id, issue_key):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def sprint_add(sprint_id, issue_key, dry_run):
     """Add an issue to a sprint."""
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would add {issue_key} to sprint {sprint_id}")
+        return
     from pennyfarthing_scripts.jira.client import get_client
 
     client = get_client()

@@ -281,6 +281,7 @@ def add_initiative_story(
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 @click.option("--initiative", type=str, default=None, help="Add as standalone story to initiative (e.g., technical-debt)")
 @click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def story_add_command(
     epic_id: str | None,
     title: str | None,
@@ -292,6 +293,7 @@ def story_add_command(
     sprint_file: str | None,
     initiative: str | None,
     repos: str,
+    dry_run: bool,
 ) -> None:
     """Add a new story to an epic or initiative.
 
@@ -314,6 +316,10 @@ def story_add_command(
             init_points = int(title)
         except ValueError as err:
             raise click.ClickException(f"POINTS must be an integer, got '{title}'") from err
+
+        if dry_run:
+            click.echo(f"[DRY-RUN] Would add story to initiative {initiative}: {init_title} [{init_points}pts]")
+            return
 
         result = add_initiative_story(
             initiative_slug=initiative,
@@ -338,6 +344,10 @@ def story_add_command(
             raise click.ClickException("TITLE is required")
         if points is None:
             raise click.ClickException("POINTS is required")
+
+        if dry_run:
+            click.echo(f"[DRY-RUN] Would add story to epic {epic_id}: {title} [{points}pts]")
+            return
 
         if sprint_file is None:
             from pennyfarthing_scripts.common.config import get_project_root
