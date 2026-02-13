@@ -132,9 +132,12 @@ export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
       wsRef.current.onmessage = (event: MessageEvent) => {
         try {
           const msg = JSON.parse(event.data) as FocusMessage;
-          if (msg.type === 'init' || msg.type === 'update') {
+          if (msg.type === 'update') {
+            // Live /bc commands — apply focus change immediately
             handleFocusChange(msg.focus);
           }
+          // 'init' messages are ignored — focus is ephemeral, not persistent.
+          // Stale focus values in config would destroy the layout on page load.
         } catch {
           // Ignore malformed messages
         }

@@ -532,6 +532,9 @@ export function DockviewWorkspace({
     const api = apiRef.current;
     if (!api || !onLayoutChange) return;
 
+    // Never save empty layouts — prevents corruption loop
+    if (api.panels.length === 0) return;
+
     // Debounce saves
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -540,7 +543,10 @@ export function DockviewWorkspace({
     saveTimeoutRef.current = setTimeout(() => {
       // Use native Dockview toJSON for complete layout serialization
       const serializedLayout = api.toJSON();
-      onLayoutChange(serializedLayout);
+      // Double-check: don't persist if serialization produced empty panels
+      if (serializedLayout.panels && Object.keys(serializedLayout.panels).length > 0) {
+        onLayoutChange(serializedLayout);
+      }
     }, 300);
   }, [onLayoutChange]);
 
