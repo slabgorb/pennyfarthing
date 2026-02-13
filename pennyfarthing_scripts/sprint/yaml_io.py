@@ -201,12 +201,30 @@ def _canonicalize(data: Any) -> Any:
     if not isinstance(data, Mapping):
         return data
 
-    # Determine which key order to use based on context
-    # Top level
-    result = _sort_mapping(
-        data if isinstance(data, CommentedMap) else _to_commented_map(data),
-        TOP_KEY_ORDER,
-    )
+    cm = data if isinstance(data, CommentedMap) else _to_commented_map(data)
+
+    # Detect epic shard: has 'stories' + 'id' but no 'sprint'/'epics' top-level keys
+    is_epic_shard = "stories" in cm and "id" in cm and "sprint" not in cm and "epics" not in cm
+
+    if is_epic_shard:
+        result = _sort_mapping(cm, EPIC_KEY_ORDER)
+        # Reorder stories within the epic
+        if "stories" in result and isinstance(result["stories"], (list, CommentedSeq)):
+            new_stories = CommentedSeq()
+            for story in result["stories"]:
+                if isinstance(story, Mapping):
+                    story_cm = (
+                        story if isinstance(story, CommentedMap) else _to_commented_map(story)
+                    )
+                    new_stories.append(_sort_mapping(story_cm, STORY_KEY_ORDER))
+                else:
+                    new_stories.append(story)
+            result["stories"] = new_stories
+        result = _ensure_block_scalars(result)
+        return result
+
+    # Full sprint document: sort top-level keys
+    result = _sort_mapping(cm, TOP_KEY_ORDER)
 
     # Reorder sprint section
     if "sprint" in result and isinstance(result["sprint"], Mapping):
