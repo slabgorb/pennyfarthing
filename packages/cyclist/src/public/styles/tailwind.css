@@ -2000,38 +2000,6 @@
   color: var(--status-warning, #cca700);
 }
 
-/* Sync all repos action bar */
-.git-panel .git-panel-actions {
-  padding: 0 0 4px;
-}
-
-.git-panel .sync-all-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid var(--border-secondary, rgba(255, 255, 255, 0.08));
-  border-radius: 4px;
-  background: var(--bg-tertiary, #2d2d2d);
-  color: var(--text-secondary, #8b8b8b);
-  font-size: 0.75rem;
-  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.git-panel .sync-all-btn:hover {
-  background: var(--bg-hover, #3d3d3d);
-  color: var(--text-primary, #e0e0e0);
-  border-color: var(--accent-color, #007acc);
-}
-
-.git-panel .sync-all-btn:active {
-  background: var(--bg-active, #4d4d4d);
-}
-
 .git-panel .repo-status .file-status {
   gap: 6px;
 }
