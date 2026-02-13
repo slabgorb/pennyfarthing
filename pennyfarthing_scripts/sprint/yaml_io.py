@@ -134,7 +134,9 @@ def read_sprint(path: Path) -> CommentedMap:
         else:
             merged_epics.append(ref)
 
-    # Discover unindexed shard files on disk
+    # Log unindexed shard files on disk (but do NOT auto-merge them —
+    # orphan shards may belong to future initiatives and should not be
+    # pulled into the current sprint automatically).
     for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
         if shard_file.resolve() in loaded_shard_files:
             continue
@@ -144,16 +146,17 @@ def read_sprint(path: Path) -> CommentedMap:
             continue
         if not isinstance(epic_data, Mapping) or "id" not in epic_data:
             continue
-        # Skip if this epic was already loaded (by id or jira key)
         eid = str(epic_data.get("id", "")).replace("epic-", "")
         jira_key = str(epic_data.get("jira", ""))
         if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
             continue
-        merged_epics.append(epic_data)
-        if eid:
-            loaded_epic_ids.add(eid)
-        if jira_key:
-            loaded_epic_ids.add(jira_key)
+        # Warn but don't merge — these are intentionally excluded
+        import sys
+        print(
+            f"  NOTE: Unindexed shard {shard_file.name} (epic {eid}) "
+            f"not in epics list — skipping",
+            file=sys.stderr,
+        )
 
     data["epics"] = merged_epics
     return data
