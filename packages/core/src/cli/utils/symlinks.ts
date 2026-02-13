@@ -61,9 +61,9 @@ export function createCommandsDirectory(
   }
   logger.created('.claude/commands/ (directory for built-in + user commands)');
 
-  // Symlink each built-in command
+  // Symlink each built-in command (only pf-prefixed built-in commands)
   if (pathExists(builtInCommandsPath)) {
-    const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md'));
+    const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
     for (const cmd of builtInCommands) {
       const linkPath = join(commandsDir, cmd);
       const targetPath = join(builtInCommandsPath, cmd);
@@ -132,11 +132,11 @@ export function createSkillsDirectory(
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
-  // Symlink each built-in skill (skills are directories, not .md files)
+  // Symlink each built-in skill (only pf-prefixed built-in skills)
   if (pathExists(builtInSkillsPath)) {
     const builtInSkills = readdirSync(builtInSkillsPath).filter(f => {
       const fullPath = join(builtInSkillsPath, f);
-      return isDirectory(fullPath) && !f.startsWith('.');
+      return isDirectory(fullPath) && f.startsWith('pf-');
     });
     for (const skill of builtInSkills) {
       const linkPath = join(skillsDir, skill);
@@ -268,9 +268,9 @@ export function copyCommandsDirectory(
   }
   logger.created('.claude/commands/ (directory for built-in + user commands)');
 
-  // Copy each built-in command
+  // Copy each built-in command (only pf-prefixed built-in commands)
   if (pathExists(builtInCommandsPath)) {
-    const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md'));
+    const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
     for (const cmd of builtInCommands) {
       const sourcePath = join(builtInCommandsPath, cmd);
       const destPath = join(commandsDir, cmd);
@@ -337,11 +337,11 @@ export function copySkillsDirectory(
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
-  // Copy each built-in skill (skills are directories)
+  // Copy each built-in skill (only pf-prefixed built-in skills)
   if (pathExists(builtInSkillsPath)) {
     const builtInSkills = readdirSync(builtInSkillsPath).filter(f => {
       const fullPath = join(builtInSkillsPath, f);
-      return isDirectory(fullPath) && !f.startsWith('.');
+      return isDirectory(fullPath) && f.startsWith('pf-');
     });
     for (const skill of builtInSkills) {
       const sourcePath = join(builtInSkillsPath, skill);
