@@ -137,12 +137,13 @@ def add_epic(
 @click.command("epic-add")
 @click.argument("epic_id", type=str)
 @click.argument("title", type=str)
-@click.option("--priority", type=click.Choice(["P0", "P1", "P2", "P3"]), default="P1")
+@click.option("--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1")
 @click.option("--status", type=click.Choice(["backlog", "ready", "in_progress"]), default="backlog")
 @click.option("--repos", default="pennyfarthing")
 @click.option("--jira", "jira_id", type=str, default=None, help="Jira epic key (MSSCI-NNNNN)")
 @click.option("--description", "-d", type=str, default=None, help="Epic description")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def epic_add_command(
     epic_id: str,
     title: str,
@@ -152,8 +153,13 @@ def epic_add_command(
     jira_id: str | None,
     description: str | None,
     sprint_file: str | None,
+    dry_run: bool,
 ) -> None:
     """Add a new epic to the current sprint."""
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would add epic {epic_id}: {title}")
+        return
+
     if sprint_file is None:
         from pennyfarthing_scripts.common.config import get_project_root
         path = get_project_root() / "sprint" / "current-sprint.yaml"
