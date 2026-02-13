@@ -16,6 +16,7 @@ import {
   DockviewApi,
   IDockviewPanelProps,
   SerializedDockview,
+  DockviewDefaultTab,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -206,6 +207,7 @@ export function BikeRackWorkspace({
         className="dockview-container"
         onReady={onReady}
         components={components}
+        defaultTabComponent={(props) => <DockviewDefaultTab {...props} hideClose />}
         watermarkComponent={() => null}
       />
     </div>
