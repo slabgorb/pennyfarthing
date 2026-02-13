@@ -165,16 +165,22 @@ class TestConnection:
         client = WheelHubClient(port=2898)
         client.subscribe("sprint", MagicMock())
 
-        mock_connect = AsyncMock()
+        mock_ws = AsyncMock()
+        mock_ws.recv = AsyncMock(side_effect=asyncio.CancelledError())
+        mock_ws.close = AsyncMock()
+
         with patch(
             "pennyfarthing_scripts.bikerack.ws_client.websockets",
             create=True,
-        ) as mock_ws:
-            mock_ws.connect = mock_connect
-            await client.connect()
+        ) as mock_ws_mod:
+            mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
+            try:
+                await client.connect()
+            except asyncio.CancelledError:
+                pass
 
         # Should have attempted to connect to the sprint channel
-        mock_connect.assert_any_call("ws://localhost:2898/ws/sprint")
+        mock_ws_mod.connect.assert_any_call("ws://localhost:2898/ws/sprint")
 
     async def test_disconnect_transitions_to_disconnected(self):
         """disconnect() should transition state to DISCONNECTED."""
@@ -618,11 +624,12 @@ class TestCleanShutdown:
         client.subscribe("sprint", MagicMock())
 
         sleep_cancelled = False
+        _real_sleep = asyncio.sleep  # Capture before patch replaces it
 
         async def mock_sleep(delay):
             nonlocal sleep_cancelled
             try:
-                await asyncio.sleep(delay)
+                await _real_sleep(delay)
             except asyncio.CancelledError:
                 sleep_cancelled = True
                 raise
@@ -642,7 +649,7 @@ class TestCleanShutdown:
                 side_effect=mock_sleep,
             ):
                 connect_task = asyncio.create_task(client.connect())
-                await asyncio.sleep(0.05)  # Let it start
+                await _real_sleep(0.05)  # Let it start
                 await client.disconnect()
                 try:
                     await asyncio.wait_for(connect_task, timeout=1.0)
