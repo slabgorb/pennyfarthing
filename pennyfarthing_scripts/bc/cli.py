@@ -3,6 +3,11 @@
 Usage:
     pf bc <panel>    Set focus to a panel
     pf bc reset      Clear focus setting
+    pf bc save       Save a named layout
+    pf bc load       Load a named layout
+    pf bc list       List saved layouts
+    pf bc clear      Delete a named layout
+    pf bc clear-all  Delete all named layouts
 """
 
 from __future__ import annotations
@@ -12,7 +17,16 @@ import sys
 
 import click
 
-from pennyfarthing_scripts.bc.focus import VALID_PANELS, clear_panel_focus, set_panel_focus
+from pennyfarthing_scripts.bc.focus import (
+    VALID_PANELS,
+    clear_all_named_layouts,
+    clear_named_layout,
+    clear_panel_focus,
+    list_named_layouts,
+    load_named_layout,
+    save_named_layout,
+    set_panel_focus,
+)
 
 
 @click.group()
@@ -64,6 +78,67 @@ def reset_focus():
     result = clear_panel_focus()
     if result["success"]:
         click.echo(json.dumps({"success": True, "message": result.get("message", "focus cleared")}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+# --- Story 104-4: Named layout commands (stubs) ---
+
+
+@bc.command("save")
+@click.argument("name")
+def save_layout(name: str):
+    """Save current layout under a name."""
+    result = save_named_layout(name, {})  # stub — layout_data comes from client
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "name": result["data"]}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+@bc.command("load")
+@click.argument("name")
+def load_layout(name: str):
+    """Load a previously saved named layout."""
+    result = load_named_layout(name)
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "name": name, "layout": result["data"]}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+@bc.command("list")
+def list_layouts():
+    """List all saved named layouts."""
+    result = list_named_layouts()
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "layouts": result["data"]}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+@bc.command("clear")
+@click.argument("name")
+def clear_layout(name: str):
+    """Delete a specific named layout."""
+    result = clear_named_layout(name)
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "message": result.get("message", "layout cleared")}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+@bc.command("clear-all")
+def clear_all_layouts():
+    """Delete all named layouts."""
+    result = clear_all_named_layouts()
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "message": result.get("message", "all layouts cleared")}))
     else:
         click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
         sys.exit(1)
