@@ -9,7 +9,7 @@
  * Single Dockview group — users can freely rearrange panels.
  */
 
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import {
   DockviewReact,
   DockviewReadyEvent,
@@ -21,6 +21,7 @@ import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { panelRegistry } from './panel-registry';
 import PersonaHeader from './PersonaHeader.js';
+import { useFocusPanel } from '../hooks/useFocusPanel.js';
 import '../styles/dockview-theme.css';
 
 // =============================================================================
@@ -105,11 +106,16 @@ export function BikeRackWorkspace({
   onLayoutChange,
 }: BikeRackWorkspaceProps): React.ReactElement {
   const apiRef = useRef<DockviewApi | null>(null);
+  const [dockviewApi, setDockviewApi] = useState<DockviewApi | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Panel focus mode — stash/restore layout on /bc CLI events
+  useFocusPanel(dockviewApi);
 
   const onReady = useCallback((event: DockviewReadyEvent) => {
     const api = event.api;
     apiRef.current = api;
+    setDockviewApi(api);
 
     // Restore saved layout if available
     if (initialLayout && initialLayout.grid && initialLayout.panels) {
