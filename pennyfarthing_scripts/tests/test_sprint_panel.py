@@ -363,35 +363,19 @@ class TestSprintPanelMetrics:
 class TestDefaultPanel:
     """AC5: SprintPanel is the default panel on TUI launch."""
 
-    def test_bikerack_app_mounts_sprint_panel(self) -> None:
+    async def test_bikerack_app_mounts_sprint_panel(self) -> None:
         """BikeRackApp should mount SprintPanel in main-content on startup."""
         from pennyfarthing_scripts.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
         app = BikeRackApp(client=mock_client)
 
-        # The compose method should include SprintPanel
-        # (currently it doesn't — this test should FAIL until tui.py is updated)
-        composed = list(app.compose())
-        panel_types = [type(w).__name__ for w in composed]
-
-        # Walk into containers to find SprintPanel
-        all_widgets = []
-        for w in composed:
-            all_widgets.append(w)
-            if hasattr(w, "children"):
-                all_widgets.extend(w.children)
-            # Check compose of containers
-            if hasattr(w, "compose"):
-                try:
-                    all_widgets.extend(w.compose())
-                except Exception:
-                    pass
-
-        widget_types = [type(w).__name__ for w in all_widgets]
-        assert "SprintPanel" in widget_types, (
-            f"BikeRackApp should compose SprintPanel, got: {widget_types}"
-        )
+        async with app.run_test():
+            panels = app.query(SprintPanel)
+            assert len(panels) > 0, "SprintPanel should be mounted as default panel"
+            panel = panels.first()
+            assert panel.id == "sprint-panel"
 
 
 # ---------------------------------------------------------------------------
@@ -526,6 +510,11 @@ def _extract_table(result: Any) -> Table:
     raise AssertionError(
         f"Expected Rich Table in output, got {type(result).__name__}: {result!r}"
     )
+
+
+async def _noop_coroutine() -> None:
+    """No-op coroutine for mocking async client.connect()."""
+    pass
 
 
 def _render_to_string(result: Any) -> str:
