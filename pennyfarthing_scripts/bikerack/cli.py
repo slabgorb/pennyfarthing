@@ -38,7 +38,8 @@ def bikerack(ctx):
     default=None,
     help="Project directory (where .pennyfarthing/ lives). Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
 )
-def start(project_dir):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def start(project_dir, dry_run):
     """Start BikeRack mode.
 
     Starts WheelHub in background, waits for readiness,
@@ -60,6 +61,12 @@ def start(project_dir):
         project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
     else:
         project_dir = Path.cwd()
+
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would start BikeRack mode")
+        click.echo(f"  Project: {project_dir}")
+        click.echo(f"  Actions: start WheelHub, set OTEL env, exec Claude CLI")
+        return
 
     running, pid, port = is_already_running(project_dir)
     if running:
@@ -101,7 +108,8 @@ def start(project_dir):
     default=None,
     help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
 )
-def stop(project_dir):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def stop(project_dir, dry_run):
     """Stop running BikeRack instance."""
     from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
 
@@ -111,6 +119,12 @@ def stop(project_dir):
         project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
     else:
         project_dir = Path.cwd()
+
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would stop BikeRack instance")
+        click.echo(f"  Project: {project_dir}")
+        return
+
     result = stop_bikerack(project_dir)
 
     if result["success"]:
