@@ -117,11 +117,16 @@ export function BikeRackWorkspace({
     apiRef.current = api;
     setDockviewApi(api);
 
-    // Restore saved layout if available
-    if (initialLayout && initialLayout.grid && initialLayout.panels) {
+    // Restore saved layout if available (must have actual panels, not just empty {})
+    if (initialLayout && initialLayout.grid && initialLayout.panels
+        && Object.keys(initialLayout.panels).length > 0) {
       try {
         api.fromJSON(initialLayout);
-        return;
+        // Verify panels were actually created
+        if (api.panels.length > 0) {
+          return;
+        }
+        console.warn('[BikeRackWorkspace] Restored layout produced no panels, building default');
       } catch (err) {
         console.warn('[BikeRackWorkspace] Failed to restore layout, building default:', err);
       }
@@ -151,12 +156,19 @@ export function BikeRackWorkspace({
     const api = apiRef.current;
     if (!api || !onLayoutChange) return;
 
+    // Never save empty layouts — prevents corruption loop
+    if (api.panels.length === 0) return;
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      onLayoutChange(api.toJSON());
+      const serialized = api.toJSON();
+      // Double-check: don't persist if serialization produced empty panels
+      if (serialized.panels && Object.keys(serialized.panels).length > 0) {
+        onLayoutChange(serialized);
+      }
     }, 300);
   }, [onLayoutChange]);
 
@@ -182,21 +194,20 @@ export function BikeRackWorkspace({
     };
   }, []);
 
-  const components = { PanelAdapter };
+  // Memoize to prevent DockviewReact from reinitializing on re-render
+  const components = React.useMemo(() => ({ PanelAdapter }), []);
 
   return (
     <div className="cyclist-app cyclist-dockview" style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
       <div data-testid="bikerack-portrait-anchor" style={{ flexShrink: 0 }}>
         <PersonaHeader />
       </div>
-      <div className="flex-1" style={{ flexGrow: 1, minHeight: 0 }}>
-        <DockviewReact
-          className="dockview-container"
-          onReady={onReady}
-          components={components}
-          watermarkComponent={() => null}
-        />
-      </div>
+      <DockviewReact
+        className="dockview-container"
+        onReady={onReady}
+        components={components}
+        watermarkComponent={() => null}
+      />
     </div>
   );
 }
