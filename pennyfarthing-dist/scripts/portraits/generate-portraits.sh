@@ -20,18 +20,30 @@ while [[ ! -d "$_dir/.pennyfarthing" ]] && [[ ! -d "$_dir/pennyfarthing-dist" ]]
 done
 PROJECT_ROOT="$_dir"
 
-# If we're in the pennyfarthing repo itself, look for .venv there
-# If we're in a user project, .venv should be at project root
-VENV_DIR="$PROJECT_ROOT/.venv"
+# Find Python venv - check multiple locations
+# Priority: VENV_DIR env var > project .venv > ~/.venvs/sd > ~/.venv
 PYTHON_SCRIPT="$SCRIPT_DIR/generate-portraits.py"
 
+if [[ -z "${VENV_DIR:-}" ]]; then
+    if [[ -d "$PROJECT_ROOT/.venv" ]]; then
+        VENV_DIR="$PROJECT_ROOT/.venv"
+    elif [[ -d "$HOME/.venvs/sd" ]]; then
+        VENV_DIR="$HOME/.venvs/sd"
+    elif [[ -d "$HOME/.venv" ]]; then
+        VENV_DIR="$HOME/.venv"
+    fi
+fi
+
 # Check venv exists
-if [[ ! -d "$VENV_DIR" ]]; then
-    echo "Error: Virtual environment not found at $VENV_DIR"
-    echo "Create it with: python3 -m venv .venv"
+if [[ -z "${VENV_DIR:-}" ]] || [[ ! -d "$VENV_DIR" ]]; then
+    echo "Error: Virtual environment not found"
+    echo "Searched: $PROJECT_ROOT/.venv, ~/.venvs/sd, ~/.venv"
+    echo "Or set VENV_DIR=/path/to/venv"
+    echo "Create with: python3 -m venv .venv"
     echo "Then install: pip install diffusers transformers accelerate torch pillow pyyaml"
     exit 1
 fi
+echo "Using venv: $VENV_DIR"
 
 # Check Python script exists
 if [[ ! -f "$PYTHON_SCRIPT" ]]; then
