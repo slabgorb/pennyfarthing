@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Loader, Circle, AlertTriangle } from 'lucide-react';
+import { Check, Copy, Loader, Circle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -241,6 +241,35 @@ function JiraLink({ jiraKey, storyId }: { jiraKey: string; storyId: string }): R
 }
 
 /**
+ * CopyButton - Copy ID + title to clipboard on click
+ */
+function CopyButton({ text }: { text: string }): React.ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard API not available
+    }
+  };
+
+  return (
+    <button
+      className={`copy-id-button ${copied ? 'copied' : ''}`}
+      onClick={handleCopy}
+      aria-label={`Copy ${text}`}
+      title="Copy ID + title"
+    >
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  );
+}
+
+/**
  * EpicGroup - Renders a single epic with its stories
  */
 function EpicGroup({
@@ -281,6 +310,7 @@ function EpicGroup({
         </Button>
         <span className="epic-title">{epic.title}</span>
         {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
+        <CopyButton text={`${epic.id} ${epic.title}`} />
         <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
         {completed && epic.hasContext && (
           <Badge variant="default" className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
@@ -347,6 +377,7 @@ function EpicGroup({
                 <PriorityDot priority={story.priority} storyId={story.id} />
                 <StatusBadge status={story.status} storyId={story.id} />
                 {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
+                <CopyButton text={`${story.id} ${story.title}`} />
                 <div className="story-info">
                   <span className="story-title">{story.title}</span>
                   <span className="story-meta">
