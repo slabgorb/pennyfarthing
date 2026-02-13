@@ -78,15 +78,7 @@
   border-bottom: 2px solid var(--accent, #6366f1);
 }
 
-/* Tab close button */
-.cyclist-dockview .dv-tab .dv-default-tab-content .dv-close-action {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.cyclist-dockview .dv-tab:hover .dv-default-tab-content .dv-close-action {
-  opacity: 1;
-}
+/* Tab close button removed via defaultTabComponent with hideClose={true} */
 
 /* =============================================================================
    Group Styles
