@@ -42,6 +42,9 @@ function isValidDockviewLayout(layout: unknown): layout is SerializedDockview {
   if (!layoutObj.grid || typeof layoutObj.grid !== 'object') return false;
   if (!layoutObj.panels || typeof layoutObj.panels !== 'object') return false;
 
+  // A layout with zero panels is empty — treat as invalid so default panels get created
+  if (Object.keys(layoutObj.panels as Record<string, unknown>).length === 0) return false;
+
   const grid = layoutObj.grid as Record<string, unknown>;
   // Grid should have root, width, height, orientation
   if (!grid.root || typeof grid.width !== 'number' || typeof grid.height !== 'number') return false;
