@@ -7,10 +7,11 @@ Epic: 104 — /bc CLI Panel Focus
 
 from __future__ import annotations
 
+import io
 import re
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 
 def _get_root() -> Path:
@@ -55,27 +56,11 @@ def set_panel_focus(panel_name: str, project_dir: Path | None = None) -> dict:
         }
 
     try:
-        root = project_dir or _get_root()
-        config_path = root / ".pennyfarthing" / "config.local.yaml"
-
-        config: dict = {}
-        if config_path.exists():
-            try:
-                existing = yaml.safe_load(config_path.read_text())
-                if existing and isinstance(existing, dict):
-                    config = existing
-                elif existing is not None and not isinstance(existing, dict):
-                    return {"success": False, "error": "Config is not a YAML mapping"}
-            except yaml.YAMLError as exc:
-                return {"success": False, "error": f"Failed to parse config: {exc}"}
-
+        config_path, config = _read_config(project_dir)
+        if config is None:
+            return {"success": False, "error": "Config is not a YAML mapping"}
         config["focus"] = panel_name
-
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(
-            yaml.dump(config, default_flow_style=False, sort_keys=False)
-        )
-
+        _write_config(config_path, config)
         return {"success": True, "data": panel_name}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
@@ -97,19 +82,12 @@ def clear_panel_focus(project_dir: Path | None = None) -> dict:
         if not config_path.exists():
             return {"success": True, "message": "No focus setting to clear"}
 
-        config: dict = {}
-        try:
-            existing = yaml.safe_load(config_path.read_text())
-            if existing and isinstance(existing, dict):
-                config = existing
-        except Exception:
-            pass
-
-        config.pop("focus", None)
-
-        config_path.write_text(
-            yaml.dump(config, default_flow_style=False, sort_keys=False)
-        )
+        config_path, config = _read_config(project_dir)
+        if config is None:
+            config = _make_yaml().load("{}")
+        if "focus" in config:
+            del config["focus"]
+        _write_config(config_path, config)
 
         return {"success": True, "message": "focus cleared"}
     except Exception as exc:
@@ -119,24 +97,40 @@ def clear_panel_focus(project_dir: Path | None = None) -> dict:
 LAYOUT_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
 
 
-def _read_config(project_dir: Path | None = None) -> tuple[Path, dict]:
-    """Read config.local.yaml, returning (path, config_dict)."""
+def _make_yaml() -> YAML:
+    """Create a configured ruamel.yaml instance that preserves formatting."""
+    yml = YAML()
+    yml.preserve_quotes = True
+    yml.default_flow_style = False
+    yml.width = 4096
+    yml.indent(mapping=2, sequence=4, offset=2)
+    return yml
+
+
+def _read_config(project_dir: Path | None = None):
+    """Read config.local.yaml using ruamel.yaml to preserve formatting.
+
+    Returns:
+        (config_path, config) where config is a CommentedMap or None if invalid.
+    """
     root = project_dir or _get_root()
     config_path = root / ".pennyfarthing" / "config.local.yaml"
-    config: dict = {}
+    yml = _make_yaml()
     if config_path.exists():
-        existing = yaml.safe_load(config_path.read_text())
-        if existing and isinstance(existing, dict):
-            config = existing
-    return config_path, config
+        config = yml.load(config_path.read_text())
+        if config is None:
+            config = yml.load("{}")
+        return config_path, config
+    return config_path, yml.load("{}")
 
 
-def _write_config(config_path: Path, config: dict) -> None:
-    """Write config dict to YAML file."""
+def _write_config(config_path: Path, config) -> None:
+    """Write config to YAML file, preserving formatting via ruamel.yaml."""
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(
-        yaml.dump(config, default_flow_style=False, sort_keys=False)
-    )
+    yml = _make_yaml()
+    stream = io.StringIO()
+    yml.dump(config, stream)
+    config_path.write_text(stream.getvalue())
 
 
 def validate_layout_name(name: str) -> bool:
@@ -277,8 +271,8 @@ def get_panel_focus(project_dir: Path | None = None) -> dict:
             return {"success": True, "focus": None}
 
         try:
-            config = yaml.safe_load(config_path.read_text())
-            if config and isinstance(config, dict):
+            _, config = _read_config(project_dir)
+            if config is not None:
                 return {"success": True, "focus": config.get("focus")}
             return {"success": True, "focus": None}
         except Exception:
