@@ -18,7 +18,6 @@ Tests should FAIL until focus.py is implemented.
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from pennyfarthing_scripts.bc.focus import (
@@ -27,7 +26,6 @@ from pennyfarthing_scripts.bc.focus import (
     get_panel_focus,
     set_panel_focus,
 )
-
 
 # ---------------------------------------------------------------------------
 # AC1: set_panel_focus writes focus key to config.local.yaml
