@@ -951,11 +951,8 @@ def epic_promote(epic_id: str):
         init_data = yaml.safe_load(f.read())
 
     if isinstance(source_ref, str):
-        # String ref — remove from list and delete shard file
+        # String ref — remove from initiative list (shard file is kept for current sprint)
         init_data["epics"] = [e for e in init_data.get("epics", []) if e != source_ref]
-        shard = _epic_shard_path(sprint_dir, source_ref)
-        if shard.exists():
-            shard.unlink()
     else:
         # Inline dict — remove matching entry
         init_data["epics"] = [
