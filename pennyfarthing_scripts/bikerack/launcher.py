@@ -179,3 +179,25 @@ def get_status(project_dir: Path) -> dict:
         "port": port,
         "dashboard": f"http://localhost:{port}/bikerack",
     }
+
+
+# --- Story 103-3: TUI launcher stubs (RED phase) ---
+
+
+def read_tui_pid_file(project_dir: Path) -> int | None:
+    """Read TUI PID from .bikerack-tui-pid file. Returns None if not found."""
+    raise NotImplementedError("Story 103-3: not yet implemented")
+
+
+def write_tui_pid_file(project_dir: Path, pid: int) -> None:
+    """Write .bikerack-tui-pid file."""
+    raise NotImplementedError("Story 103-3: not yet implemented")
+
+
+def start_tui(project_dir: Path, port: int) -> subprocess.Popen:
+    """Start TUI as independent subprocess.
+
+    Must use start_new_session=True so TUI survives parent exit.
+    Writes .bikerack-tui-pid for lifecycle tracking.
+    """
+    raise NotImplementedError("Story 103-3: not yet implemented")
