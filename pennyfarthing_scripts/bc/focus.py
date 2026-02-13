@@ -1,6 +1,7 @@
 """Panel focus management — read/write focus key in config.local.yaml.
 
 Story 104-1: pf bc CLI command + /bc user skill
+Story 104-4: Save and clear named layouts via /bc
 Epic: 104 — /bc CLI Panel Focus
 """
 
@@ -112,6 +113,89 @@ def clear_panel_focus(project_dir: Path | None = None) -> dict:
         return {"success": True, "message": "focus cleared"}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
+
+
+import re
+
+LAYOUT_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
+
+
+def validate_layout_name(name: str) -> bool:
+    """Validate a layout name (alphanumeric + underscore only).
+
+    Args:
+        name: Layout name to validate
+
+    Returns:
+        True if valid, False otherwise
+    """
+    return False  # stub — 104-4
+
+
+def save_named_layout(
+    name: str, layout_data: dict, project_dir: Path | None = None
+) -> dict:
+    """Save a named layout to config.local.yaml.
+
+    Args:
+        name: Layout name (must match LAYOUT_NAME_PATTERN)
+        layout_data: Serialized dockview layout
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, data?: str, error?: str}
+    """
+    return {"success": False, "error": "not implemented"}  # stub — 104-4
+
+
+def load_named_layout(name: str, project_dir: Path | None = None) -> dict:
+    """Load a named layout from config.local.yaml.
+
+    Args:
+        name: Layout name to load
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, data?: dict, error?: str}
+    """
+    return {"success": False, "error": "not implemented"}  # stub — 104-4
+
+
+def list_named_layouts(project_dir: Path | None = None) -> dict:
+    """List all saved named layouts.
+
+    Args:
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, data?: list[str], error?: str}
+    """
+    return {"success": False, "error": "not implemented"}  # stub — 104-4
+
+
+def clear_named_layout(name: str, project_dir: Path | None = None) -> dict:
+    """Delete a specific named layout from config.local.yaml.
+
+    Args:
+        name: Layout name to delete
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, message?: str, error?: str}
+    """
+    return {"success": False, "error": "not implemented"}  # stub — 104-4
+
+
+def clear_all_named_layouts(project_dir: Path | None = None) -> dict:
+    """Delete all named layouts from config.local.yaml.
+
+    Args:
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, message?: str, error?: str}
+    """
+    return {"success": False, "error": "not implemented"}  # stub — 104-4
 
 
 def get_panel_focus(project_dir: Path | None = None) -> dict:
