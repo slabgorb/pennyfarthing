@@ -91,6 +91,10 @@ def read_sprint(path: Path) -> CommentedMap:
     loads each epic-{ref}.yaml shard file and replaces the strings
     with full epic CommentedMaps.
 
+    Also discovers unindexed shard files on disk (epic-*.yaml files not
+    referenced in the epics list) and appends them so orphan shards are
+    never invisible to the CLI.
+
     Args:
         path: Path to sprint YAML index file
 
@@ -108,6 +112,10 @@ def read_sprint(path: Path) -> CommentedMap:
         return data
 
     sprint_dir = path.parent
+
+    # Track loaded epic identities to prevent duplicates
+    loaded_shard_files: set[Path] = set()
+    loaded_epic_ids: set[str] = set()
     merged_epics = CommentedSeq()
     for ref in epics:
         if isinstance(ref, str):
@@ -115,8 +123,37 @@ def read_sprint(path: Path) -> CommentedMap:
             if shard_file.exists():
                 epic_data = _read_yaml_file(shard_file)
                 merged_epics.append(epic_data)
+                loaded_shard_files.add(shard_file.resolve())
+                # Track both id and jira key (normalized) for dedup
+                eid = str(epic_data.get("id", "")).replace("epic-", "")
+                if eid:
+                    loaded_epic_ids.add(eid)
+                jira_key = str(epic_data.get("jira", ""))
+                if jira_key:
+                    loaded_epic_ids.add(jira_key)
         else:
             merged_epics.append(ref)
+
+    # Discover unindexed shard files on disk
+    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
+        if shard_file.resolve() in loaded_shard_files:
+            continue
+        try:
+            epic_data = _read_yaml_file(shard_file)
+        except (FileNotFoundError, ValueError):
+            continue
+        if not isinstance(epic_data, Mapping) or "id" not in epic_data:
+            continue
+        # Skip if this epic was already loaded (by id or jira key)
+        eid = str(epic_data.get("id", "")).replace("epic-", "")
+        jira_key = str(epic_data.get("jira", ""))
+        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
+            continue
+        merged_epics.append(epic_data)
+        if eid:
+            loaded_epic_ids.add(eid)
+        if jira_key:
+            loaded_epic_ids.add(jira_key)
 
     data["epics"] = merged_epics
     return data
