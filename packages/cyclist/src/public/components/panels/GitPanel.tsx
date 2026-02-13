@@ -6,13 +6,12 @@
  */
 
 import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGitStatus, RepoStatusData, DirtyFile } from '../../hooks/useGitStatus';
-import { useClaudeContext } from '../../contexts/ClaudeContext';
+
 
 /** Get CSS class for file status */
 function getFileStatusClass(status: string): string {
@@ -152,11 +151,6 @@ function RepoStatus({ repo }: RepoStatusProps): React.ReactElement {
 
 export function GitPanel(): React.ReactElement {
   const { repos, isLoading, error } = useGitStatus();
-  const { send } = useClaudeContext();
-
-  const handleSyncAll = () => {
-    send('Sync all repos');
-  };
 
   if (isLoading) {
     return (
@@ -193,19 +187,6 @@ export function GitPanel(): React.ReactElement {
 
   return (
     <div className="git-panel stacked" data-testid="git-panel">
-      <div className="git-panel-actions">
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="sync-all-btn" onClick={handleSyncAll} aria-label="Sync all repos">
-                <RefreshCw size={14} />
-                <span>Sync all repos</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Pull latest changes for all repos</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
       {repos.map(repo => (
         <RepoStatus key={repo.name} repo={repo} />
       ))}
