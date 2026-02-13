@@ -29,6 +29,13 @@ import ApprovalModal, { useApprovalModal } from './components/ApprovalModal';
 import { subscribeToPermissionRequests, sendPermissionResponse, createApprovalResponse } from './components/ApprovalModal';
 import type { ApprovalRequest, GrantScope } from './components/ApprovalModal';
 
+// Environment discriminator injected by server.ts (ADR-0024)
+declare global {
+  interface Window {
+    __CYCLIST_MODE__?: 'cyclist' | 'bikerack';
+  }
+}
+
 // Import all panel components
 // Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)
 import {
@@ -202,7 +209,7 @@ function RootErrorFallback(): React.ReactElement {
 
 export default function App(): React.ReactElement {
   // Detect route mode (computed before hooks, used after)
-  const isBikeRackIndex = window.location.pathname === '/bikerack';
+  const isBikeRackIndex = window.__CYCLIST_MODE__ === 'bikerack';
   const standalonePanelName = getStandalonePanelName();
 
   // --- All hooks called unconditionally (React rules of hooks) ---
