@@ -28,6 +28,7 @@ import {
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
+import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
 import { storePendingToolInput } from './span-correlation.js';
 import {
   getAllGitDiffs,
@@ -159,6 +160,10 @@ const sprintClients = new Set<WebSocket>();
 
 // Diffs WebSocket clients (MSSCI-14238: Git-based diffs)
 const diffsClients = new Set<WebSocket>();
+
+// Focus WebSocket clients (MSSCI-14976: panel focus broadcast)
+const focusClients = new Set<WebSocket>();
+let lastKnownFocus: string | null = null;
 
 // In-memory todos store (for initial send on connection)
 interface TodoItem {
@@ -303,6 +308,10 @@ export function getClaudeClients(): Set<WebSocket> {
   return claudeClients;
 }
 
+export function getFocusClients(): Set<WebSocket> {
+  return focusClients;
+}
+
 // =============================================================================
 // Todos Callback (Electron Mode Bridge)
 // =============================================================================
@@ -432,6 +441,9 @@ export function setupWebSocketServers(
   // WebSocket server for diffs at /ws/diffs (MSSCI-14238: Git-based diffs)
   const diffsWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for focus at /ws/focus (MSSCI-14976: panel focus)
+  const focusWss = new WebSocketServer({ noServer: true });
+
   // WebSocket server for PTY at /ws/pty (terminal emulator)
   const ptyWss = new WebSocketServer({ noServer: true });
 
@@ -506,6 +518,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/diffs') {
       diffsWss.handleUpgrade(request, socket, head, (ws) => {
         diffsWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/focus') {
+      focusWss.handleUpgrade(request, socket, head, (ws) => {
+        focusWss.emit('connection', ws, request);
       });
     } else if (pathname === '/ws/pty') {
       ptyWss.handleUpgrade(request, socket, head, (ws) => {
@@ -773,6 +789,25 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       settingsClients.delete(ws);
+    });
+  });
+
+  // Handle focus WebSocket connections (MSSCI-14976: panel focus)
+  focusWss.on('connection', (ws: WebSocket) => {
+    focusClients.add(ws);
+
+    // Send initial focus state on connection
+    const focus = getConfigFocus(getProjectDir());
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(createFocusMessage('init', focus)));
+    }
+
+    ws.on('close', () => {
+      focusClients.delete(ws);
+    });
+
+    ws.on('error', () => {
+      focusClients.delete(ws);
     });
   });
 
@@ -1185,6 +1220,12 @@ export function setupWebSocketServers(
           try {
             const settings = await getSettingsForWebSocket(projectDir);
             broadcastSettingsUpdate(settings);
+            // MSSCI-14976: Also check for focus changes
+            const newFocus = getConfigFocus(projectDir);
+            if (shouldBroadcastFocus(newFocus, lastKnownFocus)) {
+              lastKnownFocus = newFocus;
+              broadcastFocusUpdate(newFocus);
+            }
           } catch (err) {
             console.error('[WebSocket] Failed to broadcast settings update:', err);
           }
@@ -1617,6 +1658,16 @@ export function broadcastContextUpdate(context: ContextInfo): void {
 export function broadcastPanelToggle(panelId: string): void {
   const message = JSON.stringify({ type: 'panel:toggle', panelId });
   for (const client of settingsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// MSSCI-14976: Broadcast focus update to all connected focus clients
+export function broadcastFocusUpdate(focus: string | null): void {
+  const message = JSON.stringify(createFocusMessage('update', focus));
+  for (const client of focusClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
