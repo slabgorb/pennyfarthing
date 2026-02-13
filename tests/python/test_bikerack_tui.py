@@ -13,7 +13,6 @@ Run with: python -m pytest tests/python/test_bikerack_tui.py -v
 
 import pytest
 from textual.app import App
-from textual.widgets import Header, Footer, Static
 
 
 class TestImportAndEntryPoint:
