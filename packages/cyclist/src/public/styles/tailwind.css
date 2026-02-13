@@ -1752,6 +1752,33 @@
   text-decoration: line-through;
 }
 
+/* Copy ID Button — show on hover, feedback on click */
+.enhanced-sprint-panel .copy-id-button {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #8b8b8b);
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.enhanced-sprint-panel .story-item:hover .copy-id-button,
+.enhanced-sprint-panel .epic-header:hover .copy-id-button {
+  opacity: 1;
+}
+
+.enhanced-sprint-panel .copy-id-button:hover {
+  color: var(--text-primary, #d4d4d4);
+}
+
+.enhanced-sprint-panel .copy-id-button.copied {
+  opacity: 1;
+  color: var(--success-color, #4ec9b0);
+}
+
 /* Future Initiatives Section */
 .enhanced-sprint-panel .future-epic {
   display: flex;
