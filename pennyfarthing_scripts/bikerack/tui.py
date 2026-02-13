@@ -66,6 +66,7 @@ class BikeRackApp(App):
     async def on_mount(self) -> None:
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
+            self._client.subscribe("focus", self._handle_focus_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
 
     def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
@@ -73,9 +74,21 @@ class BikeRackApp(App):
 
         Expected format: {type: 'init'|'update', focus: '<panel>'|null}
         Only 'update' messages trigger panel switches (matching React hook).
-        Stub — not yet implemented.
         """
-        pass
+        if message is None or not isinstance(message, dict):
+            return
+        if message.get("type") != "update":
+            return
+        if "focus" not in message:
+            return
+
+        focus = message["focus"]
+        if focus is not None:
+            self._previous_panel = self._focused_panel
+            self._focused_panel = focus
+        else:
+            self._focused_panel = None
+            self._previous_panel = None
 
     def _on_ws_state_change(self, state: ConnectionState) -> None:
         """Handle WheelHub connection state changes."""
