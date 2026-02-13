@@ -15,6 +15,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tui = [
+    "textual>=1.0",
+]
+
 portraits = [
     "torch>=2.0",
     "diffusers>=0.36",
