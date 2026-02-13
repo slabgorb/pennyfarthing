@@ -14,7 +14,7 @@
  * No stash stack — successive /bc calls preserve original saved state.
  */
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { DockviewApi, SerializedDockview } from 'dockview-react';
 
 export interface UseFocusPanelResult {
@@ -26,6 +26,43 @@ export interface UseFocusPanelResult {
   stashedLayout: SerializedDockview | null;
 }
 
+/** WebSocket message format from /ws/focus */
+interface FocusMessage {
+  type: 'init' | 'update';
+  focus: string | null;
+}
+
+/**
+ * Build a minimal single-panel layout for focus mode.
+ */
+function buildSinglePanelLayout(panelId: string): SerializedDockview {
+  return {
+    grid: {
+      root: {
+        type: 'leaf',
+        data: {
+          views: [panelId],
+          activeView: panelId,
+          id: 'focus-group',
+        },
+        size: 1,
+      },
+      width: 1,
+      height: 1,
+      orientation: 'HORIZONTAL',
+    },
+    panels: {
+      [panelId]: {
+        id: panelId,
+        contentComponent: 'PanelAdapter',
+        title: panelId,
+        params: { panelId },
+      },
+    },
+    activeGroup: 'focus-group',
+  };
+}
+
 /**
  * Hook for managing panel focus mode.
  *
@@ -33,27 +70,93 @@ export interface UseFocusPanelResult {
  * @returns Focus state including current focused panel and mode
  */
 export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
-  const wsRef = useRef<WebSocket | null>(null);
+  const [focusedPanel, setFocusedPanel] = useState<string | null>(null);
+  const [isInFocusMode, setIsInFocusMode] = useState(false);
+  const [stashedLayout, setStashedLayout] = useState<SerializedDockview | null>(null);
 
-  // Connect to /ws/focus WebSocket — stub: connects but does not process messages
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const isMountedRef = useRef(true);
+
+  // Refs to access latest values inside WebSocket callbacks without re-creating the effect
+  const apiRef = useRef(api);
+  apiRef.current = api;
+
+  const inFocusModeRef = useRef(false);
+  const stashRef = useRef<SerializedDockview | null>(null);
+
   useEffect(() => {
+    isMountedRef.current = true;
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/focus`;
 
-    wsRef.current = new WebSocket(wsUrl);
+    const handleFocusChange = (focus: string | null) => {
+      const currentApi = apiRef.current;
+
+      if (focus !== null) {
+        // Focus on a panel
+        if (!inFocusModeRef.current && currentApi) {
+          // First focus after normal mode — stash current layout
+          const layout = currentApi.toJSON();
+          stashRef.current = layout;
+          setStashedLayout(layout);
+        }
+
+        inFocusModeRef.current = true;
+        setIsInFocusMode(true);
+        setFocusedPanel(focus);
+
+        if (currentApi) {
+          currentApi.fromJSON(buildSinglePanelLayout(focus));
+        }
+      } else {
+        // Reset — restore stashed layout
+        if (inFocusModeRef.current && currentApi && stashRef.current) {
+          currentApi.fromJSON(stashRef.current);
+        }
+
+        stashRef.current = null;
+        inFocusModeRef.current = false;
+        setStashedLayout(null);
+        setIsInFocusMode(false);
+        setFocusedPanel(null);
+      }
+    };
+
+    const connect = () => {
+      if (!isMountedRef.current) return;
+
+      wsRef.current = new WebSocket(wsUrl);
+
+      wsRef.current.onmessage = (event: MessageEvent) => {
+        try {
+          const msg = JSON.parse(event.data) as FocusMessage;
+          if (msg.type === 'init' || msg.type === 'update') {
+            handleFocusChange(msg.focus);
+          }
+        } catch {
+          // Ignore malformed messages
+        }
+      };
+
+      wsRef.current.onclose = () => {
+        reconnectTimeoutRef.current = setTimeout(connect, 2000);
+      };
+    };
+
+    connect();
 
     return () => {
+      isMountedRef.current = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
   }, []);
 
-  // Stub: not implemented — returns default empty state
-  // Dev will implement: message handling, stash/restore, state management
-  return {
-    focusedPanel: null,
-    isInFocusMode: false,
-    stashedLayout: null,
-  };
+  return { focusedPanel, isInFocusMode, stashedLayout };
 }
