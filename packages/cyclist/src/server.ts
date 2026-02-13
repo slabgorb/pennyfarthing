@@ -60,10 +60,10 @@ export { getGitInfo, getAllReposGitInfo, getAllReposGitInfoAsync } from './api/i
 export type { GitInfo } from './api/index.js';
 
 // BikeRack mode detection (ADR-0024, Rule 1)
-// Centralized gate — all mode checks go through this function
-export function isBikeRackMode(): boolean {
-  return process.env.IS_BIKERACK === '1';
-}
+// Imported from env.ts to break circular import (server → api/index → mode → server)
+// Re-exported to preserve public API for main.ts, bikerack.ts, etc.
+import { isBikeRackMode } from './env.js';
+export { isBikeRackMode };
 
 export const app: Express = express();
 
@@ -76,7 +76,7 @@ if (portraitsDir) {
 }
 
 // Serve static files from public directory
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, { index: false }));
 
 // Serve Vite build output (React components) from dist/public
 // This is separate from src/public to avoid Vite overwriting source files
@@ -93,15 +93,22 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Serve index.html for root route
-app.get('/', (_req, res) => {
-  res.sendFile(join(publicDir, 'index.html'));
-});
+// Cache index.html template once at startup, inject mode flag per-request
+const indexHtmlTemplate = readFileSync(join(publicDir, 'index.html'), 'utf-8');
 
-// BikeRack index page (MSSCI-14822) — serves SPA, React handles routing
-app.get('/bikerack', (_req, res) => {
-  res.sendFile(join(publicDir, 'index.html'));
-});
+function serveIndexHtml(_req: express.Request, res: express.Response) {
+  const mode = isBikeRackMode() ? 'bikerack' : 'cyclist';
+  const injected = indexHtmlTemplate.replace(
+    '</head>',
+    `<script>window.__CYCLIST_MODE__="${mode}";</script>\n</head>`
+  );
+  res.set('Cache-Control', 'no-cache');
+  res.type('html').send(injected);
+}
+
+// Both routes serve the same injected HTML — /bikerack kept for backward compat (bookmarks)
+app.get('/', serveIndexHtml);
+app.get('/bikerack', serveIndexHtml);
 
 // Serve pennyfarthing logo from project root (for welcome message)
 app.get('/pennyfarthing-transparent.png', (_req, res) => {

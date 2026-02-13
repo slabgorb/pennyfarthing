@@ -70,7 +70,7 @@ export function StandalonePanel(): React.ReactElement {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', backgroundColor: 'var(--bg-primary, #1a1a2e)', color: 'var(--text-primary, #e4e4e7)' }}>
         <h1>Panel not found</h1>
         <p>
-          <a href="/bikerack" style={{ color: 'var(--accent, #818cf8)' }}>Back to BikeRack</a>
+          <a href="/" style={{ color: 'var(--accent, #818cf8)' }}>Back to BikeRack</a>
         </p>
       </div>
     );
