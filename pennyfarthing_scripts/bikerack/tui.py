@@ -2,6 +2,7 @@
 
 Story 103-1: Textual app scaffold with basic layout.
 Story 103-4: Connection status indicator in TUI header.
+Story 103-7: /bc TUI panel focus — subscribe to /ws/focus, switch panels.
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
+
+from typing import Any
 
 from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
 
@@ -47,6 +50,8 @@ class BikeRackApp(App):
     def __init__(self, client=None, **kwargs):
         super().__init__(**kwargs)
         self._client = client
+        self._focused_panel: str | None = None
+        self._previous_panel: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -62,6 +67,15 @@ class BikeRackApp(App):
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
+
+    def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
+        """Handle incoming focus channel messages.
+
+        Expected format: {type: 'init'|'update', focus: '<panel>'|null}
+        Only 'update' messages trigger panel switches (matching React hook).
+        Stub — not yet implemented.
+        """
+        pass
 
     def _on_ws_state_change(self, state: ConnectionState) -> None:
         """Handle WheelHub connection state changes."""
