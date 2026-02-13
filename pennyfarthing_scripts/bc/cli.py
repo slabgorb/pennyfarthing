@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.request
+import urllib.error
+from pathlib import Path
 
 import click
 
@@ -27,6 +30,47 @@ from pennyfarthing_scripts.bc.focus import (
     save_named_layout,
     set_panel_focus,
 )
+
+
+def _get_current_layout() -> dict | None:
+    """Fetch the current layout from a running Cyclist or BikeRack server.
+
+    Checks .bikerack-port first, then .cyclist-port, and fetches the
+    appropriate layout endpoint.
+
+    Returns:
+        Layout dict, or None if no server is running or fetch fails.
+    """
+    from pennyfarthing_scripts.bc.focus import _get_root
+
+    root = _get_root()
+
+    # Try BikeRack first (bikerack-layout), then Cyclist (layout)
+    candidates = [
+        (root / ".bikerack-port", "/api/settings/bikerack-layout"),
+        (root / ".cyclist-port", "/api/settings/bikerack-layout"),
+    ]
+
+    for port_file, endpoint in candidates:
+        if not port_file.exists():
+            continue
+        try:
+            port = int(port_file.read_text().strip())
+        except (ValueError, OSError):
+            continue
+
+        url = f"http://localhost:{port}{endpoint}"
+        try:
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode())
+                layout = data.get("layout")
+                if layout and isinstance(layout, dict) and layout.get("panels"):
+                    return layout
+        except (urllib.error.URLError, OSError, json.JSONDecodeError):
+            continue
+
+    return None
 
 
 @click.group()
@@ -83,16 +127,28 @@ def reset_focus():
         sys.exit(1)
 
 
-# --- Story 104-4: Named layout commands (stubs) ---
+# --- Story 104-4: Named layout commands ---
 
 
 @bc.command("save")
 @click.argument("name")
 def save_layout(name: str):
-    """Save current layout under a name."""
-    result = save_named_layout(name, {})  # stub — layout_data comes from client
+    """Save current layout under a name.
+
+    Fetches the active layout from the running Cyclist/BikeRack server
+    and stores it in config.local.yaml under the given name.
+    """
+    layout_data = _get_current_layout()
+    if not layout_data:
+        click.echo(
+            json.dumps({"success": False, "error": "No running Cyclist/BikeRack server found, or layout is empty"}),
+            err=True,
+        )
+        sys.exit(1)
+    result = save_named_layout(name, layout_data)
     if result["success"]:
-        click.echo(json.dumps({"success": True, "name": result["data"]}))
+        panel_count = len(layout_data.get("panels", {}))
+        click.echo(json.dumps({"success": True, "name": result["data"], "panels": panel_count}))
     else:
         click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
         sys.exit(1)
