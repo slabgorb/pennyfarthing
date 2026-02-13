@@ -2,6 +2,7 @@
 
 Story 103-1: Textual app scaffold with basic layout.
 Story 103-4: Connection status indicator in TUI header.
+Story 103-6: SprintPanel as default panel on launch.
 Story 103-7: /bc TUI panel focus — subscribe to /ws/focus, switch panels.
 """
 
@@ -15,6 +16,7 @@ from textual.widgets import Footer, Header, Static
 
 from typing import Any
 
+from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
 from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
 
 
@@ -60,7 +62,7 @@ class BikeRackApp(App):
             id="connection-status",
         )
         with VerticalScroll(id="main-content"):
-            yield Static("No active panel", id="placeholder")
+            yield SprintPanel(client=self._client, id="sprint-panel")
         yield Footer()
 
     async def on_mount(self) -> None:
