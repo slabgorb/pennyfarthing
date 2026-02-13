@@ -1001,6 +1001,11 @@ from pennyfarthing_scripts.sprint.epic_add import epic_add_command  # noqa: E402
 
 epic.add_command(epic_add_command, "add")
 
+# Register epic-update as epic.update
+from pennyfarthing_scripts.sprint.epic_update import epic_update_command  # noqa: E402
+
+epic.add_command(epic_update_command, "update")
+
 
 # --- Initiative subgroup ---
 
