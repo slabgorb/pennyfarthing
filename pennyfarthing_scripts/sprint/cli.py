@@ -301,8 +301,9 @@ def story_finish(story_id: str, dry_run: bool):
         return
 
     click.echo(f"=== Story {story_id} Complete ===")
-    jira_key = result.get("jira_key", "")
-    click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
+    jira_key = result.get("jira_key")
+    if jira_key:
+        click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
     for step in result.get("steps", []):
         warning = step.get("warning", "")
         error = step.get("error", "")
@@ -313,13 +314,18 @@ def story_finish(story_id: str, dry_run: bool):
 @story.command("claim")
 @click.argument("story_id")
 @click.option("--claim/--unclaim", default=True, help="Claim or unclaim the story")
-def story_claim(story_id: str, claim: bool):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def story_claim(story_id: str, claim: bool, dry_run: bool):
     """Claim or unclaim a story in Jira.
 
     \b
     Arguments:
       STORY_ID  - Story ID / Jira key to claim
     """
+    if dry_run:
+        action = "claim" if claim else "unclaim"
+        click.echo(f"[DRY-RUN] Would {action} {story_id}")
+        return
     from pennyfarthing_scripts.jira.claim import claim_issue, unclaim_issue
 
     if claim:
@@ -817,7 +823,8 @@ def epic_remove(epic_id: str, dry_run: bool):
 
 @epic.command("promote")
 @click.argument("epic_id")
-def epic_promote(epic_id: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def epic_promote(epic_id: str, dry_run: bool):
     """Move an epic from future initiatives to current-sprint.yaml.
 
     Detects ID collisions and assigns new IDs if needed.
@@ -931,6 +938,10 @@ def epic_promote(epic_id: str):
     click.echo(f"  Stories: {story_count}")
     click.echo("")
 
+    if dry_run:
+        click.echo(f"\n[DRY-RUN] Would promote {original_id} ({story_count} stories) to current sprint")
+        return
+
     # Validate epic shard before writing (ADR-0022)
     from pennyfarthing_scripts.sprint.validator import validate_epic_shard
     validation = validate_epic_shard(dict(epic_data))
@@ -950,11 +961,8 @@ def epic_promote(epic_id: str):
         init_data = yaml.safe_load(f.read())
 
     if isinstance(source_ref, str):
-        # String ref — remove from list and delete shard file
+        # String ref — remove from initiative list (shard file is kept for current sprint)
         init_data["epics"] = [e for e in init_data.get("epics", []) if e != source_ref]
-        shard = _epic_shard_path(sprint_dir, source_ref)
-        if shard.exists():
-            shard.unlink()
     else:
         # Inline dict — remove matching entry
         init_data["epics"] = [
@@ -999,6 +1007,11 @@ def epic_promote(epic_id: str):
 from pennyfarthing_scripts.sprint.epic_add import epic_add_command  # noqa: E402
 
 epic.add_command(epic_add_command, "add")
+
+# Register epic-update as epic.update
+from pennyfarthing_scripts.sprint.epic_update import epic_update_command  # noqa: E402
+
+epic.add_command(epic_update_command, "update")
 
 
 # --- Initiative subgroup ---
@@ -1716,7 +1729,8 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
 @click.argument("start_date")
 @click.argument("end_date")
 @click.argument("goal")
-def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, goal: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, goal: str, dry_run: bool):
     """Initialize a new sprint.
 
     \b
@@ -1749,6 +1763,13 @@ def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, g
             if not click.confirm("Continue?"):
                 click.echo("Aborted.")
                 return
+
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would initialize sprint TO Sprint {sprint_yyww}")
+        click.echo(f"  Jira ID: {jira_id}")
+        click.echo(f"  Dates: {start_date} to {end_date}")
+        click.echo(f"  Goal: {goal}")
+        return
 
     # Create sprint file using write_sprint for consistency
     from pennyfarthing_scripts.sprint.yaml_io import write_sprint

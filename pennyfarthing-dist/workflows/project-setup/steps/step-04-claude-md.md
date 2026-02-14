@@ -130,9 +130,9 @@ If sprint/ exists:
 ```markdown
 ## Sprint Management
 
-- `/sprint status` - View current sprint
-- `/sprint backlog` - Available stories
-- `/sprint work` - Start a story
+- `/pf-sprint status` - View current sprint
+- `/pf-sprint backlog` - Available stories
+- `/pf-sprint work` - Start a story
 ```
 
 ### 4. Add Project-Specific Sections

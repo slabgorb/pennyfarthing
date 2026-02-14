@@ -187,8 +187,8 @@ Available slash commands for this agent.
 
 ```xml
 <skills>
-- `/testing` - Test commands and patterns
-- `/dev-patterns` - Implementation patterns and gotchas
+- `/pf-testing` - Test commands and patterns
+- `/pf-dev-patterns` - Implementation patterns and gotchas
 </skills>
 ```
 

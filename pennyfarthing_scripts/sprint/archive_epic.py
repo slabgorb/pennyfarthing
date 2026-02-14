@@ -98,6 +98,99 @@ completed_stories:
     return archive_path
 
 
+def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
+    """Migrate a monolithic completed archive to index+shard format.
+
+    Extracts inlined stories from completed_stories, groups them by epic,
+    writes per-epic shard files to the archive directory, and removes
+    migrated stories from the index (keeping only orphans).
+
+    Args:
+        archive_path: Path to the sprint archive YAML file
+
+    Returns:
+        Dict with migration results {success, shards_created, stories_migrated}
+    """
+    archive_dir = archive_path.parent
+    data = _load_archive_file(archive_path)
+    epic_refs = set(data["completed_epics"])
+
+    # Group stories by epic ref
+    epic_stories: dict[str, list[dict[str, Any]]] = {}
+    orphans: list[dict[str, Any]] = []
+    for story in data["completed_stories"]:
+        epic = story.get("epic", "")
+        if epic in epic_refs:
+            epic_stories.setdefault(epic, []).append(story)
+        else:
+            orphans.append(story)
+
+    # Write per-epic shard files
+    shards_created = 0
+    stories_migrated = 0
+    for epic_ref, stories in epic_stories.items():
+        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if shard_path.exists():
+            existing = _read_yaml_file(shard_path)
+            existing_ids = {s["id"] for s in existing.get("stories", [])}
+            merged = list(existing.get("stories", []))
+            for s in stories:
+                if s["id"] not in existing_ids:
+                    merged.append(s)
+            existing["stories"] = merged
+            _write_yaml_file(shard_path, existing)
+        else:
+            shard_data = {
+                "jira": epic_ref,
+                "status": "done",
+                "stories": stories,
+            }
+            _write_yaml_file(shard_path, shard_data)
+            shards_created += 1
+        stories_migrated += len(stories)
+
+    # Update the index: keep only orphans
+    data["completed_stories"] = orphans
+    _write_archive_file(archive_path, data)
+
+    return {
+        "success": True,
+        "shards_created": shards_created,
+        "stories_migrated": stories_migrated,
+    }
+
+
+def load_archive(archive_path: Path) -> dict[str, Any]:
+    """Load the archive index and merge stories from shard files.
+
+    Like load_sprint() for the active sprint, this reads the index file
+    and merges stories from per-epic shard files in the same directory.
+
+    Args:
+        archive_path: Path to the sprint archive YAML file
+
+    Returns:
+        Unified archive dict with all completed_stories from shards + orphans
+    """
+    data = _load_archive_file(archive_path)
+    archive_dir = archive_path.parent
+
+    # Collect stories from shards
+    all_stories: list[dict[str, Any]] = []
+    for epic_ref in data["completed_epics"]:
+        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if shard_path.exists():
+            shard = _read_yaml_file(shard_path)
+            all_stories.extend(shard.get("stories", []))
+
+    # Add orphans from index
+    all_stories.extend(data["completed_stories"])
+
+    result = dict(data)
+    result["completed_stories"] = all_stories
+    return result
+
+
 def _load_archive_file(archive_path: Path) -> dict[str, Any]:
     """Load the sprint archive file, handling both old and new formats.
 
@@ -329,13 +422,28 @@ def archive_epic(
             context_moved = ctx_name
             break
 
-    # 3. Add epic ref to sprint completed file
+    # 3. Add epic ref and completed stories to sprint completed file
     archive_path = ensure_archive_file(root)
     archive_data = _load_archive_file(archive_path)
 
     # Add ref if not already present
     if epic_ref not in archive_data["completed_epics"]:
         archive_data["completed_epics"].append(epic_ref)
+
+    # Add each completed story to completed_stories list
+    existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
+    epic_jira_ref = epic.get("jira", epic_ref)
+    for story in epic.get("stories", []):
+        story_id = story.get("id", "")
+        if story_id and story_id not in existing_ids:
+            archive_data["completed_stories"].append({
+                "id": story_id,
+                "epic": epic_jira_ref,
+                "title": story.get("title", ""),
+                "points": story.get("points", 0),
+                "completed": story.get("completed", date.today().isoformat()),
+            })
+
     _write_archive_file(archive_path, archive_data)
 
     # 4. Remove epic from current-sprint.yaml index

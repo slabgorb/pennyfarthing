@@ -116,9 +116,6 @@ def finish_story(
         except Exception:
             pass
 
-    if not jira_key:
-        return {"success": False, "error": f"Could not determine Jira key for {story_id}"}
-
     # Fallback: resolve PR from GitHub if not in session
     if not pr_number and branch:
         result = _run(["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"])
@@ -127,14 +124,18 @@ def finish_story(
 
     today = date.today().isoformat()
     steps: list[dict[str, Any]] = []
+    archive_name = f"{jira_key}-session.md" if jira_key else f"{story_id}-session.md"
 
     if dry_run:
-        steps.append({"step": 1, "action": f"Archive session → {archive_dir / f'{jira_key}-session.md'}"})
+        steps.append({"step": 1, "action": f"Archive session → {archive_dir / archive_name}"})
         if pr_number:
             steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
         else:
             steps.append({"step": 2, "action": "No PR to merge"})
-        steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
+        if jira_key:
+            steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
+        else:
+            steps.append({"step": 3, "action": "Skip Jira transition (no key)"})
         steps.append({"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"})
         steps.append({"step": 5, "action": "Archive completed epics"})
         steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
@@ -142,7 +143,7 @@ def finish_story(
         return {"success": True, "dry_run": True, "jira_key": jira_key, "steps": steps}
 
     # --- Step 1: Archive session ---
-    archive_dest = archive_dir / f"{jira_key}-session.md"
+    archive_dest = archive_dir / archive_name
     shutil.copy2(session_path, archive_dest)
     steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
 
@@ -157,11 +158,14 @@ def finish_story(
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
     # --- Step 3: Transition Jira ---
-    result = _run(["jira", "issue", "move", jira_key, "Done"])
-    if result.returncode == 0:
-        steps.append({"step": 3, "action": "jira_done", "key": jira_key})
+    if jira_key:
+        result = _run(["jira", "issue", "move", jira_key, "Done"])
+        if result.returncode == 0:
+            steps.append({"step": 3, "action": "jira_done", "key": jira_key})
+        else:
+            steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": "Already Done or failed"})
     else:
-        steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": "Already Done or failed"})
+        steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
 
     # --- Step 4: Update sprint YAML ---
     try:

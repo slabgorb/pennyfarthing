@@ -1,6 +1,6 @@
 ---
 name: 'step-05-import-to-future'
-description: 'Import validated epics and stories into sprint/future.yaml backlog'
+description: 'Create initiative file and import validated epics into sprint/future.yaml backlog'
 
 # Path Definitions
 workflow_path: '{project_root}/.pennyfarthing/workflows/epics-and-stories'
@@ -28,11 +28,12 @@ To import the validated and complete epics and stories from the epics.md documen
 </instructions>
 
 <output>
-- Initiative imported to sprint/future.yaml
+- Initiative file created at sprint/initiative-{name}.yaml with epic metadata
+- Initiative name added to sprint/future.yaml
 - Epic assigned with correct sequential number (epic-N)
 - All stories with proper IDs (epic-N-story-M format)
 - Dry-run preview showing exactly what will be imported
-- Verification that epic and stories are accessible via sprint commands
+- Verification that both initiative file and future.yaml entry exist
 - Completion message with next steps for sprint planning
 </output>
 
@@ -111,22 +112,46 @@ Display the full preview to the user showing:
 Ask user: "Does this look correct? [Y] Yes, import to future.yaml / [N] No, make changes"
 
 **If Y:**
-Append the new initiative and epics to `sprint/future.yaml` using yq or direct YAML editing.
+
+**Step A — Create the initiative file** (`sprint/initiative-{initiative_name}.yaml`).
+This file is required by the sprint system to hold epic metadata. Use the following structure:
+
+```yaml
+name: "{Initiative Display Name}"
+description: |
+  {Brief description extracted from the epics document}
+status: backlog
+blocked_by:
+total_points: {sum of all story points}
+epics:
+  - epic-{N}
+```
+
+If the initiative produces multiple epics, list all of them in the `epics` array.
+
+**Step B — Append initiative name to `sprint/future.yaml`.**
+Add `{initiative_name}` to the `future.initiatives` list using yq or direct YAML editing.
 
 **If N:**
 Ask what changes are needed and help user adjust before re-applying.
 
 ### 5. Verify Import
 
-After successful import, verify by showing:
+After successful import, verify **both** files:
 
 ```bash
-grep -A3 "{initiative_name}" sprint/future.yaml
+# Verify initiative file exists and has correct structure
+cat sprint/initiative-{initiative_name}.yaml
+
+# Verify initiative is listed in future.yaml
+grep "{initiative_name}" sprint/future.yaml
 ```
 
 Confirm:
-- Epic appears in future.yaml
-- Epic number is correct
+- Initiative file exists at `sprint/initiative-{initiative_name}.yaml`
+- Initiative file contains epic IDs and metadata
+- Initiative name appears in future.yaml
+- Epic numbers are correct
 - Stories have proper IDs
 
 ### 6. Complete Workflow
@@ -139,15 +164,18 @@ Display completion message:
 **Epic imported:** epic-{N}
 **Initiative:** {initiative_name}
 **Stories:** {count} stories ready for sprint planning
-**Location:** sprint/future.yaml
+**Files created/updated:**
+- sprint/initiative-{initiative_name}.yaml (NEW)
+- sprint/future.yaml (UPDATED)
 
 Next steps:
-- Use `/sprint` to view the backlog
+- Use `/pf-sprint` to view the backlog
 - Use `pf sprint epic promote` to move to a sprint when ready
 ```
 
 ## SUCCESS CRITERIA:
 
+- ✅ Initiative file created at `sprint/initiative-{initiative_name}.yaml`
 - ✅ Initiative appears in future.yaml
 - ✅ Epic has correct sequential number
 - ✅ All stories have proper IDs (epic-story format)
@@ -156,7 +184,8 @@ Next steps:
 ## FAILURE MODES:
 
 - ❌ future.yaml not found - ensure sprint/ directory exists
+- ❌ Initiative file not created - sprint commands won't find epic data
 - ❌ Duplicate epic number - check existing IDs before assigning
 - ❌ yq not installed - required for YAML manipulation (`brew install yq`)
 
-**Master Rule:** The workflow is not complete until epics are in future.yaml and accessible via sprint commands.
+**Master Rule:** The workflow is not complete until both the initiative file exists AND the initiative is listed in future.yaml.

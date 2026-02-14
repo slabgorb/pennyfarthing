@@ -34,7 +34,7 @@ pf sprint epic promote epic-41
 
 ## Ownership
 
-- **Primary users:** SM agent, `/sprint` skill
+- **Primary users:** SM agent, `/pf-sprint` skill
 - **Maintained by:** Core Pennyfarthing team
 
 ## Migration Note

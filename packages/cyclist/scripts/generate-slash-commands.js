@@ -233,7 +233,7 @@ export function isCompletionTrigger(text: string, position: number): boolean {
 // Main
 const commands = scanCommands();
 const content = generateContent(commands);
-const outputPath = join(__dirname, '../src/public/utils/slash-commands.ts');
+const outputPath = join(__dirname, '../../core/src/public/utils/slash-commands.ts');
 
 writeFileSync(outputPath, content, 'utf8');
 

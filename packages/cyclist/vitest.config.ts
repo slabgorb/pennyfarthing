@@ -4,6 +4,8 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Override vite.config.ts root — vitest must run from cyclist package root
+  root: __dirname,
   test: {
     globals: true,
     environment: 'happy-dom',
@@ -26,9 +28,9 @@ export default defineConfig({
   resolve: {
     alias: {
       // 68-6: Map browser absolute paths to source for test environment
-      '/js/': path.resolve(__dirname, 'src/public/js/'),
-      // Map @/* to src/public/* (matches vite.config.ts alias)
-      '@': path.resolve(__dirname, 'src/public'),
+      '/js/': path.resolve(__dirname, '../core/src/public/js/'),
+      // Map @/* to core/src/public/* (canonical source moved in 98-18)
+      '@': path.resolve(__dirname, '../core/src/public'),
     },
   },
 });

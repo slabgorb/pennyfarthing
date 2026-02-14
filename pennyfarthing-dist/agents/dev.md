@@ -206,9 +206,9 @@ Write to session file BEFORE spawning handoff:
 </exit-sequence>
 
 <skills>
-- `/testing` - Test commands and patterns
-- `/dev-patterns` - Implementation patterns and gotchas
-- `/code-review` - Self-review checklist
+- `/pf-testing` - Test commands and patterns
+- `/pf-dev-patterns` - Implementation patterns and gotchas
+- `/pf-code-review` - Self-review checklist
 </skills>
 
 <exit>

@@ -711,7 +711,7 @@ sprint:
   status: active
 epics:
   - MSSCI-14298
-  - epic-40
+  - "40"
 stories: []
 """
 
@@ -731,7 +731,7 @@ stories:
 """
 
 SHARD_INTERNAL_YAML = """\
-id: epic-40
+id: 40
 type: epic
 title: "Epic: Scale Adaptation"
 priority: P2
@@ -750,7 +750,7 @@ def sharded_sprint_dir(tmp_path: Path) -> Path:
     """Create a sharded sprint directory structure."""
     (tmp_path / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
     (tmp_path / "epic-MSSCI-14298.yaml").write_text(SHARD_JIRA_YAML)
-    (tmp_path / "epic-epic-40.yaml").write_text(SHARD_INTERNAL_YAML)
+    (tmp_path / "epic-40.yaml").write_text(SHARD_INTERNAL_YAML)
     return tmp_path
 
 
@@ -763,7 +763,7 @@ class TestShardedReadWrite:
 
         assert len(data["epics"]) == 2
         assert data["epics"][0]["id"] == "MSSCI-14298"
-        assert data["epics"][1]["id"] == "epic-40"
+        assert data["epics"][1]["id"] == 40
         assert len(data["epics"][0]["stories"]) == 1
         assert len(data["epics"][1]["stories"]) == 1
 
@@ -785,7 +785,7 @@ class TestShardedReadWrite:
         assert raw_index["epics"][0] == "MSSCI-14298"
 
         # Shard file should have the updated story
-        shard = read_sprint(sharded_sprint_dir / "epic-epic-40.yaml")
+        shard = read_sprint(sharded_sprint_dir / "epic-40.yaml")
         assert shard["stories"][0]["status"] == "in_progress"
 
     def test_sharded_round_trip(self, sharded_sprint_dir: Path) -> None:

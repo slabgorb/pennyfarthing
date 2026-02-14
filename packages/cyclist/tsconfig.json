@@ -6,6 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@pennyfarthing/core": ["../core/src/index.ts"],
+      "@pennyfarthing/core/server": ["../core/src/server/server.ts"],
+      "@pennyfarthing/core/dist/server/api/*": ["../core/src/server/api/*"],
       "@pennyfarthing/shared": ["../shared/src/index.ts"]
     }
   },

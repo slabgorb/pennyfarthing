@@ -15,7 +15,7 @@
  */
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync, statSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -70,7 +70,7 @@ function counterPath(): string {
   return join(SESSION_DIR, '.tandem-turn-counter');
 }
 
-function snapshotPath(): string {
+function _snapshotPath(): string {
   return join(SESSION_DIR, `${DEFAULT_CONFIG.storyId}-tandem-context.md`);
 }
 

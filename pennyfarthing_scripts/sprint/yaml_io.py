@@ -91,6 +91,10 @@ def read_sprint(path: Path) -> CommentedMap:
     loads each epic-{ref}.yaml shard file and replaces the strings
     with full epic CommentedMaps.
 
+    Also discovers unindexed shard files on disk (epic-*.yaml files not
+    referenced in the epics list) and appends them so orphan shards are
+    never invisible to the CLI.
+
     Args:
         path: Path to sprint YAML index file
 
@@ -108,6 +112,10 @@ def read_sprint(path: Path) -> CommentedMap:
         return data
 
     sprint_dir = path.parent
+
+    # Track loaded epic identities to prevent duplicates
+    loaded_shard_files: set[Path] = set()
+    loaded_epic_ids: set[str] = set()
     merged_epics = CommentedSeq()
     for ref in epics:
         if isinstance(ref, str):
@@ -115,8 +123,40 @@ def read_sprint(path: Path) -> CommentedMap:
             if shard_file.exists():
                 epic_data = _read_yaml_file(shard_file)
                 merged_epics.append(epic_data)
+                loaded_shard_files.add(shard_file.resolve())
+                # Track both id and jira key (normalized) for dedup
+                eid = str(epic_data.get("id", "")).replace("epic-", "")
+                if eid:
+                    loaded_epic_ids.add(eid)
+                jira_key = str(epic_data.get("jira", ""))
+                if jira_key:
+                    loaded_epic_ids.add(jira_key)
         else:
             merged_epics.append(ref)
+
+    # Log unindexed shard files on disk (but do NOT auto-merge them —
+    # orphan shards may belong to future initiatives and should not be
+    # pulled into the current sprint automatically).
+    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
+        if shard_file.resolve() in loaded_shard_files:
+            continue
+        try:
+            epic_data = _read_yaml_file(shard_file)
+        except (FileNotFoundError, ValueError):
+            continue
+        if not isinstance(epic_data, Mapping) or "id" not in epic_data:
+            continue
+        eid = str(epic_data.get("id", "")).replace("epic-", "")
+        jira_key = str(epic_data.get("jira", ""))
+        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
+            continue
+        # Warn but don't merge — these are intentionally excluded
+        import sys
+        print(
+            f"  NOTE: Unindexed shard {shard_file.name} (epic {eid}) "
+            f"not in epics list — skipping",
+            file=sys.stderr,
+        )
 
     data["epics"] = merged_epics
     return data
@@ -161,12 +201,30 @@ def _canonicalize(data: Any) -> Any:
     if not isinstance(data, Mapping):
         return data
 
-    # Determine which key order to use based on context
-    # Top level
-    result = _sort_mapping(
-        data if isinstance(data, CommentedMap) else _to_commented_map(data),
-        TOP_KEY_ORDER,
-    )
+    cm = data if isinstance(data, CommentedMap) else _to_commented_map(data)
+
+    # Detect epic shard: has 'stories' + 'id' but no 'sprint'/'epics' top-level keys
+    is_epic_shard = "stories" in cm and "id" in cm and "sprint" not in cm and "epics" not in cm
+
+    if is_epic_shard:
+        result = _sort_mapping(cm, EPIC_KEY_ORDER)
+        # Reorder stories within the epic
+        if "stories" in result and isinstance(result["stories"], (list, CommentedSeq)):
+            new_stories = CommentedSeq()
+            for story in result["stories"]:
+                if isinstance(story, Mapping):
+                    story_cm = (
+                        story if isinstance(story, CommentedMap) else _to_commented_map(story)
+                    )
+                    new_stories.append(_sort_mapping(story_cm, STORY_KEY_ORDER))
+                else:
+                    new_stories.append(story)
+            result["stories"] = new_stories
+        result = _ensure_block_scalars(result)
+        return result
+
+    # Full sprint document: sort top-level keys
+    result = _sort_mapping(cm, TOP_KEY_ORDER)
 
     # Reorder sprint section
     if "sprint" in result and isinstance(result["sprint"], Mapping):

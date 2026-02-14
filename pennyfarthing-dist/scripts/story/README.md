@@ -19,5 +19,5 @@ Scripts for story creation and management.
 
 ## Ownership
 
-- **Primary users:** SM agent, `/sprint story` commands
+- **Primary users:** SM agent, `/pf-sprint story` commands
 - **Maintained by:** Core Pennyfarthing team

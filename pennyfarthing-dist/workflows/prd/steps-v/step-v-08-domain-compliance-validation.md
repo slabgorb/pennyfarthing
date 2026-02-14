@@ -101,6 +101,8 @@ Treat as "general" (low complexity) and proceed to step 4
 - GovTech / Public sector
 - EdTech (educational records, accredited courses)
 - Legal tech
+- Process Control / Industrial Automation / OT
+- Building Automation / BAS / BMS
 - Other regulated domains
 
 ### 3. For High-Complexity Domains: Validate Required Special Sections
@@ -130,6 +132,20 @@ Based on {domain} requirements, check PRD for:
 - Procurement Compliance
 - Security Clearance requirements
 - Data residency requirements
+
+**Process Control / Industrial Automation:**
+- Functional Safety (IEC 61508/61511, SIL ratings)
+- OT Cybersecurity (IEC 62443, network segmentation, zone/conduit model)
+- Process requirements (real-time control, legacy system integration, industrial protocols)
+- Process safety and hazard analysis (HAZOP, LOPA, SIS)
+- Engineering authority (PE/EOR credential requirements, stamped deliverables)
+
+**Building Automation:**
+- Life Safety (fire alarm, fire protection, suppression codes, elevator safety)
+- Energy compliance (ASHRAE standards, building energy codes, Title 24)
+- Commissioning requirements (sequence of operations, functional performance testing)
+- Multi-trade coordination and interoperability (BACnet, LON, Modbus)
+- Engineering authority (PE/EOR credential requirements, stamped deliverables)
 
 **Other regulated domains:**
 - Check for domain-specific regulatory sections

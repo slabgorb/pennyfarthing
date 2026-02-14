@@ -134,7 +134,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 **Never manually edit sprint YAML.** The finish script handles all YAML updates.
 
 <critical>
-**Use `/sprint story add` to create stories.** Never manually edit sprint YAML to add stories.
+**Use `/pf-sprint story add` to create stories.** Never manually edit sprint YAML to add stories.
 </critical>
 </finish-flow>
 
@@ -145,7 +145,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 
 ### Research Phase
 
-**Quick backlog:** `/sprint backlog` or spawn `sm-setup MODE=research`
+**Quick backlog:** `/pf-sprint backlog` or spawn `sm-setup MODE=research`
 
 Present to user:
 - Available stories sorted by priority
@@ -153,8 +153,8 @@ Present to user:
 - Blocked stories and why
 
 **Direct shortcuts:**
-- `/sprint work MSSCI-XXX` - Start specific story
-- `/sprint work next` - Start highest priority
+- `/pf-sprint work MSSCI-XXX` - Start specific story
+- `/pf-sprint work next` - Start highest priority
 
 **WHEN USER SELECTS A STORY:**
 - **YOU MUST:** Setup story first (create session file) → Then route based on workflow type
@@ -182,17 +182,18 @@ Present to user:
 
 4. **Route based on workflow type:**
    - **Phased workflow** → Spawn `sm-handoff` to hand off to first agent
-   - **Stepped workflow** → Tell user to run `/workflow start {workflow}` (no handoff)
+   - **Stepped workflow** → Tell user to run `/pf-workflow start {workflow}` (no handoff)
 </new-work-flow>
 
 <merge-gate>
 ## Merge Gate (BLOCKING)
 
-Before starting new work: `gh pr list --state open` - BLOCKS if any exist.
+Before starting new work: `gh pr list --state open --search "draft:false"` - BLOCKS if any non-draft PRs exist.
 
-Open PRs → incomplete work → merge conflicts, stale branches, CI failures.
+Draft PRs are allowed — they represent in-progress work that isn't ready for review yet.
+Non-draft open PRs → incomplete work → merge conflicts, stale branches, CI failures.
 
-**Resolution:** Merge/close all PRs first. Use `/reviewer` to complete reviews.
+**Resolution:** Merge/close all non-draft PRs first. Use `/reviewer` to complete reviews.
 </merge-gate>
 
 <gate>
@@ -226,7 +227,7 @@ Before `sm-handoff`, verify ALL of these:
 
 1. Report: "Sprint backlog empty. All stories done or cancelled."
 2. Show future work: `pf sprint future`
-3. Offer: "Promote stories from `future.yaml`?" → `/sprint promote {epic-id}`
+3. Offer: "Promote stories from `future.yaml`?" → `/pf-sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
 </empty-backlog-flow>
@@ -253,20 +254,20 @@ SM sets up the story and hands off to the first agent. Agents hand off to each o
 
 ### Stepped Workflows (BikeLane)
 
-SM does NOT hand off to agents. Instead, use `/workflow start {name}` to begin the stepped flow. The workflow itself guides the user through steps with gates.
+SM does NOT hand off to agents. Instead, use `/pf-workflow start {name}` to begin the stepped flow. The workflow itself guides the user through steps with gates.
 
 | Workflow | Type | How to Start |
 |----------|------|--------------|
-| `architecture` | stepped | `/workflow start architecture` |
-| `prd` | stepped | `/workflow start prd` |
-| `research` | stepped | `/workflow start research` |
-| `sprint-planning` | stepped | `/workflow start sprint-planning` |
+| `architecture` | stepped | `/pf-workflow start architecture` |
+| `prd` | stepped | `/pf-workflow start prd` |
+| `research` | stepped | `/pf-workflow start research` |
+| `sprint-planning` | stepped | `/pf-workflow start sprint-planning` |
 
-**To list all workflows:** `/workflow list`
+**To list all workflows:** `/pf-workflow list`
 
 **If story has a stepped workflow tag:**
 1. Create session file with workflow tracking
-2. Tell user: "This story uses the `{workflow}` stepped workflow. Run `/workflow start {workflow}` to begin."
+2. Tell user: "This story uses the `{workflow}` stepped workflow. Run `/pf-workflow start {workflow}` to begin."
 3. **DO NOT spawn sm-handoff** — stepped workflows don't use agent handoffs
 </workflow-routing>
 
@@ -284,8 +285,8 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 </phase-check>
 
 <skills>
-- `/sprint` - Sprint management (including story and epic operations)
-- `/jira` - Jira integration
+- `/pf-sprint` - Sprint management (including story and epic operations)
+- `/pf-jira` - Jira integration
 </skills>
 
 <exit>
