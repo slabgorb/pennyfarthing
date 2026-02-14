@@ -282,8 +282,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
     }
 
-    server.listen(actualPort, () => {
-      console.log(`Cyclist running at http://localhost:${actualPort}`);
+    server.listen(actualPort, '127.0.0.1', () => {
+      console.log(`Cyclist running at http://127.0.0.1:${actualPort}`);
       writePortFile(projectDir, actualPort);
     });
 

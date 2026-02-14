@@ -7,9 +7,22 @@
 
 import { Router } from 'express';
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, realpathSync } from 'fs';
 import { resolve, isAbsolute } from 'path';
 import { listDirectory, readFile } from '../file-browser.js';
+
+/**
+ * Validate that a path is within the project directory (#892)
+ */
+function validatePathSecurity(absolutePath: string, projectDir: string): { allowed: boolean } {
+  try {
+    const realPath = realpathSync(absolutePath);
+    const realProjectDir = realpathSync(projectDir);
+    return { allowed: realPath.startsWith(realProjectDir + '/') || realPath === realProjectDir };
+  } catch {
+    return { allowed: false };
+  }
+}
 
 export function createFileBrowserRouter(getProjectDir: () => string): Router {
   const router = Router();
@@ -63,6 +76,12 @@ export function createFileBrowserRouter(getProjectDir: () => string): Router {
 
       // Resolve path (absolute or relative to project)
       const absolutePath = isAbsolute(filePath) ? filePath : resolve(projectDir, filePath);
+
+      // Security: Validate path is within project directory (#892)
+      const validation = validatePathSecurity(absolutePath, projectDir);
+      if (!validation.allowed) {
+        return res.status(403).json({ success: false, error: 'Path outside project directory' });
+      }
 
       // Verify file exists
       if (!existsSync(absolutePath)) {
