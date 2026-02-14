@@ -329,13 +329,28 @@ def archive_epic(
             context_moved = ctx_name
             break
 
-    # 3. Add epic ref to sprint completed file
+    # 3. Add epic ref and completed stories to sprint completed file
     archive_path = ensure_archive_file(root)
     archive_data = _load_archive_file(archive_path)
 
     # Add ref if not already present
     if epic_ref not in archive_data["completed_epics"]:
         archive_data["completed_epics"].append(epic_ref)
+
+    # Add each completed story to completed_stories list
+    existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
+    epic_jira_ref = epic.get("jira", epic_ref)
+    for story in epic.get("stories", []):
+        story_id = story.get("id", "")
+        if story_id and story_id not in existing_ids:
+            archive_data["completed_stories"].append({
+                "id": story_id,
+                "epic": epic_jira_ref,
+                "title": story.get("title", ""),
+                "points": story.get("points", 0),
+                "completed": story.get("completed", date.today().isoformat()),
+            })
+
     _write_archive_file(archive_path, archive_data)
 
     # 4. Remove epic from current-sprint.yaml index
