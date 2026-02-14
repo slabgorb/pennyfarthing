@@ -71,3 +71,29 @@ export function createFocusMessage(
 export function isValidFocusPanel(panelId: string): boolean {
   return (VALID_FOCUS_PANELS as readonly string[]).includes(panelId);
 }
+
+/**
+ * Read the last-viewed panel from config.local.yaml.
+ *
+ * Story 103-8: Panel persistence — single source of truth for last-viewed
+ * panel, shared between ERB (BikeRack) and TUI.
+ *
+ * Returns the panel ID string or null if not saved.
+ */
+export function getLastPanel(projectDir: string): string | null {
+  // Stub: 103-8 not implemented yet
+  throw new Error('103-8: getLastPanel not implemented');
+}
+
+/**
+ * Save the last-viewed panel to config.local.yaml.
+ *
+ * Story 103-8: Panel persistence — persists the active panel so it can
+ * be restored on next launch. Preserves other config keys.
+ *
+ * Returns true on success, false on failure.
+ */
+export function saveLastPanel(projectDir: string, panelId: string): boolean {
+  // Stub: 103-8 not implemented yet
+  throw new Error('103-8: saveLastPanel not implemented');
+}
