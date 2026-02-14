@@ -374,7 +374,7 @@ describe('API route factory exports', () => {
     const api = await import('./api/index.js');
 
     for (const name of NO_ARG_FACTORIES) {
-      const factory = (api as Record<string, (...args: unknown[]) => unknown>)[name];
+      const factory = (api as Record<string, unknown>)[name] as (...args: unknown[]) => unknown;
       const router = factory();
       assert.ok(router, `${name}() should return a router, not null/undefined`);
       // Express Router has use/get/post methods
@@ -389,7 +389,7 @@ describe('API route factory exports', () => {
     const getProjectDir = () => '/tmp/test';
 
     for (const name of PROJECT_DIR_FACTORIES) {
-      const factory = (api as Record<string, (...args: unknown[]) => unknown>)[name];
+      const factory = (api as Record<string, unknown>)[name] as (...args: unknown[]) => unknown;
       const router = factory(getProjectDir);
       assert.ok(router, `${name}() should return a router, not null/undefined`);
       const r = router as Record<string, unknown>;
