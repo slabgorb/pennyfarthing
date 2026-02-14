@@ -33,8 +33,8 @@ function cleanupPortFile(projectDir: string): void {
     console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
   }
 
-  server.listen(actualPort, () => {
-    console.log(`BikeRack running at http://localhost:${actualPort}`);
+  server.listen(actualPort, '127.0.0.1', () => {
+    console.log(`BikeRack running at http://127.0.0.1:${actualPort}`);
     // Write port file AFTER listen() callback (CE-3)
     writePortFile(projectDir, actualPort);
     console.log(`[BikeRack] Wrote .bikerack-port to ${projectDir}`);
