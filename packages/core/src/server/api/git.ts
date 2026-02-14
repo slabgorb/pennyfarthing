@@ -15,6 +15,16 @@ const execAsync = promisify(exec);
 const repoLocks = new Map<string, Promise<void>>();
 
 /**
+ * Per-repo git fetch cooldown to prevent frequent network calls during active sessions.
+ * Maps repo path to the timestamp of the last successful git fetch.
+ * Story 103-21
+ */
+const lastFetchTimes = new Map<string, number>();
+
+/** Default cooldown between git fetch calls per repo (ms). */
+export const GIT_FETCH_COOLDOWN_MS = 60_000;
+
+/**
  * Acquire a lock for a repo, ensuring only one git operation runs at a time
  * Returns a release function to call when done
  */
@@ -264,15 +274,20 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
 
   try {
     // Fetch latest refs from remote (quiet, no output)
-    // This ensures ahead/behind counts are accurate against remote state
-    try {
-      await execAsync('git fetch --quiet', {
-        cwd: projectDir,
-        encoding: 'utf-8',
-        timeout: 10000, // 10s timeout for network operation
-      });
-    } catch {
-      // Fetch failed (offline, no remote, etc.) - continue with local refs
+    // Throttled: only fetch once per GIT_FETCH_COOLDOWN_MS per repo (Story 103-21)
+    const now = Date.now();
+    const lastFetch = lastFetchTimes.get(projectDir) ?? 0;
+    if (now - lastFetch >= GIT_FETCH_COOLDOWN_MS) {
+      try {
+        await execAsync('git fetch --quiet', {
+          cwd: projectDir,
+          encoding: 'utf-8',
+          timeout: 10000, // 10s timeout for network operation
+        });
+        lastFetchTimes.set(projectDir, Date.now());
+      } catch {
+        // Fetch failed (offline, no remote, etc.) - continue with local refs
+      }
     }
 
     // Get current branch
@@ -361,6 +376,19 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
   }
 }
 
+/**
+ * Reset the fetch cooldown for a repo, allowing the next getGitInfoAsync call
+ * to perform a git fetch immediately. Used by force-refresh paths.
+ * Story 103-21
+ */
+export function resetFetchCooldown(projectDir?: string): void {
+  if (projectDir) {
+    lastFetchTimes.delete(projectDir);
+  } else {
+    lastFetchTimes.clear();
+  }
+}
+
 // Callback for forcing git refresh (set by websocket.ts)
 let forceRefreshCallback: ((projectDir: string) => Promise<void>) | null = null;
 
@@ -384,6 +412,7 @@ export function createGitRouter(getProjectDir: () => string): Router {
 
     if (forceRefreshCallback) {
       console.log('[Git API] Calling forceRefreshCallback...');
+      resetFetchCooldown(projectDir);
       await forceRefreshCallback(projectDir);
       console.log('[Git API] forceRefreshCallback complete');
       res.json({ success: true, message: 'Git cache refreshed and broadcast sent' });
