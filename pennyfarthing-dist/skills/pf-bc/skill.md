@@ -10,178 +10,43 @@ args: "[panel|reset|save|load|list|clear|clear-all] [name]"
 
 Set or clear the focused panel in Cyclist/BikeRack. Save and restore named layouts.
 
-## Panel Focus
-
-### `/bc <panel>` - Set Focus
-
-Set the focus panel. Valid panels:
-
-| Panel | Description |
-|-------|-------------|
-| `sprint` | Sprint panel |
-| `git` | Git panel |
-| `diffs` | Diffs panel |
-| `todo` | Todo panel |
-| `workflow` | Workflow panel |
-| `background` | Background panel |
-| `audit-log` | Audit Log panel |
-| `changed` | Changed panel |
-| `ac` | Acceptance Criteria panel |
-| `debug` | Debug panel |
-| `settings` | Settings panel |
-| `tty` | TTY panel |
-
-<run>
-pf bc <panel>
-</run>
-
-<example>
-pf bc sprint    # Focus on Sprint panel
-pf bc diffs     # Focus on Diffs panel
-pf bc ac        # Focus on Acceptance Criteria panel
-</example>
-
-<output>
-Success: `{"success": true, "panel": "<panel>"}`
-Error: `{"success": false, "error": "Invalid panel '<name>'. Valid panels: sprint, git, ..."}`
-</output>
-
----
-
-### `/bc reset` - Clear Focus
-
-Remove the focus setting from config.
-
-<run>
-pf bc reset
-</run>
-
-<output>
-Success: `{"success": true, "message": "focus cleared"}`
-</output>
-
----
-
-## Named Layouts
-
-Save, load, and manage named layouts. Layouts capture the full panel arrangement from a running Cyclist/BikeRack server.
-
-### `/bc save <name>` - Save Layout
-
-Fetch the active layout from the running Cyclist/BikeRack server and store it under a name.
-
-<run>
-pf bc save <name>
-</run>
-
-<example>
-pf bc save normal     # Save current layout as "normal"
-pf bc save review     # Save current layout as "review"
-pf bc save debug      # Save current layout as "debug"
-</example>
-
-<output>
-Success: `{"success": true, "name": "<name>", "panels": <count>}`
-Error: `{"success": false, "error": "No running Cyclist/BikeRack server found, or layout is empty"}`
-</output>
-
----
-
-### `/bc load <name>` - Load Layout
-
-Load a previously saved named layout.
-
-<run>
-pf bc load <name>
-</run>
-
-<example>
-pf bc load normal     # Restore the "normal" layout
-pf bc load review     # Switch to "review" layout
-</example>
-
-<output>
-Success: `{"success": true, "name": "<name>", "layout": {...}}`
-Error: `{"success": false, "error": "..."}`
-</output>
-
----
-
-### `/bc list` - List Layouts
-
-List all saved named layouts.
-
-<run>
-pf bc list
-</run>
-
-<output>
-Success: `{"success": true, "layouts": ["normal", "review", ...]}`
-</output>
-
----
-
-### `/bc clear <name>` - Delete Layout
-
-Delete a specific named layout.
-
-<run>
-pf bc clear <name>
-</run>
-
-<example>
-pf bc clear review    # Delete the "review" layout
-</example>
-
-<output>
-Success: `{"success": true, "message": "layout cleared"}`
-Error: `{"success": false, "error": "..."}`
-</output>
-
----
-
-### `/bc clear-all` - Delete All Layouts
-
-Delete all saved named layouts.
-
-<run>
-pf bc clear-all
-</run>
-
-<output>
-Success: `{"success": true, "message": "all layouts cleared"}`
-</output>
-
----
-
-## Notes
-
-- The `message` panel (sacred center) is not focusable
-- Config is written to `.pennyfarthing/config.local.yaml` under the `focus` key
-- Named layouts are stored in `.pennyfarthing/config.local.yaml` under the `named_layouts` key
-- All other config keys (theme, layout, display, etc.) are preserved
-- If the config file or directory doesn't exist, it will be created
-- `save` requires a running Cyclist/BikeRack server to fetch the current layout
-
 ## Quick Reference
 
-| Command | CLI |
-|---------|-----|
-| `/bc sprint` | `pf bc sprint` |
-| `/bc git` | `pf bc git` |
-| `/bc diffs` | `pf bc diffs` |
-| `/bc todo` | `pf bc todo` |
-| `/bc workflow` | `pf bc workflow` |
-| `/bc background` | `pf bc background` |
-| `/bc audit-log` | `pf bc audit-log` |
-| `/bc changed` | `pf bc changed` |
-| `/bc ac` | `pf bc ac` |
-| `/bc debug` | `pf bc debug` |
-| `/bc settings` | `pf bc settings` |
-| `/bc tty` | `pf bc tty` |
-| `/bc reset` | `pf bc reset` |
-| `/bc save <name>` | `pf bc save <name>` |
-| `/bc load <name>` | `pf bc load <name>` |
-| `/bc list` | `pf bc list` |
-| `/bc clear <name>` | `pf bc clear <name>` |
-| `/bc clear-all` | `pf bc clear-all` |
+### Panel Focus
+
+| Command | CLI | Purpose |
+|---------|-----|---------|
+| `/bc sprint` | `pf bc sprint [--dry-run]` | Focus Sprint panel |
+| `/bc git` | `pf bc git [--dry-run]` | Focus Git panel |
+| `/bc diffs` | `pf bc diffs [--dry-run]` | Focus Diffs panel |
+| `/bc todo` | `pf bc todo [--dry-run]` | Focus Todo panel |
+| `/bc workflow` | `pf bc workflow [--dry-run]` | Focus Workflow panel |
+| `/bc background` | `pf bc background [--dry-run]` | Focus Background panel |
+| `/bc audit-log` | `pf bc audit-log [--dry-run]` | Focus Audit Log panel |
+| `/bc changed` | `pf bc changed [--dry-run]` | Focus Changed panel |
+| `/bc ac` | `pf bc ac [--dry-run]` | Focus Acceptance Criteria panel |
+| `/bc debug` | `pf bc debug [--dry-run]` | Focus Debug panel |
+| `/bc settings` | `pf bc settings [--dry-run]` | Focus Settings panel |
+| `/bc tty` | `pf bc tty [--dry-run]` | Focus TTY panel |
+| `/bc reset` | `pf bc reset [--dry-run]` | Clear focus setting |
+
+### Named Layouts
+
+| Command | CLI | Purpose |
+|---------|-----|---------|
+| `/bc save <name>` | `pf bc save <name> [--dry-run]` | Save current layout from running server |
+| `/bc load <name>` | `pf bc load <name> [--dry-run]` | Load a saved layout |
+| `/bc list` | `pf bc list` | List all saved layouts |
+| `/bc clear <name>` | `pf bc clear <name> [--dry-run]` | Delete a saved layout |
+| `/bc clear-all` | `pf bc clear-all [--dry-run]` | Delete all saved layouts |
+
+### Notes
+
+- The `message` panel (sacred center) is not focusable
+- Config written to `.pennyfarthing/config.local.yaml` under `focus` / `named_layouts` keys
+- `save` requires a running Cyclist/BikeRack server
+
+---
+
+**Detailed options and behavior:** [usage.md](usage.md)
+**Practical examples:** [examples.md](examples.md)
