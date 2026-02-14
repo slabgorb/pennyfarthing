@@ -91,7 +91,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 2. **Assess:** Tests needed or chore bypass?
 3. If tests needed:
    - Write failing tests covering each AC
-   - Use `/testing` skill for patterns
+   - Use `/pf-testing` skill for patterns
    - Commit: `git commit -m "test: add failing tests for X-Y"`
 4. **Spawn `testing-runner`** to verify RED state
 5. Write TEA Assessment to session file
@@ -151,7 +151,7 @@ Write to session file BEFORE spawning handoff:
 </exit-sequence>
 
 <skills>
-- `/testing` - Test commands, patterns, TDD workflow
+- `/pf-testing` - Test commands, patterns, TDD workflow
   - `references/backend-patterns.md` - Go test patterns
   - `references/frontend-patterns.md` - React/Vitest patterns
   - `references/tdd-policy.md` - TDD rules (no skipped tests!)

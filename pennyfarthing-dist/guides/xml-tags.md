@@ -49,7 +49,7 @@ Tags that affect LLM behavior and attention.
 ```markdown
 <info>
 **Workflow:** SM → TEA → Dev → Reviewer → SM
-**Skills:** `/sprint`, `/jira`, `/testing`
+**Skills:** `/pf-sprint`, `/pf-jira`, `/pf-testing`
 </info>
 ```
 
@@ -487,7 +487,7 @@ pf sprint check MSSCI-12038
 ```markdown
 <when>
 - Starting new development work
-- After promote, create Jira epic with `/jira create epic`
+- After promote, create Jira epic with `/pf-jira create epic`
 </when>
 ```
 

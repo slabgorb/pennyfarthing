@@ -240,7 +240,7 @@ When filtered, only shows epics with matching stories.
 - `/new-work` is an alias for this command
 Next steps after promote:
 - Review appended YAML in current-sprint.yaml
-- Create Jira epic: `/jira create epic <epic-id>`
+- Create Jira epic: `/pf-jira create epic <epic-id>`
 </when>
 ```
 
@@ -287,7 +287,7 @@ Never manually edit sprint YAML. Use the provided commands.
 
 ## Commands
 
-### `/sprint story add <epic-id> "<title>" <points>`
+### `/pf-sprint story add <epic-id> "<title>" <points>`
 
 Add a new story to an epic.
 
@@ -312,12 +312,12 @@ Confirmation with new story ID and details.
 </output>
 
 <when>
-After creating, use `/sprint story size` for sizing guidelines.
+After creating, use `/pf-sprint story size` for sizing guidelines.
 </when>
 
 ---
 
-### `/sprint story finish <story-id>`
+### `/pf-sprint story finish <story-id>`
 
 Complete a story after PR merge.
 
@@ -359,16 +359,16 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 
 | Command | Script/CLI |
 |---------|------------|
-| `/sprint story add ...` | `sprint story add` |
-| `/sprint story size` | `sprint story size` |
-| `/sprint story finish <id>` | `sprint story finish` |
+| `/pf-sprint story add ...` | `sprint story add` |
+| `/pf-sprint story size` | `sprint story size` |
+| `/pf-sprint story finish <id>` | `sprint story finish` |
 
 ## Related Skills
 
 | Skill | Purpose |
 |-------|---------|
-| `/sprint` | Sprint management |
-| `/jira` | Jira operations |
+| `/pf-sprint` | Sprint management |
+| `/pf-jira` | Jira operations |
 ```
 
 ---
