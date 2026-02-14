@@ -457,9 +457,9 @@ function checkCommandRelated(filePath, content, commands) {
   while ((match = pattern.exec(block)) !== null) {
     refs++;
     const cmdName = match[1];
-    if (!commands.has(cmdName)) {
+    if (!commands.has(cmdName) && !commands.has(`pf-${cmdName}`)) {
       issues.push(issue(filePath, offsetToLine(stripped, relatedMatch.index + match.index),
-        `/${cmdName}`, `Unknown command "/${cmdName}" (no commands/${cmdName}.md)`));
+        `/${cmdName}`, `Unknown command "/${cmdName}" (no commands/${cmdName}.md or pf-${cmdName}.md)`));
     }
   }
   return { issues, refs };

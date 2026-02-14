@@ -91,7 +91,7 @@ describe('getSkillNames', () => {
   it('contains core skills from pennyfarthing-dist/skills/', () => {
     const skills = getSkillNames();
     // Known core skills
-    for (const name of ['sprint', 'workflow', 'testing']) {
+    for (const name of ['pf-sprint', 'pf-workflow', 'pf-testing']) {
       assert.ok(skills.has(name), `Missing expected core skill: ${name}`);
     }
   });
