@@ -51,8 +51,8 @@ FILE_LIST: "{comma-separated file paths}"
 </critical>
 
 <skills>
-- `/mermaid` - Generate architecture diagrams
-- `/dev-patterns` - Implementation patterns
+- `/pf-mermaid` - Generate architecture diagrams
+- `/pf-dev-patterns` - Implementation patterns
 </skills>
 
 <reasoning-mode>

@@ -3,17 +3,17 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 // Vite config for Cyclist React renderer
-// Builds React components while coexisting with vanilla JS
+// Builds from core's src/public (canonical source moved in Story 98-18)
 export default defineConfig({
   plugins: [react()],
-  root: resolve(__dirname, 'src/public'),
+  root: resolve(__dirname, '../core/src/public'),
   base: '/',
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/public'),
+      '@': resolve(__dirname, '../core/src/public'),
     },
   },
-  // Define Node.js globals for browser - some packages (xterm) check for these
+  // Define Node.js globals for browser - some packages check for these
   define: {
     // Stub __dirname to empty string - it's only used for optional file checks
     '__dirname': '""',
@@ -25,10 +25,10 @@ export default defineConfig({
     emptyOutDir: true, // Safe to clear - this is a build output directory
     rollupOptions: {
       input: {
-        react: resolve(__dirname, 'src/public/index.tsx'),
+        react: resolve(__dirname, '../core/src/public/index.tsx'),
       },
-      // Mark electron and node-pty as external - they're only available in Electron main/preload
-      external: ['electron', 'node-pty'],
+      // Mark electron as external - only available in Electron main/preload
+      external: ['electron'],
       output: {
         entryFileNames: 'js/react/[name].js',
         chunkFileNames: 'js/react/[name]-[hash].js',

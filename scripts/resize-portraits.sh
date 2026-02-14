@@ -38,7 +38,8 @@ set -eo pipefail
 # Configuration
 SCRIPT_DIR="${0:A:h}"
 PROJECT_ROOT="${SCRIPT_DIR:h}"
-PORTRAITS_DIR="$PROJECT_ROOT/pennyfarthing-dist/personas/portraits"
+BUILTIN_PORTRAITS_DIR="$PROJECT_ROOT/pennyfarthing-dist/personas/portraits"
+PACKAGES_DIR="$PROJECT_ROOT/packages"
 
 # Sizes to generate - parallel arrays
 SIZE_NAMES=(small medium large)
@@ -152,13 +153,25 @@ check_dependencies() {
     fi
 }
 
-# Check if portraits directory exists
-check_portraits_dir() {
-    if [[ ! -d "$PORTRAITS_DIR" ]]; then
-        log_error "Portraits directory not found: $PORTRAITS_DIR"
+# Collect all portrait directories (built-in + packages)
+ALL_PORTRAIT_DIRS=()
+collect_portrait_dirs() {
+    if [[ -d "$BUILTIN_PORTRAITS_DIR" ]]; then
+        ALL_PORTRAIT_DIRS+=("$BUILTIN_PORTRAITS_DIR")
+        log_info "Built-in portraits: $BUILTIN_PORTRAITS_DIR"
+    fi
+    if [[ -d "$PACKAGES_DIR" ]]; then
+        for pkg_dir in "$PACKAGES_DIR"/themes-*/portraits; do
+            if [[ -d "$pkg_dir" ]]; then
+                ALL_PORTRAIT_DIRS+=("$pkg_dir")
+                log_info "Package portraits:  $pkg_dir"
+            fi
+        done
+    fi
+    if [[ ${#ALL_PORTRAIT_DIRS[@]} -eq 0 ]]; then
+        log_error "No portrait directories found"
         exit 1
     fi
-    log_info "Portraits directory: $PORTRAITS_DIR"
 }
 
 # Process a single image
@@ -265,19 +278,21 @@ report_savings() {
     local total_medium=0
     local total_large=0
 
-    for theme_dir in "$PORTRAITS_DIR"/*/; do
-        if [[ -d "$theme_dir/original" ]]; then
-            total_original=$((total_original + $(du -sk "$theme_dir/original" 2>/dev/null | cut -f1 || echo 0)))
-        fi
-        if [[ -d "$theme_dir/small" ]]; then
-            total_small=$((total_small + $(du -sk "$theme_dir/small" 2>/dev/null | cut -f1 || echo 0)))
-        fi
-        if [[ -d "$theme_dir/medium" ]]; then
-            total_medium=$((total_medium + $(du -sk "$theme_dir/medium" 2>/dev/null | cut -f1 || echo 0)))
-        fi
-        if [[ -d "$theme_dir/large" ]]; then
-            total_large=$((total_large + $(du -sk "$theme_dir/large" 2>/dev/null | cut -f1 || echo 0)))
-        fi
+    for portraits_dir in "${ALL_PORTRAIT_DIRS[@]}"; do
+        for theme_dir in "$portraits_dir"/*/; do
+            if [[ -d "$theme_dir/original" ]]; then
+                total_original=$((total_original + $(du -sk "$theme_dir/original" 2>/dev/null | cut -f1 || echo 0)))
+            fi
+            if [[ -d "$theme_dir/small" ]]; then
+                total_small=$((total_small + $(du -sk "$theme_dir/small" 2>/dev/null | cut -f1 || echo 0)))
+            fi
+            if [[ -d "$theme_dir/medium" ]]; then
+                total_medium=$((total_medium + $(du -sk "$theme_dir/medium" 2>/dev/null | cut -f1 || echo 0)))
+            fi
+            if [[ -d "$theme_dir/large" ]]; then
+                total_large=$((total_large + $(du -sk "$theme_dir/large" 2>/dev/null | cut -f1 || echo 0)))
+            fi
+        done
     done
 
     echo ""
@@ -306,7 +321,7 @@ main() {
 
     parse_args "$@"
     check_dependencies
-    check_portraits_dir
+    collect_portrait_dirs
 
     echo ""
 
@@ -318,21 +333,30 @@ main() {
     local themes_processed=0
 
     if [[ -n "$SINGLE_THEME" ]]; then
-        # Process single theme
-        local theme_path="$PORTRAITS_DIR/$SINGLE_THEME"
-        if [[ ! -d "$theme_path" ]]; then
+        # Process single theme - search all portrait directories
+        local found=false
+        for portraits_dir in "${ALL_PORTRAIT_DIRS[@]}"; do
+            local theme_path="$portraits_dir/$SINGLE_THEME"
+            if [[ -d "$theme_path" ]]; then
+                process_theme "$theme_path"
+                themes_processed=$((themes_processed + 1))
+                found=true
+                break
+            fi
+        done
+        if ! $found; then
             log_error "Theme not found: $SINGLE_THEME"
             exit 1
         fi
-        process_theme "$theme_path"
-        themes_processed=1
     else
-        # Process all themes
-        for theme_dir in "$PORTRAITS_DIR"/*/; do
-            if [[ -d "$theme_dir" ]]; then
-                process_theme "$theme_dir"
-                themes_processed=$((themes_processed + 1))
-            fi
+        # Process all themes across all portrait directories
+        for portraits_dir in "${ALL_PORTRAIT_DIRS[@]}"; do
+            for theme_dir in "$portraits_dir"/*/; do
+                if [[ -d "$theme_dir" ]]; then
+                    process_theme "$theme_dir"
+                    themes_processed=$((themes_processed + 1))
+                fi
+            done
         done
     fi
 

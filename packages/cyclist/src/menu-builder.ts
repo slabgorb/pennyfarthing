@@ -151,7 +151,6 @@ const VIEW_MENU_PANELS = [
   { id: 'diffs', label: 'Diffs' },
   { id: 'debug', label: 'Debug' },
   { id: 'audit-log', label: 'Audit Log' },
-  { id: 'tty', label: 'Terminal' },
   { id: 'sprint', label: 'Sprint' },
   { id: 'workflow', label: 'Workflow' },
   { id: 'ac', label: 'AC' },

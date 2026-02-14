@@ -13,10 +13,14 @@ from pennyfarthing_scripts.bikerack.launcher import (
     poll_for_port_file,
     read_pid_file,
     read_port_file,
+    read_tui_pid_file,
     register_cleanup,
+    resolve_project_dir,
+    start_tui,
     start_wheelhub,
     stop_bikerack,
     write_pid_file,
+    write_tui_pid_file,
 )
 
 __all__ = [
@@ -29,8 +33,12 @@ __all__ = [
     "poll_for_port_file",
     "read_pid_file",
     "read_port_file",
+    "read_tui_pid_file",
     "register_cleanup",
+    "resolve_project_dir",
+    "start_tui",
     "start_wheelhub",
     "stop_bikerack",
     "write_pid_file",
+    "write_tui_pid_file",
 ]

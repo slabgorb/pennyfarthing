@@ -28,6 +28,7 @@ import {
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
+import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
 import { storePendingToolInput } from './span-correlation.js';
 import {
   getAllGitDiffs,
@@ -159,6 +160,10 @@ const sprintClients = new Set<WebSocket>();
 
 // Diffs WebSocket clients (MSSCI-14238: Git-based diffs)
 const diffsClients = new Set<WebSocket>();
+
+// Focus WebSocket clients (MSSCI-14976: panel focus broadcast)
+const focusClients = new Set<WebSocket>();
+let lastKnownFocus: string | null = null;
 
 // In-memory todos store (for initial send on connection)
 interface TodoItem {
@@ -303,6 +308,10 @@ export function getClaudeClients(): Set<WebSocket> {
   return claudeClients;
 }
 
+export function getFocusClients(): Set<WebSocket> {
+  return focusClients;
+}
+
 // =============================================================================
 // Todos Callback (Electron Mode Bridge)
 // =============================================================================
@@ -432,8 +441,8 @@ export function setupWebSocketServers(
   // WebSocket server for diffs at /ws/diffs (MSSCI-14238: Git-based diffs)
   const diffsWss = new WebSocketServer({ noServer: true });
 
-  // WebSocket server for PTY at /ws/pty (terminal emulator)
-  const ptyWss = new WebSocketServer({ noServer: true });
+  // WebSocket server for focus at /ws/focus (MSSCI-14976: panel focus)
+  const focusWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -507,9 +516,9 @@ export function setupWebSocketServers(
       diffsWss.handleUpgrade(request, socket, head, (ws) => {
         diffsWss.emit('connection', ws, request);
       });
-    } else if (pathname === '/ws/pty') {
-      ptyWss.handleUpgrade(request, socket, head, (ws) => {
-        ptyWss.emit('connection', ws, request);
+    } else if (pathname === '/ws/focus') {
+      focusWss.handleUpgrade(request, socket, head, (ws) => {
+        focusWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -776,6 +785,25 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle focus WebSocket connections (MSSCI-14976: panel focus)
+  focusWss.on('connection', (ws: WebSocket) => {
+    focusClients.add(ws);
+
+    // Send initial focus state on connection
+    const focus = getConfigFocus(getProjectDir());
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(createFocusMessage('init', focus)));
+    }
+
+    ws.on('close', () => {
+      focusClients.delete(ws);
+    });
+
+    ws.on('error', () => {
+      focusClients.delete(ws);
+    });
+  });
+
   // Handle context WebSocket connections (Phase 2: context usage)
   contextWss.on('connection', (ws: WebSocket) => {
     console.log('[WebSocket] Context client connected');
@@ -923,82 +951,6 @@ export function setupWebSocketServers(
         client.send(message);
       }
     }
-  });
-
-  // Handle PTY WebSocket connections (terminal emulator)
-  ptyWss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] PTY client connected');
-    let ptyProcess: import('node-pty').IPty | null = null;
-
-    ws.on('message', async (data) => {
-      try {
-        const msg = JSON.parse(data.toString());
-
-        if (msg.type === 'spawn') {
-          // Clean up any existing process
-          if (ptyProcess) {
-            ptyProcess.kill();
-            ptyProcess = null;
-          }
-
-          const pty = await import('node-pty');
-          const shell = msg.shell || process.env.SHELL || '/bin/bash';
-          const cwd = msg.cwd || getProjectDir();
-
-          ptyProcess = pty.spawn(shell, ['-l'], {
-            name: 'xterm-256color',
-            cols: msg.cols || 80,
-            rows: msg.rows || 24,
-            cwd,
-            env: { ...process.env, TERM: 'xterm-256color' } as Record<string, string>,
-          });
-
-          ptyProcess.onData((output: string) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'data', data: output }));
-            }
-          });
-
-          ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
-            }
-            ptyProcess = null;
-          });
-
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'spawn', pid: ptyProcess.pid }));
-          }
-        } else if (msg.type === 'data' && ptyProcess) {
-          ptyProcess.write(msg.data);
-        } else if (msg.type === 'resize' && ptyProcess) {
-          ptyProcess.resize(msg.cols, msg.rows);
-        } else if (msg.type === 'kill' && ptyProcess) {
-          ptyProcess.kill();
-          ptyProcess = null;
-        }
-      } catch (err) {
-        console.error('[WebSocket] PTY message error:', err);
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'error', error: String(err) }));
-        }
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('[WebSocket] PTY client disconnected');
-      if (ptyProcess) {
-        ptyProcess.kill();
-        ptyProcess = null;
-      }
-    });
-
-    ws.on('error', () => {
-      if (ptyProcess) {
-        ptyProcess.kill();
-        ptyProcess = null;
-      }
-    });
   });
 
   // Set up tool event listener to broadcast new spans to WebSocket clients
@@ -1185,6 +1137,12 @@ export function setupWebSocketServers(
           try {
             const settings = await getSettingsForWebSocket(projectDir);
             broadcastSettingsUpdate(settings);
+            // MSSCI-14976: Also check for focus changes
+            const newFocus = getConfigFocus(projectDir);
+            if (shouldBroadcastFocus(newFocus, lastKnownFocus)) {
+              lastKnownFocus = newFocus;
+              broadcastFocusUpdate(newFocus);
+            }
           } catch (err) {
             console.error('[WebSocket] Failed to broadcast settings update:', err);
           }
@@ -1617,6 +1575,16 @@ export function broadcastContextUpdate(context: ContextInfo): void {
 export function broadcastPanelToggle(panelId: string): void {
   const message = JSON.stringify({ type: 'panel:toggle', panelId });
   for (const client of settingsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// MSSCI-14976: Broadcast focus update to all connected focus clients
+export function broadcastFocusUpdate(focus: string | null): void {
+  const message = JSON.stringify(createFocusMessage('update', focus));
+  for (const client of focusClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }

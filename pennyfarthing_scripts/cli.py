@@ -26,6 +26,16 @@ def cli():
     workflow  - Workflow state and phase management
     agent     - Agent session management
     sprint    - Sprint status and story operations
+    debug     - Analysis tools (hotspots, deadcode, healthscore)
+
+    \b
+    Shortcuts (sugar for common operations):
+      status   - Show sprint status (= sprint status)
+      backlog  - Show available stories (= sprint backlog)
+      work     - Start work on a story (= sprint work)
+      story    - Story operations (= sprint story)
+      gui      - Open BikeRack dashboard (= launch gui)
+      tui      - Launch terminal UI (= launch tui)
     """
     pass
 
@@ -35,30 +45,52 @@ from pennyfarthing_scripts.sprint.cli import sprint  # noqa: E402
 
 cli.add_command(sprint)
 
-# Import and register hotspots group
+# Top-level sugar shortcuts for common sprint operations
+cli.add_command(sprint.commands["status"], "status")
+cli.add_command(sprint.commands["backlog"], "backlog")
+cli.add_command(sprint.commands["work"], "work")
+cli.add_command(sprint.commands["story"], "story")
+
+# Import analysis groups
+from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
+from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
 from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
 
-cli.add_command(hotspots)
+
+@cli.group()
+def debug():
+    """Debug and analysis tools.
+
+    \b
+    Subcommands:
+      hotspots     - Git history hotspot detection
+      deadcode     - Dead code detection tools
+      healthscore  - Composite codebase health score
+    """
+    pass
+
+
+debug.add_command(hotspots)
+debug.add_command(deadcode)
+debug.add_command(healthscore)
+
+# Hidden backward-compat aliases
+cli.add_command(hotspots, "hotspots")
+cli.commands["hotspots"].hidden = True
+cli.add_command(deadcode, "deadcode")
+cli.commands["deadcode"].hidden = True
+cli.add_command(healthscore, "healthscore")
+cli.commands["healthscore"].hidden = True
 
 # Import and register jira group
 from pennyfarthing_scripts.jira.cli import jira  # noqa: E402
 
 cli.add_command(jira)
 
-# Import and register deadcode group
-from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
-
-cli.add_command(deadcode)
-
 # Import and register theme group
 from pennyfarthing_scripts.theme.cli import theme  # noqa: E402
 
 cli.add_command(theme)
-
-# Import and register healthscore group
-from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
-
-cli.add_command(healthscore)
 
 # Import and register validate group
 from pennyfarthing_scripts.validate.cli import validate  # noqa: E402
@@ -69,6 +101,18 @@ cli.add_command(validate)
 from pennyfarthing_scripts.bikerack.cli import bikerack  # noqa: E402
 
 cli.add_command(bikerack)
+
+# Import and register launch group + top-level sugar aliases
+from pennyfarthing_scripts.launch.cli import launch  # noqa: E402
+
+cli.add_command(launch)
+cli.add_command(launch.commands["gui"], "gui")
+cli.add_command(launch.commands["tui"], "tui")
+
+# Import and register bc group
+from pennyfarthing_scripts.bc.cli import bc  # noqa: E402
+
+cli.add_command(bc)
 
 
 @cli.group()
@@ -86,16 +130,16 @@ def agent():
 @click.argument("name")
 @click.option("--session-id", help="Use explicit session ID")
 @click.option("--no-persona", is_flag=True, help="Skip persona loading")
-@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
 @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
 @click.option("--full", is_flag=True, help="Include domain docs")
 @click.option("--quiet", is_flag=True, help="Suppress section headers")
-@click.option("--tier", type=click.Choice(["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False), help="Context tier level")
+@click.option("--tier", type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False), help="Context tier level")
 def agent_start(
     name: str,
     session_id: str | None,
     no_persona: bool,
-    json_output: bool,
+    output_json: bool,
     minimal: bool,
     full: bool,
     quiet: bool,
@@ -117,7 +161,7 @@ def agent_start(
         agent_name=name,
         session_id=session_id,
         no_persona=no_persona,
-        json_output=json_output,
+        json_output=output_json,
         minimal=minimal,
         full=full,
         quiet=quiet,

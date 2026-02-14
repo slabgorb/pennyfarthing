@@ -177,7 +177,7 @@ Session files can track active grants:
 
 ## Related Stories
 
-- **33-2**: `/permissions` skill for viewing and managing grants
+- **33-2**: `/pf-permissions` skill for viewing and managing grants
 - **33-3**: Cyclist UI for permission prompts
 - **33-4**: Spot permission grants (once/session/always implementation)
 - **33-5**: Workflow permission presets

@@ -4,6 +4,7 @@ import { logger } from '../utils/logger.js';
 import { pathExists } from '../utils/files.js';
 import { readManifest } from '../utils/manifest.js';
 import { confirm } from '../utils/prompts.js';
+import { cleanManagedEntries } from '../utils/symlinks.js';
 
 interface UninstallOptions {
   force?: boolean;
@@ -146,13 +147,29 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   logger.newline();
   logger.header('Removing files...');
 
+  // Directories where only pf-* entries should be removed (preserves user content)
+  const SELECTIVE_CLEAN_DIRS = ['.claude/commands', '.claude/skills'];
+
   // Remove managed paths
   for (const path of managedToRemove) {
     const fullPath = join(projectRoot, path);
-    if (!dryRun) {
-      rmSync(fullPath, { recursive: true, force: true });
+    if (SELECTIVE_CLEAN_DIRS.includes(path)) {
+      // Clean only pf-* managed entries, preserve user content
+      const removed = cleanManagedEntries(fullPath, 'pf-', dryRun);
+      if (removed > 0) {
+        logger.error(`  ✗ ${path} (${removed} managed entries removed)`);
+      }
+      // Only remove the directory itself if empty after cleaning
+      if (!dryRun && pathExists(fullPath) && isDirEmpty(fullPath)) {
+        rmSync(fullPath, { recursive: true });
+        logger.error(`  ✗ ${path}/ (empty, removed)`);
+      }
+    } else {
+      if (!dryRun) {
+        rmSync(fullPath, { recursive: true, force: true });
+      }
+      logger.error(`  ✗ ${path}`);
     }
-    logger.error(`  ✗ ${path}`);
   }
 
   // Remove project paths if --all

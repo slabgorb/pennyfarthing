@@ -120,6 +120,8 @@ Certain industries have mandatory requirements that must be present:
 - **Fintech:** PCI-DSS Level 1, AML/KYC compliance, SOX controls, financial audit trails
 - **GovTech:** NIST framework, Section 508 accessibility (WCAG 2.1 AA), FedRAMP, data residency
 - **E-Commerce:** PCI-DSS for payments, inventory accuracy, tax calculation by jurisdiction
+- **Process Control:** IEC 62443 OT cybersecurity, IEC 61508/61511 functional safety, HAZOP/LOPA process safety, PE/EOR engineering authority
+- **Building Automation:** Life safety codes (fire alarm, fire protection, suppression), ASHRAE building energy standards, BACnet interoperability, commissioning and sequence of operations, PE/EOR engineering authority
 
 **Why:** Missing these requirements in the PRD means they'll be missed in architecture and implementation, creating expensive rework. During PRD creation there is a step to cover this - during validation we want to make sure it was covered. For this purpose steps will utilize a domain-complexity.csv and project-types.csv.
 

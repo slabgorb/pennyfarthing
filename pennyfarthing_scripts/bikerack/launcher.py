@@ -24,8 +24,8 @@ def is_process_alive(pid: int) -> bool:
 
 
 def cleanup_files(project_dir: Path) -> None:
-    """Clean up .bikerack-port and .bikerack-pid files."""
-    for name in (".bikerack-port", ".bikerack-pid"):
+    """Clean up .bikerack-port, .bikerack-pid, and .bikerack-tui-pid files."""
+    for name in (".bikerack-port", ".bikerack-pid", ".bikerack-tui-pid"):
         try:
             (project_dir / name).unlink()
         except FileNotFoundError:
@@ -62,6 +62,19 @@ def build_otel_env(port: int) -> dict[str, str]:
         "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
         "OTEL_EXPORTER_OTLP_ENDPOINT": f"http://localhost:{port}",
     }
+
+
+def resolve_project_dir(project_dir: str | None) -> Path:
+    """Resolve project directory from option → env var → cwd.
+
+    Used by bikerack and launch CLI commands.
+    """
+    if project_dir:
+        return Path(project_dir)
+    env = os.environ.get("CYCLIST_PROJECT_DIR")
+    if env:
+        return Path(env)
+    return Path.cwd()
 
 
 def _find_framework_dir() -> Path:
@@ -147,7 +160,7 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
 
 
 def stop_bikerack(project_dir: Path) -> dict:
-    """Stop running BikeRack instance. Returns {success, pid, message}."""
+    """Stop running BikeRack instance and TUI. Returns {success, pid, message}."""
     pid = read_pid_file(project_dir)
 
     if pid is None:
@@ -158,6 +171,15 @@ def stop_bikerack(project_dir: Path) -> dict:
         return {"success": False, "message": "BikeRack is not running (stale PID)"}
 
     os.kill(pid, signal.SIGTERM)
+
+    # Also kill TUI process if running
+    tui_pid = read_tui_pid_file(project_dir)
+    if tui_pid is not None:
+        try:
+            os.kill(tui_pid, signal.SIGTERM)
+        except (ProcessLookupError, OSError):
+            pass
+
     cleanup_files(project_dir)
     return {"success": True, "pid": pid, "message": f"Stopped BikeRack (PID {pid})"}
 
@@ -173,9 +195,46 @@ def get_status(project_dir: Path) -> dict:
     if not is_process_alive(pid):
         return {"running": False}
 
-    return {
+    result = {
         "running": True,
         "pid": pid,
         "port": port,
         "dashboard": f"http://localhost:{port}/bikerack",
+        "tui_pid": read_tui_pid_file(project_dir),
     }
+    return result
+
+
+# --- Story 103-3: TUI launcher functions ---
+
+
+def read_tui_pid_file(project_dir: Path) -> int | None:
+    """Read TUI PID from .bikerack-tui-pid file. Returns None if not found."""
+    try:
+        return int((project_dir / ".bikerack-tui-pid").read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def write_tui_pid_file(project_dir: Path, pid: int) -> None:
+    """Write .bikerack-tui-pid file."""
+    (project_dir / ".bikerack-tui-pid").write_text(str(pid))
+
+
+def start_tui(project_dir: Path, port: int) -> subprocess.Popen:
+    """Start TUI as independent subprocess.
+
+    Uses start_new_session=True so TUI survives parent exit.
+    Writes .bikerack-tui-pid for lifecycle tracking.
+    """
+    import sys
+
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "pennyfarthing_scripts.bikerack.tui", "--port", str(port)],
+        cwd=str(project_dir),
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    write_tui_pid_file(project_dir, proc.pid)
+    return proc

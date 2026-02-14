@@ -5,38 +5,38 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
 ## Table of Contents
 
 - [AI/LLM](#aillm)
-  - [agentic-patterns](#agentic-patterns)
-  - [context-engineering](#context-engineering)
+  - [pf-agentic-patterns](#pf-agentic-patterns)
+  - [pf-context-engineering](#pf-context-engineering)
 - [Benchmarking](#benchmarking)
-  - [finalize-run](#finalize-run)
-  - [judge](#judge)
-  - [persona-benchmark](#persona-benchmark)
+  - [pf-finalize-run](#pf-finalize-run)
+  - [pf-judge](#pf-judge)
+  - [pf-persona-benchmark](#pf-persona-benchmark)
 - [Development](#development)
-  - [code-review](#code-review)
-  - [dev-patterns](#dev-patterns)
-  - [systematic-debugging](#systematic-debugging)
-  - [testing](#testing)
+  - [pf-code-review](#pf-code-review)
+  - [pf-dev-patterns](#pf-dev-patterns)
+  - [pf-systematic-debugging](#pf-systematic-debugging)
+  - [pf-testing](#pf-testing)
 - [Documentation](#documentation)
-  - [changelog](#changelog)
+  - [pf-changelog](#pf-changelog)
 - [Project Management](#project-management)
-  - [jira](#jira)
-  - [permissions](#permissions)
-  - [sprint](#sprint)
-  - [story](#story)
-  - [workflow](#workflow)
+  - [pf-jira](#pf-jira)
+  - [pf-permissions](#pf-permissions)
+  - [pf-sprint](#pf-sprint)
+  - [pf-story](#pf-story)
+  - [pf-workflow](#pf-workflow)
 - [Theming](#theming)
-  - [theme](#theme)
-  - [theme-creation](#theme-creation)
+  - [pf-theme](#pf-theme)
+  - [pf-theme-creation](#pf-theme-creation)
 - [Tools](#tools)
-  - [cyclist](#cyclist)
-  - [just](#just)
-  - [mermaid](#mermaid)
-  - [otel](#otel)
-  - [yq](#yq)
+  - [pf-cyclist](#pf-cyclist)
+  - [pf-just](#pf-just)
+  - [pf-mermaid](#pf-mermaid)
+  - [pf-otel](#pf-otel)
+  - [pf-yq](#pf-yq)
 
 ## AI/LLM
 
-### agentic-patterns
+### pf-agentic-patterns
 
 Core reasoning patterns for building effective LLM agents
 
@@ -51,9 +51,9 @@ Core reasoning patterns for building effective LLM agents
 **Anti-patterns:**
 - Don't apply patterns mechanically without understanding context
 
-**Related:** [context-engineering](#context-engineering)
+**Related:** [pf-context-engineering](#pf-context-engineering)
 
-### context-engineering
+### pf-context-engineering
 
 Strategies for managing context windows in long-running agent sessions
 
@@ -69,11 +69,11 @@ Strategies for managing context windows in long-running agent sessions
 - Don't load unnecessary context upfront
 - Don't repeat large code blocks in prompts
 
-**Related:** [agentic-patterns](#agentic-patterns)
+**Related:** [pf-agentic-patterns](#pf-agentic-patterns)
 
 ## Benchmarking
 
-### finalize-run
+### pf-finalize-run
 
 Validate and save benchmark run results - single exit point for all runs
 
@@ -87,9 +87,9 @@ Validate and save benchmark run results - single exit point for all runs
 **Anti-patterns:**
 - Never save results without passing through this skill
 
-**Related:** [judge](#judge), [persona-benchmark](#persona-benchmark)
+**Related:** [pf-judge](#pf-judge), [pf-persona-benchmark](#pf-persona-benchmark)
 
-### judge
+### pf-judge
 
 Evaluate agent responses using standardized rubrics
 
@@ -104,9 +104,9 @@ Evaluate agent responses using standardized rubrics
 **Anti-patterns:**
 - Don't modify rubrics during a benchmark run
 
-**Related:** [finalize-run](#finalize-run), [persona-benchmark](#persona-benchmark)
+**Related:** [pf-finalize-run](#pf-finalize-run), [pf-persona-benchmark](#pf-persona-benchmark)
 
-### persona-benchmark
+### pf-persona-benchmark
 
 Run benchmarks to compare persona effectiveness
 
@@ -121,11 +121,11 @@ Run benchmarks to compare persona effectiveness
 **Anti-patterns:**
 - Don't compare results across different rubric versions
 
-**Related:** [judge](#judge), [finalize-run](#finalize-run), [theme](#theme)
+**Related:** [pf-judge](#pf-judge), [pf-finalize-run](#pf-finalize-run), [pf-theme](#pf-theme)
 
 ## Development
 
-### code-review
+### pf-code-review
 
 Code review checklists and patterns for quality assurance
 
@@ -141,9 +141,9 @@ Code review checklists and patterns for quality assurance
 - Don't skip security considerations in review
 - Don't approve without running tests
 
-**Related:** [testing](#testing), [dev-patterns](#dev-patterns)
+**Related:** [pf-testing](#pf-testing), [pf-dev-patterns](#pf-dev-patterns)
 
-### dev-patterns
+### pf-dev-patterns
 
 Common development patterns, fixes, and gotchas
 
@@ -158,9 +158,9 @@ Common development patterns, fixes, and gotchas
 **Anti-patterns:**
 - Don't apply patterns from other frameworks blindly
 
-**Related:** [code-review](#code-review), [testing](#testing)
+**Related:** [pf-code-review](#pf-code-review), [pf-testing](#pf-testing)
 
-### systematic-debugging
+### pf-systematic-debugging
 
 Systematic debugging approach for isolating and fixing issues
 
@@ -176,9 +176,9 @@ Systematic debugging approach for isolating and fixing issues
 - Don't jump to solutions without reproducing the issue first
 - Don't fix symptoms instead of root causes
 
-**Related:** [testing](#testing), [dev-patterns](#dev-patterns), [agentic-patterns](#agentic-patterns)
+**Related:** [pf-testing](#pf-testing), [pf-dev-patterns](#pf-dev-patterns), [pf-agentic-patterns](#pf-agentic-patterns)
 
-### testing
+### pf-testing
 
 Test commands and TDD workflow patterns
 
@@ -194,11 +194,11 @@ Test commands and TDD workflow patterns
 - Don't run tests directly - use testing-runner subagent
 - Don't skip RED phase in TDD workflow
 
-**Related:** [dev-patterns](#dev-patterns), [code-review](#code-review)
+**Related:** [pf-dev-patterns](#pf-dev-patterns), [pf-code-review](#pf-code-review)
 
 ## Documentation
 
-### changelog
+### pf-changelog
 
 Maintain changelogs following Keep a Changelog format with conventional commits
 
@@ -215,7 +215,7 @@ Maintain changelogs following Keep a Changelog format with conventional commits
 
 ## Project Management
 
-### jira
+### pf-jira
 
 Jira CLI commands for sprint management
 
@@ -230,9 +230,9 @@ Jira CLI commands for sprint management
 **Anti-patterns:**
 - Don't bypass Jira for sprint tracking
 
-**Related:** [sprint](#sprint)
+**Related:** [pf-sprint](#pf-sprint)
 
-### permissions
+### pf-permissions
 
 Manage runtime permission grants - list, grant, and revoke tool access
 
@@ -249,7 +249,7 @@ Manage runtime permission grants - list, grant, and revoke tool access
 - Don't manually edit settings.local.json permissions - use skill
 - Don't grant overly broad scope patterns
 
-### sprint
+### pf-sprint
 
 Sprint status, backlog, story, and epic management for Pennyfarthing
 
@@ -267,9 +267,9 @@ Sprint status, backlog, story, and epic management for Pennyfarthing
 **Anti-patterns:**
 - Don't manually edit sprint YAML - use scripts
 
-**Related:** [jira](#jira)
+**Related:** [pf-jira](#pf-jira)
 
-### story
+### pf-story
 
 DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint.
 
@@ -285,9 +285,9 @@ DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint
 - Don't create stories without acceptance criteria
 - Don't use /story directly - use /sprint story instead
 
-**Related:** [sprint](#sprint), [jira](#jira)
+**Related:** [pf-sprint](#pf-sprint), [pf-jira](#pf-jira)
 
-### workflow
+### pf-workflow
 
 Manage workflows - list, show, set, start, resume, and check status
 
@@ -303,11 +303,11 @@ Manage workflows - list, show, set, start, resume, and check status
 **Anti-patterns:**
 - Don't switch workflows mid-story unless requirements fundamentally changed
 
-**Related:** [sprint](#sprint)
+**Related:** [pf-sprint](#pf-sprint)
 
 ## Theming
 
-### theme
+### pf-theme
 
 Manage persona themes - list, show, set, create, and interactive maker wizard
 
@@ -326,7 +326,7 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 - Don't edit config.local.yaml directly - use skill
 - Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
 
-### theme-creation
+### pf-theme-creation
 
 DEPRECATED: Use /theme maker instead
 
@@ -337,11 +337,11 @@ DEPRECATED: Use /theme maker instead
 **Examples:**
 - Interactive theme wizard: `/theme maker`
 
-**Related:** [theme](#theme)
+**Related:** [pf-theme](#pf-theme)
 
 ## Tools
 
-### cyclist
+### pf-cyclist
 
 Launch Cyclist visual terminal for Claude Code monitoring
 
@@ -356,7 +356,7 @@ Launch Cyclist visual terminal for Claude Code monitoring
 **Anti-patterns:**
 - Don't run Cyclist in headless environments
 
-### just
+### pf-just
 
 Run just recipes for project tasks like dev servers, tests, and databases
 
@@ -371,9 +371,9 @@ Run just recipes for project tasks like dev servers, tests, and databases
 **Anti-patterns:**
 - Don't create complex recipes - keep them simple and composable
 
-**Related:** [testing](#testing)
+**Related:** [pf-testing](#pf-testing)
 
-### mermaid
+### pf-mermaid
 
 Generate diagrams using Mermaid syntax for documentation
 
@@ -388,9 +388,9 @@ Generate diagrams using Mermaid syntax for documentation
 **Anti-patterns:**
 - Don't create overly complex diagrams - split into multiple if needed
 
-**Related:** [changelog](#changelog)
+**Related:** [pf-changelog](#pf-changelog)
 
-### otel
+### pf-otel
 
 Claude Code OTEL telemetry format documentation for span interception and enrichment
 
@@ -405,9 +405,9 @@ Claude Code OTEL telemetry format documentation for span interception and enrich
 **Anti-patterns:**
 - Don't assume fields exist - verify against this documentation
 
-**Related:** [cyclist](#cyclist)
+**Related:** [pf-cyclist](#pf-cyclist)
 
-### yq
+### pf-yq
 
 YAML processor for reading, modifying, and querying YAML files
 
@@ -422,7 +422,7 @@ YAML processor for reading, modifying, and querying YAML files
 **Anti-patterns:**
 - Don't use complex expressions without testing first
 
-**Related:** [just](#just)
+**Related:** [pf-just](#pf-just)
 
 ---
 

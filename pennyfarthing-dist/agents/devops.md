@@ -61,7 +61,7 @@ FILE_LIST: "{comma-separated config file paths}"
 </critical>
 
 <skills>
-- `/just` - Just commands for dev operations
+- `/pf-just` - Just commands for dev operations
 - `/run-ci` - Detect and run CI locally
 - `/release` - Release management workflow
 </skills>

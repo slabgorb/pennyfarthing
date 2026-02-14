@@ -45,7 +45,7 @@ FILE_LIST: "{comma-separated file paths}"
 </critical>
 
 <skills>
-- `/sprint-context` - Sprint status, backlog, story management
+- `/pf-sprint` - Sprint status, backlog, story management
 </skills>
 
 <reasoning-mode>

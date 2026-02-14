@@ -167,13 +167,12 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     'audit',
     'changed',
     'ac',
-    'tty',
     'debug',
     'bikelane',
     'settings',
   ];
 
-  it('PANEL_REGISTRY should have exactly 13 entries', () => {
+  it('PANEL_REGISTRY should have exactly 12 entries', () => {
     const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
@@ -184,7 +183,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     const registryContent = registryMatch![1];
     // Count key: value pairs (panel entries like "sprint: EnhancedSprintPanel,")
     const entries = registryContent.match(/^\s+\w+\s*:/gm) || [];
-    expect(entries.length).toBe(13);
+    expect(entries.length).toBe(12);
   });
 
   it.each(EXPECTED_PANELS)('PANEL_REGISTRY should contain "%s" panel', (panelName) => {
@@ -218,7 +217,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     expect(importMatch).not.toBeNull();
 
     const importedNames = importMatch![1].split(',').map(s => s.trim()).filter(Boolean);
-    expect(importedNames.length).toBe(13);
+    expect(importedNames.length).toBe(12);
 
     // Each imported name should be exported from panels/index.ts
     for (const name of importedNames) {
@@ -226,7 +225,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     }
   });
 
-  it('BikeRackIndex should list all 13 panels', () => {
+  it('BikeRackIndex should list all 12 panels', () => {
     const indexPath = join(COMPONENTS_DIR, 'BikeRackIndex.tsx');
     const content = readFileSync(indexPath, 'utf-8');
 
@@ -350,7 +349,8 @@ describe('AC7: Regression guard — existing tests unmodified', () => {
 // ============================================================================
 
 describe('AC8: CE-5 — No new WebSocket channels', () => {
-  // These are ALL the WebSocket channels that existed before Epic 101.
+  // These are ALL the WebSocket channels that existed before Epic 101,
+  // plus channels added by later epics (e.g. /ws/focus from Epic 104).
   // BikeRack must NOT add any new channels.
   const PRE_BIKERACK_CHANNELS = [
     '/ws/stats',
@@ -370,7 +370,7 @@ describe('AC8: CE-5 — No new WebSocket channels', () => {
     '/ws/todos',
     '/ws/sprint',
     '/ws/diffs',
-    '/ws/pty',
+    '/ws/focus',
   ];
 
   it('websocket.ts should have exactly the pre-BikeRack channel count', () => {

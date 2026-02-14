@@ -5,7 +5,8 @@
 # 1. Prevents direct commits to protected branches (main, develop)
 #    Exception: sprint/ folder commits allowed on develop
 # 2. Validates agent files when pennyfarthing-dist/agents/*.md is modified
-# 3. Validates sprint YAML files when sprint/*.yaml is modified
+# 3. Validates file references when pennyfarthing-dist/ files are modified (warn only)
+# 4. Validates sprint YAML files when sprint/*.yaml is modified
 #
 # Installation:
 #   End-user projects: pennyfarthing init (copies to .git/hooks/)
@@ -109,7 +110,31 @@ if [[ -n "$AGENT_FILES" ]]; then
 fi
 
 # =============================================================================
-# Check 3: Sprint YAML Validation
+# Check 3: File Reference Validation (warn only)
+# =============================================================================
+
+DIST_FILES=$(echo "$STAGED_FILES" | grep "^pennyfarthing-dist/" || true)
+SCRIPT_FILES=$(echo "$STAGED_FILES" | grep "^scripts/validate-refs" || true)
+
+if [[ -n "$DIST_FILES" || -n "$SCRIPT_FILES" ]]; then
+    VALIDATE_REFS="$PROJECT_ROOT/scripts/validate-refs.js"
+
+    if [[ -f "$VALIDATE_REFS" ]] && command -v node &>/dev/null; then
+        echo "Running file reference validation..."
+        if ! node "$VALIDATE_REFS" 2>&1; then
+            echo ""
+            echo "WARNING: File reference issues detected (see above)"
+            echo "CI will fail on these — fix before pushing."
+            echo ""
+        else
+            echo "✓ File reference validation passed"
+            echo ""
+        fi
+    fi
+fi
+
+# =============================================================================
+# Check 4: Sprint YAML Validation
 # =============================================================================
 
 SPRINT_YAML_FILES=$(git diff --cached --name-only -- 'sprint/*.yaml' 'sprint/archive/*.yaml' 2>/dev/null \
