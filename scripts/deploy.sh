@@ -205,7 +205,8 @@ else
     log_info "Updated VERSION file"
 
     if [[ -f "$PROJECT_ROOT/package.json" ]]; then
-        sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
+        # Use flexible regex to handle version drift between VERSION file and package.json
+        sed -i '' -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
         log_info "Updated package.json"
     fi
 
