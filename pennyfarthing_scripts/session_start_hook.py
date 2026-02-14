@@ -33,9 +33,9 @@ def _setup_session_dir(project_dir: Path, session_id: str, source_type: str) -> 
     session_dir.mkdir(parents=True, exist_ok=True)
     (session_dir / "agents").mkdir(exist_ok=True)
 
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
 
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     log_file = session_dir / "session-log.txt"
     with open(log_file, "a") as f:
         f.write(f"{timestamp} | Session {source_type}: {session_id}\n")
@@ -88,9 +88,9 @@ def _validate_checkpoint(project_dir: Path) -> None:
             return
 
         # Log drift
-        from datetime import datetime, timezone
+        from datetime import UTC, datetime
 
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         session_dir = project_dir / ".session"
 
         warning = f"CROSS_SESSION_DRIFT: Git changed (was: {prev_sha}, now: {current_sha})"

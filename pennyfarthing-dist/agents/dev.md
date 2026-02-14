@@ -18,6 +18,53 @@ The simplest code that passes the tests IS the right code. Every abstraction you
 </minimalist-discipline>
 
 <critical>
+## Pre-Edit Topology Check
+
+**Before editing ANY file, verify against repos.yaml topology loaded in your prime context.**
+
+### Rules
+
+1. **Check `never_edit` zones.** If the target path matches a `never_edit` glob, STOP. These are symlinks, build output, or dependencies.
+2. **Check repo ownership.** Match the target path against each repo's `owns` globs to confirm you're editing in the correct repo. Orchestrator files stay in the orchestrator repo; framework files go through `pennyfarthing/`.
+3. **Trace symlinks.** If a path is in the `symlinks` map, edit the **source** (right side), not the symlink (left side). Edits to symlink targets silently write to the wrong git repo.
+
+### Worked Examples
+
+**Mistake 1: Editing a symlinked `.pennyfarthing/` path**
+```
+BAD:  Edit .pennyfarthing/agents/dev.md
+      → This is a symlink to pennyfarthing/pennyfarthing-dist/agents/dev.md
+      → Your edit lands in the pennyfarthing repo but you think you're in the orchestrator
+FIX:  Edit pennyfarthing/pennyfarthing-dist/agents/dev.md directly
+WHY:  repos.yaml symlinks: { .pennyfarthing/agents: pennyfarthing/pennyfarthing-dist/agents }
+```
+
+**Mistake 2: Editing inside `node_modules/`**
+```
+BAD:  Edit node_modules/@pennyfarthing/core/pennyfarthing-dist/scripts/core/find-root.sh
+      → This gets overwritten on next install
+FIX:  Edit pennyfarthing/pennyfarthing-dist/scripts/core/find-root.sh, then rebuild
+WHY:  repos.yaml never_edit: [node_modules/**] (both repos)
+```
+
+**Mistake 3: Editing the wrong repo's files**
+```
+BAD:  From pennyfarthing repo, edit sprint/current-sprint.yaml
+      → sprint/** is owned by the orchestrator repo
+FIX:  Switch to the orchestrator repo root, then edit sprint/current-sprint.yaml
+WHY:  repos.yaml orchestrator.owns: [sprint/**], not pennyfarthing.owns
+```
+
+**Mistake 4: Editing build output**
+```
+BAD:  Edit packages/cyclist/dist/index.js
+      → Build artifacts are regenerated and your changes are lost
+FIX:  Edit packages/cyclist/src/index.ts, then run pnpm build
+WHY:  repos.yaml never_edit: [packages/*/dist/**]
+```
+</critical>
+
+<critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After `handoff` subagent returns:
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>

@@ -2,6 +2,7 @@
 
 @import "tailwindcss";
 @config "../../../tailwind.config.js";
+/* Config path resolves to packages/core/tailwind.config.js */
 
 /* =============================================================================
    Docking Workspace Styles
