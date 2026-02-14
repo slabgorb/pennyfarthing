@@ -17,13 +17,10 @@ Tests should FAIL until focus handling is implemented in tui.py.
 from __future__ import annotations
 
 import time
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from pennyfarthing_scripts.bikerack.tui import BikeRackApp
 from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -57,7 +54,7 @@ class TestFocusSubscription:
 
         # Simulate what on_mount does — it should subscribe to "focus"
         # We check by looking at all subscribe calls on the client
-        app._handle_focus_message  # Ensure method exists (stub)
+        assert hasattr(app, "_handle_focus_message")  # Ensure method exists
 
         # The real test: after on_mount, client.subscribe was called with "focus"
         # Since we can't easily run on_mount (Textual lifecycle), we check
@@ -235,8 +232,6 @@ class TestFocusReset:
 
         # Simulate: no panel active, then focus sprint, then focus git
         app._handle_focus_message(focus_msg("sprint"))
-        first_previous = app._previous_panel
-
         app._handle_focus_message(focus_msg("git"))
 
         # _previous_panel should still point to what was active before

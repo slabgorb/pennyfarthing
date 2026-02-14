@@ -8,18 +8,17 @@ Story 103-7: /bc TUI panel focus — subscribe to /ws/focus, switch panels.
 
 from __future__ import annotations
 
+from typing import Any
+
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
-from typing import Any
-
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
 from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
-
 
 STATE_DISPLAY: dict[ConnectionState, str] = {
     ConnectionState.CONNECTED: "[green]● Connected[/green]",
