@@ -63,9 +63,9 @@ def start(project_dir, dry_run):
         project_dir = Path.cwd()
 
     if dry_run:
-        click.echo(f"[DRY-RUN] Would start BikeRack mode")
+        click.echo("[DRY-RUN] Would start BikeRack mode")
         click.echo(f"  Project: {project_dir}")
-        click.echo(f"  Actions: start WheelHub, set OTEL env, exec Claude CLI")
+        click.echo("  Actions: start WheelHub, set OTEL env, exec Claude CLI")
         return
 
     running, pid, port = is_already_running(project_dir)
@@ -121,7 +121,7 @@ def stop(project_dir, dry_run):
         project_dir = Path.cwd()
 
     if dry_run:
-        click.echo(f"[DRY-RUN] Would stop BikeRack instance")
+        click.echo("[DRY-RUN] Would stop BikeRack instance")
         click.echo(f"  Project: {project_dir}")
         return
 

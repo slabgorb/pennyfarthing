@@ -71,8 +71,8 @@ importers:
   packages/core:
     dependencies:
       '@pennyfarthing/shared':
-        specifier: workspace:^
-        version: link:../shared
+        specifier: ^10.4.0
+        version: 10.4.0
       chalk:
         specifier: ^5.3.0
         version: 5.6.2
@@ -108,11 +108,11 @@ importers:
   packages/cyclist:
     dependencies:
       '@pennyfarthing/core':
-        specifier: workspace:^
-        version: link:../core
+        specifier: ^10.4.0
+        version: 10.4.0(@types/node@20.19.27)
       '@pennyfarthing/shared':
-        specifier: workspace:^
-        version: link:../shared
+        specifier: ^10.4.0
+        version: 10.4.0
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -821,8 +821,17 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  '@pennyfarthing/core@10.4.0':
+    resolution: {integrity: sha512-Z0c4UWUOlPVJQnmRsEern6FTrRAw8PZ0KFpIRUxRcUlXiRMQfE9orWjN4qvGbvLVkxhlbceBF3Q5XC+dPLwHNw==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   '@pennyfarthing/shared@10.0.3':
     resolution: {integrity: sha512-dfTIHoDMElmX7gO2pUqAY0qeD0yRHq5zWtHk6MSDI3A3o4WbpJKuZGNTiEm0k30jgHiN9f1LrUnveLHtUlqayg==}
+    engines: {node: '>=18.0.0'}
+
+  '@pennyfarthing/shared@10.4.0':
+    resolution: {integrity: sha512-Np3jGQIhEgnvM52NJy1DX8YVB5mayOc6rMLJ8vHySnACI/y8HGGCkM3CmV8cH6r+xQgqypVk06fkwrMPIdM1rg==}
     engines: {node: '>=18.0.0'}
 
   '@pkgjs/parseargs@0.11.0':
@@ -4943,7 +4952,23 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@pennyfarthing/core@10.4.0(@types/node@20.19.27)':
+    dependencies:
+      '@pennyfarthing/shared': 10.4.0
+      chalk: 5.6.2
+      commander: 12.1.0
+      fs-extra: 11.3.3
+      inquirer: 9.3.8(@types/node@20.19.27)
+      open: 11.0.0
+      yaml: 2.8.2
+    transitivePeerDependencies:
+      - '@types/node'
+
   '@pennyfarthing/shared@10.0.3':
+    dependencies:
+      yaml: 2.8.2
+
+  '@pennyfarthing/shared@10.4.0':
     dependencies:
       yaml: 2.8.2
 

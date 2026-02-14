@@ -16,11 +16,9 @@ Tests should FAIL until persistence is implemented in bc/focus.py and tui.py.
 
 from __future__ import annotations
 
-import io
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from ruamel.yaml import YAML
 
 from pennyfarthing_scripts.bc.focus import (
@@ -30,7 +28,6 @@ from pennyfarthing_scripts.bc.focus import (
 )
 from pennyfarthing_scripts.bikerack.tui import BikeRackApp
 from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
-
 
 # ---------------------------------------------------------------------------
 # Helpers
