@@ -356,7 +356,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   let completedEpics = 0;
   const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
   if (sprintNumber > 0) {
-    const completedPath = join(sprintDir, `sprint-${sprintNumber}-completed.yaml`);
+    const completedPath = join(sprintDir, 'archive', `sprint-${sprintNumber}-completed.yaml`);
     if (existsSync(completedPath)) {
       try {
         const completedContent = readFileSync(completedPath, 'utf-8');
