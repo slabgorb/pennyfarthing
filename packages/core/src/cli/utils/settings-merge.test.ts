@@ -31,8 +31,6 @@ import {
   type SharedSettings,
   type FrameworkContribution,
   type FrameworkMeta,
-  type HookEntry,
-  type MergeConflict,
 } from './settings-merge.js';
 
 // =============================================================================
@@ -701,19 +699,17 @@ describe('AC3: Migration from legacy format', () => {
     assert.deepStrictEqual(migrated.permissions, { allow: [] });
   });
 
-  it('should preserve unknown top-level keys in contribution', () => {
+  it('should handle unknown top-level keys gracefully without crashing', () => {
     const legacy = {
       hooks: {},
       permissions: { allow: [] },
       customExtension: { someData: true },
     };
 
-    // Migration should not lose unknown keys — they should be preserved
-    // somewhere so round-tripping works
+    // Unknown keys are intentionally dropped — only known fields are migrated
     const migrated = migrateToSharedFormat(legacy, 'test-framework', '1.0.0');
 
     assert.ok(migrated._frameworks['test-framework'], 'Framework should be registered');
-    // The migrated format should be valid
     assert.strictEqual(migrated._version, SHARED_SETTINGS_VERSION);
   });
 });
