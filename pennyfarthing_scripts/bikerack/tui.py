@@ -9,6 +9,7 @@ Story 103-9: Panel header chrome — icon + name indicator for active panel.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from textual.app import App, ComposeResult
@@ -20,7 +21,7 @@ from textual.widgets import Footer, Header, Static
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
-from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
+from pennyfarthing_scripts.bikerack.ws_client import ConnectionState, WheelHubClient
 
 STATE_DISPLAY: dict[ConnectionState, str] = {
     ConnectionState.CONNECTED: "[green]● Connected[/green]",
@@ -150,3 +151,43 @@ class BikeRackApp(App):
             widget.connection_state = state
         except Exception:
             pass
+
+
+DEFAULT_PORT = 2898
+
+
+def main(port: int | None = None, project_dir: Path | None = None) -> None:
+    """Launch BikeRack TUI as a standalone application.
+
+    Args:
+        port: Explicit WheelHub port. If None, reads from .bikerack-port file.
+        project_dir: Project directory for port file discovery. Defaults to cwd.
+    """
+    if port is None:
+        if project_dir is not None:
+            port_file = project_dir / ".bikerack-port"
+            if port_file.exists():
+                try:
+                    port = int(port_file.read_text().strip())
+                except (ValueError, OSError):
+                    port = DEFAULT_PORT
+            else:
+                port = DEFAULT_PORT
+        else:
+            port = DEFAULT_PORT
+
+    client = WheelHubClient(port=port)
+    app = BikeRackApp(client=client)
+    app.run()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="BikeRack TUI")
+    parser.add_argument("--port", type=int, default=None, help="WheelHub port")
+    parser.add_argument("--project-dir", type=str, default=None, help="Project directory")
+    args = parser.parse_args()
+
+    project_dir = Path(args.project_dir) if args.project_dir else None
+    main(port=args.port, project_dir=project_dir)
