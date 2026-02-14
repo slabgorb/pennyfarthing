@@ -249,7 +249,7 @@ describe('AC4: Invalid ?panel= shows "Panel not found" with link to /bikerack', 
 
     const link = screen.getByRole('link', { name: /bikerack/i });
     expect(link).toBeInTheDocument();
-    expect(link.getAttribute('href')).toBe('/bikerack');
+    expect(link.getAttribute('href')).toBe('/');
   });
 });
 

@@ -58,7 +58,7 @@ describe('AC2: Theme + Agent Input -> SVG Output', () => {
     assert.ok(svg.includes('</svg>'), 'Should contain SVG closing tag');
   });
 
-  it('should work for all 10 agent roles', async () => {
+  it('should work for all 11 agent roles', async () => {
     const { generateSpider } = await import('./generate-spider.js');
     const roles = [
       'orchestrator',
@@ -71,6 +71,7 @@ describe('AC2: Theme + Agent Input -> SVG Output', () => {
       'tech-writer',
       'ux-designer',
       'devops',
+      'ba',
     ];
 
     for (const role of roles) {

@@ -22,7 +22,7 @@ import request from 'supertest';
 import { WebSocket } from 'ws';
 
 // Mock settings-store BEFORE importing hook-request
-vi.mock('../src/settings-store.js', () => ({
+vi.mock('@pennyfarthing/core/dist/server/settings-store.js', () => ({
   checkGrant: vi.fn().mockReturnValue(false),
   isAllowlisted: vi.fn().mockReturnValue(false),
   getBashApprovalGate: vi.fn().mockReturnValue(true),
@@ -37,7 +37,7 @@ import {
   resolveApproval,
   handleHookWebSocketMessage,
 } from '../src/api/hook-request.js';
-import { checkGrant, isAllowlisted, addGrant } from '../src/settings-store.js';
+import { checkGrant, isAllowlisted, addGrant } from '@pennyfarthing/core/dist/server/settings-store.js';
 
 // Type the mocked functions
 const mockCheckGrant = vi.mocked(checkGrant);
@@ -455,15 +455,15 @@ describe('MSSCI-14321: Server grant initialization', () => {
     // NOTE: This test will fail until server.ts is updated to call
     // initializeGrants() and setGrantsPersistCallback().
 
-    // Read server.ts source and verify it imports and calls grant init functions
+    // Read core's server.ts source and verify it imports and calls grant init functions
     const fs = await import('fs');
     const path = await import('path');
     const serverSource = fs.readFileSync(
-      path.resolve(__dirname, '../src/server.ts'),
+      path.resolve(__dirname, '../../core/src/server/server.ts'),
       'utf-8',
     );
 
-    // Verify server.ts imports grant initialization functions
+    // Verify core's server.ts imports grant initialization functions
     expect(serverSource).toContain('initializeGrants');
     expect(serverSource).toContain('setGrantsPersistCallback');
     expect(serverSource).toContain('loadGrants');

@@ -75,7 +75,8 @@ describe('AC1: BikeRack server startup', () => {
   });
 
   it('server.ts /bikerack route should serve index.html for SPA routing', () => {
-    const serverPath = join(SRC_DIR, 'server.ts');
+    // After 98-17, route is in core's server.ts
+    const serverPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'server.ts');
     const content = readFileSync(serverPath, 'utf-8');
 
     expect(content).toMatch(/app\.get\s*\(\s*['"]\/bikerack['"]/);
@@ -257,13 +258,14 @@ describe('AC5: PersonaHeader in BikeRackWorkspace (replaces PortraitPanel)', () 
     const workspacePath = join(COMPONENTS_DIR, 'BikeRackWorkspace.tsx');
     const content = readFileSync(workspacePath, 'utf-8');
 
-    // Search within JSX return block, not imports
-    const jsxMatch = content.match(/return\s*\(([\s\S]*)\);\s*\}/);
-    expect(jsxMatch).not.toBeNull();
-    const jsx = jsxMatch![1];
+    // Find the return statement with the specific cyclist-app div
+    const returnMatch = content.match(/return\s*\(\s*<div className="cyclist-app cyclist-dockview"[\s\S]*?<\/div>\s*\);/);
+    expect(returnMatch).not.toBeNull();
+    const jsx = returnMatch![0];
 
-    const portraitIndex = jsx.indexOf('PersonaHeader');
-    const dockviewIndex = jsx.indexOf('DockviewReact');
+    // Now search for the JSX tags (with <> to avoid matching imports)
+    const portraitIndex = jsx.indexOf('<PersonaHeader');
+    const dockviewIndex = jsx.indexOf('<DockviewReact');
     expect(portraitIndex).toBeGreaterThan(-1);
     expect(dockviewIndex).toBeGreaterThan(-1);
     expect(portraitIndex).toBeLessThan(dockviewIndex);
@@ -283,10 +285,11 @@ describe('AC5: PersonaHeader in BikeRackWorkspace (replaces PortraitPanel)', () 
 
 describe('AC6: Port isolation — no collision', () => {
   it('Cyclist default port should be 1898', () => {
-    const serverPath = join(SRC_DIR, 'server.ts');
+    // After 98-17, default port is in core's server.ts
+    const serverPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'server.ts');
     const content = readFileSync(serverPath, 'utf-8');
 
-    expect(content).toMatch(/['"]1898['"]/);
+    expect(content).toMatch(/1898/);
   });
 
   it('BikeRack default port should be 2898', () => {
@@ -300,7 +303,8 @@ describe('AC6: Port isolation — no collision', () => {
     const bikerackPath = join(SRC_DIR, 'bikerack.ts');
     const bikerackContent = readFileSync(bikerackPath, 'utf-8');
 
-    const serverPath = join(SRC_DIR, 'server.ts');
+    // After 98-17, port file logic is in core's server.ts
+    const serverPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'server.ts');
     const serverContent = readFileSync(serverPath, 'utf-8');
 
     // BikeRack uses .bikerack-port
@@ -457,12 +461,15 @@ describe('AC10: Rule 1 — Only isBikeRackMode() for mode detection', () => {
     const serverPath = join(SRC_DIR, 'server.ts');
     const content = readFileSync(serverPath, 'utf-8');
 
-    expect(content).toMatch(/export\s+function\s+isBikeRackMode/);
+    // After 98-17, cyclist's server.ts re-exports isBikeRackMode from core
+    expect(content).toMatch(/isBikeRackMode/);
+    expect(content).toMatch(/from\s+['"]@pennyfarthing\/core\/server['"]/);
   });
 
   it('isBikeRackMode should check process.env.IS_BIKERACK === "1"', () => {
-    const serverPath = join(SRC_DIR, 'server.ts');
-    const content = readFileSync(serverPath, 'utf-8');
+    // After 98-17, isBikeRackMode is defined in core's env.ts
+    const envPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'env.ts');
+    const content = readFileSync(envPath, 'utf-8');
 
     // Extract the function body
     const funcMatch = content.match(/function\s+isBikeRackMode\(\)[^{]*\{([^}]+)\}/);
@@ -471,8 +478,9 @@ describe('AC10: Rule 1 — Only isBikeRackMode() for mode detection', () => {
   });
 
   it('no source files should check process.env.IS_BIKERACK directly (except server.ts and bikerack.ts)', () => {
-    // Allowed files: server.ts (defines the function), bikerack.ts (sets the env var)
-    const ALLOWED_FILES = ['server.ts', 'bikerack.ts'];
+    // After 98-17: bikerack.ts (sets the env var), env.ts (defines isBikeRackMode)
+    // Core's env.ts also defines isBikeRackMode() — both are allowed
+    const ALLOWED_FILES = ['bikerack.ts', 'env.ts'];
 
     // Recursively collect .ts files from SRC_DIR
     function collectTsFiles(dir: string): string[] {

@@ -408,10 +408,11 @@ describe('AC4: /new-work behavior regression tests', () => {
     const result = routeStoryToWorkflow(story, workflows);
     assert.ok(result, 'Should route to a workflow');
     // trivial.yaml has: types: [chore, fix, refactor], points.max: 2
-    // With AND logic, 3-pt chore exceeds max, so trivial doesn't match
-    // Falls back to tdd (default: true)
-    assert.strictEqual(result.workflow.name, 'tdd',
-      '3-pt chore should fall back to tdd (exceeds trivial max)');
+    // With AND logic, 3-pt chore exceeds max, so trivial doesn't match on type
+    // Falls to points match: tdd-tandem has points.min:3 with no type constraint,
+    // so it matches before tdd (which has type constraint [feature, enhancement])
+    assert.strictEqual(result.workflow.name, 'tdd-tandem',
+      '3-pt chore should match tdd-tandem via points (no type constraint)');
   });
 
   it('story with no type and no points falls back to default workflow', () => {

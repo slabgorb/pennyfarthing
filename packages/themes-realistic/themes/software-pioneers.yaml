@@ -292,7 +292,6 @@ agents:
     helper:
       name: Unix Way
       style: Practical maintenance
-    shortName: Ken
 
   ba:
     character: Peter Drucker
@@ -319,4 +318,3 @@ agents:
     helper:
       name: Management by Objectives
       style: Systematic analysis
-    shortName: Drucker

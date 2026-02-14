@@ -35,7 +35,7 @@ const ANCHOR_THEMES = [
   'software-pioneers',
 ];
 
-// 10 agent roles
+// 11 agent roles
 const AGENT_ROLES = [
   'orchestrator',
   'sm',
@@ -47,6 +47,7 @@ const AGENT_ROLES = [
   'tech-writer',
   'ux-designer',
   'devops',
+  'ba',
 ];
 
 // OCEAN dimensions
@@ -82,7 +83,7 @@ describe('OCEAN Profiles - Structure Validation', () => {
         );
       });
 
-      it('should have all 10 agent roles', () => {
+      it('should have all 11 agent roles', () => {
         const theme = loadTheme(themeName);
         const agents = theme.agents as Record<string, unknown>;
 
@@ -147,7 +148,7 @@ describe('OCEAN Profiles - Structure Validation', () => {
 });
 
 describe('OCEAN Profiles - Completeness', () => {
-  it('should have exactly 100 character profiles (10 themes × 10 agents)', () => {
+  it('should have exactly 110 character profiles (10 themes × 11 agents)', () => {
     let profileCount = 0;
 
     for (const themeName of ANCHOR_THEMES) {
@@ -164,8 +165,8 @@ describe('OCEAN Profiles - Completeness', () => {
 
     assert.strictEqual(
       profileCount,
-      100,
-      `Expected 100 character profiles, found ${profileCount}`
+      110,
+      `Expected 110 character profiles, found ${profileCount}`
     );
   });
 });

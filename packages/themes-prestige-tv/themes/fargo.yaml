@@ -314,7 +314,6 @@ agents:
     helper:
       name: Business Analysis
       style: Successful but haunted intelligence
-    shortName: Emmit
 # Additional characters for OCEAN gap coverage
 additional_characters:
   lorne_malvo:
