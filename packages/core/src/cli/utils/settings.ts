@@ -402,6 +402,9 @@ export function ensureSettingsSymlink(projectRoot: string): void {
     if (lstatSync(symlinkPath).isSymbolicLink()) {
       return;
     }
+    // Exists but is a real file — migrate it first (creates symlink as side effect)
+    migrateSettingsFile(projectRoot);
+    return;
   } catch {
     // Doesn't exist yet — continue to create
   }
