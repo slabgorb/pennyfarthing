@@ -190,6 +190,12 @@ export function getPublicDir(): string {
     return srcPublic;
   }
 
+  // Monorepo: __dirname is packages/core/dist/server/, public is in packages/cyclist/src/public/
+  const monorepoPublic = join(__dirname, '..', '..', '..', 'cyclist', 'src', 'public');
+  if (existsSync(monorepoPublic)) {
+    return monorepoPublic;
+  }
+
   // Fallback to relative path (for tsx dev mode)
   return join(__dirname, 'public');
 }
@@ -229,8 +235,14 @@ export function getPortraitsDir(): string | null {
   return null;
 }
 
-// Get the dist directory (where compiled JS files live)
+// Get the dist directory (where Vite build output lives — dist/public/)
 export function getDistDir(): string {
+  // Monorepo: Vite output is in packages/cyclist/dist/, not core's dist/
+  const monorepoDistPublic = join(__dirname, '..', '..', '..', 'cyclist', 'dist');
+  if (existsSync(join(monorepoDistPublic, 'public'))) {
+    return monorepoDistPublic;
+  }
+
   if (__dirname.includes('/dist')) {
     return __dirname;
   }
