@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, chmodSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -264,58 +264,11 @@ export async function initCommand(
 }
 
 /**
- * Generate a dispatcher script for a given hook name.
- * The dispatcher iterates over executable scripts in the .d/ directory
- * and runs them in sorted order, propagating exit codes and forwarding
- * arguments and stdin.
+ * Generate a dispatcher script for a given hook name by substituting
+ * __HOOK_NAME__ in the shared template.
  */
-function generateDispatcher(hookName: string): string {
-  return `#!/bin/bash
-# pennyfarthing-dispatcher: Git hook dispatcher for ${hookName}
-# Runs all executable scripts in ${hookName}.d/ in sorted order.
-# Installed by pennyfarthing — do not edit manually.
-
-set -uo pipefail
-
-HOOK_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-HOOK_NAME="${hookName}"
-D_DIR="\${HOOK_DIR}/\${HOOK_NAME}.d"
-
-# If .d/ directory doesn't exist or is empty, exit successfully
-if [[ ! -d "\${D_DIR}" ]]; then
-  exit 0
-fi
-
-# Capture stdin for hooks that receive input (e.g., pre-push)
-STDIN_DATA=""
-if [[ ! -t 0 ]]; then
-  STDIN_DATA="$(cat /dev/stdin)"
-fi
-
-# Run each executable script in sorted order
-for hook_script in $(ls "\${D_DIR}/" 2>/dev/null | sort); do
-  script_path="\${D_DIR}/\${hook_script}"
-
-  # Skip non-executable files
-  if [[ ! -x "\${script_path}" ]]; then
-    continue
-  fi
-
-  # Run the hook, forwarding arguments and stdin
-  if [[ -n "\${STDIN_DATA}" ]]; then
-    echo "\${STDIN_DATA}" | "\${script_path}" "$@"
-  else
-    "\${script_path}" "$@"
-  fi
-
-  exit_code=$?
-  if [[ \${exit_code} -ne 0 ]]; then
-    exit \${exit_code}
-  fi
-done
-
-exit 0
-`;
+function generateDispatcher(hookName: string, template: string): string {
+  return template.replace(/__HOOK_NAME__/g, hookName);
 }
 
 /**
@@ -353,6 +306,10 @@ export async function installGitHooks(
   const PF_PREFIX = '10';
   const MIGRATED_PREFIX = '50';
 
+  // Load shared dispatcher template
+  const dispatcherTemplatePath = join(nodeModulesPath, 'scripts/hooks/dispatcher-template.sh');
+  const dispatcherTemplate = readFileSync(dispatcherTemplatePath, 'utf8');
+
   // Define hooks to install
   const hooks = [
     { source: 'pre-commit.sh', dest: 'pre-commit' },
@@ -380,17 +337,17 @@ export async function installGitHooks(
     }
 
     // Create .d/ directory
-    if (!existsSync(dDir)) {
+    if (!pathExists(dDir)) {
       mkdirSync(dDir, { recursive: true });
     }
 
     // Migrate existing hook if present
-    if (existsSync(destPath)) {
+    if (pathExists(destPath)) {
       const existingContent = readFileSync(destPath, 'utf8');
 
       if (existingContent.includes(DISPATCHER_MARKER)) {
         // Already a dispatcher — update it if content changed
-        const newDispatcher = generateDispatcher(hook.dest);
+        const newDispatcher = generateDispatcher(hook.dest, dispatcherTemplate);
         if (existingContent !== newDispatcher) {
           writeFileSync(destPath, newDispatcher, { mode: 0o755 });
           logger.updated(`.git/hooks/${hook.dest} dispatcher`);
@@ -399,27 +356,27 @@ export async function installGitHooks(
         }
       } else if (existingContent.includes(PF_MARKER)) {
         // Old-style single-file pennyfarthing hook — replace with dispatcher
-        writeFileSync(destPath, generateDispatcher(hook.dest), { mode: 0o755 });
+        writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
         logger.updated(`.git/hooks/${hook.dest} → dispatcher`);
       } else {
         // Non-pennyfarthing hook — migrate into .d/ then install dispatcher
         const migratedName = `${MIGRATED_PREFIX}-migrated-${hook.dest}.sh`;
         const migratedPath = join(dDir, migratedName);
-        if (!existsSync(migratedPath)) {
+        if (!pathExists(migratedPath)) {
           writeFileSync(migratedPath, existingContent, { mode: 0o755 });
           logger.info(`Migrated existing ${hook.dest} hook to ${hook.dest}.d/${migratedName}`);
         }
-        writeFileSync(destPath, generateDispatcher(hook.dest), { mode: 0o755 });
+        writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
         logger.created(`.git/hooks/${hook.dest} dispatcher`);
       }
     } else {
       // No existing hook — install fresh dispatcher
-      writeFileSync(destPath, generateDispatcher(hook.dest), { mode: 0o755 });
+      writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
       logger.created(`.git/hooks/${hook.dest} dispatcher`);
     }
 
     // Install/update pennyfarthing hook in .d/
-    if (existsSync(pfHookPath)) {
+    if (pathExists(pfHookPath)) {
       const existingPf = readFileSync(pfHookPath, 'utf8');
       if (existingPf === sourceContent) {
         logger.skipped(`.git/hooks/${hook.dest}.d/${pfHookName}`, 'already installed');
