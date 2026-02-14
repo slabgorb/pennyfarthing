@@ -1,11 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    '../core/src/public/**/*.{tsx,ts,jsx,js,html}',
+    './src/public/**/*.{tsx,ts,jsx,js,html}',
   ],
   theme: {
     extend: {
-      // Existing Cyclist color mappings
       colors: {
         primary: {
           DEFAULT: 'var(--bg-primary)',
@@ -28,9 +27,6 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         error: 'var(--error)',
-
-        // shadcn CSS variable bridge
-        // Maps shadcn's expected color tokens to Cyclist's theme variables
         background: 'var(--bg-primary)',
         foreground: 'var(--text-primary)',
         card: {

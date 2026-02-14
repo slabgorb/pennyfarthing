@@ -65,7 +65,11 @@ def ensure_archive_file(project_root: Path | None = None) -> Path:
 
     sprint_name = sprint_info.get("jira_sprint_name", "Unknown Sprint")
     sprint_id = sprint_info.get("jira_sprint_id", "")
+    sprint_number = sprint_info.get("number", "")
     goal = sprint_info.get("goal", "")
+    start_date = sprint_info.get("start_date", "")
+    end_date = sprint_info.get("end_date", "")
+    status = sprint_info.get("status", "active")
 
     template = f"""# Sprint {sprint_name} - Completed Work
 # Jira Sprint ID: {sprint_id}
@@ -73,9 +77,13 @@ def ensure_archive_file(project_root: Path | None = None) -> Path:
 
 sprint:
   name: "{sprint_name}"
+  number: {sprint_number}
   jira_sprint_id: {sprint_id}
   jira_sprint_name: "{sprint_name}"
   goal: {goal}
+  start_date: {start_date}
+  end_date: {end_date}
+  status: {status}
 
 completed_epics:
   # Epic shard files live in sprint/archive/epic-{{ref}}.yaml

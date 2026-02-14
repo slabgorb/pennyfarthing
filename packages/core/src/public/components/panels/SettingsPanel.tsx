@@ -53,6 +53,24 @@ interface ThemeMetadata {
 // Tier sort order: S=0, A=1, B=2, unranked=3
 const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2 };
 
+// Panel display names for the visibility toggles
+const PANEL_DISPLAY_NAMES: Record<string, string> = {
+  changed: 'Changed Files',
+  diffs: 'Diffs',
+  debug: 'Debug',
+  'audit-log': 'Audit Log',
+  message: 'Message',
+  sprint: 'Sprint',
+  workflow: 'Workflow',
+  ac: 'AC',
+  todo: 'Todo',
+  background: 'Background',
+  git: 'Git',
+  settings: 'Settings',
+};
+
+// Panels that cannot be hidden
+const PROTECTED_PANELS = new Set<string>();
 
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);

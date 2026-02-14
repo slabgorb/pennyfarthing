@@ -12,7 +12,6 @@ from pennyfarthing_scripts.sprint.archive_epic import (
     _load_archive_file,
     _write_archive_file,
     archive_epic,
-    ensure_archive_file,
     is_epic_complete,
 )
 from pennyfarthing_scripts.sprint.yaml_io import _make_yaml, _write_yaml_file
@@ -27,7 +26,7 @@ def sprint_tree(tmp_path: Path) -> Path:
     (sprint_dir / "context").mkdir()
 
     # current-sprint.yaml index referencing one epic
-    yml = _make_yaml()
+    _make_yaml()
     index = {
         "sprint": {
             "name": "TO Sprint 2699",

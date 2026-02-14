@@ -184,6 +184,12 @@ export function getPublicDir(): string {
     return asarPublic;
   }
 
+  // Compiled dist: dist/server/paths.js → ../../src/public
+  const compiledPublic = join(__dirname, '..', '..', 'src', 'public');
+  if (existsSync(compiledPublic)) {
+    return compiledPublic;
+  }
+
   // Try src/public from cwd (for compiled dist/server.js in dev)
   const srcPublic = join(process.cwd(), 'src', 'public');
   if (existsSync(srcPublic)) {

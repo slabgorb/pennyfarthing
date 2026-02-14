@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { parse as parseYaml } from 'yaml';
 import { detectPennyfarthingProject, loadThemeConfig, loadThemeYaml } from '../pennyfarthing.js';
 
 export interface AgentCharacterMap {
