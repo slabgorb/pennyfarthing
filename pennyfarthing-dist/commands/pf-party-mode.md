@@ -11,7 +11,7 @@ Party mode has two variants. Route based on the user's invocation:
 
 - **`party-mode quick`** or **`[P]` from A/P/C menus** → Run the Quick variant below
 - **`party-mode roleplay`** → Launch the roleplay workflow: `workflows/party-mode-roleplay/workflow.yaml`
-- **`party-mode`** (bare, no variant specified) → Check `party_mode_default` in `.pennyfarthing/config.local.yaml`. If not set or set to `quick`, run Quick. If set to `roleplay`, launch the roleplay workflow.
+- **`party-mode`** (bare, no variant specified) → Check `workflow.party_mode_default` in `.pennyfarthing/config.local.yaml`. If not set or set to `quick`, run Quick. If set to `roleplay`, launch the roleplay workflow.
 
 ---
 
