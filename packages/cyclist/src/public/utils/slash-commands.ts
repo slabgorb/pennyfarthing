@@ -154,7 +154,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     "name": "/pf-party-mode",
-    "description": "Free-form creative brainstorming with all agents"
+    "description": "Creative brainstorming and multi-agent discussion"
   },
   {
     "name": "/pf-patch",

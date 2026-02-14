@@ -29,11 +29,13 @@ def cli():
     debug     - Analysis tools (hotspots, deadcode, healthscore)
 
     \b
-    Shortcuts (sugar for common sprint operations):
+    Shortcuts (sugar for common operations):
       status   - Show sprint status (= sprint status)
       backlog  - Show available stories (= sprint backlog)
       work     - Start work on a story (= sprint work)
       story    - Story operations (= sprint story)
+      gui      - Open BikeRack dashboard (= launch gui)
+      tui      - Launch terminal UI (= launch tui)
     """
     pass
 
@@ -99,6 +101,13 @@ cli.add_command(validate)
 from pennyfarthing_scripts.bikerack.cli import bikerack  # noqa: E402
 
 cli.add_command(bikerack)
+
+# Import and register launch group + top-level sugar aliases
+from pennyfarthing_scripts.launch.cli import launch  # noqa: E402
+
+cli.add_command(launch)
+cli.add_command(launch.commands["gui"], "gui")
+cli.add_command(launch.commands["tui"], "tui")
 
 # Import and register bc group
 from pennyfarthing_scripts.bc.cli import bc  # noqa: E402
