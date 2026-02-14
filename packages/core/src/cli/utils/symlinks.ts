@@ -41,6 +41,16 @@ export function removeSymlinkOrDirectory(path: string, dryRun: boolean = false):
 }
 
 /**
+ * Remove only entries matching a prefix from a directory.
+ * Preserves all other entries (user content).
+ * Returns count of removed entries.
+ * TODO: 98-6 — implement selective cleanup
+ */
+export function cleanManagedEntries(_dir: string, _prefix: string, _dryRun: boolean = false): number {
+  return 0; // stub — not implemented
+}
+
+/**
  * Create commands directory with individual symlinks to each command file.
  * This allows users to add their own commands alongside built-in ones.
  */
