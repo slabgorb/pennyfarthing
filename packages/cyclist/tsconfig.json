@@ -7,14 +7,12 @@
     "paths": {
       "@pennyfarthing/core": ["../core/src/index.ts"],
       "@pennyfarthing/core/server": ["../core/src/server/server.ts"],
-      "@pennyfarthing/core/dist/server/api/*": ["../core/src/server/api/*"],
-      "@pennyfarthing/shared": ["../shared/src/index.ts"]
+      "@pennyfarthing/core/dist/server/api/*": ["../core/src/server/api/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests", "src/preload.ts", "src/public/**/*.tsx", "src/public/**/*.ts", "src/public/styles/**"],
   "references": [
-    { "path": "../core" },
-    { "path": "../shared" }
+    { "path": "../core" }
   ]
 }

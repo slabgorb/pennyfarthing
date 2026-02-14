@@ -2,7 +2,7 @@
  * Theme Metadata
  *
  * Handles loading and caching of Pennyfarthing theme metadata.
- * Delegates discovery to @pennyfarthing/shared unified loader.
+ * Delegates discovery to @pennyfarthing/core unified loader.
  */
 
 import * as fs from 'fs';
@@ -13,13 +13,13 @@ import {
   loadAllThemeMetadata as sharedLoadAllThemeMetadata,
   deriveCategory,
   type ThemeMetadata,
-} from '@pennyfarthing/shared';
+} from '@pennyfarthing/core';
 
 // Re-export ThemeMetadata so existing consumers don't break
 export type { ThemeMetadata };
 
 // Re-export deriveCategory for any direct consumers
-export { deriveCategory, CATEGORY_MAP } from '@pennyfarthing/shared';
+export { deriveCategory, CATEGORY_MAP } from '@pennyfarthing/core';
 
 /**
  * Agent data within a theme (24-6)
@@ -186,7 +186,7 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
   }
 
   // Shared discovery handles core + packages + custom
-  const { discoverAllThemeDirs } = await import('@pennyfarthing/shared');
+  const { discoverAllThemeDirs } = await import('@pennyfarthing/core');
   const sharedDirs = discoverAllThemeDirs(projectDir || undefined);
   for (const dir of sharedDirs) {
     if (!themeDirs.includes(dir)) {
