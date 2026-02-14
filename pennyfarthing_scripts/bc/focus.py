@@ -254,6 +254,39 @@ def clear_all_named_layouts(project_dir: Path | None = None) -> dict:
         return {"success": False, "error": str(exc)}
 
 
+def get_last_panel(project_dir: Path | None = None) -> dict:
+    """Read last_panel from config.local.yaml.
+
+    Story 103-8: Panel persistence — single source of truth for last-viewed
+    panel, shared between ERB and TUI.
+
+    Args:
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, last_panel?: str|None, error?: str}
+    """
+    # Stub: 103-8 not implemented yet
+    return {"success": False, "error": "Not implemented"}
+
+
+def save_last_panel(panel_name: str, project_dir: Path | None = None) -> dict:
+    """Save last_panel to config.local.yaml.
+
+    Story 103-8: Panel persistence — persists the active panel so it can
+    be restored on next launch. Shared between ERB and TUI.
+
+    Args:
+        panel_name: Panel ID to persist (must be in VALID_PANELS)
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, data?: str, error?: str}
+    """
+    # Stub: 103-8 not implemented yet
+    return {"success": False, "error": "Not implemented"}
+
+
 def get_panel_focus(project_dir: Path | None = None) -> dict:
     """Read current focus setting from config.local.yaml.
 
