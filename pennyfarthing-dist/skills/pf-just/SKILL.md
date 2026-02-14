@@ -6,7 +6,7 @@ description: |
 args: "[recipe] [args...]"
 ---
 
-# /just - Project Task Runner
+# /pf-just - Project Task Runner
 
 <run>
 Main commands:
@@ -23,7 +23,7 @@ Main commands:
 
 ## Commands
 
-### `/just` or `/just --list`
+### `/pf-just` or `/pf-just --list`
 
 List all available recipes.
 
@@ -36,7 +36,7 @@ just --list
 
 ---
 
-### `/just build`
+### `/pf-just build`
 
 Build all packages in the monorepo.
 
@@ -49,7 +49,7 @@ just build
 
 ---
 
-### `/just test`
+### `/pf-just test`
 
 Run tests for all packages.
 
@@ -62,7 +62,7 @@ just test
 
 ---
 
-### `/just test-cyclist`
+### `/pf-just test-cyclist`
 
 Run tests for the Cyclist package only.
 
@@ -75,7 +75,7 @@ just test-cyclist
 
 ---
 
-### `/just test-cyclist-watch`
+### `/pf-just test-cyclist-watch`
 
 Run Cyclist tests in watch mode for TDD workflow.
 
@@ -88,7 +88,7 @@ just test-cyclist-watch
 
 ---
 
-### `/just install`
+### `/pf-just install`
 
 Install dependencies for all packages.
 
@@ -105,7 +105,7 @@ just install
 
 The `cyclist` recipe is the main entry point for Cyclist operations.
 
-### `/just cyclist` (default)
+### `/pf-just cyclist` (default)
 
 Launch Cyclist in Electron mode with folder picker.
 
@@ -118,7 +118,7 @@ just cyclist
 
 ---
 
-### `/just cyclist here`
+### `/pf-just cyclist here`
 
 Launch Cyclist for the current directory.
 
@@ -131,7 +131,7 @@ just cyclist here
 
 ---
 
-### `/just cyclist web`
+### `/pf-just cyclist web`
 
 Launch Cyclist in web dev mode with hot reload.
 
@@ -144,7 +144,7 @@ just cyclist web
 
 ---
 
-### `/just cyclist server`
+### `/pf-just cyclist server`
 
 Start Cyclist web server only (no browser).
 
@@ -157,7 +157,7 @@ just cyclist server
 
 ---
 
-### `/just cyclist verbose`
+### `/pf-just cyclist verbose`
 
 Enable debug logging for troubleshooting.
 
@@ -174,7 +174,7 @@ just cyclist web verbose
 
 ---
 
-### `/just cyclist dir=<path>`
+### `/pf-just cyclist dir=<path>`
 
 Launch Cyclist for a specific project directory.
 
@@ -190,7 +190,7 @@ just cyclist dir=/path/to/project
 
 ---
 
-### `/just cyclist setup`
+### `/pf-just cyclist setup`
 
 First-time setup for Cyclist development.
 
@@ -207,7 +207,7 @@ just cyclist setup
 
 ---
 
-### `/just cyclist doctor`
+### `/pf-just cyclist doctor`
 
 Diagnose Cyclist setup issues.
 
@@ -226,7 +226,7 @@ just cyclist doctor --fix
 
 ---
 
-### `/just cyclist build`
+### `/pf-just cyclist build`
 
 Build Cyclist TypeScript only.
 
@@ -239,7 +239,7 @@ just cyclist build
 
 ---
 
-### `/just cyclist clean`
+### `/pf-just cyclist clean`
 
 Remove Cyclist build artifacts.
 
@@ -252,7 +252,7 @@ just cyclist clean
 
 ---
 
-### `/just cyclist rebuild`
+### `/pf-just cyclist rebuild`
 
 Rebuild native modules (node-pty) for Electron.
 
@@ -267,7 +267,7 @@ just cyclist rebuild
 
 ---
 
-### `/just cyclist package`
+### `/pf-just cyclist package`
 
 Build Cyclist Electron app for distribution.
 
@@ -280,7 +280,7 @@ just cyclist package
 
 ---
 
-### `/just cyclist install`
+### `/pf-just cyclist install`
 
 Install Cyclist app and CLI.
 
@@ -299,7 +299,7 @@ just cyclist install
 
 Generate AI portraits for persona themes.
 
-### `/just portraits <theme>`
+### `/pf-just portraits <theme>`
 
 Generate portraits for a specific theme.
 
@@ -315,7 +315,7 @@ just portraits arthurian-mythos
 
 ---
 
-### `/just portraits-all`
+### `/pf-just portraits-all`
 
 Generate portraits for all themes.
 
@@ -328,7 +328,7 @@ just portraits-all
 
 ---
 
-### `/just portraits-preview <theme>`
+### `/pf-just portraits-preview <theme>`
 
 Preview portraits for a theme without saving.
 

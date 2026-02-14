@@ -5,7 +5,7 @@ description: |
 args: "[list|show [name]|set <name>|start <name> [--mode <mode>]|resume [name]|status|check|fix-phase]"
 ---
 
-# /workflow - Workflow Management
+# /pf-workflow - Workflow Management
 
 Pennyfarthing uses YAML-defined workflows to control agent sequences. The default TDD workflow (SM > TEA > Dev > Reviewer) can be customized or replaced.
 
@@ -15,13 +15,13 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 
 | Command | Script | Purpose |
 |---------|--------|---------|
-| `/workflow` or `/workflow list` | `.pennyfarthing/scripts/workflow/list-workflows.sh` | List all workflows |
-| `/workflow show [name]` | `.pennyfarthing/scripts/workflow/show-workflow.sh [name]` | Show workflow details |
-| `/workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
-| `/workflow start <name>` | `.pennyfarthing/scripts/workflow/start-workflow.sh <name> [--mode M]` | Start stepped workflow |
-| `/workflow resume [name]` | `.pennyfarthing/scripts/workflow/resume-workflow.sh [name]` | Resume interrupted workflow |
-| `/workflow status` | `.pennyfarthing/scripts/workflow/workflow-status.sh` | Show stepped workflow progress |
-| `/workflow fix-phase <id> <phase>` | `.pennyfarthing/scripts/workflow/fix-session-phase.sh <id> <phase> [--dry-run]` | Repair session phase |
+| `/pf-workflow` or `/pf-workflow list` | `.pennyfarthing/scripts/workflow/list-workflows.sh` | List all workflows |
+| `/pf-workflow show [name]` | `.pennyfarthing/scripts/workflow/show-workflow.sh [name]` | Show workflow details |
+| `/pf-workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
+| `/pf-workflow start <name>` | `.pennyfarthing/scripts/workflow/start-workflow.sh <name> [--mode M]` | Start stepped workflow |
+| `/pf-workflow resume [name]` | `.pennyfarthing/scripts/workflow/resume-workflow.sh [name]` | Resume interrupted workflow |
+| `/pf-workflow status` | `.pennyfarthing/scripts/workflow/workflow-status.sh` | Show stepped workflow progress |
+| `/pf-workflow fix-phase <id> <phase>` | `.pennyfarthing/scripts/workflow/fix-session-phase.sh <id> <phase> [--dry-run]` | Repair session phase |
 
 ### Python CLI Commands
 

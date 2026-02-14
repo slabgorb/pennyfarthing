@@ -41,7 +41,7 @@ ASSESSMENT_SECTION: "Tech Writer Review"
 
 <skills>
 - `/architecture` - System documentation reference
-- `/changelog` - Changelog management and release notes
+- `/pf-changelog` - Changelog management and release notes
 </skills>
 
 <critical>
