@@ -6,11 +6,11 @@ description: |
 args: "[check|status]"
 ---
 
-# /cyclist - Cyclist Visual Terminal
+# /pf-cyclist - Cyclist Visual Terminal
 
 ## Commands
 
-### `/cyclist` or `/cyclist check`
+### `/pf-cyclist` or `/pf-cyclist check`
 
 Check if running inside Cyclist visual terminal.
 
@@ -77,12 +77,12 @@ just cyclist server
 
 | Command | Script |
 |---------|--------|
-| `/cyclist` | `cyclist/is-cyclist.sh` |
-| `/cyclist check` | `cyclist/is-cyclist.sh` |
+| `/pf-cyclist` | `cyclist/is-cyclist.sh` |
+| `/pf-cyclist check` | `cyclist/is-cyclist.sh` |
 
 ## Related Skills
 
 | Skill | Purpose |
 |-------|---------|
 | `/theme` | Theme management (list, show, set) |
-| `/just` | Run just recipes including `just cyclist` |
+| `/pf-just` | Run just recipes including `just cyclist` |

@@ -75,12 +75,12 @@ Workflow state lives in session files (`.session/{story-id}-session.md`):
 
 | Command | Purpose |
 |---------|---------|
-| `/workflow list` | List all workflows |
-| `/workflow show [name]` | Show workflow details |
-| `/workflow start <name>` | Start a workflow |
-| `/workflow start <name> --mode <mode>` | Start in specific mode |
-| `/workflow resume` | Resume interrupted workflow |
-| `/workflow status` | Show current progress |
+| `/pf-workflow list` | List all workflows |
+| `/pf-workflow show [name]` | Show workflow details |
+| `/pf-workflow start <name>` | Start a workflow |
+| `/pf-workflow start <name> --mode <mode>` | Start in specific mode |
+| `/pf-workflow resume` | Resume interrupted workflow |
+| `/pf-workflow status` | Show current progress |
 
 <info>
 **Full docs:** `docs/BIKELANE.md`, `docs/BIKELANE-DIAGRAMS.md`

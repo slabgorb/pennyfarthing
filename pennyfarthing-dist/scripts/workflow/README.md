@@ -24,5 +24,5 @@ pf sprint story finish MSSCI-12345
 
 ## Ownership
 
-- **Primary users:** SM agent, `/workflow` skill
+- **Primary users:** SM agent, `/pf-workflow` skill
 - **Maintained by:** Core Pennyfarthing team

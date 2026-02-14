@@ -32,5 +32,5 @@ Core logic lives in `pennyfarthing_scripts/jira/`:
 
 ## Ownership
 
-- **Primary users:** SM agent, `/jira` skill
+- **Primary users:** SM agent, `/pf-jira` skill
 - **Maintained by:** Core Pennyfarthing team
