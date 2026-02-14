@@ -33,6 +33,14 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Add files to context"
   },
   {
+    "name": "/benchmark",
+    "description": "Compare an agent's performance against a stored baseline"
+  },
+  {
+    "name": "/benchmark-control",
+    "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
+  },
+  {
     "name": "/bug",
     "description": "Report a bug"
   },
@@ -63,6 +71,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/init",
     "description": "Initialize CLAUDE.md"
+  },
+  {
+    "name": "/job-fair",
+    "description": "Discover which characters in a theme excel at each role"
   },
   {
     "name": "/login",
@@ -259,6 +271,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/review",
     "description": "Start code review"
+  },
+  {
+    "name": "/solo",
+    "description": "Run a single agent on a scenario with absolute rubric scoring"
   },
   {
     "name": "/status",
