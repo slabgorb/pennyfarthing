@@ -11,6 +11,38 @@ from typing import Any
 
 from textual.widgets import Static
 
+# Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
+PANEL_ICONS: dict[str, tuple[str, str]] = {
+    "sprint": ("\uf0e7", "#"),       # nf-fa-bolt
+    "git": ("\ue725", "G"),          # nf-dev-git_branch
+    "diffs": ("\uf440", "D"),        # nf-oct-diff
+    "todo": ("\uf046", "T"),         # nf-fa-check_square_o
+    "workflow": ("\uf126", "W"),     # nf-fa-code_fork
+    "background": ("\uf110", "B"),   # nf-fa-spinner
+    "audit-log": ("\uf15c", "L"),    # nf-fa-file_text
+    "changed": ("\uf044", "C"),      # nf-fa-pencil_square_o
+    "ac": ("\uf00c", "A"),           # nf-fa-check
+    "debug": ("\uf188", "d"),        # nf-fa-bug
+    "settings": ("\uf013", "S"),     # nf-fa-gear
+    "tty": ("\uf120", ">"),          # nf-fa-terminal
+}
+
+
+def get_panel_icon(panel_name: str, use_nerd_font: bool = True) -> str:
+    """Return icon for a panel name.
+
+    Args:
+        panel_name: Panel identifier (e.g. "sprint", "git").
+        use_nerd_font: If True, return Nerd Font glyph; otherwise ASCII fallback.
+
+    Returns:
+        Icon string, or empty string if panel_name is unknown.
+    """
+    entry = PANEL_ICONS.get(panel_name)
+    if entry is None:
+        return ""
+    return entry[0] if use_nerd_font else entry[1]
+
 
 class BasePanel(Static):
     """Base class for BikeRack TUI panels.
@@ -21,6 +53,12 @@ class BasePanel(Static):
 
     #: WebSocket channel this panel subscribes to (override in subclass)
     channel: str = ""
+
+    #: Human-readable panel name shown in header chrome
+    panel_name: str = ""
+
+    #: Nerd Font icon for this panel type (with ASCII fallback)
+    icon: str = ""
 
     def __init__(self, client=None, **kwargs):
         super().__init__(**kwargs)

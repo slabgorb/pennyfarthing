@@ -12,7 +12,7 @@ from rich.console import Group
 from rich.table import Table
 from rich.text import Text
 
-from pennyfarthing_scripts.bikerack.base_panel import BasePanel
+from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 
 
 class SprintPanel(BasePanel):
@@ -23,6 +23,8 @@ class SprintPanel(BasePanel):
     """
 
     channel: str = "sprint"
+    panel_name: str = "Sprint"
+    icon: str = PANEL_ICONS["sprint"][0]
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render sprint data as Rich renderable.

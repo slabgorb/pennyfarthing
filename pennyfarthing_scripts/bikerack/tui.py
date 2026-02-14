@@ -4,6 +4,7 @@ Story 103-1: Textual app scaffold with basic layout.
 Story 103-4: Connection status indicator in TUI header.
 Story 103-6: SprintPanel as default panel on launch.
 Story 103-7: /bc TUI panel focus — subscribe to /ws/focus, switch panels.
+Story 103-9: Panel header chrome — icon + name indicator for active panel.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
+from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
 from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
 
@@ -26,6 +28,37 @@ STATE_DISPLAY: dict[ConnectionState, str] = {
     ConnectionState.RECONNECTING: "[yellow]● Reconnecting…[/yellow]",
     ConnectionState.CONNECTING: "[yellow]● Connecting…[/yellow]",
 }
+
+# Human-readable display names for panels
+PANEL_DISPLAY_NAMES: dict[str, str] = {
+    "sprint": "Sprint",
+    "git": "Git",
+    "diffs": "Diffs",
+    "todo": "Todo",
+    "workflow": "Workflow",
+    "background": "Background",
+    "audit-log": "Audit Log",
+    "changed": "Changed",
+    "ac": "Acceptance Criteria",
+    "debug": "Debug",
+    "settings": "Settings",
+    "tty": "TTY",
+}
+
+
+class PanelIndicator(Static):
+    """Displays the active panel's Nerd Font icon and name."""
+
+    panel_key: reactive[str] = reactive("sprint")
+
+    def watch_panel_key(self, key: str) -> None:
+        """Update display when the active panel changes."""
+        icon = get_panel_icon(key)
+        name = PANEL_DISPLAY_NAMES.get(key, key.title())
+        if icon:
+            self.update(f"[bold]{icon} {name}[/bold]")
+        else:
+            self.update(f"[bold]{name}[/bold]")
 
 
 class ConnectionStatus(Static):
@@ -57,6 +90,7 @@ class BikeRackApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield PanelIndicator(id="panel-indicator")
         yield ConnectionStatus(
             STATE_DISPLAY[ConnectionState.DISCONNECTED],
             id="connection-status",
@@ -70,10 +104,21 @@ class BikeRackApp(App):
         if result.get("success") and result.get("last_panel"):
             self._focused_panel = result["last_panel"]
 
+        # Set initial panel indicator
+        self._update_panel_indicator(self._focused_panel or "sprint")
+
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
             self._client.subscribe("focus", self._handle_focus_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
+
+    def _update_panel_indicator(self, panel_key: str) -> None:
+        """Update the panel indicator widget with the given panel key."""
+        try:
+            indicator = self.query_one("#panel-indicator", PanelIndicator)
+            indicator.panel_key = panel_key
+        except Exception:
+            pass
 
     def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming focus channel messages.
@@ -93,6 +138,7 @@ class BikeRackApp(App):
             self._previous_panel = self._focused_panel
             self._focused_panel = focus
             save_last_panel(focus, project_dir=None)
+            self._update_panel_indicator(focus)
         else:
             self._focused_panel = None
             self._previous_panel = None
