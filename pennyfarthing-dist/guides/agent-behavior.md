@@ -15,7 +15,7 @@
 1. Reviewer approves and merges the PR
 2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
 
-**Never** start new work while stories have open PRs. The merge gate blocks `/sprint work` if open PRs exist.
+**Never** start new work while stories have open PRs. The merge gate blocks `/pf-sprint work` if open PRs exist.
 
 **If stuck in incomplete state:**
 - Open PRs? → Run `/reviewer` to complete reviews and merge
@@ -29,7 +29,7 @@
 <info>
 **Workflow:** SM → TEA → Dev → Reviewer → SM. Trivial skips TEA.
 
-**Skills:** `/sprint`, `/testing`, `/dev-patterns`, `/jira`, `/just`
+**Skills:** `/pf-sprint`, `/pf-testing`, `/pf-dev-patterns`, `/pf-jira`, `/pf-just`
 
 **Efficiency:** Parallelize reads, batch bash with `&&`, spawn independent subagents together.
 

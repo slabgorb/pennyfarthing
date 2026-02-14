@@ -166,9 +166,9 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 </handoffs>
 
 <skills>
-- `/sprint-context` - Sprint status and project state
-- `/dev-patterns` - Turn-efficient patterns reference
-- `/workflow` - View and switch workflows
+- `/pf-sprint` - Sprint status and project state
+- `/pf-dev-patterns` - Turn-efficient patterns reference
+- `/pf-workflow` - View and switch workflows
 </skills>
 
 <exit>

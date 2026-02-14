@@ -3,7 +3,7 @@ name: systematic-debugging
 description: Systematic debugging approach for isolating and fixing issues. Use when debugging failures, investigating errors, bisecting regressions, or validating fixes.
 ---
 
-# Systematic Debugging Skill
+# /pf-systematic-debugging - Systematic Debugging Skill
 
 <run>systematic-debugging</run>
 
@@ -428,7 +428,7 @@ mcp__playwright__browser_navigate to http://localhost:3000/
 | `browser_console_messages` | Check for JS errors |
 | `browser_network_requests` | Debug API calls |
 
-See: `/workflow interactive-debug` for full workflow.
+See: `/pf-workflow interactive-debug` for full workflow.
 
 ---
 
@@ -436,10 +436,10 @@ See: `/workflow interactive-debug` for full workflow.
 
 | Skill | How It Complements |
 |-------|-------------------|
-| `/testing` | Run tests to verify fixes |
-| `/dev-patterns` | Avoid common pitfalls |
-| `/agentic-patterns` | ReAct pattern for systematic investigation |
-| `/workflow interactive-debug` | UI debugging with Playwright MCP |
+| `/pf-testing` | Run tests to verify fixes |
+| `/pf-dev-patterns` | Avoid common pitfalls |
+| `/pf-agentic-patterns` | ReAct pattern for systematic investigation |
+| `/pf-workflow interactive-debug` | UI debugging with Playwright MCP |
 
 ---
 

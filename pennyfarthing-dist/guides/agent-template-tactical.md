@@ -57,8 +57,8 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 
 <skills>
 **Skills I Use:**
-- `/sprint-context` - Sprint status and backlog
-- `/testing` - Test execution patterns
+- `/pf-sprint` - Sprint status and backlog
+- `/pf-testing` - Test execution patterns
 </skills>
 
 <context>
