@@ -126,6 +126,10 @@ describe('AC1: Popup maintains consistent size when hovering different panels', 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
+    await waitFor(() => {
+      expect(screen.getByTestId('agent-popup-details')).toBeInTheDocument();
+    });
+
     const detailsPanel = screen.getByTestId('agent-popup-details');
     const styles = window.getComputedStyle(detailsPanel);
 
@@ -189,6 +193,10 @@ describe('AC1: Popup maintains consistent size when hovering different panels', 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
+    await waitFor(() => {
+      expect(screen.getByTestId('agent-popup-details')).toBeInTheDocument();
+    });
+
     const detailsPanel = screen.getByTestId('agent-popup-details');
     const styles = window.getComputedStyle(detailsPanel);
 
@@ -217,6 +225,10 @@ describe('AC2: No layout shift or jumping when moving mouse between panel names'
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('agent-popup-details')).toBeInTheDocument();
     });
 
     const detailsPanel = screen.getByTestId('agent-popup-details');
@@ -396,6 +408,10 @@ describe('AC4: Smooth visual experience when browsing panel list', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('agent-popup-details')).toBeInTheDocument();
     });
 
     const detailsPanel = screen.getByTestId('agent-popup-details');
