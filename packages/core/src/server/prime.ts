@@ -3,7 +3,7 @@
  * Provides functions/types used by API routes without cyclist prime dependency.
  */
 
-export type ContextTier = 'FULL' | 'REDUCED' | 'MINIMAL';
+export type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
 
 export interface PrimeOutput {
   tiers: Record<string, unknown>;

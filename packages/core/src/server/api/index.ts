@@ -18,13 +18,15 @@ export type { ModeInfo } from './mode.js';
 export { createTelemetryRouter } from './telemetry.js';
 export { createEvaluationRouter } from './evaluation.js';
 // 35-1: Settings API for contextual settings
-export { createSettingsRouter } from './settings.js';
+export { createSettingsRouter, getSettingsForWebSocket } from './settings.js';
 // 35-16: Background tasks API
 export { createBackgroundTasksRouter, getBackgroundTaskClients, broadcastBackgroundTaskEvent, initBackgroundTaskBroadcast } from './background-tasks.js';
 // MSSCI-11734: Enriched spans API
 export { createSpansRouter } from './spans.js';
 // Bell mode WebSocket broadcast
 export { getBellClients, broadcastBellConsumed } from './bell.js';
+// Welcome message WebSocket broadcast
+export { getWelcomeClients, broadcastWelcome } from './welcome.js';
 // MSSCI-12409: Hook request API (WheelHub consolidation)
 export { createHookRequestRouter, getHookClients, addHookClient, resolveApproval, handleHookWebSocketMessage } from './hook-request.js';
 // MSSCI-12469: Identity API for stats strip

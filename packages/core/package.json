@@ -28,6 +28,17 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/server.d.ts",
+      "default": "./dist/server/server.js"
+    },
+    "./dist/*": "./dist/*"
+  },
   "files": [
     "dist/",
     "bin/",
