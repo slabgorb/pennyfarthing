@@ -19,10 +19,13 @@ export function getThemeAgents(projectDir: string): AgentCharacterMap {
   const themeName = (config as { theme?: string } | null)?.theme;
   if (!themeName) return {};
 
-  const themeData = loadThemeYaml(projectDir, themeName) as Record<string, unknown> | null;
+  // Resolve theme file path and load YAML
+  const themeFile = `${themeName}.yaml`;
+  const themePath = join(projectDir, '.pennyfarthing', 'personas', 'themes', themeFile);
+  const themeData = loadThemeYaml(themePath);
   if (!themeData) return {};
 
-  const agents = (themeData as { agents?: Record<string, { character?: string; shortName?: string }> }).agents;
+  const agents = themeData as Record<string, { character?: string; shortName?: string }>;
   if (!agents) return {};
 
   const result: AgentCharacterMap = {};
