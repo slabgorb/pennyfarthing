@@ -43,7 +43,6 @@ const REQUIRED_PANELS = [
   'audit',
   'changed',
   'ac',
-  'tty',
   'debug',
   'bikelane',
   'settings',
@@ -173,13 +172,13 @@ describe('AC1: ?panel=sprint renders SprintPanel full-screen', () => {
 // ---------------------------------------------------------------------------
 
 describe('AC2: All 12 existing panels in PANEL_REGISTRY', () => {
-  it('should have exactly 13 panels in PANEL_REGISTRY', async () => {
+  it('should have exactly 12 panels in PANEL_REGISTRY', async () => {
     const { PANEL_REGISTRY } = await import(
       '../src/public/components/StandalonePanel'
     );
 
     const keys = Object.keys(PANEL_REGISTRY);
-    expect(keys.length).toBe(13);
+    expect(keys.length).toBe(12);
   });
 
   it.each(REQUIRED_PANELS)(

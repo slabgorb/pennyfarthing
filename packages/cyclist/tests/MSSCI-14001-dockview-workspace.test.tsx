@@ -133,10 +133,10 @@ describe('AC2: DockviewWorkspace exports and structure', () => {
     expect(typeof module.registerPanelComponent).toBe('function');
   });
 
-  it('should export PANEL_INVENTORY with 14 panels', async () => {
+  it('should export PANEL_INVENTORY with 12 panels', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(12);
   });
 
   it('should export PanelAdapter component', async () => {
@@ -236,7 +236,6 @@ describe('AC5: Layout persistence', () => {
     expect(layout.leftSidebar.panels).toContain('diffs');
     expect(layout.leftSidebar.panels).toContain('debug');
     expect(layout.leftSidebar.panels).toContain('audit-log');
-    expect(layout.leftSidebar.panels).toContain('tty');
   });
 
   it('should have right sidebar panels in default layout', async () => {
@@ -332,7 +331,7 @@ describe('AC8: Panel functionality preserved', () => {
   it('should export PANEL_INVENTORY constant', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(12);
   });
 
   it('should have all expected panel IDs', async () => {
@@ -342,7 +341,6 @@ describe('AC8: Panel functionality preserved', () => {
     expect(PANEL_INVENTORY.DIFFS).toBe('diffs');
     expect(PANEL_INVENTORY.DEBUG).toBe('debug');
     expect(PANEL_INVENTORY.AUDIT_LOG).toBe('audit-log');
-    expect(PANEL_INVENTORY.TTY).toBe('tty');
     expect(PANEL_INVENTORY.MESSAGE).toBe('message');
     expect(PANEL_INVENTORY.SPRINT).toBe('sprint');
     expect(PANEL_INVENTORY.WORKFLOW).toBe('workflow');
