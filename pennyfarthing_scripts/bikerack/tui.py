@@ -67,6 +67,10 @@ class BikeRackApp(App):
         yield Footer()
 
     async def on_mount(self) -> None:
+        result = get_last_panel()
+        if result.get("success") and result.get("last_panel"):
+            self._focused_panel = result["last_panel"]
+
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
             self._client.subscribe("focus", self._handle_focus_message)
@@ -89,6 +93,7 @@ class BikeRackApp(App):
         if focus is not None:
             self._previous_panel = self._focused_panel
             self._focused_panel = focus
+            save_last_panel(focus, project_dir=None)
         else:
             self._focused_panel = None
             self._previous_panel = None

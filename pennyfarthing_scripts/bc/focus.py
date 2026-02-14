@@ -266,8 +266,14 @@ def get_last_panel(project_dir: Path | None = None) -> dict:
     Returns:
         {success: bool, last_panel?: str|None, error?: str}
     """
-    # Stub: 103-8 not implemented yet
-    return {"success": False, "error": "Not implemented"}
+    try:
+        _, config = _read_config(project_dir)
+        last_panel = config.get("last_panel") if config else None
+        if last_panel is not None and last_panel not in VALID_PANELS:
+            return {"success": True, "last_panel": None}
+        return {"success": True, "last_panel": last_panel}
+    except Exception:
+        return {"success": True, "last_panel": None}
 
 
 def save_last_panel(panel_name: str, project_dir: Path | None = None) -> dict:
@@ -283,8 +289,21 @@ def save_last_panel(panel_name: str, project_dir: Path | None = None) -> dict:
     Returns:
         {success: bool, data?: str, error?: str}
     """
-    # Stub: 103-8 not implemented yet
-    return {"success": False, "error": "Not implemented"}
+    if panel_name not in VALID_PANELS:
+        return {
+            "success": False,
+            "error": f"Invalid panel '{panel_name}'. Valid panels: {', '.join(VALID_PANELS)}",
+        }
+
+    try:
+        config_path, config = _read_config(project_dir)
+        if config is None:
+            config = _make_yaml().load("{}")
+        config["last_panel"] = panel_name
+        _write_config(config_path, config)
+        return {"success": True, "data": panel_name}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
 
 
 def get_panel_focus(project_dir: Path | None = None) -> dict:
