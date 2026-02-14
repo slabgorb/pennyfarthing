@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -264,7 +264,20 @@ export async function initCommand(
 }
 
 /**
- * Install git hooks from pennyfarthing-dist to .git/hooks
+ * Generate a dispatcher script for a given hook name by substituting
+ * __HOOK_NAME__ in the shared template.
+ */
+function generateDispatcher(hookName: string, template: string): string {
+  return template.replace(/__HOOK_NAME__/g, hookName);
+}
+
+/**
+ * Install git hooks using .d/ dispatcher pattern.
+ * Creates a dispatcher script at .git/hooks/{hook} that runs all
+ * executable scripts in .git/hooks/{hook}.d/ in sorted order.
+ * Pennyfarthing hooks are placed in the .d/ directory with numeric prefixes.
+ * Existing hooks are migrated into .d/ to preserve user customizations.
+ *
  * Installs: pre-commit, pre-push, post-merge
  */
 export async function installGitHooks(
@@ -288,16 +301,28 @@ export async function installGitHooks(
     ensureDir(gitHooksDir, { dryRun: options.dryRun });
   }
 
+  const DISPATCHER_MARKER = 'pennyfarthing-dispatcher';
+  const PF_MARKER = 'pennyfarthing';
+  const PF_PREFIX = '10';
+  const MIGRATED_PREFIX = '50';
+
+  // Load shared dispatcher template
+  const dispatcherTemplatePath = join(nodeModulesPath, 'scripts/hooks/dispatcher-template.sh');
+  const dispatcherTemplate = readFileSync(dispatcherTemplatePath, 'utf8');
+
   // Define hooks to install
   const hooks = [
-    { source: 'pre-commit.sh', dest: 'pre-commit', marker: 'pennyfarthing' },
-    { source: 'pre-push.sh', dest: 'pre-push', marker: 'pennyfarthing' },
-    { source: 'post-merge.sh', dest: 'post-merge', marker: 'pennyfarthing' },
+    { source: 'pre-commit.sh', dest: 'pre-commit' },
+    { source: 'pre-push.sh', dest: 'pre-push' },
+    { source: 'post-merge.sh', dest: 'post-merge' },
   ];
 
   for (const hook of hooks) {
     const sourcePath = join(nodeModulesPath, 'scripts/hooks', hook.source);
     const destPath = join(gitHooksDir, hook.dest);
+    const dDir = join(gitHooksDir, `${hook.dest}.d`);
+    const pfHookName = `${PF_PREFIX}-pennyfarthing-${hook.dest}.sh`;
+    const pfHookPath = join(dDir, pfHookName);
 
     if (!pathExists(sourcePath)) {
       logger.warning(`${hook.source} not found, skipping`);
@@ -306,37 +331,63 @@ export async function installGitHooks(
 
     const sourceContent = readFileSync(sourcePath, 'utf8');
 
-    // Check if hook already exists
+    if (options.dryRun) {
+      logger.info(`Would install .git/hooks/${hook.dest} dispatcher + .d/`);
+      continue;
+    }
+
+    // Create .d/ directory
+    if (!pathExists(dDir)) {
+      mkdirSync(dDir, { recursive: true });
+    }
+
+    // Migrate existing hook if present
     if (pathExists(destPath)) {
       const existingContent = readFileSync(destPath, 'utf8');
 
-      if (existingContent.includes(hook.marker)) {
-        // Our hook — check if content matches (refresh stale copies)
-        if (existingContent === sourceContent) {
-          logger.skipped(`.git/hooks/${hook.dest}`, 'already installed');
-          continue;
+      if (existingContent.includes(DISPATCHER_MARKER)) {
+        // Already a dispatcher — update it if content changed
+        const newDispatcher = generateDispatcher(hook.dest, dispatcherTemplate);
+        if (existingContent !== newDispatcher) {
+          writeFileSync(destPath, newDispatcher, { mode: 0o755 });
+          logger.updated(`.git/hooks/${hook.dest} dispatcher`);
+        } else {
+          logger.skipped(`.git/hooks/${hook.dest} dispatcher`, 'already installed');
         }
-        // Content differs — update in place
-        if (!options.dryRun) {
-          writeFileSync(destPath, sourceContent, { mode: 0o755 });
+      } else if (existingContent.includes(PF_MARKER)) {
+        // Old-style single-file pennyfarthing hook — replace with dispatcher
+        writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
+        logger.updated(`.git/hooks/${hook.dest} → dispatcher`);
+      } else {
+        // Non-pennyfarthing hook — migrate into .d/ then install dispatcher
+        const migratedName = `${MIGRATED_PREFIX}-migrated-${hook.dest}.sh`;
+        const migratedPath = join(dDir, migratedName);
+        if (!pathExists(migratedPath)) {
+          writeFileSync(migratedPath, existingContent, { mode: 0o755 });
+          logger.info(`Migrated existing ${hook.dest} hook to ${hook.dest}.d/${migratedName}`);
         }
-        logger.updated(`.git/hooks/${hook.dest}`);
-        continue;
+        writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
+        logger.created(`.git/hooks/${hook.dest} dispatcher`);
       }
-
-      // Existing non-pennyfarthing hook - backup and replace
-      if (!options.dryRun) {
-        const backupPath = `${destPath}.backup`;
-        writeFileSync(backupPath, existingContent, 'utf8');
-        logger.info(`Backed up existing hook to ${backupPath}`);
-      }
+    } else {
+      // No existing hook — install fresh dispatcher
+      writeFileSync(destPath, generateDispatcher(hook.dest, dispatcherTemplate), { mode: 0o755 });
+      logger.created(`.git/hooks/${hook.dest} dispatcher`);
     }
 
-    // Copy the hook
-    if (!options.dryRun) {
-      writeFileSync(destPath, sourceContent, { mode: 0o755 });
+    // Install/update pennyfarthing hook in .d/
+    if (pathExists(pfHookPath)) {
+      const existingPf = readFileSync(pfHookPath, 'utf8');
+      if (existingPf === sourceContent) {
+        logger.skipped(`.git/hooks/${hook.dest}.d/${pfHookName}`, 'already installed');
+      } else {
+        writeFileSync(pfHookPath, sourceContent, { mode: 0o755 });
+        logger.updated(`.git/hooks/${hook.dest}.d/${pfHookName}`);
+      }
+    } else {
+      writeFileSync(pfHookPath, sourceContent, { mode: 0o755 });
+      logger.created(`.git/hooks/${hook.dest}.d/${pfHookName}`);
     }
-    logger.created(`.git/hooks/${hook.dest}`);
   }
 }
 
