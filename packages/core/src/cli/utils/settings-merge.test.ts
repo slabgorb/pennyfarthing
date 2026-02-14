@@ -720,7 +720,7 @@ describe('AC3: Migration from legacy format', () => {
 
 describe('AC4: Framework removal (rollback)', () => {
   it('should remove a framework contribution cleanly', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const other = makeOtherFrameworkContribution();
 
@@ -744,7 +744,7 @@ describe('AC4: Framework removal (rollback)', () => {
   });
 
   it('should re-merge hooks after framework removal', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const other = makeOtherFrameworkContribution();
 
@@ -768,7 +768,7 @@ describe('AC4: Framework removal (rollback)', () => {
   });
 
   it('should re-merge permissions after framework removal', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const other = makeOtherFrameworkContribution();
 
@@ -788,7 +788,7 @@ describe('AC4: Framework removal (rollback)', () => {
   });
 
   it('should handle removing the only framework', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
 
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
@@ -801,7 +801,7 @@ describe('AC4: Framework removal (rollback)', () => {
   });
 
   it('should be no-op when removing non-existent framework', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
 
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
@@ -821,7 +821,7 @@ describe('AC4: Framework removal (rollback)', () => {
 
 describe('AC5: Backward compatibility (flat format export)', () => {
   it('should export merged settings in Claude Code-compatible flat format', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -838,7 +838,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
   });
 
   it('should produce valid hooks structure in flat format', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -850,7 +850,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
   });
 
   it('should produce valid permissions structure in flat format', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -862,7 +862,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
   });
 
   it('should include statusLine in flat format when present', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -875,7 +875,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
   });
 
   it('should include context_budget in flat format when present', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -887,7 +887,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
   });
 
   it('should produce identical JSON to what Claude Code expects', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 
@@ -906,7 +906,7 @@ describe('AC5: Backward compatibility (flat format export)', () => {
 
 describe('AC6: Validation', () => {
   it('should validate a correct SharedSettings structure', () => {
-    let settings = createEmptySharedSettings();
+    const settings = createEmptySharedSettings();
     const pf = makePennyfarthingContribution();
     const result = contributeFrameworkSettings(settings, 'pennyfarthing', pf);
 

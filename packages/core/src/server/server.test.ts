@@ -25,7 +25,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, rmSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -188,7 +188,7 @@ describe('Port file management', () => {
   });
 
   it('writePortFile creates .cyclist-port file with port number', async () => {
-    const { writePortFile, readPortFile } = await import('./server.js');
+    const { writePortFile } = await import('./server.js');
 
     writePortFile(testDir, 1898);
 

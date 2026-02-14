@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { parse, stringify } from 'yaml';
+import { parse } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
