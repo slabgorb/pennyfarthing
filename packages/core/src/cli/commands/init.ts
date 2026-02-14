@@ -19,8 +19,8 @@ import {
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
   createDirectorySymlink,
-  copyCommandsDirectory,
-  copySkillsDirectory,
+  createCommandsDirectory,
+  createSkillsDirectory,
   removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
@@ -169,15 +169,15 @@ export async function initCommand(
     }
   }
 
-  // Copy commands directory (allows user commands alongside built-in)
+  // Link commands directory (allows user commands alongside built-in)
   const builtInCommandsPath = join(nodeModulesPath, 'commands');
   const projectCommandsPath = join(projectRoot, '.pennyfarthing/project/commands');
-  copyCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
+  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
 
-  // Copy skills directory (allows user skills alongside built-in)
+  // Link skills directory (allows user skills alongside built-in)
   const builtInSkillsPath = join(nodeModulesPath, 'skills');
   const projectSkillsPath = join(projectRoot, '.pennyfarthing/project/skills');
-  copySkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
+  createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
 
   // 8. Create agent sidecars if not exist
   logger.newline();

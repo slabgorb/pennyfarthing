@@ -17,8 +17,8 @@ import {
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
   createDirectorySymlink,
-  copyCommandsDirectory,
-  copySkillsDirectory,
+  createCommandsDirectory,
+  createSkillsDirectory,
   removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
@@ -196,12 +196,12 @@ async function updateInstalledContent(
     logger.created('.pennyfarthing/project/skills/ (for user custom skills)');
   }
 
-  // Re-copy commands and skills
+  // Re-link commands and skills
   const builtInCommandsPath = join(nodeModulesPath, 'commands');
-  copyCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
+  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
 
   const builtInSkillsPath = join(nodeModulesPath, 'skills');
-  copySkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
+  createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
 
   // Update settings
   const assetsPath = getAssetsPath();
