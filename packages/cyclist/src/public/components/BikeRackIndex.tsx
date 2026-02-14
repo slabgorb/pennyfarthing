@@ -25,7 +25,6 @@ const PANELS = [
   { id: 'audit', label: 'Audit', description: 'OTEL spans and logs' },
   { id: 'changed', label: 'Changed', description: 'Changed files' },
   { id: 'ac', label: 'AC', description: 'Acceptance criteria detail' },
-  { id: 'tty', label: 'TTY', description: 'Terminal output' },
   { id: 'debug', label: 'Debug', description: 'Debug information' },
   { id: 'bikelane', label: 'BikeLane', description: 'Workflow visualization' },
   { id: 'settings', label: 'Settings', description: 'Theme, fonts, and display preferences' },

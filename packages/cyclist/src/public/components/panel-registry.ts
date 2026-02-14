@@ -8,4 +8,6 @@
 
 import type { ComponentType } from 'react';
 
-export const panelRegistry: Map<string, ComponentType> = new Map();
+export type PanelComponent = ComponentType;
+
+export const panelRegistry: Map<string, PanelComponent> = new Map();
