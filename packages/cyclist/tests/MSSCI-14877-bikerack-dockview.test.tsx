@@ -298,7 +298,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
     expect(source).toMatch(/export function DockviewWorkspace/);
   });
 
-  it('PANEL_INVENTORY should still define 13 panels in source', () => {
+  it('PANEL_INVENTORY should still define 12 panels in source', () => {
     const filePath = path.resolve(
       __dirname,
       '../src/public/components/DockviewWorkspace.tsx',
@@ -311,7 +311,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
 
     // Count colon-separated entries (key: 'value' pairs)
     const entries = inventoryMatch![1].match(/:\s*['"]/g);
-    expect(entries).toHaveLength(13);
+    expect(entries).toHaveLength(12);
   });
 
   it('PANEL_INVENTORY should still include MESSAGE panel', () => {

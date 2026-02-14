@@ -27,7 +27,6 @@ Set or clear the focused panel in Cyclist/BikeRack. Save and restore named layou
 | `/bc ac` | `pf bc ac [--dry-run]` | Focus Acceptance Criteria panel |
 | `/bc debug` | `pf bc debug [--dry-run]` | Focus Debug panel |
 | `/bc settings` | `pf bc settings [--dry-run]` | Focus Settings panel |
-| `/bc tty` | `pf bc tty [--dry-run]` | Focus TTY panel |
 | `/bc reset` | `pf bc reset [--dry-run]` | Clear focus setting |
 
 ### Named Layouts

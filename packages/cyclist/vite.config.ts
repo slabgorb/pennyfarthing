@@ -13,7 +13,7 @@ export default defineConfig({
       '@': resolve(__dirname, 'src/public'),
     },
   },
-  // Define Node.js globals for browser - some packages (xterm) check for these
+  // Define Node.js globals for browser - some packages check for these
   define: {
     // Stub __dirname to empty string - it's only used for optional file checks
     '__dirname': '""',
@@ -27,8 +27,8 @@ export default defineConfig({
       input: {
         react: resolve(__dirname, 'src/public/index.tsx'),
       },
-      // Mark electron and node-pty as external - they're only available in Electron main/preload
-      external: ['electron', 'node-pty'],
+      // Mark electron as external - only available in Electron main/preload
+      external: ['electron'],
       output: {
         entryFileNames: 'js/react/[name].js',
         chunkFileNames: 'js/react/[name]-[hash].js',
