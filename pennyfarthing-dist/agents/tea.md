@@ -13,6 +13,7 @@ Every line of code you DON'T test is a bug waiting to happen. Your tests aren't 
 - Happy path works? Great—now break it with nulls, empty strings, boundary values.
 - One assertion per test? Add the negative case. What should NOT happen?
 - Tests pass quickly? Add the slow path, the timeout, the race condition.
+- Is it wired up? Write integration tests to keep that sneaky dev honest.
 
 **A test suite that catches nothing catches nothing.**
 </test-paranoia>

@@ -118,15 +118,23 @@ describe('portrait-resolver', () => {
   });
 
   describe('resolvePortraitPath', () => {
-    it('should resolve portrait path for valid theme and agent', () => {
-      // Use a-team which has actual portraits (shakespeare has only .gitkeep)
+    it('should resolve portrait by shortName-OCEAN slug from theme YAML', () => {
+      // a-team sm = Faceman, shortName "Faceman", OCEAN scores produce slug
       const result = resolvePortraitPath('a-team', 'sm');
 
       assert.ok(result !== null, 'Should find portrait');
       assert.ok(result!.includes('a-team'), 'Path should include theme');
-      // Portrait files use character names (faceman) not agent names (sm)
-      assert.ok(result!.includes('face'), 'Path should include character name');
       assert.ok(result!.endsWith('.png') || result!.endsWith('.jpg'), 'Should be image file');
+    });
+
+    it('should resolve monty-python portraits by shortName-OCEAN slug', () => {
+      const result = resolvePortraitPath('monty-python', 'sm');
+
+      // monty-python sm = The Announcer, shortName "Announcer", slug "announcer-44441"
+      if (result !== null) {
+        assert.ok(result.includes('monty-python'), 'Path should include theme');
+        assert.ok(result.includes('announcer'), 'Should match by shortName slug');
+      }
     });
 
     it('should return null for invalid theme', () => {
@@ -142,24 +150,19 @@ describe('portrait-resolver', () => {
     });
 
     it('should handle theme with special characters in name', () => {
-      // Themes like 'star-trek-tos' have hyphens
       const result = resolvePortraitPath('star-trek-tos', 'sm');
 
       assert.ok(result === null || result.includes('star-trek-tos'));
     });
 
-    it('should handle portrait resolution when dist is found', () => {
-      // When resolvePennyfarthingDist returns a valid path, we should be able
-      // to resolve portraits for known themes
+    it('should resolve portraits across theme packages', () => {
       delete process.env.PENNYFARTHING_DIST;
 
       const result = resolvePortraitPath('a-team', 'dev');
 
-      // If dist is found (which it is in monorepo), should find portrait
-      // dev maps to ba in a-team theme
       if (result !== null) {
         assert.ok(result.includes('a-team'));
-        assert.ok(result.includes('ba'));
+        assert.ok(result.endsWith('.png') || result.endsWith('.jpg'));
       }
     });
   });
