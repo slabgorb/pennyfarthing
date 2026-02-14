@@ -51,7 +51,6 @@ import {
   DebugPanel,
   SettingsPanel,
   AuditLogPanel,
-  TTYPanel,
 } from './components/panels';
 
 // =============================================================================
@@ -67,7 +66,6 @@ registerPanelComponent(PANEL_INVENTORY.CHANGED, ChangedPanel);
 registerPanelComponent(PANEL_INVENTORY.DIFFS, DiffsPanel);
 registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 registerPanelComponent(PANEL_INVENTORY.AUDIT_LOG, AuditLogPanel);
-registerPanelComponent(PANEL_INVENTORY.TTY, TTYPanel);
 
 // Right sidebar panels
 // Note: ProgressPanel split into Workflow/AC/Todo panels (MSSCI-14188)

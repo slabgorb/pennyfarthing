@@ -65,7 +65,6 @@ const PANEL_DISPLAY_NAMES: Record<string, string> = {
   diffs: 'Diffs',
   debug: 'Debug',
   'audit-log': 'Audit Log',
-  tty: 'Terminal',
   message: 'Message',
   sprint: 'Sprint',
   workflow: 'Workflow',
