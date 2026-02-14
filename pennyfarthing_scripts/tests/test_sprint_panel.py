@@ -18,7 +18,7 @@ Tests should FAIL until sprint_panel.py is fully implemented.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from rich.table import Table
@@ -26,7 +26,6 @@ from rich.text import Text
 
 from pennyfarthing_scripts.bikerack.base_panel import BasePanel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -397,7 +396,7 @@ class TestSprintPanelRealtime:
     def test_handle_message_updates_widget(self, panel: SprintPanel) -> None:
         """handle_message should call self.update() with rendered output."""
         panel._mounted = True
-        with patch.object(panel, "render_panel", return_value="rendered") as mock_render:
+        with patch.object(panel, "render_panel", return_value="rendered"):
             with patch.object(panel, "update") as mock_update:
                 panel.handle_message(SAMPLE_INIT_PAYLOAD)
                 mock_update.assert_called_once_with("rendered")
