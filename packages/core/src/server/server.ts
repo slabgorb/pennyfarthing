@@ -67,8 +67,12 @@ import { initPluginRouters } from './plugin-loader.js';
 import { broadcastWelcome } from './api/welcome.js';
 import { broadcastBellConsumed } from './api/bell.js';
 
+// OTLP provider registry (lets Cyclist wire its real implementation into core's API routes)
+export { setOTLPProvider } from './otlp-receiver.js';
+export type { OTLPProvider } from './otlp-receiver.js';
+
 // Re-exports for Cyclist and external consumers
-export { broadcastStats } from './api/index.js';
+export { broadcastStats, initTokenStatsBroadcast, initBackgroundTaskBroadcast } from './api/index.js';
 export { getStoryInfo } from './story-parser.js';
 export type { StoryInfo, WorkflowStep, CriteriaItem } from './story-parser.js';
 export { getGitInfo, getAllReposGitInfo, getAllReposGitInfoAsync } from './api/index.js';
