@@ -11,7 +11,7 @@
  * tiers based on session state.
  */
 
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import type { SessionContextState } from './claude-service.js';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
@@ -19,6 +19,17 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Known agent names — reject anything not on this list to prevent command injection (#890)
+const VALID_AGENTS = [
+  'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm',
+  'tech-writer', 'ux-designer', 'devops', 'orchestrator', 'ba',
+];
+
+function isValidAgentName(name: string): boolean {
+  // Allow known agents, plus alphanumeric/hyphen names (for custom agents)
+  return VALID_AGENTS.includes(name) || /^[a-zA-Z0-9][-a-zA-Z0-9]*$/.test(name);
+}
 
 /**
  * Find the Pennyfarthing scripts directory
@@ -68,10 +79,17 @@ function findPennyfarthingScripts(projectDir: string): string | null {
  * @returns Prime context string, or null if failed
  */
 export function getPrimeContext(agentName: string, projectDir: string): string | null {
+  // Validate agent name to prevent command injection (#890)
+  if (!isValidAgentName(agentName)) {
+    console.error(`[prime] Invalid agent name rejected: "${agentName}"`);
+    return null;
+  }
+
   try {
     // Try pf CLI first (installed via uv tool install / pipx)
-    const result = execSync(
-      `pf agent start "${agentName}" --quiet`,
+    const result = execFileSync(
+      'pf',
+      ['agent', 'start', agentName, '--quiet'],
       {
         cwd: projectDir,
         encoding: 'utf-8',
@@ -103,8 +121,9 @@ export function getPrimeContext(agentName: string, projectDir: string): string |
       PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
     };
 
-    const result = execSync(
-      `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`,
+    const result = execFileSync(
+      'python3',
+      ['-m', 'pennyfarthing_scripts.cli', 'agent', 'start', agentName, '--quiet'],
       {
         cwd: projectDir,
         env,
@@ -258,27 +277,27 @@ export function selectContextTier(
 // =============================================================================
 
 /**
- * Build the Python prime command string
+ * Build the prime command arguments array
  *
  * This is exported for testing - allows verification of command format
  * without actually executing the command.
  *
  * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
  * @param tier - Optional context tier (FULL, REFRESH, HANDOFF, MINIMAL)
- * @returns Command string for executing Python prime script
+ * @returns Arguments array for execFileSync (command is 'pf')
  */
-export function buildPrimeCommand(agentName: string, tier?: ContextTier, json?: boolean): string {
-  let command = `pf agent start "${agentName}" --quiet`;
+export function buildPrimeCommand(agentName: string, tier?: ContextTier, json?: boolean): string[] {
+  const args = ['agent', 'start', agentName, '--quiet'];
 
   if (tier !== undefined) {
-    command += ` --tier ${tier}`;
+    args.push('--tier', tier);
   }
 
   if (json) {
-    command += ' --json';
+    args.push('--json');
   }
 
-  return command;
+  return args;
 }
 
 /**
@@ -298,6 +317,12 @@ export function getPrimeContextWithTier(
   projectDir: string,
   tier: ContextTier
 ): string | null {
+  // Validate agent name to prevent command injection (#890)
+  if (!isValidAgentName(agentName)) {
+    console.error(`[prime] Invalid agent name rejected: "${agentName}"`);
+    return null;
+  }
+
   const packageRoot = findPennyfarthingScripts(projectDir);
   if (!packageRoot) {
     console.warn('[prime] Could not find pennyfarthing_scripts');
@@ -311,10 +336,10 @@ export function getPrimeContextWithTier(
       PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
     };
 
-    // Build command with tier argument
-    const command = buildPrimeCommand(agentName, tier);
+    // Build command args with tier argument
+    const args = buildPrimeCommand(agentName, tier);
 
-    const result = execSync(command, {
+    const result = execFileSync('pf', args, {
       cwd: projectDir,
       env,
       encoding: 'utf-8',
@@ -351,6 +376,12 @@ export function getPrimeContextJson(
   projectDir: string,
   tier: ContextTier
 ): PrimeOutput | null {
+  // Validate agent name to prevent command injection (#890)
+  if (!isValidAgentName(agentName)) {
+    console.error(`[prime] Invalid agent name rejected: "${agentName}"`);
+    return null;
+  }
+
   const packageRoot = findPennyfarthingScripts(projectDir);
   if (!packageRoot) {
     console.warn('[prime] Could not find pennyfarthing_scripts');
@@ -363,9 +394,9 @@ export function getPrimeContextJson(
       PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
     };
 
-    const command = buildPrimeCommand(agentName, tier, true);
+    const args = buildPrimeCommand(agentName, tier, true);
 
-    const result = execSync(command, {
+    const result = execFileSync('pf', args, {
       cwd: projectDir,
       env,
       encoding: 'utf-8',

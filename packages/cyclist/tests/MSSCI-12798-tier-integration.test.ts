@@ -76,41 +76,48 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
       expect(typeof buildPrimeCommand).toBe('function');
     });
 
-    it('should include --tier FULL in command when FULL tier specified', async () => {
+    it('should include --tier FULL in args when FULL tier specified', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', 'FULL');
-      expect(command).toContain('--tier FULL');
+      const args = buildPrimeCommand('dev', 'FULL');
+      expect(args).toContain('--tier');
+      expect(args).toContain('FULL');
     });
 
-    it('should include --tier REFRESH in command when REFRESH tier specified', async () => {
+    it('should include --tier REFRESH in args when REFRESH tier specified', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', 'REFRESH');
-      expect(command).toContain('--tier REFRESH');
+      const args = buildPrimeCommand('dev', 'REFRESH');
+      expect(args).toContain('--tier');
+      expect(args).toContain('REFRESH');
     });
 
-    it('should include --tier HANDOFF in command when HANDOFF tier specified', async () => {
+    it('should include --tier HANDOFF in args when HANDOFF tier specified', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', 'HANDOFF');
-      expect(command).toContain('--tier HANDOFF');
+      const args = buildPrimeCommand('dev', 'HANDOFF');
+      expect(args).toContain('--tier');
+      expect(args).toContain('HANDOFF');
     });
 
-    it('should include --tier MINIMAL in command when MINIMAL tier specified', async () => {
+    it('should include --tier MINIMAL in args when MINIMAL tier specified', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', 'MINIMAL');
-      expect(command).toContain('--tier MINIMAL');
+      const args = buildPrimeCommand('dev', 'MINIMAL');
+      expect(args).toContain('--tier');
+      expect(args).toContain('MINIMAL');
     });
 
     it('should place --tier after agent name and --quiet flag', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('tea', 'HANDOFF');
-      // Expected format: python3 -m pennyfarthing_scripts.cli agent start "tea" --quiet --tier HANDOFF
-      expect(command).toMatch(/agent start "tea" --quiet --tier HANDOFF/);
+      const args = buildPrimeCommand('tea', 'HANDOFF');
+      // Expected: ['agent', 'start', 'tea', '--quiet', '--tier', 'HANDOFF']
+      const quietIdx = args.indexOf('--quiet');
+      const tierIdx = args.indexOf('--tier');
+      expect(tierIdx).toBeGreaterThan(quietIdx);
+      expect(args).toContain('tea');
     });
 
     it('should not include --tier when tier is undefined', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', undefined);
-      expect(command).not.toContain('--tier');
+      const args = buildPrimeCommand('dev', undefined);
+      expect(args).not.toContain('--tier');
     });
   });
 
@@ -195,10 +202,11 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
       const tier = selectContextTier('dev', state);
       expect(tier).toBe('FULL');
 
-      // Verify the command would include --tier FULL
+      // Verify the args would include --tier FULL
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', tier);
-      expect(command).toContain('--tier FULL');
+      const args = buildPrimeCommand('dev', tier);
+      expect(args).toContain('--tier');
+      expect(args).toContain('FULL');
     });
 
     it('should use HANDOFF tier when agent changes', async () => {
@@ -212,8 +220,9 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
       expect(tier).toBe('HANDOFF');
 
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', tier);
-      expect(command).toContain('--tier HANDOFF');
+      const args = buildPrimeCommand('dev', tier);
+      expect(args).toContain('--tier');
+      expect(args).toContain('HANDOFF');
     });
 
     it('should use MINIMAL tier for deep conversation with same agent', async () => {
@@ -227,8 +236,9 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
       expect(tier).toBe('MINIMAL');
 
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', tier);
-      expect(command).toContain('--tier MINIMAL');
+      const args = buildPrimeCommand('dev', tier);
+      expect(args).toContain('--tier');
+      expect(args).toContain('MINIMAL');
     });
 
     it('should use REFRESH tier for early conversation with same agent', async () => {
@@ -242,8 +252,9 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
       expect(tier).toBe('REFRESH');
 
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', tier);
-      expect(command).toContain('--tier REFRESH');
+      const args = buildPrimeCommand('dev', tier);
+      expect(args).toContain('--tier');
+      expect(args).toContain('REFRESH');
     });
 
     it('should handle workflow: new session → early turns → deep conversation', async () => {
@@ -298,8 +309,8 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
 
     it('should not include --tier when tier is undefined', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
-      const command = buildPrimeCommand('dev', undefined);
-      expect(command).not.toContain('--tier');
+      const args = buildPrimeCommand('dev', undefined);
+      expect(args).not.toContain('--tier');
     });
 
     it('should keep original getPrimeContext function signature', async () => {
@@ -365,9 +376,9 @@ describe('MSSCI-12798: TypeScript Tier Integration', () => {
     it('should handle special characters in agent name', async () => {
       const { buildPrimeCommand } = await import('../src/prime.js');
 
-      // Agent names should be quoted in command to handle special chars
-      const command = buildPrimeCommand('agent-with-dash', 'FULL');
-      expect(command).toContain('"agent-with-dash"');
+      // Agent names are passed as separate args (safe from injection)
+      const args = buildPrimeCommand('agent-with-dash', 'FULL');
+      expect(args).toContain('agent-with-dash');
     });
   });
 });
