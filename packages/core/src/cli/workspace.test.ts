@@ -171,22 +171,16 @@ describe('Story 11-2: pnpm Workspace Structure', () => {
   });
 
   describe('Workspace Dependencies', () => {
-    it('should have @pennyfarthing/shared in packages/core dependencies', () => {
+    it('should NOT have @pennyfarthing/shared in packages/core dependencies (absorbed in 98-16)', () => {
       const packageJsonPath = join(PROJECT_ROOT, 'packages', 'core', 'package.json');
       if (!existsSync(packageJsonPath)) {
         assert.fail('packages/core/package.json must exist first');
       }
       const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const deps = pkg.dependencies || {};
-      assert.ok(
-        deps['@pennyfarthing/shared'],
-        'packages/core should depend on @pennyfarthing/shared'
-      );
-      // Accept either workspace protocol (development) or version (for npm publish)
-      const sharedDep = deps['@pennyfarthing/shared'];
-      assert.ok(
-        sharedDep.includes('workspace') || sharedDep.match(/^\^?\d+\.\d+\.\d+/),
-        'Dependency should use workspace protocol or semver version'
+      assert.strictEqual(
+        deps['@pennyfarthing/shared'], undefined,
+        'packages/core should NOT depend on @pennyfarthing/shared (absorbed into core in story 98-16)'
       );
     });
   });

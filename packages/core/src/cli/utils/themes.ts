@@ -6,7 +6,7 @@ import YAML from 'yaml';
 import {
   discoverAllThemeDirs,
   resolveThemePath as sharedResolveThemePath,
-} from '@pennyfarthing/shared';
+} from '../../shared/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

@@ -5,7 +5,7 @@
  * commands, skills, and API routers from installed @pennyfarthing/* packages.
  *
  * The plugin system reads a "pennyfarthing" field from package.json of
- * installed @pennyfarthing/* packages (excluding core and shared).
+ * installed @pennyfarthing/* packages (excluding core, shared, and benchmark).
  *
  * Test categories:
  * 1. discoverPlugins() - Scan node_modules for plugin packages
@@ -110,7 +110,7 @@ describe('Plugin Discovery (93-3)', () => {
 
     it('should discover packages with "pennyfarthing" field in package.json', () => {
       // AC: Generic plugin discovery mechanism
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           commands: 'commands/',
           skills: 'skills/',
@@ -123,7 +123,7 @@ describe('Plugin Discovery (93-3)', () => {
       const plugins = discoverPlugins(TEST_DIR);
 
       assert.strictEqual(plugins.length, 1, 'Should find one plugin');
-      assert.strictEqual(plugins[0].name, '@pennyfarthing/benchmark');
+      assert.strictEqual(plugins[0].name, '@pennyfarthing/metrics');
     });
 
     it('should skip @pennyfarthing/core (not a plugin)', () => {
@@ -139,6 +139,20 @@ describe('Plugin Discovery (93-3)', () => {
       const plugins = discoverPlugins(TEST_DIR);
 
       assert.strictEqual(plugins.length, 0, 'Should skip core package');
+    });
+
+    it('should skip @pennyfarthing/benchmark (absorbed into core)', () => {
+      const benchmarkDir = join(TEST_DIR, 'node_modules/@pennyfarthing/benchmark');
+      mkdirSync(benchmarkDir, { recursive: true });
+      writeFileSync(join(benchmarkDir, 'package.json'), JSON.stringify({
+        name: '@pennyfarthing/benchmark',
+        version: '10.0.0',
+        pennyfarthing: { commands: 'commands/' }
+      }));
+
+      const plugins = discoverPlugins(TEST_DIR);
+
+      assert.strictEqual(plugins.length, 0, 'Should skip benchmark package (absorbed into core)');
     });
 
     it('should skip @pennyfarthing/shared (not a plugin)', () => {
@@ -170,7 +184,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should discover multiple plugins', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, { commands: ['solo'] });
 
@@ -184,7 +198,7 @@ describe('Plugin Discovery (93-3)', () => {
       const names = plugins.map(p => p.name).sort();
       assert.deepStrictEqual(names, [
         '@pennyfarthing/analytics',
-        '@pennyfarthing/benchmark'
+        '@pennyfarthing/metrics'
       ]);
     });
 
@@ -215,7 +229,7 @@ describe('Plugin Discovery (93-3)', () => {
   describe('parsePluginManifest()', () => {
 
     it('should parse commands path from manifest', () => {
-      const pkgDir = createFakePlugin(TEST_DIR, 'benchmark', {
+      const pkgDir = createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           commands: 'commands/',
         }
@@ -228,7 +242,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should parse skills path from manifest', () => {
-      const pkgDir = createFakePlugin(TEST_DIR, 'benchmark', {
+      const pkgDir = createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           skills: 'skills/',
         }
@@ -241,8 +255,8 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should parse API router entry point from manifest', () => {
-      // AC: Cyclist benchmark API router registers automatically
-      const pkgDir = createFakePlugin(TEST_DIR, 'benchmark', {
+      // AC: Plugin API router registers automatically
+      const pkgDir = createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           commands: 'commands/',
           skills: 'skills/',
@@ -264,7 +278,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should parse manifest with all fields', () => {
-      const pkgDir = createFakePlugin(TEST_DIR, 'benchmark', {
+      const pkgDir = createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           commands: 'commands/',
           skills: 'skills/',
@@ -326,8 +340,8 @@ describe('Plugin Discovery (93-3)', () => {
   describe('getPluginCommands()', () => {
 
     it('should return command file paths from a plugin', () => {
-      // AC: Benchmark commands available when @pennyfarthing/benchmark installed
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      // AC: Plugin commands available when installed
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, {
         commands: ['solo', 'benchmark', 'benchmark-control', 'job-fair']
@@ -346,7 +360,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should include plugin name in command metadata', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, { commands: ['solo'] });
 
@@ -354,12 +368,12 @@ describe('Plugin Discovery (93-3)', () => {
       const commands = getPluginCommands(plugins);
 
       assert.strictEqual(commands.length, 1);
-      assert.strictEqual(commands[0].plugin, '@pennyfarthing/benchmark');
+      assert.strictEqual(commands[0].plugin, '@pennyfarthing/metrics');
       assert.strictEqual(commands[0].name, 'solo');
     });
 
     it('should aggregate commands from multiple plugins', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, { commands: ['solo', 'benchmark'] });
 
@@ -374,7 +388,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should return empty array for plugin with no commands field', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'skills/' }
       }, { skills: ['judge'] });
 
@@ -386,7 +400,7 @@ describe('Plugin Discovery (93-3)', () => {
 
     it('should skip commands directory that does not exist on disk', () => {
       // Plugin declares commands but directory is missing
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       });
       // Note: no commands option — directory not created
@@ -405,8 +419,8 @@ describe('Plugin Discovery (93-3)', () => {
   describe('getPluginSkills()', () => {
 
     it('should return skill directory paths from a plugin', () => {
-      // AC: Benchmark skills load when referenced
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      // AC: Plugin skills load when referenced
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'skills/' }
       }, {
         skills: ['judge', 'finalize-run', 'persona-benchmark']
@@ -424,7 +438,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should include plugin name in skill metadata', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'skills/' }
       }, { skills: ['judge'] });
 
@@ -432,12 +446,12 @@ describe('Plugin Discovery (93-3)', () => {
       const skills = getPluginSkills(plugins);
 
       assert.strictEqual(skills.length, 1);
-      assert.strictEqual(skills[0].plugin, '@pennyfarthing/benchmark');
+      assert.strictEqual(skills[0].plugin, '@pennyfarthing/metrics');
       assert.strictEqual(skills[0].name, 'judge');
     });
 
     it('should aggregate skills from multiple plugins', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'skills/' }
       }, { skills: ['judge', 'finalize-run'] });
 
@@ -452,7 +466,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should return empty array for plugin with no skills field', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, { commands: ['solo'] });
 
@@ -463,13 +477,13 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should skip hidden directories in skills path', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'skills/' }
       }, { skills: ['judge'] });
 
       // Add a hidden directory that should be ignored
       const hiddenDir = join(
-        TEST_DIR, 'node_modules/@pennyfarthing/benchmark/skills/.hidden'
+        TEST_DIR, 'node_modules/@pennyfarthing/metrics/skills/.hidden'
       );
       mkdirSync(hiddenDir, { recursive: true });
 
@@ -488,8 +502,8 @@ describe('Plugin Discovery (93-3)', () => {
   describe('getPluginRouters()', () => {
 
     it('should return API router definitions from plugins', () => {
-      // AC: Cyclist benchmark API router registers automatically
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      // AC: Plugin API router registers automatically
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           api: {
             path: '/api/benchmark',
@@ -504,13 +518,13 @@ describe('Plugin Discovery (93-3)', () => {
 
       assert.strictEqual(routers.length, 1);
       assert.strictEqual(routers[0].mountPath, '/api/benchmark');
-      assert.strictEqual(routers[0].plugin, '@pennyfarthing/benchmark');
+      assert.strictEqual(routers[0].plugin, '@pennyfarthing/metrics');
       assert.ok(routers[0].modulePath, 'Should have module path');
       assert.strictEqual(routers[0].exportName, 'createBenchmarkRouter');
     });
 
     it('should return empty array for plugins without api field', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       });
 
@@ -521,7 +535,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should aggregate routers from multiple plugins', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           api: {
             path: '/api/benchmark',
@@ -568,7 +582,7 @@ describe('Plugin Discovery (93-3)', () => {
 
     it('should skip plugin with unreadable package.json', () => {
       // Create a valid plugin and a broken one
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       }, { commands: ['solo'] });
 
@@ -580,11 +594,11 @@ describe('Plugin Discovery (93-3)', () => {
 
       // Should find benchmark but skip broken
       assert.strictEqual(plugins.length, 1);
-      assert.strictEqual(plugins[0].name, '@pennyfarthing/benchmark');
+      assert.strictEqual(plugins[0].name, '@pennyfarthing/metrics');
     });
 
     it('should handle plugin declaring commands path that does not exist', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'nonexistent-commands/' }
       });
 
@@ -595,7 +609,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should handle plugin declaring skills path that does not exist', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { skills: 'nonexistent-skills/' }
       });
 
@@ -613,7 +627,7 @@ describe('Plugin Discovery (93-3)', () => {
   describe('DiscoveredPlugin type contract', () => {
 
     it('should include package name, path, and manifest in DiscoveredPlugin', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: {
           commands: 'commands/',
           skills: 'skills/',
@@ -637,7 +651,7 @@ describe('Plugin Discovery (93-3)', () => {
     });
 
     it('should resolve absolute path for plugin directory', () => {
-      createFakePlugin(TEST_DIR, 'benchmark', {
+      createFakePlugin(TEST_DIR, 'metrics', {
         pennyfarthing: { commands: 'commands/' }
       });
 
