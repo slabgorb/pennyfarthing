@@ -2,9 +2,18 @@
 
 <purpose>
 Merge develop into main and create the annotated release tag. This prepares everything for push — still local, still reversible.
+
+**For prerelease:** This step is SKIPPED. Alpha/beta/rc releases stay on develop and are tagged there. Main only receives stable releases.
 </purpose>
 
 <instructions>
+**If prerelease (`IS_PRERELEASE=true`):**
+1. Stay on develop (do NOT checkout main)
+2. Create annotated tag on develop with prerelease flag
+3. Show tag info
+4. Auto-continue to push step
+
+**If stable release:**
 1. Checkout main and pull latest
 2. Merge develop into main
 3. Create annotated tag
@@ -17,7 +26,19 @@ Merge summary and tag details. Everything is local — nothing has been pushed y
 
 ## Execution
 
-### 8.1 Update Main
+### 8.0 Prerelease Check
+
+```bash
+if [[ "$IS_PRERELEASE" == "true" ]]; then
+    echo "=== Prerelease — Skipping Merge to Main ==="
+    echo "Prerelease versions stay on develop. Main only receives stable releases."
+    echo ""
+fi
+```
+
+**If prerelease, skip to 8.3 (tag on develop).**
+
+### 8.1 Update Main (stable only)
 
 ```bash
 git checkout main
@@ -27,7 +48,7 @@ git pull origin main --ff-only || {
 }
 ```
 
-### 8.2 Merge Develop
+### 8.2 Merge Develop (stable only)
 
 ```bash
 git merge develop -m "Merge develop into main for release {new_version}"
@@ -49,9 +70,13 @@ echo "Branch: $(git branch --show-current)"
 echo "Tag: $(git tag -l 'v{new_version}')"
 echo "HEAD: $(git log --oneline -1)"
 echo ""
-echo "=== Branches Ahead of Remote ==="
-git log --oneline origin/main..main
-echo "---"
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    echo "=== Branches Ahead of Remote ==="
+    echo "main:"
+    git log --oneline origin/main..main
+    echo "---"
+fi
+echo "develop:"
 git log --oneline origin/develop..develop
 ```
 
@@ -60,6 +85,6 @@ Everything is local. The next step pushes to the remote — that's the point of 
 ---
 
 **[C]** Continue to push
-**[A]** Abort (delete tag, reset main)
+**[A]** Abort (delete tag{if stable: , reset main})
 
 <!-- CYCLIST:CHOICES:C,A -->

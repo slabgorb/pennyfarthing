@@ -11,7 +11,11 @@ Release a new version of Pennyfarthing using an interactive stepped workflow wit
 # Start the interactive release workflow
 /release
 
-# The workflow will ask for bump type (major/minor/patch) during preflight
+# The workflow will ask for bump type during preflight:
+#   Stable: major/minor/patch
+#   Prerelease: premajor/preminor/prepatch (creates alpha)
+#   If already on prerelease: prerelease (bump N), promote (go stable),
+#     graduate-beta, graduate-rc
 ```
 </usage>
 
@@ -54,9 +58,12 @@ To check status:
 </instructions>
 
 <when-to-use>
-- After completing a sprint or set of features
-- When develop is stable and ready for production
-- Before deploying to production environments
+- After completing a sprint or set of features (stable release)
+- When develop is stable and ready for production (stable release)
+- Before deploying to production environments (stable release)
+- For early testing of new features before a stable cut (alpha/beta/rc prerelease)
+- To iterate on a prerelease (bump alpha.0 → alpha.1)
+- To promote a tested prerelease to stable
 </when-to-use>
 
 <prerequisites>

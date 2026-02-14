@@ -30,9 +30,14 @@ git checkout -b "$RELEASE_BRANCH"
 ### 7.2 Stage Files Explicitly
 
 ```bash
-# Root files
-git add VERSION package.json README.md CHANGELOG.md CLAUDE.md
+# Root files (always staged)
+git add VERSION package.json CHANGELOG.md
 [[ -f package-lock.json ]] && git add package-lock.json
+
+# Stable-only files (skip for prerelease)
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    git add README.md CLAUDE.md
+fi
 
 # All workspace packages (auto-discovered)
 for PKG_JSON in packages/*/package.json; do
@@ -50,8 +55,12 @@ git diff --cached --name-only
 
 echo ""
 echo "=== Verification ==="
-# Check root files are staged
-for f in VERSION package.json README.md CHANGELOG.md CLAUDE.md; do
+# Check root files are staged (prerelease skips README.md and CLAUDE.md)
+ROOT_FILES="VERSION package.json CHANGELOG.md"
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    ROOT_FILES="$ROOT_FILES README.md CLAUDE.md"
+fi
+for f in $ROOT_FILES; do
     if git diff --cached --name-only | grep -q "^$f$"; then
         echo "  ✓ $f"
     else

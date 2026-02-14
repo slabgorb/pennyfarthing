@@ -22,9 +22,15 @@ Release summary with links to GitHub release, npm packages, and git tag.
 TAG="v{new_version}"
 TODAY=$(date +%Y-%m-%d)
 
+PRERELEASE_FLAG=""
+if [[ "$IS_PRERELEASE" == "true" ]]; then
+    PRERELEASE_FLAG="--prerelease"
+fi
+
 gh release create "$TAG" \
     --title "v{new_version}" \
     --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md) for details." \
+    $PRERELEASE_FLAG \
     || echo "WARNING: GitHub release creation failed (may already exist)"
 ```
 
@@ -48,6 +54,8 @@ gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  N
 
 ### 11.3 Summary
 
+**For stable release:**
+
 ```
 ╔══════════════════════════════════════╗
 ║       Release {new_version} Complete       ║
@@ -62,6 +70,27 @@ gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  N
 ║  Current branch:  develop            ║
 ║                                      ║
 ╚══════════════════════════════════════╝
+```
+
+**For prerelease:**
+
+```
+╔══════════════════════════════════════════╗
+║  Prerelease {new_version} Complete            ║
+╠══════════════════════════════════════════╣
+║                                          ║
+║  Tag:       v{new_version}                    ║
+║  npm tag:   {prerelease_channel}              ║
+║  npm:       @pennyfarthing/core          ║
+║             @pennyfarthing/cyclist       ║
+║  GitHub:    (prerelease URL)             ║
+║                                          ║
+║  Branch pushed: develop (main unchanged) ║
+║  Current branch: develop                 ║
+║                                          ║
+║  Install: npm i @pennyfarthing/core@{channel} ║
+║                                          ║
+╚══════════════════════════════════════════╝
 ```
 
 ---

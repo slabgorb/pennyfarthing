@@ -36,9 +36,10 @@ sed -i '' 's/"version": "{current_version}"/"version": "{new_version}"/' package
 
 ```bash
 # Bump all workspace packages (auto-discovered)
+# Regex handles both stable (x.y.z) and prerelease (x.y.z-tag.N) versions
 for PKG_JSON in packages/*/package.json; do
     if [[ -f "$PKG_JSON" ]]; then
-        sed -i '' -E 's/"version": "[0-9]+\.[0-9]+\.[0-9]+"/"version": "{new_version}"/' "$PKG_JSON"
+        sed -i '' -E 's/"version": "[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?"/"version": "{new_version}"/' "$PKG_JSON"
         echo "Updated $PKG_JSON"
     fi
 done
@@ -46,8 +47,12 @@ done
 
 ### 2.4 Update README.md
 
+**Skip for prerelease** — README should always reflect the latest stable version.
+
 ```bash
-sed -i '' 's/\*\*v{current_version}\*\*/\*\*v{new_version}\*\*/' README.md
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    sed -i '' 's/\*\*v{current_version}\*\*/\*\*v{new_version}\*\*/' README.md
+fi
 ```
 
 ### 2.5 Update package-lock.json
@@ -81,8 +86,10 @@ git diff --stat
 | `VERSION` | `{new_version}` |
 | `package.json` | `"version": "{new_version}"` |
 | `packages/*/package.json` | `"version": "{new_version}"` (all workspace packages) |
-| `README.md` | Badge updated |
+| `README.md` | Badge updated (stable only) |
 | `CHANGELOG.md` | New version header |
+
+**For prerelease:** README.md should NOT appear in the diff.
 
 ---
 
