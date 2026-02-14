@@ -14,8 +14,6 @@ AC Coverage:
 
 import click
 import click.testing
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers

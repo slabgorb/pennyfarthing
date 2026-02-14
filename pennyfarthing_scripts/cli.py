@@ -50,9 +50,9 @@ cli.add_command(sprint.commands["work"], "work")
 cli.add_command(sprint.commands["story"], "story")
 
 # Import analysis groups
-from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
 from pennyfarthing_scripts.deadcode.cli import deadcode  # noqa: E402
 from pennyfarthing_scripts.healthscore.cli import healthscore  # noqa: E402
+from pennyfarthing_scripts.hotspots.cli import hotspots  # noqa: E402
 
 
 @cli.group()
