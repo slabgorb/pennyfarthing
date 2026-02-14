@@ -188,11 +188,12 @@ Present to user:
 <merge-gate>
 ## Merge Gate (BLOCKING)
 
-Before starting new work: `gh pr list --state open` - BLOCKS if any exist.
+Before starting new work: `gh pr list --state open --search "draft:false"` - BLOCKS if any non-draft PRs exist.
 
-Open PRs → incomplete work → merge conflicts, stale branches, CI failures.
+Draft PRs are allowed — they represent in-progress work that isn't ready for review yet.
+Non-draft open PRs → incomplete work → merge conflicts, stale branches, CI failures.
 
-**Resolution:** Merge/close all PRs first. Use `/reviewer` to complete reviews.
+**Resolution:** Merge/close all non-draft PRs first. Use `/reviewer` to complete reviews.
 </merge-gate>
 
 <gate>
