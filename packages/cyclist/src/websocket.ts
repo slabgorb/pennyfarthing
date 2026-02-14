@@ -446,6 +446,18 @@ export function setupWebSocketServers(
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
+    // Security: Validate WebSocket origin to prevent cross-site WebSocket hijacking (#888)
+    const origin = request.headers.origin;
+    if (origin) {
+      const allowed = ['http://localhost', 'http://127.0.0.1'];
+      if (!allowed.some(a => origin.startsWith(a))) {
+        console.warn(`[WebSocket] Rejected connection from origin: ${origin}`);
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+    }
+
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
 
     if (pathname === '/ws/stats') {
