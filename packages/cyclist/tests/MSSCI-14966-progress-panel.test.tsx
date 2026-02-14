@@ -263,8 +263,7 @@ describe('AC3: Shows story context', () => {
   it('should display story points', async () => {
     const { ProgressPanel } = await import('../src/public/components/panels/ProgressPanel');
     render(<ProgressPanel />);
-    // Should show points somewhere (e.g., "5pt" or "5 pts")
-    expect(screen.getByText(/5/)).toBeInTheDocument();
+    // Validate story points format in panel text (getByText(/5/) removed — collides with AC count "2/5")
     const panel = screen.getByTestId('progress-panel');
     expect(panel.textContent).toMatch(/5\s*pt/i);
   });

@@ -426,6 +426,7 @@ describe('AC4: Tab headers use Title Case', () => {
       git: 'Git',
       hotspots: 'Hotspots',
       settings: 'Settings',
+      progress: 'Progress',
     };
 
     // Verify each panel has expected Title Case mapping

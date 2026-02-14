@@ -278,10 +278,10 @@ describe('AC4: All three panels independently positionable in Dockview', () => {
     expect(PANEL_INVENTORY.TODO).toBe('todo');
   });
 
-  it('should remove PROGRESS from PANEL_INVENTORY', async () => {
+  it('should have PROGRESS in PANEL_INVENTORY (re-added by MSSCI-14966)', async () => {
     const { PANEL_INVENTORY } = await import('../src/public/components/DockviewWorkspace');
 
-    expect((PANEL_INVENTORY as any).PROGRESS).toBeUndefined();
+    expect((PANEL_INVENTORY as any).PROGRESS).toBe('progress');
   });
 
   it('should include new panels in RIGHT_SIDEBAR_PANELS', async () => {
@@ -453,8 +453,8 @@ describe('Panel index exports new panels', () => {
     expect(panels.TodoPanel).toBeDefined();
   });
 
-  it('should NOT export ProgressPanel from panels index', async () => {
+  it('should export ProgressPanel from panels index (re-added by MSSCI-14966)', async () => {
     const panels = await import('../src/public/components/panels');
-    expect((panels as any).ProgressPanel).toBeUndefined();
+    expect((panels as any).ProgressPanel).toBeDefined();
   });
 });
