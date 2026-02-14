@@ -111,7 +111,53 @@ def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
     Returns:
         Dict with migration results {success, shards_created, stories_migrated}
     """
-    raise NotImplementedError("td-4: migrate_completed_archive not yet implemented")
+    archive_dir = archive_path.parent
+    data = _load_archive_file(archive_path)
+    epic_refs = set(data["completed_epics"])
+
+    # Group stories by epic ref
+    epic_stories: dict[str, list[dict[str, Any]]] = {}
+    orphans: list[dict[str, Any]] = []
+    for story in data["completed_stories"]:
+        epic = story.get("epic", "")
+        if epic in epic_refs:
+            epic_stories.setdefault(epic, []).append(story)
+        else:
+            orphans.append(story)
+
+    # Write per-epic shard files
+    shards_created = 0
+    stories_migrated = 0
+    for epic_ref, stories in epic_stories.items():
+        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if shard_path.exists():
+            existing = _read_yaml_file(shard_path)
+            existing_ids = {s["id"] for s in existing.get("stories", [])}
+            merged = list(existing.get("stories", []))
+            for s in stories:
+                if s["id"] not in existing_ids:
+                    merged.append(s)
+            existing["stories"] = merged
+            _write_yaml_file(shard_path, existing)
+        else:
+            shard_data = {
+                "jira": epic_ref,
+                "status": "done",
+                "stories": stories,
+            }
+            _write_yaml_file(shard_path, shard_data)
+            shards_created += 1
+        stories_migrated += len(stories)
+
+    # Update the index: keep only orphans
+    data["completed_stories"] = orphans
+    _write_archive_file(archive_path, data)
+
+    return {
+        "success": True,
+        "shards_created": shards_created,
+        "stories_migrated": stories_migrated,
+    }
 
 
 def load_archive(archive_path: Path) -> dict[str, Any]:
@@ -126,7 +172,23 @@ def load_archive(archive_path: Path) -> dict[str, Any]:
     Returns:
         Unified archive dict with all completed_stories from shards + orphans
     """
-    raise NotImplementedError("td-4: load_archive not yet implemented")
+    data = _load_archive_file(archive_path)
+    archive_dir = archive_path.parent
+
+    # Collect stories from shards
+    all_stories: list[dict[str, Any]] = []
+    for epic_ref in data["completed_epics"]:
+        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if shard_path.exists():
+            shard = _read_yaml_file(shard_path)
+            all_stories.extend(shard.get("stories", []))
+
+    # Add orphans from index
+    all_stories.extend(data["completed_stories"])
+
+    result = dict(data)
+    result["completed_stories"] = all_stories
+    return result
 
 
 def _load_archive_file(archive_path: Path) -> dict[str, Any]:
