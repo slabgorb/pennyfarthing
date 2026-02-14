@@ -407,3 +407,26 @@ bikerack *args:
     fi
 
     PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack start $dir_flag
+
+# Launch BikeRack TUI (connects to running WheelHub)
+tui *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    port_flag=""
+    project_dir_flag=""
+    for arg in {{args}}; do
+        case "$arg" in
+            --port=*|port=*)
+                port_flag="--port ${arg#*=}"
+                ;;
+            dir=*)
+                project_dir_flag="--project-dir ${arg#dir=}"
+                ;;
+            here)
+                project_dir_flag="--project-dir $(pwd)"
+                ;;
+        esac
+    done
+
+    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack.tui $port_flag $project_dir_flag
