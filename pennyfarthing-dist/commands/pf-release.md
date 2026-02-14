@@ -20,7 +20,7 @@ This command starts the `release` stepped workflow (BikeLane):
 
 1. **Preflight** — Clean state, compute version, conflict checks
 2. **Bump** — Update all version files, show diff ← GATE
-3. **Changelog** — Generate entries from commits (`/changelog`) ← GATE
+3. **Changelog** — Generate entries from commits (`/pf-changelog`) ← GATE
 4. **README** — Audit feature counts, update content
 5. **CLAUDE.md** — Verify version, build commands, project structure
 6. **Retro** — Optional retrospective (`/retro`)
@@ -38,18 +38,18 @@ Start the release stepped workflow:
 
 ```bash
 # Start the workflow
-/workflow start release
+/pf-workflow start release
 ```
 
 If already in progress:
 ```bash
 # Resume where you left off
-/workflow resume
+/pf-workflow resume
 ```
 
 To check status:
 ```bash
-/workflow status
+/pf-workflow status
 ```
 </instructions>
 
@@ -68,7 +68,7 @@ To check status:
 </prerequisites>
 
 <skills>
-- `/changelog` - For changelog format reference and auto-generation
+- `/pf-changelog` - For changelog format reference and auto-generation
 - `/retro` - For optional release retrospective
-- `/workflow` - For workflow management commands
+- `/pf-workflow` - For workflow management commands
 </skills>

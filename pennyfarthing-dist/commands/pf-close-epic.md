@@ -28,5 +28,5 @@ Counterpart to `/start-epic`. Idempotent — safe to run multiple times.
 
 <related>
 - `/start-epic` — Start an epic (move to current sprint, generate context)
-- `/sprint status` — View sprint progress
+- `/pf-sprint status` — View sprint progress
 </related>
