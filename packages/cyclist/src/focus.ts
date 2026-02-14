@@ -8,9 +8,9 @@
  * imports these functions and wires them into the WS channel + config watcher.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
 /** Valid panel IDs that can be focused */
 export const VALID_FOCUS_PANELS = [
@@ -81,8 +81,21 @@ export function isValidFocusPanel(panelId: string): boolean {
  * Returns the panel ID string or null if not saved.
  */
 export function getLastPanel(projectDir: string): string | null {
-  // Stub: 103-8 not implemented yet
-  throw new Error('103-8: getLastPanel not implemented');
+  try {
+    const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+    if (!existsSync(configPath)) return null;
+    const raw = readFileSync(configPath, 'utf-8');
+    if (!raw.trim()) return null;
+    const config = parseYaml(raw);
+    if (!config || typeof config !== 'object') return null;
+    const lastPanel = (config as Record<string, unknown>).last_panel;
+    if (lastPanel == null) return null;
+    const panelStr = String(lastPanel);
+    if (!(VALID_FOCUS_PANELS as readonly string[]).includes(panelStr)) return null;
+    return panelStr;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -94,6 +107,28 @@ export function getLastPanel(projectDir: string): string | null {
  * Returns true on success, false on failure.
  */
 export function saveLastPanel(projectDir: string, panelId: string): boolean {
-  // Stub: 103-8 not implemented yet
-  throw new Error('103-8: saveLastPanel not implemented');
+  if (!(VALID_FOCUS_PANELS as readonly string[]).includes(panelId)) return false;
+
+  try {
+    const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+    let config: Record<string, unknown> = {};
+
+    if (existsSync(configPath)) {
+      const raw = readFileSync(configPath, 'utf-8');
+      if (raw.trim()) {
+        const parsed = parseYaml(raw);
+        if (parsed && typeof parsed === 'object') {
+          config = parsed as Record<string, unknown>;
+        }
+      }
+    }
+
+    config.last_panel = panelId;
+
+    mkdirSync(join(projectDir, '.pennyfarthing'), { recursive: true });
+    writeFileSync(configPath, stringifyYaml(config));
+    return true;
+  } catch {
+    return false;
+  }
 }
