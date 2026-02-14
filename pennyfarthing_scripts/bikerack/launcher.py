@@ -64,6 +64,19 @@ def build_otel_env(port: int) -> dict[str, str]:
     }
 
 
+def resolve_project_dir(project_dir: str | None) -> Path:
+    """Resolve project directory from option → env var → cwd.
+
+    Used by bikerack and launch CLI commands.
+    """
+    if project_dir:
+        return Path(project_dir)
+    env = os.environ.get("CYCLIST_PROJECT_DIR")
+    if env:
+        return Path(env)
+    return Path.cwd()
+
+
 def _find_framework_dir() -> Path:
     """Locate the pennyfarthing framework root from this package's location."""
     # pennyfarthing_scripts/bikerack/launcher.py -> pennyfarthing/
