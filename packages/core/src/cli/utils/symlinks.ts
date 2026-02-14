@@ -1,4 +1,4 @@
-import { readdirSync, unlinkSync, symlinkSync, copyFileSync } from 'fs';
+import { readdirSync, unlinkSync, symlinkSync, copyFileSync, lstatSync, rmSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -23,21 +23,74 @@ export function removeSymlinkOrDirectory(path: string, dryRun: boolean = false):
     return false;
   }
 
-  if (dryRun) {
-    return true;
-  }
-
-  try {
-    unlinkSync(path);
-    return true;
-  } catch {
+  // Symlinks are always safe to remove
+  if (isSymlink(path)) {
+    if (dryRun) return true;
     try {
-      removeSync(path);
+      unlinkSync(path);
       return true;
     } catch {
       return false;
     }
   }
+
+  // Non-symlink directory: check if empty before removing
+  if (isDirectory(path)) {
+    const entries = readdirSync(path);
+    if (entries.length > 0) {
+      logger.warning(`Refusing to remove non-empty directory: ${path} (${entries.length} entries)`);
+      return false;
+    }
+    if (dryRun) return true;
+    try {
+      rmSync(path, { recursive: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Regular file
+  if (dryRun) return true;
+  try {
+    unlinkSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Remove only entries matching a prefix from a directory.
+ * Preserves all other entries (user content).
+ * Returns count of removed entries.
+ */
+export function cleanManagedEntries(dir: string, prefix: string, dryRun: boolean = false): number {
+  if (!pathExists(dir)) return 0;
+
+  const entries = readdirSync(dir);
+  let count = 0;
+
+  for (const entry of entries) {
+    if (!entry.startsWith(prefix)) continue;
+    count++;
+    if (!dryRun) {
+      const entryPath = join(dir, entry);
+      try {
+        // Handle both symlinks and real files/dirs
+        const stat = lstatSync(entryPath);
+        if (stat.isSymbolicLink() || stat.isFile()) {
+          unlinkSync(entryPath);
+        } else if (stat.isDirectory()) {
+          rmSync(entryPath, { recursive: true });
+        }
+      } catch {
+        // Entry may have been removed by another process
+      }
+    }
+  }
+
+  return count;
 }
 
 /**
@@ -52,12 +105,17 @@ export function createCommandsDirectory(
 ): void {
   const commandsDir = join(projectRoot, '.claude/commands');
 
-  // Remove existing symlink or directory
-  removeSymlinkOrDirectory(commandsDir, dryRun);
-
-  // Create commands directory
-  if (!dryRun) {
-    ensureDirSync(commandsDir);
+  // Three-way logic: symlink → migrate, directory → clean managed, missing → create
+  if (isSymlink(commandsDir)) {
+    // Legacy whole-directory symlink — remove and recreate as real dir
+    removeSymlinkOrDirectory(commandsDir, dryRun);
+    if (!dryRun) ensureDirSync(commandsDir);
+  } else if (isDirectory(commandsDir)) {
+    // Real directory — clean only managed (pf-*) entries, preserve user content
+    cleanManagedEntries(commandsDir, 'pf-', dryRun);
+  } else {
+    // First install — create fresh
+    if (!dryRun) ensureDirSync(commandsDir);
   }
   logger.created('.claude/commands/ (directory for built-in + user commands)');
 
@@ -123,12 +181,17 @@ export function createSkillsDirectory(
 ): void {
   const skillsDir = join(projectRoot, '.claude/skills');
 
-  // Remove existing symlink or directory
-  removeSymlinkOrDirectory(skillsDir, dryRun);
-
-  // Create skills directory
-  if (!dryRun) {
-    ensureDirSync(skillsDir);
+  // Three-way logic: symlink → migrate, directory → clean managed, missing → create
+  if (isSymlink(skillsDir)) {
+    // Legacy whole-directory symlink — remove and recreate as real dir
+    removeSymlinkOrDirectory(skillsDir, dryRun);
+    if (!dryRun) ensureDirSync(skillsDir);
+  } else if (isDirectory(skillsDir)) {
+    // Real directory — clean only managed (pf-*) entries, preserve user content
+    cleanManagedEntries(skillsDir, 'pf-', dryRun);
+  } else {
+    // First install — create fresh
+    if (!dryRun) ensureDirSync(skillsDir);
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
@@ -259,12 +322,14 @@ export function copyCommandsDirectory(
 ): void {
   const commandsDir = join(projectRoot, '.claude/commands');
 
-  // Remove existing symlink or directory
-  removeSymlinkOrDirectory(commandsDir, dryRun);
-
-  // Create commands directory
-  if (!dryRun) {
-    ensureDirSync(commandsDir);
+  // Three-way logic: symlink → migrate, directory → clean managed, missing → create
+  if (isSymlink(commandsDir)) {
+    removeSymlinkOrDirectory(commandsDir, dryRun);
+    if (!dryRun) ensureDirSync(commandsDir);
+  } else if (isDirectory(commandsDir)) {
+    cleanManagedEntries(commandsDir, 'pf-', dryRun);
+  } else {
+    if (!dryRun) ensureDirSync(commandsDir);
   }
   logger.created('.claude/commands/ (directory for built-in + user commands)');
 
@@ -328,12 +393,14 @@ export function copySkillsDirectory(
 ): void {
   const skillsDir = join(projectRoot, '.claude/skills');
 
-  // Remove existing symlink or directory
-  removeSymlinkOrDirectory(skillsDir, dryRun);
-
-  // Create skills directory
-  if (!dryRun) {
-    ensureDirSync(skillsDir);
+  // Three-way logic: symlink → migrate, directory → clean managed, missing → create
+  if (isSymlink(skillsDir)) {
+    removeSymlinkOrDirectory(skillsDir, dryRun);
+    if (!dryRun) ensureDirSync(skillsDir);
+  } else if (isDirectory(skillsDir)) {
+    cleanManagedEntries(skillsDir, 'pf-', dryRun);
+  } else {
+    if (!dryRun) ensureDirSync(skillsDir);
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
