@@ -8,12 +8,11 @@
  * - Statistics display
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 // =============================================================================
 // Types
@@ -124,6 +123,30 @@ export function AuditLogPanel(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedEntry, setExpandedEntry] = useState<number | null>(null);
+
+  // Auto-scroll refs (using ref instead of state for synchronous updates)
+  const autoScrollRef = useRef(true);
+  const topRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Detect manual scroll to pause/resume auto-scroll
+  // Re-runs when loading changes so the listener attaches after the scroll container renders
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const handler = () => {
+      autoScrollRef.current = el.scrollTop === 0;
+    };
+    el.addEventListener('scroll', handler);
+    return () => el.removeEventListener('scroll', handler);
+  }, [loading]);
+
+  // Auto-scroll to newest entry when entries change
+  useEffect(() => {
+    if (autoScrollRef.current && topRef.current && entries.length > 0) {
+      topRef.current.scrollIntoView();
+    }
+  }, [entries]);
 
   // Fetch entries
   const fetchEntries = useCallback(async () => {
@@ -326,7 +349,8 @@ export function AuditLogPanel(): React.ReactElement {
       </div>
 
       {/* Entries List */}
-      <ScrollArea className="audit-log-entries flex-1">
+      <div ref={scrollContainerRef} className="audit-log-entries flex-1" style={{ overflow: 'auto' }}>
+        <div ref={topRef} />
         {entries.length === 0 ? (
           <div className="p-4 text-muted text-center">No entries</div>
         ) : (
@@ -456,7 +480,7 @@ export function AuditLogPanel(): React.ReactElement {
             </tbody>
           </table>
         )}
-      </ScrollArea>
+      </div>
     </TooltipProvider>
     </div>
   );
