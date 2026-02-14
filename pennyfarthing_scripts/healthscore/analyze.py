@@ -557,10 +557,24 @@ def compute_composite_score(
     return weighted_sum / total_weight
 
 
+def _find_project_root(start: Path) -> Path | None:
+    """Find project root by walking up to find .pennyfarthing with config."""
+    current = start
+    while current != current.parent:
+        pf_dir = current / ".pennyfarthing"
+        if pf_dir.is_dir() and (pf_dir / "config.local.yaml").exists():
+            return current
+        current = current.parent
+    return None
+
+
 def get_cache_path(target_path: Path) -> Path:
     """Return the cache directory for a given target path."""
     path_hash = hashlib.md5(str(target_path).encode()).hexdigest()[:12]
-    return target_path / ".pennyfarthing" / ".cache" / "healthscore" / path_hash
+    project_root = _find_project_root(target_path) or _find_project_root(Path.cwd())
+    if project_root:
+        return project_root / ".pennyfarthing" / ".cache" / "healthscore" / path_hash
+    return Path.home() / ".cache" / "pennyfarthing" / "healthscore" / path_hash
 
 
 def read_cached_score(cache_dir: Path, dimension: str, ttl: int) -> float | None:
