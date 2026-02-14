@@ -98,6 +98,37 @@ completed_stories:
     return archive_path
 
 
+def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
+    """Migrate a monolithic completed archive to index+shard format.
+
+    Extracts inlined stories from completed_stories, groups them by epic,
+    writes per-epic shard files to the archive directory, and removes
+    migrated stories from the index (keeping only orphans).
+
+    Args:
+        archive_path: Path to the sprint archive YAML file
+
+    Returns:
+        Dict with migration results {success, shards_created, stories_migrated}
+    """
+    raise NotImplementedError("td-4: migrate_completed_archive not yet implemented")
+
+
+def load_archive(archive_path: Path) -> dict[str, Any]:
+    """Load the archive index and merge stories from shard files.
+
+    Like load_sprint() for the active sprint, this reads the index file
+    and merges stories from per-epic shard files in the same directory.
+
+    Args:
+        archive_path: Path to the sprint archive YAML file
+
+    Returns:
+        Unified archive dict with all completed_stories from shards + orphans
+    """
+    raise NotImplementedError("td-4: load_archive not yet implemented")
+
+
 def _load_archive_file(archive_path: Path) -> dict[str, Any]:
     """Load the sprint archive file, handling both old and new formats.
 
