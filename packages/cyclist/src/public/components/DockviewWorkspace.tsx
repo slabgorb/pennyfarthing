@@ -52,6 +52,7 @@ export const PANEL_INVENTORY = {
   BACKGROUND: 'background',
   GIT: 'git',
   SETTINGS: 'settings',
+  PROGRESS: 'progress',
 } as const;
 
 export type PanelId = typeof PANEL_INVENTORY[keyof typeof PANEL_INVENTORY];
@@ -107,6 +108,7 @@ const PANEL_TITLES: Record<string, string> = {
   background: 'Subagents',
   git: 'Git',
   settings: 'Settings',
+  progress: 'Progress',
 };
 
 // Track closed panels for restoration

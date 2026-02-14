@@ -17,6 +17,7 @@ export { DiffsPanel } from './DiffsPanel';
 export { DebugPanel } from './DebugPanel';
 export { SettingsPanel } from './SettingsPanel';
 export { AuditLogPanel } from './AuditLogPanel';
+export { ProgressPanel } from './ProgressPanel';
 // Legacy exports - kept for backwards compatibility and tests
 export { AcceptanceCriteriaPanel, ConnectedAcceptanceCriteriaPanel } from './AcceptanceCriteriaPanel';
 export { BikeLanePanel, ConnectedBikeLanePanel } from './BikeLanePanel';
