@@ -34,6 +34,7 @@ log_dry() { echo -e "${YELLOW}[DRY-RUN]${NC} $1"; }
 # Parse arguments
 BUMP_TYPE=""
 DRY_RUN=false
+PRERELEASE_CHANNEL=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,28 +42,50 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
-        major|minor|patch)
+        --alpha|--beta|--rc)
+            PRERELEASE_CHANNEL="${1#--}"
+            shift
+            ;;
+        major|minor|patch|premajor|preminor|prepatch|prerelease|promote)
             BUMP_TYPE="$1"
             shift
             ;;
         *)
-            echo "Usage: $0 [--dry-run] <major|minor|patch>"
+            echo "Usage: $0 [--dry-run] [--alpha|--beta|--rc] <major|minor|patch|premajor|preminor|prepatch|prerelease|promote>"
             echo ""
             echo "Options:"
-            echo "  --dry-run    Show what would happen without executing"
+            echo "  --dry-run       Show what would happen without executing"
+            echo "  --alpha         Set prerelease channel to alpha (default for pre* bumps)"
+            echo "  --beta          Set prerelease channel to beta"
+            echo "  --rc            Set prerelease channel to rc"
             echo ""
-            echo "Examples:"
-            echo "  $0 patch           # 1.2.3 -> 1.2.4"
-            echo "  $0 minor           # 1.2.3 -> 1.3.0"
-            echo "  $0 major --dry-run # Preview major bump"
+            echo "Bump types:"
+            echo "  patch           Bug fix:        1.2.3 -> 1.2.4"
+            echo "  minor           New feature:    1.2.3 -> 1.3.0"
+            echo "  major           Breaking:       1.2.3 -> 2.0.0"
+            echo "  prepatch        Alpha patch:    1.2.3 -> 1.2.4-alpha.0"
+            echo "  preminor        Alpha minor:    1.2.3 -> 1.3.0-alpha.0"
+            echo "  premajor        Alpha major:    1.2.3 -> 2.0.0-alpha.0"
+            echo "  prerelease      Bump pre-num:   1.3.0-alpha.0 -> 1.3.0-alpha.1"
+            echo "  promote         Go stable:      1.3.0-alpha.1 -> 1.3.0"
             exit 1
             ;;
     esac
 done
 
 if [[ -z "$BUMP_TYPE" ]]; then
-    echo "Usage: $0 [--dry-run] <major|minor|patch>"
+    echo "Usage: $0 [--dry-run] [--alpha|--beta|--rc] <major|minor|patch|premajor|preminor|prepatch|prerelease|promote>"
     exit 1
+fi
+
+# Default prerelease channel to alpha for pre* bumps
+if [[ "$BUMP_TYPE" == pre* && -z "$PRERELEASE_CHANNEL" ]]; then
+    PRERELEASE_CHANNEL="alpha"
+fi
+
+IS_PRERELEASE=false
+if [[ "$BUMP_TYPE" == pre* ]]; then
+    IS_PRERELEASE=true
 fi
 
 # Helper to run or log commands
@@ -99,8 +122,12 @@ fi
 CURRENT_VERSION=$(cat "$VERSION_FILE")
 log_info "Current version: $CURRENT_VERSION"
 
-# Parse version components
-IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+# Parse version components (handle prerelease suffix)
+BASE_VERSION="${CURRENT_VERSION%%-*}"  # Strip prerelease suffix if present
+PRERELEASE_SUFFIX="${CURRENT_VERSION#*-}"  # Get prerelease suffix
+[[ "$PRERELEASE_SUFFIX" == "$CURRENT_VERSION" ]] && PRERELEASE_SUFFIX=""  # No suffix found
+
+IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
 
 # Bump version
 case "$BUMP_TYPE" in
@@ -108,18 +135,59 @@ case "$BUMP_TYPE" in
         MAJOR=$((MAJOR + 1))
         MINOR=0
         PATCH=0
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
         ;;
     minor)
         MINOR=$((MINOR + 1))
         PATCH=0
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
         ;;
     patch)
         PATCH=$((PATCH + 1))
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+        ;;
+    premajor)
+        MAJOR=$((MAJOR + 1))
+        MINOR=0
+        PATCH=0
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}-${PRERELEASE_CHANNEL}.0"
+        ;;
+    preminor)
+        MINOR=$((MINOR + 1))
+        PATCH=0
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}-${PRERELEASE_CHANNEL}.0"
+        ;;
+    prepatch)
+        PATCH=$((PATCH + 1))
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}-${PRERELEASE_CHANNEL}.0"
+        ;;
+    prerelease)
+        if [[ -z "$PRERELEASE_SUFFIX" ]]; then
+            log_error "Current version ($CURRENT_VERSION) is not a prerelease. Use premajor/preminor/prepatch instead."
+            exit 1
+        fi
+        # Parse existing prerelease: "alpha.0" -> channel="alpha", num=0
+        PRE_CHANNEL="${PRERELEASE_SUFFIX%.*}"
+        PRE_NUM="${PRERELEASE_SUFFIX##*.}"
+        PRE_NUM=$((PRE_NUM + 1))
+        [[ -n "$PRERELEASE_CHANNEL" ]] && PRE_CHANNEL="$PRERELEASE_CHANNEL"
+        NEW_VERSION="${BASE_VERSION}-${PRE_CHANNEL}.${PRE_NUM}"
+        PRERELEASE_CHANNEL="$PRE_CHANNEL"
+        ;;
+    promote)
+        if [[ -z "$PRERELEASE_SUFFIX" ]]; then
+            log_error "Current version ($CURRENT_VERSION) is not a prerelease. Nothing to promote."
+            exit 1
+        fi
+        NEW_VERSION="$BASE_VERSION"
+        IS_PRERELEASE=false
         ;;
 esac
 
-NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 log_info "New version: $NEW_VERSION"
+if $IS_PRERELEASE; then
+    log_info "Prerelease channel: $PRERELEASE_CHANNEL"
+fi
 
 
 # Step 1: Update version files
@@ -145,8 +213,8 @@ else
     for pkg in core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes; do
         PKG_JSON="$PROJECT_ROOT/packages/$pkg/package.json"
         if [[ -f "$PKG_JSON" ]]; then
-            # Use a more flexible pattern that matches any version number
-            sed -i '' -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"$NEW_VERSION\"/" "$PKG_JSON"
+            # Regex handles both stable (x.y.z) and prerelease (x.y.z-tag.N) versions
+            sed -i '' -E "s/\"version\": \"[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?\"/\"version\": \"$NEW_VERSION\"/" "$PKG_JSON"
             log_info "Updated packages/$pkg/package.json"
         fi
     done
@@ -231,22 +299,34 @@ fi
 # Step 4: Merge develop to main
 TAG_NAME="v$NEW_VERSION"
 if $DRY_RUN; then
-    log_dry "git checkout main && git merge develop"
-    log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
-    log_dry "git push origin develop main --tags"
-    log_dry "git checkout develop"
-    log_dry "npm publish --access public (@pennyfarthing/core)"
-    log_dry "npm publish --access public (@pennyfarthing/cyclist)"
-    log_dry "gh release create $TAG_NAME"
+    if $IS_PRERELEASE; then
+        log_dry "Prerelease: skipping merge to main"
+        log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
+        log_dry "git push origin develop --tags"
+        log_dry "npm publish --access public --tag $PRERELEASE_CHANNEL (@pennyfarthing/core)"
+        log_dry "gh release create $TAG_NAME --prerelease"
+    else
+        log_dry "git checkout main && git merge develop"
+        log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
+        log_dry "git push origin develop main --tags"
+        log_dry "git checkout develop"
+        log_dry "npm publish --access public (@pennyfarthing/core)"
+        log_dry "gh release create $TAG_NAME"
+    fi
 else
-    log_info "Merging develop to main..."
-    git -C "$PROJECT_ROOT" checkout main
-    git -C "$PROJECT_ROOT" pull origin main --ff-only || {
-        log_warn "Could not fast-forward main. Attempting merge..."
-        git -C "$PROJECT_ROOT" pull origin main --no-rebase
-    }
-    git -C "$PROJECT_ROOT" merge develop -m "Merge develop into main for release $NEW_VERSION"
-    log_info "Merged to main"
+    # Step 4: Merge to main (stable only — prereleases stay on develop)
+    if $IS_PRERELEASE; then
+        log_info "Prerelease: skipping merge to main (stays on develop)"
+    else
+        log_info "Merging develop to main..."
+        git -C "$PROJECT_ROOT" checkout main
+        git -C "$PROJECT_ROOT" pull origin main --ff-only || {
+            log_warn "Could not fast-forward main. Attempting merge..."
+            git -C "$PROJECT_ROOT" pull origin main --no-rebase
+        }
+        git -C "$PROJECT_ROOT" merge develop -m "Merge develop into main for release $NEW_VERSION"
+        log_info "Merged to main"
+    fi
 
     # Step 5: Create annotated tag
     log_info "Creating tag: $TAG_NAME"
@@ -256,8 +336,10 @@ else
     log_info "Pushing develop..."
     git -C "$PROJECT_ROOT" push origin develop
 
-    log_info "Pushing main..."
-    git -C "$PROJECT_ROOT" push origin main
+    if ! $IS_PRERELEASE; then
+        log_info "Pushing main..."
+        git -C "$PROJECT_ROOT" push origin main
+    fi
 
     log_info "Pushing tags..."
     git -C "$PROJECT_ROOT" push origin --tags
@@ -273,8 +355,15 @@ else
         npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
     fi
 
+    # Determine npm publish flags
+    NPM_TAG_FLAG=""
+    if $IS_PRERELEASE; then
+        NPM_TAG_FLAG="--tag $PRERELEASE_CHANNEL"
+        log_info "Publishing with dist-tag: $PRERELEASE_CHANNEL"
+    fi
+
     # Publish root package (@pennyfarthing/core)
-    (cd "$PROJECT_ROOT" && npm publish --access public)
+    (cd "$PROJECT_ROOT" && npm publish --access public $NPM_TAG_FLAG)
     log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
 
     # Publish all workspace packages
@@ -282,14 +371,18 @@ else
         if [[ -f "$pkg_dir/package.json" ]]; then
             PKG_NAME=$(node -e "console.log(require('$pkg_dir/package.json').name)")
             log_info "Publishing $PKG_NAME..."
-            (cd "$pkg_dir" && npm publish --access public) || log_warn "Failed to publish $PKG_NAME"
+            (cd "$pkg_dir" && npm publish --access public $NPM_TAG_FLAG) || log_warn "Failed to publish $PKG_NAME"
             log_info "Published $PKG_NAME@$NEW_VERSION to npm"
         fi
     done
 
     # Step 9: Create GitHub release
     log_info "Creating GitHub release..."
-    gh release create "$TAG_NAME" --title "v$NEW_VERSION" --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md#${NEW_VERSION//\.}-${TODAY//-}) for details." || log_warn "GitHub release creation failed (may already exist)"
+    GH_PRERELEASE_FLAG=""
+    if $IS_PRERELEASE; then
+        GH_PRERELEASE_FLAG="--prerelease"
+    fi
+    gh release create "$TAG_NAME" --title "v$NEW_VERSION" --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md#${NEW_VERSION//\.}-${TODAY//-}) for details." $GH_PRERELEASE_FLAG || log_warn "GitHub release creation failed (may already exist)"
 fi
 
 echo ""
@@ -298,6 +391,11 @@ if $DRY_RUN; then
     echo ""
     echo "  Would release version: $NEW_VERSION"
     echo "  Would create tag: $TAG_NAME"
+    if $IS_PRERELEASE; then
+        echo "  Type: prerelease ($PRERELEASE_CHANNEL)"
+        echo "  npm dist-tag: $PRERELEASE_CHANNEL"
+        echo "  Branches: develop only (main unchanged)"
+    fi
     echo "  Would publish:"
     echo "    - @pennyfarthing/core@$NEW_VERSION"
     for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
@@ -308,7 +406,14 @@ else
     echo ""
     echo "  Version: $NEW_VERSION"
     echo "  Tag: $TAG_NAME"
-    echo "  Branches pushed: develop, main"
+    if $IS_PRERELEASE; then
+        echo "  Type: prerelease ($PRERELEASE_CHANNEL)"
+        echo "  npm dist-tag: $PRERELEASE_CHANNEL"
+        echo "  Branch pushed: develop (main unchanged)"
+        echo "  Install: npm install @pennyfarthing/core@$PRERELEASE_CHANNEL"
+    else
+        echo "  Branches pushed: develop, main"
+    fi
     echo "  npm packages:"
     echo "    - @pennyfarthing/core@$NEW_VERSION"
     for pkg_dir in "$PROJECT_ROOT"/packages/*/; do

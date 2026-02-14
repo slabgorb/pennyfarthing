@@ -31,11 +31,15 @@ echo "Pushing develop..."
 git push origin develop
 ```
 
-### 9.2 Push Main
+### 9.2 Push Main (stable only)
 
 ```bash
-echo "Pushing main..."
-git push origin main
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    echo "Pushing main..."
+    git push origin main
+else
+    echo "Skipping main push (prerelease stays on develop only)"
+fi
 ```
 
 ### 9.3 Push Tags
@@ -60,9 +64,11 @@ git ls-remote --tags origin | grep "v{new_version}"
 echo ""
 echo "Remote develop HEAD:"
 git log --oneline origin/develop -1
-echo ""
-echo "Remote main HEAD:"
-git log --oneline origin/main -1
+if [[ "$IS_PRERELEASE" != "true" ]]; then
+    echo ""
+    echo "Remote main HEAD:"
+    git log --oneline origin/main -1
+fi
 ```
 
 ---

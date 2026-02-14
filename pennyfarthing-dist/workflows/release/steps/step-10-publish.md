@@ -50,26 +50,41 @@ for PKG_JSON in package.json packages/*/package.json; do
 done
 ```
 
-### 10.3 Publish Root Package (Core)
+### 10.3 Determine npm Dist-Tag
+
+```bash
+if [[ "$IS_PRERELEASE" == "true" ]]; then
+    # Prerelease: publish under the prerelease channel tag (alpha, beta, rc)
+    # This prevents alpha versions from becoming the "latest" tag
+    NPM_TAG="--tag $PRERELEASE_CHANNEL"
+    echo "Publishing as prerelease with dist-tag: $PRERELEASE_CHANNEL"
+else
+    # Stable: publish as "latest" (npm default)
+    NPM_TAG=""
+    echo "Publishing as stable release (latest)"
+fi
+```
+
+### 10.4 Publish Root Package (Core)
 
 ```bash
 echo "Publishing @pennyfarthing/core@{new_version}..."
-npm publish --access public
+npm publish --access public $NPM_TAG
 ```
 
-### 10.4 Publish Workspace Packages
+### 10.5 Publish Workspace Packages
 
 ```bash
 for pkg_dir in packages/cyclist packages/shared packages/themes-*; do
     if [[ -f "$pkg_dir/package.json" ]]; then
         PKG_NAME=$(node -e "console.log(require('./$pkg_dir/package.json').name)")
         echo "Publishing $PKG_NAME@{new_version}..."
-        (cd "$pkg_dir" && npm publish --access public) || echo "WARNING: Failed to publish $PKG_NAME"
+        (cd "$pkg_dir" && npm publish --access public $NPM_TAG) || echo "WARNING: Failed to publish $PKG_NAME"
     fi
 done
 ```
 
-### 10.5 Verify Published
+### 10.6 Verify Published
 
 ```bash
 echo "=== Registry Verification ==="
@@ -81,6 +96,16 @@ for PKG_JSON in package.json packages/*/package.json; do
         && echo "  ✓ $PKG_NAME@{new_version}" \
         || echo "  ✗ $PKG_NAME@{new_version} NOT FOUND"
 done
+
+if [[ "$IS_PRERELEASE" == "true" ]]; then
+    echo ""
+    echo "=== Dist-Tag Verification ==="
+    echo "Checking that 'latest' still points to the stable release..."
+    npm view @pennyfarthing/core dist-tags 2>/dev/null
+    echo ""
+    echo "Users install stable: npm install @pennyfarthing/core"
+    echo "Users install alpha:  npm install @pennyfarthing/core@$PRERELEASE_CHANNEL"
+fi
 ```
 
 ---

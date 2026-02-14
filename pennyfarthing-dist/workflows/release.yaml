@@ -31,6 +31,13 @@ workflow:
     version_file: VERSION
     project_root: .
     packages: "core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes"
+    # Set during preflight based on user choice:
+    # IS_PRERELEASE: "true" | "false"
+    # PRERELEASE_CHANNEL: "alpha" | "beta" | "rc" (only when IS_PRERELEASE=true)
+    # These control conditional behavior in steps 2, 4, 5, 6, 7, 8, 9, 10, 11
+
+  # Steps skipped for prerelease
+  prerelease_skip_steps: [4, 5, 6, 8]  # README, CLAUDE.md, Retro, Merge to main
 
   # User approval gates
   gates:
