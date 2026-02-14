@@ -17,15 +17,13 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
 from rich.console import Console
 from rich.text import Text
 from textual.widgets import Static
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
+from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel, Syntax
 from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
-
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching actual WheelHub /ws/diffs wire format
@@ -285,18 +283,60 @@ class TestDiffsPanelSubscription:
 class TestDiffsPanelSyntaxHighlighting:
     """AC3: Syntax highlighting applied using rich.syntax."""
 
-    def test_python_file_has_syntax_highlighting(self):
-        """Python file diffs should use rich.syntax for highlighting.
+    def test_module_imports_rich_syntax(self):
+        """DiffsPanel module must import rich.syntax.Syntax (AC3 requirement)."""
+        # Syntax is re-exported at module level — import proves usage
+        assert Syntax is not None
+        from rich.syntax import Syntax as RealSyntax
+        assert Syntax is RealSyntax
 
-        The rendered output should contain ANSI escape codes from Syntax,
-        not plain unhighlighted text.
+    def test_python_file_has_language_specific_colors(self):
+        """Python diffs should have multiple distinct ANSI colors from Syntax.
+
+        With rich.syntax, 'def' (keyword) gets a different color than 'hello'
+        (identifier). Plain diff coloring uses only green/red/dim — syntax
+        highlighting adds language-specific token colors (3+ distinct codes).
         """
+        message = {
+            "type": "init",
+            "diffs": [{
+                "path": "src/example.py",
+                "diff": (
+                    "diff --git a/src/example.py b/src/example.py\n"
+                    "index aaa..bbb 100644\n"
+                    "--- a/src/example.py\n"
+                    "+++ b/src/example.py\n"
+                    "@@ -1,1 +1,1 @@\n"
+                    "+def hello(name):\n"
+                ),
+                "toolName": "Git",
+                "timestamp": 1707900000,
+                "status": "modified",
+                "additions": 1,
+                "deletions": 0,
+            }],
+        }
+        panel = DiffsPanel(client=MagicMock())
+        result = panel.render_panel(message)
+        console = Console(
+            file=StringIO(), force_terminal=True, width=120, color_system="truecolor"
+        )
+        console.print(result)
+        raw = console.file.getvalue()
+        # Count unique ANSI color sequences — syntax highlighting produces
+        # multiple distinct foreground colors (keyword, identifier, punctuation)
+        import re as re_mod
+        colors = set(re_mod.findall(r"\x1b\[38;2;\d+;\d+;\d+[;\d]*m", raw))
+        assert len(colors) >= 2, (
+            f"Expected multiple language-specific colors from Syntax, "
+            f"got {len(colors)} unique truecolor codes: {colors}"
+        )
+
+    def test_python_content_rendered(self):
+        """Python file diffs should render code content."""
         panel = DiffsPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
         output = _render_to_string(result)
-        # Syntax highlighting produces styled output —
-        # the word 'def' or 'self' should appear in the output
-        # and the output should have ANSI styling (not just plain text)
         assert "self" in output or "version" in output, (
             "Diff content not rendered — expected code content in output"
         )
@@ -305,8 +345,18 @@ class TestDiffsPanelSyntaxHighlighting:
         """TypeScript .ts files should be detected for syntax highlighting."""
         panel = DiffsPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_TYPESCRIPT_MESSAGE)
+        console = Console(
+            file=StringIO(), force_terminal=True, width=120, color_system="truecolor"
+        )
+        console.print(result)
+        raw = console.file.getvalue()
+        # TypeScript should also produce language-specific colors
+        import re as re_mod
+        colors = set(re_mod.findall(r"\x1b\[38;2;\d+;\d+;\d+[;\d]*m", raw))
+        assert len(colors) >= 2, (
+            f"TypeScript should have syntax-specific colors, got {len(colors)}"
+        )
         output = _render_to_string(result)
-        # Should contain the TypeScript import content
         assert "import" in output or "Logger" in output, (
             "TypeScript diff content not rendered"
         )
