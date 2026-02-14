@@ -27,6 +27,7 @@ import {
   DebugPanel,
   BikeLanePanel,
   SettingsPanel,
+  ProgressPanel,
 } from './panels';
 
 /**
@@ -46,6 +47,7 @@ export const PANEL_REGISTRY: Record<string, React.ComponentType> = {
   debug: DebugPanel,
   bikelane: BikeLanePanel,
   settings: SettingsPanel,
+  progress: ProgressPanel,
 };
 
 /**
