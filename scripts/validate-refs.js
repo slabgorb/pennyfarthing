@@ -87,11 +87,37 @@ function getCommandNames() {
 }
 
 function getSkillNames() {
+  const names = new Set();
+
+  // Core skills from pennyfarthing-dist/skills/
   const dir = join(DIST_DIR, 'skills');
-  if (!existsSync(dir)) return new Set();
-  return new Set(
-    readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name)
-  );
+  if (existsSync(dir)) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) names.add(e.name);
+    }
+  }
+
+  // Plugin skills from packages/*/package.json with pennyfarthing.skills
+  const packagesDir = join(PROJECT_ROOT, 'packages');
+  if (existsSync(packagesDir)) {
+    for (const pkg of readdirSync(packagesDir, { withFileTypes: true })) {
+      if (!pkg.isDirectory()) continue;
+      const pkgJson = join(packagesDir, pkg.name, 'package.json');
+      if (!existsSync(pkgJson)) continue;
+      try {
+        const meta = JSON.parse(readFileSync(pkgJson, 'utf-8'));
+        const skillsPath = meta.pennyfarthing?.skills;
+        if (typeof skillsPath !== 'string') continue;
+        const skillsDir = join(packagesDir, pkg.name, skillsPath);
+        if (!existsSync(skillsDir)) continue;
+        for (const e of readdirSync(skillsDir, { withFileTypes: true })) {
+          if (e.isDirectory()) names.add(e.name);
+        }
+      } catch { /* skip malformed package.json */ }
+    }
+  }
+
+  return names;
 }
 
 function getGuideNames() {
