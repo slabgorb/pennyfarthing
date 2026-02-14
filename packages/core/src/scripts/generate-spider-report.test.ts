@@ -230,12 +230,12 @@ describe('AC2: Role Filter Support', () => {
 });
 
 describe('AC2: Theme Filter Support', () => {
-  it('should return all 10 agents for deadwood theme', async () => {
+  it('should return all 11 agents for deadwood theme', async () => {
     const { filterByTheme } = await import('./generate-spider-report.js');
     const results = filterByTheme('deadwood');
 
     assert.ok(Array.isArray(results), 'Should return array');
-    assert.strictEqual(results.length, 10, 'Should return exactly 10 agents');
+    assert.strictEqual(results.length, 11, 'Should return exactly 11 agents');
 
     for (const char of results) {
       assert.strictEqual(

@@ -160,8 +160,8 @@ describe('AC1: /bikerack URL renders the index page', () => {
   });
 
   it('server.ts should have a /bikerack route', () => {
-    // Verify server.ts serves the SPA for /bikerack
-    const serverPath = path.resolve(__dirname, '../src/server.ts');
+    // After 98-17, /bikerack route is in core's server.ts
+    const serverPath = path.resolve(__dirname, '../../core/src/server/server.ts');
     const source = fs.readFileSync(serverPath, 'utf-8');
 
     expect(source).toMatch(/['"]\/bikerack['"]/);

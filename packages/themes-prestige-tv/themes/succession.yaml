@@ -318,4 +318,3 @@ agents:
     helper:
       name: Legal Analysis
       style: Risk-based discovery
-    shortName: Gerri

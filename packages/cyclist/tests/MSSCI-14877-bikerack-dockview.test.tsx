@@ -34,7 +34,7 @@ expect.extend(matchers);
 
 // Portrait moved from Dockview tab to fixed anchor above tab bar (MSSCI-14882)
 // TTY and BikeLane removed in MSSCI-14887 (BikeRack UX sweep)
-const EXPECTED_BIKERACK_PANEL_COUNT = 10;
+const EXPECTED_BIKERACK_PANEL_COUNT = 11;
 
 // Panels that MUST be in BikeRack (regardless of exact ID format)
 const MUST_HAVE_PANELS = [

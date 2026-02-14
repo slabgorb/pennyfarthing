@@ -76,7 +76,7 @@ describe('B-bmad-gates: BMAD Gate Behavior', () => {
           if (config.workflow.type === 'stepped') {
             allSteppedWorkflows.push({ name: entry.name, config });
 
-            if (config.workflow.gates?.after_steps) {
+            if (config.workflow.gates?.after_steps?.length) {
               const stepsPath = config.workflow.modes?.create ||
                 config.workflow.steps?.path ||
                 './steps/';

@@ -17,7 +17,7 @@ import request from 'supertest';
 import { WebSocket } from 'ws';
 
 // Mock settings-store BEFORE importing hook-request
-vi.mock('../src/settings-store.js', () => ({
+vi.mock('@pennyfarthing/core/dist/server/settings-store.js', () => ({
   checkGrant: vi.fn().mockReturnValue(false),
   isAllowlisted: vi.fn().mockReturnValue(false),
   getBashApprovalGate: vi.fn().mockReturnValue(true),
@@ -32,7 +32,7 @@ import {
   resolveApproval,
   handleHookWebSocketMessage,
 } from '../src/api/hook-request.js';
-import { checkGrant, addGrant } from '../src/settings-store.js';
+import { checkGrant, addGrant } from '@pennyfarthing/core/dist/server/settings-store.js';
 
 const mockCheckGrant = vi.mocked(checkGrant);
 const mockAddGrant = vi.mocked(addGrant);
@@ -296,7 +296,7 @@ describe('MSSCI-14392: HookRequest type includes agent', () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
-      path.resolve(__dirname, '../src/api/hook-request.ts'),
+      path.resolve(__dirname, '../../core/src/server/api/hook-request.ts'),
       'utf-8',
     );
 
@@ -308,7 +308,7 @@ describe('MSSCI-14392: HookRequest type includes agent', () => {
     const fs = await import('fs');
     const path = await import('path');
     const source = fs.readFileSync(
-      path.resolve(__dirname, '../src/api/hook-request.ts'),
+      path.resolve(__dirname, '../../core/src/server/api/hook-request.ts'),
       'utf-8',
     );
 

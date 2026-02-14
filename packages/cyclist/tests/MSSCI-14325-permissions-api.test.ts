@@ -18,8 +18,8 @@ import {
   getGrants,
   getPersistedGrants,
   setGrantsPersistCallback,
-} from '../src/settings-store.js';
-import type { PermissionGrant } from '../src/settings-store.js';
+} from '@pennyfarthing/core/dist/server/settings-store.js';
+import type { PermissionGrant } from '@pennyfarthing/core/dist/server/settings-store.js';
 import { createPermissionsRouter } from '../src/api/permissions.js';
 
 /**

@@ -24,7 +24,7 @@ const projectRoot = findMonorepoRoot(__dirname);
 const distDir = join(projectRoot, 'pennyfarthing-dist');
 
 describe('/theme-maker Command File', () => {
-  const commandPath = join(distDir, 'commands', 'theme-maker.md');
+  const commandPath = join(distDir, 'commands', 'pf-theme-maker.md');
 
   it('should have theme-maker.md command file', () => {
     assert.ok(
@@ -162,7 +162,7 @@ describe('Theme Directory Creation', () => {
 // ============================================================================
 
 describe('AI-Driven Mode - Command File (Story 6-2)', () => {
-  const commandPath = join(distDir, 'commands', 'theme-maker.md');
+  const commandPath = join(distDir, 'commands', 'pf-theme-maker.md');
 
   // theme-maker.md is now a deprecated stub redirecting to /theme maker.
   // AI-Driven mode functionality has moved to the /theme command.
@@ -233,7 +233,8 @@ describe('Theme Schema Validation (Story 6-2)', () => {
     'pm',
     'tech-writer',
     'ux-designer',
-    'devops'
+    'devops',
+    'ba'
   ];
 
   // Theme type for testing - allows optional fields and deletions
@@ -367,7 +368,7 @@ describe('Theme Schema Validation (Story 6-2)', () => {
 // ============================================================================
 
 describe('Guided Mode - Command File (Story 6-3)', () => {
-  const commandPath = join(distDir, 'commands', 'theme-maker.md');
+  const commandPath = join(distDir, 'commands', 'pf-theme-maker.md');
 
   // theme-maker.md is now a deprecated stub redirecting to /theme maker.
   // Guided mode functionality has moved to the /theme command.

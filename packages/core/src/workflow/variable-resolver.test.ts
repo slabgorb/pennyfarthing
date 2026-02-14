@@ -505,7 +505,7 @@ Line 3: c`);
       // Date should be current date in YYYY-MM-DD format
       assert.match(result.content, /Date: \d{4}-\d{2}-\d{2}/);
       // planning_artifacts should have default value
-      assert.ok(result.content.includes('planning-artifacts/'));
+      assert.ok(result.content.includes('sprint/planning/'));
     });
 
     it('should work with no options provided', () => {

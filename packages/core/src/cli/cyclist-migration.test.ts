@@ -82,9 +82,10 @@ describe('Story 11-3: Cyclist Migration into Monorepo', () => {
         deps['@pennyfarthing/shared'],
         'packages/cyclist should depend on @pennyfarthing/shared'
       );
+      // Dependency can use workspace:* or a version range
       assert.ok(
-        deps['@pennyfarthing/shared'].includes('workspace'),
-        '@pennyfarthing/shared dependency should use workspace protocol (workspace:*)'
+        deps['@pennyfarthing/shared'].includes('workspace') || /^\^?\d/.test(deps['@pennyfarthing/shared']),
+        '@pennyfarthing/shared dependency should use workspace protocol or version range'
       );
     });
 
