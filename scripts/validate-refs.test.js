@@ -118,26 +118,30 @@ describe('getSkillNames', () => {
 describe('checkThemeAgentKeys', () => {
   it('returns no issues for valid theme YAML with known agent keys', () => {
     const yaml = `theme:\n  name: Test\nagents:\n  sm:\n    character: Test SM\n  dev:\n    character: Test Dev\n`;
-    const issues = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
+    const { issues, refs } = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 2);
   });
 
   it('returns issue for unknown agent key', () => {
     const yaml = `agents:\n  sm:\n    character: Test SM\n  fake-agent:\n    character: Does Not Exist\n`;
-    const issues = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
+    const { issues, refs } = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
     assert.equal(issues.length, 1);
     assert.ok(issues[0].issue.includes('fake-agent'));
+    assert.equal(refs, 2);
   });
 
   it('returns empty for YAML without agents map', () => {
     const yaml = `theme:\n  name: Test\nsomething_else: true\n`;
-    const issues = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
+    const { issues, refs } = checkThemeAgentKeys('/fake/theme.yaml', yaml, knownAgents);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 0);
   });
 
   it('handles malformed YAML gracefully', () => {
-    const issues = checkThemeAgentKeys('/fake/theme.yaml', '{{invalid', knownAgents);
+    const { issues, refs } = checkThemeAgentKeys('/fake/theme.yaml', '{{invalid', knownAgents);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 0);
   });
 });
 
@@ -146,44 +150,47 @@ describe('checkThemeAgentKeys', () => {
 describe('checkGuideRefs', () => {
   it('catches `guides/nonexistent.md` reference', () => {
     const content = 'See `guides/nonexistent.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues, refs } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 1);
     assert.ok(issues[0].issue.includes('nonexistent'));
+    assert.equal(refs, 1);
   });
 
   it('catches `.pennyfarthing/guides/nonexistent.md` reference', () => {
     const content = 'See `.pennyfarthing/guides/nonexistent.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 1);
   });
 
   it('catches `pennyfarthing-dist/guides/nonexistent.md` reference', () => {
     const content = 'See `pennyfarthing-dist/guides/nonexistent.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 1);
   });
 
   it('passes for `guides/agent-behavior.md` (known guide)', () => {
     const content = 'See `guides/agent-behavior.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues, refs } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 1);
   });
 
   it('ignores guide refs inside code blocks', () => {
     const content = '```\nSee `guides/nonexistent.md` for details.\n```';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues, refs } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 0);
   });
 
   it('catches `guides/subdir/nonexistent.md` reference', () => {
     const content = 'See `guides/subdir/nonexistent.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 1);
   });
 
   it('passes for `guides/patterns/tdd-flow-pattern.md` (known nested guide)', () => {
     const content = 'See `guides/patterns/tdd-flow-pattern.md` for details.';
-    const issues = checkGuideRefs('/fake/file.md', content, knownGuides);
+    const { issues } = checkGuideRefs('/fake/file.md', content, knownGuides);
     assert.equal(issues.length, 0);
   });
 });
@@ -195,13 +202,14 @@ describe('checkSkillRegistry — redirect', () => {
 
   it('returns no issue when redirect target is a known skill', () => {
     const yaml = `skills:\n  story:\n    name: story\n    deprecated: true\n    redirect: sprint\n    related_skills: [sprint]\n`;
-    const issues = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
+    const { issues, refs } = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 3); // skill key + related_skill + redirect
   });
 
   it('returns issue when redirect target is unknown', () => {
     const yaml = `skills:\n  story:\n    name: story\n    deprecated: true\n    redirect: nonexistent\n    related_skills: [sprint]\n`;
-    const issues = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
+    const { issues } = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
     const redirectIssues = issues.filter(i => i.ref.startsWith('redirect:'));
     assert.equal(redirectIssues.length, 1);
     assert.ok(redirectIssues[0].issue.includes('nonexistent'));
@@ -209,7 +217,7 @@ describe('checkSkillRegistry — redirect', () => {
 
   it('ignores entries without deprecated flag', () => {
     const yaml = `skills:\n  sprint:\n    name: sprint\n    redirect: nonexistent\n    related_skills: []\n`;
-    const issues = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
+    const { issues } = checkSkillRegistry('/fake/skill-registry.yaml', yaml, knownSkills);
     const redirectIssues = issues.filter(i => i.ref.startsWith('redirect:'));
     assert.equal(redirectIssues.length, 0);
   });
@@ -220,33 +228,36 @@ describe('checkSkillRegistry — redirect', () => {
 describe('checkPythonImports', () => {
   it('returns no issue for valid `from pennyfarthing_scripts.swebench import ...`', () => {
     const content = 'from pennyfarthing_scripts.swebench import extract_patch_info\n';
-    const issues = checkPythonImports('/fake/script.py', content, knownPythonModules);
+    const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 1);
   });
 
   it('returns issue for `from pennyfarthing_scripts.nonexistent import ...`', () => {
     const content = 'from pennyfarthing_scripts.nonexistent import something\n';
-    const issues = checkPythonImports('/fake/script.py', content, knownPythonModules);
+    const { issues } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 1);
     assert.ok(issues[0].issue.includes('nonexistent'));
   });
 
   it('ignores bare `from pennyfarthing_scripts import __version__`', () => {
     const content = 'from pennyfarthing_scripts import __version__\n';
-    const issues = checkPythonImports('/fake/script.py', content, knownPythonModules);
+    const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 0);
   });
 
   it('ignores comment lines', () => {
     const content = '# from pennyfarthing_scripts.nonexistent import something\n';
-    const issues = checkPythonImports('/fake/script.py', content, knownPythonModules);
+    const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
+    assert.equal(refs, 0);
   });
 
   it('handles sub-module imports via package prefix', () => {
     // sprint.validate_cmd is not a direct module, but sprint is a known package
     const content = 'from pennyfarthing_scripts.sprint.validate_cmd import validate_sprint_yaml\n';
-    const issues = checkPythonImports('/fake/script.py', content, knownPythonModules);
+    const { issues } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
   });
 });
