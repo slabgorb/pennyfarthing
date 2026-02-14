@@ -49,7 +49,7 @@ export interface SharedSettings {
 }
 
 export interface MergeConflict {
-  type: 'hook_duplicate' | 'permission_overlap' | 'scalar_collision';
+  type: 'hook_duplicate' | 'scalar_collision';
   frameworks: string[];
   key: string;
   detail: string;
@@ -378,15 +378,15 @@ export function isSharedFormat(settings: unknown): settings is SharedSettings {
 export function toFlatFormat(settings: SharedSettings): Record<string, unknown> {
   const flat: Record<string, unknown> = {};
 
-  flat.hooks = settings.hooks;
-  flat.permissions = settings.permissions;
+  flat.hooks = JSON.parse(JSON.stringify(settings.hooks));
+  flat.permissions = JSON.parse(JSON.stringify(settings.permissions));
 
   if (settings.statusLine) {
-    flat.statusLine = settings.statusLine;
+    flat.statusLine = JSON.parse(JSON.stringify(settings.statusLine));
   }
 
   if (settings.context_budget) {
-    flat.context_budget = settings.context_budget;
+    flat.context_budget = JSON.parse(JSON.stringify(settings.context_budget));
   }
 
   return flat;
