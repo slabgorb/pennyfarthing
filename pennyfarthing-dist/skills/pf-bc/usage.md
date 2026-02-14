@@ -28,7 +28,6 @@ Valid panels:
 | `ac` | Acceptance Criteria panel |
 | `debug` | Debug panel |
 | `settings` | Settings panel |
-| `tty` | TTY terminal panel |
 
 The `message` panel (sacred center) is not focusable.
 
