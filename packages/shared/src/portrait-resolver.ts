@@ -12,6 +12,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse as parseYaml } from 'yaml';
 
 export interface PortraitPaths {
   portraitsDir: string;
@@ -78,10 +79,40 @@ export function resolvePennyfarthingDist(): string | null {
 }
 
 /**
- * Find portrait in a specific theme directory.
- * Shared logic for both core and theme package portrait resolution.
+ * Convert a name to URL-safe slug (lowercase kebab-case).
  */
-function findPortraitInDir(portraitsThemeDir: string, agent: string): string | null {
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Extract portrait slug ({shortName}-{OCEAN}) for an agent from a theme YAML file.
+ * Inlined here to avoid circular dependency with theme-loader.ts.
+ */
+function extractAgentSlug(themeYamlPath: string, agent: string): string | null {
+  if (!existsSync(themeYamlPath)) return null;
+  try {
+    const content = readFileSync(themeYamlPath, 'utf-8');
+    const parsed = parseYaml(content) as { agents?: Record<string, { shortName?: string; character?: string; ocean?: { O: number; C: number; E: number; A: number; N: number } }> };
+    const agentData = parsed?.agents?.[agent];
+    if (!agentData) return null;
+
+    const shortName = agentData.shortName || agentData.character?.split(' ')[0];
+    const ocean = agentData.ocean;
+    if (shortName && ocean?.O != null && ocean?.C != null && ocean?.E != null && ocean?.A != null && ocean?.N != null) {
+      return `${toSlug(shortName)}-${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Find portrait in a specific theme directory.
+ * Matches by slug (shortName-OCEAN) derived from theme YAML, falling back to agent name prefix.
+ */
+function findPortraitInDir(portraitsThemeDir: string, slug: string): string | null {
   if (!existsSync(portraitsThemeDir)) {
     return null;
   }
@@ -107,28 +138,11 @@ function findPortraitInDir(portraitsThemeDir: string, agent: string): string | n
       searchDir = portraitsThemeDir;
     }
 
-    // Map agent names to portrait file prefixes based on theme conventions
-    const agentMappings: Record<string, string[]> = {
-      'sm': ['prospero', 'baldur', 'face', 'faceman', 'sm'],
-      'tea': ['hamlet', 'tyr', 'murdock', 'tea'],
-      'dev': ['puck', 'loki', 'ba', 'dev'],
-      'reviewer': ['portia', 'heimdall', 'lynch', 'decker', 'reviewer'],
-      'architect': ['oberon', 'mimir', 'hannibal', 'architect'],
-      'pm': ['henry', 'thor', 'amy', 'pm'],
-      'tech-writer': ['horatio', 'bragi', 'tech-writer'],
-      'ux-designer': ['viola', 'idunn', 'ux-designer'],
-      'devops': ['caliban', 'norns', 'devops'],
-      'orchestrator': ['chorus', 'odin', 'orchestrator'],
-    };
-
-    const possiblePrefixes = agentMappings[agent] || [agent];
-
+    // Match by slug prefix (e.g., "announcer-44441" matches "announcer-44441.png")
     for (const file of files) {
-      for (const prefix of possiblePrefixes) {
-        if (file.toLowerCase().startsWith(prefix.toLowerCase()) &&
-            (file.endsWith('.png') || file.endsWith('.jpg'))) {
-          return join(searchDir, file);
-        }
+      if (file.toLowerCase().startsWith(slug.toLowerCase()) &&
+          (file.endsWith('.png') || file.endsWith('.jpg'))) {
+        return join(searchDir, file);
       }
     }
   } catch {
@@ -202,24 +216,44 @@ function discoverThemePackagePortraitDirs(): Array<{ portraitsDir: string }> {
 }
 
 /**
- * Resolve the full path to a portrait image
- * @param theme - Theme name (e.g., 'shakespeare', 'norse-mythology')
- * @param agent - Agent name (e.g., 'sm', 'tea', 'dev')
+ * Resolve the full path to a portrait image.
+ * Looks up shortName + OCEAN from theme YAML to construct the portrait slug,
+ * then searches core and theme package portrait directories.
+ *
+ * @param theme - Theme name (e.g., 'monty-python', 'mash')
+ * @param agent - Agent role (e.g., 'sm', 'tea', 'dev')
  * @returns Full path to portrait file, or null if not found
  */
 export function resolvePortraitPath(theme: string, agent: string): string | null {
-  // 1. Check core portraits
   const distPath = resolvePennyfarthingDist();
+  const themePackages = discoverThemePackagePortraitDirs();
+
+  // Resolve slug from theme YAML — check core then packages
+  let slug: string | null = null;
+  if (distPath) {
+    slug = extractAgentSlug(join(distPath, 'personas', 'themes', `${theme}.yaml`), agent);
+  }
+  if (!slug) {
+    for (const pkg of themePackages) {
+      const themesDir = join(dirname(pkg.portraitsDir), 'themes');
+      slug = extractAgentSlug(join(themesDir, `${theme}.yaml`), agent);
+      if (slug) break;
+    }
+  }
+
+  // Fall back to agent role name if theme YAML doesn't have shortName/OCEAN
+  const searchSlug = slug || agent;
+
+  // 1. Check core portraits
   if (distPath) {
     const paths = getPortraitPaths(distPath);
-    const coreResult = findPortraitInDir(join(paths.portraitsDir, theme), agent);
+    const coreResult = findPortraitInDir(join(paths.portraitsDir, theme), searchSlug);
     if (coreResult) return coreResult;
   }
 
   // 2. Check theme package portraits
-  const themePackages = discoverThemePackagePortraitDirs();
   for (const pkg of themePackages) {
-    const pkgResult = findPortraitInDir(join(pkg.portraitsDir, theme), agent);
+    const pkgResult = findPortraitInDir(join(pkg.portraitsDir, theme), searchSlug);
     if (pkgResult) return pkgResult;
   }
 

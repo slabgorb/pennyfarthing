@@ -143,7 +143,8 @@ def _display_agent(name: str, agent: dict, full: bool) -> None:
 
 @theme.command("set")
 @click.argument("name")
-def set_theme(name: str):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def set_theme(name: str, dry_run: bool):
     """Set the active persona theme.
 
     \b
@@ -166,6 +167,17 @@ def set_theme(name: str):
     theme_data = yaml.safe_load(theme_path.read_text())
     theme_meta = theme_data.get("theme", {})
     agents = theme_data.get("agents", {})
+
+    if dry_run:
+        click.echo(f"[DRY-RUN] Would set theme to '{name}'")
+        samples = []
+        for key in ["sm", "tea", "dev"]:
+            agent = agents.get(key)
+            if agent and agent.get("character"):
+                samples.append(f"{key.upper()}: {agent['character']}")
+        if samples:
+            click.echo(f"  {' | '.join(samples)}")
+        return
 
     # Build theme_characters map (matches Node.js setTheme behavior)
     theme_characters: dict[str, str] = {}
@@ -218,7 +230,8 @@ def set_theme(name: str):
 @click.argument("name")
 @click.option("--base", default=None, help="Base theme to copy from (defaults to current theme)")
 @click.option("--user", is_flag=True, help="Create as user-level theme (~/.claude/pennyfarthing/themes/)")
-def create(name: str, base: str | None, user: bool):
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def create(name: str, base: str | None, user: bool, dry_run: bool):
     """Create a new custom theme from a base theme.
 
     \b
@@ -255,6 +268,16 @@ def create(name: str, base: str | None, user: bool):
     if not base_path:
         available = ", ".join(list_themes()[:10])
         raise click.ClickException(f"Base theme '{base}' not found.\nAvailable: {available}...")
+
+    if dry_run:
+        if user:
+            target = Path.home() / ".claude" / "pennyfarthing" / "themes" / f"{name}.yaml"
+        else:
+            root = get_project_root()
+            target = root / ".claude" / "pennyfarthing" / "themes" / f"{name}.yaml"
+        click.echo(f"[DRY-RUN] Would create theme '{name}' based on '{base}'")
+        click.echo(f"  Target: {target}")
+        return
 
     if user:
         target_dir = Path.home() / ".claude" / "pennyfarthing" / "themes"
