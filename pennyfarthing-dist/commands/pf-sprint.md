@@ -15,7 +15,7 @@ Never manually edit `sprint/current-sprint.yaml`. Always use the provided script
 
 ## Commands
 
-### `/sprint` or `/sprint status [filter]`
+### `/pf-sprint` or `/pf-sprint status [filter]`
 
 Show current sprint status with story counts and points.
 
@@ -30,7 +30,7 @@ pf sprint status [filter]
 | `in-progress` | Work in progress |
 | `done` | Completed stories |
 
-### `/sprint backlog`
+### `/pf-sprint backlog`
 
 Show available stories ready for work, grouped by epic.
 
@@ -38,7 +38,7 @@ Show available stories ready for work, grouped by epic.
 pf sprint backlog
 ```
 
-### `/sprint work [story-id|epic-id|next]`
+### `/pf-sprint work [story-id|epic-id|next]`
 
 Start work on a story. Primary entry point for development.
 
@@ -73,7 +73,7 @@ When starting work, this command:
 5. Hands off to TEA (tdd) or Dev (trivial)
 </workflow>
 
-### `/sprint archive <story-id> [pr-number] [--apply]`
+### `/pf-sprint archive <story-id> [pr-number] [--apply]`
 
 Archive a completed story.
 
@@ -85,7 +85,7 @@ pf sprint archive <story-id> [pr-number] [--apply]
 |--------|-------------|
 | `--apply` | Also remove from current-sprint.yaml |
 
-### `/sprint new <yyww> <jira-id> <start> <end> "<goal>"`
+### `/pf-sprint new <yyww> <jira-id> <start> <end> "<goal>"`
 
 Initialize a new sprint.
 
@@ -93,7 +93,7 @@ Initialize a new sprint.
 pf sprint new 2605 277 2026-02-03 2026-02-16 "Sprint goal"
 ```
 
-### `/sprint future [--epic EPIC_ID]`
+### `/pf-sprint future [--epic EPIC_ID]`
 
 Show future work available for promotion.
 
@@ -101,7 +101,7 @@ Show future work available for promotion.
 pf sprint future [--epic epic-XX]
 ```
 
-### `/sprint promote <epic-id>`
+### `/pf-sprint promote <epic-id>`
 
 Move an epic from future.yaml to current sprint.
 
@@ -113,26 +113,26 @@ pf sprint epic promote epic-XX
 
 | Command | Action |
 |---------|--------|
-| `/sprint` | Show sprint status |
-| `/sprint status todo` | Show backlog |
-| `/sprint backlog` | Available stories |
-| `/sprint work` | Interactive start |
-| `/sprint work next` | Start highest priority |
-| `/sprint work MSSCI-XXX` | Start specific story |
-| `/sprint archive MSSCI-XXX` | Archive completed |
-| `/sprint future` | Show future work |
-| `/sprint promote epic-XX` | Promote to sprint |
+| `/pf-sprint` | Show sprint status |
+| `/pf-sprint status todo` | Show backlog |
+| `/pf-sprint backlog` | Available stories |
+| `/pf-sprint work` | Interactive start |
+| `/pf-sprint work next` | Start highest priority |
+| `/pf-sprint work MSSCI-XXX` | Start specific story |
+| `/pf-sprint archive MSSCI-XXX` | Archive completed |
+| `/pf-sprint future` | Show future work |
+| `/pf-sprint promote epic-XX` | Promote to sprint |
 
 ## Aliases
 
-- `/new-work` is an alias for `/sprint work`
+- `/pf-new-work` is an alias for `/pf-sprint work`
 
 ## Related
 
 | Skill | Purpose |
 |-------|---------|
-| `/jira` | Jira operations (create, sync, claim) |
-| `/sprint story` | Story creation, sizing, finish (consolidated) |
+| `/pf-jira` | Jira operations (create, sync, claim) |
+| `/pf-sprint story` | Story creation, sizing, finish (consolidated) |
 | `/sm` | Scrum Master agent for coordination |
 
 <reference>

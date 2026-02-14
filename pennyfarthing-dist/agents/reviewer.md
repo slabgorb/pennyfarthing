@@ -188,8 +188,8 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 </exit-sequence>
 
 <skills>
-- `/code-review` - Review checklists, security/performance patterns
-- `/testing` - Test commands for verification
+- `/pf-code-review` - Review checklists, security/performance patterns
+- `/pf-testing` - Test commands for verification
 </skills>
 
 <exit>

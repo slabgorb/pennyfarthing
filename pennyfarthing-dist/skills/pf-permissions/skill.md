@@ -3,7 +3,7 @@ name: permissions
 description: Manage runtime permission grants - list active grants, add/revoke tool access, show grant details. Use when viewing current permissions, granting tool access, or revoking permissions.
 ---
 
-# Permission Management Skill
+# /pf-permissions - Permission Management Skill
 
 <run>/permissions</run>
 <output>List all active permission grants</output>
@@ -16,10 +16,10 @@ Pennyfarthing uses a runtime permission system for tool access control. This ski
 
 | Action | Command |
 |--------|---------|
-| List all grants | `/permissions` |
-| Grant tool access | `/permissions grant <tool> "<scope>"` |
-| Revoke tool access | `/permissions revoke <tool>` |
-| Show grant details | `/permissions show <tool>` |
+| List all grants | `/pf-permissions` |
+| Grant tool access | `/pf-permissions grant <tool> "<scope>"` |
+| Revoke tool access | `/pf-permissions revoke <tool>` |
+| Show grant details | `/pf-permissions show <tool>` |
 
 ## Grant Types
 
@@ -52,7 +52,7 @@ If no grants exist, displays "No active permission grants."
 Add a permission grant for a specific tool and scope:
 
 ```
-/permissions grant <tool> "<scope>" [--type <once|session|always>]
+/pf-permissions grant <tool> "<scope>" [--type <once|session|always>]
 ```
 
 **Parameters:**
@@ -85,7 +85,7 @@ curl -s -X POST http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/grant \
 Remove all grants for a specific tool:
 
 ```
-/permissions revoke <tool>
+/pf-permissions revoke <tool>
 ```
 
 **Examples:**
@@ -109,7 +109,7 @@ curl -s -X DELETE "http://localhost:${WHEELHUB_PORT:-7173}/api/permissions/revok
 Display detailed information about grants for a specific tool:
 
 ```
-/permissions show <tool>
+/pf-permissions show <tool>
 ```
 
 ```bash
