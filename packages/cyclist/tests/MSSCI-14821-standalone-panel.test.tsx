@@ -178,7 +178,7 @@ describe('AC2: All 12 existing panels in PANEL_REGISTRY', () => {
     );
 
     const keys = Object.keys(PANEL_REGISTRY);
-    expect(keys.length).toBe(12);
+    expect(keys.length).toBe(13);
   });
 
   it.each(REQUIRED_PANELS)(
