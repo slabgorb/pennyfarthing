@@ -1,8 +1,21 @@
 ---
-description: Free-form creative brainstorming with all agents
+description: Creative brainstorming and multi-agent discussion
+variants:
+  quick: Single-shot brainstorm flash (default)
+  roleplay: Sustained multi-round discussion with agent personas
 ---
 
-# Party Mode - Creative Brainstorming Session
+# Party Mode
+
+Party mode has two variants. Route based on the user's invocation:
+
+- **`party-mode quick`** or **`[P]` from A/P/C menus** → Run the Quick variant below
+- **`party-mode roleplay`** → Launch the roleplay workflow: `workflows/party-mode-roleplay/workflow.yaml`
+- **`party-mode`** (bare, no variant specified) → Check `party_mode_default` in `.pennyfarthing/config.local.yaml`. If not set or set to `quick`, run Quick. If set to `roleplay`, launch the roleplay workflow.
+
+---
+
+## Quick — Creative Brainstorming Session
 
 You are now in **PARTY MODE** - a free-form creative brainstorming session where all Pennyfarthing agents contribute ideas without the usual constraints.
 
