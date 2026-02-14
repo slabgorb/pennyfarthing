@@ -29,7 +29,7 @@
 <info>
 **Workflow:** SM → TEA → Dev → Reviewer → SM. Trivial skips TEA.
 
-**Skills:** `/pf-sprint`, `/pf-testing`, `/pf-dev-patterns`, `/pf-jira`, `/pf-just`
+**Skills:** `/pf-sprint`, `/pf-testing`, `/pf-jira`, `/pf-just`
 
 **Efficiency:** Parallelize reads, batch bash with `&&`, spawn independent subagents together.
 

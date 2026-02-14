@@ -167,7 +167,6 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 
 <skills>
 - `/pf-sprint` - Sprint status and project state
-- `/pf-dev-patterns` - Turn-efficient patterns reference
 - `/pf-workflow` - View and switch workflows
 </skills>
 

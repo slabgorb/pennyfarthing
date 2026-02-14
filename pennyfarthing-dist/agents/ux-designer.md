@@ -36,7 +36,6 @@ FILE_LIST: "{comma-separated UI component paths}"
 
 
 <skills>
-- `/pf-dev-patterns` - UI implementation patterns
 </skills>
 
 <critical>

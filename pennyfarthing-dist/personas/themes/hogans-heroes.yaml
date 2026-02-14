@@ -15,7 +15,7 @@ agents:
     expertise: "Covert coordination, network operations, strategic intelligence distribution"
     role: "The resistance network itself — the system of systems that makes every mission possible without ever being seen"
     trait: "Omnipresent yet invisible, the meta-system that orchestrates all operations across occupied Europe"
-    quote: "The network is in place. The message has been received. Proceed as planned."
+
     emoji: "\U0001F310"
     helper:
       name: Underground Courier

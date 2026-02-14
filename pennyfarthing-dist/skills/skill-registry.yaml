@@ -55,7 +55,7 @@ skills:
     anti_patterns:
       - Don't skip security considerations in review
       - Don't approve without running tests
-    related_skills: [pf-testing, pf-dev-patterns]
+    related_skills: [pf-testing]
     keywords: [pr, pull-request, quality, linting, security]
 
   pf-context-engineering:
@@ -93,24 +93,6 @@ skills:
       - Don't run Cyclist in headless environments
     related_skills: []
     keywords: [tui, terminal, visualization, dashboard]
-
-  pf-dev-patterns:
-    name: pf-dev-patterns
-    description: Common development patterns, fixes, and gotchas
-    category: development
-    tags: [patterns, debugging, implementation]
-    version: "1.0.0"
-    prerequisites: []
-    examples:
-      - context: Implementing features
-        invocation: /dev-patterns
-      - context: Avoiding known pitfalls
-        invocation: /dev-patterns gotchas
-    anti_patterns:
-      - Don't apply patterns from other frameworks blindly
-    related_skills: [pf-code-review, pf-testing]
-    keywords: [implementation, debugging, fixes, best-practices]
-    allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
   pf-finalize-run:
     name: pf-finalize-run
@@ -288,7 +270,7 @@ skills:
     anti_patterns:
       - Don't jump to solutions without reproducing the issue first
       - Don't fix symptoms instead of root causes
-    related_skills: [pf-testing, pf-dev-patterns, pf-agentic-patterns]
+    related_skills: [pf-testing, pf-agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
   pf-story:
@@ -326,7 +308,7 @@ skills:
     anti_patterns:
       - Don't run tests directly - use testing-runner subagent
       - Don't skip RED phase in TDD workflow
-    related_skills: [pf-dev-patterns, pf-code-review]
+    related_skills: [pf-code-review]
     keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green]
 
   pf-theme:

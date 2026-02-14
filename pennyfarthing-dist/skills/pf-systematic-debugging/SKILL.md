@@ -437,7 +437,6 @@ See: `/pf-workflow interactive-debug` for full workflow.
 | Skill | How It Complements |
 |-------|-------------------|
 | `/pf-testing` | Run tests to verify fixes |
-| `/pf-dev-patterns` | Avoid common pitfalls |
 | `/pf-agentic-patterns` | ReAct pattern for systematic investigation |
 | `/pf-workflow interactive-debug` | UI debugging with Playwright MCP |
 
