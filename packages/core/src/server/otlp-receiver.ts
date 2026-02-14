@@ -18,9 +18,12 @@ export interface BackgroundTask {
   subagentType: string;
   startedAt: number;
   completedAt?: number;
+  durationMs?: number;
+  status: 'pending' | 'completed';
   success?: boolean;
+  output?: string;
+  error?: string;
   isBackground?: boolean;
-  [key: string]: unknown;
 }
 
 export interface ToolEvent {
