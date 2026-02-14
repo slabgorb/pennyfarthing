@@ -210,6 +210,53 @@ describe('MSSCI-14366: Move settings.local.json into .pennyfarthing', () => {
       );
     });
 
+    it('should not crash when real file exists at symlink path (EEXIST fix)', () => {
+      // Setup: real file at .claude/settings.local.json (legacy state)
+      const legacySettings = { hooks: {}, legacy: true };
+      writeFileSync(
+        join(claudeDir, 'settings.local.json'),
+        JSON.stringify(legacySettings, null, 2)
+      );
+
+      // ensureSettingsSymlink should NOT throw EEXIST
+      assert.doesNotThrow(() => ensureSettingsSymlink(testDir));
+
+      // Should have migrated the real file and created a symlink
+      const stats = lstatSync(join(claudeDir, 'settings.local.json'));
+      assert.ok(stats.isSymbolicLink(), 'Should be a symlink after migration');
+
+      // Content should be preserved at .pennyfarthing/
+      const content = JSON.parse(
+        readFileSync(join(pennyfarthingDir, 'settings.local.json'), 'utf8')
+      );
+      assert.strictEqual(content.legacy, true, 'Legacy content should be preserved');
+    });
+
+    it('should not crash when real file exists and .pennyfarthing/ already has settings', () => {
+      // Setup: both locations have files (conflict scenario)
+      writeFileSync(
+        join(claudeDir, 'settings.local.json'),
+        JSON.stringify({ source: 'old' }, null, 2)
+      );
+      writeFileSync(
+        join(pennyfarthingDir, 'settings.local.json'),
+        JSON.stringify({ source: 'new' }, null, 2)
+      );
+
+      // Should NOT throw
+      assert.doesNotThrow(() => ensureSettingsSymlink(testDir));
+
+      // .pennyfarthing/ version should win
+      const content = JSON.parse(
+        readFileSync(join(pennyfarthingDir, 'settings.local.json'), 'utf8')
+      );
+      assert.strictEqual(content.source, 'new', '.pennyfarthing/ content takes precedence');
+
+      // .claude/ should be a symlink now
+      const stats = lstatSync(join(claudeDir, 'settings.local.json'));
+      assert.ok(stats.isSymbolicLink(), 'Should be a symlink');
+    });
+
     it('should create .claude/ directory if it does not exist', () => {
       // Remove .claude dir
       rmSync(claudeDir, { recursive: true, force: true });
