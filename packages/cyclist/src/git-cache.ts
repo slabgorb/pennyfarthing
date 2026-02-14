@@ -8,7 +8,7 @@
  * Story: Interactive Debug Session - Git Lock Fix
  */
 
-import { getAllReposGitInfoAsync, type RepoGitInfo } from './api/git.js';
+import { getAllReposGitInfoAsync, resetFetchCooldown, type RepoGitInfo } from './api/git.js';
 
 // Cache state
 interface GitCacheState {
@@ -171,10 +171,12 @@ export function invalidateGitCache(projectDir: string): void {
 
 /**
  * Force an immediate refresh (used for branch switches via .git/HEAD watcher)
+ * Resets the fetch cooldown so git fetch actually runs (Story 103-21)
  */
 export async function forceRefreshGitCache(projectDir: string): Promise<RepoGitInfo[]> {
   const cache = getOrCreateCache(projectDir);
   cache.stale = true;
+  resetFetchCooldown(projectDir);
 
   // Clear any pending debounced refresh and invalidation tracking
   const existingTimer = refreshTimers.get(projectDir);
