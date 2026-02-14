@@ -113,7 +113,9 @@ function getSkillNames() {
         for (const e of readdirSync(skillsDir, { withFileTypes: true })) {
           if (e.isDirectory()) names.add(e.name);
         }
-      } catch { /* skip malformed package.json */ }
+      } catch (err) {
+        if (VERBOSE) console.log(`  [skip] ${pkgJson}: ${err.message}`);
+      }
     }
   }
 
@@ -688,6 +690,7 @@ export const _testing = {
   checkPythonImports,
   getGuideNames,
   getPythonModules,
+  getSkillNames,
   stripCodeBlocks,
   hasRuntimeVar,
   offsetToLine,
