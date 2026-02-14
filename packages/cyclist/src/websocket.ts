@@ -444,9 +444,6 @@ export function setupWebSocketServers(
   // WebSocket server for focus at /ws/focus (MSSCI-14976: panel focus)
   const focusWss = new WebSocketServer({ noServer: true });
 
-  // WebSocket server for PTY at /ws/pty (terminal emulator)
-  const ptyWss = new WebSocketServer({ noServer: true });
-
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -522,10 +519,6 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/focus') {
       focusWss.handleUpgrade(request, socket, head, (ws) => {
         focusWss.emit('connection', ws, request);
-      });
-    } else if (pathname === '/ws/pty') {
-      ptyWss.handleUpgrade(request, socket, head, (ws) => {
-        ptyWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -958,82 +951,6 @@ export function setupWebSocketServers(
         client.send(message);
       }
     }
-  });
-
-  // Handle PTY WebSocket connections (terminal emulator)
-  ptyWss.on('connection', (ws: WebSocket) => {
-    console.log('[WebSocket] PTY client connected');
-    let ptyProcess: import('node-pty').IPty | null = null;
-
-    ws.on('message', async (data) => {
-      try {
-        const msg = JSON.parse(data.toString());
-
-        if (msg.type === 'spawn') {
-          // Clean up any existing process
-          if (ptyProcess) {
-            ptyProcess.kill();
-            ptyProcess = null;
-          }
-
-          const pty = await import('node-pty');
-          const shell = msg.shell || process.env.SHELL || '/bin/bash';
-          const cwd = msg.cwd || getProjectDir();
-
-          ptyProcess = pty.spawn(shell, ['-l'], {
-            name: 'xterm-256color',
-            cols: msg.cols || 80,
-            rows: msg.rows || 24,
-            cwd,
-            env: { ...process.env, TERM: 'xterm-256color' } as Record<string, string>,
-          });
-
-          ptyProcess.onData((output: string) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'data', data: output }));
-            }
-          });
-
-          ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
-            }
-            ptyProcess = null;
-          });
-
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'spawn', pid: ptyProcess.pid }));
-          }
-        } else if (msg.type === 'data' && ptyProcess) {
-          ptyProcess.write(msg.data);
-        } else if (msg.type === 'resize' && ptyProcess) {
-          ptyProcess.resize(msg.cols, msg.rows);
-        } else if (msg.type === 'kill' && ptyProcess) {
-          ptyProcess.kill();
-          ptyProcess = null;
-        }
-      } catch (err) {
-        console.error('[WebSocket] PTY message error:', err);
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'error', error: String(err) }));
-        }
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('[WebSocket] PTY client disconnected');
-      if (ptyProcess) {
-        ptyProcess.kill();
-        ptyProcess = null;
-      }
-    });
-
-    ws.on('error', () => {
-      if (ptyProcess) {
-        ptyProcess.kill();
-        ptyProcess = null;
-      }
-    });
   });
 
   // Set up tool event listener to broadcast new spans to WebSocket clients
