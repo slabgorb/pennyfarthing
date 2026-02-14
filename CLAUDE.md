@@ -64,13 +64,21 @@ Publishing: `pnpm version patch|minor|major && pnpm publish`
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package content (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-| `packages/core/` | Main package (`@pennyfarthing/core`) — CLI commands |
-| `packages/cyclist/` | Visual terminal (Electron, React 19, Tailwind v4, shadcn/ui, dockview panels) |
-| `packages/shared/` | Shared utilities (portrait resolution, YAML helpers) |
+| `packages/core/` | Main package (`@pennyfarthing/core`) — CLI, server (WheelHub), API routes, shared utilities (theme-loader, portrait-resolver, markers) |
+| `packages/cyclist/` | Visual terminal (Electron, React 19, Tailwind v4, shadcn/ui, dockview panels) — thin wrapper over core server, adds WebSocket + OTLP |
+| `packages/shared/` | **Deprecated** — absorbed into `packages/core/src/shared/` (story 98-16). Package still exists for backward compat but core is source of truth |
 | `packages/themes-*/` | Theme packages (comedy, literary, mythology-fantasy, prestige-tv, realistic, scifi, superheroes) |
 | `tests/` | Framework tests |
 | `scripts/` | Meta scripts for framework dev only (NOT distributed) |
 | `pennyfarthing_scripts/` | Distributed Python package (hooks, jira, sprint, story) |
+
+### Migration Notes (Stories 98-16, 98-17, 98-18)
+
+- **98-16:** `@pennyfarthing/shared` absorbed into `packages/core/src/shared/` — theme-loader, portrait-resolver, marker detection, skill-search all live in core now
+- **98-17:** WheelHub server (Express app, API routes, settings) moved from `packages/cyclist/src/server.ts` to `packages/core/src/server/`. Cyclist is now a thin wrapper that adds real WebSocket handlers and OTLP receiver
+- **98-18:** React UI build pipeline moved into core
+
+Import shared utilities from core: `import { loadAllThemeMetadata } from '../../shared/index.js'` (within core) or `from '@pennyfarthing/core'` (external consumers).
 </info>
 
 <info>
@@ -114,7 +122,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 
 Electron app with React 19, Tailwind v4, shadcn/ui, dockview-react panels.
 
-**Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (standalone panel viewer)
+**Codenames:** WheelHub (server — now in `packages/core/src/server/`), TirePump (context clearing), JobFair (benchmarking), BikeRack (standalone panel viewer)
 
 **Key components:** `DockviewWorkspace.tsx` (layout), `MessageView.tsx` (conversation), `ToolCallBlock.tsx` / `ToolStack.tsx` (tool visualization), `QuickActions.tsx` (marker detection)
 

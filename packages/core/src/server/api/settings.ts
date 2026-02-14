@@ -9,6 +9,7 @@ import path from 'path';
 import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
+import { loadAllThemeMetadata } from '../../shared/index.js';
 
 export interface SettingsResponse {
   [key: string]: unknown;
@@ -62,7 +63,14 @@ export function createSettingsRouter(): Router {
   });
 
   router.get('/themes', (_req, res) => {
-    res.json({ themes: [] });
+    try {
+      const projectDir = getProjectDirectory() || process.cwd();
+      const themes = loadAllThemeMetadata(projectDir);
+      res.json({ themes });
+    } catch (err) {
+      console.error('Failed to load themes:', err);
+      res.json({ themes: [] });
+    }
   });
 
   return router;
