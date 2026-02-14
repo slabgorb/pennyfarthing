@@ -96,7 +96,7 @@ describe('Story 9-2: Skill Search Utility', () => {
         const results = await searchSkills({ tag: 'tdd' });
 
         const skillNames = results.map(s => s.name);
-        assert.ok(skillNames.includes('testing'), 'Should include testing skill for tdd tag');
+        assert.ok(skillNames.includes('pf-testing'), 'Should include testing skill for tdd tag');
       });
 
       it('should return testing skill when filtering by --keyword vitest', async () => {
@@ -104,7 +104,7 @@ describe('Story 9-2: Skill Search Utility', () => {
         const results = await searchSkills({ keyword: 'vitest' });
 
         const skillNames = results.map(s => s.name);
-        assert.ok(skillNames.includes('testing'), 'Should include testing skill for vitest keyword');
+        assert.ok(skillNames.includes('pf-testing'), 'Should include testing skill for vitest keyword');
       });
 
       it('should return 4 skills when filtering by --category development', async () => {
