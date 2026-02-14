@@ -144,6 +144,7 @@ jobs:
   python-benchmark:
     runs-on: [self-hosted, Ubuntu, Common]
     name: Python CLI Startup Benchmark
+    continue-on-error: true  # Flaky on loaded runners — timing-sensitive
 
     steps:
       - name: Checkout

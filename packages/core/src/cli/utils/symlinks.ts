@@ -2,7 +2,7 @@ import { readdirSync, unlinkSync, symlinkSync, copyFileSync, lstatSync, rmSync }
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
-const { ensureDirSync, removeSync, copySync } = fsExtra;
+const { ensureDirSync, copySync } = fsExtra;
 import { logger } from './logger.js';
 import { pathExists, isSymlink, isDirectory } from './files.js';
 

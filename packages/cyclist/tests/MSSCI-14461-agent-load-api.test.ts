@@ -2,12 +2,12 @@
  * MSSCI-14461: Agent Load Analyzer — Story 82-1: Agent load API endpoint
  *
  * Tests the agent-load API router that exposes getPrimeContextJson()
- * results for all 10 primary agents at FULL tier.
+ * results for all 11 primary agents at FULL tier.
  *
  * Acceptance Criteria:
  * - AC1: New `packages/cyclist/src/api/agent-load.ts` with `createAgentLoadRouter()`
  * - AC2: GET `/api/agent-load` returns array of agent load data
- * - AC3: Runs all 10 agents in parallel (not serial blocking)
+ * - AC3: Runs all 11 agents in parallel (not serial blocking)
  * - AC4: 60-second cache with `cachedAt` timestamp
  * - AC5: Partial failure handling: failed agents included with `error` field
  * - AC6: Does NOT leak `context` field (full prompt text) in response
@@ -158,7 +158,7 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
   // ===========================================================================
 
   describe('AC2: GET / - Returns agent load data', () => {
-    it('should return agents array with load data for all 10 agents', async () => {
+    it('should return agents array with load data for all 11 agents', async () => {
       const router = createAgentLoadRouter(() => '/test/project');
       const handler = getRouteHandler(router, 'get', '/');
 
@@ -168,10 +168,10 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res._json).toHaveProperty('agents');
-      expect(res._json.agents).toHaveLength(10);
+      expect(res._json.agents).toHaveLength(PRIMARY_AGENTS.length);
     });
 
-    it('should include all 10 primary agents in response', async () => {
+    it('should include all 11 primary agents in response', async () => {
       const router = createAgentLoadRouter(() => '/test/project');
       const handler = getRouteHandler(router, 'get', '/');
 
@@ -268,7 +268,7 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
       const res = mockRes();
       await handler(req, res);
 
-      expect(mockGetPrimeContextJson).toHaveBeenCalledTimes(10);
+      expect(mockGetPrimeContextJson).toHaveBeenCalledTimes(PRIMARY_AGENTS.length);
       for (const agent of PRIMARY_AGENTS) {
         expect(mockGetPrimeContextJson).toHaveBeenCalledWith(
           agent,
@@ -284,7 +284,7 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
   // ===========================================================================
 
   describe('AC3: Parallel execution', () => {
-    it('should call all 10 agents without waiting for each sequentially', async () => {
+    it('should call all 11 agents without waiting for each sequentially', async () => {
       // Track call timing — if parallel, all calls happen before any resolves
       const callOrder: string[] = [];
       const resolveOrder: string[] = [];
@@ -304,9 +304,9 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
       const res = mockRes();
       await handler(req, res);
 
-      // All 10 agents should have been called
-      expect(callOrder).toHaveLength(10);
-      expect(res._json.agents).toHaveLength(10);
+      // All 11 agents should have been called
+      expect(callOrder).toHaveLength(PRIMARY_AGENTS.length);
+      expect(res._json.agents).toHaveLength(PRIMARY_AGENTS.length);
     });
   });
 
@@ -355,8 +355,8 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
       const res2 = mockRes();
       await handler(req2, res2);
 
-      // Should have called getPrimeContextJson again (10 more calls)
-      expect(mockGetPrimeContextJson.mock.calls.length).toBe(firstCallCount + 10);
+      // Should have called getPrimeContextJson again (11 more calls)
+      expect(mockGetPrimeContextJson.mock.calls.length).toBe(firstCallCount + PRIMARY_AGENTS.length);
       // cachedAt should be updated
       expect(res2._json.cachedAt).not.toBe(firstCachedAt);
     });
@@ -400,7 +400,7 @@ describe('MSSCI-14461: Agent Load API (Story 82-1)', () => {
 
       // Should still return 200, not 500
       expect(res.statusCode).toBe(200);
-      expect(res._json.agents).toHaveLength(10);
+      expect(res._json.agents).toHaveLength(PRIMARY_AGENTS.length);
 
       // Find the failed agent
       const devEntry = res._json.agents.find((a: any) => a.agent === 'dev');
