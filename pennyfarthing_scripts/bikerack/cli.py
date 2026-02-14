@@ -9,9 +9,7 @@ Commands:
     status  Show running state
 """
 
-import os
 import sys
-from pathlib import Path
 
 import click
 
@@ -51,16 +49,12 @@ def start(project_dir, dry_run):
         is_already_running,
         poll_for_port_file,
         register_cleanup,
+        resolve_project_dir,
         start_wheelhub,
         write_pid_file,
     )
 
-    if project_dir:
-        project_dir = Path(project_dir)
-    elif os.environ.get("CYCLIST_PROJECT_DIR"):
-        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
-    else:
-        project_dir = Path.cwd()
+    project_dir = resolve_project_dir(project_dir)
 
     if dry_run:
         click.echo("[DRY-RUN] Would start BikeRack mode")
@@ -111,14 +105,9 @@ def start(project_dir, dry_run):
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def stop(project_dir, dry_run):
     """Stop running BikeRack instance."""
-    from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
+    from pennyfarthing_scripts.bikerack.launcher import resolve_project_dir, stop_bikerack
 
-    if project_dir:
-        project_dir = Path(project_dir)
-    elif os.environ.get("CYCLIST_PROJECT_DIR"):
-        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
-    else:
-        project_dir = Path.cwd()
+    project_dir = resolve_project_dir(project_dir)
 
     if dry_run:
         click.echo("[DRY-RUN] Would stop BikeRack instance")
@@ -143,14 +132,9 @@ def stop(project_dir, dry_run):
 )
 def status(project_dir):
     """Show BikeRack running state."""
-    from pennyfarthing_scripts.bikerack.launcher import get_status
+    from pennyfarthing_scripts.bikerack.launcher import get_status, resolve_project_dir
 
-    if project_dir:
-        project_dir = Path(project_dir)
-    elif os.environ.get("CYCLIST_PROJECT_DIR"):
-        project_dir = Path(os.environ["CYCLIST_PROJECT_DIR"])
-    else:
-        project_dir = Path.cwd()
+    project_dir = resolve_project_dir(project_dir)
     result = get_status(project_dir)
 
     if result["running"]:
