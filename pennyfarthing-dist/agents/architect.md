@@ -52,7 +52,6 @@ FILE_LIST: "{comma-separated file paths}"
 
 <skills>
 - `/pf-mermaid` - Generate architecture diagrams
-- `/pf-dev-patterns` - Implementation patterns
 </skills>
 
 <reasoning-mode>

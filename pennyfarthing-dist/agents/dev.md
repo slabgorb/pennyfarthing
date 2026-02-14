@@ -207,7 +207,6 @@ Write to session file BEFORE spawning handoff:
 
 <skills>
 - `/pf-testing` - Test commands and patterns
-- `/pf-dev-patterns` - Implementation patterns and gotchas
 - `/pf-code-review` - Self-review checklist
 </skills>
 

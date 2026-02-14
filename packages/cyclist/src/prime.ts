@@ -11,7 +11,7 @@
  * tiers based on session state.
  */
 
-import { execSync, execFileSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import type { SessionContextState } from './claude-service.js';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
