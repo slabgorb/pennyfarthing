@@ -16,6 +16,7 @@ from textual.widgets import Footer, Header, Static
 
 from typing import Any
 
+from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
 from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
 
