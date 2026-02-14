@@ -59,6 +59,56 @@ describe('Story 98-12: Git hook chaining with .d/ dispatcher pattern', () => {
     mkdirSync(gitHooksDir, { recursive: true });
     mkdirSync(hooksSourceDir, { recursive: true });
 
+    // Create dispatcher template (shared source of truth)
+    writeFileSync(
+      join(hooksSourceDir, 'dispatcher-template.sh'),
+      '#!/bin/bash\n' +
+      '# pennyfarthing-dispatcher: Git hook dispatcher for __HOOK_NAME__\n' +
+      '# Runs all executable scripts in __HOOK_NAME__.d/ in sorted order.\n' +
+      '# Installed by pennyfarthing — do not edit manually.\n' +
+      '\n' +
+      'set -uo pipefail\n' +
+      '\n' +
+      'HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n' +
+      'HOOK_NAME="__HOOK_NAME__"\n' +
+      'D_DIR="${HOOK_DIR}/${HOOK_NAME}.d"\n' +
+      '\n' +
+      '# If .d/ directory doesn\'t exist or is empty, exit successfully\n' +
+      'if [[ ! -d "${D_DIR}" ]]; then\n' +
+      '  exit 0\n' +
+      'fi\n' +
+      '\n' +
+      '# Capture stdin for hooks that receive input (e.g., pre-push)\n' +
+      'STDIN_DATA=""\n' +
+      'if [[ ! -t 0 ]]; then\n' +
+      '  STDIN_DATA="$(cat /dev/stdin)"\n' +
+      'fi\n' +
+      '\n' +
+      '# Run each executable script in sorted order\n' +
+      'for hook_script in $(ls "${D_DIR}/" 2>/dev/null | sort); do\n' +
+      '  script_path="${D_DIR}/${hook_script}"\n' +
+      '\n' +
+      '  # Skip non-executable files\n' +
+      '  if [[ ! -x "${script_path}" ]]; then\n' +
+      '    continue\n' +
+      '  fi\n' +
+      '\n' +
+      '  # Run the hook, forwarding arguments and stdin\n' +
+      '  if [[ -n "${STDIN_DATA}" ]]; then\n' +
+      '    echo "${STDIN_DATA}" | "${script_path}" "$@"\n' +
+      '  else\n' +
+      '    "${script_path}" "$@"\n' +
+      '  fi\n' +
+      '\n' +
+      '  exit_code=$?\n' +
+      '  if [[ ${exit_code} -ne 0 ]]; then\n' +
+      '    exit ${exit_code}\n' +
+      '  fi\n' +
+      'done\n' +
+      '\n' +
+      'exit 0\n'
+    );
+
     // Create source hook files (mimicking pennyfarthing-dist/scripts/hooks/)
     writeFileSync(
       join(hooksSourceDir, 'pre-commit.sh'),
