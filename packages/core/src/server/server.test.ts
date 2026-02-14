@@ -418,7 +418,7 @@ describe('API routes mounted on Express app', () => {
   ];
 
   for (const route of ROUTES_TO_CHECK) {
-    it(`${route} does not return 404`, async () => {
+    it(`${route} is mounted (not Express default 404)`, async () => {
       const { app } = await import('./server.js');
       assert.ok(app, 'app must not be null');
 
@@ -434,7 +434,15 @@ describe('API routes mounted on Express app', () => {
 
       try {
         const response = await fetch(`http://localhost:${port}${route}`);
-        assert.notStrictEqual(response.status, 404, `${route} should not return 404 (got ${response.status})`);
+        // Route handler 404 (JSON) is fine — means the route IS mounted.
+        // Express default 404 returns text/html "Cannot GET ..." — that means NOT mounted.
+        if (response.status === 404) {
+          const contentType = response.headers.get('content-type') || '';
+          assert.ok(
+            contentType.includes('application/json'),
+            `${route} returned 404 with content-type "${contentType}" — looks like Express default (route not mounted)`
+          );
+        }
       } finally {
         server.close();
       }
