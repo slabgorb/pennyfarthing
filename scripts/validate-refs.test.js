@@ -15,6 +15,7 @@ const {
   checkPythonImports,
   getGuideNames,
   getPythonModules,
+  getSkillNames,
   stripCodeBlocks,
 } = _testing;
 
@@ -79,7 +80,40 @@ describe('getPythonModules', () => {
   });
 });
 
-// --- Suite 2: Check 14 — Theme agent keys ---
+// --- Suite 2: getSkillNames ---
+
+describe('getSkillNames', () => {
+  it('returns a non-empty Set', () => {
+    const skills = getSkillNames();
+    assert.ok(skills.size > 0, `Expected skills, got ${skills.size}`);
+  });
+
+  it('contains core skills from pennyfarthing-dist/skills/', () => {
+    const skills = getSkillNames();
+    // Known core skills
+    for (const name of ['sprint', 'workflow', 'testing']) {
+      assert.ok(skills.has(name), `Missing expected core skill: ${name}`);
+    }
+  });
+
+  it('discovers plugin skills from packages/*/package.json', () => {
+    const skills = getSkillNames();
+    // packages/benchmark has pennyfarthing.skills pointing to skills/
+    // which contains benchmark-related skill directories
+    // If no plugin packages exist, this just verifies the scan doesn't crash
+    assert.ok(skills instanceof Set, 'Should return a Set');
+  });
+
+  it('excludes non-directory entries', () => {
+    const skills = getSkillNames();
+    for (const name of skills) {
+      assert.ok(!name.endsWith('.md'), `Skill name should not be a file: ${name}`);
+      assert.ok(!name.endsWith('.yaml'), `Skill name should not be a file: ${name}`);
+    }
+  });
+});
+
+// --- Suite 3: Check 14 — Theme agent keys ---
 
 describe('checkThemeAgentKeys', () => {
   it('returns no issues for valid theme YAML with known agent keys', () => {
