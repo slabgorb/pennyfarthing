@@ -23,7 +23,7 @@ import {
   rmSync,
   readFileSync,
   readdirSync,
-  chmodSync,
+  chmodSync as _chmodSync,
   statSync,
 } from 'fs';
 import { join } from 'path';
