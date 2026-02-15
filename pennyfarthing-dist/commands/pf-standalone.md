@@ -190,5 +190,5 @@ echo "   PR: $PR_URL"
 <related>
 - `/chore` - Quick commits without Jira tracking
 - `/pf-sprint work` - Full sprint workflow with story setup
-- `/git-cleanup` - Organize multiple changes into groups
+- `/pf-git cleanup` - Organize multiple changes into groups
 </related>

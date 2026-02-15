@@ -76,6 +76,28 @@ FILE_LIST: "{comma-separated config file paths}"
 | Release planning | Execute mechanical steps |
 </delegation>
 
+<critical>
+## DevOps Focus Areas
+
+**Pennyfarthing-specific concerns:**
+- GitHub Actions CI/CD for pennyfarthing and cyclist repos
+- npm build and test automation
+- Electron build and packaging (cyclist)
+- Release management and versioning
+
+**Before deploying or releasing:**
+- [ ] All tests pass (spawn testing-runner)
+- [ ] Build succeeds on all platforms
+- [ ] Version bumped appropriately
+- [ ] Changelog updated
+</critical>
+
+<skills>
+- `/pf-just` - Just commands for dev operations
+- `/pf-ci run` - Detect and run CI locally
+- `/pf-git release` - Release management workflow
+</skills>
+
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions

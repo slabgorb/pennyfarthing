@@ -306,16 +306,16 @@ git tag -a "v$NEW_VERSION" -m "Release $NEW_VERSION"
 git push origin main --tags
 ```
 
-## Integration with /release Command
+## Integration with /pf-git release Command
 
-The `/release` command in Pennyfarthing can use this skill for:
+The `/pf-git release` command in Pennyfarthing can use this skill for:
 
 1. **Auto-detecting new commits** - Run conventional commit analysis since last tag
 2. **Generating changelog sections** - Create properly formatted entries
 3. **Version bumping** - Semantic versioning based on commit types
 4. **Tagging** - Create annotated tags for releases
 
-Reference in `/release` command:
+Reference in `/pf-git release` command:
 
 ```markdown
 See the [Changelog Skill](/changelog) for patterns on:
@@ -382,4 +382,4 @@ npx conventional-changelog -p angular -i CHANGELOG.md -s
 - **Conventional Commits:** https://www.conventionalcommits.org/
 - **Semantic Versioning:** https://semver.org/
 - **conventional-changelog:** https://github.com/conventional-changelog/conventional-changelog
-- **Pennyfarthing Release:** `/release` command
+- **Pennyfarthing Release:** `/pf-git release` command

@@ -211,6 +211,152 @@ def _get_body(content: str) -> str:
     return content[end + 4:].strip()
 
 
+def _discover_registry(root: Path) -> dict | None:
+    """Load command-registry.yaml if it exists."""
+    path = root / "pennyfarthing-dist" / "command-registry.yaml"
+    if not path.is_file():
+        return None
+    try:
+        return yaml.safe_load(path.read_text())
+    except yaml.YAMLError:
+        return None
+
+
+def _collect_registry_command_names(registry: dict) -> set[str]:
+    """Collect all command names expected from the registry."""
+    names: set[str] = set()
+
+    # Groups: each group has a slash field like "/pf-sprint"
+    for group_name, group in registry.get("groups", {}).items():
+        slash = group.get("slash", "")
+        if slash:
+            # "/pf-sprint" -> "pf-sprint"
+            names.add(slash.lstrip("/"))
+
+    # Standalone
+    for cmd_name, cmd in registry.get("standalone", {}).items():
+        slash = cmd.get("slash", "")
+        if slash:
+            names.add(slash.lstrip("/"))
+
+    # Agents
+    agents = registry.get("agents", {})
+    for agent_name, agent in agents.get("commands", {}).items():
+        slash = agent.get("slash", "")
+        if slash:
+            names.add(slash.lstrip("/"))
+
+    # Benchmarking
+    benchmarking = registry.get("benchmarking", {})
+    for cmd_name, cmd in benchmarking.get("commands", {}).items():
+        slash = cmd.get("slash", "")
+        if slash:
+            names.add(slash.lstrip("/"))
+
+    # Also add the new grouped commands (pf-git, pf-session, pf-epic, pf-ci, pf-docs)
+    for group_name in registry.get("groups", {}):
+        names.add(f"pf-{group_name}")
+    for cmd_name in registry.get("standalone", {}):
+        if cmd_name not in (
+            "help", "setup", "health-check", "prime", "check", "work",
+            "chore", "patch", "standalone", "party-mode", "brainstorming",
+            "retro", "permissions",
+        ):
+            names.add(f"pf-{cmd_name}")
+
+    return names
+
+
+def validate_prefix(commands_dir: Path) -> tuple[list[str], list[str]]:
+    """Check all command files have pf- prefix."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for path in discover_command_files(commands_dir):
+        name = path.stem  # filename without .md
+        if not name.startswith("pf-"):
+            # Check if it's a deprecated redirect stub
+            content = path.read_text()
+            fm = _parse_frontmatter(content)
+            if fm and fm.get("deprecated"):
+                continue  # Redirect stubs are fine without prefix
+            warnings.append(f"{path.name}: missing 'pf-' prefix")
+
+    return errors, warnings
+
+
+def validate_deprecated(commands_dir: Path) -> tuple[list[str], list[str]]:
+    """Check deprecated files have redirect field."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    for path in discover_command_files(commands_dir):
+        content = path.read_text()
+        fm = _parse_frontmatter(content)
+        if fm and fm.get("deprecated") and not fm.get("redirect"):
+            errors.append(f"{path.name}: deprecated command missing 'redirect' field")
+
+    return errors, warnings
+
+
+def validate_registry_crossref(
+    root: Path, commands_dir: Path
+) -> tuple[list[str], list[str]]:
+    """Cross-reference command files with command-registry.yaml."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    registry = _discover_registry(root)
+    if registry is None:
+        warnings.append("command-registry.yaml not found — skipping cross-reference")
+        return errors, warnings
+
+    registry_names = _collect_registry_command_names(registry)
+
+    # Check command files against registry
+    for path in discover_command_files(commands_dir):
+        name = path.stem
+        content = path.read_text()
+        fm = _parse_frontmatter(content)
+        if fm and fm.get("deprecated"):
+            continue  # Skip deprecated stubs
+        if name not in registry_names:
+            warnings.append(f"{path.name}: not found in command-registry.yaml")
+
+    return errors, warnings
+
+
+def validate_skill_alignment(root: Path) -> tuple[list[str], list[str]]:
+    """Check skill command_group values match registry groups."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    registry = _discover_registry(root)
+    if registry is None:
+        return errors, warnings
+
+    registry_path = discover_skill_registry(root)
+    if registry_path is None:
+        return errors, warnings
+
+    try:
+        skills_data = yaml.safe_load(registry_path.read_text())
+    except yaml.YAMLError:
+        return errors, warnings
+
+    registry_groups = set(registry.get("groups", {}).keys())
+
+    for skill_name, skill in skills_data.get("skills", {}).items():
+        command_group = skill.get("command_group")
+        if command_group and command_group not in registry_groups:
+            warnings.append(
+                f"skill '{skill_name}': command_group '{command_group}' "
+                f"not found in command-registry.yaml groups"
+            )
+
+    return errors, warnings
+
+
 def validate_command_file(path: Path) -> tuple[list[str], list[str]]:
     """Validate a command markdown file.
 
@@ -287,5 +433,59 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
         if not file_errors:
             report.passed += 1
+
+    # --- New validation checks ---
+
+    # Prefix check
+    prefix_errors, prefix_warnings = validate_prefix(commands_dir)
+    for e in prefix_errors:
+        report.errors += 1
+        report.details.append(f"[ERROR] prefix: {e}")
+    for w in prefix_warnings:
+        if strict:
+            report.errors += 1
+            report.details.append(f"[ERROR] prefix: {w}")
+        else:
+            report.warnings += 1
+            report.details.append(f"[WARN] prefix: {w}")
+
+    # Deprecated check
+    depr_errors, depr_warnings = validate_deprecated(commands_dir)
+    for e in depr_errors:
+        report.errors += 1
+        report.details.append(f"[ERROR] deprecated: {e}")
+    for w in depr_warnings:
+        if strict:
+            report.errors += 1
+            report.details.append(f"[ERROR] deprecated: {w}")
+        else:
+            report.warnings += 1
+            report.details.append(f"[WARN] deprecated: {w}")
+
+    # Registry cross-reference
+    xref_errors, xref_warnings = validate_registry_crossref(root, commands_dir)
+    for e in xref_errors:
+        report.errors += 1
+        report.details.append(f"[ERROR] registry: {e}")
+    for w in xref_warnings:
+        if strict:
+            report.errors += 1
+            report.details.append(f"[ERROR] registry: {w}")
+        else:
+            report.warnings += 1
+            report.details.append(f"[WARN] registry: {w}")
+
+    # Skill alignment
+    align_errors, align_warnings = validate_skill_alignment(root)
+    for e in align_errors:
+        report.errors += 1
+        report.details.append(f"[ERROR] skill-align: {e}")
+    for w in align_warnings:
+        if strict:
+            report.errors += 1
+            report.details.append(f"[ERROR] skill-align: {w}")
+        else:
+            report.warnings += 1
+            report.details.append(f"[WARN] skill-align: {w}")
 
     return report

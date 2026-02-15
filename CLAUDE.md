@@ -103,7 +103,7 @@ BikeLane is Pennyfarthing's customizable workflow engine.
 | **Phased** | Agent-driven with automatic handoffs | tdd, tdd-tandem, bdd, bdd-tandem, trivial, 2party-tdd, agent-docs, patch |
 | **Stepped** | Progressive disclosure with gates | architecture, release, git-cleanup |
 
-**TDD flow:** `/new-work` → SM → TEA → Dev → Reviewer → SM (finish)
+**TDD flow:** `/pf-session new` → SM → TEA → Dev → Reviewer → SM (finish)
 
 | Agent | Role |
 |-------|------|

@@ -1,32 +1,14 @@
 ---
-description: Close an epic - verify completion, update status, and archive context
+deprecated: true
+redirect: pf-epic
+description: "DEPRECATED: Use /pf-epic close instead."
 ---
 
-# Close Epic
+# /close-epic - DEPRECATED
 
-<purpose>
-Closes an epic after all stories are done. Updates sprint YAML, transitions Jira, archives context.
-Counterpart to `/start-epic`. Idempotent — safe to run multiple times.
-</purpose>
+Epic commands have been consolidated into `/pf-epic`. Use:
 
-<usage>
-```bash
-/close-epic 79        # Close epic 79
-/close-epic epic-79   # Also accepts epic-N format
-```
-</usage>
-
-<workflow>
-1. Parse epic ID (strip `epic-` prefix if present). Ask if not provided.
-2. Read epic shard `sprint/epic-{JIRA_KEY}.yaml`, verify all stories `status: done`. Warn if incomplete.
-3. Update epic: `status: done`, `completed_points: {sum of story points}`
-4. Recalculate sprint summary totals in `sprint/current-sprint.yaml`
-5. If epic has `jira:` key → `pf jira move {JIRA_KEY} "Done"`
-6. If `sprint/context/context-epic-{N}.md` exists → move to `sprint/archive/`
-7. Commit and push sprint changes
-</workflow>
-
-<related>
-- `/start-epic` — Start an epic (move to current sprint, generate context)
-- `/pf-sprint status` — View sprint progress
-</related>
+| Old Command | New Command |
+|-------------|-------------|
+| `/start-epic <id>` | `/pf-epic start <id>` |
+| `/close-epic <id>` | `/pf-epic close <id>` |

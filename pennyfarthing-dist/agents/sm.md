@@ -124,7 +124,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 </critical>
 </finish-flow>
 
-<new-work-flow>
+<session-new-flow>
 ## New Work Flow
 
 > **Triggered when:** `NEW_WORK_STATE`
@@ -169,7 +169,7 @@ Present to user:
 4. **Route based on workflow type:**
    - **Phased workflow** → Run exit protocol: `pf handoff complete-phase` then `pf handoff marker`
    - **Stepped workflow** → Tell user to run `/pf-workflow start {workflow}` (no handoff)
-</new-work-flow>
+</session-new-flow>
 
 <merge-gate>
 ## Merge Gate (BLOCKING)

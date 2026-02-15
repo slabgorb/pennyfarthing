@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pennyfarthing.dev/schemas/command-registry.schema.json",
+  "title": "Pennyfarthing Command Registry",
+  "description": "Schema for the centralized command registry — single source of truth for CLI commands, slash commands, and skills",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the registry format"
+    },
+    "groups": {
+      "type": "object",
+      "description": "Command groups (e.g., sprint, jira, theme)",
+      "additionalProperties": {
+        "$ref": "#/definitions/group"
+      }
+    },
+    "standalone": {
+      "type": "object",
+      "description": "Standalone commands not part of a group",
+      "additionalProperties": {
+        "$ref": "#/definitions/standalone_command"
+      }
+    },
+    "agents": {
+      "$ref": "#/definitions/agent_section"
+    },
+    "benchmarking": {
+      "$ref": "#/definitions/benchmarking_section"
+    },
+    "deprecated": {
+      "type": "object",
+      "description": "Deprecated commands with redirect targets",
+      "additionalProperties": {
+        "$ref": "#/definitions/deprecated_command"
+      }
+    }
+  },
+  "required": ["version", "groups"],
+  "additionalProperties": false,
+  "definitions": {
+    "command": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of what the command does"
+        },
+        "args": {
+          "type": "string",
+          "description": "Argument syntax (e.g., '<required> [optional]')"
+        },
+        "cli": {
+          "type": "string",
+          "description": "Full CLI invocation"
+        },
+        "slash": {
+          "type": "string",
+          "description": "Slash command invocation"
+        }
+      },
+      "required": ["description"],
+      "additionalProperties": false
+    },
+    "subgroup": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of the subgroup"
+        },
+        "commands": {
+          "type": "object",
+          "description": "Commands within this subgroup",
+          "additionalProperties": {
+            "$ref": "#/definitions/command"
+          }
+        }
+      },
+      "required": ["description", "commands"],
+      "additionalProperties": false
+    },
+    "alias": {
+      "type": "object",
+      "properties": {
+        "shortcut": {
+          "type": "string",
+          "description": "Short form of the command"
+        },
+        "target": {
+          "type": "string",
+          "description": "Full command this aliases to"
+        }
+      },
+      "required": ["shortcut", "target"],
+      "additionalProperties": false
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of the command group"
+        },
+        "cli": {
+          "type": "string",
+          "description": "CLI prefix for the group"
+        },
+        "slash": {
+          "type": "string",
+          "description": "Slash command prefix for the group"
+        },
+        "skill": {
+          "type": "string",
+          "description": "Associated skill name from skill-registry.yaml"
+        },
+        "commands": {
+          "type": "object",
+          "description": "Commands within this group",
+          "additionalProperties": {
+            "$ref": "#/definitions/command"
+          }
+        },
+        "subgroups": {
+          "type": "object",
+          "description": "Nested command subgroups",
+          "additionalProperties": {
+            "$ref": "#/definitions/subgroup"
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Shortcut aliases for commands in this group",
+          "items": {
+            "$ref": "#/definitions/alias"
+          }
+        }
+      },
+      "required": ["description"],
+      "additionalProperties": false
+    },
+    "standalone_command": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Brief description of the standalone command"
+        },
+        "cli": {
+          "type": "string",
+          "description": "CLI invocation"
+        },
+        "slash": {
+          "type": "string",
+          "description": "Slash command invocation"
+        },
+        "skill": {
+          "type": "string",
+          "description": "Associated skill name"
+        },
+        "commands": {
+          "type": "object",
+          "description": "Sub-commands if the standalone has them",
+          "additionalProperties": {
+            "$ref": "#/definitions/command"
+          }
+        }
+      },
+      "required": ["description"],
+      "additionalProperties": false
+    },
+    "agent_section": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the agents section"
+        },
+        "commands": {
+          "type": "object",
+          "description": "Agent shortcut commands",
+          "additionalProperties": {
+            "$ref": "#/definitions/command"
+          }
+        }
+      },
+      "required": ["description", "commands"],
+      "additionalProperties": false
+    },
+    "benchmarking_section": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the benchmarking section"
+        },
+        "commands": {
+          "type": "object",
+          "description": "Benchmark commands",
+          "additionalProperties": {
+            "$ref": "#/definitions/command"
+          }
+        }
+      },
+      "required": ["description", "commands"],
+      "additionalProperties": false
+    },
+    "deprecated_command": {
+      "type": "object",
+      "properties": {
+        "redirect": {
+          "type": "string",
+          "description": "Command to redirect to"
+        },
+        "slash": {
+          "type": "string",
+          "description": "New slash command form"
+        }
+      },
+      "required": ["redirect"],
+      "additionalProperties": false
+    }
+  }
+}

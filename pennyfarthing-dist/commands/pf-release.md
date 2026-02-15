@@ -1,81 +1,16 @@
 ---
-description: Interactive stepped release with verification gates
+deprecated: true
+redirect: pf-git
+description: "DEPRECATED: Use /pf-git release instead."
 ---
 
-<purpose>
-Release a new version of Pennyfarthing using an interactive stepped workflow with gates at every critical point. An 11-step process that verifies each stage before proceeding.
-</purpose>
+# /release - DEPRECATED
 
-<usage>
-```bash
-# Start the interactive release workflow
-/release
+Git commands have been consolidated into `/pf-git`. Use:
 
-# The workflow will ask for bump type during preflight:
-# Stable: major/minor/patch
-# Prerelease: premajor/preminor/prepatch (creates alpha)
-# If already on prerelease: prerelease (bump N), promote (go stable),
-# graduate-beta, graduate-rc
-```
-</usage>
-
-<workflow>
-This command starts the `release` stepped workflow (BikeLane):
-
-1. **Preflight** — Clean state, compute version, conflict checks
-2. **Bump** — Update all version files, show diff ← GATE
-3. **Changelog** — Generate entries from commits (`/pf-changelog`) ← GATE
-4. **README** — Audit feature counts, update content
-5. **CLAUDE.md** — Verify version, build commands, project structure
-6. **Retro** — Optional retrospective (`/retro`)
-7. **Commit** — Stage, commit, merge to develop, verify staging ← GATE
-8. **Merge** — Merge develop → main, create tag
-9. **Push & Tag** — Push branches + tag (point of no return) ← GATE
-10. **Publish** — npm publish all packages (core, cyclist, theme packs) ← GATE
-11. **Finalize** — GitHub release, summary
-
-Gates pause for user approval. You can abort, revise, or continue at each gate.
-</workflow>
-
-<instructions>
-Start the release stepped workflow:
-
-```bash
-# Start the workflow
-/pf-workflow start release
-```
-
-If already in progress:
-```bash
-# Resume where you left off
-/pf-workflow resume
-```
-
-To check status:
-```bash
-/pf-workflow status
-```
-</instructions>
-
-<when-to-use>
-- After completing a sprint or set of features (stable release)
-- When develop is stable and ready for production (stable release)
-- Before deploying to production environments (stable release)
-- For early testing of new features before a stable cut (alpha/beta/rc prerelease)
-- To iterate on a prerelease (bump alpha.0 → alpha.1)
-- To promote a tested prerelease to stable
-</when-to-use>
-
-<prerequisites>
-- Clean working directory (no uncommitted changes)
-- On develop branch
-- Origin remote configured
-- npm authentication configured (for publish step)
-- `gh` CLI authenticated (for GitHub release step)
-</prerequisites>
-
-<skills>
-- `/pf-changelog` - For changelog format reference and auto-generation
-- `/retro` - For optional release retrospective
-- `/pf-workflow` - For workflow management commands
-</skills>
+| Old Command | New Command |
+|-------------|-------------|
+| `/repo-status` | `/pf-git status` |
+| `/git-cleanup` | `/pf-git cleanup` |
+| `/create-branches-from-story` | `/pf-git branches` |
+| `/release` | `/pf-git release` |
