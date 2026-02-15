@@ -11,6 +11,11 @@
  * Electron's sandboxed preload to work. See tsconfig.preload.json.
  */
 
+// Type imports for Electron APIs (compiled to require() by CommonJS target)
+import type { IpcRenderer, ContextBridge } from 'electron';
+// IPC channel constants for type-safe channel references
+import { IPC_DATA_CHANNELS } from './ipc-channels.js';
+
 /**
  * Data API interface for sidebar data (B-2)
  * Each data type has get() for request/response and onUpdate() for subscriptions
