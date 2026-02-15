@@ -237,7 +237,7 @@ When filtered, only shows epics with matching stories.
 ```xml
 <when>
 - Starting new development work
-- `/new-work` is an alias for this command
+- `/pf-session new` is an alias for this command
 Next steps after promote:
 - Review appended YAML in current-sprint.yaml
 - Create Jira epic: `/pf-jira create epic <epic-id>`

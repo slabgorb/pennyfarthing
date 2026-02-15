@@ -29,7 +29,6 @@ from pennyfarthing_scripts.handoff.gate_runner import (
     parse_gate_file,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: Gate file content
 # ---------------------------------------------------------------------------

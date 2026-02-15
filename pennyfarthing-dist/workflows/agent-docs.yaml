@@ -28,6 +28,7 @@ workflow:
       input: [audit_report, proposed_changes]
       output: [updated_files]
       gate:
+        file: gates/validation
         type: validation
         condition: Agent files parse correctly, no broken references
 
@@ -36,6 +37,7 @@ workflow:
       input: [updated_files]
       output: [approval]
       gate:
+        file: gates/approval
         type: approval
         condition: |
           Documentation quality review:

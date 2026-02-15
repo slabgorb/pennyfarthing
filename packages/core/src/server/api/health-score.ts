@@ -1,6 +1,23 @@
 import { Router } from 'express';
 import { execFile } from 'child_process';
 import { join } from 'path';
+import { existsSync } from 'fs';
+
+/**
+ * Resolve the directory containing pennyfarthing_scripts.
+ * Checks projectDir/pennyfarthing/ first (orchestrator layout),
+ * then projectDir itself (framework layout).
+ */
+function resolvePythonPath(projectDir: string): string | null {
+  const orchestratorPath = join(projectDir, 'pennyfarthing');
+  if (existsSync(join(orchestratorPath, 'pennyfarthing_scripts'))) {
+    return orchestratorPath;
+  }
+  if (existsSync(join(projectDir, 'pennyfarthing_scripts'))) {
+    return projectDir;
+  }
+  return null;
+}
 
 export function createHealthScoreRouter(getProjectDir: () => string): Router {
   const router = Router();
@@ -8,7 +25,16 @@ export function createHealthScoreRouter(getProjectDir: () => string): Router {
   router.get('/', (req, res) => {
     const projectDir = getProjectDir();
     const args = ['-m', 'pennyfarthing_scripts.healthscore', 'analyze', '--format', 'json', '--no-cache'];
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = resolvePythonPath(projectDir);
+
+    if (!pythonPath) {
+      console.error('[HealthScore] pennyfarthing_scripts not found in %s or %s/pennyfarthing', projectDir, projectDir);
+      res.status(404).json({
+        success: false,
+        error: 'pennyfarthing_scripts not found. Ensure project directory contains the Python package.',
+      });
+      return;
+    }
 
     console.log('[HealthScore] Starting analysis, cwd=%s, PYTHONPATH=%s', pythonPath, pythonPath);
 

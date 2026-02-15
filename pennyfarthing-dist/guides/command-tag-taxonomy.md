@@ -65,7 +65,7 @@
 - `<agent-activation>` — Required to show activation
 - `<instructions>` — Required for agent behavior
 
-**Script-Based Commands (e.g., /check, /run-ci)**
+**Script-Based Commands (e.g., /check, /pf-ci run)**
 - `<execution>` — Required with options
 - `<reference>` — Links to scripts
 
@@ -78,7 +78,7 @@
 - `<when-not-to-use>` — When NOT to pick this
 - `<related>` — Alternatives to consider
 
-**Workflow/Phase Commands (e.g., /sprint, /release)**
+**Workflow/Phase Commands (e.g., /sprint, /pf-git release)**
 - `<workflow>` — Phase breakdown
 - `<commands>` or subcommand table — Available subcommands
 
