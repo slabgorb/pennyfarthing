@@ -261,8 +261,8 @@ export function checkGate(
       return { passed: true, gateType };
 
     default:
-      // Unknown gate type - treat as manual (pass)
-      return { passed: true, gateType };
+      // Unknown gate type - reject (single code path enforcement)
+      return { passed: false, gateType, message: `Unknown gate type "${gateType}" — only tests_fail, tests_pass, approval, and manual are supported` };
   }
 }
 
