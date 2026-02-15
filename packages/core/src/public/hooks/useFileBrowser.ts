@@ -47,10 +47,12 @@ export function useFileBrowser(): UseFileBrowserResult {
       const params = dirPath ? `?path=${encodeURIComponent(dirPath)}` : '';
       const res = await fetch(`/api/files${params}`);
       if (!res.ok) throw new Error(`Failed to list directory: ${res.statusText}`);
-      const listing: DirectoryListing = await res.json();
+      const json = await res.json();
+      // API may return { entries: [...] } or a raw array
+      const entries: DirectoryEntry[] = Array.isArray(json) ? json : (json.entries ?? []);
 
       // Sort: directories first, then files, alphabetical within each
-      const sorted = listing.entries.sort((a, b) => {
+      const sorted = entries.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
         return a.name.localeCompare(b.name);
       });

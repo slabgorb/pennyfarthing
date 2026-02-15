@@ -59,11 +59,13 @@ export function useHealthScore(): UseHealthScoreReturn {
       });
   }, []);
 
+  // Auto-fetch on mount
   useEffect(() => {
+    refresh();
     return () => {
       abortRef.current?.abort();
     };
-  }, []);
+  }, [refresh]);
 
   return { data, isLoading, error, lastFetchedAt, refresh };
 }
