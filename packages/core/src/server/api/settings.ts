@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 import { loadAllThemeMetadata } from '../../shared/index.js';
@@ -59,6 +59,68 @@ export function createSettingsRouter(): Router {
       res.json({ success: true });
     } else {
       res.status(500).json({ error: 'Failed to save settings' });
+    }
+  });
+
+  // Layout persistence (Cyclist full app)
+  router.get('/layout', (_req, res) => {
+    try {
+      const projectDir = getProjectDirectory() || process.cwd();
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (fs.existsSync(configPath)) {
+        const config = parse(fs.readFileSync(configPath, 'utf-8')) || {};
+        return res.json({ layout: config.layout || null });
+      }
+      res.json({ layout: null });
+    } catch {
+      res.json({ layout: null });
+    }
+  });
+
+  router.patch('/layout', (req, res) => {
+    try {
+      const projectDir = getProjectDirectory() || process.cwd();
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      let config: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        config = (parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>) || {};
+      }
+      config.layout = req.body;
+      fs.writeFileSync(configPath, stringify(config), 'utf-8');
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: 'Failed to save layout' });
+    }
+  });
+
+  // Layout persistence (BikeRack standalone)
+  router.get('/bikerack-layout', (_req, res) => {
+    try {
+      const projectDir = getProjectDirectory() || process.cwd();
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (fs.existsSync(configPath)) {
+        const config = parse(fs.readFileSync(configPath, 'utf-8')) || {};
+        return res.json({ layout: config.bikerack_layout || null });
+      }
+      res.json({ layout: null });
+    } catch {
+      res.json({ layout: null });
+    }
+  });
+
+  router.patch('/bikerack-layout', (req, res) => {
+    try {
+      const projectDir = getProjectDirectory() || process.cwd();
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      let config: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        config = (parse(fs.readFileSync(configPath, 'utf-8')) as Record<string, unknown>) || {};
+      }
+      config.bikerack_layout = req.body;
+      fs.writeFileSync(configPath, stringify(config), 'utf-8');
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ error: 'Failed to save layout' });
     }
   });
 
