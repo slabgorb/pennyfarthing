@@ -81,7 +81,7 @@ def session_continue(list_only: bool, story_id: str | None):
             click.echo(f"  {i}. {cp.stem}")
         target = checkpoints[0]
 
-    click.echo(f"\nTo resume, load the agent with checkpoint context:")
+    click.echo("\nTo resume, load the agent with checkpoint context:")
     click.echo(f"  Read: {target}")
 
 

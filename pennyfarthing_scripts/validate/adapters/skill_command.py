@@ -227,28 +227,28 @@ def _collect_registry_command_names(registry: dict) -> set[str]:
     names: set[str] = set()
 
     # Groups: each group has a slash field like "/pf-sprint"
-    for group_name, group in registry.get("groups", {}).items():
+    for _group_name, group in registry.get("groups", {}).items():
         slash = group.get("slash", "")
         if slash:
             # "/pf-sprint" -> "pf-sprint"
             names.add(slash.lstrip("/"))
 
     # Standalone
-    for cmd_name, cmd in registry.get("standalone", {}).items():
+    for _cmd_name, cmd in registry.get("standalone", {}).items():
         slash = cmd.get("slash", "")
         if slash:
             names.add(slash.lstrip("/"))
 
     # Agents
     agents = registry.get("agents", {})
-    for agent_name, agent in agents.get("commands", {}).items():
+    for _agent_name, agent in agents.get("commands", {}).items():
         slash = agent.get("slash", "")
         if slash:
             names.add(slash.lstrip("/"))
 
     # Benchmarking
     benchmarking = registry.get("benchmarking", {})
-    for cmd_name, cmd in benchmarking.get("commands", {}).items():
+    for _cmd_name, cmd in benchmarking.get("commands", {}).items():
         slash = cmd.get("slash", "")
         if slash:
             names.add(slash.lstrip("/"))
