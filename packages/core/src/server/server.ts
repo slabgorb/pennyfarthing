@@ -320,7 +320,7 @@ export async function findAvailablePort(startPort: number, maxAttempts = 10): Pr
         testServer.close();
         resolve(true);
       });
-      testServer.listen(port);
+      testServer.listen(port, '127.0.0.1');
     });
 
     if (available) {
