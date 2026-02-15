@@ -6,12 +6,15 @@
     "baseUrl": ".",
     "paths": {
       "@pennyfarthing/core": ["../core/src/index.ts"],
-      "@pennyfarthing/core/server": ["../core/src/server/server.ts"]
+      "@pennyfarthing/core/server": ["../core/src/server/server.ts"],
+      "@pennyfarthing/core/dist/server/*": ["../core/src/server/*"],
+      "@pennyfarthing/cyclist/dist/*": ["../cyclist/src/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests", "src/preload.ts"],
   "references": [
-    { "path": "../core" }
+    { "path": "../core" },
+    { "path": "../cyclist" }
   ]
 }
