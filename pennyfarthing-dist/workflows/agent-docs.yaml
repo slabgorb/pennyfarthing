@@ -36,6 +36,7 @@ workflow:
       input: [updated_files]
       output: [approval]
       gate:
+        file: gates/approval
         type: approval
         condition: |
           Documentation quality review:
