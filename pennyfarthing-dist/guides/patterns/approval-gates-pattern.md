@@ -322,7 +322,7 @@ EnterPlanMode:
 
 ### The Assessment-First Protocol
 
-**Critical Pattern:** All agents must write their assessment BEFORE spawning the handoff subagent.
+**Critical Pattern:** All agents must write their assessment BEFORE starting the exit protocol.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -569,9 +569,9 @@ Gate BLOCKED. Address security issue before proceeding.
 ```
 Agent completes work
     ↓
-Spawns handoff subagent immediately
+Runs exit protocol immediately
     ↓
-Subagent has no assessment to verify
+resolve-gate finds no assessment
     ↓
 Gate is effectively bypassed
 ```
@@ -582,9 +582,9 @@ Agent completes work
     ↓
 Writes assessment to session file
     ↓
-Spawns handoff subagent
+Runs exit protocol (resolve-gate → complete-phase → marker)
     ↓
-Subagent verifies assessment exists
+resolve-gate verifies assessment exists
     ↓
 Gate functions properly
 ```

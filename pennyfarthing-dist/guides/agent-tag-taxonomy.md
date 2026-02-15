@@ -105,8 +105,8 @@ High-priority instruction that MUST be followed.
 
 ```xml
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After `handoff` subagent returns:
-Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
+Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 ```
 - **Validation:** First `<critical>` should be within line 30
@@ -178,7 +178,7 @@ Read `**Workflow:**` and `**Phase:**` from session. Query:
 OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
-**If OWNER != "dev":** Run `handoff-marker.sh $OWNER`, output result, tell user.
+**If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
 </phase-check>
 ```
 
@@ -250,8 +250,9 @@ Tags that contain checklists with `- [ ]` items.
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Dev Assessment to session file
-- [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed (subagent emits marker)
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 ```
 

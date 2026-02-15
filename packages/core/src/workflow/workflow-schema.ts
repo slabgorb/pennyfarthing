@@ -29,8 +29,10 @@ export interface WorkflowPhase {
   output?: string[];
   /** Conditions to proceed to next phase (optional) */
   gate?: {
-    /** Gate type: tests_pass, tests_fail, approval, manual, etc. */
-    type: string;
+    /** Gate type: tests_pass, tests_fail, approval, manual */
+    type?: string;
+    /** Gate file path (relative, no traversal) */
+    file?: string;
     /** Additional condition description (optional) */
     condition?: string;
   };
@@ -352,16 +354,48 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         errors.push({ field: `workflow.phases[${index}].agent`, message: 'Phase agent must be a string' });
       }
 
-      // Phase gate (optional, but if present must have type)
+      // Phase gate (optional, but if present must have type or file)
       if ('gate' in phaseObj && phaseObj.gate !== undefined) {
         if (!phaseObj.gate || typeof phaseObj.gate !== 'object') {
           errors.push({ field: `workflow.phases[${index}].gate`, message: 'Gate must be an object' });
         } else {
           const gateObj = phaseObj.gate as Record<string, unknown>;
-          if (!('type' in gateObj) || gateObj.type === undefined || gateObj.type === null) {
-            errors.push({ field: `workflow.phases[${index}].gate.type`, message: 'Gate type is required' });
-          } else if (typeof gateObj.type !== 'string') {
-            errors.push({ field: `workflow.phases[${index}].gate.type`, message: 'Gate type must be a string' });
+          const validGateTypes = ['tests_pass', 'tests_fail', 'approval', 'manual', 'quality_pass', 'design_review', 'validation'];
+          const hasType = 'type' in gateObj && gateObj.type !== undefined && gateObj.type !== null;
+          const hasFile = 'file' in gateObj && gateObj.file !== undefined && gateObj.file !== null;
+
+          // Must have at least type or file
+          if (!hasType && !hasFile) {
+            errors.push({ field: `workflow.phases[${index}].gate`, message: 'Gate requires type or file (or both)' });
+          }
+
+          // Validate type if present
+          if (hasType) {
+            if (typeof gateObj.type !== 'string') {
+              errors.push({ field: `workflow.phases[${index}].gate.type`, message: 'Gate type must be a string' });
+            } else if (!validGateTypes.includes(gateObj.type)) {
+              errors.push({ field: `workflow.phases[${index}].gate.type`, message: `Unknown gate type '${gateObj.type}'. Valid types: ${validGateTypes.join(', ')}` });
+            }
+          }
+
+          // Validate file if present
+          if (hasFile) {
+            if (typeof gateObj.file !== 'string') {
+              errors.push({ field: `workflow.phases[${index}].gate.file`, message: 'gate.file must be a string (e.g. "gates/tests-pass")' });
+            } else if (gateObj.file === '') {
+              errors.push({ field: `workflow.phases[${index}].gate.file`, message: 'gate.file cannot be empty' });
+            } else if ((gateObj.file as string).includes('..')) {
+              errors.push({ field: `workflow.phases[${index}].gate.file`, message: 'gate.file must not contain path traversal (..)' });
+            } else if ((gateObj.file as string).startsWith('/')) {
+              errors.push({ field: `workflow.phases[${index}].gate.file`, message: 'gate.file must be a relative path, not absolute' });
+            }
+          }
+
+          // Validate condition if present
+          if ('condition' in gateObj && gateObj.condition !== undefined && gateObj.condition !== null) {
+            if (typeof gateObj.condition !== 'string') {
+              errors.push({ field: `workflow.phases[${index}].gate.condition`, message: 'Gate condition must be a string' });
+            }
           }
         }
       }
@@ -549,9 +583,13 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
       }
       if (phase.gate !== undefined) {
         const gateObj = phase.gate as Record<string, unknown>;
-        result.gate = {
-          type: gateObj.type as string
-        };
+        result.gate = {};
+        if (gateObj.type !== undefined) {
+          result.gate.type = gateObj.type as string;
+        }
+        if (gateObj.file !== undefined) {
+          (result.gate as Record<string, unknown>).file = gateObj.file as string;
+        }
         if (gateObj.condition !== undefined) {
           result.gate.condition = gateObj.condition as string;
         }
