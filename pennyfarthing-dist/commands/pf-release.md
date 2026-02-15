@@ -12,10 +12,10 @@ Release a new version of Pennyfarthing using an interactive stepped workflow wit
 /release
 
 # The workflow will ask for bump type during preflight:
-#   Stable: major/minor/patch
-#   Prerelease: premajor/preminor/prepatch (creates alpha)
-#   If already on prerelease: prerelease (bump N), promote (go stable),
-#     graduate-beta, graduate-rc
+# Stable: major/minor/patch
+# Prerelease: premajor/preminor/prepatch (creates alpha)
+# If already on prerelease: prerelease (bump N), promote (go stable),
+# graduate-beta, graduate-rc
 ```
 </usage>
 
