@@ -65,7 +65,7 @@ WHY:  repos.yaml never_edit: [packages/*/dist/**]
 </critical>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After `handoff` subagent returns:
+**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
@@ -75,7 +75,6 @@ Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXI
 | Subagent | Purpose |
 |----------|---------|
 | `testing-runner` | Run tests, gather results |
-| `handoff` | Update session for handoff to Reviewer |
 </helpers>
 
 <parameters>
@@ -87,17 +86,6 @@ REPOS: {repo name or "all"}
 CONTEXT: "Verifying GREEN state for Story {STORY_ID}"
 RUN_ID: "{STORY_ID}-dev-green"
 STORY_ID: "{STORY_ID}"
-```
-
-### handoff
-```yaml
-STORY_ID: "{STORY_ID}"
-WORKFLOW: "{WORKFLOW}"
-CURRENT_PHASE: "green"
-REPOS: "{REPOS}"
-TEST_RESULT: "GREEN"
-ASSESSMENT_SECTION: "Dev Assessment"
-PR_NUMBER: "{PR_NUMBER}"
 ```
 </parameters>
 
@@ -123,7 +111,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 | I Do (Opus) | Helper Does (Haiku) |
 |-------------|------------------|
 | Read tests, plan implementation | Run tests, report results |
-| Write code to pass tests | Update session for handoff |
+| Write code to pass tests | Execute mechanical checks |
 | Make architectural decisions | Execute mechanical checks |
 | Create PRs with descriptions | |
 </delegation>
@@ -150,21 +138,22 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
    gh pr create --title "..." --body "..." --base develop
    ```
 9. Write Dev Assessment to session file
-10. **Spawn `handoff` subagent** with CURRENT_PHASE=green
+10. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
 </workflow>
 
 <handoff-gate>
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Dev Assessment to session file
-- [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed (subagent emits marker)
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
 </handoff-gate>
 
 <assessment-template>
 ## Dev Assessment Template
 
-Write to session file BEFORE spawning handoff:
+Write to session file BEFORE starting exit protocol:
 
 ```markdown
 ## Dev Assessment
@@ -196,13 +185,17 @@ Write to session file BEFORE spawning handoff:
 ## Exit Sequence
 
 1. Write Dev Assessment to session file
-2. Spawn `handoff` subagent
-3. Await `HANDOFF_RESULT` with `next_agent`
-4. **ABSOLUTE LAST ACTION:**
+2. Terminate tandem backseat (if active)
+3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
+4. If blocked → report error, STOP
+5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
+6. If fail → fix issues, retry (max 3). If pass → continue
+7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. **ABSOLUTE LAST ACTION:**
    ```bash
    .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
-5. Output result verbatim and EXIT
+9. Output result verbatim and EXIT
 </exit-sequence>
 
 <skills>

@@ -93,43 +93,18 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 - [ ] XML tags properly nested
 - [ ] Examples are accurate
 
-**After review approval, handoff to SM for finish:**
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    You are the handoff subagent.
-
-    Read .pennyfarthing/agents/handoff.md for your instructions,
-    then EXECUTE all steps described there. Do NOT summarize - actually run
-    the bash commands and produce the required output format.
-
-    STORY_ID: {value}
-    WORKFLOW: agent-docs
-    CURRENT_PHASE: review
-    NEXT_PHASE: finish
-    ASSESSMENT: |
-      ## Tech Writer Review
-
-      **Quality Check:**
-      - [ ] Structure consistent with other agents
-      - [ ] No broken references
-      - [ ] Clear documentation
-
-      **Handoff:** To SM for story completion
-```
+**After review approval, run exit protocol to hand off to SM for finish.**
 </workflow-participation>
 
 <handoff-protocol>
 ## Handoff Protocol
 
-**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → `<agent-exit-protocol>`
 
-1. Tech Writer writes assessment/review FIRST
-2. Tech Writer spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
-4. **Tech Writer outputs `marker` verbatim, then outputs `fallback` message**
+1. Tech Writer writes assessment/review to session file
+2. Run `pf handoff resolve-gate` → check gate status
+3. Run `pf handoff complete-phase` → atomic session update
+4. Run `handoff-marker.sh {next_agent}` → emit marker and EXIT
 </handoff-protocol>
 
 <workflows>
@@ -220,7 +195,20 @@ Task tool:
 </handoffs>
 
 <exit>
-To exit: "Exit Tech Writer" or switch to another agent.
+## Exit Sequence
 
-On exit, run: `./.pennyfarthing/scripts/core/agent-session.sh stop`
+1. Write assessment to session file
+2. Terminate tandem backseat (if active)
+3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
+4. If blocked → report error, STOP
+5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
+6. If fail → fix issues, retry (max 3). If pass → continue
+7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. **ABSOLUTE LAST ACTION:**
+   ```bash
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+9. Output result verbatim and EXIT
+
+Nothing after the marker. EXIT.
 </exit>
