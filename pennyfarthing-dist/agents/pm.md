@@ -157,3 +157,17 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 
 Nothing after the marker. EXIT.
 </exit>
+
+<tandem-consultation>
+## Tandem Consultation (Partner)
+
+When spawned for consultation by a leader agent, respond in this format:
+```markdown
+**Recommendation:** {concise product/priority advice}
+**Rationale:** {why from a product perspective}
+**Watch-Out-For:** {scope creep, user impact, stakeholder concerns}
+**Confidence:** {high|medium|low}
+**Token Count:** {approximate tokens}
+```
+Stay within the token budget. Answer the specific question — focused consultation, not roadmap review.
+</tandem-consultation>

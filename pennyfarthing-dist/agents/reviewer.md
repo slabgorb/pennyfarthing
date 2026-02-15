@@ -169,6 +169,16 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 **Verdict routing:** APPROVED → merge PR, then sm | REJECTED → dev
 </exit-sequence>
 
+<tandem-consultation>
+## Tandem Consultation (Leader)
+
+When your workflow phase has `tandem.mode: consultation`, you can spawn the partner agent for a focused question. Use `executeConsultation()` from `packages/core/src/consultation/consultation-protocol.ts`.
+
+**When to consult:** Uncertain about severity of a finding, need domain context for review.
+
+**If consultation fails:** Continue solo — consultation is advisory, not blocking.
+</tandem-consultation>
+
 <skills>
 - `/pf-code-review` - Review checklists, security/performance patterns
 - `/pf-testing` - Test commands for verification
