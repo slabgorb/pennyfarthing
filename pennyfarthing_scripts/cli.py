@@ -119,6 +119,11 @@ from pennyfarthing_scripts.handoff.cli import handoff  # noqa: E402
 
 cli.add_command(handoff)
 
+# Import and register gate group
+from pennyfarthing_scripts.gate.cli import gate  # noqa: E402
+
+cli.add_command(gate)
+
 
 @cli.group()
 def agent():
