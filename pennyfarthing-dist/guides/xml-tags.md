@@ -21,7 +21,7 @@ Tags that affect LLM behavior and attention.
 **Examples:**
 - "Subagent output is NOT visible to Cyclist"
 - "NEVER mark acceptance criteria as complete" (for subagents)
-- "Write assessment BEFORE spawning handoff subagent"
+- "Write assessment BEFORE starting exit protocol"
 
 ### `<gate>`
 
@@ -150,8 +150,9 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Assessment to session file
-- [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed (subagent emits marker)
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
 </handoff-gate>
 ```
 
