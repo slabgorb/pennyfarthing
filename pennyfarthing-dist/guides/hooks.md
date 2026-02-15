@@ -79,7 +79,7 @@ Warns agents when context usage is high. Outputs a warning at 60% usage and a cr
 
 **Location:** `.pennyfarthing/scripts/hooks/context-circuit-breaker.sh`
 
-Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `context-warning.sh`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/continue-session` can restore it with FULL tier context.
+Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `context-warning.sh`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/pf-session continue` can restore it with FULL tier context.
 
 #### schema-validation.sh
 

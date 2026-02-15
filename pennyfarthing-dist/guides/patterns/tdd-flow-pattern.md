@@ -36,7 +36,7 @@ Each transition is mediated by a **handoff subagent** that updates the session f
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NEW_WORK: /new-work invoked
+    [*] --> NEW_WORK: /pf-session new invoked
 
     NEW_WORK --> SM_SETUP: User selects story
     SM_SETUP --> TEA_RED: Standard story (3+ pts)
@@ -153,7 +153,7 @@ The session file (`.session/{story-id}-session.md`) tracks state:
 ### Agent Responsibilities
 
 #### SM (Scrum Master)
-**Entry:** `/new-work` command
+**Entry:** `/pf-session new` command
 **Role:** Story selection, context creation, finish workflow
 **Files:** `agents/sm.md`
 
@@ -291,9 +291,9 @@ Session file tracks rejection count and issues.
 ### Missing Epic Context
 
 ```
-User runs /new-work → prime detects no epic context
+User runs /pf-session new → prime detects no epic context
 → Returns MISSING_EPIC_CONTEXT state
-→ Blocks until user runs /start-epic
+→ Blocks until user runs /pf-epic start
 ```
 
 ### Context Overflow

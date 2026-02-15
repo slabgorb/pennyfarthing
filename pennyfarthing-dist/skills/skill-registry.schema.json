@@ -106,6 +106,10 @@
         "redirect": {
           "type": "string",
           "description": "Skill name to redirect to when deprecated"
+        },
+        "command_group": {
+          "type": "string",
+          "description": "Command group name from command-registry.yaml that this skill manages"
         }
       },
       "required": ["name", "description", "category", "tags"],

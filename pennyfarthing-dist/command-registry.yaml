@@ -1,0 +1,343 @@
+# Pennyfarthing Command Registry
+# Single source of truth for CLI commands, slash commands, and skills
+# Schema: command-registry.schema.json
+
+version: "1.0.0"
+
+groups:
+  sprint:
+    description: Sprint status, backlog, and story management
+    cli: "pf sprint"
+    slash: "/pf-sprint"
+    skill: pf-sprint
+    commands:
+      status:
+        description: Show sprint status
+        args: "[filter]"
+        cli: "pf sprint status [filter]"
+        slash: "/pf-sprint status [filter]"
+      backlog:
+        description: Available stories grouped by epic
+        cli: "pf sprint backlog"
+        slash: "/pf-sprint backlog"
+      work:
+        description: Start work on a story
+        args: "[story-id|epic-id|next]"
+        cli: "pf sprint work [story-id]"
+        slash: "/pf-sprint work [story-id]"
+      archive:
+        description: Archive a completed story
+        args: "<story-id> [pr-number]"
+        cli: "pf sprint archive <story-id>"
+        slash: "/pf-sprint archive <story-id>"
+      new:
+        description: Initialize a new sprint
+        args: "<yyww> <jira-id> <start> <end> <goal>"
+        cli: "pf sprint new"
+      future:
+        description: Show future work available for promotion
+        args: "[--epic EPIC_ID]"
+        cli: "pf sprint future"
+        slash: "/pf-sprint future"
+      validate:
+        description: Validate sprint YAML files
+        cli: "pf sprint validate"
+      plan:
+        description: Facilitate sprint planning session
+        slash: "/pf-sprint plan"
+      sync:
+        description: Sync work session with sprint status
+        slash: "/pf-sprint sync"
+    subgroups:
+      story:
+        description: Story operations
+        commands:
+          show: { description: "Show story details", args: "<id>" }
+          add: { description: "Add story to epic", args: "<epic-id> <title> <points>" }
+          update: { description: "Update story fields", args: "<id> [options]" }
+          field: { description: "Get single field value", args: "<id> <field>" }
+          size: { description: "Sizing guidelines", args: "[points]" }
+          template: { description: "Story templates", args: "[type]" }
+          finish: { description: "Complete story", args: "<id>" }
+          claim: { description: "Claim/unclaim in Jira", args: "<jira-key>" }
+      epic:
+        description: Epic operations
+        commands:
+          show: { description: "Show epic details", args: "<id>" }
+          add: { description: "Add new epic", args: "<id> <title>" }
+          update: { description: "Update epic fields", args: "<id> [options]" }
+          field: { description: "Get single field value", args: "<id> <field>" }
+          promote: { description: "Move from future to current sprint", args: "<id>" }
+          archive: { description: "Archive completed epics", args: "[id]" }
+          cancel: { description: "Cancel epic and all stories", args: "<id>" }
+          import: { description: "Import BMAD epics to future.yaml", args: "<file>" }
+          remove: { description: "Remove from future.yaml", args: "<id>" }
+      initiative:
+        description: Initiative operations
+        commands:
+          show: { description: "Show initiative details", args: "<id>" }
+          cancel: { description: "Cancel initiative and all children", args: "<id>" }
+    aliases:
+      - { shortcut: "pf status", target: "sprint status" }
+      - { shortcut: "pf backlog", target: "sprint backlog" }
+      - { shortcut: "pf work", target: "sprint work" }
+      - { shortcut: "pf story", target: "sprint story" }
+
+  jira:
+    description: Jira issue management
+    cli: "pf jira"
+    slash: "/pf-jira"
+    skill: pf-jira
+    commands:
+      view: { description: "View issue details", args: "<key>" }
+      check: { description: "Check if story is available", args: "<key>" }
+      claim: { description: "Assign to self + In Progress", args: "<key>" }
+      assign: { description: "Assign to user", args: "<key> <user>" }
+      move: { description: "Transition issue status", args: "<key> <status>" }
+      link: { description: "Link two issues", args: "<key1> <key2> [type]" }
+      search: { description: "Search by JQL", args: "<jql>" }
+      sync: { description: "Sync YAML to Jira", args: "<epic-id>" }
+      sync-epic: { description: "Sync epic to Jira", slash: "/pf-jira sync-epic" }
+      bidirectional: { description: "Bidirectional sync (Jira wins)" }
+      reconcile: { description: "Report mismatches between YAML and Jira" }
+    subgroups:
+      create:
+        description: Create Jira items
+        commands:
+          epic: { description: "Create epic + children from YAML", args: "<epic-id>" }
+          story: { description: "Create single story under epic", args: "<epic-key> <story-id>" }
+          standalone: { description: "Create standalone story", args: "<title>" }
+
+  theme:
+    description: Persona theme management
+    cli: "pf theme"
+    slash: "/pf-theme"
+    skill: pf-theme
+    commands:
+      list: { description: "List all available themes" }
+      show: { description: "Show theme details", args: "[name]" }
+      set: { description: "Set active theme", args: "<name>" }
+      create: { description: "Create custom theme", args: "<name>" }
+      maker: { description: "Interactive theme creation wizard" }
+
+  workflow:
+    description: Workflow state and phase management
+    cli: "pf workflow"
+    slash: "/pf-workflow"
+    skill: pf-workflow
+    commands:
+      check: { description: "Check current workflow state" }
+      phase-check: { description: "Verify phase ownership", args: "<workflow> <phase>" }
+      handoff: { description: "Emit handoff marker", args: "<next-agent>" }
+      list: { description: "List available workflows", slash: "/pf-workflow" }
+      show: { description: "Show current workflow details" }
+      start: { description: "Start a stepped workflow", args: "<name>" }
+      resume: { description: "Resume a workflow in progress" }
+      status: { description: "Check workflow status" }
+
+  git:
+    description: Repository operations
+    cli: "pf git"
+    slash: "/pf-git"
+    commands:
+      status: { description: "Check git status of all repos" }
+      cleanup: { description: "Organize changes into commits/branches" }
+      branches: { description: "Create feature branches from story", args: "<story-id>" }
+      release: { description: "Interactive release with verification gates" }
+
+  session:
+    description: Session lifecycle management
+    cli: "pf session"
+    slash: "/pf-session"
+    commands:
+      new: { description: "Start the next available story from backlog" }
+      continue: { description: "Resume from saved checkpoint" }
+
+  epic:
+    description: Epic lifecycle management
+    cli: "pf epic"
+    slash: "/pf-epic"
+    commands:
+      start: { description: "Start an epic - move to sprint and generate context", args: "<id>" }
+      close: { description: "Close epic - verify completion and archive", args: "<id>" }
+
+  bc:
+    description: Panel focus and layout management
+    cli: "pf bc"
+    slash: "/pf-bc"
+    skill: pf-bc
+    commands:
+      focus: { description: "Focus a panel", args: "<panel>" }
+      reset: { description: "Clear focus" }
+      save: { description: "Save current layout", args: "<name>" }
+      load: { description: "Load saved layout", args: "<name>" }
+      list: { description: "List saved layouts" }
+      clear: { description: "Delete layout", args: "<name>" }
+      clear-all: { description: "Delete all layouts" }
+
+  debug:
+    description: Analysis and debugging tools
+    cli: "pf debug"
+    subgroups:
+      hotspots:
+        description: Git history hotspot detection
+        commands:
+          analyze: { description: "Full hotspot analysis" }
+          files: { description: "File-level hotspot report" }
+          dirs: { description: "Directory-level hotspot report" }
+      deadcode:
+        description: Dead code detection
+        commands:
+          stale: { description: "Files with no recent commits" }
+          exports: { description: "Unused TypeScript exports" }
+      healthscore:
+        description: Composite health score
+        commands:
+          analyze: { description: "Composite health score analysis" }
+
+  agent:
+    description: Agent session management
+    cli: "pf agent"
+    commands:
+      start: { description: "Start agent session with context", args: "<name>" }
+
+  validate:
+    description: Project validators
+    cli: "pf validate"
+    commands:
+      sprint: { description: "Sprint YAML validation" }
+      schema: { description: "XML schema validation" }
+      agent: { description: "Agent definition validation" }
+      workflow: { description: "Workflow definition validation" }
+      skill-command: { description: "Skill registry and command file validation" }
+
+  bikerack:
+    description: BikeRack dashboard launcher
+    cli: "pf bikerack"
+    commands:
+      start: { description: "Start BikeRack + Claude CLI" }
+      stop: { description: "Stop running instance" }
+      status: { description: "Show running state" }
+
+  launch:
+    description: Application launchers
+    cli: "pf launch"
+    commands:
+      gui: { description: "Open BikeRack dashboard" }
+      tui: { description: "Launch terminal UI" }
+    aliases:
+      - { shortcut: "pf gui", target: "launch gui" }
+      - { shortcut: "pf tui", target: "launch tui" }
+
+  handoff:
+    description: Agent handoff management
+    cli: "pf handoff"
+    commands:
+      marker: { description: "Generate handoff marker", args: "<next-agent>" }
+      resolve: { description: "Resolve phase gate" }
+
+standalone:
+  ci:
+    description: Detect and run CI locally
+    slash: "/pf-ci"
+    commands:
+      run: { description: "Run CI locally (auto-detects CI system)" }
+  docs:
+    description: Domain documentation management
+    slash: "/pf-docs"
+    commands:
+      update: { description: "Update CLAUDE-*.md domain documentation files" }
+  help:
+    description: Context-aware help
+    cli: "pf help"
+    slash: "/pf-help"
+  setup:
+    description: First-time project setup
+    slash: "/pf-setup"
+  health-check:
+    description: Check installation health
+    slash: "/pf-health-check"
+  prime:
+    description: Load essential project context
+    slash: "/pf-prime"
+  check:
+    description: Run quality gates before handoff
+    slash: "/pf-check"
+  work:
+    description: Smart entry point - resume or start new
+    slash: "/pf-work"
+  chore:
+    description: Quick commit for small changes
+    slash: "/pf-chore"
+  patch:
+    description: Interrupt-driven bug fix during story work
+    slash: "/pf-patch"
+  standalone:
+    description: Wrap changes into standalone Jira story
+    slash: "/pf-standalone"
+  party-mode:
+    description: Creative brainstorming with all agents
+    slash: "/pf-party-mode"
+  brainstorming:
+    description: Structured problem-solving brainstorm
+    slash: "/pf-brainstorming"
+  retro:
+    description: Sprint retrospective
+    slash: "/pf-retro"
+  permissions:
+    description: Runtime permission management
+    slash: "/pf-permissions"
+    skill: pf-permissions
+
+agents:
+  description: Agent shortcuts (equivalent to pf agent start <role>)
+  commands:
+    sm: { description: "Scrum Master", slash: "/sm" }
+    tea: { description: "Test Engineer/Architect", slash: "/tea" }
+    dev: { description: "Developer", slash: "/dev" }
+    reviewer: { description: "Code Reviewer", slash: "/reviewer" }
+    architect: { description: "System Architect", slash: "/architect" }
+    pm: { description: "Product Manager", slash: "/pm" }
+    devops: { description: "DevOps Engineer", slash: "/devops" }
+    tech-writer: { description: "Technical Writer", slash: "/tech-writer" }
+    ux-designer: { description: "UX Designer", slash: "/ux-designer" }
+    orchestrator: { description: "Orchestrator", slash: "/orchestrator" }
+    ba: { description: "Business Analyst", slash: "/ba" }
+
+benchmarking:
+  description: Benchmark and evaluation commands
+  commands:
+    benchmark:
+      description: Compare agent performance against baseline
+      slash: "/pf-benchmark"
+    benchmark-control:
+      description: Create control baseline for a scenario
+      slash: "/pf-benchmark-control"
+    job-fair:
+      description: Discover which characters excel at each role
+      slash: "/pf-job-fair"
+    solo:
+      description: Run single agent on scenario with rubric scoring
+      slash: "/pf-solo"
+
+deprecated:
+  start-epic: { redirect: "epic start", slash: "/pf-epic start" }
+  close-epic: { redirect: "epic close", slash: "/pf-epic close" }
+  new-work: { redirect: "session new", slash: "/pf-session new" }
+  continue-session: { redirect: "session continue", slash: "/pf-session continue" }
+  parallel-work: { redirect: "removed", note: "Replaced by sister directories" }
+  repo-status: { redirect: "git status", slash: "/pf-git status" }
+  git-cleanup: { redirect: "git cleanup", slash: "/pf-git cleanup" }
+  create-branches-from-story: { redirect: "git branches", slash: "/pf-git branches" }
+  release: { redirect: "git release", slash: "/pf-git release" }
+  run-ci: { redirect: "ci run", slash: "/pf-ci run" }
+  update-domain-docs: { redirect: "docs update", slash: "/pf-docs update" }
+  sync-epic-to-jira: { redirect: "jira sync-epic", slash: "/pf-jira sync-epic" }
+  sync-work-with-sprint: { redirect: "sprint sync", slash: "/pf-sprint sync" }
+  sprint-planning: { redirect: "sprint plan", slash: "/pf-sprint plan" }
+  set-theme: { redirect: "theme set", slash: "/pf-theme set" }
+  show-theme: { redirect: "theme show", slash: "/pf-theme show" }
+  list-themes: { redirect: "theme list", slash: "/pf-theme list" }
+  create-theme: { redirect: "theme create", slash: "/pf-theme create" }
+  theme-maker: { redirect: "theme maker", slash: "/pf-theme maker" }
+  fix-blocker: { redirect: "patch", slash: "/pf-patch" }

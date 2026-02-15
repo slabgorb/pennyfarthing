@@ -4,7 +4,7 @@ description: Quick commit for small changes without full git-cleanup ceremony
 
 # Quick Chore Commit
 
-Quickly commit dirty changes without the full `/git-cleanup` ceremony. Checks **all repos** (orchestrator + subrepos), creates branches, commits, merges to develop, and pushes.
+Quickly commit dirty changes without the full `/pf-git cleanup` ceremony. Checks **all repos** (orchestrator + subrepos), creates branches, commits, merges to develop, and pushes.
 
 <purpose>
 Fast path for committing small changes that don't warrant story tracking.
@@ -206,13 +206,13 @@ All repos should show clean.
 
 ## When to Use
 
-| Use /chore | Use /git-cleanup |
+| Use /chore | Use /pf-git cleanup |
 |------------|------------------|
 | Single logical change | Multiple unrelated changes |
 | Quick fix or tweak | Need to organize into groups |
 | One type of change | Mixed types requiring separation |
 
 <related>
-- `/git-cleanup` - Full ceremony for organizing multiple changes
-- `/repo-status` - Check status across all repos
+- `/pf-git cleanup` - Full ceremony for organizing multiple changes
+- `/pf-git status` - Check status across all repos
 </related>

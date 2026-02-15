@@ -4,7 +4,7 @@
 
 This document describes how Pennyfarthing agents are coordinated. The framework supports both single-repo and multi-repo projects.
 
-**Key Principle:** Single entry point (`/new-work` or `/work`), state detection via session files, handoffs via Haiku subagents.
+**Key Principle:** Single entry point (`/pf-session new` or `/work`), state detection via session files, handoffs via Haiku subagents.
 
 ## The TDD Flow
 
@@ -12,7 +12,7 @@ SM → TEA → Dev → Reviewer → SM (setup → red → green → review → f
 
 Handoffs between agents are managed by Haiku subagents.
 
-**Entry points:** `/new-work` (new story) or `/work` (smart resume/start)
+**Entry points:** `/pf-session new` (new story) or `/work` (smart resume/start)
 **State detection:** Agents read session file on activation
 **Handoffs:** Agents spawn Haiku subagents to update session file
 **Finish:** SM handles when status = `approved`
@@ -311,7 +311,7 @@ SM → TEA → Dev → Reviewer → SM
 | **Reviewer Subagents** | | |
 | `reviewer-preflight.md` | Pre-flight checks before review | haiku |
 ### SM → TEA (Story Setup)
-**Trigger:** User selects story via `/new-work`
+**Trigger:** User selects story via `/pf-session new`
 **Subagent:** `sm-setup MODE=setup` then `sm-handoff`
 **Action:** Claim Jira, write session file, create branches
 **Handoff phrase:** "TEA, Story X-Y needs tests. Write failing tests for these ACs."
@@ -423,13 +423,13 @@ Dev Agent Example (API story):
 ## Architecture History
 
 ### Previous Architecture (Pre-December 2025)
-- Separate commands: `/new-work`, `/pickup-work`, `/handoff-work`, `/finish-work`
+- Separate commands: `/pf-session new`, `/pickup-work`, `/handoff-work`, `/finish-work`
 - Manual handoff documentation
 - No subagent extraction
 
 ### Current Architecture (January 2026)
 - Smart entry point: `/work` (resumes or starts new)
-- Alternative: `/new-work` (explicitly start new story)
+- Alternative: `/pf-session new` (explicitly start new story)
 - State detection via session file in `.session/`
 - Handoffs via Haiku subagents in `.pennyfarthing/agents/`
 - SM handles finish-story when status = `approved`
@@ -448,7 +448,7 @@ sprint/                            # Sprint tracking
 ```bash
 # Entry points
 /work          # Smart entry - resume or start new
-/new-work      # Explicitly start new story
+/pf-session new # Explicitly start new story
 
 # TDD Flow agents
 /sm            # Scrum Master (setup + finish)
@@ -465,7 +465,7 @@ sprint/                            # Sprint tracking
 # Utility
 /check         # Run quality gates before handoff
 /chore         # Quick commit for small changes
-/release       # Merge develop to main
+/pf-git release # Merge develop to main
 ```
 
 ---

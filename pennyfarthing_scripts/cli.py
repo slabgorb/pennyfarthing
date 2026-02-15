@@ -26,6 +26,9 @@ def cli():
     workflow  - Workflow state and phase management
     agent     - Agent session management
     sprint    - Sprint status and story operations
+    git       - Repository operations (status, cleanup, branches, release)
+    session   - Session lifecycle (new, continue, parallel)
+    epic      - Epic lifecycle (start, close)
     debug     - Analysis tools (hotspots, deadcode, healthscore)
 
     \b
@@ -118,6 +121,21 @@ cli.add_command(bc)
 from pennyfarthing_scripts.handoff.cli import handoff  # noqa: E402
 
 cli.add_command(handoff)
+
+# Import and register git group
+from pennyfarthing_scripts.git_group.cli import git  # noqa: E402
+
+cli.add_command(git)
+
+# Import and register session group
+from pennyfarthing_scripts.session.cli import session  # noqa: E402
+
+cli.add_command(session)
+
+# Import and register epic group
+from pennyfarthing_scripts.epic.cli import epic  # noqa: E402
+
+cli.add_command(epic)
 
 
 @cli.group()
@@ -247,6 +265,98 @@ def workflow_handoff(next_agent: str):
     click.echo(f'  marker: "<!-- CYCLIST:HANDOFF:/{next_agent} -->"')
     click.echo(f'  fallback: "Run `/{next_agent}` to continue"')
     click.echo("---")
+
+
+@cli.command("help")
+@click.argument("group", required=False)
+def help_cmd(group: str | None):
+    """Context-aware help for Pennyfarthing commands.
+
+    \b
+    Arguments:
+      GROUP  - Optional command group name (sprint, git, session, epic, jira, theme, workflow, etc.)
+    """
+    from pathlib import Path
+
+    import yaml
+
+    from pennyfarthing_scripts.common.config import get_project_root
+
+    root = get_project_root()
+    registry_path = root / "pennyfarthing-dist" / "command-registry.yaml"
+
+    if not registry_path.is_file():
+        click.echo("Command registry not found. Run /pf-health-check.", err=True)
+        raise SystemExit(1)
+
+    registry = yaml.safe_load(registry_path.read_text())
+
+    if group is None:
+        # Show overview
+        click.echo("Pennyfarthing CLI — Command Reference")
+        click.echo("=" * 45)
+        click.echo("")
+        click.echo("Resource Groups:")
+        for name, grp in registry.get("groups", {}).items():
+            cli_cmd = grp.get("cli", "")
+            slash = grp.get("slash", "")
+            desc = grp.get("description", "")
+            parts = []
+            if slash:
+                parts.append(slash)
+            if cli_cmd:
+                parts.append(cli_cmd)
+            ref = ", ".join(parts)
+            click.echo(f"  {name:<12} {desc:<45} ({ref})")
+        click.echo("")
+        click.echo("Standalone:")
+        for name, cmd in registry.get("standalone", {}).items():
+            slash = cmd.get("slash", "")
+            desc = cmd.get("description", "")
+            click.echo(f"  {name:<12} {desc:<45} ({slash})")
+        click.echo("")
+        click.echo("Use 'pf help <group>' for detailed commands.")
+        return
+
+    # Show specific group
+    groups = registry.get("groups", {})
+    if group not in groups:
+        click.echo(f"Unknown group: {group}", err=True)
+        click.echo(f"Available groups: {', '.join(groups.keys())}", err=True)
+        raise SystemExit(1)
+
+    grp = groups[group]
+    click.echo(f"{group} — {grp.get('description', '')}")
+    click.echo("-" * 45)
+    if grp.get("cli"):
+        click.echo(f"CLI:   {grp['cli']}")
+    if grp.get("slash"):
+        click.echo(f"Slash: {grp['slash']}")
+    if grp.get("skill"):
+        click.echo(f"Skill: {grp['skill']}")
+    click.echo("")
+
+    commands = grp.get("commands", {})
+    if commands:
+        click.echo("Commands:")
+        for cmd_name, cmd in commands.items():
+            args = cmd.get("args", "")
+            desc = cmd.get("description", "")
+            if args:
+                click.echo(f"  {cmd_name} {args:<20} {desc}")
+            else:
+                click.echo(f"  {cmd_name:<25} {desc}")
+
+    subgroups = grp.get("subgroups", {})
+    for sg_name, sg in subgroups.items():
+        click.echo(f"\n  {sg_name} — {sg.get('description', '')}")
+        for cmd_name, cmd in sg.get("commands", {}).items():
+            args = cmd.get("args", "")
+            desc = cmd.get("description", "")
+            if args:
+                click.echo(f"    {cmd_name} {args:<18} {desc}")
+            else:
+                click.echo(f"    {cmd_name:<23} {desc}")
 
 
 def main():

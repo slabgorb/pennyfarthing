@@ -7,23 +7,15 @@ Get help with Pennyfarthing commands, agents, themes, and workflows.
 Provides quick-start guidance for new users and context-aware suggestions based on current work state.
 </purpose>
 
-<when-to-use>
-- New to Pennyfarthing and need orientation
-- Looking for a specific command or agent
-- Want to understand the TDD workflow
-- Need to check available themes
-- Forgot what command to use next
-</when-to-use>
-
 <quick-start>
 
 ## New to Pennyfarthing?
 
 Start here:
 
-1. **`/work`** - Smart entry point (resumes existing work or starts new)
-2. **`/new-work`** - Start a fresh work session from backlog
-3. **`/health-check`** - Verify your installation is working
+1. **`/pf-work`** - Smart entry point (resumes existing work or starts new)
+2. **`/pf-session new`** - Start a fresh work session from backlog
+3. **`/pf-health-check`** - Verify your installation is working
 
 ### First Time Setup
 
@@ -52,120 +44,127 @@ SM → TEA → Dev → Reviewer → SM (finish)
 | Review | Reviewer | `/reviewer` | Code review, quality enforcement |
 | Finish | SM | `/sm` | Merge PR, archive session |
 
-### Workflow Commands
-
-| Command | Description |
-|---------|-------------|
-| `/new-work` | Start a new work session with Pennyfarthing |
-| `/work` | Resume work or start new - smart entry point |
-| `/sm` | Scrum Master - Story coordination and sprint management |
-| `/tea` | Test Engineer/Architect - Test strategy and TDD |
-| `/dev` | Developer - Feature implementation and coding |
-| `/reviewer` | Code Reviewer - Critical code review and quality enforcement |
-| `/check` | Run quality gates (lint, type check, tests) before handoff |
-
 </workflow>
-
-<agents>
-
-## All Agents (24)
-
-### TDD Workflow Agents
-
-| Agent | Command | Role |
-|-------|---------|------|
-| SM | `/sm` | Scrum Master - Story coordination, sprint management, workflow entry/exit |
-| TEA | `/tea` | Test Engineer - Test strategy, TDD design, RED phase |
-| Dev | `/dev` | Developer - Implementation, feature shipping, GREEN phase |
-| Reviewer | `/reviewer` | Code Reviewer - Quality enforcement, adversarial review |
-
-### Specialist Agents
-
-| Agent | Command | Role |
-|-------|---------|------|
-| Architect | `/architect` | System Architect - Technical design and architecture |
-| PM | `/pm` | Product Manager - Strategic planning and prioritization |
-| DevOps | `/devops` | DevOps Engineer - Infrastructure and deployment automation |
-| Tech-Writer | `/tech-writer` | Technical Writer - Documentation creation and maintenance |
-| UX-Designer | `/ux-designer` | UX Designer - User experience design and UI patterns |
-| Orchestrator | `/orchestrator` | Orchestrator - Coordinator of all agents and meta operations |
-
-</agents>
 
 <commands>
 
-## All Commands (43)
+## Resource Groups
 
-### TDD Workflow (7)
+Commands are organized by resource. Each group is accessible via both slash commands and CLI.
+
+### Sprint — `/pf-sprint` · `pf sprint`
+
 | Command | Description |
 |---------|-------------|
-| `/new-work` | Start a new work session with Pennyfarthing |
-| `/work` | Resume work or start new - smart entry point |
-| `/sm` | Scrum Master - Story coordination and sprint management |
-| `/tea` | Test Engineer/Architect - Test strategy and TDD |
-| `/dev` | Developer - Feature implementation and coding |
-| `/reviewer` | Code Reviewer - Critical code review and quality enforcement |
-| `/check` | Run quality gates (lint, type check, tests) before handoff |
+| `/pf-sprint` | Show sprint status |
+| `/pf-sprint backlog` | Available stories |
+| `/pf-sprint work [id\|next]` | Start work on a story |
+| `/pf-sprint archive <id>` | Archive completed story |
+| `/pf-sprint plan` | Sprint planning session |
+| `/pf-sprint sync` | Sync work with sprint |
+| `/pf-sprint story [show\|add\|update\|size\|finish]` | Story operations |
+| `/pf-sprint epic [show\|add\|promote\|archive]` | Epic operations |
 
-### Specialist Agents (6)
+### Git — `/pf-git` · `pf git`
+
 | Command | Description |
 |---------|-------------|
-| `/architect` | System Architect - Technical design and architecture |
-| `/pm` | Product Manager - Strategic planning and prioritization |
-| `/devops` | DevOps Engineer - Infrastructure and deployment automation |
-| `/tech-writer` | Technical Writer - Documentation creation and maintenance |
-| `/ux-designer` | UX Designer - User experience design and UI patterns |
-| `/orchestrator` | Orchestrator - Coordinator of all agents and meta operations |
+| `/pf-git status` | Check all repo status |
+| `/pf-git cleanup` | Organize changes into commits/branches |
+| `/pf-git branches <id>` | Create feature branches from story |
+| `/pf-git release` | Interactive release workflow |
 
-### Sprint & Planning (5)
+### Session — `/pf-session` · `pf session`
+
 | Command | Description |
 |---------|-------------|
-| `/sprint-planning` | Facilitate sprint planning session |
-| `/start-epic` | Start an epic - move to current sprint and generate tech context |
-| `/retro` | Facilitate a sprint retrospective |
-| `/sync-work-with-sprint` | Sync Pennyfarthing work session with unified sprint status |
-| `/sync-epic-to-jira` | Sync Pennyfarthing epic to Jira MSSCI project |
+| `/pf-session new` | Start next available story |
+| `/pf-session continue` | Resume from checkpoint |
 
-### Context & Loading (2)
+### Epic — `/pf-epic` · `pf epic`
+
 | Command | Description |
 |---------|-------------|
-| `/prime` | Load essential project context at agent activation |
-| `/health-check` | Check Pennyfarthing installation health and apply updates |
+| `/pf-epic start <id>` | Start epic for development |
+| `/pf-epic close <id>` | Close completed epic |
 
-### Theme Management (1)
+### Jira — `/pf-jira` · `pf jira`
+
 | Command | Description |
 |---------|-------------|
-| `/theme [list\|show\|set\|create\|maker]` | Manage persona themes — list, show, set, create, or interactive wizard |
+| `/pf-jira view <key>` | View issue details |
+| `/pf-jira claim <key>` | Claim issue |
+| `/pf-jira sync <epic-id>` | Sync YAML to Jira |
+| `/pf-jira sync-epic` | Sync epic to Jira |
+| `/pf-jira reconcile` | Report mismatches |
 
-### Creative & Brainstorm (4)
+### Theme — `/pf-theme` · `pf theme`
+
 | Command | Description |
 |---------|-------------|
-| `/party-mode` | Free-form creative brainstorming with all agents |
-| `/brainstorm` | Structured problem-solving brainstorm session |
-| `/job-fair` | Discover which characters in a theme excel at each role |
-| `/solo` | Run a single agent on a scenario with absolute rubric scoring |
+| `/pf-theme list` | List all themes |
+| `/pf-theme show [name]` | Show theme details |
+| `/pf-theme set <name>` | Set active theme |
+| `/pf-theme create <name>` | Create custom theme |
+| `/pf-theme maker` | Interactive theme wizard |
 
-### Benchmarking (2)
+### Workflow — `/pf-workflow` · `pf workflow`
+
 | Command | Description |
 |---------|-------------|
-| `/benchmark` | Compare an agent's performance against a stored baseline |
-| `/benchmark-control` | Create control baseline for a scenario |
+| `/pf-workflow` | List available workflows |
+| `/pf-workflow show` | Current workflow details |
+| `/pf-workflow start <name>` | Start stepped workflow |
+| `/pf-workflow resume` | Resume workflow |
 
-### Git & Repository (4)
+## Agents (11)
+
+| Agent | Command | Role |
+|-------|---------|------|
+| SM | `/sm` | Scrum Master — Story coordination, sprint management |
+| TEA | `/tea` | Test Engineer — Test strategy, TDD design |
+| Dev | `/dev` | Developer — Implementation, feature shipping |
+| Reviewer | `/reviewer` | Code Reviewer — Quality enforcement |
+| Architect | `/architect` | System Architect — Technical design |
+| PM | `/pm` | Product Manager — Strategic planning |
+| DevOps | `/devops` | DevOps — Infrastructure and deployment |
+| Tech-Writer | `/tech-writer` | Technical Writer — Documentation |
+| UX-Designer | `/ux-designer` | UX Designer — User experience |
+| Orchestrator | `/orchestrator` | Orchestrator — Multi-agent coordination |
+| BA | `/ba` | Business Analyst — Requirements discovery |
+
+## Utilities
+
 | Command | Description |
 |---------|-------------|
-| `/repo-status` | Check git status of all project repos |
-| `/git-cleanup` | Clean up git repos by organizing changes into commits/branches |
-| `/create-branches-from-story` | Create feature branches in both repos from a story |
-| `/release` | Merge develop to main and push (optional version bump) |
+| `/pf-work` | Smart entry point — resume or start new |
+| `/pf-check` | Run quality gates before handoff |
+| `/pf-prime` | Load project context at agent activation |
+| `/pf-health-check` | Check installation health |
+| `/pf-setup` | First-time project setup |
+| `/pf-chore` | Quick commit for small changes |
+| `/pf-patch` | Bug fix during active story work |
+| `/pf-standalone` | Wrap changes into standalone story |
+| `/pf-ci run` | Detect and run CI locally |
+| `/pf-docs update` | Update domain documentation |
+| `/pf-permissions` | Manage runtime permissions |
 
-### Utility (4)
+## Benchmarking
+
 | Command | Description |
 |---------|-------------|
-| `/continue-session` | Resume work from a saved checkpoint after context circuit breaker |
-| `/parallel-work` | Start parallel work in a new worktree |
-| `/update-domain-docs` | Update CLAUDE-*.md domain documentation files |
-| `/help` | This help command |
+| `/pf-benchmark` | Compare performance against baseline |
+| `/pf-benchmark-control` | Create control baseline |
+| `/pf-job-fair` | Discover best characters per role |
+| `/pf-solo` | Single agent rubric scoring |
+
+## Creative
+
+| Command | Description |
+|---------|-------------|
+| `/pf-party-mode` | Creative brainstorming with all agents |
+| `/pf-brainstorming` | Structured problem-solving session |
+| `/pf-retro` | Sprint retrospective |
 
 </commands>
 
@@ -188,24 +187,7 @@ Pennyfarthing agents adopt personas from themed character sets. There are **102 
 | `breaking-bad` | Breaking Bad characters |
 | `battlestar-galactica` | Battlestar Galactica characters |
 
-Run `/theme list` to see all 102 available themes.
-
-### Theme Commands
-
-| Command | Description |
-|---------|-------------|
-| `/theme list` | See all available themes |
-| `/theme show [name]` | View current theme with character mappings |
-| `/theme set <name>` | Change to a different theme |
-| `/theme create <name>` | Create a custom theme |
-| `/theme maker` | Interactive theme creation wizard |
-
-### Current Theme
-
-Check your current theme:
-```bash
-cat .pennyfarthing/config.local.yaml
-```
+Run `/pf-theme list` to see all 102 available themes.
 
 </themes>
 
@@ -216,11 +198,11 @@ cat .pennyfarthing/config.local.yaml
 Based on your current state, here's what you might need:
 
 ### No Active Session
-- Use `/work` or `/new-work` to begin
-- Check `/health-check` if first time
+- Use `/pf-work` or `/pf-session new` to begin
+- Check `/pf-health-check` if first time
 
 ### In Dev Phase
-- Run `/check` before handoff
+- Run `/pf-check` before handoff
 - Then `/reviewer` for code review
 
 ### In Review Phase
@@ -228,12 +210,23 @@ Based on your current state, here's what you might need:
 - Then `/sm` to finish the story
 
 ### Between Stories
-- `/work` to pick up next story
-- `/sprint-planning` for planning session
+- `/pf-work` to pick up next story
+- `/pf-sprint plan` for planning session
 
 </context-aware>
 
 <reference>
+
+## CLI Help
+
+For detailed help on any command group:
+```bash
+pf help           # Overview of all groups
+pf help sprint    # Sprint commands
+pf help git       # Git commands
+pf help session   # Session commands
+pf help epic      # Epic commands
+```
 
 ## Documentation
 
@@ -242,19 +235,8 @@ Based on your current state, here's what you might need:
 - **Active Session:** `.session/*-session.md`
 - **Agent Definitions:** `pennyfarthing-dist/agents/*.md`
 - **Command Definitions:** `pennyfarthing-dist/commands/*.md`
+- **Command Registry:** `pennyfarthing-dist/command-registry.yaml`
 - **Theme Files:** `pennyfarthing-dist/personas/themes/*.yaml`
 - **Guides:** `.pennyfarthing/guides/*.md`
-
-## Getting More Help
-
-For detailed help on a specific command, read its definition file:
-```bash
-cat pennyfarthing-dist/commands/<command-name>.md
-```
-
-For agent documentation:
-```bash
-cat pennyfarthing-dist/agents/<agent-name>.md
-```
 
 </reference>
