@@ -11,9 +11,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [11.0.0-alpha.0] - 2026-02-14
+## [11.0.0] - 2026-02-14
 
-*No unreleased changes*
+### Added
+
+- **BikeRack TUI** — Full terminal-native dashboard replacing browser-based panels, built with Textual. Includes scaffold (103-1), WheelHub WebSocket client with auto-reconnect (103-2), `pf bikerack` launcher command (103-3), connection status indicator (103-4), BasePanel channel subscription with Rich rendering (103-5), SprintPanel (103-6), panel focus via `/ws/focus` (103-7), panel persistence for ERB and TUI (103-8), panel header chrome with Nerd Font icons (103-9), GitPanel multi-repo status (103-10), ChangedPanel file list with status icons (103-14), AuditLogPanel with auto-scroll and manual override (103-15), BackgroundPanel task status display (103-16), DiffsPanel with Rich diff rendering and syntax highlighting (103-18), TUI launcher entry point (103-20), git fetch cooldown to prevent frequent network calls (103-21)
+- **Panel focus system** — `pf bc` CLI command and `/bc` skill for controlling which panel BikeRack focuses on (104-1), WheelHub config file watch with panel focus broadcast (104-2), `useFocusPanel` React hook for layout stash/restore (104-3), named layout save/load/list/clear (104-4)
+- **Core consolidation** — Absorbed `@pennyfarthing/shared` and benchmark packages into core (98-16), extracted WheelHub server from Cyclist into `packages/core/src/server/` (98-17), moved React UI build pipeline and static assets to core (98-18). Cyclist is now a thin wrapper adding WebSocket + OTLP
+- **Namespace isolation** — Prefixed all built-in skills and commands with `pf-` (98-4), updated agent definitions and docs for new references (98-7), sprint shard migration as versioned migration (98-5), protective symlink pre-flight checks (98-6)
+- **Settings merge model** — Shared merge model for `settings.local.json` so Cyclist and CLI don't overwrite each other's settings (98-11)
+- **Git hook chaining** — `.d/` dispatcher pattern lets multiple hooks coexist without overwriting (98-12)
+- **ProgressPanel** — At-a-glance story dashboard showing sprint progress in Cyclist (103-11)
+- **New persona themes** — Hogan's Heroes and Stephen King theme packs (MSSCI-15087)
+- **CLI normalization** — Lowercase choices, unified `--json` flag, sugar shortcuts across all `pf` commands (91-28)
+- **Validate-refs CI** — CI job and pre-commit warning for broken file references, per-check reference counters, plugin skill discovery (validate-refs)
+- **Party mode roleplay** — Multi-round agent discussion variant for brainstorming sessions
+- **Release workflow** — Alpha/beta/rc prerelease support with channel graduation
+- **Sprint CLI** — Epic update command (`pf sprint epic update`), `--workflow` option for story update
+- **Archive sharding** — Migration and loader for sharded completed-story archives (td-4)
+- **Mid-session launch** — `pf gui` and `pf tui` commands to launch Cyclist or BikeRack without restarting (MSSCI-15072)
+- **Orphan shard discovery** — Sprint loader automatically finds and includes orphaned epic shards (MSSCI-14990)
+- **Copy-to-clipboard** — Sprint Panel story/epic ID copy button in Cyclist (MSSCI-15030)
+- **Quick-spec workflow** — New stepped workflow for rapid specification with architecture domain data
+- **PRD domains** — Process control and building automation domain data for PRD workflow
+- **Skill docs** — Restructured into staggered discovery with CLI index (91-28)
+- **BikeRack panel state persistence** — Panels remember their state across TUI restarts (td-3)
+
+### Changed
+
+- **Cyclist/BikeRack unified serving** — Both modes now serve from `/` via environment discriminator instead of separate paths
+- **Monty Python theme** — Reworked to Flying Circus focus, moved to core themes package; Star Trek TNG moved to scifi package
+- **Cyclist thins out** — Dropped `@pennyfarthing/shared` dependency, removed dead copy-mode code paths (98-14)
+
+### Removed
+
+- **TTY panel** — Removed TTY panel and `node-pty` dependency entirely (98-15). Terminal emulation replaced by TUI panels
+- **pf-dev-patterns skill** — Removed unused skill and stale references
+
+### Fixed
+
+- **Uninstall safety** — `pennyfarthing uninstall` no longer destroys user-created commands and skills (98-9)
+- **Sprint shard bugs** — Stopped auto-merging orphan epic shards into current sprint, fixed epic shard deletion on promote, wired `_canonicalize` into `validate --fix`, fixed `completed_stories` population when archiving epics
+- **Layout corruption** — Prevented empty layout persistence and restore corruption in both Cyclist and BikeRack, fixed config corruption on YAML roundtrip in `/bc`
+- **Settings symlink crash** — Handle existing real file in `ensureSettingsSymlink` instead of crashing
+- **Settings panel** — Wired theme list API, OTLP provider pattern, and general settings cleanup (#894)
+- **Monorepo paths** — Added monorepo path resolution for public and dist dirs, enabled workspace linking for package resolution, replaced `workspace:` protocol refs with npm version ranges for publishing
+- **Port binding** — `findAvailablePort` now binds to `127.0.0.1` instead of all interfaces
+
+### Security
+
+- Addressed security issues #888, #890, #891, #892
 
 ---
 

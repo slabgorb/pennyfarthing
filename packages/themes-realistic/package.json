@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/themes-realistic",
-  "version": "11.0.0-alpha.0",
+  "version": "11.0.0",
   "description": "Historical figure themes for Pennyfarthing (optional)",
   "pennyfarthing-theme-pack": true,
   "files": [
