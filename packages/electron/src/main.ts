@@ -12,7 +12,7 @@
 import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
-import type { App, BrowserWindow, IpcMain, Dialog, Menu } from 'electron';
+// Electron types are available at runtime via require('electron') in startElectronApp()
 // Core server exports (paths, ports, story, git, etc.)
 import {
   getStoryInfo,
