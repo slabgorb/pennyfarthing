@@ -66,7 +66,7 @@ WHY:  repos.yaml never_edit: [packages/*/dist/**]
 
 <critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
 <helpers>
@@ -97,7 +97,7 @@ Read `**Workflow:**` and `**Phase:**` from session. Query:
 OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
-**If OWNER != "dev":** Run `handoff-marker.sh $OWNER`, output result, tell user.
+**If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
 </phase-check>
 
 <on-activation>
@@ -147,7 +147,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 - [ ] Write Dev Assessment to session file
 - [ ] Run `pf handoff resolve-gate` — verify gate status
 - [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
+- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 
 <assessment-template>
@@ -193,7 +193,7 @@ Write to session file BEFORE starting exit protocol:
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
 8. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/pf handoff marker {next_agent}
    ```
 9. Output result verbatim and EXIT
 </exit-sequence>

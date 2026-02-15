@@ -151,7 +151,7 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
 8. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/pf handoff marker {next_agent}
    ```
 9. Output result verbatim and EXIT
 
