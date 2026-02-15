@@ -64,11 +64,6 @@ WHY:  repos.yaml never_edit: [packages/*/dist/**]
 ```
 </critical>
 
-<critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
-</critical>
-
 <helpers>
 **Model:** haiku | **Execution:** foreground (sequential)
 
@@ -141,15 +136,6 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 10. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
 </workflow>
 
-<handoff-gate>
-## MANDATORY: Complete Before Exiting
-
-- [ ] Write Dev Assessment to session file
-- [ ] Run `pf handoff resolve-gate` — verify gate status
-- [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
-</handoff-gate>
-
 <assessment-template>
 ## Dev Assessment Template
 
@@ -181,22 +167,12 @@ Write to session file BEFORE starting exit protocol:
 - [ ] Error handling implemented
 </self-review>
 
-<exit-sequence>
-## Exit Sequence
+<exit>
+1. Write Dev Assessment to session file (see <assessment-template>)
+2. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
-1. Write Dev Assessment to session file
-2. Terminate tandem backseat (if active)
-3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
-4. If blocked → report error, STOP
-5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
-6. If fail → fix issues, retry (max 3). If pass → continue
-7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker {next_agent}
-   ```
-9. Output result verbatim and EXIT
-</exit-sequence>
+Nothing after the marker. EXIT.
+</exit>
 
 <tandem-consultation>
 ## Tandem Consultation (Leader)
@@ -226,6 +202,3 @@ When your workflow phase has `tandem.mode: consultation`, you can spawn the part
 - `/pf-code-review` - Self-review checklist
 </skills>
 
-<exit>
-Nothing after the marker. EXIT.
-</exit>

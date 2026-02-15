@@ -25,11 +25,6 @@ The moment you start reading implementation files or planning how code should wo
 </critical>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
-</critical>
-
-<critical>
 Use `pf jira <command>` for all Jira interactions. Key commands:
 ```
 pf jira check MSSCI-XXXXX       # Check story availability
@@ -281,19 +276,8 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 </skills>
 
 <exit>
-## Exit Sequence
-
-1. Verify pre-handoff checklist
-2. `pf handoff resolve-gate {story-id} {workflow} {phase}`
-3. If blocked → report error, STOP
-4. If skip → jump to step 6. If ready → spawn gate subagent → GATE_RESULT
-5. If fail → fix issues, retry (max 3). If pass → continue
-6. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-7. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker {next_agent}
-   ```
-8. Output result verbatim and EXIT
+1. Verify pre-handoff checklist (see <gate>)
+2. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>

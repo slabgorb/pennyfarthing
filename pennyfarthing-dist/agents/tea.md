@@ -18,11 +18,6 @@ Every line of code you DON'T test is a bug waiting to happen. Your tests aren't 
 **A test suite that catches nothing catches nothing.**
 </test-paranoia>
 
-<critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
-</critical>
-
 <helpers>
 **Model:** haiku | **Execution:** foreground (sequential)
 
@@ -98,15 +93,6 @@ TEA may skip test writing for:
 **If bypassing:** Document reason in session file, hand directly to Dev.
 </workflow>
 
-<handoff-gate>
-## MANDATORY: Complete Before Exiting
-
-- [ ] Write TEA Assessment to session file
-- [ ] Run `pf handoff resolve-gate` — verify gate status
-- [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
-</handoff-gate>
-
 <assessment-template>
 ## TEA Assessment Template
 
@@ -128,22 +114,12 @@ Write to session file BEFORE starting exit protocol:
 ```
 </assessment-template>
 
-<exit-sequence>
-## Exit Sequence
+<exit>
+1. Write TEA Assessment to session file (see <assessment-template>)
+2. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
-1. Write TEA Assessment to session file
-2. Terminate tandem backseat (if active)
-3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
-4. If blocked → report error, STOP
-5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
-6. If fail → fix issues, retry (max 3). If pass → continue
-7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker {next_agent}
-   ```
-9. Output result verbatim and EXIT
-</exit-sequence>
+Nothing after the marker. EXIT.
+</exit>
 
 <tandem-consultation>
 ## Tandem Consultation (Leader + Partner)
@@ -168,6 +144,3 @@ Stay within the token budget. Be focused — answer the specific question, not e
   - `references/tdd-policy.md` - TDD rules (no skipped tests!)
 </skills>
 
-<exit>
-Nothing after the marker. EXIT.
-</exit>
