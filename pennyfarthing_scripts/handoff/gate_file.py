@@ -31,4 +31,75 @@ def resolve_gate_file(
             path: str | None  (absolute path if found)
             error: str | None (error message if not found)
     """
-    raise NotImplementedError("Story 106-4: Dev implements this")
+    if project_root is None:
+        project_root = _find_project_root()
+
+    name = _sanitize_gate_name(gate_ref)
+    if name is None:
+        return _result(
+            status="not_found",
+            error=f"Invalid gate reference: {gate_ref!r}",
+        )
+
+    # Resolution order: local first, built-in fallback
+    search_paths = [
+        project_root / ".pennyfarthing" / "gates" / f"{name}.md",
+        project_root / "pennyfarthing-dist" / "gates" / f"{name}.md",
+    ]
+
+    for candidate in search_paths:
+        if candidate.is_file():
+            return _result(status="found", path=str(candidate.resolve()))
+
+    return _result(
+        status="not_found",
+        error=f"Gate file not found: {name}",
+    )
+
+
+def _sanitize_gate_name(gate_ref: str) -> str | None:
+    """Extract a clean gate name from a reference string.
+
+    Strips 'gates/' prefix and '.md' suffix. Rejects empty names
+    and path traversal attempts.
+    """
+    if not gate_ref:
+        return None
+
+    name = gate_ref
+    # Strip gates/ prefix
+    if name.startswith("gates/"):
+        name = name[len("gates/"):]
+    # Strip .md suffix
+    if name.endswith(".md"):
+        name = name[: -len(".md")]
+
+    if not name:
+        return None
+
+    # Reject path traversal
+    if ".." in name or "/" in name:
+        return None
+
+    return name
+
+
+def _result(
+    status: str,
+    path: str | None = None,
+    error: str | None = None,
+) -> dict:
+    return {
+        "status": status,
+        "path": path,
+        "error": error,
+    }
+
+
+def _find_project_root() -> Path:
+    """Walk up from cwd looking for .pennyfarthing/ directory."""
+    cwd = Path.cwd()
+    for parent in [cwd, *cwd.parents]:
+        if (parent / ".pennyfarthing").is_dir():
+            return parent
+    return cwd
