@@ -21,7 +21,7 @@ model: haiku
 <critical>
 **Marker generation happens in the CALLING agent, not here.**
 This subagent does gate checks and session updates only.
-Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `handoff-marker.sh` as their last action.
+Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `pf handoff marker` as their last action.
 </critical>
 
 ---
@@ -161,8 +161,8 @@ HANDOFF_RESULT:
   tandem_scope: {SCOPE or "none"}
 
   next_steps:
-    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Handoff complete. Run `pf handoff marker` as ABSOLUTE LAST ACTION."
+    - "Command: pf handoff marker {next_agent}"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -178,8 +178,8 @@ HANDOFF_RESULT:
   tandem_scope: file-watch
 
   next_steps:
-    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh dev"
+    - "Handoff complete. Run `pf handoff marker` as ABSOLUTE LAST ACTION."
+    - "Command: pf handoff marker dev"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -195,8 +195,8 @@ HANDOFF_RESULT:
   tandem_scope: file-watch
 
   next_steps:
-    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh reviewer"
+    - "Handoff complete. Run `pf handoff marker` as ABSOLUTE LAST ACTION."
+    - "Command: pf handoff marker reviewer"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -212,7 +212,7 @@ HANDOFF_RESULT:
   next_steps:
     - "Handoff blocked at gate '{gate}': {error}"
     - "Required action: {fix}"
-    - "Do NOT run handoff-marker.sh. Resolve issue first."
+    - "Do NOT run `pf handoff marker`. Resolve issue first."
 ```
 </output>
 
@@ -244,7 +244,7 @@ When you receive `HANDOFF_RESULT`:
 **CRITICAL: The calling agent MUST run this as their ABSOLUTE LAST ACTION:**
 
 ```bash
-.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+pf handoff marker {next_agent}
 ```
 
-Then output the script's result verbatim and EXIT. Nothing else after.
+Then output the command's result verbatim and EXIT. Nothing else after.

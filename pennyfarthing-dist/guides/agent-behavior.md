@@ -3,7 +3,7 @@
 
 **Tests:** Use `testing-runner` subagent, never run directly.
 
-**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `handoff-marker.sh` → EXIT. See `<agent-exit-protocol>`.
+**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `pf handoff marker` → EXIT. See `<agent-exit-protocol>`.
 
 **Sidecars:** Write learnings BEFORE starting exit protocol.
 
@@ -124,7 +124,7 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
    - If fail → fix issues, retry from step 3 (max 3 retries)
    - If pass → continue
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. `.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}` → emit marker → EXIT
+8. `pf handoff marker {next_agent}` → emit marker → EXIT
 
 **Agents drive exit directly — no handoff subagent.** Scripts handle routing and session updates atomically.
 </agent-exit-protocol>
@@ -143,6 +143,6 @@ Output:
 ```
 <!-- CYCLIST:HANDOFF:/{OWNER} -->
 
-Run `/{OWNER}` to continue
+Run `/pf-{OWNER}` to continue
 ```
 </wrong-phase-detection>

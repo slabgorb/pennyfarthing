@@ -104,7 +104,7 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 1. Tech Writer writes assessment/review to session file
 2. Run `pf handoff resolve-gate` → check gate status
 3. Run `pf handoff complete-phase` → atomic session update
-4. Run `handoff-marker.sh {next_agent}` → emit marker and EXIT
+4. Run `pf handoff marker {next_agent}` → emit marker and EXIT
 </handoff-protocol>
 
 <workflows>
@@ -206,7 +206,7 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
 8. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   pf handoff marker {next_agent}
    ```
 9. Output result verbatim and EXIT
 
