@@ -80,7 +80,7 @@ All agents now have `<critical>` blocks between lines 20-36:
 ```markdown
 <critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After handoff subagent returns:
-Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 ```
 
