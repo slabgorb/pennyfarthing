@@ -27,6 +27,7 @@ workflow:
       input: [implementation]
       output: [approval]
       gate:
+        file: gates/approval
         type: approval
 
     - name: finish
