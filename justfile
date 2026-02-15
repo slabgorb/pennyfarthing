@@ -401,11 +401,39 @@ bikerack *args:
     echo "  Server: tsx watch src/bikerack.ts"
     echo "  Frontend: vite build --watch"
     echo ""
+    logfile="$CYCLIST_PROJECT_DIR/.session/bikerack_debug.log"
+    mkdir -p "$(dirname "$logfile")"
+    echo "  Log: $logfile"
+    # Clean stale port file before starting
+    rm -f "$CYCLIST_PROJECT_DIR/.bikerack-port"
     npx concurrently -k \
         -n server,vite \
         -c green,magenta \
         "tsx watch src/bikerack.ts" \
-        "vite build --watch"
+        "vite build --watch" \
+        >> "$logfile" 2>&1 &
+    echo "  PID: $!"
+    echo ""
+    # Wait for server to write .bikerack-port (up to 10s)
+    port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"
+    for i in $(seq 1 20); do
+        if [[ -f "$port_file" ]]; then
+            port=$(cat "$port_file")
+            url="http://127.0.0.1:${port}"
+            echo "  BikeRack: $url"
+            echo ""
+            open -a "Google Chrome" "$url"
+            break
+        fi
+        sleep 0.5
+    done
+    if [[ ! -f "$port_file" ]]; then
+        echo "  Warning: server didn't start within 10s. Check logs: $logfile"
+    fi
+    echo "BikeRack running in background. Use 'tail -f $logfile' to watch logs."
+    echo ""
+    # Launch Claude Code in the project directory
+    exec claude --project-dir "$CYCLIST_PROJECT_DIR"
 
 # Launch BikeRack TUI (connects to running WheelHub)
 tui *args:
