@@ -22,17 +22,16 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 </critical>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After `handoff` subagent returns:
+**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
 <helpers>
-**Model:** haiku | **Pre-flight:** background | **Handoff:** foreground
+**Model:** haiku | **Pre-flight:** background
 
 | Subagent | Purpose |
 |----------|---------|
 | `reviewer-preflight` | Run tests, lint, gather smells (background) |
-| `handoff` | Update session for approve/reject |
 </helpers>
 
 <parameters>
@@ -44,26 +43,6 @@ STORY_ID: "{STORY_ID}"
 REPOS: "{REPOS}"
 BRANCH: "{BRANCH}"
 PR_NUMBER: "{PR_NUMBER}"
-```
-
-### handoff (approval)
-```yaml
-STORY_ID: "{STORY_ID}"
-WORKFLOW: "{WORKFLOW}"
-CURRENT_PHASE: "review"
-REPOS: "{REPOS}"
-VERDICT: "approved"
-ASSESSMENT_SECTION: "Reviewer Assessment"
-```
-
-### handoff (rejection)
-```yaml
-STORY_ID: "{STORY_ID}"
-WORKFLOW: "{WORKFLOW}"
-CURRENT_PHASE: "review"
-REPOS: "{REPOS}"
-VERDICT: "rejected"
-ASSESSMENT_SECTION: "Reviewer Assessment"
 ```
 </parameters>
 
@@ -125,8 +104,9 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 
 - [ ] Write Reviewer Assessment to session file
 - [ ] **If APPROVED:** Merge PR directly with `gh pr merge {PR_NUMBER} --merge --delete-branch`
-- [ ] Spawn `handoff` subagent with VERDICT (approved/rejected)
-- [ ] Verify handoff completed (subagent emits marker)
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
 </handoff-gate>
 
 <assessment-templates>
@@ -165,24 +145,26 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
    ```bash
    gh pr merge {PR_NUMBER} --merge --delete-branch
    ```
-3. Update session phase to `finish`
-4. Spawn `handoff` subagent with VERDICT=approved
-5. Await `HANDOFF_RESULT` with `next_agent` (will be `sm`)
-6. **ABSOLUTE LAST ACTION:**
+3. Terminate tandem backseat (if active)
+4. `pf handoff resolve-gate {story-id} {workflow} review`
+5. If blocked → report error, STOP
+6. `pf handoff complete-phase {story-id} {workflow} review finish approval`
+7. **ABSOLUTE LAST ACTION:**
    ```bash
    .pennyfarthing/scripts/core/handoff-marker.sh sm
    ```
-7. Output result verbatim and EXIT
+8. Output result verbatim and EXIT
 
 ### If REJECTED:
 1. Write Reviewer Assessment to session file
-2. Spawn `handoff` subagent with VERDICT=rejected
-3. Await `HANDOFF_RESULT` with `next_agent` (will be `dev`)
-4. **ABSOLUTE LAST ACTION:**
+2. Terminate tandem backseat (if active)
+3. `pf handoff resolve-gate {story-id} {workflow} review`
+4. `pf handoff complete-phase {story-id} {workflow} review green approval`
+5. **ABSOLUTE LAST ACTION:**
    ```bash
    .pennyfarthing/scripts/core/handoff-marker.sh dev
    ```
-5. Output result verbatim and EXIT
+6. Output result verbatim and EXIT
 
 **Verdict routing:** APPROVED → merge PR, then sm | REJECTED → dev
 </exit-sequence>

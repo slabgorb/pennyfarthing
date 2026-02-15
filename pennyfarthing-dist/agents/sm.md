@@ -25,7 +25,7 @@ The moment you start reading implementation files or planning how code should wo
 </critical>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After `sm-handoff` returns:
+**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
@@ -48,7 +48,6 @@ If they are broken, COMPLAIN LOUDLY
 | `sm-setup` | MODE=research (backlog scan) OR MODE=setup (story setup) |
 | `sm-finish` | PHASE=preflight (checks) OR PHASE=execute (archive) |
 | `sm-file-summary` | Summarize implementation files for context |
-| `sm-handoff` | Session update + handoff to TEA/Dev |
 </helpers>
 
 <parameters>
@@ -81,14 +80,6 @@ BRANCH: "{BRANCH}"
 ### sm-file-summary
 ```yaml
 FILE_LIST: "{comma-separated file paths}"
-```
-
-### sm-handoff
-```yaml
-STORY_ID: "{STORY_ID}"
-NEXT_AGENT: "{tea|dev|ux-designer|orchestrator}"
-NEXT_PHASE: "{red|implement|design}"
-WORKFLOW: "{WORKFLOW}"
 ```
 
 **Phase names must match workflow YAML exactly.** Use the phase `name` field from the workflow definition:
@@ -181,7 +172,7 @@ Present to user:
    ```
 
 4. **Route based on workflow type:**
-   - **Phased workflow** → Spawn `sm-handoff` to hand off to first agent
+   - **Phased workflow** → Run exit protocol: `pf handoff complete-phase` then `handoff-marker.sh`
    - **Stepped workflow** → Tell user to run `/pf-workflow start {workflow}` (no handoff)
 </new-work-flow>
 
@@ -208,7 +199,7 @@ ls .session/{story-id}-session.md || echo "BLOCKED: No session file"
 
 **If session file does not exist → DO NOT HANDOFF. Run sm-setup first.**
 
-Before `sm-handoff`, verify ALL of these:
+Before handoff, verify ALL of these:
 - [ ] Session file EXISTS: `.session/{story-id}-session.md`
 - [ ] Session has `**Workflow:**` field set
 - [ ] Session has `**Phase:**` field set to `setup`
@@ -268,7 +259,7 @@ SM does NOT hand off to agents. Instead, use `/pf-workflow start {name}` to begi
 **If story has a stepped workflow tag:**
 1. Create session file with workflow tracking
 2. Tell user: "This story uses the `{workflow}` stepped workflow. Run `/pf-workflow start {workflow}` to begin."
-3. **DO NOT spawn sm-handoff** — stepped workflows don't use agent handoffs
+3. **DO NOT run exit protocol** — stepped workflows don't use agent handoffs
 </workflow-routing>
 
 <phase-check>
@@ -293,13 +284,16 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ## Exit Sequence
 
 1. Verify pre-handoff checklist
-2. Spawn `sm-handoff`
-3. Await `HANDOFF_RESULT` with `next_agent`
-4. **ABSOLUTE LAST ACTION:**
+2. `pf handoff resolve-gate {story-id} {workflow} {phase}`
+3. If blocked → report error, STOP
+4. If skip → jump to step 6. If ready → spawn gate subagent → GATE_RESULT
+5. If fail → fix issues, retry (max 3). If pass → continue
+6. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+7. **ABSOLUTE LAST ACTION:**
    ```bash
    .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
-5. Output result verbatim and EXIT
+8. Output result verbatim and EXIT
 
 Nothing after the marker. EXIT.
 </exit>

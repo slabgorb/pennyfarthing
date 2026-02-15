@@ -191,7 +191,20 @@ Task tool:
 </handoffs>
 
 <exit>
-To exit: "Exit DevOps" or switch to another agent.
+## Exit Sequence
 
-On exit, run: `./.pennyfarthing/scripts/core/agent-session.sh stop`
+1. Write assessment to session file
+2. Terminate tandem backseat (if active)
+3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
+4. If blocked → report error, STOP
+5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
+6. If fail → fix issues, retry (max 3). If pass → continue
+7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. **ABSOLUTE LAST ACTION:**
+   ```bash
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+9. Output result verbatim and EXIT
+
+Nothing after the marker. EXIT.
 </exit>

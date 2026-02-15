@@ -211,7 +211,7 @@ SETUP_RESULT:
   next_agent: "{tea|dev|orchestrator}"
 
   next_steps:
-    - "Setup complete. Spawn sm-handoff to transition to {next_agent}."
+    - "Setup complete. Run exit protocol to transition to {next_agent}."
     - "Workflow '{workflow}' routes to: {next_agent}"
     - "Session file ready at: {session_file}"
 ```
@@ -231,7 +231,7 @@ SETUP_RESULT:
 
   next_steps:
     - "Setup complete. This is a STEPPED workflow."
-    - "DO NOT spawn sm-handoff. Tell user to run: /pf-workflow start {WORKFLOW}"
+    - "DO NOT run exit protocol. Tell user to run: /pf-workflow start {WORKFLOW}"
     - "Session file ready at: {session_file}"
 ```
 

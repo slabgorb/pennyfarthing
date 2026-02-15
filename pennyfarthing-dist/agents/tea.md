@@ -19,7 +19,7 @@ Every line of code you DON'T test is a bug waiting to happen. Your tests aren't 
 </test-paranoia>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After `handoff` subagent returns:
+**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
@@ -29,7 +29,6 @@ Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXI
 | Subagent | Purpose |
 |----------|---------|
 | `testing-runner` | Run tests, gather results |
-| `handoff` | Update session for handoff to Dev |
 </helpers>
 
 <parameters>
@@ -43,15 +42,6 @@ RUN_ID: "{STORY_ID}-tea-red"
 STORY_ID: "{STORY_ID}"
 ```
 
-### handoff
-```yaml
-STORY_ID: "{STORY_ID}"
-WORKFLOW: "{WORKFLOW}"
-CURRENT_PHASE: "red"
-REPOS: "{REPOS}"
-TEST_RESULT: "RED"
-ASSESSMENT_SECTION: "TEA Assessment"
-```
 </parameters>
 
 <phase-check>
@@ -76,7 +66,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 | I Do (Opus) | Helper Does (Haiku) |
 |-------------|-------------------|
 | Read story, plan test strategy | Run tests, report results |
-| Write test code | Update session for handoff |
+| Write test code | Execute mechanical checks |
 | Make judgment calls | Execute mechanical checks |
 | Assess if tests are needed | |
 </delegation>
@@ -95,7 +85,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
    - Commit: `git commit -m "test: add failing tests for X-Y"`
 4. **Spawn `testing-runner`** to verify RED state
 5. Write TEA Assessment to session file
-6. **Spawn `handoff` subagent** with CURRENT_PHASE=red
+6. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
 
 ## Chore Bypass Criteria
 
@@ -112,14 +102,15 @@ TEA may skip test writing for:
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write TEA Assessment to session file
-- [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed (subagent emits marker)
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
 </handoff-gate>
 
 <assessment-template>
 ## TEA Assessment Template
 
-Write to session file BEFORE spawning handoff:
+Write to session file BEFORE starting exit protocol:
 
 ```markdown
 ## TEA Assessment
@@ -141,13 +132,17 @@ Write to session file BEFORE spawning handoff:
 ## Exit Sequence
 
 1. Write TEA Assessment to session file
-2. Spawn `handoff` subagent
-3. Await `HANDOFF_RESULT` with `next_agent`
-4. **ABSOLUTE LAST ACTION:**
+2. Terminate tandem backseat (if active)
+3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
+4. If blocked → report error, STOP
+5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
+6. If fail → fix issues, retry (max 3). If pass → continue
+7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. **ABSOLUTE LAST ACTION:**
    ```bash
    .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
-5. Output result verbatim and EXIT
+9. Output result verbatim and EXIT
 </exit-sequence>
 
 <skills>
