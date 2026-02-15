@@ -89,6 +89,7 @@ def resolve_gate(
     if gate_type is None:
         return _result(
             status="skip",
+            gate_file=gate_file,
             next_agent=next_agent,
             next_phase=next_phase,
             assessment_found=True,
