@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -53,7 +53,7 @@ def complete_phase(
         }
 
     content = session_path.read_text()
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
     to_agent = _get_phase_agent(project_root, workflow, to_phase)
