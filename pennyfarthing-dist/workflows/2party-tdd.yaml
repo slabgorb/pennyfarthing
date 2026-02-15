@@ -53,6 +53,7 @@ workflow:
         Present findings to user. User decides what to add/change.
         Update the story description with agreed refinements.
       gate:
+        file: gates/approval
         type: approval
         condition: User reviewed dev-perspective gaps and decided on each item
 
@@ -73,6 +74,7 @@ workflow:
         Present findings to user. User decides what to add/change.
         Update the story description with agreed refinements.
       gate:
+        file: gates/approval
         type: approval
         condition: User reviewed tea-perspective gaps and decided on each item
 
@@ -93,6 +95,7 @@ workflow:
 
         Fix any remaining issues, then hand off to TEA.
       gate:
+        file: gates/approval
         type: approval
         condition: Story passes quality check and is ready for TEA
 
@@ -122,6 +125,7 @@ workflow:
         In the TEA Assessment handoff, list what quality gates Dev
         should expect to pass beyond the functional tests.
       gate:
+        file: gates/tests-fail
         type: tests_fail
         condition: All acceptance criteria have test coverage, including quality gate check
 
@@ -181,6 +185,7 @@ workflow:
         - Set review_verdict: approved in story
         - DO NOT merge the PR — hand off to SM for finish phase
       gate:
+        file: gates/approval
         type: approval
         condition: Code review passed, no blocking issues
 
@@ -194,6 +199,7 @@ workflow:
         from the story. Write failing tests for each testable finding.
         Commit RED tests. Hand off to Dev.
       gate:
+        file: gates/tests-fail
         type: tests_fail
         condition: New tests cover reviewer findings
 
@@ -255,6 +261,7 @@ workflow:
         5. Only after user approves: create PR (draft by default,
            or per user pr_mode preference in pennyfarthing config)
       gate:
+        file: gates/approval
         type: approval
         condition: User has reviewed and approved PR content before submission
 
@@ -315,6 +322,7 @@ workflow:
 
         Present decisions to user. User has final say on every item.
       gate:
+        file: gates/approval
         type: approval
         condition: User has decided on every external review comment
 
@@ -340,6 +348,7 @@ workflow:
 
         Commit fixes. Push branch. Present all draft replies to user.
       gate:
+        file: gates/approval
         type: approval
         condition: >
           User has approved every draft reply. Fixes pass quality
