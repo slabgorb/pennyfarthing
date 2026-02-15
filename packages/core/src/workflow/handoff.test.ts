@@ -384,6 +384,32 @@ describe('Generic Handoff (31-7)', () => {
       assert.strictEqual(result.passed, false);
       assert.ok(result.message?.includes('not found'), 'Should indicate phase not found');
     });
+
+    // Story 108-2: Unknown gate types should fail, not silently pass
+    it('should fail for unknown gate type (108-2: remove inline fallback)', () => {
+      // AC4: After removing the gate.type fallback, unknown gate types must
+      // return passed=false instead of silently treating them as manual gates.
+      // This ensures only recognized gate types (tests_fail, tests_pass,
+      // approval, manual) are accepted — single code path enforcement.
+      const unknownGateWorkflow: WorkflowDefinition = {
+        name: 'unknown-gate-test',
+        phases: [
+          { name: 'work', agent: 'dev', gate: { type: 'nonexistent_gate_type' } }
+        ]
+      };
+
+      const result = checkGate(unknownGateWorkflow, 'work', {});
+
+      assert.strictEqual(
+        result.passed,
+        false,
+        'Unknown gate type should fail — not silently pass as manual'
+      );
+      assert.ok(
+        result.message,
+        'Should provide error message for unknown gate type'
+      );
+    });
   });
 
   describe('formatPhaseTransition() - Format session file updates', () => {

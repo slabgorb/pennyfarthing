@@ -21,6 +21,7 @@ workflow:
       input: [session_file, story_context]
       output: [design_spec, user_flows, wireframes, behavior_scenarios]
       gate:
+        file: gates/design-review
         type: design_review
         condition: UX spec defines user flows and acceptance behaviors
       tandem:
@@ -41,6 +42,7 @@ workflow:
       input: [failing_tests, design_spec, story_context]
       output: [implementation, passing_tests]
       gate:
+        file: gates/tests-pass
         type: tests_pass
         condition: All tests passing, UX spec implemented
       tandem:
