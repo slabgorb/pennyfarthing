@@ -47,7 +47,7 @@ def generate_marker(
         # Relay off — ask for confirmation
         if ctx.is_cyclist:
             return _block(
-                marker=f"<!-- CYCLIST:QUESTION:yesno -->",
+                marker="<!-- CYCLIST:QUESTION:yesno -->",
                 question=f"Ready to hand off to {cmd}?",
                 fallback=f"Run `{cmd}` to continue",
             )
