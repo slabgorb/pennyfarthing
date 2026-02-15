@@ -13,7 +13,6 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-persona-benchmark](#pf-persona-benchmark)
 - [Development](#development)
   - [pf-code-review](#pf-code-review)
-  - [pf-dev-patterns](#pf-dev-patterns)
   - [pf-systematic-debugging](#pf-systematic-debugging)
   - [pf-testing](#pf-testing)
 - [Documentation](#documentation)
@@ -141,24 +140,7 @@ Code review checklists and patterns for quality assurance
 - Don't skip security considerations in review
 - Don't approve without running tests
 
-**Related:** [pf-testing](#pf-testing), [pf-dev-patterns](#pf-dev-patterns)
-
-### pf-dev-patterns
-
-Common development patterns, fixes, and gotchas
-
-**Tags:** patterns, debugging, implementation
-
-**Keywords:** implementation, debugging, fixes, best-practices
-
-**Examples:**
-- Implementing features: `/dev-patterns`
-- Avoiding known pitfalls: `/dev-patterns gotchas`
-
-**Anti-patterns:**
-- Don't apply patterns from other frameworks blindly
-
-**Related:** [pf-code-review](#pf-code-review), [pf-testing](#pf-testing)
+**Related:** [pf-testing](#pf-testing)
 
 ### pf-systematic-debugging
 
@@ -176,7 +158,7 @@ Systematic debugging approach for isolating and fixing issues
 - Don't jump to solutions without reproducing the issue first
 - Don't fix symptoms instead of root causes
 
-**Related:** [pf-testing](#pf-testing), [pf-dev-patterns](#pf-dev-patterns), [pf-agentic-patterns](#pf-agentic-patterns)
+**Related:** [pf-testing](#pf-testing), [pf-agentic-patterns](#pf-agentic-patterns)
 
 ### pf-testing
 
@@ -194,7 +176,7 @@ Test commands and TDD workflow patterns
 - Don't run tests directly - use testing-runner subagent
 - Don't skip RED phase in TDD workflow
 
-**Related:** [pf-dev-patterns](#pf-dev-patterns), [pf-code-review](#pf-code-review)
+**Related:** [pf-code-review](#pf-code-review)
 
 ## Documentation
 
