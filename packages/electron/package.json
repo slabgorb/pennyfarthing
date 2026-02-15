@@ -1,0 +1,106 @@
+{
+  "name": "@pennyfarthing/electron",
+  "version": "11.0.0",
+  "description": "Electron shell for Cyclist visual terminal",
+  "author": "1898andCo",
+  "type": "module",
+  "main": "dist/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/electron"
+  },
+  "scripts": {
+    "build": "tsc --build && tsc -p tsconfig.preload.json",
+    "build:electron": "npm run build && electron-builder -c.npmRebuild=false",
+    "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron dist/main.js\"",
+    "dev:once": "npm run build && electron dist/main.js",
+    "start": "electron dist/main.js"
+  },
+  "dependencies": {
+    "@pennyfarthing/core": "workspace:*",
+    "@pennyfarthing/cyclist": "workspace:*",
+    "electron-window-state": "^5.0.3",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "concurrently": "^9.2.1",
+    "electron": "^35.7.5",
+    "electron-builder": "^24.9.1",
+    "electron-reload": "^2.0.0-alpha.1",
+    "typescript": "^5.3.2"
+  },
+  "build": {
+    "appId": "com.cyclist.app",
+    "productName": "Cyclist",
+    "copyright": "Copyright © 2026",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+    ],
+    "extraMetadata": {
+      "main": "dist/main.js"
+    },
+    "extraResources": [
+      {
+        "from": "../../pennyfarthing-dist/personas/portraits",
+        "to": "pennyfarthing-dist/personas/portraits",
+        "filter": [
+          "**/*",
+          "!**/original/**",
+          "!**/small/**"
+        ]
+      },
+      {
+        "from": "../../pennyfarthing-dist/personas/themes",
+        "to": "pennyfarthing-dist/personas/themes"
+      },
+      {
+        "from": "../../packages/themes-realistic/themes",
+        "to": "pennyfarthing-dist/personas/themes"
+      },
+      {
+        "from": "../../packages/themes-realistic/portraits",
+        "to": "pennyfarthing-dist/personas/portraits",
+        "filter": [
+          "**/*",
+          "!**/original/**",
+          "!**/small/**"
+        ]
+      },
+      {
+        "from": "../../pennyfarthing-dist/agents",
+        "to": "pennyfarthing-dist/agents"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development"
+    }
+  }
+}

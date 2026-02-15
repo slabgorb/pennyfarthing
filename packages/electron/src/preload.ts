@@ -11,6 +11,11 @@
  * Electron's sandboxed preload to work. See tsconfig.preload.json.
  */
 
+// Type imports for Electron APIs (compiled to require() by CommonJS target)
+import type { IpcRenderer, ContextBridge } from 'electron';
+// IPC channel constants for type-safe channel references
+import { IPC_DATA_CHANNELS } from './ipc-channels.js';
+
 /**
  * Data API interface for sidebar data (B-2)
  * Each data type has get() for request/response and onUpdate() for subscriptions
@@ -619,23 +624,23 @@ function createElectronAPI(): ElectronAPI {
     const { ipcRenderer } = require('electron');
 
     return {
-      // Data APIs for sidebar (B-2)
-      stats: createDataAPI(ipcRenderer, 'stats:get', 'stats:update'),
-      persona: createDataAPI(ipcRenderer, 'persona:get', 'persona:update'),
-      story: createDataAPI(ipcRenderer, 'story:get', 'story:update'),
-      git: createDataAPI(ipcRenderer, 'git:get', 'git:update'),
+      // Data APIs for sidebar (B-2) — using IPC_DATA_CHANNELS constants
+      stats: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.STATS_GET, IPC_DATA_CHANNELS.STATS_UPDATE),
+      persona: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.PERSONA_GET, IPC_DATA_CHANNELS.PERSONA_UPDATE),
+      story: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.STORY_GET, IPC_DATA_CHANNELS.STORY_UPDATE),
+      git: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.GIT_GET, IPC_DATA_CHANNELS.GIT_UPDATE),
       // Tool stats API (E5-2)
-      toolStats: createDataAPI(ipcRenderer, 'toolStats:get', 'toolStats:update'),
+      toolStats: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.TOOL_STATS_GET, IPC_DATA_CHANNELS.TOOL_STATS_UPDATE),
       // Token stats API (E6-3)
-      tokenStats: createDataAPI(ipcRenderer, 'tokenStats:get', 'tokenStats:update'),
+      tokenStats: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.TOKEN_STATS_GET, IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE),
       // Todos API (B-17)
-      todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
+      todos: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.TODOS_GET, IPC_DATA_CHANNELS.TODOS_UPDATE),
       // Context API (B-19)
-      context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
+      context: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.CONTEXT_GET, IPC_DATA_CHANNELS.CONTEXT_UPDATE),
       // Usage Stats API (23-1)
-      usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+      usageStats: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.USAGE_STATS_GET, IPC_DATA_CHANNELS.USAGE_STATS_UPDATE),
       // 35-2: Project Info API (directory and user email)
-      projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
+      projectInfo: createDataAPI(ipcRenderer, IPC_DATA_CHANNELS.PROJECT_INFO_GET, IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE),
       // Claude SDK API (E7-3, 28-1: images support, MSSCI-11840: clearAndReload)
       claude: {
         send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
