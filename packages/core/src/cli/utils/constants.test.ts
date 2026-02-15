@@ -47,6 +47,7 @@ describe('106-4: ALL_SYMLINKS includes gates', () => {
 
 describe('106-4: MANAGED_PATHS includes gates', () => {
   it('has .pennyfarthing/gates in MANAGED_PATHS', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const found = MANAGED_PATHS.includes('.pennyfarthing/gates' as any);
     assert.ok(found, '.pennyfarthing/gates missing from MANAGED_PATHS');
   });
