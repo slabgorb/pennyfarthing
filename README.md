@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v10.4.0** | *The outer loop goes once, the inner loop goes many times.*
+**v11.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -16,8 +16,8 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
 - **11 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
-- **47 Slash Commands** - Entry points for agent activation and workflows
-- **19 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **51 Slash Commands** - Entry points for agent activation and workflows
+- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
@@ -110,7 +110,7 @@ Cyclist renders tool use as human-readable summaries instead of raw JSON. Consec
 
 ### Agent Portraits
 
-Each of the 97 persona characters has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+Each of the 319 persona characters across 29 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
 ## Prime Context System
 
