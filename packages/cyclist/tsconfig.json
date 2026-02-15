@@ -1,9 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
+    "types": ["node", "electron"],
     "paths": {
       "@pennyfarthing/core": ["../core/src/index.ts"],
       "@pennyfarthing/core/server": ["../core/src/server/server.ts"],
@@ -11,7 +13,7 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/preload.ts", "src/public/**/*.tsx", "src/public/**/*.ts", "src/public/styles/**"],
+  "exclude": ["node_modules", "dist", "tests", "src/public/**/*.tsx", "src/public/**/*.ts", "src/public/styles/**"],
   "references": [
     { "path": "../core" }
   ]

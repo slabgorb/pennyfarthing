@@ -16,7 +16,7 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
                         REFLECTOR SYSTEM FLOW
 
   +------------+     +---------------+     +---------------------+
-  |   Agent    |---->| Handoff       |---->| handoff-marker.sh   |
+  |   Agent    |---->| Handoff       |---->| pf handoff marker   |
   |   (Opus)   |     | Subagent      |     | (marker generator)  |
   +------------+     | (Haiku)       |     +---------------------+
        |             +---------------+              |
@@ -158,7 +158,7 @@ TirePump activates when:
        |                                    | 4. Update session file
        |                                    |    (Phase, History)
        |                                    |
-       |                                    | 5. Run handoff-marker.sh
+       |                                    | 5. Run pf handoff marker
        |                                    |
        |<------ Return AGENT_COMMAND -------|
        |                                    |
@@ -221,7 +221,7 @@ const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
 
 ### Marker Generator
 
-**Script:** `pennyfarthing-dist/scripts/core/handoff-marker.sh`
+**Command:** `pf handoff marker` (`pennyfarthing_scripts/handoff/marker.py`)
 
 Single source of truth for marker format. Handles:
 - IS_CYCLIST detection
@@ -283,7 +283,7 @@ packages/vscode-extension/
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Marker Generator | `pennyfarthing-dist/scripts/core/handoff-marker.sh` | Single source of truth for marker format |
+| Marker Generator | `pennyfarthing_scripts/handoff/marker.py` | Single source of truth for marker format |
 | Context Checker | `pennyfarthing-dist/scripts/core/check-context.sh` | Calculates context %, TirePump decision |
 | Cyclist Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
 | VS Code Parser | `packages/vscode-extension/src/adapters/reflector.ts` | VS Code marker detection |

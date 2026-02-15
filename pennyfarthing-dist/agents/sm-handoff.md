@@ -16,7 +16,7 @@ AC checkboxes are marked ONLY by the agent that does the work.
 <critical>
 **Marker generation happens in the CALLING agent, not here.**
 This subagent verifies prerequisites and updates session file only.
-Return `HANDOFF_RESULT` with the next agent name - SM runs `handoff-marker.sh` as their last action.
+Return `HANDOFF_RESULT` with the next agent name - SM runs `pf handoff marker` as their last action.
 </critical>
 
 <arguments>
@@ -97,8 +97,8 @@ HANDOFF_RESULT:
   summary: "{what was done}"
 
   next_steps:
-    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Handoff complete. Run `pf handoff marker` as ABSOLUTE LAST ACTION."
+    - "Command: pf handoff marker {next_agent}"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -114,8 +114,8 @@ HANDOFF_RESULT:
   summary: "Session updated (setup → red), branch verified, 7 AC defined. Tandem: architect available."
 
   next_steps:
-    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh tea"
+    - "Handoff complete. Run `pf handoff marker` as ABSOLUTE LAST ACTION."
+    - "Command: pf handoff marker tea"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -130,7 +130,7 @@ HANDOFF_RESULT:
   next_steps:
     - "Handoff blocked: {error}"
     - "Required action: {fix}"
-    - "Do NOT run handoff-marker.sh. Resolve issue first."
+    - "Do NOT run `pf handoff marker`. Resolve issue first."
 ```
 </output>
 
@@ -146,7 +146,7 @@ When SM receives `HANDOFF_RESULT`:
 **CRITICAL: SM MUST run this as their ABSOLUTE LAST ACTION:**
 
 ```bash
-.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+pf handoff marker {next_agent}
 ```
 
-Then output the script's result verbatim and EXIT. Nothing else after.
+Then output the command's result verbatim and EXIT. Nothing else after.

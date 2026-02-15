@@ -116,7 +116,7 @@ function calculateEpicProgress(epic: SprintEpic): { done: number; total: number 
  * Check if epic is fully completed (all stories done)
  */
 function isEpicCompleted(epic: SprintEpic): boolean {
-  return epic.stories.length > 0 && epic.stories.every((s) => s.status === 'done');
+  return epic.stories.length > 0 && epic.stories.every((s) => s.status === 'done' || s.status === 'cancelled');
 }
 
 /**
