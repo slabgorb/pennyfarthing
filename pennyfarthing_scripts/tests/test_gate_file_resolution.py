@@ -21,7 +21,6 @@ import pytest
 
 from pennyfarthing_scripts.handoff.gate_file import resolve_gate_file
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: Project structure
 # ---------------------------------------------------------------------------
