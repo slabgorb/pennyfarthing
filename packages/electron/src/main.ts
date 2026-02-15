@@ -12,6 +12,7 @@
 import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
+import type { App, BrowserWindow, IpcMain, Dialog, Menu } from 'electron';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
