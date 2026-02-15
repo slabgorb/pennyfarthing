@@ -143,6 +143,18 @@ From `bdd-tandem.yaml`:
 | green | Dev | UX Designer | file-watch |
 | review | Reviewer | PM | file-watch |
 
+## Tandem Consultation Protocol
+
+For active, synchronous agent-to-agent questions (as opposed to passive observation), see `protocols/tandem-consultation.md`. Key differences:
+
+| Aspect | Backseat (this guide) | Consultation |
+|--------|----------------------|--------------|
+| Mode | Passive observer | Active request/response |
+| Trigger | Phase start (automatic) | Leader-initiated (on demand) |
+| Model | Haiku | Sonnet |
+| Output | Observation file | Structured recommendation |
+| Lifecycle | Background process | Synchronous spawn |
+
 ## Related Infrastructure
 
 | Component | Status | Purpose |

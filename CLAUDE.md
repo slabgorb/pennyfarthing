@@ -140,11 +140,18 @@ For detailed behavior, key files, configuration, and APIs for each component, re
 
 | Component | What it is | Guide |
 |-----------|-----------|-------|
+| **BikeLane** | Workflow engine — phased, stepped, and procedural workflow orchestration | `pennyfarthing-dist/guides/bikelane.md` |
+| **BikeRack** | Standalone panel viewer for CLI-first development — WheelHub without Cyclist UI | `pennyfarthing-dist/guides/bikerack.md` |
+| **Gates** | Conditional checks blocking phase transitions until quality thresholds are met | `pennyfarthing-dist/guides/gates.md` |
+| **Handoff CLI** | Phase gate resolution, session transitions, and marker generation | `pennyfarthing-dist/guides/handoff-cli.md` |
+| **Hooks** | Claude Code hook system — session start, pre/post tool use, git hooks | `pennyfarthing-dist/guides/hooks.md` |
 | **Bell Mode** | Message queue injection via PostToolUse hook — queue messages while Claude works | `pennyfarthing-dist/guides/bell-mode.md` |
 | **Relay Mode** | Automatic agent handoff execution — skips user confirmation on HANDOFF markers | `pennyfarthing-dist/guides/relay-mode.md` |
 | **TirePump** | Context clearing system — resets Claude session, reloads agent with fresh context | `pennyfarthing-dist/guides/tirepump.md` |
 | **Prime** | Agent activation system — bootstraps agents with tiered context (identity, workflow, session) | `pennyfarthing-dist/guides/prime.md` |
 | **Reflector** | Agent-to-UI protocol — `<!-- CYCLIST:TYPE:value -->` markers drive QuickActions buttons | `pennyfarthing-dist/guides/reflector.md` |
+| **Tandem Protocol** | Background observer pairing and consultation protocol for agent collaboration | `pennyfarthing-dist/guides/tandem-protocol.md` |
+| **Output Styles** | Configurable response modes (terse, verbose, teaching) | `pennyfarthing-dist/guides/output-styles.md` |
+| **Brownfield Tools** | Codebase analysis — hotspots, complexity, dead code, dependencies, health score | `pennyfarthing-dist/guides/brownfield-tools.md` |
 | **Benchmarks (JobFair)** | Persona evaluation — OCEAN trait correlation with agent task performance | `packages/benchmark/docs/benchmarks-guide.md` |
-| **BikeLane** | Workflow engine — phased, stepped, and procedural workflow orchestration | `pennyfarthing-dist/guides/bikelane.md` |
 </context>

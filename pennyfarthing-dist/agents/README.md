@@ -44,6 +44,7 @@ Task tool:
 - **`sm-file-summary.md`** - Summarize file changes
 - **`reviewer-preflight.md`** - Gather review data
 - **`testing-runner.md`** - Execute tests, report results
+- **`tandem-backseat.md`** - Background observer for tandem mode (Story 95-2)
 
 ### Removed Files (Stories 31-11, 31-12)
 These files have been deleted and replaced by consolidated versions:
@@ -116,12 +117,13 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (5 active)
-├── sm-setup.md        # Research or setup mode (Story 31-11)
-├── sm-finish.md       # Preflight or execute (Story 31-11)
+│ # Official Subagents (6 active)
+├── sm-setup.md                # Research or setup mode (Story 31-11)
+├── sm-finish.md               # Preflight or execute (Story 31-11)
 ├── sm-file-summary.md         # Summarize files
 ├── reviewer-preflight.md      # Review prep
-└── testing-runner.md          # Run tests
+├── testing-runner.md          # Run tests
+└── tandem-backseat.md         # Tandem background observer (Story 95-2)
 ```
 
 ## Context Budget
