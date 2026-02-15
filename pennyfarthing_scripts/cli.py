@@ -276,7 +276,6 @@ def help_cmd(group: str | None):
     Arguments:
       GROUP  - Optional command group name (sprint, git, session, epic, jira, theme, workflow, etc.)
     """
-    from pathlib import Path
 
     import yaml
 
