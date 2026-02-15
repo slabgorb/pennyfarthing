@@ -158,6 +158,7 @@ workflow:
 
         Reviewer should only receive code that is verified clean.
       gate:
+        file: gates/quality-pass
         type: quality_pass
         condition: >
           All project quality gates pass locally — tests, lint, format,
@@ -233,6 +234,7 @@ workflow:
         If verification fails, hand back to Dev with specifics.
         If verification passes, hand off to Reviewer for re-review.
       gate:
+        file: gates/quality-pass
         type: quality_pass
         condition: >
           All project quality gates pass. Each review finding verified

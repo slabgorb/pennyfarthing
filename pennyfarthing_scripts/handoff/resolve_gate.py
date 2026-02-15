@@ -65,9 +65,7 @@ def resolve_gate(
             error=f"Phase '{phase}' not found in workflow '{workflow}'",
         )
 
-    gate = current_phase.get("gate") or {}
-    gate_type = gate.get("type")
-    gate_file = gate.get("file")  # None for MVP
+    gate = current_phase.get("gate")
 
     if current_idx + 1 < len(phases):
         nxt = phases[current_idx + 1]
@@ -77,19 +75,21 @@ def resolve_gate(
         next_phase = None
         next_agent = None
 
-    if gate_type == "manual":
+    if not gate:
         return _result(
             status="skip",
-            gate_type="manual",
             next_agent=next_agent,
             next_phase=next_phase,
             assessment_found=True,
         )
 
-    if gate_type is None:
+    gate_type = gate.get("type")
+    gate_file = gate.get("file")
+
+    if gate_type == "manual":
         return _result(
             status="skip",
-            gate_file=gate_file,
+            gate_type="manual",
             next_agent=next_agent,
             next_phase=next_phase,
             assessment_found=True,
