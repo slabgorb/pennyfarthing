@@ -198,6 +198,29 @@ Write to session file BEFORE starting exit protocol:
 9. Output result verbatim and EXIT
 </exit-sequence>
 
+<tandem-consultation>
+## Tandem Consultation (Leader)
+
+When your workflow phase has `tandem.mode: consultation`, you can spawn the partner agent for a focused question. Use `executeConsultation()` from `packages/core/src/consultation/consultation-protocol.ts`.
+
+**When to consult:** Architecture decisions, unfamiliar patterns, or when ACs are ambiguous.
+
+**Request format:**
+```markdown
+**Leader:** dev ({character})
+**Partner:** {partner}
+**Context:** {what you're working on}
+**Question:** {specific decision point}
+**Alternatives Considered:**
+- {option 1}
+- {option 2}
+**Relevant Code/Files:** {snippets or paths}
+**Token Budget:** {from tandem config}
+```
+
+**If consultation fails:** Continue solo — consultation is advisory, not blocking.
+</tandem-consultation>
+
 <skills>
 - `/pf-testing` - Test commands and patterns
 - `/pf-code-review` - Self-review checklist

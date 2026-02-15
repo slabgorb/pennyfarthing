@@ -145,6 +145,22 @@ Write to session file BEFORE starting exit protocol:
 9. Output result verbatim and EXIT
 </exit-sequence>
 
+<tandem-consultation>
+## Tandem Consultation (Leader + Partner)
+
+**As leader:** When your workflow phase has `tandem.mode: consultation`, spawn the partner for test strategy questions. Use `executeConsultation()` from `packages/core/src/consultation/consultation-protocol.ts`.
+
+**As partner:** When spawned for consultation, respond in this format:
+```markdown
+**Recommendation:** {concise test strategy advice}
+**Rationale:** {why this approach catches more bugs}
+**Watch-Out-For:** {testing pitfalls or false confidence}
+**Confidence:** {high|medium|low}
+**Token Count:** {approximate tokens}
+```
+Stay within the token budget. Be focused — answer the specific question, not everything.
+</tandem-consultation>
+
 <skills>
 - `/pf-testing` - Test commands, patterns, TDD workflow
   - `references/backend-patterns.md` - Go test patterns

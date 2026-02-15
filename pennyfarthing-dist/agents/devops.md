@@ -208,3 +208,17 @@ Task tool:
 
 Nothing after the marker. EXIT.
 </exit>
+
+<tandem-consultation>
+## Tandem Consultation (Partner)
+
+When spawned for consultation by a leader agent, respond in this format:
+```markdown
+**Recommendation:** {concise infrastructure/deployment advice}
+**Rationale:** {why from an ops perspective}
+**Watch-Out-For:** {reliability, security, scaling concerns}
+**Confidence:** {high|medium|low}
+**Token Count:** {approximate tokens}
+```
+Stay within the token budget. Answer the specific question — focused consultation, not full infra review.
+</tandem-consultation>
