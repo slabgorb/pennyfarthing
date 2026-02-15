@@ -2,7 +2,8 @@
 """
 Individual Portrait Generator for Pennyfarthing Themes
 
-Generates individual portraits per theme using Stable Diffusion SDXL on M3 Max (MPS).
+Generates individual portraits per theme on M3 Max (MPS).
+Supports multiple engines: SDXL (Stable Diffusion XL) and Flux.
 Reads visual prompts from theme YAML files in three locations:
   - Package:  packages/themes-*/themes/ (output to packages/themes-*/portraits/)
   - Built-in: pennyfarthing-dist/personas/themes/ (output to pennyfarthing-dist/personas/portraits/)
@@ -11,9 +12,9 @@ Reads visual prompts from theme YAML files in three locations:
 Output: {portraits-dir}/{theme}/{slug}-{OCEAN}.png (512x512px each)
 
 Usage:
-    python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
-    python3 scripts/generate-portraits.py --theme gilligans-island --dry-run
-    python3 scripts/generate-portraits.py --role ba --skip-existing
+    python3 scripts/generate-portraits.py [--dry-run] [--theme THEME] [--engine ENGINE]
+    python3 scripts/generate-portraits.py --engine flux --theme gilligans-island --dry-run
+    python3 scripts/generate-portraits.py --engine sdxl --role ba --skip-existing
 """
 
 import argparse
@@ -46,6 +47,11 @@ try:
 except ImportError as e:
     HAS_TORCH = False
     TORCH_ERROR = str(e)
+
+# Native Flux repo (Black Forest Labs) — loaded lazily when --engine flux is used
+HAS_FLUX = False
+FLUX_ERROR = ""
+FLUX_PROJECT_DIR = Path.home() / "Projects" / "flux"
 
 # CLIP tokenizer for accurate token counting (optional - falls back to word estimate)
 try:
@@ -81,18 +87,29 @@ BUILTIN_THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
 CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
 BUILTIN_OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
 PACKAGES_DIR = PROJECT_ROOT / "packages"
-MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
+# Engine configurations
+ENGINES = {
+    "sdxl": {
+        "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+        "generation_size": 1024,
+        "output_size": 512,
+        "num_inference_steps": 30,
+        "guidance_scale": 7.5,
+        "max_tokens": 77,
+        "supports_negative_prompt": True,
+    },
+    "flux": {
+        "model_name": "flux-schnell",
+        "generation_size": 1024,
+        "output_size": 512,
+        "num_inference_steps": 4,
+        "guidance_scale": 3.5,
+        "max_tokens": 256,
+        "supports_negative_prompt": False,
+    },
+}
 
-# SDXL generates at 1024x1024, we'll resize to 512x512
-GENERATION_SIZE = 1024
-OUTPUT_SIZE = 512
-
-# Generation parameters
-NUM_INFERENCE_STEPS = 30
-GUIDANCE_SCALE = 7.5
-
-# CLIP token limit - prompts are truncated beyond this
-CLIP_MAX_TOKENS = 77
+DEFAULT_ENGINE = "sdxl"
 
 # Role order for the 11 agents
 ROLES = [
@@ -124,7 +141,7 @@ def count_clip_tokens(text: str) -> int:
         return int(len(text.split()) * 1.3)
 
 
-def truncate_prompt_to_clip_limit(visual: str, style_suffix: str, max_tokens: int = CLIP_MAX_TOKENS) -> tuple[str, bool]:
+def truncate_prompt_to_clip_limit(visual: str, style_suffix: str, max_tokens: int = 77) -> tuple[str, bool]:
     """Truncate prompt to fit within CLIP token limit.
 
     Strategy: Prioritize the visual description over the style suffix.
@@ -208,61 +225,167 @@ def parse_theme_file(theme_path: Path) -> dict:
     return result
 
 
-def build_portrait_prompt(visual: str, style_suffix: str = None) -> tuple[str, bool, int]:
-    """Build a prompt for portrait generation with CLIP token limit enforcement.
+def build_portrait_prompt(visual: str, style_suffix: str = None, max_tokens: int = 77) -> tuple[str, bool, int]:
+    """Build a prompt for portrait generation with token limit enforcement.
 
     Args:
         visual: The character's visual description from theme YAML
         style_suffix: Optional theme-specific style suffix. Falls back to DEFAULT_STYLE_SUFFIX.
+        max_tokens: Token limit for the engine (77 for SDXL/CLIP, 256 for Flux/T5).
 
     Returns:
         tuple: (prompt, was_truncated, token_count)
     """
     suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
-    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix)
+    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix, max_tokens=max_tokens)
     token_count = count_clip_tokens(prompt)
     return prompt, was_truncated, token_count
 
 
-def load_pipeline():
-    """Load SDXL pipeline on MPS."""
-    print("\nLoading SDXL model on MPS...")
-    print("(First run downloads ~6.5GB model)")
+def _load_flux_modules():
+    """Lazy-load the native Flux repo and return its modules."""
+    global HAS_FLUX, FLUX_ERROR
 
-    # Use float32 on MPS to avoid NaN issues with float16
-    pipe = StableDiffusionXLPipeline.from_pretrained(
-        MODEL_ID,
-        torch_dtype=torch.float32,
-        use_safetensors=True,
-    )
+    if not FLUX_PROJECT_DIR.exists():
+        FLUX_ERROR = f"Flux project not found at {FLUX_PROJECT_DIR}"
+        return None
 
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    pipe = pipe.to("mps")
-    pipe.enable_attention_slicing()
+    # Add flux src to path so we can import it
+    flux_src = str(FLUX_PROJECT_DIR / "src")
+    if flux_src not in sys.path:
+        sys.path.insert(0, flux_src)
 
-    print("Model loaded.\n")
-    return pipe
+    try:
+        from flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
+        from flux.util import configs, load_ae, load_clip, load_flow_model, load_t5
+        HAS_FLUX = True
+        return {
+            "denoise": denoise,
+            "get_noise": get_noise,
+            "get_schedule": get_schedule,
+            "prepare": prepare,
+            "unpack": unpack,
+            "configs": configs,
+            "load_ae": load_ae,
+            "load_clip": load_clip,
+            "load_flow_model": load_flow_model,
+            "load_t5": load_t5,
+        }
+    except ImportError as e:
+        FLUX_ERROR = str(e)
+        return None
 
 
-def generate_portrait(pipe, prompt: str, seed: int = 42) -> "Image.Image":
-    """Generate a single portrait."""
-    # Use CPU generator for MPS compatibility
-    generator = torch.Generator().manual_seed(seed)
+def load_pipeline(engine_name: str):
+    """Load the image generation pipeline for the specified engine.
 
-    with torch.no_grad():
-        result = pipe(
-            prompt=prompt,
-            negative_prompt="color, grayscale, photorealistic, blurry, deformed",
-            width=GENERATION_SIZE,
-            height=GENERATION_SIZE,
-            num_inference_steps=NUM_INFERENCE_STEPS,
-            guidance_scale=GUIDANCE_SCALE,
-            generator=generator,
+    Returns a dict with engine-specific components.
+    For SDXL: {"pipe": StableDiffusionXLPipeline}
+    For Flux: {"model", "ae", "t5", "clip", "flux_modules", "device"}
+    """
+    engine = ENGINES[engine_name]
+
+    if engine_name == "flux":
+        model_name = engine["model_name"]
+        print(f"\nLoading Flux ({model_name}) on MPS...")
+        print("  (First run downloads the model)")
+
+        flux = _load_flux_modules()
+        if flux is None:
+            print(f"Error loading Flux: {FLUX_ERROR}")
+            print(f"Expected Flux repo at: {FLUX_PROJECT_DIR}")
+            print("Install: git clone https://github.com/black-forest-labs/flux ~/Projects/flux")
+            sys.exit(1)
+
+        device = torch.device("mps")
+        t5 = flux["load_t5"](device, max_length=256)
+        clip = flux["load_clip"](device)
+        model = flux["load_flow_model"](model_name, device=device)
+        ae = flux["load_ae"](model_name, device=device)
+
+        print("Flux models loaded.\n")
+        return {
+            "model": model, "ae": ae, "t5": t5, "clip": clip,
+            "flux_modules": flux, "device": device,
+        }
+    else:
+        model_id = engine["model_id"]
+        print(f"\nLoading SDXL model on MPS...")
+        print(f"  Model: {model_id}")
+        print("  (First run downloads ~6.5GB model)")
+
+        pipe = StableDiffusionXLPipeline.from_pretrained(
+            model_id,
+            torch_dtype=torch.float32,
+            use_safetensors=True,
+        )
+        pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+        pipe = pipe.to("mps")
+        pipe.enable_attention_slicing()
+
+        print("Model loaded.\n")
+        return {"pipe": pipe}
+
+
+def generate_portrait(pipeline_components: dict, prompt: str, engine_name: str, seed: int = 42) -> "Image.Image":
+    """Generate a single portrait using the specified engine."""
+    engine = ENGINES[engine_name]
+    gen_size = engine["generation_size"]
+    out_size = engine["output_size"]
+
+    if engine_name == "flux":
+        from einops import rearrange
+
+        flux = pipeline_components["flux_modules"]
+        model = pipeline_components["model"]
+        ae = pipeline_components["ae"]
+        t5 = pipeline_components["t5"]
+        clip = pipeline_components["clip"]
+        device = pipeline_components["device"]
+
+        # Flux native sampling pipeline
+        x = flux["get_noise"](
+            1, gen_size, gen_size,
+            device=device, dtype=torch.bfloat16, seed=seed,
+        )
+        inp = flux["prepare"](t5, clip, x, prompt=prompt)
+        timesteps = flux["get_schedule"](
+            engine["num_inference_steps"], inp["img"].shape[1], shift=False,
         )
 
-    image = result.images[0]
-    # Resize to output size
-    return image.resize((OUTPUT_SIZE, OUTPUT_SIZE), Image.Resampling.LANCZOS)
+        with torch.no_grad():
+            x = flux["denoise"](model, **inp, timesteps=timesteps, guidance=engine["guidance_scale"])
+
+        x = flux["unpack"](x.float(), gen_size, gen_size)
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+            x = ae.decode(x)
+
+        # Convert tensor to PIL
+        x = x.clamp(-1, 1)
+        x = rearrange(x[0], "c h w -> h w c")
+        image = Image.fromarray((127.5 * (x + 1.0)).cpu().byte().numpy())
+    else:
+        # SDXL via diffusers
+        pipe = pipeline_components["pipe"]
+        generator = torch.Generator().manual_seed(seed)
+
+        kwargs = dict(
+            prompt=prompt,
+            width=gen_size,
+            height=gen_size,
+            num_inference_steps=engine["num_inference_steps"],
+            guidance_scale=engine["guidance_scale"],
+            generator=generator,
+        )
+        if engine["supports_negative_prompt"]:
+            kwargs["negative_prompt"] = "color, grayscale, photorealistic, blurry, deformed"
+
+        with torch.no_grad():
+            result = pipe(**kwargs)
+
+        image = result.images[0]
+
+    return image.resize((out_size, out_size), Image.Resampling.LANCZOS)
 
 
 def main():
@@ -273,7 +396,12 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--skip-existing", action="store_true", help="Skip existing files")
     parser.add_argument("--output-dir", type=str, help="Output to different directory (default: pennyfarthing-dist/personas/portraits)")
+    parser.add_argument("--engine", type=str, choices=list(ENGINES.keys()), default=DEFAULT_ENGINE,
+                        help=f"Image generation engine (default: {DEFAULT_ENGINE})")
     args = parser.parse_args()
+
+    engine_name = args.engine
+    engine = ENGINES[engine_name]
 
     # Determine output directory override
     output_override = Path(args.output_dir) if args.output_dir else None
@@ -323,9 +451,11 @@ def main():
         print(f"  Package:  {src}")
     print(f"  Custom:   {CUSTOM_THEMES_DIR}")
     print(f"Found {len(theme_entries)} themes")
+    engine_label = engine.get("model_id", engine.get("model_name", engine_name))
+    print(f"Engine: {engine_name.upper()} ({engine_label})")
 
     if args.dry_run:
-        print(f"\nCLIP token limit: {CLIP_MAX_TOKENS} tokens")
+        print(f"\nToken limit: {engine['max_tokens']} tokens ({engine_name.upper()})")
         print(f"Tokenizer: {'CLIP (accurate)' if HAS_CLIP_TOKENIZER else 'word estimate (fallback)'}")
         roles_to_show = [args.role] if args.role else ROLES
         print(f"\nDry run - portraits to generate (roles: {', '.join(roles_to_show)}):")
@@ -348,7 +478,9 @@ def main():
                     status = "EXISTS" if out_path.exists() else "PENDING"
 
                     # Check token count and truncation
-                    prompt, was_truncated, token_count = build_portrait_prompt(char["visual"], parsed["portrait_style"])
+                    prompt, was_truncated, token_count = build_portrait_prompt(
+                        char["visual"], parsed["portrait_style"], max_tokens=engine["max_tokens"]
+                    )
                     token_status = f"{token_count}tok"
                     if was_truncated:
                         token_status = f"⚠️ {token_count}tok TRUNCATED"
@@ -362,7 +494,7 @@ def main():
         if truncation_warnings:
             print(f"\n{'='*60}")
             print(f"⚠️  WARNING: {len(truncation_warnings)} prompts will be truncated!")
-            print(f"    CLIP limit is {CLIP_MAX_TOKENS} tokens. Consider shortening:")
+            print(f"    Token limit is {engine['max_tokens']} ({engine_name.upper()}). Consider shortening:")
             for theme, role, filename in truncation_warnings[:10]:
                 print(f"    - {theme}/{filename} ({role})")
             if len(truncation_warnings) > 10:
@@ -376,7 +508,7 @@ def main():
         sys.exit(1)
 
     # Load model
-    pipe = load_pipeline()
+    pipeline_components = load_pipeline(engine_name)
 
     # Track results
     successful = 0
@@ -406,7 +538,9 @@ def main():
                 print(f"  SKIP (exists): {char['filename']}")
                 continue
 
-            prompt, was_truncated, token_count = build_portrait_prompt(char["visual"], parsed["portrait_style"])
+            prompt, was_truncated, token_count = build_portrait_prompt(
+                char["visual"], parsed["portrait_style"], max_tokens=engine["max_tokens"]
+            )
 
             if was_truncated:
                 truncated.append((theme, char["filename"], token_count))
@@ -417,7 +551,7 @@ def main():
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
                 role_seed = args.seed + ROLES.index(role)
-                image = generate_portrait(pipe, prompt, seed=role_seed)
+                image = generate_portrait(pipeline_components, prompt, engine_name, seed=role_seed)
                 image.save(out_path, "PNG")
                 successful += 1
                 print(f"  DONE: {char['filename']}")
@@ -430,7 +564,7 @@ def main():
     print(f"\n{'='*50}")
     print(f"Complete: {successful} portraits in {elapsed}")
     if truncated:
-        print(f"Truncated: {len(truncated)} prompts exceeded {CLIP_MAX_TOKENS} token limit")
+        print(f"Truncated: {len(truncated)} prompts exceeded {engine['max_tokens']} token limit ({engine_name.upper()})")
     if failed:
         print(f"Failed: {len(failed)}")
         for t, r, e in failed:
