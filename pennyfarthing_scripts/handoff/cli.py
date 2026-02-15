@@ -1,10 +1,11 @@
-"""Handoff CLI — Phase gate resolution and atomic session transitions.
+"""Handoff CLI — Phase gate resolution, session transitions, and marker generation.
 
 Usage:
     pf handoff resolve-gate STORY_ID WORKFLOW PHASE
     pf handoff complete-phase STORY_ID WORKFLOW FROM_PHASE TO_PHASE GATE_TYPE
+    pf handoff marker NEXT_AGENT [--error MESSAGE]
 
-Story: 105-1 (Script-First Handoff)
+Stories: 105-1, 105-4 (Script-First Handoff)
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ def handoff():
     Commands:
       resolve-gate    - Resolve gate for current phase
       complete-phase  - Complete phase transition atomically
+      marker          - Generate AGENT_COMMAND handoff marker
     """
     pass
 
@@ -86,3 +88,33 @@ def complete_phase_cmd(
 
     if result.get("status") == "error":
         raise SystemExit(1)
+
+
+@handoff.command("marker")
+@click.argument("next_agent", required=False, default=None)
+@click.option("--error", "error_msg", default=None, help="Generate error marker")
+def marker_cmd(next_agent: str | None, error_msg: str | None):
+    """Generate AGENT_COMMAND handoff marker block.
+
+    Environment-aware marker generation. Detects Cyclist, relay mode,
+    and context usage to choose the appropriate marker type.
+
+    \b
+    Arguments:
+      NEXT_AGENT  - Agent to hand off to (e.g., dev, tea, reviewer)
+
+    \b
+    Options:
+      --error MSG - Generate an error marker instead of a handoff
+    """
+    from pennyfarthing_scripts.handoff.marker import generate_marker
+
+    if not next_agent and not error_msg:
+        raise click.UsageError(
+            "Provide NEXT_AGENT or --error MESSAGE.\n\n"
+            "Examples:\n"
+            "  pf handoff marker dev\n"
+            "  pf handoff marker --error 'Tests failing'"
+        )
+
+    click.echo(generate_marker(next_agent, error=error_msg))

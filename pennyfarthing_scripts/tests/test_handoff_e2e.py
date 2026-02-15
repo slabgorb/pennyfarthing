@@ -349,57 +349,43 @@ class TestFullChainE2E:
 
 
 class TestHandoffMarkerOutput:
-    """AC4: handoff-marker.sh emits correct AGENT_COMMAND block."""
+    """AC4: pf handoff marker emits correct AGENT_COMMAND block."""
 
-    @pytest.fixture
-    def marker_script(self) -> Path:
-        """Locate the handoff-marker.sh script."""
-        script = Path(__file__).resolve().parents[2] / (
-            "pennyfarthing-dist/scripts/core/handoff-marker.sh"
-        )
-        if not script.exists():
-            pytest.skip("handoff-marker.sh not found")
-        return script
-
-    def test_marker_contains_agent_command(self, marker_script: Path) -> None:
+    def test_marker_contains_agent_command(self) -> None:
         """Output contains AGENT_COMMAND YAML block."""
         result = subprocess.run(
-            [str(marker_script), "reviewer"],
+            ["pf", "handoff", "marker", "reviewer"],
             capture_output=True,
             text=True,
-            env={"PATH": "/usr/bin:/bin:/usr/local/bin"},
         )
         assert result.returncode == 0
         assert "AGENT_COMMAND:" in result.stdout
 
-    def test_marker_references_correct_agent(self, marker_script: Path) -> None:
+    def test_marker_references_correct_agent(self) -> None:
         """Marker fallback references the correct next agent."""
         result = subprocess.run(
-            [str(marker_script), "reviewer"],
+            ["pf", "handoff", "marker", "reviewer"],
             capture_output=True,
             text=True,
-            env={"PATH": "/usr/bin:/bin:/usr/local/bin"},
         )
         assert "/reviewer" in result.stdout
 
-    def test_marker_for_dev_agent(self, marker_script: Path) -> None:
+    def test_marker_for_dev_agent(self) -> None:
         """Marker works for dev agent too."""
         result = subprocess.run(
-            [str(marker_script), "dev"],
+            ["pf", "handoff", "marker", "dev"],
             capture_output=True,
             text=True,
-            env={"PATH": "/usr/bin:/bin:/usr/local/bin"},
         )
         assert result.returncode == 0
         assert "/dev" in result.stdout
 
-    def test_marker_error_mode(self, marker_script: Path) -> None:
+    def test_marker_error_mode(self) -> None:
         """Error flag produces error block."""
         result = subprocess.run(
-            [str(marker_script), "--error", "Tests failing"],
+            ["pf", "handoff", "marker", "--error", "Tests failing"],
             capture_output=True,
             text=True,
-            env={"PATH": "/usr/bin:/bin:/usr/local/bin"},
         )
         assert result.returncode == 0
         assert "error: true" in result.stdout
