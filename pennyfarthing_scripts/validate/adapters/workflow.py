@@ -18,6 +18,12 @@ from pennyfarthing_scripts.validate import ValidateReport
 # Known workflow types
 VALID_TYPES = {"phased", "stepped", "procedural"}
 
+# Known tandem modes for phase tandem blocks
+VALID_TANDEM_MODES = {"consultation"}
+
+# Valid model values for tandem partner spawning
+VALID_TANDEM_MODELS = {"sonnet", "haiku"}
+
 # Known gate types for phased workflows
 VALID_GATE_TYPES = {
     "tests_pass",
