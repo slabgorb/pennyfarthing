@@ -23,7 +23,7 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 
 <critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
 <helpers>
@@ -54,7 +54,7 @@ Read `**Workflow:**` and `**Phase:**` from session. Query:
 OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
-**If OWNER != "reviewer":** Run `handoff-marker.sh $OWNER`, output result, tell user.
+**If OWNER != "reviewer":** Run `pf handoff marker $OWNER`, output result, tell user.
 </phase-check>
 
 <on-activation>
@@ -106,7 +106,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 - [ ] **If APPROVED:** Merge PR directly with `gh pr merge {PR_NUMBER} --merge --delete-branch`
 - [ ] Run `pf handoff resolve-gate` — verify gate status
 - [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `handoff-marker.sh {next_agent}` — emit marker and EXIT
+- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 
 <assessment-templates>
@@ -151,7 +151,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 6. `pf handoff complete-phase {story-id} {workflow} review finish approval`
 7. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh sm
+   pf handoff marker sm
    ```
 8. Output result verbatim and EXIT
 
@@ -162,7 +162,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 4. `pf handoff complete-phase {story-id} {workflow} review green approval`
 5. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh dev
+   pf handoff marker dev
    ```
 6. Output result verbatim and EXIT
 

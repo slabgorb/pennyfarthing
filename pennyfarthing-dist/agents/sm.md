@@ -26,7 +26,7 @@ The moment you start reading implementation files or planning how code should wo
 
 <critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
 <critical>
@@ -172,7 +172,7 @@ Present to user:
    ```
 
 4. **Route based on workflow type:**
-   - **Phased workflow** → Run exit protocol: `pf handoff complete-phase` then `handoff-marker.sh`
+   - **Phased workflow** → Run exit protocol: `pf handoff complete-phase` then `pf handoff marker`
    - **Stepped workflow** → Tell user to run `/pf-workflow start {workflow}` (no handoff)
 </new-work-flow>
 
@@ -270,7 +270,7 @@ Read `**Workflow:**` and `**Phase:**` from session. Query:
 OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
-**If OWNER != "sm":** Run `handoff-marker.sh $OWNER`, output result, tell user.
+**If OWNER != "sm":** Run `pf handoff marker $OWNER`, output result, tell user.
 
 **Note:** SM also handles `approved` status (finish phase).
 </phase-check>
@@ -291,7 +291,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 6. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
 7. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   pf handoff marker {next_agent}
    ```
 8. Output result verbatim and EXIT
 

@@ -87,4 +87,4 @@ echo "Phase owner: $OWNER (you requested: $AGENT)"
 echo ""
 
 # Generate and output the handoff marker
-"$SCRIPTS_DIR/core/handoff-marker.sh" "$OWNER"
+pf handoff marker "$OWNER"
