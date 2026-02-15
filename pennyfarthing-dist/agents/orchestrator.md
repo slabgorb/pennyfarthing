@@ -182,7 +182,7 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
 8. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   pf handoff marker {next_agent}
    ```
 9. Output result verbatim and EXIT
 

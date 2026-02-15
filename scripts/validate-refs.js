@@ -593,14 +593,14 @@ function checkShellSourceRefs(filePath, content) {
 }
 
 /**
- * 12. handoff-marker.sh targets → agent names
+ * 12. pf handoff marker targets → agent names
  */
 function checkHandoffTargets(filePath, content, agents) {
   const issues = [];
   let refs = 0;
   const stripped = stripCodeBlocks(content);
 
-  const pattern = /handoff-marker\.sh\s+([a-z][-a-z0-9]*)/g;
+  const pattern = /pf handoff marker\s+([a-z][-a-z0-9]*)/g;
   let match;
   while ((match = pattern.exec(stripped)) !== null) {
     const target = match[1];
@@ -608,7 +608,7 @@ function checkHandoffTargets(filePath, content, agents) {
     refs++;
     if (!agents.has(target)) {
       issues.push(issue(filePath, offsetToLine(stripped, match.index),
-        `handoff-marker.sh ${target}`, `Handoff target "${target}" is not a known agent`));
+        `pf handoff marker ${target}`, `Handoff target "${target}" is not a known agent`));
     }
   }
   return { issues, refs };
