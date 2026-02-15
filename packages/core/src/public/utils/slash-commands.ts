@@ -33,14 +33,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Add files to context"
   },
   {
-    "name": "/benchmark",
-    "description": "Compare an agent's performance against a stored baseline"
-  },
-  {
-    "name": "/benchmark-control",
-    "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
-  },
-  {
     "name": "/bug",
     "description": "Report a bug"
   },
@@ -73,10 +65,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Initialize CLAUDE.md"
   },
   {
-    "name": "/job-fair",
-    "description": "Discover which characters in a theme excel at each role"
-  },
-  {
     "name": "/login",
     "description": "Authenticate with Anthropic"
   },
@@ -105,6 +93,14 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Business Analyst - Requirements discovery and stakeholder analysis"
   },
   {
+    "name": "/pf-benchmark",
+    "description": "Compare an agent's performance against a stored baseline"
+  },
+  {
+    "name": "/pf-benchmark-control",
+    "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
+  },
+  {
     "name": "/pf-brainstorming",
     "description": "Structured problem-solving brainstorm session"
   },
@@ -117,16 +113,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Quick commit for small changes without full git-cleanup ceremony"
   },
   {
-    "name": "/pf-close-epic",
-    "description": "Close an epic - verify completion, update status, and archive context"
-  },
-  {
-    "name": "/pf-continue-session",
-    "description": "Resume work from a saved checkpoint after context circuit breaker"
-  },
-  {
-    "name": "/pf-create-branches-from-story",
-    "description": "Create feature branches in both repos from a story"
+    "name": "/pf-ci",
+    "description": "Detect and run CI locally"
   },
   {
     "name": "/pf-dev",
@@ -137,12 +125,20 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "DevOps Engineer - Infrastructure and deployment automation"
   },
   {
+    "name": "/pf-docs",
+    "description": "Domain documentation management"
+  },
+  {
+    "name": "/pf-epic",
+    "description": "Epic lifecycle - start epics for development and close completed epics"
+  },
+  {
     "name": "/pf-fix-blocker",
     "description": "Quick alias for /patch - fix blocking issue during story work"
   },
   {
-    "name": "/pf-git-cleanup",
-    "description": "Clean up git repos by organizing changes into proper commits/branches by initiative"
+    "name": "/pf-git",
+    "description": "Repository operations - status, cleanup, branches, and release management"
   },
   {
     "name": "/pf-health-check",
@@ -153,16 +149,12 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Context-aware help for Pennyfarthing commands, agents, and workflows"
   },
   {
-    "name": "/pf-new-work",
-    "description": "Start the next available story from the sprint backlog"
+    "name": "/pf-job-fair",
+    "description": "Discover which characters in a theme excel at each role"
   },
   {
     "name": "/pf-orchestrator",
     "description": "Orchestrator - Coordinator of all agents and meta operations"
-  },
-  {
-    "name": "/pf-parallel-work",
-    "description": "Start parallel work in a new worktree"
   },
   {
     "name": "/pf-party-mode",
@@ -185,14 +177,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Load essential project context at agent activation"
   },
   {
-    "name": "/pf-release",
-    "description": "Interactive stepped release with verification gates"
-  },
-  {
-    "name": "/pf-repo-status",
-    "description": "Check git status of all project repos"
-  },
-  {
     "name": "/pf-retro",
     "description": "Facilitate a sprint retrospective"
   },
@@ -201,8 +185,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Code Reviewer - Critical code review and quality enforcement"
   },
   {
-    "name": "/pf-run-ci",
-    "description": "Detect and run CI locally"
+    "name": "/pf-session",
+    "description": "Session lifecycle - start new work and resume checkpoints"
   },
   {
     "name": "/pf-setup",
@@ -213,28 +197,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Scrum Master - Story coordination and sprint management"
   },
   {
+    "name": "/pf-solo",
+    "description": "Run a single agent on a scenario with absolute rubric scoring"
+  },
+  {
     "name": "/pf-sprint",
     "description": "Sprint status, backlog, and story management - check status, find work, archive completed stories"
   },
   {
-    "name": "/pf-sprint-planning",
-    "description": "Facilitate sprint planning session"
-  },
-  {
     "name": "/pf-standalone",
     "description": "Wrap current changes into a standalone Jira story, branch, PR, and merge"
-  },
-  {
-    "name": "/pf-start-epic",
-    "description": "Start an epic - move to current sprint and generate tech context"
-  },
-  {
-    "name": "/pf-sync-epic-to-jira",
-    "description": "Sync Pennyfarthing epic to Jira MSSCI project using jira CLI"
-  },
-  {
-    "name": "/pf-sync-work-with-sprint",
-    "description": "Sync Pennyfarthing work session with unified sprint status"
   },
   {
     "name": "/pf-tea",
@@ -247,10 +219,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/pf-theme",
     "description": "Manage persona themes - list, show, set, create, or interactive wizard"
-  },
-  {
-    "name": "/pf-update-domain-docs",
-    "description": "Update CLAUDE-*.md domain documentation files based on current codebase"
   },
   {
     "name": "/pf-ux-designer",
@@ -271,10 +239,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     "name": "/review",
     "description": "Start code review"
-  },
-  {
-    "name": "/solo",
-    "description": "Run a single agent on a scenario with absolute rubric scoring"
   },
   {
     "name": "/status",

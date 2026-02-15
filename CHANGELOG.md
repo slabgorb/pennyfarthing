@@ -11,6 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.1.0] - 2026-02-15
+
+### Added
+
+- **Gate system** — File-based gate definitions with schema validation, subagent runner with GATE_RESULT contract, gate file discovery and resolution, SM confidence gate (106-1, 106-2, 106-3, 106-4, 107-1, 90-2, 90-3)
+- **Handoff CLI** — `pf handoff` commands (resolve-gate, complete-phase, marker) replacing bash scripts, with e2e smoke tests (105-1, 105-4)
+- **Tandem protocol** — Workflow schema tandem block validation and consultation protocol (86-1, 86-2)
+- **Unified CLI groups** — Consolidated deprecated commands into `/pf-git`, `/pf-session`, `/pf-epic`, `/pf-docs`, `/pf-ci` groups (MSSCI-15113)
+- **Electron extraction** — Extracted Electron shell to `packages/electron` for cleaner separation (98-20)
+- **v11 migration automation** — Auto-detect and remove old packages and backward-compat symlinks (98-22, 98-13)
+- **DebugPanel** — BikeRack TUI debug log viewer (103-17)
+- **Large diff handling** — Truncation, pagination, and temp file support for oversized diffs (103-19)
+- **Layout persistence** — Server endpoints for Cyclist and BikeRack layout save/restore
+
+### Changed
+
+- Agent definitions deduplicated — exit protocol consolidated, ghost references removed
+- BikeRack defaults to hot-reload mode, launches Chrome and Claude after backgrounding server
+- Portrait generation supports `--engine` flag for multi-engine output
+
+### Fixed
+
+- Panel data flow issues in BikeRack mode
+- Changed tab crash, Debug auto-fetch, and theme-agents `/full` route in Cyclist
+- CI failures (lockfile sync, ruff lint, sprint panel cancelled-as-completed)
+- Stale `.pennyfarthing/scripts/core/` path prefix in agent exit sequences
+- Theme `quote` → `catchphrases` migration and YAML lint errors
+- Markdown trailing newline (MD047) and Python import sort (I001) lint errors
+
+### Documentation
+
+- Full documentation sweep with 5 new guides and v11 README update
+- Agent exit protocol updated to script-first flow (105-2)
+
+---
+
 ## [11.0.0] - 2026-02-14
 
 ### Added
