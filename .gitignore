@@ -82,3 +82,6 @@ uv.lock
 *-port
 .pennyfarthing/*.json
 .cyclist-*
+
+# Model checkpoints
+checkpoints/
