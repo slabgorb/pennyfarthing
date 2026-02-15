@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@pennyfarthing/core": "workspace:*",
+    "@pennyfarthing/cyclist": "workspace:*",
     "electron-window-state": "^5.0.3",
     "yaml": "^2.8.2"
   },
