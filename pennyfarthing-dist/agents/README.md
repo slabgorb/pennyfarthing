@@ -41,8 +41,8 @@ Task tool:
 
 - **`sm-setup.md`** - Research OR setup mode (Story 31-11)
 - **`sm-finish.md`** - Preflight OR execute phase (Story 31-11)
-- **`handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
-- **`sm-handoff.md`** - SM→TEA/Dev handoff with Jira/branch verification
+- **`handoff.md`** - *(deprecated — replaced by `pf handoff` CLI per ADR-0025, removal in 108-2)*
+- **`sm-handoff.md`** - *(deprecated — replaced by `pf handoff` CLI per ADR-0025, removal in 108-2)*
 - **`sm-file-summary.md`** - Summarize file changes
 - **`reviewer-preflight.md`** - Gather review data
 - **`testing-runner.md`** - Execute tests, report results
@@ -124,11 +124,11 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (7 active)
+│ # Official Subagents (5 active, 2 deprecated)
 ├── sm-setup.md        # Research or setup mode (Story 31-11)
 ├── sm-finish.md       # Preflight or execute (Story 31-11)
-├── handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)
-├── sm-handoff.md              # SM→TEA/Dev handoff with Jira/branch
+├── handoff.md         # DEPRECATED — replaced by pf handoff CLI (ADR-0025)
+├── sm-handoff.md              # DEPRECATED — replaced by pf handoff CLI (ADR-0025)
 ├── sm-file-summary.md         # Summarize files
 ├── reviewer-preflight.md      # Review prep
 └── testing-runner.md          # Run tests

@@ -3,9 +3,9 @@
 
 **Tests:** Use `testing-runner` subagent, never run directly.
 
-**Handoff:** Run `handoff-marker.sh {next_agent}` → extract marker → emit → EXIT. See `<agent-exit-protocol>`.
+**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `handoff-marker.sh` → EXIT. See `<agent-exit-protocol>`.
 
-**Sidecars:** Write learnings BEFORE spawning handoff subagent.
+**Sidecars:** Write learnings BEFORE starting exit protocol.
 
 **Scripts:** Pennyfarthing scripts are Python-based (`pennyfarthing_scripts/`), not shell—check before assuming `.sh`.
 </critical>
@@ -117,16 +117,16 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 
 1. Write assessment to session
 2. Terminate tandem backseat (if active)
-3. Spawn `handoff` subagent → returns `HANDOFF_RESULT: {status, next_agent}`
-4. If blocked → report error, stop
-5. Run `.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}`
-6. Extract marker from YAML output, emit it:
-   ```
-   <!-- CYCLIST:HANDOFF:/dev -->
+3. `pf handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
+4. If blocked → report error, STOP
+5. If skip → jump to step 7
+6. If ready → spawn gate subagent with gate file → GATE_RESULT
+   - If fail → fix issues, retry from step 3 (max 3 retries)
+   - If pass → continue
+7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. `.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}` → emit marker → EXIT
 
-   Run `/dev` to continue
-   ```
-7. EXIT (nothing after marker)
+**Agents drive exit directly — no handoff subagent.** Scripts handle routing and session updates atomically.
 </agent-exit-protocol>
 
 <wrong-phase-detection>

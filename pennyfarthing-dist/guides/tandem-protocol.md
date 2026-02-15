@@ -102,7 +102,7 @@ When the primary agent receives a tandem injection, it surfaces the observation 
 
 ### 7. Cleanup
 
-Before handoff, the primary agent terminates the backseat background task. This must happen before spawning the handoff subagent.
+Before handoff, the primary agent terminates the backseat background task. This must happen before starting the exit protocol.
 
 ## Observation Scopes
 
