@@ -294,4 +294,23 @@ def get_phase_tandem_config(
         Dict with tandem config (partner, mode, model, token_budget, triggers, scope)
         or None if no tandem config on this phase.
     """
-    return None  # Stub — not implemented yet
+    root = project_root or get_project_root()
+    workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+
+    if not workflow_path.exists():
+        return None
+
+    try:
+        data = yaml.safe_load(workflow_path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+
+        for phase in phases:
+            if isinstance(phase, dict) and phase.get("name") == phase_name:
+                tandem = phase.get("tandem")
+                if isinstance(tandem, dict):
+                    return dict(tandem)
+                return None
+
+        return None
+    except Exception:
+        return None

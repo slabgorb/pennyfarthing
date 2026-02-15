@@ -170,6 +170,64 @@ def validate_phased(
                     f"'{gate_type}'"
                 )
 
+        # Tandem validation
+        tandem = phase.get("tandem")
+        if tandem is not None:
+            label = phase_name or i
+            if not isinstance(tandem, dict):
+                errors.append(
+                    f"Phase '{label}' tandem must be a mapping"
+                )
+            else:
+                # partner is required
+                partner = tandem.get("partner")
+                if not partner:
+                    errors.append(
+                        f"Phase '{label}' tandem missing required field: partner"
+                    )
+                else:
+                    # Cross-reference partner against known agents
+                    warnings.extend(
+                        _check_agent_ref(
+                            partner, agent_stems, f"phase '{label}' tandem partner"
+                        )
+                    )
+
+                # mode validation (optional for backward compat)
+                mode = tandem.get("mode")
+                if mode is not None and mode not in VALID_TANDEM_MODES:
+                    errors.append(
+                        f"Phase '{label}' tandem has invalid mode: '{mode}' "
+                        f"(must be one of: {', '.join(sorted(VALID_TANDEM_MODES))})"
+                    )
+
+                # model validation (optional)
+                model = tandem.get("model")
+                if model is not None and model not in VALID_TANDEM_MODELS:
+                    warnings.append(
+                        f"Phase '{label}' tandem has unknown model: '{model}' "
+                        f"(expected one of: {', '.join(sorted(VALID_TANDEM_MODELS))})"
+                    )
+
+                # token_budget validation (must be positive integer)
+                token_budget = tandem.get("token_budget")
+                if token_budget is not None:
+                    if not isinstance(token_budget, int) or isinstance(token_budget, bool):
+                        errors.append(
+                            f"Phase '{label}' tandem token_budget must be a positive integer"
+                        )
+                    elif token_budget <= 0:
+                        errors.append(
+                            f"Phase '{label}' tandem token_budget must be a positive integer"
+                        )
+
+                # triggers validation (must be list)
+                triggers = tandem.get("triggers")
+                if triggers is not None and not isinstance(triggers, list):
+                    errors.append(
+                        f"Phase '{label}' tandem triggers must be a list"
+                    )
+
     return errors, warnings
 
 
