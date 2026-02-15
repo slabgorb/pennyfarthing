@@ -11,8 +11,7 @@
  * Electron's sandboxed preload to work. See tsconfig.preload.json.
  */
 
-// Type imports for Electron APIs (compiled to require() by CommonJS target)
-import type { IpcRenderer, ContextBridge } from 'electron';
+// Electron APIs (ipcRenderer, contextBridge) accessed via require('electron') at runtime
 // IPC channel constants for type-safe channel references
 import { IPC_DATA_CHANNELS } from './ipc-channels.js';
 
