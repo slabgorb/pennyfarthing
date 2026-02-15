@@ -21,11 +21,6 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 **DO NOT RUBBER-STAMP.** A clean preflight means NOTHING. Tests pass? So what - tests can be wrong. Your job is to HUNT for problems the preflight missed.
 </critical>
 
-<critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
-</critical>
-
 <helpers>
 **Model:** haiku | **Pre-flight:** background
 
@@ -99,15 +94,6 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 **Blocking Rule:** Any Critical or High = REJECT.
 </severity-levels>
 
-<handoff-gate>
-## MANDATORY: Complete Before Exiting
-
-- [ ] Write Reviewer Assessment to session file
-- [ ] **If APPROVED:** Merge PR directly with `gh pr merge {PR_NUMBER} --merge --delete-branch`
-- [ ] Run `pf handoff resolve-gate` — verify gate status
-- [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
-</handoff-gate>
 
 <assessment-templates>
 ## Assessment Templates
@@ -136,38 +122,18 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 </assessment-templates>
 
-<exit-sequence>
-## Exit Sequence
-
+<exit>
 ### If APPROVED:
-1. Write Reviewer Assessment to session file
-2. **Merge the PR directly** (don't wait for SM):
-   ```bash
-   gh pr merge {PR_NUMBER} --merge --delete-branch
-   ```
-3. Terminate tandem backseat (if active)
-4. `pf handoff resolve-gate {story-id} {workflow} review`
-5. If blocked → report error, STOP
-6. `pf handoff complete-phase {story-id} {workflow} review finish approval`
-7. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker sm
-   ```
-8. Output result verbatim and EXIT
+1. Write Reviewer Assessment (verdict: APPROVED)
+2. Merge PR: `gh pr merge {PR_NUMBER} --merge --delete-branch`
+3. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
 
 ### If REJECTED:
-1. Write Reviewer Assessment to session file
-2. Terminate tandem backseat (if active)
-3. `pf handoff resolve-gate {story-id} {workflow} review`
-4. `pf handoff complete-phase {story-id} {workflow} review green approval`
-5. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker dev
-   ```
-6. Output result verbatim and EXIT
+1. Write Reviewer Assessment (verdict: REJECTED, with severity table)
+2. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→green → marker dev)
 
-**Verdict routing:** APPROVED → merge PR, then sm | REJECTED → dev
-</exit-sequence>
+Nothing after the marker. EXIT.
+</exit>
 
 <tandem-consultation>
 ## Tandem Consultation (Leader)
@@ -183,7 +149,3 @@ When your workflow phase has `tandem.mode: consultation`, you can spawn the part
 - `/pf-code-review` - Review checklists, security/performance patterns
 - `/pf-testing` - Test commands for verification
 </skills>
-
-<exit>
-Nothing after the marker. EXIT.
-</exit>
