@@ -375,6 +375,9 @@ importers:
       '@pennyfarthing/core':
         specifier: workspace:*
         version: link:../core
+      '@pennyfarthing/cyclist':
+        specifier: workspace:*
+        version: link:../cyclist
       electron-window-state:
         specifier: ^5.0.3
         version: 5.0.3
