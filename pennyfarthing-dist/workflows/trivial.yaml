@@ -19,6 +19,7 @@ workflow:
       input: [session_file]
       output: [implementation]
       gate:
+        file: gates/tests-pass
         type: tests_pass
         condition: Existing tests still pass
 
