@@ -5,8 +5,7 @@
  * Extracted from main.ts for better maintainability.
  */
 
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
-import { openSettingsWindow } from './settings-window.js';
+import { getVerboseMode, setVerboseMode } from '@pennyfarthing/core/dist/server/settings-store.js';
 import { IPC_AGENT_CHANNELS, IPC_SETTINGS_CHANNELS } from './ipc-channels.js';
 
 // Broadcast function type - set by main.ts
@@ -16,6 +15,10 @@ let broadcastToRenderer: BroadcastFn = () => {};
 // Panel toggle via WebSocket - set by main.ts
 type PanelToggleFn = (panelId: string) => void;
 let panelToggleFn: PanelToggleFn = () => {};
+
+// Settings window opener - set by main.ts (avoids direct cyclist dependency)
+type SettingsOpenerFn = () => void;
+let settingsOpenerFn: SettingsOpenerFn = () => {};
 
 /**
  * Set the broadcast function (called from main.ts)
@@ -30,6 +33,14 @@ export function setBroadcastFunction(fn: BroadcastFn): void {
  */
 export function setPanelToggleBroadcast(fn: PanelToggleFn): void {
   panelToggleFn = fn;
+}
+
+/**
+ * Set the settings window opener function (called from main.ts)
+ * Avoids direct @pennyfarthing/cyclist dependency in menu-builder
+ */
+export function setSettingsOpener(fn: SettingsOpenerFn): void {
+  settingsOpenerFn = fn;
 }
 
 /**
@@ -211,7 +222,7 @@ export function buildAppMenu(): { label: string; submenu: unknown[] } {
     submenu: [
       { role: 'about' },
       { type: 'separator' },
-      { label: 'Settings...', accelerator: 'CmdOrCtrl+,', click: () => openSettingsWindow() },
+      { label: 'Settings...', accelerator: 'CmdOrCtrl+,', click: () => settingsOpenerFn() },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
