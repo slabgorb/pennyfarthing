@@ -45,6 +45,7 @@ go.mod
 # Test output files
 *-test-output.txt
 test-output.txt
+__test_*__/
 
 # Python
 .venv/

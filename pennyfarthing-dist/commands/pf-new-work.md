@@ -1,23 +1,14 @@
 ---
-description: Start the next available story from the sprint backlog
+deprecated: true
+redirect: pf-session
+description: "DEPRECATED: Use /pf-session new instead."
 ---
 
-# New Work
+# /new-work - DEPRECATED
 
-<purpose>
-Shortcut to start the highest priority available story. Alias for `/pf-sprint work next`.
-</purpose>
+Session commands have been consolidated into `/pf-session`. Use:
 
-<on-invoke>
-Invoke the sprint work command with "next" to auto-select the highest priority story:
-
-```
-/pf-sprint work next
-```
-</on-invoke>
-
-<related>
-- `/pf-sprint work` - Interactive story selection
-- `/pf-sprint backlog` - View available stories
-- `/work` - Resume existing work or start new
-</related>
+| Old Command | New Command |
+|-------------|-------------|
+| `/new-work` | `/pf-session new` |
+| `/continue-session` | `/pf-session continue` |

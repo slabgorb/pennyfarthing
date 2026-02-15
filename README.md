@@ -35,9 +35,11 @@ The 98 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments
 
 ### 3. Integration & Tooling
 
-- **Cyclist Visual Terminal** - Electron-based IDE with 16 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
+- **Cyclist Visual Terminal** - Electron-based IDE with 17 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
+- **BikeRack** - Standalone panel viewer for CLI-first developers — dashboard panels in your browser, Claude in your terminal
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
+- **Codebase Analysis** - Hotspots, complexity, dead code, dependencies, code markers, and health score via `pf debug`
 
 ---
 
@@ -81,6 +83,7 @@ All panels are draggable, floatable, and splittable:
 |-------|---------|
 | **Message** | Conversation stream (always visible) |
 | **Sprint** | Current sprint stories and progress |
+| **Progress** | At-a-glance story dashboard |
 | **BikeLane** | Stepped workflow state and navigation |
 | **AC** | Acceptance criteria checklist with progress |
 | **Acceptance Criteria** | Story ACs with pass/fail tracking |
@@ -92,7 +95,6 @@ All panels are draggable, floatable, and splittable:
 | **Settings** | Permission mode, relay mode, bell mode toggles |
 | **Debug** | Prime context inspection with token counts |
 | **Background** | Background job monitoring |
-| **TTY** | Integrated terminal |
 | **Workflow** | Workflow navigation and status |
 | **Hotspots** | Codebase health — dead code, complexity, dependencies |
 
@@ -111,6 +113,17 @@ Cyclist renders tool use as human-readable summaries instead of raw JSON. Consec
 ### Agent Portraits
 
 Each of the 319 persona characters across 29 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+
+### BikeRack (CLI-First Dashboard)
+
+For developers who prefer Claude Code in their own terminal, BikeRack runs WheelHub separately and serves panels in a browser:
+
+```bash
+pf bikerack start      # Launch BikeRack + Claude CLI
+just bikerack          # Same, via just recipe
+```
+
+BikeRack provides the same panels as Cyclist without the conversation UI. Panels receive data via OTEL telemetry and file watchers.
 
 ## Prime Context System
 
@@ -155,6 +168,28 @@ BikeLane is the umbrella workflow system supporting two types:
 
 Use `/workflow list` to see all workflows. Use `/workflow start <name>` to begin any stepped workflow.
 
+### Workflow Gates
+
+Gates are conditional checks on phase transitions. When an agent finishes a phase, the gate evaluates whether the transition should proceed:
+
+| Gate | Purpose |
+|------|---------|
+| `tests-pass` | Verify all tests pass before review |
+| `tests-fail` | Verify tests are RED before implementation |
+| `approval` | Verify reviewer has approved |
+| `confidence-sm` | Check if user instruction is unambiguous |
+
+Gates are defined in `pennyfarthing-dist/gates/` and referenced via `gate.file` in workflow YAML.
+
+### Tandem Mode
+
+Tandem workflows pair a background observer with the primary agent. The backseat watches the primary agent's work and injects observations:
+
+- **TDD-Tandem** — Architect watches TEA, TEA watches Dev, PM watches Reviewer
+- **BDD-Tandem** — Adds UX Designer watching Dev, Architect watching UX
+
+For active questions (not passive observation), agents use the **Consultation Protocol** — synchronous Sonnet-powered request/response between agents.
+
 ## Benchmarking & Personality Research
 
 Pennyfarthing includes a scientific benchmarking system for evaluating how personality affects agent performance:
@@ -189,20 +224,35 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | `pennyfarthing uninstall` | Remove for clean reinstall |
 | `pennyfarthing theme list` | Show available themes |
 | `pennyfarthing theme set <name>` | Change active theme |
+| `pennyfarthing cyclist` | Launch Cyclist visual terminal |
+| `pf bikerack start` | Launch BikeRack dashboard |
+| `pf debug hotspots analyze` | Git change frequency analysis |
+| `pf debug complexity analyze` | Code complexity metrics |
+| `pf debug deadcode stale` | Find files with no recent commits |
+| `pf debug healthscore analyze` | Composite codebase health score |
+| `pf handoff marker <agent>` | Generate handoff marker |
+| `pf validate` | Run all validators |
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [**User Guide**](docs/USER-GUIDE.md) | Complete documentation |
-| [Getting Started](docs/GETTING-STARTED.md) | Quick start guide |
-| [BikeLane Diagrams](docs/BIKELANE-DIAGRAMS.md) | Visual Mermaid diagrams for all workflows |
-| [BikeLane](docs/BIKELANE.md) | Workflow system architecture |
-| [Agents](docs/AGENTS.md) | Agent reference |
-| [Commands](docs/COMMANDS.md) | Slash command reference |
-| [Benchmarking](packages/benchmark/docs/BENCHMARKING.md) | Scientific persona evaluation |
-| [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
-| [Cyclist Guide](docs/CYCLIST-GUIDE.md) | Visual terminal documentation |
+### Guides (in `pennyfarthing-dist/guides/`)
+
+| Guide | Description |
+|-------|-------------|
+| [BikeLane](pennyfarthing-dist/guides/bikelane.md) | Workflow engine — phased, stepped, procedural |
+| [BikeRack](pennyfarthing-dist/guides/bikerack.md) | Standalone panel viewer for CLI-first development |
+| [Gates](pennyfarthing-dist/guides/gates.md) | Workflow phase transition gates |
+| [Handoff CLI](pennyfarthing-dist/guides/handoff-cli.md) | Phase transitions and marker generation |
+| [Hooks](pennyfarthing-dist/guides/hooks.md) | Hook system configuration and reference |
+| [Prime](pennyfarthing-dist/guides/prime.md) | Agent activation and context loading |
+| [Bell Mode](pennyfarthing-dist/guides/bell-mode.md) | Message queue injection |
+| [Relay Mode](pennyfarthing-dist/guides/relay-mode.md) | Automatic agent handoffs |
+| [Reflector](pennyfarthing-dist/guides/reflector.md) | Agent-to-UI marker protocol |
+| [TirePump](pennyfarthing-dist/guides/tirepump.md) | Context clearing system |
+| [Tandem Protocol](pennyfarthing-dist/guides/tandem-protocol.md) | Background observer pairing |
+| [Output Styles](pennyfarthing-dist/guides/output-styles.md) | Configurable response modes |
+| [Brownfield Tools](pennyfarthing-dist/guides/brownfield-tools.md) | Codebase analysis CLI tools |
+| [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system |
 
 ## Available Themes (98)
 
@@ -245,12 +295,15 @@ your-project/
 ├── .pennyfarthing/
 │   ├── agents/               # → symlink to @pennyfarthing/core
 │   ├── guides/               # → symlink to @pennyfarthing/core
+│   ├── gates/                # → symlink to @pennyfarthing/core
+│   ├── output-styles/        # → symlink to @pennyfarthing/core
 │   ├── personas/             # → symlink to @pennyfarthing/core
 │   ├── scripts/              # → symlink to @pennyfarthing/core
+│   ├── templates/            # → symlink to @pennyfarthing/core
 │   ├── workflows/            # → symlink to @pennyfarthing/core
 │   ├── sidecars/             # Agent learning files (local, writable)
-│   ├── settings.local.json   # Claude Code settings
-│   └── config.local.yaml     # Theme selection
+│   ├── config.local.yaml     # Theme, output style, modes
+│   └── repos.yaml            # Multi-repo topology
 ├── .claude/
 │   ├── commands/             # → symlinks for Claude Code discovery
 │   └── skills/               # → symlinks for Claude Code discovery
@@ -261,17 +314,22 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v10.3.0
+## What's New in v11.0.0
 
-- **BikeRack Dockview Migration** — Full migration from index page to proper Dockview layout with standalone panel routing, settings panel, and portrait anchoring
-- **BikeRack Launcher CLI** — `--project-dir` flag for decoupled launch against any project directory
-- **Repos Topology System** — `repos.yaml` schema validation and topology wired into agent prime context for multi-repo awareness
-- **BikeRack UX Sweep** — Single group layout, visible sashes, streamlined panel set
-- **Business Analyst (BA) Agent** — New 11th agent for requirements discovery and stakeholder analysis, with personas across all core themes
+- **Single Package Consolidation** — `@pennyfarthing/shared` absorbed into `@pennyfarthing/core`. WheelHub server, React UI build, and all shared utilities now live in core. Cyclist is a thin wrapper adding WebSocket + OTLP.
+- **Workflow Gate System** — Conditional checks (tests-pass, tests-fail, approval, confidence) that block phase transitions until quality thresholds are met
+- **Handoff CLI** — Python CLI (`pf handoff`) for gate resolution, session transitions, and environment-aware marker generation
+- **Tandem Consultation Protocol** — Synchronous agent-to-agent questions via Sonnet (complements passive backseat observation)
+- **Output Styles** — Configurable response modes (terse, verbose, teaching) that adjust agent communication without changing behavior
+- **Codebase Analysis Tools** — `pf debug` suite: hotspots, complexity, dead code, dependencies, code markers, health score — with WheelHub API routes for panel integration
+- **Context Circuit Breaker** — Hard stop at 80% context usage, auto-saves agent state for `/continue-session` recovery
+- **Git Hook Chaining** — Dispatcher `.d/` pattern allows multiple tools to install hooks without overwriting each other
+- **v11 Migration Automation** — Detects and removes old packages during upgrade
 
 ### Previous Highlights
 
-- **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), plugin system, benchmark package extraction, CI quality gates, schema validation, Fifth Element theme
+- **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
+- **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
 - **v10.1** - Codebase health dashboard, tool dialog system, 2party-TDD workflow, cross-file reference validator
 - **v10.0** - Clean install consolidation, tool use approval system, plan mode exit UI
 - **v9.3** - Theme packages (97 themes across 7 packs), release workflow, shadcn/ui migration

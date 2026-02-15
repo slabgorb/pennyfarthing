@@ -275,3 +275,42 @@ def check_redirect(workflow_status: WorkflowStatus, agent_name: str) -> tuple[st
             )
 
     return None
+
+
+def get_phase_tandem_config(
+    workflow_name: str, phase_name: str, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract tandem configuration for a specific workflow phase.
+
+    Reads the workflow YAML and returns the tandem block for the given phase,
+    or None if the phase has no tandem configuration.
+
+    Args:
+        workflow_name: Workflow name (tdd-tandem, bdd-tandem, etc.)
+        phase_name: Phase name (red, green, review, etc.)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with tandem config (partner, mode, model, token_budget, triggers, scope)
+        or None if no tandem config on this phase.
+    """
+    root = project_root or get_project_root()
+    workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+
+    if not workflow_path.exists():
+        return None
+
+    try:
+        data = yaml.safe_load(workflow_path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+
+        for phase in phases:
+            if isinstance(phase, dict) and phase.get("name") == phase_name:
+                tandem = phase.get("tandem")
+                if isinstance(tandem, dict):
+                    return dict(tandem)
+                return None
+
+        return None
+    except Exception:
+        return None

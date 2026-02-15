@@ -14,22 +14,27 @@
 
 # Determine project directory
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-PORT_FILE="$PROJECT_DIR/.cyclist-port"
 
-# Check if port file exists
-if [[ -f "$PORT_FILE" ]]; then
-  # Read the port number
-  PORT=$(cat "$PORT_FILE" 2>/dev/null)
-
-  # Validate port is a number
-  if [[ "$PORT" =~ ^[0-9]+$ ]]; then
-    # Set OTEL environment variables
-    export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
-    export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$PORT"
-
-    # Optional: Log for debugging (can be silenced by setting CYCLIST_QUIET=1)
-    if [[ -z "$CYCLIST_QUIET" ]]; then
-      echo "[otel-auto-config] Configured OTEL to http://localhost:$PORT" >&2
+# Check .cyclist-port first, then .bikerack-port as fallback
+PORT=""
+for PORT_FILE in "$PROJECT_DIR/.cyclist-port" "$PROJECT_DIR/.bikerack-port"; do
+  if [[ -f "$PORT_FILE" ]]; then
+    PORT=$(cat "$PORT_FILE" 2>/dev/null)
+    # Validate port is a number
+    if [[ "$PORT" =~ ^[0-9]+$ ]]; then
+      break
     fi
+    PORT=""
+  fi
+done
+
+# Configure OTEL if a valid port was found
+if [[ -n "$PORT" ]]; then
+  export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
+  export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$PORT"
+
+  # Optional: Log for debugging (can be silenced by setting CYCLIST_QUIET=1)
+  if [[ -z "$CYCLIST_QUIET" ]]; then
+    echo "[otel-auto-config] Configured OTEL to http://localhost:$PORT (from $PORT_FILE)" >&2
   fi
 fi

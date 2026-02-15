@@ -19,6 +19,7 @@ workflow:
       input: [session_file, story_context]
       output: [design_spec, user_flows, wireframes, behavior_scenarios]
       gate:
+        file: gates/design-review
         type: design_review
         condition: UX spec defines user flows and acceptance behaviors
 
@@ -27,6 +28,7 @@ workflow:
       input: [design_spec, behavior_scenarios, story_context]
       output: [failing_tests]
       gate:
+        file: gates/tests-fail
         type: tests_fail
         condition: Behavior scenarios have test coverage
 
@@ -35,6 +37,7 @@ workflow:
       input: [failing_tests, design_spec, story_context]
       output: [implementation, passing_tests]
       gate:
+        file: gates/tests-pass
         type: tests_pass
         condition: All tests passing, UX spec implemented
 
@@ -43,6 +46,7 @@ workflow:
       input: [implementation, passing_tests, design_spec]
       output: [approval]
       gate:
+        file: gates/approval
         type: approval
         condition: Code review approved, UX requirements met
 

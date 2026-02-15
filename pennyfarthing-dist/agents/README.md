@@ -41,11 +41,10 @@ Task tool:
 
 - **`sm-setup.md`** - Research OR setup mode (Story 31-11)
 - **`sm-finish.md`** - Preflight OR execute phase (Story 31-11)
-- **`handoff.md`** - *(deprecated — replaced by `pf handoff` CLI per ADR-0025, removal in 108-2)*
-- **`sm-handoff.md`** - *(deprecated — replaced by `pf handoff` CLI per ADR-0025, removal in 108-2)*
 - **`sm-file-summary.md`** - Summarize file changes
 - **`reviewer-preflight.md`** - Gather review data
 - **`testing-runner.md`** - Execute tests, report results
+- **`tandem-backseat.md`** - Background observer for tandem mode (Story 95-2)
 
 ### Removed Files (Stories 31-11, 31-12)
 These files have been deleted and replaced by consolidated versions:
@@ -55,12 +54,6 @@ These files have been deleted and replaced by consolidated versions:
 - `sm-story-setup.md` → use `sm-setup` with MODE=setup
 - `sm-finish-bookkeeping.md` → use `sm-finish` with PHASE=preflight
 - `sm-finish-execution.md` → use `sm-finish` with PHASE=execute
-
-**Handoff Subagents (Story 31-11):**
-- `tea-handoff.md` → use `handoff` with CURRENT_PHASE=red
-- `dev-handoff.md` → use `handoff` with CURRENT_PHASE=green
-- `reviewer-handoff-approve.md` → use `handoff` with VERDICT=approved
-- `reviewer-handoff-reject.md` → use `handoff` with VERDICT=rejected
 
 ## Context Loading
 
@@ -124,14 +117,13 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (5 active, 2 deprecated)
-├── sm-setup.md        # Research or setup mode (Story 31-11)
-├── sm-finish.md       # Preflight or execute (Story 31-11)
-├── handoff.md         # DEPRECATED — replaced by pf handoff CLI (ADR-0025)
-├── sm-handoff.md              # DEPRECATED — replaced by pf handoff CLI (ADR-0025)
+│ # Official Subagents (6 active)
+├── sm-setup.md                # Research or setup mode (Story 31-11)
+├── sm-finish.md               # Preflight or execute (Story 31-11)
 ├── sm-file-summary.md         # Summarize files
 ├── reviewer-preflight.md      # Review prep
-└── testing-runner.md          # Run tests
+├── testing-runner.md          # Run tests
+└── tandem-backseat.md         # Tandem background observer (Story 95-2)
 ```
 
 ## Context Budget

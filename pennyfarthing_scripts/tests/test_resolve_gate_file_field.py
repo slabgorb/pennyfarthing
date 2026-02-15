@@ -30,7 +30,6 @@ import yaml
 
 from pennyfarthing_scripts.handoff.resolve_gate import resolve_gate
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: Workflow YAML data with gate.file support
 # ---------------------------------------------------------------------------

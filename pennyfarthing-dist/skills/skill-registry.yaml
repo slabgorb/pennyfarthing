@@ -115,6 +115,7 @@ skills:
     category: project-management
     tags: [jira, issues, sprint]
     version: "1.0.0"
+    command_group: jira
     prerequisites: []
     examples:
       - context: Viewing sprint issues
@@ -200,6 +201,7 @@ skills:
     category: project-management
     tags: [permissions, security, tools]
     version: "1.0.0"
+    command_group: permissions
     prerequisites: []
     examples:
       - context: Viewing active grants
@@ -237,6 +239,7 @@ skills:
     category: project-management
     tags: [sprint, status, backlog, stories, epics]
     version: "2.0.0"
+    command_group: sprint
     prerequisites: []
     examples:
       - context: Checking sprint status
@@ -317,6 +320,7 @@ skills:
     category: theming
     tags: [personas, themes, customization, creation]
     version: "2.0.0"
+    command_group: theme
     prerequisites: []
     examples:
       - context: Listing available themes
@@ -357,6 +361,7 @@ skills:
     category: project-management
     tags: [workflow, phases, tdd]
     version: "1.0.0"
+    command_group: workflow
     prerequisites: []
     examples:
       - context: Listing available workflows

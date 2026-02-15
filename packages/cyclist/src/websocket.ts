@@ -36,6 +36,7 @@ import {
   invalidateDiffCache,
   type GitDiffData,
 } from './git-diff.js';
+import { isTodoWriteMessage, extractTodos } from './todos.js';
 
 // =============================================================================
 // Subagent Message Enrichment
@@ -1361,6 +1362,20 @@ export function setupWebSocketServers(
                           console.log(`[WebSocket] Background task completed: ${completedTask.taskId} (${completedTask.success ? 'success' : 'error'})`);
                         }
                       }
+                    }
+                  }
+
+                  // Web mode: extract todos from TodoWrite messages and broadcast
+                  // Mirrors Electron mode behavior (main.ts → broadcastTodosUpdate)
+                  if (isTodoWriteMessage(message as Parameters<typeof isTodoWriteMessage>[0])) {
+                    const rawTodos = extractTodos(message as Parameters<typeof extractTodos>[0]);
+                    if (rawTodos.length > 0) {
+                      broadcastTodosUpdate(rawTodos.map((t, i) => ({
+                        id: `todo-${Date.now()}-${i}`,
+                        content: t.content,
+                        activeForm: t.activeForm,
+                        status: t.status,
+                      })));
                     }
                   }
                 }

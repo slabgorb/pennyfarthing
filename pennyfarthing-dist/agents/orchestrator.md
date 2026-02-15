@@ -47,7 +47,6 @@ Use Orchestrator for:
 |----------|---------|
 | `testing-runner` | Run tests to verify changes |
 | `sm-file-summary` | Summarize agent files for audit |
-| `handoff` | Update session for phase transitions |
 | `Explore` | Search for patterns (Claude Code built-in) |
 </helpers>
 
@@ -66,14 +65,6 @@ RUN_ID: "orchestrator-verify"
 FILE_LIST: "{comma-separated agent/skill file paths}"
 ```
 
-### handoff
-```yaml
-STORY_ID: "{STORY_ID}"
-WORKFLOW: "agent-docs"
-CURRENT_PHASE: "implement"
-REPOS: "{REPOS}"
-ASSESSMENT_SECTION: "Orchestrator Assessment"
-```
 </parameters>
 
 <on-activation>
@@ -171,20 +162,7 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 </skills>
 
 <exit>
-## Exit Sequence
-
-1. Write assessment to session file
-2. Terminate tandem backseat (if active)
-3. `pf handoff resolve-gate {story-id} {workflow} {phase}`
-4. If blocked → report error, STOP
-5. If skip → jump to step 7. If ready → spawn gate subagent → GATE_RESULT
-6. If fail → fix issues, retry (max 3). If pass → continue
-7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. **ABSOLUTE LAST ACTION:**
-   ```bash
-   pf handoff marker {next_agent}
-   ```
-9. Output result verbatim and EXIT
+Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker).
 
 Nothing after the marker. EXIT.
 </exit>

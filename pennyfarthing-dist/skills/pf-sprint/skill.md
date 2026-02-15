@@ -71,7 +71,7 @@ Never manually edit `sprint/current-sprint.yaml`. Use `pf sprint` CLI commands f
 | `pf backlog` | `pf sprint backlog` |
 | `pf work` | `pf sprint work` |
 | `pf story` | `pf sprint story` |
-| `/new-work` | `/pf-sprint work` |
+| `/pf-session new` | `/pf-sprint work` |
 
 ---
 

@@ -34,10 +34,10 @@ Marker pattern: /<!--\s*CYCLIST:(\w+)(?::([^>]+?))?\s*-->/gi
 
 | File | Purpose |
 |------|---------|
-| `packages/shared/src/marker/detect.ts` | `detectMarkers()` — parses markers from text |
-| `packages/shared/src/marker/strip.ts` | `stripMarkers()`, `stripCodeBlocks()` |
-| `packages/shared/src/marker/types.ts` | `MarkerType`, `Marker` interface |
-| `packages/shared/src/marker/constants.ts` | `MARKER_PATTERN`, `MARKER_TYPES` |
+| `packages/core/src/shared/marker/detect.ts` | `detectMarkers()` — parses markers from text |
+| `packages/core/src/shared/marker/strip.ts` | `stripMarkers()`, `stripCodeBlocks()` |
+| `packages/core/src/shared/marker/types.ts` | `MarkerType`, `Marker` interface |
+| `packages/core/src/shared/marker/constants.ts` | `MARKER_PATTERN`, `MARKER_TYPES` |
 | `packages/cyclist/src/public/components/QuickActions.tsx` | Renders action buttons from detected markers |
 | `packages/cyclist/src/public/hooks/useMarkerActions.ts` | Detects markers, builds action metadata |
 | `pennyfarthing-dist/scripts/hooks/question_reflector_check.py` | Stop hook — enforces marker presence |

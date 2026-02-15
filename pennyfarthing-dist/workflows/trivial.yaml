@@ -19,6 +19,7 @@ workflow:
       input: [session_file]
       output: [implementation]
       gate:
+        file: gates/tests-pass
         type: tests_pass
         condition: Existing tests still pass
 
@@ -27,6 +28,7 @@ workflow:
       input: [implementation]
       output: [approval]
       gate:
+        file: gates/approval
         type: approval
 
     - name: finish

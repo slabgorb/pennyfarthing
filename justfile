@@ -328,8 +328,8 @@ validate: validate-agents validate-subagents validate-sprint
 # BikeRack
 # =============================================================================
 
-# Start BikeRack mode (WheelHub + Claude CLI)
-# Run modes: here, dir=/path, stop, status, debug
+# Start BikeRack mode (hot-reload by default)
+# Run modes: here, dir=/path, stop, status, prod
 bikerack *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -352,7 +352,7 @@ bikerack *args:
 
     # Parse run arguments
     project_dir=""
-    debug_mode=false
+    prod_mode=false
     for arg in "$@"; do
         case "$arg" in
             here)
@@ -361,8 +361,8 @@ bikerack *args:
             dir=*)
                 project_dir="${arg#dir=}"
                 ;;
-            debug)
-                debug_mode=true
+            prod)
+                prod_mode=true
                 ;;
             start)
                 # default, no-op
@@ -371,10 +371,10 @@ bikerack *args:
                 echo "Unknown argument: $arg"
                 echo ""
                 echo "Usage:"
-                echo "  just bikerack              # Start in current directory"
-                echo "  just bikerack here         # Start pointing at invocation directory"
-                echo "  just bikerack dir=/path    # Start pointing at specific directory"
-                echo "  just bikerack debug        # Hot-reload dev mode (no Claude CLI)"
+                echo "  just bikerack              # Start with hot reload (default)"
+                echo "  just bikerack here         # Hot reload pointing at invocation directory"
+                echo "  just bikerack dir=/path    # Hot reload pointing at specific directory"
+                echo "  just bikerack prod         # Production mode (Python launcher + Claude CLI)"
                 echo "  just bikerack stop         # Stop running instance"
                 echo "  just bikerack status       # Show running state"
                 exit 1
@@ -382,31 +382,58 @@ bikerack *args:
         esac
     done
 
-    # Debug mode: hot-reload server + vite rebuild watcher (no Claude CLI)
-    if [[ "$debug_mode" == "true" ]]; then
-        cd packages/cyclist
-        export IS_BIKERACK=1
-        export CYCLIST_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
-        echo "BikeRack debug mode — hot reload enabled"
-        echo "  Project dir: $CYCLIST_PROJECT_DIR"
-        echo "  Server: tsx watch src/bikerack.ts"
-        echo "  Frontend: vite build --watch"
-        echo ""
-        npx concurrently -k \
-            -n server,vite \
-            -c green,magenta \
-            "tsx watch src/bikerack.ts" \
-            "vite build --watch"
+    # Production mode: Python launcher with Claude CLI
+    if [[ "$prod_mode" == "true" ]]; then
+        dir_flag=""
+        if [[ -n "$project_dir" ]]; then
+            dir_flag="--project-dir $project_dir"
+        fi
+        PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack start $dir_flag
         exit 0
     fi
 
-    # Build project-dir flag
-    dir_flag=""
-    if [[ -n "$project_dir" ]]; then
-        dir_flag="--project-dir $project_dir"
+    # Default: hot-reload server + vite rebuild watcher
+    cd packages/cyclist
+    export IS_BIKERACK=1
+    export CYCLIST_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
+    echo "BikeRack — hot reload mode"
+    echo "  Project dir: $CYCLIST_PROJECT_DIR"
+    echo "  Server: tsx watch src/bikerack.ts"
+    echo "  Frontend: vite build --watch"
+    echo ""
+    logfile="$CYCLIST_PROJECT_DIR/.session/bikerack_debug.log"
+    mkdir -p "$(dirname "$logfile")"
+    echo "  Log: $logfile"
+    # Clean stale port file before starting
+    rm -f "$CYCLIST_PROJECT_DIR/.bikerack-port"
+    npx concurrently -k \
+        -n server,vite \
+        -c green,magenta \
+        "tsx watch src/bikerack.ts" \
+        "vite build --watch" \
+        >> "$logfile" 2>&1 &
+    echo "  PID: $!"
+    echo ""
+    # Wait for server to write .bikerack-port (up to 10s)
+    port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"
+    for i in $(seq 1 20); do
+        if [[ -f "$port_file" ]]; then
+            port=$(cat "$port_file")
+            url="http://127.0.0.1:${port}"
+            echo "  BikeRack: $url"
+            echo ""
+            open -a "Google Chrome" "$url"
+            break
+        fi
+        sleep 0.5
+    done
+    if [[ ! -f "$port_file" ]]; then
+        echo "  Warning: server didn't start within 10s. Check logs: $logfile"
     fi
-
-    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack start $dir_flag
+    echo "BikeRack running in background. Use 'tail -f $logfile' to watch logs."
+    echo ""
+    # Launch Claude Code in the project directory
+    exec claude --project-dir "$CYCLIST_PROJECT_DIR"
 
 # Launch BikeRack TUI (connects to running WheelHub)
 tui *args:
