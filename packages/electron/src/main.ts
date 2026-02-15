@@ -13,15 +13,48 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import type { App, BrowserWindow, IpcMain, Dialog, Menu } from 'electron';
-import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig } from './server.js';
-import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
+// Core server exports (paths, ports, story, git, etc.)
+import {
+  getStoryInfo,
+  getAllReposGitInfoAsync,
+  writePortFile,
+  cleanupPortFile,
+  writePidFile,
+  cleanupPidFile,
+  readPidFile,
+  isProcessRunning,
+  getOtelConfig,
+  getProjectDirectory,
+  setProjectDirectory,
+  isValidProjectDirectory,
+  parseProjectDirArg,
+  clearSessionGrants,
+} from '@pennyfarthing/core/server';
+// Core server submodules
+import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from '@pennyfarthing/core/dist/server/pennyfarthing.js';
+import { selectContextTier, getPrimeContextJson } from '@pennyfarthing/cyclist/dist/prime.js';
+import { listDirectory as listDir } from '@pennyfarthing/core/dist/server/file-browser.js';
+import { getContextUsage, type ContextInfo } from '@pennyfarthing/core/dist/server/api/context.js';
+import { getVerboseMode, setVerboseMode, initializeGrants, setGrantsPersistCallback } from '@pennyfarthing/core/dist/server/settings-store.js';
+import {
+  getCurrentSettings,
+  saveUserSettings,
+  initializeSettings,
+  loadGrants,
+  saveGrants,
+  type CyclistSettings,
+  type SettingsInput,
+} from '@pennyfarthing/core/dist/server/settings.js';
+import { broadcastBackgroundTaskEvent } from '@pennyfarthing/core/dist/server/api/background-tasks.js';
+import { setBellMode } from '@pennyfarthing/core/dist/server/bell-mode.js';
+// Cyclist modules (real OTLP, WebSocket, ClaudeService, utilities)
+import { parseToolStats, type ToolStats, createEmptyStats } from '@pennyfarthing/cyclist/dist/tool-stats.js';
 import {
   getTokenStats,
   setTokenStatsCallback,
   setToolEventCallback,
-  TokenStats,
-  ToolEvent,
+  type TokenStats,
+  type ToolEvent,
   resetTokenStats,
   resetEventStore,
   getToolEventsFiltered,
@@ -33,41 +66,19 @@ import {
   setUserEmailCallback,
   setBackgroundTaskCallback,
   setBackgroundTaskStartCallback,
-  BackgroundTask,
+  type BackgroundTask,
   trackBackgroundTask,
   completeBackgroundTask,
   getBackgroundTaskByToolId,
   getBackgroundTasks,
-} from './otlp-receiver.js';
-import { ClaudeService, SDKMessage } from './claude-service.js';
-import { selectContextTier, getPrimeContextJson } from './prime.js';
-import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
+} from '@pennyfarthing/cyclist/dist/otlp-receiver.js';
+import { ClaudeService, type SDKMessage } from '@pennyfarthing/cyclist/dist/claude-service.js';
+import { isTodoWriteMessage, extractTodos, type TodoItem } from '@pennyfarthing/cyclist/dist/todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
-import { storePendingToolInput } from './span-correlation.js';
-import { listDirectory as listDir } from './file-browser.js';
-import {
-  getProjectDirectory,
-  setProjectDirectory,
-  isValidProjectDirectory,
-  parseProjectDirArg,
-} from './paths.js';
-import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { storePendingToolInput } from '@pennyfarthing/cyclist/dist/span-correlation.js';
+import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from '@pennyfarthing/cyclist/dist/websocket.js';
+import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from '@pennyfarthing/cyclist/dist/settings-window.js';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import {
-  getCurrentSettings,
-  saveUserSettings,
-  initializeSettings,
-  loadGrants,
-  saveGrants,
-  type CyclistSettings,
-  type SettingsInput,
-} from './settings.js';
-import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
-import { setStoryUpdateCallback, setGitUpdateCallback, broadcastClaudeMessage, setClaudeSendCallback, setClaudeAbortCallback, setClaudeClearCallback, setClaudeSetModeCallback, setClaudeGetModeCallback, setClaudeClearAndReloadCallback, broadcastTodosUpdate, broadcastContextUpdate, broadcastPanelToggle } from './websocket.js';
-import { initializeGrants, setGrantsPersistCallback, clearSessionGrants } from './settings-store.js';
-import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
-import { setBellMode } from './bell-mode.js';
 import {
   IPC_DATA_CHANNELS,
   IPC_CLAUDE_CHANNELS,
@@ -158,6 +169,7 @@ import {
   buildToolsMenu,
   buildViewMenu,
   setPanelToggleBroadcast,
+  setSettingsOpener,
 } from './menu-builder.js';
 
 /**
@@ -651,13 +663,13 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
 
 // =============================================================================
 // Re-export usage stats from dedicated module
-export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
+export { type UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from '@pennyfarthing/cyclist/dist/usage-stats.js';
 import {
   getUsageStats,
   resetUsageStats as resetUsageStatsInternal,
   startUsagePolling as startUsagePollingInternal,
   setUserEmail as setUsageStatsUserEmail,
-} from './usage-stats.js';
+} from '@pennyfarthing/cyclist/dist/usage-stats.js';
 
 // Wrapper functions that include broadcast
 function resetUsageStats(): void {
@@ -1513,14 +1525,14 @@ export async function handleSettingsSave(settings: SettingsInput): Promise<{ suc
 
 // Re-export theme metadata from dedicated module
 export {
-  ThemeMetadata,
-  ThemeAgent,
-  ThemeMetadataWithAgents,
+  type ThemeMetadata,
+  type ThemeAgent,
+  type ThemeMetadataWithAgents,
   CATEGORY_MAP,
   deriveCategory,
   getThemeMetadataCache,
   loadThemeMetadataWithAgents,
-} from './theme-metadata.js';
+} from '@pennyfarthing/cyclist/dist/theme-metadata.js';
 // getAvailableThemes, loadThemeMetadata - REMOVED (React uses REST /api/settings/themes)
 
 // Re-export from menu-builder
@@ -1975,21 +1987,16 @@ export function clearSessionId(): void {
 }
 
 // =============================================================================
-// Electron Runtime (Only executes in Electron context)
+// Electron App Entry Point (called from bikeshow.ts after app.whenReady)
 // =============================================================================
 
-// Check if running in Electron
-const isElectron = typeof process !== 'undefined' &&
-  process.versions &&
-  process.versions.electron;
-
-if (isElectron) {
+export async function createElectronApp(): Promise<void> {
   // Use createRequire for electron - dynamic import() doesn't expose named exports properly in Electron
   const { createRequire } = await import('module');
   const require = createRequire(import.meta.url);
   const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
-  const { createTerminalServer, app: expressApp } = await import('./server.js');
-  const { initPluginRouters } = await import('./plugin-loader.js');
+  const { createTerminalServer, app: expressApp } = await import('@pennyfarthing/cyclist/dist/server.js');
+  const { initPluginRouters } = await import('@pennyfarthing/core/dist/server/plugin-loader.js');
   const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
@@ -2265,10 +2272,9 @@ if (isElectron) {
     }
   }
 
-  // App ready - check for project directory, validate Pennyfarthing, then start
-  app.whenReady().then(async () => {
-    try {
-      let projectDir = getProjectDirectory();
+  // Initialize project directory, validate Pennyfarthing, then start
+  try {
+    let projectDir = getProjectDirectory();
 
       // Loop until we have a valid Pennyfarthing project or user quits
       while (true) {
@@ -2329,6 +2335,8 @@ if (isElectron) {
       // B-23: Wire agent and workflow menus to Electron menu bar
       // Wire panel toggle to WebSocket broadcast
       setPanelToggleBroadcast(broadcastPanelToggle);
+      // Wire settings window opener (dependency injection to avoid cyclist import in menu-builder)
+      setSettingsOpener(() => openSettingsWindow());
 
       // Use standard macOS menu roles instead of reconstructing existing menu
       // (reconstructing fails on nested submenus like Window)
@@ -2378,19 +2386,11 @@ if (isElectron) {
       console.error('Failed to start Cyclist:', error);
       app.quit();
     }
-  });
 
   // macOS: re-create window when dock icon clicked and no windows open
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
-    }
-  });
-
-  // Quit when all windows are closed (except on macOS)
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit();
     }
   });
 
