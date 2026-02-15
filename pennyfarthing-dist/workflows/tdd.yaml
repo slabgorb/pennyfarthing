@@ -27,6 +27,7 @@ workflow:
       input: [failing_tests, story_context]
       output: [implementation, passing_tests]
       gate:
+        file: gates/tests-pass
         type: tests_pass
         condition: All tests passing, no skipped tests
 
