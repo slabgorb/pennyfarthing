@@ -11,6 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.2.0] - 2026-02-16
+
+### Added
+
+- **Tandem protocol suite** — awareness validator, workflow templates, metrics/token tracking, portrait branding with theme variations, dialogue manager Python port (86-4, 86-5, 86-6, 86-16, 86-17)
+- **Native teams support** — capability detection for Claude Code native teams feature (86-7)
+- **Teammate activation** — spawn prompt builder for teammate activation flows (86-8)
+- **Agent activation heatmap** — diagnostic tool for visualizing agent activation patterns (MSSCI-15176)
+- **WheelHub namespace unification** — port/pid files consolidated under wheelhub namespace (MSSCI-15174)
+- **BikeRack TUI feature parity** — enhanced panels, ProgressPanel, interactive epics (MSSCI-15166)
+- **OTLP integrations** — real OpenTelemetry integrations replacing core server stubs (98-23)
+- **Lock-free git status** — read-only git status checks and improved cache invalidation (MSSCI-15125)
+- **Electron release workflow** — GitHub Actions CI/CD for standalone Electron distribution (98-21)
+
+### Changed
+
+- **Git scripts migrated to Python CLI** — bash git scripts replaced by `pf git` Python commands
+- **Workflow scripts migrated to Python CLI** — bash workflow scripts replaced by `pf workflow` Python commands
+
+### Fixed
+
+- **Stale port file references** — remaining references updated to wheelhub namespace (MSSCI-15174)
+- **Handoff assessment guard** — moved from resolve-gate to complete-phase for correct sequencing
+
+---
+
 ## [11.1.1] - 2026-02-16
 
 ### Fixed
@@ -2505,7 +2531,11 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...HEAD
+[11.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.1...v11.2.0
+[11.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.0...v11.1.1
+[11.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.0.0...v11.1.0
+[11.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.3...v11.0.0
 [10.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.2...v10.0.3
 [10.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v10.0.0...v10.0.1
