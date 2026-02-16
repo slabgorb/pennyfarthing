@@ -25,11 +25,13 @@ Shows branch, uncommitted changes, and ahead/behind status for each configured r
 
 Organize uncommitted changes into proper commits and branches.
 
+**When this subcommand is invoked, immediately start the stepped workflow:**
+
 ```bash
-pf git cleanup
+pf workflow start git-cleanup
 ```
 
-Starts the git-cleanup stepped workflow via BikeLane. Handles multiple repos.
+Then follow each step's instructions. Use `pf workflow complete-step git-cleanup` to advance between steps. The workflow handles multi-repo analysis, change categorization, branch creation, commits, and push.
 
 ### `/pf-git branches <story-id>`
 
