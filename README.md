@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v11.1.1** | *The outer loop goes once, the inner loop goes many times.*
+**v11.2.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,8 +15,8 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **11 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
-- **51 Slash Commands** - Entry points for agent activation and workflows
+- **12 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Review-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
+- **60 Slash Commands** - Entry points for agent activation and workflows
 - **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
@@ -254,18 +254,18 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Brownfield Tools](pennyfarthing-dist/guides/brownfield-tools.md) | Codebase analysis CLI tools |
 | [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system |
 
-## Available Themes (98)
+## Available Themes (100)
 
-Core includes 27 themes. Optional theme packs add 71 more across 7 packages:
+Core includes 29 themes. Optional theme packs add 71 more across 7 packages:
 
 | Package | Themes | Examples |
 |---------|--------|----------|
-| `@pennyfarthing/core` (included) | 27 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element` |
+| `@pennyfarthing/core` (included) | 29 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element` |
 | `@pennyfarthing/themes-prestige-tv` | 17 | `succession`, `the-wire`, `mad-men`, `fargo`, `the-sopranos` |
 | `@pennyfarthing/themes-literary` | 15 | `shakespeare`, `jane-austen`, `sherlock-holmes`, `1984`, `great-gatsby` |
 | `@pennyfarthing/themes-realistic` | 14 | `ancient-philosophers`, `jazz-legends`, `film-auteurs`, `software-pioneers` |
-| `@pennyfarthing/themes-comedy` | 9 | `the-office`, `parks-and-rec`, `ted-lasso`, `monty-python`, `futurama` |
-| `@pennyfarthing/themes-scifi` | 8 | `foundation`, `snow-crash`, `neuromancer`, `babylon-5` |
+| `@pennyfarthing/themes-comedy` | 8 | `the-office`, `parks-and-rec`, `ted-lasso`, `monty-python`, `futurama` |
+| `@pennyfarthing/themes-scifi` | 9 | `foundation`, `snow-crash`, `neuromancer`, `babylon-5` |
 | `@pennyfarthing/themes-mythology-fantasy` | 4 | `greek-mythology`, `norse-mythology`, `his-dark-materials`, `the-witcher` |
 | `@pennyfarthing/themes-superheroes` | 4 | `marvel-mcu`, `avatar-the-last-airbender`, `legion-of-doom` |
 

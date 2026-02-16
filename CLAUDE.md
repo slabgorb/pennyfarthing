@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 11.1.1. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 11.2.0. ES module monorepo (pnpm, TypeScript, Node >=18).
 
 <critical>
 ## Implementation Rules
@@ -65,7 +65,8 @@ Publishing: `pnpm version patch|minor|major && pnpm publish`
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package content (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
 | `packages/core/` | Main package (`@pennyfarthing/core`) — CLI, server (WheelHub), API routes, shared utilities (theme-loader, portrait-resolver, markers) |
-| `packages/cyclist/` | Visual terminal (Electron, React 19, Tailwind v4, shadcn/ui, dockview panels) — thin wrapper over core server, adds WebSocket + OTLP |
+| `packages/cyclist/` | Visual terminal (React 19, Tailwind v4, shadcn/ui, dockview panels) — thin wrapper over core server, adds WebSocket + OTLP |
+| `packages/electron/` | Electron shell for Cyclist — extracted from cyclist for standalone distribution (98-20) |
 | `packages/shared/` | **Deprecated** — absorbed into `packages/core/src/shared/` (story 98-16). Package still exists for backward compat but core is source of truth |
 | `packages/themes-*/` | Theme packages (comedy, literary, mythology-fantasy, prestige-tv, realistic, scifi, superheroes) |
 | `tests/` | Framework tests |
