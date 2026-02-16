@@ -61,7 +61,7 @@ describe('MSSCI-15073: Remove TTY panel', () => {
 
   describe('AC3: TTY removed from View menu panels', () => {
     it('should not have tty entry in VIEW_MENU_PANELS', () => {
-      const content = readFile('src/menu-builder.ts');
+      const content = readFile('../electron/src/menu-builder.ts');
       expect(content).not.toMatch(/['"]tty['"]/);
     });
   });

@@ -267,7 +267,8 @@ describe('Electron main.ts in packages/electron', () => {
   it('should import from electron module', () => {
     const mainPath = join(ELECTRON_PKG_DIR, 'src', 'main.ts');
     const content = readFileSync(mainPath, 'utf-8');
-    expect(content).toMatch(/from\s+['"]electron['"]/);
+    // main.ts uses require('electron') at runtime (createRequire pattern)
+    expect(content).toMatch(/require\(['"]electron['"]\)/);
   });
 
   it('should import IPC channels from local module', () => {
@@ -387,10 +388,10 @@ describe('Preload script in packages/electron', () => {
     expect(existsSync(preloadPath)).toBe(true);
   });
 
-  it('should import from electron (contextBridge, ipcRenderer)', () => {
+  it('should use electron APIs (contextBridge, ipcRenderer)', () => {
     const preloadPath = join(ELECTRON_PKG_DIR, 'src', 'preload.ts');
     const content = readFileSync(preloadPath, 'utf-8');
-    expect(content).toMatch(/from\s+['"]electron['"]/);
+    expect(content).toMatch(/require\(['"]electron['"]\)/);
     expect(content).toMatch(/contextBridge|ipcRenderer/);
   });
 
