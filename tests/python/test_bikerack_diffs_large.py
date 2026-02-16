@@ -258,20 +258,26 @@ class TestTruncationIndicator:
             )
 
     def test_indicator_for_multi_file_diff(self):
-        """Multi-file diff where one file exceeds limit should show indicator."""
+        """Multi-file diff where one file exceeds limit should show indicator when navigated to."""
         message = _make_multi_file_large_diff([
             ("src/small.py", 100),
             ("src/huge.py", 5000),
         ])
         panel = DiffsPanel(client=MagicMock())
+
+        # First file (small) should render fully without truncation indicator
         result = panel.render_panel(message)
         output = _render_to_string(result)
-
-        # The small file should render fully
         assert "src/small.py" in output
+
+        # Navigate to the large file and re-render
+        panel._current_file_index = 1
+        result2 = panel.render_panel(message)
+        output2 = _render_to_string(result2)
+
         # The huge file should have a truncation indicator
-        lower = output.lower()
-        assert "showing" in lower, (
+        lower2 = output2.lower()
+        assert "showing" in lower2, (
             "Large file in multi-file diff should trigger truncation indicator"
         )
 

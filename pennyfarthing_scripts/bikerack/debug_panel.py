@@ -7,13 +7,14 @@ token consumption stats (input, output, cache, cost).
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any
 
 from rich.console import Group
 from rich.table import Table
 from rich.text import Text
 
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel, render_progress_bar
 
 # Tier → Rich style mapping
 _TIER_STYLES: dict[str, str] = {
@@ -68,6 +69,7 @@ class DebugPanel(BasePanel):
         super().__init__(client=client, **kwargs)
         self._context_data: dict[str, Any] | None = None
         self._token_stats: dict[str, Any] | None = None
+        self._sparkline_history: deque[int] = deque(maxlen=20)
 
     def on_mount(self) -> None:
         """Subscribe to both context and token-stats channels."""
@@ -83,6 +85,9 @@ class DebugPanel(BasePanel):
         ctx = message.get("context")
         if isinstance(ctx, dict):
             self._context_data = ctx
+            pct = _safe_int(ctx.get("percent"))
+            if pct is not None:
+                self._sparkline_history.append(pct)
         else:
             self._context_data = {}
         self._rerender()
@@ -110,6 +115,8 @@ class DebugPanel(BasePanel):
         ctx = self._context_data
         if ctx:
             parts.append(_render_context(ctx))
+            if len(self._sparkline_history) >= 2:
+                parts.append(_render_sparkline(self._sparkline_history))
         elif not self._token_stats:
             return Text("No context data", style="dim italic")
 
@@ -157,6 +164,10 @@ def _render_context(ctx: dict[str, Any]) -> Any:
             usage_text.append(f" ({percent}%)")
         parts.append(usage_text)
 
+    # Context usage progress bar
+    if percent is not None:
+        parts.append(render_progress_bar(percent, warn_high=True))
+
     # Breakdown: baseline / conversation / available
     if baseline is not None:
         breakdown = Table(show_header=False, show_edge=False, pad_edge=False, box=None)
@@ -174,6 +185,25 @@ def _render_context(ctx: dict[str, Any]) -> Any:
         return Text("No context data", style="dim italic")
 
     return Group(*parts)
+
+
+_SPARKLINE_CHARS = "▁▂▃▄▅▆▇█"
+
+
+def _render_sparkline(history: deque[int]) -> Text:
+    """Render a Unicode sparkline from context usage history."""
+    text = Text()
+    text.append("Context trend: ", style="dim")
+    for pct in history:
+        level = min(7, max(0, int(pct / 100 * 7.99)))
+        if pct < 50:
+            style = "green"
+        elif pct <= 80:
+            style = "yellow"
+        else:
+            style = "red"
+        text.append(_SPARKLINE_CHARS[level], style=style)
+    return text
 
 
 def _render_token_stats(stats: dict[str, Any]) -> Any:

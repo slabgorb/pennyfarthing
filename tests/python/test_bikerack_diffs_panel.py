@@ -548,17 +548,22 @@ class TestDiffsPanelRendering:
         assert "src/new_file.py" in output, "Second file path not found"
 
     def test_multiple_files_both_have_content(self):
-        """Each file in a multi-file diff should have its diff content rendered."""
+        """Each file in a multi-file diff should have its content rendered via navigation."""
         panel = DiffsPanel(client=MagicMock())
+        # Render first file (default _current_file_index=0)
         result = panel.render_panel(SAMPLE_MULTI_FILE_MESSAGE)
         output = _render_to_string(result)
         # Content from first file
         assert "version" in output or "debug" in output, (
             "First file diff content missing"
         )
+        # Navigate to second file and re-render
+        panel._current_file_index = 1
+        result2 = panel.render_panel(SAMPLE_MULTI_FILE_MESSAGE)
+        output2 = _render_to_string(result2)
         # Content from second file (new_file.py adds hello/world)
-        assert "hello" in output or "world" in output, (
-            "Second file diff content missing"
+        assert "hello" in output2 or "world" in output2, (
+            "Second file diff content missing after navigation"
         )
 
     def test_empty_diffs_shows_placeholder(self):

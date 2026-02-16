@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from io import StringIO
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from rich.console import Console
 from rich.text import Text
@@ -25,6 +25,14 @@ from textual.widgets import Static
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+
+
+def _mock_mount(panel):
+    """Call on_mount with set_interval mocked to avoid asyncio requirement."""
+    mock_timer = MagicMock()
+    with patch.object(panel, "set_interval", return_value=mock_timer):
+        panel.on_mount()
+    return mock_timer
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/background-tasks wire format
@@ -154,7 +162,7 @@ class TestBackgroundPanelSubscription:
         """BackgroundPanel should subscribe to 'background-tasks' on mount."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         client.subscribe.assert_called_once_with(
             "background-tasks", panel.handle_message
         )
@@ -169,21 +177,21 @@ class TestBackgroundPanelSubscription:
         """handle_message should store the received payload."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         panel.handle_message(SAMPLE_INIT_MESSAGE)
         assert panel._last_payload == SAMPLE_INIT_MESSAGE
 
     def test_handle_init_message_type(self):
         """Panel should handle 'init' type messages with tasks array."""
         panel = BackgroundPanel(client=MagicMock())
-        panel.on_mount()
+        _mock_mount(panel)
         panel.handle_message(SAMPLE_INIT_MESSAGE)
         assert panel._last_payload["type"] == "init"
 
     def test_handle_update_message_type(self):
         """Panel should handle 'update' type messages with tasks array."""
         panel = BackgroundPanel(client=MagicMock())
-        panel.on_mount()
+        _mock_mount(panel)
         panel.handle_message(SAMPLE_UPDATE_MESSAGE)
         assert panel._last_payload["type"] == "update"
 
@@ -366,7 +374,7 @@ class TestBackgroundPanelErrorHandling:
     def test_missing_tasks_field(self):
         """Message without 'tasks' field should not crash."""
         panel = BackgroundPanel(client=MagicMock())
-        panel.on_mount()
+        _mock_mount(panel)
         result = panel.render_panel({"type": "init"})
         output = _render_to_string(result)
         assert isinstance(output, str)
@@ -375,7 +383,7 @@ class TestBackgroundPanelErrorHandling:
         """None payload should be handled gracefully by handle_message."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         panel.handle_message(None)
         assert panel._last_payload is None
 
@@ -383,7 +391,7 @@ class TestBackgroundPanelErrorHandling:
         """Empty dict payload should not crash."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         panel.handle_message({})
         assert panel._last_payload == {}
 
@@ -482,7 +490,7 @@ class TestBackgroundPanelRealTimeUpdates:
         """handle_message should call render_panel with the payload."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         panel.render_panel = MagicMock(return_value=Text("updated"))
         panel.handle_message(SAMPLE_INIT_MESSAGE)
         panel.render_panel.assert_called_once_with(SAMPLE_INIT_MESSAGE)
@@ -491,7 +499,7 @@ class TestBackgroundPanelRealTimeUpdates:
         """Multiple messages should each trigger a new render call."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
         panel.render_panel = MagicMock(return_value=Text("ok"))
         panel.handle_message(SAMPLE_INIT_MESSAGE)
         panel.handle_message(SAMPLE_UPDATE_MESSAGE)
@@ -500,7 +508,7 @@ class TestBackgroundPanelRealTimeUpdates:
     def test_update_replaces_displayed_content(self):
         """An 'update' message should replace previous task data."""
         panel = BackgroundPanel(client=MagicMock())
-        panel.on_mount()
+        _mock_mount(panel)
 
         # Init with running task
         result_init = panel.render_panel(SAMPLE_SINGLE_RUNNING_MESSAGE)
@@ -517,7 +525,7 @@ class TestBackgroundPanelRealTimeUpdates:
         """_last_payload should update to the most recent message."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        _mock_mount(panel)
 
         panel.handle_message(SAMPLE_INIT_MESSAGE)
         assert panel._last_payload == SAMPLE_INIT_MESSAGE
@@ -529,8 +537,9 @@ class TestBackgroundPanelRealTimeUpdates:
         """After unmount, messages should not trigger render."""
         client = MagicMock(spec=WheelHubClient)
         panel = BackgroundPanel(client=client)
-        panel.on_mount()
+        mock_timer = _mock_mount(panel)
         panel.on_unmount()
+        mock_timer.stop.assert_called_once()
 
         panel.render_panel = MagicMock()
         panel.handle_message(SAMPLE_INIT_MESSAGE)
