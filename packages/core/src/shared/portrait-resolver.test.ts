@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   resolvePennyfarthingDist,
   resolvePortraitPath,
+  resolveTandemBrandingPath,
   getPortraitPaths,
 } from './portrait-resolver.js';
 
@@ -217,6 +218,67 @@ describe('portrait-resolver', () => {
 
       // Should normalize paths correctly
       assert.ok(!result.portraitsDir.includes('//'), 'Should not have double slashes');
+    });
+  });
+
+  // ==========================================================================
+  // Story 86-17: resolveTandemBrandingPath
+  // ==========================================================================
+
+  describe('resolveTandemBrandingPath', () => {
+    // AC3: Portrait resolver detects tandem mode and returns tandem variant path
+    it('should return a path containing cyclist-tandem for a theme with tandem portraits', () => {
+      // Once tandem portraits are generated, a-team should have one
+      const result = resolveTandemBrandingPath('a-team');
+
+      assert.ok(result !== null, 'Should find tandem branding for a-team theme');
+      assert.ok(result!.includes('cyclist-tandem'), 'Path should include cyclist-tandem');
+      assert.ok(result!.includes('a-team'), 'Path should include theme name');
+    });
+
+    it('should return path in the medium size directory by default', () => {
+      const result = resolveTandemBrandingPath('a-team');
+
+      assert.ok(result !== null, 'Should find tandem branding');
+      assert.ok(result!.includes('/medium/'), 'Default should use medium size');
+    });
+
+    it('should return path in the large size directory when requested', () => {
+      // AC6: Tandem portraits properly sized (large 300x300)
+      const result = resolveTandemBrandingPath('a-team', 'large');
+
+      assert.ok(result !== null, 'Should find large tandem branding');
+      assert.ok(result!.includes('/large/'), 'Should use large size directory');
+    });
+
+    // AC5: Falls back to standard portrait when tandem mode is inactive
+    it('should return null for a theme without tandem portraits', () => {
+      const result = resolveTandemBrandingPath('nonexistent-theme');
+
+      assert.strictEqual(result, null, 'Should return null for unknown theme');
+    });
+
+    it('should return a .png file path', () => {
+      const result = resolveTandemBrandingPath('a-team');
+
+      assert.ok(result !== null, 'Should find tandem branding');
+      assert.ok(result!.endsWith('.png'), 'Should be a PNG file');
+    });
+
+    it('should work for stephen-king theme', () => {
+      // Verify multiple themes work, not just one
+      const result = resolveTandemBrandingPath('stephen-king');
+
+      assert.ok(result !== null, 'Should find tandem branding for stephen-king');
+      assert.ok(result!.includes('stephen-king'), 'Path should include theme');
+      assert.ok(result!.includes('cyclist-tandem'), 'Path should include cyclist-tandem');
+    });
+
+    it('should work for monty-python theme', () => {
+      const result = resolveTandemBrandingPath('monty-python');
+
+      assert.ok(result !== null, 'Should find tandem branding for monty-python');
+      assert.ok(result!.includes('monty-python'), 'Path should include theme');
     });
   });
 });
