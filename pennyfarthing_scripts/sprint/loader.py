@@ -62,6 +62,17 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
                 stacklevel=2,
             )
 
+    # Collect epic refs owned by initiatives so we don't warn about them.
+    initiative_refs: set[str] = set()
+    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+        init_data = load_yaml_config(init_file)
+        if init_data and isinstance(init_data, dict):
+            for ref in init_data.get("epics", []):
+                if isinstance(ref, str):
+                    initiative_refs.add(ref)
+                    # Also add normalized form (strip "epic-" prefix)
+                    initiative_refs.add(ref.replace("epic-", ""))
+
     # Log unindexed shard files on disk (but do NOT auto-merge —
     # orphan shards may belong to future initiatives).
     for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
@@ -74,7 +85,10 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
         jira_key = str(epic_data.get("jira", ""))
         if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
             continue
-        # Warn but don't merge
+        # Skip shards owned by initiatives (not orphans)
+        if eid in initiative_refs or jira_key in initiative_refs:
+            continue
+        # Warn only about truly orphaned shards
         warnings.warn(
             f"Unindexed shard {shard_file.name} (epic {eid}) not in epics list — skipping",
             stacklevel=2,
