@@ -22,6 +22,7 @@ VALIDATORS = {
     "agent": "pennyfarthing_scripts.validate.adapters.agent",
     "workflow": "pennyfarthing_scripts.validate.adapters.workflow",
     "skill-command": "pennyfarthing_scripts.validate.adapters.skill_command",
+    "tandem-awareness": "pennyfarthing_scripts.validate.adapters.tandem_awareness",
 }
 
 
