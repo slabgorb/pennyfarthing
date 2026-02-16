@@ -149,7 +149,8 @@ def agent():
 
     \b
     Commands:
-      start  - Start an agent session with context
+      start    - Start an agent session with context
+      heatmap  - Visualize context distribution and attention
     """
     pass
 
@@ -194,6 +195,40 @@ def agent_start(
         full=full,
         quiet=quiet,
         tier=tier,
+    )
+    raise SystemExit(exit_code)
+
+
+@agent.command("heatmap")
+@click.argument("name", required=False)
+@click.option("--all", "show_all", is_flag=True, help="Show summary across all primary agents")
+@click.option("--csv", "csv_output", is_flag=True, help="Output CSV for machine consumption")
+@click.option("--json", "json_output", is_flag=True, help="Output JSON")
+def agent_heatmap(
+    name: str | None,
+    show_all: bool,
+    csv_output: bool,
+    json_output: bool,
+):
+    """Visualize context distribution and attention for agent activation.
+
+    Shows a heat map of how tokens are distributed across sections of an
+    agent's activation context, with attention scores based on the
+    "Lost in the Middle" U-shaped attention model.
+
+    \b
+    Examples:
+      pf agent heatmap sm           # Detailed view for SM
+      pf agent heatmap --all        # Summary across all agents
+      pf agent heatmap dev --json   # JSON output for tooling
+    """
+    from pennyfarthing_scripts.prime.heatmap import run_heatmap
+
+    exit_code = run_heatmap(
+        agent_name=name,
+        show_all=show_all,
+        csv_output=csv_output,
+        json_output=json_output,
     )
     raise SystemExit(exit_code)
 
