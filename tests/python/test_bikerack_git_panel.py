@@ -2,7 +2,7 @@
 
 Verifies:
   AC1: GitPanel subscribes to /ws/git WebSocket channel and receives updates
-  AC2: Multi-repo status renders as Rich Table with all required columns
+  AC2: Multi-repo status renders as Rich Group with repo lines and file lists
   AC3: Nerd Font glyphs display correctly for branch and status indicators
   AC4: Panel updates in real-time when git state changes
   AC5: Error handling for missing/malformed WebSocket messages
@@ -12,17 +12,31 @@ Run with: python -m pytest tests/python/test_bikerack_git_panel.py -v
 
 from __future__ import annotations
 
+from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from rich.table import Table
+from rich.console import Console
+from rich.console import Group as RichGroup
 from rich.text import Text
 from textual.widgets import Static
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 from pennyfarthing_scripts.bikerack.git_panel import GitPanel
 from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _render_to_string(renderable) -> str:
+    """Render a Rich renderable to plain string for assertion checking."""
+    console = Console(file=StringIO(), force_terminal=True, width=120)
+    console.print(renderable)
+    return console.file.getvalue()
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +98,6 @@ SAMPLE_SINGLE_DIRTY_REPO: dict[str, Any] = {
             "clean": False,
             "ahead": 0,
             "behind": 5,
-            "developBehind": 0,
             "dirtyFiles": [
                 {"status": "M", "path": "file1.py"},
                 {"status": "A", "path": "file2.py"},
@@ -146,121 +159,93 @@ class TestGitPanelSubscription:
 
 
 # ---------------------------------------------------------------------------
-# AC2: Multi-repo status renders as Rich Table with all required columns
+# AC2: Multi-repo status renders as Rich Group with repo lines
 # ---------------------------------------------------------------------------
 
 
-class TestGitPanelTableRendering:
-    """AC2: Multi-repo status renders as Rich Table with required columns."""
+class TestGitPanelGroupRendering:
+    """AC2: Multi-repo status renders as Rich Group with text lines."""
 
-    def test_render_panel_returns_table(self):
-        """render_panel should return a Rich Table."""
+    def test_render_panel_returns_group_for_repos(self):
+        """render_panel should return a Rich Group when repos are present."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, Table)
+        assert isinstance(result, RichGroup)
 
-    def test_table_has_five_columns(self):
-        """Table should have 5 columns: Repository, Branch, Commits, Changes, Status."""
-        panel = GitPanel(client=MagicMock())
-        result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, Table)
-        assert len(result.columns) == 5, (
-            f"Expected 5 columns, got {len(result.columns)}"
-        )
-
-    def test_table_column_names(self):
-        """Table columns should be named correctly."""
-        panel = GitPanel(client=MagicMock())
-        result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, Table)
-        col_headers = [str(col.header) for col in result.columns]
-        assert "Repository" in col_headers
-        assert "Branch" in col_headers
-        assert "Commits" in col_headers
-        assert "Changes" in col_headers
-        assert "Status" in col_headers
-
-    def test_one_row_per_repo(self):
-        """Table should have one row per repo in the message."""
-        panel = GitPanel(client=MagicMock())
-        result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, Table)
-        # SAMPLE_INIT_MESSAGE has 2 repos
-        assert result.row_count == 2
-
-    def test_single_repo_renders_one_row(self):
-        """Single repo message should produce a table with one row."""
-        panel = GitPanel(client=MagicMock())
-        result = panel.render_panel(SAMPLE_UPDATE_MESSAGE)
-        assert isinstance(result, Table)
-        assert result.row_count == 1
-
-    def test_empty_repos_renders_empty_table(self):
-        """Empty repos list should produce a table with no rows."""
+    def test_render_panel_returns_text_for_empty_repos(self):
+        """render_panel should return Text for empty repos list."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel({"type": "init", "repos": []})
-        assert isinstance(result, Table)
-        assert result.row_count == 0
+        assert isinstance(result, Text)
+        assert "No repository data" in str(result)
 
-    def test_repo_name_in_table(self):
-        """Repository name should appear in the rendered table."""
+    def test_both_repos_appear_in_output(self):
+        """Both repo names should appear in the rendered output."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, Table)
-        # Verify by checking that the table has the right row count
-        # and can be rendered without error — detailed content verified
-        # via console capture
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
+        output = _render_to_string(result)
         assert "orchestrator" in output
         assert "pennyfarthing" in output
 
-    def test_branch_name_in_table(self):
-        """Branch names should appear in the rendered table."""
+    def test_single_repo_renders(self):
+        """Single repo message should render successfully."""
+        panel = GitPanel(client=MagicMock())
+        result = panel.render_panel(SAMPLE_UPDATE_MESSAGE)
+        output = _render_to_string(result)
+        assert "orchestrator" in output
+
+    def test_repo_name_in_output(self):
+        """Repository name should appear in the rendered output."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
+        output = _render_to_string(result)
+        assert "orchestrator" in output
+        assert "pennyfarthing" in output
 
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
+    def test_branch_name_in_output(self):
+        """Branch names should appear in the rendered output."""
+        panel = GitPanel(client=MagicMock())
+        result = panel.render_panel(SAMPLE_INIT_MESSAGE)
+        output = _render_to_string(result)
         assert "feature/103-10-gitpanel" in output
         assert "develop" in output
 
-    def test_ahead_behind_in_table(self):
-        """Ahead/behind commit counts should appear in the rendered output."""
+    def test_ahead_count_in_output(self):
+        """Ahead commit count should appear in the rendered output."""
         panel = GitPanel(client=MagicMock())
-        # Use a repo that is ahead 2, behind 0
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
+        output = _render_to_string(result)
+        # orchestrator is ahead=2, should show "↑2"
+        assert "\u21912" in output or "↑2" in output
 
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Should show ahead count (2) somewhere in commits column
-        assert "2" in output
-
-    def test_dirty_file_count_in_table(self):
-        """Dirty file count should appear in the Changes column."""
+    def test_dirty_file_paths_in_output(self):
+        """Dirty file paths should appear in expanded file list."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_SINGLE_DIRTY_REPO)
+        output = _render_to_string(result)
+        assert "file1.py" in output
+        assert "file2.py" in output
+        assert "file3.py" in output
 
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # 3 dirty files — the count should appear
-        assert "3" in output
+    def test_clean_repo_no_file_list(self):
+        """Clean repo should not show expanded file list."""
+        panel = GitPanel(client=MagicMock())
+        clean_message = {
+            "type": "init",
+            "repos": [{
+                "name": "cleanrepo",
+                "path": "/path",
+                "branch": "main",
+                "clean": True,
+                "ahead": 0,
+                "behind": 0,
+                "dirtyFiles": [],
+            }],
+        }
+        result = panel.render_panel(clean_message)
+        output = _render_to_string(result)
+        assert "cleanrepo" in output
+        assert "clean" in output
 
 
 # ---------------------------------------------------------------------------
@@ -284,35 +269,21 @@ class TestGitPanelGlyphs:
         assert GitPanel.panel_name == "Git"
 
     def test_branch_glyph_in_output(self):
-        """Branch column should include Nerd Font branch glyph."""
+        """Output should include Nerd Font branch glyph."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Branch glyph: U+E0A0 (nf-pl-branch) or similar
+        output = _render_to_string(result)
+        # Branch glyph: U+E0A0 (nf-pl-branch)
         branch_glyph = "\ue0a0"
         assert branch_glyph in output, (
-            f"Branch glyph (U+E0A0) not found in output"
+            "Branch glyph (U+E0A0) not found in output"
         )
 
     def test_clean_status_glyph(self):
         """Clean repo should show clean status indicator."""
-        # Second repo in SAMPLE_INIT_MESSAGE is clean
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Clean glyph: checkmark (U+2713) or similar
+        output = _render_to_string(result)
         assert "\u2713" in output or "✓" in output, (
             "Clean status glyph not found in output"
         )
@@ -321,14 +292,7 @@ class TestGitPanelGlyphs:
         """Dirty repo should show dirty status indicator."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_SINGLE_DIRTY_REPO)
-
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Dirty glyph: cross mark (U+2717) or similar
+        output = _render_to_string(result)
         assert "\u2717" in output or "✗" in output, (
             "Dirty status glyph not found in output"
         )
@@ -338,22 +302,15 @@ class TestGitPanelGlyphs:
         panel = GitPanel(client=MagicMock())
         # orchestrator in SAMPLE_INIT_MESSAGE is ahead=2
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Ahead glyph: up arrow (U+2B06) or similar
-        assert "\u2b06" in output or "⬆" in output, (
-            "Ahead glyph not found in output"
+        output = _render_to_string(result)
+        # New code uses U+2191 (↑) not U+2B06 (⬆)
+        assert "\u2191" in output or "↑" in output, (
+            "Ahead glyph (↑) not found in output"
         )
 
     def test_behind_glyph_in_output(self):
         """Repo behind remote should show down-arrow glyph."""
         panel = GitPanel(client=MagicMock())
-        # Use repo that is behind
         behind_message = {
             "type": "init",
             "repos": [{
@@ -368,17 +325,21 @@ class TestGitPanelGlyphs:
             }],
         }
         result = panel.render_panel(behind_message)
-
-        from io import StringIO
-        from rich.console import Console
-
-        console = Console(file=StringIO(), force_terminal=True, width=120)
-        console.print(result)
-        output = console.file.getvalue()
-        # Behind glyph: down arrow (U+2B07) or similar
-        assert "\u2b07" in output or "⬇" in output, (
-            "Behind glyph not found in output"
+        output = _render_to_string(result)
+        # New code uses U+2193 (↓) not U+2B07 (⬇)
+        assert "\u2193" in output or "↓" in output, (
+            "Behind glyph (↓) not found in output"
         )
+
+    def test_file_status_icons_in_output(self):
+        """Dirty file list should show status icons (~, +, -)."""
+        panel = GitPanel(client=MagicMock())
+        result = panel.render_panel(SAMPLE_SINGLE_DIRTY_REPO)
+        output = _render_to_string(result)
+        # file1.py has status "M" -> "~", file2.py "A" -> "+", file3.py "D" -> "-"
+        assert "~" in output
+        assert "+" in output
+        assert "-" in output
 
 
 # ---------------------------------------------------------------------------
@@ -435,7 +396,6 @@ class TestGitPanelRealTimeUpdates:
         panel.handle_message({"type": "update", "repos": []})
 
         assert panel.render_panel.call_count == 2
-        # Verify both message types were passed through
         types_received = [
             call.args[0]["type"] for call in panel.render_panel.call_args_list
         ]
@@ -467,17 +427,17 @@ class TestGitPanelErrorHandling:
         """Message without 'repos' field should not crash."""
         panel = GitPanel(client=MagicMock())
         panel.on_mount()
-        # Should not raise
         result = panel.render_panel({"type": "init"})
-        assert isinstance(result, Table)
-        assert result.row_count == 0
+        # No repos -> Text("No repository data")
+        assert isinstance(result, Text)
+        assert "No repository data" in str(result)
 
     def test_empty_repos_array(self):
-        """Message with empty repos array should render empty table."""
+        """Message with empty repos array should render 'No repository data'."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel({"type": "init", "repos": []})
-        assert isinstance(result, Table)
-        assert result.row_count == 0
+        assert isinstance(result, Text)
+        assert "No repository data" in str(result)
 
     def test_none_payload_via_handle_message(self):
         """None payload should be handled gracefully by handle_message."""
@@ -495,8 +455,9 @@ class TestGitPanelErrorHandling:
             "type": "init",
             "repos": [{"name": "myrepo", "path": "/path"}],
         })
-        assert isinstance(result, Table)
-        assert result.row_count == 1
+        # Should render without error
+        output = _render_to_string(result)
+        assert "myrepo" in output
 
     def test_repo_missing_dirty_files(self):
         """Repo entry without 'dirtyFiles' should not crash."""
@@ -512,8 +473,8 @@ class TestGitPanelErrorHandling:
                 "behind": 0,
             }],
         })
-        assert isinstance(result, Table)
-        assert result.row_count == 1
+        output = _render_to_string(result)
+        assert "myrepo" in output
 
     def test_repo_missing_ahead_behind(self):
         """Repo entry without ahead/behind should not crash."""
@@ -528,8 +489,8 @@ class TestGitPanelErrorHandling:
                 "dirtyFiles": [],
             }],
         })
-        assert isinstance(result, Table)
-        assert result.row_count == 1
+        output = _render_to_string(result)
+        assert "myrepo" in output
 
     def test_handle_message_with_empty_dict(self):
         """Empty dict payload should not crash."""
@@ -559,5 +520,5 @@ class TestGitPanelErrorHandling:
                 ],
             }],
         })
-        assert isinstance(result, Table)
-        assert result.row_count == 1
+        output = _render_to_string(result)
+        assert "myrepo" in output

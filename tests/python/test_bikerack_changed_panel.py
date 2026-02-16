@@ -2,7 +2,7 @@
 
 Verifies:
   AC1: Panel subscribes to correct WebSocket channel for changed file data
-  AC2: Renders Rich table with columns: file path, change type icon, status
+  AC2: Renders Rich Group with file path, change type icon, status grouped by repo
   AC3: Updates in real-time when file changes are detected
   AC4: Handles edge cases (empty state, malformed data, multi-repo)
 
@@ -16,7 +16,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from rich.console import Console
-from rich.table import Table
+from rich.console import Group as RichGroup
 from rich.text import Text
 from textual.widgets import Static
 
@@ -221,12 +221,12 @@ class TestChangedPanelSubscription:
 
 
 # ---------------------------------------------------------------------------
-# AC2: Renders Rich table with columns: file path, change type icon, status
+# AC2: Renders Rich Group with file path, change type icon, status grouped by repo
 # ---------------------------------------------------------------------------
 
 
 class TestChangedPanelRendering:
-    """AC2: Renders Rich table with file path, change type icon, and status."""
+    """AC2: Renders Rich Group with file path, change type icon, and status."""
 
     def test_render_panel_returns_renderable(self):
         """render_panel should return a Rich renderable (not plain string)."""
@@ -235,12 +235,12 @@ class TestChangedPanelRendering:
         output = _render_to_string(result)
         assert len(output) > 0
 
-    def test_render_returns_table(self):
-        """render_panel should return a Rich Table for structured file list."""
+    def test_render_returns_group(self):
+        """render_panel should return a Rich Group for structured file list."""
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_SINGLE_REPO)
-        assert isinstance(result, Table), (
-            f"Expected Rich Table, got {type(result).__name__}"
+        assert isinstance(result, RichGroup), (
+            f"Expected Rich Group, got {type(result).__name__}"
         )
 
     def test_file_paths_visible_in_output(self):
@@ -395,14 +395,15 @@ class TestChangedPanelMultiRepo:
         assert "src/new-panel.ts" in output, "Added file from pennyfarthing not found"
 
     def test_multi_repo_total_file_count(self):
-        """Table should contain rows for all dirty files across all repos."""
+        """Group should contain text lines for all dirty files across all repos."""
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_MULTI_REPO)
-        assert isinstance(result, Table)
+        assert isinstance(result, RichGroup)
+        output = _render_to_string(result)
         # 1 file from orchestrator + 2 files from pennyfarthing = 3 total
-        assert result.row_count == 3, (
-            f"Expected 3 rows for multi-repo files, got {result.row_count}"
-        )
+        file_paths = ["sprint/epic-103.yaml", "src/panel.ts", "src/new-panel.ts"]
+        for fp in file_paths:
+            assert fp in output, f"Expected file path {fp!r} in output"
 
     def test_repo_context_visible(self):
         """Files should indicate which repo they belong to (directly or via grouping)."""
