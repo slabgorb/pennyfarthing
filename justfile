@@ -412,7 +412,9 @@ bikerack *args:
         "tsx watch src/bikerack.ts" \
         "vite build --watch" \
         >> "$logfile" 2>&1 &
-    echo "  PID: $!"
+    bg_pid=$!
+    echo "  PID: $bg_pid"
+    echo "$bg_pid" > "$CYCLIST_PROJECT_DIR/.bikerack-pid"
     echo ""
     # Wait for server to write .bikerack-port (up to 10s)
     port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"
@@ -433,7 +435,7 @@ bikerack *args:
     echo "BikeRack running in background. Use 'tail -f $logfile' to watch logs."
     echo ""
     # Launch Claude Code in the project directory
-    exec claude --project-dir "$CYCLIST_PROJECT_DIR"
+    cd "$CYCLIST_PROJECT_DIR" && exec claude
 
 # Launch BikeRack TUI (connects to running WheelHub)
 tui *args:

@@ -10,7 +10,7 @@ const BIKERACK_PORT_FILE = '.bikerack-port';
 const DEFAULT_PORT = parseInt(process.env.BIKERACK_PORT || '2898', 10);
 
 function getProjectDir(): string {
-  return process.cwd();
+  return process.env.CYCLIST_PROJECT_DIR || process.cwd();
 }
 
 function writePortFile(projectDir: string, port: number): void {
