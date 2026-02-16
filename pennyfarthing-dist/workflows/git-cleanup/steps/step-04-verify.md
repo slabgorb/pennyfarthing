@@ -34,7 +34,7 @@ Git cleanup summary report including:
 ### 4.1 Final Git Status (All Repos)
 
 ```bash
-.pennyfarthing/scripts/git/git-status-all.sh
+pf git status
 ```
 
 Expected: Clean working directory in all repos, or only intentionally skipped files.
