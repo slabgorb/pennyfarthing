@@ -1,14 +1,14 @@
 """Resolve gate for current workflow phase.
 
-Reads workflow YAML, finds current phase gate, checks for assessment
-section in session file, and returns a structured RESOLVE_RESULT.
+Reads workflow YAML, finds current phase gate, and returns gate info.
+Assessment checks are enforced in complete_phase (not here) to avoid
+race conditions where agents call resolve-gate before writing assessments.
 
 Story: 105-1 (Script-First Handoff)
 """
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import yaml
@@ -95,22 +95,13 @@ def resolve_gate(
             assessment_found=True,
         )
 
-    session_path = project_root / ".session" / f"{story_id}-session.md"
-    assessment_found = False
-    if session_path.exists():
-        content = session_path.read_text()
-        assessment_found = bool(
-            re.search(r"^##\s+.*Assessment", content, re.MULTILINE)
-        )
-
-    status = "ready" if assessment_found else "blocked"
     return _result(
-        status=status,
+        status="ready",
         gate_type=gate_type,
         gate_file=gate_file,
         next_agent=next_agent,
         next_phase=next_phase,
-        assessment_found=assessment_found,
+        assessment_found=True,
     )
 
 
