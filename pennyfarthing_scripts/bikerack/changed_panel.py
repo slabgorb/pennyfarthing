@@ -2,6 +2,8 @@
 
 Story 103-14: Subscribes to /ws/git, extracts dirtyFiles from all repos,
 renders Rich table with file path, change type icon, and status.
+
+Story 110-1: Selectable file list with arrow navigation and Enter to navigate.
 """
 
 from __future__ import annotations
@@ -9,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from rich.text import Text
+from textual.binding import Binding
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 
@@ -55,15 +58,78 @@ class ChangedPanel(BasePanel):
 
     Subscribes to the ``git`` WebSocket channel and renders
     dirty files from all repos as a Rich table with file path,
-    change type icon, and status.
+    change type icon, and status. Supports arrow-key selection
+    and Enter to navigate to diffs.
     """
 
     channel: str = "git"
     panel_name: str = "Changed"
     icon: str = PANEL_ICONS["changed"][0]
+    can_focus = True
+
+    BINDINGS = [
+        Binding("enter", "select_file", "Select file"),
+    ]
+
+    def __init__(self, client=None, **kwargs):
+        super().__init__(client=client, **kwargs)
+        self._selected_index: int = 0
+        self._file_paths: list[str] = []
+
+    def handle_message(self, message: dict[str, Any] | None) -> None:
+        """Handle incoming message — build file path index then render."""
+        if message is not None:
+            self._build_file_paths(message)
+        super().handle_message(message)
+
+    def _build_file_paths(self, payload: dict[str, Any]) -> None:
+        """Extract flat list of file paths from repos payload."""
+        paths: list[str] = []
+        repos = payload.get("repos", [])
+        if isinstance(repos, list):
+            for repo in repos:
+                if not isinstance(repo, dict):
+                    continue
+                dirty_files = repo.get("dirtyFiles", [])
+                if not isinstance(dirty_files, list):
+                    continue
+                for f in dirty_files:
+                    if isinstance(f, dict):
+                        path = f.get("path", "")
+                        if path:
+                            paths.append(path)
+        self._file_paths = paths
+        if self._selected_index >= len(paths):
+            self._selected_index = max(0, len(paths) - 1)
+
+    def select_next(self) -> None:
+        """Move selection to the next file."""
+        if self._file_paths and self._selected_index < len(self._file_paths) - 1:
+            self._selected_index += 1
+
+    def select_prev(self) -> None:
+        """Move selection to the previous file."""
+        if self._selected_index > 0:
+            self._selected_index -= 1
+
+    def get_selected_path(self) -> str | None:
+        """Return the currently selected file path, or None if empty."""
+        if not self._file_paths:
+            return None
+        if self._selected_index >= len(self._file_paths):
+            return None
+        return self._file_paths[self._selected_index]
+
+    def action_select_file(self) -> None:
+        """Post NavigateToFile event for the selected file."""
+        path = self.get_selected_path()
+        if path is not None:
+            from pennyfarthing_scripts.bikerack.events import NavigateToFile
+
+            self.post_message(NavigateToFile(path=path))
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
-        """Render changed files grouped by repository."""
+        """Render changed files grouped by repository with selection highlight."""
         repos = payload.get("repos", [])
         if not isinstance(repos, list):
             return Text("No changed files", style="dim italic")
@@ -85,6 +151,7 @@ class ChangedPanel(BasePanel):
         from rich.console import Group as RichGroup
 
         parts: list[Any] = []
+        flat_idx = 0
         for repo_name, files in repo_files.items():
             count = len(files)
             label = "file" if count == 1 else "files"
@@ -97,12 +164,17 @@ class ChangedPanel(BasePanel):
                 status_code = f.get("status", "  ")
                 path = f.get("path", "")
                 icon, label_text, style = _parse_status(status_code)
+                is_selected = flat_idx == self._selected_index
                 line = Text()
-                line.append("  ")
+                if is_selected:
+                    line.append("› ", style="bold reverse")
+                else:
+                    line.append("  ")
                 line.append(icon, style=f"bold {style}")
-                line.append(f" {path}", style="cyan")
+                line.append(f" {path}", style="bold cyan reverse" if is_selected else "cyan")
                 line.append(f"  {label_text}", style=style)
                 parts.append(line)
+                flat_idx += 1
 
             parts.append(Text(""))  # spacer between repos
 

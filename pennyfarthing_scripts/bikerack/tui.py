@@ -23,6 +23,7 @@ from textual.widgets import Footer, Header, Static
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
+from pennyfarthing_scripts.bikerack.events import NavigateToFile  # noqa: F401
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
@@ -99,6 +100,28 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
 
 # Keys from PANEL_REGISTRY for fast lookup
 _PANEL_KEYS = [key for key, _ in PANEL_REGISTRY]
+
+
+class BindingFooter(Footer):
+    """Footer subclass that exposes active binding text via render().
+
+    Textual's Footer uses compose() for visual content, so render() returns
+    Blank. This override makes binding descriptions available through
+    str(footer.render()) for programmatic inspection.
+    """
+
+    def render(self) -> Any:
+        try:
+            bindings = self.screen.active_bindings
+            parts: list[str] = []
+            for _, binding, enabled, tooltip in bindings.values():
+                if binding.show:
+                    parts.append(f"{binding.key}:{binding.description}")
+            if parts:
+                return " ".join(parts)
+        except Exception:
+            pass
+        return super().render()
 
 
 class PanelTabBar(Static):
@@ -287,7 +310,7 @@ class BikeRackApp(App):
             yield BackgroundPanel(client=self._client, id="panel-background")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
-        yield Footer()
+        yield BindingFooter()
 
     async def on_mount(self) -> None:
         # Restore last panel or default to sprint
@@ -309,14 +332,28 @@ class BikeRackApp(App):
             except Exception:
                 pass
 
-        # Set tab bar active state
+        # Set tab bar active state and focus initial panel
         self._update_tab_bar(initial)
+        try:
+            initial_widget = self.query_one(f"#panel-{initial}")
+            initial_widget.focus()
+        except Exception:
+            pass
 
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
             self._client.subscribe("focus", self._handle_focus_message)
             self._client.subscribe("persona", self._handle_persona_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
+
+    def on_navigate_to_file(self, event: NavigateToFile) -> None:
+        """Handle NavigateToFile — switch to diffs and navigate to file."""
+        self.action_switch_panel("diffs")
+        try:
+            diffs = self.query_one("#panel-diffs", DiffsPanel)
+            diffs.navigate_to_file(event.path)
+        except Exception:
+            pass
 
     def action_switch_panel(self, key: str) -> None:
         """Switch to a panel by key."""
@@ -332,10 +369,11 @@ class BikeRackApp(App):
         except Exception:
             pass
 
-        # Show target panel
+        # Show target panel and focus it
         try:
             target = self.query_one(f"#panel-{key}")
             target.display = True
+            target.focus()
         except Exception:
             pass
 
