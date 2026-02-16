@@ -23,7 +23,7 @@ from textual.widgets import Footer, Header, Static
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
-from pennyfarthing_scripts.bikerack.events import NavigateToFile  # noqa: F401
+from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel

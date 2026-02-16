@@ -102,6 +102,11 @@ class DiffsPanel(BasePanel):
         for i, d in enumerate(diffs):
             if d.get("path") == path:
                 self._current_file_index = i
+                rendered = self.render_panel(self._last_payload)
+                try:
+                    self.update(rendered)
+                except Exception:
+                    pass
                 return
 
     def action_next_file_key(self) -> None:
