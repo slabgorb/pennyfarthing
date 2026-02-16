@@ -137,6 +137,11 @@ from pennyfarthing_scripts.epic.cli import epic  # noqa: E402
 
 cli.add_command(epic)
 
+# Import and register consultation group
+from pennyfarthing_scripts.consultation.cli import consultation  # noqa: E402
+
+cli.add_command(consultation)
+
 
 @cli.group()
 def agent():
