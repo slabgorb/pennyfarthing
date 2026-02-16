@@ -10,6 +10,8 @@
  * @module capabilities
  */
 
+import { readFileSync } from 'node:fs';
+
 /** Result of teammate mode detection */
 export type TeammateMode = 'in-process' | 'tmux' | null;
 
@@ -41,51 +43,76 @@ export interface CapabilityCheckResult {
   detail?: string;
 }
 
-/**
- * Detect whether native Claude Code Agent Teams are available.
- *
- * Checks:
- * - CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS env var is truthy
- * - Running in interactive mode (not invoked with -p)
- * - teammateMode setting from config
- *
- * @param configPath - Optional path to config file for teammateMode lookup
- * @returns CapabilityResult with detailed detection info
- */
-export function detectTeamsCapability(_configPath?: string): CapabilityResult {
-  // STUB: Not implemented — tests should fail on assertions
-  return { success: false, error: 'not implemented' };
+/** Execution strategy for a workflow phase */
+export interface PhaseExecutionStrategy {
+  mode: 'team' | 'solo-tandem' | 'solo';
+  degraded: boolean;
+  reason?: string;
 }
 
 /**
  * Check if the CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS env var is set and truthy.
- *
- * @returns true if the env var is set to a truthy value
  */
 export function isTeamsEnvVarSet(): boolean {
-  // STUB: Not implemented
-  return false;
+  const val = process.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS;
+  return val === 'true' || val === '1';
 }
 
 /**
  * Detect whether the current session is interactive (not -p mode).
- *
- * @returns true if running interactively
  */
 export function isInteractiveMode(): boolean {
-  // STUB: Not implemented
-  return false;
+  return !process.argv.includes('-p');
 }
 
 /**
- * Read the teammateMode setting from Claude Code config.
+ * Read the teammateMode setting from a JSON config file.
  *
- * @param configPath - Optional path to settings file
+ * @param configPath - Path to config file. If omitted, returns null.
  * @returns The teammate mode setting, or null if not configured
  */
-export function getTeammateMode(_configPath?: string): TeammateMode {
-  // STUB: Not implemented
-  return null;
+export function getTeammateMode(configPath?: string): TeammateMode {
+  if (!configPath) return null;
+  try {
+    const content = readFileSync(configPath, 'utf-8');
+    const config = JSON.parse(content);
+    const mode = config.teammateMode;
+    if (mode === 'in-process' || mode === 'tmux') return mode;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect whether native Claude Code Agent Teams are available.
+ *
+ * Always returns `{success: true}` — the detection itself always succeeds.
+ * The `teamsAvailable` flag within `data` indicates actual capability.
+ *
+ * @param configPath - Optional path to config file for teammateMode lookup
+ * @returns CapabilityResult with detailed detection info
+ */
+export function detectTeamsCapability(configPath?: string): CapabilityResult {
+  const envVarSet = isTeamsEnvVarSet();
+  const interactive = isInteractiveMode();
+  const teammateMode = getTeammateMode(configPath);
+  const teamsAvailable = envVarSet && interactive;
+
+  const reasons: string[] = [];
+  if (!envVarSet) reasons.push('CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set');
+  if (!interactive) reasons.push('not in interactive mode (-p flag detected)');
+
+  return {
+    success: true,
+    data: {
+      teamsAvailable,
+      envVarSet,
+      isInteractive: interactive,
+      teammateMode,
+      reason: teamsAvailable ? undefined : reasons.join('; '),
+    },
+  };
 }
 
 /**
@@ -95,31 +122,60 @@ export function getTeammateMode(_configPath?: string): TeammateMode {
  * @param configPath - Optional path to config file
  * @returns Array of check results
  */
-export function checkTeamsCapability(_configPath?: string): CapabilityCheckResult[] {
-  // STUB: Not implemented
-  return [];
+export function checkTeamsCapability(configPath?: string): CapabilityCheckResult[] {
+  const detection = detectTeamsCapability(configPath);
+  const data = detection.data!;
+
+  return [
+    {
+      name: 'Teams env var',
+      status: data.envVarSet ? 'pass' : 'warn',
+      detail: data.envVarSet
+        ? 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS is enabled'
+        : 'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set (teams disabled)',
+    },
+    {
+      name: 'Interactive mode',
+      status: data.isInteractive ? 'pass' : 'warn',
+      detail: data.isInteractive
+        ? 'Running in interactive mode'
+        : 'Running with -p flag (teams require interactive mode)',
+    },
+    {
+      name: 'Teammate mode',
+      status: data.teammateMode ? 'pass' : 'warn',
+      detail: data.teammateMode
+        ? `teammateMode: ${data.teammateMode}`
+        : 'teammateMode not configured',
+    },
+  ];
 }
 
 /**
  * Determine whether a workflow phase should degrade from team mode to solo+tandem.
  *
- * When teams are unavailable but a phase has a `team:` block configured,
- * this function returns the degraded execution strategy.
- *
  * @param phaseConfig - The phase configuration object (with optional team: block)
  * @param configPath - Optional path to config for capability detection
  * @returns Execution strategy recommendation
  */
-export interface PhaseExecutionStrategy {
-  mode: 'team' | 'solo-tandem' | 'solo';
-  degraded: boolean;
-  reason?: string;
-}
-
 export function resolvePhaseExecution(
-  _phaseConfig: { team?: Record<string, unknown> },
-  _configPath?: string,
+  phaseConfig: { team?: Record<string, unknown> },
+  configPath?: string,
 ): PhaseExecutionStrategy {
-  // STUB: Not implemented
-  return { mode: 'solo', degraded: false };
+  if (!phaseConfig.team) {
+    return { mode: 'solo', degraded: false };
+  }
+
+  const detection = detectTeamsCapability(configPath);
+  const teamsAvailable = detection.data?.teamsAvailable ?? false;
+
+  if (teamsAvailable) {
+    return { mode: 'team', degraded: false };
+  }
+
+  return {
+    mode: 'solo-tandem',
+    degraded: true,
+    reason: detection.data?.reason || 'Teams capability not available',
+  };
 }
