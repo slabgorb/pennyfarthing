@@ -1,8 +1,8 @@
-import { readdirSync, unlinkSync, symlinkSync, lstatSync, rmSync } from 'fs';
+import { readdirSync, unlinkSync, symlinkSync, lstatSync, rmSync, copyFileSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
-const { ensureDirSync } = fsExtra;
+const { ensureDirSync, copySync } = fsExtra;
 import { logger } from './logger.js';
 import { pathExists, isSymlink, isDirectory } from './files.js';
 
@@ -119,23 +119,23 @@ export function createCommandsDirectory(
   }
   logger.created('.claude/commands/ (directory for built-in + user commands)');
 
-  // Symlink each built-in command (only pf-prefixed built-in commands)
+  // Copy each built-in command (only pf-prefixed built-in commands)
+  // Copies instead of symlinks to avoid drift when node_modules changes
   if (pathExists(builtInCommandsPath)) {
     const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
     for (const cmd of builtInCommands) {
-      const linkPath = join(commandsDir, cmd);
-      const targetPath = join(builtInCommandsPath, cmd);
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+      const destPath = join(commandsDir, cmd);
+      const sourcePath = join(builtInCommandsPath, cmd);
 
       if (!dryRun) {
         try {
-          symlinkSync(relativeTarget, linkPath);
+          copyFileSync(sourcePath, destPath);
         } catch (e) {
-          logger.warning(`Could not create symlink for ${cmd}: ${e}`);
+          logger.warning(`Could not copy command ${cmd}: ${e}`);
         }
       }
     }
-    logger.info(`  Linked ${builtInCommands.length} built-in commands`);
+    logger.info(`  Copied ${builtInCommands.length} built-in commands`);
   }
 
   // Symlink user project commands (if any exist)
@@ -195,26 +195,26 @@ export function createSkillsDirectory(
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
-  // Symlink each built-in skill (only pf-prefixed built-in skills)
+  // Copy each built-in skill directory (only pf-prefixed built-in skills)
+  // Copies instead of symlinks to avoid drift when node_modules changes
   if (pathExists(builtInSkillsPath)) {
     const builtInSkills = readdirSync(builtInSkillsPath).filter(f => {
       const fullPath = join(builtInSkillsPath, f);
       return isDirectory(fullPath) && f.startsWith('pf-');
     });
     for (const skill of builtInSkills) {
-      const linkPath = join(skillsDir, skill);
-      const targetPath = join(builtInSkillsPath, skill);
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+      const destPath = join(skillsDir, skill);
+      const sourcePath = join(builtInSkillsPath, skill);
 
       if (!dryRun) {
         try {
-          symlinkSync(relativeTarget, linkPath);
+          copySync(sourcePath, destPath, { overwrite: true });
         } catch (e) {
-          logger.warning(`Could not create symlink for ${skill}: ${e}`);
+          logger.warning(`Could not copy skill ${skill}: ${e}`);
         }
       }
     }
-    logger.info(`  Linked ${builtInSkills.length} built-in skills`);
+    logger.info(`  Copied ${builtInSkills.length} built-in skills`);
   }
 
   // Symlink user project skills (if any exist) - skills are directories

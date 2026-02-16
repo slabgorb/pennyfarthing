@@ -196,15 +196,13 @@ async function updateInstalledContent(
     logger.created('.pennyfarthing/project/skills/ (for user custom skills)');
   }
 
-  // Re-link commands and skills
-  const builtInCommandsPath = join(nodeModulesPath, 'commands');
+  // Re-copy commands and skills (use assetsPath for correct pf-* prefix resolution)
+  const assetsPath = getAssetsPath();
+  const builtInCommandsPath = join(assetsPath, 'commands');
   createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
 
-  const builtInSkillsPath = join(nodeModulesPath, 'skills');
+  const builtInSkillsPath = join(assetsPath, 'skills');
   createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
-
-  // Update settings
-  const assetsPath = getAssetsPath();
   await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
   if (!dryRun) {
     ensureSettingsSymlink(projectRoot);

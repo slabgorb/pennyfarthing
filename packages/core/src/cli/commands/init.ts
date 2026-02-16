@@ -169,13 +169,13 @@ export async function initCommand(
     }
   }
 
-  // Link commands directory (allows user commands alongside built-in)
-  const builtInCommandsPath = join(nodeModulesPath, 'commands');
+  // Copy commands directory (allows user commands alongside built-in)
+  const builtInCommandsPath = join(assetsPath, 'commands');
   const projectCommandsPath = join(projectRoot, '.pennyfarthing/project/commands');
   createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
 
-  // Link skills directory (allows user skills alongside built-in)
-  const builtInSkillsPath = join(nodeModulesPath, 'skills');
+  // Copy skills directory (allows user skills alongside built-in)
+  const builtInSkillsPath = join(assetsPath, 'skills');
   const projectSkillsPath = join(projectRoot, '.pennyfarthing/project/skills');
   createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
 
