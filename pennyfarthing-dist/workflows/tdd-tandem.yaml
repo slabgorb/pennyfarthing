@@ -1,14 +1,22 @@
 # TDD Tandem Workflow - TDD with Full Tandem Chain
-# Extends standard TDD with tandem observers on every phase:
-#   - Architect backseats TEA during red phase
-#   - TEA backseats Dev during green phase
-#   - PM backseats Reviewer during review phase
 #
-# Flow: SM → TEA (+Architect) → Dev (+TEA) → Reviewer (+PM) → SM
+# When to use: Best for 5+ point feature stories where architectural alignment
+# during implementation provides high value. Use this instead of base tdd when
+# the story involves cross-cutting concerns, new patterns, or complex integrations.
+#
+# Tandem pairings:
+#   - RED phase: TEA + Architect (file-watch) — Architect reviews test strategy
+#   - GREEN phase: Dev + Architect (file-watch) — Architect guides implementation patterns
+#   - REVIEW phase: Reviewer + PM (file-watch) — PM validates business requirements
+#
+# Compared to base tdd: Adds tandem observers on every working phase.
+# The extra context from partner agents helps catch architectural drift early.
+#
+# Flow: SM → TEA (+Architect) → Dev (+Architect) → Reviewer (+PM) → SM
 
 workflow:
   name: tdd-tandem
-  description: TDD with full tandem chain across all phases
+  description: TDD with full tandem chain — architect and PM consultation across phases
   version: "2.0.0"
 
   phases:
@@ -37,7 +45,7 @@ workflow:
         type: tests_pass
         condition: All tests passing, no skipped tests
       tandem:
-        partner: tea
+        partner: architect
         scope: file-watch
 
     - name: review
@@ -60,5 +68,5 @@ workflow:
   triggers:
     tags: [tandem]
     points:
-      min: 3
+      min: 5
     default: false
