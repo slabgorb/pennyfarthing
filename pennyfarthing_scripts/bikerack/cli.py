@@ -64,12 +64,12 @@ def start(project_dir, dry_run):
 
     running, pid, port = is_already_running(project_dir)
     if running:
-        click.echo(
-            f"Error: BikeRack is already running (PID {pid}, port {port})",
-            err=True,
-        )
-        click.echo("Use 'pf bikerack stop' to stop it.", err=True)
-        sys.exit(2)
+        # Idempotent: WheelHub already up, just exec Claude with OTEL env
+        click.echo(f"BikeRack already running (PID {pid}, port {port})")
+        otel_env = build_otel_env(port)
+        click.echo(f"Dashboard: http://localhost:{port}/bikerack")
+        click.echo("Starting Claude CLI...")
+        exec_claude(otel_env, project_dir)
 
     click.echo("Starting BikeRack mode...")
     try:
