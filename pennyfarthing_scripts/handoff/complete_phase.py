@@ -53,6 +53,18 @@ def complete_phase(
         }
 
     content = session_path.read_text()
+
+    # Guard: require assessment section before allowing gated phase transitions.
+    # Skip/manual transitions (e.g. setup→implement) don't need assessments.
+    if gate_type not in ("skip", "manual", "-", None, "") and not re.search(
+        r"^##\s+.*Assessment", content, re.MULTILINE
+    ):
+        return {
+            "status": "error",
+            "session_file": str(session_path),
+            "error": "No assessment found in session file. Write your assessment before completing the phase.",
+        }
+
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
