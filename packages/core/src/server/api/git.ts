@@ -178,7 +178,8 @@ export async function getAllReposGitInfoAsync(projectDir: string): Promise<RepoG
 export function getGitInfo(projectDir: string): GitInfo | null {
   try {
     // Get current branch
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+    // --no-optional-locks: prevent taking .git/index lock (avoids conflicts with concurrent git ops)
+    const branch = execSync('git --no-optional-locks rev-parse --abbrev-ref HEAD', {
       cwd: projectDir,
       encoding: 'utf-8',
     }).trim();
@@ -187,7 +188,7 @@ export function getGitInfo(projectDir: string): GitInfo | null {
     let dirtyFiles: DirtyFile[] = [];
     let clean = true;
     try {
-      const statusOutput = execSync('git status --porcelain', {
+      const statusOutput = execSync('git --no-optional-locks status --porcelain', {
         cwd: projectDir,
         encoding: 'utf-8',
       }).trim();
@@ -203,7 +204,7 @@ export function getGitInfo(projectDir: string): GitInfo | null {
     } catch {
       // Fall back to diff-index check if porcelain fails
       try {
-        execSync('git diff-index --quiet HEAD --', {
+        execSync('git --no-optional-locks diff-index --quiet HEAD --', {
           cwd: projectDir,
           encoding: 'utf-8',
         });
@@ -217,14 +218,14 @@ export function getGitInfo(projectDir: string): GitInfo | null {
     let ahead: number | null = null;
     let behind: number | null = null;
     try {
-      const aheadOutput = execSync('git rev-list --count @{u}..HEAD', {
+      const aheadOutput = execSync('git --no-optional-locks rev-list --count @{u}..HEAD', {
         cwd: projectDir,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       ahead = parseInt(aheadOutput.trim(), 10);
 
-      const behindOutput = execSync('git rev-list --count HEAD..@{u}', {
+      const behindOutput = execSync('git --no-optional-locks rev-list --count HEAD..@{u}', {
         cwd: projectDir,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -237,7 +238,7 @@ export function getGitInfo(projectDir: string): GitInfo | null {
     // Get commits that origin/develop has that current branch doesn't
     let developBehind: number | null = null;
     try {
-      const developBehindOutput = execSync('git rev-list --count HEAD..origin/develop', {
+      const developBehindOutput = execSync('git --no-optional-locks rev-list --count HEAD..origin/develop', {
         cwd: projectDir,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -266,32 +267,14 @@ export function getGitInfo(projectDir: string): GitInfo | null {
 /**
  * Get git status for project (async - does not block event loop)
  * This should be preferred over getGitInfo for WebSocket broadcasts and polling
- * Uses a per-repo mutex to prevent git lock conflicts from concurrent operations
+ * Uses --no-optional-locks so reads never conflict with concurrent git operations.
+ * Does NOT fetch from remote — use fetchRepoAsync() separately for that.
  */
 export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | null> {
-  // Acquire lock to prevent concurrent git operations on the same repo
-  const releaseLock = await acquireRepoLock(projectDir);
-
   try {
-    // Fetch latest refs from remote (quiet, no output)
-    // Throttled: only fetch once per GIT_FETCH_COOLDOWN_MS per repo (Story 103-21)
-    const now = Date.now();
-    const lastFetch = lastFetchTimes.get(projectDir) ?? 0;
-    if (now - lastFetch >= GIT_FETCH_COOLDOWN_MS) {
-      try {
-        await execAsync('git fetch --quiet', {
-          cwd: projectDir,
-          encoding: 'utf-8',
-          timeout: 10000, // 10s timeout for network operation
-        });
-        lastFetchTimes.set(projectDir, Date.now());
-      } catch {
-        // Fetch failed (offline, no remote, etc.) - continue with local refs
-      }
-    }
-
     // Get current branch
-    const { stdout: branchOutput } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+    // --no-optional-locks: prevent taking .git/index lock (avoids conflicts with concurrent git ops)
+    const { stdout: branchOutput } = await execAsync('git --no-optional-locks rev-parse --abbrev-ref HEAD', {
       cwd: projectDir,
       encoding: 'utf-8',
     });
@@ -301,7 +284,7 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
     let dirtyFiles: DirtyFile[] = [];
     let clean = true;
     try {
-      const { stdout: statusOutput } = await execAsync('git status --porcelain', {
+      const { stdout: statusOutput } = await execAsync('git --no-optional-locks status --porcelain', {
         cwd: projectDir,
         encoding: 'utf-8',
       });
@@ -317,7 +300,7 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
     } catch {
       // Fall back to diff-index check if porcelain fails
       try {
-        await execAsync('git diff-index --quiet HEAD --', {
+        await execAsync('git --no-optional-locks diff-index --quiet HEAD --', {
           cwd: projectDir,
           encoding: 'utf-8',
         });
@@ -331,13 +314,13 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
     let ahead: number | null = null;
     let behind: number | null = null;
     try {
-      const { stdout: aheadOutput } = await execAsync('git rev-list --count @{u}..HEAD', {
+      const { stdout: aheadOutput } = await execAsync('git --no-optional-locks rev-list --count @{u}..HEAD', {
         cwd: projectDir,
         encoding: 'utf-8',
       });
       ahead = parseInt(aheadOutput.trim(), 10);
 
-      const { stdout: behindOutput } = await execAsync('git rev-list --count HEAD..@{u}', {
+      const { stdout: behindOutput } = await execAsync('git --no-optional-locks rev-list --count HEAD..@{u}', {
         cwd: projectDir,
         encoding: 'utf-8',
       });
@@ -351,7 +334,7 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
     let developBehind: number | null = null;
     try {
       const { stdout: developBehindOutput } = await execAsync(
-        'git rev-list --count HEAD..origin/develop',
+        'git --no-optional-locks rev-list --count HEAD..origin/develop',
         { cwd: projectDir, encoding: 'utf-8' }
       );
       developBehind = parseInt(developBehindOutput.trim(), 10);
@@ -359,10 +342,8 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
       // origin/develop doesn't exist or other error - leave as null
     }
 
-    releaseLock();
     return { branch, clean, ahead, behind, dirtyFiles, developBehind };
   } catch (error) {
-    releaseLock();
     // Not a git repo or git command failed - return null gracefully
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorCode = (error as NodeJS.ErrnoException)?.code;
@@ -374,6 +355,47 @@ export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | nul
 
     return null;
   }
+}
+
+/**
+ * Fetch latest refs from remote for a single repo.
+ * Uses per-repo mutex to prevent concurrent fetch operations.
+ * Throttled: only fetches once per GIT_FETCH_COOLDOWN_MS per repo (Story 103-21).
+ * Returns true if fetch was performed, false if skipped (cooldown) or failed.
+ */
+export async function fetchRepoAsync(projectDir: string): Promise<boolean> {
+  const now = Date.now();
+  const lastFetch = lastFetchTimes.get(projectDir) ?? 0;
+  if (now - lastFetch < GIT_FETCH_COOLDOWN_MS) {
+    return false; // Still in cooldown
+  }
+
+  const releaseLock = await acquireRepoLock(projectDir);
+  try {
+    await execAsync('git fetch --quiet', {
+      cwd: projectDir,
+      encoding: 'utf-8',
+      timeout: 10000, // 10s timeout for network operation
+    });
+    lastFetchTimes.set(projectDir, Date.now());
+    releaseLock();
+    return true;
+  } catch {
+    // Fetch failed (offline, no remote, etc.)
+    releaseLock();
+    return false;
+  }
+}
+
+/**
+ * Fetch all configured repos. Returns true if any repo was fetched.
+ */
+export async function fetchAllReposAsync(projectDir: string): Promise<boolean> {
+  const repos = getReposFromConfig(projectDir);
+  const results = await Promise.all(
+    repos.map(repo => fetchRepoAsync(join(projectDir, repo.path)))
+  );
+  return results.some(r => r);
 }
 
 /**
