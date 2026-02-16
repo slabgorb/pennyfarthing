@@ -43,7 +43,41 @@ export interface WorkflowPhase {
     /** Observation scope(s): file-watch, tool-watch, context-watch */
     scope?: string | string[];
   };
+  /** Native team configuration for phase-scoped collaboration (optional) */
+  team?: TeamConfig;
 }
+
+/**
+ * Teammate entry within a team configuration
+ */
+export interface TeamMember {
+  /** Agent name (must be a valid agent from the registry) */
+  agent: string;
+  /** Description of the teammate's task/role in this phase */
+  task?: string;
+}
+
+/**
+ * Native team configuration for a workflow phase.
+ * Enables phase-scoped parallel collaboration via Claude Code Agent Teams.
+ */
+export interface TeamConfig {
+  /** List of teammate agents for this phase */
+  teammates: TeamMember[];
+  /** Model selection for teammate agents */
+  model?: string;
+  /** Display mode for team execution */
+  display?: string;
+}
+
+/**
+ * Valid agent names for teammate validation.
+ * These are the main agents that can participate in team collaboration.
+ */
+export const VALID_AGENT_NAMES = [
+  'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm',
+  'tech-writer', 'ux-designer', 'devops', 'ba', 'orchestrator',
+] as const;
 
 /**
  * Trigger rules for automatic workflow selection
