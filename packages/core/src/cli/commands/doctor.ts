@@ -1,10 +1,10 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync, copyFileSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import YAML from 'yaml';
 import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
 
-const { removeSync, ensureDirSync } = fsExtra;
+const { removeSync, ensureDirSync, copySync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import {
   readManifest
@@ -13,9 +13,10 @@ import {
   pathExists,
   isDirectory,
   isSymlink,
-  fileMatchesHash
+  fileMatchesHash,
+  filesMatch
 } from '../utils/files.js';
-import { getPackageVersion } from '../utils/version.js';
+import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
@@ -81,6 +82,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   // Run checks
   results.push(...checkInstallation(projectRoot, manifest));
   results.push(...checkCoreFiles(projectRoot, manifest));
+  results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
   results.push(...checkUserFiles(projectRoot));
   results.push(...checkDirectories(projectRoot));
   results.push(...checkHooks(projectRoot));
@@ -100,7 +102,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   // Display results by category
   const categories = [
     { name: 'Installation', filter: (r: CheckResult) => r.name.startsWith('manifest') },
-    { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') },
+    { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') && r.name !== 'core/commands' && r.name !== 'core/skills' },
+    { name: 'Commands & Skills', filter: (r: CheckResult) => r.name === 'core/commands' || r.name === 'core/skills' },
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
@@ -237,6 +240,217 @@ function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readMan
   }
 
   return results;
+}
+
+/**
+ * Check commands and skills are properly copied (not symlinked) and up to date.
+ * Commands and skills are file copies since v11.3.0 to avoid node_modules drift.
+ */
+function checkCommandsAndSkills(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  // Use assetsPath for source resolution (correct pf-* prefix in dogfood)
+  let assetsPath: string | null = null;
+  try { assetsPath = getAssetsPath(); } catch { /* no assets available */ }
+
+  if (!assetsPath) {
+    // Can't check freshness without assets, but check dirs exist
+    const commandsDir = join(projectRoot, '.claude/commands');
+    const skillsDir = join(projectRoot, '.claude/skills');
+
+    results.push({
+      name: 'core/commands',
+      status: pathExists(commandsDir) ? 'pass' : 'fail',
+      detail: pathExists(commandsDir) ? undefined : 'Missing .claude/commands/'
+    });
+    results.push({
+      name: 'core/skills',
+      status: pathExists(skillsDir) ? 'pass' : 'fail',
+      detail: pathExists(skillsDir) ? undefined : 'Missing .claude/skills/'
+    });
+
+    return results;
+  }
+
+  // Check commands
+  const commandsDir = join(projectRoot, '.claude/commands');
+  const builtInCommandsPath = join(assetsPath, 'commands');
+
+  if (!pathExists(commandsDir)) {
+    results.push({
+      name: 'core/commands',
+      status: 'fail',
+      detail: 'Missing .claude/commands/ — run pennyfarthing update'
+    });
+  } else if (pathExists(builtInCommandsPath)) {
+    const sourceCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
+    const installedEntries = readdirSync(commandsDir).filter(f => f.startsWith('pf-'));
+    let staleCount = 0;
+    let symlinkCount = 0;
+
+    // Check for stale symlinks (legacy) or stale copies
+    for (const cmd of sourceCommands) {
+      const installedPath = join(commandsDir, cmd);
+      const sourcePath = join(builtInCommandsPath, cmd);
+
+      if (!pathExists(installedPath)) {
+        staleCount++;
+      } else if (isSymlink(installedPath)) {
+        symlinkCount++;
+      } else if (!filesMatch(installedPath, sourcePath)) {
+        staleCount++;
+      }
+    }
+
+    if (symlinkCount > 0) {
+      results.push({
+        name: 'core/commands',
+        status: 'warn',
+        detail: `${symlinkCount} command(s) are symlinks — should be copies. Run pennyfarthing update`,
+        fix: () => {
+          refreshCommandsCopy(projectRoot, builtInCommandsPath);
+        }
+      });
+    } else if (staleCount > 0) {
+      results.push({
+        name: 'core/commands',
+        status: 'warn',
+        detail: `${staleCount} command(s) out of date — run pennyfarthing update`,
+        fix: () => {
+          refreshCommandsCopy(projectRoot, builtInCommandsPath);
+        }
+      });
+    } else {
+      results.push({
+        name: 'core/commands',
+        status: 'pass',
+        detail: `${installedEntries.length} commands`
+      });
+    }
+  }
+
+  // Check skills
+  const skillsDir = join(projectRoot, '.claude/skills');
+  const builtInSkillsPath = join(assetsPath, 'skills');
+
+  if (!pathExists(skillsDir)) {
+    results.push({
+      name: 'core/skills',
+      status: 'fail',
+      detail: 'Missing .claude/skills/ — run pennyfarthing update'
+    });
+  } else if (pathExists(builtInSkillsPath)) {
+    const sourceSkills = readdirSync(builtInSkillsPath).filter(f => {
+      const fullPath = join(builtInSkillsPath, f);
+      return isDirectory(fullPath) && f.startsWith('pf-');
+    });
+    const installedEntries = readdirSync(skillsDir).filter(f => f.startsWith('pf-'));
+    let missingCount = 0;
+    let symlinkCount = 0;
+
+    for (const skill of sourceSkills) {
+      const installedPath = join(skillsDir, skill);
+
+      if (!pathExists(installedPath)) {
+        missingCount++;
+      } else if (isSymlink(installedPath)) {
+        symlinkCount++;
+      }
+    }
+
+    if (symlinkCount > 0) {
+      results.push({
+        name: 'core/skills',
+        status: 'warn',
+        detail: `${symlinkCount} skill(s) are symlinks — should be copies. Run pennyfarthing update`,
+        fix: () => {
+          refreshSkillsCopy(projectRoot, builtInSkillsPath);
+        }
+      });
+    } else if (missingCount > 0) {
+      results.push({
+        name: 'core/skills',
+        status: 'warn',
+        detail: `${missingCount} skill(s) missing — run pennyfarthing update`,
+        fix: () => {
+          refreshSkillsCopy(projectRoot, builtInSkillsPath);
+        }
+      });
+    } else {
+      results.push({
+        name: 'core/skills',
+        status: 'pass',
+        detail: `${installedEntries.length} skills`
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Fix function: refresh commands by cleaning managed entries and copying fresh
+ */
+function refreshCommandsCopy(projectRoot: string, builtInCommandsPath: string): void {
+  const commandsDir = join(projectRoot, '.claude/commands');
+  ensureDirSync(commandsDir);
+
+  // Clean all pf-* entries (symlinks or files)
+  const entries = readdirSync(commandsDir).filter(f => f.startsWith('pf-'));
+  for (const entry of entries) {
+    const entryPath = join(commandsDir, entry);
+    try {
+      unlinkSync(entryPath);
+    } catch {
+      // Already gone
+    }
+  }
+
+  // Copy fresh from source
+  const sourceCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
+  for (const cmd of sourceCommands) {
+    const sourcePath = join(builtInCommandsPath, cmd);
+    const destPath = join(commandsDir, cmd);
+    try {
+      copyFileSync(sourcePath, destPath);
+    } catch (e) {
+      logger.warning(`Could not copy command ${cmd}: ${e}`);
+    }
+  }
+}
+
+/**
+ * Fix function: refresh skills by cleaning managed entries and copying fresh
+ */
+function refreshSkillsCopy(projectRoot: string, builtInSkillsPath: string): void {
+  const skillsDir = join(projectRoot, '.claude/skills');
+  ensureDirSync(skillsDir);
+
+  // Clean all pf-* entries (symlinks or directories)
+  const entries = readdirSync(skillsDir).filter(f => f.startsWith('pf-'));
+  for (const entry of entries) {
+    const entryPath = join(skillsDir, entry);
+    try {
+      removeSync(entryPath);
+    } catch {
+      // Already gone
+    }
+  }
+
+  // Copy fresh from source
+  const sourceSkills = readdirSync(builtInSkillsPath).filter(f => {
+    const fullPath = join(builtInSkillsPath, f);
+    return isDirectory(fullPath) && f.startsWith('pf-');
+  });
+  for (const skill of sourceSkills) {
+    const sourcePath = join(builtInSkillsPath, skill);
+    const destPath = join(skillsDir, skill);
+    try {
+      copySync(sourcePath, destPath, { overwrite: true });
+    } catch (e) {
+      logger.warning(`Could not copy skill ${skill}: ${e}`);
+    }
+  }
 }
 
 /**
