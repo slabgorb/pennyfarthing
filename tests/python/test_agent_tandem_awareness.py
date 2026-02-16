@@ -20,6 +20,7 @@ from textwrap import dedent
 import pytest
 
 from pennyfarthing_scripts.validate.adapters.tandem_awareness import (
+    ADR_0012_PAIRINGS,
     classify_tandem_roles,
     run,
     validate_leader_tandem,
@@ -455,15 +456,6 @@ class TestAC4WorkflowPhaseCheck:
 # =============================================================================
 
 
-# ADR-0012 high-value pairings
-ADR_0012_PAIRINGS = [
-    ("dev", "architect"),
-    ("tea", "dev"),
-    ("reviewer", "architect"),
-    ("dev", "devops"),
-]
-
-
 class TestAC5HighValuePairings:
     """AC5: High-value pairings documented per ADR-0012 table."""
 
@@ -473,8 +465,11 @@ class TestAC5HighValuePairings:
         _write_agent(agents_dir, "architect.md", PARTNER_COMPLETE)
         _write_agent(agents_dir, "tea.md", DUAL_ROLE_COMPLETE)
 
+        leaders, partners = classify_tandem_roles(agents_dir)
+        leader_names = {f.stem for f in leaders}
+        partner_names = {f.stem for f in partners}
         covered, missing = validate_pairings_documented(
-            agents_dir, ADR_0012_PAIRINGS
+            leader_names, partner_names, ADR_0012_PAIRINGS
         )
 
         # Should return lists of tuples
@@ -486,9 +481,14 @@ class TestAC5HighValuePairings:
         """If only one agent file exists, most pairings are missing."""
         _write_agent(agents_dir, "dev.md", LEADER_COMPLETE)
 
-        _, missing = validate_pairings_documented(agents_dir, ADR_0012_PAIRINGS)
+        leaders, partners = classify_tandem_roles(agents_dir)
+        leader_names = {f.stem for f in leaders}
+        partner_names = {f.stem for f in partners}
+        _, missing = validate_pairings_documented(
+            leader_names, partner_names, ADR_0012_PAIRINGS
+        )
 
-        # With only dev.md, pairings requiring architect/tea/devops as partner are missing
+        # With only dev.md (leader-only), all pairings missing partners
         assert len(missing) > 0
 
     def test_all_pairings_covered_when_agents_present(
@@ -531,8 +531,11 @@ class TestAC5HighValuePairings:
             </tandem-consultation>
         """))
 
+        leaders, partners = classify_tandem_roles(agents_dir)
+        leader_names = {f.stem for f in leaders}
+        partner_names = {f.stem for f in partners}
         covered, missing = validate_pairings_documented(
-            agents_dir, ADR_0012_PAIRINGS
+            leader_names, partner_names, ADR_0012_PAIRINGS
         )
 
         assert missing == [], f"Expected all pairings covered, missing: {missing}"
@@ -564,6 +567,37 @@ class TestValidatorRun:
         _write_agent(agents_dir, "dev.md", LEADER_COMPLETE)
         _write_agent(agents_dir, "architect.md", PARTNER_COMPLETE)
         _write_agent(agents_dir, "tea.md", DUAL_ROLE_COMPLETE)
+        _write_agent(agents_dir, "reviewer.md", dedent("""\
+            # Reviewer Agent
+            <role>Code review</role>
+
+            <tandem-consultation>
+            ## Tandem Consultation (Leader)
+
+            When your workflow phase has `tandem.mode: consultation`, spawn
+            the partner for review questions.
+
+            **When to consult:** Uncertain about severity, need domain context.
+
+            **If consultation fails:** Continue solo.
+            </tandem-consultation>
+        """))
+        _write_agent(agents_dir, "devops.md", dedent("""\
+            # DevOps Agent
+            <role>Infrastructure</role>
+
+            <tandem-consultation>
+            ## Tandem Consultation (Partner)
+
+            When spawned for consultation, respond:
+            ```markdown
+            **Recommendation:** {advice}
+            **Rationale:** {why}
+            **Watch-Out-For:** {concerns}
+            **Confidence:** {high|medium|low}
+            ```
+            </tandem-consultation>
+        """))
 
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
@@ -659,8 +693,11 @@ class TestRealAgentFiles:
         """All ADR-0012 high-value pairings are covered by real agent files."""
         agents_dir = self._get_agents_dir()
 
+        leaders, partners = classify_tandem_roles(agents_dir)
+        leader_names = {f.stem for f in leaders}
+        partner_names = {f.stem for f in partners}
         covered, missing = validate_pairings_documented(
-            agents_dir, ADR_0012_PAIRINGS
+            leader_names, partner_names, ADR_0012_PAIRINGS
         )
 
         assert missing == [], (

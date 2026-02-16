@@ -84,11 +84,12 @@ def validate(ctx, fix: bool, strict: bool):
 
     \b
     Validators:
-      sprint        - Sprint YAML (epics, initiatives, future, current-sprint)
-      schema        - XML schema (sessions, skills, workflow steps)
-      agent         - Agent definitions (required sections, model values, subagent refs)
-      workflow      - Workflow definitions (phased/stepped/procedural structure)
-      skill-command - Skill registry and command files (prefix, deprecated, cross-ref)
+      sprint             - Sprint YAML (epics, initiatives, future, current-sprint)
+      schema             - XML schema (sessions, skills, workflow steps)
+      agent              - Agent definitions (required sections, model values, subagent refs)
+      workflow           - Workflow definitions (phased/stepped/procedural structure)
+      skill-command      - Skill registry and command files (prefix, deprecated, cross-ref)
+      tandem-awareness   - Agent tandem consultation sections (ADR-0012 pairings)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
@@ -148,6 +149,16 @@ def validate_workflow(ctx):
 def validate_skill_command(ctx):
     """Validate skill registry and command files (prefix, deprecated, cross-ref)."""
     report = _run_validator("skill-command", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("tandem-awareness")
+@click.pass_context
+def validate_tandem_awareness(ctx):
+    """Validate agent tandem consultation sections (ADR-0012 pairings, roles)."""
+    report = _run_validator("tandem-awareness", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)
