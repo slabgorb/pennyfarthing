@@ -212,7 +212,9 @@ export default function PersonaHeader(): React.ReactElement {
             )}
           </div>
           <img
-            src={colorScheme === 'dark' ? '/images/cyclist-dark.png' : '/images/cyclist-light.png'}
+            src={tandemAgent
+              ? `/portraits/${theme}/medium/cyclist-tandem.png`
+              : (colorScheme === 'dark' ? '/images/cyclist-dark.png' : '/images/cyclist-light.png')}
             alt="Cyclist"
             className="persona-branding"
           />
