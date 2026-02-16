@@ -25,6 +25,7 @@ import {
   onGitCacheRefresh,
   hasFreshCache,
   getCachedGitStatusSync,
+  startPeriodicFetch,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
@@ -1091,10 +1092,10 @@ export function setupWebSocketServers(
     }
   }
 
-  // Set up git file watchers for all configured repos
-  // (MSSCI-11943: AC2 - broadcast on .git/HEAD changes only)
-  // NOTE: .git/index watcher REMOVED to prevent lock conflicts with Claude's git operations
-  // Git status is now invalidated via tool events instead (see git-cache.ts)
+  // Set up git metadata watchers for all configured repos
+  // Watches .git/HEAD (branch switches), .git/index (staging), .git/FETCH_HEAD (fetches),
+  // and .git/refs/heads/ (commits). Safe because reads use --no-optional-locks.
+  // Supplements OTLP tool-event invalidation to catch hooks, scripts, and manual git commands.
   const repos = getReposFromConfig(projectDir);
   for (const repo of repos) {
     const repoPath = join(projectDir, repo.path);
@@ -1107,14 +1108,41 @@ export function setupWebSocketServers(
       if (existsSync(headPath)) {
         watch(headPath, async (eventType) => {
           if (eventType !== 'change') return;
-          // Branch switch - force immediate refresh
           console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
           await forceRefreshGitCache(projectDir);
         });
       }
 
-      // .git/index watcher REMOVED - was causing lock conflicts
-      // Git status now invalidated via PostToolUse events instead
+      // Watch .git/index for staging changes (safe now — reads use --no-optional-locks)
+      // Catches: git add/reset from hooks, scripts, or manual terminal commands
+      const indexPath = join(gitDir, 'index');
+      if (existsSync(indexPath)) {
+        watch(indexPath, (eventType) => {
+          if (eventType !== 'change') return;
+          console.log(`[Git Cache] Index change detected in ${repo.name}`);
+          invalidateGitCache(projectDir);
+        });
+      }
+
+      // Watch .git/FETCH_HEAD for fetch completions (catches manual git fetch, hooks, etc.)
+      const fetchHeadPath = join(gitDir, 'FETCH_HEAD');
+      if (existsSync(fetchHeadPath)) {
+        watch(fetchHeadPath, (eventType) => {
+          if (eventType !== 'change') return;
+          console.log(`[Git Cache] FETCH_HEAD change detected in ${repo.name}`);
+          invalidateGitCache(projectDir);
+        });
+      }
+
+      // Watch .git/refs/heads/ for local branch updates (commits, rebases, etc.)
+      const refsHeadsDir = join(gitDir, 'refs', 'heads');
+      if (existsSync(refsHeadsDir)) {
+        watch(refsHeadsDir, { recursive: true }, (eventType, filename) => {
+          if (!filename) return;
+          console.log(`[Git Cache] Ref change detected in ${repo.name}: refs/heads/${filename}`);
+          invalidateGitCache(projectDir);
+        });
+      }
     } catch (err) {
       console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
     }
@@ -1125,6 +1153,10 @@ export function setupWebSocketServers(
     console.log('[WebSocket] onGitCacheRefresh callback fired, broadcasting to', gitClients.size, 'clients');
     broadcastGitUpdate(allReposInfo);
   });
+
+  // Start periodic background fetch (decoupled from status reads)
+  // Fetches remote refs on a 60s interval, invalidates cache on success
+  startPeriodicFetch(projectDir);
 
   // Register force refresh callback for /api/git/refresh endpoint
   setForceRefreshCallback(async (projDir: string) => {
