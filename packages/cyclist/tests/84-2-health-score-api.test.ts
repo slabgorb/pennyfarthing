@@ -15,8 +15,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Router } from 'express';
 
-// Module under test — to be implemented
-import { createHealthScoreRouter } from '../src/api/health-score';
+// Import directly from core source so vitest can apply child_process mock
+// (re-export through cyclist/src/api/health-score.ts goes through @pennyfarthing/core dist
+// which vitest treats as external and doesn't apply mocks to)
+import { createHealthScoreRouter } from '../../core/src/server/api/health-score';
+
+// Mock fs.existsSync to bypass pennyfarthing_scripts directory check
+// (the implementation guards with existsSync before calling execFile)
+vi.mock('fs', async (importOriginal) => {
+  const actual: any = await importOriginal();
+  return {
+    __esModule: true,
+    default: { ...actual, existsSync: vi.fn(() => true) },
+    ...actual,
+    existsSync: vi.fn(() => true),
+  };
+});
 
 // Mock child_process.execFile (include default export for ESM compat)
 vi.mock('child_process', () => {

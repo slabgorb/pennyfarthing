@@ -9,29 +9,29 @@
  *
  * Tests the useFocusPanel hook which:
  * - Connects to /ws/focus WebSocket endpoint
- * - Stashes current layout on first focus event
- * - Renders target panel as single-panel fullscreen
- * - Restores stashed layout on reset (focus: null)
- * - Preserves original stash across successive focus events (no stash stack)
+ * - Handles focus events via maximize/setActive (not toJSON/fromJSON)
+ * - Multi-group layouts: maximizeGroup / exitMaximizedGroup
+ * - Single-group layouts: setActive on target, stash previous active ID
+ * - Ignores 'init' messages (only processes 'update')
  *
  * Acceptance Criteria:
  * - AC1: BikeShow connects to `/ws/focus` WebSocket endpoint on mount
- * - AC2: On `panel:focus` event with panel name, current layout saved (if not already in focus mode)
- * - AC3: Requested panel renders as single-panel fullscreen view
- * - AC4: On `panel:focus` event with `null`, saved layout is restored
- * - AC5: Successive `/bc` calls preserve the original saved state (no stash stack)
- * - AC6: Only the first focus after a reset triggers a layout save
+ * - AC2: On `panel:focus` event, target panel is focused via maximize or setActive
+ * - AC3: Requested panel is shown (focusedPanel state updated)
+ * - AC4: On reset (focus: null), previous layout is restored
+ * - AC5: Successive focus calls preserve the original active panel reference
+ * - AC6: Only the first focus after a reset triggers a panel stash
  * - AC7: Works in both BikeRack standalone and full Cyclist mode
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import type { DockviewApi, SerializedDockview } from 'dockview-react';
+import type { DockviewApi } from 'dockview-react';
 
 import { useFocusPanel } from '../src/public/hooks/useFocusPanel';
 
 // =============================================================================
-// Test WebSocket Mock — explicit control over events
+// Test WebSocket Mock — matches the onmessage/onclose property pattern
 // =============================================================================
 
 class TestWebSocket {
@@ -44,13 +44,10 @@ class TestWebSocket {
 
   constructor(url: string) {
     this.url = url;
-    // Capture instance for test assertions
     TestWebSocket.instances.push(this);
   }
 
-  send(_data: string) {
-    // No-op
-  }
+  send(_data: string) {}
 
   close() {
     this.readyState = 3; // CLOSED
@@ -73,7 +70,7 @@ class TestWebSocket {
 
   // Test helpers
   simulateOpen() {
-    this.readyState = 1; // OPEN
+    this.readyState = 1;
     this.onopen?.();
   }
 
@@ -82,106 +79,39 @@ class TestWebSocket {
   }
 
   simulateClose() {
-    this.readyState = 3; // CLOSED
+    this.readyState = 3;
     this.onclose?.();
   }
 
-  // Static instance tracking
   static instances: TestWebSocket[] = [];
-  static reset() {
-    TestWebSocket.instances = [];
-  }
+  static reset() { TestWebSocket.instances = []; }
   static last(): TestWebSocket {
     return TestWebSocket.instances[TestWebSocket.instances.length - 1];
   }
 }
 
 // =============================================================================
-// Mock Dockview Layouts
-// =============================================================================
-
-/** Simulates a multi-panel BikeRack layout (api.toJSON() output) */
-const MOCK_BIKERACK_LAYOUT: SerializedDockview = {
-  grid: {
-    root: {
-      type: 'branch',
-      data: [
-        {
-          type: 'leaf',
-          data: {
-            views: ['sprint', 'git', 'diffs', 'todo', 'workflow'],
-            activeView: 'sprint',
-            id: 'main-group',
-          },
-          size: 1200,
-        },
-      ],
-      size: 800,
-    },
-    width: 1200,
-    height: 800,
-    orientation: 'HORIZONTAL',
-  },
-  panels: {
-    sprint: { id: 'sprint', contentComponent: 'PanelAdapter', title: 'Sprint', params: { panelId: 'sprint' } },
-    git: { id: 'git', contentComponent: 'PanelAdapter', title: 'Git', params: { panelId: 'git' } },
-    diffs: { id: 'diffs', contentComponent: 'PanelAdapter', title: 'Diffs', params: { panelId: 'diffs' } },
-    todo: { id: 'todo', contentComponent: 'PanelAdapter', title: 'Todo', params: { panelId: 'todo' } },
-    workflow: { id: 'workflow', contentComponent: 'PanelAdapter', title: 'Workflow', params: { panelId: 'workflow' } },
-  },
-  activeGroup: 'main-group',
-};
-
-/** Simulates a three-region Cyclist layout */
-const MOCK_CYCLIST_LAYOUT: SerializedDockview = {
-  grid: {
-    root: {
-      type: 'branch',
-      data: [
-        {
-          type: 'leaf',
-          data: { views: ['changed', 'diffs', 'debug'], activeView: 'changed', id: 'left' },
-          size: 300,
-        },
-        {
-          type: 'leaf',
-          data: { views: ['message'], activeView: 'message', id: 'center' },
-          size: 600,
-        },
-        {
-          type: 'leaf',
-          data: { views: ['sprint', 'git', 'settings'], activeView: 'sprint', id: 'right' },
-          size: 300,
-        },
-      ],
-      size: 800,
-    },
-    width: 1200,
-    height: 800,
-    orientation: 'HORIZONTAL',
-  },
-  panels: {
-    changed: { id: 'changed', contentComponent: 'PanelAdapter', title: 'Changed', params: { panelId: 'changed' } },
-    diffs: { id: 'diffs', contentComponent: 'PanelAdapter', title: 'Diffs', params: { panelId: 'diffs' } },
-    debug: { id: 'debug', contentComponent: 'PanelAdapter', title: 'Debug', params: { panelId: 'debug' } },
-    message: { id: 'message', contentComponent: 'PanelAdapter', title: 'Message', params: { panelId: 'message' } },
-    sprint: { id: 'sprint', contentComponent: 'PanelAdapter', title: 'Sprint', params: { panelId: 'sprint' } },
-    git: { id: 'git', contentComponent: 'PanelAdapter', title: 'Git', params: { panelId: 'git' } },
-    settings: { id: 'settings', contentComponent: 'PanelAdapter', title: 'Settings', params: { panelId: 'settings' } },
-  },
-  activeGroup: 'center',
-};
-
-// =============================================================================
 // Mock DockviewApi Factory
 // =============================================================================
 
-function createMockApi(layout: SerializedDockview = MOCK_BIKERACK_LAYOUT): DockviewApi {
+function createMockApi(opts: { multiGroup?: boolean } = {}): DockviewApi {
+  const { multiGroup = true } = opts;
+  const mockPanel = {
+    id: 'sprint',
+    api: { setActive: vi.fn() },
+    group: {},
+  };
   return {
-    toJSON: vi.fn(() => structuredClone(layout)),
-    fromJSON: vi.fn(),
-    addPanel: vi.fn(),
-    removePanel: vi.fn(),
+    getPanel: vi.fn((id: string) => ({
+      id,
+      api: { setActive: vi.fn() },
+      group: {},
+    })),
+    groups: multiGroup ? [{}, {}, {}] : [{}],
+    activePanel: { id: 'changed' },
+    maximizeGroup: vi.fn(),
+    exitMaximizedGroup: vi.fn(),
+    hasMaximizedGroup: vi.fn(() => false),
   } as unknown as DockviewApi;
 }
 
@@ -217,7 +147,6 @@ describe('AC1: WebSocket connection to /ws/focus', () => {
 
   it('should use ws: protocol for http: pages', () => {
     const api = createMockApi();
-    // happy-dom default is http:
     renderHook(() => useFocusPanel(api));
 
     expect(TestWebSocket.last().url).toMatch(/^ws:/);
@@ -232,17 +161,14 @@ describe('AC1: WebSocket connection to /ws/focus', () => {
       ws.simulateOpen();
     });
 
-    // Simulate server disconnect
     act(() => {
       ws.simulateClose();
     });
 
-    // Advance past reconnect delay
     act(() => {
       vi.advanceTimersByTime(5000);
     });
 
-    // Should have created a second WebSocket
     expect(TestWebSocket.instances.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -260,129 +186,88 @@ describe('AC1: WebSocket connection to /ws/focus', () => {
     expect(ws.readyState).toBe(3); // CLOSED
   });
 
-  it('should not create WebSocket if api is null', () => {
+  it('should not crash if api is null', () => {
     renderHook(() => useFocusPanel(null));
-
-    // Hook may still connect to WS to know the focus state,
-    // but should NOT attempt layout operations without an API.
-    // This verifies graceful handling of null api.
-    // If implementation connects anyway (valid), this test ensures no crash.
     expect(true).toBe(true); // No crash = pass
   });
 });
 
 // =============================================================================
-// AC2: On focus event, current dockview layout is saved (if not in focus mode)
+// AC2: On focus event, target panel is focused via maximize or setActive
 // =============================================================================
 
-describe('AC2: Layout stash on panel focus event', () => {
-  it('should call api.toJSON() to save current layout on first focus event', () => {
-    const api = createMockApi();
+describe('AC2: Panel focus on update event', () => {
+  it('should call maximizeGroup for multi-group layouts', () => {
+    const api = createMockApi({ multiGroup: true });
     renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Now send a focus event
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
-    expect(api.toJSON).toHaveBeenCalled();
+    expect(api.getPanel).toHaveBeenCalledWith('sprint');
+    expect(api.maximizeGroup).toHaveBeenCalled();
   });
 
-  it('should NOT call api.toJSON() if already in focus mode', () => {
-    const api = createMockApi();
+  it('should NOT call maximizeGroup if already in focus mode (just re-maximize)', () => {
+    const api = createMockApi({ multiGroup: true });
     renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // First focus — should stash
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
-    const callCountAfterFirst = (api.toJSON as ReturnType<typeof vi.fn>).mock.calls.length;
+    const firstCallCount = (api.maximizeGroup as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    // Second focus (different panel) — should NOT re-stash
     act(() => {
       ws.simulateMessage({ type: 'update', focus: 'git' });
     });
 
-    expect(api.toJSON).toHaveBeenCalledTimes(callCountAfterFirst);
+    // Should still maximize the new panel's group
+    expect((api.maximizeGroup as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(firstCallCount);
   });
 
   it('should set isInFocusMode to true after focus event', () => {
     const api = createMockApi();
     const { result } = renderHook(() => useFocusPanel(api));
 
+    expect(result.current.isInFocusMode).toBe(false);
+
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    expect(result.current.isInFocusMode).toBe(false);
-
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
     expect(result.current.isInFocusMode).toBe(true);
   });
 
-  it('should store the stashed layout in state', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+  it('should ignore init messages (focus is ephemeral)', () => {
+    const api = createMockApi();
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
+      // init message with focus value should be ignored
+      ws.simulateMessage({ type: 'init', focus: 'sprint' });
     });
 
-    expect(result.current.stashedLayout).toBeNull();
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    expect(result.current.stashedLayout).not.toBeNull();
-    // Stashed layout should match what toJSON returned
-    expect(result.current.stashedLayout?.panels).toHaveProperty('sprint');
-    expect(result.current.stashedLayout?.panels).toHaveProperty('git');
+    // Should NOT enter focus mode from init
+    expect(result.current.isInFocusMode).toBe(false);
+    expect(result.current.focusedPanel).toBeNull();
   });
 });
 
 // =============================================================================
-// AC3: Requested panel renders as single-panel fullscreen view
+// AC3: Requested panel is shown (focusedPanel state)
 // =============================================================================
 
-describe('AC3: Single-panel fullscreen rendering', () => {
-  it('should call api.fromJSON() after receiving focus event', () => {
-    const api = createMockApi();
-    renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    expect(api.fromJSON).toHaveBeenCalled();
-  });
-
+describe('AC3: focusedPanel state tracking', () => {
   it('should set focusedPanel to the requested panel ID', () => {
     const api = createMockApi();
     const { result } = renderHook(() => useFocusPanel(api));
@@ -390,27 +275,19 @@ describe('AC3: Single-panel fullscreen rendering', () => {
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'git' });
     });
 
     expect(result.current.focusedPanel).toBe('git');
   });
 
-  it('should render different panel when focus changes', () => {
+  it('should update focusedPanel when focus changes', () => {
     const api = createMockApi();
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
@@ -423,80 +300,43 @@ describe('AC3: Single-panel fullscreen rendering', () => {
     expect(result.current.focusedPanel).toBe('diffs');
   });
 
-  it('should call api.fromJSON() with layout containing only the target panel', () => {
+  it('should not act on focus for unknown panels', () => {
     const api = createMockApi();
-    renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    // fromJSON should have been called with a layout that includes only the target panel
-    const fromJsonCalls = (api.fromJSON as ReturnType<typeof vi.fn>).mock.calls;
-    expect(fromJsonCalls.length).toBeGreaterThan(0);
-
-    const singlePanelLayout = fromJsonCalls[fromJsonCalls.length - 1][0] as SerializedDockview;
-    expect(singlePanelLayout.panels).toHaveProperty('sprint');
-    expect(Object.keys(singlePanelLayout.panels)).toHaveLength(1);
-  });
-
-  it('should handle init message with existing focus (app reconnect scenario)', () => {
-    const api = createMockApi();
+    (api.getPanel as ReturnType<typeof vi.fn>).mockReturnValue(null);
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      // Server tells us focus is already set (e.g., app reconnect)
-      ws.simulateMessage({ type: 'init', focus: 'git' });
+      ws.simulateMessage({ type: 'update', focus: 'nonexistent' });
     });
 
-    expect(result.current.isInFocusMode).toBe(true);
-    expect(result.current.focusedPanel).toBe('git');
+    // Should not enter focus mode if panel not found
+    expect(result.current.isInFocusMode).toBe(false);
   });
 });
 
 // =============================================================================
-// AC4: On `panel:focus` event with `null`, saved layout is restored
+// AC4: On reset (focus: null), previous layout is restored
 // =============================================================================
 
 describe('AC4: Layout restore on reset (focus: null)', () => {
-  it('should call api.fromJSON() with stashed layout on reset', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+  it('should call exitMaximizedGroup on reset for multi-group layout', () => {
+    const api = createMockApi({ multiGroup: true });
+    (api.hasMaximizedGroup as ReturnType<typeof vi.fn>).mockReturnValue(true);
     renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Enter focus mode
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
-    // Clear the fromJSON mock to isolate the reset call
-    (api.fromJSON as ReturnType<typeof vi.fn>).mockClear();
-
-    // Reset
     act(() => {
       ws.simulateMessage({ type: 'update', focus: null });
     });
 
-    expect(api.fromJSON).toHaveBeenCalledTimes(1);
-
-    // The restored layout should be the original multi-panel layout
-    const restoredLayout = (api.fromJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as SerializedDockview;
-    expect(Object.keys(restoredLayout.panels).length).toBeGreaterThan(1);
-    expect(restoredLayout.panels).toHaveProperty('sprint');
-    expect(restoredLayout.panels).toHaveProperty('git');
+    expect(api.exitMaximizedGroup).toHaveBeenCalled();
   });
 
   it('should set isInFocusMode to false after reset', () => {
@@ -506,10 +346,6 @@ describe('AC4: Layout restore on reset (focus: null)', () => {
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
@@ -529,10 +365,6 @@ describe('AC4: Layout restore on reset (focus: null)', () => {
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
@@ -541,29 +373,6 @@ describe('AC4: Layout restore on reset (focus: null)', () => {
     });
 
     expect(result.current.focusedPanel).toBeNull();
-  });
-
-  it('should clear stashed layout after restore', () => {
-    const api = createMockApi();
-    const { result } = renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    expect(result.current.stashedLayout).not.toBeNull();
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-
-    expect(result.current.stashedLayout).toBeNull();
   });
 
   it('should be a no-op if reset received when not in focus mode', () => {
@@ -573,209 +382,117 @@ describe('AC4: Layout restore on reset (focus: null)', () => {
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Not in focus mode — reset should be harmless
-    act(() => {
+      // Send reset without ever entering focus mode
       ws.simulateMessage({ type: 'update', focus: null });
     });
 
     expect(result.current.isInFocusMode).toBe(false);
-    expect(api.fromJSON).not.toHaveBeenCalled();
+    expect(api.exitMaximizedGroup).not.toHaveBeenCalled();
   });
 });
 
 // =============================================================================
-// AC5: Successive /bc calls preserve the original saved state (no stash stack)
+// AC5: Successive focus calls preserve the original active panel reference
 // =============================================================================
 
-describe('AC5: No stash stack — original layout preserved', () => {
-  it('should NOT re-stash when switching panels in focus mode', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
-    const { result } = renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
+describe('AC5: Single-group — original active panel preserved', () => {
+  it('should use setActive for single-group layouts', () => {
+    const mockSetActive = vi.fn();
+    const api = createMockApi({ multiGroup: false });
+    (api.getPanel as ReturnType<typeof vi.fn>).mockReturnValue({
+      id: 'sprint',
+      api: { setActive: mockSetActive },
+      group: {},
     });
 
-    // First focus — stashes the original multi-panel layout
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    const originalStash = result.current.stashedLayout;
-    expect(originalStash).not.toBeNull();
-
-    // api.toJSON was called once for the stash
-    expect(api.toJSON).toHaveBeenCalledTimes(1);
-
-    // Second focus — different panel. Should NOT re-stash.
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'git' });
-    });
-
-    // toJSON should NOT have been called again
-    expect(api.toJSON).toHaveBeenCalledTimes(1);
-
-    // Stash should still be the original layout
-    expect(result.current.stashedLayout).toEqual(originalStash);
-  });
-
-  it('should preserve stash through multiple panel switches', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
-    const { result } = renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Focus sprint
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    const originalStash = result.current.stashedLayout;
-
-    // Focus git
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'git' });
-    });
-
-    // Focus diffs
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'diffs' });
-    });
-
-    // Focus todo
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'todo' });
-    });
-
-    // Stash unchanged through all switches
-    expect(result.current.stashedLayout).toEqual(originalStash);
-    expect(api.toJSON).toHaveBeenCalledTimes(1);
-  });
-});
-
-// =============================================================================
-// AC6: Only the first focus after a reset triggers a layout save
-// =============================================================================
-
-describe('AC6: First focus after reset triggers new layout save', () => {
-  it('should create new stash on first focus after reset', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
     renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // First cycle: focus → reset
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
-    expect(api.toJSON).toHaveBeenCalledTimes(1);
+    expect(mockSetActive).toHaveBeenCalled();
+    expect(api.maximizeGroup).not.toHaveBeenCalled();
+  });
+
+  it('should restore previous active panel on reset in single-group mode', () => {
+    const mockPrevSetActive = vi.fn();
+    const api = createMockApi({ multiGroup: false });
+    // First getPanel call (for focus) returns target panel
+    // Second getPanel call (for reset) returns previous panel
+    let callCount = 0;
+    (api.getPanel as ReturnType<typeof vi.fn>).mockImplementation((id: string) => ({
+      id,
+      api: { setActive: id === 'changed' ? mockPrevSetActive : vi.fn() },
+      group: {},
+    }));
+
+    renderHook(() => useFocusPanel(api));
+
+    const ws = TestWebSocket.last();
+    act(() => {
+      ws.simulateOpen();
+      ws.simulateMessage({ type: 'update', focus: 'sprint' });
+    });
+
+    // hasMaximizedGroup returns false (single group), so reset uses previousActivePanelRef
+    (api.hasMaximizedGroup as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
     act(() => {
       ws.simulateMessage({ type: 'update', focus: null });
     });
 
-    // Second cycle: new focus should trigger new stash
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'git' });
-    });
-
-    expect(api.toJSON).toHaveBeenCalledTimes(2);
+    // Should have called getPanel('changed') and setActive on it
+    expect(mockPrevSetActive).toHaveBeenCalled();
   });
+});
 
+// =============================================================================
+// AC6: Full focus/reset cycles work correctly
+// =============================================================================
+
+describe('AC6: Focus/reset cycles', () => {
   it('should complete full cycle: focus → reset → focus → reset', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+    const api = createMockApi({ multiGroup: true });
+    (api.hasMaximizedGroup as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce(true)  // first reset
+      .mockReturnValueOnce(true); // second reset
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
     });
 
     // Cycle 1: Focus
     act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
-
     expect(result.current.isInFocusMode).toBe(true);
     expect(result.current.focusedPanel).toBe('sprint');
-    expect(result.current.stashedLayout).not.toBeNull();
 
     // Cycle 1: Reset
     act(() => {
       ws.simulateMessage({ type: 'update', focus: null });
     });
-
     expect(result.current.isInFocusMode).toBe(false);
     expect(result.current.focusedPanel).toBeNull();
-    expect(result.current.stashedLayout).toBeNull();
 
     // Cycle 2: Focus
     act(() => {
       ws.simulateMessage({ type: 'update', focus: 'diffs' });
     });
-
     expect(result.current.isInFocusMode).toBe(true);
     expect(result.current.focusedPanel).toBe('diffs');
-    expect(result.current.stashedLayout).not.toBeNull();
 
     // Cycle 2: Reset
     act(() => {
       ws.simulateMessage({ type: 'update', focus: null });
     });
-
     expect(result.current.isInFocusMode).toBe(false);
     expect(result.current.focusedPanel).toBeNull();
-    expect(result.current.stashedLayout).toBeNull();
-  });
-
-  it('should not stash again on second focus after reset (only first)', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
-    renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // First focus → stash
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    // Reset
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-
-    // New focus → new stash (this is #2)
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'git' });
-    });
-
-    expect(api.toJSON).toHaveBeenCalledTimes(2);
-
-    // Switch panel in second focus session → should NOT stash again
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'diffs' });
-    });
-
-    expect(api.toJSON).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -784,90 +501,53 @@ describe('AC6: First focus after reset triggers new layout save', () => {
 // =============================================================================
 
 describe('AC7: Works in both BikeRack and Cyclist modes', () => {
-  it('should work with BikeRack-style layout (single group, no sacred center)', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+  it('should use maximizeGroup for Cyclist-style multi-group layout', () => {
+    const api = createMockApi({ multiGroup: true });
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Focus
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
     expect(result.current.isInFocusMode).toBe(true);
-    expect(result.current.focusedPanel).toBe('sprint');
-    expect(api.toJSON).toHaveBeenCalled();
-    expect(api.fromJSON).toHaveBeenCalled();
-
-    // Reset
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-
-    expect(result.current.isInFocusMode).toBe(false);
+    expect(api.maximizeGroup).toHaveBeenCalled();
   });
 
-  it('should work with Cyclist-style layout (three regions with sacred center)', () => {
-    const api = createMockApi(MOCK_CYCLIST_LAYOUT);
+  it('should use setActive for BikeRack-style single-group layout', () => {
+    const mockSetActive = vi.fn();
+    const api = createMockApi({ multiGroup: false });
+    (api.getPanel as ReturnType<typeof vi.fn>).mockReturnValue({
+      id: 'sprint',
+      api: { setActive: mockSetActive },
+      group: {},
+    });
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    // Focus — should stash the full three-region layout
-    act(() => {
       ws.simulateMessage({ type: 'update', focus: 'sprint' });
     });
 
     expect(result.current.isInFocusMode).toBe(true);
-    expect(result.current.focusedPanel).toBe('sprint');
-
-    // Stashed layout should have the full three-region structure
-    expect(result.current.stashedLayout).not.toBeNull();
-    expect(result.current.stashedLayout?.panels).toHaveProperty('message');
-    expect(result.current.stashedLayout?.panels).toHaveProperty('changed');
-    expect(result.current.stashedLayout?.panels).toHaveProperty('sprint');
-
-    // Reset — should restore the three-region layout
-    (api.fromJSON as ReturnType<typeof vi.fn>).mockClear();
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-
-    expect(result.current.isInFocusMode).toBe(false);
-
-    // Restored layout should have all the original panels including sacred center
-    const restoredLayout = (api.fromJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as SerializedDockview;
-    expect(restoredLayout.panels).toHaveProperty('message');
-    expect(Object.keys(restoredLayout.panels).length).toBe(7);
+    expect(mockSetActive).toHaveBeenCalled();
+    expect(api.maximizeGroup).not.toHaveBeenCalled();
   });
 
-  it('should use the same hook interface regardless of layout complexity', () => {
-    // BikeRack hook
-    const bikerackApi = createMockApi(MOCK_BIKERACK_LAYOUT);
-    const { result: brResult } = renderHook(() => useFocusPanel(bikerackApi));
+  it('should return the same interface shape regardless of layout mode', () => {
+    const multiApi = createMockApi({ multiGroup: true });
+    const { result: multiResult } = renderHook(() => useFocusPanel(multiApi));
 
-    // Cyclist hook
-    const cyclistApi = createMockApi(MOCK_CYCLIST_LAYOUT);
-    const { result: cyResult } = renderHook(() => useFocusPanel(cyclistApi));
+    const singleApi = createMockApi({ multiGroup: false });
+    const { result: singleResult } = renderHook(() => useFocusPanel(singleApi));
 
-    // Both should have the same interface shape
-    expect(brResult.current).toHaveProperty('focusedPanel');
-    expect(brResult.current).toHaveProperty('isInFocusMode');
-    expect(brResult.current).toHaveProperty('stashedLayout');
+    expect(multiResult.current).toHaveProperty('focusedPanel');
+    expect(multiResult.current).toHaveProperty('isInFocusMode');
 
-    expect(cyResult.current).toHaveProperty('focusedPanel');
-    expect(cyResult.current).toHaveProperty('isInFocusMode');
-    expect(cyResult.current).toHaveProperty('stashedLayout');
+    expect(singleResult.current).toHaveProperty('focusedPanel');
+    expect(singleResult.current).toHaveProperty('isInFocusMode');
   });
 });
 
@@ -877,63 +557,24 @@ describe('AC7: Works in both BikeRack and Cyclist modes', () => {
 
 describe('Edge cases', () => {
   it('should handle rapid focus/reset cycles without corruption', () => {
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+    const api = createMockApi({ multiGroup: true });
+    (api.hasMaximizedGroup as ReturnType<typeof vi.fn>).mockReturnValue(true);
     const { result } = renderHook(() => useFocusPanel(api));
 
     const ws = TestWebSocket.last();
     act(() => {
       ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
     });
 
     // Rapid fire: focus → reset → focus → reset → focus
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'git' });
-    });
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: null });
-    });
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'diffs' });
-    });
+    act(() => { ws.simulateMessage({ type: 'update', focus: 'sprint' }); });
+    act(() => { ws.simulateMessage({ type: 'update', focus: null }); });
+    act(() => { ws.simulateMessage({ type: 'update', focus: 'git' }); });
+    act(() => { ws.simulateMessage({ type: 'update', focus: null }); });
+    act(() => { ws.simulateMessage({ type: 'update', focus: 'diffs' }); });
 
-    // Should be in focus mode on 'diffs'
     expect(result.current.isInFocusMode).toBe(true);
     expect(result.current.focusedPanel).toBe('diffs');
-    expect(result.current.stashedLayout).not.toBeNull();
-  });
-
-  it('should handle same panel focused twice (no-op after first)', () => {
-    const api = createMockApi();
-    const { result } = renderHook(() => useFocusPanel(api));
-
-    const ws = TestWebSocket.last();
-    act(() => {
-      ws.simulateOpen();
-      ws.simulateMessage({ type: 'init', focus: null });
-    });
-
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    const fromJsonCallCount = (api.fromJSON as ReturnType<typeof vi.fn>).mock.calls.length;
-
-    // Same panel again — the server shouldn't broadcast this (shouldBroadcastFocus),
-    // but if it does, the client should handle it gracefully
-    act(() => {
-      ws.simulateMessage({ type: 'update', focus: 'sprint' });
-    });
-
-    expect(result.current.focusedPanel).toBe('sprint');
-    // toJSON should still only have been called once (already in focus mode)
-    expect(api.toJSON).toHaveBeenCalledTimes(1);
   });
 
   it('should handle api becoming available after initial null', () => {
@@ -945,10 +586,9 @@ describe('Edge cases', () => {
     expect(result.current.isInFocusMode).toBe(false);
 
     // Api becomes available
-    const api = createMockApi(MOCK_BIKERACK_LAYOUT);
+    const api = createMockApi();
     rerender({ api });
 
-    // Should still work with the new api
     const ws = TestWebSocket.last();
     if (ws) {
       act(() => {

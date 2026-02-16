@@ -81,6 +81,12 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
   });
 
   it('should start in loading state when refresh is called', async () => {
+    // First mock consumed by auto-fetch on mount
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
+    });
+    // Second mock for manual refresh() call
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(MOCK_HEALTH_SCORE),
@@ -101,6 +107,12 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
   });
 
   it('should populate data on successful fetch', async () => {
+    // First mock consumed by auto-fetch on mount
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
+    });
+    // Second mock for manual refresh() call
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(MOCK_HEALTH_SCORE),
@@ -123,6 +135,12 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
   });
 
   it('should set error state on fetch failure', async () => {
+    // Auto-fetch on mount succeeds
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
+    });
+    // Manual refresh returns error
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -139,11 +157,18 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
       expect(result.current.error).not.toBeNull();
     });
 
-    expect(result.current.data).toBeNull();
+    // Data from auto-fetch is kept (stale-while-error pattern)
+    expect(result.current.data).not.toBeNull();
     expect(result.current.isLoading).toBe(false);
   });
 
   it('should set error state on network error', async () => {
+    // Auto-fetch on mount succeeds
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
+    });
+    // Manual refresh throws network error
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useHealthScore());
@@ -160,6 +185,12 @@ describe('AC3: useHealthScore hook with loading/error/data states', () => {
   });
 
   it('should fetch from /api/health-score', async () => {
+    // Auto-fetch on mount
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(MOCK_HEALTH_SCORE),
+    });
+    // Manual refresh
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(MOCK_HEALTH_SCORE),
