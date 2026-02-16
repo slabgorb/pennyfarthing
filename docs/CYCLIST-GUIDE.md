@@ -637,7 +637,7 @@ Run multiple Cyclist instances for different projects simultaneously.
 ### How It Works
 
 - Each instance runs on a separate port
-- Approval port files (`.cyclist-approval-port`) prevent conflicts
+- Port files (`.wheelhub-port`) prevent conflicts
 - Instances are fully isolated with their own state
 
 ### Switching Between Instances

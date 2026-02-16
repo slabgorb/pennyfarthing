@@ -4,7 +4,7 @@ Tests for MSSCI-14320: Update and register PreToolUse hook.
 Verifies the Python PreToolUse hook and its shared utilities correctly:
 - AC1: POSTs to /api/hook-request (not /approval-request)
 - AC3: Returns decision "ask" when WheelHub is unreachable (not "allow")
-- AC6: Port discovery prefers .cyclist-port, falls back to .cyclist-approval-port
+- AC6: Port discovery reads .wheelhub-port
 
 Run with: python -m pytest tests/python/test_pretooluse_hook.py -v
 """
@@ -23,7 +23,6 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from pennyfarthing_scripts.hooks import (
-    CYCLIST_APPROVAL_PORT_FILE_LEGACY,
     CYCLIST_PORT_FILE,
     DEFAULT_CYCLIST_PORT,
     HookResponse,
@@ -190,29 +189,19 @@ class TestConnectionRefused:
 
 
 class TestPortDiscovery:
-    """AC6: Port discovery prefers .cyclist-port, falls back to .cyclist-approval-port."""
+    """AC6: Port discovery reads .wheelhub-port."""
 
     def test_constants_defined(self):
         """Port file constants should be defined in hooks module."""
-        assert CYCLIST_PORT_FILE == ".cyclist-port"
-        assert CYCLIST_APPROVAL_PORT_FILE_LEGACY == ".cyclist-approval-port"
+        assert CYCLIST_PORT_FILE == ".wheelhub-port"
 
-    def test_prefers_cyclist_port_over_legacy(self, tmp_project):
-        """get_cyclist_port should prefer .cyclist-port over .cyclist-approval-port."""
+    def test_reads_wheelhub_port(self, tmp_project):
+        """get_cyclist_port should read from .wheelhub-port."""
         (tmp_project / CYCLIST_PORT_FILE).write_text("8001")
-        (tmp_project / CYCLIST_APPROVAL_PORT_FILE_LEGACY).write_text("8002")
 
         port = get_cyclist_port(tmp_project)
 
         assert port == 8001
-
-    def test_falls_back_to_legacy_port_file(self, tmp_project):
-        """get_cyclist_port should use .cyclist-approval-port when .cyclist-port absent."""
-        (tmp_project / CYCLIST_APPROVAL_PORT_FILE_LEGACY).write_text("8002")
-
-        port = get_cyclist_port(tmp_project)
-
-        assert port == 8002
 
     def test_returns_default_when_no_port_files(self, tmp_project):
         """get_cyclist_port should return default port when no port files exist."""
@@ -249,7 +238,7 @@ class TestPortDiscovery:
         assert result == 7431
 
     def test_find_project_root_finds_cyclist_port(self, tmp_project):
-        """find_project_root should find directory containing .cyclist-port."""
+        """find_project_root should find directory containing .wheelhub-port."""
         (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
         subdir = tmp_project / "deep" / "nested"
         subdir.mkdir(parents=True)
@@ -404,7 +393,7 @@ class TestIsCyclistRunning:
             assert is_cyclist_running() is False
 
     def test_returns_false_when_stale_port_file_exists(self, tmp_project):
-        """AC1: Stale .cyclist-port must NOT cause false positive.
+        """AC1: Stale .wheelhub-port must NOT cause false positive.
 
         This is the core bug. A leftover port file should be irrelevant
         because detection is env-var-based, not file-based.

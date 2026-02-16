@@ -414,7 +414,7 @@ bikerack *args:
         >> "$logfile" 2>&1 &
     bg_pid=$!
     echo "  PID: $bg_pid"
-    echo "$bg_pid" > "$CYCLIST_PROJECT_DIR/.bikerack-pid"
+    echo "$bg_pid" > "$CYCLIST_PROJECT_DIR/.wheelhub-pid"
     echo ""
     # Wait for server to write .bikerack-port (up to 10s)
     port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"

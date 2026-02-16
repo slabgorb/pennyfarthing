@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **BikeRack start idempotency** — `pf bikerack start` no longer errors when already running; reuses existing WheelHub and execs Claude
 - **BikeRack stop idempotency** — `pf bikerack stop` exits 0 when not running instead of erroring
-- **BikeRack project dir resolution** — Use `CYCLIST_PROJECT_DIR` env var in `bikerack.ts`; save PID to `.bikerack-pid` file; launch Claude with `cd` instead of `--project-dir`
+- **BikeRack project dir resolution** — Use `CYCLIST_PROJECT_DIR` env var in `bikerack.ts`; save PID to `.wheelhub-pid` file; launch Claude with `cd` instead of `--project-dir`
 - **Missing `ba` agent in CORE_AGENTS** — Added Business Analyst to `constants.ts` and migration `005-migrate-sidecars.js` so sidecars are created and migrated correctly
 
 ---

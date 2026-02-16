@@ -9,7 +9,7 @@ page.on('console', msg => {
 });
 
 import { readFileSync } from 'fs';
-const port = readFileSync('/Users/keithavery/Projects/pennyfarthing-orchestrator/.cyclist-port', 'utf-8').trim();
+const port = readFileSync('/Users/keithavery/Projects/pennyfarthing-orchestrator/.wheelhub-port', 'utf-8').trim();
 console.log('Using port:', port);
 await page.goto(`http://localhost:${port}`);
 await page.waitForTimeout(3000);

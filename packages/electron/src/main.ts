@@ -2119,7 +2119,7 @@ export async function createElectronApp(): Promise<void> {
           const projectDir = getProjectDirectory();
           if (projectDir) {
             writePortFile(projectDir, actualPort);
-            console.log(`[OTEL] Wrote .cyclist-port file to ${projectDir}`);
+            console.log(`[OTEL] Wrote .wheelhub-port file to ${projectDir}`);
           }
           resolve();
         });
@@ -2139,7 +2139,7 @@ export async function createElectronApp(): Promise<void> {
       const projectDir = getProjectDirectory();
       if (projectDir) {
         cleanupPortFile(projectDir);
-        console.log('[OTEL] Cleaned up .cyclist-port file');
+        console.log('[OTEL] Cleaned up .wheelhub-port file');
       }
       if (server) {
         server.close(() => {
@@ -2166,7 +2166,7 @@ export async function createElectronApp(): Promise<void> {
 
   /**
    * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
-   * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
+   * B-24 fix: Only kills the specific PID from .wheelhub-pid, not all Claude processes.
    * This prevents disrupting other running Cyclist sessions.
    */
   function cleanupStaleProcesses(): void {

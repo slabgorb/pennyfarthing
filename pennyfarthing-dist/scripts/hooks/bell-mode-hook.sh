@@ -42,7 +42,7 @@ BELL_QUEUE_FILE="$PROJECT_ROOT/.pennyfarthing/bell-queue.json"
 # Detect Cyclist — bell queue is a Cyclist-only feature
 IS_CYCLIST=false
 CYCLIST_PORT=""
-PORT_FILE="$PROJECT_ROOT/.cyclist-port"
+PORT_FILE="$PROJECT_ROOT/.wheelhub-port"
 if [[ -f "$PORT_FILE" ]]; then
   CYCLIST_PORT=$(cat "$PORT_FILE" 2>/dev/null)
   if [[ -n "$CYCLIST_PORT" ]] && [[ "$CYCLIST_PORT" =~ ^[0-9]+$ ]]; then

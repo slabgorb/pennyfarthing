@@ -79,7 +79,7 @@ Cyclist supports running multiple instances for different projects simultaneousl
 
 - **File > New Window** (Cmd+Shift+N) - Opens folder picker for a new project
 - Each instance runs on a separate port with isolated state
-- Approval port files (`.cyclist-approval-port`) prevent cross-instance conflicts
+- Port files (`.wheelhub-port`) prevent cross-instance conflicts
 
 ### Process Model
 

@@ -31,7 +31,7 @@ fi
 touch "$WELCOME_LOCK"
 
 # Check if running in Cyclist (port file exists)
-PORT_FILE="$PROJECT_ROOT/.cyclist-port"
+PORT_FILE="$PROJECT_ROOT/.wheelhub-port"
 IN_CYCLIST=false
 if [[ -f "$PORT_FILE" ]]; then
     CYCLIST_PORT=$(cat "$PORT_FILE" 2>/dev/null)

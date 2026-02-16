@@ -44,7 +44,7 @@ Project-specific environment setup. Edit this file to:
 
 **Location:** `.pennyfarthing/scripts/hooks/otel-auto-config.sh`
 
-Auto-configures OTEL telemetry for Cyclist web mode. Checks for a `.cyclist-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Cyclist/BikeRack server.
+Auto-configures OTEL telemetry for Cyclist web mode. Checks for a `.wheelhub-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Cyclist/BikeRack server.
 
 #### welcome-hook.sh
 

@@ -57,7 +57,7 @@ pf bc save <NAME> [--dry-run]
 | `NAME` | Yes | Layout name to save as |
 | `--dry-run` | No | Preview without making changes |
 
-Fetches the active layout from the running Cyclist/BikeRack server (checks `.bikerack-port` then `.cyclist-port`). Fails if no server is running.
+Fetches the active layout from the running Cyclist/BikeRack server (checks `.bikerack-port` then `.wheelhub-port`). Fails if no server is running.
 
 Output: `{"success": true, "name": "<name>", "panels": <count>}`
 

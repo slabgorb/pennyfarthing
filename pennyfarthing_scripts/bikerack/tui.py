@@ -466,12 +466,12 @@ def main(
     """Launch BikeRack TUI as a standalone application.
 
     Args:
-        port: Explicit WheelHub port. If None, reads from .bikerack-port file.
+        port: Explicit WheelHub port. If None, reads from .wheelhub-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
     if port is None:
         if project_dir is not None:
-            port_file = project_dir / ".bikerack-port"
+            port_file = project_dir / ".wheelhub-port"
             if port_file.exists():
                 try:
                     port = int(port_file.read_text().strip())

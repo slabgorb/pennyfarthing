@@ -30,10 +30,7 @@ import yaml
 
 # WheelHub port file - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-CYCLIST_PORT_FILE = ".cyclist-port"
-
-# Legacy approval port file (deprecated, for backwards compatibility during migration)
-CYCLIST_APPROVAL_PORT_FILE_LEGACY = ".cyclist-approval-port"
+CYCLIST_PORT_FILE = ".wheelhub-port"
 
 # Default port if file not found
 DEFAULT_CYCLIST_PORT = 7431
@@ -51,7 +48,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     """Find the project root by looking for marker files.
 
     Searches for (in order):
-    1. .cyclist-port or .cyclist-approval-port (Cyclist is running)
+    1. .wheelhub-port (WheelHub is running)
     2. .pennyfarthing directory
     3. .claude directory
 
@@ -67,8 +64,6 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     while current != current.parent:
         # Check for Cyclist port files first (indicates Cyclist is running)
         if (current / CYCLIST_PORT_FILE).exists():
-            return current
-        if (current / CYCLIST_APPROVAL_PORT_FILE_LEGACY).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
@@ -89,7 +84,7 @@ def read_port_file(file_name: str, project_root: Path | None = None) -> int | No
     """Read a port number from a Cyclist port file.
 
     Args:
-        file_name: Name of the port file (.cyclist-port or .cyclist-approval-port)
+        file_name: Name of the port file (e.g. .wheelhub-port)
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
@@ -130,16 +125,7 @@ def get_cyclist_port(project_root: Path | None = None) -> int:
     if port:
         return port
 
-    # Fallback to legacy approval port file during migration
-    legacy_port = read_port_file(CYCLIST_APPROVAL_PORT_FILE_LEGACY, project_root)
-    if legacy_port:
-        return legacy_port
-
     return DEFAULT_CYCLIST_PORT
-
-
-# Alias for backwards compatibility
-get_approval_port = get_cyclist_port
 
 
 # =============================================================================

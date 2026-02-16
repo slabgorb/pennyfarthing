@@ -11,7 +11,7 @@
  * - AC3: bikerack.ts sets IS_BIKERACK=1 before any imports that check it (Rule 9)
  * - AC4: bikerack.ts does NOT go through main.ts (Rule 9)
  * - AC5: Port file written AFTER server.listen() callback (CE-3)
- * - AC6: Port file is .bikerack-port, not .cyclist-port (Rule 4)
+ * - AC6: Port file is .wheelhub-port (shared with Cyclist)
  * - AC7: Default port 2898 with auto-increment on conflict (Rule 6)
  * - AC8: /ws/claude WebSocket skipped in BikeRack mode
  */
@@ -165,13 +165,13 @@ describe('bikerack.ts entry point', () => {
     expect(content).toMatch(/2898/);
   });
 
-  it('should use .bikerack-port not .cyclist-port', () => {
-    // AC6: Port file is .bikerack-port (Rule 4)
+  it('should use .wheelhub-port (shared with Cyclist)', () => {
+    // BikeRack and Cyclist share a single .wheelhub-port file
     const bikerackPath = join(__dirname, '..', 'src', 'bikerack.ts');
     const content = readFileSync(bikerackPath, 'utf-8');
 
-    expect(content).toMatch(/\.bikerack-port/);
-    expect(content).not.toMatch(/\.cyclist-port/);
+    expect(content).toMatch(/\.wheelhub-port/);
+    expect(content).not.toMatch(/\.bikerack-port/);
   });
 
   it('should import createTerminalServer from server.ts', () => {
