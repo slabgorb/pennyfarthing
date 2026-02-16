@@ -129,11 +129,14 @@ pf jira reconcile --fix
 ## Sprint Management
 
 ```bash
+# Read sprint ID from current-sprint.yaml (never hardcode)
+SPRINT_ID=$(grep 'jira_sprint_id:' sprint/current-sprint.yaml | awk '{print $2}')
+
 # Add issue to sprint
-pf jira sprint add 276 MSSCI-11999
+pf jira sprint add "$SPRINT_ID" MSSCI-11999
 
 # Preview
-pf jira sprint add 276 MSSCI-11999 --dry-run
+pf jira sprint add "$SPRINT_ID" MSSCI-11999 --dry-run
 ```
 
 ## Common Workflows

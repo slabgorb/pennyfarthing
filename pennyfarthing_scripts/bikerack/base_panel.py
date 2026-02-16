@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from rich.text import Text
 from textual.widgets import Static
 
 # Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
@@ -25,6 +26,7 @@ PANEL_ICONS: dict[str, tuple[str, str]] = {
     "debug": ("\uf188", "d"),        # nf-fa-bug
     "settings": ("\uf013", "S"),     # nf-fa-gear
     "tty": ("\uf120", ">"),          # nf-fa-terminal
+    "progress": ("\uf200", "P"),     # nf-fa-pie_chart
 }
 
 
@@ -42,6 +44,66 @@ def get_panel_icon(panel_name: str, use_nerd_font: bool = True) -> str:
     if entry is None:
         return ""
     return entry[0] if use_nerd_font else entry[1]
+
+
+def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool = False) -> Text:
+    """Render a Unicode progress bar with color based on percentage.
+
+    Args:
+        percent: Value 0-100.
+        width: Number of bar characters (default 20).
+        warn_high: If True, use red at high values (for resource usage).
+                   If False (default), use blue at 100% (for completion).
+
+    Returns:
+        Rich Text like ``[████████░░░░░░░░░░░░] 22%``
+    """
+    percent = max(0, min(100, int(percent)))
+    filled = round(width * percent / 100)
+    empty = width - filled
+
+    if warn_high:
+        if percent < 50:
+            style = "green"
+        elif percent <= 80:
+            style = "yellow"
+        else:
+            style = "red"
+    else:
+        style = "blue"
+
+    bar = Text()
+    bar.append("[")
+    bar.append("█" * filled, style=style)
+    bar.append("░" * empty, style="dim")
+    bar.append(f"] {percent}%")
+    return bar
+
+
+def format_duration(seconds: int | float) -> str:
+    """Format seconds into human-friendly duration string.
+
+    Returns:
+        ``47s``, ``2m 14s``, ``1h 5m``.
+    """
+    seconds = max(0, int(seconds))
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes, secs = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes}m {secs}s"
+    hours, mins = divmod(minutes, 60)
+    return f"{hours}h {mins}m"
+
+
+def humanize_theme(slug: str) -> str:
+    """Convert a theme slug to a display name.
+
+    ``princess-bride`` → ``Princess Bride``
+    """
+    if not slug:
+        return ""
+    return slug.replace("-", " ").replace("_", " ").title()
 
 
 class BasePanel(Static):

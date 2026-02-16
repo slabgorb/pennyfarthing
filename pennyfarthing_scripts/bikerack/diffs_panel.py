@@ -52,6 +52,8 @@ class DiffsPanel(BasePanel):
         self._current_page: int = 0
         self._max_page: int = 0
         self._temp_files: list[str] = []
+        self._current_file_index: int = 0
+        self._total_files: int = 0
 
     def next_page(self) -> None:
         """Advance to the next page of truncated diff content."""
@@ -63,11 +65,34 @@ class DiffsPanel(BasePanel):
         if self._current_page > 0:
             self._current_page -= 1
 
+    def next_file(self) -> None:
+        """Advance to the next file."""
+        if self._current_file_index < self._total_files - 1:
+            self._current_file_index += 1
+            if self._last_payload:
+                rendered = self.render_panel(self._last_payload)
+                try:
+                    self.update(rendered)
+                except Exception:
+                    pass
+
+    def prev_file(self) -> None:
+        """Go back to the previous file."""
+        if self._current_file_index > 0:
+            self._current_file_index -= 1
+            if self._last_payload:
+                rendered = self.render_panel(self._last_payload)
+                try:
+                    self.update(rendered)
+                except Exception:
+                    pass
+
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket message with pagination reset and temp management."""
         if not self._mounted or message is None:
             return
         self._current_page = 0
+        self._current_file_index = 0
         self._cleanup_temp_files()
         self._store_large_diffs(message)
         super().handle_message(message)
@@ -78,31 +103,63 @@ class DiffsPanel(BasePanel):
         super().on_unmount()
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
-        """Render diff data from WebSocket payload with truncation/pagination."""
+        """Render diff data showing one file at a time with file selector header."""
         diffs = payload.get("diffs", [])
         if not diffs:
             return Text("No diffs yet", style="dim italic")
 
-        parts: list[Any] = []
-        max_total = 0
-        for diff_entry in diffs:
-            # Skip syntax highlighting for very large diffs (>2000 lines) for performance
-            raw_diff = diff_entry.get("diff", "")
-            skip_highlight = raw_diff.count("\n") > HIGHLIGHT_THRESHOLD
+        self._total_files = len(diffs)
 
-            file_parts, total_lines = _render_file_diff(
-                diff_entry,
-                page=self._current_page,
-                page_size=DEFAULT_LINE_LIMIT,
-                skip_highlight=skip_highlight,
-            )
-            parts.extend(file_parts)
-            parts.append(Text(""))  # separator between files
-            max_total = max(max_total, total_lines)
+        # Clamp file index
+        if self._current_file_index >= len(diffs):
+            self._current_file_index = len(diffs) - 1
+
+        parts: list[Any] = []
+
+        # File selector header
+        selector = Text()
+        selector.append("Files: ", style="dim")
+        for i, d in enumerate(diffs):
+            path = d.get("path", "unknown")
+            additions = d.get("additions")
+            deletions = d.get("deletions")
+            stats = ""
+            if additions is not None and deletions is not None:
+                stats = f" +{additions} -{deletions}"
+
+            if i == self._current_file_index:
+                selector.append(f"[{i+1}/{len(diffs)}] ", style="bold")
+                selector.append(path, style="bold cyan")
+                if stats:
+                    selector.append(stats, style="bold dim")
+            else:
+                selector.append(path, style="dim")
+                if stats:
+                    selector.append(stats, style="dim")
+
+            if i < len(diffs) - 1:
+                selector.append("  |  ", style="dim")
+
+        parts.append(selector)
+        parts.append(Text("n:next  p:prev", style="dim"))
+        parts.append(Text(""))
+
+        # Render only current file's diff
+        diff_entry = diffs[self._current_file_index]
+        raw_diff = diff_entry.get("diff", "")
+        skip_highlight = raw_diff.count("\n") > HIGHLIGHT_THRESHOLD
+
+        file_parts, total_lines = _render_file_diff(
+            diff_entry,
+            page=self._current_page,
+            page_size=DEFAULT_LINE_LIMIT,
+            skip_highlight=skip_highlight,
+        )
+        parts.extend(file_parts)
 
         # Track max page for pagination bounds
-        if max_total > DEFAULT_LINE_LIMIT:
-            self._max_page = -(-max_total // DEFAULT_LINE_LIMIT) - 1
+        if total_lines > DEFAULT_LINE_LIMIT:
+            self._max_page = -(-total_lines // DEFAULT_LINE_LIMIT) - 1
         else:
             self._max_page = 0
 

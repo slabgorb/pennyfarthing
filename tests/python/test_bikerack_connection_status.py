@@ -10,6 +10,8 @@ Verifies:
 Run with: python -m pytest tests/python/test_bikerack_connection_status.py -v
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from textual.widgets import Static
 
@@ -88,11 +90,12 @@ class TestConnectionStatusWithClient:
         client = WheelHubClient(port=9999)
         app = BikeRackApp(client=client)
 
-        async with app.run_test() as pilot:
-            widget = app.query_one("#connection-status", ConnectionStatus)
-            client._set_state(ConnectionState.CONNECTED)
-            await pilot.pause()
-            assert widget.connection_state == ConnectionState.CONNECTED
+        with patch.object(client, "connect", new_callable=AsyncMock):
+            async with app.run_test() as pilot:
+                widget = app.query_one("#connection-status", ConnectionStatus)
+                client._set_state(ConnectionState.CONNECTED)
+                await pilot.pause()
+                assert widget.connection_state == ConnectionState.CONNECTED
 
     async def test_client_reconnecting_updates_widget(self):
         """AC3: Widget updates when client transitions to RECONNECTING."""
@@ -163,11 +166,8 @@ class TestConnectionStatusPersistence:
             widget.connection_state = ConnectionState.CONNECTED
             await pilot.pause()
 
-            # Simulate panel content change
-            placeholder = app.query_one("#placeholder")
-            await placeholder.remove()
-            main = app.query_one("#main-content")
-            await main.mount(Static("New panel content", id="new-panel"))
+            # Simulate panel switch (changes visible content in #main-content)
+            app.action_switch_panel("git")
             await pilot.pause()
 
             # Connection status should still be there and connected
