@@ -24,9 +24,8 @@ from click.testing import CliRunner
 from pennyfarthing_scripts.cli import cli
 from pennyfarthing_scripts.workflow import get_workflow_state
 
-# Mock path: since cli.py does `from pennyfarthing_scripts.workflow import get_workflow_state`
-# inside the command function, we mock at the source module
-MOCK_PATH = "pennyfarthing_scripts.workflow.get_workflow_state"
+# Mock path: workflow.cli imports from workflow.state, so mock at the source module
+MOCK_PATH = "pennyfarthing_scripts.workflow.state.get_workflow_state"
 
 
 class TestWorkflowCheckCLI:

@@ -11,25 +11,22 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 
 ## Quick Reference
 
-### Shell Script Commands
-
-| Command | Script | Purpose |
-|---------|--------|---------|
-| `/pf-workflow` or `/pf-workflow list` | `.pennyfarthing/scripts/workflow/list-workflows.sh` | List all workflows |
-| `/pf-workflow show [name]` | `.pennyfarthing/scripts/workflow/show-workflow.sh [name]` | Show workflow details |
-| `/pf-workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
-| `/pf-workflow start <name>` | `.pennyfarthing/scripts/workflow/start-workflow.sh <name> [--mode M]` | Start stepped workflow |
-| `/pf-workflow resume [name]` | `.pennyfarthing/scripts/workflow/resume-workflow.sh [name]` | Resume interrupted workflow |
-| `/pf-workflow status` | `.pennyfarthing/scripts/workflow/workflow-status.sh` | Show stepped workflow progress |
-| `/pf-workflow fix-phase <id> <phase>` | `.pennyfarthing/scripts/workflow/fix-session-phase.sh <id> <phase> [--dry-run]` | Repair session phase |
-
 ### Python CLI Commands
 
 | Command | CLI | Purpose |
 |---------|-----|---------|
+| `/pf-workflow` or `/pf-workflow list` | `pf workflow list` | List all workflows |
+| `/pf-workflow show [name]` | `pf workflow show [name]` | Show workflow details |
+| `/pf-workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
+| `/pf-workflow start <name>` | `pf workflow start <name> [--mode M]` | Start stepped workflow |
+| `/pf-workflow resume [name]` | `pf workflow resume [name]` | Resume interrupted workflow |
+| `/pf-workflow status` | `pf workflow status` | Show stepped workflow progress |
+| `/pf-workflow fix-phase <id> <phase>` | `pf workflow fix-phase <id> <phase> [--dry-run]` | Repair session phase |
 | Check workflow state | `pf workflow check [--json]` | Current story, phase, state |
 | Check phase owner | `pf workflow phase-check <workflow> <phase>` | Which agent owns a phase |
+| Get workflow type | `pf workflow type <workflow>` | phased/stepped/procedural |
 | Emit handoff marker | `pf workflow handoff <next-agent>` | CYCLIST handoff marker |
+| Complete step | `pf workflow complete-step [name] [--step N]` | Advance stepped workflow |
 
 ### Built-in Workflows
 

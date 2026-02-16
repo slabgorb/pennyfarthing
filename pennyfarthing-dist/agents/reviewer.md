@@ -46,7 +46,7 @@ PR_NUMBER: "{PR_NUMBER}"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
 **If OWNER != "reviewer":** Run `pf handoff marker $OWNER`, output result, tell user.

@@ -135,7 +135,7 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 On activation, check if story phase belongs to you:
 
 ```bash
-OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 # If OWNER != your agent → emit handoff marker and EXIT
 ```
 

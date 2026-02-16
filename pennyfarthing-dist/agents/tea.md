@@ -44,7 +44,7 @@ STORY_ID: "{STORY_ID}"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
 **If OWNER != "tea":** Run `pf handoff marker $OWNER`, output result, tell user.

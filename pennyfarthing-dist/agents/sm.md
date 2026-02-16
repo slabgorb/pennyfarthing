@@ -154,7 +154,7 @@ Present to user:
 1. **Get workflow type:**
    ```bash
    WORKFLOW=$(pf sprint story field X-Y workflow)
-   WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "$WORKFLOW")
+   WORKFLOW_TYPE=$(pf workflow type "$WORKFLOW")
    ```
 
 2. **Spawn `sm-setup MODE=setup`** with:
@@ -262,7 +262,7 @@ SM does NOT hand off to agents. Instead, use `/pf-workflow start {name}` to begi
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
 **If OWNER != "sm":** Run `pf handoff marker $OWNER`, output result, tell user.

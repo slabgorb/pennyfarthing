@@ -124,7 +124,7 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 **Purpose:** Verify agent owns the current workflow phase before proceeding. Prevents agents from acting on stories they shouldn't own.
 
-**Usage:** SM, TEA, Dev, Reviewer - runs `phase-owner.sh` on activation to determine correct owner.
+**Usage:** SM, TEA, Dev, Reviewer - runs `pf workflow phase-check` on activation to determine correct owner.
 
 ```markdown
 <phase-check>
@@ -132,7 +132,7 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
 **If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.

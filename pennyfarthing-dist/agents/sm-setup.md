@@ -184,7 +184,7 @@ git checkout -b feat/{STORY_ID}-{SLUG}
 After session file is created, determine how to route:
 
 ```bash
-WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "{WORKFLOW}")
+WORKFLOW_TYPE=$(pf workflow type "{WORKFLOW}")
 ```
 
 | Workflow Type | Routing |
