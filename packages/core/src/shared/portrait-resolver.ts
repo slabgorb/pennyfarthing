@@ -269,7 +269,23 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
  * @returns Full path to tandem branding image, or null if not found
  */
 export function resolveTandemBrandingPath(theme: string, size: 'medium' | 'large' = 'medium'): string | null {
-  // TODO: Implement tandem branding resolution (story 86-17)
+  const filename = 'cyclist-tandem.png';
+
+  // Check core portraits
+  const distPath = resolvePennyfarthingDist();
+  if (distPath) {
+    const paths = getPortraitPaths(distPath);
+    const corePath = join(paths.portraitsDir, theme, size, filename);
+    if (existsSync(corePath)) return corePath;
+  }
+
+  // Check theme package portraits
+  const themePackages = discoverThemePackagePortraitDirs();
+  for (const pkg of themePackages) {
+    const pkgPath = join(pkg.portraitsDir, theme, size, filename);
+    if (existsSync(pkgPath)) return pkgPath;
+  }
+
   return null;
 }
 
