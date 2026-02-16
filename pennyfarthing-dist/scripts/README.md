@@ -11,7 +11,7 @@ scripts/
 ├── sprint/     # Sprint YAML operations (migrated to pf sprint CLI)
 ├── story/      # Story operations (create-story.sh)
 ├── jira/       # Jira integration (jira-claim-story.sh)
-├── git/        # Git operations (release.sh, worktree-manager.sh)
+├── git/        # Git operations (deprecated shims → pf git CLI)
 ├── theme/      # Theme operations (list-themes.sh)
 ├── test/       # Test infrastructure (test-setup.sh)
 ├── lib/        # Shared bash libraries (common.sh, logging.sh)
