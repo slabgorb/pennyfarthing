@@ -1,13 +1,5 @@
-#!/usr/bin/env bash
-# get-workflow-type.sh - Determine if a workflow is phased or stepped
-#
-# Usage: .pennyfarthing/scripts/workflow/get-workflow-type.sh <workflow-name>
-#
-# Returns: "phased" or "stepped"
-# Exit 1 if workflow not found
-
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-exec python3 "$SCRIPT_DIR/get-workflow-type.py" "$@"
+#!/bin/bash
+# DEPRECATED: Use `pf workflow type` instead.
+# This shim forwards to the Python CLI for backward compatibility.
+echo "Warning: get-workflow-type.sh is deprecated. Use: pf workflow type $*" >&2
+exec pf workflow type "$@"

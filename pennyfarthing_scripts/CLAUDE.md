@@ -12,7 +12,7 @@ Python Click CLI for Pennyfarthing. Entry point: `pennyfarthing_scripts/cli.py`.
 | `pf bc` | Panel focus and layout management | `bc/cli.py` |
 | `pf validate` | Project validators | `validate/cli.py` |
 | `pf agent` | Agent session management | `cli.py` (inline) |
-| `pf workflow` | Workflow state and phase management | `cli.py` (inline) |
+| `pf workflow` | Workflow state and phase management | `workflow/cli.py` |
 | `pf bikerack` | BikeRack dashboard launcher | `bikerack/cli.py` |
 | `pf debug` | Analysis tools (hotspots, deadcode, healthscore) | `cli.py` (inline group) |
 
@@ -139,9 +139,17 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 
 | Command | Description | Source |
 |---------|-------------|--------|
-| `pf workflow check` | Current workflow state | `workflow.py` |
-| `pf workflow phase-check WORKFLOW PHASE` | Check phase owner | `workflow.py` |
-| `pf workflow handoff AGENT` | Emit handoff marker | `cli.py` (inline) |
+| `pf workflow check [--json]` | Current workflow state | `workflow/cli.py` |
+| `pf workflow phase-check WORKFLOW PHASE` | Check phase owner | `workflow/cli.py` |
+| `pf workflow handoff AGENT` | Emit handoff marker | `workflow/cli.py` |
+| `pf workflow type WORKFLOW` | Get workflow type (phased/stepped/procedural) | `workflow/cli.py` |
+| `pf workflow list` | List all available workflows | `workflow/cli.py` |
+| `pf workflow show [NAME]` | Show workflow details | `workflow/cli.py` |
+| `pf workflow start NAME [--mode M]` | Start stepped workflow | `workflow/cli.py` |
+| `pf workflow resume [NAME]` | Resume interrupted workflow | `workflow/cli.py` |
+| `pf workflow status [NAME]` | Show stepped workflow progress | `workflow/cli.py` |
+| `pf workflow fix-phase ID PHASE [--dry-run]` | Repair session phase | `workflow/cli.py` |
+| `pf workflow complete-step [NAME] [--step N]` | Complete current step | `workflow/cli.py` |
 
 ## pf bikerack
 

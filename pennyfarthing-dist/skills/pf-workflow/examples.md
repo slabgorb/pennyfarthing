@@ -4,19 +4,19 @@
 
 ```bash
 # List all available workflows
-.pennyfarthing/scripts/workflow/list-workflows.sh
+pf workflow list
 
 # Show TDD workflow details
-.pennyfarthing/scripts/workflow/show-workflow.sh tdd
+pf workflow show tdd
 
 # Show current session's workflow
-.pennyfarthing/scripts/workflow/show-workflow.sh
+pf workflow show
 
 # Show trivial workflow
-.pennyfarthing/scripts/workflow/show-workflow.sh trivial
+pf workflow show trivial
 ```
 
-## Checking State (Python CLI)
+## Checking State
 
 ```bash
 # Check current workflow state
@@ -31,6 +31,13 @@ pf workflow phase-check tdd review
 pf workflow phase-check trivial implement
 # Returns: dev
 
+# Get workflow type
+pf workflow type tdd
+# Returns: phased
+
+pf workflow type architecture
+# Returns: stepped
+
 # Emit handoff marker for Cyclist
 pf workflow handoff reviewer
 ```
@@ -39,40 +46,44 @@ pf workflow handoff reviewer
 
 ```bash
 # Start architecture workflow in create mode (default)
-.pennyfarthing/scripts/workflow/start-workflow.sh architecture
+pf workflow start architecture
 
 # Start in validate mode
-.pennyfarthing/scripts/workflow/start-workflow.sh architecture --mode validate
+pf workflow start architecture --mode validate
 
 # Check progress
-.pennyfarthing/scripts/workflow/workflow-status.sh
+pf workflow status
 
 # Resume after interruption
-.pennyfarthing/scripts/workflow/resume-workflow.sh
-.pennyfarthing/scripts/workflow/resume-workflow.sh architecture
+pf workflow resume
+pf workflow resume architecture
+
+# Complete current step and advance
+pf workflow complete-step
+pf workflow complete-step architecture --step 3
 ```
 
 ## Phase Repair
 
 ```bash
 # Preview phase fix
-.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 review --dry-run
+pf workflow fix-phase 56-1 review --dry-run
 
 # Fix phase to review (after Dev completed)
-.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 review
+pf workflow fix-phase 56-1 review
 
 # Fix phase to approved (after Reviewer approved)
-.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 approved
+pf workflow fix-phase 56-1 approved
 
 # Using Jira key
-.pennyfarthing/scripts/workflow/fix-session-phase.sh MSSCI-12190 approved
+pf workflow fix-phase MSSCI-12190 approved
 ```
 
 ## Switching Workflow Mid-Session
 
 1. Verify the target workflow exists:
    ```bash
-   .pennyfarthing/scripts/workflow/show-workflow.sh trivial
+   pf workflow show trivial
    ```
 
 2. Edit the session file:
@@ -89,7 +100,7 @@ pf workflow handoff reviewer
 pf workflow check --json
 # Edit session to change workflow from trivial to tdd
 # Fix phase to match where you are
-.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 red
+pf workflow fix-phase 56-1 red
 ```
 
 ### Agent activated on wrong phase

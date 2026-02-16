@@ -1,11 +1,11 @@
 # Workflow — Detailed Usage
 
-## Shell Script Commands
+## Commands
 
 ### List Workflows
 
 ```bash
-.pennyfarthing/scripts/workflow/list-workflows.sh
+pf workflow list
 ```
 
 No arguments. Returns table of workflows with type, phases/steps count, modes, default flag, description.
@@ -13,7 +13,7 @@ No arguments. Returns table of workflows with type, phases/steps count, modes, d
 ### Show Workflow
 
 ```bash
-.pennyfarthing/scripts/workflow/show-workflow.sh [NAME]
+pf workflow show [NAME]
 ```
 
 | Arg | Required | Description |
@@ -31,7 +31,7 @@ Warning: Only do this when story requirements have fundamentally changed. Switch
 ### Start Stepped Workflow
 
 ```bash
-.pennyfarthing/scripts/workflow/start-workflow.sh <NAME> [--mode <MODE>]
+pf workflow start <NAME> [--mode <MODE>]
 ```
 
 | Arg/Option | Required | Description |
@@ -44,7 +44,7 @@ Creates a new session and begins at step 1.
 ### Resume Stepped Workflow
 
 ```bash
-.pennyfarthing/scripts/workflow/resume-workflow.sh [NAME]
+pf workflow resume [NAME]
 ```
 
 | Arg | Required | Description |
@@ -54,7 +54,7 @@ Creates a new session and begins at step 1.
 ### Workflow Status
 
 ```bash
-.pennyfarthing/scripts/workflow/workflow-status.sh
+pf workflow status
 ```
 
 No arguments. Shows current step, progress percentage, mode.
@@ -62,7 +62,7 @@ No arguments. Shows current step, progress percentage, mode.
 ### Fix Session Phase
 
 ```bash
-.pennyfarthing/scripts/workflow/fix-session-phase.sh <STORY_ID> <TARGET_PHASE> [--dry-run]
+pf workflow fix-phase <STORY_ID> <TARGET_PHASE> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -80,9 +80,22 @@ Valid phases by workflow:
 
 Updates `**Phase:**` field, `**Phase Started:**` timestamp, and handoff history table.
 
+### Complete Step
+
+```bash
+pf workflow complete-step [NAME] [--step N]
+```
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `NAME` | No | Workflow name (auto-detects from session) |
+| `--step N` | No | Complete specific step number instead of current |
+
+Advances session: increments step, updates completed list, recalculates percentage.
+
 ---
 
-## Python CLI Commands
+## State & Phase Commands
 
 ### Check Workflow State
 
@@ -108,6 +121,18 @@ pf workflow phase-check <WORKFLOW_NAME> <PHASE>
 | `PHASE` | Yes | Phase to check (`red`, `implement`, `review`, etc.) |
 
 Returns the agent name that owns the phase.
+
+### Get Workflow Type
+
+```bash
+pf workflow type <WORKFLOW_NAME>
+```
+
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `WORKFLOW_NAME` | Yes | Workflow name (e.g., `tdd`, `architecture`) |
+
+Returns `phased`, `stepped`, or `procedural`.
 
 ### Emit Handoff Marker
 
