@@ -109,8 +109,13 @@ fi
 
 echo "Created: $JIRA_KEY"
 
-# Add to sprint and mark done
-jira sprint add 276 "$JIRA_KEY"
+# Read sprint ID from current-sprint.yaml (never hardcode)
+SPRINT_ID=$(grep 'jira_sprint_id:' sprint/current-sprint.yaml | awk '{print $2}')
+if [ -z "$SPRINT_ID" ]; then
+  echo "WARNING: Could not read jira_sprint_id from sprint/current-sprint.yaml"
+else
+  jira sprint add "$SPRINT_ID" "$JIRA_KEY"
+fi
 jira issue move "$JIRA_KEY" "Done"
 ```
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from rich.table import Table
 from rich.text import Text
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
@@ -64,42 +63,47 @@ class ChangedPanel(BasePanel):
     icon: str = PANEL_ICONS["changed"][0]
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
-        """Render changed file data from WebSocket payload."""
+        """Render changed files grouped by repository."""
         repos = payload.get("repos", [])
         if not isinstance(repos, list):
             return Text("No changed files", style="dim italic")
 
-        files: list[tuple[str, dict[str, Any]]] = []
+        # Group files by repo
+        repo_files: dict[str, list[dict[str, Any]]] = {}
         for repo in repos:
             if not isinstance(repo, dict):
                 continue
-            repo_name = repo.get("name", "")
+            repo_name = repo.get("name", "unknown")
             dirty_files = repo.get("dirtyFiles", [])
-            if not isinstance(dirty_files, list):
+            if not isinstance(dirty_files, list) or not dirty_files:
                 continue
-            for f in dirty_files:
-                if not isinstance(f, dict):
-                    continue
-                files.append((repo_name, f))
+            repo_files[repo_name] = [f for f in dirty_files if isinstance(f, dict)]
 
-        if not files:
+        if not repo_files:
             return Text("No changed files", style="dim italic")
 
-        table = Table()
-        table.add_column("", width=2)
-        table.add_column("File", style="cyan")
-        table.add_column("Status")
-        table.add_column("Repo", style="dim")
+        from rich.console import Group as RichGroup
 
-        for repo_name, f in files:
-            status_code = f.get("status", "  ")
-            path = f.get("path", "")
-            icon, label, style = _parse_status(status_code)
-            table.add_row(
-                Text(icon, style=f"bold {style}"),
-                path,
-                Text(label, style=style),
-                repo_name,
-            )
+        parts: list[Any] = []
+        for repo_name, files in repo_files.items():
+            count = len(files)
+            label = "file" if count == 1 else "files"
+            header = Text()
+            header.append(repo_name, style="bold cyan")
+            header.append(f" ({count} {label})", style="dim")
+            parts.append(header)
 
-        return table
+            for f in files:
+                status_code = f.get("status", "  ")
+                path = f.get("path", "")
+                icon, label_text, style = _parse_status(status_code)
+                line = Text()
+                line.append("  ")
+                line.append(icon, style=f"bold {style}")
+                line.append(f" {path}", style="cyan")
+                line.append(f"  {label_text}", style=style)
+                parts.append(line)
+
+            parts.append(Text(""))  # spacer between repos
+
+        return RichGroup(*parts)
