@@ -16,7 +16,8 @@ export const CORE_AGENTS = [
   'tech-writer',
   'ux-designer',
   'devops',
-  'orchestrator'
+  'orchestrator',
+  'ba'
 ] as const;
 
 export type CoreAgent = typeof CORE_AGENTS[number];
