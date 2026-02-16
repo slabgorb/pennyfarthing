@@ -466,6 +466,66 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         }
       }
 
+      // Phase team (optional, but if present must be object with teammates)
+      if ('team' in phaseObj && phaseObj.team !== undefined) {
+        if (!phaseObj.team || typeof phaseObj.team !== 'object') {
+          errors.push({ field: `workflow.phases[${index}].team`, message: 'Team must be an object' });
+        } else {
+          const teamObj = phaseObj.team as Record<string, unknown>;
+          const validDisplayModes = ['in-process', 'tmux'];
+
+          // teammates (required, non-empty array)
+          if (!('teammates' in teamObj) || teamObj.teammates === undefined || teamObj.teammates === null) {
+            errors.push({ field: `workflow.phases[${index}].team.teammates`, message: 'Team teammates is required' });
+          } else if (!Array.isArray(teamObj.teammates)) {
+            errors.push({ field: `workflow.phases[${index}].team.teammates`, message: 'Team teammates must be an array' });
+          } else if (teamObj.teammates.length === 0) {
+            errors.push({ field: `workflow.phases[${index}].team.teammates`, message: 'Team must have at least one teammate' });
+          } else {
+            // Validate each teammate entry
+            (teamObj.teammates as unknown[]).forEach((teammate, tIndex) => {
+              if (!teammate || typeof teammate !== 'object') {
+                errors.push({ field: `workflow.phases[${index}].team.teammates[${tIndex}]`, message: 'Teammate must be an object' });
+                return;
+              }
+              const tmObj = teammate as Record<string, unknown>;
+
+              // agent (required, string, must be valid)
+              if (!('agent' in tmObj) || tmObj.agent === undefined || tmObj.agent === null) {
+                errors.push({ field: `workflow.phases[${index}].team.teammates[${tIndex}].agent`, message: 'Teammate agent is required' });
+              } else if (typeof tmObj.agent !== 'string') {
+                errors.push({ field: `workflow.phases[${index}].team.teammates[${tIndex}].agent`, message: 'Teammate agent must be a string' });
+              } else if (!(VALID_AGENT_NAMES as readonly string[]).includes(tmObj.agent)) {
+                errors.push({ field: `workflow.phases[${index}].team.teammates[${tIndex}].agent`, message: `Unknown agent '${tmObj.agent}'. Valid agents: ${VALID_AGENT_NAMES.join(', ')}` });
+              }
+
+              // task (optional, string)
+              if ('task' in tmObj && tmObj.task !== undefined && tmObj.task !== null) {
+                if (typeof tmObj.task !== 'string') {
+                  errors.push({ field: `workflow.phases[${index}].team.teammates[${tIndex}].task`, message: 'Teammate task must be a string' });
+                }
+              }
+            });
+          }
+
+          // model (optional, string)
+          if ('model' in teamObj && teamObj.model !== undefined && teamObj.model !== null) {
+            if (typeof teamObj.model !== 'string') {
+              errors.push({ field: `workflow.phases[${index}].team.model`, message: 'Team model must be a string' });
+            }
+          }
+
+          // display (optional, must be valid mode)
+          if ('display' in teamObj && teamObj.display !== undefined && teamObj.display !== null) {
+            if (typeof teamObj.display !== 'string') {
+              errors.push({ field: `workflow.phases[${index}].team.display`, message: 'Team display must be a string' });
+            } else if (!validDisplayModes.includes(teamObj.display)) {
+              errors.push({ field: `workflow.phases[${index}].team.display`, message: `Team display must be one of: ${validDisplayModes.join(', ')}` });
+            }
+          }
+        }
+      }
+
       // Phase input (optional, array of strings)
       if ('input' in phaseObj && phaseObj.input !== undefined) {
         if (!Array.isArray(phaseObj.input)) {
@@ -635,6 +695,23 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         };
         if (tandemObj.scope !== undefined) {
           result.tandem.scope = tandemObj.scope as string | string[];
+        }
+      }
+      if (phase.team !== undefined) {
+        const teamObj = phase.team as Record<string, unknown>;
+        const teammates = (teamObj.teammates as Record<string, unknown>[]).map((tm): TeamMember => {
+          const member: TeamMember = { agent: tm.agent as string };
+          if (tm.task !== undefined) {
+            member.task = tm.task as string;
+          }
+          return member;
+        });
+        result.team = { teammates };
+        if (teamObj.model !== undefined) {
+          result.team.model = teamObj.model as string;
+        }
+        if (teamObj.display !== undefined) {
+          result.team.display = teamObj.display as string;
         }
       }
 
