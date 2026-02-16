@@ -261,6 +261,35 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
 }
 
 /**
+ * Resolve the path to a tandem branding image for a given theme.
+ * Looks for cyclist-tandem.png in the theme's portrait directory.
+ *
+ * @param theme - Theme name (e.g., 'monty-python', 'stephen-king')
+ * @param size - Portrait size directory ('medium' or 'large')
+ * @returns Full path to tandem branding image, or null if not found
+ */
+export function resolveTandemBrandingPath(theme: string, size: 'medium' | 'large' = 'medium'): string | null {
+  const filename = 'cyclist-tandem.png';
+
+  // Check core portraits
+  const distPath = resolvePennyfarthingDist();
+  if (distPath) {
+    const paths = getPortraitPaths(distPath);
+    const corePath = join(paths.portraitsDir, theme, size, filename);
+    if (existsSync(corePath)) return corePath;
+  }
+
+  // Check theme package portraits
+  const themePackages = discoverThemePackagePortraitDirs();
+  for (const pkg of themePackages) {
+    const pkgPath = join(pkg.portraitsDir, theme, size, filename);
+    if (existsSync(pkgPath)) return pkgPath;
+  }
+
+  return null;
+}
+
+/**
  * Get all portrait-related paths for a resolved dist directory
  */
 export function getPortraitPaths(distPath: string): PortraitPaths {
