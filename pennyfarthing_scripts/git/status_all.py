@@ -65,12 +65,15 @@ async def _run_git_command(args: list[str], cwd: Path) -> tuple[str, str, int]:
     )
 
 
-async def get_repo_status(name: str, path: Path) -> RepoStatus:
+async def get_repo_status(
+    name: str, path: Path, upstream_ref: str = "origin/develop"
+) -> RepoStatus:
     """Get git status for a single repository.
 
     Args:
         name: Display name for the repo
         path: Path to the repository
+        upstream_ref: Remote ref to compare for unpushed commits (default: origin/develop)
 
     Returns:
         RepoStatus with current branch, changes, and unpushed commits
@@ -124,9 +127,9 @@ async def get_repo_status(name: str, path: Path) -> RepoStatus:
         status_out, _, _ = await _run_git_command(["status", "--short"], path)
         changes = [line for line in status_out.split("\n") if line.strip()]
 
-        # Get unpushed commits (comparing to origin/develop)
+        # Get unpushed commits (comparing to upstream ref)
         unpushed_out, _, unpushed_rc = await _run_git_command(
-            ["log", "origin/develop..HEAD", "--oneline"], path
+            ["log", f"{upstream_ref}..HEAD", "--oneline"], path
         )
         if unpushed_rc == 0 and unpushed_out:
             unpushed_commits = [
@@ -154,11 +157,13 @@ async def get_repo_status(name: str, path: Path) -> RepoStatus:
         )
 
 
-async def get_all_repo_status(repos: Sequence[tuple[str, Path]]) -> list[RepoStatus]:
+async def get_all_repo_status(
+    repos: Sequence[tuple[str, Path, str] | tuple[str, Path]],
+) -> list[RepoStatus]:
     """Get git status for all repos in parallel using asyncio.gather.
 
     Args:
-        repos: Sequence of (name, path) tuples for each repo
+        repos: Sequence of (name, path) or (name, path, upstream_ref) tuples
 
     Returns:
         List of RepoStatus objects in same order as input
@@ -166,7 +171,14 @@ async def get_all_repo_status(repos: Sequence[tuple[str, Path]]) -> list[RepoSta
     if not repos:
         return []
 
-    tasks = [get_repo_status(name, path) for name, path in repos]
+    tasks = []
+    for entry in repos:
+        if len(entry) == 3:
+            name, path, upstream_ref = entry  # type: ignore[misc]
+            tasks.append(get_repo_status(name, path, upstream_ref))
+        else:
+            name, path = entry  # type: ignore[misc]
+            tasks.append(get_repo_status(name, path))
     results = await asyncio.gather(*tasks, return_exceptions=False)
     return list(results)
 
@@ -279,13 +291,17 @@ async def main(brief: bool = False) -> int:
     Returns:
         0 if all repos clean, 1 if any have changes/unpushed
     """
-    from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.git.repos import load_repos_config, get_repo_paths
 
-    # For now, just check the current project
-    project_root = get_project_root()
-    repos = [("pennyfarthing", project_root)]
+    repos_with_upstream: list[tuple[str, Path, str]] = []
+    repo_paths = get_repo_paths()
+    config = load_repos_config()
 
-    statuses = await get_all_repo_status(repos)
+    for name, path in repo_paths:
+        upstream = config[name].upstream_ref if name in config else "origin/develop"
+        repos_with_upstream.append((name, path, upstream))
+
+    statuses = await get_all_repo_status(repos_with_upstream)
 
     if brief:
         print(format_status_brief(statuses))
