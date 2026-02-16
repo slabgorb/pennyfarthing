@@ -126,8 +126,16 @@ def finish_story(
     steps: list[dict[str, Any]] = []
     archive_name = f"{jira_key}-session.md" if jira_key else f"{story_id}-session.md"
 
+    # Check for dialogue file
+    dialogue_path = project_root / ".session" / f"{story_id}-dialogue.md"
+    dialogue_archive_name = (
+        f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
+    )
+
     if dry_run:
         steps.append({"step": 1, "action": f"Archive session → {archive_dir / archive_name}"})
+        if dialogue_path.exists():
+            steps.append({"step": "1b", "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}"})
         if pr_number:
             steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
         else:
@@ -146,6 +154,12 @@ def finish_story(
     archive_dest = archive_dir / archive_name
     shutil.copy2(session_path, archive_dest)
     steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
+
+    # --- Step 1b: Archive dialogue (if exists) ---
+    if dialogue_path.exists():
+        dialogue_dest = archive_dir / dialogue_archive_name
+        shutil.copy2(dialogue_path, dialogue_dest)
+        steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
 
     # --- Step 2: Merge PR ---
     if pr_number:
