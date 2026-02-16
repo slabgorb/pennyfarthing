@@ -5,15 +5,16 @@ Usage:
     pf git [COMMAND] [ARGS]...
 
 Commands:
-    status    Check git status of all project repos
-    cleanup   Organize changes into proper commits/branches
-    branches  Create feature branches from a story
-    release   Interactive release with verification gates
+    status       Check git status of all project repos
+    cleanup      Organize changes into proper commits/branches
+    branches     Create feature branches from a story
+    worktree     Manage git worktrees for parallel work
+    install-hooks Install git hooks with .d/ dispatcher pattern
 """
 
-import click
+import asyncio
 
-from pennyfarthing_scripts.common.config import get_project_root
+import click
 
 
 @click.group()
@@ -22,10 +23,11 @@ def git():
 
     \b
     Commands:
-      status    - Check git status of all repos
-      cleanup   - Organize changes into commits/branches
-      branches  - Create feature branches from a story
-      release   - Interactive release with verification gates
+      status        - Check git status of all repos
+      cleanup       - Organize changes into commits/branches
+      branches      - Create feature branches from a story
+      worktree      - Manage git worktrees for parallel work
+      install-hooks - Install git hooks with .d/ dispatcher
     """
     pass
 
@@ -37,21 +39,38 @@ def status(brief: bool):
 
     Shows branch, uncommitted changes, and ahead/behind status for each repo.
     """
-    import subprocess
+    from pennyfarthing_scripts.git.repos import get_repo_paths, load_repos_config
+    from pennyfarthing_scripts.git.status_all import (
+        format_status_brief,
+        format_status_full,
+        format_summary,
+        get_all_repo_status,
+    )
 
-    root = get_project_root()
-    script = root / ".pennyfarthing" / "scripts" / "git" / "git-status-all.sh"
+    repo_paths = get_repo_paths()
+    config = load_repos_config()
 
-    if not script.is_file():
-        click.echo("Error: git-status-all.sh not found", err=True)
-        raise SystemExit(1)
+    # Build repo list with per-repo upstream refs
+    repos_with_upstream: list[tuple[str, object, str]] = []
+    for name, path in repo_paths:
+        upstream = config[name].upstream_ref if name in config else "origin/main"
+        repos_with_upstream.append((name, path, upstream))
 
-    cmd = [str(script)]
+    statuses = asyncio.run(get_all_repo_status(repos_with_upstream))
+
     if brief:
-        cmd.append("--brief")
+        click.echo(format_status_brief(statuses))
+    else:
+        click.echo("━" * 40)
+        click.echo("  Git Status - All Repos")
+        click.echo("━" * 40)
+        click.echo()
+        click.echo(format_status_full(statuses))
+        click.echo("━" * 40)
+        click.echo(format_summary(statuses))
 
-    result = subprocess.run(cmd, cwd=str(root))
-    raise SystemExit(result.returncode)
+    has_issues = any(not s.is_clean or s.has_unpushed for s in statuses)
+    raise SystemExit(1 if has_issues else 0)
 
 
 @git.command()
@@ -67,34 +86,118 @@ def cleanup():
 
 
 @git.command()
-@click.argument("story_id")
-def branches(story_id: str):
-    """Create feature branches in both repos from a story.
+@click.argument("branch_name")
+@click.option(
+    "--repos",
+    type=click.Choice(["all", "api", "ui"]),
+    default="all",
+    help="Which repos to target",
+)
+def branches(branch_name: str, repos: str):
+    """Create feature branches across all configured repos.
 
     \b
     Arguments:
-      STORY_ID  - The story ID to create branches for (e.g., 86-3)
+      BRANCH_NAME  - The branch name to create (e.g., feat/86-3-file-upload)
     """
-    import subprocess
+    from pennyfarthing_scripts.git.create_branches import (
+        create_feature_branches,
+        detect_worktree,
+        filter_repos,
+        format_results,
+    )
+    from pennyfarthing_scripts.git.repos import get_repo_paths
 
-    root = get_project_root()
-    script = root / ".pennyfarthing" / "scripts" / "git" / "create-branches.sh"
+    is_worktree, worktree_name, _ = detect_worktree()
+    if is_worktree:
+        click.echo(f"📂 Detected worktree: {worktree_name}")
+    else:
+        click.echo("📂 Using main checkout")
 
-    if not script.is_file():
-        click.echo("Error: create-branches.sh not found", err=True)
+    all_repos = get_repo_paths()
+    filtered = filter_repos(all_repos, repos)
+
+    if not filtered:
+        click.echo(f"No repos match filter: {repos}", err=True)
         raise SystemExit(1)
 
-    result = subprocess.run([str(script), story_id], cwd=str(root))
-    raise SystemExit(result.returncode)
+    results = asyncio.run(create_feature_branches(filtered, branch_name))
+    click.echo(format_results(results, branch_name))
+
+    from pennyfarthing_scripts.git.create_branches import BranchAction
+
+    has_errors = any(r.action == BranchAction.ERROR for r in results)
+    raise SystemExit(1 if has_errors else 0)
 
 
-@git.command()
-def release():
-    """Interactive release with verification gates.
+# Worktree subgroup
+@git.group()
+def worktree():
+    """Manage git worktrees for parallel development.
 
-    Starts the release stepped workflow via BikeLane.
-    Equivalent to: /pf-workflow start release
+    \b
+    Commands:
+      create  - Create worktree(s) for parallel work
+      remove  - Remove worktree and clean up
+      list    - List all active worktrees
+      status  - Show detailed worktree status
     """
-    click.echo("Starting release workflow...")
-    click.echo("Run: /pf-workflow start release")
-    click.echo("Or:  pf workflow start release")
+    pass
+
+
+@worktree.command("create")
+@click.argument("name")
+@click.argument("branch")
+@click.option(
+    "--repos",
+    default="all",
+    help="Repos filter: all, api, ui, or comma-separated names",
+)
+def worktree_create(name: str, branch: str, repos: str):
+    """Create worktree(s) for parallel work.
+
+    \b
+    Arguments:
+      NAME    - Worktree name (e.g., wt-5-3a)
+      BRANCH  - Branch name (e.g., feat/5-3a-file-upload)
+    """
+    from pennyfarthing_scripts.git.worktree import create_worktree
+
+    raise SystemExit(create_worktree(name, branch, repos))
+
+
+@worktree.command("remove")
+@click.argument("name")
+def worktree_remove(name: str):
+    """Remove worktree and clean up."""
+    from pennyfarthing_scripts.git.worktree import remove_worktree
+
+    raise SystemExit(remove_worktree(name))
+
+
+@worktree.command("list")
+def worktree_list():
+    """List all active worktrees."""
+    from pennyfarthing_scripts.git.worktree import list_worktrees
+
+    raise SystemExit(list_worktrees())
+
+
+@worktree.command("status")
+def worktree_status():
+    """Show detailed worktree status."""
+    from pennyfarthing_scripts.git.worktree import show_worktree_status
+
+    raise SystemExit(show_worktree_status())
+
+
+@git.command("install-hooks")
+def install_hooks():
+    """Install git hooks with .d/ dispatcher pattern.
+
+    Creates .d/ directories, symlinks pennyfarthing hooks, and
+    migrates existing user hooks.
+    """
+    from pennyfarthing_scripts.git.hooks_installer import install_git_hooks
+
+    raise SystemExit(install_git_hooks())
