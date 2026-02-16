@@ -29,6 +29,14 @@ _PARTNER_FIELDS = {
     "Confidence": "**Confidence:**",
 }
 
+# ADR-0012 high-value pairings (leader, partner) — directional
+ADR_0012_PAIRINGS: list[tuple[str, str]] = [
+    ("dev", "architect"),
+    ("dev", "tea"),
+    ("reviewer", "architect"),
+    ("dev", "devops"),
+]
+
 
 def _extract_tandem_section(content: str) -> str | None:
     """Extract content between <tandem-consultation> tags."""
@@ -141,30 +149,23 @@ def validate_partner_tandem(path: Path) -> tuple[list[str], list[str]]:
 
 
 def validate_pairings_documented(
-    agents_dir: Path,
+    leader_names: set[str],
+    partner_names: set[str],
     pairings: list[tuple[str, str]],
 ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     """Check which ADR-0012 pairings are covered by agent tandem sections.
 
-    A pairing is covered if both the leader and partner agent files exist
-    and have <tandem-consultation> sections.
+    Directional check: verifies the leader agent is classified as a leader
+    and the partner agent is classified as a partner.
 
     Returns:
         (covered, missing) — two lists of (leader, partner) tuples.
     """
-    has_tandem: set[str] = set()
-    for f in sorted(agents_dir.glob("*.md")):
-        if f.name == "README.md":
-            continue
-        content = f.read_text()
-        if _extract_tandem_section(content) is not None:
-            has_tandem.add(f.stem)
-
     covered: list[tuple[str, str]] = []
     missing: list[tuple[str, str]] = []
 
     for leader, partner in pairings:
-        if leader in has_tandem and partner in has_tandem:
+        if leader in leader_names and partner in partner_names:
             covered.append((leader, partner))
         else:
             missing.append((leader, partner))
@@ -221,5 +222,33 @@ def run(
 
         if not file_errors:
             report.passed += 1
+
+    # Validate ADR-0012 pairings (directional)
+    leader_names = {f.stem for f in leaders}
+    partner_names = {f.stem for f in partners}
+    covered, missing_pairings = validate_pairings_documented(
+        leader_names, partner_names, ADR_0012_PAIRINGS
+    )
+    for leader_name, partner_name in missing_pairings:
+        report.errors += 1
+        report.details.append(
+            f"[ERROR] ADR-0012 pairing {leader_name}\u2192{partner_name} not covered "
+            f"(leader or partner missing tandem section with correct role)"
+        )
+    if covered:
+        report.passed += 1
+
+    # Detect agents with tandem section but no matching heading
+    classified_stems = leader_names | partner_names
+    for f in sorted(agents_dir.glob("*.md")):
+        if f.name == "README.md":
+            continue
+        content = f.read_text()
+        if _extract_tandem_section(content) is not None and f.stem not in classified_stems:
+            report.warnings += 1
+            report.details.append(
+                f"[WARN] {f.name}: has <tandem-consultation> section but no "
+                f"matching '## Tandem Consultation (Role)' heading"
+            )
 
     return report
