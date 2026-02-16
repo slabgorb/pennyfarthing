@@ -14,6 +14,7 @@ Python Click CLI for Pennyfarthing. Entry point: `pennyfarthing_scripts/cli.py`.
 | `pf agent` | Agent session management | `cli.py` (inline) |
 | `pf workflow` | Workflow state and phase management | `workflow/cli.py` |
 | `pf bikerack` | BikeRack dashboard launcher | `bikerack/cli.py` |
+| `pf git` | Repository operations (status, branches, worktree, hooks) | `git_group/cli.py` |
 | `pf debug` | Analysis tools (hotspots, deadcode, healthscore) | `cli.py` (inline group) |
 
 ### Sugar Shortcuts
@@ -158,6 +159,19 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 | `pf bikerack start` | Start BikeRack + Claude CLI | `bikerack/cli.py` |
 | `pf bikerack stop` | Stop running instance | `bikerack/cli.py` |
 | `pf bikerack status` | Show running state | `bikerack/cli.py` |
+
+## pf git
+
+| Command | Description | Source |
+|---------|-------------|--------|
+| `pf git status [--brief]` | Check git status of all repos | `git/status_all.py` |
+| `pf git branches BRANCH [--repos all\|api\|ui]` | Create feature branches | `git/create_branches.py` |
+| `pf git cleanup` | Start git-cleanup workflow | `git_group/cli.py` |
+| `pf git worktree create NAME BRANCH` | Create worktree(s) | `git/worktree.py` |
+| `pf git worktree remove NAME` | Remove worktree | `git/worktree.py` |
+| `pf git worktree list` | List active worktrees | `git/worktree.py` |
+| `pf git worktree status` | Show worktree status | `git/worktree.py` |
+| `pf git install-hooks` | Install git hooks with .d/ dispatcher | `git/hooks_installer.py` |
 
 ## pf debug
 

@@ -395,7 +395,7 @@ async def main(branch_name: str, repos_filter: RepoFilter = "all") -> int:
     Returns:
         0 if all repos succeeded, 1 if any had errors
     """
-    from pennyfarthing_scripts.common.config import get_project_root
+    from pennyfarthing_scripts.git.repos import get_repo_paths
 
     # Detect worktree
     is_worktree, worktree_name, base_path = detect_worktree()
@@ -405,9 +405,8 @@ async def main(branch_name: str, repos_filter: RepoFilter = "all") -> int:
     else:
         print("📂 Using main checkout")
 
-    # For now, just use the current project
-    project_root = get_project_root()
-    repos = [("pennyfarthing", project_root)]
+    # Load repos from configuration
+    repos = get_repo_paths()
 
     # Apply filter
     filtered_repos = filter_repos(repos, repos_filter)

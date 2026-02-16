@@ -32,7 +32,7 @@ Build a complete picture of uncommitted changes across ALL repos defined in `.cl
 **CRITICAL: Use the multi-repo script, not plain `git status`.**
 
 ```bash
-.pennyfarthing/scripts/git/git-status-all.sh
+pf git status
 ```
 
 This shows branch, staged/unstaged changes, and unpushed commits for **all repos** defined in the project configuration.

@@ -68,7 +68,7 @@ To run git-cleanup again:
 Or for a quick status check across all repos:
 
 ```bash
-.pennyfarthing/scripts/git/git-status-all.sh
+pf git status
 ```
 
 ---
