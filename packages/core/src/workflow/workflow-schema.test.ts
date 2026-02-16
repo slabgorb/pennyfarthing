@@ -15,7 +15,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 // Import the validator function
-import { validateWorkflow, type WorkflowValidationError as _WorkflowValidationError } from './workflow-schema.js';
+import { validateWorkflow, VALID_AGENT_NAMES, type WorkflowValidationError as _WorkflowValidationError } from './workflow-schema.js';
 
 describe('Workflow Schema Validation (31-1)', () => {
 
@@ -809,6 +809,670 @@ describe('Tandem validation (95-1)', () => {
       result.workflow?.phases?.forEach(phase => {
         assert.strictEqual(phase.tandem, undefined, `Phase "${phase.name}" should not have tandem`);
       });
+    });
+  });
+});
+
+// ==========================================================================
+// Story 86-9: Native team block on workflow phases
+// ==========================================================================
+
+describe('Team block validation (86-9)', () => {
+
+  // ========================================================================
+  // AC1: team: block parsed from workflow YAML phases (sibling to tandem:)
+  // ========================================================================
+  describe('Valid team configurations', () => {
+
+    it('should accept phase with team block and teammates', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-basic',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Review architecture decisions' },
+                  { agent: 'tea', task: 'Monitor test coverage' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept phase with team block');
+      assert.ok(result.workflow?.phases?.[0].team, 'Parsed phase should have team property');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates.length, 2);
+    });
+
+    it('should accept phase with both team and tandem blocks', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-and-tandem',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              tandem: {
+                partner: 'pm',
+                scope: 'file-watch'
+              },
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Guide patterns' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept phase with both team and tandem');
+      assert.ok(result.workflow?.phases?.[0].tandem, 'Should preserve tandem');
+      assert.ok(result.workflow?.phases?.[0].team, 'Should preserve team');
+    });
+
+    // AC2: Properties: teammates (list of agent + task), model, display
+    it('should accept team block with all properties', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-full',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Review architecture' }
+                ],
+                model: 'haiku',
+                display: 'in-process'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept team with all properties');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.model, 'haiku');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.display, 'in-process');
+    });
+
+    it('should accept team block with only teammates (model and display optional)', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-minimal',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Review code' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept team with only teammates');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.model, undefined);
+      assert.strictEqual(result.workflow?.phases?.[0].team?.display, undefined);
+    });
+
+    // AC3: Each teammate entry has: agent (required), task (description string)
+    it('should accept teammate with agent and task', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-teammate-full',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'tea', task: 'Monitor test failures and suggest fixes' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept teammate with agent and task');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates[0].agent, 'tea');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates[0].task, 'Monitor test failures and suggest fixes');
+    });
+
+    it('should accept teammate with only agent (task is optional)', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-no-task',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept teammate without task');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates[0].agent, 'architect');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates[0].task, undefined);
+    });
+
+    it('should parse display value "tmux" correctly', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-tmux',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [{ agent: 'architect' }],
+                display: 'tmux'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept tmux display mode');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.display, 'tmux');
+    });
+
+    it('should accept multiple teammates in a single phase', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-multi',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Review patterns' },
+                  { agent: 'tea', task: 'Monitor tests' },
+                  { agent: 'pm', task: 'Validate requirements' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Should accept multiple teammates');
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates.length, 3);
+    });
+  });
+
+  // ========================================================================
+  // AC3 & AC4: Validation of teammate entries and agent names
+  // ========================================================================
+  describe('Invalid team configurations', () => {
+
+    it('should reject non-object team value', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-string',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: 'architect'
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-object team');
+      assert.ok(
+        result.errors?.some(e => e.field === 'workflow.phases[0].team' && e.message.includes('object')),
+        'Should report team must be an object'
+      );
+    });
+
+    it('should reject team block without teammates', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-no-teammates',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                model: 'haiku'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject team without teammates');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('team.teammates') && e.message.includes('required')),
+        'Should report teammates is required'
+      );
+    });
+
+    it('should reject team block with empty teammates array', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-empty-teammates',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: []
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject empty teammates array');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates') && e.message.includes('at least one')),
+        'Should report need for at least one teammate'
+      );
+    });
+
+    it('should reject team block with non-array teammates', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-bad-teammates',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: 'architect'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-array teammates');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates') && e.message.includes('array')),
+        'Should report teammates must be an array'
+      );
+    });
+
+    // AC3: agent is required
+    it('should reject teammate entry missing agent', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-no-agent',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { task: 'Do something' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject teammate without agent');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates[0].agent') && e.message.includes('required')),
+        'Should report agent is required'
+      );
+    });
+
+    it('should reject teammate entry with non-string agent', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-bad-agent-type',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 123 }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-string agent');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates[0].agent') && e.message.includes('string')),
+        'Should report agent must be a string'
+      );
+    });
+
+    // AC4: Schema validation: teammate agents must be valid agent names
+    it('should reject teammate with invalid agent name', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-invalid-agent',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'not-a-real-agent', task: 'Do stuff' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject invalid agent name');
+      assert.ok(
+        result.errors?.some(e =>
+          e.field?.includes('teammates[0].agent') &&
+          e.message.includes('not-a-real-agent')
+        ),
+        'Should report the invalid agent name in error message'
+      );
+    });
+
+    it('should reject multiple invalid agent names with individual errors', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-multi-invalid',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Valid one' },
+                  { agent: 'fake-agent', task: 'Invalid' },
+                  { agent: 'also-fake', task: 'Also invalid' }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject with invalid agents');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates[1].agent')),
+        'Should flag second teammate'
+      );
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates[2].agent')),
+        'Should flag third teammate'
+      );
+    });
+
+    it('should accept all valid main agent names as teammates', () => {
+      // Every valid agent should work as a teammate
+      const teammates = VALID_AGENT_NAMES.map(name => ({ agent: name, task: `Task for ${name}` }));
+      const workflow = {
+        workflow: {
+          name: 'team-all-valid',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: { teammates }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, `Should accept all valid agent names: ${VALID_AGENT_NAMES.join(', ')}`);
+      assert.strictEqual(result.workflow?.phases?.[0].team?.teammates.length, VALID_AGENT_NAMES.length);
+    });
+
+    it('should reject invalid display value', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-bad-display',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [{ agent: 'architect' }],
+                display: 'split-screen'
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject invalid display value');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('team.display')),
+        'Should report invalid display'
+      );
+    });
+
+    it('should reject non-string model value', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-bad-model',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [{ agent: 'architect' }],
+                model: 42
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-string model');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('team.model') && e.message.includes('string')),
+        'Should report model must be a string'
+      );
+    });
+
+    it('should reject non-string task value', () => {
+      const workflow = {
+        workflow: {
+          name: 'team-bad-task',
+          phases: [
+            {
+              name: 'green',
+              agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 123 }
+                ]
+              }
+            }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, false, 'Should reject non-string task');
+      assert.ok(
+        result.errors?.some(e => e.field?.includes('teammates[0].task') && e.message.includes('string')),
+        'Should report task must be a string'
+      );
+    });
+  });
+
+  // ========================================================================
+  // AC6: Backward compatible: phases without team: unchanged
+  // ========================================================================
+  describe('Backward compatibility', () => {
+
+    it('should validate existing workflows without team blocks unchanged', () => {
+      const workflow = {
+        workflow: {
+          name: 'tdd',
+          description: 'Standard TDD workflow',
+          phases: [
+            { name: 'setup', agent: 'sm' },
+            { name: 'red', agent: 'tea', gate: { type: 'tests_fail' } },
+            { name: 'green', agent: 'dev', gate: { type: 'tests_pass' } },
+            { name: 'review', agent: 'reviewer', gate: { type: 'approval' } },
+            { name: 'finish', agent: 'sm' }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Existing workflow without team should still validate');
+      assert.strictEqual(result.workflow?.phases?.length, 5);
+    });
+
+    it('should have undefined team on phases without team block', () => {
+      const workflow = {
+        workflow: {
+          name: 'no-team',
+          phases: [
+            { name: 'work', agent: 'dev' }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true);
+      assert.strictEqual(result.workflow?.phases?.[0].team, undefined, 'Phase without team should have undefined team');
+    });
+
+    it('should validate tdd-tandem workflow with tandem but no team unchanged', () => {
+      const workflow = {
+        workflow: {
+          name: 'tdd-tandem',
+          phases: [
+            { name: 'setup', agent: 'sm' },
+            {
+              name: 'red', agent: 'tea',
+              gate: { type: 'tests_fail' },
+              tandem: { partner: 'architect', scope: 'file-watch' }
+            },
+            {
+              name: 'green', agent: 'dev',
+              gate: { type: 'tests_pass' },
+              tandem: { partner: 'architect', scope: 'file-watch' }
+            },
+            {
+              name: 'review', agent: 'reviewer',
+              gate: { type: 'approval' },
+              tandem: { partner: 'pm', scope: 'file-watch' }
+            },
+            { name: 'finish', agent: 'sm' }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'tdd-tandem without team blocks should validate');
+      // Tandem should be preserved, team should be undefined
+      assert.ok(result.workflow?.phases?.[1].tandem, 'Tandem should be preserved on red phase');
+      assert.strictEqual(result.workflow?.phases?.[1].team, undefined, 'Team should be undefined when not specified');
+    });
+  });
+
+  // ========================================================================
+  // AC7: workflow-status-check subagent reports team configuration per phase
+  // (Tests verify team config is accessible from parsed workflow output)
+  // ========================================================================
+  describe('Team configuration reporting', () => {
+
+    it('should expose complete team config in parsed workflow for status reporting', () => {
+      const workflow = {
+        workflow: {
+          name: 'tdd-team',
+          phases: [
+            { name: 'setup', agent: 'sm' },
+            {
+              name: 'red', agent: 'tea',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Review test strategy' }
+                ],
+                model: 'haiku',
+                display: 'in-process'
+              }
+            },
+            {
+              name: 'green', agent: 'dev',
+              team: {
+                teammates: [
+                  { agent: 'architect', task: 'Guide patterns' },
+                  { agent: 'tea', task: 'Monitor coverage' }
+                ],
+                model: 'sonnet'
+              }
+            },
+            { name: 'review', agent: 'reviewer' },
+            { name: 'finish', agent: 'sm' }
+          ]
+        }
+      };
+
+      const result = validateWorkflow(workflow);
+      assert.strictEqual(result.valid, true, 'Team workflow should validate');
+
+      // Verify phases WITHOUT team have no team config
+      assert.strictEqual(result.workflow?.phases?.[0].team, undefined, 'setup has no team');
+      assert.strictEqual(result.workflow?.phases?.[3].team, undefined, 'review has no team');
+      assert.strictEqual(result.workflow?.phases?.[4].team, undefined, 'finish has no team');
+
+      // Verify phases WITH team have complete config accessible
+      const redTeam = result.workflow?.phases?.[1].team;
+      assert.ok(redTeam, 'red phase should have team config');
+      assert.strictEqual(redTeam?.teammates.length, 1);
+      assert.strictEqual(redTeam?.teammates[0].agent, 'architect');
+      assert.strictEqual(redTeam?.teammates[0].task, 'Review test strategy');
+      assert.strictEqual(redTeam?.model, 'haiku');
+      assert.strictEqual(redTeam?.display, 'in-process');
+
+      const greenTeam = result.workflow?.phases?.[2].team;
+      assert.ok(greenTeam, 'green phase should have team config');
+      assert.strictEqual(greenTeam?.teammates.length, 2);
+      assert.strictEqual(greenTeam?.teammates[0].agent, 'architect');
+      assert.strictEqual(greenTeam?.teammates[1].agent, 'tea');
+      assert.strictEqual(greenTeam?.model, 'sonnet');
+      assert.strictEqual(greenTeam?.display, undefined, 'display should be undefined when not set');
     });
   });
 });
