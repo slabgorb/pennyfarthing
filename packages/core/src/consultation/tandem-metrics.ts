@@ -73,7 +73,38 @@ export interface TandemMetricsSummary {
  * Exchanges without metrics are counted but excluded from token/timing calculations.
  */
 export function aggregateMetrics(exchanges: MetricsExchange[]): TandemMetricsSummary {
-  throw new Error('not implemented');
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalResponseTimeMs = 0;
+  let metricsCount = 0;
+
+  const outcomeDistribution: Record<string, number> = {
+    applied: 0,
+    deferred: 0,
+    rejected: 0,
+    pending: 0,
+  };
+
+  for (const ex of exchanges) {
+    if (ex.metrics) {
+      totalInputTokens += ex.metrics.inputTokens;
+      totalOutputTokens += ex.metrics.outputTokens;
+      totalResponseTimeMs += ex.metrics.responseTimeMs;
+      metricsCount++;
+    }
+    const outcome = ex.outcome ?? 'pending';
+    outcomeDistribution[outcome] = (outcomeDistribution[outcome] ?? 0) + 1;
+  }
+
+  return {
+    consultationCount: exchanges.length,
+    totalInputTokens,
+    totalOutputTokens,
+    totalTokens: totalInputTokens + totalOutputTokens,
+    avgResponseTimeMs: metricsCount > 0 ? Math.round(totalResponseTimeMs / metricsCount) : 0,
+    outcomeDistribution,
+    overheadPercent: null,
+  };
 }
 
 /**
@@ -88,7 +119,8 @@ export function calculateOverheadPercent(
   tandemTokens: number,
   baselineTokens: number,
 ): number | null {
-  throw new Error('not implemented');
+  if (baselineTokens === 0) return null;
+  return Math.round((tandemTokens / baselineTokens) * 1000) / 10;
 }
 
 /**
@@ -103,7 +135,9 @@ export function isWithinBudget(
   overheadPercent: number | null,
   threshold?: number,
 ): boolean {
-  throw new Error('not implemented');
+  if (overheadPercent === null) return true;
+  const limit = threshold ?? 25;
+  return overheadPercent < limit;
 }
 
 // =============================================================================
@@ -115,7 +149,24 @@ export function isWithinBudget(
  * Returns an array of markdown bullet lines (without the ## Summary header).
  */
 export function formatMetricsSummary(metrics: TandemMetricsSummary): string[] {
-  throw new Error('not implemented');
+  const lines: string[] = [];
+  lines.push(`- **Consultations:** ${metrics.consultationCount}`);
+  lines.push(`- **Tokens:** ${metrics.totalTokens} (input: ${metrics.totalInputTokens}, output: ${metrics.totalOutputTokens})`);
+  lines.push(`- **Avg Response Time:** ${metrics.avgResponseTimeMs}ms`);
+
+  const dist = metrics.outcomeDistribution;
+  const parts = ['applied', 'deferred', 'rejected', 'pending']
+    .map(k => `${k}: ${dist[k] ?? 0}`)
+    .join(', ');
+  lines.push(`- **Outcomes:** ${parts}`);
+
+  if (metrics.overheadPercent !== null) {
+    lines.push(`- **Overhead:** ${metrics.overheadPercent}%`);
+  } else {
+    lines.push(`- **Overhead:** N/A`);
+  }
+
+  return lines;
 }
 
 /**
@@ -123,5 +174,33 @@ export function formatMetricsSummary(metrics: TandemMetricsSummary): string[] {
  * Returns null if no metrics are found in the summary.
  */
 export function parseMetricsFromSummary(summaryContent: string): TandemMetricsSummary | null {
-  throw new Error('not implemented');
+  const consultMatch = summaryContent.match(/\*\*Consultations:\*\*\s*(\d+)/);
+  const tokensMatch = summaryContent.match(/\*\*Tokens:\*\*\s*(\d+)\s*\(input:\s*(\d+),\s*output:\s*(\d+)\)/);
+  const responseMatch = summaryContent.match(/\*\*Avg Response Time:\*\*\s*(\d+)ms/);
+
+  if (!consultMatch || !tokensMatch) return null;
+
+  const outcomesMatch = summaryContent.match(/\*\*Outcomes:\*\*\s*(.+)/);
+  const outcomeDistribution: Record<string, number> = { applied: 0, deferred: 0, rejected: 0, pending: 0 };
+  if (outcomesMatch) {
+    for (const part of outcomesMatch[1].split(',')) {
+      const [key, val] = part.trim().split(':').map(s => s.trim());
+      if (key && val !== undefined) {
+        outcomeDistribution[key] = parseInt(val, 10);
+      }
+    }
+  }
+
+  const overheadMatch = summaryContent.match(/\*\*Overhead:\*\*\s*([\d.]+)%/);
+  const overheadPercent = overheadMatch ? parseFloat(overheadMatch[1]) : null;
+
+  return {
+    consultationCount: parseInt(consultMatch[1], 10),
+    totalTokens: parseInt(tokensMatch[1], 10),
+    totalInputTokens: parseInt(tokensMatch[2], 10),
+    totalOutputTokens: parseInt(tokensMatch[3], 10),
+    avgResponseTimeMs: responseMatch ? parseInt(responseMatch[1], 10) : 0,
+    outcomeDistribution,
+    overheadPercent,
+  };
 }
