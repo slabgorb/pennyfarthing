@@ -24,7 +24,7 @@ export const description = 'Migrate sidecars from legacy locations to .pennyfart
 
 const CORE_AGENTS = [
   'dev', 'tea', 'sm', 'reviewer', 'architect',
-  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator',
+  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator', 'ba',
 ];
 
 function isDirectory(path) {
