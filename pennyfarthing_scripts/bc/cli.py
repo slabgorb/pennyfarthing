@@ -34,8 +34,8 @@ from pennyfarthing_scripts.bc.focus import (
 def _get_current_layout() -> dict | None:
     """Fetch the current layout from a running Cyclist or BikeRack server.
 
-    Checks .bikerack-port first, then .cyclist-port, and fetches the
-    appropriate layout endpoint.
+    Reads .wheelhub-port (shared by both Cyclist and BikeRack) and fetches
+    the layout endpoint.
 
     Returns:
         Layout dict, or None if no server is running or fetch fails.
@@ -44,10 +44,8 @@ def _get_current_layout() -> dict | None:
 
     root = _get_root()
 
-    # Try BikeRack first (bikerack-layout), then Cyclist (layout)
     candidates = [
-        (root / ".bikerack-port", "/api/settings/bikerack-layout"),
-        (root / ".cyclist-port", "/api/settings/bikerack-layout"),
+        (root / ".wheelhub-port", "/api/settings/bikerack-layout"),
     ]
 
     for port_file, endpoint in candidates:

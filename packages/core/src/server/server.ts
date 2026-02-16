@@ -305,10 +305,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // Port Conflict Detection (Story 34-3)
 // =============================================================================
 
-const PORT_FILE_NAME = '.cyclist-port';
-const BIKERACK_PORT_FILE_NAME = '.bikerack-port';
-const APPROVAL_PORT_FILE_NAME = '.cyclist-approval-port';
-const PID_FILE_NAME = '.cyclist-pid';
+const PORT_FILE_NAME = '.wheelhub-port';
+const PID_FILE_NAME = '.wheelhub-pid';
 
 export async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
   const net = await import('net');
@@ -345,50 +343,7 @@ export function cleanupPortFile(projectDir: string): void {
 }
 
 export function readPortFile(projectDir: string): number | null {
-  // Check .cyclist-port first, then .bikerack-port as fallback
-  for (const fileName of [PORT_FILE_NAME, BIKERACK_PORT_FILE_NAME]) {
-    const portFilePath = join(projectDir, fileName);
-
-    if (!existsSync(portFilePath)) {
-      continue;
-    }
-
-    const content = readFileSync(portFilePath, 'utf-8').trim();
-
-    if (!content) {
-      continue;
-    }
-
-    const port = parseInt(content, 10);
-
-    if (isNaN(port)) {
-      continue;
-    }
-
-    return port;
-  }
-
-  return null;
-}
-
-// =============================================================================
-// Approval Port File (Story 33-7)
-// =============================================================================
-
-export function writeApprovalPortFile(projectDir: string, port: number): void {
-  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
-  writeFileSync(portFilePath, String(port));
-}
-
-export function cleanupApprovalPortFile(projectDir: string): void {
-  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
-  if (existsSync(portFilePath)) {
-    unlinkSync(portFilePath);
-  }
-}
-
-export function readApprovalPortFile(projectDir: string): number | null {
-  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
+  const portFilePath = join(projectDir, PORT_FILE_NAME);
 
   if (!existsSync(portFilePath)) {
     return null;
@@ -408,6 +363,7 @@ export function readApprovalPortFile(projectDir: string): number | null {
 
   return port;
 }
+
 
 // =============================================================================
 // PID File (Story B-24 fix)

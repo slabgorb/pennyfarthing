@@ -24,8 +24,8 @@ def is_process_alive(pid: int) -> bool:
 
 
 def cleanup_files(project_dir: Path) -> None:
-    """Clean up .bikerack-port, .bikerack-pid, and .bikerack-tui-pid files."""
-    for name in (".bikerack-port", ".bikerack-pid", ".bikerack-tui-pid"):
+    """Clean up .wheelhub-port, .wheelhub-pid, and .wheelhub-gui-pid files."""
+    for name in (".wheelhub-port", ".wheelhub-pid", ".wheelhub-gui-pid"):
         try:
             (project_dir / name).unlink()
         except FileNotFoundError:
@@ -33,24 +33,24 @@ def cleanup_files(project_dir: Path) -> None:
 
 
 def read_port_file(project_dir: Path) -> int | None:
-    """Read port from .bikerack-port file. Returns None if not found."""
+    """Read port from .wheelhub-port file. Returns None if not found."""
     try:
-        return int((project_dir / ".bikerack-port").read_text().strip())
+        return int((project_dir / ".wheelhub-port").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def read_pid_file(project_dir: Path) -> int | None:
-    """Read PID from .bikerack-pid file. Returns None if not found."""
+    """Read PID from .wheelhub-pid file. Returns None if not found."""
     try:
-        return int((project_dir / ".bikerack-pid").read_text().strip())
+        return int((project_dir / ".wheelhub-pid").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def write_pid_file(project_dir: Path, pid: int) -> None:
-    """Write .bikerack-pid file."""
-    (project_dir / ".bikerack-pid").write_text(str(pid))
+    """Write .wheelhub-pid file."""
+    (project_dir / ".wheelhub-pid").write_text(str(pid))
 
 
 def build_otel_env(port: int) -> dict[str, str]:
@@ -104,8 +104,8 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen:
 def poll_for_port_file(
     project_dir: Path, timeout: float = 5.0, interval: float = 0.1
 ) -> int:
-    """Poll for .bikerack-port file, return port number."""
-    port_file = project_dir / ".bikerack-port"
+    """Poll for .wheelhub-port file, return port number."""
+    port_file = project_dir / ".wheelhub-port"
     deadline = time.monotonic() + timeout
 
     while True:
@@ -209,23 +209,23 @@ def get_status(project_dir: Path) -> dict:
 
 
 def read_tui_pid_file(project_dir: Path) -> int | None:
-    """Read TUI PID from .bikerack-tui-pid file. Returns None if not found."""
+    """Read TUI PID from .wheelhub-gui-pid file. Returns None if not found."""
     try:
-        return int((project_dir / ".bikerack-tui-pid").read_text().strip())
+        return int((project_dir / ".wheelhub-gui-pid").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def write_tui_pid_file(project_dir: Path, pid: int) -> None:
-    """Write .bikerack-tui-pid file."""
-    (project_dir / ".bikerack-tui-pid").write_text(str(pid))
+    """Write .wheelhub-gui-pid file."""
+    (project_dir / ".wheelhub-gui-pid").write_text(str(pid))
 
 
 def start_tui(project_dir: Path, port: int) -> subprocess.Popen:
     """Start TUI as independent subprocess.
 
     Uses start_new_session=True so TUI survives parent exit.
-    Writes .bikerack-tui-pid for lifecycle tracking.
+    Writes .wheelhub-gui-pid for lifecycle tracking.
     """
     import sys
 

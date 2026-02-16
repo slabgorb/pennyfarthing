@@ -154,7 +154,7 @@ if last_total:
     status = 'HIGH' if usable_pct > $WARNING_THRESHOLD else 'OK'
     relay = '$RELAY_MODE' == 'true'
     tirepump = (relay or '$PERMISSION_MODE' == 'turbo') and usable_pct > $TIREPUMP_THRESHOLD
-    is_cyclist = os.environ.get('CYCLIST') == '1' or Path('$PROJECT_DIR/packages/cyclist/.cyclist-port').exists()
+    is_cyclist = os.environ.get('CYCLIST') == '1' or Path('$PROJECT_DIR/packages/cyclist/.wheelhub-port').exists()
 
     print(f'CONTEXT_TOKENS={last_total}')
     print(f'CONTEXT_PERCENT={total_pct}')

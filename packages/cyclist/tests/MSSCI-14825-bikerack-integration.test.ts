@@ -7,7 +7,7 @@
  *
  * ACs covered:
  * - AC1:  pf bikerack start → WheelHub starts, panels serve data
- * - AC2:  Ctrl+C → WheelHub terminates, .bikerack-port and .bikerack-pid cleaned
+ * - AC2:  Ctrl+C → WheelHub terminates, .wheelhub-port and .wheelhub-pid cleaned
  * - AC3:  Kill terminal → PID file exists for manual cleanup
  * - AC4:  All 12 panel tabs render with live data (portrait extracted to anchor)
  * - AC5:  PersonaHeader anchored above Dockview in BikeRackWorkspace (102-6)
@@ -84,7 +84,7 @@ describe('AC1: BikeRack server startup', () => {
 });
 
 // ============================================================================
-// AC2: Ctrl+C → WheelHub terminates, .bikerack-port and .bikerack-pid cleaned
+// AC2: Ctrl+C → WheelHub terminates, .wheelhub-port and .wheelhub-pid cleaned
 // ============================================================================
 
 describe('AC2: Graceful shutdown cleanup', () => {
@@ -119,12 +119,12 @@ describe('AC2: Graceful shutdown cleanup', () => {
     expect(sigtermMatch).not.toBeNull();
   });
 
-  it('bikerack.ts cleanupPortFile should target .bikerack-port not .cyclist-port', () => {
+  it('bikerack.ts cleanupPortFile should target .wheelhub-port (shared port file)', () => {
     const bikerackPath = join(SRC_DIR, 'bikerack.ts');
     const content = readFileSync(bikerackPath, 'utf-8');
 
-    expect(content).toMatch(/\.bikerack-port/);
-    expect(content).not.toMatch(/\.cyclist-port/);
+    expect(content).toMatch(/\.wheelhub-port/);
+    expect(content).not.toMatch(/\.bikerack-port/);
   });
 });
 
@@ -133,23 +133,23 @@ describe('AC2: Graceful shutdown cleanup', () => {
 // ============================================================================
 
 describe('AC3: PID file for manual cleanup', () => {
-  it('Python launcher should write .bikerack-pid file', () => {
+  it('Python launcher should write .wheelhub-pid file', () => {
     // Verify the launcher module exports write_pid_file
     const launcherPath = resolve(__dirname, '..', '..', '..', 'pennyfarthing_scripts', 'bikerack', 'launcher.py');
     expect(existsSync(launcherPath)).toBe(true);
 
     const content = readFileSync(launcherPath, 'utf-8');
-    expect(content).toMatch(/write_pid_file|bikerack-pid/);
+    expect(content).toMatch(/write_pid_file|wheelhub-pid/);
   });
 
   it('bikerack.ts signal handlers should NOT delete PID file (launcher owns it)', () => {
-    // bikerack.ts only manages .bikerack-port
-    // .bikerack-pid is managed by the Python launcher
+    // bikerack.ts only manages .wheelhub-port
+    // .wheelhub-pid is managed by the Python launcher
     const bikerackPath = join(SRC_DIR, 'bikerack.ts');
     const content = readFileSync(bikerackPath, 'utf-8');
 
-    // bikerack.ts should NOT reference .bikerack-pid
-    expect(content).not.toMatch(/\.bikerack-pid/);
+    // bikerack.ts should NOT reference .wheelhub-pid
+    expect(content).not.toMatch(/\.wheelhub-pid/);
   });
 });
 
@@ -300,20 +300,19 @@ describe('AC6: Port isolation — no collision', () => {
     expect(content).toMatch(/2898/);
   });
 
-  it('BikeRack and Cyclist should use different port file names', () => {
+  it('BikeRack and Cyclist should share .wheelhub-port file', () => {
     const bikerackPath = join(SRC_DIR, 'bikerack.ts');
     const bikerackContent = readFileSync(bikerackPath, 'utf-8');
 
-    // After 98-17, port file logic is in core's server.ts
+    // After port file consolidation, both use .wheelhub-port
     const serverPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'server.ts');
     const serverContent = readFileSync(serverPath, 'utf-8');
 
-    // BikeRack uses .bikerack-port
-    expect(bikerackContent).toMatch(/\.bikerack-port/);
-    // Cyclist uses .cyclist-port
-    expect(serverContent).toMatch(/\.cyclist-port/);
-    // BikeRack should NOT use .cyclist-port
-    expect(bikerackContent).not.toMatch(/\.cyclist-port/);
+    // Both use .wheelhub-port
+    expect(bikerackContent).toMatch(/\.wheelhub-port/);
+    expect(serverContent).toMatch(/\.wheelhub-port/);
+    // Neither should use the old .bikerack-port
+    expect(bikerackContent).not.toMatch(/\.bikerack-port/);
   });
 
   it('BikeRack should use findAvailablePort for conflict resolution', () => {
@@ -641,8 +640,8 @@ describe('Runtime: Port file cleanup pattern', () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  it('cleanup removes .bikerack-port when it exists', () => {
-    const portFile = join(testDir, '.bikerack-port');
+  it('cleanup removes .wheelhub-port when it exists', () => {
+    const portFile = join(testDir, '.wheelhub-port');
     writeFileSync(portFile, '2898');
     expect(existsSync(portFile)).toBe(true);
 
@@ -653,8 +652,8 @@ describe('Runtime: Port file cleanup pattern', () => {
     expect(existsSync(portFile)).toBe(false);
   });
 
-  it('cleanup is safe when .bikerack-port does not exist', () => {
-    const portFile = join(testDir, '.bikerack-port');
+  it('cleanup is safe when .wheelhub-port does not exist', () => {
+    const portFile = join(testDir, '.wheelhub-port');
     expect(existsSync(portFile)).toBe(false);
 
     // Should not throw

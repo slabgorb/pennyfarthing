@@ -33,7 +33,7 @@ pnpm run dev:server -- --project-dir=/path/to/your/project
 
 As of v6.1 (Story 20-1), Cyclist auto-configures OTEL for web mode:
 
-1. Cyclist writes port to `.cyclist-port` in project directory
+1. Cyclist writes port to `.wheelhub-port` in project directory
 2. Claude Code hook reads this and sets OTEL endpoint
 3. Token stats appear automatically
 
@@ -188,7 +188,7 @@ Clicking files in Electron opens them in `$EDITOR`.
 
 ### Token stats not appearing
 
-1. Verify Cyclist wrote `.cyclist-port` in your project directory
+1. Verify Cyclist wrote `.wheelhub-port` in your project directory
 2. Check the Pennyfarthing hook is installed (`ls .claude/hooks/`)
 3. Ensure Claude Code was started AFTER Cyclist
 

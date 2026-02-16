@@ -8,7 +8,7 @@ via HTTP to get approval decisions.
 
 Flow:
 1. Claude Code calls this script with tool info via stdin (JSON)
-2. Script reads port from .cyclist-port in project directory
+2. Script reads port from .wheelhub-port in project directory
 3. Script sends request to WheelHub's /api/hook-request endpoint
 4. WheelHub shows approval modal, user decides
 5. Script receives response, outputs JSON decision to stdout

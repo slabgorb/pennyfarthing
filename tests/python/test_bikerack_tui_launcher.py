@@ -3,7 +3,7 @@
 Verifies:
   AC1: tui.py has a main() function as standalone entry point
   AC2: main() accepts --port argument for explicit port override
-  AC3: main() discovers port from .bikerack-port when no --port given
+  AC3: main() discovers port from .wheelhub-port when no --port given
   AC4: main() creates WheelHubClient and passes to BikeRackApp
   AC5: main() falls back to default port (2898) when no port file exists
   AC6: `just tui` recipe exists in the orchestrator justfile
@@ -73,14 +73,14 @@ class TestMainPortArgument:
 
 
 class TestMainPortDiscovery:
-    """AC3: main() discovers port from .bikerack-port when no --port given."""
+    """AC3: main() discovers port from .wheelhub-port when no --port given."""
 
     def test_main_reads_port_file(self, tmp_path):
-        """main() should read .bikerack-port when no port argument is given."""
+        """main() should read .wheelhub-port when no port argument is given."""
         from pennyfarthing_scripts.bikerack.tui import main
 
         # Write a port file
-        (tmp_path / ".bikerack-port").write_text("4567")
+        (tmp_path / ".wheelhub-port").write_text("4567")
 
         with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
             with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
@@ -95,7 +95,7 @@ class TestMainPortDiscovery:
                     call_kwargs.args[0] if call_kwargs.args else None
                 )
                 assert port_used == 4567, (
-                    f"Should discover port 4567 from .bikerack-port, got: {port_used}"
+                    f"Should discover port 4567 from .wheelhub-port, got: {port_used}"
                 )
 
 
@@ -103,7 +103,7 @@ class TestMainDefaultPort:
     """AC5: main() falls back to default port (2898) when no port file exists."""
 
     def test_main_uses_default_port_when_no_file(self, tmp_path):
-        """main() should use default port 2898 when no .bikerack-port exists."""
+        """main() should use default port 2898 when no .wheelhub-port exists."""
         from pennyfarthing_scripts.bikerack.tui import main
 
         # No port file in tmp_path

@@ -75,14 +75,14 @@ class WheelHubClient:
             cb(new_state)
 
     def discover_port(self) -> int:
-        """Read port from .bikerack-port file, fallback to DEFAULT_PORT.
+        """Read port from .wheelhub-port file, fallback to DEFAULT_PORT.
 
         Priority: explicit port > port file > DEFAULT_PORT.
         """
         if self._port is not None:
             return self._port
         if self._project_dir is not None:
-            port_file = self._project_dir / ".bikerack-port"
+            port_file = self._project_dir / ".wheelhub-port"
             if port_file.exists():
                 try:
                     return int(port_file.read_text().strip())

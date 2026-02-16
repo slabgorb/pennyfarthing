@@ -93,9 +93,9 @@ Client-side detection is URL-based: the presence of `?panel=X` triggers standalo
 | File | Purpose |
 |------|---------|
 | `.bikerack-port` | Port number, written after `server.listen()` — readiness signal |
-| `.bikerack-pid` | WheelHub PID, written by launcher — enables `pf bikerack stop` |
+| `.wheelhub-pid` | WheelHub PID, written by launcher — enables `pf bikerack stop` |
 
-Both are deleted on shutdown. Separate from Cyclist's `.cyclist-port` and `.cyclist-pid` for coexistence.
+Both are deleted on shutdown. Separate from Cyclist's `.wheelhub-port` and `.wheelhub-pid` for coexistence.
 
 ## Layout Persistence
 
