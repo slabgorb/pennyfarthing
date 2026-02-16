@@ -295,21 +295,26 @@ class TestResolveGateReady:
 
 
 class TestResolveGateBlocked:
-    """AC1 + AC5: resolve-gate returns 'blocked' when no assessment."""
+    """AC1 + AC5: resolve-gate no longer blocks on missing assessment.
 
-    def test_missing_assessment_returns_blocked(
+    Assessment guard moved to complete_phase to prevent race conditions
+    where agents call resolve-gate before writing their assessment.
+    """
+
+    def test_missing_assessment_resolve_gate_still_ready(
         self, project: Path, session_without_assessment: Path
     ) -> None:
-        """AC1: Missing assessment section → status: blocked."""
+        """resolve-gate returns ready regardless of assessment (guard moved to complete-phase)."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
-        assert result["status"] == "blocked"
+        assert result["status"] == "ready"
 
-    def test_blocked_has_assessment_found_false(
+    def test_missing_assessment_complete_phase_blocks(
         self, project: Path, session_without_assessment: Path
     ) -> None:
-        """AC1: Blocked result should have assessment_found: False."""
-        result = resolve_gate("105-1", "tdd", "green", project_root=project)
-        assert result["assessment_found"] is False
+        """complete-phase blocks when no assessment found in session file."""
+        result = complete_phase("105-1", "tdd", "green", "review", "tests_pass", project)
+        assert result["status"] == "error"
+        assert "assessment" in result["error"].lower()
 
     def test_blocked_exit_code_one(self, runner: CliRunner) -> None:
         """AC5: Exit code 1 when gate resolves to blocked."""
@@ -383,10 +388,10 @@ class TestResolveGateErrors:
         result = resolve_gate("105-1", "tdd", "nonexistent", project_root=project)
         assert result["status"] == "error" or result.get("error") is not None
 
-    def test_missing_session_file_returns_blocked(self, project: Path) -> None:
-        """AC1: No session file → blocked (can't check assessment)."""
+    def test_missing_session_file_resolve_gate_ready(self, project: Path) -> None:
+        """resolve-gate returns ready even without session file (guard moved to complete-phase)."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
-        assert result["status"] in ("blocked", "error")
+        assert result["status"] == "ready"
 
 
 class TestResolveGateOutputContract:
