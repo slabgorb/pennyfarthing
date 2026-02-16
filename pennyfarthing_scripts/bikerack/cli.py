@@ -116,11 +116,10 @@ def stop(project_dir, dry_run):
 
     result = stop_bikerack(project_dir)
 
-    if result["success"]:
-        click.echo(result["message"])
-    else:
-        click.echo(result["message"], err=True)
-        sys.exit(1)
+    click.echo(result["message"])
+    if not result["success"]:
+        # "Not running" is not an error for stop — idempotent
+        sys.exit(0)
 
 
 @bikerack.command()
