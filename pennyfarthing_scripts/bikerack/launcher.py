@@ -24,8 +24,8 @@ def is_process_alive(pid: int) -> bool:
 
 
 def cleanup_files(project_dir: Path) -> None:
-    """Clean up .wheelhub-port, .wheelhub-pid, and .wheelhub-gui-pid files."""
-    for name in (".wheelhub-port", ".wheelhub-pid", ".wheelhub-gui-pid"):
+    """Clean up .bikerack-port, .wheelhub-pid, and .wheelhub-gui-pid files."""
+    for name in (".bikerack-port", ".wheelhub-pid", ".wheelhub-gui-pid"):
         try:
             (project_dir / name).unlink()
         except FileNotFoundError:
@@ -33,9 +33,9 @@ def cleanup_files(project_dir: Path) -> None:
 
 
 def read_port_file(project_dir: Path) -> int | None:
-    """Read port from .wheelhub-port file. Returns None if not found."""
+    """Read port from .bikerack-port file. Returns None if not found."""
     try:
-        return int((project_dir / ".wheelhub-port").read_text().strip())
+        return int((project_dir / ".bikerack-port").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
@@ -104,8 +104,8 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen:
 def poll_for_port_file(
     project_dir: Path, timeout: float = 5.0, interval: float = 0.1
 ) -> int:
-    """Poll for .wheelhub-port file, return port number."""
-    port_file = project_dir / ".wheelhub-port"
+    """Poll for .bikerack-port file, return port number."""
+    port_file = project_dir / ".bikerack-port"
     deadline = time.monotonic() + timeout
 
     while True:

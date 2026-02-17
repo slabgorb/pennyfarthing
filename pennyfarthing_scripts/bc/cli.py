@@ -45,7 +45,7 @@ def _get_current_layout() -> dict | None:
     root = _get_root()
 
     candidates = [
-        (root / ".wheelhub-port", "/api/settings/bikerack-layout"),
+        (root / ".bikerack-port", "/api/settings/bikerack-layout"),
     ]
 
     for port_file, endpoint in candidates:
