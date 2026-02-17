@@ -169,7 +169,8 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
     """Get the Claude Code project path for transcripts.
 
     Claude Code stores transcripts at ~/.claude/projects/<path-with-dashes>
-    The path format is: -Users-name-Projects-project (leading dash, slashes become dashes)
+    The path format is: -Users-name-Projects-project (leading dash, non-alphanumeric
+    characters like slashes and dots become dashes)
     """
     project_dir = (
         project_dir or
@@ -177,7 +178,8 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
         os.environ.get("PROJECT_ROOT") or
         os.getcwd()
     )
-    path_with_dashes = project_dir.replace("/", "-")
+    # Claude Code replaces slashes AND dots (e.g. in usernames) with dashes
+    path_with_dashes = project_dir.replace("/", "-").replace(".", "-")
     return Path.home() / ".claude" / "projects" / path_with_dashes
 
 

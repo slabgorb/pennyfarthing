@@ -8,7 +8,7 @@ Uses native Textual widgets (DataTable) instead of Rich renderables.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from rich.console import Console
@@ -113,7 +113,7 @@ def _format_timestamp(ts: Any) -> str:
     if ts is None:
         return "\u2014"
     try:
-        dt = datetime.fromtimestamp(float(ts) / 1000, tz=timezone.utc)
+        dt = datetime.fromtimestamp(float(ts) / 1000, tz=UTC)
         return dt.strftime("%H:%M:%S")
     except (ValueError, TypeError, OSError):
         return "\u2014"

@@ -24,7 +24,7 @@ Agents detect workflow state from session files and sprint YAML rather than requ
 ### State Detection Flow
 
 ```
-/new-work (or /sm, /work, etc.)
+/pf-session new (or /pf-sm, /pf-work, etc.)
     ↓
 workflow-status-check subagent
     ↓
@@ -90,7 +90,7 @@ phase: setup | red | green | review | finish
 
 ### Positive
 
-- **Single entry point** - `/new-work` handles all cases
+- **Single entry point** - `/pf-session new` handles all cases
 - **Reduced cognitive load** - User doesn't need to track state
 - **Automatic resume** - Interrupted work continues seamlessly
 - **Consistent behavior** - Same command, appropriate action

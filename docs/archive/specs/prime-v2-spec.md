@@ -472,7 +472,7 @@ python3 -m pennyfarthing_scripts.prime --agent "$AGENT" --quiet
 
 ### Agent Activation Commands
 
-`/sm`, `/dev`, `/tea` etc. use prime:
+`/pf-sm`, `/pf-dev`, `/pf-tea` etc. use prime:
 
 ```markdown
 <!-- In command file -->
@@ -548,7 +548,7 @@ story_id: 63-8
 # Agent Definition: dev
 ...
 
-<!-- CYCLIST:HANDOFF:/reviewer -->
+<!-- CYCLIST:HANDOFF:/pf-reviewer -->
 ```
 
 ### Audit Mode

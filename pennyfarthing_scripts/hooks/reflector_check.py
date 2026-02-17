@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 # =============================================================================
 # Import detection logic — inline to avoid import path issues
 # The logic lives in question_reflector_check.py in pennyfarthing-dist/scripts/hooks/
@@ -214,7 +213,7 @@ def main() -> None:
         sys.exit(0)
 
     project_dir = os.environ.get('CLAUDE_PROJECT_DIR', os.getcwd())
-    config = _load_config(project_dir)
+    _load_config(project_dir)
 
     # Prevent infinite loops
     if input_data.get('stop_hook_active'):

@@ -7,6 +7,9 @@ Usage:
 Commands:
     status      Show sprint status
     backlog     Show available stories
+    use         Switch active sprint (multi-sprint projects)
+    list        Show registered sprints from sprint/sprints.yaml
+    active      Show which sprint is currently active
     work        Start work on a story
     archive     Archive a completed story
     story       Story subcommands (show, add, update, size, template, finish, claim)
@@ -25,6 +28,9 @@ def sprint():
     Commands:
       status   - Show sprint status
       backlog  - Show available stories
+      use      - Switch active sprint (multi-sprint projects)
+      list     - Show registered sprints
+      active   - Show which sprint is active
       story    - Story operations (show, add, update, size, template, finish, claim)
       epic     - Epic operations (show, add, promote, archive, cancel, import, remove)
       initiative - Initiative operations (show, cancel)
@@ -116,6 +122,121 @@ def backlog():
 
     click.echo("---")
     click.echo(f"**Total available:** {total_count} stories, {total_points} points")
+
+
+@sprint.command("use")
+@click.argument("name")
+def sprint_use(name: str):
+    """Switch the active sprint (per-user preference).
+
+    \b
+    Validates the sprint name against sprint/sprints.yaml, then saves
+    the preference to .pennyfarthing/config.local.yaml. Does not modify
+    any shared repo files. Use "default" to clear the preference.
+
+    \b
+    Arguments:
+      NAME  - Sprint name from the registry, or "default" to clear
+
+    \b
+    Examples:
+      pf sprint use main       # Switch to main project sprint
+      pf sprint use ocsf-rs1   # Switch to OCSF research spike
+      pf sprint use default    # Clear preference, use sprint/current-sprint.yaml
+    """
+    # Lazy import
+    from pennyfarthing_scripts.sprint.loader import switch_sprint
+
+    result = switch_sprint(name)
+    if result["success"]:
+        entry = result.get("sprint", {})
+        click.echo(result["message"])
+        if entry.get("description"):
+            click.echo(f"  {entry['description']}")
+        if entry.get("type"):
+            click.echo(f"  Type: {entry['type']}")
+        if entry.get("repos"):
+            click.echo(f"  Repos: {', '.join(entry['repos'])}")
+    else:
+        raise click.ClickException(result["error"])
+
+
+@sprint.command("list")
+def sprint_list():
+    """Show all registered sprints from the sprint registry.
+
+    \b
+    Reads sprint/sprints.yaml and displays each registered sprint
+    with its type, description, and whether it is currently active
+    for this user (based on .pennyfarthing/config.local.yaml).
+    """
+    # Lazy import
+    from pennyfarthing_scripts.sprint.loader import get_active_sprint_name, load_sprint_registry
+
+    registry = load_sprint_registry()
+    if registry is None:
+        click.echo("No sprint registry found (sprint/sprints.yaml)")
+        click.echo("This project uses a single sprint.")
+        return
+
+    active = get_active_sprint_name()
+    sprints = registry.get("sprints", {})
+
+    if not sprints:
+        click.echo("Sprint registry is empty.")
+        return
+
+    click.echo("Registered Sprints:")
+    click.echo("")
+
+    for name, entry in sprints.items():
+        marker = "*" if name == active else " "
+        desc = entry.get("description", "")
+        sprint_type = entry.get("type", "project")
+        repos = ", ".join(entry.get("repos", []))
+        click.echo(f"  {marker} {name:<16} [{sprint_type}] {desc}")
+        if repos:
+            click.echo(f"    Repos: {repos}")
+
+    click.echo("")
+    if active:
+        click.echo(f"Active: {active} (per-user preference)")
+    else:
+        click.echo("Active: default (sprint/current-sprint.yaml)")
+    click.echo("Switch: pf sprint use <name>")
+
+
+@sprint.command("active")
+def sprint_active():
+    """Show which sprint is currently active for this user.
+
+    \b
+    Reads the per-user preference from .pennyfarthing/config.local.yaml
+    and displays the active sprint name and metadata. If no preference
+    is set, reports the default sprint/current-sprint.yaml.
+    """
+    # Lazy import
+    from pennyfarthing_scripts.sprint.loader import get_active_sprint_name, load_sprint_registry
+
+    active = get_active_sprint_name()
+    if not active:
+        click.echo("default (sprint/current-sprint.yaml)")
+        click.echo("  No per-user sprint preference set.")
+        click.echo("  Set one with: pf sprint use <name>")
+        return
+
+    registry = load_sprint_registry()
+    if registry:
+        sprints = registry.get("sprints", {})
+        entry = sprints.get(active, {})
+        sprint_type = entry.get("type", "project")
+        desc = entry.get("description", "")
+        click.echo(f"{active} ({sprint_type})")
+        if desc:
+            click.echo(f"  {desc}")
+    else:
+        click.echo(f"{active}")
+        click.echo("  (no sprint registry found to look up metadata)")
 
 
 @sprint.command()

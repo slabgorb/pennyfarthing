@@ -40,6 +40,9 @@ if [[ -f "$PACKAGE_ROOT/pennyfarthing_scripts/context.py" ]]; then
     PYTHON_MODULE="$PACKAGE_ROOT/pennyfarthing_scripts/context.py"
 elif [[ -f "${PROJECT_ROOT:-}/pennyfarthing_scripts/context.py" ]]; then
     PYTHON_MODULE="${PROJECT_ROOT}/pennyfarthing_scripts/context.py"
+elif [[ -f "${PROJECT_ROOT:-}/pennyfarthing/pennyfarthing_scripts/context.py" ]]; then
+    # Dogfood: orchestrator inlines framework at pennyfarthing/
+    PYTHON_MODULE="${PROJECT_ROOT}/pennyfarthing/pennyfarthing_scripts/context.py"
 fi
 
 # If Python module exists, use it
@@ -71,7 +74,8 @@ done
 
 # Derive Claude project path from current directory
 PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
-CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
+# Claude Code replaces slashes AND dots (e.g. in usernames) with dashes
+CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/.' '--')"
 
 # Default config
 WARNING_THRESHOLD=60

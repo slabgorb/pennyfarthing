@@ -23,8 +23,8 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
        |                                            |
        | Outputs marker verbatim                    v
        |         +---------------------------------------------+
-       +-------->|  <!-- CYCLIST:HANDOFF:/dev -->              |
-                 |  <!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->   |
+       +-------->|  <!-- CYCLIST:HANDOFF:/pf-dev -->            |
+                 |  <!-- CYCLIST:CONTEXT_CLEAR:/pf-reviewer --> |
                  +---------------------------------------------+
                                     |
               +---------------------+---------------------+
@@ -165,16 +165,16 @@ TirePump activates when:
        |  ---                               |
        |  AGENT_COMMAND:                    |
        |    marker: "<!-- CYCLIST:...-->"   |
-       |    fallback: "Run `/dev`..."       |
+       |    fallback: "Run `/pf-dev`..."    |
        |  ---                               |
        |                                    |
        |  6. Output marker VERBATIM         |
        |     in direct text output          |
        v                                    |
    +----------------------------------+     |
-   | <!-- CYCLIST:HANDOFF:/dev -->   |     |
+   | <!-- CYCLIST:HANDOFF:/pf-dev --> |     |
    |                                  |     |
-   | Run `/dev` to continue          |     |
+   | Run `/pf-dev` to continue        |     |
    +----------------------------------+     |
 ```
 

@@ -16,31 +16,31 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## TDD Workflow Commands
 
-### `/work`
+### `/pf-work`
 
 **Purpose:** Resume work or start new - smart entry point that picks up where you left off
 
 **Usage:**
 ```
-/work
+/pf-work
 ```
 
 **What it does:**
 1. Detects current workflow state
 2. If work in progress: suggests appropriate agent to continue
 3. If finished work: invokes SM to complete story
-4. If no work: invokes /new-work to pick up new story
-5. If missing epic context: prompts to run /start-epic
+4. If no work: invokes /pf-session new to pick up new story
+5. If missing epic context: prompts to run /pf-epic start
 
 **Entry point for:** Resuming interrupted work or starting fresh
 
-### `/new-work`
+### `/pf-session new`
 
 **Purpose:** Start a new work session (primary entry point)
 
 **Usage:**
 ```
-/new-work
+/pf-session new
 ```
 
 **What it does:**
@@ -75,13 +75,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Agent Activation Commands
 
-### `/sm`
+### `/pf-sm`
 
 **Purpose:** Activate the Scrum Master agent
 
 **Usage:**
 ```
-/sm
+/pf-sm
 ```
 
 **When to use:**
@@ -89,13 +89,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Sprint coordination
 - Direct SM tasks (outside TDD flow)
 
-### `/tea`
+### `/pf-tea`
 
 **Purpose:** Activate the Test Engineer agent
 
 **Usage:**
 ```
-/tea
+/pf-tea
 ```
 
 **When to use:**
@@ -103,13 +103,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Test strategy
 - Continuing TDD flow after SM handoff
 
-### `/dev`
+### `/pf-dev`
 
 **Purpose:** Activate the Developer agent
 
 **Usage:**
 ```
-/dev
+/pf-dev
 ```
 
 **When to use:**
@@ -117,13 +117,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Making tests pass
 - Continuing TDD flow after TEA handoff
 
-### `/reviewer`
+### `/pf-reviewer`
 
 **Purpose:** Activate the Code Reviewer agent
 
 **Usage:**
 ```
-/reviewer
+/pf-reviewer
 ```
 
 **When to use:**
@@ -131,13 +131,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Security analysis
 - Continuing TDD flow after Dev handoff
 
-### `/architect`
+### `/pf-architect`
 
 **Purpose:** Activate the System Architect agent
 
 **Usage:**
 ```
-/architect
+/pf-architect
 ```
 
 **When to use:**
@@ -145,13 +145,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Architecture questions
 - Pattern guidance
 
-### `/pm`
+### `/pf-pm`
 
 **Purpose:** Activate the Product Manager agent
 
 **Usage:**
 ```
-/pm
+/pf-pm
 ```
 
 **When to use:**
@@ -159,13 +159,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Prioritization
 - Strategic decisions
 
-### `/tech-writer`
+### `/pf-tech-writer`
 
 **Purpose:** Activate the Technical Writer agent
 
 **Usage:**
 ```
-/tech-writer
+/pf-tech-writer
 ```
 
 **When to use:**
@@ -173,13 +173,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - API docs
 - User guides
 
-### `/ux-designer`
+### `/pf-ux-designer`
 
 **Purpose:** Activate the UX Designer agent
 
 **Usage:**
 ```
-/ux-designer
+/pf-ux-designer
 ```
 
 **When to use:**
@@ -187,13 +187,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - UX improvements
 - Accessibility review
 
-### `/devops`
+### `/pf-devops`
 
 **Purpose:** Activate the DevOps Engineer agent
 
 **Usage:**
 ```
-/devops
+/pf-devops
 ```
 
 **When to use:**
@@ -201,13 +201,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 - Infrastructure tasks
 - Deployment issues
 
-### `/orchestrator`
+### `/pf-orchestrator`
 
 **Purpose:** Activate the Orchestrator agent
 
 **Usage:**
 ```
-/orchestrator
+/pf-orchestrator
 ```
 
 **When to use:**
@@ -219,13 +219,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Planning Commands
 
-### `/sprint-planning`
+### `/pf-sprint plan`
 
 **Purpose:** Facilitate a sprint planning session
 
 **Usage:**
 ```
-/sprint-planning
+/pf-sprint plan
 ```
 
 **What it does:**
@@ -235,13 +235,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 4. Helps estimate and prioritize
 5. Updates sprint tracking
 
-### `/retro`
+### `/pf-retro`
 
 **Purpose:** Facilitate a sprint retrospective
 
 **Usage:**
 ```
-/retro
+/pf-retro
 ```
 
 **What it does:**
@@ -250,13 +250,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Identifies improvements
 4. Creates action items
 
-### `/start-epic`
+### `/pf-epic start`
 
 **Purpose:** Start an epic - move to current sprint and generate tech context
 
 **Usage:**
 ```
-/start-epic [epic-id]
+/pf-epic start [epic-id]
 ```
 
 **What it does:**
@@ -281,13 +281,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 4. Optionally transitions Jira epic to Done
 5. Optionally archives epic context file
 
-### `/brainstorm` (alias: `/brainstorming`)
+### `/pf-brainstorming` (alias: `/brainstorming`)
 
 **Purpose:** Structured problem-solving brainstorm session
 
 **Usage:**
 ```
-/brainstorm [topic]
+/pf-brainstorming [topic]
 /brainstorming [topic]
 ```
 
@@ -297,20 +297,20 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Selects 1-3 ideas to pursue
 4. Produces actionable recommendations with next steps
 
-### `/party-mode`
+### `/pf-party-mode`
 
 **Purpose:** Free-form creative brainstorming with all agents
 
 **Usage:**
 ```
-/party-mode [topic]
+/pf-party-mode [topic]
 ```
 
 **What it does:**
 1. Activates multiple agents
 2. Free-form discussion
 3. Creative problem solving
-4. Less structured than `/brainstorm`
+4. Less structured than `/pf-brainstorming`
 
 ### `/job-fair`
 
@@ -334,15 +334,15 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Benchmarking Commands
 
-### `/solo`
+### `/pf-solo`
 
 **Purpose:** Run a single agent on a standardized scenario for evaluation
 
 **Usage:**
 ```
-/solo discworld:reviewer --scenario order-service
-/solo ted-lasso:sm --scenario sprint-planning-conflict --runs 4
-/solo control:dev --scenario tdd-shopping-cart --no-judge
+/pf-solo discworld:reviewer --scenario order-service
+/pf-solo ted-lasso:sm --scenario sprint-planning-conflict --runs 4
+/pf-solo control:dev --scenario tdd-shopping-cart --no-judge
 ```
 
 **Arguments:**
@@ -359,14 +359,14 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 **See also:** [BENCHMARKING.md](BENCHMARKING.md)
 
-### `/benchmark-control`
+### `/pf-benchmark-control`
 
 **Purpose:** Create a statistical baseline for a scenario
 
 **Usage:**
 ```
-/benchmark-control reviewer --scenario order-service
-/benchmark-control dev --scenario tdd-shopping-cart --runs 10
+/pf-benchmark-control reviewer --scenario order-service
+/pf-benchmark-control dev --scenario tdd-shopping-cart --runs 10
 ```
 
 **Arguments:**
@@ -379,16 +379,16 @@ Complete reference for all 46 Pennyfarthing slash commands.
 2. Calculates mean, standard deviation, 95% CI
 3. Saves baseline to `internal/results/baselines/{scenario}/{role}/`
 
-**Required before:** Using `/benchmark` to compare personas
+**Required before:** Using `/pf-benchmark` to compare personas
 
-### `/benchmark`
+### `/pf-benchmark`
 
 **Purpose:** Compare a persona's performance against the control baseline
 
 **Usage:**
 ```
-/benchmark discworld reviewer --scenario order-service
-/benchmark the-expanse sm --scenario sprint-planning-conflict --runs 8
+/pf-benchmark discworld reviewer --scenario order-service
+/pf-benchmark the-expanse sm --scenario sprint-planning-conflict --runs 8
 ```
 
 **Arguments:**
@@ -403,19 +403,19 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Calculates 95% confidence intervals
 4. Saves results to `internal/results/benchmarks/{scenario}/{theme}-{role}/`
 
-**Requires:** Control baseline created with `/benchmark-control`
+**Requires:** Control baseline created with `/pf-benchmark-control`
 
 ---
 
 ## Operations Commands
 
-### `/repo-status`
+### `/pf-git status`
 
 **Purpose:** Check git status of all project repos
 
 **Usage:**
 ```
-/repo-status
+/pf-git status
 ```
 
 **What it does:**
@@ -477,16 +477,16 @@ Complete reference for all 46 Pennyfarthing slash commands.
 5. Merges PR and marks story Done
 6. Fast path for shipping completed work that deserves tracking but didn't need story setup upfront
 
-### `/release`
+### `/pf-git release`
 
 **Purpose:** Merge develop to main and push (optional version bump)
 
 **Usage:**
 ```
-/release
-/release --bump patch
-/release --bump minor
-/release --dry-run
+/pf-git release
+/pf-git release --bump patch
+/pf-git release --bump minor
+/pf-git release --dry-run
 ```
 
 **What it does:**
@@ -495,13 +495,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Pushes main and develop
 4. Optionally bumps version and creates GitHub release
 
-### `/parallel-work`
+### `/pf-parallel-work`
 
-**Purpose:** Start parallel work in a new worktree
+**Purpose:** Start parallel work in a new worktree (deprecated)
 
 **Usage:**
 ```
-/parallel-work
+/pf-parallel-work
 ```
 
 **What it does:**
@@ -530,13 +530,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Sync Commands
 
-### `/sync-epic-to-jira`
+### `/pf-jira sync-epic`
 
 **Purpose:** Sync an epic to Jira
 
 **Usage:**
 ```
-/sync-epic-to-jira [epic-id]
+/pf-jira sync-epic [epic-id]
 ```
 
 **What it does:**
@@ -575,13 +575,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Reflects current patterns
 4. Updates file references
 
-### `/sprint`
+### `/pf-sprint`
 
 **Purpose:** Sprint status, backlog, and story management
 
 **Usage:**
 ```
-/sprint [status|backlog|work|archive|new|future|promote] [args...]
+/pf-sprint [status|backlog|work|archive|new|future|promote] [args...]
 ```
 
 **What it does:**
@@ -595,13 +595,13 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 ## Theme Commands
 
-### `/theme-maker`
+### `/pf-theme maker`
 
 **Purpose:** Interactive wizard for creating custom persona themes
 
 **Usage:**
 ```
-/theme-maker
+/pf-theme maker
 ```
 
 **What it does:**
@@ -628,7 +628,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 **Example Session:**
 
 ```
-> /theme-maker
+> /pf-theme maker
 
 Theme name: noir-detective
 
@@ -658,7 +658,7 @@ How does this look?
   ○ Try different concept
 
 Theme saved to .claude/pennyfarthing/themes/noir-detective.yaml
-Activate with: /set-theme noir-detective
+Activate with: /pf-theme set noir-detective
 ```
 
 **Output:**
@@ -668,19 +668,19 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 - All 10 agent definitions (character, style, trait, quote, emoji, helper)
 
 **Related Commands:**
-- `/set-theme` - Activate a theme
-- `/show-theme` - View theme details
-- `/list-themes` - List available themes
+- `/pf-theme set` - Activate a theme
+- `/pf-theme show` - View theme details
+- `/pf-theme list` - List available themes
 
 **See also:** [Persona System](PERSONAS.md)
 
-### `/set-theme`
+### `/pf-theme set`
 
 **Purpose:** Change the active persona theme
 
 **Usage:**
 ```
-/set-theme <name>
+/pf-theme set <name>
 ```
 
 **What it does:**
@@ -688,14 +688,14 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 2. Updates `.pennyfarthing/config.local.yaml`
 3. Theme takes effect on next agent activation
 
-### `/show-theme`
+### `/pf-theme show`
 
 **Purpose:** Display details of a theme
 
 **Usage:**
 ```
-/show-theme [name]    # Specific theme
-/show-theme           # Current theme
+/pf-theme show [name]    # Specific theme
+/pf-theme show           # Current theme
 ```
 
 **What it does:**
@@ -703,13 +703,13 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 2. Displays all agent characters and styles
 3. Shows theme metadata
 
-### `/list-themes`
+### `/pf-theme list`
 
 **Purpose:** List all available themes
 
 **Usage:**
 ```
-/list-themes
+/pf-theme list
 ```
 
 **What it does:**
@@ -717,15 +717,15 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 2. Scans custom themes in `.claude/pennyfarthing/themes/`
 3. Lists all with descriptions
 
-### `/create-theme`
+### `/pf-theme create`
 
 **Purpose:** Create a new custom persona theme
 
 **Usage:**
 ```
-/create-theme <name>
-/create-theme <name> --base <theme>
-/create-theme <name> --user
+/pf-theme create <name>
+/pf-theme create <name> --base <theme>
+/pf-theme create <name> --user
 ```
 
 **What it does:**
@@ -738,15 +738,15 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 
 ## Utility Commands
 
-### `/continue-session`
+### `/pf-session continue`
 
 **Purpose:** Resume work from a saved checkpoint after context circuit breaker
 
 **Usage:**
 ```
-/continue-session
-/continue-session --list
-/continue-session --story-id ID
+/pf-session continue
+/pf-session continue --list
+/pf-session continue --story-id ID
 ```
 
 **What it does:**
@@ -793,17 +793,17 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 3. Revokes permissions for specific tools
 4. Shows detailed grant information
 
-### `/workflow`
+### `/pf-workflow`
 
 **Purpose:** List available workflows, show current workflow details, and switch workflows
 
 **Usage:**
 ```
-/workflow
-/workflow show [name]
-/workflow set <name>
-/workflow start <name> [--mode <mode>]
-/workflow resume [name]
+/pf-workflow
+/pf-workflow show [name]
+/pf-workflow set <name>
+/pf-workflow start <name> [--mode <mode>]
+/pf-workflow resume [name]
 ```
 
 **What it does:**
@@ -816,13 +816,13 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 
 ## System Commands
 
-### `/health-check`
+### `/pf-health-check`
 
 **Purpose:** Check Pennyfarthing installation health and apply updates
 
 **Usage:**
 ```
-/health-check
+/pf-health-check
 pennyfarthing doctor
 pennyfarthing doctor --fix
 ```
@@ -873,50 +873,50 @@ pennyfarthing doctor --fix
 
 | Command | Purpose | Category |
 |---------|---------|----------|
-| `/work` | Resume or start work | TDD |
-| `/new-work` | Start work session | TDD |
+| `/pf-work` | Resume or start work | TDD |
+| `/pf-session new` | Start work session | TDD |
 | `/check` | Run quality gates | TDD |
-| `/sm` | Scrum Master | Agent |
-| `/tea` | Test Engineer | Agent |
-| `/dev` | Developer | Agent |
-| `/reviewer` | Code Reviewer | Agent |
-| `/architect` | System Architect | Agent |
-| `/pm` | Product Manager | Agent |
-| `/tech-writer` | Technical Writer | Agent |
-| `/ux-designer` | UX Designer | Agent |
-| `/devops` | DevOps Engineer | Agent |
-| `/orchestrator` | Orchestrator | Agent |
-| `/sprint` | Sprint management | Planning |
-| `/sprint-planning` | Plan sprint | Planning |
-| `/retro` | Sprint retrospective | Planning |
-| `/start-epic` | Start an epic | Planning |
+| `/pf-sm` | Scrum Master | Agent |
+| `/pf-tea` | Test Engineer | Agent |
+| `/pf-dev` | Developer | Agent |
+| `/pf-reviewer` | Code Reviewer | Agent |
+| `/pf-architect` | System Architect | Agent |
+| `/pf-pm` | Product Manager | Agent |
+| `/pf-tech-writer` | Technical Writer | Agent |
+| `/pf-ux-designer` | UX Designer | Agent |
+| `/pf-devops` | DevOps Engineer | Agent |
+| `/pf-orchestrator` | Orchestrator | Agent |
+| `/pf-sprint` | Sprint management | Planning |
+| `/pf-sprint plan` | Plan sprint | Planning |
+| `/pf-retro` | Sprint retrospective | Planning |
+| `/pf-epic start` | Start an epic | Planning |
 | `/close-epic` | Close an epic | Planning |
-| `/brainstorm` | Problem solving | Planning |
-| `/party-mode` | Creative brainstorm | Planning |
+| `/pf-brainstorming` | Problem solving | Planning |
+| `/pf-party-mode` | Creative brainstorm | Planning |
 | `/job-fair` | Character benchmarking | Planning |
-| `/solo` | Single agent evaluation | Benchmarking |
-| `/benchmark-control` | Create baseline | Benchmarking |
-| `/benchmark` | Compare vs baseline | Benchmarking |
-| `/repo-status` | Check git status | Operations |
+| `/pf-solo` | Single agent evaluation | Benchmarking |
+| `/pf-benchmark-control` | Create baseline | Benchmarking |
+| `/pf-benchmark` | Compare vs baseline | Benchmarking |
+| `/pf-git status` | Check git status | Operations |
 | `/git-cleanup` | Organize commits | Operations |
 | `/chore` | Quick commit | Operations |
 | `/standalone` | Jira story+PR+merge | Operations |
-| `/release` | Merge to main | Operations |
-| `/parallel-work` | Create worktree | Operations |
+| `/pf-git release` | Merge to main | Operations |
+| `/pf-parallel-work` | Create worktree | Operations |
 | `/create-branches-from-story` | Create branches | Operations |
-| `/sync-epic-to-jira` | Sync to Jira | Sync |
+| `/pf-jira sync-epic` | Sync to Jira | Sync |
 | `/sync-work-with-sprint` | Sync work/sprint | Sync |
 | `/update-domain-docs` | Update docs | Sync |
-| `/theme-maker` | Create custom theme | Theme |
-| `/create-theme` | Create theme | Theme |
-| `/set-theme` | Change active theme | Theme |
-| `/show-theme` | View theme details | Theme |
-| `/list-themes` | List available themes | Theme |
-| `/continue-session` | Resume checkpoint | Utility |
+| `/pf-theme maker` | Create custom theme | Theme |
+| `/pf-theme create` | Create theme | Theme |
+| `/pf-theme set` | Change active theme | Theme |
+| `/pf-theme show` | View theme details | Theme |
+| `/pf-theme list` | List available themes | Theme |
+| `/pf-session continue` | Resume checkpoint | Utility |
 | `/prime` | Load project context | Utility |
 | `/permissions` | Manage permissions | Utility |
-| `/workflow` | Workflow management | Utility |
-| `/health-check` | Check installation | System |
+| `/pf-workflow` | Workflow management | Utility |
+| `/pf-health-check` | Check installation | System |
 | `/run-ci` | Run CI locally | System |
 | `/help` | Get help | System |
 
@@ -926,14 +926,14 @@ pennyfarthing doctor --fix
 
 ### Starting Work
 
-Always use `/new-work` to start. It handles:
+Always use `/pf-session new` to start. It handles:
 - New stories
 - Resuming work
 - Finishing work
 
 ### Direct Agent Activation
 
-Use direct commands (`/dev`, `/tea`, etc.) when:
+Use direct commands (`/pf-dev`, `/pf-tea`, etc.) when:
 - You need that agent specifically
 - You're outside the TDD flow
 - You want to skip state detection
@@ -941,13 +941,13 @@ Use direct commands (`/dev`, `/tea`, etc.) when:
 ### Planning Sessions
 
 Use planning commands at sprint boundaries:
-- `/sprint-planning` at sprint start
-- `/retro` at sprint end
-- `/start-epic` when beginning new epics
+- `/pf-sprint plan` at sprint start
+- `/pf-retro` at sprint end
+- `/pf-epic start` when beginning new epics
 
 ### Maintenance
 
 Run periodically:
-- `/repo-status` - Check for uncommitted work
+- `/pf-git status` - Check for uncommitted work
 - `/git-cleanup` - Organize messy history
 - `/sync-work-with-sprint` - Keep tracking in sync

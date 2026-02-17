@@ -7,7 +7,6 @@ state detection from .session/ files.
 
 from typing import Any
 
-
 # Phase ownership mapping for TDD workflow
 # Canonical YAML names: setup, red, green, review, finish
 TDD_PHASE_OWNERS: dict[str, str] = {

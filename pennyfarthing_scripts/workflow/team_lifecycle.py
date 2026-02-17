@@ -10,10 +10,9 @@ Python port of packages/core/dist/workflow/team-lifecycle.js.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 # =============================================================================
 # In-memory registries
@@ -61,7 +60,7 @@ async def create_team(
         "storyId": story_id,
         "phase": phase["name"],
         "teammates": [],
-        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "createdAt": datetime.now(UTC).isoformat(),
     }
 
     if adapter:
@@ -213,7 +212,7 @@ def acquire_sidecar_lock(
     lock: dict[str, Any] = {
         "lockPath": f"{file_path}.lock",
         "storyId": story_id,
-        "acquiredAt": datetime.now(timezone.utc).isoformat(),
+        "acquiredAt": datetime.now(UTC).isoformat(),
     }
     _sidecar_locks[file_path] = lock
     return {"success": True, "data": lock}

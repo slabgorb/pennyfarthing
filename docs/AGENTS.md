@@ -60,7 +60,7 @@ Specialized tasks outside core TDD flow.
 
 ## Orchestrator
 
-**Command:** `/orchestrator`
+**Command:** `/pf-orchestrator`
 
 **Role:** Meta operations, process improvement, agent coordination
 
@@ -92,7 +92,7 @@ Specialized tasks outside core TDD flow.
 
 ## PM (Product Manager)
 
-**Command:** `/pm`
+**Command:** `/pf-pm`
 
 **Role:** Strategic planning and prioritization
 
@@ -132,7 +132,7 @@ Specialized tasks outside core TDD flow.
 
 ## SM (Scrum Master)
 
-**Command:** `/sm` or `/new-work`
+**Command:** `/pf-sm` or `/pf-work`
 
 **Role:** Story coordination, sprint management
 
@@ -148,7 +148,7 @@ Specialized tasks outside core TDD flow.
 
 ### When to Use
 
-- Starting new work (`/new-work`)
+- Starting new work (`/pf-work`)
 - Creating or refining stories
 - Finishing completed work
 - Sprint management tasks
@@ -191,7 +191,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## TEA (Test Engineer)
 
-**Command:** `/tea`
+**Command:** `/pf-tea`
 
 **Role:** Test strategy and writing failing tests
 
@@ -245,7 +245,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## Dev (Developer)
 
-**Command:** `/dev`
+**Command:** `/pf-dev`
 
 **Role:** Feature implementation
 
@@ -299,7 +299,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## Reviewer
 
-**Command:** `/reviewer`
+**Command:** `/pf-reviewer`
 
 **Role:** Adversarial code review
 
@@ -359,7 +359,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## Architect
 
-**Command:** `/architect`
+**Command:** `/pf-architect`
 
 **Role:** System design and architecture
 
@@ -401,7 +401,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## DevOps
 
-**Command:** `/devops`
+**Command:** `/pf-devops`
 
 **Role:** Infrastructure and deployment
 
@@ -436,7 +436,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 ## Tech Writer
 
-**Command:** `/tech-writer`
+**Command:** `/pf-tech-writer`
 
 **Role:** Documentation
 
@@ -475,7 +475,7 @@ Tech Writer does NOT write code. All code changes are handed off to Dev.
 
 ## UX Designer
 
-**Command:** `/ux-designer`
+**Command:** `/pf-ux-designer`
 
 **Role:** User experience design
 
@@ -513,16 +513,16 @@ Tech Writer does NOT write code. All code changes are handed off to Dev.
 All agents can be activated via their slash command:
 
 ```
-/sm           - Scrum Master
-/tea          - Test Engineer
-/dev          - Developer
-/reviewer     - Code Reviewer
-/architect    - System Architect
-/pm           - Product Manager
-/tech-writer  - Technical Writer
-/ux-designer  - UX Designer
-/devops       - DevOps Engineer
-/orchestrator - Orchestrator
+/pf-sm           - Scrum Master
+/pf-tea          - Test Engineer
+/pf-dev          - Developer
+/pf-reviewer     - Code Reviewer
+/pf-architect    - System Architect
+/pf-pm           - Product Manager
+/pf-tech-writer  - Technical Writer
+/pf-ux-designer  - UX Designer
+/pf-devops       - DevOps Engineer
+/pf-orchestrator - Orchestrator
 ```
 
 Or by mentioning them in conversation:
