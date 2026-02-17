@@ -204,15 +204,11 @@ class AgentHeader(Static):
 
         line = "  ".join(parts)
 
-        # Role description / style subtitle
-        if role_desc:
-            line += f"\n[dim]{role_desc}[/dim]"
-        elif style:
-            line += f"\n[dim]{style}[/dim]"
-
-        # Quote
+        # Catchphrase subtitle (quote is a random catchphrase from the theme)
         if quote:
             line += f"\n[italic dim]\"{quote}\"[/italic dim]"
+        elif role_desc:
+            line += f"\n[dim]{role_desc}[/dim]"
 
         self.update(line)
 
