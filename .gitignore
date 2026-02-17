@@ -63,6 +63,7 @@ worktrees/
 # Cyclist runtime state (when running locally for development)
 .wheelhub-port
 .wheelhub-pid
+.bikerack-port
 .pennyfarthing/
 .env
 uv.lock
