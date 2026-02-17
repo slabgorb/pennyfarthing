@@ -6,7 +6,7 @@ Analysis of the ACTUAL context loaded into an agent session, traced through `age
 
 ## Context Loading Order
 
-When an agent (e.g., `/sm`) is invoked, these sources are loaded IN ORDER:
+When an agent (e.g., `/pf-sm`) is invoked, these sources are loaded IN ORDER:
 
 | Order | Source | Typical Size | Notes |
 |-------|--------|--------------|-------|

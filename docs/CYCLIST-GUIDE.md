@@ -90,7 +90,7 @@ Cyclist v9.0+ uses **Dockview panels** - all panels are draggable, can be split,
 │                 │                                   │  └─────────────┘  │
 │                 │  ┌─────────────────────────────┐  │  ┌─────────────┐  │
 │                 │  │ Quick Actions               │  │  │ Settings    │  │
-│                 │  │ [Yes] [No] [/dev]           │  │  │ Panel       │  │
+│                 │  │ [Yes] [No] [/pf-dev]        │  │  │ Panel       │  │
 │                 │  └─────────────────────────────┘  │  └─────────────┘  │
 │                 │  ┌─────────────────────────────┐  │                   │
 │                 │  │ Editor + Stats Strip        │  │                   │
@@ -181,7 +181,7 @@ Displays the active agent's character from your selected theme.
 - **Quote** - Character's signature line
 - **Activity** - Current helper tasks and tool usage
 
-The persona updates automatically when you invoke different agents (`/sm`, `/dev`, `/tea`, etc.).
+The persona updates automatically when you invoke different agents (`/pf-sm`, `/pf-dev`, `/pf-tea`, etc.).
 
 ### Story Section
 
@@ -250,10 +250,10 @@ When ready to switch agents:
 ```
 Ready to hand off to the Caterpillar for test writing.
 
-Invoke /tea to begin the RED phase.
+Invoke /pf-tea to begin the RED phase.
 ```
 
-Button appears: `[/tea]`
+Button appears: `[/pf-tea]`
 
 #### Continue Actions
 
@@ -283,7 +283,7 @@ Quick actions are detected from these patterns:
 | "Shall I proceed/continue" | "Shall I continue?" | Yes, No |
 | "Should I" | "Should I create the file?" | Yes, No |
 | "Ready to proceed" | "Ready to proceed with testing" | Yes, Hold on |
-| "Invoke /agent" | "Invoke /dev to implement" | /dev |
+| "Invoke /agent" | "Invoke /pf-dev to implement" | /pf-dev |
 | Numbered list (1. 2. 3.) | Option list with choice context | 1, 2, 3 |
 
 ### Confidence Threshold
@@ -300,7 +300,7 @@ Quick actions use a confidence threshold (default: 0.6) to avoid false positives
 Agents can emit HTML comment markers for 100% accurate detection:
 
 ```html
-<!-- CYCLIST:HANDOFF:/tea -->
+<!-- CYCLIST:HANDOFF:/pf-tea -->
 <!-- CYCLIST:QUESTION:yesno -->
 <!-- CYCLIST:CHOICES:1,2,3 -->
 <!-- CYCLIST:CONTINUE -->
@@ -430,10 +430,10 @@ Launch agents directly from the menu.
 
 ### Workflows Menu
 
-- **New Work** - Start a new story (`/new-work`)
-- **Continue Session** - Resume previous work (`/continue-session`)
+- **New Work** - Start a new story (`/pf-work`)
+- **Continue Session** - Resume previous work (`/pf-session continue`)
 - **Sprint Context** - View sprint status (`/sprint-context`)
-- **Work** - Smart work entry (`/work`)
+- **Work** - Smart work entry (`/pf-work`)
 
 ### File Menu
 
@@ -637,7 +637,7 @@ Run multiple Cyclist instances for different projects simultaneously.
 ### How It Works
 
 - Each instance runs on a separate port
-- Port files (`.wheelhub-port`) prevent conflicts
+- Port files (`.bikerack-port`) prevent conflicts
 - Instances are fully isolated with their own state
 
 ### Switching Between Instances
@@ -733,7 +733,7 @@ The context clearing system that reinflates the session when context runs low:
 
 - Clears the Claude Code session cleanly
 - Resets all stats (tokens, tools, context percentage)
-- Reloads the current agent (e.g., /dev) automatically
+- Reloads the current agent (e.g., /pf-dev) automatically
 - Preserves workflow state in .session/ files
 
 Triggered by the Compact button (appears at 50% context) or automatically at critical thresholds.

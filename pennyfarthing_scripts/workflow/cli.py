@@ -16,6 +16,8 @@ Usage:
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import click
 
 
@@ -141,7 +143,6 @@ def workflow_list_cmd():
 
     Shows a markdown table with type, phases/steps, modes, and descriptions.
     """
-    import yaml as yaml_mod
 
     from pennyfarthing_scripts.workflow.helpers import (
         count_steps,
@@ -353,7 +354,7 @@ def workflow_start_cmd(name: str, mode: str | None):
     Arguments:
       NAME  - Workflow name (e.g., architecture, release)
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.workflow.helpers import (
@@ -444,7 +445,7 @@ def workflow_start_cmd(name: str, mode: str | None):
         return
 
     # Create session file
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     wf_agent = wf.get("agent", "pm")
     wf_desc = wf.get("description", "-")
 
@@ -516,7 +517,7 @@ def workflow_resume_cmd(name: str | None):
     Arguments:
       NAME  - Workflow name (auto-detects from active session if omitted)
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.workflow.helpers import (
@@ -601,7 +602,7 @@ def workflow_resume_cmd(name: str | None):
         raise SystemExit(1)
 
     # Update last updated timestamp
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     import re
 
     updated_content = re.sub(
@@ -788,7 +789,7 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
       TARGET_PHASE  - Target phase to set (e.g., review, approved, finish)
     """
     import re
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.workflow.helpers import (
@@ -849,17 +850,17 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
     # Find indices
     try:
         current_idx = phases.index(current_phase)
-    except ValueError:
+    except ValueError as err:
         click.echo(f"Error: Current phase '{current_phase}' not found in {workflow_name} workflow", err=True)
         click.echo(f"Valid phases: {', '.join(phases)}", err=True)
-        raise SystemExit(1)
+        raise SystemExit(1) from err
 
     try:
         target_idx = phases.index(target_phase)
-    except ValueError:
+    except ValueError as err:
         click.echo(f"Error: Target phase '{target_phase}' not found in {workflow_name} workflow", err=True)
         click.echo(f"Valid phases: {', '.join(phases)}", err=True)
-        raise SystemExit(1)
+        raise SystemExit(1) from err
 
     if target_idx <= current_idx:
         click.echo(f"Error: Target phase '{target_phase}' is not ahead of current phase '{current_phase}'", err=True)
@@ -867,7 +868,7 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
         raise SystemExit(1)
 
     # Calculate transitions
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     click.echo("")
     click.echo("Transitions needed:")
 
@@ -909,7 +910,7 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
 
     # Build handoff history additions
     handoff_lines = []
-    for from_phase, to_phase, from_agent, to_agent, gate in transitions:
+    for _from_phase, _to_phase, from_agent, to_agent, gate in transitions:
         handoff_lines.append(f"| {from_agent} | {to_agent} | {gate} | PASSED | {now} |")
 
     # Insert handoff rows after the last PASSED/FAILED row
@@ -951,7 +952,7 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
       NAME  - Workflow name (auto-detects from session if omitted)
     """
     import re
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from pennyfarthing_scripts.common.config import get_project_root
     from pennyfarthing_scripts.workflow.helpers import (
@@ -1036,7 +1037,7 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     new_status = "completed" if completed_count >= step_count else "in_progress"
 
     # Update session file
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     content = re.sub(
         r"^- \*\*Current Step:\*\*.*$",

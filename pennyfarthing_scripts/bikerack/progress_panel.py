@@ -265,7 +265,6 @@ class ProgressPanel(BasePanel):
         line = Text()
         line.append("Git  ", style="bold")
 
-        repo_parts: list[str] = []
         for repo in repos:
             if not isinstance(repo, dict):
                 continue

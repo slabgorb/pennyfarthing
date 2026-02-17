@@ -10,7 +10,6 @@ Usage via CLI:
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from pennyfarthing_scripts.common.config import get_project_root
@@ -70,8 +69,8 @@ def install_git_hooks(project_root: Path | None = None) -> int:
         return 1
 
     print("Installing git hooks with .d/ dispatcher pattern...")
-    print(f"  Source: pennyfarthing-dist/scripts/hooks/")
-    print(f"  Dest:   .git/hooks/")
+    print("  Source: pennyfarthing-dist/scripts/hooks/")
+    print("  Dest:   .git/hooks/")
     print()
 
     for source_file, dest_name in HOOKS:

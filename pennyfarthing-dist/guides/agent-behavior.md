@@ -18,8 +18,8 @@
 **Never** start new work while stories have open PRs. The merge gate blocks `/pf-sprint work` if open PRs exist.
 
 **If stuck in incomplete state:**
-- Open PRs? → Run `/reviewer` to complete reviews and merge
-- Merged but not finished? → Run `/sm` to trigger finish flow
+- Open PRs? → Run `/pf-reviewer` to complete reviews and merge
+- Merged but not finished? → Run `/pf-sm` to trigger finish flow
 </critical>
 
 ---

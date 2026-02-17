@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from pennyfarthing_scripts.consultation.dialogue_manager import (

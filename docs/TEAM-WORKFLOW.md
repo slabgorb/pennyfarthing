@@ -19,7 +19,7 @@ Pennyfarthing uses Jira integration as the primary conflict prevention mechanism
 
 ```bash
 # Start new work - SM checks Jira before claiming
-/new-work
+/pf-work
 
 # SM will run:
 .pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-10988 --claim
@@ -53,7 +53,7 @@ Work on multiple stories simultaneously using worktrees:
 
 ```bash
 # Start parallel work on a new story
-/parallel-work
+/pf-parallel-work
 
 # List active worktrees
 .pennyfarthing/scripts/git/worktree-manager.sh list
@@ -285,7 +285,7 @@ dev:
 
 ```bash
 # Dev A claims via SM
-/new-work
+/pf-work
 # Select story 5-2
 # SM claims in Jira, creates session file
 ```
@@ -294,7 +294,7 @@ dev:
 
 ```bash
 # Dev B claims different story
-/new-work
+/pf-work
 # Select story 5-3
 # SM claims in Jira (different story - no conflict)
 ```
@@ -302,7 +302,7 @@ dev:
 ### Developer B tries to claim 5-2
 
 ```bash
-/new-work
+/pf-work
 # Select story 5-2
 
 # SM checks Jira:
@@ -314,7 +314,7 @@ dev:
 
 ### 1. Claim Before Working
 
-Always use `/new-work` to claim stories through Jira. Don't start work without claiming.
+Always use `/pf-work` to claim stories through Jira. Don't start work without claiming.
 
 ### 2. Push Frequently
 

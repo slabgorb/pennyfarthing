@@ -228,7 +228,7 @@ class SprintPanel(Widget):
         """Mark unmounted so WS callbacks are ignored."""
         self._mounted = False
 
-    def focus(self, scroll_visible: bool = True) -> "SprintPanel":
+    def focus(self, scroll_visible: bool = True) -> SprintPanel:
         """Delegate focus to the tree widget."""
         try:
             tree = self.query_one("#sprint-tree", Tree)

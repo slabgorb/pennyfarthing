@@ -248,7 +248,7 @@ function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readMan
  * Check commands and skills are properly copied (not symlinked) and up to date.
  * Commands and skills are file copies since v11.3.0 to avoid node_modules drift.
  */
-function checkCommandsAndSkills(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: string | null): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Use assetsPath for source resolution (correct pf-* prefix in dogfood)

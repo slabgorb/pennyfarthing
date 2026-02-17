@@ -61,7 +61,7 @@
 
 ### Conditional by Type
 
-**Workflow/Agent Commands (e.g., /sm, /dev, /tea)**
+**Workflow/Agent Commands (e.g., /pf-sm, /pf-dev, /pf-tea)**
 - `<agent-activation>` — Required to show activation
 - `<instructions>` — Required for agent behavior
 

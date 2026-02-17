@@ -182,7 +182,7 @@ Console output uses colors:
 1. Save current state: `checkpoint_save "phase" "summary"`
 2. Update session file with progress
 3. Commit pending changes
-4. Use `/continue-session` to resume
+4. Use `/pf-session continue` to resume
 
 ### Pattern: Session File Corruption
 
@@ -407,7 +407,7 @@ Required actions:
 1. checkpoint_save "{phase}" "summary"
 2. Update session file with progress
 3. Commit pending changes
-4. Invoke /continue-session
+4. Invoke /pf-session continue
 
 DO NOT attempt further tool calls
 ```
@@ -429,7 +429,7 @@ DO NOT attempt further tool calls
 
 4. **Resume in new session**
    ```
-   /continue-session
+   /pf-session continue
    ```
 
 ## Doctor Command
@@ -495,7 +495,7 @@ Monitor in real-time:
 
 | Issue | Quick Fix |
 |-------|-----------|
-| Context exhausted | `checkpoint_save` → commit → `/continue-session` |
+| Context exhausted | `checkpoint_save` → commit → `/pf-session continue` |
 | Symlinks broken | `pennyfarthing doctor --fix` |
 | Git locked | `rm .git/index.lock` (if stale) |
 | Path errors | Use `$CLAUDE_PROJECT_DIR` |

@@ -165,19 +165,19 @@ Extend session files to track stepped workflow progress:
 
 ```bash
 # List available workflows
-/workflow list                     # Shows both phased and stepped
+/pf-workflow list                     # Shows both phased and stepped
 
 # Start a stepped workflow
-/workflow start architecture       # Starts in default (create) mode
-/workflow start architecture --mode validate
-/workflow start prd --edit
+/pf-workflow start architecture       # Starts in default (create) mode
+/pf-workflow start architecture --mode validate
+/pf-workflow start prd --edit
 
 # Resume interrupted workflow
-/workflow resume                   # Detects and resumes incomplete workflows
-/workflow resume architecture      # Resume specific workflow
+/pf-workflow resume                   # Detects and resumes incomplete workflows
+/pf-workflow resume architecture      # Resume specific workflow
 
 # Check workflow status
-/workflow status                   # Shows current step, progress
+/pf-workflow status                   # Shows current step, progress
 ```
 
 ### Execution Model
@@ -300,7 +300,7 @@ BMAD workflows can be migrated to Pennyfarthing stepped format:
 | 1 | Workflow YAML schema extension (`type: stepped`) | High | Pending |
 | 2 | Step file parser and variable resolution | High | Pending |
 | 3 | Session file state tracking extensions | High | Pending |
-| 4 | `/workflow` command updates (start, resume, status) | High | Pending |
+| 4 | `/pf-workflow` command updates (start, resume, status) | High | Pending |
 | 5 | Gate detection and user approval flow | Medium | Pending |
 | 6 | Tri-modal support (create/validate/edit) | Medium | Pending |
 | 7 | BMAD migration script | Low | Pending |
@@ -356,10 +356,10 @@ BMAD workflows can be migrated to Pennyfarthing stepped format:
 
 ### Phase 4: Commands
 
-1. `/workflow list` - Show all workflows with type indicator
-2. `/workflow start <name> [--mode]` - Begin stepped workflow
-3. `/workflow resume [name]` - Continue from last step
-4. `/workflow status` - Show current progress
+1. `/pf-workflow list` - Show all workflows with type indicator
+2. `/pf-workflow start <name> [--mode]` - Begin stepped workflow
+3. `/pf-workflow resume [name]` - Continue from last step
+4. `/pf-workflow status` - Show current progress
 
 ### Phase 5: Gates
 
