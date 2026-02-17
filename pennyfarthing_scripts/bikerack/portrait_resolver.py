@@ -105,11 +105,18 @@ def detect_image_protocol() -> str | None:
         Protocol name ('kitty', 'sixel', 'halfcell', None for unsupported).
     """
     try:
-        from textual_image.widget import Image  # noqa: F401
-
-        # textual-image is available — it handles protocol detection internally
-        # at render time. Return None here since actual detection requires
-        # terminal I/O that may not be available (e.g., in CI/test).
-        return None
+        from textual_image._terminal import get_cell_size
     except ImportError:
         return None
+
+    # Probe terminal for image protocol support via cell size query.
+    # If the terminal responds, it supports at least halfcell rendering.
+    # The Image widget auto-selects the best protocol at render time,
+    # so we just confirm the terminal is capable.
+    try:
+        cell_size = get_cell_size()
+        if cell_size and cell_size.width > 0:
+            return "halfcell"  # baseline — widget upgrades to kitty/sixel if available
+    except Exception:
+        pass
+    return None
