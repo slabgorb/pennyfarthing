@@ -17,13 +17,10 @@ Run with: python -m pytest tests/python/test_bikerack_story_detail.py -v
 
 from __future__ import annotations
 
-from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from rich.console import Console
-from textual.binding import Binding
 from textual.screen import Screen
 
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
@@ -150,177 +147,200 @@ def empty_detail_screen() -> StoryDetailScreen:
 # ---------------------------------------------------------------------------
 
 
-def _render_to_string(result: Any) -> str:
-    """Render a Rich renderable to plain string."""
-    buf = StringIO()
-    console = Console(file=buf, no_color=True, width=120)
-    console.print(result)
-    return buf.getvalue()
-
-
 # ===========================================================================
 # AC1: Add per-story cursor to SprintPanel (arrow keys within expanded epic)
 # ===========================================================================
 
 
 class TestStoryNavigationState:
-    """AC1: SprintPanel has per-story cursor state."""
+    """AC1: SprintPanel tree cursor navigates stories via native Tree widget."""
 
-    def test_panel_has_selected_story_attribute(self, panel: SprintPanel) -> None:
-        """SprintPanel should track selected story index."""
-        assert hasattr(panel, "_selected_story"), (
-            "SprintPanel should have _selected_story attribute"
-        )
-
-    def test_selected_story_default_is_negative_one(self) -> None:
-        """Default story selection should be -1 (no story selected)."""
+    def test_get_selected_story_default_none(self) -> None:
+        """Default get_selected_story should return None (no tree data)."""
         p = SprintPanel()
-        assert p._selected_story == -1, (
-            f"Default _selected_story should be -1, got {p._selected_story}"
-        )
+        assert p.get_selected_story() is None
 
-    def test_next_story_selects_first_story(self, panel: SprintPanel) -> None:
-        """From no selection (-1), next_story should select the first story (index 0)."""
-        assert panel._selected_story == -1
-        panel.next_story()
-        assert panel._selected_story == 0, (
-            f"After first next_story(), _selected_story should be 0, got {panel._selected_story}"
-        )
-
-    def test_next_story_increments(self, panel: SprintPanel) -> None:
-        """next_story should move from story 0 to story 1."""
-        panel._selected_story = 0
-        panel.next_story()
-        assert panel._selected_story == 1, (
-            f"After next_story() from 0, should be 1, got {panel._selected_story}"
-        )
-
-    def test_next_story_wraps_at_end(self, panel: SprintPanel) -> None:
-        """next_story should wrap from last story back to first (index 0)."""
-        # Epic 110 has 3 stories (indices 0, 1, 2)
-        panel._selected_story = 2
-        panel.next_story()
-        assert panel._selected_story == 0, (
-            f"After wrapping, should be 0, got {panel._selected_story}"
-        )
-
-    def test_prev_story_wraps_at_beginning(self, panel: SprintPanel) -> None:
-        """prev_story from index 0 should wrap to last story."""
-        panel._selected_story = 0
-        panel.prev_story()
-        # Epic 110 has 3 stories, so last index is 2
-        assert panel._selected_story == 2, (
-            f"After wrapping back, should be 2, got {panel._selected_story}"
-        )
-
-    def test_prev_story_decrements(self, panel: SprintPanel) -> None:
-        """prev_story should move from story 2 to story 1."""
-        panel._selected_story = 2
-        panel.prev_story()
-        assert panel._selected_story == 1, (
-            f"After prev_story() from 2, should be 1, got {panel._selected_story}"
-        )
-
-    def test_story_navigation_noop_when_epic_collapsed(self, panel: SprintPanel) -> None:
-        """next_story should be no-op when selected epic is collapsed."""
-        # Collapse epic 110
-        panel._toggled["110"] = False
-        panel._selected_story = -1
-        panel.next_story()
-        assert panel._selected_story == -1, (
-            "Story nav should be no-op when epic is collapsed"
-        )
-
-    def test_story_cursor_resets_on_epic_switch(self, panel: SprintPanel) -> None:
-        """Switching epics should reset story cursor to -1."""
-        panel._selected_story = 1
-        panel.next_epic()
-        assert panel._selected_story == -1, (
-            f"Story cursor should reset on epic switch, got {panel._selected_story}"
-        )
-
-    def test_story_navigation_noop_no_payload(self) -> None:
-        """next_story should be no-op when no payload is loaded."""
+    def test_next_epic_safe_without_mount(self) -> None:
+        """next_epic() should not crash on unmounted panel."""
         p = SprintPanel()
-        p.next_story()
-        assert p._selected_story == -1
+        p.next_epic()  # should not raise
+
+    def test_prev_epic_safe_without_mount(self) -> None:
+        """prev_epic() should not crash on unmounted panel."""
+        p = SprintPanel()
+        p.prev_epic()  # should not raise
+
+    def test_toggle_epic_safe_without_mount(self) -> None:
+        """toggle_epic() should not crash on unmounted panel."""
+        p = SprintPanel()
+        p.toggle_epic()  # should not raise
+
+    def test_drill_into_story_safe_without_mount(self) -> None:
+        """drill_into_story() should not crash when no story selected."""
+        p = SprintPanel()
+        p.drill_into_story()  # should not raise
+
+    async def test_tree_has_epic_nodes_after_data(self) -> None:
+        """Tree should have epic nodes after receiving sprint data."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            assert len(tree.root.children) == 2, (
+                f"Tree should have 2 epic nodes, got {len(tree.root.children)}"
+            )
+
+    async def test_tree_epic_has_story_children(self) -> None:
+        """Epic node should have story leaf children."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            epic_110 = tree.root.children[0]
+            assert len(epic_110.children) == 3, (
+                f"Epic 110 should have 3 stories, got {len(epic_110.children)}"
+            )
+
+    async def test_get_selected_story_returns_data_on_story_node(self) -> None:
+        """get_selected_story should return data when cursor is on a story."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            epic_110 = tree.root.children[0]
+            epic_110.expand()
+            tree.move_cursor(epic_110.children[0])
+            await pilot.pause()
+            story = sprint.get_selected_story()
+            assert story is not None, "Should return story data when on story node"
+            assert story["id"] == "110-1"
+
+    async def test_get_selected_story_none_on_epic_node(self) -> None:
+        """get_selected_story should return None when cursor is on an epic node."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            tree.move_cursor(tree.root.children[0])
+            await pilot.pause()
+            story = sprint.get_selected_story()
+            assert story is None, "Should return None when cursor is on epic node"
 
 
 class TestStoryNavigationBindings:
-    """AC1: SprintPanel has arrow key bindings for story navigation."""
+    """AC1: Tree widget handles arrow key and enter bindings natively."""
 
-    def test_down_arrow_binding_exists(self) -> None:
-        """SprintPanel should have a 'down' binding for next story."""
-        binding_keys = [b.key for b in SprintPanel.BINDINGS]
-        assert "down" in binding_keys, (
-            f"Expected 'down' binding, found: {binding_keys}"
+    def test_tree_widget_in_compose(self) -> None:
+        """SprintPanel compose should include a Tree widget."""
+        panel = SprintPanel()
+        widgets = list(panel.compose())
+        from textual.widgets import Tree
+
+        tree_widgets = [w for w in widgets if isinstance(w, Tree)]
+        assert len(tree_widgets) == 1, "SprintPanel should compose exactly one Tree"
+
+    def test_tree_has_node_selected_handler(self) -> None:
+        """SprintPanel should handle Tree.NodeSelected for drill-through."""
+        assert hasattr(SprintPanel, "on_tree_node_selected"), (
+            "SprintPanel should handle on_tree_node_selected for Enter key"
         )
 
-    def test_up_arrow_binding_exists(self) -> None:
-        """SprintPanel should have an 'up' binding for previous story."""
-        binding_keys = [b.key for b in SprintPanel.BINDINGS]
-        assert "up" in binding_keys, (
-            f"Expected 'up' binding, found: {binding_keys}"
-        )
-
-    def test_enter_binding_exists(self) -> None:
-        """SprintPanel should have an 'enter' binding for drill-through."""
-        binding_keys = [b.key for b in SprintPanel.BINDINGS]
-        assert "enter" in binding_keys, (
-            f"Expected 'enter' binding, found: {binding_keys}"
-        )
+    def test_has_compat_navigation_methods(self) -> None:
+        """SprintPanel should expose next_epic/prev_epic/toggle_epic compat methods."""
+        p = SprintPanel()
+        assert callable(getattr(p, "next_epic", None))
+        assert callable(getattr(p, "prev_epic", None))
+        assert callable(getattr(p, "toggle_epic", None))
 
 
 class TestStoryNavigationRender:
-    """AC1: Selected story shows visual cursor in rendered output."""
+    """AC1: Tree renders story data as labeled nodes."""
 
-    def test_render_shows_story_cursor(self, panel: SprintPanel) -> None:
-        """Rendered output should show a cursor indicator on selected story."""
-        panel._selected_story = 1  # Select "110-2"
-        with patch.object(panel, "update"):
-            result = panel.render_panel(SAMPLE_PAYLOAD)
-        rendered = _render_to_string(result)
-        # The selected story line should have a visible cursor marker
-        # Look for a selection indicator (▸ or › or >) near the story ID
-        lines = rendered.strip().split("\n")
-        story_lines = [l for l in lines if "110-2" in l]
-        assert len(story_lines) > 0, "Story 110-2 should appear in output"
-        story_line = story_lines[0]
-        # Selected story should have a distinct marker that non-selected don't
-        assert any(marker in story_line for marker in ["▸", "›", ">", "→"]), (
-            f"Selected story should have cursor marker, got: '{story_line.strip()}'"
-        )
+    async def test_tree_story_nodes_contain_story_ids(self) -> None:
+        """Tree story leaf labels should contain story IDs."""
+        from textual.widgets import Tree
 
-    def test_render_no_cursor_when_no_story_selected(self, panel: SprintPanel) -> None:
-        """When no story is selected (-1), no story cursor should appear."""
-        panel._selected_story = -1
-        with patch.object(panel, "update"):
-            result = panel.render_panel(SAMPLE_PAYLOAD)
-        rendered = _render_to_string(result)
-        lines = rendered.strip().split("\n")
-        story_lines = [l for l in lines if "110-2" in l]
-        assert len(story_lines) > 0, "Story 110-2 should appear in output"
-        story_line = story_lines[0]
-        # No story cursor markers when nothing selected
-        assert "▸" not in story_line, (
-            "No story cursor should appear when _selected_story is -1"
-        )
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
 
-    def test_get_selected_story_returns_data(self, panel: SprintPanel) -> None:
-        """get_selected_story should return story dict when a story is selected."""
-        panel._selected_story = 1  # Second story in epic 110 = "110-2"
-        story = panel.get_selected_story()
-        assert story is not None, "get_selected_story should return data when selected"
-        assert story["id"] == "110-2", (
-            f"Expected story id '110-2', got '{story.get('id')}'"
-        )
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            epic_110 = tree.root.children[0]
+            # Check story leaf data
+            story_ids = [c.data["story"]["id"] for c in epic_110.children]
+            assert "110-1" in story_ids
+            assert "110-2" in story_ids
+            assert "110-3" in story_ids
+
+    async def test_tree_story_nodes_have_status_badges(self) -> None:
+        """Tree story labels should include status information."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            epic_110 = tree.root.children[0]
+            # First story is "done" — label should contain done indicator
+            first_label = epic_110.children[0].label.plain
+            assert "done" in first_label, (
+                f"Done story label should contain 'done', got: {first_label}"
+            )
 
     def test_get_selected_story_returns_none_when_unselected(self, panel: SprintPanel) -> None:
-        """get_selected_story should return None when no story is selected."""
-        panel._selected_story = -1
+        """get_selected_story should return None when no tree is mounted."""
         story = panel.get_selected_story()
         assert story is None, (
-            "get_selected_story should return None when _selected_story is -1"
+            "get_selected_story should return None when tree has no cursor"
         )
 
 
@@ -764,6 +784,8 @@ class TestDrillThroughIntegration:
 
     async def test_enter_on_selected_story_pushes_detail_screen(self) -> None:
         """Pressing Enter with a selected story should push StoryDetailScreen."""
+        from textual.widgets import Tree
+
         from pennyfarthing_scripts.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
@@ -771,51 +793,67 @@ class TestDrillThroughIntegration:
         app = BikeRackApp(client=mock_client)
 
         async with app.run_test() as pilot:
-            # Get the sprint panel and set it up
-            panels = app.query(SprintPanel)
-            if len(panels) > 0:
-                sprint_panel = panels.first()
-                sprint_panel._last_payload = SAMPLE_PAYLOAD
-                sprint_panel._selected_story = 1  # Select "110-2"
-                sprint_panel._mounted = True
-                sprint_panel.focus()
-                await pilot.pause()
+            sprint_panel = app.query_one("#panel-sprint", SprintPanel)
+            sprint_panel._mounted = True
+            sprint_panel._rebuild_tree(SAMPLE_PAYLOAD)
+            await pilot.pause()
 
-                # Press Enter to drill through
-                await pilot.press("enter")
-                await pilot.pause()
+            # Move cursor to a story node and press Enter
+            tree = sprint_panel.query_one("#sprint-tree", Tree)
+            epic_110 = tree.root.children[0]
+            epic_110.expand()
+            tree.move_cursor(epic_110.children[1])  # "110-2"
+            sprint_panel.focus()
+            await pilot.pause()
 
-                # Should now be on StoryDetailScreen
-                assert isinstance(app.screen, StoryDetailScreen), (
-                    f"After Enter, should be on StoryDetailScreen, got {type(app.screen).__name__}"
-                )
+            await pilot.press("enter")
+            await pilot.pause()
+
+            assert isinstance(app.screen, StoryDetailScreen), (
+                f"After Enter, should be on StoryDetailScreen, got {type(app.screen).__name__}"
+            )
 
 
 class TestEdgeCases:
     """Edge cases for story navigation and detail screen."""
 
-    def test_story_nav_with_empty_epics(self) -> None:
-        """Story navigation should be safe with empty epics list."""
-        panel = SprintPanel()
-        panel._last_payload = {**SAMPLE_PAYLOAD, "epics": []}
-        panel._mounted = True
-        # Should not raise
-        panel.next_story()
-        panel.prev_story()
-        assert panel._selected_story == -1
+    async def test_tree_with_empty_epics(self) -> None:
+        """Tree rebuild should be safe with empty epics list."""
+        from textual.widgets import Tree
 
-    def test_story_nav_with_empty_stories_in_epic(self) -> None:
-        """Story navigation should handle epic with zero stories."""
-        panel = SprintPanel()
-        panel._last_payload = {
-            **SAMPLE_PAYLOAD,
-            "epics": [{"id": "99", "title": "Empty", "stories": []}],
-        }
-        panel._mounted = True
-        panel.next_story()
-        assert panel._selected_story == -1, (
-            "Should stay at -1 when epic has no stories"
-        )
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree({**SAMPLE_PAYLOAD, "epics": []})
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            assert len(tree.root.children) == 0
+
+    async def test_tree_with_empty_stories_in_epic(self) -> None:
+        """Tree should handle epic with zero stories."""
+        from textual.widgets import Tree
+
+        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+
+        mock_client = MagicMock()
+        mock_client.connect = MagicMock(return_value=_noop_coroutine())
+        app = BikeRackApp(client=mock_client)
+        async with app.run_test() as pilot:
+            sprint = app.query_one("#panel-sprint", SprintPanel)
+            sprint._mounted = True
+            sprint._rebuild_tree({
+                **SAMPLE_PAYLOAD,
+                "epics": [{"id": "99", "title": "Empty", "stories": []}],
+            })
+            await pilot.pause()
+            tree = sprint.query_one("#sprint-tree", Tree)
+            assert len(tree.root.children) == 1
+            assert len(tree.root.children[0].children) == 0
 
     def test_detail_screen_with_no_acceptance_criteria(self) -> None:
         """StoryDetailScreen should handle story data with no ACs."""
