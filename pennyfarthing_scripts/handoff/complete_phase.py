@@ -70,6 +70,19 @@ def complete_phase(
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
     to_agent = _get_phase_agent(project_root, workflow, to_phase)
 
+    # Update tandem line: remove existing, add if to_phase has tandem config
+    content = re.sub(r"\*\*Tandem:\*\*[^\n]*\n", "", content)
+    tandem = _get_phase_tandem(project_root, workflow, to_phase)
+    if tandem:
+        partner = tandem["partner"]
+        scope = tandem["scope"]
+        tandem_line = f"**Tandem:** {partner} ({scope})\n"
+        content = re.sub(
+            r"(\*\*Workflow:\*\*[^\n]*\n)",
+            rf"\1{tandem_line}",
+            content,
+        )
+
     # Update all **Phase:** lines to new phase
     content = re.sub(r"(\*\*Phase:\*\*) \S+", rf"\1 {to_phase}", content)
 
@@ -143,6 +156,21 @@ def _calc_duration(started_str: str, ended_str: str) -> str:
     hours = total_seconds // 3600
     rem_minutes = (total_seconds % 3600) // 60
     return f"{hours}h {rem_minutes}m" if rem_minutes else f"{hours}h"
+
+
+def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | None:
+    """Return tandem config for a phase, or None if no tandem block."""
+    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
+        path = project_root / ".pennyfarthing" / "workflows" / name
+        if path.exists():
+            try:
+                data = yaml.safe_load(path.read_text())
+                for p in data["workflow"]["phases"]:
+                    if p["name"] == phase:
+                        return p.get("tandem")
+            except Exception:
+                pass
+    return None
 
 
 def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
