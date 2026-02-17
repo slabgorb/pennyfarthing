@@ -51,6 +51,7 @@ import {
   DebugPanel,
   SettingsPanel,
   AuditLogPanel,
+  TandemPanel,
 } from './components/panels';
 
 // =============================================================================
@@ -76,6 +77,7 @@ registerPanelComponent(PANEL_INVENTORY.TODO, TodoPanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
+registerPanelComponent(PANEL_INVENTORY.TANDEM, TandemPanel);
 
 // =============================================================================
 // Skip Link Component
