@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/themes-literary",
-  "version": "11.2.0",
+  "version": "11.2.1",
   "description": "Classic literary themes for Pennyfarthing (optional)",
   "pennyfarthing-theme-pack": true,
   "files": [
