@@ -11,11 +11,54 @@
  * - Hidden when native teams not active
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useTeamMembers } from '../../hooks/useTeamMembers';
+import { TeamRoster } from './TeamRoster';
+import { TaskTracker } from './TaskTracker';
+import { MessageFeed } from './MessageFeed';
+import type { TeamMember } from '../../hooks/useTeamMembers';
 
-// Stub — not implemented
 export function TeamPanel(): React.ReactElement {
-  return <div data-testid="team-panel" />;
+  const { isActive, teamName, members, tasks, messages, isLoading, error } = useTeamMembers();
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+
+  return (
+    <div data-testid="team-panel" className="team-panel">
+      {isLoading && (
+        <div data-testid="team-loading">Connecting to team...</div>
+      )}
+
+      {error && (
+        <div data-testid="team-error">Connection failed — team data unavailable</div>
+      )}
+
+      {!isActive && (
+        <div data-testid="team-empty-state">No active team</div>
+      )}
+
+      {teamName && (
+        <div data-testid="team-name">{teamName}</div>
+      )}
+
+      <TeamRoster members={members} onMemberClick={setSelectedMember} />
+      <TaskTracker tasks={tasks} />
+      <MessageFeed messages={messages} />
+
+      {selectedMember && (
+        <div data-testid="agent-output-view">
+          <div>{selectedMember.name}</div>
+          <div>Role: {selectedMember.agentType}</div>
+          <div>Status: {selectedMember.status}</div>
+          <button
+            data-testid="agent-output-close"
+            onClick={() => setSelectedMember(null)}
+          >
+            Close
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default TeamPanel;
