@@ -134,7 +134,8 @@ fi
 SPRINT_YAML_FILES=$(git diff --cached --name-only -- 'sprint/*.yaml' 'sprint/archive/*.yaml' 2>/dev/null \
     | grep -v 'sprint-template\.yaml$' \
     | grep -v 'sprint/completed\.yaml$' \
-    | grep -v 'sprint/context/archived/' || true)
+    | grep -v 'sprint/context/archived/' \
+    | grep -v 'sprints\.yaml$' || true)
 
 if [[ -n "$SPRINT_YAML_FILES" ]]; then
     echo "Sprint YAML files staged for commit:"

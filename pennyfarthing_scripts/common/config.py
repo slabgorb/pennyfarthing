@@ -82,11 +82,38 @@ def load_yaml_config(path: Path) -> dict[str, Any] | None:
         return yaml.safe_load(f)
 
 
-def load_pennyfarthing_config() -> dict[str, Any]:
+def load_pennyfarthing_config(project_root: Path | None = None) -> dict[str, Any]:
     """Load .pennyfarthing/config.local.yaml.
+
+    Args:
+        project_root: Project root path (defaults to auto-detect)
 
     Returns:
         Config dict, or empty dict if not found
     """
-    config_path = get_project_root() / ".pennyfarthing" / "config.local.yaml"
+    root = project_root or get_project_root()
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
     return load_yaml_config(config_path) or {}
+
+
+def save_pennyfarthing_config_key(
+    key: str, value: Any, project_root: Path | None = None
+) -> None:
+    """Set a top-level key in .pennyfarthing/config.local.yaml.
+
+    Creates the file if it doesn't exist. Preserves existing keys.
+
+    Args:
+        key: Top-level key (e.g., "sprint")
+        value: Value to set (dict, str, etc.)
+        project_root: Project root path (defaults to auto-detect)
+    """
+    root = project_root or get_project_root()
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
+
+    config = load_yaml_config(config_path) or {}
+    config[key] = value
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, "w") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
