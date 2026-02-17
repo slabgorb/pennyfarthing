@@ -25,7 +25,6 @@ import {
   onGitCacheRefresh,
   hasFreshCache,
   getCachedGitStatusSync,
-  startPeriodicFetch,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
@@ -1153,10 +1152,6 @@ export function setupWebSocketServers(
     console.log('[WebSocket] onGitCacheRefresh callback fired, broadcasting to', gitClients.size, 'clients');
     broadcastGitUpdate(allReposInfo);
   });
-
-  // Start periodic background fetch (decoupled from status reads)
-  // Fetches remote refs on a 60s interval, invalidates cache on success
-  startPeriodicFetch(projectDir);
 
   // Register force refresh callback for /api/git/refresh endpoint
   setForceRefreshCallback(async (projDir: string) => {
