@@ -98,16 +98,17 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 ## Reflector
 
 <critical>
-**EVERY TURN MUST END WITH A CYCLIST MARKER.** Stop hook enforces this.
+**Cyclist only:** EVERY TURN MUST END WITH A CYCLIST MARKER. Stop hook enforces this.
+**CLI mode:** Do NOT emit CYCLIST markers — they are inert outside Cyclist.
 
-| Situation | Marker |
-|-----------|--------|
-| Workflow handoff | `<!-- CYCLIST:HANDOFF:/agent -->` |
-| Handoff + context >80% | `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` |
-| Yes/no question | `<!-- CYCLIST:QUESTION:yesno -->` |
-| Open-ended question | `<!-- CYCLIST:QUESTION:open -->` |
-| Multiple choice | `<!-- CYCLIST:CHOICES:a,b,c -->` |
-| Everything else | `<!-- CYCLIST:CONTINUE -->` |
+| Situation | Cyclist Marker | CLI Behavior |
+|-----------|---------------|--------------|
+| Workflow handoff | `<!-- CYCLIST:HANDOFF:/agent -->` | Use AGENT_COMMAND `action` field |
+| Handoff + context >80% | `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` | Tell user to `/clear` then run agent |
+| Yes/no question | `<!-- CYCLIST:QUESTION:yesno -->` | Ask user directly |
+| Open-ended question | `<!-- CYCLIST:QUESTION:open -->` | Ask user directly |
+| Multiple choice | `<!-- CYCLIST:CHOICES:a,b,c -->` | Ask user directly |
+| Everything else | `<!-- CYCLIST:CONTINUE -->` | (no marker needed) |
 </critical>
 
 ---
@@ -124,7 +125,12 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
    - If fail → fix issues, retry from step 3 (max 3 retries)
    - If pass → continue
 7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. `pf handoff marker {next_agent}` → emit marker → EXIT
+8. `pf handoff marker {next_agent}` → AGENT_COMMAND block
+9. **Act on AGENT_COMMAND:**
+   - Has `marker:` field → emit the CYCLIST marker (Cyclist path)
+   - `action: "inline_handoff"` → run `activation_command` via Bash, output result, adopt new agent identity
+   - `action: "tirepump_handoff"` → tell user: "Context is high. Run `/clear` then `{fallback}`"
+   - No action, no marker → output `fallback` text and EXIT
 
 **Agents drive exit directly — no handoff subagent.** Scripts handle routing and session updates atomically.
 </agent-exit-protocol>
@@ -135,14 +141,12 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 On activation, check if story phase belongs to you:
 
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
-# If OWNER != your agent → emit handoff marker and EXIT
+pf handoff phase-check {your_agent_name}
 ```
 
-Output:
-```
-<!-- CYCLIST:HANDOFF:/{OWNER} -->
+If result has `action: "redirect"`:
 
-Run `/pf-{OWNER}` to continue
-```
+- **Cyclist:** Emit `<!-- CYCLIST:HANDOFF:/{phase_owner} -->` and EXIT
+- **CLI + relay ON:** Run `pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
+- **CLI + relay OFF:** Output `Run /pf-{phase_owner} to continue` and EXIT
 </wrong-phase-detection>
