@@ -311,7 +311,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
 
     // Count colon-separated entries (key: 'value' pairs)
     const entries = inventoryMatch![1].match(/:\s*['"]/g);
-    expect(entries).toHaveLength(13);
+    expect(entries).toHaveLength(14);
   });
 
   it('PANEL_INVENTORY should still include MESSAGE panel', () => {
