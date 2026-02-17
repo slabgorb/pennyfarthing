@@ -75,12 +75,88 @@ export interface TandemMessage {
 // =============================================================================
 
 export function useTandemObservations(): UseTandemObservationsResult {
-  // Stub: returns empty state — implementation pending
-  const [header] = useState<TandemHeader | null>(null);
-  const [observations] = useState<TandemObservation[]>([]);
-  const [metrics] = useState<TandemMetrics | null>(null);
-  const [isLoading] = useState(true);
-  const [error] = useState<Error | null>(null);
+  const [header, setHeader] = useState<TandemHeader | null>(null);
+  const [observations, setObservations] = useState<TandemObservation[]>([]);
+  const [metrics, setMetrics] = useState<TandemMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/tandem`;
+
+    const connect = () => {
+      try {
+        wsRef.current = new WebSocket(wsUrl);
+
+        wsRef.current.onopen = () => {
+          console.debug('[useTandemObservations] WebSocket connected');
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data) as TandemMessage;
+
+            switch (msg.type) {
+              case 'init':
+                setHeader(msg.header ?? null);
+                setObservations(msg.observations ?? []);
+                setIsLoading(false);
+                setError(null);
+                break;
+
+              case 'observation':
+                if (msg.observation) {
+                  setObservations(prev => [...prev, msg.observation!]);
+                }
+                break;
+
+              case 'metrics':
+                if (msg.metrics) {
+                  setMetrics(msg.metrics);
+                }
+                break;
+
+              case 'clear':
+                setHeader(null);
+                setObservations([]);
+                setMetrics(null);
+                break;
+            }
+          } catch (err) {
+            console.error('[useTandemObservations] Failed to parse message:', err);
+          }
+        };
+
+        wsRef.current.onclose = () => {
+          console.debug('[useTandemObservations] WebSocket closed, reconnecting...');
+          reconnectTimeoutRef.current = setTimeout(connect, 2000);
+        };
+
+        wsRef.current.onerror = (err) => {
+          console.error('[useTandemObservations] WebSocket error:', err);
+          setError(new Error('WebSocket connection failed'));
+        };
+      } catch (err) {
+        console.error('[useTandemObservations] WebSocket init failed:', err);
+        setError(err instanceof Error ? err : new Error('Failed to connect'));
+        setIsLoading(false);
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   return { header, observations, metrics, isLoading, error };
 }
