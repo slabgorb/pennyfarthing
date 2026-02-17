@@ -17,7 +17,8 @@ from typing import Any
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.command import Hit, Hits, Provider
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
+from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
@@ -150,7 +151,19 @@ class PanelTabBar(Static):
 
 
 class AgentHeader(Static):
-    """Displays current agent persona from WheelHub /ws/persona channel."""
+    """Displays current agent persona from WheelHub /ws/persona channel.
+
+    When a portrait image is available (resolved locally or provided via
+    portraitPath in persona data), mounts a Horizontal layout container.
+    Falls back to text-only when no portrait is found.
+    """
+
+    class PortraitLayoutUpdate(Message):
+        """Internal message to update portrait layout asynchronously."""
+
+        def __init__(self, has_portrait: bool) -> None:
+            super().__init__()
+            self.has_portrait = has_portrait
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -168,6 +181,21 @@ class AgentHeader(Static):
         self._is_streaming = bool(data.get("isStreaming", False))
         self._render_header()
 
+    def _resolve_portrait(self, data: dict[str, Any]) -> Path | None:
+        """Get portrait path from persona data or resolve locally."""
+        portrait_path = data.get("portraitPath")
+        if portrait_path:
+            p = Path(portrait_path)
+            if p.exists():
+                return p
+        theme = data.get("theme", "")
+        role = data.get("role", "")
+        if theme and role:
+            from pennyfarthing_scripts.bikerack import portrait_resolver
+
+            return portrait_resolver.resolve_portrait_path(theme, role)
+        return None
+
     def _render_header(self) -> None:
         """Re-render the header from stored state."""
         data = self._persona_data
@@ -175,20 +203,20 @@ class AgentHeader(Static):
         role = data.get("role", "")
         role_desc = data.get("roleDescription", "")
         quote = data.get("quote", "")
-        style = data.get("style", "")
         theme = data.get("theme", "")
 
         if not char:
             self.update("[dim]Waiting for agent...[/dim]")
+            self.post_message(self.PortraitLayoutUpdate(has_portrait=False))
             return
 
         parts: list[str] = []
 
-        # Role badge
+        # Role badge — escape brackets so Rich doesn't eat them as tags
         if role:
             abbrev = AGENT_ABBREV.get(role, role.upper()[:3])
             color = AGENT_ROLE_COLORS.get(role, "bright_magenta")
-            parts.append(f"[bold {color}][{abbrev}][/bold {color}]")
+            parts.append(f"[bold {color}]\\[{abbrev}][/bold {color}]")
 
         # Character name
         parts.append(f"[bold]{char}[/bold]")
@@ -196,6 +224,7 @@ class AgentHeader(Static):
         # Theme name
         if theme:
             from pennyfarthing_scripts.bikerack.base_panel import humanize_theme
+
             parts.append(f"[dim]{humanize_theme(theme)}[/dim]")
 
         # Streaming indicator
@@ -211,6 +240,19 @@ class AgentHeader(Static):
             line += f"\n[dim]{role_desc}[/dim]"
 
         self.update(line)
+
+        # Check portrait and schedule layout update
+        portrait = self._resolve_portrait(data)
+        self.post_message(self.PortraitLayoutUpdate(has_portrait=portrait is not None))
+
+    async def on_agent_header_portrait_layout_update(
+        self, event: PortraitLayoutUpdate
+    ) -> None:
+        """Mount or remove Horizontal portrait layout."""
+        for child in list(self.query("Horizontal")):
+            await child.remove()
+        if event.has_portrait:
+            await self.mount(Horizontal(id="portrait-row"))
 
 
 class ConnectionStatus(Static):
@@ -507,6 +549,11 @@ def main(
         port: Explicit WheelHub port. If None, reads from .wheelhub-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
+    # Detect terminal image protocol BEFORE App.run() claims the terminal
+    from pennyfarthing_scripts.bikerack import portrait_resolver
+
+    portrait_resolver.detect_image_protocol()
+
     if port is None:
         if project_dir is not None:
             port_file = project_dir / ".wheelhub-port"
