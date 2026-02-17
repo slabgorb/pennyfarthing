@@ -20,6 +20,7 @@ import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
+import { LEGACY_HOOK_MIGRATIONS, migrateHookPaths } from '../utils/settings.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -90,6 +91,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkFileLayout(projectRoot));
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
+  results.push(checkLegacyHookCommands(projectRoot));
   results.push(...checkCyclist(projectRoot));
   results.push(checkPfCli(nodeModulesPath));
 
@@ -2324,6 +2326,89 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
     name: 'settings/statusline-path',
     status: 'pass',
     detail: 'Configured'
+  };
+}
+
+/**
+ * Check if settings.local.json contains legacy .sh hook commands that should
+ * be migrated to `pf hooks` commands. The .sh scripts still work (they're shims)
+ * but `pf hooks` is the canonical path — faster, no shell indirection.
+ */
+function checkLegacyHookCommands(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  if (!pathExists(settingsPath)) {
+    return { name: 'legacy/hook-commands', status: 'pass', detail: 'No settings file' };
+  }
+
+  let settings: Record<string, unknown>;
+  try {
+    settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  } catch {
+    return { name: 'legacy/hook-commands', status: 'warn', detail: 'Cannot parse settings.local.json' };
+  }
+
+  if (!settings.hooks) {
+    return { name: 'legacy/hook-commands', status: 'pass' };
+  }
+
+  // Count how many hook commands still reference .sh scripts
+  const hooks = settings.hooks as Record<string, unknown>;
+  let legacyCount = 0;
+
+  for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
+    if (!Array.isArray(hooks[hookType])) continue;
+    for (const entry of hooks[hookType] as Array<{ hooks?: Array<{ command?: string }> }>) {
+      if (!entry.hooks) continue;
+      for (const h of entry.hooks) {
+        if (!h.command) continue;
+        for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
+          if (h.command.includes(shName)) {
+            legacyCount++;
+          }
+        }
+      }
+    }
+  }
+
+  // Also check statusLine
+  const statusLine = settings.statusLine as { command?: string } | undefined;
+  if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+    for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
+      if (statusLine.command.includes(shName)) {
+        legacyCount++;
+      }
+    }
+  }
+
+  if (legacyCount === 0) {
+    return { name: 'legacy/hook-commands', status: 'pass' };
+  }
+
+  return {
+    name: 'legacy/hook-commands',
+    status: 'warn',
+    detail: `${legacyCount} hook(s) still use .sh scripts — should use pf hooks commands`,
+    fix: () => {
+      // Migrate all hook arrays
+      for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
+        if (Array.isArray(hooks[hookType])) {
+          migrateHookPaths(hooks[hookType] as unknown[]);
+        }
+      }
+
+      // Migrate statusLine
+      if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+        for (const [shName, pfCommand] of Object.entries(LEGACY_HOOK_MIGRATIONS)) {
+          if (statusLine.command.includes(shName)) {
+            statusLine.command = pfCommand;
+            break;
+          }
+        }
+      }
+
+      writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+    }
   };
 }
 
