@@ -161,9 +161,10 @@ class AgentHeader(Static):
     class PortraitLayoutUpdate(Message):
         """Internal message to update portrait layout asynchronously."""
 
-        def __init__(self, has_portrait: bool) -> None:
+        def __init__(self, portrait_path: Path | None) -> None:
             super().__init__()
-            self.has_portrait = has_portrait
+            self.has_portrait = portrait_path is not None
+            self.portrait_path = portrait_path
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -207,7 +208,7 @@ class AgentHeader(Static):
 
         if not char:
             self.update("[dim]Waiting for agent...[/dim]")
-            self.post_message(self.PortraitLayoutUpdate(has_portrait=False))
+            self.post_message(self.PortraitLayoutUpdate(portrait_path=None))
             return
 
         parts: list[str] = []
@@ -243,7 +244,7 @@ class AgentHeader(Static):
 
         # Check portrait and schedule layout update
         portrait = self._resolve_portrait(data)
-        self.post_message(self.PortraitLayoutUpdate(has_portrait=portrait is not None))
+        self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
 
     async def on_agent_header_portrait_layout_update(
         self, event: PortraitLayoutUpdate
@@ -251,8 +252,16 @@ class AgentHeader(Static):
         """Mount or remove Horizontal portrait layout."""
         for child in list(self.query("Horizontal")):
             await child.remove()
-        if event.has_portrait:
-            await self.mount(Horizontal(id="portrait-row"))
+        if event.has_portrait and event.portrait_path:
+            try:
+                from textual_image.widget import AutoImage
+
+                img = AutoImage(str(event.portrait_path), id="portrait-img")
+                row = Horizontal(img, id="portrait-row")
+                await self.mount(row)
+            except ImportError:
+                # textual-image not installed — skip portrait, text-only fallback
+                pass
 
 
 class ConnectionStatus(Static):
@@ -293,8 +302,17 @@ class BikeRackApp(App):
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 3;
+        max-height: 4;
         padding: 0 1;
+    }
+    #portrait-row {
+        height: 3;
+        width: auto;
+    }
+    #portrait-img {
+        width: 6;
+        height: 3;
+        margin: 0 1 0 0;
     }
     #tab-bar {
         height: 1;
