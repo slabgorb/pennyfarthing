@@ -284,6 +284,10 @@ class BikeRackApp(App):
         Binding("e", "toggle_epic", show=False),
     ]
 
+    def _get_dom_base(self):
+        """Query the active screen so app.query() finds pushed screen widgets."""
+        return self.screen
+
     def __init__(self, client=None, **kwargs):
         super().__init__(**kwargs)
         self._client = client
