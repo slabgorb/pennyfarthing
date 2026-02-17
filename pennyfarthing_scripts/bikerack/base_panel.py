@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from rich.text import Text
+from textual.message import Message
 from textual.widgets import Static
 
 # Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
@@ -113,6 +114,13 @@ class BasePanel(Static):
     ``render_panel(payload)`` to return a Rich renderable.
     """
 
+    class DataReceived(Message, bubble=False):
+        """WebSocket data received — routed through Textual message system."""
+
+        def __init__(self, content: Any) -> None:
+            super().__init__()
+            self.content = content
+
     #: WebSocket channel this panel subscribes to (override in subclass)
     channel: str = ""
 
@@ -138,19 +146,17 @@ class BasePanel(Static):
         """Mark panel as unmounted — messages ignored after this."""
         self._mounted = False
 
-    def _thread_safe_update(self, content: Any) -> None:
-        """Update widget content, safe from both main and worker threads."""
-        try:
-            self.app.call_from_thread(self.update, content)
-        except RuntimeError:
-            # Already on the main thread (e.g., in tests)
-            self.update(content)
+    def on_base_panel_data_received(self, event: DataReceived) -> None:
+        """Process DataReceived in Textual message context — triggers repaint."""
+        self.update(event.content)
 
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket message.
 
-        Stores payload, calls render_panel, updates widget display.
-        Uses thread-safe update since WS handlers may run in a worker thread.
+        Stores payload, calls render_panel, posts DataReceived message.
+        Uses post_message to route through Textual's message system,
+        ensuring proper repaint cycle (call_from_thread / direct update
+        from async WS tasks does not reliably trigger redraws).
         No-op after unmount or if message is None.
         """
         if not self._mounted or message is None:
@@ -158,7 +164,7 @@ class BasePanel(Static):
         self._last_payload = message
         rendered = self.render_panel(message)
         try:
-            self._thread_safe_update(rendered)
+            self.post_message(self.DataReceived(rendered))
         except Exception:
             pass
 

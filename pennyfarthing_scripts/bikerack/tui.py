@@ -151,11 +151,20 @@ class PanelTabBar(Static):
         self.update("  ".join(parts))
 
 
+PORTRAIT_SKELETON = """\
+[dim]┌────────┐
+│░░░░░░░░│
+│░░░▓▓░░░│
+│░░░░░░░░│
+└────────┘[/dim]"""
+
+
 class AgentHeader(Static):
     """Displays current agent persona from WheelHub /ws/persona channel.
 
     When a portrait image is available (resolved locally or provided via
     portraitPath in persona data), mounts a Horizontal layout container.
+    Shows a skeleton placeholder while the image loads.
     Falls back to text-only when no portrait is found.
     """
 
@@ -252,7 +261,11 @@ class AgentHeader(Static):
     async def on_agent_header_portrait_layout_update(
         self, event: PortraitLayoutUpdate
     ) -> None:
-        """Mount or remove Horizontal portrait layout with text beside image."""
+        """Mount or remove Horizontal portrait layout with text beside image.
+
+        Shows a skeleton placeholder immediately while the real image loads
+        to avoid a visible blank gap during image decode/render.
+        """
         if event.has_portrait and event.portrait_path:
             if self._current_portrait == event.portrait_path:
                 # Same portrait — just update text label if it exists
@@ -266,6 +279,16 @@ class AgentHeader(Static):
             # New portrait or first time — full layout rebuild
             for child in list(self.query("Horizontal")):
                 await child.remove()
+
+            # Mount skeleton + text immediately so there's no blank gap
+            self.update("")
+            self._current_portrait = event.portrait_path
+            skeleton = Static(PORTRAIT_SKELETON, id="portrait-skeleton")
+            text = Static(self._header_text, id="agent-text")
+            row = Horizontal(skeleton, text, id="portrait-row")
+            await self.mount(row)
+
+            # Now try to load the real image and swap it in
             try:
                 from pennyfarthing_scripts.bikerack.portrait_resolver import (
                     detect_image_protocol,
@@ -273,7 +296,9 @@ class AgentHeader(Static):
 
                 protocol = detect_image_protocol()
                 if protocol is None:
-                    # No image protocol available — text-only
+                    # No image protocol — remove skeleton, fall back to text-only
+                    for child in list(self.query("Horizontal")):
+                        await child.remove()
                     self.update(self._header_text)
                     return
 
@@ -284,14 +309,17 @@ class AgentHeader(Static):
                 else:
                     from textual_image.widget import HalfcellImage as ImageWidget
 
-                self.update("")  # clear Static text — text goes in child
-                self._current_portrait = event.portrait_path
                 img = ImageWidget(str(event.portrait_path), id="portrait-img")
-                text = Static(self._header_text, id="agent-text")
-                row = Horizontal(img, text, id="portrait-row")
-                await self.mount(row)
+                try:
+                    skel = self.query_one("#portrait-skeleton")
+                    await skel.remove()
+                except Exception:
+                    pass
+                await row.mount(img, before=0)
             except (ImportError, Exception):
-                # textual-image not installed or render error — text-only fallback
+                # textual-image not available — remove skeleton, text-only
+                for child in list(self.query("Horizontal")):
+                    await child.remove()
                 self.update(self._header_text)
         else:
             # No portrait — text-only
@@ -334,22 +362,43 @@ class PanelCommands(Provider):
 class BikeRackApp(App):
     """BikeRack TUI application shell."""
 
+    class PersonaUpdate(Message, bubble=False):
+        """Persona data from WS — routed through Textual message system."""
+
+        def __init__(self, data: dict[str, Any]) -> None:
+            super().__init__()
+            self.data = data
+
+    class FocusUpdate(Message, bubble=False):
+        """Focus change from WS — routed through Textual message system."""
+
+        def __init__(self, focus: str | None) -> None:
+            super().__init__()
+            self.focus = focus
+
+    class WsStateUpdate(Message, bubble=False):
+        """WS connection state change — routed through Textual message system."""
+
+        def __init__(self, state: ConnectionState) -> None:
+            super().__init__()
+            self.state = state
+
     TITLE = "BikeRack"
 
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 6;
+        max-height: 7;
         padding: 0 1;
         border-bottom: solid $accent;
     }
     #portrait-row {
-        height: 4;
+        height: 5;
         width: 100%;
     }
     #portrait-img {
-        width: 8;
-        height: 4;
+        width: 10;
+        height: 5;
         margin: 0 1 0 0;
     }
     #agent-text {
@@ -564,6 +613,7 @@ class BikeRackApp(App):
 
         Expected format: {type: 'init'|'update', focus: '<panel>'|null}
         Only 'update' messages trigger panel switches (matching React hook).
+        Routes through Textual message system via post_message for proper repaint.
         """
         if message is None or not isinstance(message, dict):
             return
@@ -571,34 +621,47 @@ class BikeRackApp(App):
             return
         if "focus" not in message:
             return
+        self.post_message(self.FocusUpdate(message["focus"]))
 
-        focus = message["focus"]
+    def _handle_persona_message(self, message: dict[str, Any] | None) -> None:
+        """Handle incoming persona channel messages.
+
+        Routes through Textual message system via post_message for proper repaint.
+        """
+        if message is None or not isinstance(message, dict):
+            return
+        self.post_message(self.PersonaUpdate(message))
+
+    def _on_ws_state_change(self, state: ConnectionState) -> None:
+        """Handle WheelHub connection state changes.
+
+        Routes through Textual message system via post_message for proper repaint.
+        """
+        self.post_message(self.WsStateUpdate(state))
+
+    def on_bike_rack_app_persona_update(self, event: PersonaUpdate) -> None:
+        """Apply persona data in Textual message context."""
+        try:
+            header = self.query_one("#agent-header", AgentHeader)
+            header._apply_persona(event.data)
+        except Exception:
+            pass
+
+    def on_bike_rack_app_focus_update(self, event: FocusUpdate) -> None:
+        """Apply focus change in Textual message context."""
+        focus = event.focus
         if focus is not None and focus in _PANEL_KEYS:
-            try:
-                self.call_from_thread(self.action_switch_panel, focus)
-            except RuntimeError:
-                self.action_switch_panel(focus)
+            self.action_switch_panel(focus)
         elif focus is not None:
-            # Panel exists in display names but not implemented — just update state
             self._previous_panel = self._focused_panel
             self._focused_panel = focus
             save_last_panel(focus, project_dir=None)
 
-    def _handle_persona_message(self, message: dict[str, Any] | None) -> None:
-        """Handle incoming persona channel messages."""
-        if message is None or not isinstance(message, dict):
-            return
-        try:
-            header = self.query_one("#agent-header", AgentHeader)
-            header._apply_persona(message)
-        except Exception:
-            pass
-
-    def _on_ws_state_change(self, state: ConnectionState) -> None:
-        """Handle WheelHub connection state changes."""
+    def on_bike_rack_app_ws_state_update(self, event: WsStateUpdate) -> None:
+        """Apply connection state in Textual message context."""
         try:
             widget = self.query_one("#connection-status", ConnectionStatus)
-            widget.connection_state = state
+            widget.connection_state = event.state
         except Exception:
             pass
 
