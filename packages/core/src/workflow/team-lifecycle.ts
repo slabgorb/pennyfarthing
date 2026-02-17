@@ -124,7 +124,7 @@ export interface TeamProcessAdapter {
 }
 
 // =============================================================================
-// In-memory registries (stubs — not implemented)
+// In-memory registries
 // =============================================================================
 
 /** Active teams keyed by storyId */
@@ -142,7 +142,7 @@ export function _resetForTesting(): void {
 }
 
 // =============================================================================
-// Stub implementations — all return not-implemented errors
+// Implementations
 // =============================================================================
 
 /**
@@ -152,35 +152,115 @@ export function _resetForTesting(): void {
  * If phase has team config, creates team and returns handle.
  */
 export async function createTeam(
-  _params: CreateTeamParams,
+  params: CreateTeamParams,
 ): Promise<TeamResult<TeamHandle>> {
-  // STUB: not implemented — tests should fail on assertions
-  return { success: false, error: 'not implemented' };
+  const { phase, storyId, adapter } = params;
+
+  if (!phase.team) {
+    return { success: true };
+  }
+
+  const teamName = `${storyId}-${phase.name}`;
+
+  // Clean up existing team for same story
+  const existing = activeTeams.get(storyId);
+  if (existing && adapter) {
+    try { await adapter.deleteTeam(existing.teamName); } catch { /* swallow */ }
+    activeTeams.delete(storyId);
+  }
+
+  const handle: TeamHandle = {
+    teamName,
+    storyId,
+    phase: phase.name,
+    teammates: [],
+    createdAt: new Date().toISOString(),
+  };
+
+  if (adapter) {
+    try {
+      await adapter.createTeam({ teamName });
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  }
+
+  activeTeams.set(storyId, handle);
+  return { success: true, data: handle };
 }
 
 /**
  * Spawn all teammates for a team based on workflow YAML config.
  */
 export async function spawnTeammates(
-  _handle: TeamHandle,
-  _config: TeamConfig,
-  _storyId: string,
-  _phase: string,
-  _adapter?: TeamProcessAdapter,
+  handle: TeamHandle,
+  config: TeamConfig,
+  storyId: string,
+  phase: string,
+  adapter?: TeamProcessAdapter,
 ): Promise<TeamResult<TeammateHandle[]>> {
-  // STUB: not implemented
-  return { success: false, error: 'not implemented' };
+  const teammates: TeammateHandle[] = [];
+
+  for (const member of config.teammates) {
+    const teammate: TeammateHandle = {
+      agent: member.agent,
+      task: member.task,
+      status: 'spawned',
+    };
+
+    if (adapter) {
+      try {
+        await adapter.spawnTeammate({
+          teamName: handle.teamName,
+          agent: member.agent,
+          prompt: `pf agent start "${member.agent}"`,
+          model: config.model,
+        });
+      } catch {
+        teammate.status = 'crashed';
+      }
+    }
+
+    teammates.push(teammate);
+  }
+
+  handle.teammates = teammates;
+  // Update registry
+  if (activeTeams.has(handle.storyId)) {
+    activeTeams.set(handle.storyId, handle);
+  }
+
+  return { success: true, data: teammates };
 }
 
 /**
  * Shut down all active teammates in a team.
  */
 export async function shutdownAllTeammates(
-  _handle: TeamHandle,
-  _adapter?: TeamProcessAdapter,
+  handle: TeamHandle,
+  adapter?: TeamProcessAdapter,
 ): Promise<TeamResult<{ shutdownCount: number }>> {
-  // STUB: not implemented
-  return { success: false, error: 'not implemented' };
+  let shutdownCount = 0;
+
+  for (const teammate of handle.teammates) {
+    if (teammate.status === 'shutdown' || teammate.status === 'crashed') {
+      continue;
+    }
+
+    if (adapter) {
+      try {
+        await adapter.shutdownTeammate({
+          teamName: handle.teamName,
+          agent: teammate.agent,
+        });
+      } catch { /* swallow — graceful degradation */ }
+    }
+
+    teammate.status = 'shutdown';
+    shutdownCount++;
+  }
+
+  return { success: true, data: { shutdownCount } };
 }
 
 /**
@@ -188,22 +268,36 @@ export async function shutdownAllTeammates(
  * Must run before pf handoff.
  */
 export async function cleanupTeam(
-  _handle: TeamHandle,
-  _adapter?: TeamProcessAdapter,
+  handle: TeamHandle,
+  adapter?: TeamProcessAdapter,
 ): Promise<TeamResult<{ cleaned: boolean }>> {
-  // STUB: not implemented
-  return { success: false, error: 'not implemented' };
+  if (adapter) {
+    try { await adapter.deleteTeam(handle.teamName); } catch { /* swallow */ }
+  }
+
+  activeTeams.delete(handle.storyId);
+  return { success: true, data: { cleaned: true } };
 }
 
 /**
  * Check gate condition when a TaskCompleted event fires.
  */
 export function checkGateOnTaskCompleted(
-  _handle: TeamHandle,
-  _phase: WorkflowPhase,
+  handle: TeamHandle,
+  phase: WorkflowPhase,
 ): GateCheckResult {
-  // STUB: not implemented
-  return { passed: false, gate: 'unknown', reason: 'not implemented' };
+  if (!phase.gate) {
+    return { passed: true, gate: 'none' };
+  }
+
+  const gateType = phase.gate.type ?? 'unknown';
+  const hasActive = handle.teammates.some((t) => t.status === 'active');
+
+  if (hasActive) {
+    return { passed: false, gate: gateType, reason: 'Teammates still active' };
+  }
+
+  return { passed: true, gate: gateType };
 }
 
 /**
@@ -211,26 +305,38 @@ export function checkGateOnTaskCompleted(
  */
 export function checkGateOnTeammateIdle(
   _handle: TeamHandle,
-  _teammate: TeammateHandle,
-  _phase: WorkflowPhase,
+  teammate: TeammateHandle,
+  phase: WorkflowPhase,
 ): GateCheckResult {
-  // STUB: not implemented
-  return { passed: false, gate: 'unknown', reason: 'not implemented' };
+  if (!phase.gate) {
+    return { passed: true, gate: 'none' };
+  }
+
+  const gateType = phase.gate.type ?? 'unknown';
+
+  if (teammate.status === 'crashed') {
+    return { passed: false, gate: gateType, reason: 'Teammate crashed' };
+  }
+
+  return { passed: true, gate: gateType };
 }
 
 /**
  * Generate a team activity summary for the session file audit trail.
  */
 export function generateTeamSummary(
-  _handle: TeamHandle,
+  handle: TeamHandle,
 ): TeamActivitySummary {
-  // STUB: not implemented
   return {
-    teamName: '',
-    storyId: '',
-    phase: '',
-    members: [],
-    cleanShutdown: false,
+    teamName: handle.teamName,
+    storyId: handle.storyId,
+    phase: handle.phase,
+    members: handle.teammates.map((t) => ({
+      agent: t.agent,
+      status: t.status,
+      task: t.task,
+    })),
+    cleanShutdown: handle.teammates.every((t) => t.status === 'shutdown'),
   };
 }
 
@@ -238,22 +344,43 @@ export function generateTeamSummary(
  * Acquire an exclusive lock for sidecar file writing.
  */
 export async function acquireSidecarLock(
-  _filePath: string,
-  _storyId: string,
+  filePath: string,
+  storyId: string,
   _timeout?: number,
 ): Promise<TeamResult<SidecarLock>> {
-  // STUB: not implemented
-  return { success: false, error: 'not implemented' };
+  const existing = sidecarLocks.get(filePath);
+
+  if (existing) {
+    if (existing.storyId === storyId) {
+      return { success: true, data: existing };
+    }
+    return { success: false, error: `Lock held by story ${existing.storyId}` };
+  }
+
+  const lock: SidecarLock = {
+    lockPath: `${filePath}.lock`,
+    storyId,
+    acquiredAt: new Date().toISOString(),
+  };
+
+  sidecarLocks.set(filePath, lock);
+  return { success: true, data: lock };
 }
 
 /**
  * Release a sidecar file lock.
  */
 export function releaseSidecarLock(
-  _lock: SidecarLock,
+  lock: SidecarLock,
 ): TeamResult<void> {
-  // STUB: not implemented
-  return { success: false, error: 'not implemented' };
+  // Find and remove by lockPath
+  for (const [path, held] of sidecarLocks) {
+    if (held.lockPath === lock.lockPath) {
+      sidecarLocks.delete(path);
+      break;
+    }
+  }
+  return { success: true };
 }
 
 /**
