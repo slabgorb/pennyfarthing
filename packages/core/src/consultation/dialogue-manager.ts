@@ -229,7 +229,7 @@ export function parseDialogueExchanges(content: string): DialogueExchange[] {
 /**
  * Generate summary markdown section from exchanges.
  */
-export function generateSummary(exchanges: DialogueExchange[], startedAt: string): string {
+export function generateSummary(exchanges: DialogueExchange[], _startedAt: string): string {
   const total = exchanges.length;
 
   // Key decisions from applied outcomes

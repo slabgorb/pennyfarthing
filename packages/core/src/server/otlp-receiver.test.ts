@@ -358,7 +358,6 @@ describe('AC5: Background task lifecycle', () => {
     const {
       trackBackgroundTask,
       completeBackgroundTask,
-      getBackgroundTasks,
     } = await import('./otlp-receiver.js');
 
     trackBackgroundTask({

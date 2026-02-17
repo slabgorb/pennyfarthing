@@ -15,7 +15,6 @@ import os
 import sys
 from pathlib import Path
 
-
 # Protected patterns — files that should never be edited automatically
 PROTECTED_PATTERNS = [
     "*.env",

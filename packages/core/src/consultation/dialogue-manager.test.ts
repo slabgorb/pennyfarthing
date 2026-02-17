@@ -36,7 +36,6 @@ import {
 import type {
   DialogueHeader,
   DialogueExchange,
-  Outcome,
 } from './dialogue-manager.js';
 
 // =============================================================================

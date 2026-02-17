@@ -245,7 +245,7 @@ checkpoint_save "dev-phase" "implemented user auth"
 
 # 2. Update session file with progress
 # 3. Commit pending changes
-# 4. Hand off or use /continue-session
+# 4. Hand off or use /pf-session continue
 ```
 
 #### "Context circuit breaker triggered"
@@ -256,7 +256,7 @@ checkpoint_save "dev-phase" "implemented user auth"
 1. The circuit breaker blocks further tool use
 2. Save your current state manually
 3. Commit any pending changes
-4. Start fresh session with `/continue-session`
+4. Start fresh session with `/pf-session continue`
 
 ### Agent-Specific Issues
 
@@ -394,7 +394,7 @@ Problem?
 │   ├── No matches → Check pattern case
 │   └── CI-only → Check env vars
 ├── Context exhausted
-│   └── checkpoint_save → commit → /continue-session
+│   └── checkpoint_save → commit → /pf-session continue
 └── Agent errors
     └── Check sidecar gotchas for agent
 ```

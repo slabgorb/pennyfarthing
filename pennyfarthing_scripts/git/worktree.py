@@ -199,7 +199,7 @@ def remove_worktree(name: str) -> int:
         shutil.rmtree(wt_path)
 
     # Prune worktree references
-    for repo_name, cfg in repos.items():
+    for _repo_name, cfg in repos.items():
         full_path = (project_root / cfg.path).resolve()
         if full_path.exists():
             _git(["worktree", "prune"], full_path)
@@ -277,7 +277,7 @@ def show_worktree_status() -> int:
             if repo_wt.exists():
                 branch, _ = _git(["branch", "--show-current"], repo_wt)
                 status_out, _ = _git(["status", "--short"], repo_wt)
-                count = len([l for l in status_out.split("\n") if l.strip()]) if status_out else 0
+                count = len([line for line in status_out.split("\n") if line.strip()]) if status_out else 0
                 print(f"  {repo_name} ({cfg.repo_type}): {branch} ({count} uncommitted)")
 
         # Check for session files referencing this worktree

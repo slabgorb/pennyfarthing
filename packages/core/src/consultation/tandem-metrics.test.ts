@@ -27,7 +27,6 @@ import {
 } from './tandem-metrics.js';
 
 import type {
-  ExchangeMetrics,
   MetricsExchange,
   TandemMetricsSummary,
 } from './tandem-metrics.js';
