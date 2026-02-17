@@ -53,6 +53,7 @@ export const PANEL_INVENTORY = {
   GIT: 'git',
   SETTINGS: 'settings',
   PROGRESS: 'progress',
+  TANDEM: 'tandem',
 } as const;
 
 export type PanelId = typeof PANEL_INVENTORY[keyof typeof PANEL_INVENTORY];
@@ -92,6 +93,7 @@ export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.BACKGROUND,
   PANEL_INVENTORY.GIT,
   PANEL_INVENTORY.SETTINGS,
+  PANEL_INVENTORY.TANDEM,
 ] as const;
 
 // Title Case display names for tab headers (AC4: Story 75-5)
@@ -109,6 +111,7 @@ const PANEL_TITLES: Record<string, string> = {
   git: 'Git',
   settings: 'Settings',
   progress: 'Progress',
+  tandem: 'Tandem',
 };
 
 // Track closed panels for restoration
