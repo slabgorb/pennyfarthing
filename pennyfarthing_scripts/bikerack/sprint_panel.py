@@ -48,12 +48,16 @@ class SprintPanel(BasePanel):
         Binding("j", "next_epic_key", "Next epic"),
         Binding("k", "prev_epic_key", "Prev epic"),
         Binding("e", "toggle_epic_key", "Toggle epic"),
+        Binding("down", "next_story_key", "Next story", show=False),
+        Binding("up", "prev_story_key", "Prev story", show=False),
+        Binding("enter", "drill_into_story_key", "Open story", show=False),
     ]
 
     def __init__(self, client: Any = None, **kwargs: Any) -> None:
         super().__init__(client=client, **kwargs)
         self._selected_epic: int = 0
         self._toggled: dict[str, bool] = {}  # epic_id -> user override
+        self._selected_story: int = -1  # -1 = no story selected
 
     def next_epic(self) -> None:
         """Move selection to the next epic."""
@@ -83,6 +87,22 @@ class SprintPanel(BasePanel):
             self._toggled[epic_id] = not self._is_expanded(epics[self._selected_epic])
         self._rerender()
 
+    def next_story(self) -> None:
+        """Move cursor to next story within expanded epic. Stub."""
+        pass
+
+    def prev_story(self) -> None:
+        """Move cursor to previous story within expanded epic. Stub."""
+        pass
+
+    def get_selected_story(self) -> dict[str, Any] | None:
+        """Return the currently selected story data, or None if no story selected. Stub."""
+        return None
+
+    def drill_into_story(self) -> None:
+        """Push StoryDetailScreen for the selected story. Stub."""
+        pass
+
     def action_next_epic_key(self) -> None:
         """Binding action: next epic."""
         self.next_epic()
@@ -94,6 +114,18 @@ class SprintPanel(BasePanel):
     def action_toggle_epic_key(self) -> None:
         """Binding action: toggle epic."""
         self.toggle_epic()
+
+    def action_next_story_key(self) -> None:
+        """Binding action: next story."""
+        self.next_story()
+
+    def action_prev_story_key(self) -> None:
+        """Binding action: previous story."""
+        self.prev_story()
+
+    def action_drill_into_story_key(self) -> None:
+        """Binding action: drill into story."""
+        self.drill_into_story()
 
     def _rerender(self) -> None:
         if self._last_payload is not None:
