@@ -109,7 +109,10 @@ export function useTandemObservations(): UseTandemObservationsResult {
 
               case 'observation':
                 if (msg.observation) {
-                  setObservations(prev => [...prev, msg.observation!]);
+                  setObservations(prev => {
+                    const next = [...prev, msg.observation!];
+                    return next.length > 200 ? next.slice(-200) : next;
+                  });
                 }
                 break;
 
