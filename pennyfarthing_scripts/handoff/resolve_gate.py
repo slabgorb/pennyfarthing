@@ -67,7 +67,19 @@ def resolve_gate(
 
     gate = current_phase.get("gate")
 
-    if current_idx + 1 < len(phases):
+    # Support explicit next: directive for non-linear phase routing
+    explicit_next = current_phase.get("next")
+    if explicit_next:
+        nxt = next((p for p in phases if p["name"] == explicit_next), None)
+        if nxt:
+            next_phase = nxt["name"]
+            next_agent = nxt["agent"]
+        else:
+            return _result(
+                status="error",
+                error=f"Phase '{explicit_next}' referenced by next: not found in workflow '{workflow}'",
+            )
+    elif current_idx + 1 < len(phases):
         nxt = phases[current_idx + 1]
         next_phase = nxt["name"]
         next_agent = nxt["agent"]

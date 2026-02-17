@@ -30,6 +30,8 @@ def update_story(
     completed_date: str | None = None,
     started_date: str | None = None,
     workflow: str | None = None,
+    review_findings: str | None = None,
+    review_verdict: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Update fields on a story in the sprint YAML.
@@ -44,6 +46,8 @@ def update_story(
         completed_date: Completed date (ISO format)
         started_date: Started date (ISO format)
         workflow: Workflow type (tdd, trivial, bdd, agent-docs)
+        review_findings: Reviewer findings text
+        review_verdict: Review verdict (approved, rejected, pending)
         dry_run: If True, report changes without writing
 
     Returns:
@@ -97,6 +101,15 @@ def update_story(
         story["started"] = started_date
     if workflow is not None:
         story["workflow"] = workflow
+    if review_findings is not None:
+        story["review_findings"] = review_findings
+    if review_verdict is not None:
+        if review_verdict not in ("approved", "rejected", "pending"):
+            return {
+                "success": False,
+                "error": f"Invalid review_verdict '{review_verdict}'. Must be one of: approved, rejected, pending",
+            }
+        story["review_verdict"] = review_verdict
 
     # Auto-cleanup rules
     if status == "done":
@@ -153,6 +166,8 @@ def update_story(
 @click.option("--priority", default=None)
 @click.option("--started", "started_date", default=None)
 @click.option("--workflow", default=None)
+@click.option("--review-findings", default=None, help="Reviewer findings text")
+@click.option("--review-verdict", type=click.Choice(["approved", "rejected", "pending"]), default=None)
 @click.option("--dry-run", is_flag=True)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
@@ -164,6 +179,8 @@ def story_update_command(
     priority: str | None,
     started_date: str | None,
     workflow: str | None,
+    review_findings: str | None,
+    review_verdict: str | None,
     dry_run: bool,
     sprint_file: str | None,
 ) -> None:
@@ -184,6 +201,8 @@ def story_update_command(
         completed_date=completed_date,
         started_date=started_date,
         workflow=workflow,
+        review_findings=review_findings,
+        review_verdict=review_verdict,
         dry_run=dry_run,
     )
 
