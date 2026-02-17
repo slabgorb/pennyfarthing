@@ -111,13 +111,13 @@ class TestPortraitPathResolution:
         result = resolve_portrait_path("hogans-heroes", "nonexistent-agent", project_root=PROJECT_ROOT)
         assert result is None, "Unknown agent should return None"
 
-    def test_resolve_prefers_small_size(self):
-        """For TUI header, resolver should prefer the 'small' size directory."""
+    def test_resolve_prefers_medium_size(self):
+        """Resolver should prefer the 'medium' size for balanced quality/performance."""
         from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "sm", project_root=PROJECT_ROOT)
         assert result is not None, "Should resolve portrait"
-        assert "small" in str(result), f"Should prefer small size, got {result}"
+        assert "medium" in str(result), f"Should prefer medium size, got {result}"
 
     def test_resolve_all_standard_agents(self):
         """Should resolve portraits for all standard agent roles in hogans-heroes."""
@@ -210,7 +210,12 @@ class TestAgentHeaderWithPortrait:
             header._apply_persona(PERSONA_SM)
             await pilot.pause()
 
-            rendered = str(header.render())
+            # When portrait is present, text is in child #agent-text widget
+            try:
+                text_widget = header.query_one("#agent-text")
+                rendered = str(text_widget.render())
+            except Exception:
+                rendered = str(header.render())
             assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
                 f"Character name should be visible, got: '{rendered}'"
             )
@@ -222,7 +227,12 @@ class TestAgentHeaderWithPortrait:
             header._apply_persona(PERSONA_SM)
             await pilot.pause()
 
-            rendered = str(header.render())
+            # When portrait is present, text is in child #agent-text widget
+            try:
+                text_widget = header.query_one("#agent-text")
+                rendered = str(text_widget.render())
+            except Exception:
+                rendered = str(header.render())
             assert "SM" in rendered, f"Role badge [SM] should be visible, got: '{rendered}'"
 
 
@@ -270,24 +280,31 @@ class TestFallbackBehavior:
                 header._apply_persona(PERSONA_SM)
                 await pilot.pause()
 
-            rendered = str(header.render())
-            assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
-                "Should render text-only when protocol unsupported"
-            )
+                rendered = str(header.render())
+                assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
+                    "Should render text-only when protocol unsupported"
+                )
 
     async def test_header_still_functional_without_textual_image(self, app):
         """Header should work even if textual-image package is not installed."""
         async with app.run_test() as pilot:
             header = app.query_one("#agent-header")
             # Simulate textual-image not being available
-            with patch.dict("sys.modules", {"textual_image": None}):
+            with patch.dict("sys.modules", {
+                "textual_image": None,
+                "textual_image.widget": None,
+                "textual_image._terminal": None,
+            }), patch(
+                "pennyfarthing_scripts.bikerack.portrait_resolver.detect_image_protocol",
+                return_value=None,
+            ):
                 header._apply_persona(PERSONA_SM)
                 await pilot.pause()
 
-            rendered = str(header.render())
-            assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
-                "Header must work without textual-image installed"
-            )
+                rendered = str(header.render())
+                assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
+                    "Header must work without textual-image installed"
+                )
 
 
 class TestPortraitUpdatesOnPersonaChange:
@@ -304,15 +321,23 @@ class TestPortraitUpdatesOnPersonaChange:
         async with app.run_test() as pilot:
             header = app.query_one("#agent-header")
 
+            def _get_header_text() -> str:
+                """Get visible text from header or its child #agent-text."""
+                try:
+                    text_widget = header.query_one("#agent-text")
+                    return str(text_widget.render())
+                except Exception:
+                    return str(header.render())
+
             # First persona
             header._apply_persona(PERSONA_SM)
             await pilot.pause()
-            rendered_sm = str(header.render())
+            rendered_sm = _get_header_text()
 
             # Switch to different persona
             header._apply_persona(PERSONA_TEA)
             await pilot.pause()
-            rendered_tea = str(header.render())
+            rendered_tea = _get_header_text()
 
             # Renderings should differ (different character names at minimum)
             assert rendered_sm != rendered_tea, (
@@ -335,7 +360,12 @@ class TestPortraitUpdatesOnPersonaChange:
             header._apply_persona(PERSONA_STREAMING)
             await pilot.pause()
 
-            rendered = str(header.render())
+            # When portrait is present, text is in child #agent-text widget
+            try:
+                text_widget = header.query_one("#agent-text")
+                rendered = str(text_widget.render())
+            except Exception:
+                rendered = str(header.render())
             # Character name should still be visible after streaming update
             assert "Colonel Hogan" in rendered or "Hogan" in rendered, (
                 f"Streaming update should preserve persona display, got: '{rendered}'"

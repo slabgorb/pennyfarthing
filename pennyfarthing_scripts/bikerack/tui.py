@@ -170,6 +170,8 @@ class AgentHeader(Static):
         super().__init__(**kwargs)
         self._is_streaming: bool = False
         self._persona_data: dict[str, Any] = {}
+        self._header_text: str = ""
+        self._current_portrait: Path | None = None
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -240,7 +242,7 @@ class AgentHeader(Static):
         elif role_desc:
             line += f"\n[dim]{role_desc}[/dim]"
 
-        self.update(line)
+        self._header_text = line
 
         # Check portrait and schedule layout update
         portrait = self._resolve_portrait(data)
@@ -249,19 +251,53 @@ class AgentHeader(Static):
     async def on_agent_header_portrait_layout_update(
         self, event: PortraitLayoutUpdate
     ) -> None:
-        """Mount or remove Horizontal portrait layout."""
-        for child in list(self.query("Horizontal")):
-            await child.remove()
+        """Mount or remove Horizontal portrait layout with text beside image."""
         if event.has_portrait and event.portrait_path:
-            try:
-                from textual_image.widget import AutoImage
+            if self._current_portrait == event.portrait_path:
+                # Same portrait — just update text label if it exists
+                try:
+                    text_widget = self.query_one("#agent-text", Static)
+                    text_widget.update(self._header_text)
+                except Exception:
+                    pass
+                return
 
-                img = AutoImage(str(event.portrait_path), id="portrait-img")
-                row = Horizontal(img, id="portrait-row")
+            # New portrait or first time — full layout rebuild
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+            try:
+                from pennyfarthing_scripts.bikerack.portrait_resolver import (
+                    detect_image_protocol,
+                )
+
+                protocol = detect_image_protocol()
+                if protocol is None:
+                    # No image protocol available — text-only
+                    self.update(self._header_text)
+                    return
+
+                if protocol == "kitty":
+                    from textual_image.widget import TGPImage as ImageWidget
+                elif protocol == "sixel":
+                    from textual_image.widget import SixelImage as ImageWidget
+                else:
+                    from textual_image.widget import HalfcellImage as ImageWidget
+
+                self.update("")  # clear Static text — text goes in child
+                self._current_portrait = event.portrait_path
+                img = ImageWidget(str(event.portrait_path), id="portrait-img")
+                text = Static(self._header_text, id="agent-text")
+                row = Horizontal(img, text, id="portrait-row")
                 await self.mount(row)
-            except ImportError:
-                # textual-image not installed — skip portrait, text-only fallback
-                pass
+            except (ImportError, Exception):
+                # textual-image not installed or render error — text-only fallback
+                self.update(self._header_text)
+        else:
+            # No portrait — text-only
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+            self._current_portrait = None
+            self.update(self._header_text)
 
 
 class ConnectionStatus(Static):
@@ -302,17 +338,22 @@ class BikeRackApp(App):
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 4;
+        max-height: 6;
         padding: 0 1;
+        border-bottom: solid $accent;
     }
     #portrait-row {
-        height: 3;
-        width: auto;
+        height: 4;
+        width: 100%;
     }
     #portrait-img {
-        width: 6;
-        height: 3;
+        width: 8;
+        height: 4;
         margin: 0 1 0 0;
+    }
+    #agent-text {
+        height: auto;
+        width: 1fr;
     }
     #tab-bar {
         height: 1;
@@ -528,7 +569,10 @@ class BikeRackApp(App):
 
         focus = message["focus"]
         if focus is not None and focus in _PANEL_KEYS:
-            self.action_switch_panel(focus)
+            try:
+                self.call_from_thread(self.action_switch_panel, focus)
+            except RuntimeError:
+                self.action_switch_panel(focus)
         elif focus is not None:
             # Panel exists in display names but not implemented — just update state
             self._previous_panel = self._focused_panel
