@@ -24,7 +24,10 @@ import pytest
 from textual.screen import Screen
 
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
-from pennyfarthing_scripts.bikerack.story_detail_data import fetch_story_detail
+from pennyfarthing_scripts.bikerack.story_detail_data import (
+    _check_context_files,
+    fetch_story_detail,
+)
 from pennyfarthing_scripts.bikerack.story_detail_screen import StoryDetailScreen
 
 # ---------------------------------------------------------------------------
@@ -315,7 +318,7 @@ class TestStoryNavigationRender:
             assert "110-3" in story_ids
 
     async def test_tree_story_nodes_have_status_badges(self) -> None:
-        """Tree story labels should include status information."""
+        """Tree story labels should include status symbol (not text)."""
         from textual.widgets import Tree
 
         from pennyfarthing_scripts.bikerack.tui import BikeRackApp
@@ -330,10 +333,13 @@ class TestStoryNavigationRender:
             await pilot.pause()
             tree = sprint.query_one("#sprint-tree", Tree)
             epic_110 = tree.root.children[0]
-            # First story is "done" — label should contain done indicator
+            # First story is "done" — label should contain ✓ symbol, not "done" text
             first_label = epic_110.children[0].label.plain
-            assert "done" in first_label, (
-                f"Done story label should contain 'done', got: {first_label}"
+            assert "\u2713" in first_label, (
+                f"Done story label should contain \u2713 symbol, got: {first_label}"
+            )
+            assert "done" not in first_label, (
+                f"Done story label should NOT contain 'done' text, got: {first_label}"
             )
 
     def test_get_selected_story_returns_none_when_unselected(self, panel: SprintPanel) -> None:
@@ -891,6 +897,98 @@ class TestEdgeCases:
         assert "points" in result, (
             f"Result should contain 'points' key, got keys: {list(result.keys())}"
         )
+
+
+# ===========================================================================
+# Enrichment: StoryDetailScreen calls fetch_story_detail
+# ===========================================================================
+
+
+class TestStoryDetailEnrichment:
+    """Verify StoryDetailScreen calls fetch_story_detail and merges data."""
+
+    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    def test_enrichment_called(self, mock_fetch: MagicMock) -> None:
+        """StoryDetailScreen should call fetch_story_detail with story ID."""
+        mock_fetch.return_value = {"id": "110-2", "workflow": "tdd", "workflow_phase": "red"}
+        ws_data = {"id": "110-2", "title": "Drill", "points": 5, "status": "in-progress"}
+        screen = StoryDetailScreen(story_data=ws_data)
+        mock_fetch.assert_called_once_with("110-2")
+
+    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    def test_ws_data_wins_for_non_null(self, mock_fetch: MagicMock) -> None:
+        """WS data should override enriched data for non-null fields."""
+        mock_fetch.return_value = {
+            "id": "110-2", "title": "From file", "points": 3,
+            "workflow": "tdd", "workflow_phase": "red",
+        }
+        ws_data = {"id": "110-2", "title": "From WS", "points": 5, "status": "in-progress"}
+        screen = StoryDetailScreen(story_data=ws_data)
+        assert screen._story_data["title"] == "From WS"
+        assert screen._story_data["points"] == 5
+        assert screen._story_data["workflow"] == "tdd"
+
+    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    def test_enrichment_failure_resilient(self, mock_fetch: MagicMock) -> None:
+        """StoryDetailScreen should survive fetch_story_detail failure."""
+        mock_fetch.side_effect = Exception("disk error")
+        ws_data = {"id": "110-2", "title": "Drill", "points": 5}
+        screen = StoryDetailScreen(story_data=ws_data)
+        assert screen._story_data["title"] == "Drill"
+
+    def test_no_enrichment_without_id(self) -> None:
+        """StoryDetailScreen with no ID should not attempt enrichment."""
+        screen = StoryDetailScreen(story_data={"title": "No ID"})
+        assert screen._story_data["title"] == "No ID"
+
+
+# ===========================================================================
+# Context file checks
+# ===========================================================================
+
+
+class TestContextFileChecks:
+    """Verify _check_context_files detects epic/story context files."""
+
+    def test_no_context_files(self, tmp_path) -> None:
+        """Returns False for both when no files exist."""
+        result = _check_context_files("110-2", str(tmp_path))
+        assert result["has_epic_context"] is False
+        assert result["has_story_context"] is False
+
+    def test_epic_context_present(self, tmp_path) -> None:
+        """Detects epic context file."""
+        ctx_dir = tmp_path / "sprint" / "context"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "context-epic-110.md").write_text("# Epic 110 Context")
+        result = _check_context_files("110-2", str(tmp_path))
+        assert result["has_epic_context"] is True
+        assert "context-epic-110.md" in result["epic_context_path"]
+
+    def test_story_context_present(self, tmp_path) -> None:
+        """Detects story context file."""
+        ctx_dir = tmp_path / "sprint" / "context"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "context-story-110-2.md").write_text("# Story 110-2 Context")
+        result = _check_context_files("110-2", str(tmp_path))
+        assert result["has_story_context"] is True
+        assert "context-story-110-2.md" in result["story_context_path"]
+
+    def test_both_contexts_present(self, tmp_path) -> None:
+        """Detects both epic and story context files."""
+        ctx_dir = tmp_path / "sprint" / "context"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "context-epic-110.md").write_text("# Epic")
+        (ctx_dir / "context-story-110-2.md").write_text("# Story")
+        result = _check_context_files("110-2", str(tmp_path))
+        assert result["has_epic_context"] is True
+        assert result["has_story_context"] is True
+
+    def test_none_project_root(self) -> None:
+        """Returns all False with None project root."""
+        result = _check_context_files("110-2", None)
+        assert result["has_epic_context"] is False
+        assert result["has_story_context"] is False
 
 
 # ---------------------------------------------------------------------------

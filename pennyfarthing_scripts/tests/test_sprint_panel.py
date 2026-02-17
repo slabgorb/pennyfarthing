@@ -27,6 +27,8 @@ from pennyfarthing_scripts.bikerack.sprint_panel import (
     SprintPanel,
     _build_epic_label,
     _build_story_label,
+    _format_assignee,
+    _is_terminal,
     _should_expand,
     _status_badge,
 )
@@ -235,41 +237,69 @@ class TestSprintPanelParsing:
 
 
 class TestStatusBadge:
-    """Status badge helper produces correct Rich Text."""
+    """Status badge helper produces symbol-only Rich Text (no text word)."""
 
     def test_done_badge(self) -> None:
         badge = _status_badge("done")
-        assert "done" in badge.plain
-        assert badge.style == "green"
+        assert "\u2713" in badge.plain
+        assert "done" not in badge.plain
 
     def test_in_progress_badge(self) -> None:
         badge = _status_badge("in-progress")
-        assert "in-progress" in badge.plain
-        assert badge.style == "yellow"
+        assert "\u27f3" in badge.plain
+        assert "in-progress" not in badge.plain
+
+    def test_in_progress_underscore(self) -> None:
+        """Handle both 'in-progress' and 'in_progress' status strings."""
+        badge = _status_badge("in_progress")
+        assert "\u27f3" in badge.plain
 
     def test_backlog_badge(self) -> None:
         badge = _status_badge("backlog")
-        assert "backlog" in badge.plain
+        assert "\u25ef" in badge.plain
+        assert "backlog" not in badge.plain
 
     def test_blocked_badge(self) -> None:
         badge = _status_badge("blocked")
-        assert "blocked" in badge.plain
+        assert "!" in badge.plain
+        assert "blocked" not in badge.plain
 
     def test_review_badge(self) -> None:
         badge = _status_badge("review")
-        assert "review" in badge.plain
+        assert "\u25ce" in badge.plain
+        assert "review" not in badge.plain
+
+    def test_canceled_badge(self) -> None:
+        badge = _status_badge("canceled")
+        assert "\u2715" in badge.plain
+
+    def test_cancelled_british_spelling(self) -> None:
+        badge = _status_badge("cancelled")
+        assert "\u2715" in badge.plain
 
     def test_unknown_status(self) -> None:
         badge = _status_badge("unknown-status")
-        assert "unknown-status" in badge.plain
+        assert "\u2014" in badge.plain
 
 
 class TestEpicLabel:
     """Epic label builder produces correct Rich Text."""
 
-    def test_includes_epic_id(self) -> None:
+    def test_includes_epic_id_fallback(self) -> None:
         label = _build_epic_label("103", "BikeRack TUI", 4, 6)
         assert "103" in label.plain
+
+    def test_includes_jira_key_when_provided(self) -> None:
+        label = _build_epic_label("103", "BikeRack TUI", 4, 6, jira_key="MSSCI-14510")
+        assert "MSSCI-14510" in label.plain
+
+    def test_long_id_gets_ellipsed(self) -> None:
+        label = _build_epic_label("standalone", "Standalone Stories", 2, 7, jira_key="epic-standalone")
+        plain = label.plain
+        assert "\u2026" in plain, f"Long ID should be ellipsed, got: {plain}"
+        # Should not exceed 11 chars for the ID portion
+        id_part = plain.split("  ")[0]
+        assert len(id_part) <= 11
 
     def test_includes_progress(self) -> None:
         label = _build_epic_label("103", "BikeRack TUI", 4, 6)
@@ -286,11 +316,6 @@ class TestEpicLabel:
 
 class TestStoryLabel:
     """Story label builder produces correct Rich Text."""
-
-    def test_includes_story_id(self) -> None:
-        story = {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
-        label = _build_story_label(story, "")
-        assert "103-1" in label.plain
 
     def test_includes_jira_key(self) -> None:
         story = {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
@@ -315,9 +340,83 @@ class TestStoryLabel:
     def test_current_story_bolded(self) -> None:
         story = {"id": "103-6", "title": "Current", "points": 2, "status": "in-progress", "jiraKey": "X"}
         label = _build_story_label(story, "103-6")
-        # Check that bold styling is applied
         has_bold = any("bold" in str(span.style) for span in label._spans)
         assert has_bold, "Current story should have bold styling"
+
+    def test_done_story_is_dim(self) -> None:
+        story = {"id": "103-1", "title": "Done one", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
+        label = _build_story_label(story, "")
+        # Overall dim styling applied to done stories
+        has_dim = any("dim" in str(span.style) for span in label._spans)
+        assert has_dim, "Done story should have dim styling"
+
+
+class TestFormatAssignee:
+    """Email to display name formatting."""
+
+    def test_standard_email(self) -> None:
+        assert _format_assignee("keith.avery@1898andco.io") == "K. Avery"
+
+    def test_underscore_email(self) -> None:
+        assert _format_assignee("john_doe@example.com") == "J. Doe"
+
+    def test_none_returns_empty(self) -> None:
+        assert _format_assignee(None) == ""
+
+    def test_empty_string_returns_empty(self) -> None:
+        assert _format_assignee("") == ""
+
+    def test_single_part_local(self) -> None:
+        result = _format_assignee("admin@example.com")
+        assert result == "Admin"
+
+
+class TestStoryLabelOwner:
+    """Owner shown for in-progress stories, hidden for done/backlog."""
+
+    def test_in_progress_shows_owner(self) -> None:
+        story = {
+            "id": "110-2", "title": "Drill", "points": 5,
+            "status": "in-progress", "jiraKey": "MSSCI-15186",
+            "assignee": "keith.avery@1898andco.io",
+        }
+        label = _build_story_label(story, "")
+        assert "K. Avery" in label.plain
+
+    def test_done_hides_owner(self) -> None:
+        story = {
+            "id": "110-1", "title": "Done", "points": 3,
+            "status": "done", "jiraKey": "MSSCI-15185",
+            "assignee": "keith.avery@1898andco.io",
+        }
+        label = _build_story_label(story, "")
+        assert "K. Avery" not in label.plain
+
+    def test_backlog_hides_owner(self) -> None:
+        story = {
+            "id": "110-3", "title": "Backlog", "points": 3,
+            "status": "backlog", "jiraKey": "MSSCI-15187",
+            "assignee": "keith.avery@1898andco.io",
+        }
+        label = _build_story_label(story, "")
+        assert "K. Avery" not in label.plain
+
+    def test_in_progress_no_assignee(self) -> None:
+        story = {
+            "id": "110-2", "title": "Drill", "points": 5,
+            "status": "in-progress", "jiraKey": "MSSCI-15186",
+        }
+        label = _build_story_label(story, "")
+        assert "[" not in label.plain or "[]" not in label.plain
+
+    def test_canceled_story_is_dim(self) -> None:
+        story = {
+            "id": "110-4", "title": "Canceled one", "points": 2,
+            "status": "canceled", "jiraKey": "MSSCI-15999",
+        }
+        label = _build_story_label(story, "")
+        has_dim = any("dim" in str(span.style) for span in label._spans)
+        assert has_dim, "Canceled story should have dim styling"
 
 
 class TestShouldExpand:
@@ -347,6 +446,45 @@ class TestShouldExpand:
     def test_expands_empty_epic(self) -> None:
         epic = {"stories": []}
         assert _should_expand(epic) is False
+
+    def test_collapses_canceled_epic(self) -> None:
+        epic = {"status": "canceled", "stories": [
+            {"points": 2, "status": "backlog"},
+        ]}
+        assert _should_expand(epic) is False
+
+    def test_collapses_when_all_done_or_canceled(self) -> None:
+        epic = {"stories": [
+            {"points": 2, "status": "done"},
+            {"points": 3, "status": "canceled"},
+        ]}
+        assert _should_expand(epic) is False
+
+    def test_expands_when_mix_of_canceled_and_backlog(self) -> None:
+        epic = {"stories": [
+            {"points": 2, "status": "canceled"},
+            {"points": 3, "status": "backlog"},
+        ]}
+        assert _should_expand(epic) is True
+
+
+class TestIsTerminal:
+    """Terminal status detection."""
+
+    def test_done_is_terminal(self) -> None:
+        assert _is_terminal("done") is True
+
+    def test_canceled_is_terminal(self) -> None:
+        assert _is_terminal("canceled") is True
+
+    def test_cancelled_british_is_terminal(self) -> None:
+        assert _is_terminal("cancelled") is True
+
+    def test_in_progress_is_not_terminal(self) -> None:
+        assert _is_terminal("in-progress") is False
+
+    def test_backlog_is_not_terminal(self) -> None:
+        assert _is_terminal("backlog") is False
 
 
 # ---------------------------------------------------------------------------
