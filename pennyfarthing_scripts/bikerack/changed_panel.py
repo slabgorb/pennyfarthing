@@ -68,6 +68,8 @@ class ChangedPanel(BasePanel):
     can_focus = True
 
     BINDINGS = [
+        Binding("up", "select_prev_key", "Up"),
+        Binding("down", "select_next_key", "Down"),
         Binding("enter", "select_file", "Select file"),
     ]
 
@@ -106,11 +108,29 @@ class ChangedPanel(BasePanel):
         """Move selection to the next file."""
         if self._file_paths and self._selected_index < len(self._file_paths) - 1:
             self._selected_index += 1
+            self._rerender()
 
     def select_prev(self) -> None:
         """Move selection to the previous file."""
         if self._selected_index > 0:
             self._selected_index -= 1
+            self._rerender()
+
+    def action_select_next_key(self) -> None:
+        """Binding action: move selection down."""
+        self.select_next()
+
+    def action_select_prev_key(self) -> None:
+        """Binding action: move selection up."""
+        self.select_prev()
+
+    def _rerender(self) -> None:
+        """Re-render panel with current payload after selection change."""
+        if self._last_payload:
+            try:
+                self.update(self.render_panel(self._last_payload))
+            except Exception:
+                pass
 
     def get_selected_path(self) -> str | None:
         """Return the currently selected file path, or None if empty."""
