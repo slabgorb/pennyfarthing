@@ -75,7 +75,7 @@ const LEGACY_PROJECT_HOOK_PATHS = [
  * Map of legacy .sh hook commands to their `pf hooks` replacements.
  * Used during init/update/doctor to migrate existing settings.
  */
-const LEGACY_HOOK_MIGRATIONS: Record<string, string> = {
+export const LEGACY_HOOK_MIGRATIONS: Record<string, string> = {
   'session-start.sh': 'pf hooks session-start',
   'welcome-hook.sh': 'pf hooks session-start',
   'question-reflector-check.sh': 'pf hooks reflector-check',
@@ -113,7 +113,7 @@ function findHookEntry(hookArray: unknown[], substring: string): unknown | undef
  * and .claude/project/hooks/ to .pennyfarthing/project/hooks/
  * Also migrates .sh hook scripts to `pf hooks` commands.
  */
-function migrateHookPaths(hookArray: unknown[]): boolean {
+export function migrateHookPaths(hookArray: unknown[]): boolean {
   let migrated = false;
   for (const entry of hookArray) {
     if (typeof entry === 'object' && entry !== null) {
