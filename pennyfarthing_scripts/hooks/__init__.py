@@ -31,7 +31,7 @@ import yaml
 # Port files - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
 # Cyclist full mode writes .wheelhub-port, BikeRack mode writes .bikerack-port
-CYCLIST_PORT_FILE = ".wheelhub-port"
+CYCLIST_PORT_FILE = ".cyclist-port"
 BIKERACK_PORT_FILE = ".bikerack-port"
 
 # Default port if file not found
