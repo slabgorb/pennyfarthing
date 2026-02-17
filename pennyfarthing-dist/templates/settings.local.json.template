@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/session-start.sh"
+            "command": "pf hooks session-start"
           }
         ]
       },
@@ -68,7 +68,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/question-reflector-check.sh"
+            "command": "pf hooks reflector-check"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pf hooks session-stop"
           }
         ]
       }
@@ -79,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/bell-mode-hook.sh"
+            "command": "pf hooks bell-mode"
           }
         ]
       },
@@ -88,7 +97,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/sprint-yaml-validation.sh"
+            "command": "pf hooks sprint-yaml"
           }
         ]
       }
@@ -99,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/pre-edit-check.sh"
+            "command": "pf hooks pre-edit-check"
           }
         ]
       },
@@ -108,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/schema-validation.sh"
+            "command": "pf hooks schema-validation"
           }
         ]
       },
@@ -117,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/context-warning.sh"
+            "command": "pf hooks context-warning"
           }
         ]
       },
@@ -126,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/context-circuit-breaker.sh"
+            "command": "pf hooks context-breaker"
           }
         ]
       },
@@ -134,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/cyclist-pretooluse-hook.sh"
+            "command": "pf hooks cyclist-pretooluse"
           }
         ]
       }
@@ -142,6 +151,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/misc/statusline.sh"
+    "command": "pf hooks statusline"
   }
 }
