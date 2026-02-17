@@ -41,7 +41,7 @@ Marker pattern: /<!--\s*CYCLIST:(\w+)(?::([^>]+?))?\s*-->/gi
 | `packages/cyclist/src/public/components/QuickActions.tsx` | Renders action buttons from detected markers |
 | `packages/cyclist/src/public/hooks/useMarkerActions.ts` | Detects markers, builds action metadata |
 | `pennyfarthing-dist/scripts/hooks/question_reflector_check.py` | Stop hook — enforces marker presence |
-| `pennyfarthing-dist/scripts/hooks/question-reflector-check.sh` | Bash wrapper for stop hook |
+| `pf hooks reflector-check` | CLI entry point for stop hook |
 
 ## Enforcement Hook
 
