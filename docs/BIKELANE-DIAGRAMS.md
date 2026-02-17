@@ -55,7 +55,7 @@ flowchart TD
         end
     end
 
-    CMD["/workflow start name"] --> BikeLane
+    CMD["/pf-workflow start name"] --> BikeLane
 
     style Phased fill:#4a9eff,color:white
     style Stepped fill:#51cf66,color:white
@@ -75,7 +75,7 @@ The default workflow for feature development (3+ story points).
 ```mermaid
 flowchart LR
     subgraph Entry
-        NW["/work or /new-work"]
+        NW["/pf-work or /pf-session new"]
     end
 
     subgraph "TDD Cycle"
@@ -120,7 +120,7 @@ Behavior-driven development with UX design phase for UI-focused features.
 ```mermaid
 flowchart LR
     subgraph Entry
-        NW["/workflow start bdd"]
+        NW["/pf-workflow start bdd"]
     end
 
     subgraph "BDD Cycle"
@@ -169,7 +169,7 @@ Quick fixes without full TDD ceremony (1-2 story points).
 ```mermaid
 flowchart LR
     subgraph Entry
-        NW["/workflow start trivial"]
+        NW["/pf-workflow start trivial"]
     end
 
     subgraph "Trivial Cycle"
@@ -210,7 +210,7 @@ For agent file creation, updates, and process improvements.
 ```mermaid
 flowchart LR
     subgraph Entry
-        NW["/workflow start agent-docs"]
+        NW["/pf-workflow start agent-docs"]
     end
 
     subgraph "Agent-Docs Cycle"
@@ -259,7 +259,7 @@ Collaborative architectural decision-making with A/P/C collaboration menus.
 ```mermaid
 flowchart TD
     subgraph Entry
-        START["/workflow start architecture"]
+        START["/pf-workflow start architecture"]
     end
 
     subgraph "Architecture Steps"
@@ -317,7 +317,7 @@ Tri-modal PRD workflow supporting Create, Validate, and Edit modes.
 ```mermaid
 flowchart TD
     subgraph Entry
-        START["/workflow start prd"]
+        START["/pf-workflow start prd"]
         MODE{"Select<br/>Mode"}
     end
 
@@ -388,7 +388,7 @@ All stepped workflows follow this pattern.
 ```mermaid
 flowchart TD
     subgraph "Stepped Workflow Pattern"
-        START["/workflow start name"]
+        START["/pf-workflow start name"]
         S1["Step 1"]
         S2["Step 2"]
         GATE{{"User Gate"}}
@@ -432,7 +432,7 @@ Procedural workflows are flexible, agent-guided processes without strict step se
 ```mermaid
 flowchart TD
     subgraph "Procedural Workflow Pattern"
-        START["/workflow start name"]
+        START["/pf-workflow start name"]
         AGENT["Agent<br/>follows checklist"]
 
         subgraph "Flexible Execution"

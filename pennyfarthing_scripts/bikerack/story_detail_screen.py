@@ -88,7 +88,8 @@ class StoryDetailScreen(Screen):
             name = _format_assignee(assignee)
             if name:
                 meta_parts.append(name)
-        header_text.append(f"\n{' \u00b7 '.join(meta_parts)}", style="dim")
+        separator = " \u00b7 "
+        header_text.append(f"\n{separator.join(meta_parts)}", style="dim")
         yield Static(header_text, id="dossier-header")
 
         # Context section (only if context files exist)

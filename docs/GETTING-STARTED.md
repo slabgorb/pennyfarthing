@@ -80,7 +80,7 @@ In Claude Code:
 
 ```
 /list-themes       # Browse all available themes
-/set-theme         # Interactive theme selector
+/pf-theme set         # Interactive theme selector
 /show-theme        # Preview current or any theme
 ```
 
@@ -102,7 +102,7 @@ theme: discworld    # See THEME-COMPARISON.md for all available themes
 In Claude Code:
 
 ```
-/new-work
+/pf-work
 ```
 
 The SM (Scrum Master) agent activates and guides you through:
@@ -115,22 +115,22 @@ The SM (Scrum Master) agent activates and guides you through:
 Pennyfarthing uses BikeLane workflows - flexible, configurable agent sequences:
 
 ```
-/workflow list          # See all available workflows
-/workflow start <name>  # Start a specific workflow
+/pf-workflow list          # See all available workflows
+/pf-workflow start <name>  # Start a specific workflow
 ```
 
 **Example: TDD Workflow**
 
 ```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
+/pf-work → SM → TEA → Dev → Reviewer → SM (finish)
 ```
 
 | Agent | Command | Role |
 |-------|---------|------|
-| SM | `/sm` | Story setup, session management |
-| TEA | `/tea` | Write failing tests |
-| Dev | `/dev` | Make tests pass |
-| Reviewer | `/reviewer` | Code review |
+| SM | `/pf-sm` | Story setup, session management |
+| TEA | `/pf-tea` | Write failing tests |
+| Dev | `/pf-dev` | Make tests pass |
+| Reviewer | `/pf-reviewer` | Code review |
 
 See [WORKFLOWS.md](WORKFLOWS.md) for all workflow types including stepped workflows for planning, architecture, and more.
 
@@ -138,13 +138,13 @@ See [WORKFLOWS.md](WORKFLOWS.md) for all workflow types including stepped workfl
 
 | Command | Purpose |
 |---------|---------|
-| `/new-work` | Start a work session |
-| `/sm` | Activate Scrum Master |
-| `/tea` | Activate Test Engineer |
-| `/dev` | Activate Developer |
-| `/reviewer` | Activate Reviewer |
-| `/architect` | Get architecture guidance |
-| `/pm` | Strategic planning |
+| `/pf-work` | Start a work session |
+| `/pf-sm` | Activate Scrum Master |
+| `/pf-tea` | Activate Test Engineer |
+| `/pf-dev` | Activate Developer |
+| `/pf-reviewer` | Activate Reviewer |
+| `/pf-architect` | Get architecture guidance |
+| `/pf-pm` | Strategic planning |
 
 ## Updating
 

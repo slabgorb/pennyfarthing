@@ -63,7 +63,7 @@ getPrimeContextJson(agentName, projectDir, tier)  # JSON for Cyclist
 
 ## Integration Points
 
-- **Agent commands** (`/sm`, `/dev`, `/tea`) invoke prime on activation
+- **Agent commands** (`/pf-sm`, `/pf-dev`, `/pf-tea`) invoke prime on activation
 - **TirePump** calls prime to reload agent context after clearing
 - **Cyclist** uses JSON output for context display and token tracking
 

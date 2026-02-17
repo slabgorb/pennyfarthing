@@ -4,7 +4,7 @@
 
 This document describes how Pennyfarthing agents are coordinated. The framework supports both single-repo and multi-repo projects.
 
-**Key Principle:** Single entry point (`/pf-session new` or `/work`), state detection via session files, handoffs via Haiku subagents.
+**Key Principle:** Single entry point (`/pf-session new` or `/pf-work`), state detection via session files, handoffs via Haiku subagents.
 
 ## The TDD Flow
 
@@ -12,7 +12,7 @@ SM → TEA → Dev → Reviewer → SM (setup → red → green → review → f
 
 Handoffs between agents are managed by Haiku subagents.
 
-**Entry points:** `/pf-session new` (new story) or `/work` (smart resume/start)
+**Entry points:** `/pf-session new` (new story) or `/pf-work` (smart resume/start)
 **State detection:** Agents read session file on activation
 **Handoffs:** Agents spawn Haiku subagents to update session file
 **Finish:** SM handles when status = `approved`
@@ -263,7 +263,7 @@ User: @/pm
 ### Tactical Agent Workflow (Dev Example)
 
 ```
-User: @/dev
+User: @/pf-dev
 
 1. Load Dev agent definition (.pennyfarthing/agents/dev.md)
 2. Load base context:
@@ -428,7 +428,7 @@ Dev Agent Example (API story):
 - No subagent extraction
 
 ### Current Architecture (January 2026)
-- Smart entry point: `/work` (resumes or starts new)
+- Smart entry point: `/pf-work` (resumes or starts new)
 - Alternative: `/pf-session new` (explicitly start new story)
 - State detection via session file in `.session/`
 - Handoffs via Haiku subagents in `.pennyfarthing/agents/`
@@ -447,17 +447,17 @@ sprint/                            # Sprint tracking
 ### Commands Reference
 ```bash
 # Entry points
-/work          # Smart entry - resume or start new
+/pf-work        # Smart entry - resume or start new
 /pf-session new # Explicitly start new story
 
 # TDD Flow agents
-/sm            # Scrum Master (setup + finish)
-/tea           # Test Engineer (RED phase)
-/dev           # Developer (GREEN phase)
-/reviewer      # Code Reviewer
+/pf-sm          # Scrum Master (setup + finish)
+/pf-tea         # Test Engineer (RED phase)
+/pf-dev         # Developer (GREEN phase)
+/pf-reviewer    # Code Reviewer
 
 # Support agents
-/architect     # Architecture design
+/pf-architect   # Architecture design
 /tech-writer   # Documentation
 /ux-designer   # UI/UX design
 /devops        # Infrastructure

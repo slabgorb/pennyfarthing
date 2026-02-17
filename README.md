@@ -45,35 +45,61 @@ The 98 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments
 
 ## Quick Start
 
+### Install
+
 ```bash
 cd your-project
 
-# Install CLI
+# Install core package
 npm install --save-dev @pennyfarthing/core
 
-# Initialize (creates symlinks)
+# Initialize project (creates .pennyfarthing/, .claude/ symlinks)
 npx pennyfarthing init
 
 # Verify installation
 npx pennyfarthing doctor
 
-# Start working (in Claude Code)
-/new-work
+# Start working (inside Claude Code)
+/pf-work
 ```
 
-### Optional: Visual Terminal
+### Choose How to Work
 
-```bash
-# Install Cyclist (includes portraits)
-npm install --save-dev @pennyfarthing/cyclist
+Pennyfarthing works in any terminal, but optional dashboards give you real-time visibility into what agents are doing. Pick the mode that fits your workflow:
 
-# Launch
-npx pennyfarthing cyclist
+| I want to... | Mode | Command |
+|--------------|------|---------|
+| Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
+| See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
+| Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
+| One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
+| Full desktop app with embedded terminal | **Cyclist** | `npx pennyfarthing cyclist` |
+
+```mermaid
+graph LR
+    subgraph "CLI Only"
+        A["claude"] --> B["Agents work in your terminal<br/>No dashboard"]
+    end
+
+    subgraph "BikeRack (dashboard + your terminal)"
+        C["just gui / just tui"] --> D["WheelHub Server"]
+        E["just claude"] --> D
+        D --> F["Dashboard panels<br/>(browser or TUI)"]
+    end
+
+    subgraph "Cyclist (all-in-one desktop app)"
+        G["pennyfarthing cyclist"] --> H["Electron app<br/>Embedded terminal + panels"]
+    end
 ```
 
-## Cyclist Visual Terminal
+> **See the full [BikeRack Guide](pennyfarthing-dist/guides/bikerack.md)** for detailed quickstart paths, OTEL telemetry setup, and command reference.
 
-Cyclist is an Electron-based IDE built on React 19, Tailwind v4, and Dockview. It wraps Claude Code with a rich panel system and workflow controls.
+## Visual Dashboards
+
+Whether you use Cyclist or BikeRack, you get the same 17 dashboard panels showing real-time agent activity:
+
+<!-- TODO: Screenshot of Cyclist with multiple panels visible -->
+<!-- ![Cyclist Dashboard](docs/images/cyclist-dashboard.png) -->
 
 ### Panels
 
@@ -81,26 +107,75 @@ All panels are draggable, floatable, and splittable:
 
 | Panel | Purpose |
 |-------|---------|
-| **Message** | Conversation stream (always visible) |
+| **Message** | Conversation stream (Cyclist only) |
 | **Sprint** | Current sprint stories and progress |
 | **Progress** | At-a-glance story dashboard |
-| **BikeLane** | Stepped workflow state and navigation |
+| **BikeLane** | Workflow phase state and navigation |
 | **AC** | Acceptance criteria checklist with progress |
-| **Acceptance Criteria** | Story ACs with pass/fail tracking |
-| **Changed** | Files added or modified during the session |
-| **Diffs** | Git-based diff viewer for current changes |
-| **Git** | Branch management and git operations |
+| **Changed** | Files modified during the session |
+| **Diffs** | Git diff viewer for current changes |
+| **Git** | Branch management and status |
 | **Todo** | Task list tracking |
-| **Audit Log** | Timestamped action history |
-| **Settings** | Permission mode, relay mode, bell mode toggles |
+| **Audit Log** | Timestamped tool use history |
+| **Workflow** | Workflow navigation and status |
+| **Hotspots** | Codebase health — dead code, complexity |
+| **Settings** | Permission mode, relay mode, bell mode |
 | **Debug** | Prime context inspection with token counts |
 | **Background** | Background job monitoring |
-| **Workflow** | Workflow navigation and status |
-| **Hotspots** | Codebase health — dead code, complexity, dependencies |
+
+<!-- TODO: Screenshot of BikeRack TUI -->
+<!-- ![BikeRack TUI](docs/images/bikerack-tui.png) -->
+
+### Cyclist vs BikeRack
+
+| | Cyclist | BikeRack |
+|---|---------|----------|
+| **Runtime** | Electron desktop app | Node.js server + browser/TUI |
+| **Terminal** | Embedded (node-pty) | Your own terminal |
+| **Conversation UI** | Built-in MessagePanel | Not included (by design) |
+| **Dashboard panels** | 17 Dockview panels | Same 17 panels |
+| **OTEL telemetry** | Automatic | Via `just claude` or `pf bikerack start` |
+| **Install** | `npm i @pennyfarthing/cyclist` | Included in `@pennyfarthing/core` |
+
+### Architecture
+
+Both Cyclist and BikeRack are wrappers around **WheelHub**, the shared Express/WebSocket server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
+
+```mermaid
+graph TB
+    subgraph "Cyclist (Electron)"
+        C["Electron + React UI"]
+    end
+    subgraph "BikeRack (CLI)"
+        BR["Node.js server"]
+    end
+
+    C --> WH["WheelHub<br/>(shared server)"]
+    BR --> WH
+
+    C -- "writes" --> CP[".cyclist-port"]
+    BR -- "writes" --> BP[".bikerack-port"]
+
+    WH --> API["/api/* endpoints"]
+    WH --> WS["/ws/* channels"]
+    WH --> OTLP["/v1/* OTLP receiver"]
+```
+
+> **See [Cyclist Architecture](docs/CYCLIST-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
 
 ### Tool Visualization
 
-Cyclist renders tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
+<!-- TODO: Screenshot of tool call rendering -->
+<!-- ![Tool Visualization](docs/images/tool-visualization.png) -->
+
+Cyclist and BikeRack render tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
+
+### Agent Portraits
+
+<!-- TODO: Screenshot of agent portrait in conversation -->
+<!-- ![Agent Portrait](docs/images/agent-portrait.png) -->
+
+Each of the 319 persona characters across 29 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
 ### Workflow Modes
 
@@ -109,21 +184,6 @@ Cyclist renders tool use as human-readable summaries instead of raw JSON. Consec
 | **Permission Mode** | `plan` / `manual` / `accept` — controls how much Claude can do without approval |
 | **Relay Mode** | Automatic agent handoffs — detects `CYCLIST:HANDOFF` markers and runs the next agent |
 | **Bell Mode** | Queue messages while Claude works — injected at next tool execution via hooks |
-
-### Agent Portraits
-
-Each of the 319 persona characters across 29 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
-
-### BikeRack (CLI-First Dashboard)
-
-For developers who prefer Claude Code in their own terminal, BikeRack runs WheelHub separately and serves panels in a browser:
-
-```bash
-pf bikerack start      # Launch BikeRack + Claude CLI
-just bikerack          # Same, via just recipe
-```
-
-BikeRack provides the same panels as Cyclist without the conversation UI. Panels receive data via OTEL telemetry and file watchers.
 
 ## Prime Context System
 

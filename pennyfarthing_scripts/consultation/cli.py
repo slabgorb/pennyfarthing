@@ -6,7 +6,7 @@ the bash wrapper dialogue-manager.sh interface.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
@@ -44,7 +44,7 @@ def init(story_id: str, workflow: str, leader: str, partner: str) -> None:
         workflow=workflow,
         leader=leader,
         partner=partner,
-        started_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        started_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )
 
     content = create_dialogue_content(header)
@@ -80,7 +80,7 @@ def append(story_id: str, question: str, recommendation: str, confidence: str) -
 
     exchange = DialogueExchange(
         number=next_num,
-        timestamp=datetime.now(timezone.utc).strftime("%H:%M"),
+        timestamp=datetime.now(UTC).strftime("%H:%M"),
         leader="",
         partner="",
         question=question,

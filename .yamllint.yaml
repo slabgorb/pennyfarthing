@@ -15,6 +15,10 @@ rules:
   # Files don't consistently use document-start markers
   document-start: disable
 
+  # command-registry.yaml uses flow-style { key: "value" } consistently
+  braces:
+    max-spaces-inside: 1
+
   # Keep structural rules enforced
   indentation:
     spaces: 2

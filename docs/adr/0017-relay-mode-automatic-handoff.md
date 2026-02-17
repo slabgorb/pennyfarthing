@@ -57,7 +57,7 @@ Split auto-handoff into a separate **relay_mode** setting, orthogonal to permiss
 │  │                                                           │   │
 │  │  On HANDOFF marker detected:                              │   │
 │  │    if (relay_mode) {                                      │   │
-│  │      autoExecuteHandoff(marker.value)  // e.g., "/dev"    │   │
+│  │      autoExecuteHandoff(marker.value)  // e.g., "/pf-dev"    │   │
 │  │    } else {                                               │   │
 │  │      showHandoffButton(marker.value)   // User clicks     │   │
 │  │    }                                                      │   │
@@ -94,7 +94,7 @@ Migration happens transparently in `migrateSettings()`.
 ### Marker Detection Flow
 
 ```
-Agent output contains: <!-- CYCLIST:HANDOFF:/dev -->
+Agent output contains: <!-- CYCLIST:HANDOFF:/pf-dev -->
                               │
                               ▼
               quick-actions.js detects marker
@@ -110,7 +110,7 @@ Agent output contains: <!-- CYCLIST:HANDOFF:/dev -->
          relay_mode: true             relay_mode: false
               │                             │
               ▼                             ▼
-    Auto-execute "/dev"           Show "Continue with /dev"
+    Auto-execute "/pf-dev"           Show "Continue with /pf-dev"
     (inject into terminal)              button
               │                             │
               ▼                             ▼
