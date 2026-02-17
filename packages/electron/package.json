@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/electron",
-  "version": "11.2.0",
+  "version": "11.2.1",
   "description": "Electron shell for Cyclist visual terminal",
   "author": "1898andCo",
   "type": "module",
