@@ -11,6 +11,7 @@
     "packages/core/dist/",
     "pennyfarthing-dist/agents/",
     "pennyfarthing-dist/commands/",
+    "pennyfarthing-dist/gates/",
     "pennyfarthing-dist/guides/",
     "pennyfarthing-dist/output-styles/",
     "pennyfarthing-dist/personas/themes/",
