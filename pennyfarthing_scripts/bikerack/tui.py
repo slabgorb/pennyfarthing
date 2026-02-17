@@ -20,7 +20,7 @@ from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Header, Static, Tab, Tabs
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
@@ -126,29 +126,14 @@ class BindingFooter(Footer):
         return super().render()
 
 
-class PanelTabBar(Static):
-    """Horizontal tab bar showing all available panels with active highlight."""
-
-    active: reactive[str] = reactive("sprint")
-
-    def watch_active(self, key: str) -> None:
-        """Re-render tab bar when active panel changes."""
-        parts: list[str] = []
-        for panel_key, display_name in PANEL_REGISTRY:
-            icon = get_panel_icon(panel_key)
-            idx = _PANEL_KEYS.index(panel_key) + 1
-            prefix = f"{idx}:"
-            if panel_key == key:
-                if icon:
-                    parts.append(f"[bold reverse] {prefix}{icon} {display_name} [/]")
-                else:
-                    parts.append(f"[bold reverse] {prefix}{display_name} [/]")
-            else:
-                if icon:
-                    parts.append(f"[dim]{prefix}{icon} {display_name}[/]")
-                else:
-                    parts.append(f"[dim]{prefix}{display_name}[/]")
-        self.update("  ".join(parts))
+def _build_panel_tabs() -> list[Tab]:
+    """Build Tab widgets for each panel in the registry."""
+    tabs: list[Tab] = []
+    for panel_key, display_name in PANEL_REGISTRY:
+        icon = get_panel_icon(panel_key)
+        label = f"{icon} {display_name}" if icon else display_name
+        tabs.append(Tab(label, id=f"tab-{panel_key}"))
+    return tabs
 
 
 PORTRAIT_SKELETON = """\
@@ -405,8 +390,14 @@ class BikeRackApp(App):
         height: auto;
         width: 1fr;
     }
-    #tab-bar {
-        height: 1;
+    Tabs {
+        dock: top;
+    }
+    Tab.-active {
+        color: $text;
+    }
+    Tab {
+        color: $text-muted;
     }
     #connection-status {
         height: 1;
@@ -447,11 +438,12 @@ class BikeRackApp(App):
         self._client = client
         self._focused_panel: str = "sprint"
         self._previous_panel: str | None = None
+        self._programmatic_tab_count: int = 0
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield AgentHeader(id="agent-header")
-        yield PanelTabBar(id="tab-bar")
+        yield Tabs(*_build_panel_tabs(), id="tab-bar")
         yield ConnectionStatus(
             STATE_DISPLAY[ConnectionState.DISCONNECTED],
             id="connection-status",
@@ -601,12 +593,33 @@ class BikeRackApp(App):
                 pass
 
     def _update_tab_bar(self, panel_key: str) -> None:
-        """Update the tab bar widget with the given panel key."""
+        """Update the tab bar widget with the given panel key.
+
+        Increments _programmatic_tab_count so the async TabActivated
+        handler knows to ignore the event (prevents infinite ping-pong).
+        """
         try:
-            tab_bar = self.query_one("#tab-bar", PanelTabBar)
-            tab_bar.active = panel_key
+            tab_bar = self.query_one("#tab-bar", Tabs)
+            tab_id = f"tab-{panel_key}"
+            if tab_bar.active != tab_id:
+                self._programmatic_tab_count += 1
+                tab_bar.active = tab_id
         except Exception:
             pass
+
+    def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
+        """Handle tab activation from the Tabs widget.
+
+        Programmatic tabs.active changes fire TabActivated asynchronously.
+        We use a counter to skip those and only react to genuine user clicks.
+        """
+        if self._programmatic_tab_count > 0:
+            self._programmatic_tab_count -= 1
+            return
+        tab_id = event.tab.id or ""
+        panel_key = tab_id.removeprefix("tab-")
+        if panel_key in _PANEL_KEYS and panel_key != self._focused_panel:
+            self.action_switch_panel(panel_key)
 
     def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming focus channel messages.
