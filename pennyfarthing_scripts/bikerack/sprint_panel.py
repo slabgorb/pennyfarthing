@@ -1,7 +1,8 @@
 """SprintPanel — Sprint status panel for BikeRack TUI.
 
 Story 103-6: First panel implementation proving the BasePanel vertical slice.
-Subscribes to /ws/sprint, renders sprint status as Rich table.
+Story 110-2: Added per-story cursor navigation and drill-through.
+Subscribes to /ws/sprint, renders sprint status with epic grouping.
 """
 
 from __future__ import annotations
@@ -48,12 +49,16 @@ class SprintPanel(BasePanel):
         Binding("j", "next_epic_key", "Next epic"),
         Binding("k", "prev_epic_key", "Prev epic"),
         Binding("e", "toggle_epic_key", "Toggle epic"),
+        Binding("down", "next_story_key", "Next story", show=False),
+        Binding("up", "prev_story_key", "Prev story", show=False),
+        Binding("enter", "drill_into_story_key", "Open story", show=False),
     ]
 
     def __init__(self, client: Any = None, **kwargs: Any) -> None:
         super().__init__(client=client, **kwargs)
         self._selected_epic: int = 0
         self._toggled: dict[str, bool] = {}  # epic_id -> user override
+        self._selected_story: int = -1  # -1 = no story selected
 
     def next_epic(self) -> None:
         """Move selection to the next epic."""
@@ -61,6 +66,7 @@ class SprintPanel(BasePanel):
         if epic_count == 0:
             return
         self._selected_epic = (self._selected_epic + 1) % epic_count
+        self._selected_story = -1
         self._rerender()
 
     def prev_epic(self) -> None:
@@ -69,6 +75,7 @@ class SprintPanel(BasePanel):
         if epic_count == 0:
             return
         self._selected_epic = (self._selected_epic - 1) % epic_count
+        self._selected_story = -1
         self._rerender()
 
     def toggle_epic(self) -> None:
@@ -83,6 +90,65 @@ class SprintPanel(BasePanel):
             self._toggled[epic_id] = not self._is_expanded(epics[self._selected_epic])
         self._rerender()
 
+    def next_story(self) -> None:
+        """Move cursor to next story within expanded epic."""
+        if self._last_payload is None:
+            return
+        epics = self._last_payload.get("epics", [])
+        if not epics or self._selected_epic >= len(epics):
+            return
+        epic = epics[self._selected_epic]
+        if not self._is_expanded(epic):
+            return
+        stories = epic.get("stories", [])
+        if not stories:
+            return
+        self._selected_story = (self._selected_story + 1) % len(stories)
+        self._rerender()
+
+    def prev_story(self) -> None:
+        """Move cursor to previous story within expanded epic."""
+        if self._last_payload is None:
+            return
+        epics = self._last_payload.get("epics", [])
+        if not epics or self._selected_epic >= len(epics):
+            return
+        epic = epics[self._selected_epic]
+        if not self._is_expanded(epic):
+            return
+        stories = epic.get("stories", [])
+        if not stories:
+            return
+        if self._selected_story == -1:
+            self._selected_story = len(stories) - 1
+        else:
+            self._selected_story = (self._selected_story - 1) % len(stories)
+        self._rerender()
+
+    def get_selected_story(self) -> dict[str, Any] | None:
+        """Return the currently selected story data, or None if no story selected."""
+        if self._selected_story < 0 or self._last_payload is None:
+            return None
+        epics = self._last_payload.get("epics", [])
+        if not epics or self._selected_epic >= len(epics):
+            return None
+        stories = epics[self._selected_epic].get("stories", [])
+        if self._selected_story >= len(stories):
+            return None
+        return stories[self._selected_story]
+
+    def drill_into_story(self) -> None:
+        """Push StoryDetailScreen for the selected story."""
+        story = self.get_selected_story()
+        if story is None:
+            return
+        from pennyfarthing_scripts.bikerack.story_detail_screen import StoryDetailScreen
+
+        try:
+            self.app.push_screen(StoryDetailScreen(story_data=story))
+        except Exception:
+            pass
+
     def action_next_epic_key(self) -> None:
         """Binding action: next epic."""
         self.next_epic()
@@ -94,6 +160,18 @@ class SprintPanel(BasePanel):
     def action_toggle_epic_key(self) -> None:
         """Binding action: toggle epic."""
         self.toggle_epic()
+
+    def action_next_story_key(self) -> None:
+        """Binding action: next story."""
+        self.next_story()
+
+    def action_prev_story_key(self) -> None:
+        """Binding action: previous story."""
+        self.prev_story()
+
+    def action_drill_into_story_key(self) -> None:
+        """Binding action: drill into story."""
+        self.drill_into_story()
 
     def _rerender(self) -> None:
         if self._last_payload is not None:
@@ -155,7 +233,9 @@ class SprintPanel(BasePanel):
             f"Velocity: {velocity}"
         )
 
-        hint = Text.from_markup("[dim]j/k:navigate  e:expand/collapse[/dim]")
+        hint = Text.from_markup(
+            "[dim]j/k:navigate  e:expand/collapse  \u2191/\u2193:stories  Enter:open[/dim]"
+        )
         parts: list[Any] = [header, hint, Text("")]
 
         for i, epic in enumerate(epics):
@@ -178,10 +258,10 @@ class SprintPanel(BasePanel):
             selected = i == self._selected_epic
 
             # Epic header: selector arrow epic-id progress-bar pts title
-            arrow = "▼" if expanded else "▶"
+            arrow = "\u25bc" if expanded else "\u25b6"
             epic_line = Text(no_wrap=True, overflow="ellipsis")
             if selected:
-                epic_line.append("› ", style="bold yellow")
+                epic_line.append("\u203a ", style="bold yellow")
             epic_line.append(f"{arrow} ", style="bold")
             epic_line.append(f"{epic_id}", style="bold cyan")
             epic_line.append("  ")
@@ -199,17 +279,24 @@ class SprintPanel(BasePanel):
 
             # Show stories if expanded
             if expanded:
-                for story in stories:
+                for si, story in enumerate(stories):
                     story_id = story.get("id", "")
                     title = story.get("title", "")
                     pts = story.get("points", "")
-                    jira = story.get("jiraKey") or "—"
+                    jira = story.get("jiraKey") or "\u2014"
                     badge = _status_badge(story.get("status", ""))
+
+                    is_story_selected = selected and si == self._selected_story
 
                     # Fixed-width fields first, title last (truncates)
                     story_line = Text(no_wrap=True, overflow="ellipsis")
+                    if is_story_selected:
+                        story_line.append("\u25b8 ", style="bold yellow")
                     story_line.append_text(badge)
-                    story_line.append(f" {story_id}", style="cyan" if story_id != current_story_id else "bold cyan")
+                    story_line.append(
+                        f" {story_id}",
+                        style="cyan" if story_id != current_story_id else "bold cyan",
+                    )
                     story_line.append(f"  {jira}", style="dim")
                     story_line.append(f"  {pts}", style="dim")
                     story_line.append(f"  {title}")
