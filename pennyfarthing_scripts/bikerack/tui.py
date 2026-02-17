@@ -23,6 +23,7 @@ from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static, Tab, Tabs
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
+from pennyfarthing_scripts.bikerack.audit_log_panel import AuditLogPanel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
@@ -79,6 +80,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("diffs", "Diffs"),
     ("changed", "Changed"),
     ("background", "Background"),
+    ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
 ]
@@ -416,8 +418,9 @@ class BikeRackApp(App):
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
         Binding("4", "switch_panel('changed')", "Changed", show=False),
         Binding("5", "switch_panel('background')", "Background", show=False),
-        Binding("6", "switch_panel('debug')", "Debug", show=False),
-        Binding("7", "switch_panel('progress')", "Progress", show=False),
+        Binding("6", "switch_panel('audit-log')", "Audit Log", show=False),
+        Binding("7", "switch_panel('debug')", "Debug", show=False),
+        Binding("8", "switch_panel('progress')", "Progress", show=False),
         Binding("bracketright", "next_panel", "]Next"),
         Binding("bracketleft", "prev_panel", "[Prev"),
         Binding("tab", "next_panel", show=False),
@@ -454,6 +457,7 @@ class BikeRackApp(App):
             yield DiffsPanel(client=self._client, id="panel-diffs")
             yield ChangedPanel(client=self._client, id="panel-changed")
             yield BackgroundPanel(client=self._client, id="panel-background")
+            yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
         yield ContextMeterFooter(client=self._client)
