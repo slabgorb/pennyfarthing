@@ -45,6 +45,10 @@ export interface WorkflowPhase {
   };
   /** Native team configuration for phase-scoped collaboration (optional) */
   team?: TeamConfig;
+  /** Explicit next phase name for non-linear routing (optional) */
+  next?: string;
+  /** Freeform instructions for the agent in this phase (optional) */
+  instructions?: string;
 }
 
 /**
@@ -539,7 +543,40 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
           errors.push({ field: `workflow.phases[${index}].output`, message: 'Output must be an array' });
         }
       }
+
+      // Phase next (optional, string — must reference an existing phase name)
+      if ('next' in phaseObj && phaseObj.next !== undefined) {
+        if (typeof phaseObj.next !== 'string') {
+          errors.push({ field: `workflow.phases[${index}].next`, message: 'Next must be a string' });
+        }
+      }
+
+      // Phase instructions (optional, string)
+      if ('instructions' in phaseObj && phaseObj.instructions !== undefined) {
+        if (typeof phaseObj.instructions !== 'string') {
+          errors.push({ field: `workflow.phases[${index}].instructions`, message: 'Instructions must be a string' });
+        }
+      }
     });
+
+    // Cross-validate next: references point to existing phase names
+    if (!errors.some(e => e.field.includes('.next') && e.message === 'Next must be a string')) {
+      const phaseNames = new Set(
+        (workflowObj.phases as Record<string, unknown>[])
+          .filter(p => p && typeof p === 'object' && typeof p.name === 'string')
+          .map(p => p.name as string)
+      );
+      (workflowObj.phases as Record<string, unknown>[]).forEach((phase, index) => {
+        if (phase && typeof phase === 'object' && 'next' in phase && typeof phase.next === 'string') {
+          if (!phaseNames.has(phase.next)) {
+            errors.push({
+              field: `workflow.phases[${index}].next`,
+              message: `Next references unknown phase '${phase.next}'`
+            });
+          }
+        }
+      });
+    }
     }
   }
 
@@ -713,6 +750,12 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         if (teamObj.display !== undefined) {
           result.team.display = teamObj.display as string;
         }
+      }
+      if (phase.next !== undefined) {
+        result.next = phase.next as string;
+      }
+      if (phase.instructions !== undefined) {
+        result.instructions = phase.instructions as string;
       }
 
       return result;

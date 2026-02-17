@@ -15,7 +15,24 @@ model: haiku
 </arguments>
 
 <execution>
-## Run Preflight Script
+## 1. Create PR (if needed)
+
+Before running preflight, check if a PR exists for the branch. If not, create one
+using the project's `pr_mode` config:
+
+```bash
+# Read pr_mode: draft | ready | none
+PR_MODE=$(source .venv/bin/activate && python -m pennyfarthing_scripts.common.pr_config)
+```
+
+- If `PR_MODE=draft`: `gh pr create --draft --title "feat({STORY_ID}): {title}" --body "..." --base develop`
+- If `PR_MODE=ready`: `gh pr create --title "feat({STORY_ID}): {title}" --body "..." --base develop`
+- If `PR_MODE=none`: Skip PR creation entirely.
+
+Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`
+If a PR already exists, skip creation.
+
+## 2. Run Preflight Script
 
 The preflight script runs all checks in parallel using asyncio:
 
