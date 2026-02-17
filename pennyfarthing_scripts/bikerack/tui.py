@@ -26,6 +26,7 @@ from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
+from pennyfarthing_scripts.bikerack.context_meter_footer import ContextMeterFooter
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
 from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
 from pennyfarthing_scripts.bikerack.events import NavigateToFile
@@ -361,6 +362,9 @@ class BikeRackApp(App):
     #connection-status {
         height: 1;
     }
+    ContextMeterFooter {
+        height: 1;
+    }
     """
 
     COMMANDS = App.COMMANDS | {PanelCommands}
@@ -411,6 +415,7 @@ class BikeRackApp(App):
             yield BackgroundPanel(client=self._client, id="panel-background")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
+        yield ContextMeterFooter(client=self._client)
         yield BindingFooter()
 
     async def on_mount(self) -> None:
