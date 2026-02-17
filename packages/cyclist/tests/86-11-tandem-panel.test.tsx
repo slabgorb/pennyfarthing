@@ -199,7 +199,8 @@ describe('AC1: TandemPanel reads observation file format', () => {
     await waitFor(() => {
       expect(screen.getByText('The Man in Black')).toBeInTheDocument();
     });
-    expect(screen.getByText(/red/i)).toBeInTheDocument();
+    const phaseEl = screen.getByTestId('observer-phase');
+    expect(phaseEl.textContent).toMatch(/red/i);
   });
 
   it('should parse trigger scope and detail for each observation', async () => {
