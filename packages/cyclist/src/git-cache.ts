@@ -8,7 +8,7 @@
  * Story: Interactive Debug Session - Git Lock Fix
  */
 
-import { getAllReposGitInfoAsync, fetchAllReposAsync, resetFetchCooldown, type RepoGitInfo } from './api/git.js';
+import { getAllReposGitInfoAsync, type RepoGitInfo } from './api/git.js';
 
 // Cache state
 interface GitCacheState {
@@ -171,12 +171,10 @@ export function invalidateGitCache(projectDir: string): void {
 
 /**
  * Force an immediate refresh (used for branch switches via .git/HEAD watcher)
- * Resets the fetch cooldown so git fetch actually runs (Story 103-21)
  */
 export async function forceRefreshGitCache(projectDir: string): Promise<RepoGitInfo[]> {
   const cache = getOrCreateCache(projectDir);
   cache.stale = true;
-  resetFetchCooldown(projectDir);
 
   // Clear any pending debounced refresh and invalidation tracking
   const existingTimer = refreshTimers.get(projectDir);
@@ -186,44 +184,9 @@ export async function forceRefreshGitCache(projectDir: string): Promise<RepoGitI
   }
   invalidationStartTimes.delete(projectDir);
 
-  // Fetch remote refs first (decoupled from status reads)
-  await fetchAllReposAsync(projectDir);
   return getCachedGitStatus(projectDir);
 }
 
-// Periodic fetch timer handle (for cleanup)
-let periodicFetchTimer: ReturnType<typeof setInterval> | null = null;
-
-/**
- * Start periodic background fetch for all repos.
- * Runs git fetch on a fixed interval, invalidating cache on success.
- * This is decoupled from status reads — fetch is network I/O, status is local.
- */
-export function startPeriodicFetch(projectDir: string, intervalMs: number = 60_000): void {
-  if (periodicFetchTimer) return; // Already running
-  console.log('[GitCache] Starting periodic fetch every', intervalMs, 'ms');
-  periodicFetchTimer = setInterval(async () => {
-    try {
-      const fetched = await fetchAllReposAsync(projectDir);
-      if (fetched) {
-        console.log('[GitCache] Periodic fetch completed, invalidating cache');
-        invalidateGitCache(projectDir);
-      }
-    } catch (err) {
-      console.error('[GitCache] Periodic fetch error:', err);
-    }
-  }, intervalMs);
-}
-
-/**
- * Stop periodic background fetch (for cleanup)
- */
-export function stopPeriodicFetch(): void {
-  if (periodicFetchTimer) {
-    clearInterval(periodicFetchTimer);
-    periodicFetchTimer = null;
-  }
-}
 
 /**
  * Register a callback to be notified when cache refreshes
