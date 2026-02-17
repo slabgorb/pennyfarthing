@@ -108,14 +108,13 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 | Read tests, plan implementation | Run tests, report results |
 | Write code to pass tests | Execute mechanical checks |
 | Make architectural decisions | Execute mechanical checks |
-| Create PRs with descriptions | |
 </delegation>
 
 <workflow>
 ## Primary Workflow: Make Tests GREEN
 
 **Input:** Failing tests from TEA (RED state)
-**Output:** Passing tests, PR created (GREEN state)
+**Output:** Passing tests, branch pushed (GREEN state)
 
 1. Read session file for test locations
 2. **Spawn `testing-runner`** to verify RED state
@@ -128,12 +127,10 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    git add . && git commit -m "feat(X-Y): implement feature"
    git push -u origin $(git branch --show-current)
    ```
-8. Create PR targeting `develop`:
-   ```bash
-   gh pr create --title "..." --body "..." --base develop
-   ```
-9. Write Dev Assessment to session file
-10. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
+8. Write Dev Assessment to session file
+9. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
+
+**DO NOT create a PR.** PR creation is handled by SM in the finish phase.
 </workflow>
 
 <assessment-template>
@@ -149,10 +146,9 @@ Write to session file BEFORE starting exit protocol:
 - `path/to/file.go` - {description}
 
 **Tests:** {N}/{N} passing (GREEN)
-**PR:** #{number} - {title}
 **Branch:** {branch-name} (pushed)
 
-**Handoff:** To Reviewer for code review
+**Handoff:** To next phase (verify or review)
 ```
 </assessment-template>
 

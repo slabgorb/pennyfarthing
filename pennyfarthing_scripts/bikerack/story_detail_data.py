@@ -71,6 +71,10 @@ def _parse_session_file(session_path: str) -> dict[str, Any]:
                 result["points"] = int(value)
             except ValueError:
                 result["points"] = value
+        elif key == "review verdict":
+            result["review_verdict"] = value
+        elif key == "review findings":
+            result["review_findings"] = value
 
     # Parse ACs from ## Acceptance Criteria section
     ac_match = re.search(
@@ -234,5 +238,7 @@ def fetch_story_detail(
     result.setdefault("git_branch", "")
     result.setdefault("pr_url", None)
     result.setdefault("session_notes", "")
+    result.setdefault("review_findings", "")
+    result.setdefault("review_verdict", "")
 
     return result

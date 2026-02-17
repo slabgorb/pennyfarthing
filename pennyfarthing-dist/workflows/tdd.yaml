@@ -1,7 +1,7 @@
 # TDD Workflow - Test-Driven Development
 # Default workflow for feature development in Pennyfarthing
 #
-# Flow: SM → TEA → Dev → Reviewer → SM
+# Flow: SM → TEA → Dev → TEA (verify) → Reviewer → SM
 # Scale routing: 1-2 pts use 'trivial' workflow instead
 
 workflow:
@@ -32,9 +32,18 @@ workflow:
         type: tests_pass
         condition: All tests passing, no skipped tests
 
+    - name: verify
+      agent: tea
+      input: [implementation, passing_tests]
+      output: [quality_verified]
+      gate:
+        file: gates/quality-pass
+        type: quality_pass
+        condition: Lint, typecheck, and all tests passing
+
     - name: review
       agent: reviewer
-      input: [implementation, passing_tests]
+      input: [implementation, passing_tests, quality_verified]
       output: [approval]
       gate:
         file: gates/approval
