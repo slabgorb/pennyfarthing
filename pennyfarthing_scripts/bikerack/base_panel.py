@@ -138,10 +138,19 @@ class BasePanel(Static):
         """Mark panel as unmounted — messages ignored after this."""
         self._mounted = False
 
+    def _thread_safe_update(self, content: Any) -> None:
+        """Update widget content, safe from both main and worker threads."""
+        try:
+            self.app.call_from_thread(self.update, content)
+        except RuntimeError:
+            # Already on the main thread (e.g., in tests)
+            self.update(content)
+
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket message.
 
         Stores payload, calls render_panel, updates widget display.
+        Uses thread-safe update since WS handlers may run in a worker thread.
         No-op after unmount or if message is None.
         """
         if not self._mounted or message is None:
@@ -149,7 +158,7 @@ class BasePanel(Static):
         self._last_payload = message
         rendered = self.render_panel(message)
         try:
-            self.update(rendered)
+            self._thread_safe_update(rendered)
         except Exception:
             pass
 

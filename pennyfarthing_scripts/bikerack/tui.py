@@ -17,17 +17,18 @@ from typing import Any
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.command import Hit, Hits, Provider
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
+from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
-from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
 from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
+from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.git_panel import GitPanel
 from pennyfarthing_scripts.bikerack.progress_panel import ProgressPanel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
@@ -114,7 +115,7 @@ class BindingFooter(Footer):
         try:
             bindings = self.screen.active_bindings
             parts: list[str] = []
-            for _, binding, enabled, tooltip in bindings.values():
+            for _, binding, _enabled, _tooltip in bindings.values():
                 if binding.show:
                     parts.append(f"{binding.key}:{binding.description}")
             if parts:
@@ -150,12 +151,27 @@ class PanelTabBar(Static):
 
 
 class AgentHeader(Static):
-    """Displays current agent persona from WheelHub /ws/persona channel."""
+    """Displays current agent persona from WheelHub /ws/persona channel.
+
+    When a portrait image is available (resolved locally or provided via
+    portraitPath in persona data), mounts a Horizontal layout container.
+    Falls back to text-only when no portrait is found.
+    """
+
+    class PortraitLayoutUpdate(Message):
+        """Internal message to update portrait layout asynchronously."""
+
+        def __init__(self, portrait_path: Path | None) -> None:
+            super().__init__()
+            self.has_portrait = portrait_path is not None
+            self.portrait_path = portrait_path
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._is_streaming: bool = False
         self._persona_data: dict[str, Any] = {}
+        self._header_text: str = ""
+        self._current_portrait: Path | None = None
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -168,6 +184,21 @@ class AgentHeader(Static):
         self._is_streaming = bool(data.get("isStreaming", False))
         self._render_header()
 
+    def _resolve_portrait(self, data: dict[str, Any]) -> Path | None:
+        """Get portrait path from persona data or resolve locally."""
+        portrait_path = data.get("portraitPath")
+        if portrait_path:
+            p = Path(portrait_path)
+            if p.exists():
+                return p
+        theme = data.get("theme", "")
+        role = data.get("role", "")
+        if theme and role:
+            from pennyfarthing_scripts.bikerack import portrait_resolver
+
+            return portrait_resolver.resolve_portrait_path(theme, role)
+        return None
+
     def _render_header(self) -> None:
         """Re-render the header from stored state."""
         data = self._persona_data
@@ -175,20 +206,20 @@ class AgentHeader(Static):
         role = data.get("role", "")
         role_desc = data.get("roleDescription", "")
         quote = data.get("quote", "")
-        style = data.get("style", "")
         theme = data.get("theme", "")
 
         if not char:
             self.update("[dim]Waiting for agent...[/dim]")
+            self.post_message(self.PortraitLayoutUpdate(portrait_path=None))
             return
 
         parts: list[str] = []
 
-        # Role badge
+        # Role badge — escape brackets so Rich doesn't eat them as tags
         if role:
             abbrev = AGENT_ABBREV.get(role, role.upper()[:3])
             color = AGENT_ROLE_COLORS.get(role, "bright_magenta")
-            parts.append(f"[bold {color}][{abbrev}][/bold {color}]")
+            parts.append(f"[bold {color}]\\[{abbrev}][/bold {color}]")
 
         # Character name
         parts.append(f"[bold]{char}[/bold]")
@@ -196,6 +227,7 @@ class AgentHeader(Static):
         # Theme name
         if theme:
             from pennyfarthing_scripts.bikerack.base_panel import humanize_theme
+
             parts.append(f"[dim]{humanize_theme(theme)}[/dim]")
 
         # Streaming indicator
@@ -210,7 +242,62 @@ class AgentHeader(Static):
         elif role_desc:
             line += f"\n[dim]{role_desc}[/dim]"
 
-        self.update(line)
+        self._header_text = line
+
+        # Check portrait and schedule layout update
+        portrait = self._resolve_portrait(data)
+        self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
+
+    async def on_agent_header_portrait_layout_update(
+        self, event: PortraitLayoutUpdate
+    ) -> None:
+        """Mount or remove Horizontal portrait layout with text beside image."""
+        if event.has_portrait and event.portrait_path:
+            if self._current_portrait == event.portrait_path:
+                # Same portrait — just update text label if it exists
+                try:
+                    text_widget = self.query_one("#agent-text", Static)
+                    text_widget.update(self._header_text)
+                except Exception:
+                    pass
+                return
+
+            # New portrait or first time — full layout rebuild
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+            try:
+                from pennyfarthing_scripts.bikerack.portrait_resolver import (
+                    detect_image_protocol,
+                )
+
+                protocol = detect_image_protocol()
+                if protocol is None:
+                    # No image protocol available — text-only
+                    self.update(self._header_text)
+                    return
+
+                if protocol == "kitty":
+                    from textual_image.widget import TGPImage as ImageWidget
+                elif protocol == "sixel":
+                    from textual_image.widget import SixelImage as ImageWidget
+                else:
+                    from textual_image.widget import HalfcellImage as ImageWidget
+
+                self.update("")  # clear Static text — text goes in child
+                self._current_portrait = event.portrait_path
+                img = ImageWidget(str(event.portrait_path), id="portrait-img")
+                text = Static(self._header_text, id="agent-text")
+                row = Horizontal(img, text, id="portrait-row")
+                await self.mount(row)
+            except (ImportError, Exception):
+                # textual-image not installed or render error — text-only fallback
+                self.update(self._header_text)
+        else:
+            # No portrait — text-only
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+            self._current_portrait = None
+            self.update(self._header_text)
 
 
 class ConnectionStatus(Static):
@@ -251,8 +338,22 @@ class BikeRackApp(App):
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 3;
+        max-height: 6;
         padding: 0 1;
+        border-bottom: solid $accent;
+    }
+    #portrait-row {
+        height: 4;
+        width: 100%;
+    }
+    #portrait-img {
+        width: 8;
+        height: 4;
+        margin: 0 1 0 0;
+    }
+    #agent-text {
+        height: auto;
+        width: 1fr;
     }
     #tab-bar {
         height: 1;
@@ -468,7 +569,10 @@ class BikeRackApp(App):
 
         focus = message["focus"]
         if focus is not None and focus in _PANEL_KEYS:
-            self.action_switch_panel(focus)
+            try:
+                self.call_from_thread(self.action_switch_panel, focus)
+            except RuntimeError:
+                self.action_switch_panel(focus)
         elif focus is not None:
             # Panel exists in display names but not implemented — just update state
             self._previous_panel = self._focused_panel
@@ -507,6 +611,11 @@ def main(
         port: Explicit WheelHub port. If None, reads from .wheelhub-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
+    # Detect terminal image protocol BEFORE App.run() claims the terminal
+    from pennyfarthing_scripts.bikerack import portrait_resolver
+
+    portrait_resolver.detect_image_protocol()
+
     if port is None:
         if project_dir is not None:
             port_file = project_dir / ".wheelhub-port"
