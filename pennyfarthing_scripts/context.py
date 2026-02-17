@@ -271,7 +271,7 @@ def detect_cyclist(project_dir: str | None = None) -> bool:
 
     Checks:
     1. CYCLIST env var set to '1' (Electron mode - definitive)
-    2. .wheelhub-port file exists AND port is responding (Web mode)
+    2. .wheelhub-port or .bikerack-port file exists AND port is responding (Web mode)
     """
     # Env var is definitive - set by Cyclist when it spawns Claude
     if os.environ.get("CYCLIST") == "1":
@@ -288,6 +288,7 @@ def detect_cyclist(project_dir: str | None = None) -> bool:
     port_files = [
         Path(project_dir) / "packages" / "cyclist" / ".wheelhub-port",
         Path(os.getcwd()) / ".wheelhub-port",
+        Path(os.getcwd()) / ".bikerack-port",
     ]
 
     for port_file in port_files:

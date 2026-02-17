@@ -6,7 +6,7 @@ import { createTerminalServer, findAvailablePort } from './server.js';
 import { writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 
-const PORT_FILE = '.wheelhub-port';
+const PORT_FILE = '.bikerack-port';
 const DEFAULT_PORT = parseInt(process.env.BIKERACK_PORT || '2898', 10);
 
 function getProjectDir(): string {
@@ -37,7 +37,7 @@ function cleanupPortFile(projectDir: string): void {
     console.log(`BikeRack running at http://127.0.0.1:${actualPort}`);
     // Write port file AFTER listen() callback (CE-3)
     writePortFile(projectDir, actualPort);
-    console.log(`[BikeRack] Wrote .wheelhub-port to ${projectDir}`);
+    console.log(`[BikeRack] Wrote .bikerack-port to ${projectDir}`);
   });
 
   process.on('SIGINT', () => {

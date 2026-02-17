@@ -5,14 +5,14 @@ Epic: 101 — BikeRack Mode (ADR-0024)
 
 Acceptance Criteria:
 - [AC1]  `pf bikerack start` starts WheelHub background with IS_BIKERACK=1
-- [AC2]  Polls for .wheelhub-port file (100ms interval, 5s timeout)
+- [AC2]  Polls for .bikerack-port file (100ms interval, 5s timeout)
 - [AC3]  Sets exactly 5 OTEL env vars from discovered port (Rule 5)
 - [AC4]  Uses exec (not spawn) for Claude CLI (CE-4)
 - [AC5]  trap EXIT registered before exec to kill WheelHub PID (Rule 8)
 - [AC6]  Writes .wheelhub-pid after spawning WheelHub
 - [AC7]  `pf bikerack stop` reads PID, sends SIGTERM, deletes files
 - [AC8]  `pf bikerack status` shows running state (PID, port, uptime)
-- [AC9]  Error if already running (.wheelhub-port exists with live PID)
+- [AC9]  Error if already running (.bikerack-port exists with live PID)
 - [AC10] Exit code 1 if WheelHub fails to start, 2 if already running
 - [AC11] Prints dashboard URL on startup
 - [AC12] `just bikerack` works as alias
@@ -101,7 +101,7 @@ class TestStartWheelHub:
 
 
 # ---------------------------------------------------------------------------
-# AC2: Polls for .wheelhub-port file (100ms interval, 5s timeout)
+# AC2: Polls for .bikerack-port file (100ms interval, 5s timeout)
 # ---------------------------------------------------------------------------
 
 
@@ -110,7 +110,7 @@ class TestPortFilePolling:
 
     def test_returns_port_when_file_exists(self, tmp_path: Path) -> None:
         """poll_for_port_file should return port number from file."""
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("2898")
 
         result = poll_for_port_file(tmp_path)
@@ -125,7 +125,7 @@ class TestPortFilePolling:
 
     def test_waits_for_file_to_appear(self, tmp_path: Path) -> None:
         """poll_for_port_file should poll until file appears."""
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
 
         # Simulate file appearing after short delay
         call_count = [0]
@@ -160,7 +160,7 @@ class TestPortFilePolling:
 
     def test_reads_integer_port(self, tmp_path: Path) -> None:
         """poll_for_port_file should parse port as integer."""
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("3000\n")  # Trailing newline should be handled
 
         result = poll_for_port_file(tmp_path)
@@ -340,8 +340,8 @@ class TestCleanupRegistration:
                 assert kill_args[1] == signal.SIGTERM
 
     def test_cleanup_removes_port_file(self, tmp_path: Path) -> None:
-        """Registered cleanup should delete .wheelhub-port file."""
-        port_file = tmp_path / ".wheelhub-port"
+        """Registered cleanup should delete .bikerack-port file."""
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("2898")
 
         cleanup_func = None
@@ -363,7 +363,7 @@ class TestCleanupRegistration:
             except (ProcessLookupError, OSError):
                 pass
 
-        assert not port_file.exists(), ".wheelhub-port should be deleted by cleanup"
+        assert not port_file.exists(), ".bikerack-port should be deleted by cleanup"
 
     def test_cleanup_removes_pid_file(self, tmp_path: Path) -> None:
         """Registered cleanup should delete .wheelhub-pid file."""
@@ -443,7 +443,7 @@ class TestStopBikeRack:
     def test_sends_sigterm_to_pid(self, tmp_path: Path) -> None:
         """stop_bikerack should send SIGTERM to the WheelHub PID."""
         # Setup: create port and pid files
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.os.kill") as mock_kill:
@@ -453,8 +453,8 @@ class TestStopBikeRack:
                 mock_kill.assert_called_with(12345, signal.SIGTERM)
 
     def test_deletes_port_file(self, tmp_path: Path) -> None:
-        """stop_bikerack should delete .wheelhub-port."""
-        port_file = tmp_path / ".wheelhub-port"
+        """stop_bikerack should delete .bikerack-port."""
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
@@ -466,7 +466,7 @@ class TestStopBikeRack:
 
     def test_deletes_pid_file(self, tmp_path: Path) -> None:
         """stop_bikerack should delete .wheelhub-pid."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         pid_file = tmp_path / ".wheelhub-pid"
         pid_file.write_text("12345")
 
@@ -478,7 +478,7 @@ class TestStopBikeRack:
 
     def test_returns_success_dict(self, tmp_path: Path) -> None:
         """stop_bikerack should return {success: True, pid: N, message: str}."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.os.kill"):
@@ -506,7 +506,7 @@ class TestStatus:
 
     def test_returns_running_state(self, tmp_path: Path) -> None:
         """get_status should detect running BikeRack."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -524,7 +524,7 @@ class TestStatus:
 
     def test_includes_dashboard_url(self, tmp_path: Path) -> None:
         """get_status should include dashboard URL when running."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -534,7 +534,7 @@ class TestStatus:
 
     def test_detects_stale_pid(self, tmp_path: Path) -> None:
         """get_status should detect stale PID (file exists, process dead)."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("99999")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=False):
@@ -544,7 +544,7 @@ class TestStatus:
 
 
 # ---------------------------------------------------------------------------
-# AC9: Error if already running (.wheelhub-port exists with live PID)
+# AC9: Error if already running (.bikerack-port exists with live PID)
 # ---------------------------------------------------------------------------
 
 
@@ -553,7 +553,7 @@ class TestAlreadyRunning:
 
     def test_detects_running_instance(self, tmp_path: Path) -> None:
         """is_already_running should return True when port file + live PID."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -573,7 +573,7 @@ class TestAlreadyRunning:
 
     def test_not_running_when_stale_pid(self, tmp_path: Path) -> None:
         """is_already_running should return False when PID is dead (stale)."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("99999")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=False):
@@ -583,7 +583,7 @@ class TestAlreadyRunning:
 
     def test_cleans_stale_files(self, tmp_path: Path) -> None:
         """is_already_running should clean up stale files when PID is dead."""
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
         pid_file = tmp_path / ".wheelhub-pid"
         port_file.write_text("2898")
         pid_file.write_text("99999")
@@ -605,7 +605,7 @@ class TestExitCodes:
 
     def test_exit_code_2_when_already_running(self, tmp_path: Path) -> None:
         """Start should raise SystemExit(2) when already running."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / ".wheelhub-pid").write_text("12345")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -736,8 +736,8 @@ class TestCleanupFiles:
     """Utility: cleanup_files removes port and PID files."""
 
     def test_removes_port_file(self, tmp_path: Path) -> None:
-        """cleanup_files should remove .wheelhub-port."""
-        port_file = tmp_path / ".wheelhub-port"
+        """cleanup_files should remove .bikerack-port."""
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("2898")
 
         cleanup_files(tmp_path)
@@ -764,7 +764,7 @@ class TestReadPortFile:
 
     def test_reads_port(self, tmp_path: Path) -> None:
         """read_port_file should return port as integer."""
-        (tmp_path / ".wheelhub-port").write_text("2898")
+        (tmp_path / ".bikerack-port").write_text("2898")
 
         result = read_port_file(tmp_path)
 
@@ -778,7 +778,7 @@ class TestReadPortFile:
 
     def test_handles_trailing_whitespace(self, tmp_path: Path) -> None:
         """read_port_file should handle trailing newlines/spaces."""
-        (tmp_path / ".wheelhub-port").write_text("2898\n")
+        (tmp_path / ".bikerack-port").write_text("2898\n")
 
         result = read_port_file(tmp_path)
 
