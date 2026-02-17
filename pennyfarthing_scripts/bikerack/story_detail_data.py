@@ -145,6 +145,42 @@ def _get_pr_url(branch: str) -> str | None:
     return None
 
 
+def _check_context_files(story_id: str, project_root: str | None) -> dict[str, Any]:
+    """Check for epic and story context files.
+
+    Args:
+        story_id: Story identifier (e.g. "110-2").
+        project_root: Path to project root.
+
+    Returns:
+        Dict with has_epic_context, has_story_context, and their paths.
+    """
+    result: dict[str, Any] = {
+        "has_epic_context": False,
+        "has_story_context": False,
+        "epic_context_path": "",
+        "story_context_path": "",
+    }
+    if not project_root:
+        return result
+
+    # Extract epic number from story ID (e.g. "110-2" → "110")
+    parts = story_id.split("-")
+    if parts:
+        epic_num = parts[0]
+        epic_path = os.path.join(project_root, "sprint", "context", f"context-epic-{epic_num}.md")
+        if os.path.isfile(epic_path):
+            result["has_epic_context"] = True
+            result["epic_context_path"] = epic_path
+
+    story_path = os.path.join(project_root, "sprint", "context", f"context-story-{story_id}.md")
+    if os.path.isfile(story_path):
+        result["has_story_context"] = True
+        result["story_context_path"] = story_path
+
+    return result
+
+
 def fetch_story_detail(
     story_id: str,
     project_root: str | None = None,
@@ -181,6 +217,11 @@ def fetch_story_detail(
     if "pr_url" not in result:
         pr_url = _get_pr_url(result.get("git_branch", ""))
         result["pr_url"] = pr_url
+
+    # Check for context files
+    root = project_root or _find_project_root()
+    context_info = _check_context_files(story_id, root)
+    result.update(context_info)
 
     # Ensure all required keys exist with defaults
     result.setdefault("title", "")

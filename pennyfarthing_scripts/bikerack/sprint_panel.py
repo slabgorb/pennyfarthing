@@ -19,24 +19,62 @@ from textual.widgets import Static, Tree
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, render_progress_bar
 
 
+def _normalize_status(status: str) -> str:
+    """Normalize status string: lowercase, strip, hyphens for separators."""
+    s = status.lower().strip().replace("_", "-") if status else ""
+    # Normalize both British and American spelling
+    if s == "cancelled":
+        s = "canceled"
+    return s
+
+
+def _is_terminal(status: str) -> bool:
+    """Return True if the normalized status is done or canceled."""
+    return _normalize_status(status) in {"done", "canceled"}
+
+
 def _status_badge(status: str) -> Text:
-    """Convert status string to styled Rich Text badge."""
-    s = status.lower().strip() if status else ""
+    """Convert status string to styled Rich Text badge (symbol only, no text)."""
+    s = _normalize_status(status)
     if s == "done":
-        return Text("\u2713 done", style="green")
+        return Text("\u2713", style="dim green")
+    if s == "canceled":
+        return Text("\u2715", style="dim")
     if s == "in-progress":
-        return Text("\u27f3 in-progress", style="yellow")
+        return Text("\u27f3", style="bold yellow")
     if s == "backlog":
-        return Text("\u25ef backlog", style="dim")
+        return Text("\u25ef", style="dim")
     if s == "blocked":
-        return Text("! blocked", style="bold red")
+        return Text("!", style="bold red")
     if s == "review":
-        return Text("\u25ce review", style="cyan")
-    return Text(status or "\u2014", style="dim")
+        return Text("\u25ce", style="cyan")
+    return Text("\u2014", style="dim")
+
+
+def _format_assignee(email: str | None) -> str:
+    """Format an email address into a short display name.
+
+    ``"keith.avery@1898andco.io"`` → ``"K. Avery"``
+    ``None`` → ``""``
+    """
+    if not email:
+        return ""
+    local = email.split("@")[0]
+    parts = local.replace("_", ".").split(".")
+    if len(parts) < 2:
+        return parts[0].capitalize()
+    first_initial = parts[0][0].upper() if parts[0] else ""
+    last = parts[-1].capitalize()
+    return f"{first_initial}. {last}"
 
 
 def _should_expand(epic: dict[str, Any]) -> bool:
-    """Check if an epic should be expanded by default (has incomplete work)."""
+    """Check if an epic should be expanded by default (has incomplete work).
+
+    Epics that are canceled, or whose stories are all done/canceled, collapse.
+    """
+    if _is_terminal(epic.get("status", "")):
+        return False
     stories = epic.get("stories", [])
     total_pts = 0
     done_pts = 0
@@ -45,24 +83,30 @@ def _should_expand(epic: dict[str, Any]) -> bool:
         pts = story.get("points", 0)
         if isinstance(pts, (int, float)):
             total_pts += pts
-            status = (story.get("status") or "").lower().strip()
-            if status == "done":
+            if _is_terminal(story.get("status", "")):
                 done_pts += pts
-            if status == "in-progress":
+            if _normalize_status(story.get("status", "")) == "in-progress":
                 has_in_progress = True
     return has_in_progress or done_pts < total_pts
 
 
+_EPIC_ID_WIDTH = 11  # "MSSCI-NNNNN" = 11 chars
+
+
 def _build_epic_label(
-    epic_id: str, title: str, done_pts: int, total_pts: int
+    epic_id: str, title: str, done_pts: int, total_pts: int, jira_key: str = ""
 ) -> Text:
     """Build Rich Text label for an epic tree node."""
     label = Text(no_wrap=True, overflow="ellipsis")
-    label.append(f"{epic_id}", style="bold cyan")
+    display_id = jira_key if jira_key else epic_id
+    if len(display_id) > _EPIC_ID_WIDTH:
+        display_id = display_id[: _EPIC_ID_WIDTH - 1] + "\u2026"
+    display_id = f"{display_id:<{_EPIC_ID_WIDTH}}"
+    label.append(display_id, style="bold cyan")
     label.append("  ")
     if total_pts > 0:
         pct = int(done_pts / total_pts * 100)
-        label.append_text(render_progress_bar(pct, width=10))
+        label.append_text(render_progress_bar(pct, width=10, fill_style="dim green"))
         label.append(f" {done_pts}/{total_pts} pts", style="dim")
     else:
         label.append("0 pts", style="dim")
@@ -71,25 +115,48 @@ def _build_epic_label(
 
 
 def _build_story_label(story: dict[str, Any], current_story_id: str) -> Text:
-    """Build Rich Text label for a story tree leaf."""
+    """Build Rich Text label for a story tree leaf.
+
+    Layout: ``✓  MSSCI-14952   2  Story title``
+    In-progress adds owner: ``⟳  MSSCI-15186   5  Story title  [K. Avery]``
+    Done stories are rendered entirely dim.
+    """
     story_id = story.get("id", "")
     title = story.get("title", "")
     pts = story.get("points", "")
     jira = story.get("jiraKey") or "\u2014"
+    status = _normalize_status(story.get("status", ""))
     badge = _status_badge(story.get("status", ""))
+
+    is_done = _is_terminal(story.get("status", ""))
+    is_in_progress = status == "in-progress"
+    is_current = story_id == current_story_id
 
     label = Text(no_wrap=True, overflow="ellipsis")
     label.append_text(badge)
-    label.append(
-        f" {story_id}",
-        style="cyan" if story_id != current_story_id else "bold cyan",
-    )
-    label.append(f"  {jira}", style="dim")
-    label.append(f"  {pts}", style="dim")
-    label.append(f"  {title}")
 
-    if story_id == current_story_id:
+    # MSSCI key flush left, fixed-width (14 chars — fits "MSSCI-NNNNN" + padding)
+    jira_padded = f"{jira:<14}"
+    label.append(f"  {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan"))
+
+    # Points right-aligned (2 chars)
+    pts_str = f"{pts:>2}" if isinstance(pts, int) else f"{pts!s:>2}"
+    label.append(f"  {pts_str}", style="dim")
+
+    # Title
+    label.append(f"  {title}", style="dim" if is_done else "")
+
+    # Owner for in-progress stories
+    if is_in_progress:
+        owner = _format_assignee(story.get("assignee"))
+        if owner:
+            label.append(f"  [{owner}]", style="dim yellow")
+
+    if is_current:
         label.stylize("bold")
+
+    if is_done:
+        label.stylize("dim")
 
     return label
 
@@ -247,17 +314,20 @@ class SprintPanel(Widget):
             epic_title = epic.get("title", "")
             stories = epic.get("stories", [])
 
-            # Calculate epic progress
+            # Calculate epic progress (canceled counts as done)
             total_pts = 0
             done_pts = 0
             for story in stories:
                 pts = story.get("points", 0)
                 if isinstance(pts, (int, float)):
                     total_pts += pts
-                    if (story.get("status") or "").lower().strip() == "done":
+                    if _is_terminal(story.get("status", "")):
                         done_pts += pts
 
-            label = _build_epic_label(epic_id, epic_title, done_pts, total_pts)
+            label = _build_epic_label(
+                epic_id, epic_title, done_pts, total_pts,
+                jira_key=epic.get("jiraKey", ""),
+            )
             epic_data: dict[str, Any] = {
                 "type": "epic",
                 "id": epic_id,

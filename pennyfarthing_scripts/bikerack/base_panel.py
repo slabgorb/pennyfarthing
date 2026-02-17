@@ -47,7 +47,12 @@ def get_panel_icon(panel_name: str, use_nerd_font: bool = True) -> str:
     return entry[0] if use_nerd_font else entry[1]
 
 
-def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool = False) -> Text:
+def render_progress_bar(
+    percent: int | float,
+    width: int = 20,
+    warn_high: bool = False,
+    fill_style: str | None = None,
+) -> Text:
     """Render a Unicode progress bar with color based on percentage.
 
     Args:
@@ -55,6 +60,7 @@ def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool =
         width: Number of bar characters (default 20).
         warn_high: If True, use red at high values (for resource usage).
                    If False (default), use blue at 100% (for completion).
+        fill_style: Override the computed fill color (e.g. ``"dim green"``).
 
     Returns:
         Rich Text like ``[████████░░░░░░░░░░░░] 22%``
@@ -63,7 +69,9 @@ def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool =
     filled = round(width * percent / 100)
     empty = width - filled
 
-    if warn_high:
+    if fill_style is not None:
+        style = fill_style
+    elif warn_high:
         if percent < 50:
             style = "green"
         elif percent <= 80:
