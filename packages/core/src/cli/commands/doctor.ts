@@ -1,10 +1,10 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync, copyFileSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import YAML from 'yaml';
 import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
 
-const { removeSync, ensureDirSync } = fsExtra;
+const { removeSync, ensureDirSync, copySync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import {
   readManifest
@@ -13,12 +13,14 @@ import {
   pathExists,
   isDirectory,
   isSymlink,
-  fileMatchesHash
+  fileMatchesHash,
+  filesMatch
 } from '../utils/files.js';
-import { getPackageVersion } from '../utils/version.js';
+import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
+import { LEGACY_HOOK_MIGRATIONS, migrateHookPaths } from '../utils/settings.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -81,6 +83,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   // Run checks
   results.push(...checkInstallation(projectRoot, manifest));
   results.push(...checkCoreFiles(projectRoot, manifest));
+  results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
   results.push(...checkUserFiles(projectRoot));
   results.push(...checkDirectories(projectRoot));
   results.push(...checkHooks(projectRoot));
@@ -88,6 +91,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkFileLayout(projectRoot));
   results.push(...checkLegacyFiles(projectRoot));
   results.push(checkLegacyStatuslinePath(projectRoot));
+  results.push(checkLegacyHookCommands(projectRoot));
   results.push(...checkCyclist(projectRoot));
   results.push(checkPfCli(nodeModulesPath));
 
@@ -100,7 +104,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   // Display results by category
   const categories = [
     { name: 'Installation', filter: (r: CheckResult) => r.name.startsWith('manifest') },
-    { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') },
+    { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') && r.name !== 'core/commands' && r.name !== 'core/skills' },
+    { name: 'Commands & Skills', filter: (r: CheckResult) => r.name === 'core/commands' || r.name === 'core/skills' },
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
@@ -237,6 +242,217 @@ function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readMan
   }
 
   return results;
+}
+
+/**
+ * Check commands and skills are properly copied (not symlinked) and up to date.
+ * Commands and skills are file copies since v11.3.0 to avoid node_modules drift.
+ */
+function checkCommandsAndSkills(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  // Use assetsPath for source resolution (correct pf-* prefix in dogfood)
+  let assetsPath: string | null = null;
+  try { assetsPath = getAssetsPath(); } catch { /* no assets available */ }
+
+  if (!assetsPath) {
+    // Can't check freshness without assets, but check dirs exist
+    const commandsDir = join(projectRoot, '.claude/commands');
+    const skillsDir = join(projectRoot, '.claude/skills');
+
+    results.push({
+      name: 'core/commands',
+      status: pathExists(commandsDir) ? 'pass' : 'fail',
+      detail: pathExists(commandsDir) ? undefined : 'Missing .claude/commands/'
+    });
+    results.push({
+      name: 'core/skills',
+      status: pathExists(skillsDir) ? 'pass' : 'fail',
+      detail: pathExists(skillsDir) ? undefined : 'Missing .claude/skills/'
+    });
+
+    return results;
+  }
+
+  // Check commands
+  const commandsDir = join(projectRoot, '.claude/commands');
+  const builtInCommandsPath = join(assetsPath, 'commands');
+
+  if (!pathExists(commandsDir)) {
+    results.push({
+      name: 'core/commands',
+      status: 'fail',
+      detail: 'Missing .claude/commands/ — run pennyfarthing update'
+    });
+  } else if (pathExists(builtInCommandsPath)) {
+    const sourceCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
+    const installedEntries = readdirSync(commandsDir).filter(f => f.startsWith('pf-'));
+    let staleCount = 0;
+    let symlinkCount = 0;
+
+    // Check for stale symlinks (legacy) or stale copies
+    for (const cmd of sourceCommands) {
+      const installedPath = join(commandsDir, cmd);
+      const sourcePath = join(builtInCommandsPath, cmd);
+
+      if (!pathExists(installedPath)) {
+        staleCount++;
+      } else if (isSymlink(installedPath)) {
+        symlinkCount++;
+      } else if (!filesMatch(installedPath, sourcePath)) {
+        staleCount++;
+      }
+    }
+
+    if (symlinkCount > 0) {
+      results.push({
+        name: 'core/commands',
+        status: 'warn',
+        detail: `${symlinkCount} command(s) are symlinks — should be copies. Run pennyfarthing update`,
+        fix: () => {
+          refreshCommandsCopy(projectRoot, builtInCommandsPath);
+        }
+      });
+    } else if (staleCount > 0) {
+      results.push({
+        name: 'core/commands',
+        status: 'warn',
+        detail: `${staleCount} command(s) out of date — run pennyfarthing update`,
+        fix: () => {
+          refreshCommandsCopy(projectRoot, builtInCommandsPath);
+        }
+      });
+    } else {
+      results.push({
+        name: 'core/commands',
+        status: 'pass',
+        detail: `${installedEntries.length} commands`
+      });
+    }
+  }
+
+  // Check skills
+  const skillsDir = join(projectRoot, '.claude/skills');
+  const builtInSkillsPath = join(assetsPath, 'skills');
+
+  if (!pathExists(skillsDir)) {
+    results.push({
+      name: 'core/skills',
+      status: 'fail',
+      detail: 'Missing .claude/skills/ — run pennyfarthing update'
+    });
+  } else if (pathExists(builtInSkillsPath)) {
+    const sourceSkills = readdirSync(builtInSkillsPath).filter(f => {
+      const fullPath = join(builtInSkillsPath, f);
+      return isDirectory(fullPath) && f.startsWith('pf-');
+    });
+    const installedEntries = readdirSync(skillsDir).filter(f => f.startsWith('pf-'));
+    let missingCount = 0;
+    let symlinkCount = 0;
+
+    for (const skill of sourceSkills) {
+      const installedPath = join(skillsDir, skill);
+
+      if (!pathExists(installedPath)) {
+        missingCount++;
+      } else if (isSymlink(installedPath)) {
+        symlinkCount++;
+      }
+    }
+
+    if (symlinkCount > 0) {
+      results.push({
+        name: 'core/skills',
+        status: 'warn',
+        detail: `${symlinkCount} skill(s) are symlinks — should be copies. Run pennyfarthing update`,
+        fix: () => {
+          refreshSkillsCopy(projectRoot, builtInSkillsPath);
+        }
+      });
+    } else if (missingCount > 0) {
+      results.push({
+        name: 'core/skills',
+        status: 'warn',
+        detail: `${missingCount} skill(s) missing — run pennyfarthing update`,
+        fix: () => {
+          refreshSkillsCopy(projectRoot, builtInSkillsPath);
+        }
+      });
+    } else {
+      results.push({
+        name: 'core/skills',
+        status: 'pass',
+        detail: `${installedEntries.length} skills`
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Fix function: refresh commands by cleaning managed entries and copying fresh
+ */
+function refreshCommandsCopy(projectRoot: string, builtInCommandsPath: string): void {
+  const commandsDir = join(projectRoot, '.claude/commands');
+  ensureDirSync(commandsDir);
+
+  // Clean all pf-* entries (symlinks or files)
+  const entries = readdirSync(commandsDir).filter(f => f.startsWith('pf-'));
+  for (const entry of entries) {
+    const entryPath = join(commandsDir, entry);
+    try {
+      unlinkSync(entryPath);
+    } catch {
+      // Already gone
+    }
+  }
+
+  // Copy fresh from source
+  const sourceCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
+  for (const cmd of sourceCommands) {
+    const sourcePath = join(builtInCommandsPath, cmd);
+    const destPath = join(commandsDir, cmd);
+    try {
+      copyFileSync(sourcePath, destPath);
+    } catch (e) {
+      logger.warning(`Could not copy command ${cmd}: ${e}`);
+    }
+  }
+}
+
+/**
+ * Fix function: refresh skills by cleaning managed entries and copying fresh
+ */
+function refreshSkillsCopy(projectRoot: string, builtInSkillsPath: string): void {
+  const skillsDir = join(projectRoot, '.claude/skills');
+  ensureDirSync(skillsDir);
+
+  // Clean all pf-* entries (symlinks or directories)
+  const entries = readdirSync(skillsDir).filter(f => f.startsWith('pf-'));
+  for (const entry of entries) {
+    const entryPath = join(skillsDir, entry);
+    try {
+      removeSync(entryPath);
+    } catch {
+      // Already gone
+    }
+  }
+
+  // Copy fresh from source
+  const sourceSkills = readdirSync(builtInSkillsPath).filter(f => {
+    const fullPath = join(builtInSkillsPath, f);
+    return isDirectory(fullPath) && f.startsWith('pf-');
+  });
+  for (const skill of sourceSkills) {
+    const sourcePath = join(builtInSkillsPath, skill);
+    const destPath = join(skillsDir, skill);
+    try {
+      copySync(sourcePath, destPath, { overwrite: true });
+    } catch (e) {
+      logger.warning(`Could not copy skill ${skill}: ${e}`);
+    }
+  }
 }
 
 /**
@@ -525,12 +741,12 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       };
     }
 
-    // Check if session-start.sh is configured
+    // Check if session-start hook is configured (pf hooks or legacy .sh)
     const hasSessionStartHook = settings.hooks.SessionStart.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('session-start.sh')
+          h.command?.includes('pf hooks session-start') || h.command?.includes('session-start.sh')
         );
       }
       return false;
@@ -540,7 +756,7 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       return {
         name: 'settings/session-start-hook',
         status: 'fail',
-        detail: 'session-start.sh not configured - PROJECT_ROOT will be undefined',
+        detail: 'session-start hook not configured - PROJECT_ROOT will be undefined',
         fix: () => {
           addSessionStartHooks(projectRoot, installationType);
         }
@@ -725,12 +941,12 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       };
     }
 
-    // Check if question-reflector-check is configured
+    // Check if reflector-check hook is configured (pf hooks or legacy .sh)
     const hasReflectorHook = settings.hooks.Stop.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('question-reflector-check')
+          h.command?.includes('pf hooks reflector-check') || h.command?.includes('question-reflector-check')
         );
       }
       return false;
@@ -740,7 +956,7 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       return {
         name: 'settings/stop-hook',
         status: 'warn',
-        detail: 'question-reflector-check not configured',
+        detail: 'reflector-check hook not configured',
         fix: () => {
           addStopHook(projectRoot, installationType);
         }
@@ -783,12 +999,12 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
       };
     }
 
-    // Check if context-circuit-breaker is configured
+    // Check if context-breaker hook is configured (pf hooks or legacy .sh)
     const hasCircuitBreaker = settings.hooks.PreToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('context-circuit-breaker')
+          h.command?.includes('pf hooks context-breaker') || h.command?.includes('context-circuit-breaker')
         );
       }
       return false;
@@ -798,7 +1014,7 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
       return {
         name: 'settings/context-circuit-breaker',
         status: 'warn',
-        detail: 'context-circuit-breaker not configured - context exhaustion protection disabled',
+        detail: 'context-breaker hook not configured - context exhaustion protection disabled',
         fix: () => {
           addContextCircuitBreaker(projectRoot, installationType);
         }
@@ -822,16 +1038,15 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
 /**
  * Fix function: Add context-circuit-breaker hook to PreToolUse in settings.local.json
  */
-function addContextCircuitBreaker(projectRoot: string, installationType: string): void {
+function addContextCircuitBreaker(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Edit|Write|Bash|Task',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+        command: 'pf hooks context-breaker'
       }
     ]
   };
@@ -924,16 +1139,15 @@ function checkSchemaValidationHook(projectRoot: string, installationType: string
 /**
  * Fix function: Add schema-validation hook to PreToolUse in settings.local.json
  */
-function addSchemaValidationHook(projectRoot: string, installationType: string): void {
+function addSchemaValidationHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Write',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/schema-validation.sh`
+        command: 'pf hooks schema-validation'
       }
     ]
   };
@@ -987,12 +1201,12 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
       };
     }
 
-    // Check if bell-mode-hook is configured
+    // Check if bell-mode hook is configured (pf hooks or legacy .sh)
     const hasBellModeHook = settings.hooks.PostToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('bell-mode-hook')
+          h.command?.includes('pf hooks bell-mode') || h.command?.includes('bell-mode-hook')
         );
       }
       return false;
@@ -1002,7 +1216,7 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
       return {
         name: 'settings/post-tool-use-hook',
         status: 'warn',
-        detail: 'bell-mode-hook not configured - bell mode will not work',
+        detail: 'bell-mode hook not configured - bell mode will not work',
         fix: () => {
           addPostToolUseHook(projectRoot, installationType);
         }
@@ -1027,16 +1241,15 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
  * Fix function: Add PostToolUse hook to settings.local.json
  * Required for bell mode to inject queued messages via additionalContext
  */
-function addPostToolUseHook(projectRoot: string, installationType: string): void {
+function addPostToolUseHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: '',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+        command: 'pf hooks bell-mode'
       }
     ]
   };
@@ -1090,12 +1303,12 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
       };
     }
 
-    // Check if sprint-yaml-validation is configured
+    // Check if sprint-yaml hook is configured (pf hooks or legacy .sh)
     const hasSprintYamlValidation = settings.hooks.PostToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('sprint-yaml-validation')
+          h.command?.includes('pf hooks sprint-yaml') || h.command?.includes('sprint-yaml-validation')
         );
       }
       return false;
@@ -1105,7 +1318,7 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
       return {
         name: 'settings/sprint-yaml-validation',
         status: 'warn',
-        detail: 'sprint-yaml-validation not configured - sprint YAML errors may break SprintPanel',
+        detail: 'sprint-yaml hook not configured - sprint YAML errors may break SprintPanel',
         fix: () => {
           addSprintYamlValidationHook(projectRoot, installationType);
         }
@@ -1130,16 +1343,15 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
  * Fix function: Add sprint-yaml-validation hook to PostToolUse in settings.local.json
  * Validates sprint YAML files after Edit/Write for Cyclist SprintPanel compatibility
  */
-function addSprintYamlValidationHook(projectRoot: string, installationType: string): void {
+function addSprintYamlValidationHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Edit|Write',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
+        command: 'pf hooks sprint-yaml'
       }
     ]
   };
@@ -1174,19 +1386,29 @@ function addSprintYamlValidationHook(projectRoot: string, installationType: stri
 /**
  * Fix function: Add Stop hook to settings.local.json
  */
-function addStopHook(projectRoot: string, installationType: string): void {
+function addStopHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
-  const requiredHook = {
-    matcher: '',
-    hooks: [
-      {
-        type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
-      }
-    ]
-  };
+  const requiredHooks = [
+    {
+      matcher: '',
+      hooks: [
+        {
+          type: 'command',
+          command: 'pf hooks reflector-check'
+        }
+      ]
+    },
+    {
+      matcher: '',
+      hooks: [
+        {
+          type: 'command',
+          command: 'pf hooks session-stop'
+        }
+      ]
+    }
+  ];
 
   let settings: Record<string, unknown> = {};
 
@@ -1206,10 +1428,10 @@ function addStopHook(projectRoot: string, installationType: string): void {
   const hooks = settings.hooks as Record<string, unknown>;
 
   if (!hooks.Stop) {
-    hooks.Stop = [requiredHook];
+    hooks.Stop = requiredHooks;
   } else if (Array.isArray(hooks.Stop)) {
-    // Prepend the required hook
-    hooks.Stop = [requiredHook, ...hooks.Stop];
+    // Prepend the required hooks
+    hooks.Stop = [...requiredHooks, ...hooks.Stop];
   }
 
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
@@ -1229,16 +1451,15 @@ function getScriptBasePath(installationType: string): string {
 /**
  * Fix function: Add SessionStart hooks to settings.local.json
  */
-function addSessionStartHooks(projectRoot: string, installationType: string): void {
+function addSessionStartHooks(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHooks = [
     {
       hooks: [
         {
           type: 'command',
-          command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
+          command: 'pf hooks session-start'
         }
       ]
     },
@@ -1292,11 +1513,10 @@ function addSessionStartHooks(projectRoot: string, installationType: string): vo
  * Create settings.local.json from template
  * This is the critical fix for installations that are missing this file
  */
-function createSettingsLocalJson(projectRoot: string, installationType: string): void {
+function createSettingsLocalJson(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
-  // Create full settings structure matching the template
+  // Create full settings structure matching the template — uses pf hooks commands
   const settings = {
     permissions: {
       allow: [
@@ -1339,7 +1559,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
+              command: 'pf hooks session-start'
             }
           ]
         },
@@ -1361,13 +1581,33 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           ]
         }
       ],
+      Stop: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks reflector-check'
+            }
+          ]
+        },
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks session-stop'
+            }
+          ]
+        }
+      ],
       PostToolUse: [
         {
           matcher: '',
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+              command: 'pf hooks bell-mode'
             }
           ]
         },
@@ -1376,18 +1616,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
-            }
-          ]
-        }
-      ],
-      Stop: [
-        {
-          matcher: '',
-          hooks: [
-            {
-              type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
+              command: 'pf hooks sprint-yaml'
             }
           ]
         }
@@ -1398,7 +1627,16 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/pre-edit-check.sh`
+              command: 'pf hooks pre-edit-check'
+            }
+          ]
+        },
+        {
+          matcher: 'Write',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks schema-validation'
             }
           ]
         },
@@ -1407,7 +1645,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-warning.sh`
+              command: 'pf hooks context-warning'
             }
           ]
         },
@@ -1416,7 +1654,15 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+              command: 'pf hooks context-breaker'
+            }
+          ]
+        },
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks cyclist-pretooluse'
             }
           ]
         }
@@ -1424,7 +1670,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
     },
     statusLine: {
       type: 'command',
-      command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/misc/statusline.sh`
+      command: 'pf hooks statusline'
     }
   };
 
@@ -2041,8 +2287,8 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
   const pathMatch = command.match(/(?:\"\$CLAUDE_PROJECT_DIR\"\/)?([^\s"]+)/);
   const currentPath = pathMatch ? pathMatch[1] : command;
 
-  // Check if it contains the canonical path
-  if (currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
+  // Check if it's the canonical pf hooks command or the legacy .sh path
+  if (command === 'pf hooks statusline' || currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
     return {
       name: 'settings/statusline-path',
       status: 'pass',
@@ -2067,7 +2313,7 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
           const updatedSettings = { ...settings };
           (updatedSettings.statusLine as { type: string; command: string }) = {
             type: 'command',
-            command: `"$CLAUDE_PROJECT_DIR"/${CANONICAL_STATUSLINE_PATH}`
+            command: 'pf hooks statusline'
           };
           writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
         }
@@ -2080,6 +2326,89 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
     name: 'settings/statusline-path',
     status: 'pass',
     detail: 'Configured'
+  };
+}
+
+/**
+ * Check if settings.local.json contains legacy .sh hook commands that should
+ * be migrated to `pf hooks` commands. The .sh scripts still work (they're shims)
+ * but `pf hooks` is the canonical path — faster, no shell indirection.
+ */
+function checkLegacyHookCommands(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  if (!pathExists(settingsPath)) {
+    return { name: 'legacy/hook-commands', status: 'pass', detail: 'No settings file' };
+  }
+
+  let settings: Record<string, unknown>;
+  try {
+    settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  } catch {
+    return { name: 'legacy/hook-commands', status: 'warn', detail: 'Cannot parse settings.local.json' };
+  }
+
+  if (!settings.hooks) {
+    return { name: 'legacy/hook-commands', status: 'pass' };
+  }
+
+  // Count how many hook commands still reference .sh scripts
+  const hooks = settings.hooks as Record<string, unknown>;
+  let legacyCount = 0;
+
+  for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
+    if (!Array.isArray(hooks[hookType])) continue;
+    for (const entry of hooks[hookType] as Array<{ hooks?: Array<{ command?: string }> }>) {
+      if (!entry.hooks) continue;
+      for (const h of entry.hooks) {
+        if (!h.command) continue;
+        for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
+          if (h.command.includes(shName)) {
+            legacyCount++;
+          }
+        }
+      }
+    }
+  }
+
+  // Also check statusLine
+  const statusLine = settings.statusLine as { command?: string } | undefined;
+  if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+    for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
+      if (statusLine.command.includes(shName)) {
+        legacyCount++;
+      }
+    }
+  }
+
+  if (legacyCount === 0) {
+    return { name: 'legacy/hook-commands', status: 'pass' };
+  }
+
+  return {
+    name: 'legacy/hook-commands',
+    status: 'warn',
+    detail: `${legacyCount} hook(s) still use .sh scripts — should use pf hooks commands`,
+    fix: () => {
+      // Migrate all hook arrays
+      for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
+        if (Array.isArray(hooks[hookType])) {
+          migrateHookPaths(hooks[hookType] as unknown[]);
+        }
+      }
+
+      // Migrate statusLine
+      if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+        for (const [shName, pfCommand] of Object.entries(LEGACY_HOOK_MIGRATIONS)) {
+          if (statusLine.command.includes(shName)) {
+            statusLine.command = pfCommand;
+            break;
+          }
+        }
+      }
+
+      writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+    }
   };
 }
 

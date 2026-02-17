@@ -15,6 +15,8 @@ from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+from textual.widgets import Tabs
+
 from pennyfarthing_scripts.bikerack.base_panel import (
     PANEL_ICONS,
     BasePanel,
@@ -24,7 +26,6 @@ from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
 from pennyfarthing_scripts.bikerack.tui import (
     PANEL_DISPLAY_NAMES,
     BikeRackApp,
-    PanelTabBar,
 )
 from pennyfarthing_scripts.bc.focus import VALID_PANELS
 
@@ -38,21 +39,20 @@ class TestPanelNameDisplay:
     """AC1: Panel name is visible in the TUI."""
 
     async def test_tab_bar_widget_exists(self):
-        """App should have a PanelTabBar widget."""
+        """App should have a Tabs widget."""
         app = BikeRackApp()
         async with app.run_test() as pilot:
             tab_bar = app.query("#tab-bar")
             assert len(tab_bar) > 0, "App should have a tab bar widget"
 
     async def test_tab_bar_shows_name(self):
-        """PanelTabBar should display panel names."""
+        """Tabs widget should contain tab with panel names."""
         app = BikeRackApp()
         async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            rendered = tab_bar.render()
-            text = rendered.plain if hasattr(rendered, "plain") else str(rendered)
-            # Should show at least Sprint (default active panel)
-            assert "Sprint" in text, f"Tab bar should show 'Sprint', got: '{text}'"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            # Check that Sprint tab exists
+            sprint_tab = app.query_one("#tab-sprint")
+            assert sprint_tab is not None, "Tab bar should have a Sprint tab"
 
     def test_all_valid_panels_have_display_names(self):
         """Every panel in VALID_PANELS should have a display name."""
@@ -125,25 +125,31 @@ class TestIconVisibility:
     """AC3: Icon and name visible at all times."""
 
     async def test_tab_bar_visible_on_launch(self):
-        """PanelTabBar should be rendered on app launch."""
+        """Tabs widget should be rendered on app launch with tabs."""
         app = BikeRackApp()
         async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            rendered = tab_bar.render()
-            text = rendered.plain if hasattr(rendered, "plain") else str(rendered)
-            assert len(text.strip()) > 0, "Tab bar should not be empty on launch"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            # Tabs should have children (the individual Tab widgets)
+            from textual.widgets import Tab
+
+            tabs = app.query(Tab)
+            assert len(tabs) > 0, "Tab bar should contain Tab widgets on launch"
 
     async def test_tab_bar_contains_icon_character(self):
-        """PanelTabBar should contain icon characters."""
+        """Tabs should contain Nerd Font icon characters in tab labels."""
         app = BikeRackApp()
         async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            rendered = tab_bar.render()
-            text = rendered.plain if hasattr(rendered, "plain") else str(rendered)
-            has_non_ascii = any(ord(c) > 127 for c in text)
-            assert has_non_ascii, (
-                f"Tab bar should contain Nerd Font icons (non-ASCII chars), got: '{text}'"
-            )
+            from textual.widgets import Tab
+
+            tabs = list(app.query(Tab))
+            # Check that at least one tab label has non-ASCII (Nerd Font icon)
+            has_non_ascii = False
+            for tab in tabs:
+                label_text = str(tab.label)
+                if any(ord(c) > 127 for c in label_text):
+                    has_non_ascii = True
+                    break
+            assert has_non_ascii, "Tab labels should contain Nerd Font icons (non-ASCII chars)"
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +161,7 @@ class TestPanelSwitching:
     """AC4: Tab bar updates on panel switch."""
 
     async def test_tab_bar_updates_on_focus_message(self):
-        """PanelTabBar should update when focus message arrives."""
+        """Tabs should update active tab when focus message arrives."""
         client = MagicMock()
         client.connect = AsyncMock()
         app = BikeRackApp(client=client)
@@ -164,11 +170,8 @@ class TestPanelSwitching:
             app._handle_focus_message({"type": "update", "focus": "git"})
             await pilot.pause()
 
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            assert tab_bar.active == "git"
-            rendered = tab_bar.render()
-            text = rendered.plain if hasattr(rendered, "plain") else str(rendered)
-            assert "Git" in text, f"Tab bar should show 'Git' after switch, got: '{text}'"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            assert tab_bar.active == "tab-git"
 
     async def test_tab_bar_updates_multiple_switches(self):
         """Tab bar should track multiple panel switches."""
@@ -180,14 +183,14 @@ class TestPanelSwitching:
                 app._handle_focus_message({"type": "update", "focus": panel})
                 await pilot.pause()
 
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            assert tab_bar.active == "sprint"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            assert tab_bar.active == "tab-sprint"
 
     async def test_tab_bar_ignores_non_update_messages(self):
         """Tab bar should not change on 'init' type messages."""
         app = BikeRackApp()
         async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
+            tab_bar = app.query_one("#tab-bar", Tabs)
             original_active = tab_bar.active
 
             app._handle_focus_message({"type": "init", "focus": "git"})
@@ -204,14 +207,14 @@ class TestPanelSwitching:
             app._handle_focus_message({"type": "update", "focus": "git"})
             await pilot.pause()
 
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            assert tab_bar.active == "git"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            assert tab_bar.active == "tab-git"
 
             # Null focus — tab bar should NOT update
             app._handle_focus_message({"type": "update", "focus": None})
             await pilot.pause()
 
-            assert tab_bar.active == "git"
+            assert tab_bar.active == "tab-git"
 
     async def test_keyboard_switches_panel(self):
         """Pressing number keys should switch panels."""
@@ -224,8 +227,8 @@ class TestPanelSwitching:
             await pilot.press("2")
             await pilot.pause()
 
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            assert tab_bar.active == "git"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            assert tab_bar.active == "tab-git"
             assert app._focused_panel == "git"
 
     async def test_bracket_cycles_panels(self):
@@ -239,13 +242,13 @@ class TestPanelSwitching:
             await pilot.press("bracketright")
             await pilot.pause()
 
-            tab_bar = app.query_one("#tab-bar", PanelTabBar)
-            assert tab_bar.active == "git"
+            tab_bar = app.query_one("#tab-bar", Tabs)
+            assert tab_bar.active == "tab-git"
 
             await pilot.press("bracketright")
             await pilot.pause()
 
-            assert tab_bar.active == "diffs"
+            assert tab_bar.active == "tab-diffs"
 
 
 # ---------------------------------------------------------------------------

@@ -17,6 +17,7 @@ from typing import Any
 from rich.console import Group
 from rich.syntax import Syntax
 from rich.text import Text
+from textual.binding import Binding
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 
@@ -46,6 +47,12 @@ class DiffsPanel(BasePanel):
     channel: str = "diffs"
     panel_name: str = "Diffs"
     icon: str = PANEL_ICONS["diffs"][0]
+    can_focus = True
+
+    BINDINGS = [
+        Binding("n", "next_file_key", "Next file"),
+        Binding("p", "prev_file_key", "Prev file"),
+    ]
 
     def __init__(self, client=None, **kwargs):
         super().__init__(client=client, **kwargs)
@@ -86,6 +93,29 @@ class DiffsPanel(BasePanel):
                     self.update(rendered)
                 except Exception:
                     pass
+
+    def navigate_to_file(self, path: str) -> None:
+        """Jump to a specific file by path. No-op if not found."""
+        if self._last_payload is None:
+            return
+        diffs = self._last_payload.get("diffs", [])
+        for i, d in enumerate(diffs):
+            if d.get("path") == path:
+                self._current_file_index = i
+                rendered = self.render_panel(self._last_payload)
+                try:
+                    self.update(rendered)
+                except Exception:
+                    pass
+                return
+
+    def action_next_file_key(self) -> None:
+        """Binding action: advance to next file."""
+        self.next_file()
+
+    def action_prev_file_key(self) -> None:
+        """Binding action: go to previous file."""
+        self.prev_file()
 
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket message with pagination reset and temp management."""

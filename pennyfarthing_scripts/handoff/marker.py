@@ -72,25 +72,25 @@ def generate_marker(
             fallback=f"Run `{cmd}` to continue",
         )
 
-    # Non-Cyclist relay: invoke the next agent directly
-    import subprocess
-    try:
-        result = subprocess.run(
-            ["pf", "agent", "start", next_agent],
-            capture_output=True,
-            text=True,
-            timeout=30,
+    # Non-Cyclist relay: return structured action for the agent to act on.
+    # The calling agent reads the `action` field and executes accordingly.
+    if ctx.use_tirepump:
+        return _block(
+            action="tirepump_handoff",
+            next_agent=next_agent,
+            fallback=f"Context is high ({pct}%). Run /clear then {cmd}",
+            context_percent=pct,
+            relay_mode=True,
         )
-        agent_output = result.stdout.strip()
-    except Exception as e:
-        agent_output = f"Failed to invoke agent: {e}"
 
     return _block(
-        fallback=f"Run `{cmd}` to continue{context_warning}",
-        relay_mode=True,
+        action="inline_handoff",
+        next_agent=next_agent,
+        activation_command=f"pf agent start {next_agent} --tier handoff --quiet",
+        fallback=f"Run `{cmd}` to continue",
         context_percent=pct,
-        invoke=cmd,
-    ) + f"\n\n{agent_output}"
+        relay_mode=True,
+    )
 
 
 def _block(**fields: object) -> str:

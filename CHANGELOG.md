@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.2.1] - 2026-02-17
+
+### Added
+
+- **2pTDD workflow** — two-party TDD workflow with review/PR lifecycle (epic-92)
+- **BikeRack audit log panel** — real-time audit log panel for TUI (110-8)
+- **BikeRack context meter** — ContextMeterFooter showing context usage in TUI footer (110-5)
+- **BikeRack story drill-through** — story dossier detail screen with drill-through navigation (110-2)
+- **BikeRack cross-panel event bus** — Changed-to-Diffs navigation with event bus (110-1)
+- **Cyclist Tandem dialogue panel** — WebSocket-based tandem observation display (86-11)
+- **BikeRack portrait rendering** — Kitty TGP portrait images in agent header (110-3)
+- **Phase-scoped team lifecycle** — team block validation and phase-scoped lifecycle in Python (86-9, 86-10)
+- **Team block validation** — workflow schema parsing for team blocks (86-9)
+
+### Changed
+
+- **BikeRack sprint panel** — improved layout and story detail context (MSSCI-15235)
+- **BikeRack tab bar and sprint panel** — migrated to native Textual widgets
+- **Agent handoff** — CLI relay mode fixed and bash scripts ported to Python (MSSCI-15228)
+
+### Fixed
+
+- **Gates missing from npm package** — added `pennyfarthing-dist/gates/` to `files` array so end users receive gate definitions after `npm install`
+- **Tandem handoff** — write tandem line to session during phase transitions
+- **BikeRack WebSocket updates** — route through Textual message system for reliable redraws
+- **Sprint data totals** — include archived epics and standalone stories in sprint totals
+- **CLI assets path** — use assetsPath for commands/skills source resolution
+- **Agent load stub** — return cachedAt to prevent Invalid Date
+
+---
+
 ## [11.2.0] - 2026-02-16
 
 ### Added
@@ -2531,7 +2562,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...HEAD
+[11.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...v11.2.1
 [11.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.1...v11.2.0
 [11.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.0...v11.1.1
 [11.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.0.0...v11.1.0

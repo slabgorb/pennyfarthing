@@ -103,7 +103,7 @@ class DebugPanel(BasePanel):
         """Re-render with the latest data from both channels."""
         rendered = self.render_panel(self._context_data or {})
         try:
-            self.update(rendered)
+            self._thread_safe_update(rendered)
         except Exception:
             pass
 

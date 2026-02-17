@@ -4,8 +4,9 @@ Usage:
     pf handoff resolve-gate STORY_ID WORKFLOW PHASE
     pf handoff complete-phase STORY_ID WORKFLOW FROM_PHASE TO_PHASE GATE_TYPE
     pf handoff marker NEXT_AGENT [--error MESSAGE]
+    pf handoff phase-check AGENT
 
-Stories: 105-1, 105-4 (Script-First Handoff)
+Stories: 105-1, 105-4 (Script-First Handoff), 110-8 (CLI Relay Handoff Fix)
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ def handoff():
       resolve-gate    - Resolve gate for current phase
       complete-phase  - Complete phase transition atomically
       marker          - Generate AGENT_COMMAND handoff marker
+      phase-check     - Check if agent owns current phase
     """
     pass
 
@@ -118,3 +120,33 @@ def marker_cmd(next_agent: str | None, error_msg: str | None):
         )
 
     click.echo(generate_marker(next_agent, error=error_msg))
+
+
+@handoff.command("phase-check")
+@click.argument("agent")
+def phase_check_cmd(agent: str):
+    """Check if the requested agent owns the current workflow phase.
+
+    Returns a YAML block with action ("start" or "redirect"), the correct
+    agent, story ID, phase, and a human-readable message.
+
+    If the agent does not own the phase, generates a handoff marker for
+    the correct agent.
+
+    \b
+    Arguments:
+      AGENT  - Agent to check (e.g., dev, tea, reviewer, sm)
+    """
+    from pennyfarthing_scripts.handoff.phase_check import phase_check_start
+
+    result = phase_check_start(agent)
+
+    import yaml
+
+    click.echo(yaml.dump({"PHASE_CHECK": result}, default_flow_style=False).rstrip())
+
+    if result["action"] == "redirect":
+        click.echo("")
+        from pennyfarthing_scripts.handoff.marker import generate_marker
+
+        click.echo(generate_marker(result["agent"]))

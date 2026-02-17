@@ -17,16 +17,20 @@ from typing import Any
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.command import Hit, Hits, Provider
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, VerticalScroll
+from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Header, Static, Tab, Tabs
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
+from pennyfarthing_scripts.bikerack.audit_log_panel import AuditLogPanel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
+from pennyfarthing_scripts.bikerack.context_meter_footer import ContextMeterFooter
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
 from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
+from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.git_panel import GitPanel
 from pennyfarthing_scripts.bikerack.progress_panel import ProgressPanel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
@@ -76,6 +80,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("diffs", "Diffs"),
     ("changed", "Changed"),
     ("background", "Background"),
+    ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
 ]
@@ -101,38 +106,69 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
 _PANEL_KEYS = [key for key, _ in PANEL_REGISTRY]
 
 
-class PanelTabBar(Static):
-    """Horizontal tab bar showing all available panels with active highlight."""
+class BindingFooter(Footer):
+    """Footer subclass that exposes active binding text via render().
 
-    active: reactive[str] = reactive("sprint")
+    Textual's Footer uses compose() for visual content, so render() returns
+    Blank. This override makes binding descriptions available through
+    str(footer.render()) for programmatic inspection.
+    """
 
-    def watch_active(self, key: str) -> None:
-        """Re-render tab bar when active panel changes."""
-        parts: list[str] = []
-        for panel_key, display_name in PANEL_REGISTRY:
-            icon = get_panel_icon(panel_key)
-            idx = _PANEL_KEYS.index(panel_key) + 1
-            prefix = f"{idx}:"
-            if panel_key == key:
-                if icon:
-                    parts.append(f"[bold reverse] {prefix}{icon} {display_name} [/]")
-                else:
-                    parts.append(f"[bold reverse] {prefix}{display_name} [/]")
-            else:
-                if icon:
-                    parts.append(f"[dim]{prefix}{icon} {display_name}[/]")
-                else:
-                    parts.append(f"[dim]{prefix}{display_name}[/]")
-        self.update("  ".join(parts))
+    def render(self) -> Any:
+        try:
+            bindings = self.screen.active_bindings
+            parts: list[str] = []
+            for _, binding, _enabled, _tooltip in bindings.values():
+                if binding.show:
+                    parts.append(f"{binding.key}:{binding.description}")
+            if parts:
+                return " ".join(parts)
+        except Exception:
+            pass
+        return super().render()
+
+
+def _build_panel_tabs() -> list[Tab]:
+    """Build Tab widgets for each panel in the registry."""
+    tabs: list[Tab] = []
+    for panel_key, display_name in PANEL_REGISTRY:
+        icon = get_panel_icon(panel_key)
+        label = f"{icon} {display_name}" if icon else display_name
+        tabs.append(Tab(label, id=f"tab-{panel_key}"))
+    return tabs
+
+
+PORTRAIT_SKELETON = """\
+[dim]┌────────┐
+│░░░░░░░░│
+│░░░▓▓░░░│
+│░░░░░░░░│
+└────────┘[/dim]"""
 
 
 class AgentHeader(Static):
-    """Displays current agent persona from WheelHub /ws/persona channel."""
+    """Displays current agent persona from WheelHub /ws/persona channel.
+
+    When a portrait image is available (resolved locally or provided via
+    portraitPath in persona data), mounts a Horizontal layout container.
+    Shows a skeleton placeholder while the image loads.
+    Falls back to text-only when no portrait is found.
+    """
+
+    class PortraitLayoutUpdate(Message):
+        """Internal message to update portrait layout asynchronously."""
+
+        def __init__(self, portrait_path: Path | None) -> None:
+            super().__init__()
+            self.has_portrait = portrait_path is not None
+            self.portrait_path = portrait_path
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._is_streaming: bool = False
         self._persona_data: dict[str, Any] = {}
+        self._header_text: str = ""
+        self._current_portrait: Path | None = None
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -145,6 +181,21 @@ class AgentHeader(Static):
         self._is_streaming = bool(data.get("isStreaming", False))
         self._render_header()
 
+    def _resolve_portrait(self, data: dict[str, Any]) -> Path | None:
+        """Get portrait path from persona data or resolve locally."""
+        portrait_path = data.get("portraitPath")
+        if portrait_path:
+            p = Path(portrait_path)
+            if p.exists():
+                return p
+        theme = data.get("theme", "")
+        role = data.get("role", "")
+        if theme and role:
+            from pennyfarthing_scripts.bikerack import portrait_resolver
+
+            return portrait_resolver.resolve_portrait_path(theme, role)
+        return None
+
     def _render_header(self) -> None:
         """Re-render the header from stored state."""
         data = self._persona_data
@@ -152,20 +203,20 @@ class AgentHeader(Static):
         role = data.get("role", "")
         role_desc = data.get("roleDescription", "")
         quote = data.get("quote", "")
-        style = data.get("style", "")
         theme = data.get("theme", "")
 
         if not char:
             self.update("[dim]Waiting for agent...[/dim]")
+            self.post_message(self.PortraitLayoutUpdate(portrait_path=None))
             return
 
         parts: list[str] = []
 
-        # Role badge
+        # Role badge — escape brackets so Rich doesn't eat them as tags
         if role:
             abbrev = AGENT_ABBREV.get(role, role.upper()[:3])
             color = AGENT_ROLE_COLORS.get(role, "bright_magenta")
-            parts.append(f"[bold {color}][{abbrev}][/bold {color}]")
+            parts.append(f"[bold {color}]\\[{abbrev}][/bold {color}]")
 
         # Character name
         parts.append(f"[bold]{char}[/bold]")
@@ -173,6 +224,7 @@ class AgentHeader(Static):
         # Theme name
         if theme:
             from pennyfarthing_scripts.bikerack.base_panel import humanize_theme
+
             parts.append(f"[dim]{humanize_theme(theme)}[/dim]")
 
         # Streaming indicator
@@ -181,17 +233,87 @@ class AgentHeader(Static):
 
         line = "  ".join(parts)
 
-        # Role description / style subtitle
-        if role_desc:
-            line += f"\n[dim]{role_desc}[/dim]"
-        elif style:
-            line += f"\n[dim]{style}[/dim]"
-
-        # Quote
+        # Catchphrase subtitle (quote is a random catchphrase from the theme)
         if quote:
             line += f"\n[italic dim]\"{quote}\"[/italic dim]"
+        elif role_desc:
+            line += f"\n[dim]{role_desc}[/dim]"
 
-        self.update(line)
+        self._header_text = line
+
+        # Check portrait and schedule layout update
+        portrait = self._resolve_portrait(data)
+        self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
+
+    async def on_agent_header_portrait_layout_update(
+        self, event: PortraitLayoutUpdate
+    ) -> None:
+        """Mount or remove Horizontal portrait layout with text beside image.
+
+        Shows a skeleton placeholder immediately while the real image loads
+        to avoid a visible blank gap during image decode/render.
+        """
+        if event.has_portrait and event.portrait_path:
+            if self._current_portrait == event.portrait_path:
+                # Same portrait — just update text label if it exists
+                try:
+                    text_widget = self.query_one("#agent-text", Static)
+                    text_widget.update(self._header_text)
+                except Exception:
+                    pass
+                return
+
+            # New portrait or first time — full layout rebuild
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+
+            # Mount skeleton + text immediately so there's no blank gap
+            self.update("")
+            self._current_portrait = event.portrait_path
+            skeleton = Static(PORTRAIT_SKELETON, id="portrait-skeleton")
+            text = Static(self._header_text, id="agent-text")
+            row = Horizontal(skeleton, text, id="portrait-row")
+            await self.mount(row)
+
+            # Now try to load the real image and swap it in
+            try:
+                from pennyfarthing_scripts.bikerack.portrait_resolver import (
+                    detect_image_protocol,
+                )
+
+                protocol = detect_image_protocol()
+                if protocol is None:
+                    # No image protocol — remove skeleton, fall back to text-only
+                    for child in list(self.query("Horizontal")):
+                        await child.remove()
+                    self.update(self._header_text)
+                    return
+
+                if protocol == "kitty":
+                    from textual_image.widget import TGPImage as ImageWidget
+                elif protocol == "sixel":
+                    from textual_image.widget import SixelImage as ImageWidget
+                else:
+                    from textual_image.widget import HalfcellImage as ImageWidget
+
+                img = ImageWidget(str(event.portrait_path), id="portrait-img")
+                try:
+                    skel = self.query_one("#portrait-skeleton")
+                    await skel.remove()
+                except Exception:
+                    pass
+                await row.mount(img, before=0)
+            except (ImportError, Exception):
+                # textual-image not available — remove skeleton, text-only
+                for child in list(self.query("Horizontal")):
+                    await child.remove()
+                self.update(self._header_text)
+        else:
+            # No portrait — text-only
+            for child in list(self.query("Horizontal")):
+                await child.remove()
+            self._current_portrait = None
+            self.update(self._header_text)
 
 
 class ConnectionStatus(Static):
@@ -227,18 +349,62 @@ class PanelCommands(Provider):
 class BikeRackApp(App):
     """BikeRack TUI application shell."""
 
+    class PersonaUpdate(Message, bubble=False):
+        """Persona data from WS — routed through Textual message system."""
+
+        def __init__(self, data: dict[str, Any]) -> None:
+            super().__init__()
+            self.data = data
+
+    class FocusUpdate(Message, bubble=False):
+        """Focus change from WS — routed through Textual message system."""
+
+        def __init__(self, focus: str | None) -> None:
+            super().__init__()
+            self.focus = focus
+
+    class WsStateUpdate(Message, bubble=False):
+        """WS connection state change — routed through Textual message system."""
+
+        def __init__(self, state: ConnectionState) -> None:
+            super().__init__()
+            self.state = state
+
     TITLE = "BikeRack"
 
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 3;
+        max-height: 7;
         padding: 0 1;
+        border-bottom: solid $accent;
     }
-    #tab-bar {
-        height: 1;
+    #portrait-row {
+        height: 5;
+        width: 100%;
+    }
+    #portrait-img {
+        width: 10;
+        height: 5;
+        margin: 0 1 0 0;
+    }
+    #agent-text {
+        height: auto;
+        width: 1fr;
+    }
+    Tabs {
+        dock: top;
+    }
+    Tab.-active {
+        color: $text;
+    }
+    Tab {
+        color: $text-muted;
     }
     #connection-status {
+        height: 1;
+    }
+    ContextMeterFooter {
         height: 1;
     }
     """
@@ -252,8 +418,9 @@ class BikeRackApp(App):
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
         Binding("4", "switch_panel('changed')", "Changed", show=False),
         Binding("5", "switch_panel('background')", "Background", show=False),
-        Binding("6", "switch_panel('debug')", "Debug", show=False),
-        Binding("7", "switch_panel('progress')", "Progress", show=False),
+        Binding("6", "switch_panel('audit-log')", "Audit Log", show=False),
+        Binding("7", "switch_panel('debug')", "Debug", show=False),
+        Binding("8", "switch_panel('progress')", "Progress", show=False),
         Binding("bracketright", "next_panel", "]Next"),
         Binding("bracketleft", "prev_panel", "[Prev"),
         Binding("tab", "next_panel", show=False),
@@ -265,16 +432,21 @@ class BikeRackApp(App):
         Binding("e", "toggle_epic", show=False),
     ]
 
+    def _get_dom_base(self):
+        """Query the active screen so app.query() finds pushed screen widgets."""
+        return self.screen
+
     def __init__(self, client=None, **kwargs):
         super().__init__(**kwargs)
         self._client = client
         self._focused_panel: str = "sprint"
         self._previous_panel: str | None = None
+        self._programmatic_tab_count: int = 0
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield AgentHeader(id="agent-header")
-        yield PanelTabBar(id="tab-bar")
+        yield Tabs(*_build_panel_tabs(), id="tab-bar")
         yield ConnectionStatus(
             STATE_DISPLAY[ConnectionState.DISCONNECTED],
             id="connection-status",
@@ -285,9 +457,11 @@ class BikeRackApp(App):
             yield DiffsPanel(client=self._client, id="panel-diffs")
             yield ChangedPanel(client=self._client, id="panel-changed")
             yield BackgroundPanel(client=self._client, id="panel-background")
+            yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
-        yield Footer()
+        yield ContextMeterFooter(client=self._client)
+        yield BindingFooter()
 
     async def on_mount(self) -> None:
         # Restore last panel or default to sprint
@@ -309,14 +483,28 @@ class BikeRackApp(App):
             except Exception:
                 pass
 
-        # Set tab bar active state
+        # Set tab bar active state and focus initial panel
         self._update_tab_bar(initial)
+        try:
+            initial_widget = self.query_one(f"#panel-{initial}")
+            initial_widget.focus()
+        except Exception:
+            pass
 
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
             self._client.subscribe("focus", self._handle_focus_message)
             self._client.subscribe("persona", self._handle_persona_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
+
+    def on_navigate_to_file(self, event: NavigateToFile) -> None:
+        """Handle NavigateToFile — switch to diffs and navigate to file."""
+        self.action_switch_panel("diffs")
+        try:
+            diffs = self.query_one("#panel-diffs", DiffsPanel)
+            diffs.navigate_to_file(event.path)
+        except Exception:
+            pass
 
     def action_switch_panel(self, key: str) -> None:
         """Switch to a panel by key."""
@@ -332,10 +520,11 @@ class BikeRackApp(App):
         except Exception:
             pass
 
-        # Show target panel
+        # Show target panel and focus it
         try:
             target = self.query_one(f"#panel-{key}")
             target.display = True
+            target.focus()
         except Exception:
             pass
 
@@ -408,18 +597,40 @@ class BikeRackApp(App):
                 pass
 
     def _update_tab_bar(self, panel_key: str) -> None:
-        """Update the tab bar widget with the given panel key."""
+        """Update the tab bar widget with the given panel key.
+
+        Increments _programmatic_tab_count so the async TabActivated
+        handler knows to ignore the event (prevents infinite ping-pong).
+        """
         try:
-            tab_bar = self.query_one("#tab-bar", PanelTabBar)
-            tab_bar.active = panel_key
+            tab_bar = self.query_one("#tab-bar", Tabs)
+            tab_id = f"tab-{panel_key}"
+            if tab_bar.active != tab_id:
+                self._programmatic_tab_count += 1
+                tab_bar.active = tab_id
         except Exception:
             pass
+
+    def on_tabs_tab_activated(self, event: Tabs.TabActivated) -> None:
+        """Handle tab activation from the Tabs widget.
+
+        Programmatic tabs.active changes fire TabActivated asynchronously.
+        We use a counter to skip those and only react to genuine user clicks.
+        """
+        if self._programmatic_tab_count > 0:
+            self._programmatic_tab_count -= 1
+            return
+        tab_id = event.tab.id or ""
+        panel_key = tab_id.removeprefix("tab-")
+        if panel_key in _PANEL_KEYS and panel_key != self._focused_panel:
+            self.action_switch_panel(panel_key)
 
     def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming focus channel messages.
 
         Expected format: {type: 'init'|'update', focus: '<panel>'|null}
         Only 'update' messages trigger panel switches (matching React hook).
+        Routes through Textual message system via post_message for proper repaint.
         """
         if message is None or not isinstance(message, dict):
             return
@@ -427,31 +638,47 @@ class BikeRackApp(App):
             return
         if "focus" not in message:
             return
+        self.post_message(self.FocusUpdate(message["focus"]))
 
-        focus = message["focus"]
+    def _handle_persona_message(self, message: dict[str, Any] | None) -> None:
+        """Handle incoming persona channel messages.
+
+        Routes through Textual message system via post_message for proper repaint.
+        """
+        if message is None or not isinstance(message, dict):
+            return
+        self.post_message(self.PersonaUpdate(message))
+
+    def _on_ws_state_change(self, state: ConnectionState) -> None:
+        """Handle WheelHub connection state changes.
+
+        Routes through Textual message system via post_message for proper repaint.
+        """
+        self.post_message(self.WsStateUpdate(state))
+
+    def on_bike_rack_app_persona_update(self, event: PersonaUpdate) -> None:
+        """Apply persona data in Textual message context."""
+        try:
+            header = self.query_one("#agent-header", AgentHeader)
+            header._apply_persona(event.data)
+        except Exception:
+            pass
+
+    def on_bike_rack_app_focus_update(self, event: FocusUpdate) -> None:
+        """Apply focus change in Textual message context."""
+        focus = event.focus
         if focus is not None and focus in _PANEL_KEYS:
             self.action_switch_panel(focus)
         elif focus is not None:
-            # Panel exists in display names but not implemented — just update state
             self._previous_panel = self._focused_panel
             self._focused_panel = focus
             save_last_panel(focus, project_dir=None)
 
-    def _handle_persona_message(self, message: dict[str, Any] | None) -> None:
-        """Handle incoming persona channel messages."""
-        if message is None or not isinstance(message, dict):
-            return
-        try:
-            header = self.query_one("#agent-header", AgentHeader)
-            header._apply_persona(message)
-        except Exception:
-            pass
-
-    def _on_ws_state_change(self, state: ConnectionState) -> None:
-        """Handle WheelHub connection state changes."""
+    def on_bike_rack_app_ws_state_update(self, event: WsStateUpdate) -> None:
+        """Apply connection state in Textual message context."""
         try:
             widget = self.query_one("#connection-status", ConnectionStatus)
-            widget.connection_state = state
+            widget.connection_state = event.state
         except Exception:
             pass
 
@@ -469,6 +696,11 @@ def main(
         port: Explicit WheelHub port. If None, reads from .wheelhub-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
+    # Detect terminal image protocol BEFORE App.run() claims the terminal
+    from pennyfarthing_scripts.bikerack import portrait_resolver
+
+    portrait_resolver.detect_image_protocol()
+
     if port is None:
         if project_dir is not None:
             port_file = project_dir / ".wheelhub-port"

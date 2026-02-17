@@ -104,8 +104,9 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
 
             if key == "workflow":
                 result["workflow"] = value.lower()
-            elif key == "current phase":
+            elif key in ("current phase", "phase"):
                 # Extract phase name, handling "(APPROVED)" suffix
+                # Matches both "**Current Phase:**" and "**Phase:**"
                 phase_match = re.match(r"(\w+)(?:\s*\(([^)]+)\))?", value)
                 if phase_match:
                     result["phase"] = phase_match.group(1).lower()

@@ -38,13 +38,12 @@ export const DIRECTORY_SYMLINKS = [
 ] as const;
 
 /**
- * All symlinks including commands and skills
- * Used by doctor for comprehensive checks
+ * All directory symlinks (used by doctor for symlink checks)
+ * Note: commands and skills are copied (not symlinked) since v11.3.0
+ * to avoid drift when node_modules changes during install/update
  */
 export const ALL_SYMLINKS = [
   ...DIRECTORY_SYMLINKS,
-  { name: 'commands', link: '.claude/commands' },
-  { name: 'skills', link: '.claude/skills' }
 ] as const;
 
 /**

@@ -90,17 +90,18 @@ def workflow_phase_check(workflow_name: str, phase: str):
 @workflow.command("handoff")
 @click.argument("next_agent")
 def workflow_handoff(next_agent: str):
-    """Emit a handoff marker for Cyclist.
+    """Emit an environment-aware handoff marker.
+
+    Delegates to generate_marker() which detects Cyclist, relay mode,
+    and context usage to choose the appropriate marker type.
 
     \b
     Arguments:
       NEXT_AGENT  - The agent to hand off to (tea, dev, reviewer, etc.)
     """
-    click.echo("---")
-    click.echo("AGENT_COMMAND:")
-    click.echo(f'  marker: "<!-- CYCLIST:HANDOFF:/{next_agent} -->"')
-    click.echo(f'  fallback: "Run `/{next_agent}` to continue"')
-    click.echo("---")
+    from pennyfarthing_scripts.handoff.marker import generate_marker
+
+    click.echo(generate_marker(next_agent))
 
 
 # ---------------------------------------------------------------------------

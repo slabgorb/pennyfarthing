@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from rich.text import Text
+from textual.message import Message
 from textual.widgets import Static
 
 # Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
@@ -46,7 +47,12 @@ def get_panel_icon(panel_name: str, use_nerd_font: bool = True) -> str:
     return entry[0] if use_nerd_font else entry[1]
 
 
-def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool = False) -> Text:
+def render_progress_bar(
+    percent: int | float,
+    width: int = 20,
+    warn_high: bool = False,
+    fill_style: str | None = None,
+) -> Text:
     """Render a Unicode progress bar with color based on percentage.
 
     Args:
@@ -54,6 +60,7 @@ def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool =
         width: Number of bar characters (default 20).
         warn_high: If True, use red at high values (for resource usage).
                    If False (default), use blue at 100% (for completion).
+        fill_style: Override the computed fill color (e.g. ``"dim green"``).
 
     Returns:
         Rich Text like ``[████████░░░░░░░░░░░░] 22%``
@@ -62,7 +69,9 @@ def render_progress_bar(percent: int | float, width: int = 20, warn_high: bool =
     filled = round(width * percent / 100)
     empty = width - filled
 
-    if warn_high:
+    if fill_style is not None:
+        style = fill_style
+    elif warn_high:
         if percent < 50:
             style = "green"
         elif percent <= 80:
@@ -113,6 +122,13 @@ class BasePanel(Static):
     ``render_panel(payload)`` to return a Rich renderable.
     """
 
+    class DataReceived(Message, bubble=False):
+        """WebSocket data received — routed through Textual message system."""
+
+        def __init__(self, content: Any) -> None:
+            super().__init__()
+            self.content = content
+
     #: WebSocket channel this panel subscribes to (override in subclass)
     channel: str = ""
 
@@ -138,10 +154,17 @@ class BasePanel(Static):
         """Mark panel as unmounted — messages ignored after this."""
         self._mounted = False
 
+    def on_base_panel_data_received(self, event: DataReceived) -> None:
+        """Process DataReceived in Textual message context — triggers repaint."""
+        self.update(event.content)
+
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket message.
 
-        Stores payload, calls render_panel, updates widget display.
+        Stores payload, calls render_panel, posts DataReceived message.
+        Uses post_message to route through Textual's message system,
+        ensuring proper repaint cycle (call_from_thread / direct update
+        from async WS tasks does not reliably trigger redraws).
         No-op after unmount or if message is None.
         """
         if not self._mounted or message is None:
@@ -149,7 +172,7 @@ class BasePanel(Static):
         self._last_payload = message
         rendered = self.render_panel(message)
         try:
-            self.update(rendered)
+            self.post_message(self.DataReceived(rendered))
         except Exception:
             pass
 

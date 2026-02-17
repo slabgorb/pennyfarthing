@@ -6,7 +6,7 @@ export function createAgentLoadRouter(getProjectDir: () => string): Router {
   const router = Router();
 
   router.get('/', (_req, res) => {
-    res.json({ agents: [], summary: null });
+    res.json({ agents: [], summary: null, cachedAt: new Date().toISOString(), totalAcrossAllAgents: 0 });
   });
 
   router.get('/:agent', (req, res) => {

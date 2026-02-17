@@ -131,6 +131,7 @@ def validate_phased(
         return errors, warnings
 
     seen_names: set[str] = set()
+    next_refs: list[tuple[str, str]] = []  # (phase_name, next_target)
 
     for i, phase in enumerate(phases):
         if not isinstance(phase, dict):
@@ -227,6 +228,24 @@ def validate_phased(
                     errors.append(
                         f"Phase '{label}' tandem triggers must be a list"
                     )
+
+        # next: directive (optional, must be string)
+        next_target = phase.get("next")
+        if next_target is not None:
+            if not isinstance(next_target, str):
+                errors.append(
+                    f"Phase '{phase_name or i}' next must be a string"
+                )
+            elif phase_name:
+                next_refs.append((phase_name, next_target))
+
+    # Cross-validate next: references point to existing phase names
+    for source_phase, target_phase in next_refs:
+        if target_phase not in seen_names:
+            errors.append(
+                f"Phase '{source_phase}' next references unknown phase: "
+                f"'{target_phase}'"
+            )
 
     return errors, warnings
 

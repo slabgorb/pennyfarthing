@@ -12,6 +12,8 @@
 
 set -euo pipefail
 
+echo "DEPRECATED: check-context.sh — use 'pf context' instead" >&2
+
 # Find project root (where pennyfarthing_scripts lives)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
