@@ -11,62 +11,48 @@
  * - Empty state when no tandem activity
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTandemObservations } from '../../hooks/useTandemObservations';
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/** Render text split across child spans so no single leaf element contains
- *  a phase-keyword substring (e.g. "red" inside "shared"). Each span's
- *  getNodeText stays isolated, preventing getByText regex collisions. */
-function SplitText({ text }: { text: string }): React.ReactElement {
-  const parts: React.ReactNode[] = [];
-  let remaining = text;
-  let key = 0;
-  const pattern = /red/i;
-
-  while (remaining.length > 0) {
-    const match = pattern.exec(remaining.toLowerCase());
-    if (!match) {
-      parts.push(<span key={key++}>{remaining}</span>);
-      break;
-    }
-    // Include everything up to and including the 'r' of 'red'
-    const splitAt = match.index + 1;
-    parts.push(<span key={key++}>{remaining.slice(0, splitAt)}</span>);
-    remaining = remaining.slice(splitAt);
-  }
-
-  return <>{parts}</>;
-}
 
 // =============================================================================
 // TandemPanel Component
 // =============================================================================
 
 export function TandemPanel(): React.ReactElement {
-  const { header, observations, metrics, isLoading } = useTandemObservations();
+  const { header, observations, metrics, isLoading, error } = useTandemObservations();
+  const [portraitError, setPortraitError] = useState(false);
 
-  const showEmptyState = !isLoading && !header && observations.length === 0;
+  const showEmptyState = !isLoading && !error && !header && observations.length === 0;
 
   return (
     <div className="tandem-panel">
+      {/* Error state */}
+      {error && (
+        <div data-testid="tandem-error" className="tandem-error">
+          Connection failed — tandem data unavailable
+        </div>
+      )}
+
       {/* Observer header with portrait and role */}
       {header && (
         <div className="tandem-header">
-          <img
-            data-testid="observer-portrait"
-            src={`/portraits/${header.theme}/medium/${header.slug}.png`}
-            alt={header.character}
-            className="observer-portrait"
-          />
+          {!portraitError ? (
+            <img
+              data-testid="observer-portrait"
+              src={`/portraits/${header.theme}/medium/${header.slug}.png`}
+              alt={header.character}
+              className="observer-portrait"
+              onError={() => setPortraitError(true)}
+            />
+          ) : (
+            <span data-testid="observer-portrait" className="observer-portrait-fallback" aria-hidden="true">🤖</span>
+          )}
           <div className="tandem-header-info">
             <span className="observer-name">{header.character}</span>
             <span data-testid="observer-role-badge" className="observer-role-badge">
               {header.observer}
             </span>
-            <span className="observer-phase">{header.phase}</span>
+            <span data-testid="observer-phase" className="observer-phase">{header.phase}</span>
           </div>
         </div>
       )}
@@ -86,15 +72,14 @@ export function TandemPanel(): React.ReactElement {
             <span className="trigger-scope">{obs.trigger.scope}</span>
             <span className="trigger-detail">{obs.trigger.detail}</span>
           </div>
-          <div className="observation-content"><SplitText text={obs.content} /></div>
+          <div className="observation-content">{obs.content}</div>
           {obs.outcome && (
             <span
               data-testid="outcome-badge"
               data-outcome={obs.outcome}
               className={`outcome-badge outcome-${obs.outcome}`}
             >
-              <span className="badge-text">{obs.outcome.slice(0, -2)}</span>
-              <span className="badge-text">{obs.outcome.slice(-2)}</span>
+              {obs.outcome}
             </span>
           )}
         </div>
