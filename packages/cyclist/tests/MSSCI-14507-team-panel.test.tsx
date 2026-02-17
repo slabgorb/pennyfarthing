@@ -838,7 +838,7 @@ describe('AC7: Panel hidden when no active team', () => {
 
 describe('WebSocket reconnection', () => {
   it('should attempt reconnection after WebSocket close', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     render(<TeamPanel />);
 
     await waitFor(() => expect(teamWs).not.toBeNull());
