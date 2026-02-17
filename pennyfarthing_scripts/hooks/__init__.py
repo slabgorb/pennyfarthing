@@ -28,9 +28,11 @@ import yaml
 # Port File Constants
 # =============================================================================
 
-# WheelHub port file - central coordination server for all communication
+# Port files - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-CYCLIST_PORT_FILE = ".wheelhub-port"
+# Cyclist full mode writes .wheelhub-port, BikeRack mode writes .bikerack-port
+CYCLIST_PORT_FILE = ".cyclist-port"
+BIKERACK_PORT_FILE = ".bikerack-port"
 
 # Default port if file not found
 DEFAULT_CYCLIST_PORT = 7431
@@ -48,7 +50,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     """Find the project root by looking for marker files.
 
     Searches for (in order):
-    1. .wheelhub-port (WheelHub is running)
+    1. .wheelhub-port or .bikerack-port (WheelHub is running)
     2. .pennyfarthing directory
     3. .claude directory
 
@@ -62,8 +64,8 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     current = current.resolve()
 
     while current != current.parent:
-        # Check for Cyclist port files first (indicates Cyclist is running)
-        if (current / CYCLIST_PORT_FILE).exists():
+        # Check for Cyclist/BikeRack port files first (indicates server is running)
+        if (current / CYCLIST_PORT_FILE).exists() or (current / BIKERACK_PORT_FILE).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
@@ -122,6 +124,10 @@ def get_cyclist_port(project_root: Path | None = None) -> int:
         Port number (default if file not found)
     """
     port = read_port_file(CYCLIST_PORT_FILE, project_root)
+    if port:
+        return port
+
+    port = read_port_file(BIKERACK_PORT_FILE, project_root)
     if port:
         return port
 

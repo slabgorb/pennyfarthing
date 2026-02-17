@@ -61,8 +61,10 @@ packages/vscode-extension/resources/portraits/
 worktrees/
 
 # Cyclist runtime state (when running locally for development)
+.cyclist-port
 .wheelhub-port
 .wheelhub-pid
+.bikerack-port
 .pennyfarthing/
 .env
 uv.lock
