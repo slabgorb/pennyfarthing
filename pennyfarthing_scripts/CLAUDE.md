@@ -184,16 +184,25 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 | `pf debug deadcode exports` | Unused TypeScript exports | `deadcode/cli.py` |
 | `pf debug healthscore analyze` | Composite health score | `healthscore/cli.py` |
 
-## Hooks (non-CLI)
+## Hooks (`pf hooks`)
 
-| File | Hook Type | Purpose |
-|------|-----------|---------|
-| `hooks.py` | PostToolUse | Main hook dispatcher |
-| `bellmode_hook.py` | PostToolUse | Bell mode message injection |
-| `pretooluse_hook.py` | PreToolUse | Permission and safety gates |
-| `schema_validation_hook.py` | PreToolUse:Write | Schema validation on file writes |
-| `welcome_hook.py` | PostToolUse | Welcome message on session start |
-| `patch_mode.py` | PostToolUse | Patch mode interrupt handling |
+All hooks are in `hooks/` subpackage, invoked via `pf hooks <name>`.
+
+| Command | Hook Type | Purpose |
+|---------|-----------|---------|
+| `pf hooks session-start` | SessionStart | Session setup, checkpoint, WheelHub, welcome |
+| `pf hooks session-stop` | Stop | Save checkpoint for cross-session continuity |
+| `pf hooks reflector-check` | Stop | Enforce CYCLIST reflector markers |
+| `pf hooks pre-edit-check` | PreToolUse | Block edits to protected files |
+| `pf hooks context-warning` | PreToolUse | Warn when context usage is high |
+| `pf hooks context-breaker` | PreToolUse | Block tool execution at critical context |
+| `pf hooks cyclist-pretooluse` | PreToolUse | Route approval through WheelHub |
+| `pf hooks schema-validation` | PreToolUse:Write | Validate session/skill/step schema |
+| `pf hooks bell-mode` | PostToolUse | Bell queue + tandem injection |
+| `pf hooks sprint-yaml` | PostToolUse | Validate sprint YAML (YAML 1.2) |
+| `pf hooks statusline` | statusLine | Render Claude Code status bar |
+
+Legacy shims (`bellmode_hook.py`, `pretooluse_hook.py`, etc.) re-export from `hooks/` for backward compat.
 
 ## Architecture
 

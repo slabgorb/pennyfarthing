@@ -123,7 +123,7 @@ class TestEndpointURL:
     def test_endpoint_is_not_approval_request(self):
         """The hook module should reference /api/hook-request, not /approval-request."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "pretooluse_hook.py"
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         assert "/api/hook-request" in hook_source
@@ -150,9 +150,9 @@ class TestConnectionRefused:
         assert result is None
 
     def test_hook_defers_to_claude_code_when_cyclist_not_running(self):
-        """pretooluse_hook.py should output 'ask' when Cyclist isn't running."""
+        """cyclist_pretooluse.py should output 'ask' when Cyclist isn't running."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "pretooluse_hook.py"
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         # The hook should check is_cyclist_running and output "ask" if False
@@ -162,7 +162,7 @@ class TestConnectionRefused:
     def test_hook_never_returns_allow_on_connection_failure(self):
         """The hook must NOT return 'allow' when WheelHub is unreachable."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "pretooluse_hook.py"
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         # The Python hook should not have the JS bug of allowing on connection failure

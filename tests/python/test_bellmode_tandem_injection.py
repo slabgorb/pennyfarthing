@@ -369,38 +369,41 @@ class TestDualImplementation:
         assert hasattr(bellmode_hook, "get_latest_observation"), "Missing get_latest_observation"
         assert hasattr(bellmode_hook, "format_tandem_message"), "Missing format_tandem_message"
 
-    def test_bash_hook_contains_tandem_check(self):
-        """bell-mode-hook.sh should contain tandem observation logic."""
+    def test_bash_hook_is_shim_to_python(self):
+        """bell-mode-hook.sh should be a shim delegating to pf hooks bell-mode."""
         bash_hook = (
             PROJECT_ROOT / "pennyfarthing-dist" / "scripts" / "hooks" / "bell-mode-hook.sh"
         )
         assert bash_hook.exists(), "bell-mode-hook.sh should exist"
         content = bash_hook.read_text()
-        assert "tandem" in content.lower(), (
-            "bell-mode-hook.sh should contain tandem observation logic"
+        assert "pf hooks bell-mode" in content, (
+            "bell-mode-hook.sh should delegate to pf hooks bell-mode"
         )
 
-    def test_bash_hook_checks_tandem_mtime(self):
-        """Bash hook should check tandem file mtime."""
-        bash_hook = (
-            PROJECT_ROOT / "pennyfarthing-dist" / "scripts" / "hooks" / "bell-mode-hook.sh"
-        )
-        if not bash_hook.exists():
-            pytest.skip("bash hook not yet created")
-        content = bash_hook.read_text()
-        assert "mtime" in content.lower() or "stat" in content.lower(), (
-            "Bash hook should check file mtime for tandem observations"
+    def test_python_hook_contains_tandem_check(self):
+        """Python bell_mode.py should contain tandem observation logic."""
+        hook_source = (
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+        ).read_text()
+        assert "tandem" in hook_source.lower(), (
+            "hooks/bell_mode.py should contain tandem observation logic"
         )
 
-    def test_bash_hook_formats_tandem_prefix(self):
-        """Bash hook should format with [Tandem] prefix."""
-        bash_hook = (
-            PROJECT_ROOT / "pennyfarthing-dist" / "scripts" / "hooks" / "bell-mode-hook.sh"
+    def test_python_hook_checks_tandem_mtime(self):
+        """Python hook should check tandem file mtime."""
+        hook_source = (
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+        ).read_text()
+        assert "mtime" in hook_source.lower(), (
+            "hooks/bell_mode.py should check file mtime for tandem observations"
         )
-        if not bash_hook.exists():
-            pytest.skip("bash hook not yet created")
-        content = bash_hook.read_text()
-        assert "[Tandem]" in content, "Bash hook should use [Tandem] prefix format"
+
+    def test_python_hook_formats_tandem_prefix(self):
+        """Python hook should format with [Tandem] prefix."""
+        hook_source = (
+            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+        ).read_text()
+        assert "[Tandem]" in hook_source, "hooks/bell_mode.py should use [Tandem] prefix format"
 
 
 # =============================================================================

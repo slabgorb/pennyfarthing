@@ -142,6 +142,11 @@ from pennyfarthing_scripts.consultation.cli import consultation  # noqa: E402
 
 cli.add_command(consultation)
 
+# Import and register hooks group
+from pennyfarthing_scripts.hooks.cli import hooks  # noqa: E402
+
+cli.add_command(hooks)
+
 
 @cli.group()
 def agent():
