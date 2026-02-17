@@ -125,12 +125,18 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 <exit>
 ### If APPROVED:
 1. Write Reviewer Assessment (verdict: APPROVED)
-2. Merge PR: `gh pr merge {PR_NUMBER} --merge --delete-branch`
+2. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
 3. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
+4. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
 1. Write Reviewer Assessment (verdict: REJECTED, with severity table)
-2. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→green → marker dev)
+2. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
+3. If findings are testable (logic bugs, missing edge cases):
+   - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)
+4. If findings are lint/format/dead-code only:
+   - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker dev)
+5. **DO NOT merge or create PRs.**
 
 Nothing after the marker. EXIT.
 </exit>
