@@ -55,6 +55,7 @@ export interface SprintMetrics {
   completed: { points: number; stories: number; epics: number };
   current: { done: number; inProgress: number; remaining: number; totalPoints: number; storiesDone: number; storiesInProgress: number; storiesRemaining: number };
   future: { totalPoints: number; initiatives: number };
+  velocity: number;
 }
 
 export interface SprintData {
@@ -110,6 +111,7 @@ interface YamlSprint {
 interface CurrentSprintYaml {
   sprint?: YamlSprint;
   epics?: (YamlEpic | string)[];
+  stories?: YamlStory[];
 }
 
 interface FutureInitiative {
@@ -324,7 +326,62 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
   const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
 
-  // Calculate sprint metrics from ACTIVE epics only
+  // Load archived epics from sprint-{N}-completed.yaml BEFORE metrics calculation
+  // so their points are included in sprint totals
+  let completedEpicCount = 0;
+  let archivedDonePoints = 0;
+  let archivedDoneStories = 0;
+  const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
+  if (sprintNumber > 0) {
+    const completedPath = join(sprintDir, 'archive', `sprint-${sprintNumber}-completed.yaml`);
+    if (existsSync(completedPath)) {
+      try {
+        const completedContent = readFileSync(completedPath, 'utf-8');
+        const completedData = parseYaml(completedContent) as { completed_epics?: string[] };
+        const epicRefs = completedData.completed_epics ?? [];
+
+        for (const ref of epicRefs) {
+          const shardPath = join(sprintDir, 'archive', `epic-${ref}.yaml`);
+          if (existsSync(shardPath)) {
+            try {
+              const shardContent = readFileSync(shardPath, 'utf-8');
+              const epicData = parseYaml(shardContent) as YamlEpic;
+              if (epicData && epicData.id) {
+                const transformed = transformEpic(epicData, projectDir);
+                epics.push(transformed);
+                completedEpicCount++;
+                for (const story of transformed.stories) {
+                  archivedDonePoints += story.points;
+                  archivedDoneStories++;
+                }
+              } else {
+                console.warn(`[sprint-data] Archive shard epic-${ref}.yaml missing id, skipped`);
+              }
+            } catch (err) {
+              console.error(`[sprint-data] Failed to parse archive epic-${ref}.yaml:`, err);
+            }
+          } else {
+            console.warn(`[sprint-data] Archive shard not found: ${shardPath}`);
+          }
+        }
+      } catch (err) {
+        console.error('[sprint-data] Failed to parse completed sprint YAML:', err);
+      }
+    }
+  }
+
+  // Include top-level standalone stories from current-sprint.yaml
+  const standaloneStories = (currentSprint.stories ?? []).map((s) => transformStory(s, projectDir));
+  if (standaloneStories.length > 0) {
+    epics.push({
+      id: 'standalone',
+      title: 'Standalone Stories',
+      jiraKey: null,
+      stories: standaloneStories,
+    });
+  }
+
+  // Calculate sprint metrics from ALL epics (active + archived + standalone)
   // Note: blocked stories are NOT counted in remaining - they're blocked, not available
   let done = 0;
   let inProgress = 0;
@@ -346,50 +403,6 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
         storiesRemaining++;
       }
       // blocked stories intentionally not counted in remaining
-    }
-  }
-
-  // Load archived epics from sprint-{N}-completed.yaml
-  // These are appended AFTER metrics calculation so their points don't inflate sprint totals
-  let completedPoints = 0;
-  let completedStories = 0;
-  let completedEpics = 0;
-  const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
-  if (sprintNumber > 0) {
-    const completedPath = join(sprintDir, 'archive', `sprint-${sprintNumber}-completed.yaml`);
-    if (existsSync(completedPath)) {
-      try {
-        const completedContent = readFileSync(completedPath, 'utf-8');
-        const completedData = parseYaml(completedContent) as { completed_epics?: string[] };
-        const epicRefs = completedData.completed_epics ?? [];
-
-        for (const ref of epicRefs) {
-          const shardPath = join(sprintDir, 'archive', `epic-${ref}.yaml`);
-          if (existsSync(shardPath)) {
-            try {
-              const shardContent = readFileSync(shardPath, 'utf-8');
-              const epicData = parseYaml(shardContent) as YamlEpic;
-              if (epicData && epicData.id) {
-                const transformed = transformEpic(epicData, projectDir);
-                epics.push(transformed);
-                completedEpics++;
-                for (const story of transformed.stories) {
-                  completedPoints += story.points;
-                  completedStories++;
-                }
-              } else {
-                console.warn(`[sprint-data] Archive shard epic-${ref}.yaml missing id, skipped`);
-              }
-            } catch (err) {
-              console.error(`[sprint-data] Failed to parse archive epic-${ref}.yaml:`, err);
-            }
-          } else {
-            console.warn(`[sprint-data] Archive shard not found: ${shardPath}`);
-          }
-        }
-      } catch (err) {
-        console.error('[sprint-data] Failed to parse completed sprint YAML:', err);
-      }
     }
   }
 
@@ -480,9 +493,10 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       endDate: currentSprint.sprint?.end_date ?? '',
     },
     metrics: {
-      completed: { points: completedPoints, stories: completedStories, epics: completedEpics },
+      completed: { points: archivedDonePoints, stories: archivedDoneStories, epics: completedEpicCount },
       current: { done, inProgress, remaining, totalPoints: done + inProgress + remaining, storiesDone, storiesInProgress, storiesRemaining },
       future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length },
+      velocity: done,
     },
   };
 }

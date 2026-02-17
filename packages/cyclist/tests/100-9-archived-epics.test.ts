@@ -357,7 +357,7 @@ describe('Archived Epics as Completed (AC3/AC4)', () => {
     expect(story.completed).toBe('2026-02-08');
   });
 
-  it('archived epic done points should NOT count toward sprint metrics', async () => {
+  it('archived epic done points should be included in sprint totals', async () => {
     setupFileMocks({
       'current-sprint.yaml': CURRENT_SPRINT_YAML,
       'future.yaml': null,
@@ -369,12 +369,11 @@ describe('Archived Epics as Completed (AC3/AC4)', () => {
     const { getSprintData } = await import('../src/sprint-data.js');
     const data = getSprintData('/test/project');
 
-    // Sprint metrics should only count active epics, not archived ones
-    // Active epic has 3 points in_progress, 0 done
-    // Archived epics have 7 done points total — these should NOT inflate sprint.done
-    // (They were already counted when they were active)
+    // Sprint totals include all work: active + archived
+    // Active: 3 in_progress, 0 done
+    // Archived: epic-80(4pts) + epic-81(3pts) = 7 done
     expect(data.sprint.inProgress).toBe(3);
-    expect(data.sprint.done).toBe(0);
+    expect(data.sprint.done).toBe(7);
   });
 });
 
