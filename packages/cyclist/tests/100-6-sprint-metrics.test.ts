@@ -371,11 +371,11 @@ describe('Sprint Metrics — Future Work (AC3)', () => {
 });
 
 // =============================================================================
-// AC4: Metrics isolation — completed metrics don't inflate current sprint
+// AC4: Sprint totals include archived work, metrics.completed tracks archive-only
 // =============================================================================
 
-describe('Sprint Metrics — Isolation (AC4)', () => {
-  it('completed metrics should be separate from current sprint metrics', async () => {
+describe('Sprint Metrics — Full Sprint Totals (AC4)', () => {
+  it('sprint.done should include both active and archived done points', async () => {
     setupFileMocks({
       'current-sprint.yaml': CURRENT_SPRINT_YAML,
       'future.yaml': null,
@@ -387,11 +387,13 @@ describe('Sprint Metrics — Isolation (AC4)', () => {
     const { getSprintData } = await import('../src/sprint-data.js');
     const data = getSprintData('/test/project');
 
-    // Current sprint done should NOT include archived epic points
-    expect(data.metrics.current.done).toBe(7); // only active epics
-    expect(data.metrics.completed.points).toBe(10); // only archived
-    // They should NOT add up in sprint.done
-    expect(data.sprint.done).toBe(7);
+    // Active done: 99-3(5) + 100-2(2) = 7
+    // Archived done: epic-80(5) + epic-81(5) = 10
+    // Total done: 17
+    expect(data.sprint.done).toBe(17);
+    expect(data.metrics.current.done).toBe(17);
+    // metrics.completed tracks archive-specific data
+    expect(data.metrics.completed.points).toBe(10);
   });
 
   it('future metrics should be separate from current sprint metrics', async () => {
@@ -411,7 +413,7 @@ describe('Sprint Metrics — Isolation (AC4)', () => {
     expect(data.sprint.done).toBe(7);
   });
 
-  it('existing sprint.done/inProgress/remaining should be unchanged', async () => {
+  it('sprint totals should reflect full sprint including archived work', async () => {
     setupFileMocks({
       'current-sprint.yaml': CURRENT_SPRINT_YAML,
       'future.yaml': FUTURE_YAML,
@@ -425,8 +427,10 @@ describe('Sprint Metrics — Isolation (AC4)', () => {
     const { getSprintData } = await import('../src/sprint-data.js');
     const data = getSprintData('/test/project');
 
-    // Legacy sprint metrics untouched
-    expect(data.sprint.done).toBe(7);
+    // Active: 7 done + 3 inProgress + 2 remaining = 12
+    // Archived: 10 done
+    // Sprint totals include archived work
+    expect(data.sprint.done).toBe(17);
     expect(data.sprint.inProgress).toBe(3);
     expect(data.sprint.remaining).toBe(2);
   });
