@@ -24,11 +24,11 @@ from textual.widgets import Footer, Header, Static
 
 from pennyfarthing_scripts.bc.focus import get_last_panel, save_last_panel
 from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
-from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.base_panel import get_panel_icon
 from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
 from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
 from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
+from pennyfarthing_scripts.bikerack.events import NavigateToFile
 from pennyfarthing_scripts.bikerack.git_panel import GitPanel
 from pennyfarthing_scripts.bikerack.progress_panel import ProgressPanel
 from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
@@ -115,7 +115,7 @@ class BindingFooter(Footer):
         try:
             bindings = self.screen.active_bindings
             parts: list[str] = []
-            for _, binding, enabled, tooltip in bindings.values():
+            for _, binding, _enabled, _tooltip in bindings.values():
                 if binding.show:
                     parts.append(f"{binding.key}:{binding.description}")
             if parts:
