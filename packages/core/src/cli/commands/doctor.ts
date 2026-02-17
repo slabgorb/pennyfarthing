@@ -739,12 +739,12 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       };
     }
 
-    // Check if session-start.sh is configured
+    // Check if session-start hook is configured (pf hooks or legacy .sh)
     const hasSessionStartHook = settings.hooks.SessionStart.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('session-start.sh')
+          h.command?.includes('pf hooks session-start') || h.command?.includes('session-start.sh')
         );
       }
       return false;
@@ -754,7 +754,7 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       return {
         name: 'settings/session-start-hook',
         status: 'fail',
-        detail: 'session-start.sh not configured - PROJECT_ROOT will be undefined',
+        detail: 'session-start hook not configured - PROJECT_ROOT will be undefined',
         fix: () => {
           addSessionStartHooks(projectRoot, installationType);
         }
@@ -939,12 +939,12 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       };
     }
 
-    // Check if question-reflector-check is configured
+    // Check if reflector-check hook is configured (pf hooks or legacy .sh)
     const hasReflectorHook = settings.hooks.Stop.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('question-reflector-check')
+          h.command?.includes('pf hooks reflector-check') || h.command?.includes('question-reflector-check')
         );
       }
       return false;
@@ -954,7 +954,7 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       return {
         name: 'settings/stop-hook',
         status: 'warn',
-        detail: 'question-reflector-check not configured',
+        detail: 'reflector-check hook not configured',
         fix: () => {
           addStopHook(projectRoot, installationType);
         }
@@ -997,12 +997,12 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
       };
     }
 
-    // Check if context-circuit-breaker is configured
+    // Check if context-breaker hook is configured (pf hooks or legacy .sh)
     const hasCircuitBreaker = settings.hooks.PreToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('context-circuit-breaker')
+          h.command?.includes('pf hooks context-breaker') || h.command?.includes('context-circuit-breaker')
         );
       }
       return false;
@@ -1012,7 +1012,7 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
       return {
         name: 'settings/context-circuit-breaker',
         status: 'warn',
-        detail: 'context-circuit-breaker not configured - context exhaustion protection disabled',
+        detail: 'context-breaker hook not configured - context exhaustion protection disabled',
         fix: () => {
           addContextCircuitBreaker(projectRoot, installationType);
         }
@@ -1036,16 +1036,15 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
 /**
  * Fix function: Add context-circuit-breaker hook to PreToolUse in settings.local.json
  */
-function addContextCircuitBreaker(projectRoot: string, installationType: string): void {
+function addContextCircuitBreaker(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Edit|Write|Bash|Task',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+        command: 'pf hooks context-breaker'
       }
     ]
   };
@@ -1138,16 +1137,15 @@ function checkSchemaValidationHook(projectRoot: string, installationType: string
 /**
  * Fix function: Add schema-validation hook to PreToolUse in settings.local.json
  */
-function addSchemaValidationHook(projectRoot: string, installationType: string): void {
+function addSchemaValidationHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Write',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/schema-validation.sh`
+        command: 'pf hooks schema-validation'
       }
     ]
   };
@@ -1201,12 +1199,12 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
       };
     }
 
-    // Check if bell-mode-hook is configured
+    // Check if bell-mode hook is configured (pf hooks or legacy .sh)
     const hasBellModeHook = settings.hooks.PostToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('bell-mode-hook')
+          h.command?.includes('pf hooks bell-mode') || h.command?.includes('bell-mode-hook')
         );
       }
       return false;
@@ -1216,7 +1214,7 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
       return {
         name: 'settings/post-tool-use-hook',
         status: 'warn',
-        detail: 'bell-mode-hook not configured - bell mode will not work',
+        detail: 'bell-mode hook not configured - bell mode will not work',
         fix: () => {
           addPostToolUseHook(projectRoot, installationType);
         }
@@ -1241,16 +1239,15 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
  * Fix function: Add PostToolUse hook to settings.local.json
  * Required for bell mode to inject queued messages via additionalContext
  */
-function addPostToolUseHook(projectRoot: string, installationType: string): void {
+function addPostToolUseHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: '',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+        command: 'pf hooks bell-mode'
       }
     ]
   };
@@ -1304,12 +1301,12 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
       };
     }
 
-    // Check if sprint-yaml-validation is configured
+    // Check if sprint-yaml hook is configured (pf hooks or legacy .sh)
     const hasSprintYamlValidation = settings.hooks.PostToolUse.some((entry: unknown) => {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('sprint-yaml-validation')
+          h.command?.includes('pf hooks sprint-yaml') || h.command?.includes('sprint-yaml-validation')
         );
       }
       return false;
@@ -1319,7 +1316,7 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
       return {
         name: 'settings/sprint-yaml-validation',
         status: 'warn',
-        detail: 'sprint-yaml-validation not configured - sprint YAML errors may break SprintPanel',
+        detail: 'sprint-yaml hook not configured - sprint YAML errors may break SprintPanel',
         fix: () => {
           addSprintYamlValidationHook(projectRoot, installationType);
         }
@@ -1344,16 +1341,15 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
  * Fix function: Add sprint-yaml-validation hook to PostToolUse in settings.local.json
  * Validates sprint YAML files after Edit/Write for Cyclist SprintPanel compatibility
  */
-function addSprintYamlValidationHook(projectRoot: string, installationType: string): void {
+function addSprintYamlValidationHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHook = {
     matcher: 'Edit|Write',
     hooks: [
       {
         type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
+        command: 'pf hooks sprint-yaml'
       }
     ]
   };
@@ -1388,19 +1384,29 @@ function addSprintYamlValidationHook(projectRoot: string, installationType: stri
 /**
  * Fix function: Add Stop hook to settings.local.json
  */
-function addStopHook(projectRoot: string, installationType: string): void {
+function addStopHook(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
-  const requiredHook = {
-    matcher: '',
-    hooks: [
-      {
-        type: 'command',
-        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
-      }
-    ]
-  };
+  const requiredHooks = [
+    {
+      matcher: '',
+      hooks: [
+        {
+          type: 'command',
+          command: 'pf hooks reflector-check'
+        }
+      ]
+    },
+    {
+      matcher: '',
+      hooks: [
+        {
+          type: 'command',
+          command: 'pf hooks session-stop'
+        }
+      ]
+    }
+  ];
 
   let settings: Record<string, unknown> = {};
 
@@ -1420,10 +1426,10 @@ function addStopHook(projectRoot: string, installationType: string): void {
   const hooks = settings.hooks as Record<string, unknown>;
 
   if (!hooks.Stop) {
-    hooks.Stop = [requiredHook];
+    hooks.Stop = requiredHooks;
   } else if (Array.isArray(hooks.Stop)) {
-    // Prepend the required hook
-    hooks.Stop = [requiredHook, ...hooks.Stop];
+    // Prepend the required hooks
+    hooks.Stop = [...requiredHooks, ...hooks.Stop];
   }
 
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
@@ -1443,16 +1449,15 @@ function getScriptBasePath(installationType: string): string {
 /**
  * Fix function: Add SessionStart hooks to settings.local.json
  */
-function addSessionStartHooks(projectRoot: string, installationType: string): void {
+function addSessionStartHooks(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
   const requiredHooks = [
     {
       hooks: [
         {
           type: 'command',
-          command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
+          command: 'pf hooks session-start'
         }
       ]
     },
@@ -1506,11 +1511,10 @@ function addSessionStartHooks(projectRoot: string, installationType: string): vo
  * Create settings.local.json from template
  * This is the critical fix for installations that are missing this file
  */
-function createSettingsLocalJson(projectRoot: string, installationType: string): void {
+function createSettingsLocalJson(projectRoot: string, _installationType: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
-  const scriptBase = getScriptBasePath(installationType);
 
-  // Create full settings structure matching the template
+  // Create full settings structure matching the template — uses pf hooks commands
   const settings = {
     permissions: {
       allow: [
@@ -1553,7 +1557,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
+              command: 'pf hooks session-start'
             }
           ]
         },
@@ -1575,13 +1579,33 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           ]
         }
       ],
+      Stop: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks reflector-check'
+            }
+          ]
+        },
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks session-stop'
+            }
+          ]
+        }
+      ],
       PostToolUse: [
         {
           matcher: '',
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+              command: 'pf hooks bell-mode'
             }
           ]
         },
@@ -1590,18 +1614,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/sprint-yaml-validation.sh`
-            }
-          ]
-        }
-      ],
-      Stop: [
-        {
-          matcher: '',
-          hooks: [
-            {
-              type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
+              command: 'pf hooks sprint-yaml'
             }
           ]
         }
@@ -1612,7 +1625,16 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/pre-edit-check.sh`
+              command: 'pf hooks pre-edit-check'
+            }
+          ]
+        },
+        {
+          matcher: 'Write',
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks schema-validation'
             }
           ]
         },
@@ -1621,7 +1643,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-warning.sh`
+              command: 'pf hooks context-warning'
             }
           ]
         },
@@ -1630,7 +1652,15 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
           hooks: [
             {
               type: 'command',
-              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-circuit-breaker.sh`
+              command: 'pf hooks context-breaker'
+            }
+          ]
+        },
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: 'pf hooks cyclist-pretooluse'
             }
           ]
         }
@@ -1638,7 +1668,7 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
     },
     statusLine: {
       type: 'command',
-      command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/misc/statusline.sh`
+      command: 'pf hooks statusline'
     }
   };
 
@@ -2255,8 +2285,8 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
   const pathMatch = command.match(/(?:\"\$CLAUDE_PROJECT_DIR\"\/)?([^\s"]+)/);
   const currentPath = pathMatch ? pathMatch[1] : command;
 
-  // Check if it contains the canonical path
-  if (currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
+  // Check if it's the canonical pf hooks command or the legacy .sh path
+  if (command === 'pf hooks statusline' || currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
     return {
       name: 'settings/statusline-path',
       status: 'pass',
@@ -2281,7 +2311,7 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
           const updatedSettings = { ...settings };
           (updatedSettings.statusLine as { type: string; command: string }) = {
             type: 'command',
-            command: `"$CLAUDE_PROJECT_DIR"/${CANONICAL_STATUSLINE_PATH}`
+            command: 'pf hooks statusline'
           };
           writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
         }
