@@ -11,6 +11,7 @@ from typing import Any
 from rich.console import Group
 from rich.padding import Padding
 from rich.text import Text
+from textual.binding import Binding
 
 from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel, render_progress_bar
 
@@ -41,6 +42,13 @@ class SprintPanel(BasePanel):
     channel: str = "sprint"
     panel_name: str = "Sprint"
     icon: str = PANEL_ICONS["sprint"][0]
+    can_focus = True
+
+    BINDINGS = [
+        Binding("j", "next_epic_key", "Next epic"),
+        Binding("k", "prev_epic_key", "Prev epic"),
+        Binding("e", "toggle_epic_key", "Toggle epic"),
+    ]
 
     def __init__(self, client: Any = None, **kwargs: Any) -> None:
         super().__init__(client=client, **kwargs)
@@ -74,6 +82,18 @@ class SprintPanel(BasePanel):
         if epic_id:
             self._toggled[epic_id] = not self._is_expanded(epics[self._selected_epic])
         self._rerender()
+
+    def action_next_epic_key(self) -> None:
+        """Binding action: next epic."""
+        self.next_epic()
+
+    def action_prev_epic_key(self) -> None:
+        """Binding action: previous epic."""
+        self.prev_epic()
+
+    def action_toggle_epic_key(self) -> None:
+        """Binding action: toggle epic."""
+        self.toggle_epic()
 
     def _rerender(self) -> None:
         if self._last_payload is not None:
