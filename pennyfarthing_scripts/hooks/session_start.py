@@ -21,10 +21,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pennyfarthing_scripts.hooks import (
+    find_project_root,
     is_cyclist_running,
     load_settings,
     send_to_cyclist,
 )
+
 
 # =============================================================================
 # Session Setup
@@ -126,17 +128,6 @@ def _validate_checkpoint(project_dir: Path) -> None:
 # =============================================================================
 
 
-def _is_port_alive(port: int, timeout: float = 1.0) -> bool:
-    """Check if a port is listening on localhost."""
-    import socket
-
-    try:
-        with socket.create_connection(("localhost", port), timeout=timeout):
-            return True
-    except (ConnectionRefusedError, TimeoutError, OSError):
-        return False
-
-
 def _ensure_wheelhub(project_dir: Path) -> int | None:
     """Auto-start WheelHub if not already running. Returns port or None."""
     from pennyfarthing_scripts.bikerack.launcher import (
@@ -146,24 +137,15 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
         write_pid_file,
     )
 
-    # Check .cyclist-port first (full Cyclist), then .bikerack-port
-    # Verify the port is actually listening before trusting the file
-    for port_file_name in (".cyclist-port", ".bikerack-port"):
-        port_file = project_dir / port_file_name
-        if port_file.exists():
-            try:
-                port = int(port_file.read_text().strip())
-            except (ValueError, OSError):
-                continue
-            if _is_port_alive(port):
-                return port
-            # Stale port file — warn but don't remove
-            print(
-                f"[session-start] Stale {port_file_name} (port {port} not listening), skipping",
-                file=sys.stderr,
-            )
+    # Skip if full Cyclist is running
+    cyclist_port_file = project_dir / ".wheelhub-port"
+    if cyclist_port_file.exists():
+        try:
+            return int(cyclist_port_file.read_text().strip())
+        except (ValueError, OSError):
+            return None
 
-    # Check if BikeRack WheelHub is already running (PID-based check)
+    # Check if BikeRack WheelHub is already running
     running, _pid, port = is_already_running(project_dir)
     if running:
         return port
@@ -197,9 +179,8 @@ def _write_env_file(project_dir: Path, session_id: str, otel_port: int | None) -
     if otel_port is not None:
         from pennyfarthing_scripts.bikerack.launcher import build_otel_env
 
-        otel_vars = build_otel_env(otel_port)
         lines.append("# OTEL auto-configuration for Cyclist/WheelHub")
-        for key, value in otel_vars.items():
+        for key, value in build_otel_env(otel_port).items():
             lines.append(f'export {key}="{value}"')
 
     with open(env_file, "a") as f:
