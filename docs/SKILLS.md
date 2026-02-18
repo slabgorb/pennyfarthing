@@ -298,11 +298,11 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 **Keywords:** personas, characters, discworld, literary-classics, custom, generation, wizard
 
 **Examples:**
-- Listing available themes: `/theme list`
-- Showing current theme: `/theme show`
-- Setting active theme: `/theme set discworld`
-- Creating a new theme: `/theme create my-theme --base discworld`
-- Interactive AI-driven theme wizard: `/theme maker`
+- Listing available themes: `/pf-theme list`
+- Showing current theme: `/pf-theme show`
+- Setting active theme: `/pf-theme set discworld`
+- Creating a new theme: `/pf-theme create my-theme --base discworld`
+- Interactive AI-driven theme wizard: `/pf-theme maker`
 
 **Anti-patterns:**
 - Don't edit config.local.yaml directly - use skill
@@ -310,14 +310,14 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 
 ### pf-theme-creation
 
-DEPRECATED: Use /theme maker instead
+DEPRECATED: Use /pf-theme maker instead
 
 **Tags:** personas, themes, creation
 
 **Keywords:** personas, custom, generation, wizard
 
 **Examples:**
-- Interactive theme wizard: `/theme maker`
+- Interactive theme wizard: `/pf-theme maker`
 
 **Related:** [pf-theme](#pf-theme)
 

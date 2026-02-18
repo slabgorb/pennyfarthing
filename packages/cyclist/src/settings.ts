@@ -29,6 +29,7 @@ export type PermissionMode = 'plan' | 'manual' | 'accept';
 export interface WorkflowSettings {
   permission_mode: PermissionMode;
   relay_mode?: boolean;
+  git_monitor?: boolean;
 }
 
 // Account-specific settings for usage tracking
@@ -76,6 +77,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
     permission_mode: 'manual',
     relay_mode: false,
+    git_monitor: false,
   },
 };
 
@@ -165,6 +167,11 @@ export function validateSettings(settings: unknown): boolean {
     return false;
   }
 
+  // Validate git_monitor if present (must be boolean)
+  if ('git_monitor' in workflow && typeof workflow.git_monitor !== 'boolean') {
+    return false;
+  }
+
   return true;
 }
 
@@ -203,6 +210,11 @@ export function migrateSettings(settings: PartialSettings): CyclistSettings {
     else if (workflow.permission_mode === 'turbo') {
       result.workflow.permission_mode = 'accept';
       result.workflow.relay_mode = true;
+    }
+
+    // Handle git_monitor if present
+    if ('git_monitor' in workflow && typeof workflow.git_monitor === 'boolean') {
+      result.workflow.git_monitor = workflow.git_monitor as boolean;
     }
 
     // Migrate relay_mode from legacy handoff settings (only if not explicitly set)
@@ -248,6 +260,11 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
     // Merge relay_mode if present
     if (typeof override.workflow.relay_mode === 'boolean') {
       result.workflow.relay_mode = override.workflow.relay_mode;
+    }
+
+    // Merge git_monitor if present
+    if (typeof override.workflow.git_monitor === 'boolean') {
+      result.workflow.git_monitor = override.workflow.git_monitor;
     }
   }
 

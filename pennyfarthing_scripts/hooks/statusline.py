@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from pennyfarthing_scripts.hooks import load_settings
+
 try:
     import yaml
     HAS_YAML = True
@@ -349,7 +351,14 @@ def main() -> None:
         session_id = data.get("session_id", "")
 
         model = _get_model_name(data)
-        branch, branch_dirty = _get_git_info(cwd) if cwd else ("", "")
+
+        # Check git_monitor setting — skip git calls when disabled
+        _settings = load_settings(Path(project_root) if project_root else None)
+        if cwd and _settings.git_monitor:
+            branch, branch_dirty = _get_git_info(cwd)
+        else:
+            branch, branch_dirty = "", ""
+
         pct = _get_context_pct(data)
 
         agent_name = _resolve_agent(project_root, session_id)
