@@ -22,6 +22,7 @@ import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
 import { panelRegistry } from './panel-registry';
 import PersonaHeader from './PersonaHeader.js';
+import ProjectInfoBar from './ProjectInfoBar.js';
 import { useFocusPanel } from '../hooks/useFocusPanel.js';
 import '../styles/dockview-theme.css';
 
@@ -203,6 +204,7 @@ export function BikeRackWorkspace({
       <div data-testid="bikerack-portrait-anchor" style={{ flexShrink: 0 }}>
         <PersonaHeader />
       </div>
+      <ProjectInfoBar />
       <DockviewReact
         className="dockview-container"
         onReady={onReady}
