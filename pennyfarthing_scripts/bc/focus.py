@@ -34,6 +34,7 @@ VALID_PANELS = [
     "changed",
     "ac",
     "debug",
+    "progress",
     "settings",
     "tty",
 ]
