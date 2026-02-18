@@ -36,6 +36,7 @@ workflow:
   handoff_mode: manual        # manual | auto
   bell_mode: true             # true | false (enable/disable bell notifications)
   relay_mode: true            # true | false (enable/disable relay mode)
+  git_monitor: false          # true | false (enable/disable automatic git monitoring)
 
 # Context budget thresholds
 context_budget:
@@ -168,6 +169,17 @@ Enable or disable relay mode for agent coordination.
 |-------|-------------|
 | `true` | Relay mode enabled (default) |
 | `false` | Relay mode disabled |
+
+#### `workflow.git_monitor`
+
+Enable or disable automatic git status monitoring. When enabled, WheelHub watches `.git/` metadata files and reacts to tool events to keep the GitPanel and DiffsPanel updated in real time. When disabled, no automatic git subprocess calls are made — git panels receive empty data and the statusline omits branch/dirty info.
+
+| Value | Description |
+|-------|-------------|
+| `true` | Automatic git monitoring enabled |
+| `false` | Automatic git monitoring disabled (default) |
+
+On-demand git operations (e.g. `/api/git/refresh`, `pf git status`) are unaffected by this setting. Changing this setting requires a server restart to take effect.
 
 #### `context_budget.tirepump_threshold`
 
