@@ -140,6 +140,7 @@ class CyclistSettings:
     permission_mode: str = "manual"  # plan, manual, accept
     relay_mode: bool = False
     bell_mode: bool = False
+    git_monitor: bool = False
     theme: str | None = None
 
 
@@ -205,6 +206,10 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
     # Handle bell_mode
     if "bell_mode" in workflow and isinstance(workflow["bell_mode"], bool):
         settings.bell_mode = workflow["bell_mode"]
+
+    # Handle git_monitor
+    if "git_monitor" in workflow and isinstance(workflow["git_monitor"], bool):
+        settings.git_monitor = workflow["git_monitor"]
 
     return settings
 
