@@ -67,55 +67,11 @@ Cyclist uses bicycle-themed internal codenames for major subsystems:
 
 | Codename | Component | Description |
 |----------|-----------|-------------|
-| **WheelHub** | `packages/core/src/server/` | Shared Express/WebSocket server — API endpoints, WebSocket channels, OTLP receiver, hook approval, cache invalidation. Library consumed by both Cyclist and BikeRack. |
-| **BikeRack** | `packages/cyclist/src/bikerack.ts` | Standalone panel viewer — runs WheelHub without Electron, serves dashboard panels in a browser while Claude Code runs in your terminal. |
-| **TirePump** | Context clearing system | Reinflates the session when context runs low — clears Claude session, resets stats, reloads current agent while preserving workflow state. |
-| **JobFair** | Character benchmarking | Runs every character in a theme against benchmarks to discover which personas excel at each role, producing talent matrices for theme optimization. |
+| **WheelHub** | `src/server.ts` | Central coordination server - the hub where all communication converges (API endpoints, WebSocket servers, OTLP receiver, hook approval handling, cache invalidation) |
+| **TirePump** | Context clearing system | Reinflates the session when context runs low - clears Claude session, resets stats, reloads current agent while preserving workflow state |
+| **JobFair** | Character benchmarking | Runs every character in a theme against benchmarks to discover which personas excel at each role, producing talent matrices for theme optimization |
 
 See `packages/cyclist/README.md` for detailed implementation notes.
-
-### WheelHub, Cyclist, and BikeRack
-
-WheelHub is the shared server — it never runs on its own. Cyclist and BikeRack are wrappers that start WheelHub and add their own entry points:
-
-```mermaid
-graph TB
-    subgraph "Cyclist (Electron)"
-        C_Main["Electron Main Process"]
-        C_Renderer["React UI + Dockview Panels"]
-        C_PTY["node-pty (Claude terminal)"]
-        C_Main --> C_Renderer
-        C_Main --> C_PTY
-    end
-
-    subgraph "BikeRack (CLI)"
-        BR_Entry["bikerack.ts entry point"]
-        BR_Browser["Browser panels"]
-        BR_Entry --> BR_Browser
-    end
-
-    subgraph "WheelHub (shared server)"
-        WH_API["REST API (/api/*)"]
-        WH_WS["WebSocket (/ws/*)"]
-        WH_OTLP["OTLP Receiver (/v1/*)"]
-    end
-
-    C_Main --> WH_API
-    C_Main --> WH_WS
-    BR_Entry --> WH_API
-    BR_Entry --> WH_WS
-
-    Claude["Claude Code CLI"] -- "OTEL telemetry" --> WH_OTLP
-```
-
-Each wrapper writes its own port file so hooks and other tools can discover the running server:
-
-| Mode | Port File | Default Port | Entry Point |
-|------|-----------|--------------|-------------|
-| **Cyclist** | `.cyclist-port` | 1898 | `packages/electron/src/main.ts` |
-| **BikeRack** | `.bikerack-port` | 2898 | `packages/cyclist/src/bikerack.ts` |
-
-WheelHub does **not** write a port file. The OTEL auto-config hook checks `.cyclist-port` first, then `.bikerack-port`, with a liveness check on each to handle stale files from crashed processes.
 
 ### Multi-Instance Support
 
@@ -123,7 +79,7 @@ Cyclist supports running multiple instances for different projects simultaneousl
 
 - **File > New Window** (Cmd+Shift+N) - Opens folder picker for a new project
 - Each instance runs on a separate port with isolated state
-- Port files (`.cyclist-port` / `.bikerack-port`) prevent cross-instance conflicts
+- Port files (`.bikerack-port`) prevent cross-instance conflicts
 
 ### Process Model
 

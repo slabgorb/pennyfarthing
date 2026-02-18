@@ -1,39 +1,39 @@
 #!/bin/bash
-# otel-auto-config.sh - Auto-configure OTEL for Cyclist/BikeRack
+# otel-auto-config.sh - Auto-configure OTEL for Cyclist web mode (Story 20-1)
 #
-# DEPRECATED: Prefer `pf hooks session-start` which handles WheelHub auto-start
-# AND OTEL configuration together. This script is a fallback that only sets
-# env vars when WheelHub is already running.
+# This hook checks for a .bikerack-port file in the project directory.
+# If found, it sets the OTEL environment variables to connect Claude Code
+# telemetry to the running Cyclist server.
+#
+# Usage: Source this script early in Claude Code startup to enable auto-config.
+#   source /path/to/otel-auto-config.sh
 #
 # Prerequisites:
-#   - WheelHub or BikeRack must be running (.wheelhub-port file exists)
-#   - CLAUDE_ENV_FILE must be set (standard in Claude Code hook environment)
+#   - Cyclist must be running in web mode (writes .bikerack-port file)
+#   - CLAUDE_PROJECT_DIR must be set (standard in Claude Code environment)
 
+# Determine project directory
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-PORT_FILE="$PROJECT_DIR/.wheelhub-port"
 
-if [[ ! -f "$PORT_FILE" ]]; then
-  exit 0
+# Read port from .bikerack-port (used by both Cyclist and BikeRack)
+PORT=""
+PORT_FILE="$PROJECT_DIR/.bikerack-port"
+if [[ -f "$PORT_FILE" ]]; then
+  PORT=$(cat "$PORT_FILE" 2>/dev/null)
+  # Validate port is a number
+  if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
+    PORT=""
+  fi
 fi
 
-PORT=$(cat "$PORT_FILE" 2>/dev/null)
+# Configure OTEL if a valid port was found
+if [[ -n "$PORT" ]]; then
+  export CLAUDE_CODE_ENABLE_TELEMETRY=1
+  export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
+  export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$PORT"
 
-if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
-  exit 0
-fi
-
-# Write all 5 required OTEL env vars to CLAUDE_ENV_FILE
-if [[ -n "$CLAUDE_ENV_FILE" ]]; then
-  cat >> "$CLAUDE_ENV_FILE" <<EOF
-# OTEL auto-configuration (otel-auto-config.sh fallback)
-export CLAUDE_CODE_ENABLE_TELEMETRY="1"
-export OTEL_LOGS_EXPORTER="otlp"
-export OTEL_METRICS_EXPORTER="otlp"
-export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$PORT"
-EOF
-fi
-
-if [[ -z "$CYCLIST_QUIET" ]]; then
-  echo "[otel-auto-config] Configured OTEL to http://localhost:$PORT" >&2
+  # Optional: Log for debugging (can be silenced by setting CYCLIST_QUIET=1)
+  if [[ -z "$CYCLIST_QUIET" ]]; then
+    echo "[otel-auto-config] Configured OTEL to http://localhost:$PORT (from $PORT_FILE)" >&2
+  fi
 fi

@@ -305,7 +305,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // Port Conflict Detection (Story 34-3)
 // =============================================================================
 
-const PORT_FILE_NAME = '.wheelhub-port';
+const PORT_FILE_NAME = '.bikerack-port';
 const PID_FILE_NAME = '.wheelhub-pid';
 
 export async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {

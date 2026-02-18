@@ -40,9 +40,6 @@ if [[ -f "$PACKAGE_ROOT/pennyfarthing_scripts/context.py" ]]; then
     PYTHON_MODULE="$PACKAGE_ROOT/pennyfarthing_scripts/context.py"
 elif [[ -f "${PROJECT_ROOT:-}/pennyfarthing_scripts/context.py" ]]; then
     PYTHON_MODULE="${PROJECT_ROOT}/pennyfarthing_scripts/context.py"
-elif [[ -f "${PROJECT_ROOT:-}/pennyfarthing/pennyfarthing_scripts/context.py" ]]; then
-    # Dogfood: orchestrator inlines framework at pennyfarthing/
-    PYTHON_MODULE="${PROJECT_ROOT}/pennyfarthing/pennyfarthing_scripts/context.py"
 fi
 
 # If Python module exists, use it
@@ -74,8 +71,7 @@ done
 
 # Derive Claude project path from current directory
 PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
-# Claude Code replaces slashes AND dots (e.g. in usernames) with dashes
-CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/.' '--')"
+CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
 
 # Default config
 WARNING_THRESHOLD=60
@@ -160,7 +156,7 @@ if last_total:
     status = 'HIGH' if usable_pct > $WARNING_THRESHOLD else 'OK'
     relay = '$RELAY_MODE' == 'true'
     tirepump = (relay or '$PERMISSION_MODE' == 'turbo') and usable_pct > $TIREPUMP_THRESHOLD
-    is_cyclist = os.environ.get('CYCLIST') == '1' or Path('$PROJECT_DIR/packages/cyclist/.wheelhub-port').exists() or Path('$PROJECT_DIR/.bikerack-port').exists()
+    is_cyclist = os.environ.get('CYCLIST') == '1' or Path('$PROJECT_DIR/packages/cyclist/.bikerack-port').exists()
 
     print(f'CONTEXT_TOKENS={last_total}')
     print(f'CONTEXT_PERCENT={total_pct}')

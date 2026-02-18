@@ -169,8 +169,7 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
     """Get the Claude Code project path for transcripts.
 
     Claude Code stores transcripts at ~/.claude/projects/<path-with-dashes>
-    The path format is: -Users-name-Projects-project (leading dash, non-alphanumeric
-    characters like slashes and dots become dashes)
+    The path format is: -Users-name-Projects-project (leading dash, slashes become dashes)
     """
     project_dir = (
         project_dir or
@@ -178,8 +177,7 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
         os.environ.get("PROJECT_ROOT") or
         os.getcwd()
     )
-    # Claude Code replaces slashes AND dots (e.g. in usernames) with dashes
-    path_with_dashes = project_dir.replace("/", "-").replace(".", "-")
+    path_with_dashes = project_dir.replace("/", "-")
     return Path.home() / ".claude" / "projects" / path_with_dashes
 
 
@@ -271,7 +269,7 @@ def detect_cyclist(project_dir: str | None = None) -> bool:
 
     Checks:
     1. CYCLIST env var set to '1' (Electron mode - definitive)
-    2. .wheelhub-port or .bikerack-port file exists AND port is responding (Web mode)
+    2. .bikerack-port file exists AND port is responding (Web mode)
     """
     # Env var is definitive - set by Cyclist when it spawns Claude
     if os.environ.get("CYCLIST") == "1":
@@ -286,8 +284,7 @@ def detect_cyclist(project_dir: str | None = None) -> bool:
     )
 
     port_files = [
-        Path(project_dir) / "packages" / "cyclist" / ".wheelhub-port",
-        Path(os.getcwd()) / ".wheelhub-port",
+        Path(project_dir) / "packages" / "cyclist" / ".bikerack-port",
         Path(os.getcwd()) / ".bikerack-port",
     ]
 

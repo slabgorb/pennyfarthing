@@ -9,7 +9,7 @@ Verifies:
   NFR7: Auto-reconnect uses 2-second backoff delay
   NFR8: Connection status updates within 5 seconds
   NFR9: WebSocket client is reusable across all panels
-  NFR14: Port configuration sourced from .wheelhub-port or config
+  NFR14: Port configuration sourced from .bikerack-port or config
 
 Run with: python -m pytest tests/python/test_wheelhub_client.py -v
 """
@@ -91,13 +91,13 @@ class TestImportAndInterface:
 
 
 class TestPortDiscovery:
-    """FR3/NFR14: Client discovers port from .wheelhub-port file."""
+    """FR3/NFR14: Client discovers port from .bikerack-port file."""
 
     def test_discovers_port_from_file(self, tmp_path):
-        """discover_port() should read port from .wheelhub-port file."""
+        """discover_port() should read port from .bikerack-port file."""
         from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
 
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("3456")
 
         client = WheelHubClient(project_dir=tmp_path)
@@ -111,7 +111,7 @@ class TestPortDiscovery:
             WheelHubClient,
         )
 
-        # No .wheelhub-port file in tmp_path
+        # No .bikerack-port file in tmp_path
         client = WheelHubClient(project_dir=tmp_path)
         port = client.discover_port()
         assert port == DEFAULT_PORT, (
@@ -122,7 +122,7 @@ class TestPortDiscovery:
         """When port is passed explicitly, discover_port() should return it."""
         from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
 
-        port_file = tmp_path / ".wheelhub-port"
+        port_file = tmp_path / ".bikerack-port"
         port_file.write_text("3456")
 
         client = WheelHubClient(port=9999, project_dir=tmp_path)

@@ -1,5 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # DEPRECATED: Use `pf workflow fix-phase` instead.
-# This shim forwards to the Python CLI for backward compatibility.
 echo "Warning: fix-session-phase.sh is deprecated. Use: pf workflow fix-phase $*" >&2
-exec pf workflow fix-phase "$@"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+exec_pf workflow fix-phase "$@"

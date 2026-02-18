@@ -232,11 +232,8 @@ case "$1" in
       PRIME_ARGS+=(--no-persona)
     fi
 
-    if command -v pf &>/dev/null; then
-      pf prime "${PRIME_ARGS[@]}"
-    else
-      python3 -m pennyfarthing_scripts.prime "${PRIME_ARGS[@]}"
-    fi
+    source "$SCRIPT_DIR/../lib/run-pf.sh"
+    run_pf prime "${PRIME_ARGS[@]}"
     ;;
   stop)
     # Use provided session ID, fall back to SESSION_ID env var
