@@ -21,12 +21,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pennyfarthing_scripts.hooks import (
-    find_project_root,
     is_cyclist_running,
     load_settings,
     send_to_cyclist,
 )
-
 
 # =============================================================================
 # Session Setup
