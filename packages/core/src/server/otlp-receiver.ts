@@ -280,7 +280,23 @@ export function processLogEvents(events: unknown): void {
         success,
       };
       _auditLog.push(entry);
-      const toolEvent: ToolEvent = { toolName, success };
+      // Parse tool_parameters for input excerpt (matches Cyclist's enrichment)
+      let input: string | undefined;
+      const toolParams = event.attributes?.tool_parameters as string | undefined;
+      if (toolParams) {
+        try {
+          const params = JSON.parse(toolParams);
+          input = params.description || params.full_command || params.file_path || params.command || params.pattern || (Object.values(params)[0] as string);
+        } catch {
+          input = toolParams;
+        }
+      }
+      const toolEvent: ToolEvent = {
+        toolName,
+        input: input?.substring(0, 500),
+        success,
+        timestamp: event.timestamp,
+      };
       for (const listener of _toolEventListeners) {
         listener(toolEvent);
       }
