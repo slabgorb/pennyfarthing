@@ -335,7 +335,7 @@ def _pretty_tag(tag: str) -> str:
 def capture_agent_output(agent_name: str) -> str:
     """Run pf agent start and capture raw output."""
     result = subprocess.run(
-        ["pf", "agent", "start", agent_name],
+        [sys.executable, "-m", "pennyfarthing_scripts.cli", "agent", "start", agent_name],
         capture_output=True,
         text=True,
         timeout=30,

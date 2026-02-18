@@ -46,10 +46,10 @@ PR_NUMBER: "{PR_NUMBER}"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
+OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "reviewer":** Run `pf handoff marker $OWNER`, output result, tell user.
+**If OWNER != "reviewer":** Run `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker $OWNER`, output result, tell user.
 </phase-check>
 
 <on-activation>
@@ -125,13 +125,13 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 <exit>
 ### If APPROVED:
 1. Write Reviewer Assessment (verdict: APPROVED)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
+2. Update story: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story update {STORY_ID} --review-verdict approved`
 3. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
 4. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
 1. Write Reviewer Assessment (verdict: REJECTED, with severity table)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
+2. Update story: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
 3. If findings are testable (logic bugs, missing edge cases):
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)
 4. If findings are lint/format/dead-code only:

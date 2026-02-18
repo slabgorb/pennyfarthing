@@ -107,9 +107,12 @@ def _parse_session_file(session_path: str) -> dict[str, Any]:
 
 def _get_sprint_story_status(story_id: str) -> str | None:
     """Try to get story status from pf sprint CLI."""
+    import sys
+
     try:
         out = subprocess.run(
-            ["pf", "sprint", "story", "field", story_id, "status"],
+            [sys.executable, "-m", "pennyfarthing_scripts.cli",
+             "sprint", "story", "field", story_id, "status"],
             capture_output=True,
             text=True,
             timeout=10,

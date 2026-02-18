@@ -26,7 +26,7 @@ model: haiku
 
 - [ ] Use `/pf-sprint backlog` for initial backlog scan:
   ```bash
-  pf sprint backlog
+  "$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint backlog
   ```
 - [ ] Use `/pf-jira` skill to enrich with Jira status/assignee:
   - `/pf-jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
@@ -92,10 +92,10 @@ Other formats break Cyclist detection.
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Get epic's Jira key (use script, not direct yq)
-EPIC_JIRA=$(pf sprint epic field "$EPIC_NUM" jira)
+EPIC_JIRA=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint epic field "$EPIC_NUM" jira)
 ```
 
-If missing or "null": auto-create via `pf jira create epic {EPIC_NUM}`
+If missing or "null": auto-create via `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira create epic {EPIC_NUM}`
 
 ## Step 2: Check Workflow Permissions
 
@@ -135,14 +135,14 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 
 ## Step 3: Claim in Jira
 
-Use `pf jira check` and `pf jira claim` commands:
+Use the pf wrapper for Jira commands:
 
 ```bash
 # Check availability first
-pf jira check {JIRA_KEY}
+"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira check {JIRA_KEY}
 
 # Then claim (assign to self + move to In Progress)
-pf jira claim {JIRA_KEY}
+"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira claim {JIRA_KEY}
 ```
 
 **Exit codes:**
@@ -184,7 +184,7 @@ git checkout -b feat/{STORY_ID}-{SLUG}
 After session file is created, determine how to route:
 
 ```bash
-WORKFLOW_TYPE=$(pf workflow type "{WORKFLOW}")
+WORKFLOW_TYPE=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow type "{WORKFLOW}")
 ```
 
 | Workflow Type | Routing |

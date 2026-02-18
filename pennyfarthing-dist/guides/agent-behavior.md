@@ -3,17 +3,22 @@
 
 **Tests:** Use `testing-runner` subagent, never run directly.
 
-**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `pf handoff marker` → EXIT. See `<agent-exit-protocol>`.
+**Handoff:** Run pf.sh `handoff resolve-gate` → gate check → pf.sh `handoff complete-phase` → pf.sh `handoff marker` → EXIT. See `<agent-exit-protocol>`.
 
 **Sidecars:** Write learnings BEFORE starting exit protocol.
 
 **Scripts:** Pennyfarthing scripts are Python-based (`pennyfarthing_scripts/`), not shell—check before assuming `.sh`.
+
+**pf CLI:** Never call bare `pf` — it is not globally installed. Always use the wrapper:
+```bash
+"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh <command> [args...]
+```
 </critical>
 
 <critical>
 **Story completion is MANDATORY.** A story is NOT done until:
 1. Reviewer approves and merges the PR
-2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
+2. SM runs pf.sh `sprint story finish` (archive session, update Jira, clean up)
 
 **Never** start new work while stories have open PRs. The merge gate blocks `/pf-sprint work` if open PRs exist.
 
@@ -118,14 +123,14 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 
 1. Write assessment to session
 2. Terminate tandem backseat (if active)
-3. `pf handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
+3. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
 4. If blocked → report error, STOP
 5. If skip → jump to step 7
 6. If ready → spawn gate subagent with gate file → GATE_RESULT
    - If fail → fix issues, retry from step 3 (max 3 retries)
    - If pass → continue
-7. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. `pf handoff marker {next_agent}` → AGENT_COMMAND block
+7. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+8. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker {next_agent}` → AGENT_COMMAND block
 9. **Act on AGENT_COMMAND:**
    - Has `marker:` field → emit the CYCLIST marker (Cyclist path)
    - `action: "inline_handoff"` → run `activation_command` via Bash, output result, adopt new agent identity
@@ -141,12 +146,12 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 On activation, check if story phase belongs to you:
 
 ```bash
-pf handoff phase-check {your_agent_name}
+"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff phase-check {your_agent_name}
 ```
 
 If result has `action: "redirect"`:
 
 - **Cyclist:** Emit `<!-- CYCLIST:HANDOFF:/{phase_owner} -->` and EXIT
-- **CLI + relay ON:** Run `pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
+- **CLI + relay ON:** Run `source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
 - **CLI + relay OFF:** Output `Run /pf-{phase_owner} to continue` and EXIT
 </wrong-phase-detection>
