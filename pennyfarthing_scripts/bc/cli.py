@@ -34,7 +34,7 @@ from pennyfarthing_scripts.bc.focus import (
 def _get_current_layout() -> dict | None:
     """Fetch the current layout from a running Cyclist or BikeRack server.
 
-    Reads .wheelhub-port (shared by both Cyclist and BikeRack) and fetches
+    Reads .bikerack-port (shared by both Cyclist and BikeRack) and fetches
     the layout endpoint.
 
     Returns:

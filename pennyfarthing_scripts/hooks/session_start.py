@@ -138,7 +138,7 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
     )
 
     # Skip if full Cyclist is running
-    cyclist_port_file = project_dir / ".wheelhub-port"
+    cyclist_port_file = project_dir / ".bikerack-port"
     if cyclist_port_file.exists():
         try:
             return int(cyclist_port_file.read_text().strip())

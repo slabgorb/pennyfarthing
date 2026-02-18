@@ -2119,7 +2119,7 @@ export async function createElectronApp(): Promise<void> {
           const projectDir = getProjectDirectory();
           if (projectDir) {
             writePortFile(projectDir, actualPort);
-            console.log(`[OTEL] Wrote .wheelhub-port file to ${projectDir}`);
+            console.log(`[OTEL] Wrote .bikerack-port file to ${projectDir}`);
           }
           resolve();
         });
@@ -2139,7 +2139,7 @@ export async function createElectronApp(): Promise<void> {
       const projectDir = getProjectDirectory();
       if (projectDir) {
         cleanupPortFile(projectDir);
-        console.log('[OTEL] Cleaned up .wheelhub-port file');
+        console.log('[OTEL] Cleaned up .bikerack-port file');
       }
       if (server) {
         server.close(() => {

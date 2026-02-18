@@ -28,11 +28,9 @@ import yaml
 # Port File Constants
 # =============================================================================
 
-# Port files - central coordination server for all communication
+# WheelHub port file - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-# Cyclist full mode writes .wheelhub-port, BikeRack mode writes .bikerack-port
-CYCLIST_PORT_FILE = ".cyclist-port"
-BIKERACK_PORT_FILE = ".bikerack-port"
+CYCLIST_PORT_FILE = ".bikerack-port"
 
 # Default port if file not found
 DEFAULT_CYCLIST_PORT = 7431
@@ -50,7 +48,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     """Find the project root by looking for marker files.
 
     Searches for (in order):
-    1. .wheelhub-port or .bikerack-port (WheelHub is running)
+    1. .bikerack-port (WheelHub is running)
     2. .pennyfarthing directory
     3. .claude directory
 
@@ -64,8 +62,8 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     current = current.resolve()
 
     while current != current.parent:
-        # Check for Cyclist/BikeRack port files first (indicates server is running)
-        if (current / CYCLIST_PORT_FILE).exists() or (current / BIKERACK_PORT_FILE).exists():
+        # Check for Cyclist port files first (indicates Cyclist is running)
+        if (current / CYCLIST_PORT_FILE).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
@@ -86,7 +84,7 @@ def read_port_file(file_name: str, project_root: Path | None = None) -> int | No
     """Read a port number from a Cyclist port file.
 
     Args:
-        file_name: Name of the port file (e.g. .wheelhub-port)
+        file_name: Name of the port file (e.g. .bikerack-port)
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
@@ -127,10 +125,6 @@ def get_cyclist_port(project_root: Path | None = None) -> int:
     if port:
         return port
 
-    port = read_port_file(BIKERACK_PORT_FILE, project_root)
-    if port:
-        return port
-
     return DEFAULT_CYCLIST_PORT
 
 
@@ -146,7 +140,6 @@ class CyclistSettings:
     permission_mode: str = "manual"  # plan, manual, accept
     relay_mode: bool = False
     bell_mode: bool = False
-    git_monitor: bool = False
     theme: str | None = None
 
 
@@ -212,10 +205,6 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
     # Handle bell_mode
     if "bell_mode" in workflow and isinstance(workflow["bell_mode"], bool):
         settings.bell_mode = workflow["bell_mode"]
-
-    # Handle git_monitor
-    if "git_monitor" in workflow and isinstance(workflow["git_monitor"], bool):
-        settings.git_monitor = workflow["git_monitor"]
 
     return settings
 

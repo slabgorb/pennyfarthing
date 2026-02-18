@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# DEPRECATED: This script is a shim. Logic has moved to Python.
-# Use: pf hooks session-stop
-exec pf hooks session-stop
+# Shim: delegates to Python CLI via uv run — no global pf install needed.
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+exec_pf hooks session-stop
