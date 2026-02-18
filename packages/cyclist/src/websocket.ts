@@ -27,7 +27,7 @@ import {
   getCachedGitStatusSync,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
-import { getCurrentSettings } from './settings.js';
+import { getCurrentSettings } from '@pennyfarthing/core/dist/server/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
 import { storePendingToolInput } from './span-correlation.js';
