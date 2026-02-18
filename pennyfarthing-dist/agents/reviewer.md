@@ -151,6 +151,19 @@ When your workflow phase has `tandem.mode: consultation`, you can spawn the part
 **If consultation fails:** Continue solo — consultation is advisory, not blocking.
 </tandem-consultation>
 
+<team-mode>
+## Team Mode (Lead)
+
+When the review phase has a `team:` block in workflow YAML, Reviewer acts as **lead**:
+
+1. **On phase entry:** Detect team config, create team with `TeamCreate`
+2. **Spawn teammates** per workflow YAML `teammates:` list (e.g., Architect for architectural pattern validation)
+3. **During phase:** Coordinate via `SendMessage`, perform adversarial review while teammates check specific concerns in parallel
+4. **Before exit:** Shut down all teammates before starting exit protocol — send `shutdown_request`, await responses, then `TeamDelete`
+
+Teammates are phase-scoped — created at phase start, destroyed at phase end.
+</team-mode>
+
 <skills>
 - `/pf-code-review` - Review checklists, security/performance patterns
 - `/pf-testing` - Test commands for verification
