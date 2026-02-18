@@ -5,7 +5,7 @@
 ### Set Focus
 
 ```bash
-pf bc <panel> [--dry-run]
+pf.sh bc <panel> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -37,7 +37,7 @@ Output on error: `{"success": false, "error": "Invalid panel..."}`
 ### Clear Focus
 
 ```bash
-pf bc reset [--dry-run]
+pf.sh bc reset [--dry-run]
 ```
 
 Removes the `focus` key from `.pennyfarthing/config.local.yaml`.
@@ -49,7 +49,7 @@ Removes the `focus` key from `.pennyfarthing/config.local.yaml`.
 ### Save Layout
 
 ```bash
-pf bc save <NAME> [--dry-run]
+pf.sh bc save <NAME> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -64,7 +64,7 @@ Output: `{"success": true, "name": "<name>", "panels": <count>}`
 ### Load Layout
 
 ```bash
-pf bc load <NAME> [--dry-run]
+pf.sh bc load <NAME> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -77,7 +77,7 @@ Output: `{"success": true, "name": "<name>", "layout": {...}}`
 ### List Layouts
 
 ```bash
-pf bc list
+pf.sh bc list
 ```
 
 No arguments. Output: `{"success": true, "layouts": ["normal", "review", ...]}`
@@ -85,7 +85,7 @@ No arguments. Output: `{"success": true, "layouts": ["normal", "review", ...]}`
 ### Delete Layout
 
 ```bash
-pf bc clear <NAME> [--dry-run]
+pf.sh bc clear <NAME> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -96,7 +96,7 @@ pf bc clear <NAME> [--dry-run]
 ### Delete All Layouts
 
 ```bash
-pf bc clear-all [--dry-run]
+pf.sh bc clear-all [--dry-run]
 ```
 
 | Option | Description |

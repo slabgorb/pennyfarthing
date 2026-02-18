@@ -146,7 +146,7 @@ args: "[arg1|arg2]"       # Optional: argument summary
 **Example:**
 ```xml
 <run>
-pf sprint status [filter]
+pf.sh sprint status [filter]
 </run>
 ```
 
@@ -195,7 +195,7 @@ pf sprint status [filter]
 **Example:**
 ```xml
 <example>
-pf sprint check MSSCI-12038
+pf.sh sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 ```
@@ -292,7 +292,7 @@ Never manually edit sprint YAML. Use the provided commands.
 Add a new story to an epic.
 
 <run>
-pf sprint story add <epic-id> "<title>" <points>
+pf.sh sprint story add <epic-id> "<title>" <points>
 </run>
 
 <args>
@@ -304,7 +304,7 @@ pf sprint story add <epic-id> "<title>" <points>
 </args>
 
 <example>
-pf sprint story add epic-76 "Add user authentication" 3
+pf.sh sprint story add epic-76 "Add user authentication" 3
 </example>
 
 <output>
@@ -322,7 +322,7 @@ After creating, use `/pf-sprint story size` for sizing guidelines.
 Complete a story after PR merge.
 
 <run>
-pf sprint story finish <story-id>
+pf.sh sprint story finish <story-id>
 </run>
 
 <args>
@@ -332,7 +332,7 @@ pf sprint story finish <story-id>
 </args>
 
 <example>
-pf sprint story finish MSSCI-12052
+pf.sh sprint story finish MSSCI-12052
 # Archives story, updates Jira, cleans session files
 </example>
 

@@ -1,35 +1,35 @@
 # Sprint Scripts
 
-Sprint management is handled by the Python CLI: `pf sprint [COMMAND]`.
+Sprint management is handled by the Python CLI: `pf.sh sprint [COMMAND]`.
 
 ## Commands
 
 | Command | Purpose |
 |---------|---------|
-| `pf sprint status` | Show current sprint status and metrics |
-| `pf sprint backlog` | List available stories grouped by epic |
-| `pf sprint info` | Sprint info as JSON (for Cyclist sidebar) |
-| `pf sprint metrics` | Sprint velocity and progress metrics |
-| `pf sprint check <id>` | Check story/epic availability (JSON) |
-| `pf sprint future` | Show future initiatives and epics |
-| `pf sprint new` | Initialize a new sprint |
-| `pf sprint validate <file>` | Validate sprint YAML structure |
-| `pf sprint archive <id>` | Archive a completed story |
-| `pf sprint work <id>` | Start work on a story |
-| `pf sprint story field <id> <field>` | Get a story field value |
-| `pf sprint epic field <id> <field>` | Get an epic field value |
-| `pf sprint epic promote <id>` | Move epic from future to current sprint |
-| `pf sprint epic show <id>` | Show epic details |
-| `pf sprint epic cancel <id>` | Cancel an epic |
-| `pf sprint epic archive` | Archive completed epics |
+| `pf.sh sprint status` | Show current sprint status and metrics |
+| `pf.sh sprint backlog` | List available stories grouped by epic |
+| `pf.sh sprint info` | Sprint info as JSON (for Cyclist sidebar) |
+| `pf.sh sprint metrics` | Sprint velocity and progress metrics |
+| `pf.sh sprint check <id>` | Check story/epic availability (JSON) |
+| `pf.sh sprint future` | Show future initiatives and epics |
+| `pf.sh sprint new` | Initialize a new sprint |
+| `pf.sh sprint validate <file>` | Validate sprint YAML structure |
+| `pf.sh sprint archive <id>` | Archive a completed story |
+| `pf.sh sprint work <id>` | Start work on a story |
+| `pf.sh sprint story field <id> <field>` | Get a story field value |
+| `pf.sh sprint epic field <id> <field>` | Get an epic field value |
+| `pf.sh sprint epic promote <id>` | Move epic from future to current sprint |
+| `pf.sh sprint epic show <id>` | Show epic details |
+| `pf.sh sprint epic cancel <id>` | Cancel an epic |
+| `pf.sh sprint epic archive` | Archive completed epics |
 
 ## Usage
 
 ```bash
-pf sprint status
-pf sprint backlog
-pf sprint future epic-55
-pf sprint epic promote epic-41
+pf.sh sprint status
+pf.sh sprint backlog
+pf.sh sprint future epic-55
+pf.sh sprint epic promote epic-41
 ```
 
 ## Ownership

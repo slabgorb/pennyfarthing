@@ -20,7 +20,7 @@ Never manually edit `sprint/current-sprint.yaml`. Always use the provided script
 Show current sprint status with story counts and points.
 
 ```bash
-pf sprint status [filter]
+pf.sh sprint status [filter]
 ```
 
 | Filter | Description |
@@ -35,7 +35,7 @@ pf sprint status [filter]
 Show available stories ready for work, grouped by epic.
 
 ```bash
-pf sprint backlog
+pf.sh sprint backlog
 ```
 
 ### `/pf-sprint work [story-id|epic-id|next]`
@@ -59,7 +59,7 @@ if [[ "$OPEN_PRS" -gt 0 ]]; then
 fi
 
 # Check if story is available
-pf sprint check <story-id>
+pf.sh sprint check <story-id>
 
 # Then load SM to begin work
 ```
@@ -78,7 +78,7 @@ When starting work, this command:
 Archive a completed story.
 
 ```bash
-pf sprint archive <story-id> [pr-number] [--apply]
+pf.sh sprint archive <story-id> [pr-number] [--apply]
 ```
 
 | Option | Description |
@@ -90,7 +90,7 @@ pf sprint archive <story-id> [pr-number] [--apply]
 Initialize a new sprint.
 
 ```bash
-pf sprint new 2605 277 2026-02-03 2026-02-16 "Sprint goal"
+pf.sh sprint new 2605 277 2026-02-03 2026-02-16 "Sprint goal"
 ```
 
 ### `/pf-sprint future [--epic EPIC_ID]`
@@ -98,7 +98,7 @@ pf sprint new 2605 277 2026-02-03 2026-02-16 "Sprint goal"
 Show future work available for promotion.
 
 ```bash
-pf sprint future [--epic epic-XX]
+pf.sh sprint future [--epic epic-XX]
 ```
 
 ### `/pf-sprint promote <epic-id>`
@@ -106,7 +106,7 @@ pf sprint future [--epic epic-XX]
 Move an epic from future.yaml to current sprint.
 
 ```bash
-pf sprint epic promote epic-XX
+pf.sh sprint epic promote epic-XX
 ```
 
 ## Quick Reference

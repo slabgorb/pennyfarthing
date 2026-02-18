@@ -181,7 +181,7 @@ The `gate.file` value is resolved by the gate file discovery algorithm (project-
 Validate gate files before use:
 
 ```bash
-pf gate validate path/to/gate-file.md
+pf.sh gate validate path/to/gate-file.md
 ```
 
 The validator checks:
@@ -215,7 +215,7 @@ Gate 'tests-pass' is valid
 
 6. **Add recovery steps.** The `recovery` array in failed results gives the agent a clear path to fix issues and retry.
 
-7. **Test with the validator.** Run `pf gate validate` on your gate file before referencing it in a workflow.
+7. **Test with the validator.** Run `pf.sh gate validate` on your gate file before referencing it in a workflow.
 
 ## Related
 

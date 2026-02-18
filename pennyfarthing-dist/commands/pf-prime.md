@@ -4,7 +4,7 @@ description: Load essential project context at agent activation
 
 <purpose>
 Quickly load essential context files to reduce agent cold-start overhead.
-Automatically invoked on agent activation via `pf agent start`.
+Automatically invoked on agent activation via `pf.sh agent start`.
 </purpose>
 
 <when-to-use>
@@ -21,19 +21,19 @@ Use the `pf` CLI:
 
 ```bash
 # Load all essential context (default)
-pf agent start "sm"
+pf.sh agent start "sm"
 
 # Minimal mode - fastest startup
-pf agent start "sm" --minimal
+pf.sh agent start "sm" --minimal
 
 # Full mode - include domain docs
-pf agent start "sm" --full
+pf.sh agent start "sm" --full
 
 # Skip persona loading
-pf agent start "sm" --no-persona
+pf.sh agent start "sm" --no-persona
 
 # JSON output (for Cyclist integration)
-pf agent start "sm" --json
+pf.sh agent start "sm" --json
 ```
 
 ## Options
@@ -111,7 +111,7 @@ With `--quiet`, section headers are suppressed.
 The `/prime` command is automatically invoked when agents activate:
 
 1. User invokes `/sm`, `/tea`, `/dev`, or `/reviewer`
-2. `pf agent start <name>` runs
+2. `pf.sh agent start <name>` runs
 3. Context is loaded: workflow state, agent definition, persona, behavior guide, sprint context, session, sidecars
 4. Agent starts with full context AND their learned patterns loaded
 
@@ -129,7 +129,7 @@ If context becomes stale mid-session, run `/prime` manually:
 </integration>
 
 <reference>
-- **CLI:** `pf agent start <name>` or `python3 -m pennyfarthing_scripts.cli agent start <name>`
+- **CLI:** `pf.sh agent start <name>` or `python3 -m pennyfarthing_scripts.cli agent start <name>`
 - **Loads:** Workflow state, agent definition, persona, behavior guide, sprint context, session, sidecars
 - **Sidecar location:** `.pennyfarthing/sidecars/{agent}/*.md`
 - **Behavior guide:** `.pennyfarthing/guides/agent-behavior.md` (all agents)

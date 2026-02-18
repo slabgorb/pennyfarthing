@@ -124,7 +124,7 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 **Purpose:** Verify agent owns the current workflow phase before proceeding. Prevents agents from acting on stories they shouldn't own.
 
-**Usage:** SM, TEA, Dev, Reviewer - runs `pf workflow phase-check` on activation to determine correct owner.
+**Usage:** SM, TEA, Dev, Reviewer - runs `pf.sh workflow phase-check` on activation to determine correct owner.
 
 ```markdown
 <phase-check>
@@ -132,10 +132,10 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
+OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
+**If OWNER != "dev":** Run `pf.sh handoff marker $OWNER`, output result, tell user.
 </phase-check>
 ```
 
@@ -150,9 +150,9 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Assessment to session file
-- [ ] Run `pf handoff resolve-gate` — verify gate status
-- [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
+- [ ] Run `pf.sh handoff resolve-gate` — verify gate status
+- [ ] Run `pf.sh handoff complete-phase` — atomic session update
+- [ ] Run `pf.sh handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 ```
 
@@ -448,7 +448,7 @@ Tags used in skill files (`skills/{name}/SKILL.md`) for command documentation.
 
 ```markdown
 <run>
-pf sprint status [filter]
+pf.sh sprint status [filter]
 </run>
 ```
 
@@ -474,7 +474,7 @@ pf sprint status [filter]
 
 ```markdown
 <example>
-pf sprint check MSSCI-12038
+pf.sh sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true}
 </example>
 ```

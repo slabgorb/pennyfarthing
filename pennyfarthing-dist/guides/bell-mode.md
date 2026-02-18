@@ -26,7 +26,7 @@ User queues message in Editor
 |------|---------|
 | `packages/cyclist/src/bell-mode.ts` | State management: `isBellModeEnabled()`, `setBellMode()`, `toggleBellMode()` |
 | `packages/cyclist/src/api/bell.ts` | WebSocket broadcast of bell-consumed events |
-| `pf hooks bell-mode` | PostToolUse hook — reads queue, returns `additionalContext` |
+| `pf.sh hooks bell-mode` | PostToolUse hook — reads queue, returns `additionalContext` |
 | `packages/cyclist/src/public/hooks/useMessageQueue.ts` | React hook: `queueMessage()`, `dequeueMessage()`, `injectMessage()`, `handleTurnComplete()` |
 | `packages/cyclist/src/public/contexts/MessageQueueContext.tsx` | Shared React context (single queue instance across components) |
 | `packages/cyclist/src/public/components/ControlBar.tsx` | Bell mode toggle button |
