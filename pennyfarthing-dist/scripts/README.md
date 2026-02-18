@@ -8,10 +8,10 @@ Scripts are organized into categorical subdirectories. **Full paths are required
 scripts/
 ├── core/       # Essential scripts (agent-session.sh)
 ├── workflow/   # Workflow mechanics (finish-story.sh, check.sh)
-├── sprint/     # Sprint YAML operations (migrated to pf sprint CLI)
+├── sprint/     # Sprint YAML operations (migrated to pf.sh sprint CLI)
 ├── story/      # Story operations (create-story.sh)
 ├── jira/       # Jira integration (jira-claim-story.sh)
-├── git/        # Git operations (deprecated shims → pf git CLI)
+├── git/        # Git operations (deprecated shims → pf.sh git CLI)
 ├── theme/      # Theme operations (list-themes.sh)
 ├── test/       # Test infrastructure (test-setup.sh)
 ├── lib/        # Shared bash libraries (common.sh, logging.sh)
@@ -27,9 +27,9 @@ Scripts are invoked directly with **full category paths**:
 ```bash
 # From project root
 .pennyfarthing/scripts/core/agent-session.sh start sm
-pf sprint status
+pf.sh sprint status
 .pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12345
-pf sprint story finish MSSCI-12345
+pf.sh sprint story finish MSSCI-12345
 ```
 
 ## Distributed Scripts

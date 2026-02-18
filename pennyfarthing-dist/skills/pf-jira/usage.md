@@ -1,13 +1,13 @@
 # Jira CLI — Detailed Usage
 
-All commands use `pf jira <command>` as the entry point. REST API is used where possible — no interactive prompt issues.
+All commands use `pf.sh jira <command>` as the entry point. REST API is used where possible — no interactive prompt issues.
 
 ## Commands
 
 ### View Issue
 
 ```bash
-pf jira view <KEY>
+pf.sh jira view <KEY>
 ```
 
 | Arg | Required | Description |
@@ -19,7 +19,7 @@ Delegates to `jira issue view`. Shows summary, status, assignee, description, li
 ### Check Availability
 
 ```bash
-pf jira check <KEY>
+pf.sh jira check <KEY>
 ```
 
 | Arg | Required | Description |
@@ -31,7 +31,7 @@ Exit codes: `0` = available, `1` = assigned, `2` = not found, `3` = error.
 ### Claim Story
 
 ```bash
-pf jira claim <KEY> [--dry-run]
+pf.sh jira claim <KEY> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -44,7 +44,7 @@ Assigns to self and moves to In Progress.
 ### Move Issue
 
 ```bash
-pf jira move <KEY> "<STATUS>" [--dry-run]
+pf.sh jira move <KEY> "<STATUS>" [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -58,7 +58,7 @@ Checks current status first — skips if already there.
 ### Assign Issue
 
 ```bash
-pf jira assign <KEY> <USER> [--dry-run]
+pf.sh jira assign <KEY> <USER> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -72,7 +72,7 @@ Checks current assignee — skips if already assigned.
 ### Link Issues
 
 ```bash
-pf jira link <PARENT_KEY> <CHILD_KEY> [LINK_TYPE] [--dry-run]
+pf.sh jira link <PARENT_KEY> <CHILD_KEY> [LINK_TYPE] [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -85,7 +85,7 @@ pf jira link <PARENT_KEY> <CHILD_KEY> [LINK_TYPE] [--dry-run]
 ### Search Issues
 
 ```bash
-pf jira search "<JQL>"
+pf.sh jira search "<JQL>"
 ```
 
 | Arg | Required | Description |
@@ -97,7 +97,7 @@ Delegates to `jira issue list --jql`.
 ### Create Epic
 
 ```bash
-pf jira create epic <EPIC_ID> [--dry-run]
+pf.sh jira create epic <EPIC_ID> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -110,7 +110,7 @@ Creates Jira epic and all child stories without existing Jira keys. Updates spri
 ### Create Story
 
 ```bash
-pf jira create story <EPIC_JIRA_KEY> <STORY_ID> [--dry-run]
+pf.sh jira create story <EPIC_JIRA_KEY> <STORY_ID> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -124,7 +124,7 @@ Sets priority, points, sprint membership. Updates YAML.
 ### Create Standalone
 
 ```bash
-pf jira create standalone "<TITLE>" [--points N] [-d DESC] [--dry-run]
+pf.sh jira create standalone "<TITLE>" [--points N] [-d DESC] [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -139,7 +139,7 @@ Creates story, adds to current sprint, transitions to Done. All via REST API.
 ### Sync Epic
 
 ```bash
-pf jira sync <EPIC> [--transition] [--points] [--all] [--dry-run]
+pf.sh jira sync <EPIC> [--transition] [--points] [--all] [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -153,7 +153,7 @@ pf jira sync <EPIC> [--transition] [--points] [--all] [--dry-run]
 ### Bidirectional Sync
 
 ```bash
-pf jira bidirectional [options]
+pf.sh jira bidirectional [options]
 ```
 
 | Option | Description |
@@ -169,7 +169,7 @@ pf jira bidirectional [options]
 ### Reconcile
 
 ```bash
-pf jira reconcile [--fix]
+pf.sh jira reconcile [--fix]
 ```
 
 | Option | Description |
@@ -181,7 +181,7 @@ Reports: status mismatches, missing Jira keys, orphans, sprint membership gaps.
 ### Sprint Add
 
 ```bash
-pf jira sprint add <SPRINT_ID> <ISSUE_KEY> [--dry-run]
+pf.sh jira sprint add <SPRINT_ID> <ISSUE_KEY> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |

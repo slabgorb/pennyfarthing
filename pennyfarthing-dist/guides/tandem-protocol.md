@@ -13,7 +13,7 @@ Primary Agent (Opus)          Backseat Agent (Haiku, background)
      │                              │   .session/{story}-tandem-{partner}.md
      │                              │
      ├── PostToolUse hook fires ────┤
-     │   pf hooks bell-mode detects │
+     │   pf.sh hooks bell-mode detects │
      │   new observation, injects   │
      │   "[Tandem] Character: ..."  │
      │                              │
@@ -163,8 +163,8 @@ For active, synchronous agent-to-agent questions (as opposed to passive observat
 | `observation-writer.ts` | Built | TypeScript API for observation file I/O |
 | `file-watch.ts` | Built | File system change detection |
 | `tool-watch.ts` | Built | Tool call log monitoring |
-| `pf hooks bell-mode` | Built | PostToolUse hook with tandem injection |
+| `pf.sh hooks bell-mode` | Built | PostToolUse hook with tandem injection |
 | `bellmode_hook.py` | Built | Python implementation of bell mode hook |
-| `pf hooks statusline` | Built | CLI statusline with tandem indicator |
+| `pf.sh hooks statusline` | Built | CLI statusline with tandem indicator |
 | `tandem-backseat.md` | Built | Backseat agent prompt template |
 | `agent-behavior.md` | Built | Shared agent behavior with tandem protocol |

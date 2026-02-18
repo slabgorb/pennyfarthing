@@ -54,7 +54,7 @@ On activation, check session file for a `**Tandem:**` line (e.g., `**Tandem:** a
 
 **If tandem is configured:**
 
-1. **Resolve backseat persona** from theme using the `pf theme`
+1. **Resolve backseat persona** from theme using the `pf.sh theme`
    ```bash
    THEME=$(yq '.theme' .pennyfarthing/config.local.yaml)
    PARTNER_CHARACTER=$(yq ".agents.{PARTNER}.character" .pennyfarthing/personas/themes/${THEME}.yaml)

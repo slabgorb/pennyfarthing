@@ -68,7 +68,7 @@ git status --short
 git -C pennyfarthing status --short 2>/dev/null
 
 # Or use the multi-repo status script:
-pf git status --brief
+pf.sh git status --brief
 ```
 
 Collect which repos have changes. If ALL repos are clean, abort with "No changes to commit."
@@ -191,7 +191,7 @@ cd {orchestrator_root}
 
 After all repos are processed:
 ```bash
-pf git status --brief
+pf.sh git status --brief
 ```
 
 All repos should show clean.

@@ -6,7 +6,7 @@ CLI tools for analyzing existing codebases. Identify change hotspots, complexity
 
 ## Overview
 
-All tools are available under `pf debug` and share a consistent interface: `--format` (table/json/csv), `--output` (file), `--top` (result count), `--exclude` (patterns), and `--repo` (target).
+All tools are available under `pf.sh debug` and share a consistent interface: `--format` (table/json/csv), `--output` (file), `--top` (result count), `--exclude` (patterns), and `--repo` (target).
 
 ## Tools
 
@@ -16,19 +16,19 @@ Find files that change most frequently — high churn often correlates with bugs
 
 ```bash
 # Full analysis (files + directories)
-pf debug hotspots analyze
+pf.sh debug hotspots analyze
 
 # File-level only
-pf debug hotspots files
+pf.sh debug hotspots files
 
 # Directory-level only
-pf debug hotspots dirs
+pf.sh debug hotspots dirs
 
 # Options
-pf debug hotspots analyze --days 90 --top 20 --repo pennyfarthing
-pf debug hotspots analyze --format json --output hotspots.json
-pf debug hotspots analyze --exclude "*.test.ts" --branch main
-pf debug hotspots analyze --skip-type orchestrator
+pf.sh debug hotspots analyze --days 90 --top 20 --repo pennyfarthing
+pf.sh debug hotspots analyze --format json --output hotspots.json
+pf.sh debug hotspots analyze --exclude "*.test.ts" --branch main
+pf.sh debug hotspots analyze --skip-type orchestrator
 ```
 
 ### Complexity
@@ -36,9 +36,9 @@ pf debug hotspots analyze --skip-type orchestrator
 Measure code complexity metrics across files.
 
 ```bash
-pf debug complexity analyze
-pf debug complexity analyze --path ./packages/core/src
-pf debug complexity analyze --top 30 --format csv
+pf.sh debug complexity analyze
+pf.sh debug complexity analyze --path ./packages/core/src
+pf.sh debug complexity analyze --top 30 --format csv
 ```
 
 ### Dead Code
@@ -47,12 +47,12 @@ Find unused code: stale files with no recent commits, and unused TypeScript expo
 
 ```bash
 # Files with no recent commits (default: 180 days)
-pf debug deadcode stale
-pf debug deadcode stale --days 90 --repo pennyfarthing
+pf.sh debug deadcode stale
+pf.sh debug deadcode stale --days 90 --repo pennyfarthing
 
 # Unused TypeScript exports (via ts-prune)
-pf debug deadcode exports
-pf debug deadcode exports --repo pennyfarthing --format json
+pf.sh debug deadcode exports
+pf.sh debug deadcode exports --repo pennyfarthing --format json
 ```
 
 ### Code Markers
@@ -61,16 +61,16 @@ Detect TODO, FIXME, HACK, and XXX comments with git blame data.
 
 ```bash
 # Full analysis with blame data
-pf debug codemarkers analyze
+pf.sh debug codemarkers analyze
 
 # Only stale markers (older than threshold)
-pf debug codemarkers stale --days 90
+pf.sh debug codemarkers stale --days 90
 
 # Summary counts by type
-pf debug codemarkers summary
+pf.sh debug codemarkers summary
 
 # Deprecated symbol detection
-pf debug codemarkers deprecations
+pf.sh debug codemarkers deprecations
 ```
 
 ### Dependencies
@@ -78,8 +78,8 @@ pf debug codemarkers deprecations
 Analyze dependency staleness and security advisories.
 
 ```bash
-pf debug dependencies analyze
-pf debug dependencies analyze --path ./pennyfarthing --format json
+pf.sh debug dependencies analyze
+pf.sh debug dependencies analyze --path ./pennyfarthing --format json
 ```
 
 ### Health Score
@@ -87,9 +87,9 @@ pf debug dependencies analyze --path ./pennyfarthing --format json
 Composite health score across all dimensions (hotspots, complexity, dead code, dependencies, markers).
 
 ```bash
-pf debug healthscore analyze
-pf debug healthscore analyze --no-cache   # Bypass cache
-pf debug healthscore analyze --format json --output health.json
+pf.sh debug healthscore analyze
+pf.sh debug healthscore analyze --no-cache   # Bypass cache
+pf.sh debug healthscore analyze --format json --output health.json
 ```
 
 ## Common Options
