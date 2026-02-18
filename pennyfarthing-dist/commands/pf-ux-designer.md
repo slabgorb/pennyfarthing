@@ -5,7 +5,7 @@ description: UX Designer - User experience design and UI patterns
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start "ux-designer"
+source .pennyfarthing/scripts/lib/env.sh && source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start "ux-designer"
 ```
 This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>

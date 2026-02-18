@@ -152,6 +152,6 @@ On activation, check if story phase belongs to you:
 If result has `action: "redirect"`:
 
 - **Cyclist:** Emit `<!-- CYCLIST:HANDOFF:/{phase_owner} -->` and EXIT
-- **CLI + relay ON:** Run `source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
+- **CLI + relay ON:** Run `source .pennyfarthing/scripts/lib/env.sh && source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
 - **CLI + relay OFF:** Output `Run /pf-{phase_owner} to continue` and EXIT
 </wrong-phase-detection>
