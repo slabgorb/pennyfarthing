@@ -750,7 +750,7 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks session-start') || h.command?.includes('session-start.sh')
+          h.command?.includes('pf.sh hooks session-start') || h.command?.includes('pf hooks session-start') || h.command?.includes('session-start.sh')
         );
       }
       return false;
@@ -805,7 +805,7 @@ function checkOtelAutoStart(projectRoot: string, installationType: string): Chec
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks session-start')
+          h.command?.includes('pf.sh hooks session-start') || h.command?.includes('pf hooks session-start')
         );
       }
       return false;
@@ -872,7 +872,7 @@ function migrateSessionStartToPfHooks(projectRoot: string): void {
         if (typeof entry === 'object' && entry !== null && Array.isArray(entry.hooks)) {
           for (const h of entry.hooks) {
             if (h.command?.includes('session-start.sh')) {
-              h.command = 'pf hooks session-start';
+              h.command = '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start';
             }
           }
         }
@@ -1054,7 +1054,7 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks reflector-check') || h.command?.includes('question-reflector-check')
+          h.command?.includes('pf.sh hooks reflector-check') || h.command?.includes('pf hooks reflector-check') || h.command?.includes('question-reflector-check')
         );
       }
       return false;
@@ -1112,7 +1112,7 @@ function checkContextCircuitBreaker(projectRoot: string, installationType: strin
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks context-breaker') || h.command?.includes('context-circuit-breaker')
+          h.command?.includes('pf.sh hooks context-breaker') || h.command?.includes('pf hooks context-breaker') || h.command?.includes('context-circuit-breaker')
         );
       }
       return false;
@@ -1154,7 +1154,7 @@ function addContextCircuitBreaker(projectRoot: string, _installationType: string
     hooks: [
       {
         type: 'command',
-        command: 'pf hooks context-breaker'
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks context-breaker'
       }
     ]
   };
@@ -1255,7 +1255,7 @@ function addSchemaValidationHook(projectRoot: string, _installationType: string)
     hooks: [
       {
         type: 'command',
-        command: 'pf hooks schema-validation'
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks schema-validation'
       }
     ]
   };
@@ -1314,7 +1314,7 @@ function checkPostToolUseHook(projectRoot: string, installationType: string): Ch
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks bell-mode') || h.command?.includes('bell-mode-hook')
+          h.command?.includes('pf.sh hooks bell-mode') || h.command?.includes('pf hooks bell-mode') || h.command?.includes('bell-mode-hook')
         );
       }
       return false;
@@ -1357,7 +1357,7 @@ function addPostToolUseHook(projectRoot: string, _installationType: string): voi
     hooks: [
       {
         type: 'command',
-        command: 'pf hooks bell-mode'
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks bell-mode'
       }
     ]
   };
@@ -1416,7 +1416,7 @@ function checkSprintYamlValidationHook(projectRoot: string, installationType: st
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         return hookEntry.hooks?.some(h =>
-          h.command?.includes('pf hooks sprint-yaml') || h.command?.includes('sprint-yaml-validation')
+          h.command?.includes('pf.sh hooks sprint-yaml') || h.command?.includes('pf hooks sprint-yaml') || h.command?.includes('sprint-yaml-validation')
         );
       }
       return false;
@@ -1459,7 +1459,7 @@ function addSprintYamlValidationHook(projectRoot: string, _installationType: str
     hooks: [
       {
         type: 'command',
-        command: 'pf hooks sprint-yaml'
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks sprint-yaml'
       }
     ]
   };
@@ -1503,7 +1503,7 @@ function addStopHook(projectRoot: string, _installationType: string): void {
       hooks: [
         {
           type: 'command',
-          command: 'pf hooks reflector-check'
+          command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks reflector-check'
         }
       ]
     },
@@ -1512,7 +1512,7 @@ function addStopHook(projectRoot: string, _installationType: string): void {
       hooks: [
         {
           type: 'command',
-          command: 'pf hooks session-stop'
+          command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-stop'
         }
       ]
     }
@@ -1567,7 +1567,7 @@ function addSessionStartHooks(projectRoot: string, _installationType: string): v
       hooks: [
         {
           type: 'command',
-          command: 'pf hooks session-start'
+          command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start'
         }
       ]
     },
@@ -1667,7 +1667,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks session-start'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start'
             }
           ]
         },
@@ -1695,7 +1695,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks reflector-check'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks reflector-check'
             }
           ]
         },
@@ -1704,7 +1704,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks session-stop'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-stop'
             }
           ]
         }
@@ -1715,7 +1715,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks bell-mode'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks bell-mode'
             }
           ]
         },
@@ -1724,7 +1724,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks sprint-yaml'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks sprint-yaml'
             }
           ]
         }
@@ -1735,7 +1735,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks pre-edit-check'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks pre-edit-check'
             }
           ]
         },
@@ -1744,7 +1744,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks schema-validation'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks schema-validation'
             }
           ]
         },
@@ -1753,7 +1753,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks context-warning'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks context-warning'
             }
           ]
         },
@@ -1762,7 +1762,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks context-breaker'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks context-breaker'
             }
           ]
         },
@@ -1770,7 +1770,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
           hooks: [
             {
               type: 'command',
-              command: 'pf hooks cyclist-pretooluse'
+              command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks cyclist-pretooluse'
             }
           ]
         }
@@ -1778,7 +1778,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
     },
     statusLine: {
       type: 'command',
-      command: 'pf hooks statusline'
+      command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks statusline'
     }
   };
 
@@ -2396,7 +2396,7 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
   const currentPath = pathMatch ? pathMatch[1] : command;
 
   // Check if it's the canonical pf hooks command or the legacy .sh path
-  if (command === 'pf hooks statusline' || currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
+  if (command.includes('pf.sh hooks statusline') || command === 'pf hooks statusline' || currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
     return {
       name: 'settings/statusline-path',
       status: 'pass',
@@ -2421,7 +2421,7 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
           const updatedSettings = { ...settings };
           (updatedSettings.statusLine as { type: string; command: string }) = {
             type: 'command',
-            command: 'pf hooks statusline'
+            command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks statusline'
           };
           writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
         }
@@ -2481,7 +2481,7 @@ function checkLegacyHookCommands(projectRoot: string): CheckResult {
 
   // Also check statusLine
   const statusLine = settings.statusLine as { command?: string } | undefined;
-  if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+  if (statusLine?.command && !statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
     for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
       if (statusLine.command.includes(shName)) {
         legacyCount++;
@@ -2506,7 +2506,7 @@ function checkLegacyHookCommands(projectRoot: string): CheckResult {
       }
 
       // Migrate statusLine
-      if (statusLine?.command && statusLine.command !== 'pf hooks statusline') {
+      if (statusLine?.command && !statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
         for (const [shName, pfCommand] of Object.entries(LEGACY_HOOK_MIGRATIONS)) {
           if (statusLine.command.includes(shName)) {
             statusLine.command = pfCommand;

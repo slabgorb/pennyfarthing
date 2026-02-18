@@ -75,19 +75,25 @@ const LEGACY_PROJECT_HOOK_PATHS = [
  * Map of legacy .sh hook commands to their `pf hooks` replacements.
  * Used during init/update/doctor to migrate existing settings.
  */
+/**
+ * Canonical hook command prefix — uses pf.sh wrapper (no global pf install needed).
+ * $CLAUDE_PROJECT_DIR is set by Claude Code for hook execution contexts.
+ */
+const PF_SH = '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh';
+
 export const LEGACY_HOOK_MIGRATIONS: Record<string, string> = {
-  'session-start.sh': 'pf hooks session-start',
-  'welcome-hook.sh': 'pf hooks session-start',
-  'question-reflector-check.sh': 'pf hooks reflector-check',
-  'session-stop.sh': 'pf hooks session-stop',
-  'pre-edit-check.sh': 'pf hooks pre-edit-check',
-  'context-warning.sh': 'pf hooks context-warning',
-  'context-circuit-breaker.sh': 'pf hooks context-breaker',
-  'cyclist-pretooluse-hook.sh': 'pf hooks cyclist-pretooluse',
-  'schema-validation.sh': 'pf hooks schema-validation',
-  'bell-mode-hook.sh': 'pf hooks bell-mode',
-  'sprint-yaml-validation.sh': 'pf hooks sprint-yaml',
-  'statusline.sh': 'pf hooks statusline',
+  'session-start.sh': `${PF_SH} hooks session-start`,
+  'welcome-hook.sh': `${PF_SH} hooks session-start`,
+  'question-reflector-check.sh': `${PF_SH} hooks reflector-check`,
+  'session-stop.sh': `${PF_SH} hooks session-stop`,
+  'pre-edit-check.sh': `${PF_SH} hooks pre-edit-check`,
+  'context-warning.sh': `${PF_SH} hooks context-warning`,
+  'context-circuit-breaker.sh': `${PF_SH} hooks context-breaker`,
+  'cyclist-pretooluse-hook.sh': `${PF_SH} hooks cyclist-pretooluse`,
+  'schema-validation.sh': `${PF_SH} hooks schema-validation`,
+  'bell-mode-hook.sh': `${PF_SH} hooks bell-mode`,
+  'sprint-yaml-validation.sh': `${PF_SH} hooks sprint-yaml`,
+  'statusline.sh': `${PF_SH} hooks statusline`,
 };
 
 /**
@@ -233,11 +239,11 @@ export async function mergeSettingsLocalJson(
     logger.info('Added missing SessionStart hooks');
   } else if (Array.isArray(hooks.SessionStart)) {
     const hasSessionStartHook = hooks.SessionStart.some((entry: unknown) =>
-      hookEntryContains(entry, 'session-start.sh') || hookEntryContains(entry, 'pf hooks session-start')
+      hookEntryContains(entry, 'session-start.sh') || hookEntryContains(entry, 'pf.sh hooks session-start') || hookEntryContains(entry, 'pf hooks session-start')
     );
 
     if (!hasSessionStartHook && templateContent.hooks?.SessionStart) {
-      const sessionStartEntry = findHookEntry(templateContent.hooks.SessionStart, 'pf hooks session-start');
+      const sessionStartEntry = findHookEntry(templateContent.hooks.SessionStart, 'pf.sh hooks session-start');
       if (sessionStartEntry) {
         hooks.SessionStart = [sessionStartEntry, ...hooks.SessionStart];
         modified = true;
@@ -274,11 +280,11 @@ export async function mergeSettingsLocalJson(
     logger.info('Added missing Stop hooks');
   } else if (Array.isArray(hooks.Stop)) {
     const hasReflectorHook = hooks.Stop.some((entry: unknown) =>
-      hookEntryContains(entry, 'question-reflector-check') || hookEntryContains(entry, 'pf hooks reflector-check')
+      hookEntryContains(entry, 'question-reflector-check') || hookEntryContains(entry, 'pf.sh hooks reflector-check') || hookEntryContains(entry, 'pf hooks reflector-check')
     );
 
     if (!hasReflectorHook && templateContent.hooks?.Stop) {
-      const reflectorEntry = findHookEntry(templateContent.hooks.Stop, 'pf hooks reflector-check');
+      const reflectorEntry = findHookEntry(templateContent.hooks.Stop, 'pf.sh hooks reflector-check');
       if (reflectorEntry) {
         hooks.Stop = [reflectorEntry, ...hooks.Stop];
         modified = true;
@@ -294,11 +300,11 @@ export async function mergeSettingsLocalJson(
     logger.info('Added missing PostToolUse hooks');
   } else if (Array.isArray(hooks.PostToolUse)) {
     const hasBellModeHook = hooks.PostToolUse.some((entry: unknown) =>
-      hookEntryContains(entry, 'bell-mode-hook') || hookEntryContains(entry, 'pf hooks bell-mode')
+      hookEntryContains(entry, 'bell-mode-hook') || hookEntryContains(entry, 'pf.sh hooks bell-mode') || hookEntryContains(entry, 'pf hooks bell-mode')
     );
 
     if (!hasBellModeHook && templateContent.hooks?.PostToolUse) {
-      const bellModeEntry = findHookEntry(templateContent.hooks.PostToolUse, 'pf hooks bell-mode');
+      const bellModeEntry = findHookEntry(templateContent.hooks.PostToolUse, 'pf.sh hooks bell-mode');
       if (bellModeEntry) {
         hooks.PostToolUse = [bellModeEntry, ...hooks.PostToolUse];
         modified = true;
@@ -315,11 +321,11 @@ export async function mergeSettingsLocalJson(
   } else if (Array.isArray(hooks.PreToolUse)) {
     // Check for context-circuit-breaker / context-breaker
     const hasCircuitBreaker = hooks.PreToolUse.some((entry: unknown) =>
-      hookEntryContains(entry, 'context-circuit-breaker') || hookEntryContains(entry, 'pf hooks context-breaker')
+      hookEntryContains(entry, 'context-circuit-breaker') || hookEntryContains(entry, 'pf.sh hooks context-breaker') || hookEntryContains(entry, 'pf hooks context-breaker')
     );
 
     if (!hasCircuitBreaker && templateContent.hooks?.PreToolUse) {
-      const circuitBreakerEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf hooks context-breaker');
+      const circuitBreakerEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf.sh hooks context-breaker');
       if (circuitBreakerEntry) {
         hooks.PreToolUse = [...hooks.PreToolUse, circuitBreakerEntry];
         modified = true;
@@ -333,7 +339,7 @@ export async function mergeSettingsLocalJson(
     );
 
     if (!hasSchemaValidation && templateContent.hooks?.PreToolUse) {
-      const schemaValidationEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf hooks schema-validation');
+      const schemaValidationEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf.sh hooks schema-validation');
       if (schemaValidationEntry) {
         hooks.PreToolUse = [...(hooks.PreToolUse as unknown[]), schemaValidationEntry];
         modified = true;
@@ -343,11 +349,11 @@ export async function mergeSettingsLocalJson(
 
     // Check for cyclist-pretooluse hook (Cyclist permissions integration)
     const hasCyclistPreToolUse = (hooks.PreToolUse as unknown[]).some((entry: unknown) =>
-      hookEntryContains(entry, 'cyclist-pretooluse') || hookEntryContains(entry, 'pf hooks cyclist-pretooluse')
+      hookEntryContains(entry, 'cyclist-pretooluse') || hookEntryContains(entry, 'pf.sh hooks cyclist-pretooluse') || hookEntryContains(entry, 'pf hooks cyclist-pretooluse')
     );
 
     if (!hasCyclistPreToolUse && templateContent.hooks?.PreToolUse) {
-      const cyclistEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf hooks cyclist-pretooluse');
+      const cyclistEntry = findHookEntry(templateContent.hooks.PreToolUse, 'pf.sh hooks cyclist-pretooluse');
       if (cyclistEntry) {
         hooks.PreToolUse = [...(hooks.PreToolUse as unknown[]), cyclistEntry];
         modified = true;
@@ -364,12 +370,12 @@ export async function mergeSettingsLocalJson(
     logger.info('Added missing statusLine configuration');
   } else if (statusLine.command && typeof statusLine.command === 'string') {
     // Migrate from any legacy .sh path to pf hooks statusline
-    if (statusLine.command !== 'pf hooks statusline') {
+    if (!statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
       for (const legacyPath of LEGACY_STATUSLINE_PATHS) {
         if (statusLine.command.includes(legacyPath)) {
-          statusLine.command = 'pf hooks statusline';
+          statusLine.command = `${PF_SH} hooks statusline`;
           modified = true;
-          logger.info('Migrated statusLine from .sh to pf hooks statusline');
+          logger.info('Migrated statusLine to pf.sh hooks statusline');
           break;
         }
       }
