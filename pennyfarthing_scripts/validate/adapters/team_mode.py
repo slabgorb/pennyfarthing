@@ -196,8 +196,6 @@ def validate_communication_protocols(
     errors: list[str] = []
     warnings: list[str] = []
 
-    content_lower = content.lower()
-
     # Reflector section must still exist
     if "<critical>" not in content or "CYCLIST" not in content:
         errors.append("Reflector/CYCLIST marker section missing — must remain for inter-phase handoff")
