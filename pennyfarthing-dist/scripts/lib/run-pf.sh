@@ -10,7 +10,7 @@
 #   exec_pf hooks session-start
 
 # Resolve PROJECT_ROOT if not already set
-_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
 source "$_lib_dir/find-root.sh"
 
 # Find the pyproject.toml that provides pennyfarthing-scripts
