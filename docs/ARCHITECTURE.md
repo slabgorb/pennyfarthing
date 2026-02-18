@@ -132,7 +132,7 @@ Pennyfarthing's BikeLane system provides flexible workflow orchestration through
 ### Example: TDD Workflow (Phased)
 
 ```
-/new-work
+/pf-work
     |
     v
 SM (Story Setup)
@@ -396,7 +396,7 @@ Stories sync to/from Jira via:
 
 ### Why Single Entry Point?
 
-`/new-work` is the only entry point because:
+`/pf-work` is the only entry point because:
 - State detection handles all cases (new, resume, finish)
 - Reduces cognitive load
 - Prevents workflow confusion

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Shared utility: Run the `pf` CLI via uv run — no global install needed.
+#
+# Resolution order for pyproject.toml:
+# 1. Dogfooding: $PROJECT_ROOT/pennyfarthing/pyproject.toml (inlined repo)
+# 2. Consumer:   $PROJECT_ROOT/pyproject.toml (project declares dependency)
+#
+# Usage from hook shims:
+#   source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+#   exec_pf hooks session-start
+
+# Resolve PROJECT_ROOT if not already set
+_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+source "$_lib_dir/find-root.sh"
+
+# Find the pyproject.toml that provides pennyfarthing-scripts
+_pf_project=""
+if [[ -f "$PROJECT_ROOT/pennyfarthing/pyproject.toml" ]]; then
+    # Dogfooding: inlined framework repo
+    _pf_project="$PROJECT_ROOT/pennyfarthing"
+elif [[ -f "$PROJECT_ROOT/pyproject.toml" ]]; then
+    # Consumer: project-level pyproject.toml with pennyfarthing-scripts dep
+    _pf_project="$PROJECT_ROOT"
+fi
+
+if [[ -z "$_pf_project" ]]; then
+    echo "Error: No pyproject.toml found for pennyfarthing-scripts" >&2
+    echo "Expected: $PROJECT_ROOT/pennyfarthing/pyproject.toml (dogfooding)" >&2
+    echo "      or: $PROJECT_ROOT/pyproject.toml (consumer)" >&2
+    exit 1
+fi
+
+run_pf() {
+    uv run --project "$_pf_project" pf "$@"
+}
+
+exec_pf() {
+    exec uv run --project "$_pf_project" pf "$@"
+}

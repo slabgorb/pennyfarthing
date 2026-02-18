@@ -53,7 +53,7 @@ Prime selects a context tier based on session state to manage token overhead:
 
 ```bash
 # From agent commands (via pf CLI)
-pf agent start "<agent>" --quiet
+pf.sh agent start "<agent>" --quiet
 
 # TypeScript API (from Cyclist)
 getPrimeContext(agentName, projectDir)
@@ -63,7 +63,7 @@ getPrimeContextJson(agentName, projectDir, tier)  # JSON for Cyclist
 
 ## Integration Points
 
-- **Agent commands** (`/sm`, `/dev`, `/tea`) invoke prime on activation
+- **Agent commands** (`/pf-sm`, `/pf-dev`, `/pf-tea`) invoke prime on activation
 - **TirePump** calls prime to reload agent context after clearing
 - **Cyclist** uses JSON output for context display and token tracking
 

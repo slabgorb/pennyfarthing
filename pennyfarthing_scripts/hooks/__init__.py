@@ -30,7 +30,7 @@ import yaml
 
 # WheelHub port file - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-CYCLIST_PORT_FILE = ".wheelhub-port"
+CYCLIST_PORT_FILE = ".bikerack-port"
 
 # Default port if file not found
 DEFAULT_CYCLIST_PORT = 7431
@@ -48,7 +48,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     """Find the project root by looking for marker files.
 
     Searches for (in order):
-    1. .wheelhub-port (WheelHub is running)
+    1. .bikerack-port (WheelHub is running)
     2. .pennyfarthing directory
     3. .claude directory
 
@@ -84,7 +84,7 @@ def read_port_file(file_name: str, project_root: Path | None = None) -> int | No
     """Read a port number from a Cyclist port file.
 
     Args:
-        file_name: Name of the port file (e.g. .wheelhub-port)
+        file_name: Name of the port file (e.g. .bikerack-port)
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
@@ -140,6 +140,7 @@ class CyclistSettings:
     permission_mode: str = "manual"  # plan, manual, accept
     relay_mode: bool = False
     bell_mode: bool = False
+    git_monitor: bool = False
     theme: str | None = None
 
 
@@ -205,6 +206,10 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
     # Handle bell_mode
     if "bell_mode" in workflow and isinstance(workflow["bell_mode"], bool):
         settings.bell_mode = workflow["bell_mode"]
+
+    # Handle git_monitor
+    if "git_monitor" in workflow and isinstance(workflow["git_monitor"], bool):
+        settings.git_monitor = workflow["git_monitor"]
 
     return settings
 

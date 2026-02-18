@@ -170,7 +170,7 @@ Display completion message:
 
 Next steps:
 - Use `/pf-sprint` to view the backlog
-- Use `pf sprint epic promote` to move to a sprint when ready
+- Use `pf.sh sprint epic promote` to move to a sprint when ready
 ```
 
 ## SUCCESS CRITERIA:

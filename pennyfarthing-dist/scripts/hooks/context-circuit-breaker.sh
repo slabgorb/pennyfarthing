@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-# DEPRECATED: This script is a shim. Logic has moved to Python.
-# Use: pf hooks context-breaker
-exec pf hooks context-breaker
+# Shim: delegates to Python CLI via uv run (dogfooding) or global pf (consumer).
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+exec_pf hooks context-breaker

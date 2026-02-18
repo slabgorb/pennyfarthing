@@ -5,7 +5,7 @@ Verifies:
   AC2: `pf bikerack` starts Claude CLI session
   AC3: `pf bikerack` opens TUI in companion terminal pane
   AC4: TUI process is independent of Claude session
-  AC5: Port discovery via `.wheelhub-port` works correctly
+  AC5: Port discovery via `.bikerack-port` works correctly
 
 Run with: python -m pytest tests/python/test_bikerack_launcher.py -v
 """
@@ -152,7 +152,7 @@ class TestStopBikerackWithTui:
 
         # Set up running state: WheelHub + TUI
         (tmp_project / ".wheelhub-pid").write_text("11111")
-        (tmp_project / ".wheelhub-port").write_text("2898")
+        (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -169,7 +169,7 @@ class TestStopBikerackWithTui:
         from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
-        (tmp_project / ".wheelhub-port").write_text("2898")
+        (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -191,7 +191,7 @@ class TestGetStatusWithTui:
         from pennyfarthing_scripts.bikerack.launcher import get_status
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
-        (tmp_project / ".wheelhub-port").write_text("2898")
+        (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
@@ -207,7 +207,7 @@ class TestGetStatusWithTui:
         from pennyfarthing_scripts.bikerack.launcher import get_status
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
-        (tmp_project / ".wheelhub-port").write_text("2898")
+        (tmp_project / ".bikerack-port").write_text("2898")
 
         with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
             result = get_status(tmp_project)
@@ -223,7 +223,7 @@ class TestCleanupIncludesTui:
         """cleanup_files() should remove .wheelhub-gui-pid."""
         from pennyfarthing_scripts.bikerack.launcher import cleanup_files
 
-        (tmp_project / ".wheelhub-port").write_text("2898")
+        (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-pid").write_text("11111")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
@@ -235,14 +235,14 @@ class TestCleanupIncludesTui:
 
 
 class TestPortDiscoveryIntegration:
-    """AC5: Port discovery via .wheelhub-port file works correctly."""
+    """AC5: Port discovery via .bikerack-port file works correctly."""
 
     def test_start_tui_uses_discovered_port(self, tmp_project):
         """start_tui() should use the port from poll_for_port_file."""
         from pennyfarthing_scripts.bikerack.launcher import poll_for_port_file
 
         # Write port file as if WheelHub wrote it
-        (tmp_project / ".wheelhub-port").write_text("3456")
+        (tmp_project / ".bikerack-port").write_text("3456")
         port = poll_for_port_file(tmp_project, timeout=1.0)
 
         with patch("subprocess.Popen") as mock_popen:

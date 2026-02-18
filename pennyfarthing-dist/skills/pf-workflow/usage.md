@@ -5,7 +5,7 @@
 ### List Workflows
 
 ```bash
-pf workflow list
+pf.sh workflow list
 ```
 
 No arguments. Returns table of workflows with type, phases/steps count, modes, default flag, description.
@@ -13,7 +13,7 @@ No arguments. Returns table of workflows with type, phases/steps count, modes, d
 ### Show Workflow
 
 ```bash
-pf workflow show [NAME]
+pf.sh workflow show [NAME]
 ```
 
 | Arg | Required | Description |
@@ -31,7 +31,7 @@ Warning: Only do this when story requirements have fundamentally changed. Switch
 ### Start Stepped Workflow
 
 ```bash
-pf workflow start <NAME> [--mode <MODE>]
+pf.sh workflow start <NAME> [--mode <MODE>]
 ```
 
 | Arg/Option | Required | Description |
@@ -44,7 +44,7 @@ Creates a new session and begins at step 1.
 ### Resume Stepped Workflow
 
 ```bash
-pf workflow resume [NAME]
+pf.sh workflow resume [NAME]
 ```
 
 | Arg | Required | Description |
@@ -54,7 +54,7 @@ pf workflow resume [NAME]
 ### Workflow Status
 
 ```bash
-pf workflow status
+pf.sh workflow status
 ```
 
 No arguments. Shows current step, progress percentage, mode.
@@ -62,7 +62,7 @@ No arguments. Shows current step, progress percentage, mode.
 ### Fix Session Phase
 
 ```bash
-pf workflow fix-phase <STORY_ID> <TARGET_PHASE> [--dry-run]
+pf.sh workflow fix-phase <STORY_ID> <TARGET_PHASE> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -83,7 +83,7 @@ Updates `**Phase:**` field, `**Phase Started:**` timestamp, and handoff history 
 ### Complete Step
 
 ```bash
-pf workflow complete-step [NAME] [--step N]
+pf.sh workflow complete-step [NAME] [--step N]
 ```
 
 | Arg/Option | Required | Description |
@@ -100,7 +100,7 @@ Advances session: increments step, updates completed list, recalculates percenta
 ### Check Workflow State
 
 ```bash
-pf workflow check [--json]
+pf.sh workflow check [--json]
 ```
 
 | Option | Description |
@@ -112,7 +112,7 @@ Returns current story ID, phase, workflow, and state.
 ### Check Phase Owner
 
 ```bash
-pf workflow phase-check <WORKFLOW_NAME> <PHASE>
+pf.sh workflow phase-check <WORKFLOW_NAME> <PHASE>
 ```
 
 | Arg | Required | Description |
@@ -125,7 +125,7 @@ Returns the agent name that owns the phase.
 ### Get Workflow Type
 
 ```bash
-pf workflow type <WORKFLOW_NAME>
+pf.sh workflow type <WORKFLOW_NAME>
 ```
 
 | Arg | Required | Description |
@@ -137,7 +137,7 @@ Returns `phased`, `stepped`, or `procedural`.
 ### Emit Handoff Marker
 
 ```bash
-pf workflow handoff <NEXT_AGENT>
+pf.sh workflow handoff <NEXT_AGENT>
 ```
 
 | Arg | Required | Description |

@@ -243,15 +243,15 @@ skills:
     prerequisites: []
     examples:
       - context: Checking sprint status
-        invocation: /sprint
+        invocation: /pf-sprint
       - context: Finding available stories
-        invocation: /sprint backlog
+        invocation: /pf-sprint backlog
       - context: Adding a story
-        invocation: /sprint story add epic-76 "My story" 3
+        invocation: /pf-sprint story add epic-76 "My story" 3
       - context: Sizing guidelines
-        invocation: /sprint story size
+        invocation: /pf-sprint story size
       - context: Adding an epic
-        invocation: /sprint epic add epic-85 "New epic"
+        invocation: /pf-sprint epic add epic-85 "New epic"
     anti_patterns:
       - Don't manually edit sprint YAML - use scripts
     related_skills: [pf-jira]
@@ -278,7 +278,7 @@ skills:
 
   pf-story:
     name: pf-story
-    description: "DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint."
+    description: "DEPRECATED: Use /pf-sprint story instead. Story commands consolidated under /pf-sprint."
     category: project-management
     tags: [stories, sizing, workflow, deprecated]
     version: "2.0.0"
@@ -287,12 +287,12 @@ skills:
     prerequisites: []
     examples:
       - context: Creating new stories
-        invocation: /sprint story add
+        invocation: /pf-sprint story add
       - context: Sizing stories
-        invocation: /sprint story size
+        invocation: /pf-sprint story size
     anti_patterns:
       - Don't create stories without acceptance criteria
-      - Don't use /story directly - use /sprint story instead
+      - Don't use /story directly - use /pf-sprint story instead
     related_skills: [pf-sprint, pf-jira]
     keywords: [user-stories, estimation, points, acceptance-criteria]
 
@@ -324,15 +324,15 @@ skills:
     prerequisites: []
     examples:
       - context: Listing available themes
-        invocation: /theme list
+        invocation: /pf-theme list
       - context: Showing current theme
-        invocation: /theme show
+        invocation: /pf-theme show
       - context: Setting active theme
-        invocation: /theme set discworld
+        invocation: /pf-theme set discworld
       - context: Creating a new theme
-        invocation: /theme create my-theme --base discworld
+        invocation: /pf-theme create my-theme --base discworld
       - context: Interactive AI-driven theme wizard
-        invocation: /theme maker
+        invocation: /pf-theme maker
     anti_patterns:
       - Don't edit config.local.yaml directly - use skill
       - Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
@@ -341,7 +341,7 @@ skills:
 
   pf-theme-creation:
     name: pf-theme-creation
-    description: "DEPRECATED: Use /theme maker instead"
+    description: "DEPRECATED: Use /pf-theme maker instead"
     category: theming
     tags: [personas, themes, creation]
     version: "2.0.0"
@@ -350,7 +350,7 @@ skills:
     prerequisites: []
     examples:
       - context: Interactive theme wizard
-        invocation: /theme maker
+        invocation: /pf-theme maker
     anti_patterns: []
     related_skills: [pf-theme]
     keywords: [personas, custom, generation, wizard]
@@ -365,11 +365,11 @@ skills:
     prerequisites: []
     examples:
       - context: Listing available workflows
-        invocation: /workflow
+        invocation: /pf-workflow
       - context: Showing current workflow
-        invocation: /workflow show
+        invocation: /pf-workflow show
       - context: Starting stepped workflow
-        invocation: /workflow start architecture
+        invocation: /pf-workflow start architecture
     anti_patterns:
       - Don't switch workflows mid-story unless requirements fundamentally changed
     related_skills: [pf-sprint]

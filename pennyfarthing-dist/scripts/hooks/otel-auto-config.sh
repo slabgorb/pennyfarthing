@@ -1,7 +1,7 @@
 #!/bin/bash
 # otel-auto-config.sh - Auto-configure OTEL for Cyclist web mode (Story 20-1)
 #
-# This hook checks for a .wheelhub-port file in the project directory.
+# This hook checks for a .bikerack-port file in the project directory.
 # If found, it sets the OTEL environment variables to connect Claude Code
 # telemetry to the running Cyclist server.
 #
@@ -9,15 +9,15 @@
 #   source /path/to/otel-auto-config.sh
 #
 # Prerequisites:
-#   - Cyclist must be running in web mode (writes .wheelhub-port file)
+#   - Cyclist must be running in web mode (writes .bikerack-port file)
 #   - CLAUDE_PROJECT_DIR must be set (standard in Claude Code environment)
 
 # Determine project directory
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
-# Read port from .wheelhub-port (used by both Cyclist and BikeRack)
+# Read port from .bikerack-port (used by both Cyclist and BikeRack)
 PORT=""
-PORT_FILE="$PROJECT_DIR/.wheelhub-port"
+PORT_FILE="$PROJECT_DIR/.bikerack-port"
 if [[ -f "$PORT_FILE" ]]; then
   PORT=$(cat "$PORT_FILE" 2>/dev/null)
   # Validate port is a number
@@ -28,6 +28,7 @@ fi
 
 # Configure OTEL if a valid port was found
 if [[ -n "$PORT" ]]; then
+  export CLAUDE_CODE_ENABLE_TELEMETRY=1
   export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
   export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$PORT"
 

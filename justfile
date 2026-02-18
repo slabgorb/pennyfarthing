@@ -405,7 +405,7 @@ bikerack *args:
     mkdir -p "$(dirname "$logfile")"
     echo "  Log: $logfile"
     # Clean stale port file before starting
-    rm -f "$CYCLIST_PROJECT_DIR/.wheelhub-port"
+    rm -f "$CYCLIST_PROJECT_DIR/.bikerack-port"
     npx concurrently -k \
         -n server,vite \
         -c green,magenta \
@@ -416,8 +416,8 @@ bikerack *args:
     echo "  PID: $bg_pid"
     echo "$bg_pid" > "$CYCLIST_PROJECT_DIR/.wheelhub-pid"
     echo ""
-    # Wait for server to write .wheelhub-port (up to 10s)
-    port_file="$CYCLIST_PROJECT_DIR/.wheelhub-port"
+    # Wait for server to write .bikerack-port (up to 10s)
+    port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"
     for i in $(seq 1 20); do
         if [[ -f "$port_file" ]]; then
             port=$(cat "$port_file")

@@ -14,4 +14,4 @@ Modules:
     swebench: SWE-bench patch parsing and scenario utilities
 """
 
-__version__ = "7.6.1"
+__version__ = "8.1.0"

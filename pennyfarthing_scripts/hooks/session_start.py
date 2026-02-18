@@ -21,12 +21,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pennyfarthing_scripts.hooks import (
-    find_project_root,
     is_cyclist_running,
     load_settings,
     send_to_cyclist,
 )
-
 
 # =============================================================================
 # Session Setup
@@ -138,7 +136,7 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
     )
 
     # Skip if full Cyclist is running
-    cyclist_port_file = project_dir / ".wheelhub-port"
+    cyclist_port_file = project_dir / ".bikerack-port"
     if cyclist_port_file.exists():
         try:
             return int(cyclist_port_file.read_text().strip())
@@ -177,11 +175,11 @@ def _write_env_file(project_dir: Path, session_id: str, otel_port: int | None) -
     ]
 
     if otel_port is not None:
-        lines.extend([
-            "# OTEL auto-configuration for Cyclist/WheelHub",
-            'export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"',
-            f'export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:{otel_port}"',
-        ])
+        from pennyfarthing_scripts.bikerack.launcher import build_otel_env
+
+        lines.append("# OTEL auto-configuration for Cyclist/WheelHub")
+        for key, value in build_otel_env(otel_port).items():
+            lines.append(f'export {key}="{value}"')
 
     with open(env_file, "a") as f:
         f.write("\n".join(lines) + "\n")

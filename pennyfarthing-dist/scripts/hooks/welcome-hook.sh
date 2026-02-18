@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# DEPRECATED: This script is a shim. Logic has moved to Python.
-# Welcome is now part of session-start.
-# Use: pf hooks session-start
-exec pf hooks session-start
+# Shim: delegates to Python CLI via uv run — no global pf install needed.
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+exec_pf hooks session-start

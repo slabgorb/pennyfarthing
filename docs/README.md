@@ -91,7 +91,7 @@ npx pennyfarthing init
 npx pennyfarthing doctor
 
 # Start working (in Claude Code)
-/work
+/pf-work
 ```
 
 ## Example: TDD Workflow

@@ -30,6 +30,7 @@ def update_story(
     completed_date: str | None = None,
     started_date: str | None = None,
     workflow: str | None = None,
+    description: str | None = None,
     review_findings: str | None = None,
     review_verdict: str | None = None,
     dry_run: bool = False,
@@ -46,6 +47,7 @@ def update_story(
         completed_date: Completed date (ISO format)
         started_date: Started date (ISO format)
         workflow: Workflow type (tdd, trivial, bdd, agent-docs)
+        description: Story description text
         review_findings: Reviewer findings text
         review_verdict: Review verdict (approved, rejected, pending)
         dry_run: If True, report changes without writing
@@ -101,6 +103,8 @@ def update_story(
         story["started"] = started_date
     if workflow is not None:
         story["workflow"] = workflow
+    if description is not None:
+        story["description"] = description
     if review_findings is not None:
         story["review_findings"] = review_findings
     if review_verdict is not None:
@@ -166,6 +170,7 @@ def update_story(
 @click.option("--priority", default=None)
 @click.option("--started", "started_date", default=None)
 @click.option("--workflow", default=None)
+@click.option("--description", default=None, help="Story description text")
 @click.option("--review-findings", default=None, help="Reviewer findings text")
 @click.option("--review-verdict", type=click.Choice(["approved", "rejected", "pending"]), default=None)
 @click.option("--dry-run", is_flag=True)
@@ -179,6 +184,7 @@ def story_update_command(
     priority: str | None,
     started_date: str | None,
     workflow: str | None,
+    description: str | None,
     review_findings: str | None,
     review_verdict: str | None,
     dry_run: bool,
@@ -201,6 +207,7 @@ def story_update_command(
         completed_date=completed_date,
         started_date=started_date,
         workflow=workflow,
+        description=description,
         review_findings=review_findings,
         review_verdict=review_verdict,
         dry_run=dry_run,

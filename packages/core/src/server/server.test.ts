@@ -7,7 +7,7 @@
  * 1. Export a working Express app with all API routes mounted
  * 2. Export createTerminalServer() that returns an HTTP server with WebSocket support
  * 3. Re-export key functions (broadcastStats, getStoryInfo, isBikeRackMode, etc.)
- * 4. Manage port files (.wheelhub-port, .wheelhub-pid)
+ * 4. Manage port files (.bikerack-port, .wheelhub-pid)
  * 5. Initialize settings and grants on startup
  * 6. Support plugin router loading
  *
@@ -181,19 +181,19 @@ describe('Port file management', () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  it('writePortFile creates .wheelhub-port file with port number', async () => {
+  it('writePortFile creates .bikerack-port file with port number', async () => {
     const { writePortFile } = await import('./server.js');
 
     writePortFile(testDir, 1898);
 
-    const portFilePath = join(testDir, '.wheelhub-port');
-    assert.ok(existsSync(portFilePath), '.wheelhub-port file should exist after writePortFile');
+    const portFilePath = join(testDir, '.bikerack-port');
+    assert.ok(existsSync(portFilePath), '.bikerack-port file should exist after writePortFile');
 
     const content = readFileSync(portFilePath, 'utf-8').trim();
     assert.strictEqual(content, '1898', 'Port file should contain the port number');
   });
 
-  it('readPortFile returns the port number from .wheelhub-port', async () => {
+  it('readPortFile returns the port number from .bikerack-port', async () => {
     const { writePortFile, readPortFile } = await import('./server.js');
 
     writePortFile(testDir, 3000);
@@ -208,14 +208,14 @@ describe('Port file management', () => {
     assert.strictEqual(port, null, 'readPortFile should return null for missing file');
   });
 
-  it('cleanupPortFile removes the .wheelhub-port file', async () => {
+  it('cleanupPortFile removes the .bikerack-port file', async () => {
     const { writePortFile, cleanupPortFile } = await import('./server.js');
 
     writePortFile(testDir, 1898);
-    assert.ok(existsSync(join(testDir, '.wheelhub-port')), 'Port file should exist');
+    assert.ok(existsSync(join(testDir, '.bikerack-port')), 'Port file should exist');
 
     cleanupPortFile(testDir);
-    assert.ok(!existsSync(join(testDir, '.wheelhub-port')), 'Port file should be removed after cleanup');
+    assert.ok(!existsSync(join(testDir, '.bikerack-port')), 'Port file should be removed after cleanup');
   });
 
   it('writePidFile creates .wheelhub-pid file', async () => {

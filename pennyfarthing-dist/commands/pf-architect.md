@@ -5,7 +5,7 @@ description: System Architect - Technical design and architecture
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-pf agent start "architect"
+source .pennyfarthing/scripts/lib/env.sh && source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start "architect"
 ```
 This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>

@@ -291,7 +291,7 @@ async def main(brief: bool = False) -> int:
     Returns:
         0 if all repos clean, 1 if any have changes/unpushed
     """
-    from pennyfarthing_scripts.git.repos import load_repos_config, get_repo_paths
+    from pennyfarthing_scripts.git.repos import get_repo_paths, load_repos_config
 
     repos_with_upstream: list[tuple[str, Path, str]] = []
     repo_paths = get_repo_paths()

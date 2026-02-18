@@ -1,5 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # DEPRECATED: Use `pf workflow list` instead.
-# This shim forwards to the Python CLI for backward compatibility.
 echo "Warning: list-workflows.sh is deprecated. Use: pf workflow list" >&2
-exec pf workflow list "$@"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/run-pf.sh"
+exec_pf workflow list "$@"

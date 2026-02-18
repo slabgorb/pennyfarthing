@@ -434,7 +434,6 @@ export function createGitRouter(getProjectDir: () => string): Router {
 
     if (forceRefreshCallback) {
       console.log('[Git API] Calling forceRefreshCallback...');
-      resetFetchCooldown(projectDir);
       await forceRefreshCallback(projectDir);
       console.log('[Git API] forceRefreshCallback complete');
       res.json({ success: true, message: 'Git cache refreshed and broadcast sent' });

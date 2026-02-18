@@ -91,25 +91,25 @@ Flexible agent-guided processes without strict step sequences. These workflows p
 
 ```bash
 # List all workflows (shows type indicators)
-/workflow list
+/pf-workflow list
 
 # Start a phased workflow (automatic execution)
-/workflow start tdd
+/pf-workflow start tdd
 
 # Start a stepped workflow (progressive steps)
-/workflow start architecture
+/pf-workflow start architecture
 
 # Start in a specific mode
-/workflow start prd --mode validate
+/pf-workflow start prd --mode validate
 
 # Start a procedural workflow (guided execution)
-/workflow start brainstorming
+/pf-workflow start brainstorming
 
 # Resume an interrupted workflow
-/workflow resume
+/pf-workflow resume
 
 # Check current workflow progress
-/workflow status
+/pf-workflow status
 ```
 
 ## Stepped Workflow Deep Dive
@@ -294,16 +294,16 @@ workflow:
 
 ```bash
 # Start in default mode
-/workflow start architecture
+/pf-workflow start architecture
 
 # Start in validate mode
-/workflow start prd --mode validate
+/pf-workflow start prd --mode validate
 
 # Start in edit mode
-/workflow start prd --mode edit
+/pf-workflow start prd --mode edit
 
 # Start in custom mode
-/workflow start research --mode domain
+/pf-workflow start research --mode domain
 ```
 
 #### Mode Behavior
@@ -514,13 +514,13 @@ pennyfarthing-dist/workflows/
 
 | Command | Description |
 |---------|-------------|
-| `/workflow list` | List all workflows with type indicators |
-| `/workflow show [name]` | Show workflow details |
-| `/workflow start <name>` | Start a workflow |
-| `/workflow start <name> --mode <mode>` | Start in specific mode |
-| `/workflow resume` | Resume interrupted workflow |
-| `/workflow resume <name>` | Resume specific workflow |
-| `/workflow status` | Show current workflow progress |
+| `/pf-workflow list` | List all workflows with type indicators |
+| `/pf-workflow show [name]` | Show workflow details |
+| `/pf-workflow start <name>` | Start a workflow |
+| `/pf-workflow start <name> --mode <mode>` | Start in specific mode |
+| `/pf-workflow resume` | Resume interrupted workflow |
+| `/pf-workflow resume <name>` | Resume specific workflow |
+| `/pf-workflow status` | Show current workflow progress |
 
 ## Best Practices
 
@@ -640,6 +640,6 @@ Error: Mode 'custom-mode' not configured
 ## Related Documentation
 
 - [docs/bmad-compatibility-matrix.md](/Users/keithavery/Projects/pennyfarthing-2/docs/bmad-compatibility-matrix.md) - BMAD import compatibility
-- [Workflow Skill](/workflow) - Command reference
+- [Workflow Skill](/pf-workflow) - Command reference
 - [Architecture Workflow Example](/Users/keithavery/Projects/pennyfarthing-2/pennyfarthing-dist/workflows/architecture.yaml) - Reference implementation
 - [ADR-0006: State Detection Pattern](/Users/keithavery/Projects/pennyfarthing-2/docs/adr/0006-state-detection-pattern.md) - Workflow state management

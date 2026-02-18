@@ -10,6 +10,7 @@ Panel navigation: Mount all panels, tab bar, keyboard switching, command palette
 
 from __future__ import annotations
 
+import os
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -392,6 +393,11 @@ class BikeRackApp(App):
         height: auto;
         width: 1fr;
     }
+    #project-dir {
+        height: 1;
+        padding: 0 1;
+        color: $text-muted;
+    }
     Tabs {
         dock: top;
     }
@@ -444,8 +450,12 @@ class BikeRackApp(App):
         self._programmatic_tab_count: int = 0
 
     def compose(self) -> ComposeResult:
+        project_dir_name = Path(
+            os.environ.get("CYCLIST_PROJECT_DIR", os.getcwd())
+        ).name
         yield Header()
         yield AgentHeader(id="agent-header")
+        yield Static(f"[dim]{project_dir_name}[/dim]", id="project-dir")
         yield Tabs(*_build_panel_tabs(), id="tab-bar")
         yield ConnectionStatus(
             STATE_DISPLAY[ConnectionState.DISCONNECTED],
@@ -693,7 +703,7 @@ def main(
     """Launch BikeRack TUI as a standalone application.
 
     Args:
-        port: Explicit WheelHub port. If None, reads from .wheelhub-port file.
+        port: Explicit WheelHub port. If None, reads from .bikerack-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
     # Detect terminal image protocol BEFORE App.run() claims the terminal
@@ -703,7 +713,7 @@ def main(
 
     if port is None:
         if project_dir is not None:
-            port_file = project_dir / ".wheelhub-port"
+            port_file = project_dir / ".bikerack-port"
             if port_file.exists():
                 try:
                     port = int(port_file.read_text().strip())

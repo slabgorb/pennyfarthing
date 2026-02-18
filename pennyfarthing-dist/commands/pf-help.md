@@ -52,7 +52,7 @@ SM → TEA → Dev → Reviewer → SM (finish)
 
 Commands are organized by resource. Each group is accessible via both slash commands and CLI.
 
-### Sprint — `/pf-sprint` · `pf sprint`
+### Sprint — `/pf-sprint` · `pf.sh sprint`
 
 | Command | Description |
 |---------|-------------|
@@ -65,7 +65,7 @@ Commands are organized by resource. Each group is accessible via both slash comm
 | `/pf-sprint story [show\|add\|update\|size\|finish]` | Story operations |
 | `/pf-sprint epic [show\|add\|promote\|archive]` | Epic operations |
 
-### Git — `/pf-git` · `pf git`
+### Git — `/pf-git` · `pf.sh git`
 
 | Command | Description |
 |---------|-------------|
@@ -74,21 +74,21 @@ Commands are organized by resource. Each group is accessible via both slash comm
 | `/pf-git branches <id>` | Create feature branches from story |
 | `/pf-git release` | Interactive release workflow |
 
-### Session — `/pf-session` · `pf session`
+### Session — `/pf-session` · `pf.sh session`
 
 | Command | Description |
 |---------|-------------|
 | `/pf-session new` | Start next available story |
 | `/pf-session continue` | Resume from checkpoint |
 
-### Epic — `/pf-epic` · `pf epic`
+### Epic — `/pf-epic` · `pf.sh epic`
 
 | Command | Description |
 |---------|-------------|
 | `/pf-epic start <id>` | Start epic for development |
 | `/pf-epic close <id>` | Close completed epic |
 
-### Jira — `/pf-jira` · `pf jira`
+### Jira — `/pf-jira` · `pf.sh jira`
 
 | Command | Description |
 |---------|-------------|
@@ -98,7 +98,7 @@ Commands are organized by resource. Each group is accessible via both slash comm
 | `/pf-jira sync-epic` | Sync epic to Jira |
 | `/pf-jira reconcile` | Report mismatches |
 
-### Theme — `/pf-theme` · `pf theme`
+### Theme — `/pf-theme` · `pf.sh theme`
 
 | Command | Description |
 |---------|-------------|
@@ -108,7 +108,7 @@ Commands are organized by resource. Each group is accessible via both slash comm
 | `/pf-theme create <name>` | Create custom theme |
 | `/pf-theme maker` | Interactive theme wizard |
 
-### Workflow — `/pf-workflow` · `pf workflow`
+### Workflow — `/pf-workflow` · `pf.sh workflow`
 
 | Command | Description |
 |---------|-------------|
@@ -221,11 +221,11 @@ Based on your current state, here's what you might need:
 
 For detailed help on any command group:
 ```bash
-pf help           # Overview of all groups
-pf help sprint    # Sprint commands
-pf help git       # Git commands
-pf help session   # Session commands
-pf help epic      # Epic commands
+pf.sh help           # Overview of all groups
+pf.sh help sprint    # Sprint commands
+pf.sh help git       # Git commands
+pf.sh help session   # Session commands
+pf.sh help epic      # Epic commands
 ```
 
 ## Documentation

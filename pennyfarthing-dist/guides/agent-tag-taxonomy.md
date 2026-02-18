@@ -106,7 +106,7 @@ High-priority instruction that MUST be followed.
 ```xml
 <critical>
 **HANDOFF REQUIRES MARKER OUTPUT.** After exit protocol completes:
-Run `pf handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
+Run `pf.sh handoff marker {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 ```
 - **Validation:** First `<critical>` should be within line 30
@@ -175,10 +175,10 @@ Logic for checking if this agent owns the current phase.
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
+OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
+**If OWNER != "dev":** Run `pf.sh handoff marker $OWNER`, output result, tell user.
 </phase-check>
 ```
 
@@ -250,9 +250,9 @@ Tags that contain checklists with `- [ ]` items.
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Dev Assessment to session file
-- [ ] Run `pf handoff resolve-gate` — verify gate status
-- [ ] Run `pf handoff complete-phase` — atomic session update
-- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
+- [ ] Run `pf.sh handoff resolve-gate` — verify gate status
+- [ ] Run `pf.sh handoff complete-phase` — atomic session update
+- [ ] Run `pf.sh handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 ```
 

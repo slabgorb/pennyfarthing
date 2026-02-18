@@ -4,7 +4,7 @@ Tests for MSSCI-14320: Update and register PreToolUse hook.
 Verifies the Python PreToolUse hook and its shared utilities correctly:
 - AC1: POSTs to /api/hook-request (not /approval-request)
 - AC3: Returns decision "ask" when WheelHub is unreachable (not "allow")
-- AC6: Port discovery reads .wheelhub-port
+- AC6: Port discovery reads .bikerack-port
 
 Run with: python -m pytest tests/python/test_pretooluse_hook.py -v
 """
@@ -189,14 +189,14 @@ class TestConnectionRefused:
 
 
 class TestPortDiscovery:
-    """AC6: Port discovery reads .wheelhub-port."""
+    """AC6: Port discovery reads .bikerack-port."""
 
     def test_constants_defined(self):
         """Port file constants should be defined in hooks module."""
-        assert CYCLIST_PORT_FILE == ".wheelhub-port"
+        assert CYCLIST_PORT_FILE == ".bikerack-port"
 
     def test_reads_wheelhub_port(self, tmp_project):
-        """get_cyclist_port should read from .wheelhub-port."""
+        """get_cyclist_port should read from .bikerack-port."""
         (tmp_project / CYCLIST_PORT_FILE).write_text("8001")
 
         port = get_cyclist_port(tmp_project)
@@ -238,7 +238,7 @@ class TestPortDiscovery:
         assert result == 7431
 
     def test_find_project_root_finds_cyclist_port(self, tmp_project):
-        """find_project_root should find directory containing .wheelhub-port."""
+        """find_project_root should find directory containing .bikerack-port."""
         (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
         subdir = tmp_project / "deep" / "nested"
         subdir.mkdir(parents=True)
@@ -393,7 +393,7 @@ class TestIsCyclistRunning:
             assert is_cyclist_running() is False
 
     def test_returns_false_when_stale_port_file_exists(self, tmp_project):
-        """AC1: Stale .wheelhub-port must NOT cause false positive.
+        """AC1: Stale .bikerack-port must NOT cause false positive.
 
         This is the core bug. A leftover port file should be irrelevant
         because detection is env-var-based, not file-based.

@@ -16,18 +16,18 @@ Hooks are commands that Claude Code runs at specific events:
 
 ### SessionStart Hooks
 
-#### pf hooks session-start
+#### pf.sh hooks session-start
 
-**Location:** `pf hooks session-start`
+**Location:** `pf.sh hooks session-start`
 
 Initializes the Pennyfarthing environment:
 - Creates `.session/` directory structure
 - Clears stale agent state from previous sessions
 - Sets `PROJECT_ROOT` and `SESSION_ID` environment variables
 
-#### pf hooks session-stop
+#### pf.sh hooks session-stop
 
-**Location:** `pf hooks session-stop`
+**Location:** `pf.sh hooks session-stop`
 
 Cleans up session state when Claude Code exits.
 
@@ -44,66 +44,66 @@ Project-specific environment setup. Edit this file to:
 
 **Location:** `.pennyfarthing/scripts/hooks/otel-auto-config.sh`
 
-Auto-configures OTEL telemetry for Cyclist web mode. Checks for a `.wheelhub-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Cyclist/BikeRack server.
+Auto-configures OTEL telemetry for Cyclist web mode. Checks for a `.bikerack-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Cyclist/BikeRack server.
 
-#### pf hooks session-start (welcome)
+#### pf.sh hooks session-start (welcome)
 
-**Location:** `pf hooks session-start`
+**Location:** `pf.sh hooks session-start`
 
-Welcome display is now folded into `pf hooks session-start`. In CLI mode, shows ASCII art. In Cyclist mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
+Welcome display is now folded into `pf.sh hooks session-start`. In CLI mode, shows ASCII art. In Cyclist mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
 
 ### PreToolUse Hooks
 
-#### pf hooks pre-edit-check
+#### pf.sh hooks pre-edit-check
 
-**Location:** `pf hooks pre-edit-check`
+**Location:** `pf.sh hooks pre-edit-check`
 
 Protects sensitive files from accidental edits:
 - Blocks: `.env`, `.pem`, `.key`, credentials, secrets
 - Blocks: `.git/`, `node_modules/`, `vendor/`
 - Blocks: `.pennyfarthing/*` (managed files)
 
-#### pf hooks cyclist-pretooluse
+#### pf.sh hooks cyclist-pretooluse
 
-**Location:** `pf hooks cyclist-pretooluse`
+**Location:** `pf.sh hooks cyclist-pretooluse`
 
 Cyclist-specific pre-tool validation. Runs additional safety checks when operating inside Cyclist.
 
-#### pf hooks context-warning
+#### pf.sh hooks context-warning
 
-**Location:** `pf hooks context-warning`
+**Location:** `pf.sh hooks context-warning`
 
 Warns agents when context usage is high. Outputs a warning at 60% usage and a critical warning at 85%. Never blocks — warning only (always exits 0).
 
-#### pf hooks context-breaker
+#### pf.sh hooks context-breaker
 
-**Location:** `pf hooks context-breaker`
+**Location:** `pf.sh hooks context-breaker`
 
-Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `pf hooks context-warning`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/pf-session continue` can restore it with FULL tier context.
+Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `pf.sh hooks context-warning`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/pf-session continue` can restore it with FULL tier context.
 
-#### pf hooks schema-validation
+#### pf.sh hooks schema-validation
 
-**Location:** `pf hooks schema-validation`
+**Location:** `pf.sh hooks schema-validation`
 
 Validates file writes against XML schema rules for agent definitions, workflow files, and other structured content.
 
-#### pf hooks sprint-yaml
+#### pf.sh hooks sprint-yaml
 
-**Location:** `pf hooks sprint-yaml`
+**Location:** `pf.sh hooks sprint-yaml`
 
 Validates sprint YAML files on write to prevent structural corruption.
 
 ### PostToolUse Hooks
 
-#### pf hooks bell-mode
+#### pf.sh hooks bell-mode
 
-**Location:** `pf hooks bell-mode`
+**Location:** `pf.sh hooks bell-mode`
 
 Bell mode message injection. Checks the bell mode queue and injects queued messages into the agent's context at the next tool execution. Also handles tandem observation injection.
 
-#### pf hooks reflector-check
+#### pf.sh hooks reflector-check
 
-**Location:** `pf hooks reflector-check`
+**Location:** `pf.sh hooks reflector-check`
 
 Stop hook enforcing that every agent turn ends with a CYCLIST marker. Detects questions, handoff phrases, and validates marker presence. Blocks turns without valid markers in Cyclist mode.
 
@@ -133,7 +133,7 @@ Hooks are configured in `.claude/settings.local.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks session-start"
+            "command": "pf.sh hooks session-start"
           }
         ]
       }
@@ -144,7 +144,7 @@ Hooks are configured in `.claude/settings.local.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks pre-edit-check"
+            "command": "pf.sh hooks pre-edit-check"
           }
         ]
       }

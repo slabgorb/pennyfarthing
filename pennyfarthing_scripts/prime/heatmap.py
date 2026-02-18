@@ -14,13 +14,10 @@ Usage:
 from __future__ import annotations
 
 import json
-import math
 import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
-
 
 # ── Section Categories ──────────────────────────────────────────────
 
@@ -204,7 +201,6 @@ def parse_sections(raw_output: str) -> list[Section]:
     current_section_lines: list[str] = []
     in_agent_def = False
     in_behavior_guide = False
-    in_sidecar = False
 
     def _flush_section(end_line: int) -> None:
         """Emit the current section."""
@@ -245,42 +241,36 @@ def parse_sections(raw_output: str) -> list[Section]:
                 current_section_name = "Workflow State"
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = False
             elif header_text.startswith("Agent Definition"):
                 current_component = "agent_definition"
                 current_section_category = "identity"
                 current_section_name = "Agent Definition"
                 in_agent_def = True
                 in_behavior_guide = False
-                in_sidecar = False
             elif header_text.startswith("Persona:"):
                 current_component = "persona"
                 current_section_category = "persona"
                 current_section_name = header_text
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = False
             elif header_text.startswith("Agent Behavior Guide"):
                 current_component = "behavior_guide"
                 current_section_category = "shared"
                 current_section_name = "BG: Preamble"
                 in_agent_def = False
                 in_behavior_guide = True
-                in_sidecar = False
             elif header_text.startswith("Sprint Context"):
                 current_component = "sprint_context"
                 current_section_category = "shared"
                 current_section_name = "Sprint Context"
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = False
             elif header_text.startswith("Repos Topology"):
                 current_component = "repos_topology"
                 current_section_category = "shared"
                 current_section_name = "Repos Topology"
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = False
             elif header_text.startswith("Agent Sidecar:"):
                 current_component = "sidecars"
                 current_section_category = "learned"
@@ -288,14 +278,12 @@ def parse_sections(raw_output: str) -> list[Section]:
                 current_section_name = f"Sidecar: {sidecar_file.replace('.md', '').title()}"
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = True
             elif header_text.startswith("Active Session:"):
                 current_component = "session"
                 current_section_category = "routing"
                 current_section_name = "Active Session"
                 in_agent_def = False
                 in_behavior_guide = False
-                in_sidecar = False
 
             current_section_start = i
             current_section_lines = [line]
@@ -347,7 +335,7 @@ def _pretty_tag(tag: str) -> str:
 def capture_agent_output(agent_name: str) -> str:
     """Run pf agent start and capture raw output."""
     result = subprocess.run(
-        ["pf", "agent", "start", agent_name],
+        [sys.executable, "-m", "pennyfarthing_scripts.cli", "agent", "start", agent_name],
         capture_output=True,
         text=True,
         timeout=30,
@@ -484,10 +472,10 @@ def render_summary(heatmaps: list[AgentHeatmap]) -> str:
     comp_labels = ["Route", "Ident", "Guard", "Proced", "Refer", "Perso", "Shared", "Learn"]
 
     # Find max per category across all agents
-    cat_maxes: dict[str, int] = {c: 0 for c in components}
+    cat_maxes: dict[str, int] = dict.fromkeys(components, 0)
     agent_cats: dict[str, dict[str, int]] = {}
     for hm in heatmaps:
-        agent_cats[hm.agent] = {c: 0 for c in components}
+        agent_cats[hm.agent] = dict.fromkeys(components, 0)
         for s in hm.sections:
             agent_cats[hm.agent][s.category] = agent_cats[hm.agent].get(s.category, 0) + s.tokens
         for c in components:

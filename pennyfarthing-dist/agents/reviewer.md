@@ -46,10 +46,10 @@ PR_NUMBER: "{PR_NUMBER}"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
+OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "reviewer":** Run `pf handoff marker $OWNER`, output result, tell user.
+**If OWNER != "reviewer":** Run `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker $OWNER`, output result, tell user.
 </phase-check>
 
 <on-activation>
@@ -125,13 +125,13 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 <exit>
 ### If APPROVED:
 1. Write Reviewer Assessment (verdict: APPROVED)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
+2. Update story: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story update {STORY_ID} --review-verdict approved`
 3. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
 4. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
 1. Write Reviewer Assessment (verdict: REJECTED, with severity table)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
+2. Update story: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
 3. If findings are testable (logic bugs, missing edge cases):
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)
 4. If findings are lint/format/dead-code only:
@@ -150,6 +150,19 @@ When your workflow phase has `tandem.mode: consultation`, you can spawn the part
 
 **If consultation fails:** Continue solo — consultation is advisory, not blocking.
 </tandem-consultation>
+
+<team-mode>
+## Team Mode (Lead)
+
+When the review phase has a `team:` block in workflow YAML, Reviewer acts as **lead**:
+
+1. **On phase entry:** Detect team config, create team with `TeamCreate`
+2. **Spawn teammates** per workflow YAML `teammates:` list (e.g., Architect for architectural pattern validation)
+3. **During phase:** Coordinate via `SendMessage`, perform adversarial review while teammates check specific concerns in parallel
+4. **Before exit:** Shut down all teammates before starting exit protocol — send `shutdown_request`, await responses, then `TeamDelete`
+
+Teammates are phase-scoped — created at phase start, destroyed at phase end.
+</team-mode>
 
 <skills>
 - `/pf-code-review` - Review checklists, security/performance patterns

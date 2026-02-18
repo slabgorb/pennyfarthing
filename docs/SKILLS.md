@@ -240,11 +240,11 @@ Sprint status, backlog, story, and epic management for Pennyfarthing
 **Keywords:** sprint, backlog, velocity, kanban, stories, epics, sizing, templates
 
 **Examples:**
-- Checking sprint status: `/sprint`
-- Finding available stories: `/sprint backlog`
-- Adding a story: `/sprint story add epic-76 "My story" 3`
-- Sizing guidelines: `/sprint story size`
-- Adding an epic: `/sprint epic add epic-85 "New epic`
+- Checking sprint status: `/pf-sprint`
+- Finding available stories: `/pf-sprint backlog`
+- Adding a story: `/pf-sprint story add epic-76 "My story" 3`
+- Sizing guidelines: `/pf-sprint story size`
+- Adding an epic: `/pf-sprint epic add epic-85 "New epic`
 
 **Anti-patterns:**
 - Don't manually edit sprint YAML - use scripts
@@ -253,19 +253,19 @@ Sprint status, backlog, story, and epic management for Pennyfarthing
 
 ### pf-story
 
-DEPRECATED: Use /sprint story instead. Story commands consolidated under /sprint.
+DEPRECATED: Use /pf-sprint story instead. Story commands consolidated under /pf-sprint.
 
 **Tags:** stories, sizing, workflow, deprecated
 
 **Keywords:** user-stories, estimation, points, acceptance-criteria
 
 **Examples:**
-- Creating new stories: `/sprint story add`
-- Sizing stories: `/sprint story size`
+- Creating new stories: `/pf-sprint story add`
+- Sizing stories: `/pf-sprint story size`
 
 **Anti-patterns:**
 - Don't create stories without acceptance criteria
-- Don't use /story directly - use /sprint story instead
+- Don't use /story directly - use /pf-sprint story instead
 
 **Related:** [pf-sprint](#pf-sprint), [pf-jira](#pf-jira)
 
@@ -278,9 +278,9 @@ Manage workflows - list, show, set, start, resume, and check status
 **Keywords:** tdd, tdd-tandem, trivial, agent-docs, bdd, bdd-tandem, architecture, bikelane, stepped, phased
 
 **Examples:**
-- Listing available workflows: `/workflow`
-- Showing current workflow: `/workflow show`
-- Starting stepped workflow: `/workflow start architecture`
+- Listing available workflows: `/pf-workflow`
+- Showing current workflow: `/pf-workflow show`
+- Starting stepped workflow: `/pf-workflow start architecture`
 
 **Anti-patterns:**
 - Don't switch workflows mid-story unless requirements fundamentally changed
@@ -298,11 +298,11 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 **Keywords:** personas, characters, discworld, literary-classics, custom, generation, wizard
 
 **Examples:**
-- Listing available themes: `/theme list`
-- Showing current theme: `/theme show`
-- Setting active theme: `/theme set discworld`
-- Creating a new theme: `/theme create my-theme --base discworld`
-- Interactive AI-driven theme wizard: `/theme maker`
+- Listing available themes: `/pf-theme list`
+- Showing current theme: `/pf-theme show`
+- Setting active theme: `/pf-theme set discworld`
+- Creating a new theme: `/pf-theme create my-theme --base discworld`
+- Interactive AI-driven theme wizard: `/pf-theme maker`
 
 **Anti-patterns:**
 - Don't edit config.local.yaml directly - use skill
@@ -310,14 +310,14 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 
 ### pf-theme-creation
 
-DEPRECATED: Use /theme maker instead
+DEPRECATED: Use /pf-theme maker instead
 
 **Tags:** personas, themes, creation
 
 **Keywords:** personas, custom, generation, wizard
 
 **Examples:**
-- Interactive theme wizard: `/theme maker`
+- Interactive theme wizard: `/pf-theme maker`
 
 **Related:** [pf-theme](#pf-theme)
 

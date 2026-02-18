@@ -25,9 +25,9 @@ import {
   onGitCacheRefresh,
   hasFreshCache,
   getCachedGitStatusSync,
-  startPeriodicFetch,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
+import { getCurrentSettings } from '@pennyfarthing/core/dist/server/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
 import { storePendingToolInput } from './span-correlation.js';
@@ -666,19 +666,28 @@ export function setupWebSocketServers(
 
     // Send initial git data on connection (multi-repo) - uses cache to avoid lock conflicts
     const projectDir = getProjectDir();
+    const gitMonitorEnabled = getCurrentSettings().workflow?.git_monitor === true;
 
-    // If we have fresh cache, send it immediately; otherwise fetch
-    let allReposInfo;
-    if (hasFreshCache(projectDir)) {
-      allReposInfo = getCachedGitStatusSync(projectDir);
-      console.log('[Git WS] New connection, sending cached init with', allReposInfo.length, 'repos');
+    // If git_monitor is disabled, send empty data
+    if (!gitMonitorEnabled) {
+      console.log('[Git WS] New connection, git_monitor disabled — sending empty init');
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', repos: [] }));
+      }
     } else {
-      allReposInfo = await getCachedGitStatus(projectDir);
-      console.log('[Git WS] New connection, sending fresh init with', allReposInfo.length, 'repos');
-    }
+      // If we have fresh cache, send it immediately; otherwise fetch
+      let allReposInfo;
+      if (hasFreshCache(projectDir)) {
+        allReposInfo = getCachedGitStatusSync(projectDir);
+        console.log('[Git WS] New connection, sending cached init with', allReposInfo.length, 'repos');
+      } else {
+        allReposInfo = await getCachedGitStatus(projectDir);
+        console.log('[Git WS] New connection, sending fresh init with', allReposInfo.length, 'repos');
+      }
 
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
+      }
     }
 
     // Remove client on disconnect
@@ -895,28 +904,38 @@ export function setupWebSocketServers(
 
     // Send initial diffs on connection
     const projectDir = getProjectDir();
-    try {
-      const diffs = await getAllGitDiffs(projectDir);
-      // Transform GitDiffData to DiffData format expected by useDiffs hook
-      const transformedDiffs = diffs.map((d: GitDiffData) => ({
-        id: `diff-${d.path}-${d.timestamp}`,
-        path: d.path,
-        original: '', // Git diff doesn't have separate original - it's in the unified diff
-        modified: '', // Git diff doesn't have separate modified - it's in the unified diff
-        diff: d.diff, // Raw git diff for rendering
-        toolName: 'Git',
-        timestamp: d.timestamp,
-        status: d.status,
-        additions: d.additions,
-        deletions: d.deletions,
-      }));
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'init', diffs: transformedDiffs }));
-      }
-    } catch (err) {
-      console.error('[WebSocket] Failed to get initial diffs:', err);
+    const gitMonitorForDiffs = getCurrentSettings().workflow?.git_monitor === true;
+
+    // If git_monitor is disabled, send empty diffs
+    if (!gitMonitorForDiffs) {
+      console.log('[WebSocket] Diffs git_monitor disabled — sending empty init');
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'init', diffs: [] }));
+      }
+    } else {
+      try {
+        const diffs = await getAllGitDiffs(projectDir);
+        // Transform GitDiffData to DiffData format expected by useDiffs hook
+        const transformedDiffs = diffs.map((d: GitDiffData) => ({
+          id: `diff-${d.path}-${d.timestamp}`,
+          path: d.path,
+          original: '', // Git diff doesn't have separate original - it's in the unified diff
+          modified: '', // Git diff doesn't have separate modified - it's in the unified diff
+          diff: d.diff, // Raw git diff for rendering
+          toolName: 'Git',
+          timestamp: d.timestamp,
+          status: d.status,
+          additions: d.additions,
+          deletions: d.deletions,
+        }));
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'init', diffs: transformedDiffs }));
+        }
+      } catch (err) {
+        console.error('[WebSocket] Failed to get initial diffs:', err);
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'init', diffs: [] }));
+        }
       }
     }
 
@@ -991,7 +1010,9 @@ export function setupWebSocketServers(
 
     // Invalidate git cache only when files are actually modified
     // Not every tool use affects git status - be selective to avoid unnecessary refreshes
-    const shouldInvalidateGit = shouldInvalidateGitCache(event);
+    // Skip entirely when git_monitor is disabled
+    const gitMonitorForOtlp = getCurrentSettings().workflow?.git_monitor === true;
+    const shouldInvalidateGit = gitMonitorForOtlp && shouldInvalidateGitCache(event);
     console.log('[WebSocket] Tool event:', event.toolName, 'input:', event.input?.substring(0, 80), 'success:', event.success, 'shouldInvalidateGit:', shouldInvalidateGit);
     if (shouldInvalidateGit) {
       const projectDir = getProjectDir();
@@ -1096,56 +1117,62 @@ export function setupWebSocketServers(
   // Watches .git/HEAD (branch switches), .git/index (staging), .git/FETCH_HEAD (fetches),
   // and .git/refs/heads/ (commits). Safe because reads use --no-optional-locks.
   // Supplements OTLP tool-event invalidation to catch hooks, scripts, and manual git commands.
-  const repos = getReposFromConfig(projectDir);
-  for (const repo of repos) {
-    const repoPath = join(projectDir, repo.path);
-    const gitDir = join(repoPath, '.git');
-    if (!existsSync(gitDir)) continue;
+  // Gated by workflow.git_monitor — when disabled, no file watchers are created.
+  const gitMonitorSetting = getCurrentSettings().workflow?.git_monitor === true;
+  if (gitMonitorSetting) {
+    const repos = getReposFromConfig(projectDir);
+    for (const repo of repos) {
+      const repoPath = join(projectDir, repo.path);
+      const gitDir = join(repoPath, '.git');
+      if (!existsSync(gitDir)) continue;
 
-    try {
-      // Watch .git/HEAD for branch switches (infrequent, safe to force refresh)
-      const headPath = join(gitDir, 'HEAD');
-      if (existsSync(headPath)) {
-        watch(headPath, async (eventType) => {
-          if (eventType !== 'change') return;
-          console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
-          await forceRefreshGitCache(projectDir);
-        });
-      }
+      try {
+        // Watch .git/HEAD for branch switches (infrequent, safe to force refresh)
+        const headPath = join(gitDir, 'HEAD');
+        if (existsSync(headPath)) {
+          watch(headPath, async (eventType) => {
+            if (eventType !== 'change') return;
+            console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
+            await forceRefreshGitCache(projectDir);
+          });
+        }
 
-      // Watch .git/index for staging changes (safe now — reads use --no-optional-locks)
-      // Catches: git add/reset from hooks, scripts, or manual terminal commands
-      const indexPath = join(gitDir, 'index');
-      if (existsSync(indexPath)) {
-        watch(indexPath, (eventType) => {
-          if (eventType !== 'change') return;
-          console.log(`[Git Cache] Index change detected in ${repo.name}`);
-          invalidateGitCache(projectDir);
-        });
-      }
+        // Watch .git/index for staging changes (safe now — reads use --no-optional-locks)
+        // Catches: git add/reset from hooks, scripts, or manual terminal commands
+        const indexPath = join(gitDir, 'index');
+        if (existsSync(indexPath)) {
+          watch(indexPath, (eventType) => {
+            if (eventType !== 'change') return;
+            console.log(`[Git Cache] Index change detected in ${repo.name}`);
+            invalidateGitCache(projectDir);
+          });
+        }
 
-      // Watch .git/FETCH_HEAD for fetch completions (catches manual git fetch, hooks, etc.)
-      const fetchHeadPath = join(gitDir, 'FETCH_HEAD');
-      if (existsSync(fetchHeadPath)) {
-        watch(fetchHeadPath, (eventType) => {
-          if (eventType !== 'change') return;
-          console.log(`[Git Cache] FETCH_HEAD change detected in ${repo.name}`);
-          invalidateGitCache(projectDir);
-        });
-      }
+        // Watch .git/FETCH_HEAD for fetch completions (catches manual git fetch, hooks, etc.)
+        const fetchHeadPath = join(gitDir, 'FETCH_HEAD');
+        if (existsSync(fetchHeadPath)) {
+          watch(fetchHeadPath, (eventType) => {
+            if (eventType !== 'change') return;
+            console.log(`[Git Cache] FETCH_HEAD change detected in ${repo.name}`);
+            invalidateGitCache(projectDir);
+          });
+        }
 
-      // Watch .git/refs/heads/ for local branch updates (commits, rebases, etc.)
-      const refsHeadsDir = join(gitDir, 'refs', 'heads');
-      if (existsSync(refsHeadsDir)) {
-        watch(refsHeadsDir, { recursive: true }, (eventType, filename) => {
-          if (!filename) return;
-          console.log(`[Git Cache] Ref change detected in ${repo.name}: refs/heads/${filename}`);
-          invalidateGitCache(projectDir);
-        });
+        // Watch .git/refs/heads/ for local branch updates (commits, rebases, etc.)
+        const refsHeadsDir = join(gitDir, 'refs', 'heads');
+        if (existsSync(refsHeadsDir)) {
+          watch(refsHeadsDir, { recursive: true }, (eventType, filename) => {
+            if (!filename) return;
+            console.log(`[Git Cache] Ref change detected in ${repo.name}: refs/heads/${filename}`);
+            invalidateGitCache(projectDir);
+          });
+        }
+      } catch (err) {
+        console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
       }
-    } catch (err) {
-      console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
     }
+  } else {
+    console.log('[WebSocket] git_monitor disabled — skipping .git/ file watchers');
   }
 
   // Register git cache refresh callback to broadcast updates
@@ -1153,10 +1180,6 @@ export function setupWebSocketServers(
     console.log('[WebSocket] onGitCacheRefresh callback fired, broadcasting to', gitClients.size, 'clients');
     broadcastGitUpdate(allReposInfo);
   });
-
-  // Start periodic background fetch (decoupled from status reads)
-  // Fetches remote refs on a 60s interval, invalidates cache on success
-  startPeriodicFetch(projectDir);
 
   // Register force refresh callback for /api/git/refresh endpoint
   setForceRefreshCallback(async (projDir: string) => {

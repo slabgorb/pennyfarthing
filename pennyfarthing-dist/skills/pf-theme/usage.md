@@ -5,7 +5,7 @@
 ### List Themes
 
 ```bash
-pf theme list
+pf.sh theme list
 ```
 
 No arguments. Shows all available themes with:
@@ -17,7 +17,7 @@ Copy output into response text — Bash tool output may be collapsed in the UI.
 ### Show Theme
 
 ```bash
-pf theme show [NAME] [--full]
+pf.sh theme show [NAME] [--full]
 ```
 
 | Arg/Option | Required | Description |
@@ -30,7 +30,7 @@ Copy output into response text.
 ### Set Theme
 
 ```bash
-pf theme set <NAME> [--dry-run]
+pf.sh theme set <NAME> [--dry-run]
 ```
 
 | Arg/Option | Required | Description |
@@ -42,14 +42,14 @@ Updates `.pennyfarthing/config.local.yaml` with theme name and character map.
 
 After setting, refresh agent persona:
 ```bash
-pf agent start "sm"
+pf.sh agent start "sm"
 ```
 Adopt the new character immediately.
 
 ### Create Theme
 
 ```bash
-pf theme create <NAME> [--base <THEME>] [--user] [--dry-run]
+pf.sh theme create <NAME> [--base <THEME>] [--user] [--dry-run]
 ```
 
 | Arg/Option | Required | Description |

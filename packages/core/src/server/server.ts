@@ -48,6 +48,7 @@ import {
   createComplexityRouter,
   createDependenciesRouter,
   createHealthScoreRouter,
+  createProjectInfoRouter,
 } from './api/index.js';
 
 // Settings initialization
@@ -197,6 +198,7 @@ app.use('/api/agent-load', createAgentLoadRouter(getProjectDir));
 app.use('/api/complexity', createComplexityRouter(getProjectDir));
 app.use('/api/dependencies', createDependenciesRouter(getProjectDir));
 app.use('/api/health-score', createHealthScoreRouter(getProjectDir));
+app.use('/api/project-info', createProjectInfoRouter(getProjectDir));
 
 // Mount OTLP at /v1 (standard OTEL endpoint)
 app.use('/v1', createOTLPRouter());
@@ -305,7 +307,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // Port Conflict Detection (Story 34-3)
 // =============================================================================
 
-const PORT_FILE_NAME = '.wheelhub-port';
+const PORT_FILE_NAME = '.bikerack-port';
 const PID_FILE_NAME = '.wheelhub-pid';
 
 export async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
