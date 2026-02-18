@@ -100,6 +100,51 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 
 ---
 
+<team-mode>
+## Team Mode Protocol
+
+When a workflow phase has a `team:` configuration block, the phase agent acts as
+**team lead** and spawns teammates for parallel collaboration within that phase.
+
+### Team Creation
+
+On phase entry, detect the `team:` block in workflow YAML. Use `TeamCreate`
+to create a phase-scoped team named after the phase (e.g., `"green-phase"`).
+
+### Teammate Spawning
+
+Spawn teammates via the Task tool with `team_name` parameter. Each teammate
+runs `pf agent start {agent}` for full Prime activation. Keep spawn prompts
+under 500 tokens — teammates auto-load CLAUDE.md, MCP servers, and skills.
+
+### Communication
+
+- **Inter-phase handoff:** Use Reflector markers (`<!-- CYCLIST:HANDOFF -->`)
+  for phase transitions — unchanged from sequential mode.
+- **Intra-phase collaboration:** Use `SendMessage` for real-time teammate
+  communication. Never use markers for intra-phase messaging.
+
+### Teammate Behavior
+
+Teammates know they are NOT the lead. They:
+- Communicate via SendMessage (DMs to lead or other teammates)
+- Go idle when their assigned task is complete
+- Respond to shutdown requests with shutdown_response
+
+### Cleanup Before Handoff
+
+Before starting the exit protocol, the lead MUST:
+1. Send `shutdown_request` to all teammates via SendMessage
+2. Wait for `shutdown_response` from each teammate
+3. Run `TeamDelete` to clean up the team
+4. Then proceed with normal handoff (resolve-gate → complete-phase → marker)
+
+Teams are **phase-scoped** — created at phase start, destroyed at phase end.
+Handoff between phases is unchanged.
+</team-mode>
+
+---
+
 ## Reflector
 
 <critical>
@@ -123,19 +168,20 @@ See `.pennyfarthing/guides/tandem-protocol.md` for full protocol details.
 
 1. Write assessment to session
 2. Terminate tandem backseat (if active)
-3. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
-4. If blocked → report error, STOP
-5. If skip → jump to step 7
-6. If ready → spawn gate subagent with gate file → GATE_RESULT
-   - If fail → fix issues, retry from step 3 (max 3 retries)
+3. **If team is active:** Shut down all teammates → `TeamDelete` to clean up
+4. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
+5. If blocked → report error, STOP
+6. If skip → jump to step 8
+7. If ready → spawn gate subagent with gate file → GATE_RESULT
+   - If fail → fix issues, retry from step 4 (max 3 retries)
    - If pass → continue
-7. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-8. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker {next_agent}` → AGENT_COMMAND block
-9. **Act on AGENT_COMMAND:**
-   - Has `marker:` field → emit the CYCLIST marker (Cyclist path)
-   - `action: "inline_handoff"` → run `activation_command` via Bash, output result, adopt new agent identity
-   - `action: "tirepump_handoff"` → tell user: "Context is high. Run `/clear` then `{fallback}`"
-   - No action, no marker → output `fallback` text and EXIT
+8. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+9. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker {next_agent}` → AGENT_COMMAND block
+10. **Act on AGENT_COMMAND:**
+    - Has `marker:` field → emit the CYCLIST marker (Cyclist path)
+    - `action: "inline_handoff"` → run `activation_command` via Bash, output result, adopt new agent identity
+    - `action: "tirepump_handoff"` → tell user: "Context is high. Run `/clear` then `{fallback}`"
+    - No action, no marker → output `fallback` text and EXIT
 
 **Agents drive exit directly — no handoff subagent.** Scripts handle routing and session updates atomically.
 </agent-exit-protocol>
