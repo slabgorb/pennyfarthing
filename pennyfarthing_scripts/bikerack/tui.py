@@ -448,6 +448,7 @@ class BikeRackApp(App):
         self._focused_panel: str = "sprint"
         self._previous_panel: str | None = None
         self._programmatic_tab_count: int = 0
+        self._context_meter: ContextMeterFooter | None = None
 
     def compose(self) -> ComposeResult:
         project_dir_name = Path(
@@ -470,7 +471,8 @@ class BikeRackApp(App):
             yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
-        yield ContextMeterFooter(client=self._client)
+        self._context_meter = ContextMeterFooter(client=self._client)
+        yield self._context_meter
         yield BindingFooter()
 
     async def on_mount(self) -> None:
@@ -542,6 +544,10 @@ class BikeRackApp(App):
         self._focused_panel = key
         save_last_panel(key, project_dir=None)
         self._update_tab_bar(key)
+
+        # Refresh context meter on panel switch (110-12)
+        if self._context_meter is not None:
+            self._context_meter.request_refresh()
 
     def action_next_panel(self) -> None:
         """Cycle to the next panel."""
