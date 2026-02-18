@@ -49,3 +49,6 @@ export { createComplexityRouter } from './complexity.js';
 export { createDependenciesRouter } from './dependencies.js';
 // MSSCI-14471: Health Score API
 export { createHealthScoreRouter } from './health-score.js';
+// 110-6: Project Info API
+export { createProjectInfoRouter } from './project-info.js';
+export type { ProjectInfo } from './project-info.js';
