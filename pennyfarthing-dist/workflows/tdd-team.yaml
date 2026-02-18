@@ -1,0 +1,80 @@
+# TDD Team Workflow - TDD with Native Team Collaboration
+#
+# When to use: Best for 5+ point feature stories where sustained parallel
+# collaboration provides more value than periodic tandem consultation.
+# Use this instead of tdd-tandem when teammates need to work alongside the
+# lead for the full phase — e.g., Architect reviewing patterns as Dev
+# implements, not just answering a single question.
+#
+# Compared to tdd-tandem: Tandem spawns a Haiku subagent for a single
+# request/response exchange. Team mode spawns full teammate sessions that
+# work in parallel with the lead for the entire phase duration.
+#
+# Team pairings:
+#   - GREEN phase: Dev (lead) + Architect — Architect reviews implementation
+#     approach and patterns in real-time via SendMessage
+#   - REVIEW phase: Reviewer (lead) + Architect — Architect validates
+#     architectural patterns during code review
+#
+# Fallback: When native teams are unavailable (non-interactive mode, feature
+# flag off, or CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set), phases with
+# team blocks fall back to solo execution. The lead agent works alone —
+# consider using tdd-tandem as an alternative that works in all modes.
+#
+# Flow: SM → TEA → Dev (+Architect) → Reviewer (+Architect) → SM
+
+workflow:
+  name: tdd-team
+  description: TDD with native team collaboration — architect pairing on green and review phases
+  version: "1.0.0"
+
+  phases:
+    - name: setup
+      agent: sm
+      output: [session_file, branches, story_context]
+
+    - name: red
+      agent: tea
+      input: [session_file, story_context]
+      output: [failing_tests]
+      gate:
+        file: gates/tests-fail
+        type: tests_fail
+        condition: All acceptance criteria have test coverage
+
+    - name: green
+      agent: dev
+      input: [failing_tests, story_context]
+      output: [implementation, passing_tests]
+      gate:
+        file: gates/tests-pass
+        type: tests_pass
+        condition: All tests passing, no skipped tests
+      team:
+        teammates:
+          - agent: architect
+            task: "Review implementation approach and patterns. Send observations via SendMessage as Dev works."
+
+    - name: review
+      agent: reviewer
+      input: [implementation, passing_tests]
+      output: [approval]
+      gate:
+        file: gates/approval
+        type: approval
+        condition: Code review approved, no blocking issues
+      team:
+        teammates:
+          - agent: architect
+            task: "Validate architectural patterns and coupling. Flag concerns via SendMessage."
+
+    - name: finish
+      agent: sm
+      input: [approval]
+      output: [archived_session, story_summary]
+
+  triggers:
+    tags: [team, tdd-team]
+    points:
+      min: 5
+    default: false
