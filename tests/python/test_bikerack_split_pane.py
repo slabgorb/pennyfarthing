@@ -358,6 +358,27 @@ class TestBcSplitCommand:
         assert config["split"]["left"] == "sprint"
         assert config["split"]["right"] == "diffs"
 
+    def test_all_preset_panels_accepted_by_cli(self, tmp_path):
+        """Every panel referenced in SPLIT_PRESETS must be valid for bc split."""
+        from pennyfarthing_scripts.bc.split import set_split_layout
+        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+
+        for preset_name, (left, right) in SPLIT_PRESETS.items():
+            result = set_split_layout(left, right, project_dir=tmp_path)
+            assert result["success"], (
+                f"Preset '{preset_name}' uses panels ({left}, {right}) but "
+                f"set_split_layout rejects them: {result.get('error')}"
+            )
+
+    def test_split_command_accepts_progress_panel(self, tmp_path):
+        """pf bc split should accept 'progress' as a valid panel name."""
+        from pennyfarthing_scripts.bc.split import set_split_layout
+
+        result = set_split_layout("progress", "debug", project_dir=tmp_path)
+        assert result["success"], (
+            f"'progress' should be a valid panel for bc split: {result.get('error')}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # AC6: Workflow-aware auto-layout via /ws/focus channel extension
