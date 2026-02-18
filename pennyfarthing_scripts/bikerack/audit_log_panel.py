@@ -19,6 +19,18 @@ from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
 
 MAX_INPUT_LENGTH = 80
 
+# Tool name → Rich style (matches GUI CSS custom properties)
+_TOOL_COLORS: dict[str, str] = {
+    "read": "blue",
+    "write": "dark_orange",
+    "bash": "green",
+    "glob": "medium_purple1",
+    "grep": "dark_cyan",
+    "edit": "yellow",
+    "task": "hot_pink",
+    "skill": "dim",
+}
+
 # Shared fallback console for offline column/cell measurement
 _FALLBACK_CONSOLE = Console()
 
@@ -58,8 +70,9 @@ class AuditLogPanel(BasePanel):
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket messages for tool events.
 
-        Overrides BasePanel.handle_message to manipulate DataTable directly
-        instead of going through render_panel/post_message.
+        Mutates the internal DataTable then delegates to
+        super().handle_message() which calls render_panel() →
+        post_message(DataReceived) for thread-safe Textual repaint.
         """
         if not self._mounted or message is None:
             return
@@ -81,6 +94,11 @@ class AuditLogPanel(BasePanel):
             span = message.get("span")
             if isinstance(span, dict):
                 self._add_row(span)
+        else:
+            return
+
+        # Trigger repaint through BasePanel's message system
+        super().handle_message(message)
 
     def _add_row(self, span: dict[str, Any]) -> None:
         """Add a single tool event row to the DataTable."""
@@ -104,8 +122,32 @@ class AuditLogPanel(BasePanel):
         self._table.add_row(time_str, tool_name, input_text, result)
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
-        """Not used — handle_message manages DataTable directly."""
-        return self._table
+        """Render current DataTable rows as a Rich Table renderable."""
+        from rich.table import Table as RichTable
+        from rich.text import Text
+
+        if self._table.row_count == 0:
+            return Text("No audit events yet", style="dim italic")
+
+        rich_table = RichTable(show_header=True, expand=True, box=None)
+        rich_table.add_column("Time", style="dim", no_wrap=True)
+        rich_table.add_column("Tool", no_wrap=True)
+        rich_table.add_column("Input")
+        rich_table.add_column("Result", justify="center", no_wrap=True)
+
+        for row_key in reversed(list(self._table.rows)):
+            row_data = self._table.get_row(row_key)
+            time_str, tool_name, input_text, result = (str(c) for c in row_data)
+            tool_style = _TOOL_COLORS.get(tool_name.lower(), "bold cyan")
+            result_style = "green" if result == "\u2713" else "red" if result == "\u2717" else "dim"
+            rich_table.add_row(
+                time_str,
+                Text(tool_name, style=f"bold {tool_style}"),
+                Text(input_text, style="dim") if input_text else Text(""),
+                Text(result, style=result_style),
+            )
+
+        return rich_table
 
 
 def _format_timestamp(ts: Any) -> str:
