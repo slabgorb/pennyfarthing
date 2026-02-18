@@ -494,6 +494,34 @@
   max-width: 100%;
 }
 
+/* =============================================================================
+   ProjectInfoBar Component Styles (Story 110-6)
+   ============================================================================= */
+
+.project-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 12px;
+  background: var(--bg-primary, #1e1e1e);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+  flex-shrink: 0;
+  min-height: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.project-info-bar:empty {
+  display: none;
+}
+
+.project-info-dir {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+}
+
 /* Message panel */
 .message-panel {
   display: flex;
