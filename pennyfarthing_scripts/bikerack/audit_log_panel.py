@@ -135,7 +135,7 @@ class AuditLogPanel(BasePanel):
         rich_table.add_column("Input")
         rich_table.add_column("Result", justify="center", no_wrap=True)
 
-        for row_key in self._table.rows:
+        for row_key in reversed(list(self._table.rows)):
             row_data = self._table.get_row(row_key)
             time_str, tool_name, input_text, result = (str(c) for c in row_data)
             tool_style = _TOOL_COLORS.get(tool_name.lower(), "bold cyan")
