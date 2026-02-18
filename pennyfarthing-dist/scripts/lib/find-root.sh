@@ -29,6 +29,11 @@ if [[ -n "$_caller_script" ]]; then
         _pkg="${_pkg%/.pennyfarthing}"
         if [[ "$_pkg" == */node_modules/* ]]; then
             PROJECT_ROOT="${_pkg%/node_modules/*}"
+        elif [[ -d "$_pkg/.pennyfarthing" ]]; then
+            PROJECT_ROOT="$_pkg"
+        elif [[ -d "$_pkg/../.pennyfarthing" ]]; then
+            # Dogfooding: pennyfarthing/ inlined inside orchestrator
+            PROJECT_ROOT="$(cd "$_pkg/.." && pwd -P)"
         else
             PROJECT_ROOT="$_pkg"
         fi
