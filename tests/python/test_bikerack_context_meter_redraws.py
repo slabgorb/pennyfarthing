@@ -170,6 +170,9 @@ class TestPanelSwitchRedraw:
             # Seed context data so there's something to redraw
             meter.handle_context_message(CONTEXT_LOW)
 
+            # Switch to sprint first to ensure a panel change when pressing 2
+            app.action_switch_panel("sprint")
+
             with patch.object(meter, "request_refresh") as mock_refresh:
                 # Switch panel via keybinding
                 await pilot.press("2")  # Switch to git panel
