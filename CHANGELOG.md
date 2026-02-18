@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.2.2] - 2026-02-18
+
+*No unreleased changes*
+
+---
+
 ## [11.2.1] - 2026-02-17
 
 ### Added
@@ -2562,7 +2568,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.2...HEAD
+[11.2.2]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...v11.2.2
 [11.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...v11.2.1
 [11.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.1...v11.2.0
 [11.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.0...v11.1.1
