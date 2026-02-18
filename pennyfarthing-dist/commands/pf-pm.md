@@ -5,7 +5,7 @@ description: Product Manager - Strategic planning and prioritization
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start "pm"
+source .pennyfarthing/scripts/lib/env.sh && source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start "pm"
 ```
 This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>
