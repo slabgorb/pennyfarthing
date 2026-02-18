@@ -599,6 +599,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     const hookCheck = checkSessionStartHooks(projectRoot, installationType);
     results.push(hookCheck);
 
+    // Check OTEL auto-configuration (WheelHub auto-start + telemetry env vars)
+    const otelCheck = checkOtelAutoStart(projectRoot, installationType);
+    results.push(otelCheck);
+
     // Check auto-load-sm hook is configured (auto-invokes /sm on new sessions)
     const autoLoadSmCheck = checkAutoLoadSmHook(projectRoot);
     results.push(autoLoadSmCheck);
@@ -774,6 +778,110 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       status: 'warn',
       detail: 'Could not parse settings.local.json'
     };
+  }
+}
+
+/**
+ * Check that session-start hook uses `pf hooks session-start` (Python version)
+ * which handles WheelHub auto-start + OTEL env var configuration.
+ * Legacy .sh hooks only set 2 of 5 required OTEL vars, breaking telemetry.
+ */
+function checkOtelAutoStart(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    if (!settings.hooks?.SessionStart) {
+      return {
+        name: 'settings/otel-auto-start',
+        status: 'warn',
+        detail: 'No SessionStart hooks — WheelHub auto-start and OTEL not configured',
+      };
+    }
+
+    // Check if `pf hooks session-start` is used (Python version with full OTEL support)
+    const hasPfHooksSessionStart = settings.hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('pf hooks session-start')
+        );
+      }
+      return false;
+    });
+
+    if (hasPfHooksSessionStart) {
+      return {
+        name: 'settings/otel-auto-start',
+        status: 'pass',
+        detail: undefined,
+      };
+    }
+
+    // Check if using legacy .sh (only sets 2 of 5 OTEL vars)
+    const hasLegacySh = settings.hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('session-start.sh')
+        );
+      }
+      return false;
+    });
+
+    if (hasLegacySh) {
+      return {
+        name: 'settings/otel-auto-start',
+        status: 'warn',
+        detail: 'Using legacy session-start.sh — missing WheelHub auto-start and 3 OTEL env vars. Migrate to `pf hooks session-start`',
+        fix: () => {
+          migrateSessionStartToPfHooks(projectRoot);
+        },
+      };
+    }
+
+    return {
+      name: 'settings/otel-auto-start',
+      status: 'warn',
+      detail: 'session-start hook not found — WheelHub auto-start and OTEL not configured',
+      fix: () => {
+        addSessionStartHooks(projectRoot, installationType);
+      },
+    };
+  } catch {
+    return {
+      name: 'settings/otel-auto-start',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json',
+    };
+  }
+}
+
+/**
+ * Migrate legacy session-start.sh hooks to `pf hooks session-start`
+ */
+function migrateSessionStartToPfHooks(projectRoot: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    if (Array.isArray(settings.hooks?.SessionStart)) {
+      for (const entry of settings.hooks.SessionStart) {
+        if (typeof entry === 'object' && entry !== null && Array.isArray(entry.hooks)) {
+          for (const h of entry.hooks) {
+            if (h.command?.includes('session-start.sh')) {
+              h.command = 'pf hooks session-start';
+            }
+          }
+        }
+      }
+    }
+
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+  } catch {
+    // Silent fail — doctor will re-report on next run
   }
 }
 
