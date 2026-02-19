@@ -13,15 +13,19 @@ workflow:
     - name: setup
       agent: sm
       output: [session_file, branches]
+      gate:
+        file: gates/sm-setup-exit
+        type: sm_setup_exit
+        condition: Session file created with workflow, phase, and branch
 
     - name: implement
       agent: dev
       input: [session_file]
       output: [implementation]
       gate:
-        file: gates/tests-pass
-        type: tests_pass
-        condition: Existing tests still pass
+        file: gates/dev-exit
+        type: dev_exit
+        condition: Tests green, tree clean, no debug code, correct branch
 
     - name: review
       agent: reviewer
