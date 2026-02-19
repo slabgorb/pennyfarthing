@@ -139,4 +139,4 @@ To see what's available: /theme list
 
 ## NEXT STEP
 
-After theme packs, proceed to `step-09-cyclist.md` to optionally install Cyclist visual terminal.
+After theme packs, proceed to `step-09-jira.md` to configure the Jira project key.
