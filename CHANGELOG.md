@@ -11,7 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [11.3.7] - 2026-02-19
+## [11.3.8] - 2026-02-19
+
+### Fixed
+
+- **Release workflow** — use `pnpm publish` to resolve `workspace:*` dependencies; `npm publish` leaked literal `workspace:*` refs to registry (11.3.7 cyclist affected, deprecated)
+
+---
+
+## [11.3.7] - 2026-02-19 [DEPRECATED]
 
 ### Fixed
 
