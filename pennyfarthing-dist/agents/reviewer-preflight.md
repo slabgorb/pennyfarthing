@@ -17,12 +17,11 @@ model: haiku
 <gate>
 ## Pre-Flight Checklist
 
+Mechanical checks enforced by `gates/reviewer-preflight-check`: tests green (cache-aware), no debug code, error boundaries (UI only).
+
+**Additional data gathering** (this subagent's responsibility):
 - [ ] Checkout branch and get diff stats
-- [ ] Check test cache (skip tests if valid)
-- [ ] Run tests via testing-runner (if no cache)
-- [ ] Code smell detection in changed files
-- [ ] Error boundary check (UI only)
-- [ ] Get PR details
+- [ ] Get PR details via `gh pr view`
 </gate>
 
 ## 1. Checkout and Diff
