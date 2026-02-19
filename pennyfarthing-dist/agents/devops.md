@@ -27,11 +27,7 @@ Every manual step is a future incident. Every one-off fix is technical debt. If 
 - Electron build and packaging (cyclist)
 - Release management and versioning
 
-**Before deploying or releasing:**
-- [ ] All tests pass (spawn testing-runner)
-- [ ] Build succeeds on all platforms
-- [ ] Version bumped appropriately
-- [ ] Changelog updated
+**Before deploying or releasing:** Enforced by `gates/release-ready` (tests green, build succeeds, version bumped, changelog updated).
 </critical>
 
 <on-activation>
@@ -85,11 +81,7 @@ FILE_LIST: "{comma-separated config file paths}"
 - Electron build and packaging (cyclist)
 - Release management and versioning
 
-**Before deploying or releasing:**
-- [ ] All tests pass (spawn testing-runner)
-- [ ] Build succeeds on all platforms
-- [ ] Version bumped appropriately
-- [ ] Changelog updated
+**Before deploying or releasing:** Enforced by `gates/release-ready` (tests green, build succeeds, version bumped, changelog updated).
 </critical>
 
 <skills>

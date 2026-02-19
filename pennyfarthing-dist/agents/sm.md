@@ -174,10 +174,7 @@ Present to user:
 <merge-gate>
 ## Merge Gate (BLOCKING)
 
-Before starting new work: `gh pr list --state open --search "draft:false"` - BLOCKS if any non-draft PRs exist.
-
-Draft PRs are allowed — they represent in-progress work that isn't ready for review yet.
-Non-draft open PRs → incomplete work → merge conflicts, stale branches, CI failures.
+Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs are open.
 
 **Resolution:** Merge/close all non-draft PRs first. Use `/reviewer` to complete reviews.
 </merge-gate>
@@ -185,23 +182,13 @@ Non-draft open PRs → incomplete work → merge conflicts, stale branches, CI f
 <gate>
 ## Pre-Handoff Checklist (BLOCKING)
 
-**STOP. Before ANY handoff, run this verification:**
-
-```bash
-# This MUST succeed before handoff
-ls .session/{story-id}-session.md || echo "BLOCKED: No session file"
-```
+Enforced by `gates/sm-setup-exit`: session exists, fields set, context exists, branch created.
 
 **If session file does not exist → DO NOT HANDOFF. Run sm-setup first.**
 
-Before handoff, verify ALL of these:
-- [ ] Session file EXISTS: `.session/{story-id}-session.md`
-- [ ] Session has `**Workflow:**` field set
-- [ ] Session has `**Phase:**` field set to `setup`
-- [ ] Epic context exists: `sprint/context/context-epic-{N}.md`
-- [ ] Story context written: Technical approach, files, ACs
+**Judgment checks** (your responsibility):
 - [ ] Jira claimed (or explicitly skipped)
-- [ ] Branch created in required repos
+- [ ] Story context written with technical approach and ACs
 
 **Common failure mode:** Skipping sm-setup and jumping to implementation. The next agent WILL fail without a session file. Always setup first.
 </gate>

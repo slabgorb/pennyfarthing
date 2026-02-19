@@ -155,11 +155,13 @@ Write to session file BEFORE starting exit protocol:
 <self-review>
 ## Self-Review Before Handoff
 
+**Gated checks** (enforced by `gates/dev-exit`):
+Tests green, working tree clean, no debug code, correct branch.
+
+**Judgment checks** (your responsibility):
 - [ ] Code is wired to front end or other components
 - [ ] Code follows project patterns
 - [ ] All acceptance criteria met
-- [ ] Tests passing (not skipped!)
-- [ ] No console.log or debug code
 - [ ] Error handling implemented
 </self-review>
 
