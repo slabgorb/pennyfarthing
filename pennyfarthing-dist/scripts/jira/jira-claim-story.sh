@@ -3,7 +3,7 @@
 # Usage: jira-claim-story.sh <issue-key> [--claim]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira claim <issue-key> [--claim]
+#   python -m pf.jira claim <issue-key> [--claim]
 #
 # Exit codes:
 #   0 - Story is available or successfully claimed

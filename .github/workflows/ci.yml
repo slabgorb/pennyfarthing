@@ -96,7 +96,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run Ruff linter
-        run: ruff check pennyfarthing_scripts/
+        run: ruff check pennyfarthing-dist/pf/
 
   markdown-lint:
     runs-on: [self-hosted, Ubuntu, Common]

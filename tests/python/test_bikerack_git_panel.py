@@ -22,9 +22,9 @@ from rich.console import Group as RichGroup
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.git_panel import GitPanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.git_panel import GitPanel
+from pf.bikerack.ws_client import WheelHubClient
 
 
 # ---------------------------------------------------------------------------

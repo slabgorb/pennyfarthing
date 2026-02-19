@@ -155,7 +155,7 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
 
       expect(mockExecFile).toHaveBeenCalledWith(
         'python3',
-        expect.arrayContaining(['-m', 'pennyfarthing_scripts.deadcode']),
+        expect.arrayContaining(['-m', 'pf.deadcode']),
         expect.objectContaining({
           timeout: 30000,
         }),
@@ -258,8 +258,8 @@ describe('MSSCI-14460: Dead Code API (Story 81-3)', () => {
       handler(req, res);
 
       const opts = mockExecFile.mock.calls[0][2] as any;
-      expect(opts.env.PYTHONPATH).toBe('/test/project/pennyfarthing');
-      expect(opts.cwd).toBe('/test/project/pennyfarthing');
+      expect(opts.env.PYTHONPATH).toBe('/test/project/pennyfarthing/pennyfarthing-dist');
+      expect(opts.cwd).toBe('/test/project/pennyfarthing/pennyfarthing-dist');
     });
   });
 

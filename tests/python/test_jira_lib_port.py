@@ -37,7 +37,7 @@ class TestFindStory:
     @pytest.fixture
     def sprint_module(self):
         """Import sprint module."""
-        from pennyfarthing_scripts import sprint
+        from pf import sprint
         return sprint
 
     @pytest.fixture
@@ -87,7 +87,7 @@ class TestGetStoryField:
     @pytest.fixture
     def sprint_module(self):
         """Import sprint module."""
-        from pennyfarthing_scripts import sprint
+        from pf import sprint
         return sprint
 
     @pytest.fixture
@@ -166,7 +166,7 @@ class TestCheckDependencies:
     @pytest.fixture
     def jira_module(self):
         """Import jira module."""
-        from pennyfarthing_scripts import jira
+        from pf import jira
         return jira
 
     def test_check_dependencies_exists(self, jira_module):
@@ -233,7 +233,7 @@ class TestMapGithubToJira:
     @pytest.fixture
     def jira_module(self):
         """Import jira module."""
-        from pennyfarthing_scripts import jira
+        from pf import jira
         return jira
 
     def test_map_github_to_jira_exists(self, jira_module):
@@ -269,12 +269,12 @@ class TestJiraSyncStoryModule:
 
     def test_module_exists(self):
         """jira_sync_story.py module should exist."""
-        jira_sync_story_path = PROJECT_ROOT / "pennyfarthing_scripts" / "jira_sync_story.py"
+        jira_sync_story_path = PROJECT_ROOT / "pf" / "jira_sync_story.py"
         assert jira_sync_story_path.exists(), "jira_sync_story.py not found"
 
     def test_module_imports(self):
         """jira_sync_story module should import without error."""
-        from pennyfarthing_scripts import jira_sync_story
+        from pf import jira_sync_story
         assert jira_sync_story is not None
 
 
@@ -283,36 +283,36 @@ class TestJiraSyncStoryCLI:
 
     def test_parse_args_exists(self):
         """parse_args function should exist."""
-        from pennyfarthing_scripts import jira_sync_story
+        from pf import jira_sync_story
         assert hasattr(jira_sync_story, "parse_args")
 
     def test_parse_args_story_key(self):
         """Should parse story key from args."""
-        from pennyfarthing_scripts.jira_sync_story import parse_args
+        from pf.jira_sync_story import parse_args
         args = parse_args(["63-7"])
         assert args.story_key == "63-7"
 
     def test_parse_args_transition_flag(self):
         """Should parse --transition flag."""
-        from pennyfarthing_scripts.jira_sync_story import parse_args
+        from pf.jira_sync_story import parse_args
         args = parse_args(["63-7", "--transition"])
         assert args.transition is True
 
     def test_parse_args_points_flag(self):
         """Should parse --points flag."""
-        from pennyfarthing_scripts.jira_sync_story import parse_args
+        from pf.jira_sync_story import parse_args
         args = parse_args(["63-7", "--points"])
         assert args.points is True
 
     def test_parse_args_comment_flag(self):
         """Should parse --comment with message."""
-        from pennyfarthing_scripts.jira_sync_story import parse_args
+        from pf.jira_sync_story import parse_args
         args = parse_args(["63-7", "--comment", "Test comment"])
         assert args.comment == "Test comment"
 
     def test_parse_args_dry_run_flag(self):
         """Should parse --dry-run flag."""
-        from pennyfarthing_scripts.jira_sync_story import parse_args
+        from pf.jira_sync_story import parse_args
         args = parse_args(["63-7", "--dry-run"])
         assert args.dry_run is True
 
@@ -323,7 +323,7 @@ class TestJiraSyncStoryFunctions:
     @pytest.fixture
     def sync_story_module(self):
         """Import jira_sync_story module."""
-        from pennyfarthing_scripts import jira_sync_story
+        from pf import jira_sync_story
         return jira_sync_story
 
     def test_sync_story_function_exists(self, sync_story_module):
@@ -371,12 +371,12 @@ class TestJiraEpicCreationModule:
 
     def test_module_exists(self):
         """jira_epic_creation.py module should exist."""
-        epic_creation_path = PROJECT_ROOT / "pennyfarthing_scripts" / "jira_epic_creation.py"
+        epic_creation_path = PROJECT_ROOT / "pf" / "jira_epic_creation.py"
         assert epic_creation_path.exists(), "jira_epic_creation.py not found"
 
     def test_module_imports(self):
         """jira_epic_creation module should import without error."""
-        from pennyfarthing_scripts import jira_epic_creation
+        from pf import jira_epic_creation
         assert jira_epic_creation is not None
 
 
@@ -386,12 +386,12 @@ class TestJiraEpicCreation:
     @pytest.fixture
     def epic_creation_module(self):
         """Import jira_epic_creation module."""
-        from pennyfarthing_scripts import jira_epic_creation
+        from pf import jira_epic_creation
         return jira_epic_creation
 
     def test_create_epic_function_exists(self):
         """create_epic function should exist."""
-        from pennyfarthing_scripts import jira_epic_creation
+        from pf import jira_epic_creation
         assert hasattr(jira_epic_creation, "create_epic")
 
     def test_create_epic_returns_result(self, epic_creation_module):
@@ -423,12 +423,12 @@ class TestEpicCreationFromSprintYAML:
 
     def test_build_epic_payload_exists(self):
         """build_epic_payload function should exist."""
-        from pennyfarthing_scripts import jira_epic_creation
+        from pf import jira_epic_creation
         assert hasattr(jira_epic_creation, "build_epic_payload")
 
     def test_build_epic_payload_structure(self):
         """Should build correct Jira API payload structure."""
-        from pennyfarthing_scripts import jira_epic_creation
+        from pf import jira_epic_creation
 
         epic_data = {
             "id": "epic-63",
@@ -456,7 +456,7 @@ class TestBackwardsCompatibility:
     def test_jira_sync_story_can_run_as_script(self):
         """jira_sync_story.py should be runnable as a script."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.jira_sync_story", "--help"],
+            [sys.executable, "-m", "pf.jira_sync_story", "--help"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
@@ -467,7 +467,7 @@ class TestBackwardsCompatibility:
     def test_jira_epic_creation_can_run_as_script(self):
         """jira_epic_creation.py should be runnable as a script."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.jira_epic_creation", "--help"],
+            [sys.executable, "-m", "pf.jira_epic_creation", "--help"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,

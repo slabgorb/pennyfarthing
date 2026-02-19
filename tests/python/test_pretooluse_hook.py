@@ -22,7 +22,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.hooks import (
+from pf.hooks import (
     CYCLIST_PORT_FILE,
     DEFAULT_CYCLIST_PORT,
     HookResponse,
@@ -123,7 +123,7 @@ class TestEndpointURL:
     def test_endpoint_is_not_approval_request(self):
         """The hook module should reference /api/hook-request, not /approval-request."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
+            PROJECT_ROOT / "pf" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         assert "/api/hook-request" in hook_source
@@ -152,7 +152,7 @@ class TestConnectionRefused:
     def test_hook_defers_to_claude_code_when_cyclist_not_running(self):
         """cyclist_pretooluse.py should output 'ask' when Cyclist isn't running."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
+            PROJECT_ROOT / "pf" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         # The hook should check is_cyclist_running and output "ask" if False
@@ -162,7 +162,7 @@ class TestConnectionRefused:
     def test_hook_never_returns_allow_on_connection_failure(self):
         """The hook must NOT return 'allow' when WheelHub is unreachable."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "cyclist_pretooluse.py"
+            PROJECT_ROOT / "pf" / "hooks" / "cyclist_pretooluse.py"
         ).read_text()
 
         # The Python hook should not have the JS bug of allowing on connection failure
@@ -318,7 +318,7 @@ class TestHookRegistration:
         """cyclist-pretooluse-hook.sh should exist in pennyfarthing scripts hooks."""
         wrapper = (
             PROJECT_ROOT
-            / "pennyfarthing_scripts"
+            / "pf"
             / "hooks"
             / "cyclist-pretooluse-hook.sh"
         )
@@ -331,7 +331,7 @@ class TestHookRegistration:
         """cyclist-pretooluse-hook.sh should be executable."""
         wrapper = (
             PROJECT_ROOT
-            / "pennyfarthing_scripts"
+            / "pf"
             / "hooks"
             / "cyclist-pretooluse-hook.sh"
         )
@@ -343,7 +343,7 @@ class TestHookRegistration:
         """Shell wrapper should invoke pretooluse_hook.py."""
         wrapper = (
             PROJECT_ROOT
-            / "pennyfarthing_scripts"
+            / "pf"
             / "hooks"
             / "cyclist-pretooluse-hook.sh"
         )
@@ -420,7 +420,7 @@ class TestIsCyclistRunning:
     def test_no_file_io_or_http_calls(self):
         """AC3: Detection must not touch filesystem or network."""
         with patch.dict(os.environ, {"CYCLIST": "1"}):
-            with patch("pennyfarthing_scripts.hooks.urllib.request.urlopen") as mock_url:
+            with patch("pf.hooks.urllib.request.urlopen") as mock_url:
                 with patch.object(Path, "exists") as mock_exists:
                     is_cyclist_running()
                     mock_url.assert_not_called()

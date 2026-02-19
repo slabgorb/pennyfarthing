@@ -40,12 +40,12 @@ Prime selects a context tier based on session state to manage token overhead:
 | File | Purpose |
 |------|---------|
 | `packages/cyclist/src/prime.ts` | TypeScript module: `getPrimeContext()`, `getPrimeContextWithTier()`, `selectContextTier()` |
-| `pennyfarthing_scripts/prime/cli.py` | Python CLI entry point |
-| `pennyfarthing_scripts/prime/tiers.py` | Tiered context selection logic |
-| `pennyfarthing_scripts/prime/persona.py` | Persona loading from theme config |
-| `pennyfarthing_scripts/prime/session.py` | Session state reading and registration |
-| `pennyfarthing_scripts/prime/workflow.py` | Workflow state detection |
-| `pennyfarthing_scripts/prime/models.py` | Data structures (WorkflowStatus, ContextTier, PrimeResult) |
+| `pf/prime/cli.py` | Python CLI entry point |
+| `pf/prime/tiers.py` | Tiered context selection logic |
+| `pf/prime/persona.py` | Persona loading from theme config |
+| `pf/prime/session.py` | Session state reading and registration |
+| `pf/prime/workflow.py` | Workflow state detection |
+| `pf/prime/models.py` | Data structures (WorkflowStatus, ContextTier, PrimeResult) |
 | `pennyfarthing-dist/scripts/core/prime.sh` | Shell wrapper |
 | `pennyfarthing-dist/commands/prime.md` | User command docs |
 

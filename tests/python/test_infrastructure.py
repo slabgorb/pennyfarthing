@@ -1,7 +1,7 @@
 """
 Tests for Python script infrastructure (Story 63-4).
 
-These tests verify the pennyfarthing_scripts package structure and core utilities.
+These tests verify the pf package structure and core utilities.
 Run with: python -m pytest tests/python/ -v
 """
 
@@ -45,44 +45,44 @@ class TestPyprojectToml:
 
 
 class TestPackageStructure:
-    """Tests for pennyfarthing_scripts package structure."""
+    """Tests for pf package structure."""
 
     def test_package_directory_exists(self):
-        """pennyfarthing_scripts/ directory should exist."""
-        package_dir = PROJECT_ROOT / "pennyfarthing_scripts"
-        assert package_dir.exists(), "pennyfarthing_scripts/ directory not found"
-        assert package_dir.is_dir(), "pennyfarthing_scripts should be a directory"
+        """pf/ directory should exist."""
+        package_dir = PROJECT_ROOT / "pf"
+        assert package_dir.exists(), "pf/ directory not found"
+        assert package_dir.is_dir(), "pf should be a directory"
 
     def test_package_init_exists(self):
-        """pennyfarthing_scripts/__init__.py should exist."""
-        init_file = PROJECT_ROOT / "pennyfarthing_scripts" / "__init__.py"
+        """pf/__init__.py should exist."""
+        init_file = PROJECT_ROOT / "pf" / "__init__.py"
         assert init_file.exists(), "__init__.py not found"
 
     def test_package_importable(self):
-        """pennyfarthing_scripts should be importable."""
+        """pf should be importable."""
         # Add package to path for import test
         sys.path.insert(0, str(PROJECT_ROOT))
         try:
-            import pennyfarthing_scripts
-            assert pennyfarthing_scripts.__version__
+            import pf
+            assert pf.__version__
         finally:
             sys.path.pop(0)
 
     def test_config_module_exists(self):
-        """pennyfarthing_scripts/config.py should exist."""
-        config_file = PROJECT_ROOT / "pennyfarthing_scripts" / "config.py"
+        """pf/config.py should exist."""
+        config_file = PROJECT_ROOT / "pf" / "config.py"
         assert config_file.exists(), "config.py module not found"
 
     def test_sprint_module_exists(self):
-        """pennyfarthing_scripts/sprint package should exist."""
-        sprint_dir = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint"
+        """pf/sprint package should exist."""
+        sprint_dir = PROJECT_ROOT / "pf" / "sprint"
         assert sprint_dir.exists(), "sprint package not found"
         assert sprint_dir.is_dir(), "sprint should be a package directory"
         assert (sprint_dir / "__init__.py").exists(), "sprint/__init__.py not found"
 
     def test_jira_module_exists(self):
-        """pennyfarthing_scripts/jira package should exist."""
-        jira_dir = PROJECT_ROOT / "pennyfarthing_scripts" / "jira"
+        """pf/jira package should exist."""
+        jira_dir = PROJECT_ROOT / "pf" / "jira"
         assert jira_dir.exists(), "jira package not found"
         assert jira_dir.is_dir(), "jira should be a package directory"
         assert (jira_dir / "__init__.py").exists(), "jira/__init__.py not found"
@@ -96,7 +96,7 @@ class TestConfigModule:
         """Import config module."""
         sys.path.insert(0, str(PROJECT_ROOT))
         try:
-            from pennyfarthing_scripts import config
+            from pf import config
             yield config
         finally:
             sys.path.pop(0)
@@ -129,7 +129,7 @@ class TestSprintModule:
         """Import sprint module."""
         sys.path.insert(0, str(PROJECT_ROOT))
         try:
-            from pennyfarthing_scripts import sprint
+            from pf import sprint
             yield sprint
         finally:
             sys.path.pop(0)
@@ -181,7 +181,7 @@ class TestJiraModule:
         """Import jira module."""
         sys.path.insert(0, str(PROJECT_ROOT))
         try:
-            from pennyfarthing_scripts import jira
+            from pf import jira
             yield jira
         finally:
             sys.path.pop(0)

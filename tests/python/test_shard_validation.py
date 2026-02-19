@@ -41,7 +41,7 @@ class TestValidateEpicShard:
 
     def test_valid_epic_shard_passes(self):
         """A complete epic shard with all required fields should validate."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         result = validate_epic_shard(epic)
@@ -49,7 +49,7 @@ class TestValidateEpicShard:
 
     def test_missing_id_rejected(self):
         """Epic shard without 'id' field should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         del epic["id"]
@@ -59,7 +59,7 @@ class TestValidateEpicShard:
 
     def test_missing_title_rejected(self):
         """Epic shard without 'title' field should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         del epic["title"]
@@ -69,7 +69,7 @@ class TestValidateEpicShard:
 
     def test_missing_status_rejected(self):
         """Epic shard without 'status' field should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         del epic["status"]
@@ -79,7 +79,7 @@ class TestValidateEpicShard:
 
     def test_missing_stories_rejected(self):
         """Epic shard without 'stories' field should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         del epic["stories"]
@@ -89,7 +89,7 @@ class TestValidateEpicShard:
 
     def test_stories_must_be_list(self):
         """Epic shard with non-list 'stories' should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["stories"] = "not a list"
@@ -98,7 +98,7 @@ class TestValidateEpicShard:
 
     def test_invalid_jira_key_format_rejected(self):
         """Epic shard with malformed jira key should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["jira"] = "BAD-123"
@@ -108,7 +108,7 @@ class TestValidateEpicShard:
 
     def test_valid_jira_key_passes(self):
         """Epic shard with valid MSSCI-NNNNN jira key should pass."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["jira"] = "MSSCI-14510"
@@ -117,7 +117,7 @@ class TestValidateEpicShard:
 
     def test_duplicate_story_ids_rejected(self):
         """Epic shard with duplicate story IDs should be rejected."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["stories"].append(
@@ -129,7 +129,7 @@ class TestValidateEpicShard:
 
     def test_story_missing_required_fields_rejected(self):
         """Stories within epic missing required fields should be flagged."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["stories"] = [{"id": "99-1"}]  # missing title, points, status
@@ -138,7 +138,7 @@ class TestValidateEpicShard:
 
     def test_epic_prefix_in_id_rejected(self):
         """Epic shard with 'epic-' prefix in ID should be rejected (ADR-0022)."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["id"] = "epic-99"
@@ -148,7 +148,7 @@ class TestValidateEpicShard:
 
     def test_empty_stories_list_passes(self):
         """Epic shard with empty stories list should pass (stories key present)."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic_shard
+        from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
         epic["stories"] = []
@@ -166,7 +166,7 @@ class TestGetEpicRefNormalization:
 
     def test_epic_prefix_stripped(self):
         """ID 'epic-94' should return '94' to avoid epic-epic-94.yaml."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "epic-94"}
         ref = _get_epic_ref(epic)
@@ -175,7 +175,7 @@ class TestGetEpicRefNormalization:
 
     def test_numeric_id_unchanged(self):
         """ID '94' should return '94' unchanged."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "94"}
         ref = _get_epic_ref(epic)
@@ -183,7 +183,7 @@ class TestGetEpicRefNormalization:
 
     def test_jira_key_preferred_over_id(self):
         """Jira key takes precedence when present and valid."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "epic-94", "jira": "MSSCI-14659"}
         ref = _get_epic_ref(epic)
@@ -191,7 +191,7 @@ class TestGetEpicRefNormalization:
 
     def test_jira_id_in_id_field_passes_through(self):
         """ID field containing MSSCI key should pass through unchanged."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "MSSCI-14659"}
         ref = _get_epic_ref(epic)
@@ -199,7 +199,7 @@ class TestGetEpicRefNormalization:
 
     def test_invalid_jira_key_falls_back_to_id(self):
         """Invalid jira key should fall back to normalized ID."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "epic-94", "jira": "INVALID"}
         ref = _get_epic_ref(epic)
@@ -207,7 +207,7 @@ class TestGetEpicRefNormalization:
 
     def test_double_prefix_rejected(self):
         """ID 'epic-epic-94' should either normalize to '94' or raise ValueError."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "epic-epic-94"}
         # Should either strip both prefixes to get '94' or raise
@@ -220,7 +220,7 @@ class TestGetEpicRefNormalization:
 
     def test_filename_result_correct(self):
         """The resulting filename from epic-{ref}.yaml should never have double prefix."""
-        from pennyfarthing_scripts.sprint.yaml_io import _get_epic_ref
+        from pf.sprint.yaml_io import _get_epic_ref
 
         epic = {"id": "epic-94"}
         ref = _get_epic_ref(epic)
@@ -238,7 +238,7 @@ class TestWritePathIntegration:
 
     def test_epic_add_calls_validator(self, tmp_path):
         """add_epic() should call validate_epic_shard() before writing."""
-        from pennyfarthing_scripts.sprint.epic_add import add_epic
+        from pf.sprint.epic_add import add_epic
 
         # Create a minimal sprint index
         sprint_file = tmp_path / "current-sprint.yaml"
@@ -253,7 +253,7 @@ class TestWritePathIntegration:
         shard.write_text("id: epic-91\ntitle: Existing\nstatus: backlog\nstories: []\n")
 
         with patch(
-            "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
+            "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate:
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             result = add_epic(
@@ -266,8 +266,8 @@ class TestWritePathIntegration:
 
     def test_epic_add_rejects_invalid_epic(self, tmp_path):
         """add_epic() should reject an epic that fails validation."""
-        from pennyfarthing_scripts.sprint.epic_add import add_epic
-        from pennyfarthing_scripts.sprint.validator import ValidationResult
+        from pf.sprint.epic_add import add_epic
+        from pf.sprint.validator import ValidationResult
 
         sprint_file = tmp_path / "current-sprint.yaml"
         sprint_file.write_text(
@@ -283,7 +283,7 @@ class TestWritePathIntegration:
         bad_result.add_error("Missing required field: status", "epic.status")
 
         with patch(
-            "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
+            "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate:
             mock_validate.return_value = bad_result
             result = add_epic(
@@ -296,7 +296,7 @@ class TestWritePathIntegration:
     def test_epic_promote_calls_validator(self, tmp_path):
         """epic_promote() should call validate_epic_shard() after transforming."""
         from click.testing import CliRunner
-        from pennyfarthing_scripts.sprint.cli import epic_promote
+        from pf.sprint.cli import epic_promote
 
         # Create initiative shard with an epic to promote
         sprint_dir = tmp_path / "sprint"
@@ -317,9 +317,9 @@ class TestWritePathIntegration:
         )
 
         with patch(
-            "pennyfarthing_scripts.common.config.get_project_root", return_value=tmp_path
+            "pf.common.config.get_project_root", return_value=tmp_path
         ), patch(
-            "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
+            "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate:
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             runner = CliRunner()
@@ -334,7 +334,7 @@ class TestWritePathIntegration:
 
     def test_jira_create_epic_calls_validator(self, tmp_path):
         """create_epic_in_jira() should validate the epic before creating in Jira."""
-        from pennyfarthing_scripts.jira.create import create_epic_in_jira
+        from pf.jira.create import create_epic_in_jira
 
         # create_epic_in_jira calls both read_sprint(path) and load_sprint()
         # load_sprint() uses get_project_root()/sprint/current-sprint.yaml
@@ -353,16 +353,16 @@ class TestWritePathIntegration:
         )
 
         with patch(
-            "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
+            "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate, patch(
-            "pennyfarthing_scripts.sprint.loader.get_project_root", return_value=tmp_path
+            "pf.sprint.loader.get_project_root", return_value=tmp_path
         ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             mock_client = MagicMock()
             mock_client.search_issues_sync.return_value = []
             mock_client.create_issue_sync.return_value = {"key": "MSSCI-99999"}
 
-            with patch("pennyfarthing_scripts.jira.create.get_client", return_value=mock_client):
+            with patch("pf.jira.create.get_client", return_value=mock_client):
                 result = create_epic_in_jira("63", sprint_path=sprint_file)
                 assert result.get("success"), f"Expected success, got: {result}"
                 # Validator should have been called
@@ -370,7 +370,7 @@ class TestWritePathIntegration:
 
     def test_import_epic_calls_validator(self, tmp_path):
         """import_epic() should validate generated YAML before writing."""
-        from pennyfarthing_scripts.sprint.import_epic import import_epic
+        from pf.sprint.import_epic import import_epic
 
         # Create a minimal markdown file
         md_file = tmp_path / "epics.md"
@@ -391,9 +391,9 @@ class TestWritePathIntegration:
         )
 
         with patch(
-            "pennyfarthing_scripts.sprint.validator.validate_epic_shard"
+            "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate, patch(
-            "pennyfarthing_scripts.sprint.import_epic.get_project_root", return_value=tmp_path
+            "pf.sprint.import_epic.get_project_root", return_value=tmp_path
         ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             result = import_epic(str(md_file), project_root=tmp_path)
@@ -413,7 +413,7 @@ class TestLoaderWarnings:
 
     def test_missing_shard_emits_warning(self, tmp_path):
         """Unresolvable shard ref should emit a warning, not silently skip."""
-        from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
+        from pf.sprint.loader import _merge_epic_shards
 
         data = {"epics": ["MSSCI-99999", "nonexistent-ref"]}
 
@@ -429,7 +429,7 @@ class TestLoaderWarnings:
 
     def test_missing_shard_warning_contains_ref_name(self, tmp_path):
         """Warning message should identify which ref was unresolvable."""
-        from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
+        from pf.sprint.loader import _merge_epic_shards
 
         data = {"epics": ["MISSING-REF-42"]}
 
@@ -444,7 +444,7 @@ class TestLoaderWarnings:
 
     def test_existing_shard_no_warning(self, tmp_path):
         """Resolvable shard ref should NOT emit a warning."""
-        from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
+        from pf.sprint.loader import _merge_epic_shards
 
         # Create a valid shard file
         shard = tmp_path / "epic-MSSCI-14510.yaml"
@@ -465,7 +465,7 @@ class TestLoaderWarnings:
 
     def test_mixed_existing_and_missing_refs(self, tmp_path):
         """Only missing refs should produce warnings, not existing ones."""
-        from pennyfarthing_scripts.sprint.loader import _merge_epic_shards
+        from pf.sprint.loader import _merge_epic_shards
 
         # Create one valid shard
         shard = tmp_path / "epic-MSSCI-14510.yaml"
@@ -498,7 +498,7 @@ class TestJiraIdempotencyCheck:
 
     def test_duplicate_title_detected(self, tmp_path):
         """create_epic_in_jira should detect existing epic with same title."""
-        from pennyfarthing_scripts.jira.create import create_epic_in_jira
+        from pf.jira.create import create_epic_in_jira
 
         # Create sprint YAML with an epic that has no jira key
         sprint_file = tmp_path / "current-sprint.yaml"
@@ -520,8 +520,8 @@ class TestJiraIdempotencyCheck:
             {"key": "MSSCI-14659", "fields": {"summary": "Duplicate Title Epic"}}
         ]
 
-        with patch("pennyfarthing_scripts.jira.create.get_client", return_value=mock_client):
-            with patch("pennyfarthing_scripts.jira.create._get_sprint_path", return_value=sprint_file):
+        with patch("pf.jira.create.get_client", return_value=mock_client):
+            with patch("pf.jira.create._get_sprint_path", return_value=sprint_file):
                 result = create_epic_in_jira("epic-99", sprint_path=sprint_file)
 
                 # Should detect the duplicate and NOT create a new epic
@@ -535,7 +535,7 @@ class TestJiraIdempotencyCheck:
 
     def test_unique_title_proceeds(self, tmp_path):
         """create_epic_in_jira with unique title should proceed normally."""
-        from pennyfarthing_scripts.jira.create import create_epic_in_jira
+        from pf.jira.create import create_epic_in_jira
 
         sprint_file = tmp_path / "current-sprint.yaml"
         sprint_file.write_text(
@@ -554,8 +554,8 @@ class TestJiraIdempotencyCheck:
         mock_client.search_issues_sync.return_value = []
         mock_client.create_issue_sync.return_value = {"key": "MSSCI-99999"}
 
-        with patch("pennyfarthing_scripts.jira.create.get_client", return_value=mock_client):
-            with patch("pennyfarthing_scripts.jira.create._get_sprint_path", return_value=sprint_file):
+        with patch("pf.jira.create.get_client", return_value=mock_client):
+            with patch("pf.jira.create._get_sprint_path", return_value=sprint_file):
                 result = create_epic_in_jira("epic-99", sprint_path=sprint_file)
                 # Should proceed with creation
                 if result.get("success"):
@@ -572,7 +572,7 @@ class TestExistingValidatorCompat:
 
     def test_required_epic_shard_fields_constant_exists(self):
         """REQUIRED_EPIC_SHARD_FIELDS should include id, title, status, stories."""
-        from pennyfarthing_scripts.sprint.validator import REQUIRED_EPIC_SHARD_FIELDS
+        from pf.sprint.validator import REQUIRED_EPIC_SHARD_FIELDS
 
         expected = {"id", "title", "status", "stories"}
         assert expected.issubset(REQUIRED_EPIC_SHARD_FIELDS), (
@@ -582,7 +582,7 @@ class TestExistingValidatorCompat:
 
     def test_required_shard_story_fields_constant_exists(self):
         """REQUIRED_SHARD_STORY_FIELDS should include id, title, points, status."""
-        from pennyfarthing_scripts.sprint.validator import REQUIRED_SHARD_STORY_FIELDS
+        from pf.sprint.validator import REQUIRED_SHARD_STORY_FIELDS
 
         expected = {"id", "title", "points", "status"}
         assert expected == REQUIRED_SHARD_STORY_FIELDS, (
@@ -591,7 +591,7 @@ class TestExistingValidatorCompat:
 
     def test_existing_validate_epic_still_works(self):
         """The existing validate_epic() should still work as before."""
-        from pennyfarthing_scripts.sprint.validator import validate_epic
+        from pf.sprint.validator import validate_epic
 
         epic = {
             "id": "epic-99",
@@ -605,7 +605,7 @@ class TestExistingValidatorCompat:
 
     def test_existing_validate_story_still_works(self):
         """The existing validate_story() should still work as before."""
-        from pennyfarthing_scripts.sprint.validator import validate_story
+        from pf.sprint.validator import validate_story
 
         story = {"id": "99-1", "title": "Test", "points": 3, "status": "backlog"}
         result = validate_story(story, "epic-99", 0)
@@ -613,7 +613,7 @@ class TestExistingValidatorCompat:
 
     def test_validate_epic_shard_is_callable(self):
         """validate_epic_shard must be a callable function in validator module."""
-        from pennyfarthing_scripts.sprint import validator
+        from pf.sprint import validator
 
         assert hasattr(validator, "validate_epic_shard"), (
             "validator module must export validate_epic_shard()"

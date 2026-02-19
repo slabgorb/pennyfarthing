@@ -24,25 +24,25 @@ Prime v2 consolidates agent activation into a single entry point:
 
 ```bash
 # Full bootstrap (default)
-python -m pennyfarthing_scripts.prime --agent sm
+python -m pf.prime --agent sm
 
 # Refresh mode (clear cache, re-validate)
-python -m pennyfarthing_scripts.prime --agent sm --refresh
+python -m pf.prime --agent sm --refresh
 
 # Audit only (check settings, no context output)
-python -m pennyfarthing_scripts.prime --agent sm --audit
+python -m pf.prime --agent sm --audit
 
 # Minimal (skip workflow check, just context)
-python -m pennyfarthing_scripts.prime --agent sm --minimal
+python -m pf.prime --agent sm --minimal
 
 # Full context including domain docs
-python -m pennyfarthing_scripts.prime --agent sm --full
+python -m pf.prime --agent sm --full
 
 # Quiet (suppress section headers)
-python -m pennyfarthing_scripts.prime --agent sm --quiet
+python -m pf.prime --agent sm --quiet
 
 # JSON output (for programmatic use)
-python -m pennyfarthing_scripts.prime --agent sm --json
+python -m pf.prime --agent sm --json
 ```
 
 ## Output Structure
@@ -232,7 +232,7 @@ def audit_persona(theme: dict, agent_name: str) -> AuditResult:
 4. **Report changes** - Show what was stale/fixed
 
 ```bash
-$ python -m pennyfarthing_scripts.prime --agent dev --refresh
+$ python -m pf.prime --agent dev --refresh
 
 [INFO] Clearing cached session state
 [OK] Session re-registered: dev
@@ -244,7 +244,7 @@ $ python -m pennyfarthing_scripts.prime --agent dev --refresh
 ## Module Structure
 
 ```
-pennyfarthing_scripts/prime/
+pf/prime/
 ├── __init__.py          # Public API
 ├── __main__.py          # Entry point
 ├── cli.py               # Argument parsing, main()
@@ -449,7 +449,7 @@ TirePump calls prime for context reload:
 ```javascript
 // In Cyclist's context-clear handler
 async function reloadContext(agent) {
-  const result = await exec(`python3 -m pennyfarthing_scripts.prime --agent ${agent} --json`);
+  const result = await exec(`python3 -m pf.prime --agent ${agent} --json`);
   const bootstrap = JSON.parse(result.stdout);
 
   if (bootstrap.redirect) {
@@ -467,7 +467,7 @@ SessionStart hook uses prime:
 
 ```bash
 # hooks/session-start.sh
-python3 -m pennyfarthing_scripts.prime --agent "$AGENT" --quiet
+python3 -m pf.prime --agent "$AGENT" --quiet
 ```
 
 ### Agent Activation Commands
@@ -478,7 +478,7 @@ python3 -m pennyfarthing_scripts.prime --agent "$AGENT" --quiet
 <!-- In command file -->
 Run bootstrap:
 ```bash
-python3 -m pennyfarthing_scripts.prime --agent sm
+python3 -m pf.prime --agent sm
 ```
 ```
 
@@ -520,7 +520,7 @@ python3 -m pennyfarthing_scripts.prime --agent sm
 
 ### Normal Activation
 ```bash
-$ python -m pennyfarthing_scripts.prime --agent dev
+$ python -m pf.prime --agent dev
 
 # Workflow State
 state: IN_PROGRESS
@@ -535,7 +535,7 @@ story_id: 63-8
 
 ### Wrong Agent Activation
 ```bash
-$ python -m pennyfarthing_scripts.prime --agent dev
+$ python -m pf.prime --agent dev
 # When story is in review phase
 
 # Workflow State
@@ -553,7 +553,7 @@ story_id: 63-8
 
 ### Audit Mode
 ```bash
-$ python -m pennyfarthing_scripts.prime --agent sm --audit
+$ python -m pf.prime --agent sm --audit
 
 [OK] Theme exists: the-expanse
 [OK] Agent in team: sm
@@ -566,7 +566,7 @@ Audit passed: 5/5 checks
 
 ### Refresh Mode
 ```bash
-$ python -m pennyfarthing_scripts.prime --agent tea --refresh
+$ python -m pf.prime --agent tea --refresh
 
 [INFO] Clearing session cache
 [OK] Session registered: tea (session-abc123)

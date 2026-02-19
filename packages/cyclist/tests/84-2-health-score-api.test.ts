@@ -20,7 +20,7 @@ import { Router } from 'express';
 // which vitest treats as external and doesn't apply mocks to)
 import { createHealthScoreRouter } from '../../core/src/server/api/health-score';
 
-// Mock fs.existsSync to bypass pennyfarthing_scripts directory check
+// Mock fs.existsSync to bypass pf directory check
 // (the implementation guards with existsSync before calling execFile)
 vi.mock('fs', async (importOriginal) => {
   const actual: any = await importOriginal();
@@ -162,7 +162,7 @@ describe('AC1: GET /api/health-score returns health score JSON', () => {
 // ============================================================================
 
 describe('AC2: Calls Python healthscore module via child process', () => {
-  it('should call python3 with -m pennyfarthing_scripts.healthscore', () => {
+  it('should call python3 with -m pf.healthscore', () => {
     const router = createHealthScoreRouter(() => '/projects/test');
 
     mockExecFile.mockImplementation((_cmd: any, _args: any, _opts: any, callback: any) => {
@@ -178,7 +178,7 @@ describe('AC2: Calls Python healthscore module via child process', () => {
 
     expect(mockExecFile).toHaveBeenCalledWith(
       'python3',
-      expect.arrayContaining(['-m', 'pennyfarthing_scripts.healthscore']),
+      expect.arrayContaining(['-m', 'pf.healthscore']),
       expect.objectContaining({
         timeout: expect.any(Number),
       }),

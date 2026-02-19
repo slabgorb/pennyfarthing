@@ -25,8 +25,8 @@ from rich.console import Console
 from rich.text import Text
 from textual.widgets import Footer, Static
 
-from pennyfarthing_scripts.bikerack.context_meter_footer import ContextMeterFooter
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.context_meter_footer import ContextMeterFooter
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/context wire format
@@ -229,7 +229,7 @@ class TestContextMeterInLayout:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -442,7 +442,7 @@ class TestContextMeterDoesNotInterfereWithFooter:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -455,7 +455,7 @@ class TestContextMeterDoesNotInterfereWithFooter:
     async def test_binding_footer_renders_bindings(self, app):
         """BindingFooter should still render keybinding hints."""
         async with app.run_test() as pilot:
-            from pennyfarthing_scripts.bikerack.tui import BindingFooter
+            from pf.bikerack.tui import BindingFooter
 
             binding_footer = app.query_one(BindingFooter)
             rendered = str(binding_footer.render())
@@ -467,7 +467,7 @@ class TestContextMeterDoesNotInterfereWithFooter:
     async def test_context_meter_is_separate_widget(self, app):
         """ContextMeterFooter and BindingFooter should be distinct widgets."""
         async with app.run_test() as pilot:
-            from pennyfarthing_scripts.bikerack.tui import BindingFooter
+            from pf.bikerack.tui import BindingFooter
 
             meters = app.query("ContextMeterFooter")
             footers = app.query_one(BindingFooter)
@@ -479,7 +479,7 @@ class TestContextMeterDoesNotInterfereWithFooter:
     async def test_both_widgets_visible(self, app):
         """Both ContextMeterFooter and BindingFooter should be visible."""
         async with app.run_test() as pilot:
-            from pennyfarthing_scripts.bikerack.tui import BindingFooter
+            from pf.bikerack.tui import BindingFooter
 
             meter = app.query_one("ContextMeterFooter")
             footer = app.query_one(BindingFooter)

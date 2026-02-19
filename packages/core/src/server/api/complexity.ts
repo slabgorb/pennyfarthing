@@ -10,7 +10,7 @@ export function createComplexityRouter(getProjectDir: () => string): Router {
     const top = req.query.top as string | undefined;
 
     const args = [
-      '-m', 'pennyfarthing_scripts.complexity',
+      '-m', 'pf.complexity',
       'analyze',
       '--format', 'json',
       '--path', projectDir,
@@ -20,7 +20,7 @@ export function createComplexityRouter(getProjectDir: () => string): Router {
       args.push('--top', top);
     }
 
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = join(projectDir, 'pennyfarthing', 'pennyfarthing-dist');
 
     execFile('python3', args, {
       cwd: pythonPath,

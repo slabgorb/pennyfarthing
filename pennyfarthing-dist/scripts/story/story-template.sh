@@ -5,7 +5,7 @@
 #   type:    Show specific template
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.story template [type]
+#   python -m pf.story template [type]
 
 set -e
 

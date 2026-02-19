@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from pennyfarthing_scripts.bc.focus import (
+from pf.bc.focus import (
     clear_all_named_layouts,
     clear_named_layout,
     list_named_layouts,
@@ -387,7 +387,7 @@ class TestCLISaveCommand:
         """The save subcommand should be registered on the bc group."""
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["save", "--help"])
@@ -401,7 +401,7 @@ class TestCLILoadCommand:
     def test_load_command_exists(self):
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["load", "--help"])
@@ -414,7 +414,7 @@ class TestCLIListCommand:
     def test_list_command_exists(self):
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["list"])
@@ -428,7 +428,7 @@ class TestCLIClearCommand:
     def test_clear_command_exists(self):
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["clear", "--help"])
@@ -441,7 +441,7 @@ class TestCLIClearAllCommand:
     def test_clear_all_command_exists(self):
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["clear-all"])

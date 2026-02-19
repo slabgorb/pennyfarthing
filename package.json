@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "11.3.3",
+  "version": "11.3.4",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "bin": {
@@ -19,7 +19,8 @@
     "pennyfarthing-dist/skills/",
     "pennyfarthing-dist/templates/",
     "pennyfarthing-dist/workflows/",
-    "pennyfarthing_scripts/",
+    "pennyfarthing-dist/pf/",
+    "pennyfarthing-dist/pyproject.toml",
     "scripts/postinstall.cjs",
     "README.md"
   ],

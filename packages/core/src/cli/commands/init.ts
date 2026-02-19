@@ -157,7 +157,7 @@ export async function initCommand(
   }
 
   // Symlink directories from node_modules to .pennyfarthing/
-  // Symlinks are required for prime.sh to find pennyfarthing_scripts via path resolution
+  // Symlinks are required for prime.sh to find pf via path resolution
   for (const { name, link } of DIRECTORY_SYMLINKS) {
     const sourcePath = join(nodeModulesPath, name);
     const destPath = join(projectRoot, link);
@@ -220,7 +220,7 @@ export async function initCommand(
   // 9. Install git hooks
   await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
 
-  // 9b. Install Python scripts package (pennyfarthing_scripts → `pf` CLI)
+  // 9b. Install Python scripts package (pf → `pf` CLI)
   await installPythonScripts(nodeModulesPath, { dryRun });
 
   // 9c. Migrate template files from old .claude/ locations to .pennyfarthing/
@@ -395,7 +395,7 @@ export async function installGitHooks(
 }
 
 /**
- * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
+ * Install pf Python package as the `pf` CLI tool.
  * Uses shared utility that checks local source first, then PyPI.
  */
 async function installPythonScripts(
@@ -481,7 +481,7 @@ async function generateTemplateFiles(
 
 /**
  * Generate .pennyfarthing/pyproject.toml for consumer projects.
- * This enables `uv run --project` to resolve pennyfarthing_scripts for hooks.
+ * This enables `uv run --project` to resolve pf for hooks.
  *
  * Skips generation if:
  * - .pennyfarthing/pyproject.toml already exists (user-customized)
@@ -502,7 +502,7 @@ export function generatePyprojectToml(
   }
 
   // Skip if dogfooding (inlined repo)
-  if (pathExists(join(projectRoot, 'pennyfarthing/pyproject.toml'))) {
+  if (pathExists(join(projectRoot, 'pennyfarthing/pennyfarthing-dist/pyproject.toml'))) {
     return;
   }
 
@@ -511,7 +511,7 @@ export function generatePyprojectToml(
   if (pathExists(projectPyproject)) {
     try {
       const content = readFileSync(projectPyproject, 'utf8');
-      if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+      if (content.includes('pennyfarthing-scripts') || content.includes('pf')) {
         return;
       }
     } catch { /* ignore read errors */ }

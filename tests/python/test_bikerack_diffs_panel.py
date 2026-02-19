@@ -21,9 +21,9 @@ from rich.console import Console
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel, Syntax
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.diffs_panel import DiffsPanel, Syntax
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching actual WheelHub /ws/diffs wire format

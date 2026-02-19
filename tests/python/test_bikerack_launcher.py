@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pennyfarthing_scripts.bikerack.launcher import (
+from pf.bikerack.launcher import (
     read_tui_pid_file,
     start_tui,
     write_tui_pid_file,
@@ -148,14 +148,14 @@ class TestStopBikerackWithTui:
 
     def test_stop_cleans_up_tui_pid_file(self, tmp_project):
         """stop_bikerack() should remove .wheelhub-gui-pid file."""
-        from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
+        from pf.bikerack.launcher import stop_bikerack
 
         # Set up running state: WheelHub + TUI
         (tmp_project / ".wheelhub-pid").write_text("11111")
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
-        with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
+        with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
             with patch("os.kill"):
                 stop_bikerack(tmp_project)
 
@@ -166,13 +166,13 @@ class TestStopBikerackWithTui:
 
     def test_stop_kills_tui_process(self, tmp_project):
         """stop_bikerack() should send SIGTERM to TUI process."""
-        from pennyfarthing_scripts.bikerack.launcher import stop_bikerack
+        from pf.bikerack.launcher import stop_bikerack
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
-        with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
+        with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
             with patch("os.kill") as mock_kill:
                 stop_bikerack(tmp_project)
 
@@ -188,13 +188,13 @@ class TestGetStatusWithTui:
 
     def test_status_includes_tui_pid(self, tmp_project):
         """get_status() should include tui_pid when TUI is running."""
-        from pennyfarthing_scripts.bikerack.launcher import get_status
+        from pf.bikerack.launcher import get_status
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-gui-pid").write_text("22222")
 
-        with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
+        with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
             result = get_status(tmp_project)
 
         assert result["running"] is True
@@ -204,12 +204,12 @@ class TestGetStatusWithTui:
 
     def test_status_without_tui(self, tmp_project):
         """get_status() should work when TUI is not running."""
-        from pennyfarthing_scripts.bikerack.launcher import get_status
+        from pf.bikerack.launcher import get_status
 
         (tmp_project / ".wheelhub-pid").write_text("11111")
         (tmp_project / ".bikerack-port").write_text("2898")
 
-        with patch("pennyfarthing_scripts.bikerack.launcher.is_process_alive", return_value=True):
+        with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
             result = get_status(tmp_project)
 
         assert result["running"] is True
@@ -221,7 +221,7 @@ class TestCleanupIncludesTui:
 
     def test_cleanup_removes_tui_pid_file(self, tmp_project):
         """cleanup_files() should remove .wheelhub-gui-pid."""
-        from pennyfarthing_scripts.bikerack.launcher import cleanup_files
+        from pf.bikerack.launcher import cleanup_files
 
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / ".wheelhub-pid").write_text("11111")
@@ -239,7 +239,7 @@ class TestPortDiscoveryIntegration:
 
     def test_start_tui_uses_discovered_port(self, tmp_project):
         """start_tui() should use the port from poll_for_port_file."""
-        from pennyfarthing_scripts.bikerack.launcher import poll_for_port_file
+        from pf.bikerack.launcher import poll_for_port_file
 
         # Write port file as if WheelHub wrote it
         (tmp_project / ".bikerack-port").write_text("3456")

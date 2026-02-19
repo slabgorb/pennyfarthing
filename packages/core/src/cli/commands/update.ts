@@ -245,7 +245,7 @@ async function updateInstalledContent(
 }
 
 /**
- * Install pennyfarthing_scripts Python package as the `pf` CLI tool.
+ * Install pf Python package as the `pf` CLI tool.
  * Uses shared utility that checks local source first, then PyPI.
  */
 async function installPythonScripts(

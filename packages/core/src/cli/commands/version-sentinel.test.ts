@@ -10,7 +10,7 @@
  * - AC2: update.ts writes .pennyfarthing/.installed-version after successful update
  * - AC5: Sentinel file format is plain text (single version string, no JSON)
  *
- * (AC3, AC4, AC6 tested in Python: pennyfarthing_scripts/tests/test_version_sentinel.py)
+ * (AC3, AC4, AC6 tested in Python: pf/tests/test_version_sentinel.py)
  *
  * Run with: cd packages/core && pnpm build && pnpm test
  */

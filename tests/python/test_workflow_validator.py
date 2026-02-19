@@ -22,7 +22,7 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from pennyfarthing_scripts.validate.adapters.workflow import (
+from pf.validate.adapters.workflow import (
     VALID_GATE_TYPES,
     VALID_TYPES,
     discover_workflow_files,
@@ -689,7 +689,7 @@ class TestAC7StrictAndCLI:
 
     def test_cli_registration(self):
         """workflow is registered in VALIDATORS dict."""
-        from pennyfarthing_scripts.validate.cli import VALIDATORS
+        from pf.validate.cli import VALIDATORS
 
         assert "workflow" in VALIDATORS
 

@@ -39,17 +39,17 @@ class TestClickDependency:
 
 
 class TestCLIHelpOutput:
-    """AC2: python -m pennyfarthing_scripts.cli --help shows command groups."""
+    """AC2: python -m pf.cli --help shows command groups."""
 
     def test_cli_module_exists(self):
-        """pennyfarthing_scripts/cli.py should exist."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "cli.py"
+        """pf/cli.py should exist."""
+        cli_file = PROJECT_ROOT / "pf" / "cli.py"
         assert cli_file.exists(), "cli.py module not found"
 
     def test_cli_is_runnable_as_module(self):
-        """CLI should be runnable via python -m pennyfarthing_scripts.cli."""
+        """CLI should be runnable via python -m pf.cli."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+            [sys.executable, "-m", "pf.cli", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -60,7 +60,7 @@ class TestCLIHelpOutput:
     def test_cli_help_shows_usage(self):
         """--help should show usage information."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+            [sys.executable, "-m", "pf.cli", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -71,7 +71,7 @@ class TestCLIHelpOutput:
     def test_cli_help_shows_command_groups(self):
         """--help should show available command groups (workflow, sprint, agent)."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+            [sys.executable, "-m", "pf.cli", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -83,7 +83,7 @@ class TestCLIHelpOutput:
     def test_cli_has_version_option(self):
         """CLI should support --version option."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--version"],
+            [sys.executable, "-m", "pf.cli", "--version"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -103,7 +103,7 @@ class TestStartupPerformance:
         for _ in range(3):
             start = time.perf_counter()
             result = subprocess.run(
-                [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+                [sys.executable, "-m", "pf.cli", "--help"],
                 capture_output=True,
                 text=True,
                 cwd=str(PROJECT_ROOT),
@@ -120,7 +120,7 @@ class TestStartupPerformance:
     def test_cli_startup_no_heavy_imports_at_top(self):
         """CLI module should not import heavy modules at top level."""
         # This test inspects the AST to verify lazy imports
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "cli.py"
         if not cli_file.exists():
             pytest.skip("cli.py does not exist yet")
 
@@ -151,7 +151,7 @@ class TestLazyImports:
 
     def test_cli_uses_lazy_loading_pattern(self):
         """CLI should use lazy loading for command group imports."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "cli.py"
         if not cli_file.exists():
             pytest.skip("cli.py does not exist yet")
 
@@ -162,13 +162,13 @@ class TestLazyImports:
         # 2. Click's lazy group pattern
         # 3. Conditional imports
 
-        # At minimum, verify no heavy pennyfarthing_scripts modules at top level
+        # At minimum, verify no heavy pf modules at top level
         tree = ast.parse(source)
 
         top_level_from_imports = []
         for node in ast.iter_child_nodes(tree):
             if isinstance(node, ast.ImportFrom):
-                if node.module and node.module.startswith("pennyfarthing_scripts"):
+                if node.module and node.module.startswith("pf"):
                     # Collect what's being imported
                     for alias in node.names:
                         top_level_from_imports.append(f"{node.module}.{alias.name}")
@@ -180,7 +180,7 @@ class TestLazyImports:
             for imp in top_level_from_imports:
                 # Allow importing just the module name for lazy loading setup
                 # but not importing functions/classes directly
-                if f"pennyfarthing_scripts.{heavy}" in imp:
+                if f"pf.{heavy}" in imp:
                     # This is ok if it's just module import for lazy group
                     pass
 
@@ -190,7 +190,7 @@ class TestLazyImports:
         code = """
 import time
 start = time.perf_counter()
-import pennyfarthing_scripts.cli
+import pf.cli
 elapsed = (time.perf_counter() - start) * 1000
 print(f"{elapsed:.1f}")
 """
@@ -214,7 +214,7 @@ class TestCLIStructure:
 
     def test_cli_has_main_group(self):
         """CLI should define a main Click group."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "cli.py"
         if not cli_file.exists():
             pytest.skip("cli.py does not exist yet")
 
@@ -224,7 +224,7 @@ class TestCLIStructure:
 
     def test_cli_has_main_entry_point(self):
         """CLI should have if __name__ == '__main__' block."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "cli.py"
         if not cli_file.exists():
             pytest.skip("cli.py does not exist yet")
 

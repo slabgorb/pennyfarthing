@@ -488,7 +488,7 @@ class TestIntegrationRealCodebase:
     def test_skill_registry_schema_still_valid(self) -> None:
         """skill-registry.yaml should still pass its JSON schema validation."""
         # Import the existing validator to verify no regressions
-        from pennyfarthing_scripts.validate.adapters.skill_command import (
+        from pf.validate.adapters.skill_command import (
             validate_skill_registry,
         )
 

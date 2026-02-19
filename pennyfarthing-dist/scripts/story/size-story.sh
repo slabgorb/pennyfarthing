@@ -5,7 +5,7 @@
 #   points:  Show specific guidance for that point value
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.story size [points]
+#   python -m pf.story size [points]
 
 set -e
 

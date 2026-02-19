@@ -83,7 +83,7 @@ const mockCommandOutputMessage = {
 <command-name>/sm</command-name>\`\`\`bash
 d="$PWD"; while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done
 export PYTHONPATH="$(dirname "$(dirname "$(cd "$d/.pennyfarthing/scripts" && pwd -P)")"):$PYTHONPATH"
-python3 -m pennyfarthing_scripts.cli agent start "sm"
+python3 -m pf.cli agent start "sm"
 \`\`\``,
   timestamp: Date.now(),
 };
@@ -149,7 +149,7 @@ describe('AC1: Skill content filtering from user messages', () => {
   it('should NOT display full skill content for <command-name> messages', async () => {
     render(<MessageView messages={[mockCommandOutputMessage]} />);
 
-    expect(screen.queryByText(/pennyfarthing_scripts/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pf\.cli/)).not.toBeInTheDocument();
   });
 
   it('should NOT display pf agent start as a user message', async () => {

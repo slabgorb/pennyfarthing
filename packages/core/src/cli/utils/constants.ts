@@ -34,7 +34,8 @@ export const DIRECTORY_SYMLINKS = [
   { name: 'output-styles', link: '.pennyfarthing/output-styles' },
   { name: 'personas', link: '.pennyfarthing/personas' },
   { name: 'scripts', link: '.pennyfarthing/scripts' },
-  { name: 'workflows', link: '.pennyfarthing/workflows' }
+  { name: 'workflows', link: '.pennyfarthing/workflows' },
+  { name: 'pf', link: '.pennyfarthing/pf' }
 ] as const;
 
 /**
@@ -59,7 +60,8 @@ export const MANAGED_PATHS = [
   '.pennyfarthing/output-styles',
   '.pennyfarthing/personas',
   '.pennyfarthing/scripts',
-  '.pennyfarthing/workflows'
+  '.pennyfarthing/workflows',
+  '.pennyfarthing/pf'
 ] as const;
 
 export type SymlinkDefinition = {

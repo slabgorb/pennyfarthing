@@ -18,7 +18,7 @@ export function findLocalPyproject(nodeModulesPath: string | null): string | nul
   if (existsSync(pkgPyproject)) {
     try {
       const content = readFileSync(pkgPyproject, 'utf8');
-      if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+      if (content.includes('pennyfarthing-scripts') || content.includes('pf')) {
         return pkgPyproject;
       }
     } catch { /* ignore read errors */ }
@@ -32,7 +32,7 @@ export function findLocalPyproject(nodeModulesPath: string | null): string | nul
     if (existsSync(candidate)) {
       try {
         const content = readFileSync(candidate, 'utf8');
-        if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+        if (content.includes('pennyfarthing-scripts') || content.includes('pf')) {
           return candidate;
         }
       } catch { /* ignore read errors */ }
@@ -42,7 +42,7 @@ export function findLocalPyproject(nodeModulesPath: string | null): string | nul
     if (existsSync(pfCandidate)) {
       try {
         const content = readFileSync(pfCandidate, 'utf8');
-        if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+        if (content.includes('pennyfarthing-scripts') || content.includes('pf')) {
           return pfCandidate;
         }
       } catch { /* ignore read errors */ }

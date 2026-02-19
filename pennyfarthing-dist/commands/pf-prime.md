@@ -129,7 +129,7 @@ If context becomes stale mid-session, run `/prime` manually:
 </integration>
 
 <reference>
-- **CLI:** `pf.sh agent start <name>` or `python3 -m pennyfarthing_scripts.cli agent start <name>`
+- **CLI:** `pf.sh agent start <name>` or `python3 -m pf.cli agent start <name>`
 - **Loads:** Workflow state, agent definition, persona, behavior guide, sprint context, session, sidecars
 - **Sidecar location:** `.pennyfarthing/sidecars/{agent}/*.md`
 - **Behavior guide:** `.pennyfarthing/guides/agent-behavior.md` (all agents)

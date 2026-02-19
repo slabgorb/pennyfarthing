@@ -27,8 +27,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.context import ContextResult
-from pennyfarthing_scripts.handoff.marker import generate_marker
+from pf.context import ContextResult
+from pf.handoff.marker import generate_marker
 
 
 def _make_ctx(
@@ -59,35 +59,35 @@ class TestCliRelayOnContextOk:
 
     def test_returns_inline_handoff_action(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert 'action: "inline_handoff"' in result
 
     def test_has_activation_command(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "pf agent start dev --tier handoff --quiet" in result
 
     def test_has_next_agent(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("tea")
 
         assert 'next_agent: "tea"' in result
 
     def test_has_relay_mode_true(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "relay_mode: true" in result
 
     def test_no_cyclist_markers(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "CYCLIST:" not in result
@@ -106,7 +106,7 @@ class TestCliRelayOnContextHigh:
             relay_mode=True, is_cyclist=False,
             use_tirepump=True, usable_percent=75,
         )
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("reviewer")
 
         assert 'action: "tirepump_handoff"' in result
@@ -116,7 +116,7 @@ class TestCliRelayOnContextHigh:
             relay_mode=True, is_cyclist=False,
             use_tirepump=True, usable_percent=75,
         )
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("reviewer")
 
         assert "/clear" in result
@@ -126,7 +126,7 @@ class TestCliRelayOnContextHigh:
             relay_mode=True, is_cyclist=False,
             use_tirepump=True, usable_percent=75,
         )
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("reviewer")
 
         assert 'next_agent: "reviewer"' in result
@@ -137,7 +137,7 @@ class TestCliRelayOnContextHigh:
             relay_mode=True, is_cyclist=False,
             use_tirepump=True, usable_percent=75,
         )
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("reviewer")
 
         assert "activation_command" not in result
@@ -153,21 +153,21 @@ class TestCliRelayOff:
 
     def test_no_action_field(self):
         ctx = _make_ctx(relay_mode=False, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "action:" not in result
 
     def test_has_fallback_with_slash_command(self):
         ctx = _make_ctx(relay_mode=False, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "/pf-dev" in result
 
     def test_relay_mode_false(self):
         ctx = _make_ctx(relay_mode=False, is_cyclist=False, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "relay_mode: false" in result
@@ -183,14 +183,14 @@ class TestCyclistRelayOn:
 
     def test_has_handoff_marker(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=True, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "CYCLIST:HANDOFF:/pf-dev" in result
 
     def test_is_cyclist_block(self):
         ctx = _make_ctx(relay_mode=True, is_cyclist=True, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "AGENT_COMMAND:" in result
@@ -210,7 +210,7 @@ class TestCyclistRelayOnTirepump:
             relay_mode=True, is_cyclist=True,
             use_tirepump=True, usable_percent=75,
         )
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "CYCLIST:CONTEXT_CLEAR:/pf-dev" in result
@@ -226,14 +226,14 @@ class TestCyclistRelayOff:
 
     def test_has_question_marker(self):
         ctx = _make_ctx(relay_mode=False, is_cyclist=True, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "CYCLIST:QUESTION:yesno" in result
 
     def test_has_question_text(self):
         ctx = _make_ctx(relay_mode=False, is_cyclist=True, usable_percent=30)
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "hand off" in result.lower() or "Hand off" in result
@@ -261,7 +261,7 @@ class TestEdgeCases:
     def test_context_error_still_produces_marker(self):
         """When context check fails, should still produce a usable marker."""
         ctx = _make_ctx(relay_mode=False, is_cyclist=False, error="no_transcript")
-        with patch("pennyfarthing_scripts.handoff.marker.check_context", return_value=ctx):
+        with patch("pf.handoff.marker.check_context", return_value=ctx):
             result = generate_marker("dev")
 
         assert "AGENT_COMMAND:" in result

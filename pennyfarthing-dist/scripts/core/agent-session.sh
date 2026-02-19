@@ -8,11 +8,11 @@
 #
 # Session files stored in .session/agents/<session-id> for multi-session support
 
-# Find package root (where pennyfarthing_scripts lives) from script location
+# Find package root (where pf/ lives) from script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
-PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
+PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
-# Set PYTHONPATH so Python can find pennyfarthing_scripts
+# Set PYTHONPATH so Python can find pf package
 export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
 
 # Agents directory for multi-session support

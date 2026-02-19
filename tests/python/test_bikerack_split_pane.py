@@ -23,7 +23,7 @@ class TestSplitPaneStructure:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -97,7 +97,7 @@ class TestSplitToggle:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -156,7 +156,7 @@ class TestSplitPaneFocusCycling:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -209,13 +209,13 @@ class TestNamedPresets:
 
     def test_split_presets_dict_exists(self):
         """SPLIT_PRESETS dict should be defined in tui module."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         assert isinstance(SPLIT_PRESETS, dict), "SPLIT_PRESETS should be a dict"
 
     def test_required_presets_defined(self):
         """All required presets should be defined."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         required = ["sprint+diffs", "changed+diffs", "progress+debug"]
         for preset in required:
@@ -225,7 +225,7 @@ class TestNamedPresets:
 
     def test_preset_structure(self):
         """Each preset should map to a (left_panel, right_panel) tuple."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         for name, value in SPLIT_PRESETS.items():
             assert isinstance(value, tuple) and len(value) == 2, (
@@ -237,7 +237,7 @@ class TestNamedPresets:
 
     def test_sprint_diffs_preset_values(self):
         """sprint+diffs preset should map to ('sprint', 'diffs')."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         assert SPLIT_PRESETS["sprint+diffs"] == ("sprint", "diffs"), (
             f"sprint+diffs should be ('sprint', 'diffs'), got {SPLIT_PRESETS.get('sprint+diffs')}"
@@ -245,7 +245,7 @@ class TestNamedPresets:
 
     def test_changed_diffs_preset_values(self):
         """changed+diffs preset should map to ('changed', 'diffs')."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         assert SPLIT_PRESETS["changed+diffs"] == ("changed", "diffs"), (
             f"changed+diffs should be ('changed', 'diffs'), got {SPLIT_PRESETS.get('changed+diffs')}"
@@ -253,7 +253,7 @@ class TestNamedPresets:
 
     def test_progress_debug_preset_values(self):
         """progress+debug preset should map to ('progress', 'debug')."""
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         assert SPLIT_PRESETS["progress+debug"] == ("progress", "debug"), (
             f"progress+debug should be ('progress', 'debug'), got {SPLIT_PRESETS.get('progress+debug')}"
@@ -261,7 +261,7 @@ class TestNamedPresets:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -295,7 +295,7 @@ class TestBcSplitCommand:
 
     def test_split_command_exists_on_bc_group(self):
         """The bc Click group should have a 'split' subcommand."""
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         commands = list(bc.commands.keys())
         assert "split" in commands, (
@@ -306,7 +306,7 @@ class TestBcSplitCommand:
         """pf bc split should accept left and right panel arguments."""
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["split", "sprint", "diffs"])
@@ -318,7 +318,7 @@ class TestBcSplitCommand:
         """pf bc split should reject invalid panel names with a specific error."""
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["split", "sprint", "nonexistent"])
@@ -333,7 +333,7 @@ class TestBcSplitCommand:
         """pf bc split should reject the same panel for both sides."""
         from click.testing import CliRunner
 
-        from pennyfarthing_scripts.bc.cli import bc
+        from pf.bc.cli import bc
 
         runner = CliRunner()
         result = runner.invoke(bc, ["split", "sprint", "sprint"])
@@ -346,9 +346,9 @@ class TestBcSplitCommand:
 
     def test_split_command_writes_to_config(self, tmp_path):
         """pf bc split should write split configuration to config.local.yaml."""
-        from pennyfarthing_scripts.bc.focus import _read_config
+        from pf.bc.focus import _read_config
 
-        from pennyfarthing_scripts.bc.split import set_split_layout
+        from pf.bc.split import set_split_layout
 
         result = set_split_layout("sprint", "diffs", project_dir=tmp_path)
         assert result["success"], f"set_split_layout should succeed: {result}"
@@ -360,8 +360,8 @@ class TestBcSplitCommand:
 
     def test_all_preset_panels_accepted_by_cli(self, tmp_path):
         """Every panel referenced in SPLIT_PRESETS must be valid for bc split."""
-        from pennyfarthing_scripts.bc.split import set_split_layout
-        from pennyfarthing_scripts.bikerack.tui import SPLIT_PRESETS
+        from pf.bc.split import set_split_layout
+        from pf.bikerack.tui import SPLIT_PRESETS
 
         for preset_name, (left, right) in SPLIT_PRESETS.items():
             result = set_split_layout(left, right, project_dir=tmp_path)
@@ -372,7 +372,7 @@ class TestBcSplitCommand:
 
     def test_split_command_accepts_progress_panel(self, tmp_path):
         """pf bc split should accept 'progress' as a valid panel name."""
-        from pennyfarthing_scripts.bc.split import set_split_layout
+        from pf.bc.split import set_split_layout
 
         result = set_split_layout("progress", "debug", project_dir=tmp_path)
         assert result["success"], (
@@ -388,7 +388,7 @@ class TestWorkflowAwareAutoLayout:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 

@@ -17,7 +17,7 @@ Every Pennyfarthing agent activation requires loading multiple context sources: 
 
 ## Decision
 
-Create a unified Python-based activation system (`pennyfarthing_scripts/prime/`) that bootstraps any agent with consistent context loading, workflow detection, and session management.
+Create a unified Python-based activation system (`pf/prime/`) that bootstraps any agent with consistent context loading, workflow detection, and session management.
 
 ### Architecture
 
@@ -86,19 +86,19 @@ Prime detects the current workflow state to route agents correctly:
 
 ```bash
 # Standard activation
-python -m pennyfarthing_scripts.prime --agent sm
+python -m pf.prime --agent sm
 
 # Minimal (skip optional context)
-python -m pennyfarthing_scripts.prime --agent dev --minimal
+python -m pf.prime --agent dev --minimal
 
 # Full (include domain docs)
-python -m pennyfarthing_scripts.prime --agent architect --full
+python -m pf.prime --agent architect --full
 
 # JSON output for Cyclist
-python -m pennyfarthing_scripts.prime --agent tea --json
+python -m pf.prime --agent tea --json
 
 # Skip specific loading
-python -m pennyfarthing_scripts.prime --agent dev --no-persona --no-workflow
+python -m pf.prime --agent dev --no-persona --no-workflow
 ```
 
 ### Output Format
@@ -195,7 +195,7 @@ Load each section only when referenced.
 ## References
 
 - Entry point: `pennyfarthing-dist/scripts/core/prime.sh`
-- Implementation: `pennyfarthing_scripts/prime/`
+- Implementation: `pf/prime/`
 - Agent-session wrapper: `pennyfarthing-dist/scripts/core/agent-session.sh`
 - ADR-0006: State Detection Pattern
 - ADR-0007: Subagent Delegation Model

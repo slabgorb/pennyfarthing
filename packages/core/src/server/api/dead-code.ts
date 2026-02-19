@@ -9,7 +9,7 @@ function runDeadCodeCommand(
   repo: string | undefined,
 ): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
-    const args = ['-m', 'pennyfarthing_scripts.deadcode', command, '--format', 'json'];
+    const args = ['-m', 'pf.deadcode', command, '--format', 'json'];
 
     if (command === 'stale') {
       args.push('--days', days);
@@ -21,7 +21,7 @@ function runDeadCodeCommand(
       args.push('--path', projectDir);
     }
 
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = join(projectDir, 'pennyfarthing', 'pennyfarthing-dist');
 
     execFile('python3', args, {
       cwd: pythonPath,

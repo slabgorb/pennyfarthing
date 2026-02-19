@@ -1,5 +1,5 @@
 """
-Tests for pennyfarthing_scripts.complexity module.
+Tests for pf.complexity module.
 
 Covers models (ADR-0008), ESLint output parsing, analysis engine,
 formatters (table/json/csv), CLI options, and edge cases.
@@ -14,21 +14,21 @@ from dataclasses import asdict
 import pytest
 from click.testing import CliRunner
 
-from pennyfarthing_scripts.complexity.models import (
+from pf.complexity.models import (
     FileComplexity,
     ComplexityResult,
 )
-from pennyfarthing_scripts.complexity.analyze import (
+from pf.complexity.analyze import (
     analyze_complexity,
     _find_eslint,
     _parse_eslint_output,
 )
-from pennyfarthing_scripts.complexity.formatters import (
+from pf.complexity.formatters import (
     format_file_table,
     export_json,
     export_csv,
 )
-from pennyfarthing_scripts.complexity.cli import complexity
+from pf.complexity.cli import complexity
 
 
 # =============================================================================
@@ -293,7 +293,7 @@ class TestAnalyzeComplexity:
     def test_eslint_not_found_returns_error(self):
         """AC: Graceful error when eslint is not installed."""
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=None,
         ):
             result = asyncio.run(analyze_complexity(Path("/tmp/project")))
@@ -302,14 +302,14 @@ class TestAnalyzeComplexity:
 
     def test_successful_analysis(self):
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=Path("/tmp/project/node_modules/.bin/eslint"),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._run_eslint",
+            "pf.complexity.analyze._run_eslint",
             new_callable=AsyncMock,
             return_value=(SAMPLE_ESLINT_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._count_file_lines",
+            "pf.complexity.analyze._count_file_lines",
             new_callable=AsyncMock,
             return_value=506,
         ):
@@ -320,14 +320,14 @@ class TestAnalyzeComplexity:
 
     def test_result_has_target_path(self):
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=Path("/tmp/project/node_modules/.bin/eslint"),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._run_eslint",
+            "pf.complexity.analyze._run_eslint",
             new_callable=AsyncMock,
             return_value=(SAMPLE_ESLINT_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._count_file_lines",
+            "pf.complexity.analyze._count_file_lines",
             new_callable=AsyncMock,
             return_value=100,
         ):
@@ -337,14 +337,14 @@ class TestAnalyzeComplexity:
     def test_eslint_nonzero_exit_still_parses(self):
         """ESLint returns exit code 1 for warnings — should still parse output."""
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=Path("/tmp/node_modules/.bin/eslint"),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._run_eslint",
+            "pf.complexity.analyze._run_eslint",
             new_callable=AsyncMock,
             return_value=(SAMPLE_ESLINT_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._count_file_lines",
+            "pf.complexity.analyze._count_file_lines",
             new_callable=AsyncMock,
             return_value=200,
         ):
@@ -355,10 +355,10 @@ class TestAnalyzeComplexity:
     def test_empty_results(self):
         """No TS/JS files found should return success with empty files list."""
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=Path("/tmp/node_modules/.bin/eslint"),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._run_eslint",
+            "pf.complexity.analyze._run_eslint",
             new_callable=AsyncMock,
             return_value=(EMPTY_ESLINT_OUTPUT, "", 0),
         ):
@@ -390,14 +390,14 @@ class TestAnalyzeComplexity:
             },
         ])
         with patch(
-            "pennyfarthing_scripts.complexity.analyze._find_eslint",
+            "pf.complexity.analyze._find_eslint",
             return_value=Path("/tmp/node_modules/.bin/eslint"),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._run_eslint",
+            "pf.complexity.analyze._run_eslint",
             new_callable=AsyncMock,
             return_value=(output_with_excluded, "", 1),
         ), patch(
-            "pennyfarthing_scripts.complexity.analyze._count_file_lines",
+            "pf.complexity.analyze._count_file_lines",
             new_callable=AsyncMock,
             return_value=100,
         ):
@@ -557,7 +557,7 @@ class TestCLI:
             ],
         )
         with patch(
-            "pennyfarthing_scripts.complexity.cli._run_analysis",
+            "pf.complexity.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
@@ -577,7 +577,7 @@ class TestCLI:
             ],
         )
         with patch(
-            "pennyfarthing_scripts.complexity.cli._run_analysis",
+            "pf.complexity.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
@@ -595,7 +595,7 @@ class TestCLI:
             ],
         )
         with patch(
-            "pennyfarthing_scripts.complexity.cli._run_analysis",
+            "pf.complexity.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
