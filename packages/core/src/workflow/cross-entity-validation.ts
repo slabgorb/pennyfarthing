@@ -136,6 +136,129 @@ export interface CrossEntityValidationResult {
 export function validateCrossEntityRefs(
   context: CrossEntityContext,
 ): CrossEntityValidationResult {
-  // STUB: Always returns valid. Tests will fail on assertion (RED state).
-  return { valid: true };
+  const errors: CrossEntityError[] = [];
+  const warnings: CrossEntityWarning[] = [];
+
+  const agentFileSet = new Set(context.knownAgentFiles);
+  const workflowNameSet = new Set(context.knownWorkflowNames);
+  const skillNameSet = new Set(context.knownSkillNames);
+
+  // AC1: Agents referenced in workflows must exist as agent files
+  for (const wfRef of context.workflowAgentRefs) {
+    for (const agent of wfRef.referencedAgents) {
+      if (!agentFileSet.has(agent)) {
+        errors.push({
+          field: `workflow[${wfRef.workflow}].agent[${agent}]`,
+          message: `Agent '${agent}' referenced in workflow '${wfRef.workflow}' has no agent file`,
+        });
+      }
+    }
+  }
+
+  // AC2: Workflows referenced by agents must be defined
+  for (const agRef of context.agentWorkflowRefs) {
+    for (const wf of agRef.referencedWorkflows) {
+      if (!workflowNameSet.has(wf)) {
+        errors.push({
+          field: `agent[${agRef.agent}].workflow[${wf}]`,
+          message: `Workflow '${wf}' referenced by agent '${agRef.agent}' is not defined`,
+        });
+      }
+    }
+  }
+
+  // AC3: Skills' related_skills must exist in the registry
+  for (const skillRef of context.skillEntityRefs) {
+    for (const related of skillRef.relatedSkills) {
+      if (related === skillRef.skill) {
+        warnings.push({
+          field: `skill[${skillRef.skill}].related_skills`,
+          message: `Skill '${skillRef.skill}' lists itself as a related skill (self-reference)`,
+        });
+        continue;
+      }
+      if (!skillNameSet.has(related)) {
+        errors.push({
+          field: `skill[${skillRef.skill}].related_skills[${related}]`,
+          message: `Related skill '${related}' referenced by skill '${skillRef.skill}' does not exist`,
+        });
+      }
+    }
+  }
+
+  // AC4: Skills referenced by commands must exist
+  for (const cmdRef of context.commandSkillRefs) {
+    for (const skill of cmdRef.referencedSkills) {
+      if (!skillNameSet.has(skill)) {
+        errors.push({
+          field: `command[${cmdRef.command}].skill[${skill}]`,
+          message: `Skill '${skill}' referenced by command '${cmdRef.command}' does not exist`,
+        });
+      }
+    }
+  }
+
+  // AC5: Bidirectional consistency — workflow↔agent
+  // Build lookup maps for bidirectional checks
+  const workflowToAgents = new Map<string, Set<string>>();
+  for (const wfRef of context.workflowAgentRefs) {
+    workflowToAgents.set(wfRef.workflow, new Set(wfRef.referencedAgents));
+  }
+
+  const agentToWorkflows = new Map<string, Set<string>>();
+  for (const agRef of context.agentWorkflowRefs) {
+    agentToWorkflows.set(agRef.agent, new Set(agRef.referencedWorkflows));
+  }
+
+  // Check: workflow references agent, but agent doesn't claim that workflow
+  for (const [workflow, agents] of workflowToAgents) {
+    for (const agent of agents) {
+      const agentWfs = agentToWorkflows.get(agent);
+      if (agentWfs && !agentWfs.has(workflow)) {
+        warnings.push({
+          field: `bidirectional[${workflow}↔${agent}]`,
+          message: `Workflow '${workflow}' references agent '${agent}', but '${agent}' does not list '${workflow}' in its workflow references`,
+        });
+      }
+    }
+  }
+
+  // Check: agent claims workflow, but workflow doesn't reference agent
+  for (const [agent, workflows] of agentToWorkflows) {
+    for (const workflow of workflows) {
+      const wfAgents = workflowToAgents.get(workflow);
+      if (wfAgents && !wfAgents.has(agent)) {
+        warnings.push({
+          field: `bidirectional[${agent}↔${workflow}]`,
+          message: `Agent '${agent}' claims workflow '${workflow}', but '${workflow}' does not reference '${agent}'`,
+        });
+      }
+    }
+  }
+
+  // AC5: Bidirectional consistency — related_skills symmetry
+  const skillToRelated = new Map<string, Set<string>>();
+  for (const skillRef of context.skillEntityRefs) {
+    skillToRelated.set(skillRef.skill, new Set(skillRef.relatedSkills));
+  }
+
+  for (const [skill, relatedSet] of skillToRelated) {
+    for (const related of relatedSet) {
+      if (related === skill) continue; // self-ref already warned
+      const reverseSet = skillToRelated.get(related);
+      if (reverseSet && !reverseSet.has(skill)) {
+        warnings.push({
+          field: `bidirectional[${skill}↔${related}]`,
+          message: `Skill '${skill}' lists '${related}' as related, but '${related}' does not list '${skill}' back (asymmetric)`,
+        });
+      }
+    }
+  }
+
+  const valid = errors.length === 0;
+  return {
+    valid,
+    ...(errors.length > 0 ? { errors } : {}),
+    ...(warnings.length > 0 ? { warnings } : {}),
+  };
 }
