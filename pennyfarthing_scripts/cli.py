@@ -90,6 +90,11 @@ from pennyfarthing_scripts.jira.cli import jira  # noqa: E402
 
 cli.add_command(jira)
 
+# Import and register bmad group
+from pennyfarthing_scripts.bmad.cli import bmad  # noqa: E402
+
+cli.add_command(bmad)
+
 # Import and register theme group
 from pennyfarthing_scripts.theme.cli import theme  # noqa: E402
 
