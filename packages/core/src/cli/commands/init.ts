@@ -169,6 +169,9 @@ export async function initCommand(
     }
   }
 
+  // Generate pyproject.toml for consumer projects (enables uv run --project for hooks)
+  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+
   // Copy commands directory (allows user commands alongside built-in)
   const builtInCommandsPath = join(assetsPath, 'commands');
   const projectCommandsPath = join(projectRoot, '.pennyfarthing/project/commands');
@@ -474,6 +477,58 @@ async function generateTemplateFiles(
   if (!options.dryRun) {
     ensureSettingsSymlink(projectRoot);
   }
+}
+
+/**
+ * Generate .pennyfarthing/pyproject.toml for consumer projects.
+ * This enables `uv run --project` to resolve pennyfarthing_scripts for hooks.
+ *
+ * Skips generation if:
+ * - .pennyfarthing/pyproject.toml already exists (user-customized)
+ * - $PROJECT_ROOT/pyproject.toml already references pennyfarthing-scripts
+ * - $PROJECT_ROOT/pennyfarthing/pyproject.toml exists (dogfooding)
+ */
+export function generatePyprojectToml(
+  projectRoot: string,
+  nodeModulesPath: string,
+  options: { dryRun?: boolean }
+): void {
+  const destPath = join(projectRoot, '.pennyfarthing/pyproject.toml');
+
+  // Skip if already exists
+  if (pathExists(destPath)) {
+    logger.skipped('.pennyfarthing/pyproject.toml', 'already exists');
+    return;
+  }
+
+  // Skip if dogfooding (inlined repo)
+  if (pathExists(join(projectRoot, 'pennyfarthing/pyproject.toml'))) {
+    return;
+  }
+
+  // Skip if project root already has a pyproject.toml with pennyfarthing-scripts
+  const projectPyproject = join(projectRoot, 'pyproject.toml');
+  if (pathExists(projectPyproject)) {
+    try {
+      const content = readFileSync(projectPyproject, 'utf8');
+      if (content.includes('pennyfarthing-scripts') || content.includes('pennyfarthing_scripts')) {
+        return;
+      }
+    } catch { /* ignore read errors */ }
+  }
+
+  // Copy template from pennyfarthing-dist/templates/
+  const templatePath = join(nodeModulesPath, 'templates/pyproject.toml');
+  if (!pathExists(templatePath)) {
+    logger.warning('pyproject.toml template not found in package');
+    return;
+  }
+
+  if (!options.dryRun) {
+    const content = readFileSync(templatePath, 'utf8');
+    writeFileSync(destPath, content, 'utf8');
+  }
+  logger.created('.pennyfarthing/pyproject.toml');
 }
 
 async function updateGitignore(
