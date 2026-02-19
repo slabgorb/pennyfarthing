@@ -25,7 +25,7 @@ import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
-import { installGitHooks } from './init.js';
+import { installGitHooks, generatePyprojectToml } from './init.js';
 import { writeVersionSentinel } from '../utils/version-sentinel.js';
 import {
   listMigrationFiles,
@@ -119,6 +119,9 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     ensureSettingsSymlink(projectRoot);
   }
 
+  // Generate pyproject.toml if missing (enables uv run --project for hooks)
+  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+
   if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0 && !settingsUpdated) {
     logger.success(`Already up to date (v${updateInfo.currentVersion})`);
     return;
@@ -195,6 +198,9 @@ async function updateInstalledContent(
     }
     logger.created('.pennyfarthing/project/skills/ (for user custom skills)');
   }
+
+  // Generate pyproject.toml if missing (enables uv run --project for hooks)
+  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
 
   // Re-copy commands and skills (use assetsPath for correct pf-* prefix resolution)
   const assetsPath = getAssetsPath();
