@@ -223,7 +223,20 @@ export function getPortraitsDir(): string | null {
     return bundledPortraits;
   }
 
-  // 2. Monorepo/pennyfarthing-dist (for dogfooding)
+  // 2. @pennyfarthing/cyclist package (consumer npm installs)
+  //    __dirname is core/dist/server/, walk up to find node_modules
+  let searchDir = __dirname;
+  for (let i = 0; i < 10; i++) {
+    const cyclistPortraits = join(searchDir, 'node_modules', '@pennyfarthing', 'cyclist', 'portraits');
+    if (existsSync(cyclistPortraits)) {
+      return cyclistPortraits;
+    }
+    const parent = dirname(searchDir);
+    if (parent === searchDir) break;
+    searchDir = parent;
+  }
+
+  // 3. Monorepo/pennyfarthing-dist (for dogfooding)
   const distPath = resolvePennyfarthingDist();
   if (distPath) {
     const paths = getPortraitPaths(distPath);
@@ -232,7 +245,7 @@ export function getPortraitsDir(): string | null {
     }
   }
 
-  // 3. Fallback: portraits in public dir (dev symlink)
+  // 4. Fallback: portraits in public dir (dev symlink)
   const pubDir = getPublicDir();
   const publicPortraits = join(pubDir, 'portraits');
   if (existsSync(publicPortraits)) {
