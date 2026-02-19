@@ -29,6 +29,7 @@ from pennyfarthing_scripts.bc.focus import (
     save_named_layout,
     set_panel_focus,
 )
+from pennyfarthing_scripts.bc.split import set_split_layout
 
 
 def _get_current_layout() -> dict | None:
@@ -201,6 +202,26 @@ def clear_layout(name: str, dry_run: bool):
     result = clear_named_layout(name)
     if result["success"]:
         click.echo(json.dumps({"success": True, "message": result.get("message", "layout cleared")}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
+@bc.command("split")
+@click.argument("left")
+@click.argument("right")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def split_layout(left: str, right: str, dry_run: bool):
+    """Set split-pane layout with LEFT and RIGHT panels.
+
+    Example: pf bc split sprint diffs
+    """
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "split", "left": left, "right": right}))
+        return
+    result = set_split_layout(left, right)
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "split": result["data"]}))
     else:
         click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
         sys.exit(1)
