@@ -63,6 +63,8 @@ program
   .option('--fix', 'Auto-apply recommended fixes')
   .option('--json', 'Output in JSON format')
   .option('-q, --quiet', 'Only show errors')
+  .option('-c, --category <name>', 'Run only checks in this category')
+  .option('--list-categories', 'List available check categories')
   .option('--dogfood', 'Run development checks (framework repo or orchestrator with inlined pennyfarthing/)')
   .action(doctorCommand);
 
