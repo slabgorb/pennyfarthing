@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.1] - 2026-02-19
+
+### Added
+
+- **Explicit gate files** — migrate agent inline checklists to standalone gate definitions (MSSCI-15307)
+- **Split-pane layouts** — workflow-aware split-pane presets for BikeRack TUI (110-4)
+- **Team-mode protocol docs** — add team-mode protocol to agent-behavior guide
+
+### Fixed
+
+- **bc focus panels** — add `progress` to VALID_PANELS in bc/focus.py (110-4)
+
+---
+
 ## [11.3.0] - 2026-02-19
 
 ### Added
@@ -2588,7 +2602,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.1...HEAD
+[11.3.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.0...v11.3.1
 [11.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.2...v11.3.0
 [11.2.2]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...v11.2.2
 [11.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...v11.2.1
