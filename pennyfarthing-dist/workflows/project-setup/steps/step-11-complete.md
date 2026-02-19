@@ -1,4 +1,4 @@
-# Step 10: Complete Setup & Validation
+# Step 11: Complete Setup & Validation
 
 <purpose>
 Finalize the project setup, run validation checks, and provide the user with a summary of everything configured. Ensure the project is ready for development.
@@ -198,6 +198,7 @@ This workflow is now complete. The user has:
 ✅ Created justfile with recipes
 ✅ Selected a persona theme
 ✅ Optionally installed additional theme packs
+✅ Configured Jira project key
 ✅ Optionally installed Cyclist
 ✅ Validated the setup
 
