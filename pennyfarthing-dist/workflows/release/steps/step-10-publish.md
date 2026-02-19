@@ -1,20 +1,29 @@
 # Step 10: Publish to npm
 
 <purpose>
-Publish all Pennyfarthing packages to the npm registry. Verifies authentication, checks for conflicts, publishes each package, and verifies registry state.
+Publish all Pennyfarthing packages to the npm registry. Uses `pnpm publish` to
+resolve `workspace:*` dependencies to real version numbers. Verifies authentication,
+checks for conflicts, publishes each package, and verifies registry state.
 </purpose>
+
+<critical>
+**MUST use `pnpm publish`** — not `npm publish`. Packages use `workspace:*` protocol
+for inter-package dependencies. `pnpm publish` resolves these to actual version numbers
+at publish time. `npm publish` does NOT — it publishes the literal `workspace:*` string,
+which breaks consumer installs.
+</critical>
 
 <instructions>
 1. Verify npm authentication
 2. Check that versions aren't already published
-3. Publish @pennyfarthing/core (root package)
-4. Publish @pennyfarthing/cyclist
-5. Publish all theme packs
-6. Verify published versions on registry
+3. Publish @pennyfarthing/core (root package) via pnpm
+4. Publish workspace packages via pnpm
+5. Verify published versions and resolved dependencies on registry
 </instructions>
 
 <output>
-npm publish results for each package, plus registry verification.
+pnpm publish results for each package, plus registry verification including
+dependency resolution check (no workspace:* in published metadata).
 </output>
 
 ## Execution
@@ -69,7 +78,7 @@ fi
 
 ```bash
 echo "Publishing @pennyfarthing/core@{new_version}..."
-npm publish --access public $NPM_TAG
+pnpm publish --access public --no-git-checks $NPM_TAG
 ```
 
 ### 10.5 Publish Workspace Packages
@@ -79,23 +88,46 @@ for pkg_dir in packages/cyclist packages/shared packages/themes-*; do
     if [[ -f "$pkg_dir/package.json" ]]; then
         PKG_NAME=$(node -e "console.log(require('./$pkg_dir/package.json').name)")
         echo "Publishing $PKG_NAME@{new_version}..."
-        (cd "$pkg_dir" && npm publish --access public $NPM_TAG) || echo "WARNING: Failed to publish $PKG_NAME"
+        (cd "$pkg_dir" && pnpm publish --access public --no-git-checks $NPM_TAG) || echo "WARNING: Failed to publish $PKG_NAME"
     fi
 done
 ```
 
-### 10.6 Verify Published
+### 10.6 Verify Published (including workspace:* resolution)
 
 ```bash
 echo "=== Registry Verification ==="
 echo "Waiting 10s for registry propagation..."
 sleep 10
+
+echo ""
+echo "=== Version Check ==="
 for PKG_JSON in package.json packages/*/package.json; do
     PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
     npm view "$PKG_NAME@{new_version}" version 2>/dev/null \
         && echo "  ✓ $PKG_NAME@{new_version}" \
         || echo "  ✗ $PKG_NAME@{new_version} NOT FOUND"
 done
+
+echo ""
+echo "=== Dependency Resolution Check ==="
+echo "Verifying no workspace:* references leaked to npm..."
+LEAKED=0
+for PKG_JSON in package.json packages/*/package.json; do
+    PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
+    DEPS=$(npm view "$PKG_NAME@{new_version}" dependencies --json 2>/dev/null || echo "{}")
+    if echo "$DEPS" | grep -q "workspace:"; then
+        echo "  ✗ $PKG_NAME has workspace: refs in published dependencies!"
+        echo "$DEPS" | grep "workspace:"
+        LEAKED=1
+    else
+        echo "  ✓ $PKG_NAME — no workspace: refs"
+    fi
+done
+if [[ $LEAKED -eq 1 ]]; then
+    echo ""
+    echo "ERROR: workspace:* references leaked to npm. Deprecate affected versions and re-publish."
+fi
 
 if [[ "$IS_PRERELEASE" == "true" ]]; then
     echo ""
