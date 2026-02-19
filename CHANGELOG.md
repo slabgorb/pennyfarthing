@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.0] - 2026-02-19
+
+### Added
+
+- **Doctor category filtering** — `doctor` command supports `--category` filtering and installation-check workflow (MSSCI-15327)
+- **pf.sh hook migration** — bare `pf` hook commands migrated to `pf.sh` wrapper path (117-2)
+- **pyproject.toml shipping** — ship `pyproject.toml` for consumer Python hooks (117-1)
+- **Settings CLI** — `pf settings` CLI and `/pf-settings` skill for runtime config management (MSSCI-15309)
+- **Context meter refresh** — periodic refresh and throttling for BikeRack context meter footer (110-12)
+
+### Fixed
+
+- **getDistDir() path resolution** — resolve wrong path in npm-installed mode (core)
+- **Skill count in tests** — update hardcoded skill count from 21 to 22 (shared)
+- **Cyclist WebSocket settings** — re-init settings in `setupWebSocketServers` and fix 12 stale tests
+- **find-root.sh** — resolve to orchestrator root correctly in dogfooding layout (scripts)
+- **Panel switch redraw** — fix initial state issue in panel switch redraw test
+
+---
+
 ## [11.2.2] - 2026-02-18
 
 *No unreleased changes*
@@ -2568,7 +2588,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.0...HEAD
+[11.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.2...v11.3.0
 [11.2.2]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...v11.2.2
 [11.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.0...v11.2.1
 [11.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.1.1...v11.2.0

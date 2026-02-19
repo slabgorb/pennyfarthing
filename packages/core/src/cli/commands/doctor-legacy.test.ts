@@ -274,11 +274,11 @@ describe('MSSCI-12346: Legacy Install Cleanup', () => {
       // Execute the fix
       result.fix!();
 
-      // Verify the path was updated
+      // Verify the path was updated (fix now writes pf.sh hooks statusline)
       const updatedSettings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
       assert.ok(
-        updatedSettings.statusLine.command.includes('.pennyfarthing/scripts/misc/statusline.sh'),
-        'Should update to proper path'
+        updatedSettings.statusLine.command.includes('.pennyfarthing/scripts/core/pf.sh hooks statusline'),
+        'Should update to pf.sh hooks statusline path'
       );
       assert.strictEqual(
         updatedSettings.otherSetting,

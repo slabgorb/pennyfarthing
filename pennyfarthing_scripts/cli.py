@@ -147,6 +147,11 @@ from pennyfarthing_scripts.hooks.cli import hooks  # noqa: E402
 
 cli.add_command(hooks)
 
+# Import and register settings group
+from pennyfarthing_scripts.settings.cli import settings  # noqa: E402
+
+cli.add_command(settings)
+
 
 @cli.group()
 def agent():

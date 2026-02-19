@@ -216,6 +216,21 @@ skills:
     related_skills: []
     keywords: [grants, scopes, tools, runtime, security]
 
+  pf-settings:
+    name: pf-settings
+    description: View and manage .pennyfarthing/config.local.yaml settings
+    category: tools
+    tags: [configuration, settings, config]
+    version: "1.0.0"
+    command_group: settings
+    examples:
+      - context: View all settings
+        invocation: /pf-settings show
+      - context: Get a specific setting
+        invocation: /pf-settings get workflow.relay_mode
+    related_skills: [pf-theme, pf-bc]
+    keywords: [theme, relay, bell, permission, display, config]
+
   pf-persona-benchmark:
     name: pf-persona-benchmark
     description: Run benchmarks to compare persona effectiveness

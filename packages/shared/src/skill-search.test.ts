@@ -40,7 +40,7 @@ describe('Story 9-2: Skill Search Utility', () => {
 
         assert.ok(Array.isArray(results), 'Should return an array');
         assert.ok(results.length > 0, 'Should return skills from registry');
-        assert.ok(results.length === 21, 'Should return all 21 skills when no filters');
+        assert.ok(results.length === 22, 'Should return all 22 skills when no filters');
       });
 
       it('should return skills with required fields', async () => {

@@ -79,7 +79,7 @@ describe('AC1: tdd-tandem workflow template', () => {
     assert.strictEqual(result.workflow.name, 'tdd-tandem');
   });
 
-  it('should have same phase flow as base tdd workflow', () => {
+  it('should have same phase flow as base tdd workflow (minus verify)', () => {
     if (!workflowsDir) {
       assert.fail('Workflows directory not found');
     }
@@ -90,11 +90,11 @@ describe('AC1: tdd-tandem workflow template', () => {
     assert.ok(tddResult.success && tddResult.workflow);
     assert.ok(tandemResult.success && tandemResult.workflow);
 
-    const tddPhases = getPhaseNames(tddResult.workflow);
+    const tddPhases = getPhaseNames(tddResult.workflow).filter(p => p !== 'verify');
     const tandemPhases = getPhaseNames(tandemResult.workflow);
 
     assert.deepStrictEqual(tandemPhases, tddPhases,
-      'tdd-tandem should have identical phase sequence to tdd');
+      'tdd-tandem should have same phase sequence as tdd (excluding verify)');
   });
 
   it('should have Architect as tandem partner on green phase (Dev + Architect)', () => {
@@ -133,7 +133,7 @@ describe('AC1: tdd-tandem workflow template', () => {
     }
   });
 
-  it('should have gates matching base tdd workflow', () => {
+  it('should have gates matching base tdd workflow (for shared phases)', () => {
     if (!workflowsDir) {
       assert.fail('Workflows directory not found');
     }
@@ -144,9 +144,10 @@ describe('AC1: tdd-tandem workflow template', () => {
     assert.ok(tddResult.success && tddResult.workflow);
     assert.ok(tandemResult.success && tandemResult.workflow);
 
-    // Compare gate types for matching phases
+    // Compare gate types for matching phases (skip verify — not in tandem variant)
     for (const tddPhase of tddResult.workflow.phases ?? []) {
       if (!tddPhase.gate) continue;
+      if (tddPhase.name === 'verify') continue; // tandem doesn't have verify phase
 
       const tandemPhase = getPhase(tandemResult.workflow, tddPhase.name);
       assert.ok(tandemPhase, `Tandem should have phase '${tddPhase.name}'`);

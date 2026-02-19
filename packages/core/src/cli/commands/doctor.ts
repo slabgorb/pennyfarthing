@@ -27,7 +27,23 @@ interface DoctorOptions {
   json?: boolean;
   quiet?: boolean;
   dogfood?: boolean;
+  category?: string;
+  listCategories?: boolean;
 }
+
+/**
+ * Category-to-check-function mapping for --category filtering.
+ * Each category maps to the check functions that produce results in that group.
+ */
+export const CATEGORY_CHECKS: Record<string, string[]> = {
+  'installation': ['checkInstallation', 'checkCoreFiles'],
+  'commands':     ['checkCommandsAndSkills', 'checkUserFilesBasic'],
+  'hooks':        ['checkSettingsHooks'],
+  'scripts':      ['checkHooks', 'checkGitHooks'],
+  'layout':       ['checkDirectories', 'checkFileLayout'],
+  'legacy':       ['checkLegacyFiles', 'checkLegacyStatuslinePath', 'checkLegacyHookCommands'],
+  'tools':        ['checkCyclist', 'checkPfCli'],
+};
 
 export interface CheckResult {
   name: string;
@@ -38,6 +54,22 @@ export interface CheckResult {
 
 export async function doctorCommand(options: DoctorOptions): Promise<void> {
   const projectRoot = process.cwd();
+
+  // Handle --list-categories
+  if (options.listCategories) {
+    console.log('Available check categories:');
+    for (const [name, checks] of Object.entries(CATEGORY_CHECKS)) {
+      console.log(`  ${name.padEnd(14)} ${checks.join(', ')}`);
+    }
+    return;
+  }
+
+  // Validate --category if provided
+  if (options.category && !CATEGORY_CHECKS[options.category]) {
+    logger.error(`Unknown category: ${options.category}`);
+    logger.info(`Available categories: ${Object.keys(CATEGORY_CHECKS).join(', ')}`);
+    process.exit(1);
+  }
 
   // Handle dogfood mode - run checks for framework/orchestrator development
   if (options.dogfood) {
@@ -80,20 +112,44 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   // Resolve node_modules path for checks that need it
   const nodeModulesPath = findNodeModulesPath(projectRoot);
 
-  // Run checks
-  results.push(...checkInstallation(projectRoot, manifest));
-  results.push(...checkCoreFiles(projectRoot, manifest));
-  results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
-  results.push(...checkUserFiles(projectRoot));
-  results.push(...checkDirectories(projectRoot));
-  results.push(...checkHooks(projectRoot));
-  results.push(...checkGitHooks(projectRoot, nodeModulesPath));
-  results.push(...checkFileLayout(projectRoot));
-  results.push(...checkLegacyFiles(projectRoot));
-  results.push(checkLegacyStatuslinePath(projectRoot));
-  results.push(checkLegacyHookCommands(projectRoot));
-  results.push(...checkCyclist(projectRoot));
-  results.push(checkPfCli(nodeModulesPath));
+  // Determine which checks to run
+  const activeChecks = options.category
+    ? new Set(CATEGORY_CHECKS[options.category])
+    : null; // null = run all
+
+  // Run checks — when category is specified, only run matching subset
+  if (activeChecks) {
+    // Category-filtered run
+    if (activeChecks.has('checkInstallation'))       results.push(...checkInstallation(projectRoot, manifest));
+    if (activeChecks.has('checkCoreFiles'))           results.push(...checkCoreFiles(projectRoot, manifest));
+    if (activeChecks.has('checkCommandsAndSkills'))   results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
+    if (activeChecks.has('checkUserFilesBasic'))      results.push(...checkUserFilesBasic(projectRoot));
+    if (activeChecks.has('checkSettingsHooks'))       results.push(...checkSettingsHooks(projectRoot));
+    if (activeChecks.has('checkDirectories'))         results.push(...checkDirectories(projectRoot));
+    if (activeChecks.has('checkHooks'))               results.push(...checkHooks(projectRoot));
+    if (activeChecks.has('checkGitHooks'))            results.push(...checkGitHooks(projectRoot, nodeModulesPath));
+    if (activeChecks.has('checkFileLayout'))          results.push(...checkFileLayout(projectRoot));
+    if (activeChecks.has('checkLegacyFiles'))         results.push(...checkLegacyFiles(projectRoot));
+    if (activeChecks.has('checkLegacyStatuslinePath')) results.push(checkLegacyStatuslinePath(projectRoot));
+    if (activeChecks.has('checkLegacyHookCommands'))  results.push(checkLegacyHookCommands(projectRoot));
+    if (activeChecks.has('checkCyclist'))             results.push(...checkCyclist(projectRoot));
+    if (activeChecks.has('checkPfCli'))               results.push(checkPfCli(nodeModulesPath));
+  } else {
+    // Full run — original behavior
+    results.push(...checkInstallation(projectRoot, manifest));
+    results.push(...checkCoreFiles(projectRoot, manifest));
+    results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
+    results.push(...checkUserFiles(projectRoot));
+    results.push(...checkDirectories(projectRoot));
+    results.push(...checkHooks(projectRoot));
+    results.push(...checkGitHooks(projectRoot, nodeModulesPath));
+    results.push(...checkFileLayout(projectRoot));
+    results.push(...checkLegacyFiles(projectRoot));
+    results.push(checkLegacyStatuslinePath(projectRoot));
+    results.push(checkLegacyHookCommands(projectRoot));
+    results.push(...checkCyclist(projectRoot));
+    results.push(checkPfCli(nodeModulesPath));
+  }
 
   // Output results
   if (options.json) {
@@ -164,7 +220,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   }
 }
 
-function checkInstallation(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
+export function checkInstallation(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Check manifest exists
@@ -177,7 +233,7 @@ function checkInstallation(projectRoot: string, manifest: ReturnType<typeof read
   return results;
 }
 
-function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
+export function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
   const results: CheckResult[] = [];
 
   const installationType = manifest?.installationType || 'copy';
@@ -248,7 +304,7 @@ function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readMan
  * Check commands and skills are properly copied (not symlinked) and up to date.
  * Commands and skills are file copies since v11.3.0 to avoid node_modules drift.
  */
-function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: string | null): CheckResult[] {
+export function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: string | null): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Use assetsPath for source resolution (correct pf-* prefix in dogfood)
@@ -538,6 +594,103 @@ function checkSymlinks(projectRoot: string, nodeModulesPath: string | null): Che
       });
     }
   }
+
+  return results;
+}
+
+/**
+ * Check basic user files only (project dir, sidecars, persona config, settings.local.json existence).
+ * Does NOT include the settings hook checks — use checkSettingsHooks() for those.
+ * Used by --category commands to separate user file checks from hook configuration checks.
+ */
+export function checkUserFilesBasic(projectRoot: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  const manifest = readManifest(projectRoot);
+  const installationType = manifest?.installationType || 'copy';
+
+  // Check project directory
+  const projectDir = join(projectRoot, '.claude/project');
+  results.push({
+    name: 'project/directory',
+    status: pathExists(projectDir) ? 'pass' : 'warn',
+    detail: pathExists(projectDir) ? undefined : 'Run init to create'
+  });
+
+  // Check agent sidecars (now in .pennyfarthing/sidecars/)
+  const sidecarsDir = join(projectRoot, '.pennyfarthing/sidecars');
+  if (pathExists(sidecarsDir)) {
+    const existingSidecars = CORE_AGENTS.filter(a => pathExists(join(sidecarsDir, a)));
+
+    results.push({
+      name: 'project/sidecars',
+      status: existingSidecars.length > 0 ? 'pass' : 'warn',
+      detail: `${existingSidecars.length} agent sidecars configured`
+    });
+  }
+
+  // Check persona config at canonical location
+  const personaConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  results.push({
+    name: 'persona-config',
+    status: pathExists(personaConfig) ? 'pass' : 'warn',
+    detail: pathExists(personaConfig) ? undefined : 'No theme configured'
+  });
+
+  // Check settings.local.json exists (CRITICAL - registers hooks with Claude Code)
+  const settingsLocal = join(projectRoot, '.claude/settings.local.json');
+  if (!pathExists(settingsLocal)) {
+    results.push({
+      name: 'settings.local.json',
+      status: 'fail',
+      detail: 'Missing - hooks not registered with Claude Code!',
+      fix: () => {
+        createSettingsLocalJson(projectRoot, installationType);
+      }
+    });
+  } else {
+    results.push({
+      name: 'settings.local.json',
+      status: 'pass',
+      detail: undefined
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Check all settings hook configurations in settings.local.json.
+ * Returns results for all 9 hook checks (session-start, otel, auto-load-sm,
+ * stop, post-tool-use, benchmark-permissions, context-circuit-breaker,
+ * schema-validation, sprint-yaml-validation).
+ * Used by --category hooks for targeted hook configuration checking.
+ */
+export function checkSettingsHooks(projectRoot: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  const manifest = readManifest(projectRoot);
+  const installationType = manifest?.installationType || 'copy';
+
+  const settingsLocal = join(projectRoot, '.claude/settings.local.json');
+  if (!pathExists(settingsLocal)) {
+    results.push({
+      name: 'settings.local.json',
+      status: 'fail',
+      detail: 'Missing - cannot check hook configuration'
+    });
+    return results;
+  }
+
+  results.push(checkSessionStartHooks(projectRoot, installationType));
+  results.push(checkOtelAutoStart(projectRoot, installationType));
+  results.push(checkAutoLoadSmHook(projectRoot));
+  results.push(checkStopHook(projectRoot, installationType));
+  results.push(checkPostToolUseHook(projectRoot, installationType));
+  results.push(checkBenchmarkPermissions(projectRoot));
+  results.push(checkContextCircuitBreaker(projectRoot, installationType));
+  results.push(checkSchemaValidationHook(projectRoot, installationType));
+  results.push(checkSprintYamlValidationHook(projectRoot, installationType));
 
   return results;
 }
@@ -1786,7 +1939,7 @@ function createSettingsLocalJson(projectRoot: string, _installationType: string)
   writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
-function checkDirectories(projectRoot: string): CheckResult[] {
+export function checkDirectories(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
   const dirs = [
@@ -1806,7 +1959,7 @@ function checkDirectories(projectRoot: string): CheckResult[] {
   return results;
 }
 
-function checkHooks(projectRoot: string): CheckResult[] {
+export function checkHooks(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Detect installation type from manifest
@@ -1864,13 +2017,28 @@ function checkHooks(projectRoot: string): CheckResult[] {
 }
 
 /**
+ * Render the dispatcher template by substituting __HOOK_NAME__ with the actual hook name.
+ */
+function renderDispatcherTemplate(template: string, hookName: string): string {
+  return template.replace(/__HOOK_NAME__/g, hookName);
+}
+
+/**
  * Check git hooks in .git/hooks/ are up-to-date with package source.
- * Detects stale copies that were installed by `pennyfarthing init` but never refreshed.
+ *
+ * Supports two installation patterns:
+ *
+ * 1. **Dispatcher pattern** (current): `.git/hooks/{name}` is a generic dispatcher that
+ *    runs scripts from `.git/hooks/{name}.d/`. The dispatcher is generated from
+ *    `dispatcher-template.sh` and the actual hook implementation lives in the `.d/` dir.
+ *
+ * 2. **Direct-copy pattern** (legacy): `.git/hooks/{name}` is a direct copy of `{name}.sh`.
+ *
  * For framework/orchestrator repos (has pennyfarthing-dist/), checks that hooks are
  * symlinked rather than copied, since symlinks stay current automatically.
  * Provides --fix to refresh stale hooks or replace copies with symlinks.
  */
-function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+export function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Use git rev-parse to find the actual git dir (handles worktrees where .git is a file)
@@ -1894,6 +2062,16 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
     return results;
   }
 
+  // Resolve the hooks source directory
+  const hooksSourceDir = frameworkHooksDir ?? join(nodeModulesPath!, 'scripts/hooks');
+
+  // Load dispatcher template for comparison (used by dispatcher pattern detection)
+  const dispatcherTemplatePath = join(hooksSourceDir, 'dispatcher-template.sh');
+  const hasDispatcherTemplate = pathExists(dispatcherTemplatePath);
+  const dispatcherTemplate = hasDispatcherTemplate
+    ? readFileSync(dispatcherTemplatePath, 'utf8')
+    : null;
+
   const hooks = [
     { source: 'pre-commit.sh', dest: 'pre-commit', marker: 'pennyfarthing' },
     { source: 'pre-push.sh', dest: 'pre-push', marker: 'pennyfarthing' },
@@ -1901,11 +2079,9 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
   ];
 
   for (const hook of hooks) {
-    // Prefer framework source (pennyfarthing-dist/) over node_modules
-    const sourcePath = frameworkHooksDir
-      ? join(frameworkHooksDir, hook.source)
-      : join(nodeModulesPath!, 'scripts/hooks', hook.source);
+    const sourcePath = join(hooksSourceDir, hook.source);
     const destPath = join(gitHooksDir, hook.dest);
+    const dDir = join(gitHooksDir, `${hook.dest}.d`);
 
     if (!pathExists(sourcePath)) {
       continue;
@@ -1999,22 +2175,88 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
       continue;
     }
 
-    const sourceContent = readFileSync(sourcePath, 'utf8');
-    if (existingContent === sourceContent) {
-      results.push({
-        name: `git-hook/${hook.dest}`,
-        status: 'pass',
-        detail: undefined
-      });
-    } else {
-      results.push({
-        name: `git-hook/${hook.dest}`,
-        status: 'warn',
-        detail: 'Stale — content differs from package',
-        fix: () => {
-          writeFileSync(destPath, sourceContent, { mode: 0o755 });
+    // Detect dispatcher pattern: the installed hook is a dispatcher (from dispatcher-template.sh)
+    // and the actual implementation lives in .git/hooks/{name}.d/
+    const isDispatcherPattern = dispatcherTemplate
+      && existingContent.includes('pennyfarthing-dispatcher')
+      && pathExists(dDir);
+
+    if (isDispatcherPattern) {
+      // --- Dispatcher pattern: check dispatcher + .d/ scripts separately ---
+
+      // 1. Check the dispatcher itself against the rendered template
+      const expectedDispatcher = renderDispatcherTemplate(dispatcherTemplate!, hook.dest);
+      if (existingContent !== expectedDispatcher) {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'warn',
+          detail: 'Stale dispatcher — content differs from template',
+          fix: () => {
+            writeFileSync(destPath, expectedDispatcher, { mode: 0o755 });
+          }
+        });
+      } else {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'pass',
+          detail: 'Dispatcher'
+        });
+      }
+
+      // 2. Check the .d/ script against its source
+      const dScripts = readdirSync(dDir).filter(f => f.includes('pennyfarthing'));
+      if (dScripts.length === 0) {
+        results.push({
+          name: `git-hook/${hook.dest}.d`,
+          status: 'warn',
+          detail: 'No pennyfarthing script in .d/ directory',
+          fix: () => {
+            const sourceContent = readFileSync(sourcePath, 'utf8');
+            const dScriptPath = join(dDir, `10-pennyfarthing-${hook.dest}.sh`);
+            writeFileSync(dScriptPath, sourceContent, { mode: 0o755 });
+          }
+        });
+      } else {
+        // Compare the first matching .d/ script against the source
+        const dScriptPath = join(dDir, dScripts[0]);
+        const dScriptContent = readFileSync(dScriptPath, 'utf8');
+        const sourceContent = readFileSync(sourcePath, 'utf8');
+        if (dScriptContent === sourceContent) {
+          results.push({
+            name: `git-hook/${hook.dest}.d`,
+            status: 'pass',
+            detail: undefined
+          });
+        } else {
+          results.push({
+            name: `git-hook/${hook.dest}.d`,
+            status: 'warn',
+            detail: 'Stale — content differs from package',
+            fix: () => {
+              writeFileSync(dScriptPath, sourceContent, { mode: 0o755 });
+            }
+          });
         }
-      });
+      }
+    } else {
+      // --- Legacy direct-copy pattern: compare hook directly against source ---
+      const sourceContent = readFileSync(sourcePath, 'utf8');
+      if (existingContent === sourceContent) {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'pass',
+          detail: undefined
+        });
+      } else {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'warn',
+          detail: 'Stale — content differs from package',
+          fix: () => {
+            writeFileSync(destPath, sourceContent, { mode: 0o755 });
+          }
+        });
+      }
     }
   }
 
@@ -2025,7 +2267,7 @@ function checkGitHooks(projectRoot: string, nodeModulesPath: string | null): Che
  * Check Cyclist installation health (if installed as a workspace package)
  * Detects node-pty spawn-helper permission issues that cause posix_spawnp failures
  */
-function checkCyclist(projectRoot: string): CheckResult[] {
+export function checkCyclist(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Detect Cyclist package — check common locations
@@ -2141,7 +2383,7 @@ function checkCyclist(projectRoot: string): CheckResult[] {
  * Check if the pf CLI is installed and working.
  * The pf CLI is required for agent commands (e.g., `pf agent start "dev"`).
  */
-function checkPfCli(nodeModulesPath: string | null): CheckResult {
+export function checkPfCli(nodeModulesPath: string | null): CheckResult {
   const version = getPfVersion();
   if (version) {
     return {
@@ -2442,7 +2684,7 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
  * be migrated to `pf hooks` commands. The .sh scripts still work (they're shims)
  * but `pf hooks` is the canonical path — faster, no shell indirection.
  */
-function checkLegacyHookCommands(projectRoot: string): CheckResult {
+export function checkLegacyHookCommands(projectRoot: string): CheckResult {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
 
   if (!pathExists(settingsPath)) {

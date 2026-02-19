@@ -93,10 +93,10 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    assert.strictEqual(result.workflow!.phases?.length, 5, 'TDD workflow should have 5 phases');
+    assert.strictEqual(result.workflow!.phases?.length, 6, 'TDD workflow should have 6 phases (includes verify)');
   });
 
-  it('should define phases in order: setup(SM) → red(TEA) → green(Dev) → review(Reviewer) → finish(SM)', () => {
+  it('should define phases in order: setup(SM) → red(TEA) → green(Dev) → verify(TEA) → review(Reviewer) → finish(SM)', () => {
     assert.ok(workflowsDir, 'Could not find monorepo root');
 
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
@@ -107,6 +107,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
       { name: 'setup', agent: 'sm' },
       { name: 'red', agent: 'tea' },
       { name: 'green', agent: 'dev' },
+      { name: 'verify', agent: 'tea' },
       { name: 'review', agent: 'reviewer' },
       { name: 'finish', agent: 'sm' }
     ];
@@ -409,10 +410,10 @@ describe('AC4: /new-work behavior regression tests', () => {
     assert.ok(result, 'Should route to a workflow');
     // trivial.yaml has: types: [chore, fix, refactor], points.max: 2
     // With AND logic, 3-pt chore exceeds max, so trivial doesn't match on type
-    // Falls to points match: tdd-tandem has points.min:3 with no type constraint,
-    // so it matches before tdd (which has type constraint [feature, enhancement])
-    assert.strictEqual(result.workflow.name, 'tdd-tandem',
-      '3-pt chore should match tdd-tandem via points (no type constraint)');
+    // Falls to points match: bdd-team has points.min:3 with no type constraint,
+    // and wins alphabetically over tdd-tandem (which has points.min:5 anyway)
+    assert.strictEqual(result.workflow.name, 'bdd-team',
+      '3-pt chore should match bdd-team via points (no type constraint, alphabetical tiebreak)');
   });
 
   it('story with no type and no points falls back to default workflow', () => {

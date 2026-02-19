@@ -24,28 +24,47 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 
 <health-checks>
 
-## Health Check
+## Health Check Modes
 
-Use the pennyfarthing CLI:
+### Quick Mode (CLI — for automation/CI)
 
 ```bash
 # Full health check
 pennyfarthing doctor
 
-# Or via npx
-npx pennyfarthing doctor
+# Check a specific category
+pennyfarthing doctor --category hooks
+
+# List available categories
+pennyfarthing doctor --list-categories
 
 # Auto-fix issues
 pennyfarthing doctor --fix
+
+# Auto-fix a specific category
+pennyfarthing doctor --fix --category legacy
+
+# JSON output for scripting
+pennyfarthing doctor --json --category installation
 ```
 
-The CLI checks:
-- manifest.json exists and is valid
-- All managed files present in .claude/pennyfarthing/
-- Symlinks point to correct targets
-- User directories exist (.claude/project/)
-- Settings paths are correct
-- Hook scripts are executable
+Categories: `installation`, `commands`, `hooks`, `scripts`, `layout`, `legacy`, `tools`
+
+### Interactive Mode (Workflow — for onboarding/troubleshooting)
+
+```
+/pf-workflow start installation-check
+```
+
+Walks through 8 steps with AI-guided explanation and remediation:
+1. **Foundation** — manifest, core files, symlinks
+2. **Commands & Skills** — slash commands, skills, user files
+3. **Hook Configuration** — all 9 settings.local.json hooks (gated)
+4. **Hook Scripts** — script files exist and are executable
+5. **Directory Layout** — files at correct locations
+6. **Legacy Cleanup** — old artifacts from previous versions (gated)
+7. **Optional Tools** — Cyclist, pf CLI
+8. **Summary** — health score and prioritized recommendations
 
 ## Check for Updates
 
