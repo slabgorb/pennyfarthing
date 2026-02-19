@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.3] - 2026-02-19
+
+### Added
+
+- **Configurable Jira project** — `pf setup` now includes Jira project key step; stored in config (MSSCI-15336)
+
+### Fixed
+
+- **Discworld theme** — fix character-body misalignment in theme definition
+
+---
+
 ## [11.3.2] - 2026-02-19
 
 ### Added
