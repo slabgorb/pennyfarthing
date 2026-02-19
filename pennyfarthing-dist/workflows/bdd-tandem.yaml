@@ -24,6 +24,10 @@ workflow:
     - name: setup
       agent: sm
       output: [session_file, branches, story_context]
+      gate:
+        file: gates/sm-setup-exit
+        type: sm_setup_exit
+        condition: Session file created with workflow, phase, context, and branch
 
     - name: design
       agent: ux-designer
@@ -54,9 +58,9 @@ workflow:
       input: [failing_tests, design_spec, story_context]
       output: [implementation, passing_tests]
       gate:
-        file: gates/tests-pass
-        type: tests_pass
-        condition: All tests passing, UX spec implemented
+        file: gates/dev-exit
+        type: dev_exit
+        condition: Tests green, tree clean, no debug code, correct branch
       tandem:
         partner: ux-designer
         scope: file-watch
