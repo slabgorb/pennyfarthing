@@ -367,12 +367,12 @@ else
     (cd "$PROJECT_ROOT" && npm publish --access public $NPM_TAG_FLAG)
     log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
 
-    # Publish all workspace packages
+    # Publish all workspace packages (pnpm resolves workspace:* protocols)
     for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
         if [[ -f "$pkg_dir/package.json" ]]; then
             PKG_NAME=$(node -e "console.log(require('$pkg_dir/package.json').name)")
             log_info "Publishing $PKG_NAME..."
-            (cd "$pkg_dir" && npm publish --access public $NPM_TAG_FLAG) || log_warn "Failed to publish $PKG_NAME"
+            (cd "$pkg_dir" && pnpm publish --access public --no-git-checks $NPM_TAG_FLAG) || log_warn "Failed to publish $PKG_NAME"
             log_info "Published $PKG_NAME@$NEW_VERSION to npm"
         fi
     done
