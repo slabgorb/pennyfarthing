@@ -57,15 +57,26 @@ export function findLocalPyproject(nodeModulesPath: string | null): string | nul
 
 /**
  * Check if the `pf` CLI is already installed and working.
+ * Checks both the global `pf` binary and `uv run pf` (local project resolution).
  * Returns the version string if installed, null otherwise.
  */
 export function getPfVersion(): string | null {
+  // Strategy 1: Check for global pf binary
   try {
     const result = spawnSync('pf', ['--version'], { encoding: 'utf8', stdio: 'pipe' });
     if (result.status === 0) {
       return result.stdout?.trim() || 'unknown';
     }
-  } catch { /* not installed */ }
+  } catch { /* not installed globally */ }
+
+  // Strategy 2: Check for pf via uv run (local project resolution)
+  try {
+    const result = spawnSync('uv', ['run', 'pf', '--version'], { encoding: 'utf8', stdio: 'pipe' });
+    if (result.status === 0) {
+      return `${result.stdout?.trim() || 'unknown'} (via uv run)`;
+    }
+  } catch { /* uv not available or pf not resolvable */ }
+
   return null;
 }
 
