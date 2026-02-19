@@ -31,8 +31,10 @@ The setup workflow guides you through:
 5. **shared-context.md** - Populate with real project info
 6. **Task Runner** - Create justfile/Makefile
 7. **Theme** - Select persona theme
-8. **Cyclist** - Optionally install visual terminal
-9. **Validation** - Run doctor and confirm setup
+8. **Theme Packs** - Optionally install additional theme packs
+9. **Jira** - Configure Jira project key
+10. **Cyclist** - Optionally install visual terminal
+11. **Validation** - Run doctor and confirm setup
 </workflow>
 
 <when-to-use>

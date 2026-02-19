@@ -14,8 +14,20 @@ import sys
 from typing import Any
 
 # Configuration
-JIRA_PROJECT = os.environ.get("JIRA_PROJECT", "MSSCI")
-JIRA_URL = os.environ.get("JIRA_URL", "https://1898andco.atlassian.net")
+
+def _resolve_jira_config():
+    """Resolve Jira project and URL from config file, env, or defaults."""
+    try:
+        from pennyfarthing_scripts.common.config import load_pennyfarthing_config
+        config = load_pennyfarthing_config()
+        jira_cfg = config.get("jira", {})
+    except Exception:
+        jira_cfg = {}
+    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or "MSSCI"
+    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or "https://1898andco.atlassian.net"
+    return project, url
+
+JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
 
 # Status mappings: Pennyfarthing -> Jira
 STATUS_TO_JIRA = {

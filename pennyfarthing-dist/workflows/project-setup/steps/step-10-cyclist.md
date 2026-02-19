@@ -1,4 +1,4 @@
-# Step 9: Install Cyclist (Optional)
+# Step 10: Install Cyclist (Optional)
 
 <purpose>
 Optionally install Cyclist, the visual terminal interface for Claude Code. Cyclist provides a graphical interface with panels for sprint tracking, workflow visualization, and enhanced tool display.
@@ -242,4 +242,4 @@ QUICK ACTIONS:
 
 ## NEXT STEP
 
-After Cyclist setup, proceed to `step-10-complete.md` to finalize project setup and run validation.
+After Cyclist setup, proceed to `step-11-complete.md` to finalize project setup and run validation.
