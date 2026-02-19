@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v11.2.2** | *The outer loop goes once, the inner loop goes many times.*
+**v11.3.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,9 +15,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **12 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, Review-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
+- **14 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, TDD-Team, BDD-Team, Review-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
 - **60 Slash Commands** - Entry points for agent activation and workflows
-- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **23 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories

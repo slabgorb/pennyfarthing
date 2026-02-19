@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/themes-superheroes",
-  "version": "11.2.2",
+  "version": "11.3.0",
   "description": "Superhero themes for Pennyfarthing (optional)",
   "pennyfarthing-theme-pack": true,
   "files": [
