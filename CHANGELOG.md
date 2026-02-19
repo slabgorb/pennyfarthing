@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.7] - 2026-02-19
+
+### Fixed
+
+- **Portrait resolution** — resolve portraits from `@pennyfarthing/cyclist` in consumer installs
+
+---
+
 ## [11.3.6] - 2026-02-19
 
 *No unreleased changes*
