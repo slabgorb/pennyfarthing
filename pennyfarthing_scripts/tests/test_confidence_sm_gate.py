@@ -1,16 +1,18 @@
-"""Tests for SM confidence gate file — Story 90-2.
+"""Tests for confidence gate file — Story 90-2 (generalized).
 
 Epic: 90 (Confidence Circuit Breaker via Gate)
-Story: 90-2 — Implement SM confidence gate file
+Story: 90-2 — Implement confidence gate file
 
-Tests the confidence-sm gate file that checks whether an instruction to the
-SM agent is ambiguous. If ambiguous, <fail> returns clarifying options. If
+Tests the confidence gate file that checks whether an instruction to any
+agent is ambiguous. If ambiguous, <fail> returns clarifying options. If
 unambiguous, <pass> lets the agent proceed.
+
+Originally SM-specific (confidence-sm), generalized to agent-agnostic (confidence).
 
 Acceptance Criteria:
 - [AC1] Gate file exists in pennyfarthing-dist/gates/ following Gate PRD schema
 - [AC2] Gate has <gate>, <purpose>, <pass>, <fail> blocks
-- [AC3] Gate checks whether SM instruction is ambiguous
+- [AC3] Gate checks whether instruction is ambiguous
 - [AC4] <fail> block returns clarifying options when ambiguous
 - [AC5] <pass> block lets the agent proceed when unambiguous
 - [AC6] Gate uses model="haiku"
@@ -30,7 +32,7 @@ from pennyfarthing_scripts.handoff.gate_runner import parse_gate_file
 # Fixtures
 # ---------------------------------------------------------------------------
 
-GATE_NAME = "confidence-sm"
+GATE_NAME = "confidence"
 
 # The gate file lives in pennyfarthing-dist/gates/ relative to the framework root
 # In the dogfooding context, the project root is the orchestrator, so we need
@@ -43,7 +45,7 @@ _GATE_FILE = _FRAMEWORK_ROOT / "pennyfarthing-dist" / "gates" / f"{GATE_NAME}.md
 
 @pytest.fixture
 def gate_path() -> Path:
-    """Return the expected path to the confidence-sm gate file."""
+    """Return the expected path to the confidence gate file."""
     return _GATE_FILE
 
 
@@ -69,7 +71,7 @@ class TestGateFileExists:
     """AC1: Gate file exists at the expected location."""
 
     def test_gate_file_exists(self, gate_path: Path) -> None:
-        """AC1: confidence-sm.md exists in pennyfarthing-dist/gates/."""
+        """AC1: confidence.md exists in pennyfarthing-dist/gates/."""
         assert gate_path.is_file(), f"Gate file not found: {gate_path}"
 
     def test_gate_file_not_empty(self, gate_path: Path) -> None:
@@ -138,11 +140,10 @@ class TestGateSchemaStructure:
 
 
 class TestGateAmbiguityDetection:
-    """AC3: Gate content describes checking for ambiguous SM instructions."""
+    """AC3: Gate content describes checking for ambiguous instructions."""
 
     def test_purpose_mentions_ambiguity(self, gate_content: str) -> None:
         """AC3: Purpose section references ambiguity or unclear instructions."""
-        # Extract purpose content between tags
         import re
 
         purpose_match = re.search(
@@ -155,17 +156,17 @@ class TestGateAmbiguityDetection:
             for term in ["ambig", "unclear", "vague", "confidence", "clarif"]
         ), f"Purpose doesn't reference ambiguity: {purpose}"
 
-    def test_gate_name_is_confidence_sm(self, parsed_gate: dict) -> None:
-        """AC3: Gate name is 'confidence-sm'."""
+    def test_gate_name_is_confidence(self, parsed_gate: dict) -> None:
+        """AC3: Gate name is 'confidence'."""
         assert parsed_gate["name"] == GATE_NAME
 
-    def test_content_references_sm_agent(self, gate_content: str) -> None:
-        """AC3: Gate content references the SM agent or scrum master role."""
+    def test_content_is_agent_agnostic(self, gate_content: str) -> None:
+        """AC3: Gate content is agent-agnostic (not SM-specific)."""
         content_lower = gate_content.lower()
         assert any(
             term in content_lower
-            for term in ["sm agent", "scrum master", "sm ", "story management"]
-        ), "Gate doesn't reference SM agent"
+            for term in ["current agent", "the agent", "any agent"]
+        ), "Gate should be agent-agnostic"
 
 
 # ===========================================================================

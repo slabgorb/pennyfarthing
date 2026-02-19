@@ -15,7 +15,12 @@ Gates live in `pennyfarthing-dist/gates/` and are referenced by workflow YAML fi
 | **tests-pass** | `gates/tests-pass.md` | Verify all tests pass, working tree clean, correct branch | Dev → Reviewer transitions |
 | **tests-fail** | `gates/tests-fail.md` | Verify tests are RED (failing) with AC coverage | TEA → Dev transitions |
 | **approval** | `gates/approval.md` | Verify reviewer has issued explicit APPROVED verdict | Reviewer → SM transitions |
-| **confidence-sm** | `gates/confidence-sm.md` | Check if user instruction to SM is ambiguous | SM entry gate |
+| **confidence** | `gates/confidence.md` | Check if user instruction is ambiguous | Any agent entry gate |
+| **dev-exit** | `gates/dev-exit.md` | Composite: tests-pass + no debug code | Dev → Reviewer transitions |
+| **sm-setup-exit** | `gates/sm-setup-exit.md` | Session file, fields, context, branch created | SM → next agent transitions |
+| **merge-ready** | `gates/merge-ready.md` | No open non-draft PRs | SM new work gate |
+| **release-ready** | `gates/release-ready.md` | Composite: tests-pass + build, version, changelog | DevOps pre-deploy |
+| **reviewer-preflight-check** | `gates/reviewer-preflight-check.md` | Composite: tests-pass + code smells, error boundaries | Reviewer preflight |
 
 ## Gate File Format
 
@@ -96,7 +101,7 @@ Extended evaluation criteria can live in `gates/evaluations/`:
 
 | File | Purpose |
 |------|---------|
-| `evaluations/confidence-sm.md` | Detailed rubric for SM confidence scoring |
+| `evaluations/confidence-sm.md` | Historical evaluation of SM confidence gate (led to agent-agnostic `confidence` gate) |
 
 ## Creating Custom Gates
 
