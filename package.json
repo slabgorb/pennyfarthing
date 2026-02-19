@@ -3,6 +3,19 @@
   "version": "11.3.5",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
+  "main": "./packages/core/dist/index.js",
+  "types": "./packages/core/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./packages/core/dist/index.d.ts",
+      "default": "./packages/core/dist/index.js"
+    },
+    "./server": {
+      "types": "./packages/core/dist/server/server.d.ts",
+      "default": "./packages/core/dist/server/server.js"
+    },
+    "./dist/*": "./packages/core/dist/*"
+  },
   "bin": {
     "pennyfarthing": "./packages/core/bin/pennyfarthing.js"
   },
