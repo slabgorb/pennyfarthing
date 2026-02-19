@@ -77,13 +77,13 @@ describe('Story 9-4: Skill Documentation Generator', () => {
       assert.ok(result.content.includes('##'), 'Should have section headings');
     });
 
-    it('should include all 21 skills from registry', async () => {
+    it('should include all 22 skills from registry', async () => {
       // AC1: All skills from registry should appear in output
       const result = await generateSkillDocs({
         registryPath: REGISTRY_PATH,
       });
 
-      assert.ok(result.skillCount === 21, `Should include all 21 skills, got ${result.skillCount}`);
+      assert.ok(result.skillCount === 22, `Should include all 22 skills, got ${result.skillCount}`);
 
       // Check for a sample of known skills
       const expectedSkills = ['testing', 'jira', 'code-review', 'changelog', 'theme'];
