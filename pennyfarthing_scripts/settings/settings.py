@@ -8,11 +8,7 @@ from typing import Any
 
 import yaml
 
-from pennyfarthing_scripts.common.config import (
-    get_project_root,
-    load_pennyfarthing_config,
-)
-
+from pennyfarthing_scripts.common.config import get_project_root, load_pennyfarthing_config
 
 # Top-level keys to show in `pf settings show` (skip layout/panel blobs)
 SHOW_KEYS = ("theme", "workflow", "display", "split", "last_panel")
