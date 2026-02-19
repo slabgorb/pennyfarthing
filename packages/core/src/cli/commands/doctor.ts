@@ -2017,8 +2017,23 @@ export function checkHooks(projectRoot: string): CheckResult[] {
 }
 
 /**
+ * Render the dispatcher template by substituting __HOOK_NAME__ with the actual hook name.
+ */
+function renderDispatcherTemplate(template: string, hookName: string): string {
+  return template.replace(/__HOOK_NAME__/g, hookName);
+}
+
+/**
  * Check git hooks in .git/hooks/ are up-to-date with package source.
- * Detects stale copies that were installed by `pennyfarthing init` but never refreshed.
+ *
+ * Supports two installation patterns:
+ *
+ * 1. **Dispatcher pattern** (current): `.git/hooks/{name}` is a generic dispatcher that
+ *    runs scripts from `.git/hooks/{name}.d/`. The dispatcher is generated from
+ *    `dispatcher-template.sh` and the actual hook implementation lives in the `.d/` dir.
+ *
+ * 2. **Direct-copy pattern** (legacy): `.git/hooks/{name}` is a direct copy of `{name}.sh`.
+ *
  * For framework/orchestrator repos (has pennyfarthing-dist/), checks that hooks are
  * symlinked rather than copied, since symlinks stay current automatically.
  * Provides --fix to refresh stale hooks or replace copies with symlinks.
@@ -2047,6 +2062,16 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
     return results;
   }
 
+  // Resolve the hooks source directory
+  const hooksSourceDir = frameworkHooksDir ?? join(nodeModulesPath!, 'scripts/hooks');
+
+  // Load dispatcher template for comparison (used by dispatcher pattern detection)
+  const dispatcherTemplatePath = join(hooksSourceDir, 'dispatcher-template.sh');
+  const hasDispatcherTemplate = pathExists(dispatcherTemplatePath);
+  const dispatcherTemplate = hasDispatcherTemplate
+    ? readFileSync(dispatcherTemplatePath, 'utf8')
+    : null;
+
   const hooks = [
     { source: 'pre-commit.sh', dest: 'pre-commit', marker: 'pennyfarthing' },
     { source: 'pre-push.sh', dest: 'pre-push', marker: 'pennyfarthing' },
@@ -2054,11 +2079,9 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
   ];
 
   for (const hook of hooks) {
-    // Prefer framework source (pennyfarthing-dist/) over node_modules
-    const sourcePath = frameworkHooksDir
-      ? join(frameworkHooksDir, hook.source)
-      : join(nodeModulesPath!, 'scripts/hooks', hook.source);
+    const sourcePath = join(hooksSourceDir, hook.source);
     const destPath = join(gitHooksDir, hook.dest);
+    const dDir = join(gitHooksDir, `${hook.dest}.d`);
 
     if (!pathExists(sourcePath)) {
       continue;
@@ -2152,22 +2175,88 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
       continue;
     }
 
-    const sourceContent = readFileSync(sourcePath, 'utf8');
-    if (existingContent === sourceContent) {
-      results.push({
-        name: `git-hook/${hook.dest}`,
-        status: 'pass',
-        detail: undefined
-      });
-    } else {
-      results.push({
-        name: `git-hook/${hook.dest}`,
-        status: 'warn',
-        detail: 'Stale — content differs from package',
-        fix: () => {
-          writeFileSync(destPath, sourceContent, { mode: 0o755 });
+    // Detect dispatcher pattern: the installed hook is a dispatcher (from dispatcher-template.sh)
+    // and the actual implementation lives in .git/hooks/{name}.d/
+    const isDispatcherPattern = dispatcherTemplate
+      && existingContent.includes('pennyfarthing-dispatcher')
+      && pathExists(dDir);
+
+    if (isDispatcherPattern) {
+      // --- Dispatcher pattern: check dispatcher + .d/ scripts separately ---
+
+      // 1. Check the dispatcher itself against the rendered template
+      const expectedDispatcher = renderDispatcherTemplate(dispatcherTemplate!, hook.dest);
+      if (existingContent !== expectedDispatcher) {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'warn',
+          detail: 'Stale dispatcher — content differs from template',
+          fix: () => {
+            writeFileSync(destPath, expectedDispatcher, { mode: 0o755 });
+          }
+        });
+      } else {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'pass',
+          detail: 'Dispatcher'
+        });
+      }
+
+      // 2. Check the .d/ script against its source
+      const dScripts = readdirSync(dDir).filter(f => f.includes('pennyfarthing'));
+      if (dScripts.length === 0) {
+        results.push({
+          name: `git-hook/${hook.dest}.d`,
+          status: 'warn',
+          detail: 'No pennyfarthing script in .d/ directory',
+          fix: () => {
+            const sourceContent = readFileSync(sourcePath, 'utf8');
+            const dScriptPath = join(dDir, `10-pennyfarthing-${hook.dest}.sh`);
+            writeFileSync(dScriptPath, sourceContent, { mode: 0o755 });
+          }
+        });
+      } else {
+        // Compare the first matching .d/ script against the source
+        const dScriptPath = join(dDir, dScripts[0]);
+        const dScriptContent = readFileSync(dScriptPath, 'utf8');
+        const sourceContent = readFileSync(sourcePath, 'utf8');
+        if (dScriptContent === sourceContent) {
+          results.push({
+            name: `git-hook/${hook.dest}.d`,
+            status: 'pass',
+            detail: undefined
+          });
+        } else {
+          results.push({
+            name: `git-hook/${hook.dest}.d`,
+            status: 'warn',
+            detail: 'Stale — content differs from package',
+            fix: () => {
+              writeFileSync(dScriptPath, sourceContent, { mode: 0o755 });
+            }
+          });
         }
-      });
+      }
+    } else {
+      // --- Legacy direct-copy pattern: compare hook directly against source ---
+      const sourceContent = readFileSync(sourcePath, 'utf8');
+      if (existingContent === sourceContent) {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'pass',
+          detail: undefined
+        });
+      } else {
+        results.push({
+          name: `git-hook/${hook.dest}`,
+          status: 'warn',
+          detail: 'Stale — content differs from package',
+          fix: () => {
+            writeFileSync(destPath, sourceContent, { mode: 0o755 });
+          }
+        });
+      }
     }
   }
 
