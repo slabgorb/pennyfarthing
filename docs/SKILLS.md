@@ -31,6 +31,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-just](#pf-just)
   - [pf-mermaid](#pf-mermaid)
   - [pf-otel](#pf-otel)
+  - [pf-settings](#pf-settings)
   - [pf-yq](#pf-yq)
 
 ## AI/LLM
@@ -388,6 +389,20 @@ Claude Code OTEL telemetry format documentation for span interception and enrich
 - Don't assume fields exist - verify against this documentation
 
 **Related:** [pf-cyclist](#pf-cyclist)
+
+### pf-settings
+
+View and manage .pennyfarthing/config.local.yaml settings
+
+**Tags:** configuration, settings, config
+
+**Keywords:** theme, relay, bell, permission, display, config
+
+**Examples:**
+- View all settings: `/pf-settings show`
+- Get a specific setting: `/pf-settings get workflow.relay_mode`
+
+**Related:** [pf-theme](#pf-theme), [pf-bc](#pf-bc)
 
 ### pf-yq
 
