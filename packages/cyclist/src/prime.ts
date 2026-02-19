@@ -32,30 +32,26 @@ function isValidAgentName(name: string): boolean {
 }
 
 /**
- * Find the Pennyfarthing scripts directory
+ * Find the directory containing the pf Python package
  * Handles both dev mode and installed mode
  */
 function findPennyfarthingScripts(projectDir: string): string | null {
-  // 1. Check node_modules in project
-  const nodeModulesPath = join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing_scripts');
-  if (existsSync(nodeModulesPath)) {
-    return dirname(nodeModulesPath); // Return package root
+  // 1. Check node_modules in project (pf/ lives inside pennyfarthing-dist/)
+  const nodeModulesDistPath = join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing-dist', 'pf');
+  if (existsSync(nodeModulesDistPath)) {
+    return dirname(nodeModulesDistPath); // Return pennyfarthing-dist/
   }
 
-  // 2. Check .pennyfarthing symlink (resolves to node_modules)
-  const dotPennyfarthing = join(projectDir, '.pennyfarthing', 'scripts');
-  if (existsSync(dotPennyfarthing)) {
-    // Walk up from scripts to find package root
-    const packageRoot = join(dotPennyfarthing, '..', '..');
-    if (existsSync(join(packageRoot, 'pennyfarthing_scripts'))) {
-      return packageRoot;
-    }
+  // 2. Check .pennyfarthing symlink (pf/ symlinked into .pennyfarthing/)
+  const dotPfPath = join(projectDir, '.pennyfarthing', 'pf');
+  if (existsSync(dotPfPath)) {
+    return join(projectDir, '.pennyfarthing');
   }
 
-  // 3. Dev mode: Check relative to Cyclist source
-  const devPath = join(__dirname, '..', '..', '..', 'pennyfarthing_scripts');
+  // 3. Dev mode: Check relative to Cyclist source (pennyfarthing-dist/pf/)
+  const devPath = join(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'pf');
   if (existsSync(devPath)) {
-    return join(__dirname, '..', '..', '..'); // Return package root
+    return join(__dirname, '..', '..', '..', 'pennyfarthing-dist');
   }
 
   return null;
@@ -111,7 +107,7 @@ export function getPrimeContext(agentName: string, projectDir: string): string |
 
   const packageRoot = findPennyfarthingScripts(projectDir);
   if (!packageRoot) {
-    console.warn('[prime] Could not find pennyfarthing_scripts (pf CLI not installed, PYTHONPATH fallback failed)');
+    console.warn('[prime] Could not find pf (pf CLI not installed, PYTHONPATH fallback failed)');
     return null;
   }
 
@@ -123,7 +119,7 @@ export function getPrimeContext(agentName: string, projectDir: string): string |
 
     const result = execFileSync(
       'python3',
-      ['-m', 'pennyfarthing_scripts.cli', 'agent', 'start', agentName, '--quiet'],
+      ['-m', 'pf.cli', 'agent', 'start', agentName, '--quiet'],
       {
         cwd: projectDir,
         env,
@@ -325,12 +321,12 @@ export function getPrimeContextWithTier(
 
   const packageRoot = findPennyfarthingScripts(projectDir);
   if (!packageRoot) {
-    console.warn('[prime] Could not find pennyfarthing_scripts');
+    console.warn('[prime] Could not find pf');
     return null;
   }
 
   try {
-    // Set PYTHONPATH so Python can find pennyfarthing_scripts
+    // Set PYTHONPATH so Python can find pf
     const env = {
       ...process.env,
       PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
@@ -384,7 +380,7 @@ export function getPrimeContextJson(
 
   const packageRoot = findPennyfarthingScripts(projectDir);
   if (!packageRoot) {
-    console.warn('[prime] Could not find pennyfarthing_scripts');
+    console.warn('[prime] Could not find pf');
     return null;
   }
 

@@ -1,5 +1,5 @@
 """
-Tests for pennyfarthing_scripts.deadcode module.
+Tests for pf.deadcode module.
 
 Covers models, stale file detection, exclusion logic, enrichment, formatters, and CLI.
 Tests are written in RED state — all should fail until Dev implements the module.
@@ -12,13 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from pennyfarthing_scripts.deadcode.models import (
+from pf.deadcode.models import (
     StaleFile,
     DeadCodeResult,
     UnusedExport,
     UnusedExportResult,
 )
-from pennyfarthing_scripts.deadcode.analyze import (
+from pf.deadcode.analyze import (
     _run_git_command,
     _should_exclude,
     _is_source_file,
@@ -28,12 +28,12 @@ from pennyfarthing_scripts.deadcode.analyze import (
     DEFAULT_EXCLUDES,
     SOURCE_EXTENSIONS,
 )
-from pennyfarthing_scripts.deadcode.formatters import (
+from pf.deadcode.formatters import (
     format_table,
     export_json,
     export_csv,
 )
-from pennyfarthing_scripts.deadcode.cli import deadcode
+from pf.deadcode.cli import deadcode
 
 
 # =============================================================================
@@ -254,7 +254,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -282,7 +282,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -304,7 +304,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -326,7 +326,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -349,7 +349,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -371,7 +371,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -389,7 +389,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True):
             result = asyncio.run(find_stale_files(Path("/tmp/repo"), days=180))
@@ -407,7 +407,7 @@ class TestFindStaleFiles:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True):
             result = asyncio.run(find_stale_files(Path("/tmp/repo"), days=180))
@@ -433,7 +433,7 @@ class TestAnalyzeRepo:
             return ("", "fatal: not a git repository", 128)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True):
             result = asyncio.run(analyze_repo("test", Path("/tmp"), 180))
@@ -452,7 +452,7 @@ class TestAnalyzeRepo:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True), \
            patch("pathlib.Path.stat") as mock_stat:
@@ -473,7 +473,7 @@ class TestAnalyzeRepo:
             return ("", "", 0)
 
         with patch(
-            "pennyfarthing_scripts.deadcode.analyze._run_git_command",
+            "pf.deadcode.analyze._run_git_command",
             side_effect=mock_git,
         ), patch("pathlib.Path.exists", return_value=True):
             result = asyncio.run(analyze_repo("test", Path("/tmp"), 180))
@@ -609,7 +609,7 @@ class TestCLI:
             total_files=10,
         )
         with patch(
-            "pennyfarthing_scripts.deadcode.cli._run_analysis",
+            "pf.deadcode.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
@@ -666,12 +666,12 @@ class TestCLI:
 class TestCLIRegistration:
     def test_deadcode_importable(self):
         """deadcode CLI group should be importable."""
-        from pennyfarthing_scripts.deadcode.cli import deadcode
+        from pf.deadcode.cli import deadcode
         assert deadcode is not None
 
     def test_deadcode_module_entry(self):
-        """python -m pennyfarthing_scripts.deadcode should work."""
-        from pennyfarthing_scripts.deadcode import __main__
+        """python -m pf.deadcode should work."""
+        from pf.deadcode import __main__
         assert __main__ is not None
 
 
@@ -898,7 +898,7 @@ class TestFindUnusedExports:
 class TestUnusedExportFormatters:
     def test_format_exports_table_with_data(self):
         """format_exports_table should produce readable output."""
-        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+        from pf.deadcode.formatters import format_exports_table
 
         exports = [
             UnusedExport(symbol="helperFn", file="src/utils.ts", line=10, export_type="named"),
@@ -911,14 +911,14 @@ class TestUnusedExportFormatters:
 
     def test_format_exports_table_empty(self):
         """format_exports_table with no exports shows informative message."""
-        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+        from pf.deadcode.formatters import format_exports_table
 
         table = format_exports_table([])
         assert "no unused" in table.lower()
 
     def test_format_exports_table_top_n(self):
         """format_exports_table should respect top_n limit."""
-        from pennyfarthing_scripts.deadcode.formatters import format_exports_table
+        from pf.deadcode.formatters import format_exports_table
 
         exports = [
             UnusedExport(symbol=f"fn{i}", file=f"file{i}.ts", line=i)
@@ -929,7 +929,7 @@ class TestUnusedExportFormatters:
 
     def test_export_exports_json(self):
         """export_exports_json should return valid JSON."""
-        from pennyfarthing_scripts.deadcode.formatters import export_exports_json
+        from pf.deadcode.formatters import export_exports_json
 
         result = UnusedExportResult(
             success=True,
@@ -948,7 +948,7 @@ class TestUnusedExportFormatters:
 
     def test_export_exports_csv(self):
         """export_exports_csv should have header and data rows."""
-        from pennyfarthing_scripts.deadcode.formatters import export_exports_csv
+        from pf.deadcode.formatters import export_exports_csv
 
         exports = [
             UnusedExport(symbol="helperFn", file="src/utils.ts", line=10, export_type="named"),
@@ -997,7 +997,7 @@ class TestExportsCLI:
             total_exports_scanned=10,
         )
         with patch(
-            "pennyfarthing_scripts.deadcode.cli._run_exports_analysis",
+            "pf.deadcode.cli._run_exports_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()

@@ -14,3 +14,6 @@ test/
 .gitignore
 .eslintrc*
 tsconfig.json
+pennyfarthing-dist/pf/__pycache__/
+pennyfarthing-dist/pf/**/__pycache__/
+pennyfarthing-dist/pf/tests/

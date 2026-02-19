@@ -115,7 +115,7 @@ pf.sh bc list                 # List saved layouts
 | `packages/core/src/public/components/BikeRackWorkspace.tsx` | Dockview layout for BikeRack |
 | `packages/core/src/public/components/BikeRackIndex.tsx` | Panel listing index page |
 | `packages/core/src/public/components/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |
-| `pennyfarthing_scripts/bikerack/cli.py` | `pf.sh bikerack` launcher CLI |
+| `pf/bikerack/cli.py` | `pf.sh bikerack` launcher CLI |
 
 ## Constraints
 

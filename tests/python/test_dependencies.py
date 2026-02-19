@@ -1,5 +1,5 @@
 """
-Tests for pennyfarthing_scripts.dependencies module.
+Tests for pf.dependencies module.
 
 Covers models (ADR-0008), npm output parsing, analysis engine,
 formatters (table/json/csv), CLI options, and edge cases.
@@ -14,23 +14,23 @@ from dataclasses import asdict
 import pytest
 from click.testing import CliRunner
 
-from pennyfarthing_scripts.dependencies.models import (
+from pf.dependencies.models import (
     OutdatedPackage,
     SecurityAdvisory,
     DependenciesResult,
 )
-from pennyfarthing_scripts.dependencies.analyze import (
+from pf.dependencies.analyze import (
     analyze_dependencies,
     _parse_outdated_output,
     _parse_audit_output,
 )
-from pennyfarthing_scripts.dependencies.formatters import (
+from pf.dependencies.formatters import (
     format_outdated_table,
     format_audit_table,
     export_json,
     export_csv,
 )
-from pennyfarthing_scripts.dependencies.cli import dependencies
+from pf.dependencies.cli import dependencies
 
 
 # =============================================================================
@@ -294,7 +294,7 @@ class TestAnalyzeDependencies:
     def test_npm_not_found_returns_error(self):
         """AC: Graceful error when npm is not available."""
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=None,
         ):
             result = asyncio.run(analyze_dependencies(Path("/tmp/project")))
@@ -303,17 +303,17 @@ class TestAnalyzeDependencies:
 
     def test_successful_analysis(self):
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=True,
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
+            "pf.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(SAMPLE_OUTDATED_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_audit",
+            "pf.dependencies.analyze._run_npm_audit",
             new_callable=AsyncMock,
             return_value=(SAMPLE_AUDIT_OUTPUT, "", 0),
         ):
@@ -324,17 +324,17 @@ class TestAnalyzeDependencies:
 
     def test_result_has_target_path(self):
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=True,
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
+            "pf.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(SAMPLE_OUTDATED_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_audit",
+            "pf.dependencies.analyze._run_npm_audit",
             new_callable=AsyncMock,
             return_value=(SAMPLE_AUDIT_OUTPUT, "", 0),
         ):
@@ -344,17 +344,17 @@ class TestAnalyzeDependencies:
     def test_outdated_failure_still_returns_audit(self):
         """If npm outdated fails, audit results should still be returned."""
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=True,
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
+            "pf.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=("", "error", 2),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_audit",
+            "pf.dependencies.analyze._run_npm_audit",
             new_callable=AsyncMock,
             return_value=(SAMPLE_AUDIT_OUTPUT, "", 0),
         ):
@@ -365,17 +365,17 @@ class TestAnalyzeDependencies:
     def test_audit_failure_still_returns_outdated(self):
         """If npm audit fails, outdated results should still be returned."""
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=True,
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
+            "pf.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(SAMPLE_OUTDATED_OUTPUT, "", 1),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_audit",
+            "pf.dependencies.analyze._run_npm_audit",
             new_callable=AsyncMock,
             return_value=("", "error", 2),
         ):
@@ -386,10 +386,10 @@ class TestAnalyzeDependencies:
     def test_no_package_json_returns_error(self):
         """AC: Graceful error when no package.json exists."""
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=False,
         ):
             result = asyncio.run(analyze_dependencies(Path("/tmp/empty")))
@@ -399,17 +399,17 @@ class TestAnalyzeDependencies:
     def test_both_empty_results(self):
         """No outdated packages and no vulnerabilities."""
         with patch(
-            "pennyfarthing_scripts.dependencies.analyze._find_npm",
+            "pf.dependencies.analyze._find_npm",
             return_value=Path("/usr/local/bin/npm"),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._check_package_json",
+            "pf.dependencies.analyze._check_package_json",
             return_value=True,
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_outdated",
+            "pf.dependencies.analyze._run_npm_outdated",
             new_callable=AsyncMock,
             return_value=(EMPTY_OUTDATED_OUTPUT, "", 0),
         ), patch(
-            "pennyfarthing_scripts.dependencies.analyze._run_npm_audit",
+            "pf.dependencies.analyze._run_npm_audit",
             new_callable=AsyncMock,
             return_value=(EMPTY_AUDIT_OUTPUT, "", 0),
         ):
@@ -555,7 +555,7 @@ class TestCLI:
             advisories=[SecurityAdvisory(severity="high", count=1)],
         )
         with patch(
-            "pennyfarthing_scripts.dependencies.cli._run_analysis",
+            "pf.dependencies.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
@@ -576,7 +576,7 @@ class TestCLI:
             advisories=[],
         )
         with patch(
-            "pennyfarthing_scripts.dependencies.cli._run_analysis",
+            "pf.dependencies.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()

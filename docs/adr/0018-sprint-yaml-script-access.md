@@ -27,7 +27,7 @@ Sprint tracking data lives in `sprint/current-sprint.yaml`, a structured YAML fi
 **Never directly edit sprint YAML.** All access goes through the Python CLI: `pf sprint [COMMAND]`.
 
 > **Migration note (2026-02-07):** All bash scripts in `pennyfarthing-dist/scripts/sprint/` have been
-> migrated to Python CLI commands in `pennyfarthing_scripts/sprint/cli.py`. The bash scripts have been
+> migrated to Python CLI commands in `pf/sprint/cli.py`. The bash scripts have been
 > removed. See PR #716 (initial shim migration) and the follow-up deprecation commit.
 
 ### CLI Architecture
@@ -80,7 +80,7 @@ Scripts enforce these invariants:
 In addition to the bash scripts above, a Python module layer provides deterministic serialization and validation:
 
 ```
-pennyfarthing_scripts/sprint/
+pf/sprint/
 ├── yaml_io.py          # Deterministic read/write with canonical formatting
 ├── validate_cmd.py     # Validation with --fix flag for format repair
 ├── validator.py        # Schema validation (required fields, types)
@@ -117,17 +117,17 @@ The pre-commit hook (story 76-5) runs `validate_sprint_yaml()` on staged `sprint
 
 ### Integration with Jira
 
-The `pennyfarthing_scripts/jira/` Python module handles bidirectional sync:
+The `pf/jira/` Python module handles bidirectional sync:
 
 ```bash
 # Sync YAML → Jira (update Jira from local changes)
-python -m pennyfarthing_scripts.jira.bidirectional --direction yaml-to-jira
+python -m pf.jira.bidirectional --direction yaml-to-jira
 
 # Sync Jira → YAML (pull Jira updates locally)
-python -m pennyfarthing_scripts.jira.bidirectional --direction jira-to-yaml
+python -m pf.jira.bidirectional --direction jira-to-yaml
 
 # Dry run (show what would change)
-python -m pennyfarthing_scripts.jira.bidirectional --dry-run
+python -m pf.jira.bidirectional --dry-run
 ```
 
 Scripts call this automatically when:
@@ -218,9 +218,9 @@ Store changes as events, derive state.
 
 ## References
 
-- Python CLI: `pennyfarthing_scripts/sprint/cli.py`
-- Python modules: `pennyfarthing_scripts/sprint/` (`yaml_io.py`, `validate_cmd.py`, `validator.py`)
-- Jira sync: `pennyfarthing_scripts/jira/bidirectional.py`
+- Python CLI: `pf/sprint/cli.py`
+- Python modules: `pf/sprint/` (`yaml_io.py`, `validate_cmd.py`, `validator.py`)
+- Jira sync: `pf/jira/bidirectional.py`
 - Skill wrapper: `pennyfarthing-dist/skills/sprint/skill.md`
 - Agent behavior: `pennyfarthing-dist/guides/agent-behavior.md`
 - Pre-commit hook: `pennyfarthing-dist/scripts/hooks/pre-commit.sh` (Check 3)

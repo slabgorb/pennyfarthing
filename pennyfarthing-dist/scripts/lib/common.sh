@@ -171,7 +171,7 @@ check_dependencies() {
 #
 # Usage:
 #   get_python
-#   $PYTHON_CMD -m pennyfarthing_scripts.jira view MSSCI-12345
+#   $PYTHON_CMD -m pf.jira view MSSCI-12345
 #
 get_python() {
     # Find project root if not set
@@ -197,7 +197,7 @@ get_python() {
 }
 
 # run_python_module MODULE [ARGS...]
-# Run a pennyfarthing_scripts Python module with proper venv handling
+# Run a pf Python module with proper venv handling
 #
 # Usage:
 #   run_python_module jira view MSSCI-12345
@@ -208,5 +208,5 @@ run_python_module() {
     get_python || return 1
     local module="$1"
     shift
-    exec $PYTHON_CMD -m "pennyfarthing_scripts.${module}" "$@"
+    exec $PYTHON_CMD -m "pf.${module}" "$@"
 }

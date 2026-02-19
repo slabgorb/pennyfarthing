@@ -17,10 +17,10 @@ import sys
 from pathlib import Path
 from difflib import SequenceMatcher
 
-# Add parent to path for pennyfarthing_scripts imports
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+# Add parent to path for pf imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "pennyfarthing-dist"))
 
-from pennyfarthing_scripts.swebench import (
+from pf.swebench import (
     extract_patch_info,
     find_scenario,
     load_swebench_data,

@@ -1,7 +1,7 @@
 /**
  * Tests for Story 117-1: Ship pyproject.toml in npm package for consumer Python hooks
  *
- * The npm package bundles pennyfarthing_scripts/ Python source but no pyproject.toml.
+ * The npm package bundles pf/ Python source but no pyproject.toml.
  * All hooks delegate to `uv run --project` which requires pyproject.toml.
  * Consumer projects must manually create one. This story ships a template
  * pyproject.toml and auto-generates it during init.
@@ -154,7 +154,7 @@ describe('117-1: Ship pyproject.toml in npm package', () => {
         'Template should have [project.scripts] section'
       );
       assert.ok(
-        content.includes('pennyfarthing_scripts.cli:main'),
+        content.includes('pf.cli:main'),
         'Template should declare pf entry point'
       );
     });
@@ -199,16 +199,16 @@ describe('117-1: Ship pyproject.toml in npm package', () => {
       );
     });
 
-    it('generated pyproject.toml should point pennyfarthing_scripts to node_modules', () => {
+    it('generated pyproject.toml should point pf to node_modules', () => {
       runCLI(testDir, ['init', '--force']);
 
       const pyprojectPath = join(testDir, '.pennyfarthing/pyproject.toml');
       const content = readFileSync(pyprojectPath, 'utf8');
-      // The generated file should reference the pennyfarthing_scripts package
+      // The generated file should reference the pf package
       // from node_modules (where the npm package ships it)
       assert.ok(
-        content.includes('pennyfarthing_scripts'),
-        'Generated pyproject.toml should reference pennyfarthing_scripts package'
+        content.includes('pf'),
+        'Generated pyproject.toml should reference pf package'
       );
     });
 

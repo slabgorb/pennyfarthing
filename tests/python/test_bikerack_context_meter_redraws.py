@@ -23,8 +23,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.context_meter_footer import ContextMeterFooter
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.context_meter_footer import ContextMeterFooter
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data — reuse standard context wire format
@@ -135,7 +135,7 @@ class TestPeriodicRefreshInApp:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
         return BikeRackApp()
 
     async def test_meter_has_active_timer_after_mount(self, app):
@@ -160,7 +160,7 @@ class TestPanelSwitchRedraw:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
         return BikeRackApp()
 
     async def test_panel_switch_triggers_meter_refresh(self, app):

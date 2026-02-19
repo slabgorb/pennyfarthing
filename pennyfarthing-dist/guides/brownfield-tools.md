@@ -123,11 +123,11 @@ These power the **HotspotsPanel** in Cyclist and BikeRack.
 
 | Directory | Purpose |
 |-----------|---------|
-| `pennyfarthing_scripts/hotspots/` | Hotspot analysis (analyze, formatters, models) |
-| `pennyfarthing_scripts/complexity/` | Complexity analysis |
-| `pennyfarthing_scripts/deadcode/` | Dead code detection |
-| `pennyfarthing_scripts/dependencies/` | Dependency analysis |
-| `pennyfarthing_scripts/codemarkers/` | Code marker detection |
-| `pennyfarthing_scripts/healthscore/` | Composite health score |
-| `pennyfarthing_scripts/brownfield/` | Brownfield codebase discovery |
+| `pf/hotspots/` | Hotspot analysis (analyze, formatters, models) |
+| `pf/complexity/` | Complexity analysis |
+| `pf/deadcode/` | Dead code detection |
+| `pf/dependencies/` | Dependency analysis |
+| `pf/codemarkers/` | Code marker detection |
+| `pf/healthscore/` | Composite health score |
+| `pf/brownfield/` | Brownfield codebase discovery |
 | `packages/core/src/server/api/` | WheelHub API routes |

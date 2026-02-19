@@ -7,7 +7,7 @@
 
 **Sidecars:** Write learnings BEFORE starting exit protocol.
 
-**Scripts:** Pennyfarthing scripts are Python-based (`pennyfarthing_scripts/`), not shell—check before assuming `.sh`.
+**Scripts:** Pennyfarthing scripts are Python-based (`pf/`), not shell—check before assuming `.sh`.
 
 **pf CLI:** Never call bare `pf` — it is not globally installed. Always use the wrapper:
 ```bash

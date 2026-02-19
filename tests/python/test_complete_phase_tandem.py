@@ -25,7 +25,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.handoff.complete_phase import complete_phase
+from pf.handoff.complete_phase import complete_phase
 
 
 # =============================================================================

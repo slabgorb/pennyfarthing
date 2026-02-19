@@ -26,8 +26,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.hooks import HookResponse, output_hook_response
-from pennyfarthing_scripts.bellmode_hook import (
+from pf.hooks import HookResponse, output_hook_response
+from pf.bellmode_hook import (
     read_bell_queue,
     read_tandem_observations,
     get_latest_observation,
@@ -362,7 +362,7 @@ class TestDualImplementation:
 
     def test_python_bellmode_hook_has_tandem_functions(self):
         """bellmode_hook.py should export tandem-related functions."""
-        from pennyfarthing_scripts import bellmode_hook
+        from pf import bellmode_hook
 
         assert hasattr(bellmode_hook, "check_tandem_files"), "Missing check_tandem_files"
         assert hasattr(bellmode_hook, "read_tandem_observations"), "Missing read_tandem_observations"
@@ -383,7 +383,7 @@ class TestDualImplementation:
     def test_python_hook_contains_tandem_check(self):
         """Python bell_mode.py should contain tandem observation logic."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+            PROJECT_ROOT / "pf" / "hooks" / "bell_mode.py"
         ).read_text()
         assert "tandem" in hook_source.lower(), (
             "hooks/bell_mode.py should contain tandem observation logic"
@@ -392,7 +392,7 @@ class TestDualImplementation:
     def test_python_hook_checks_tandem_mtime(self):
         """Python hook should check tandem file mtime."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+            PROJECT_ROOT / "pf" / "hooks" / "bell_mode.py"
         ).read_text()
         assert "mtime" in hook_source.lower(), (
             "hooks/bell_mode.py should check file mtime for tandem observations"
@@ -401,7 +401,7 @@ class TestDualImplementation:
     def test_python_hook_formats_tandem_prefix(self):
         """Python hook should format with [Tandem] prefix."""
         hook_source = (
-            PROJECT_ROOT / "pennyfarthing_scripts" / "hooks" / "bell_mode.py"
+            PROJECT_ROOT / "pf" / "hooks" / "bell_mode.py"
         ).read_text()
         assert "[Tandem]" in hook_source, "hooks/bell_mode.py should use [Tandem] prefix format"
 

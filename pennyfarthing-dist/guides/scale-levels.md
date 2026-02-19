@@ -75,7 +75,7 @@ Or when asked during workflow initiation, specify your preferred level.
 ## Python API
 
 ```python
-from pennyfarthing_scripts.workflow import (
+from pf.workflow import (
     detect_scale_level,
     get_workflow_for_scale_level,
     get_required_artifacts,

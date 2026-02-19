@@ -34,7 +34,7 @@ class TestAgentStartCommand:
     @pytest.fixture
     def cli(self):
         """Import the CLI lazily to test import time."""
-        from pennyfarthing_scripts.cli import cli
+        from pf.cli import cli
         return cli
 
     # AC1: pf agent start <name> starts session
@@ -60,7 +60,7 @@ class TestAgentStartCommand:
 
     def test_start_with_agent_name_succeeds(self, runner: CliRunner, cli) -> None:
         """agent start <name> should succeed and start a session."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             result = runner.invoke(cli, ["agent", "start", "sm"])
 
@@ -69,7 +69,7 @@ class TestAgentStartCommand:
 
     def test_start_calls_prime_with_agent_name(self, runner: CliRunner, cli) -> None:
         """agent start should pass agent name to prime module."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             runner.invoke(cli, ["agent", "start", "dev"])
 
@@ -93,7 +93,7 @@ class TestAgentStartCommand:
 
     def test_session_id_passed_to_prime(self, runner: CliRunner, cli) -> None:
         """--session-id should be passed to prime module."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             runner.invoke(cli, ["agent", "start", "sm", "--session-id", "test-123"])
 
@@ -102,7 +102,7 @@ class TestAgentStartCommand:
 
     def test_no_persona_passed_to_prime(self, runner: CliRunner, cli) -> None:
         """--no-persona should set no_persona=True in prime call."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             runner.invoke(cli, ["agent", "start", "tea", "--no-persona"])
 
@@ -113,7 +113,7 @@ class TestAgentStartCommand:
 
     def test_start_outputs_session_id(self, runner: CliRunner, cli) -> None:
         """agent start should output the session ID."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             result = runner.invoke(cli, ["agent", "start", "sm"])
 
@@ -124,7 +124,7 @@ class TestAgentStartCommand:
 
     def test_start_outputs_agent_context(self, runner: CliRunner, cli) -> None:
         """agent start should output full agent context."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             result = runner.invoke(cli, ["agent", "start", "dev"])
 
@@ -134,8 +134,8 @@ class TestAgentStartCommand:
     # AC4: Calls existing prime module
 
     def test_start_delegates_to_prime(self, runner: CliRunner, cli) -> None:
-        """agent start should delegate to pennyfarthing_scripts.prime.prime()."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        """agent start should delegate to pf.prime.prime()."""
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             runner.invoke(cli, ["agent", "start", "reviewer"])
 
@@ -144,7 +144,7 @@ class TestAgentStartCommand:
 
     def test_start_returns_prime_exit_code(self, runner: CliRunner, cli) -> None:
         """agent start should return prime module's exit code."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 1  # Simulate error
             result = runner.invoke(cli, ["agent", "start", "sm"])
 
@@ -160,7 +160,7 @@ class TestAgentStartOptions:
 
     @pytest.fixture
     def cli(self):
-        from pennyfarthing_scripts.cli import cli
+        from pf.cli import cli
         return cli
 
     def test_json_option_exists(self, runner: CliRunner, cli) -> None:
@@ -171,7 +171,7 @@ class TestAgentStartOptions:
 
     def test_json_passed_to_prime(self, runner: CliRunner, cli) -> None:
         """--json should set json_output=True in prime call."""
-        with patch("pennyfarthing_scripts.prime.prime") as mock_prime:
+        with patch("pf.prime.prime") as mock_prime:
             mock_prime.return_value = 0
             runner.invoke(cli, ["agent", "start", "sm", "--json"])
 
@@ -197,7 +197,7 @@ class TestAgentStartModuleInvocation:
     def test_module_invocation_shows_agent_group(self) -> None:
         """CLI should show agent group in help."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+            [sys.executable, "-m", "pf.cli", "--help"],
             capture_output=True,
             text=True,
             timeout=30,
@@ -209,7 +209,7 @@ class TestAgentStartModuleInvocation:
     def test_module_invocation_agent_start_help(self) -> None:
         """agent start should show help via module invocation."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "agent", "start", "--help"],
+            [sys.executable, "-m", "pf.cli", "agent", "start", "--help"],
             capture_output=True,
             text=True,
             timeout=30,

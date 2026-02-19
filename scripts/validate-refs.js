@@ -22,7 +22,7 @@
  * 14. Theme YAML agent keys → agents/*.md
  * 15. Guide references in backticks → guides/*.md
  * 16. Skill redirect targets → skill directories
- * 17. Python imports → pennyfarthing_scripts modules
+ * 17. Python imports → pf modules
  *
  * What it does NOT check:
  * - Runtime variables ({STORY_ID}, {project_root}, $CLAUDE_PROJECT_DIR, etc.)
@@ -142,7 +142,7 @@ function getGuideNames() {
 }
 
 function getPythonModules() {
-  const scriptsDir = join(PROJECT_ROOT, 'pennyfarthing_scripts');
+  const scriptsDir = join(PROJECT_ROOT, 'pennyfarthing-dist', 'pf');
   if (!existsSync(scriptsDir)) return new Set();
   const modules = new Set();
 
@@ -663,7 +663,7 @@ function checkGuideRefs(filePath, content, guides) {
 }
 
 /**
- * 17. Python imports → pennyfarthing_scripts modules
+ * 17. Python imports → pf modules
  */
 function checkPythonImports(filePath, content, pythonModules) {
   const issues = [];
@@ -674,11 +674,11 @@ function checkPythonImports(filePath, content, pythonModules) {
     const trimmed = line.trim();
     if (trimmed.startsWith('#')) continue;
 
-    // from pennyfarthing_scripts.X.Y import ...
-    let match = trimmed.match(/^from\s+pennyfarthing_scripts\.([a-zA-Z0-9_.]+)\s+import/);
+    // from pf.X.Y import ...
+    let match = trimmed.match(/^from\s+pf\.([a-zA-Z0-9_.]+)\s+import/);
     if (!match) {
-      // import pennyfarthing_scripts.X.Y
-      match = trimmed.match(/^import\s+pennyfarthing_scripts\.([a-zA-Z0-9_.]+)/);
+      // import pf.X.Y
+      match = trimmed.match(/^import\s+pf\.([a-zA-Z0-9_.]+)/);
     }
     if (!match) continue;
 
@@ -696,8 +696,8 @@ function checkPythonImports(filePath, content, pythonModules) {
         }
       }
       if (!found) {
-        issues.push(issue(filePath, i + 1, `pennyfarthing_scripts.${modulePath}`,
-          `Unknown Python module "pennyfarthing_scripts.${modulePath}"`));
+        issues.push(issue(filePath, i + 1, `pf.${modulePath}`,
+          `Unknown Python module "pf.${modulePath}"`));
       }
     }
   }

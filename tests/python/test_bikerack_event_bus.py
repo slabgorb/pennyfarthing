@@ -20,9 +20,9 @@ import pytest
 from rich.console import Console
 from textual.message import Message
 
-from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
-from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.changed_panel import ChangedPanel
+from pf.bikerack.diffs_panel import DiffsPanel
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures
@@ -147,19 +147,19 @@ class TestPanelEventDefinition:
 
     def test_events_module_importable(self):
         """events module should be importable from bikerack package."""
-        from pennyfarthing_scripts.bikerack.events import PanelEvent
+        from pf.bikerack.events import PanelEvent
 
         assert PanelEvent is not None
 
     def test_panel_event_is_message_subclass(self):
         """PanelEvent should inherit from textual.message.Message."""
-        from pennyfarthing_scripts.bikerack.events import PanelEvent
+        from pf.bikerack.events import PanelEvent
 
         assert issubclass(PanelEvent, Message)
 
     def test_panel_event_can_be_instantiated(self):
         """PanelEvent should be instantiable as a base class."""
-        from pennyfarthing_scripts.bikerack.events import PanelEvent
+        from pf.bikerack.events import PanelEvent
 
         event = PanelEvent()
         assert isinstance(event, Message)
@@ -170,39 +170,39 @@ class TestNavigateToFileEvent:
 
     def test_navigate_to_file_importable(self):
         """NavigateToFile should be importable from events module."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         assert NavigateToFile is not None
 
     def test_navigate_to_file_is_panel_event_subclass(self):
         """NavigateToFile should inherit from PanelEvent."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile, PanelEvent
+        from pf.bikerack.events import NavigateToFile, PanelEvent
 
         assert issubclass(NavigateToFile, PanelEvent)
 
     def test_navigate_to_file_is_message_subclass(self):
         """NavigateToFile should transitively inherit from Message."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         assert issubclass(NavigateToFile, Message)
 
     def test_navigate_to_file_stores_path(self):
         """NavigateToFile should store the file path as an attribute."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         event = NavigateToFile(path="src/server.ts")
         assert event.path == "src/server.ts"
 
     def test_navigate_to_file_path_is_string(self):
         """NavigateToFile.path should be a string."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         event = NavigateToFile(path="src/app.py")
         assert isinstance(event.path, str)
 
     def test_navigate_to_file_different_paths(self):
         """NavigateToFile should work with various file paths."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         paths = ["src/app.py", "sprint/epic-110.yaml", "tests/test_foo.py"]
         for p in paths:
@@ -485,13 +485,13 @@ class TestAppNavigateToFileHandler:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
     async def test_app_switches_to_diffs_on_navigate(self, app):
         """When NavigateToFile is posted, app should switch to diffs panel."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         async with app.run_test() as pilot:
             # Start on a different panel
@@ -510,7 +510,7 @@ class TestAppNavigateToFileHandler:
 
     async def test_navigate_calls_diffs_navigate_to_file(self, app):
         """App should call DiffsPanel.navigate_to_file with the event path."""
-        from pennyfarthing_scripts.bikerack.events import NavigateToFile
+        from pf.bikerack.events import NavigateToFile
 
         async with app.run_test() as pilot:
             diffs = app.query_one("#panel-diffs", DiffsPanel)
@@ -548,7 +548,7 @@ class TestContextSensitiveBindings:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -617,13 +617,13 @@ class TestExistingBindingsRegression:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
     async def test_j_navigates_next_epic_in_sprint(self, app):
         """j key should call SprintPanel.next_epic when sprint is active."""
-        from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
+        from pf.bikerack.sprint_panel import SprintPanel
 
         async with app.run_test() as pilot:
             app.action_switch_panel("sprint")
@@ -637,7 +637,7 @@ class TestExistingBindingsRegression:
 
     async def test_k_navigates_prev_epic_in_sprint(self, app):
         """k key should call SprintPanel.prev_epic when sprint is active."""
-        from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
+        from pf.bikerack.sprint_panel import SprintPanel
 
         async with app.run_test() as pilot:
             app.action_switch_panel("sprint")
@@ -651,7 +651,7 @@ class TestExistingBindingsRegression:
 
     async def test_e_toggles_epic_in_sprint(self, app):
         """e key should call SprintPanel.toggle_epic when sprint is active."""
-        from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
+        from pf.bikerack.sprint_panel import SprintPanel
 
         async with app.run_test() as pilot:
             app.action_switch_panel("sprint")
@@ -689,7 +689,7 @@ class TestExistingBindingsRegression:
 
     async def test_j_does_nothing_when_not_on_sprint(self, app):
         """j key should NOT trigger next_epic when on diffs panel."""
-        from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
+        from pf.bikerack.sprint_panel import SprintPanel
 
         async with app.run_test() as pilot:
             app.action_switch_panel("diffs")

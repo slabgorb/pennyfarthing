@@ -135,7 +135,7 @@ describe('AC2: Graceful shutdown cleanup', () => {
 describe('AC3: PID file for manual cleanup', () => {
   it('Python launcher should write .wheelhub-pid file', () => {
     // Verify the launcher module exports write_pid_file
-    const launcherPath = resolve(__dirname, '..', '..', '..', 'pennyfarthing_scripts', 'bikerack', 'launcher.py');
+    const launcherPath = resolve(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'pf', 'bikerack', 'launcher.py');
     expect(existsSync(launcherPath)).toBe(true);
 
     const content = readFileSync(launcherPath, 'utf-8');

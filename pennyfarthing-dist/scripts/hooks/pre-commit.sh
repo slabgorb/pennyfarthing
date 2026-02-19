@@ -158,7 +158,7 @@ if [[ -n "$SPRINT_YAML_FILES" ]]; then
         # Set PYTHONPATH to include pennyfarthing source
         PYTHONPATH_ORIG="${PYTHONPATH:-}"
         if [[ -d "$PROJECT_ROOT/pennyfarthing" ]]; then
-            export PYTHONPATH="$PROJECT_ROOT/pennyfarthing${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
+            export PYTHONPATH="$PROJECT_ROOT/pennyfarthing/pennyfarthing-dist${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
         fi
 
         VALIDATION_FAILED=0
@@ -171,7 +171,7 @@ if [[ -n "$SPRINT_YAML_FILES" ]]; then
             if ! $PYTHON -c "
 import sys
 from pathlib import Path
-from pennyfarthing_scripts.sprint.validate_cmd import validate_sprint_yaml
+from pf.sprint.validate_cmd import validate_sprint_yaml
 result = validate_sprint_yaml(Path(sys.argv[1]))
 if result.errors:
     for e in result.errors:
@@ -198,7 +198,7 @@ sys.exit(0 if result.valid else 1)
             echo "COMMIT BLOCKED - Sprint YAML validation failed"
             echo ""
             echo "Fix: Review errors above, then run:"
-            echo "  python3 -m pennyfarthing_scripts.sprint.validate_cmd --fix <file>"
+            echo "  python3 -m pf.sprint.validate_cmd --fix <file>"
             echo ""
             exit 1
         fi

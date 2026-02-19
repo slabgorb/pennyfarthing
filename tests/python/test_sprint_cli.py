@@ -24,7 +24,7 @@ class TestSprintGroupRegistration:
     def test_sprint_group_in_main_cli_help(self):
         """Main CLI --help should show sprint command group."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+            [sys.executable, "-m", "pf.cli", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -39,7 +39,7 @@ class TestSprintGroupRegistration:
     def test_pf_sprint_help_works(self):
         """pf sprint --help should show sprint subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -51,7 +51,7 @@ class TestSprintGroupRegistration:
     def test_sprint_shows_subcommands_in_help(self):
         """pf sprint --help should list status, backlog, work, archive, story, epic."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -72,7 +72,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_uses_click_group(self):
         """sprint CLI should use @click.group() decorator."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -81,7 +81,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_uses_click_command(self):
         """Sprint subcommands should use @click.command() decorator."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -92,7 +92,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_no_argparse(self):
         """Sprint CLI should not use argparse anymore."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -102,7 +102,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_imports_click(self):
         """Sprint CLI should import click."""
-        cli_file = PROJECT_ROOT / "pennyfarthing_scripts" / "sprint" / "cli.py"
+        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -115,7 +115,7 @@ class TestSprintSubcommandExecution:
     def test_pf_sprint_status_runs(self):
         """pf sprint status should run without error."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "status"],
+            [sys.executable, "-m", "pf.cli", "sprint", "status"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -134,7 +134,7 @@ class TestSprintSubcommandExecution:
     def test_pf_sprint_backlog_runs(self):
         """pf sprint backlog should run without error."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "backlog"],
+            [sys.executable, "-m", "pf.cli", "sprint", "backlog"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -148,7 +148,7 @@ class TestSprintSubcommandExecution:
     def test_pf_sprint_work_help(self):
         """pf sprint work --help should show help."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "work", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "work", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -160,7 +160,7 @@ class TestSprintSubcommandExecution:
     def test_pf_sprint_archive_help(self):
         """pf sprint archive --help should show help."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "archive", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "archive", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -179,7 +179,7 @@ class TestSprintStartupPerformance:
         for _ in range(3):
             start = time.perf_counter()
             result = subprocess.run(
-                [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+                [sys.executable, "-m", "pf.cli", "sprint", "--help"],
                 capture_output=True,
                 text=True,
                 cwd=str(PROJECT_ROOT),
@@ -199,7 +199,7 @@ class TestSprintStartupPerformance:
         for _ in range(3):
             start = time.perf_counter()
             result = subprocess.run(
-                [sys.executable, "-m", "pennyfarthing_scripts.cli", "--help"],
+                [sys.executable, "-m", "pf.cli", "--help"],
                 capture_output=True,
                 text=True,
                 cwd=str(PROJECT_ROOT),

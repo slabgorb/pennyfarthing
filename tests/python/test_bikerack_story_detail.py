@@ -23,12 +23,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from textual.screen import Screen
 
-from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
-from pennyfarthing_scripts.bikerack.story_detail_data import (
+from pf.bikerack.sprint_panel import SprintPanel
+from pf.bikerack.story_detail_data import (
     _check_context_files,
     fetch_story_detail,
 )
-from pennyfarthing_scripts.bikerack.story_detail_screen import StoryDetailScreen
+from pf.bikerack.story_detail_screen import StoryDetailScreen
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -187,7 +187,7 @@ class TestStoryNavigationState:
         """Tree should have epic nodes after receiving sprint data."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -206,7 +206,7 @@ class TestStoryNavigationState:
         """Epic node should have story leaf children."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -226,7 +226,7 @@ class TestStoryNavigationState:
         """get_selected_story should return data when cursor is on a story."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -249,7 +249,7 @@ class TestStoryNavigationState:
         """get_selected_story should return None when cursor is on an epic node."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -299,7 +299,7 @@ class TestStoryNavigationRender:
         """Tree story leaf labels should contain story IDs."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -321,7 +321,7 @@ class TestStoryNavigationRender:
         """Tree story labels should include status symbol (not text)."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -360,7 +360,7 @@ class TestStoryDetailScreenClass:
 
     def test_importable(self) -> None:
         """StoryDetailScreen should be importable."""
-        from pennyfarthing_scripts.bikerack.story_detail_screen import StoryDetailScreen
+        from pf.bikerack.story_detail_screen import StoryDetailScreen
 
         assert StoryDetailScreen is not None
 
@@ -413,7 +413,7 @@ class TestFetchStoryDetail:
 
     def test_importable(self) -> None:
         """fetch_story_detail should be importable."""
-        from pennyfarthing_scripts.bikerack.story_detail_data import fetch_story_detail
+        from pf.bikerack.story_detail_data import fetch_story_detail
 
         assert fetch_story_detail is not None
 
@@ -535,7 +535,7 @@ class TestDossierLayoutContent:
 
     async def test_shows_story_title(self) -> None:
         """Dossier should display the story title."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -564,7 +564,7 @@ class TestDossierLayoutContent:
 
     async def test_shows_ac_checklist(self) -> None:
         """Dossier should display acceptance criteria as a checklist."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -593,7 +593,7 @@ class TestDossierLayoutContent:
 
     async def test_shows_workflow_phase(self) -> None:
         """Dossier should display the current workflow phase."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -622,7 +622,7 @@ class TestDossierLayoutContent:
 
     async def test_shows_git_branch(self) -> None:
         """Dossier should display the git branch name."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -650,7 +650,7 @@ class TestDossierLayoutContent:
 
     async def test_shows_pr_link(self) -> None:
         """Dossier should display the PR link when available."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -695,7 +695,7 @@ class TestEscapePopsBBack:
 
     async def test_escape_pops_screen(self) -> None:
         """Pressing Escape on StoryDetailScreen should pop back to main app."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -792,7 +792,7 @@ class TestDrillThroughIntegration:
         """Pressing Enter with a selected story should push StoryDetailScreen."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -827,7 +827,7 @@ class TestEdgeCases:
         """Tree rebuild should be safe with empty epics list."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -844,7 +844,7 @@ class TestEdgeCases:
         """Tree should handle epic with zero stories."""
         from textual.widgets import Tree
 
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -907,7 +907,7 @@ class TestEdgeCases:
 class TestStoryDetailEnrichment:
     """Verify StoryDetailScreen calls fetch_story_detail and merges data."""
 
-    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    @patch("pf.bikerack.story_detail_data.fetch_story_detail")
     def test_enrichment_called(self, mock_fetch: MagicMock) -> None:
         """StoryDetailScreen should call fetch_story_detail with story ID."""
         mock_fetch.return_value = {"id": "110-2", "workflow": "tdd", "workflow_phase": "red"}
@@ -915,7 +915,7 @@ class TestStoryDetailEnrichment:
         screen = StoryDetailScreen(story_data=ws_data)
         mock_fetch.assert_called_once_with("110-2")
 
-    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    @patch("pf.bikerack.story_detail_data.fetch_story_detail")
     def test_ws_data_wins_for_non_null(self, mock_fetch: MagicMock) -> None:
         """WS data should override enriched data for non-null fields."""
         mock_fetch.return_value = {
@@ -928,7 +928,7 @@ class TestStoryDetailEnrichment:
         assert screen._story_data["points"] == 5
         assert screen._story_data["workflow"] == "tdd"
 
-    @patch("pennyfarthing_scripts.bikerack.story_detail_data.fetch_story_detail")
+    @patch("pf.bikerack.story_detail_data.fetch_story_detail")
     def test_enrichment_failure_resilient(self, mock_fetch: MagicMock) -> None:
         """StoryDetailScreen should survive fetch_story_detail failure."""
         mock_fetch.side_effect = Exception("disk error")

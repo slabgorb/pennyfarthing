@@ -32,19 +32,19 @@ class TestImportAndInterface:
 
     def test_ws_client_module_importable(self):
         """ws_client module should be importable."""
-        from pennyfarthing_scripts.bikerack import ws_client
+        from pf.bikerack import ws_client
 
         assert ws_client is not None
 
     def test_wheelhub_client_class_exists(self):
         """WheelHubClient class should be importable."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         assert WheelHubClient is not None
 
     def test_connection_state_enum_exists(self):
         """ConnectionState enum should have expected members."""
-        from pennyfarthing_scripts.bikerack.ws_client import ConnectionState
+        from pf.bikerack.ws_client import ConnectionState
 
         assert hasattr(ConnectionState, "DISCONNECTED")
         assert hasattr(ConnectionState, "CONNECTING")
@@ -53,7 +53,7 @@ class TestImportAndInterface:
 
     def test_client_has_expected_methods(self):
         """WheelHubClient should expose connect, disconnect, subscribe, etc."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         client = WheelHubClient()
         assert callable(getattr(client, "connect", None))
@@ -64,19 +64,19 @@ class TestImportAndInterface:
 
     def test_default_port_constant(self):
         """DEFAULT_PORT should be 2898 (BikeRack mode)."""
-        from pennyfarthing_scripts.bikerack.ws_client import DEFAULT_PORT
+        from pf.bikerack.ws_client import DEFAULT_PORT
 
         assert DEFAULT_PORT == 2898
 
     def test_reconnect_delay_constant(self):
         """RECONNECT_DELAY should be 2.0 seconds."""
-        from pennyfarthing_scripts.bikerack.ws_client import RECONNECT_DELAY
+        from pf.bikerack.ws_client import RECONNECT_DELAY
 
         assert RECONNECT_DELAY == 2.0
 
     def test_initial_state_is_disconnected(self):
         """New client should start in DISCONNECTED state."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -95,7 +95,7 @@ class TestPortDiscovery:
 
     def test_discovers_port_from_file(self, tmp_path):
         """discover_port() should read port from .bikerack-port file."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         port_file = tmp_path / ".bikerack-port"
         port_file.write_text("3456")
@@ -106,7 +106,7 @@ class TestPortDiscovery:
 
     def test_falls_back_to_default_port(self, tmp_path):
         """discover_port() should return DEFAULT_PORT when no port file exists."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             DEFAULT_PORT,
             WheelHubClient,
         )
@@ -120,7 +120,7 @@ class TestPortDiscovery:
 
     def test_uses_explicit_port_over_discovery(self, tmp_path):
         """When port is passed explicitly, discover_port() should return it."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         port_file = tmp_path / ".bikerack-port"
         port_file.write_text("3456")
@@ -142,7 +142,7 @@ class TestConnection:
 
     async def test_connect_transitions_to_connected(self):
         """connect() should transition state to CONNECTED."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -150,7 +150,7 @@ class TestConnection:
         client = WheelHubClient(port=2898)
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ):
             await client.connect()
 
@@ -160,7 +160,7 @@ class TestConnection:
 
     async def test_connect_uses_correct_ws_url(self):
         """connect() should connect to ws://localhost:{port}/ws/{channel}."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         client = WheelHubClient(port=2898)
         client.subscribe("sprint", MagicMock())
@@ -170,7 +170,7 @@ class TestConnection:
         mock_ws.close = AsyncMock()
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets",
+            "pf.bikerack.ws_client.websockets",
             create=True,
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
@@ -184,7 +184,7 @@ class TestConnection:
 
     async def test_disconnect_transitions_to_disconnected(self):
         """disconnect() should transition state to DISCONNECTED."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -192,7 +192,7 @@ class TestConnection:
         client = WheelHubClient(port=2898)
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ):
             await client.connect()
             await client.disconnect()
@@ -212,7 +212,7 @@ class TestMessageHandling:
 
     async def test_dispatches_init_message_to_handler(self):
         """Handler should receive parsed 'init' messages."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         handler = MagicMock()
         client = WheelHubClient(port=2898)
@@ -228,7 +228,7 @@ class TestMessageHandling:
         mock_ws.close = AsyncMock()
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
             try:
@@ -240,7 +240,7 @@ class TestMessageHandling:
 
     async def test_dispatches_update_message_to_handler(self):
         """Handler should receive parsed 'update' messages."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         handler = MagicMock()
         client = WheelHubClient(port=2898)
@@ -255,7 +255,7 @@ class TestMessageHandling:
         mock_ws.close = AsyncMock()
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
             try:
@@ -267,7 +267,7 @@ class TestMessageHandling:
 
     async def test_multiple_handlers_for_same_channel(self):
         """Multiple handlers on same channel should all be called."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         handler_a = MagicMock()
         handler_b = MagicMock()
@@ -284,7 +284,7 @@ class TestMessageHandling:
         mock_ws.close = AsyncMock()
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
             try:
@@ -297,7 +297,7 @@ class TestMessageHandling:
 
     async def test_ignores_malformed_json(self):
         """Malformed JSON should not crash the client."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -313,7 +313,7 @@ class TestMessageHandling:
         mock_ws.close = AsyncMock()
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
             try:
@@ -339,7 +339,7 @@ class TestAutoReconnect:
 
     async def test_reconnects_on_unexpected_close(self):
         """Client should attempt reconnect when server closes connection."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -367,7 +367,7 @@ class TestAutoReconnect:
             return mock_ws
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
             try:
@@ -381,7 +381,7 @@ class TestAutoReconnect:
 
     async def test_reconnect_uses_two_second_delay(self):
         """Reconnect delay should be ~2 seconds (NFR7)."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         client = WheelHubClient(port=2898)
         client.subscribe("sprint", MagicMock())
@@ -396,7 +396,7 @@ class TestAutoReconnect:
             return
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws = AsyncMock()
             mock_ws.recv = AsyncMock(
@@ -406,7 +406,7 @@ class TestAutoReconnect:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
 
             with patch(
-                "pennyfarthing_scripts.bikerack.ws_client.asyncio.sleep",
+                "pf.bikerack.ws_client.asyncio.sleep",
                 side_effect=mock_sleep,
             ):
                 try:
@@ -421,7 +421,7 @@ class TestAutoReconnect:
 
     async def test_no_reconnect_after_explicit_disconnect(self):
         """After explicit disconnect(), no reconnect should be attempted."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -440,7 +440,7 @@ class TestAutoReconnect:
             return mock_ws
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
             try:
@@ -471,7 +471,7 @@ class TestConnectionState:
 
     async def test_state_change_callback_fires(self):
         """on_state_change callback should fire on state transitions."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -481,7 +481,7 @@ class TestConnectionState:
         client.on_state_change(lambda s: states_seen.append(s))
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ):
             await client.connect()
 
@@ -491,7 +491,7 @@ class TestConnectionState:
 
     async def test_state_is_reconnecting_during_backoff(self):
         """State should be RECONNECTING during backoff wait."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -502,7 +502,7 @@ class TestConnectionState:
         client.subscribe("sprint", MagicMock())
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws = AsyncMock()
             mock_ws.recv = AsyncMock(
@@ -512,7 +512,7 @@ class TestConnectionState:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
 
             with patch(
-                "pennyfarthing_scripts.bikerack.ws_client.asyncio.sleep",
+                "pf.bikerack.ws_client.asyncio.sleep",
                 new_callable=AsyncMock,
             ):
                 try:
@@ -535,7 +535,7 @@ class TestMultiChannel:
 
     async def test_subscribe_to_multiple_channels(self):
         """Client should accept subscriptions to multiple channels."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         client = WheelHubClient(port=2898)
 
@@ -554,7 +554,7 @@ class TestMultiChannel:
 
     async def test_channels_receive_independent_messages(self):
         """Each channel should only dispatch to its own handlers."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         sprint_handler = MagicMock()
         git_handler = MagicMock()
@@ -591,7 +591,7 @@ class TestMultiChannel:
             raise ValueError(f"Unexpected URL: {url}")
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
             try:
@@ -615,7 +615,7 @@ class TestCleanShutdown:
 
     async def test_disconnect_cancels_reconnect_timer(self):
         """disconnect() should cancel any pending reconnect."""
-        from pennyfarthing_scripts.bikerack.ws_client import (
+        from pf.bikerack.ws_client import (
             ConnectionState,
             WheelHubClient,
         )
@@ -635,7 +635,7 @@ class TestCleanShutdown:
                 raise
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws = AsyncMock()
             mock_ws.recv = AsyncMock(
@@ -645,7 +645,7 @@ class TestCleanShutdown:
             mock_ws_mod.connect = AsyncMock(return_value=mock_ws)
 
             with patch(
-                "pennyfarthing_scripts.bikerack.ws_client.asyncio.sleep",
+                "pf.bikerack.ws_client.asyncio.sleep",
                 side_effect=mock_sleep,
             ):
                 connect_task = asyncio.create_task(client.connect())
@@ -660,7 +660,7 @@ class TestCleanShutdown:
 
     async def test_disconnect_closes_all_connections(self):
         """disconnect() should close WebSocket connections for all channels."""
-        from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+        from pf.bikerack.ws_client import WheelHubClient
 
         client = WheelHubClient(port=2898)
         client.subscribe("sprint", MagicMock())
@@ -682,7 +682,7 @@ class TestCleanShutdown:
             raise ValueError(f"Unexpected URL: {url}")
 
         with patch(
-            "pennyfarthing_scripts.bikerack.ws_client.websockets", create=True
+            "pf.bikerack.ws_client.websockets", create=True
         ) as mock_ws_mod:
             mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
             try:

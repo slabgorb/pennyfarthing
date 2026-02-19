@@ -3,7 +3,7 @@
 # Usage: create-jira-story.sh <epic-jira-key> <story-id> [--dry-run]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira create story <epic-jira-key> <story-id> [--dry-run]
+#   python -m pf.jira create story <epic-jira-key> <story-id> [--dry-run]
 
 set -e
 

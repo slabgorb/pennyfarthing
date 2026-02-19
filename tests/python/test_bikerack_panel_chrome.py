@@ -17,17 +17,17 @@ from unittest.mock import AsyncMock, MagicMock
 
 from textual.widgets import Tabs
 
-from pennyfarthing_scripts.bikerack.base_panel import (
+from pf.bikerack.base_panel import (
     PANEL_ICONS,
     BasePanel,
     get_panel_icon,
 )
-from pennyfarthing_scripts.bikerack.sprint_panel import SprintPanel
-from pennyfarthing_scripts.bikerack.tui import (
+from pf.bikerack.sprint_panel import SprintPanel
+from pf.bikerack.tui import (
     PANEL_DISPLAY_NAMES,
     BikeRackApp,
 )
-from pennyfarthing_scripts.bc.focus import VALID_PANELS
+from pf.bc.focus import VALID_PANELS
 
 
 # ---------------------------------------------------------------------------

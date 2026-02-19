@@ -18,9 +18,9 @@ from unittest.mock import MagicMock
 
 from textual.widgets import DataTable, Static
 
-from pennyfarthing_scripts.bikerack.audit_log_panel import AuditLogPanel
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.audit_log_panel import AuditLogPanel
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/spans wire format
@@ -378,7 +378,7 @@ class TestAuditLogPanelRegistration:
 
     def test_panel_in_registry(self):
         """AuditLogPanel should be listed in PANEL_REGISTRY in tui.py."""
-        from pennyfarthing_scripts.bikerack.tui import PANEL_REGISTRY
+        from pf.bikerack.tui import PANEL_REGISTRY
 
         panel_keys = [key for key, _ in PANEL_REGISTRY]
         assert "audit-log" in panel_keys, (
@@ -387,7 +387,7 @@ class TestAuditLogPanelRegistration:
 
     def test_panel_has_keybinding(self):
         """AuditLogPanel should have a numeric keybinding in BikeRackApp.BINDINGS."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         binding_actions = [b.action for b in BikeRackApp.BINDINGS]
         has_audit_binding = any("audit-log" in action for action in binding_actions)
@@ -397,7 +397,7 @@ class TestAuditLogPanelRegistration:
 
     def test_panel_in_display_names(self):
         """Panel should have an entry in PANEL_DISPLAY_NAMES."""
-        from pennyfarthing_scripts.bikerack.tui import PANEL_DISPLAY_NAMES
+        from pf.bikerack.tui import PANEL_DISPLAY_NAMES
 
         assert "audit-log" in PANEL_DISPLAY_NAMES, (
             "'audit-log' not in PANEL_DISPLAY_NAMES"

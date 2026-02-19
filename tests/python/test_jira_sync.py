@@ -31,7 +31,7 @@ class TestStatusMapping:
     @pytest.fixture
     def jira_module(self):
         """Import jira module."""
-        from pennyfarthing_scripts import jira
+        from pf import jira
         return jira
 
     def test_map_status_to_jira_backlog(self, jira_module):
@@ -76,7 +76,7 @@ class TestJiraKeyExtraction:
     @pytest.fixture
     def jira_module(self):
         """Import jira module."""
-        from pennyfarthing_scripts import jira
+        from pf import jira
         return jira
 
     def test_extract_jira_key_from_key(self, jira_module):
@@ -103,7 +103,7 @@ class TestStoryPoints:
     @pytest.fixture
     def jira_module(self):
         """Import jira module."""
-        from pennyfarthing_scripts import jira
+        from pf import jira
         return jira
 
     def test_get_story_points_from_issue(self, jira_module, monkeypatch):
@@ -133,12 +133,12 @@ class TestJiraSyncScript:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     def test_module_exists(self):
         """jira_sync.py module should exist."""
-        jira_sync_path = PROJECT_ROOT / "pennyfarthing_scripts" / "jira_sync.py"
+        jira_sync_path = PROJECT_ROOT / "pf" / "jira_sync.py"
         assert jira_sync_path.exists(), "jira_sync.py not found"
 
     def test_sync_epic_function_exists(self, jira_sync_module):
@@ -160,7 +160,7 @@ class TestSyncStoryAsync:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     @pytest.mark.asyncio
@@ -193,7 +193,7 @@ class TestSyncEpicAsync:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     @pytest.mark.asyncio
@@ -215,7 +215,7 @@ class TestSyncEpicAsync:
             )
 
         # Patch on the actual jira.sync module where sync_epic imports sync_story
-        import pennyfarthing_scripts.jira.sync as jira_sync_real
+        import pf.jira.sync as jira_sync_real
         with patch.object(jira_sync_real, "sync_story", side_effect=mock_sync_story):
             epic = {
                 "id": "epic-63",
@@ -238,36 +238,36 @@ class TestCLIInterface:
 
     def test_main_function_exists(self):
         """main() function should exist."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         assert hasattr(jira_sync, "main")
 
     def test_parse_args_epic_number(self):
         """Should parse epic number from args."""
-        from pennyfarthing_scripts.jira_sync import parse_args
+        from pf.jira_sync import parse_args
         args = parse_args(["63"])
         assert args.epic == "63"
 
     def test_parse_args_dry_run(self):
         """Should parse --dry-run flag."""
-        from pennyfarthing_scripts.jira_sync import parse_args
+        from pf.jira_sync import parse_args
         args = parse_args(["63", "--dry-run"])
         assert args.dry_run is True
 
     def test_parse_args_transition(self):
         """Should parse --transition flag."""
-        from pennyfarthing_scripts.jira_sync import parse_args
+        from pf.jira_sync import parse_args
         args = parse_args(["63", "--transition"])
         assert args.transition is True
 
     def test_parse_args_points(self):
         """Should parse --points flag."""
-        from pennyfarthing_scripts.jira_sync import parse_args
+        from pf.jira_sync import parse_args
         args = parse_args(["63", "--points"])
         assert args.points is True
 
     def test_parse_args_all_flags(self):
         """Should parse all flags together."""
-        from pennyfarthing_scripts.jira_sync import parse_args
+        from pf.jira_sync import parse_args
         args = parse_args(["epic-63", "--dry-run", "--transition", "--points"])
         assert args.epic == "epic-63"
         assert args.dry_run is True
@@ -284,7 +284,7 @@ class TestAsyncHttpx:
     @pytest.fixture
     def jira_client_class(self):
         """Import JiraClient class."""
-        from pennyfarthing_scripts.jira.client import JiraClient
+        from pf.jira.client import JiraClient
         return JiraClient
 
     def test_get_issue_async_exists(self, jira_client_class):
@@ -330,7 +330,7 @@ class TestBatchThenReport:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     def test_sync_result_dataclass_exists(self, jira_sync_module):
@@ -361,7 +361,7 @@ class TestBatchThenReport:
         )
 
         # Patch on the actual jira.sync module where sync_epic calls sync_story
-        import pennyfarthing_scripts.jira.sync as jira_sync_real
+        import pf.jira.sync as jira_sync_real
         with patch.object(jira_sync_real, "sync_story", mock_sync_story):
             epic = {
                 "id": "epic-63",
@@ -382,7 +382,7 @@ class TestProgressDisplay:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     def test_format_story_line_exists(self, jira_sync_module):
@@ -413,7 +413,7 @@ class TestTypeHints:
 
     def test_jira_sync_has_type_annotations(self):
         """jira_sync.py should have type annotations on public functions."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         import inspect
 
         # Check key functions have annotations
@@ -433,7 +433,7 @@ class TestTransitionLogic:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pennyfarthing_scripts import jira_sync
+        from pf import jira_sync
         return jira_sync
 
     @pytest.mark.asyncio
@@ -444,7 +444,7 @@ class TestTransitionLogic:
         JiraClient internally. We mock the client's get_issue_async to return
         a matching status, and verify transition_async is not called.
         """
-        from pennyfarthing_scripts.jira.client import JiraClient
+        from pf.jira.client import JiraClient
 
         mock_get_issue = AsyncMock(return_value={
             "fields": {"status": {"name": "In Progress"}, "customfield_10031": 3}
@@ -468,7 +468,7 @@ class TestTransitionLogic:
     @pytest.mark.asyncio
     async def test_sync_story_transitions_when_status_differs(self, jira_sync_module):
         """Should transition when status differs."""
-        from pennyfarthing_scripts.jira.client import JiraClient
+        from pf.jira.client import JiraClient
 
         mock_get_issue = AsyncMock(return_value={
             "fields": {"status": {"name": "To Do"}, "customfield_10031": None}

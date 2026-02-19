@@ -18,7 +18,7 @@ Scripts for Jira integration, synchronization, and story management.
 
 ## Python Implementation
 
-Core logic lives in `pennyfarthing_scripts/jira/`:
+Core logic lives in `pf/jira/`:
 - `sync.py` — Epic and story sync
 - `bidirectional.py` — Two-way YAML ↔ Jira sync
 - `story.py` — Story operations

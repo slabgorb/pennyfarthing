@@ -20,19 +20,19 @@ class TestImportAndEntryPoint:
 
     def test_bikerack_app_importable(self):
         """BikeRackApp should be importable from bikerack.tui."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         assert BikeRackApp is not None
 
     def test_bikerack_app_is_textual_app(self):
         """BikeRackApp should be a subclass of textual.app.App."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         assert issubclass(BikeRackApp, App)
 
     def test_bikerack_app_has_title(self):
         """BikeRackApp should have a meaningful TITLE."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         app = BikeRackApp()
         # Default App title is empty string or class name — we want "BikeRack" somewhere
@@ -46,7 +46,7 @@ class TestAppLayout:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -85,7 +85,7 @@ class TestConnectionStatusHeader:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -114,7 +114,7 @@ class TestFooter:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -138,7 +138,7 @@ class TestMainContentArea:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -168,7 +168,7 @@ class TestQuitBehavior:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 

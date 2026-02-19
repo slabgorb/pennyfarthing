@@ -20,14 +20,14 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from pennyfarthing_scripts.validate.adapters.workflow import (
+from pf.validate.adapters.workflow import (
     VALID_TANDEM_MODES,
     VALID_TANDEM_MODELS,
     discover_workflow_files,
     run,
     validate_phased,
 )
-from pennyfarthing_scripts.prime.workflow import get_phase_tandem_config
+from pf.prime.workflow import get_phase_tandem_config
 
 # =============================================================================
 # Test Fixtures — inline YAML strings

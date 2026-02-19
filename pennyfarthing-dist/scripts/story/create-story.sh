@@ -6,7 +6,7 @@
 #   --priority P0|P1|P2|P3             Priority (default: P2)
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.story create <epic-id> "<title>" <points> [options]
+#   python -m pf.story create <epic-id> "<title>" <points> [options]
 
 set -e
 

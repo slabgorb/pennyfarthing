@@ -25,7 +25,7 @@ from unittest.mock import MagicMock
 from rich.console import Console
 from rich.text import Text
 
-from pennyfarthing_scripts.bikerack.diffs_panel import DiffsPanel
+from pf.bikerack.diffs_panel import DiffsPanel
 
 
 # ---------------------------------------------------------------------------

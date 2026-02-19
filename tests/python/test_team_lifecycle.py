@@ -28,7 +28,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.workflow.team_lifecycle import (
+from pf.workflow.team_lifecycle import (
     _reset_for_testing,
     acquire_sidecar_lock,
     check_gate_on_task_completed,
@@ -854,7 +854,7 @@ class TestEdgeCases:
     def test_reset_clears_active_teams(self, story_id):
         """_reset_for_testing should clear all registries."""
         # Manually seed the registry to verify it gets cleared
-        from pennyfarthing_scripts.workflow.team_lifecycle import _active_teams
+        from pf.workflow.team_lifecycle import _active_teams
         _active_teams[story_id] = {"teamName": "test", "storyId": story_id}
         _reset_for_testing()
         assert get_active_team(story_id) is None, "Reset should clear active teams"

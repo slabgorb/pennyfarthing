@@ -30,7 +30,7 @@ BASH_SCRIPTS_DIR = ORCHESTRATOR_ROOT / ".pennyfarthing" / "scripts"
 def run_python_cli(args: list[str], cwd: Path = PENNYFARTHING_ROOT) -> subprocess.CompletedProcess:
     """Run the Python CLI with given arguments."""
     return subprocess.run(
-        [sys.executable, "-m", "pennyfarthing_scripts.cli"] + args,
+        [sys.executable, "-m", "pf.cli"] + args,
         capture_output=True,
         text=True,
         cwd=str(cwd),
