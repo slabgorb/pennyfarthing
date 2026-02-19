@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.4] - 2026-02-19
+
+### Added
+
+- **Cross-entity reference validation** — validate references across sprint entities (91-15)
+
+### Changed
+
+- **Python package path migration** — `pennyfarthing_scripts` references updated to `pennyfarthing-dist/pf` package path (MSSCI-15339)
+
+---
+
 ## [11.3.3] - 2026-02-19
 
 ### Added
@@ -2626,7 +2638,10 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.4...HEAD
+[11.3.4]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.3...v11.3.4
+[11.3.3]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.2...v11.3.3
+[11.3.2]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.1...v11.3.2
 [11.3.1]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.0...v11.3.1
 [11.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.2...v11.3.0
 [11.2.2]: https://github.com/1898andCo/pennyfarthing/compare/v11.2.1...v11.2.2
