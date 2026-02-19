@@ -106,6 +106,14 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
 # Keys from PANEL_REGISTRY for fast lookup
 _PANEL_KEYS = [key for key, _ in PANEL_REGISTRY]
 
+# Split-pane layout presets: name → (left_panel, right_panel)
+# Story 110-4: Named presets for common side-by-side views.
+SPLIT_PRESETS: dict[str, tuple[str, str]] = {
+    "sprint+diffs": ("sprint", "diffs"),
+    "changed+diffs": ("changed", "diffs"),
+    "progress+debug": ("progress", "debug"),
+}
+
 
 class BindingFooter(Footer):
     """Footer subclass that exposes active binding text via render().
@@ -360,9 +368,10 @@ class BikeRackApp(App):
     class FocusUpdate(Message, bubble=False):
         """Focus change from WS — routed through Textual message system."""
 
-        def __init__(self, focus: str | None) -> None:
+        def __init__(self, focus: str | None, split_config: dict | None = None) -> None:
             super().__init__()
             self.focus = focus
+            self.split_config = split_config
 
     class WsStateUpdate(Message, bubble=False):
         """WS connection state change — routed through Textual message system."""
@@ -413,12 +422,23 @@ class BikeRackApp(App):
     ContextMeterFooter {
         height: 1;
     }
+    #split-container {
+        display: none;
+        height: 1fr;
+    }
+    #split-left {
+        width: 1fr;
+    }
+    #split-right {
+        width: 1fr;
+    }
     """
 
     COMMANDS = App.COMMANDS | {PanelCommands}
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
+        Binding("shift+s", "toggle_split", "Split"),
         Binding("1", "switch_panel('sprint')", "Sprint", show=False),
         Binding("2", "switch_panel('git')", "Git", show=False),
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
@@ -429,8 +449,8 @@ class BikeRackApp(App):
         Binding("8", "switch_panel('progress')", "Progress", show=False),
         Binding("bracketright", "next_panel", "]Next"),
         Binding("bracketleft", "prev_panel", "[Prev"),
-        Binding("tab", "next_panel", show=False),
-        Binding("shift+tab", "prev_panel", show=False),
+        Binding("tab", "next_panel", show=False, priority=True),
+        Binding("shift+tab", "prev_panel", show=False, priority=True),
         Binding("n", "next_diff_file", "Next file", show=False),
         Binding("p", "prev_diff_file", "Prev file", show=False),
         Binding("j", "next_epic", show=False),
@@ -449,6 +469,11 @@ class BikeRackApp(App):
         self._previous_panel: str | None = None
         self._programmatic_tab_count: int = 0
         self._context_meter: ContextMeterFooter | None = None
+        # Split-pane state (Story 110-4)
+        self._split_mode: bool = False
+        self._active_split_pane: str = "left"
+        self._split_left_key: str = "sprint"
+        self._split_right_key: str = "diffs"
 
     def compose(self) -> ComposeResult:
         project_dir_name = Path(
@@ -471,6 +496,9 @@ class BikeRackApp(App):
             yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")
+        with Horizontal(id="split-container"):
+            yield VerticalScroll(id="split-left")
+            yield VerticalScroll(id="split-right")
         self._context_meter = ContextMeterFooter(client=self._client)
         yield self._context_meter
         yield BindingFooter()
@@ -550,7 +578,22 @@ class BikeRackApp(App):
             self._context_meter.request_refresh()
 
     def action_next_panel(self) -> None:
-        """Cycle to the next panel."""
+        """Cycle to the next panel, or toggle pane focus in split mode."""
+        if self._split_mode:
+            # In split mode, Tab toggles between left and right pane
+            if self._active_split_pane == "left":
+                self._active_split_pane = "right"
+                try:
+                    self.query_one("#split-right").focus()
+                except Exception:
+                    pass
+            else:
+                self._active_split_pane = "left"
+                try:
+                    self.query_one("#split-left").focus()
+                except Exception:
+                    pass
+            return
         try:
             idx = _PANEL_KEYS.index(self._focused_panel)
         except ValueError:
@@ -612,6 +655,131 @@ class BikeRackApp(App):
             except Exception:
                 pass
 
+    # ------------------------------------------------------------------
+    # Split-pane layout (Story 110-4)
+    # ------------------------------------------------------------------
+
+    def _sync_reparent(self, widget: Any, new_parent: Any) -> None:
+        """Move widget from current parent to new parent synchronously.
+
+        Uses internal Textual DOM API so the move is visible immediately
+        without awaiting an async mount/remove cycle.
+        """
+        old_parent = widget._parent
+        if old_parent is not None:
+            try:
+                old_parent._nodes._remove(widget)
+            except (ValueError, AttributeError):
+                # Fallback: remove from internal list directly
+                try:
+                    old_parent._nodes._nodes.remove(widget)
+                except Exception:
+                    pass
+        try:
+            new_parent._nodes._append(widget)
+        except AttributeError:
+            new_parent._nodes._nodes.append(widget)
+        widget._parent = new_parent
+
+    def _enter_split(self, left_key: str, right_key: str) -> None:
+        """Activate split mode with specified panels (synchronous)."""
+        if left_key not in _PANEL_KEYS or right_key not in _PANEL_KEYS:
+            return
+        if left_key == right_key:
+            return
+
+        self._split_mode = True
+        self._split_left_key = left_key
+        self._split_right_key = right_key
+        self._active_split_pane = "left"
+
+        try:
+            main_content = self.query_one("#main-content")
+            split_container = self.query_one("#split-container")
+            split_left = self.query_one("#split-left")
+            split_right = self.query_one("#split-right")
+        except Exception:
+            return
+
+        # Move left panel to split-left pane
+        try:
+            left_panel = self.query_one(f"#panel-{left_key}")
+            left_panel.display = True
+            self._sync_reparent(left_panel, split_left)
+        except Exception:
+            pass
+
+        # Move right panel to split-right pane
+        try:
+            right_panel = self.query_one(f"#panel-{right_key}")
+            right_panel.display = True
+            self._sync_reparent(right_panel, split_right)
+        except Exception:
+            pass
+
+        # Hide all other panels remaining in main-content
+        for panel_key in _PANEL_KEYS:
+            if panel_key not in (left_key, right_key):
+                try:
+                    p = self.query_one(f"#panel-{panel_key}")
+                    p.display = False
+                except Exception:
+                    pass
+
+        main_content.display = False
+        split_container.display = True
+
+    def _exit_split(self) -> None:
+        """Deactivate split mode, return panels to main-content."""
+        self._split_mode = False
+
+        try:
+            main_content = self.query_one("#main-content")
+            split_container = self.query_one("#split-container")
+            split_left = self.query_one("#split-left")
+            split_right = self.query_one("#split-right")
+        except Exception:
+            return
+
+        # Move panels back from split panes to main-content
+        for pane in (split_left, split_right):
+            for child in list(pane.children):
+                self._sync_reparent(child, main_content)
+
+        split_container.display = False
+        main_content.display = True
+
+        # Restore single-panel visibility
+        for panel_key in _PANEL_KEYS:
+            try:
+                p = self.query_one(f"#panel-{panel_key}")
+                p.display = (panel_key == self._focused_panel)
+            except Exception:
+                pass
+
+    def action_toggle_split(self) -> None:
+        """Toggle split mode on/off (Shift+S keybinding)."""
+        if self._split_mode:
+            self._exit_split()
+        else:
+            # Default: current panel left, next panel right
+            left_key = self._focused_panel
+            try:
+                idx = _PANEL_KEYS.index(left_key)
+            except ValueError:
+                idx = 0
+            right_key = _PANEL_KEYS[(idx + 1) % len(_PANEL_KEYS)]
+            self._enter_split(left_key, right_key)
+
+    def action_apply_split_preset(self, name: str) -> None:
+        """Apply a named split preset (synchronous)."""
+        if name not in SPLIT_PRESETS:
+            return
+        left_key, right_key = SPLIT_PRESETS[name]
+        if self._split_mode:
+            self._exit_split()
+        self._enter_split(left_key, right_key)
+
     def _update_tab_bar(self, panel_key: str) -> None:
         """Update the tab bar widget with the given panel key.
 
@@ -644,7 +812,10 @@ class BikeRackApp(App):
     def _handle_focus_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming focus channel messages.
 
-        Expected format: {type: 'init'|'update', focus: '<panel>'|null}
+        Expected format:
+          Single panel: {type: 'update', focus: '<panel>'}
+          Split layout:  {type: 'update', focus: 'split', split: {left: ..., right: ...}}
+          Split preset:  {type: 'update', focus: 'split:<preset-name>'}
         Only 'update' messages trigger panel switches (matching React hook).
         Routes through Textual message system via post_message for proper repaint.
         """
@@ -654,7 +825,8 @@ class BikeRackApp(App):
             return
         if "focus" not in message:
             return
-        self.post_message(self.FocusUpdate(message["focus"]))
+        split_config = message.get("split")
+        self.post_message(self.FocusUpdate(message["focus"], split_config=split_config))
 
     def _handle_persona_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming persona channel messages.
@@ -683,7 +855,23 @@ class BikeRackApp(App):
     def on_bike_rack_app_focus_update(self, event: FocusUpdate) -> None:
         """Apply focus change in Textual message context."""
         focus = event.focus
-        if focus is not None and focus in _PANEL_KEYS:
+        split_config = event.split_config
+
+        if focus == "split" and split_config:
+            # Explicit split layout: {focus: "split", split: {left: ..., right: ...}}
+            left = split_config.get("left", "sprint")
+            right = split_config.get("right", "diffs")
+            if self._split_mode:
+                self._exit_split()
+            self._enter_split(left, right)
+        elif focus is not None and focus.startswith("split:"):
+            # Preset reference: {focus: "split:progress+debug"}
+            preset_name = focus[len("split:"):]
+            self.action_apply_split_preset(preset_name)
+        elif focus is not None and focus in _PANEL_KEYS:
+            # Single panel focus — exit split if active
+            if self._split_mode:
+                self._exit_split()
             self.action_switch_panel(focus)
         elif focus is not None:
             self._previous_panel = self._focused_panel
