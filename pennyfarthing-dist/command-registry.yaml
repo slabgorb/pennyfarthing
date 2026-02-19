@@ -175,6 +175,16 @@ groups:
       clear: { description: "Delete layout", args: "<name>" }
       clear-all: { description: "Delete all layouts" }
 
+  settings:
+    description: View and manage configuration settings
+    cli: "pf settings"
+    slash: "/pf-settings"
+    skill: pf-settings
+    commands:
+      show: { description: "Pretty-print all interesting settings" }
+      get: { description: "Get value by dot-path", args: "<key>" }
+      set: { description: "Set value by dot-path", args: "<key> <value>" }
+
   debug:
     description: Analysis and debugging tools
     cli: "pf debug"
