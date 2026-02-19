@@ -104,12 +104,12 @@ See `guides/gates.md` for gate file format and evaluation details.
 
 | File | Purpose |
 |------|---------|
-| `pennyfarthing_scripts/handoff/cli.py` | Click command definitions |
-| `pennyfarthing_scripts/handoff/resolve_gate.py` | Gate resolution logic |
-| `pennyfarthing_scripts/handoff/complete_phase.py` | Session file atomic updates |
-| `pennyfarthing_scripts/handoff/marker.py` | Environment-aware marker generation |
-| `pennyfarthing_scripts/handoff/gate_runner.py` | Gate subagent spawner |
-| `pennyfarthing_scripts/handoff/gate_file.py` | Gate file discovery |
+| `pf/handoff/cli.py` | Click command definitions |
+| `pf/handoff/resolve_gate.py` | Gate resolution logic |
+| `pf/handoff/complete_phase.py` | Session file atomic updates |
+| `pf/handoff/marker.py` | Environment-aware marker generation |
+| `pf/handoff/gate_runner.py` | Gate subagent spawner |
+| `pf/handoff/gate_file.py` | Gate file discovery |
 
 <info>
 **Related:** `guides/gates.md` (gate system), `agents/agent-behavior.md` (exit protocol), `guides/reflector.md` (marker types)

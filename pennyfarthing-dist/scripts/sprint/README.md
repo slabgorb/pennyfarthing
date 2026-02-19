@@ -40,5 +40,5 @@ pf.sh sprint epic promote epic-41
 ## Migration Note
 
 All bash scripts previously in this directory have been migrated to Python CLI
-commands in `pennyfarthing_scripts/sprint/cli.py`. See PR #716 and the follow-up
+commands in `pf/sprint/cli.py`. See PR #716 and the follow-up
 deprecation commit for details.

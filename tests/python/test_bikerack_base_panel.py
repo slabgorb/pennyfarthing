@@ -22,9 +22,9 @@ from rich.table import Table
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.base_panel import BasePanel
-from pennyfarthing_scripts.bikerack.tui import BikeRackApp
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.base_panel import BasePanel
+from pf.bikerack.tui import BikeRackApp
+from pf.bikerack.ws_client import WheelHubClient
 
 
 # ---------------------------------------------------------------------------

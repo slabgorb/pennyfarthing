@@ -226,29 +226,29 @@ describe('checkSkillRegistry — redirect', () => {
 // --- Suite 5: Check 17 — Python imports ---
 
 describe('checkPythonImports', () => {
-  it('returns no issue for valid `from pennyfarthing_scripts.swebench import ...`', () => {
-    const content = 'from pennyfarthing_scripts.swebench import extract_patch_info\n';
+  it('returns no issue for valid `from pf.swebench import ...`', () => {
+    const content = 'from pf.swebench import extract_patch_info\n';
     const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
     assert.equal(refs, 1);
   });
 
-  it('returns issue for `from pennyfarthing_scripts.nonexistent import ...`', () => {
-    const content = 'from pennyfarthing_scripts.nonexistent import something\n';
+  it('returns issue for `from pf.nonexistent import ...`', () => {
+    const content = 'from pf.nonexistent import something\n';
     const { issues } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 1);
     assert.ok(issues[0].issue.includes('nonexistent'));
   });
 
-  it('ignores bare `from pennyfarthing_scripts import __version__`', () => {
-    const content = 'from pennyfarthing_scripts import __version__\n';
+  it('ignores bare `from pf import __version__`', () => {
+    const content = 'from pf import __version__\n';
     const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
     assert.equal(refs, 0);
   });
 
   it('ignores comment lines', () => {
-    const content = '# from pennyfarthing_scripts.nonexistent import something\n';
+    const content = '# from pf.nonexistent import something\n';
     const { issues, refs } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
     assert.equal(refs, 0);
@@ -256,7 +256,7 @@ describe('checkPythonImports', () => {
 
   it('handles sub-module imports via package prefix', () => {
     // sprint.validate_cmd is not a direct module, but sprint is a known package
-    const content = 'from pennyfarthing_scripts.sprint.validate_cmd import validate_sprint_yaml\n';
+    const content = 'from pf.sprint.validate_cmd import validate_sprint_yaml\n';
     const { issues } = checkPythonImports('/fake/script.py', content, knownPythonModules);
     assert.equal(issues.length, 0);
   });

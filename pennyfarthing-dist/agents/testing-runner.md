@@ -41,7 +41,7 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 
 ```bash
 # Repo config available via: pf.sh git status, or Python API:
-# from pennyfarthing_scripts.git.repos import load_repos_config
+# from pf.git.repos import load_repos_config
 source .pennyfarthing/scripts/test/test-setup.sh
 
 RUN_ID="${RUN_ID:-$(generate_run_id)}"

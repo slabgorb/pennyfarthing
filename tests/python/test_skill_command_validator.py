@@ -20,7 +20,7 @@ from textwrap import dedent
 
 import pytest
 
-from pennyfarthing_scripts.validate.adapters.skill_command import (
+from pf.validate.adapters.skill_command import (
     discover_command_files,
     discover_skill_registry,
     run,
@@ -638,15 +638,15 @@ class TestAC6CLIRegistration:
 
     def test_skill_command_in_validators_registry(self) -> None:
         """'skill-command' key should exist in the VALIDATORS dict."""
-        from pennyfarthing_scripts.validate.cli import VALIDATORS
+        from pf.validate.cli import VALIDATORS
 
         assert "skill-command" in VALIDATORS
 
     def test_skill_command_validator_module_path(self) -> None:
         """skill-command validator should point to the correct module path."""
-        from pennyfarthing_scripts.validate.cli import VALIDATORS
+        from pf.validate.cli import VALIDATORS
 
-        assert VALIDATORS["skill-command"] == "pennyfarthing_scripts.validate.adapters.skill_command"
+        assert VALIDATORS["skill-command"] == "pf.validate.adapters.skill_command"
 
 
 # =============================================================================

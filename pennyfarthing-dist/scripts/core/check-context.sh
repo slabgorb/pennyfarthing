@@ -2,7 +2,7 @@
 # check-context.sh - Check current Claude Code context usage
 # Returns: percentage and recommendation for handoff
 #
-# This is a thin wrapper around pennyfarthing_scripts/context.py
+# This is a thin wrapper around pf/context.py
 #
 # Usage:
 #   ./check-context.sh                    # Output env vars (most recent transcript)
@@ -14,7 +14,7 @@ set -euo pipefail
 
 echo "DEPRECATED: check-context.sh — use 'pf context' instead" >&2
 
-# Find project root (where pennyfarthing_scripts lives)
+# Find project root (where pf lives)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 # Resolve symlinks to find actual location
@@ -29,17 +29,17 @@ if [[ "$REAL_DIR" == *"/pennyfarthing-dist/scripts/core" ]]; then
 elif [[ "$REAL_DIR" == *"/node_modules/"* ]]; then
     # In node_modules, walk up to find project root
     PACKAGE_ROOT="${REAL_DIR}"
-    while [[ "$PACKAGE_ROOT" != "/" ]] && [[ ! -d "$PACKAGE_ROOT/pennyfarthing_scripts" ]]; do
+    while [[ "$PACKAGE_ROOT" != "/" ]] && [[ ! -d "$PACKAGE_ROOT/pf" ]]; do
         PACKAGE_ROOT="$(dirname "$PACKAGE_ROOT")"
     done
 fi
 
-# Try to find pennyfarthing_scripts
+# Try to find pf
 PYTHON_MODULE=""
-if [[ -f "$PACKAGE_ROOT/pennyfarthing_scripts/context.py" ]]; then
-    PYTHON_MODULE="$PACKAGE_ROOT/pennyfarthing_scripts/context.py"
-elif [[ -f "${PROJECT_ROOT:-}/pennyfarthing_scripts/context.py" ]]; then
-    PYTHON_MODULE="${PROJECT_ROOT}/pennyfarthing_scripts/context.py"
+if [[ -f "$PACKAGE_ROOT/pf/context.py" ]]; then
+    PYTHON_MODULE="$PACKAGE_ROOT/pf/context.py"
+elif [[ -f "${PROJECT_ROOT:-}/pf/context.py" ]]; then
+    PYTHON_MODULE="${PROJECT_ROOT}/pf/context.py"
 fi
 
 # If Python module exists, use it

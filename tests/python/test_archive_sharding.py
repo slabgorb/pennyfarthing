@@ -15,13 +15,13 @@ Run with: python -m pytest tests/python/test_archive_sharding.py -v
 from pathlib import Path
 from typing import Any
 
-from pennyfarthing_scripts.sprint.archive_epic import (
+from pf.sprint.archive_epic import (
     _load_archive_file,
     _write_archive_file,
     load_archive,
     migrate_completed_archive,
 )
-from pennyfarthing_scripts.sprint.yaml_io import _make_yaml, _read_yaml_file
+from pf.sprint.yaml_io import _make_yaml, _read_yaml_file
 
 # ---------------------------------------------------------------------------
 # Fixtures

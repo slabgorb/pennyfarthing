@@ -3,7 +3,7 @@
 # Usage: jira-sync-story.sh <story_key> [--transition] [--points] [--comment "message"]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira create story <story_key> [options]
+#   python -m pf.jira create story <story_key> [options]
 #
 # Note: The subcommand is 'create story' but it handles sync, not creation.
 

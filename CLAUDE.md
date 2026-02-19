@@ -71,7 +71,7 @@ Publishing: `pnpm version patch|minor|major && pnpm publish`
 | `packages/themes-*/` | Theme packages (comedy, literary, mythology-fantasy, prestige-tv, realistic, scifi, superheroes) |
 | `tests/` | Framework tests |
 | `scripts/` | Meta scripts for framework dev only (NOT distributed) |
-| `pennyfarthing_scripts/` | Distributed Python package (hooks, jira, sprint, story) |
+| `pennyfarthing-dist/pf/` | Distributed Python package (hooks, jira, sprint, story) |
 
 ### Migration Notes (Stories 98-16, 98-17, 98-18)
 
@@ -89,7 +89,7 @@ Import shared utilities from core: `import { loadAllThemeMetadata } from '../../
 |----------|-------------|---------|
 | `scripts/` | No | Framework dev only (deploy, benchmarks, job-fair) |
 | `pennyfarthing-dist/scripts/` | Yes | Bash/JS for user workflows (sprint, story, jira, git, portraits, core) |
-| `pennyfarthing_scripts/` | Yes | Python package (jira, sprint, story, brownfield, hooks) |
+| `pennyfarthing-dist/pf/` | Yes | Python package (jira, sprint, story, brownfield, hooks) |
 
 **Path resolution:** Distributed scripts use `find-root.sh` (walks up from `$PWD` looking for `.pennyfarthing/`). Build scripts use `BASH_SOURCE`-relative paths. If `PROJECT_ROOT` is set, `find-root.sh` respects it as override.
 </info>

@@ -3,7 +3,7 @@
 # Usage: create-jira-epic.sh <epic-id> [--dry-run]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira create epic <epic-id> [--dry-run]
+#   python -m pf.jira create epic <epic-id> [--dry-run]
 
 set -e
 

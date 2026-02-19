@@ -9,13 +9,13 @@ export function createDependenciesRouter(getProjectDir: () => string): Router {
     const projectDir = getProjectDir();
 
     const args = [
-      '-m', 'pennyfarthing_scripts.dependencies',
+      '-m', 'pf.dependencies',
       'analyze',
       '--format', 'json',
       '--path', projectDir,
     ];
 
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = join(projectDir, 'pennyfarthing', 'pennyfarthing-dist');
 
     execFile('python3', args, {
       cwd: pythonPath,

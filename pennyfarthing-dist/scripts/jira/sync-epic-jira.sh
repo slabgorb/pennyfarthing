@@ -3,7 +3,7 @@
 # Usage: sync-epic-jira.sh <epic-id> [--dry-run] [--transition] [--points] [--all]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira sync <epic-id> [options]
+#   python -m pf.jira sync <epic-id> [options]
 
 set -e
 

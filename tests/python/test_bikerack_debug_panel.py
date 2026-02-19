@@ -27,11 +27,11 @@ from rich.console import Console
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.ws_client import WheelHubClient
 
 # Import the panel under test — will fail until implemented
-from pennyfarthing_scripts.bikerack.debug_panel import DebugPanel
+from pf.bikerack.debug_panel import DebugPanel
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub wire formats

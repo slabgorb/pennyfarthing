@@ -22,9 +22,9 @@ from rich.console import Console
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.background_panel import BackgroundPanel
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.background_panel import BackgroundPanel
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.ws_client import WheelHubClient
 
 
 def _mock_mount(panel):

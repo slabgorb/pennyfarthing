@@ -21,8 +21,8 @@ from textwrap import dedent
 
 import pytest
 
-from pennyfarthing_scripts.validate import ValidateReport
-from pennyfarthing_scripts.validate.adapters.agent import (
+from pf.validate import ValidateReport
+from pf.validate.adapters.agent import (
     classify_agent_files,
     run,
     validate_main_agent,
@@ -777,15 +777,15 @@ class TestCLIRegistration:
 
     def test_agent_in_validators_registry(self) -> None:
         """'agent' key should exist in the VALIDATORS dict."""
-        from pennyfarthing_scripts.validate.cli import VALIDATORS
+        from pf.validate.cli import VALIDATORS
 
         assert "agent" in VALIDATORS
 
     def test_agent_validator_module_path(self) -> None:
         """Agent validator should point to the correct module path."""
-        from pennyfarthing_scripts.validate.cli import VALIDATORS
+        from pf.validate.cli import VALIDATORS
 
-        assert VALIDATORS["agent"] == "pennyfarthing_scripts.validate.adapters.agent"
+        assert VALIDATORS["agent"] == "pf.validate.adapters.agent"
 
 
 # =============================================================================

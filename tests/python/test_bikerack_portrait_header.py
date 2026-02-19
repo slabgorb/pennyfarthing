@@ -75,7 +75,7 @@ class TestPortraitPathResolution:
 
     def test_resolve_returns_path_for_valid_theme_and_agent(self):
         """resolve_portrait_path should return a Path for a known theme/agent combo."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "sm", project_root=PROJECT_ROOT)
         assert result is not None, "Should resolve portrait for hogans-heroes/sm"
@@ -83,7 +83,7 @@ class TestPortraitPathResolution:
 
     def test_resolved_path_exists_on_disk(self):
         """Resolved portrait path should point to an actual file."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "sm", project_root=PROJECT_ROOT)
         assert result is not None, "Should resolve portrait"
@@ -91,7 +91,7 @@ class TestPortraitPathResolution:
 
     def test_resolved_path_is_png_or_jpg(self):
         """Portrait file should be a .png or .jpg image."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "sm", project_root=PROJECT_ROOT)
         assert result is not None, "Should resolve portrait"
@@ -99,21 +99,21 @@ class TestPortraitPathResolution:
 
     def test_resolve_returns_none_for_unknown_theme(self):
         """Unknown theme should return None, not raise."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("nonexistent-theme", "sm", project_root=PROJECT_ROOT)
         assert result is None, "Unknown theme should return None"
 
     def test_resolve_returns_none_for_unknown_agent(self):
         """Unknown agent role should return None, not raise."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "nonexistent-agent", project_root=PROJECT_ROOT)
         assert result is None, "Unknown agent should return None"
 
     def test_resolve_prefers_medium_size(self):
         """Resolver should prefer the 'medium' size for balanced quality/performance."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("hogans-heroes", "sm", project_root=PROJECT_ROOT)
         assert result is not None, "Should resolve portrait"
@@ -121,7 +121,7 @@ class TestPortraitPathResolution:
 
     def test_resolve_all_standard_agents(self):
         """Should resolve portraits for all standard agent roles in hogans-heroes."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         agents = ["sm", "tea", "dev", "reviewer", "architect", "pm"]
         for agent in agents:
@@ -134,13 +134,13 @@ class TestProtocolDetection:
 
     def test_detect_protocol_function_exists(self):
         """detect_image_protocol should be importable."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import detect_image_protocol
+        from pf.bikerack.portrait_resolver import detect_image_protocol
 
         assert callable(detect_image_protocol)
 
     def test_detect_protocol_returns_string_or_none(self):
         """detect_image_protocol should return a protocol string or None."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import detect_image_protocol
+        from pf.bikerack.portrait_resolver import detect_image_protocol
 
         result = detect_image_protocol()
         assert result is None or isinstance(result, str), (
@@ -149,7 +149,7 @@ class TestProtocolDetection:
 
     def test_detect_protocol_valid_values(self):
         """If detection returns a value, it should be a known protocol."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import detect_image_protocol
+        from pf.bikerack.portrait_resolver import detect_image_protocol
 
         result = detect_image_protocol()
         valid = {None, "kitty", "sixel", "halfcell", "unicode"}
@@ -157,12 +157,12 @@ class TestProtocolDetection:
 
     def test_main_calls_detect_before_app_run(self):
         """main() should call detect_image_protocol() before App.run()."""
-        from pennyfarthing_scripts.bikerack import tui
+        from pf.bikerack import tui
 
         call_order: list[str] = []
 
         with patch(
-            "pennyfarthing_scripts.bikerack.portrait_resolver.detect_image_protocol",
+            "pf.bikerack.portrait_resolver.detect_image_protocol",
             side_effect=lambda: (call_order.append("detect"), None)[1],
         ), patch.object(
             tui.BikeRackApp,
@@ -183,7 +183,7 @@ class TestAgentHeaderWithPortrait:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -241,7 +241,7 @@ class TestFallbackBehavior:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 
@@ -274,7 +274,7 @@ class TestFallbackBehavior:
             header = app.query_one("#agent-header")
 
             with patch(
-                "pennyfarthing_scripts.bikerack.portrait_resolver.detect_image_protocol",
+                "pf.bikerack.portrait_resolver.detect_image_protocol",
                 return_value=None,
             ):
                 header._apply_persona(PERSONA_SM)
@@ -295,7 +295,7 @@ class TestFallbackBehavior:
                 "textual_image.widget": None,
                 "textual_image._terminal": None,
             }), patch(
-                "pennyfarthing_scripts.bikerack.portrait_resolver.detect_image_protocol",
+                "pf.bikerack.portrait_resolver.detect_image_protocol",
                 return_value=None,
             ):
                 header._apply_persona(PERSONA_SM)
@@ -312,7 +312,7 @@ class TestPortraitUpdatesOnPersonaChange:
 
     @pytest.fixture
     def app(self):
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp
+        from pf.bikerack.tui import BikeRackApp
 
         return BikeRackApp()
 

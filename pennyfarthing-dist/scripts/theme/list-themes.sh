@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # list-themes.sh - List all available persona themes
 #
-# Thin wrapper: discovery logic lives in pennyfarthing_scripts.common.themes
+# Thin wrapper: discovery logic lives in pf.common.themes
 #
 # Usage: list-themes.sh [--current-only]
 
@@ -14,7 +14,7 @@ export PROJECT_ROOT
 
 if [[ "${1:-}" == "--current-only" ]]; then
     python3 -c "
-from pennyfarthing_scripts.common.themes import get_current_theme
+from pf.common.themes import get_current_theme
 t = get_current_theme()
 if t:
     print(t)
@@ -24,7 +24,7 @@ else:
 "
 else
     python3 -c "
-from pennyfarthing_scripts.common.themes import format_theme_list
+from pf.common.themes import format_theme_list
 print(format_theme_list())
 "
 fi

@@ -23,7 +23,7 @@ from textwrap import dedent
 
 import pytest
 
-from pennyfarthing_scripts.validate.adapters.team_mode import (
+from pf.validate.adapters.team_mode import (
     classify_team_mode_agents,
     extract_team_mode_section,
     run,
@@ -634,7 +634,7 @@ class TestValidatorRun:
 
         report = run(project_dir, fix=False, strict=False)
 
-        from pennyfarthing_scripts.validate import ValidateReport
+        from pf.validate import ValidateReport
 
         assert isinstance(report, ValidateReport)
         assert report.validator == "team-mode"

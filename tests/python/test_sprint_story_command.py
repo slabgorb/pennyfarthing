@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
-from pennyfarthing_scripts.sprint.cli import sprint
+from pf.sprint.cli import sprint
 
 # Project root for path resolution
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -47,7 +47,7 @@ class TestSprintStoryCommandRegistration:
     def test_story_command_in_sprint_help(self):
         """pf sprint --help should show story subgroup."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -59,7 +59,7 @@ class TestSprintStoryCommandRegistration:
     def test_story_command_has_help(self):
         """pf sprint story --help should show subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -71,7 +71,7 @@ class TestSprintStoryCommandRegistration:
     def test_story_show_command_has_help(self):
         """pf sprint story show --help should show usage."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "show", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "show", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -84,7 +84,7 @@ class TestSprintStoryCommandRegistration:
 class TestSprintStoryTextOutput:
     """Test story show text output with MSSCI-00000 test fixture."""
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_story_command_returns_story_details(self, mock_fn):
         """Story show command should return basic story details."""
         runner = CliRunner()
@@ -95,7 +95,7 @@ class TestSprintStoryTextOutput:
             f"Story ID not in output: {result.output}"
         )
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_story_command_shows_title(self, mock_fn):
         """Story show command should show story title."""
         runner = CliRunner()
@@ -105,7 +105,7 @@ class TestSprintStoryTextOutput:
             f"Title not shown in output: {result.output}"
         )
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_story_command_shows_points(self, mock_fn):
         """Story show command should show story points."""
         runner = CliRunner()
@@ -115,7 +115,7 @@ class TestSprintStoryTextOutput:
             f"Points not shown in output: {result.output}"
         )
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_story_command_shows_status(self, mock_fn):
         """Story show command should show story status."""
         runner = CliRunner()
@@ -129,7 +129,7 @@ class TestSprintStoryTextOutput:
 class TestSprintStoryJsonOutput:
     """Test --json flag for structured output with MSSCI-00000 test fixture."""
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_json_flag_returns_valid_json(self, mock_fn):
         """sprint story show MSSCI-00000 --json should return valid JSON."""
         runner = CliRunner()
@@ -141,7 +141,7 @@ class TestSprintStoryJsonOutput:
         except json.JSONDecodeError as e:
             pytest.fail(f"Invalid JSON output: {e}\nOutput: {result.output}")
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_json_output_has_id_field(self, mock_fn):
         """JSON output should have id field."""
         runner = CliRunner()
@@ -150,7 +150,7 @@ class TestSprintStoryJsonOutput:
         data = json.loads(result.output)
         assert "id" in data, f"JSON missing 'id' field: {data.keys()}"
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_json_output_has_title_field(self, mock_fn):
         """JSON output should have title field."""
         runner = CliRunner()
@@ -159,7 +159,7 @@ class TestSprintStoryJsonOutput:
         data = json.loads(result.output)
         assert "title" in data, f"JSON missing 'title' field: {data.keys()}"
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_json_output_has_points_field(self, mock_fn):
         """JSON output should have points field."""
         runner = CliRunner()
@@ -168,7 +168,7 @@ class TestSprintStoryJsonOutput:
         data = json.loads(result.output)
         assert "points" in data, f"JSON missing 'points' field: {data.keys()}"
 
-    @patch("pennyfarthing_scripts.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
+    @patch("pf.sprint.loader.get_story_by_id", side_effect=_mock_get_story_by_id)
     def test_json_output_has_status_field(self, mock_fn):
         """JSON output should have status field."""
         runner = CliRunner()
@@ -184,7 +184,7 @@ class TestSprintStoryErrorHandling:
     def test_story_not_found_error(self):
         """Nonexistent story MSSCI-00000 should return error when not mocked."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "show", "MSSCI-00000"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "show", "MSSCI-00000"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -201,7 +201,7 @@ class TestSprintStoryErrorHandling:
     def test_missing_story_id_shows_usage(self):
         """Missing story ID for show should show usage or error."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "show"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "show"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -225,7 +225,7 @@ class TestSprintStoryGroupHelp:
     def test_story_no_args_shows_help(self):
         """pf sprint story (no args) should show subcommand list."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -246,7 +246,7 @@ class TestSprintStoryStartupPerformance:
         for _ in range(3):
             start = time.perf_counter()
             result = subprocess.run(
-                [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "--help"],
+                [sys.executable, "-m", "pf.cli", "sprint", "story", "--help"],
                 capture_output=True,
                 text=True,
                 cwd=str(PROJECT_ROOT),

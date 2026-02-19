@@ -254,7 +254,7 @@ export function createSkillsDirectory(
 /**
  * Create a symlink from destPath to sourcePath.
  * This keeps .pennyfarthing pointing to node_modules, which is required
- * for prime.sh to find pennyfarthing_scripts via relative path calculation.
+ * for prime.sh to find the pf package via relative path calculation.
  */
 export function createDirectorySymlink(
   sourcePath: string,

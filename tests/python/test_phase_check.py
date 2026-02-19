@@ -22,7 +22,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pennyfarthing_scripts.handoff.phase_check import phase_check_start
+from pf.handoff.phase_check import phase_check_start
 
 
 WORKFLOW_TDD = {

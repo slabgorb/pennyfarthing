@@ -114,7 +114,7 @@ describe('MSSCI-14468: Dependencies API (Story 83-3)', () => {
 
       expect(mockExecFile).toHaveBeenCalledWith(
         'python3',
-        expect.arrayContaining(['-m', 'pennyfarthing_scripts.dependencies']),
+        expect.arrayContaining(['-m', 'pf.dependencies']),
         expect.objectContaining({
           timeout: 30000,
         }),
@@ -218,8 +218,8 @@ describe('MSSCI-14468: Dependencies API (Story 83-3)', () => {
       handler(req, res);
 
       const opts = mockExecFile.mock.calls[0][2] as any;
-      expect(opts.env.PYTHONPATH).toBe('/test/project/pennyfarthing');
-      expect(opts.cwd).toBe('/test/project/pennyfarthing');
+      expect(opts.env.PYTHONPATH).toBe('/test/project/pennyfarthing/pennyfarthing-dist');
+      expect(opts.cwd).toBe('/test/project/pennyfarthing/pennyfarthing-dist');
     });
   });
 });

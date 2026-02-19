@@ -19,7 +19,7 @@ from textwrap import dedent
 
 import pytest
 
-from pennyfarthing_scripts.validate.adapters.tandem_awareness import (
+from pf.validate.adapters.tandem_awareness import (
     ADR_0012_PAIRINGS,
     classify_tandem_roles,
     run,
@@ -557,7 +557,7 @@ class TestValidatorRun:
 
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
-        from pennyfarthing_scripts.validate import ValidateReport
+        from pf.validate import ValidateReport
 
         assert isinstance(report, ValidateReport)
         assert report.validator == "tandem-awareness"

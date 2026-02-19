@@ -14,7 +14,7 @@ export function createHotspotsRouter(getProjectDir: () => string): Router {
     const skipType = req.query.skip_type;
 
     const args = [
-      '-m', 'pennyfarthing_scripts.hotspots',
+      '-m', 'pf.hotspots',
       'analyze',
       '--format', 'json',
       '--days', days,
@@ -35,7 +35,7 @@ export function createHotspotsRouter(getProjectDir: () => string): Router {
     }
 
     // Find python in the project's pennyfarthing dir
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = join(projectDir, 'pennyfarthing', 'pennyfarthing-dist');
 
     execFile('python3', args, {
       cwd: pythonPath,

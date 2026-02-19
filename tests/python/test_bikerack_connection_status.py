@@ -15,12 +15,12 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.tui import (
+from pf.bikerack.tui import (
     BikeRackApp,
     ConnectionStatus,
     STATE_DISPLAY,
 )
-from pennyfarthing_scripts.bikerack.ws_client import ConnectionState, WheelHubClient
+from pf.bikerack.ws_client import ConnectionState, WheelHubClient
 
 
 class TestConnectionStatusWidget:

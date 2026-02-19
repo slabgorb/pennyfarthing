@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pennyfarthing_scripts.sprint.story_finish import (
+from pf.sprint.story_finish import (
     _extract_branch,
     _extract_jira_key,
     _extract_pr_number,
@@ -144,7 +144,7 @@ class TestExtractFields:
 class TestFinishStoryDryRun:
     """Test dry-run mode."""
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_dry_run_returns_steps(self, mock_run, project_tree):
         result = finish_story(project_tree, "83-2", dry_run=True)
         assert result["success"] is True
@@ -152,7 +152,7 @@ class TestFinishStoryDryRun:
         assert result["jira_key"] == "MSSCI-14467"
         assert len(result["steps"]) == 7
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_dry_run_no_side_effects(self, mock_run, project_tree):
         finish_story(project_tree, "83-2", dry_run=True)
         # Session file should still exist
@@ -167,14 +167,14 @@ class TestFinishStoryDryRun:
 class TestFinishStoryYamlUpdate:
     """Test the critical YAML update (step 4) — the bug fix."""
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_updates_story_status_to_done(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         result = finish_story(project_tree, "83-2")
         assert result["success"] is True
 
         # Read back the shard file directly to verify the write
-        from pennyfarthing_scripts.sprint.yaml_io import read_sprint
+        from pf.sprint.yaml_io import read_sprint
         data = read_sprint(project_tree / "sprint" / "current-sprint.yaml")
         for epic in data.get("epics", []):
             for story in epic.get("stories", []):
@@ -185,12 +185,12 @@ class TestFinishStoryYamlUpdate:
                     return
         pytest.fail("Story 83-2 not found in sprint data after finish")
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_does_not_modify_other_stories(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         finish_story(project_tree, "83-2")
 
-        from pennyfarthing_scripts.sprint.yaml_io import read_sprint
+        from pf.sprint.yaml_io import read_sprint
         data = read_sprint(project_tree / "sprint" / "current-sprint.yaml")
         for epic in data.get("epics", []):
             for story in epic.get("stories", []):
@@ -199,13 +199,13 @@ class TestFinishStoryYamlUpdate:
                     return
         pytest.fail("Story 83-1 not found")
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_archives_session_file(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         finish_story(project_tree, "83-2")
         assert (project_tree / "sprint" / "archive" / "MSSCI-14467-session.md").exists()
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_removes_session_file(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         finish_story(project_tree, "83-2")
@@ -220,7 +220,7 @@ class TestFinishStoryErrors:
         assert result["success"] is False
         assert "not found" in result["error"].lower()
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_no_jira_key_still_succeeds(self, mock_run, project_tree):
         # When no Jira key in session or shard, finish should still succeed
         # but skip Jira transition and use story_id for archive name
@@ -235,7 +235,7 @@ class TestFinishStoryErrors:
         jira_step = [s for s in result["steps"] if s["step"] == 3][0]
         assert jira_step.get("skipped") is True
 
-    @patch("pennyfarthing_scripts.sprint.story_finish._run")
+    @patch("pf.sprint.story_finish._run")
     def test_returns_steps_on_success(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         result = finish_story(project_tree, "83-2")
@@ -253,7 +253,7 @@ class TestFinishStoryCli:
 
     def test_finish_command_registered(self):
         from click.testing import CliRunner
-        from pennyfarthing_scripts.sprint.cli import sprint
+        from pf.sprint.cli import sprint
 
         runner = CliRunner()
         result = runner.invoke(sprint, ["story", "finish", "--help"])

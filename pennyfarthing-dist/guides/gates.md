@@ -116,9 +116,9 @@ Gates run as Haiku subagents — keep instructions focused and evaluation criter
 | File | Purpose |
 |------|---------|
 | `pennyfarthing-dist/gates/*.md` | Gate definitions |
-| `pennyfarthing_scripts/handoff/gate_runner.py` | Spawns gate subagents |
-| `pennyfarthing_scripts/handoff/gate_file.py` | Gate file discovery and resolution |
-| `pennyfarthing_scripts/handoff/resolve_gate.py` | Resolves gate for a workflow phase |
+| `pf/handoff/gate_runner.py` | Spawns gate subagents |
+| `pf/handoff/gate_file.py` | Gate file discovery and resolution |
+| `pf/handoff/resolve_gate.py` | Resolves gate for a workflow phase |
 
 <info>
 **ADR:** `docs/adr/0025-script-first-gate-extraction.md`

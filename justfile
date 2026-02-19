@@ -319,7 +319,7 @@ validate-subagents:
 
 # Validate sprint YAML structure
 validate-sprint *args:
-    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.sprint.validator {{args}}
+    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.sprint.validator {{args}}
 
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
@@ -340,12 +340,12 @@ bikerack *args:
     case "${1:-start}" in
         stop)
             shift
-            PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack stop "$@"
+            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack stop "$@"
             exit 0
             ;;
         status)
             shift
-            PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack status "$@"
+            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack status "$@"
             exit 0
             ;;
     esac
@@ -388,7 +388,7 @@ bikerack *args:
         if [[ -n "$project_dir" ]]; then
             dir_flag="--project-dir $project_dir"
         fi
-        PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack start $dir_flag
+        PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack start $dir_flag
         exit 0
     fi
 
@@ -458,4 +458,4 @@ tui *args:
         esac
     done
 
-    PYTHONPATH="{{justfile_directory()}}:${PYTHONPATH:-}" python3 -m pennyfarthing_scripts.bikerack.tui $port_flag $project_dir_flag
+    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack.tui $port_flag $project_dir_flag

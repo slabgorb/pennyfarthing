@@ -196,7 +196,7 @@ class TestThemePackNpmResolution:
 
     def test_resolve_finds_portrait_in_npm_theme_pack(self, consumer_install: Path):
         """Theme-pack theme should resolve portrait via node_modules sibling path."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
         assert result is not None, (
@@ -207,7 +207,7 @@ class TestThemePackNpmResolution:
 
     def test_discover_includes_npm_theme_dirs(self, consumer_install: Path):
         """discover_all_theme_dirs should include node_modules theme-pack paths."""
-        from pennyfarthing_scripts.common.themes import discover_all_theme_dirs
+        from pf.common.themes import discover_all_theme_dirs
 
         dirs = discover_all_theme_dirs(project_root=consumer_install)
         npm_dirs = [d for d in dirs if "node_modules" in str(d)]
@@ -217,7 +217,7 @@ class TestThemePackNpmResolution:
 
     def test_npm_portrait_found_via_sibling_path(self, consumer_install: Path):
         """Portrait should be found as sibling of the npm themes/ directory."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
         assert result is not None
@@ -228,7 +228,7 @@ class TestThemePackNpmResolution:
 
     def test_npm_portrait_prefers_medium_size(self, consumer_install: Path):
         """npm-resolved portrait should prefer medium size bucket."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
         assert result is not None
@@ -245,7 +245,7 @@ class TestDogfoodingPriority:
 
     def test_dogfooding_resolves_core_theme_portrait(self, dogfooding_install: Path):
         """Core theme portrait should resolve in dogfooding mode."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("core-theme", "sm", project_root=dogfooding_install)
         assert result is not None, "Core theme portrait should resolve in dogfooding"
@@ -253,7 +253,7 @@ class TestDogfoodingPriority:
 
     def test_pennyfarthing_dir_takes_priority_over_npm(self, dogfooding_install: Path):
         """When theme exists in both .pennyfarthing/ and npm, .pennyfarthing/ wins."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         # Add the same theme to the npm pack so both locations have it
         pack_dir = dogfooding_install / "node_modules" / "@pennyfarthing" / "themes-mock"
@@ -269,7 +269,7 @@ class TestDogfoodingPriority:
 
     def test_dogfooding_also_resolves_npm_theme_pack(self, dogfooding_install: Path):
         """Theme-pack themes should still resolve alongside core themes in dogfooding."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=dogfooding_install)
         assert result is not None, "Theme-pack portrait should resolve in dogfooding mode too"
@@ -285,7 +285,7 @@ class TestMultiSourceDiscovery:
 
     def test_discovers_core_pennyfarthing_dist_portraits(self, monorepo_install: Path):
         """Should find portraits via pennyfarthing-dist/personas/portraits/."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("core-theme", "sm", project_root=monorepo_install)
         assert result is not None, (
@@ -295,7 +295,7 @@ class TestMultiSourceDiscovery:
 
     def test_discovers_monorepo_workspace_portraits(self, monorepo_install: Path):
         """Should find portraits via packages/themes-*/portraits/."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=monorepo_install)
         assert result is not None, (
@@ -305,7 +305,7 @@ class TestMultiSourceDiscovery:
 
     def test_discovers_npm_portraits(self, consumer_install: Path):
         """Should find portraits via node_modules/@pennyfarthing/themes-*/portraits/."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
         assert result is not None, (
@@ -315,7 +315,7 @@ class TestMultiSourceDiscovery:
 
     def test_all_three_sources_in_discovery(self, tmp_path: Path):
         """discover_all_theme_dirs should include dirs from all three source types."""
-        from pennyfarthing_scripts.common.themes import discover_all_theme_dirs
+        from pf.common.themes import discover_all_theme_dirs
 
         # Set up all three sources
         _write_theme_yaml(tmp_path / "pennyfarthing-dist" / "personas" / "themes", "core-theme")
@@ -341,7 +341,7 @@ class TestMultiSourceDiscovery:
 
     def test_priority_order_core_before_npm_before_workspace(self, tmp_path: Path):
         """Discovery priority: .pennyfarthing > pennyfarthing-dist > npm > monorepo."""
-        from pennyfarthing_scripts.common.themes import discover_all_theme_dirs
+        from pf.common.themes import discover_all_theme_dirs
 
         # Set up all sources
         _write_theme_yaml(tmp_path / ".pennyfarthing" / "personas" / "themes", "shared-theme")
@@ -384,7 +384,7 @@ class TestCoreThemeGracefulDegradation:
 
     def test_core_theme_returns_none_in_consumer_install(self, consumer_install: Path):
         """Core-only theme should return None when no portraits available."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("core-theme", "sm", project_root=consumer_install)
         assert result is None, (
@@ -393,7 +393,7 @@ class TestCoreThemeGracefulDegradation:
 
     def test_core_theme_no_exception_on_missing_portraits(self, consumer_install: Path):
         """resolve_portrait_path should not raise for core themes without portraits."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         # Should not raise any exception
         try:
@@ -405,14 +405,14 @@ class TestCoreThemeGracefulDegradation:
 
     def test_completely_unknown_theme_returns_none(self, consumer_install: Path):
         """Theme that exists nowhere should return None cleanly."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         result = resolve_portrait_path("nonexistent-theme", "sm", project_root=consumer_install)
         assert result is None
 
     def test_core_theme_resolves_when_pennyfarthing_dist_has_portraits(self, tmp_path: Path):
         """Core theme should resolve when pennyfarthing-dist/personas/portraits/ exists."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         # Consumer-like but with pennyfarthing-dist available (monorepo/dogfood)
         _write_theme_yaml(tmp_path / ".pennyfarthing" / "personas" / "themes", "core-theme")
@@ -426,7 +426,7 @@ class TestCoreThemeGracefulDegradation:
 
     def test_empty_portraits_dir_returns_none(self, tmp_path: Path):
         """Empty portraits directory should return None, not crash."""
-        from pennyfarthing_scripts.bikerack.portrait_resolver import resolve_portrait_path
+        from pf.bikerack.portrait_resolver import resolve_portrait_path
 
         _write_theme_yaml(tmp_path / ".pennyfarthing" / "personas" / "themes", "core-theme")
         # Create portraits dir but leave it empty (no theme subdir)

@@ -18,7 +18,7 @@ export function createCodeMarkersRouter(getProjectDir: () => string): Router {
     const type = req.query.type as string | undefined;
 
     const args = [
-      '-m', 'pennyfarthing_scripts.codemarkers',
+      '-m', 'pf.codemarkers',
       'analyze',
       '--format', 'json',
       '--days', days,
@@ -34,7 +34,7 @@ export function createCodeMarkersRouter(getProjectDir: () => string): Router {
       args.push('--type', type);
     }
 
-    const pythonPath = join(projectDir, 'pennyfarthing');
+    const pythonPath = join(projectDir, 'pennyfarthing', 'pennyfarthing-dist');
 
     execFile('python3', args, {
       cwd: pythonPath,

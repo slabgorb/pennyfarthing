@@ -23,13 +23,13 @@ class TestMainFunctionExists:
 
     def test_main_is_importable(self):
         """tui.py should export a main() function."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
         assert callable(main), "main should be a callable function"
 
     def test_main_is_not_bikerack_app(self):
         """main() should be a function, not the BikeRackApp class itself."""
-        from pennyfarthing_scripts.bikerack.tui import BikeRackApp, main
+        from pf.bikerack.tui import BikeRackApp, main
 
         assert main is not BikeRackApp, "main should be a launcher function, not BikeRackApp"
 
@@ -39,10 +39,10 @@ class TestMainPortArgument:
 
     def test_main_with_explicit_port(self):
         """main(port=3456) should create client with that port."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -57,10 +57,10 @@ class TestMainPortArgument:
 
     def test_main_with_different_port(self):
         """main(port=9999) should pass 9999 to client."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -77,13 +77,13 @@ class TestMainPortDiscovery:
 
     def test_main_reads_port_file(self, tmp_path):
         """main() should read .bikerack-port when no port argument is given."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
         # Write a port file
         (tmp_path / ".bikerack-port").write_text("4567")
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -104,12 +104,12 @@ class TestMainDefaultPort:
 
     def test_main_uses_default_port_when_no_file(self, tmp_path):
         """main() should use default port 2898 when no .bikerack-port exists."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
         # No port file in tmp_path
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -130,13 +130,13 @@ class TestMainCreatesClientAndApp:
 
     def test_main_passes_client_to_app(self):
         """main() should create WheelHubClient and pass it to BikeRackApp."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
             mock_client_instance = MagicMock()
             MockClient.return_value = mock_client_instance
 
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -154,10 +154,10 @@ class TestMainCreatesClientAndApp:
 
     def test_main_runs_app(self):
         """main() should call app.run() to start the Textual event loop."""
-        from pennyfarthing_scripts.bikerack.tui import main
+        from pf.bikerack.tui import main
 
-        with patch("pennyfarthing_scripts.bikerack.tui.WheelHubClient") as MockClient:
-            with patch("pennyfarthing_scripts.bikerack.tui.BikeRackApp") as MockApp:
+        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+            with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
 
@@ -175,7 +175,7 @@ class TestCliEntryPoint:
         """tui.py should have an if __name__ == '__main__' block."""
         import inspect
 
-        from pennyfarthing_scripts.bikerack import tui
+        from pf.bikerack import tui
 
         source = inspect.getsource(tui)
         assert '__name__' in source and '__main__' in source, (

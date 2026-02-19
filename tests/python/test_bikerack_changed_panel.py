@@ -20,9 +20,9 @@ from rich.console import Group as RichGroup
 from rich.text import Text
 from textual.widgets import Static
 
-from pennyfarthing_scripts.bikerack.changed_panel import ChangedPanel
-from pennyfarthing_scripts.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pennyfarthing_scripts.bikerack.ws_client import WheelHubClient
+from pf.bikerack.changed_panel import ChangedPanel
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/git wire format

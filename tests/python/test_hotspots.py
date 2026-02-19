@@ -1,5 +1,5 @@
 """
-Tests for pennyfarthing_scripts.hotspots module.
+Tests for pf.hotspots module.
 
 Covers git log parsing, bug-fix detection, scoring, aggregation, formatters, and CLI.
 """
@@ -12,13 +12,13 @@ from click.testing import CliRunner
 
 import pytest
 
-from pennyfarthing_scripts.hotspots.models import (
+from pf.hotspots.models import (
     FileHotspot,
     DirectoryHotspot,
     HotspotResult,
     MultiRepoHotspotResult,
 )
-from pennyfarthing_scripts.hotspots.analyze import (
+from pf.hotspots.analyze import (
     _parse_git_log,
     is_bug_fix_commit,
     calculate_hotspot_score,
@@ -27,13 +27,13 @@ from pennyfarthing_scripts.hotspots.analyze import (
     analyze_repo,
     analyze_all_repos,
 )
-from pennyfarthing_scripts.hotspots.formatters import (
+from pf.hotspots.formatters import (
     format_file_table,
     format_dir_table,
     export_json,
     export_csv,
 )
-from pennyfarthing_scripts.hotspots.cli import hotspots
+from pf.hotspots.cli import hotspots
 
 
 # =============================================================================
@@ -263,7 +263,7 @@ class TestAnalyzeRepo:
 
     def test_successful_analysis(self):
         with patch(
-            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(SAMPLE_GIT_LOG, "", 0),
         ):
@@ -275,7 +275,7 @@ class TestAnalyzeRepo:
 
     def test_git_failure(self):
         with patch(
-            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=("", "fatal: not a git repository", 128),
         ):
@@ -285,7 +285,7 @@ class TestAnalyzeRepo:
 
     def test_empty_history(self):
         with patch(
-            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=("", "", 0),
         ):
@@ -298,7 +298,7 @@ class TestAnalyzeRepo:
 100\t50\tpnpm-lock.yaml
 5\t2\tsrc/app.ts"""
         with patch(
-            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(log_with_lock, "", 0),
         ):
@@ -401,7 +401,7 @@ class TestCLI:
             ],
         )
         with patch(
-            "pennyfarthing_scripts.hotspots.cli._run_analysis",
+            "pf.hotspots.cli._run_analysis",
             return_value=mock_result,
         ):
             runner = CliRunner()
@@ -450,12 +450,12 @@ class TestAnalyzeAllReposSkipTypes:
     def test_skip_orchestrator_excludes_orchestrator_repo(self):
         """Passing skip_types=['orchestrator'] should exclude repos with type 'orchestrator'."""
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
             "pathlib.Path.exists", return_value=True,
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            "pf.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
                 success=True, repo_name="pennyfarthing", repo_path="/tmp/pennyfarthing",
@@ -475,12 +475,12 @@ class TestAnalyzeAllReposSkipTypes:
     def test_skip_multiple_types(self):
         """Passing multiple skip_types should exclude all matching repos."""
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
             "pathlib.Path.exists", return_value=True,
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            "pf.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
                 success=True, repo_name="pennyfarthing", repo_path="/tmp/pennyfarthing",
@@ -499,12 +499,12 @@ class TestAnalyzeAllReposSkipTypes:
     def test_no_skip_types_analyzes_all_repos(self):
         """When skip_types is None, all repos should be analyzed (backward compatible)."""
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
             "pathlib.Path.exists", return_value=True,
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            "pf.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
                 success=True, repo_name="test", repo_path="/tmp/test",
@@ -520,12 +520,12 @@ class TestAnalyzeAllReposSkipTypes:
     def test_empty_skip_types_analyzes_all_repos(self):
         """Empty skip_types list should analyze all repos (same as None)."""
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
             "pathlib.Path.exists", return_value=True,
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            "pf.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
                 success=True, repo_name="test", repo_path="/tmp/test",
@@ -541,7 +541,7 @@ class TestAnalyzeAllReposSkipTypes:
     def test_skip_all_types_returns_error(self):
         """If skip_types filters out ALL repos, should return error result."""
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=REPOS_YAML_WITH_TYPES,
         ), patch(
             "pathlib.Path.exists", return_value=True,
@@ -562,12 +562,12 @@ class TestAnalyzeAllReposSkipTypes:
             "legacy": {"path": "legacy"},  # no type field
         }
         with patch(
-            "pennyfarthing_scripts.common.config.load_yaml_config",
+            "pf.common.config.load_yaml_config",
             return_value=repos_yaml,
         ), patch(
             "pathlib.Path.exists", return_value=True,
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_repo",
+            "pf.hotspots.analyze.analyze_repo",
             new_callable=AsyncMock,
             return_value=HotspotResult(
                 success=True, repo_name="legacy", repo_path="/tmp/legacy",
@@ -601,7 +601,7 @@ class TestCLISkipType:
         """--skip-type should accept multiple values."""
         mock_result = MultiRepoHotspotResult(success=True, repo_results=[])
         with patch(
-            "pennyfarthing_scripts.hotspots.cli._run_analysis",
+            "pf.hotspots.cli._run_analysis",
             return_value=mock_result,
         ) as mock_run:
             runner = CliRunner()
@@ -620,10 +620,10 @@ class TestCLISkipType:
     def test_skip_type_passed_to_analyze_all_repos(self):
         """--skip-type values should flow through to analyze_all_repos."""
         with patch(
-            "pennyfarthing_scripts.common.config.get_project_root",
+            "pf.common.config.get_project_root",
             return_value=Path("/tmp"),
         ), patch(
-            "pennyfarthing_scripts.hotspots.analyze.analyze_all_repos",
+            "pf.hotspots.analyze.analyze_all_repos",
             new_callable=AsyncMock,
             return_value=MultiRepoHotspotResult(success=True, repo_results=[]),
         ) as mock_all:
@@ -652,7 +652,7 @@ class TestExpandedDefaultExcludes:
 
     def test_dotfiles_excluded(self):
         """Dotfiles (.*) should be excluded by default."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude(".gitignore", DEFAULT_EXCLUDES)
         assert _should_exclude(".eslintrc", DEFAULT_EXCLUDES)
         assert _should_exclude("some/path/.env", DEFAULT_EXCLUDES)
@@ -660,7 +660,7 @@ class TestExpandedDefaultExcludes:
 
     def test_images_excluded(self):
         """Image files (*.png, *.jpg, *.gif, *.svg, *.ico) should be excluded."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude("assets/logo.png", DEFAULT_EXCLUDES)
         assert _should_exclude("src/images/hero.jpg", DEFAULT_EXCLUDES)
         assert _should_exclude("icons/spinner.gif", DEFAULT_EXCLUDES)
@@ -670,7 +670,7 @@ class TestExpandedDefaultExcludes:
 
     def test_fonts_excluded(self):
         """Font files (*.woff, *.woff2, *.ttf, *.eot) should be excluded."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude("fonts/Inter.woff", DEFAULT_EXCLUDES)
         assert _should_exclude("fonts/Inter.woff2", DEFAULT_EXCLUDES)
         assert _should_exclude("assets/font.ttf", DEFAULT_EXCLUDES)
@@ -678,21 +678,21 @@ class TestExpandedDefaultExcludes:
 
     def test_generated_files_excluded(self):
         """Generated files (*.d.ts, *.snap, *.d.ts.map) should be excluded."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude("dist/types/index.d.ts", DEFAULT_EXCLUDES)
         assert _should_exclude("src/__snapshots__/App.test.tsx.snap", DEFAULT_EXCLUDES)
         assert _should_exclude("types/model.d.ts.map", DEFAULT_EXCLUDES)
 
     def test_ci_config_excluded(self):
         """CI config (.github/*) should be excluded."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude(".github/workflows/ci.yml", DEFAULT_EXCLUDES)
         assert _should_exclude(".github/dependabot.yml", DEFAULT_EXCLUDES)
         assert _should_exclude(".github/CODEOWNERS", DEFAULT_EXCLUDES)
 
     def test_source_files_not_excluded(self):
         """Regular source files should NOT be excluded by expanded patterns."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert not _should_exclude("src/app.ts", DEFAULT_EXCLUDES)
         assert not _should_exclude("src/components/Button.tsx", DEFAULT_EXCLUDES)
         assert not _should_exclude("lib/utils.py", DEFAULT_EXCLUDES)
@@ -700,7 +700,7 @@ class TestExpandedDefaultExcludes:
 
     def test_documentation_files_excluded(self):
         """Documentation files (*.md) are excluded server-side as non-code hotspots."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude("README.md", DEFAULT_EXCLUDES)
         assert _should_exclude("CLAUDE.md", DEFAULT_EXCLUDES)
         assert _should_exclude("CHANGELOG.md", DEFAULT_EXCLUDES)
@@ -708,7 +708,7 @@ class TestExpandedDefaultExcludes:
 
     def test_config_manifest_files_excluded(self):
         """Config/manifest files are excluded server-side as high-churn non-code signals."""
-        from pennyfarthing_scripts.hotspots.analyze import DEFAULT_EXCLUDES
+        from pf.hotspots.analyze import DEFAULT_EXCLUDES
         assert _should_exclude("tsconfig.json", DEFAULT_EXCLUDES)
         assert _should_exclude("package.json", DEFAULT_EXCLUDES)
         assert _should_exclude("config/settings.yaml", DEFAULT_EXCLUDES)
@@ -726,7 +726,7 @@ class TestExpandedDefaultExcludes:
 2\t1\tfonts/Inter.woff2
 4\t2\t.eslintrc"""
         with patch(
-            "pennyfarthing_scripts.hotspots.analyze._run_git_log",
+            "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(log_with_artifacts, "", 0),
         ):

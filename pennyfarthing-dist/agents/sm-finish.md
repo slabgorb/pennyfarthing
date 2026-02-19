@@ -22,7 +22,7 @@ using the project's `pr_mode` config:
 
 ```bash
 # Read pr_mode: draft | ready | none
-PR_MODE=$(source .venv/bin/activate && python -m pennyfarthing_scripts.common.pr_config)
+PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
 ```
 
 - If `PR_MODE=draft`: `gh pr create --draft --title "feat({STORY_ID}): {title}" --body "..." --base develop`
@@ -37,7 +37,7 @@ If a PR already exists, skip creation.
 The preflight script runs all checks in parallel using asyncio:
 
 ```bash
-source .venv/bin/activate && python -m pennyfarthing_scripts.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+source .venv/bin/activate && python -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
 ```
 
 If no JIRA_KEY, omit the `--jira` flag.

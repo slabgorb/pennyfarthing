@@ -3,7 +3,7 @@
 # Usage: jira-reconcile.sh [--fix]
 #
 # Thin wrapper that delegates to Python CLI:
-#   python -m pennyfarthing_scripts.jira reconcile [--fix]
+#   python -m pf.jira reconcile [--fix]
 
 set -e
 

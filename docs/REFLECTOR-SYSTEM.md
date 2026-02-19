@@ -221,7 +221,7 @@ const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
 
 ### Marker Generator
 
-**Command:** `pf handoff marker` (`pennyfarthing_scripts/handoff/marker.py`)
+**Command:** `pf handoff marker` (`pf/handoff/marker.py`)
 
 Single source of truth for marker format. Handles:
 - IS_CYCLIST detection
@@ -283,7 +283,7 @@ packages/vscode-extension/
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Marker Generator | `pennyfarthing_scripts/handoff/marker.py` | Single source of truth for marker format |
+| Marker Generator | `pf/handoff/marker.py` | Single source of truth for marker format |
 | Context Checker | `pennyfarthing-dist/scripts/core/check-context.sh` | Calculates context %, TirePump decision |
 | Cyclist Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
 | VS Code Parser | `packages/vscode-extension/src/adapters/reflector.ts` | VS Code marker detection |

@@ -24,7 +24,7 @@ class TestStorySubgroupHelp:
     def test_story_help_shows_subcommands(self):
         """pf sprint story --help should show all subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -47,7 +47,7 @@ class TestEpicSubgroupHelp:
     def test_epic_help_shows_subcommands(self):
         """pf sprint epic --help should show all subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "epic", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "epic", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -68,7 +68,7 @@ class TestStorySizeCommand:
     def test_story_size_returns_guidelines(self):
         """pf sprint story size should output sizing guidelines."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "size"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "size"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -82,7 +82,7 @@ class TestStorySizeCommand:
     def test_story_size_with_points(self):
         """pf sprint story size 3 should show specific guidance."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "size", "3"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "size", "3"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -100,7 +100,7 @@ class TestStoryTemplateCommand:
     def test_story_template_lists_all(self):
         """pf sprint story template should list all templates."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "template"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "template"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -114,7 +114,7 @@ class TestStoryTemplateCommand:
     def test_story_template_specific_type(self):
         """pf sprint story template bug should show bug template."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story", "template", "bug"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "template", "bug"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -130,7 +130,7 @@ class TestBackwardsCompatAliases:
     def test_story_add_alias_works(self):
         """pf sprint story-add --help should still work."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story-add", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story-add", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -142,7 +142,7 @@ class TestBackwardsCompatAliases:
     def test_story_update_alias_works(self):
         """pf sprint story-update --help should still work."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "story-update", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story-update", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -154,7 +154,7 @@ class TestBackwardsCompatAliases:
     def test_epic_add_alias_works(self):
         """pf sprint epic-add --help should still work."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "epic-add", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "epic-add", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -166,7 +166,7 @@ class TestBackwardsCompatAliases:
     def test_archive_epic_alias_works(self):
         """pf sprint archive-epic --help should still work."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "archive-epic", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "archive-epic", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -178,7 +178,7 @@ class TestBackwardsCompatAliases:
     def test_hidden_aliases_not_in_help(self):
         """Hidden aliases should not appear in sprint --help output."""
         result = subprocess.run(
-            [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+            [sys.executable, "-m", "pf.cli", "sprint", "--help"],
             capture_output=True,
             text=True,
             cwd=str(PROJECT_ROOT),
@@ -199,7 +199,7 @@ class TestSubgroupStartupPerformance:
         for _ in range(3):
             start = time.perf_counter()
             result = subprocess.run(
-                [sys.executable, "-m", "pennyfarthing_scripts.cli", "sprint", "--help"],
+                [sys.executable, "-m", "pf.cli", "sprint", "--help"],
                 capture_output=True,
                 text=True,
                 cwd=str(PROJECT_ROOT),

@@ -1,0 +1,23 @@
+"""
+Code marker analysis — TODO, FIXME, HACK, XXX detection with git blame.
+
+Story 80-1: Python codemarkers module.
+Story 80-2: @deprecated detection and caller cross-reference.
+"""
+
+from pf.codemarkers.analyze import analyze_deprecations, analyze_repo
+from pf.codemarkers.models import (
+    CodeMarker,
+    CodeMarkersResult,
+    DeprecationMarker,
+    MarkerSummary,
+)
+
+__all__ = [
+    "CodeMarker",
+    "CodeMarkersResult",
+    "DeprecationMarker",
+    "MarkerSummary",
+    "analyze_deprecations",
+    "analyze_repo",
+]
