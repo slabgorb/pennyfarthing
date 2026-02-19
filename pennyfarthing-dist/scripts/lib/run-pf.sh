@@ -18,6 +18,9 @@ _pf_project=""
 if [[ -f "$PROJECT_ROOT/pennyfarthing/pyproject.toml" ]]; then
     # Dogfooding: inlined framework repo
     _pf_project="$PROJECT_ROOT/pennyfarthing"
+elif [[ -f "$PROJECT_ROOT/node_modules/@pennyfarthing/core/pyproject.toml" ]]; then
+    # Symlink install: npm package has full Python source
+    _pf_project="$PROJECT_ROOT/node_modules/@pennyfarthing/core"
 elif [[ -f "$PROJECT_ROOT/pyproject.toml" ]]; then
     # Consumer: project-level pyproject.toml with pennyfarthing-scripts dep
     _pf_project="$PROJECT_ROOT"
