@@ -249,6 +249,13 @@ export function getDistDir(): string {
     return monorepoDistPublic;
   }
 
+  // npm installed: __dirname is dist/server/, Vite output is in dist/public/
+  // Return dist/ (parent) so join(getDistDir(), 'public') resolves correctly
+  const parentPublic = join(__dirname, '..', 'public');
+  if (__dirname.endsWith('/server') && existsSync(parentPublic)) {
+    return join(__dirname, '..');
+  }
+
   if (__dirname.includes('/dist')) {
     return __dirname;
   }

@@ -17,11 +17,7 @@ workflow list team indicator are implemented.
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch
-
 import pytest
-import yaml
 from click.testing import CliRunner
 
 from pennyfarthing_scripts.cli import cli

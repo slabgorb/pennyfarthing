@@ -34,7 +34,7 @@ def get(key: str):
         value = get_setting(key)
     except KeyError:
         click.echo(f"Key not found: {key}", err=True)
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     if isinstance(value, dict):
         import yaml
