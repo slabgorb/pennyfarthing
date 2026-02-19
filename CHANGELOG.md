@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.3.2] - 2026-02-19
+
+### Added
+
+- **BMAD adapter** — bidirectional sprint sync between BMAD markdown and PF YAML (MSSCI-15332)
+  - `pf bmad import` — initial import from BMAD project
+  - `pf bmad sync --pull/--push/--both` — bidirectional status sync
+  - `pf bmad status` — drift report
+  - Parser, importer, sync engine modeled on Jira adapter pattern
+
+---
+
 ## [11.3.1] - 2026-02-19
 
 ### Added
