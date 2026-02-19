@@ -139,6 +139,14 @@ export function migrateHookPaths(hookArray: unknown[]): boolean {
             }
             if (shMigrated) continue;
 
+            // Migrate bare `pf hooks X` commands to pf.sh wrapper path
+            if (h.command.startsWith('pf hooks ') && !h.command.includes('pf.sh')) {
+              const subcommand = h.command.replace('pf hooks ', '');
+              h.command = `${PF_SH} hooks ${subcommand}`;
+              migrated = true;
+              continue;
+            }
+
             // Legacy directory path migrations (for non-hook scripts)
             for (const legacyPath of LEGACY_SCRIPT_PATHS) {
               if (h.command.includes(legacyPath)) {
@@ -369,8 +377,13 @@ export async function mergeSettingsLocalJson(
     modified = true;
     logger.info('Added missing statusLine configuration');
   } else if (statusLine.command && typeof statusLine.command === 'string') {
-    // Migrate from any legacy .sh path to pf hooks statusline
-    if (!statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
+    // Migrate bare `pf hooks statusline` to pf.sh wrapper path
+    if (statusLine.command === 'pf hooks statusline') {
+      statusLine.command = `${PF_SH} hooks statusline`;
+      modified = true;
+      logger.info('Migrated statusLine from bare pf to pf.sh wrapper');
+    } else if (!statusLine.command.includes('pf.sh hooks statusline')) {
+      // Migrate from any legacy .sh path to pf.sh hooks statusline
       for (const legacyPath of LEGACY_STATUSLINE_PATHS) {
         if (statusLine.command.includes(legacyPath)) {
           statusLine.command = `${PF_SH} hooks statusline`;
