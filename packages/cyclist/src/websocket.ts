@@ -27,7 +27,7 @@ import {
   getCachedGitStatusSync,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
-import { getCurrentSettings } from '@pennyfarthing/core/dist/server/settings.js';
+import { getCurrentSettings, initializeSettings, onSettingsChange } from '@pennyfarthing/core/dist/server/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
 import { storePendingToolInput } from './span-correlation.js';
@@ -387,11 +387,86 @@ export function broadcastClaudeError(error: string): void {
   }
 }
 
+// Track whether git file watchers have been set up (avoid duplicates)
+let gitFileWatchersActive = false;
+
+/**
+ * Set up file watchers for .git/ directories in all configured repos.
+ * Watches HEAD, index, FETCH_HEAD, and refs/heads/ for changes.
+ * Idempotent — skips if watchers are already active.
+ */
+function setupGitFileWatchers(projectDir: string, getProjectDir: () => string): void {
+  if (gitFileWatchersActive) {
+    console.log('[WebSocket] Git file watchers already active — skipping setup');
+    return;
+  }
+
+  const repos = getReposFromConfig(projectDir);
+  for (const repo of repos) {
+    const repoPath = join(projectDir, repo.path);
+    const gitDir = join(repoPath, '.git');
+    if (!existsSync(gitDir)) continue;
+
+    try {
+      // Watch .git/HEAD for branch switches
+      const headPath = join(gitDir, 'HEAD');
+      if (existsSync(headPath)) {
+        watch(headPath, async (eventType) => {
+          if (eventType !== 'change') return;
+          console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
+          await forceRefreshGitCache(getProjectDir());
+        });
+      }
+
+      // Watch .git/index for staging changes
+      const indexPath = join(gitDir, 'index');
+      if (existsSync(indexPath)) {
+        watch(indexPath, (eventType) => {
+          if (eventType !== 'change') return;
+          console.log(`[Git Cache] Index change detected in ${repo.name}`);
+          invalidateGitCache(getProjectDir());
+        });
+      }
+
+      // Watch .git/FETCH_HEAD for fetch completions
+      const fetchHeadPath = join(gitDir, 'FETCH_HEAD');
+      if (existsSync(fetchHeadPath)) {
+        watch(fetchHeadPath, (eventType) => {
+          if (eventType !== 'change') return;
+          console.log(`[Git Cache] FETCH_HEAD change detected in ${repo.name}`);
+          invalidateGitCache(getProjectDir());
+        });
+      }
+
+      // Watch .git/refs/heads/ for local branch updates
+      const refsHeadsDir = join(gitDir, 'refs', 'heads');
+      if (existsSync(refsHeadsDir)) {
+        watch(refsHeadsDir, { recursive: true }, (eventType, filename) => {
+          if (!filename) return;
+          console.log(`[Git Cache] Ref change detected in ${repo.name}: refs/heads/${filename}`);
+          invalidateGitCache(getProjectDir());
+        });
+      }
+    } catch (err) {
+      console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
+    }
+  }
+  gitFileWatchersActive = true;
+  console.log('[WebSocket] Git file watchers set up for', repos.length, 'repos');
+}
+
 // Setup WebSocket servers for stats and persona updates
 export function setupWebSocketServers(
   server: Server,
   getProjectDir: () => string
 ): void {
+  // Re-initialize settings with the correct project directory.
+  // Core's server.ts calls initializeSettings() at module load time before
+  // the project directory is properly resolved, so defaults persist.
+  // This re-read picks up the actual config.local.yaml values.
+  const projectDirForSettings = getProjectDir();
+  initializeSettings(projectDirForSettings);
+
   // WebSocket server for stats at /ws/stats
   const statsWss = new WebSocketServer({ noServer: true });
 
@@ -1120,60 +1195,24 @@ export function setupWebSocketServers(
   // Gated by workflow.git_monitor — when disabled, no file watchers are created.
   const gitMonitorSetting = getCurrentSettings().workflow?.git_monitor === true;
   if (gitMonitorSetting) {
-    const repos = getReposFromConfig(projectDir);
-    for (const repo of repos) {
-      const repoPath = join(projectDir, repo.path);
-      const gitDir = join(repoPath, '.git');
-      if (!existsSync(gitDir)) continue;
-
-      try {
-        // Watch .git/HEAD for branch switches (infrequent, safe to force refresh)
-        const headPath = join(gitDir, 'HEAD');
-        if (existsSync(headPath)) {
-          watch(headPath, async (eventType) => {
-            if (eventType !== 'change') return;
-            console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
-            await forceRefreshGitCache(projectDir);
-          });
-        }
-
-        // Watch .git/index for staging changes (safe now — reads use --no-optional-locks)
-        // Catches: git add/reset from hooks, scripts, or manual terminal commands
-        const indexPath = join(gitDir, 'index');
-        if (existsSync(indexPath)) {
-          watch(indexPath, (eventType) => {
-            if (eventType !== 'change') return;
-            console.log(`[Git Cache] Index change detected in ${repo.name}`);
-            invalidateGitCache(projectDir);
-          });
-        }
-
-        // Watch .git/FETCH_HEAD for fetch completions (catches manual git fetch, hooks, etc.)
-        const fetchHeadPath = join(gitDir, 'FETCH_HEAD');
-        if (existsSync(fetchHeadPath)) {
-          watch(fetchHeadPath, (eventType) => {
-            if (eventType !== 'change') return;
-            console.log(`[Git Cache] FETCH_HEAD change detected in ${repo.name}`);
-            invalidateGitCache(projectDir);
-          });
-        }
-
-        // Watch .git/refs/heads/ for local branch updates (commits, rebases, etc.)
-        const refsHeadsDir = join(gitDir, 'refs', 'heads');
-        if (existsSync(refsHeadsDir)) {
-          watch(refsHeadsDir, { recursive: true }, (eventType, filename) => {
-            if (!filename) return;
-            console.log(`[Git Cache] Ref change detected in ${repo.name}: refs/heads/${filename}`);
-            invalidateGitCache(projectDir);
-          });
-        }
-      } catch (err) {
-        console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
-      }
-    }
+    setupGitFileWatchers(projectDir, getProjectDir);
   } else {
     console.log('[WebSocket] git_monitor disabled — skipping .git/ file watchers');
   }
+
+  // Listen for settings changes to handle dynamic git_monitor enable/disable.
+  // If git_monitor transitions from false to true after startup, set up watchers
+  // and force-refresh git data for already-connected clients.
+  let previousGitMonitor = gitMonitorSetting;
+  onSettingsChange((newSettings) => {
+    const newGitMonitor = newSettings.workflow?.git_monitor === true;
+    if (!previousGitMonitor && newGitMonitor) {
+      console.log('[WebSocket] git_monitor enabled dynamically — setting up watchers');
+      setupGitFileWatchers(getProjectDir(), getProjectDir);
+      forceRefreshGitCache(getProjectDir());
+    }
+    previousGitMonitor = newGitMonitor;
+  });
 
   // Register git cache refresh callback to broadcast updates
   onGitCacheRefresh((allReposInfo) => {
@@ -1203,6 +1242,9 @@ export function setupWebSocketServers(
 
         settingsDebounceTimer = setTimeout(async () => {
           try {
+            // Re-read settings from disk so in-memory state matches the file.
+            // This triggers onSettingsChange callbacks (e.g. git_monitor toggle).
+            initializeSettings(projectDir);
             const settings = await getSettingsForWebSocket(projectDir);
             broadcastSettingsUpdate(settings);
             // MSSCI-14976: Also check for focus changes

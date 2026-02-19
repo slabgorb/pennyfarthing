@@ -85,11 +85,15 @@ function createLegacyLayout(dir: string): void {
     ],
   });
 
-  // Legacy directories in .claude/ (these should be removed by update)
+  // Legacy directories in .claude/ as symlinks (realistic — old installs used symlinks)
+  // Create targets first, then symlink from .claude/
+  const legacyTargetDir = join(dir, '.legacy-targets');
+  mkdirSync(legacyTargetDir, { recursive: true });
   for (const name of ['agents', 'guides', 'personas', 'scripts']) {
-    const legacyDir = join(dir, '.claude', name);
-    mkdirSync(legacyDir, { recursive: true });
-    writeFileSync(join(legacyDir, 'placeholder.md'), `# ${name}\n`);
+    const targetDir = join(legacyTargetDir, name);
+    mkdirSync(targetDir, { recursive: true });
+    writeFileSync(join(targetDir, 'placeholder.md'), `# ${name}\n`);
+    symlinkSync(targetDir, join(dir, '.claude', name));
   }
 
   // Legacy template files in .claude/project/
@@ -268,10 +272,15 @@ describe('MSSCI-14371: Update command file migration', () => {
         '# old copy\n'
       );
 
-      // createDirectorySymlink removes existing and creates symlink
+      // Real update flow clears the copied dir before symlinking.
+      // removeSymlinkOrDirectory refuses non-empty dirs (safety check),
+      // so the update command removes contents first.
+      const destPath = join(testDir, '.pennyfarthing/agents');
+      rmSync(destPath, { recursive: true, force: true });
+
+      // createDirectorySymlink creates symlink at now-cleared path
       const { createDirectorySymlink } = await import('../utils/symlinks.js');
       const sourcePath = join(nodeModulesPath, 'agents');
-      const destPath = join(testDir, '.pennyfarthing/agents');
 
       const result = createDirectorySymlink(sourcePath, destPath);
       assert.ok(result, 'createDirectorySymlink should succeed');

@@ -411,7 +411,12 @@ function deepMergeSettings(target: Record<string, unknown>, source: Record<strin
  * Initialize settings on app startup
  */
 export function initializeSettings(projectDir?: string): CyclistSettings {
+  const previousSettings = currentSettings;
   currentSettings = loadSettings(projectDir);
+  // Notify callbacks if settings actually changed (e.g. re-init with correct projectDir)
+  if (JSON.stringify(previousSettings) !== JSON.stringify(currentSettings)) {
+    notifySettingsChange(currentSettings);
+  }
   return currentSettings;
 }
 
