@@ -2051,11 +2051,21 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
     return results;
   }
 
-  // Detect framework/orchestrator repo (has pennyfarthing-dist/ at project root)
+  // Detect framework repo (has pennyfarthing-dist/ at root)
   const isFrameworkRepo = pathExists(join(projectRoot, 'pennyfarthing-dist'));
-  const frameworkHooksDir = isFrameworkRepo
-    ? join(projectRoot, 'pennyfarthing-dist/scripts/hooks')
-    : null;
+  // Detect orchestrator repo (has pennyfarthing/pennyfarthing-dist/ — inlined framework)
+  const isOrchestratorRepo = !isFrameworkRepo
+    && pathExists(join(projectRoot, 'pennyfarthing/pennyfarthing-dist'));
+  // Either pattern means hooks should be symlinks, not copies
+  const isDevRepo = isFrameworkRepo || isOrchestratorRepo;
+
+  // Resolve hooks source directory
+  let frameworkHooksDir: string | null = null;
+  if (isFrameworkRepo) {
+    frameworkHooksDir = join(projectRoot, 'pennyfarthing-dist/scripts/hooks');
+  } else if (isOrchestratorRepo) {
+    frameworkHooksDir = join(projectRoot, 'pennyfarthing/pennyfarthing-dist/scripts/hooks');
+  }
 
   // Need either node_modules or framework source to compare against
   if (!nodeModulesPath && !frameworkHooksDir) {
@@ -2093,9 +2103,9 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
         status: 'warn',
         detail: 'Not installed',
         fix: () => {
-          if (isFrameworkRepo) {
-            // Framework repos: create symlink (relative from hooks dir to source)
-            const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+          if (isDevRepo) {
+            // Dev repos (framework or orchestrator): create symlink from hooks dir to source
+            const absSource = join(frameworkHooksDir!, hook.source);
             const relTarget = relative(gitHooksDir, absSource);
             symlinkSync(relTarget, destPath);
           } else {
@@ -2111,15 +2121,15 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
     // Check if hook is a symlink (framework repos should use symlinks)
     const hookIsSymlink = isSymlink(destPath);
 
-    if (isFrameworkRepo && !hookIsSymlink) {
-      // Framework repo has a copied hook instead of a symlink — it will go stale
+    if (isDevRepo && !hookIsSymlink) {
+      // Dev repo has a copied hook instead of a symlink — it will go stale
       results.push({
         name: `git-hook/${hook.dest}`,
         status: 'warn',
         detail: 'Copy instead of symlink (will go stale)',
         fix: () => {
           // Backup existing, replace with symlink
-          const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+          const absSource = join(frameworkHooksDir!, hook.source);
           const relTarget = relative(gitHooksDir, absSource);
           renameSync(destPath, `${destPath}.backup`);
           symlinkSync(relTarget, destPath);
@@ -2146,7 +2156,7 @@ export function checkGitHooks(projectRoot: string, nodeModulesPath: string | nul
             detail: `Broken symlink → ${target}`,
             fix: () => {
               unlinkSync(destPath);
-              const absSource = join(projectRoot, 'pennyfarthing-dist/scripts/hooks', hook.source);
+              const absSource = join(frameworkHooksDir ?? join(nodeModulesPath!, 'scripts/hooks'), hook.source);
               const relTarget = relative(gitHooksDir, absSource);
               symlinkSync(relTarget, destPath);
             }
