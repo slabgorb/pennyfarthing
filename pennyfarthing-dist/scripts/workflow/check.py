@@ -22,13 +22,11 @@ Returns exit code 0 on all passing, non-zero on any failure.
 import argparse
 import asyncio
 import json
-import os
 import shutil
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 
 class CheckStatus(Enum):
@@ -41,8 +39,8 @@ class CheckStatus(Enum):
 class CheckResult:
     name: str
     status: CheckStatus
-    command: Optional[str] = None
-    message: Optional[str] = None
+    command: str | None = None
+    message: str | None = None
 
 
 @dataclass
@@ -105,12 +103,12 @@ class Colors:
 COLORS = Colors()
 
 
-def print_pass(name: str, command: Optional[str] = None) -> None:
+def print_pass(name: str, command: str | None = None) -> None:
     suffix = f" ({command})" if command else ""
     print(f"  {COLORS.GREEN}[PASS]{COLORS.NC} {name}{suffix}")
 
 
-def print_fail(name: str, command: Optional[str] = None) -> None:
+def print_fail(name: str, command: str | None = None) -> None:
     suffix = f" ({command})" if command else ""
     print(f"  {COLORS.RED}[FAIL]{COLORS.NC} {name}{suffix}")
 

@@ -7,12 +7,13 @@
 # Tandem pairings:
 #   - RED phase: TEA + Architect (file-watch) — Architect reviews test strategy
 #   - GREEN phase: Dev + Architect (file-watch) — Architect guides implementation patterns
+#   - VERIFY phase: TEA + Architect (file-watch) — Architect reviews implementation quality
 #   - REVIEW phase: Reviewer + PM (file-watch) — PM validates business requirements
 #
 # Compared to base tdd: Adds tandem observers on every working phase.
 # The extra context from partner agents helps catch architectural drift early.
 #
-# Flow: SM → TEA (+Architect) → Dev (+Architect) → Reviewer (+PM) → SM
+# Flow: SM → TEA (+Architect) → Dev (+Architect) → TEA (+Architect, verify) → Reviewer (+PM) → SM
 
 workflow:
   name: tdd-tandem
@@ -52,9 +53,21 @@ workflow:
         partner: architect
         scope: file-watch
 
+    - name: verify
+      agent: tea
+      input: [implementation, passing_tests]
+      output: [quality_verified]
+      gate:
+        file: gates/quality-pass
+        type: quality_pass
+        condition: Lint, typecheck, and all tests passing
+      tandem:
+        partner: architect
+        scope: file-watch
+
     - name: review
       agent: reviewer
-      input: [implementation, passing_tests]
+      input: [implementation, passing_tests, quality_verified]
       output: [approval]
       gate:
         file: gates/approval

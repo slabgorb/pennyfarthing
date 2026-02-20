@@ -24,8 +24,8 @@ from pf.validate.adapters.tandem_awareness import (
     classify_tandem_roles,
     run,
     validate_leader_tandem,
-    validate_partner_tandem,
     validate_pairings_documented,
+    validate_partner_tandem,
 )
 
 # =============================================================================

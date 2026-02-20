@@ -23,6 +23,25 @@ skills:
     keywords: [react, reflection, planning, tool-use, chain-of-thought]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
+  pf-bc:
+    name: pf-bc
+    description: Panel focus management for Cyclist — set, clear, save, and load panel layouts
+    category: tools
+    tags: [cyclist, panels, layout, bikerack]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Focusing the Sprint panel
+        invocation: /bc sprint
+      - context: Saving current layout
+        invocation: /bc save my-layout
+      - context: Resetting panel focus
+        invocation: /bc reset
+    anti_patterns:
+      - Don't manually edit config.local.yaml to set panel focus — use this skill
+    related_skills: [pf-cyclist]
+    keywords: [bikerack, cyclist, panel, focus, layout, dockview]
+
   pf-changelog:
     name: pf-changelog
     description: Maintain changelogs following Keep a Changelog format with conventional commits

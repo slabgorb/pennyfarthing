@@ -12,14 +12,11 @@ These tests are written in TDD RED state - they should FAIL until
 the implementation is complete.
 """
 
-import json
 import subprocess
 import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 from click.testing import CliRunner
 
 

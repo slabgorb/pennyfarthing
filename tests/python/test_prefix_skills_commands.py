@@ -494,7 +494,7 @@ class TestIntegrationRealCodebase:
 
         errors, warnings = validate_skill_registry(PROJECT_ROOT)
         assert errors == [], (
-            f"skill-registry.yaml has validation errors after rename:\n"
+            "skill-registry.yaml has validation errors after rename:\n"
             + "\n".join(errors)
         )
 

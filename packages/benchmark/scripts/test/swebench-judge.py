@@ -14,8 +14,8 @@ Scoring structure:
 import json
 import re
 import sys
-from pathlib import Path
 from difflib import SequenceMatcher
+from pathlib import Path
 
 # Add parent to path for pf imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "pennyfarthing-dist"))
@@ -338,7 +338,7 @@ def main():
     # Load data
     swebench_data = load_swebench_data()
 
-    with open(response_file, 'r') as f:
+    with open(response_file) as f:
         response_data = json.load(f)
 
     # Handle different JSON structures

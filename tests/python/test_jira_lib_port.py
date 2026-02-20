@@ -12,12 +12,10 @@ Acceptance Criteria Coverage:
 - [ ] Backwards compatibility maintained
 """
 
-import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
