@@ -231,6 +231,7 @@ function transformEpic(yamlEpic: YamlEpic, projectDir: string): SprintEpic {
  * Merge sharded epic references into full epic objects.
  * When current-sprint.yaml contains string references (e.g. "MSSCI-14298"),
  * load each epic-{ref}.yaml shard and replace the string with parsed content.
+ * Handles both bare refs ("42", "MSSCI-14298") and prefixed refs ("epic-42").
  */
 function mergeEpicShards(epics: (YamlEpic | string)[], sprintDir: string): YamlEpic[] {
   return epics.reduce<YamlEpic[]>((merged, entry) => {
@@ -238,7 +239,9 @@ function mergeEpicShards(epics: (YamlEpic | string)[], sprintDir: string): YamlE
       merged.push(entry);
       return merged;
     }
-    const shardPath = join(sprintDir, `epic-${entry}.yaml`);
+    // Strip "epic-" prefix if present to avoid double-prefix (epic-epic-42.yaml)
+    const ref = entry.startsWith('epic-') ? entry.slice(5) : entry;
+    const shardPath = join(sprintDir, `epic-${ref}.yaml`);
     if (existsSync(shardPath)) {
       try {
         const content = readFileSync(shardPath, 'utf-8');
