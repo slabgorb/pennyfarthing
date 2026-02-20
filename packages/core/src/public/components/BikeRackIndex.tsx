@@ -23,7 +23,6 @@ const PANELS = [
   { id: 'workflow', label: 'Workflow', description: 'Current workflow state' },
   { id: 'background', label: 'Background', description: 'Background tasks' },
   { id: 'audit', label: 'Audit', description: 'OTEL spans and logs' },
-  { id: 'changed', label: 'Changed', description: 'Changed files' },
   { id: 'ac', label: 'AC', description: 'Acceptance criteria detail' },
   { id: 'debug', label: 'Debug', description: 'Debug information' },
   { id: 'bikelane', label: 'BikeLane', description: 'Workflow visualization' },

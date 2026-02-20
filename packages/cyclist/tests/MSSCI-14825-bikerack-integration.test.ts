@@ -166,7 +166,6 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     'workflow',
     'background',
     'audit',
-    'changed',
     'ac',
     'debug',
     'bikelane',
@@ -185,7 +184,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     const registryContent = registryMatch![1];
     // Count key: value pairs (panel entries like "sprint: EnhancedSprintPanel,")
     const entries = registryContent.match(/^\s+\w+\s*:/gm) || [];
-    expect(entries.length).toBe(13);
+    expect(entries.length).toBe(12);
   });
 
   it.each(EXPECTED_PANELS)('PANEL_REGISTRY should contain "%s" panel', (panelName) => {
@@ -219,7 +218,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     expect(importMatch).not.toBeNull();
 
     const importedNames = importMatch![1].split(',').map(s => s.trim()).filter(Boolean);
-    expect(importedNames.length).toBe(13);
+    expect(importedNames.length).toBe(12);
 
     // Each imported name should be exported from panels/index.ts
     for (const name of importedNames) {

@@ -27,11 +27,9 @@ from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack.audit_log_panel import AuditLogPanel
 from pf.bikerack.background_panel import BackgroundPanel
 from pf.bikerack.base_panel import get_panel_icon
-from pf.bikerack.changed_panel import ChangedPanel
 from pf.bikerack.context_meter_footer import ContextMeterFooter
 from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel
-from pf.bikerack.events import NavigateToFile
 from pf.bikerack.git_panel import GitPanel
 from pf.bikerack.progress_panel import ProgressPanel
 from pf.bikerack.sprint_panel import SprintPanel
@@ -79,7 +77,6 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("sprint", "Sprint"),
     ("git", "Git"),
     ("diffs", "Diffs"),
-    ("changed", "Changed"),
     ("background", "Background"),
     ("audit-log", "Audit Log"),
     ("debug", "Debug"),
@@ -95,7 +92,6 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
     "workflow": "Workflow",
     "background": "Background",
     "audit-log": "Audit Log",
-    "changed": "Changed",
     "ac": "Acceptance Criteria",
     "debug": "Debug",
     "progress": "Progress",
@@ -110,7 +106,7 @@ _PANEL_KEYS = [key for key, _ in PANEL_REGISTRY]
 # Story 110-4: Named presets for common side-by-side views.
 SPLIT_PRESETS: dict[str, tuple[str, str]] = {
     "sprint+diffs": ("sprint", "diffs"),
-    "changed+diffs": ("changed", "diffs"),
+    "git+diffs": ("git", "diffs"),
     "progress+debug": ("progress", "debug"),
 }
 
@@ -442,11 +438,10 @@ class BikeRackApp(App):
         Binding("1", "switch_panel('sprint')", "Sprint", show=False),
         Binding("2", "switch_panel('git')", "Git", show=False),
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
-        Binding("4", "switch_panel('changed')", "Changed", show=False),
-        Binding("5", "switch_panel('background')", "Background", show=False),
-        Binding("6", "switch_panel('audit-log')", "Audit Log", show=False),
-        Binding("7", "switch_panel('debug')", "Debug", show=False),
-        Binding("8", "switch_panel('progress')", "Progress", show=False),
+        Binding("4", "switch_panel('background')", "Background", show=False),
+        Binding("5", "switch_panel('audit-log')", "Audit Log", show=False),
+        Binding("6", "switch_panel('debug')", "Debug", show=False),
+        Binding("7", "switch_panel('progress')", "Progress", show=False),
         Binding("bracketright", "next_panel", "]Next"),
         Binding("bracketleft", "prev_panel", "[Prev"),
         Binding("tab", "next_panel", show=False, priority=True),
@@ -491,7 +486,6 @@ class BikeRackApp(App):
             yield SprintPanel(client=self._client, id="panel-sprint")
             yield GitPanel(client=self._client, id="panel-git")
             yield DiffsPanel(client=self._client, id="panel-diffs")
-            yield ChangedPanel(client=self._client, id="panel-changed")
             yield BackgroundPanel(client=self._client, id="panel-background")
             yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
@@ -536,15 +530,6 @@ class BikeRackApp(App):
             self._client.subscribe("focus", self._handle_focus_message)
             self._client.subscribe("persona", self._handle_persona_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
-
-    def on_navigate_to_file(self, event: NavigateToFile) -> None:
-        """Handle NavigateToFile — switch to diffs and navigate to file."""
-        self.action_switch_panel("diffs")
-        try:
-            diffs = self.query_one("#panel-diffs", DiffsPanel)
-            diffs.navigate_to_file(event.path)
-        except Exception:
-            pass
 
     def action_switch_panel(self, key: str) -> None:
         """Switch to a panel by key."""

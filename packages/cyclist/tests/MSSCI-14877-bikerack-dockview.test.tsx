@@ -34,14 +34,14 @@ expect.extend(matchers);
 
 // Portrait moved from Dockview tab to fixed anchor above tab bar (MSSCI-14882)
 // TTY and BikeLane removed in MSSCI-14887 (BikeRack UX sweep)
-const EXPECTED_BIKERACK_PANEL_COUNT = 11;
+// Changed panel merged into Git panel — count reduced by 1
+const EXPECTED_BIKERACK_PANEL_COUNT = 10;
 
 // Panels that MUST be in BikeRack (regardless of exact ID format)
 const MUST_HAVE_PANELS = [
   'sprint',
   'git',
   'diffs',
-  'changed',
   'workflow',
   'background',
   'ac',
@@ -298,7 +298,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
     expect(source).toMatch(/export function DockviewWorkspace/);
   });
 
-  it('PANEL_INVENTORY should still define 12 panels in source', () => {
+  it('PANEL_INVENTORY should still define 13 panels in source', () => {
     const filePath = path.resolve(
       __dirname,
       '../src/public/components/DockviewWorkspace.tsx',
@@ -311,7 +311,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
 
     // Count colon-separated entries (key: 'value' pairs)
     const entries = inventoryMatch![1].match(/:\s*['"]/g);
-    expect(entries).toHaveLength(14);
+    expect(entries).toHaveLength(13);
   });
 
   it('PANEL_INVENTORY should still include MESSAGE panel', () => {

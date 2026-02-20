@@ -38,7 +38,7 @@ import '../styles/dockview-theme.css';
 
 export const PANEL_INVENTORY = {
   // Left sidebar panels
-  CHANGED: 'changed',
+  GIT: 'git',
   DIFFS: 'diffs',
   DEBUG: 'debug',
   AUDIT_LOG: 'audit-log',
@@ -50,7 +50,6 @@ export const PANEL_INVENTORY = {
   AC: 'ac',
   TODO: 'todo',
   BACKGROUND: 'background',
-  GIT: 'git',
   SETTINGS: 'settings',
   PROGRESS: 'progress',
   TANDEM: 'tandem',
@@ -84,21 +83,20 @@ export function getDockviewApi(): DockviewApi | null {
 
 // Panel group definitions (needed for restore logic)
 // Exported so layout persistence can merge missing panels
-export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.CHANGED, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
+export const LEFT_SIDEBAR_PANELS = [PANEL_INVENTORY.GIT, PANEL_INVENTORY.DIFFS, PANEL_INVENTORY.DEBUG, PANEL_INVENTORY.AUDIT_LOG] as const;
 export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.SPRINT,
   PANEL_INVENTORY.WORKFLOW,
   PANEL_INVENTORY.AC,
   PANEL_INVENTORY.TODO,
   PANEL_INVENTORY.BACKGROUND,
-  PANEL_INVENTORY.GIT,
   PANEL_INVENTORY.SETTINGS,
   PANEL_INVENTORY.TANDEM,
 ] as const;
 
 // Title Case display names for tab headers (AC4: Story 75-5)
 const PANEL_TITLES: Record<string, string> = {
-  changed: 'Changed',
+  git: 'Git',
   diffs: 'Diffs',
   debug: 'Debug',
   'audit-log': 'Audit Log',
@@ -108,7 +106,6 @@ const PANEL_TITLES: Record<string, string> = {
   ac: 'AC',
   todo: 'Todo',
   background: 'Subagents',
-  git: 'Git',
   settings: 'Settings',
   progress: 'Progress',
   tandem: 'Tandem',
@@ -606,9 +603,9 @@ export function DockviewWorkspace({
     previousIsSmall.current = isSmall;
 
     // Find groups by their panels (groups don't have fixed names)
-    const changedPanel = api.getPanel(PANEL_INVENTORY.CHANGED);
+    const gitPanel = api.getPanel(PANEL_INVENTORY.GIT);
     const sprintPanel = api.getPanel(PANEL_INVENTORY.SPRINT);
-    const leftGroup = changedPanel?.group;
+    const leftGroup = gitPanel?.group;
     const rightGroup = sprintPanel?.group;
 
     if (isSmall) {
@@ -671,7 +668,7 @@ export function DockviewWorkspace({
 
   // Panel display names for the restore menu
   const panelDisplayNames: Record<string, string> = {
-    changed: 'Changed Files',
+    git: 'Git',
     diffs: 'Diffs',
     debug: 'Debug',
     'audit-log': 'Audit Log',
@@ -680,7 +677,6 @@ export function DockviewWorkspace({
     ac: 'AC',
     todo: 'Todo',
     background: 'Subagents',
-    git: 'Git',
     hotspots: 'Hotspots',
     settings: 'Settings',
   };
