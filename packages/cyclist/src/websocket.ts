@@ -8,7 +8,7 @@ import { getTokenStatsClients } from './api/token-stats.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, addTokenStatsListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
@@ -187,7 +187,7 @@ let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let contextDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
 const SETTINGS_DEBOUNCE_MS = 100; // Settings debounce for config.local.yaml changes
-const CONTEXT_DEBOUNCE_MS = 2000; // Context debounce (expensive operation)
+const CONTEXT_DEBOUNCE_MS = 500; // 121-1: Reduced from 2000ms for near-real-time token tracking
 
 // Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
 // These allow main.ts to receive updates for Electron IPC broadcast
@@ -676,6 +676,23 @@ export function setupWebSocketServers(
     ws.on('error', () => {
       tokenStatsClients.delete(ws);
     });
+  });
+
+  // 121-1: Trigger debounced context refresh on token stats changes
+  // OTLP metrics arrive on API call completion — use these to also refresh context
+  // so context percentage stays in sync with token burn rate
+  addTokenStatsListener(() => {
+    if (contextClients.size > 0) {
+      if (contextDebounceTimer) {
+        clearTimeout(contextDebounceTimer);
+      }
+      contextDebounceTimer = setTimeout(() => {
+        const projectDir = getProjectDir();
+        const context = getContextUsage(projectDir);
+        broadcastContextUpdate(context);
+        contextDebounceTimer = null;
+      }, CONTEXT_DEBOUNCE_MS);
+    }
   });
 
   // Handle story WebSocket connections (MSSCI-11943)
