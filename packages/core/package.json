@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "11.3.8",
+  "version": "11.4.0",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "keywords": [
