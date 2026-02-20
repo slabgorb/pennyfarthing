@@ -33,18 +33,18 @@ class TestModuleImport:
     """Tests for module existence and imports."""
 
     def test_module_exists(self):
-        """jira_bidirectional_sync.py module should exist."""
-        module_path = PROJECT_ROOT / "pf" / "jira_bidirectional_sync.py"
-        assert module_path.exists(), "jira_bidirectional_sync.py not found"
+        """jira/bidirectional.py module should exist."""
+        module_path = PROJECT_ROOT / "pf" / "jira" / "bidirectional.py"
+        assert module_path.exists(), "jira/bidirectional.py not found"
 
     def test_module_imports(self):
         """jira_bidirectional_sync module should import without error."""
-        from pf import jira_bidirectional_sync
+        from pf.jira import bidirectional as jira_bidirectional_sync
         assert jira_bidirectional_sync is not None
 
     def test_dataclasses_exist(self):
         """Data classes should be defined."""
-        from pf.jira_bidirectional_sync import (
+        from pf.jira.bidirectional import (
             SyncChange,
             SyncPlan,
             SyncResult,
@@ -65,12 +65,12 @@ class TestParseCliArgs:
     @pytest.fixture
     def parse_args(self):
         """Import parse_cli_args function."""
-        from pf.jira_bidirectional_sync import parse_cli_args
+        from pf.jira.bidirectional import parse_cli_args
         return parse_cli_args
 
     def test_parse_cli_args_exists(self):
         """parse_cli_args function should exist."""
-        from pf.jira_bidirectional_sync import parse_cli_args
+        from pf.jira.bidirectional import parse_cli_args
         assert callable(parse_cli_args)
 
     def test_parse_dry_run(self, parse_args):
@@ -125,7 +125,7 @@ class TestGenerateSyncPlan:
     @pytest.fixture
     def generate_sync_plan(self):
         """Import generate_sync_plan function."""
-        from pf.jira_bidirectional_sync import generate_sync_plan
+        from pf.jira.bidirectional import generate_sync_plan
         return generate_sync_plan
 
     @pytest.fixture
@@ -162,7 +162,7 @@ class TestGenerateSyncPlan:
 
     def test_generate_sync_plan_exists(self):
         """generate_sync_plan function should exist."""
-        from pf.jira_bidirectional_sync import generate_sync_plan
+        from pf.jira.bidirectional import generate_sync_plan
         assert callable(generate_sync_plan)
 
     def test_categorizes_yaml_only(self, generate_sync_plan, sample_yaml_stories, sample_jira_stories):
@@ -249,13 +249,13 @@ class TestFormatSyncPlan:
     @pytest.fixture
     def format_sync_plan(self):
         """Import format_sync_plan function."""
-        from pf.jira_bidirectional_sync import format_sync_plan
+        from pf.jira.bidirectional import format_sync_plan
         return format_sync_plan
 
     @pytest.fixture
     def sample_plan(self):
         """Create sample sync plan for testing."""
-        from pf.jira_bidirectional_sync import SyncChange, SyncPlan
+        from pf.jira.bidirectional import SyncChange, SyncPlan
         return SyncPlan(
             changes=[
                 SyncChange(
@@ -274,7 +274,7 @@ class TestFormatSyncPlan:
 
     def test_format_sync_plan_exists(self):
         """format_sync_plan function should exist."""
-        from pf.jira_bidirectional_sync import format_sync_plan
+        from pf.jira.bidirectional import format_sync_plan
         assert callable(format_sync_plan)
 
     def test_format_includes_header(self, format_sync_plan, sample_plan):
@@ -311,7 +311,7 @@ class TestFormatSyncPlan:
 
     def test_format_empty_plan(self, format_sync_plan):
         """Should handle empty plan."""
-        from pf.jira_bidirectional_sync import SyncPlan
+        from pf.jira.bidirectional import SyncPlan
         plan = SyncPlan()
         output = format_sync_plan(plan)
         assert "Changes to apply: 0" in output
@@ -328,13 +328,13 @@ class TestExecuteSyncPlan:
     @pytest.fixture
     def execute_sync_plan(self):
         """Import execute_sync_plan function."""
-        from pf.jira_bidirectional_sync import execute_sync_plan
+        from pf.jira.bidirectional import execute_sync_plan
         return execute_sync_plan
 
     @pytest.fixture
     def sample_plan_with_jira_updates(self):
         """Create plan with Jira updates."""
-        from pf.jira_bidirectional_sync import SyncChange, SyncPlan
+        from pf.jira.bidirectional import SyncChange, SyncPlan
         return SyncPlan(
             changes=[
                 SyncChange(
@@ -352,7 +352,7 @@ class TestExecuteSyncPlan:
     @pytest.mark.asyncio
     async def test_execute_sync_plan_exists(self):
         """execute_sync_plan function should exist."""
-        from pf.jira_bidirectional_sync import execute_sync_plan
+        from pf.jira.bidirectional import execute_sync_plan
         assert callable(execute_sync_plan)
 
     @pytest.mark.asyncio
@@ -366,7 +366,7 @@ class TestExecuteSyncPlan:
     @pytest.mark.asyncio
     async def test_returns_sync_result(self, execute_sync_plan, sample_plan_with_jira_updates):
         """Should return SyncResult dataclass."""
-        from pf.jira_bidirectional_sync import SyncResult
+        from pf.jira.bidirectional import SyncResult
         result = await execute_sync_plan(sample_plan_with_jira_updates, dry_run=True)
         assert isinstance(result, SyncResult)
 
@@ -395,7 +395,7 @@ class TestExecuteSyncPlan:
     @pytest.mark.asyncio
     async def test_executes_jira_points_update(self, execute_sync_plan):
         """Should call JiraClient.sync_story_points_async for points updates."""
-        from pf.jira_bidirectional_sync import SyncChange, SyncPlan
+        from pf.jira.bidirectional import SyncChange, SyncPlan
 
         plan = SyncPlan(
             changes=[
@@ -448,7 +448,7 @@ class TestCLIIntegration:
         """Module should run with --help."""
         import subprocess
         result = subprocess.run(
-            [sys.executable, "-m", "pf.jira_bidirectional_sync", "--help"],
+            [sys.executable, "-m", "pf.jira.bidirectional", "--help"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
@@ -463,7 +463,7 @@ class TestCLIIntegration:
         """Should error if no field is selected."""
         import subprocess
         result = subprocess.run(
-            [sys.executable, "-m", "pf.jira_bidirectional_sync", "--dry-run"],
+            [sys.executable, "-m", "pf.jira.bidirectional", "--dry-run"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
@@ -483,7 +483,7 @@ class TestStatusMappingIntegration:
     def test_uses_map_status_to_jira(self):
         """Should use map_status_to_jira from jira.py."""
         from pf.jira import map_status_to_jira
-        from pf.jira_bidirectional_sync import generate_sync_plan
+        from pf.jira.bidirectional import generate_sync_plan
 
         yaml_stories = [
             {"id": "63-1", "jira": "MSSCI-12398", "status": "in_progress", "points": 1},
@@ -501,7 +501,7 @@ class TestStatusMappingIntegration:
     def test_uses_map_jira_to_status(self):
         """Should use map_jira_to_status from jira.py."""
         from pf.jira import map_jira_to_status
-        from pf.jira_bidirectional_sync import generate_sync_plan
+        from pf.jira.bidirectional import generate_sync_plan
 
         yaml_stories = [
             {"id": "63-1", "jira": "MSSCI-12398", "status": "done", "points": 1},

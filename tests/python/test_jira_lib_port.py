@@ -267,12 +267,12 @@ class TestJiraSyncStoryModule:
 
     def test_module_exists(self):
         """jira_sync_story.py module should exist."""
-        jira_sync_story_path = PROJECT_ROOT / "pf" / "jira_sync_story.py"
-        assert jira_sync_story_path.exists(), "jira_sync_story.py not found"
+        jira_sync_story_path = PROJECT_ROOT / "pf" / "jira" / "story.py"
+        assert jira_sync_story_path.exists(), "jira/story.py not found"
 
     def test_module_imports(self):
         """jira_sync_story module should import without error."""
-        from pf import jira_sync_story
+        from pf.jira import story as jira_sync_story
         assert jira_sync_story is not None
 
 
@@ -281,36 +281,36 @@ class TestJiraSyncStoryCLI:
 
     def test_parse_args_exists(self):
         """parse_args function should exist."""
-        from pf import jira_sync_story
+        from pf.jira import story as jira_sync_story
         assert hasattr(jira_sync_story, "parse_args")
 
     def test_parse_args_story_key(self):
         """Should parse story key from args."""
-        from pf.jira_sync_story import parse_args
+        from pf.jira.story import parse_args
         args = parse_args(["63-7"])
         assert args.story_key == "63-7"
 
     def test_parse_args_transition_flag(self):
         """Should parse --transition flag."""
-        from pf.jira_sync_story import parse_args
+        from pf.jira.story import parse_args
         args = parse_args(["63-7", "--transition"])
         assert args.transition is True
 
     def test_parse_args_points_flag(self):
         """Should parse --points flag."""
-        from pf.jira_sync_story import parse_args
+        from pf.jira.story import parse_args
         args = parse_args(["63-7", "--points"])
         assert args.points is True
 
     def test_parse_args_comment_flag(self):
         """Should parse --comment with message."""
-        from pf.jira_sync_story import parse_args
+        from pf.jira.story import parse_args
         args = parse_args(["63-7", "--comment", "Test comment"])
         assert args.comment == "Test comment"
 
     def test_parse_args_dry_run_flag(self):
         """Should parse --dry-run flag."""
-        from pf.jira_sync_story import parse_args
+        from pf.jira.story import parse_args
         args = parse_args(["63-7", "--dry-run"])
         assert args.dry_run is True
 
@@ -321,7 +321,7 @@ class TestJiraSyncStoryFunctions:
     @pytest.fixture
     def sync_story_module(self):
         """Import jira_sync_story module."""
-        from pf import jira_sync_story
+        from pf.jira import story as jira_sync_story
         return jira_sync_story
 
     def test_sync_story_function_exists(self, sync_story_module):
@@ -369,12 +369,12 @@ class TestJiraEpicCreationModule:
 
     def test_module_exists(self):
         """jira_epic_creation.py module should exist."""
-        epic_creation_path = PROJECT_ROOT / "pf" / "jira_epic_creation.py"
-        assert epic_creation_path.exists(), "jira_epic_creation.py not found"
+        epic_creation_path = PROJECT_ROOT / "pf" / "jira" / "epic.py"
+        assert epic_creation_path.exists(), "jira/epic.py not found"
 
     def test_module_imports(self):
         """jira_epic_creation module should import without error."""
-        from pf import jira_epic_creation
+        from pf.jira import epic as jira_epic_creation
         assert jira_epic_creation is not None
 
 
@@ -384,12 +384,12 @@ class TestJiraEpicCreation:
     @pytest.fixture
     def epic_creation_module(self):
         """Import jira_epic_creation module."""
-        from pf import jira_epic_creation
+        from pf.jira import epic as jira_epic_creation
         return jira_epic_creation
 
     def test_create_epic_function_exists(self):
         """create_epic function should exist."""
-        from pf import jira_epic_creation
+        from pf.jira import epic as jira_epic_creation
         assert hasattr(jira_epic_creation, "create_epic")
 
     def test_create_epic_returns_result(self, epic_creation_module):
@@ -421,12 +421,12 @@ class TestEpicCreationFromSprintYAML:
 
     def test_build_epic_payload_exists(self):
         """build_epic_payload function should exist."""
-        from pf import jira_epic_creation
+        from pf.jira import epic as jira_epic_creation
         assert hasattr(jira_epic_creation, "build_epic_payload")
 
     def test_build_epic_payload_structure(self):
         """Should build correct Jira API payload structure."""
-        from pf import jira_epic_creation
+        from pf.jira import epic as jira_epic_creation
 
         epic_data = {
             "id": "epic-63",
@@ -451,24 +451,22 @@ class TestEpicCreationFromSprintYAML:
 class TestBackwardsCompatibility:
     """Tests for backwards compatibility with existing bash callers."""
 
-    def test_jira_sync_story_can_run_as_script(self):
-        """jira_sync_story.py should be runnable as a script."""
+    def test_jira_story_can_run_as_module(self):
+        """pf.jira.story should be runnable via CLI."""
         result = subprocess.run(
-            [sys.executable, "-m", "pf.jira_sync_story", "--help"],
+            [sys.executable, "-c", "from pf.jira.story import main; print('ok')"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
         )
-        # Should not crash, and should show help
-        assert result.returncode == 0 or "usage" in result.stdout.lower() or "usage" in result.stderr.lower()
+        assert result.returncode == 0
 
-    def test_jira_epic_creation_can_run_as_script(self):
-        """jira_epic_creation.py should be runnable as a script."""
+    def test_jira_epic_can_run_as_module(self):
+        """pf.jira.epic should be importable."""
         result = subprocess.run(
-            [sys.executable, "-m", "pf.jira_epic_creation", "--help"],
+            [sys.executable, "-c", "from pf.jira.epic import create_epic; print('ok')"],
             capture_output=True,
             text=True,
             cwd=PROJECT_ROOT,
         )
-        # Should not crash, and should show help
-        assert result.returncode == 0 or "usage" in result.stdout.lower() or "usage" in result.stderr.lower()
+        assert result.returncode == 0

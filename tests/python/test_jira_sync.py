@@ -133,13 +133,13 @@ class TestJiraSyncScript:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     def test_module_exists(self):
-        """jira_sync.py module should exist."""
-        jira_sync_path = PROJECT_ROOT / "pf" / "jira_sync.py"
-        assert jira_sync_path.exists(), "jira_sync.py not found"
+        """jira/sync.py module should exist."""
+        jira_sync_path = PROJECT_ROOT / "pf" / "jira" / "sync.py"
+        assert jira_sync_path.exists(), "jira/sync.py not found"
 
     def test_sync_epic_function_exists(self, jira_sync_module):
         """sync_epic async function should exist."""
@@ -160,7 +160,7 @@ class TestSyncStoryAsync:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     @pytest.mark.asyncio
@@ -193,7 +193,7 @@ class TestSyncEpicAsync:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     @pytest.mark.asyncio
@@ -238,36 +238,36 @@ class TestCLIInterface:
 
     def test_main_function_exists(self):
         """main() function should exist."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         assert hasattr(jira_sync, "main")
 
     def test_parse_args_epic_number(self):
         """Should parse epic number from args."""
-        from pf.jira_sync import parse_args
+        from pf.jira.sync import parse_args
         args = parse_args(["63"])
         assert args.epic == "63"
 
     def test_parse_args_dry_run(self):
         """Should parse --dry-run flag."""
-        from pf.jira_sync import parse_args
+        from pf.jira.sync import parse_args
         args = parse_args(["63", "--dry-run"])
         assert args.dry_run is True
 
     def test_parse_args_transition(self):
         """Should parse --transition flag."""
-        from pf.jira_sync import parse_args
+        from pf.jira.sync import parse_args
         args = parse_args(["63", "--transition"])
         assert args.transition is True
 
     def test_parse_args_points(self):
         """Should parse --points flag."""
-        from pf.jira_sync import parse_args
+        from pf.jira.sync import parse_args
         args = parse_args(["63", "--points"])
         assert args.points is True
 
     def test_parse_args_all_flags(self):
         """Should parse all flags together."""
-        from pf.jira_sync import parse_args
+        from pf.jira.sync import parse_args
         args = parse_args(["epic-63", "--dry-run", "--transition", "--points"])
         assert args.epic == "epic-63"
         assert args.dry_run is True
@@ -330,7 +330,7 @@ class TestBatchThenReport:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     def test_sync_result_dataclass_exists(self, jira_sync_module):
@@ -382,7 +382,7 @@ class TestProgressDisplay:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     def test_format_story_line_exists(self, jira_sync_module):
@@ -413,7 +413,7 @@ class TestTypeHints:
 
     def test_jira_sync_has_type_annotations(self):
         """jira_sync.py should have type annotations on public functions."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         import inspect
 
         # Check key functions have annotations
@@ -433,7 +433,7 @@ class TestTransitionLogic:
     @pytest.fixture
     def jira_sync_module(self):
         """Import jira_sync module."""
-        from pf import jira_sync
+        from pf.jira import sync as jira_sync
         return jira_sync
 
     @pytest.mark.asyncio

@@ -279,13 +279,11 @@ def get_current_user_email() -> str:
 class JiraClient:
     """Unified Jira REST API client with sync and async support.
 
-    Consolidates REST API access previously scattered across:
-    - jira_sync.py (httpx async)
-    - jira_epic_creation.py (curl subprocess)
+    Consolidates all Jira REST API access.
 
     Usage (sync):
         client = JiraClient()
-        issue = client.get_issue("MSSCI-12345")
+        issue = client.get_issue_sync("MSSCI-12345")
 
     Usage (async):
         client = JiraClient()
