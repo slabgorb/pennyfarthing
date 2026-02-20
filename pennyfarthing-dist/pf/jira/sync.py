@@ -150,7 +150,7 @@ async def sync_story(
         if result.get("success"):
             actions.append(f"transitioned: {current_status} -> {target_status}")
         else:
-            actions.append(f"transition failed: {result.get('reason')}")
+            actions.append(f"transition failed: {result.get('error')}")
 
     # Sync points if requested
     story_points = story.get("points")
@@ -167,7 +167,7 @@ async def sync_story(
             else:
                 actions.append(f"synced points: {story_points}")
         else:
-            actions.append(f"points sync failed: {result.get('reason')}")
+            actions.append(f"points sync failed: {result.get('error')}")
 
     return SyncResult(
         story_id=story_id,

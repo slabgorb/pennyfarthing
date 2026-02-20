@@ -121,8 +121,8 @@ class ContextMeterFooter(Static):
 
     def render_meter(self, ctx: dict[str, Any]) -> Text:
         """Render a compact context usage bar with percentage and tier badge."""
-        percent = ctx.get("percent", 0)
-        tier = ctx.get("tier", "")
+        percent = ctx.get("percent") or 0
+        tier = ctx.get("tier") or ""
 
         bar = render_progress_bar(percent, warn_high=True)
 

@@ -252,7 +252,7 @@ def reconcile(
                 print("  Done")
                 fixed.append(key)
             else:
-                print(f"  Failed: {result.get('reason', 'unknown')}")
+                print(f"  Failed: {result.get('error', 'unknown')}")
 
         report_lines.extend([
             "",

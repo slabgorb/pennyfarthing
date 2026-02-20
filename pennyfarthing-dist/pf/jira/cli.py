@@ -90,7 +90,7 @@ def move(key, status, dry_run):
     elif result.get("success"):
         click.echo(f"Moved {key} to '{status}'")
     else:
-        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
 
 
@@ -108,7 +108,7 @@ def assign(key, user, dry_run):
     elif result.get("success"):
         click.echo(f"Assigned {key} to {user}")
     else:
-        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
 
 
@@ -129,7 +129,7 @@ def link(parent_key, child_key, link_type, dry_run):
     if result.get("success"):
         click.echo(f"Linked {parent_key} -> {child_key} ({link_type})")
     else:
-        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
 
 
@@ -247,7 +247,7 @@ def create_standalone(title, points, description, dry_run):
     if result.get("success"):
         click.echo("Transitioned to Done")
     else:
-        click.echo(f"Warning: could not transition to Done: {result.get('reason')}")
+        click.echo(f"Warning: could not transition to Done: {result.get('error')}")
 
     click.echo(f"\n{jira_key}: {title}")
     click.echo(f"https://1898andco.atlassian.net/browse/{jira_key}")
@@ -337,7 +337,7 @@ def sprint_add(sprint_id, issue_key, dry_run):
     if result.get("success"):
         click.echo(f"Added {issue_key} to sprint {sprint_id}")
     else:
-        click.echo(f"Failed: {result.get('reason', 'unknown')}", err=True)
+        click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
 
 

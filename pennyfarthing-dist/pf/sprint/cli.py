@@ -273,7 +273,7 @@ def work(story_id: str | None, dry_run: bool):
         click.echo(f"Points: {story.get('points')}")
         click.echo("Status: Available")
     else:
-        error_msg = result.get("error") or result.get("reason")
+        error_msg = result.get("error")
         raise click.ClickException(f"Not available: {error_msg}")
 
 

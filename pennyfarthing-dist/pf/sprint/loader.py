@@ -8,7 +8,6 @@ Provides access to sprint data with support for:
 - Sharded per-epic format: epic-{ref}.yaml shard files
 """
 
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -23,13 +22,9 @@ from pf.common.config import (
 def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]:
     """Merge sharded epic files into the sprint data structure.
 
-    When the epics list contains strings (shard references like "MSSCI-14298"
-    or "epic-40"), load each epic-{ref}.yaml and replace the string with
-    the full epic dict.
-
-    Also discovers unindexed shard files on disk (epic-*.yaml files not
-    referenced in the epics list) and appends them so orphan shards are
-    never invisible to the CLI.
+    Thin wrapper around shard_merge.merge_epic_shards() that uses
+    load_yaml_config as the file loader. Kept as a named function
+    for any external importers (e.g. validator.py).
 
     Args:
         data: Sprint data with possible string refs in epics
@@ -38,72 +33,9 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
     Returns:
         Sprint data with full epic dicts
     """
-    epics = data.get("epics", [])
-    if not epics or not isinstance(epics[0], str):
-        return data
+    from pf.sprint.shard_merge import merge_epic_shards
 
-    # Track loaded epic identities to prevent duplicates
-    loaded_shard_files: set[Path] = set()
-    loaded_epic_ids: set[str] = set()
-    merged_epics = []
-    for ref in epics:
-        if not isinstance(ref, str):
-            merged_epics.append(ref)
-            continue
-
-        epic_file = sprint_dir / f"epic-{ref}.yaml"
-        if epic_file.exists():
-            epic_data = load_yaml_config(epic_file)
-            if epic_data is not None:
-                merged_epics.append(epic_data)
-                loaded_shard_files.add(epic_file.resolve())
-                # Track both id and jira key (normalized) for dedup
-                eid = str(epic_data.get("id", "")).replace("epic-", "")
-                if eid:
-                    loaded_epic_ids.add(eid)
-                jira_key = str(epic_data.get("jira", ""))
-                if jira_key:
-                    loaded_epic_ids.add(jira_key)
-        else:
-            warnings.warn(
-                f"Sprint epic ref '{ref}' not found: {epic_file}",
-                stacklevel=2,
-            )
-
-    # Collect epic refs owned by initiatives so we don't warn about them.
-    initiative_refs: set[str] = set()
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
-        init_data = load_yaml_config(init_file)
-        if init_data and isinstance(init_data, dict):
-            for ref in init_data.get("epics", []):
-                if isinstance(ref, str):
-                    initiative_refs.add(ref)
-                    # Also add normalized form (strip "epic-" prefix)
-                    initiative_refs.add(ref.replace("epic-", ""))
-
-    # Log unindexed shard files on disk (but do NOT auto-merge —
-    # orphan shards may belong to future initiatives).
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if shard_file.resolve() in loaded_shard_files:
-            continue
-        epic_data = load_yaml_config(shard_file)
-        if epic_data is None or not isinstance(epic_data, dict) or "id" not in epic_data:
-            continue
-        eid = str(epic_data.get("id", "")).replace("epic-", "")
-        jira_key = str(epic_data.get("jira", ""))
-        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
-            continue
-        # Skip shards owned by initiatives (not orphans)
-        if eid in initiative_refs or jira_key in initiative_refs:
-            continue
-        # Warn only about truly orphaned shards
-        warnings.warn(
-            f"Unindexed shard {shard_file.name} (epic {eid}) not in epics list — skipping",
-            stacklevel=2,
-        )
-
-    data["epics"] = merged_epics
-    return data
+    return merge_epic_shards(data, sprint_dir, load_file=load_yaml_config)
 
 
 def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:

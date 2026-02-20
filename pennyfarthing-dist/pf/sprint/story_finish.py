@@ -185,8 +185,10 @@ def finish_story(
 
     # --- Step 3: Transition Jira ---
     if jira_key:
-        result = _run(["jira", "issue", "move", jira_key, "Done"])
-        if result.returncode == 0:
+        from pf.jira.client import get_client
+
+        jira_result = get_client().transition_sync(jira_key, "Done")
+        if jira_result.get("success"):
             steps.append({"step": 3, "action": "jira_done", "key": jira_key})
         else:
             steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": "Already Done or failed"})
