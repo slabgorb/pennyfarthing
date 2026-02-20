@@ -61,7 +61,7 @@ _HEADER_PATTERNS: dict[str, re.Pattern[str]] = {
     "date": re.compile(r"^Date:\s*(.+)$", re.MULTILINE),
 }
 
-_TITLE_RE = re.compile(r"^#\s+Story\s+\d+\.\d+:\s*(.+)$", re.MULTILINE)
+_TITLE_RE = re.compile(r"^#\s+Story\s+\d+\.\d+(?:\.\d+)?:\s*(.+)$", re.MULTILINE)
 
 # AC block: everything between ## Acceptance Criteria and the next ## heading
 _AC_RE = re.compile(
@@ -88,10 +88,17 @@ def parse_bmad_story(path: Path) -> dict[str, Any]:
             fields[name] = match.group(1).strip()
 
     story_key = fields.get("story_key", "")
-    parts = story_key.split("-", 2)  # e.g. "1-5-testing-framework" → ["1","5","testing-framework"]
-    epic_num = parts[0] if len(parts) >= 2 else "0"
-    story_num = parts[1] if len(parts) >= 2 else "0"
-    pf_id = f"{epic_num}-{story_num}"
+    # Consume all leading numeric segments as the ID
+    # e.g. "1-5-testing-framework" → "1-5", "2-8-1-claroty-plugin" → "2-8-1"
+    key_parts = story_key.split("-")
+    id_segments: list[str] = []
+    for seg in key_parts:
+        if seg.isdigit():
+            id_segments.append(seg)
+        else:
+            break
+    pf_id = "-".join(id_segments) if len(id_segments) >= 2 else "0-0"
+    epic_num = id_segments[0] if id_segments else "0"
 
     # Title from # heading
     title_match = _TITLE_RE.search(content)
@@ -194,10 +201,9 @@ def discover_bmad_stories(
         story = parse_bmad_story(md_file)
         stories.append(story)
 
-    # Sort by epic number, then story number
-    def sort_key(s: dict) -> tuple[int, int]:
-        parts = s["id"].split("-")
-        return (int(parts[0]), int(parts[1]))
+    # Sort by epic number, then story number (supports variable-length IDs like 2-8-1)
+    def sort_key(s: dict) -> tuple[int, ...]:
+        return tuple(int(p) for p in s["id"].split("-"))
 
     stories.sort(key=sort_key)
     return stories
