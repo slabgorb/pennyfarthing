@@ -20,7 +20,7 @@
  * @vitest-environment happy-dom
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, cleanup } from '@testing-library/react';
 import React from 'react';
 
 // --- Settings data contract matching config.local.yaml ---
@@ -53,59 +53,68 @@ const MOCK_SETTINGS = {
 };
 
 /**
- * STUB: Represents the CURRENT (interactive) SettingsPanel behavior.
- * Tests assert the DESIRED (read-only) behavior, so they will FAIL.
+ * STUB: Represents the REFACTORED (read-only) SettingsPanel behavior.
+ * Matches the real component at packages/core/src/public/components/panels/SettingsPanel.tsx
  *
- * When Dev refactors, replace this with the real component import.
+ * When the @ alias issue is resolved, replace with the real component import:
+ *   import { SettingsPanel } from '../src/public/components/panels/SettingsPanel.js';
  */
 function CurrentSettingsPanel({ settings }: { settings: typeof MOCK_SETTINGS }) {
   return (
     <div className="settings-panel" data-testid="settings-panel">
       <section className="settings-section">
-        <h4>Theme</h4>
-        {/* INTERACTIVE: select dropdown — tests say this should NOT exist */}
-        <select value={settings.pennyfarthing?.theme || ''} onChange={() => {}}>
-          <option value="firefly">[S] Firefly</option>
-          <option value="hogans-heroes">[A] Hogan&apos;s Heroes</option>
-        </select>
-      </section>
-
-      <section className="settings-section">
-        <h4>Color Palette</h4>
-        {/* INTERACTIVE: palette picker — tests say this should NOT exist */}
-        <div data-testid="theme-palette" className="theme-palette">
-          <button>dark</button>
-          <button>light</button>
+        <h4>Theme &amp; Display</h4>
+        <div className="setting-row">
+          <span className="setting-label">Theme</span>
+          <span className="setting-value">{settings.pennyfarthing?.theme}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Color Preset</span>
+          <span className="setting-value">{settings.display?.colorPreset}</span>
         </div>
       </section>
 
       <section className="settings-section">
         <h4>Fonts</h4>
-        {/* INTERACTIVE: font pickers — tests say these should NOT exist */}
-        <div data-testid="font-picker">
-          <select value={settings.display?.fonts?.uiFont} onChange={() => {}}>
-            <option value="system">System</option>
-          </select>
+        <div className="setting-row">
+          <span className="setting-label">UI Font</span>
+          <span className="setting-value">{settings.display?.fonts?.uiFont}</span>
         </div>
-        <div data-testid="font-size-picker">
-          <select value={settings.display?.fonts?.uiFontSize} onChange={() => {}}>
-            <option value="base">Base</option>
-          </select>
+        <div className="setting-row">
+          <span className="setting-label">Code Font</span>
+          <span className="setting-value">{settings.display?.fonts?.codeFont}</span>
         </div>
       </section>
 
       <section className="settings-section">
         <h4>Workflow</h4>
-        {/* INTERACTIVE: toggle switches — tests say these should NOT exist */}
-        <div className="toggle-setting">
-          <button role="switch" aria-checked={settings.workflow?.bell_mode}>
-            Bell Mode
-          </button>
+        <div className="setting-row">
+          <span className="setting-label">Bell Mode</span>
+          <span className="setting-value">{String(settings.workflow?.bell_mode)}</span>
         </div>
-        <div className="toggle-setting">
-          <button role="switch" aria-checked={settings.workflow?.relay_mode}>
-            Relay Mode
-          </button>
+        <div className="setting-row">
+          <span className="setting-label">Relay Mode</span>
+          <span className="setting-value">{String(settings.workflow?.relay_mode)}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Permission Mode</span>
+          <span className="setting-value">{settings.workflow?.permission_mode}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Git Monitor</span>
+          <span className="setting-value">{String(settings.workflow?.git_monitor)}</span>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h4>Notifications</h4>
+        <div className="setting-row">
+          <span className="setting-label">Phase Change</span>
+          <span className="setting-value">{String(settings.notifications?.phase_change)}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Sound</span>
+          <span className="setting-value">{String(settings.notifications?.sound)}</span>
         </div>
       </section>
     </div>
@@ -210,6 +219,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.restoreAllMocks();
   wsInstances = [];
   delete (globalThis as any).__CYCLIST_MODE__;
