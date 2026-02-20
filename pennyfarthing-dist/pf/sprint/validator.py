@@ -66,11 +66,11 @@ class ValidationResult:
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
 VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "done", "canceled", "planning"}
-JIRA_KEY_PATTERN = re.compile(r"^MSSCI-\d{5}$")
+JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 # Required fields for sprint section
-REQUIRED_SPRINT_FIELDS = {"number", "jira_sprint_id", "goal", "start_date", "end_date", "status"}
+REQUIRED_SPRINT_FIELDS = {"goal", "start_date", "end_date", "status"}
 
 # Required fields for story
 REQUIRED_STORY_FIELDS = {"id", "title", "status", "points"}
@@ -103,7 +103,7 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
     """Validate sprint-level structure and fields.
 
     Validates:
-    - Required fields present (number, jira_sprint_id, goal, start_date, end_date, status)
+    - Required fields present (goal, start_date, end_date, status)
     - status is valid value (active, closed)
     - dates are ISO format
 
@@ -159,7 +159,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
     - Required fields present (id, title, status, points)
     - status is valid value (backlog, ready, in_progress, done, canceled)
     - points is numeric
-    - jira key follows pattern MSSCI-NNNNN if present
+    - jira key follows PROJECT-NUMBER pattern if present
     - branch follows convention if present
 
     Args:
@@ -204,7 +204,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         jira_key = str(story["jira"])
         if not JIRA_KEY_PATTERN.match(jira_key):
             result.add_error(
-                f"Invalid Jira key format '{jira_key}'. Expected MSSCI-NNNNN",
+                f"Invalid Jira key format '{jira_key}'. Expected PROJECT-NUMBER format (e.g., DPGD-17, MSSCI-12345)",
                 f"{base_path}.jira",
             )
 
@@ -286,7 +286,7 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
     - stories is a list
     - Each story has required fields (id, title, points, status)
     - No duplicate story IDs within the epic
-    - jira key follows MSSCI-NNNNN pattern if present
+    - jira key follows PROJECT-NUMBER pattern if present
 
     Args:
         epic: Epic shard dict to validate
@@ -328,7 +328,7 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
         jira_key = str(epic["jira"])
         if not JIRA_KEY_PATTERN.match(jira_key):
             result.add_error(
-                f"Invalid Jira key format '{jira_key}'. Expected MSSCI-NNNNN",
+                f"Invalid Jira key format '{jira_key}'. Expected PROJECT-NUMBER format (e.g., DPGD-17, MSSCI-12345)",
                 "epic.jira",
             )
 
