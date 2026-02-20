@@ -28,7 +28,7 @@ if [[ -n "$_caller_script" ]]; then
         _pkg="${_pkg%/pennyfarthing-dist}"
         _pkg="${_pkg%/.pennyfarthing}"
         if [[ "$_pkg" == */node_modules/* ]]; then
-            PROJECT_ROOT="${_pkg%/node_modules/*}"
+            PROJECT_ROOT="${_pkg%%/node_modules/*}"
         elif [[ -d "$_pkg/.pennyfarthing" ]]; then
             PROJECT_ROOT="$_pkg"
         elif [[ -d "$_pkg/../.pennyfarthing" ]]; then
