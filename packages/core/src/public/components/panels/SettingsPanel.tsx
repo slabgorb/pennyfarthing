@@ -1,93 +1,51 @@
 /**
- * SettingsPanel - Settings/preferences panel
+ * SettingsPanel - Read-only settings display
  *
- * Story MSSCI-12717 - React Migration
- * Updated to match actual config.local.yaml structure
- * Story MSSCI-12817 - Added Color Palette section with ThemePalette
- * Story MSSCI-12769 - Added Fonts section with FontPicker
+ * Story 122-1: Converted from interactive controls to read-only display.
+ * Settings are changed via /pf-settings CLI, not through this panel.
+ * Panel updates live via WebSocket when settings change.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ThemePalette } from '../ThemePalette';
-import { FontPicker, FontSizePicker } from '../FontPicker';
-import {
-  applyPreset,
-  savePresetToProject,
-  loadPresetFromProject,
-  DEFAULT_PRESET,
-} from '../../utils/color-presets';
-import {
-  loadFontSettings,
-  saveFontSettings,
-  applyFontSettings,
-  DEFAULT_FONT_SETTINGS,
-  FontSettings,
-  FontSize,
-} from '../../utils/font-presets';
+import React, { useState, useEffect } from 'react';
 
 interface Settings {
+  theme?: string;
+  display?: {
+    colorPreset?: string;
+    fonts?: {
+      uiFont?: string;
+      uiFontSize?: string;
+      codeFont?: string;
+      codeFontSize?: string;
+      customUiFont?: string;
+      customCodeFont?: string;
+    };
+  };
   workflow?: {
-    permission_mode?: 'plan' | 'manual' | 'accept';
+    permission_mode?: string;
     bell_mode?: boolean;
     relay_mode?: boolean;
+    git_monitor?: boolean;
     handoff_mode?: string;
   };
-  display?: {
-    show_flow?: boolean;
-    sidebar_width?: number;
+  notifications?: {
+    phase_change?: boolean;
+    sound?: boolean;
   };
   pennyfarthing?: {
     theme?: string;
   };
 }
 
-interface ThemeMetadata {
-  id: string;
-  name: string;
-  tier: string;
-}
-
-// Tier sort order: S=0, A=1, B=2, unranked=3
-const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2 };
-
-// Panel display names for the visibility toggles
-const PANEL_DISPLAY_NAMES: Record<string, string> = {
-  changed: 'Changed Files',
-  diffs: 'Diffs',
-  debug: 'Debug',
-  'audit-log': 'Audit Log',
-  message: 'Message',
-  sprint: 'Sprint',
-  workflow: 'Workflow',
-  ac: 'AC',
-  todo: 'Todo',
-  background: 'Background',
-  git: 'Git',
-  settings: 'Settings',
-};
-
-// Panels that cannot be hidden
-const PROTECTED_PANELS = new Set<string>();
-
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [themes, setThemes] = useState<ThemeMetadata[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [colorPreset, setColorPreset] = useState<string>(DEFAULT_PRESET);
-  const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
 
   useEffect(() => {
-    // Load settings via REST
     async function loadSettings() {
       try {
-        console.log('[SettingsPanel] Loading settings via REST');
         const response = await fetch('/api/settings');
         if (response.ok) {
           const data = await response.json();
-          console.log('[SettingsPanel] Settings loaded:', data);
           setSettings(data as Settings);
         }
       } catch (err) {
@@ -95,24 +53,8 @@ export function SettingsPanel(): React.ReactElement {
       }
     }
 
-    // Load theme metadata via REST
-    async function loadThemes() {
-      try {
-        const response = await fetch('/api/settings/themes');
-        if (response.ok) {
-          const data = await response.json();
-          setThemes((data.themes || []) as ThemeMetadata[]);
-        }
-      } catch (err) {
-        console.error('[SettingsPanel] Failed to load themes:', err);
-      }
-    }
-
     loadSettings();
-    loadThemes();
 
-    // WebSocket subscription for real-time sync
-    console.log('[SettingsPanel] Connecting to /ws/settings for real-time sync');
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
 
@@ -120,7 +62,6 @@ export function SettingsPanel(): React.ReactElement {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'init' || data.type === 'update') {
-          console.log('[SettingsPanel] Settings update via WebSocket:', data.settings);
           setSettings(data.settings as Settings);
         }
       } catch (err) {
@@ -128,142 +69,13 @@ export function SettingsPanel(): React.ReactElement {
       }
     };
 
-    ws.onerror = (err) => {
-      console.error('[SettingsPanel] WebSocket error:', err);
-    };
-
-    // Load color preset from project config
-    loadPresetFromProject().then(presetId => {
-      applyPreset(presetId);
-      setColorPreset(presetId);
-    });
-
-    // Load font settings
-    loadFontSettings().then(settings => {
-      setFontSettings(settings);
-      applyFontSettings(settings);
-    });
-
     return () => ws.close();
   }, []);
-
-
-
-  // Sort themes: by tier (S > A > B > U), then alphabetically by name
-  const sortedThemes = useMemo(() => {
-    return [...themes].sort((a, b) => {
-      const tierDiff = (TIER_ORDER[a.tier] ?? 3) - (TIER_ORDER[b.tier] ?? 3);
-      if (tierDiff !== 0) return tierDiff;
-      return a.name.localeCompare(b.name);
-    });
-  }, [themes]);
-
-  const handleThemeChange = useCallback(async (theme: string) => {
-    if (!settings) return;
-
-    setSaving(true);
-    try {
-      const updated = {
-        ...settings,
-        pennyfarthing: { ...settings.pennyfarthing, theme },
-      };
-
-      // Use REST API
-      await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pennyfarthing: { theme } }),
-      });
-      setSettings(updated);
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
-
-  const handleToggle = useCallback(async (section: string, key: string, value: boolean) => {
-    if (!settings) return;
-
-    console.log(`[SettingsPanel] Toggle ${section}.${key} = ${value}`);
-    setSaving(true);
-    try {
-      const updated = {
-        ...settings,
-        [section]: { ...(settings as Record<string, Record<string, unknown>>)[section], [key]: value },
-      };
-
-      // Use REST API
-      console.log('[SettingsPanel] Saving via REST');
-      await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [section]: { [key]: value } }),
-      });
-      console.log('[SettingsPanel] Save complete, updating local state');
-      setSettings(updated);
-    } finally {
-      setSaving(false);
-    }
-  }, [settings]);
-
-  const handleColorPresetChange = useCallback(async (presetId: string) => {
-    setSaving(true);
-    try {
-      applyPreset(presetId);
-      await savePresetToProject(presetId);
-      setColorPreset(presetId);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
-
-  const handleFontChange = useCallback(async (
-    type: 'ui' | 'code',
-    presetId: string,
-    customFamily?: string
-  ) => {
-    setSaving(true);
-    try {
-      const updated: FontSettings = {
-        ...fontSettings,
-        [type === 'ui' ? 'uiFont' : 'codeFont']: presetId,
-        ...(presetId === 'custom' && customFamily
-          ? { [type === 'ui' ? 'customUiFont' : 'customCodeFont']: customFamily }
-          : {}),
-      };
-      applyFontSettings(updated);
-      await saveFontSettings(updated);
-      setFontSettings(updated);
-    } finally {
-      setSaving(false);
-    }
-  }, [fontSettings]);
-
-  const handleFontSizeChange = useCallback(async (type: 'ui' | 'code', size: FontSize) => {
-    setSaving(true);
-    try {
-      const updated: FontSettings = {
-        ...fontSettings,
-        [type === 'ui' ? 'uiFontSize' : 'codeFontSize']: size,
-      };
-      applyFontSettings(updated);
-      await saveFontSettings(updated);
-      setFontSettings(updated);
-    } finally {
-      setSaving(false);
-    }
-  }, [fontSettings]);
 
   if (!settings) {
     return (
       <div className="settings-panel loading" data-testid="settings-panel">
-        <div className="space-y-4 p-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-6 w-48" />
-        </div>
+        <div className="space-y-4 p-2">Loading settings...</div>
       </div>
     );
   }
@@ -271,89 +83,68 @@ export function SettingsPanel(): React.ReactElement {
   return (
     <div className="settings-panel" data-testid="settings-panel">
       <section className="settings-section">
-        <h4>Theme</h4>
-        <select
-          value={settings.pennyfarthing?.theme || ''}
-          onChange={(e) => handleThemeChange(e.target.value)}
-          disabled={saving}
-          className="theme-select"
-        >
-          {sortedThemes.map(theme => (
-            <option key={theme.id} value={theme.id}>
-              [{theme.tier || 'Unranked'}] {theme.name}
-            </option>
-          ))}
-        </select>
+        <h4>Theme &amp; Display</h4>
+        <div className="setting-row">
+          <span className="setting-label">Theme</span>
+          <span className="setting-value">{settings.pennyfarthing?.theme}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Color Preset</span>
+          <span className="setting-value">{settings.display?.colorPreset}</span>
+        </div>
       </section>
-
-      <Separator className="my-2" />
-
-      <section className="settings-section">
-        <h4>Color Palette</h4>
-        <ThemePalette
-          currentPreset={colorPreset}
-          onSelect={handleColorPresetChange}
-        />
-      </section>
-
-      <Separator className="my-2" />
 
       <section className="settings-section">
         <h4>Fonts</h4>
-        <div className="font-setting">
-          <label>UI Font</label>
-          <FontPicker
-            type="ui"
-            currentFont={fontSettings.uiFont}
-            customFont={fontSettings.customUiFont}
-            onSelect={(id, custom) => handleFontChange('ui', id, custom)}
-          />
-          <FontSizePicker
-            currentSize={fontSettings.uiFontSize}
-            onSelect={(size) => handleFontSizeChange('ui', size)}
-          />
+        <div className="setting-row">
+          <span className="setting-label">UI Font</span>
+          <span className="setting-value">{settings.display?.fonts?.uiFont}</span>
         </div>
-        <div className="font-setting">
-          <label>Code Font</label>
-          <FontPicker
-            type="code"
-            currentFont={fontSettings.codeFont}
-            customFont={fontSettings.customCodeFont}
-            onSelect={(id, custom) => handleFontChange('code', id, custom)}
-          />
-          <FontSizePicker
-            currentSize={fontSettings.codeFontSize}
-            onSelect={(size) => handleFontSizeChange('code', size)}
-          />
+        <div className="setting-row">
+          <span className="setting-label">UI Font Size</span>
+          <span className="setting-value">{settings.display?.fonts?.uiFontSize}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Code Font</span>
+          <span className="setting-value">{settings.display?.fonts?.codeFont}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Code Font Size</span>
+          <span className="setting-value">{settings.display?.fonts?.codeFontSize}</span>
         </div>
       </section>
-
-      <Separator className="my-2" />
 
       <section className="settings-section">
         <h4>Workflow</h4>
-        {window.__CYCLIST_MODE__ === 'cyclist' && (
-          <div className="toggle-setting">
-            <Switch
-              checked={settings.workflow?.bell_mode || false}
-              onCheckedChange={(checked: boolean) => handleToggle('workflow', 'bell_mode', checked)}
-              disabled={saving}
-            />
-            Bell Mode
-            <span className="setting-description">Inject queued messages via PostToolUse hook instead of waiting</span>
-          </div>
-        )}
-        <div className="toggle-setting">
-          <Switch
-            checked={settings.workflow?.relay_mode || false}
-            onCheckedChange={(checked: boolean) => handleToggle('workflow', 'relay_mode', checked)}
-            disabled={saving}
-          />
-          Relay Mode
-          <span className="setting-description">Auto-handoff to next agent</span>
+        <div className="setting-row">
+          <span className="setting-label">Bell Mode</span>
+          <span className="setting-value">{String(settings.workflow?.bell_mode)}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Relay Mode</span>
+          <span className="setting-value">{String(settings.workflow?.relay_mode)}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Permission Mode</span>
+          <span className="setting-value">{settings.workflow?.permission_mode}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Git Monitor</span>
+          <span className="setting-value">{String(settings.workflow?.git_monitor)}</span>
         </div>
       </section>
 
+      <section className="settings-section">
+        <h4>Notifications</h4>
+        <div className="setting-row">
+          <span className="setting-label">Phase Change</span>
+          <span className="setting-value">{String(settings.notifications?.phase_change)}</span>
+        </div>
+        <div className="setting-row">
+          <span className="setting-label">Sound</span>
+          <span className="setting-value">{String(settings.notifications?.sound)}</span>
+        </div>
+      </section>
     </div>
   );
 }
