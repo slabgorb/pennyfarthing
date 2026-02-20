@@ -38,11 +38,11 @@ const ALL_PANELS = [
   'workflow',
   'background',
   'audit',
-  'changed',
   'ac',
   'debug',
   'bikelane',
   'settings',
+  'progress',
 ] as const;
 
 // ============================================================================
@@ -218,12 +218,12 @@ describe('AC2: Lists all 12 panels with links', () => {
     });
 
     // Should have exactly 12 panel links
-    expect(panelLinks.length).toBe(13);
+    expect(panelLinks.length).toBe(12);
 
     // All should be unique
     const hrefs = panelLinks.map((l) => l.getAttribute('href'));
     const uniqueHrefs = new Set(hrefs);
-    expect(uniqueHrefs.size).toBe(13);
+    expect(uniqueHrefs.size).toBe(12);
   });
 });
 

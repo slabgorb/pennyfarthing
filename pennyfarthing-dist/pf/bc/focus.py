@@ -31,7 +31,6 @@ VALID_PANELS = [
     "workflow",
     "background",
     "audit-log",
-    "changed",
     "ac",
     "debug",
     "progress",

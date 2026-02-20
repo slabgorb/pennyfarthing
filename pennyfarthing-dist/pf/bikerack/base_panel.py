@@ -22,7 +22,6 @@ PANEL_ICONS: dict[str, tuple[str, str]] = {
     "workflow": ("\uf126", "W"),     # nf-fa-code_fork
     "background": ("\uf110", "B"),   # nf-fa-spinner
     "audit-log": ("\uf15c", "L"),    # nf-fa-file_text
-    "changed": ("\uf044", "C"),      # nf-fa-pencil_square_o
     "ac": ("\uf00c", "A"),           # nf-fa-check
     "debug": ("\uf188", "d"),        # nf-fa-bug
     "settings": ("\uf013", "S"),     # nf-fa-gear

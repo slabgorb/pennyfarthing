@@ -408,25 +408,23 @@ describe('AC4: Tab headers use Title Case', () => {
   it('should configure Dockview tabs with Title Case labels', async () => {
     const { PANEL_INVENTORY } = await import('../src/public/components/DockviewWorkspace');
 
-    // The panel IDs are lowercase: 'changed', 'diffs', 'debug', etc.
-    // Tab labels should be Title Case: 'Changed', 'Diffs', 'Debug', etc.
+    // The panel IDs are lowercase: 'diffs', 'debug', etc.
+    // Tab labels should be Title Case: 'Diffs', 'Debug', etc.
 
     const expectedTitleCase: Record<string, string> = {
-      changed: 'Changed',
       diffs: 'Diffs',
       debug: 'Debug',
       'audit-log': 'Audit Log',
-      tty: 'Terminal',
       message: 'Message',
       sprint: 'Sprint',
       workflow: 'Workflow',
       ac: 'AC',
       todo: 'Todo',
-      background: 'Background',
+      background: 'Subagents',
       git: 'Git',
-      hotspots: 'Hotspots',
       settings: 'Settings',
       progress: 'Progress',
+      tandem: 'Tandem',
     };
 
     // Verify each panel has expected Title Case mapping
@@ -458,12 +456,11 @@ describe('AC4: Tab headers use Title Case', () => {
     // Check that panel display names exist and are Title Case
     // This is already defined in the code but not used for tab labels:
     const panelDisplayNames: Record<string, string> = {
-      changed: 'Changed Files', // Full name for restore menu
       diffs: 'Diffs',
       debug: 'Debug',
       sprint: 'Sprint',
       progress: 'Progress',
-      background: 'Background',
+      background: 'Subagents',
       git: 'Git',
       settings: 'Settings',
     };
@@ -477,9 +474,9 @@ describe('AC4: Tab headers use Title Case', () => {
   it('should use title property when adding panels to Dockview', async () => {
     // The fix requires passing `title` to api.addPanel() calls
     // Current code:
-    //   api.addPanel({ id: 'changed', component: 'PanelAdapter', params: { panelId: 'changed' } })
+    //   api.addPanel({ id: 'git', component: 'PanelAdapter', params: { panelId: 'git' } })
     // Fixed code:
-    //   api.addPanel({ id: 'changed', component: 'PanelAdapter', params: { panelId: 'changed' }, title: 'Changed' })
+    //   api.addPanel({ id: 'git', component: 'PanelAdapter', params: { panelId: 'git' }, title: 'Git' })
 
     const fs = await import('fs');
     const path = await import('path');

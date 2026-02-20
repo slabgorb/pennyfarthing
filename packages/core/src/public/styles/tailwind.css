@@ -3143,12 +3143,46 @@
   margin: 0;
 }
 
-/* Changed panel (FileTree) */
-.changed-panel {
+/* Git panel - clickable file items for diff drill-through */
+.git-panel .file-item.clickable {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 2px 4px;
+}
+
+.git-panel .file-item.clickable:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.git-panel .diff-back-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color, #404040);
+  margin-bottom: 8px;
+}
+
+.git-panel .diff-back-bar .back-button {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}
+
+.git-panel .diff-back-bar .breadcrumb-path {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b8b8b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-panel.diff-drillthrough {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  overflow: auto;
 }
 
 /* =============================================================================
