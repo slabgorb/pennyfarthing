@@ -289,7 +289,7 @@ class SprintPanel(Widget):
         saved_expanded: dict[str, bool] = {}
         for node in tree.root.children:
             data = node.data
-            if data and data.get("type") == "epic":
+            if data and data.get("type") in ("epic", "future_initiative"):
                 saved_expanded[data["id"]] = node.is_expanded
 
         # Save cursor position by node identity
@@ -355,6 +355,63 @@ class SprintPanel(Widget):
 
             if cursor_node_key == f"epic:{epic_id}":
                 cursor_target = epic_node
+
+        # Future Initiatives section (Story 118-1)
+        future_epics = payload.get("futureEpics", [])
+        if future_epics:
+            # Section separator
+            separator_label = Text("── Future Initiatives ──", style="bold dim")
+            tree.root.add_leaf(separator_label, data={"type": "separator"})
+
+            for initiative in future_epics:
+                init_id = initiative.get("id", "")
+                init_title = initiative.get("title", "")
+                init_pts = initiative.get("estimatedPoints", 0)
+                init_status = initiative.get("status", "planning")
+                children = initiative.get("children", [])
+
+                # Build initiative label
+                init_label = Text(no_wrap=True, overflow="ellipsis")
+                status_style = "green" if init_status == "ready" else "dim yellow"
+                init_label.append(f"[{init_status}]", style=status_style)
+                init_label.append(f"  {init_title}", style="bold")
+                init_label.append(f"  {init_pts} pts", style="dim")
+                if children:
+                    init_label.append(f"  ({len(children)} epics)", style="dim")
+
+                init_data: dict[str, Any] = {
+                    "type": "future_initiative",
+                    "id": init_id,
+                    "title": init_title,
+                }
+                init_node = tree.root.add(init_label, data=init_data)
+
+                # Add child epics as leaves
+                for child in children:
+                    child_label = Text(no_wrap=True, overflow="ellipsis")
+                    child_status = child.get("status", "planning")
+                    child_style = "green" if child_status == "ready" else "dim yellow"
+                    child_label.append(f"  [{child_status}]", style=child_style)
+                    child_label.append(f"  {child.get('title', '')}")
+                    child_label.append(f"  {child.get('estimatedPoints', 0)} pts", style="dim")
+                    child_label.append(f"  {child.get('storyCount', 0)} stories", style="dim")
+                    child_data: dict[str, Any] = {
+                        "type": "future_epic_child",
+                        "id": child.get("id", ""),
+                    }
+                    init_node.add_leaf(child_label, data=child_data)
+
+                # Restore expand state or collapse by default
+                if init_id in saved_expanded:
+                    if saved_expanded[init_id]:
+                        init_node.expand()
+                    else:
+                        init_node.collapse()
+                else:
+                    init_node.collapse()
+
+                if cursor_node_key == f"epic:{init_id}":
+                    cursor_target = init_node
 
         # Restore cursor position
         if cursor_target is not None:
