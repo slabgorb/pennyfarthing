@@ -11,7 +11,25 @@ import yaml
 from pf.common.config import get_project_root, load_pennyfarthing_config
 
 # Top-level keys to show in `pf settings show` (skip layout/panel blobs)
-SHOW_KEYS = ("theme", "workflow", "jira", "display", "split", "last_panel")
+SHOW_KEYS = ("theme", "bell_mode", "relay_mode", "permission_mode", "workflow", "jira", "display", "split", "last_panel")
+
+# Default values for all known settings
+DEFAULTS: dict[str, Any] = {
+    "theme": "firefly",
+    "bell_mode": "standard",
+    "relay_mode": False,
+    "permission_mode": "standard",
+    "workflow": {
+        "bell_mode": False,
+        "git_monitor": False,
+        "relay_mode": False,
+        "permission_mode": "standard",
+    },
+    "display": {
+        "colorPreset": "catppuccin",
+    },
+    "last_panel": "sprint",
+}
 
 
 def _coerce_value(value: str) -> Any:
@@ -74,25 +92,41 @@ def set_setting(key: str, value: str) -> dict:
     return config
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Deep-merge override into base, returning a new dict."""
+    result = dict(base)
+    for k, v in override.items():
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = _deep_merge(result[k], v)
+        else:
+            result[k] = v
+    return result
+
+
 def show_settings() -> str:
-    """Format interesting top-level settings for display."""
+    """Format all settings with defaults, annotating which are user-set."""
     config = load_pennyfarthing_config()
+    merged = _deep_merge(DEFAULTS, config)
     lines: list[str] = []
 
     for key in SHOW_KEYS:
-        if key not in config:
+        if key not in merged:
             continue
-        val = config[key]
+        val = merged[key]
+        is_set = key in config
+        suffix = "" if is_set else "  # (default)"
         if isinstance(val, dict):
             lines.append(f"{key}:")
+            user_dict = config.get(key, {}) if isinstance(config.get(key), dict) else {}
             for k, v in val.items():
+                k_suffix = "" if k in user_dict else "  # (default)"
                 if isinstance(v, dict):
                     nested = yaml.dump({k: v}, default_flow_style=False, sort_keys=False)
-                    for line in nested.rstrip().split("\n"):
-                        lines.append(f"  {line}")
+                    for i, line in enumerate(nested.rstrip().split("\n")):
+                        lines.append(f"  {line}{k_suffix if i == 0 else ''}")
                 else:
-                    lines.append(f"  {k}: {v}")
+                    lines.append(f"  {k}: {v}{k_suffix}")
         else:
-            lines.append(f"{key}: {val}")
+            lines.append(f"{key}: {val}{suffix}")
 
     return "\n".join(lines) if lines else "(no settings found)"
