@@ -101,6 +101,27 @@ def resolve_portrait_path(
         if result:
             return result
 
+    # Fallback: search Cyclist package portrait directories
+    # Portraits are bundled in @pennyfarthing/cyclist, not alongside theme YAMLs
+    root = project_root or Path.cwd()
+    cyclist_portrait_dirs = [
+        root / "packages" / "cyclist" / "portraits" / theme,  # monorepo dev
+        root / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme,  # npm
+    ]
+    # pnpm: resolve through .pennyfarthing symlink chain
+    pnpm_cyclist = root / "node_modules" / ".pnpm"
+    if pnpm_cyclist.is_dir():
+        for entry in pnpm_cyclist.iterdir():
+            if entry.name.startswith("@pennyfarthing+cyclist@"):
+                candidate = entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
+                cyclist_portrait_dirs.append(candidate)
+                break
+
+    for portraits_dir in cyclist_portrait_dirs:
+        result = _find_portrait(portraits_dir, slug)
+        if result:
+            return result
+
     return None
 
 
