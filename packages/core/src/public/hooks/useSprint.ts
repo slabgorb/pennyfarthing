@@ -36,12 +36,22 @@ export interface SprintEpic {
   hasContext?: boolean;
 }
 
+export interface FutureEpicChild {
+  id: string;
+  title: string;
+  estimatedPoints: number;
+  status: 'ready' | 'blocked' | 'planning';
+  jiraKey: string | null;
+  storyCount: number;
+}
+
 export interface FutureEpic {
   id: string;
   title: string;
   description: string;
   estimatedPoints: number;
   status: 'ready' | 'blocked' | 'planning';
+  children: FutureEpicChild[];
 }
 
 export interface SprintData {
