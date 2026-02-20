@@ -107,59 +107,14 @@ def read_sprint(path: Path) -> CommentedMap:
     """
     data = _read_yaml_file(path)
 
-    epics = data.get("epics", [])
-    if not epics or not isinstance(epics[0], str):
-        return data
+    from pf.sprint.shard_merge import merge_epic_shards
 
-    sprint_dir = path.parent
-
-    # Track loaded epic identities to prevent duplicates
-    loaded_shard_files: set[Path] = set()
-    loaded_epic_ids: set[str] = set()
-    merged_epics = CommentedSeq()
-    for ref in epics:
-        if isinstance(ref, str):
-            shard_file = sprint_dir / f"epic-{ref}.yaml"
-            if shard_file.exists():
-                epic_data = _read_yaml_file(shard_file)
-                merged_epics.append(epic_data)
-                loaded_shard_files.add(shard_file.resolve())
-                # Track both id and jira key (normalized) for dedup
-                eid = str(epic_data.get("id", "")).replace("epic-", "")
-                if eid:
-                    loaded_epic_ids.add(eid)
-                jira_key = str(epic_data.get("jira", ""))
-                if jira_key:
-                    loaded_epic_ids.add(jira_key)
-        else:
-            merged_epics.append(ref)
-
-    # Log unindexed shard files on disk (but do NOT auto-merge them —
-    # orphan shards may belong to future initiatives and should not be
-    # pulled into the current sprint automatically).
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if shard_file.resolve() in loaded_shard_files:
-            continue
-        try:
-            epic_data = _read_yaml_file(shard_file)
-        except (FileNotFoundError, ValueError):
-            continue
-        if not isinstance(epic_data, Mapping) or "id" not in epic_data:
-            continue
-        eid = str(epic_data.get("id", "")).replace("epic-", "")
-        jira_key = str(epic_data.get("jira", ""))
-        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
-            continue
-        # Warn but don't merge — these are intentionally excluded
-        import sys
-        print(
-            f"  NOTE: Unindexed shard {shard_file.name} (epic {eid}) "
-            f"not in epics list — skipping",
-            file=sys.stderr,
-        )
-
-    data["epics"] = merged_epics
-    return data
+    return merge_epic_shards(
+        data,
+        path.parent,
+        load_file=_read_yaml_file,
+        make_list=CommentedSeq,
+    )
 
 
 def _sort_mapping(data: CommentedMap, key_order: list[str]) -> CommentedMap:

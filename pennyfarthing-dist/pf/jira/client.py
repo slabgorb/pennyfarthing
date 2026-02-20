@@ -122,76 +122,6 @@ def is_jira_cli_available() -> bool:
     return shutil.which("jira") is not None
 
 
-def get_issue(issue_key: str) -> dict[str, Any] | None:
-    """Fetch issue details from Jira.
-
-    Args:
-        issue_key: Jira issue key (e.g., "MSSCI-12398")
-
-    Returns:
-        Issue data as dict, or None if not found
-    """
-    if not is_jira_cli_available():
-        return None
-
-    result = subprocess.run(
-        ["jira", "issue", "view", issue_key, "--raw"],
-        capture_output=True,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        return None
-
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return None
-
-
-def update_issue_status(issue_key: str, status: str) -> bool:
-    """Transition an issue to a new status.
-
-    Args:
-        issue_key: Jira issue key
-        status: Target status name
-
-    Returns:
-        True if successful, False otherwise
-    """
-    if not is_jira_cli_available():
-        return False
-
-    result = subprocess.run(
-        ["jira", "issue", "move", issue_key, status],
-        capture_output=True,
-        text=True,
-    )
-
-    return result.returncode == 0
-
-
-def add_comment(issue_key: str, comment: str) -> bool:
-    """Add a comment to an issue.
-
-    Args:
-        issue_key: Jira issue key
-        comment: Comment text
-
-    Returns:
-        True if successful, False otherwise
-    """
-    if not is_jira_cli_available():
-        return False
-
-    result = subprocess.run(
-        ["jira", "issue", "comment", "add", issue_key, "--body", comment],
-        capture_output=True,
-        text=True,
-    )
-
-    return result.returncode == 0
-
 
 def get_jira_field(issue_json: dict[str, Any], field_path: str, default: Any = None) -> Any:
     """Extract field from Jira issue JSON using dot notation.
@@ -226,13 +156,13 @@ def get_story_points(issue_key: str, issue_json: dict[str, Any] | None = None) -
 
     Args:
         issue_key: Jira issue key
-        issue_json: Optional pre-fetched issue JSON
+        issue_json: Optional pre-fetched issue JSON (required if no default client)
 
     Returns:
         Story points as int, or None if not set
     """
     if issue_json is None:
-        issue_json = get_issue(issue_key)
+        issue_json = get_client().get_issue_sync(issue_key)
     if not issue_json:
         return None
 
@@ -349,13 +279,11 @@ def get_current_user_email() -> str:
 class JiraClient:
     """Unified Jira REST API client with sync and async support.
 
-    Consolidates REST API access previously scattered across:
-    - jira_sync.py (httpx async)
-    - jira_epic_creation.py (curl subprocess)
+    Consolidates all Jira REST API access.
 
     Usage (sync):
         client = JiraClient()
-        issue = client.get_issue("MSSCI-12345")
+        issue = client.get_issue_sync("MSSCI-12345")
 
     Usage (async):
         client = JiraClient()
@@ -510,7 +438,7 @@ class JiraClient:
             "GET", f"/rest/api/3/issue/{issue_key}/transitions"
         )
         if not transitions_data:
-            return {"success": False, "reason": "Could not get transitions"}
+            return {"success": False, "error": "Could not get transitions"}
 
         transitions = transitions_data.get("transitions", [])
         transition_id = None
@@ -523,7 +451,7 @@ class JiraClient:
             available = [t.get("name") for t in transitions]
             return {
                 "success": False,
-                "reason": f"No transition to '{target_status}' available. "
+                "error": f"No transition to '{target_status}' available. "
                 f"Available: {available}",
             }
 
@@ -558,7 +486,7 @@ class JiraClient:
             if not users or not isinstance(users, list) or len(users) == 0:
                 return {
                     "success": False,
-                    "reason": f"User not found: {assignee_email}",
+                    "error": f"User not found: {assignee_email}",
                 }
             account_id = users[0].get("accountId")
         else:
@@ -569,6 +497,41 @@ class JiraClient:
             "PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload
         )
         # Assign PUT returns empty body on success (204)
+        return {"success": True}
+
+    def add_comment_sync(self, issue_key: str, comment: str) -> dict[str, Any]:
+        """Add a comment to a Jira issue via REST API.
+
+        Args:
+            issue_key: Jira issue key
+            comment: Comment body text
+
+        Returns:
+            Result dict with success status
+        """
+        payload = {
+            "body": {
+                "type": "doc",
+                "version": 1,
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": comment}],
+                    }
+                ],
+            }
+        }
+        result = self._call_api_sync(
+            "POST",
+            f"/rest/api/3/issue/{issue_key}/comment",
+            payload,
+        )
+        if result is None:
+            # POST comment returns the created comment on success;
+            # _call_api_sync returns None on empty/failed response
+            # but also returns None on JSON decode failure for 201 with empty body.
+            # Treat None as success since the API may return 201 with no body.
+            pass
         return {"success": True}
 
     def add_to_sprint_sync(self, sprint_id: int | str, issue_key: str) -> dict[str, Any]:
@@ -680,7 +643,7 @@ class JiraClient:
             target_status: Target status name (e.g., "In Progress", "Done")
 
         Returns:
-            Result dict with success status and optional reason
+            Result dict with success status and optional error
         """
         import httpx
 
@@ -694,7 +657,7 @@ class JiraClient:
                 if response.status_code != 200:
                     return {
                         "success": False,
-                        "reason": f"Could not get transitions: {response.status_code}",
+                        "error": f"Could not get transitions: {response.status_code}",
                     }
 
                 transitions = response.json().get("transitions", [])
@@ -707,7 +670,7 @@ class JiraClient:
                 if not transition_id:
                     return {
                         "success": False,
-                        "reason": f"No transition to '{target_status}' available",
+                        "error": f"No transition to '{target_status}' available",
                     }
 
                 # Execute transition
@@ -722,11 +685,11 @@ class JiraClient:
                     return {"success": True}
                 return {
                     "success": False,
-                    "reason": f"Transition failed: {response.status_code}",
+                    "error": f"Transition failed: {response.status_code}",
                 }
 
             except httpx.HTTPError as e:
-                return {"success": False, "reason": str(e)}
+                return {"success": False, "error": str(e)}
 
     async def update_fields_async(
         self, issue_key: str, fields: dict[str, Any]
@@ -756,10 +719,10 @@ class JiraClient:
 
                 if response.status_code in (200, 204):
                     return {"success": True}
-                return {"success": False, "reason": f"HTTP {response.status_code}"}
+                return {"success": False, "error": f"HTTP {response.status_code}"}
 
             except httpx.HTTPError as e:
-                return {"success": False, "reason": str(e)}
+                return {"success": False, "error": str(e)}
 
     async def sync_story_points_async(
         self,

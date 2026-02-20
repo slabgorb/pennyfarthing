@@ -2,7 +2,7 @@
 Brownfield CLI - Analyze existing codebases.
 
 Usage:
-    python -m pf.brownfield <subcommand> [args]
+    pf debug <subcommand> [args]
 
 Subcommands:
     scan        Scan codebase and generate documentation

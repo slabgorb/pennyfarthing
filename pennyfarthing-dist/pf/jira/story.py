@@ -88,7 +88,7 @@ def fetch_jira_issue(jira_key: str) -> dict[str, Any] | None:
     Returns:
         Issue JSON if found, None otherwise
     """
-    return jira_client.get_issue(jira_key)
+    return jira_client.get_client().get_issue_sync(jira_key)
 
 
 def sync_story(
@@ -147,10 +147,11 @@ def sync_story(
             if dry_run:
                 actions.append(f"[DRY-RUN] {action}")
             else:
-                if jira_client.update_issue_status(jira_key, target_status):
+                result = jira_client.get_client().transition_sync(jira_key, target_status)
+                if result.get("success"):
                     actions.append(action)
                 else:
-                    errors.append(f"Failed to transition {jira_key}")
+                    errors.append(f"Failed to transition {jira_key}: {result.get('error', 'unknown')}")
         else:
             actions.append(f"status already {current_jira_status}")
 
@@ -173,7 +174,8 @@ def sync_story(
         if dry_run:
             actions.append(f"[DRY-RUN] {action}")
         else:
-            if jira_client.add_comment(jira_key, comment):
+            result = jira_client.get_client().add_comment_sync(jira_key, comment)
+            if result.get("success"):
                 actions.append(action)
             else:
                 errors.append(f"Failed to add comment to {jira_key}")

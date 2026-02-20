@@ -19,10 +19,8 @@ import sys
 from typing import Any
 
 from pf.jira.client import (
-    get_issue,
+    get_client,
     get_jira_field,
-    is_jira_cli_available,
-    update_issue_status,
 )
 
 
@@ -57,14 +55,7 @@ def check_availability(issue_key: str) -> dict[str, Any]:
     Returns:
         Dict with available status and details
     """
-    if not is_jira_cli_available():
-        return {
-            "available": False,
-            "error": "Jira CLI not installed",
-            "exit_code": 3,
-        }
-
-    issue = get_issue(issue_key)
+    issue = get_client().get_issue_sync(issue_key)
     if not issue:
         return {
             "available": False,
@@ -102,15 +93,6 @@ def claim_story(issue_key: str) -> dict[str, Any]:
     Returns:
         Dict with success status and details
     """
-    import subprocess
-
-    if not is_jira_cli_available():
-        return {
-            "success": False,
-            "error": "Jira CLI not installed",
-            "exit_code": 3,
-        }
-
     # Check availability first
     availability = check_availability(issue_key)
     if not availability["available"]:
@@ -120,39 +102,27 @@ def claim_story(issue_key: str) -> dict[str, Any]:
             "exit_code": 1,
         }
 
+    from pf.jira.client import get_current_user_email
+
     actions = []
     errors = []
 
-    # Get current user
-    result = subprocess.run(
-        ["jira", "me"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        return {
-            "success": False,
-            "error": "Could not get current Jira user",
-            "exit_code": 3,
-        }
-    current_user = result.stdout.strip()
+    current_user = get_current_user_email()
+    client = get_client()
 
-    # Assign to self
-    result = subprocess.run(
-        ["jira", "issue", "assign", issue_key, current_user, "--project", "MSSCI"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode == 0:
+    # Assign to self via REST API
+    assign_result = client.assign_issue_sync(issue_key, current_user)
+    if assign_result.get("success"):
         actions.append(f"Assigned to {current_user}")
     else:
-        errors.append(f"Failed to assign: {result.stderr}")
+        errors.append(f"Failed to assign: {assign_result.get('error', 'unknown')}")
 
-    # Move to In Progress
-    if update_issue_status(issue_key, "In Progress"):
+    # Move to In Progress via REST API
+    transition_result = client.transition_sync(issue_key, "In Progress")
+    if transition_result.get("success"):
         actions.append("Moved to In Progress")
     else:
-        errors.append("Failed to move to In Progress")
+        errors.append(f"Failed to move to In Progress: {transition_result.get('error', 'unknown')}")
 
     if errors:
         return {

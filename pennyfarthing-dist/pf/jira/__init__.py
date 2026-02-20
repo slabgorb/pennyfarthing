@@ -45,18 +45,15 @@ from pf.jira.client import (
     # Classes
     JiraClient,
     # Functions
-    add_comment,
     check_dependencies,
     extract_jira_key,
     get_client,
-    get_issue,
     get_jira_field,
     get_story_points,
     is_jira_cli_available,
     map_github_to_jira,
     map_jira_to_status,
     map_status_to_jira,
-    update_issue_status,
 )
 
 __all__ = [
@@ -69,18 +66,15 @@ __all__ = [
     # Classes
     "JiraClient",
     # Functions
-    "add_comment",
     "check_dependencies",
     "extract_jira_key",
     "get_client",
-    "get_issue",
     "get_jira_field",
     "get_story_points",
     "is_jira_cli_available",
     "map_github_to_jira",
     "map_jira_to_status",
     "map_status_to_jira",
-    "update_issue_status",
     # Submodules
     "bidirectional",
     "claim",

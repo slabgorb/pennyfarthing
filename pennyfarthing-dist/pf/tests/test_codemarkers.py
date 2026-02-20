@@ -650,21 +650,6 @@ class TestCLI:
             assert parsed["success"] is True
 
 
-class TestMainModule:
-    """python -m pf.codemarkers works."""
-
-    def test_module_runnable(self) -> None:
-        """Module can be invoked with --help."""
-        import subprocess
-        import sys
-
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.codemarkers", "--help"],
-            capture_output=True, text=True, timeout=30,
-        )
-        assert result.returncode == 0
-        assert "analyze" in result.stdout.lower()
-
 
 # ---------------------------------------------------------------------------
 # __init__ re-exports

@@ -96,7 +96,7 @@ class TestConfigModule:
         """Import config module."""
         sys.path.insert(0, str(PROJECT_ROOT))
         try:
-            from pf import config
+            from pf.common import config
             yield config
         finally:
             sys.path.pop(0)

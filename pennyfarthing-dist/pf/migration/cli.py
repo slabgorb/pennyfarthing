@@ -3,7 +3,6 @@ Migration CLI - Click-based CLI for XML schema migration tools.
 
 Usage:
     pf migration [COMMAND] [ARGS]...
-    python -m pf.migration [COMMAND] [ARGS]...
 
 Commands:
     session   Migrate session files to XML format

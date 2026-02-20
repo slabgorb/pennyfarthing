@@ -36,22 +36,37 @@ export interface ContextInfo {
  * @returns Context usage info
  */
 export function getContextUsage(projectDir: string, sessionId?: string): ContextInfo {
-  // Find the check-context.sh script
-  const possiblePaths = [
+  // Find context.py (preferred) or legacy check-context.sh
+  const pythonPaths = [
+    join(projectDir, 'pennyfarthing-dist', 'pf', 'context.py'),
+    join(projectDir, '.pennyfarthing', 'pf', 'context.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context.py'),
+  ];
+  const shellPaths = [
     join(projectDir, 'pennyfarthing-dist', 'scripts', 'core', 'check-context.sh'),
     join(projectDir, '.pennyfarthing', 'scripts', 'core', 'check-context.sh'),
   ];
 
   let scriptPath: string | null = null;
-  for (const path of possiblePaths) {
+  let isPython = false;
+  for (const path of pythonPaths) {
     if (existsSync(path)) {
       scriptPath = path;
+      isPython = true;
       break;
+    }
+  }
+  if (!scriptPath) {
+    for (const path of shellPaths) {
+      if (existsSync(path)) {
+        scriptPath = path;
+        break;
+      }
     }
   }
 
   if (!scriptPath) {
-    return { percent: null, tokens: null, status: null, error: 'check-context.sh not found', baseline: null, usableTokens: null, usablePercent: null, available: null };
+    return { percent: null, tokens: null, status: null, error: 'context.py not found', baseline: null, usableTokens: null, usablePercent: null, available: null };
   }
 
   try {
@@ -64,7 +79,11 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
       env.SESSION_ID = sessionId;
     }
 
-    const output = execSync(`"${scriptPath}"`, {
+    const cmd = isPython
+      ? `python3 "${scriptPath}"${sessionId ? ` --session ${sessionId}` : ''} --project-dir "${projectDir}"`
+      : `"${scriptPath}"`;
+
+    const output = execSync(cmd, {
       encoding: 'utf-8',
       timeout: 5000,
       cwd: projectDir,

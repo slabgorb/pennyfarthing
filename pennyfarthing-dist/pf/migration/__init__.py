@@ -8,7 +8,7 @@ to conform to the XML schema definitions:
 - Workflow step files -> guides/workflow-step-schema.md
 
 Usage:
-    python -m pf.migration [command] [options]
+    pf migration [command] [options]
 
 Commands:
     session   Migrate session files to XML format

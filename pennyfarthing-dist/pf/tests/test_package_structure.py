@@ -10,7 +10,25 @@ These tests verify:
 5. Backwards compatibility for existing imports
 """
 
+import os
+import subprocess
 import sys
+from pathlib import Path
+
+# pennyfarthing-dist/ must be on PYTHONPATH for subprocess -m calls
+_DIST_DIR = str(Path(__file__).resolve().parents[2])
+_ENV = {**os.environ, "PYTHONPATH": _DIST_DIR + os.pathsep + os.environ.get("PYTHONPATH", "")}
+
+
+def _run_module(*args: str) -> subprocess.CompletedProcess[str]:
+    """Run a pf module as subprocess with correct PYTHONPATH."""
+    return subprocess.run(
+        [sys.executable, "-m", *args],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env=_ENV,
+    )
 
 
 class TestCommonPackage:
@@ -40,20 +58,6 @@ class TestCommonPackage:
         assert hasattr(config, "load_yaml_config")
         assert hasattr(config, "load_pennyfarthing_config")
 
-    def test_output_backwards_compatibility(self) -> None:
-        """Old import path should still work for backwards compatibility."""
-        from pf import output
-
-        # Should re-export from common.output
-        assert hasattr(output, "success")
-        assert hasattr(output, "error")
-
-    def test_config_backwards_compatibility(self) -> None:
-        """Old import path should still work for backwards compatibility."""
-        from pf import config
-
-        # Should re-export from common.config
-        assert hasattr(config, "get_project_root")
 
 
 class TestJiraPackage:
@@ -71,7 +75,7 @@ class TestJiraPackage:
         from pf.jira import client
 
         assert hasattr(client, "JiraClient")
-        assert hasattr(client, "get_issue")
+        assert hasattr(client, "get_client")
         assert hasattr(client, "map_status_to_jira")
         assert hasattr(client, "map_jira_to_status")
         assert hasattr(client, "extract_jira_key")
@@ -128,11 +132,10 @@ class TestJiraPackage:
 
     def test_jira_backwards_compatibility(self) -> None:
         """Old-style imports should still work."""
-        # These imports should work for backwards compatibility
-        from pf.jira import STATUS_TO_JIRA, JiraClient, get_issue
+        from pf.jira import STATUS_TO_JIRA, JiraClient, get_client
 
         assert JiraClient is not None
-        assert callable(get_issue)
+        assert callable(get_client)
         assert isinstance(STATUS_TO_JIRA, dict)
 
 
@@ -251,13 +254,7 @@ class TestJiraCLI:
 
     def test_jira_cli_runnable_as_module(self) -> None:
         """python -m pf.jira should work."""
-        import subprocess
-
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.jira", "--help"],
-            capture_output=True,
-            text=True,
-        )
+        result = _run_module("pf.jira", "--help")
         # Should exit 0 with help text
         assert result.returncode == 0
         assert "usage" in result.stdout.lower() or "Usage" in result.stdout
@@ -284,13 +281,7 @@ class TestSprintCLI:
 
     def test_sprint_cli_runnable_as_module(self) -> None:
         """python -m pf.sprint should work."""
-        import subprocess
-
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.sprint", "--help"],
-            capture_output=True,
-            text=True,
-        )
+        result = _run_module("pf.sprint", "--help")
         assert result.returncode == 0
         assert "usage" in result.stdout.lower() or "Usage" in result.stdout
 
@@ -315,45 +306,8 @@ class TestStoryCLI:
 
     def test_story_cli_runnable_as_module(self) -> None:
         """python -m pf.story should work."""
-        import subprocess
-
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.story", "--help"],
-            capture_output=True,
-            text=True,
-        )
+        result = _run_module("pf.story", "--help")
         assert result.returncode == 0
         assert "usage" in result.stdout.lower() or "Usage" in result.stdout
 
 
-class TestOldModuleCompatibility:
-    """Tests ensuring old flat modules still work."""
-
-    def test_jira_sync_module_works(self) -> None:
-        """jira_sync.py should still be importable and functional."""
-        from pf import jira_sync
-
-        assert hasattr(jira_sync, "sync_epic")
-        assert hasattr(jira_sync, "sync_story")
-        assert hasattr(jira_sync, "main")
-
-    def test_jira_bidirectional_sync_module_works(self) -> None:
-        """jira_bidirectional_sync.py should still be importable."""
-        from pf import jira_bidirectional_sync
-
-        assert hasattr(jira_bidirectional_sync, "generate_sync_plan")
-        assert hasattr(jira_bidirectional_sync, "main")
-
-    def test_jira_epic_creation_module_works(self) -> None:
-        """jira_epic_creation.py should still be importable."""
-        from pf import jira_epic_creation
-
-        assert hasattr(jira_epic_creation, "create_epic")
-        assert hasattr(jira_epic_creation, "main")
-
-    def test_jira_sync_story_module_works(self) -> None:
-        """jira_sync_story.py should still be importable."""
-        from pf import jira_sync_story
-
-        assert hasattr(jira_sync_story, "sync_story")
-        assert hasattr(jira_sync_story, "main")
