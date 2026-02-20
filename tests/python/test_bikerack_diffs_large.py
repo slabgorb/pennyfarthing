@@ -16,17 +16,14 @@ Run with: python -m pytest tests/python/test_bikerack_diffs_large.py -v
 from __future__ import annotations
 
 import os
-import tempfile
 import time
 from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
 from rich.console import Console
-from rich.text import Text
 
 from pf.bikerack.diffs_panel import DiffsPanel
-
 
 # ---------------------------------------------------------------------------
 # Helpers — generate large diffs for testing
@@ -79,7 +76,7 @@ def _make_multi_file_large_diff(
     """
     diffs = []
     for path, num_lines in files:
-        ext = os.path.splitext(path)[1] or ".py"
+        _ext = os.path.splitext(path)[1] or ".py"
         diff_lines = [
             f"diff --git a/{path} b/{path}",
             "index aaa..bbb 100644",
@@ -251,7 +248,7 @@ class TestTruncationIndicator:
         # Indicator should not contain box-drawing characters
         box_chars = set("┌┐└┘├┤┬┴┼─│═║╔╗╚╝╠╣╦╩╬")
         for line in indicator_lines:
-            plain = line.encode("ascii", errors="ignore").decode() + line
+            _plain = line.encode("ascii", errors="ignore").decode() + line
             bad = [c for c in line if c in box_chars]
             assert not bad, (
                 f"Truncation indicator contains box-drawing chars: {bad}"
@@ -347,7 +344,7 @@ class TestDiffPagination:
 
         # render_panel shows page 1 (first ~1000 lines)
         result_page1 = panel.render_panel(message)
-        output_page1 = _render_to_string(result_page1)
+        _output_page1 = _render_to_string(result_page1)
 
         # After advancing, should show different content
         assert hasattr(panel, "next_page"), (

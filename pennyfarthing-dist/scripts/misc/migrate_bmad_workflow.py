@@ -14,7 +14,6 @@ Usage: python migrate_bmad_workflow.py [--dry-run] <source-dir> [target-dir]
 
 import argparse
 import re
-import shutil
 import sys
 from pathlib import Path
 

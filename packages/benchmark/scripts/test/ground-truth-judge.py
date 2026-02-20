@@ -13,8 +13,8 @@ Scores based on:
 import json
 import re
 import sys
-from pathlib import Path
 from difflib import SequenceMatcher
+from pathlib import Path
 
 # Add parent to path for pf imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "pennyfarthing-dist"))
@@ -172,7 +172,7 @@ def main():
         sys.exit(1)
 
     # Load response
-    with open(response_file, 'r') as f:
+    with open(response_file) as f:
         response_data = json.load(f)
 
     response_text = response_data.get('result', '')
@@ -187,7 +187,7 @@ def main():
     print(f"\n{'='*60}")
     print(f"GROUND TRUTH EVALUATION: {scenario_name}")
     print(f"{'='*60}")
-    print(f"\nScores:")
+    print("\nScores:")
     print(f"  File Identification:     {scores['file_identification']:5.1f}/20")
     print(f"  Location Identification: {scores['location_identification']:5.1f}/20")
     print(f"  Fix Logic Match:         {scores['fix_logic_match']:5.1f}/40")
@@ -195,7 +195,7 @@ def main():
     print(f"  {'─'*40}")
     print(f"  TOTAL:                   {scores['total']:5.1f}/100")
 
-    print(f"\nDetails:")
+    print("\nDetails:")
     for key, value in scores['details'].items():
         print(f"  {key}: {value}")
 

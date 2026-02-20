@@ -912,7 +912,7 @@ class TestStoryDetailEnrichment:
         """StoryDetailScreen should call fetch_story_detail with story ID."""
         mock_fetch.return_value = {"id": "110-2", "workflow": "tdd", "workflow_phase": "red"}
         ws_data = {"id": "110-2", "title": "Drill", "points": 5, "status": "in-progress"}
-        screen = StoryDetailScreen(story_data=ws_data)
+        _screen = StoryDetailScreen(story_data=ws_data)
         mock_fetch.assert_called_once_with("110-2")
 
     @patch("pf.bikerack.story_detail_data.fetch_story_detail")

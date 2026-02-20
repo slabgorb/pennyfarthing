@@ -12,8 +12,6 @@ import sys
 import time
 from pathlib import Path
 
-import pytest
-
 # Project root for path resolution
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 

@@ -33,12 +33,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-try:
-    import yaml
-except ImportError:
-    print("Error: PyYAML required. Install with: pip install pyyaml", file=sys.stderr)
-    sys.exit(1)
-
 
 def find_project_root() -> Path:
     """Find project root by looking for .pennyfarthing directory."""

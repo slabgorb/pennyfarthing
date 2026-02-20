@@ -401,7 +401,12 @@ export function removeLegacyClaudeDirectories(
   for (const name of legacyDirs) {
     const legacyPath = join(projectRoot, '.claude', name);
     if (pathExists(legacyPath)) {
-      removeSymlinkOrDirectory(legacyPath, options.dryRun);
+      if (!options.dryRun) {
+        // Force-remove legacy directories including any content.
+        // These directories should only contain Pennyfarthing-managed files —
+        // user content now lives in .pennyfarthing/project/ or .claude/project/.
+        removeSync(legacyPath);
+      }
       logger.info(`Removed legacy .claude/${name}`);
     }
   }

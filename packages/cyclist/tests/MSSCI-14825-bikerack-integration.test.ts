@@ -124,7 +124,6 @@ describe('AC2: Graceful shutdown cleanup', () => {
     const content = readFileSync(bikerackPath, 'utf-8');
 
     expect(content).toMatch(/\.bikerack-port/);
-    expect(content).not.toMatch(/\.bikerack-port/);
   });
 });
 
@@ -310,8 +309,6 @@ describe('AC6: Port isolation — no collision', () => {
     // Both use .bikerack-port
     expect(bikerackContent).toMatch(/\.bikerack-port/);
     expect(serverContent).toMatch(/\.bikerack-port/);
-    // Neither should use the old .bikerack-port
-    expect(bikerackContent).not.toMatch(/\.bikerack-port/);
   });
 
   it('BikeRack should use findAvailablePort for conflict resolution', () => {

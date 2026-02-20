@@ -27,6 +27,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-theme](#pf-theme)
   - [pf-theme-creation](#pf-theme-creation)
 - [Tools](#tools)
+  - [pf-bc](#pf-bc)
   - [pf-cyclist](#pf-cyclist)
   - [pf-just](#pf-just)
   - [pf-mermaid](#pf-mermaid)
@@ -323,6 +324,24 @@ DEPRECATED: Use /pf-theme maker instead
 **Related:** [pf-theme](#pf-theme)
 
 ## Tools
+
+### pf-bc
+
+Panel focus management for Cyclist — set, clear, save, and load panel layouts
+
+**Tags:** cyclist, panels, layout, bikerack
+
+**Keywords:** bikerack, cyclist, panel, focus, layout, dockview
+
+**Examples:**
+- Focusing the Sprint panel: `/bc sprint`
+- Saving current layout: `/bc save my-layout`
+- Resetting panel focus: `/bc reset`
+
+**Anti-patterns:**
+- Don't manually edit config.local.yaml to set panel focus — use this skill
+
+**Related:** [pf-cyclist](#pf-cyclist)
 
 ### pf-cyclist
 

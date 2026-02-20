@@ -13,7 +13,7 @@ Run with: python -m pytest tests/python/test_bikerack_portrait_header.py -v
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -189,7 +189,6 @@ class TestAgentHeaderWithPortrait:
 
     async def test_header_uses_horizontal_layout_with_portrait(self, app):
         """AgentHeader should use Horizontal layout when portrait is available."""
-        from textual.containers import Horizontal
 
         async with app.run_test() as pilot:
             header = app.query_one("#agent-header")
