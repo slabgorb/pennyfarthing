@@ -1,4 +1,4 @@
-import { readdirSync, renameSync, unlinkSync, existsSync } from 'fs';
+import { readdirSync, renameSync, unlinkSync, existsSync, chmodSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -212,6 +212,27 @@ async function updateInstalledContent(
   await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
   if (!dryRun) {
     ensureSettingsSymlink(projectRoot);
+  }
+
+  // Ensure project hook scripts have execute permission
+  if (!dryRun) {
+    const projectHooksDir = join(projectRoot, '.pennyfarthing/project/hooks');
+    if (existsSync(projectHooksDir)) {
+      try {
+        for (const file of readdirSync(projectHooksDir)) {
+          if (file.endsWith('.sh')) {
+            const hookPath = join(projectHooksDir, file);
+            const stats = statSync(hookPath);
+            if ((stats.mode & 0o111) === 0) {
+              chmodSync(hookPath, 0o755);
+              logger.updated(`${file} → executable`);
+            }
+          }
+        }
+      } catch {
+        // Ignore errors reading project hooks dir
+      }
+    }
   }
 
   // Refresh git hooks (updates stale copies in .git/hooks/)
@@ -443,6 +464,10 @@ export function migrateTemplateFiles(
       // Ensure destination directory exists
       ensureDirSync(join(fullNewPath, '..'));
       renameSync(fullOldPath, fullNewPath);
+      // Ensure shell scripts are executable after migration
+      if (newPath.endsWith('.sh')) {
+        chmodSync(fullNewPath, 0o755);
+      }
     }
     migrated++;
   }
