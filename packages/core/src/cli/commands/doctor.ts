@@ -2870,6 +2870,26 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
       status: 'pass',
       detail: undefined
     });
+
+    // Check execute permission on each shell script in project hooks
+    try {
+      const hookFiles = readdirSync(projectHooksPath).filter(f => f.endsWith('.sh'));
+      for (const file of hookFiles) {
+        const hookPath = join(projectHooksPath, file);
+        const stats = statSync(hookPath);
+        const isExecutable = (stats.mode & 0o111) !== 0;
+        results.push({
+          name: `layout/project-hooks/${file}`,
+          status: isExecutable ? 'pass' : 'warn',
+          detail: isExecutable ? undefined : 'Not executable — will cause Permission denied on session start',
+          fix: isExecutable ? undefined : () => {
+            chmodSync(hookPath, 0o755);
+          }
+        });
+      }
+    } catch {
+      // Ignore read errors
+    }
   }
 
   // 8. Old project hooks at .claude/project/hooks/
@@ -2897,6 +2917,16 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
             // Ignore
           }
           removeSync(oldProjectHooksPath);
+        }
+        // Ensure migrated shell scripts are executable
+        try {
+          for (const file of readdirSync(projectHooksPath)) {
+            if (file.endsWith('.sh')) {
+              chmodSync(join(projectHooksPath, file), 0o755);
+            }
+          }
+        } catch {
+          // Ignore
         }
       }
     });
