@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useStory } from '../../hooks/useStory';
-import { useSprint, type SprintStory, type SprintEpic, type FutureEpic } from '../../hooks/useSprint';
+import { useSprint, type SprintStory, type SprintEpic, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
 
 // =============================================================================
 // Original SprintPanel (unchanged)
@@ -687,6 +687,28 @@ export function EnhancedSprintPanel(): React.ReactElement {
                   >
                     Promote
                   </Button>
+                )}
+                {epic.children && epic.children.length > 0 && (
+                  <div className="future-epic-children" data-testid={`future-children-${epic.id}`}>
+                    {epic.children.map((child: FutureEpicChild) => (
+                      <div
+                        key={child.id}
+                        className="future-epic-child"
+                        data-testid={`future-child-${child.id}`}
+                      >
+                        <span className="future-child-title">{child.title}</span>
+                        <span className="future-child-points">{child.estimatedPoints} pts</span>
+                        <span className="future-child-stories">{child.storyCount} stories</span>
+                        <Badge
+                          variant={child.status === 'blocked' ? 'destructive' : 'secondary'}
+                          className="future-child-status"
+                          data-status={child.status}
+                        >
+                          {child.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             );

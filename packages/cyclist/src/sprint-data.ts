@@ -43,18 +43,28 @@ export interface SprintEpic {
   hasContext?: boolean;
 }
 
+export interface FutureEpicChild {
+  id: string;
+  title: string;
+  estimatedPoints: number;
+  status: 'ready' | 'blocked' | 'planning';
+  jiraKey: string | null;
+  storyCount: number;
+}
+
 export interface FutureEpic {
   id: string;
   title: string;
   description: string;
   estimatedPoints: number;
   status: 'ready' | 'blocked' | 'planning';
+  children: FutureEpicChild[];
 }
 
 export interface SprintMetrics {
   completed: { points: number; stories: number; epics: number };
   current: { done: number; inProgress: number; remaining: number; totalPoints: number; storiesDone: number; storiesInProgress: number; storiesRemaining: number };
-  future: { totalPoints: number; initiatives: number };
+  future: { totalPoints: number; initiatives: number; epics: number };
   velocity: number;
 }
 
@@ -119,7 +129,7 @@ interface FutureInitiative {
   description?: string;
   status?: string;
   total_points?: number;
-  epics?: YamlEpic[];
+  epics?: (YamlEpic | string)[];
 }
 
 interface FutureYaml {
@@ -459,9 +469,26 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   const rawInitiatives = future.future?.initiatives ?? [];
   const initiatives = mergeInitiativeShards(rawInitiatives, sprintDir);
 
+  let futureEpicCount = 0;
   for (const initiative of initiatives) {
     // Skip completed initiatives
     if (initiative.status === 'complete') continue;
+
+    // Resolve child epics from initiative's epics refs
+    const rawEpics = initiative.epics ?? [];
+    const resolvedChildEpics = mergeEpicShards(rawEpics, sprintDir);
+    const children: FutureEpicChild[] = resolvedChildEpics.map((epic) => {
+      const storyPoints = (epic.stories ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+      return {
+        id: String(epic.id),
+        title: epic.title.replace(/^Epic:\s*/i, ''),
+        estimatedPoints: storyPoints,
+        status: mapFutureStatus(epic.status),
+        jiraKey: epic.jira ?? null,
+        storyCount: (epic.stories ?? []).length,
+      };
+    });
+    futureEpicCount += children.length;
 
     // Add the initiative itself as a promotable epic
     futureEpics.push({
@@ -470,6 +497,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       description: initiative.description ?? '',
       estimatedPoints: initiative.total_points ?? 0,
       status: mapFutureStatus(initiative.status),
+      children,
     });
   }
 
@@ -495,7 +523,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     metrics: {
       completed: { points: archivedDonePoints, stories: archivedDoneStories, epics: completedEpicCount },
       current: { done, inProgress, remaining, totalPoints: done + inProgress + remaining, storiesDone, storiesInProgress, storiesRemaining },
-      future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length },
+      future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length, epics: futureEpicCount },
       velocity: done,
     },
   };
