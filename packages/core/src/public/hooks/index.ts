@@ -14,9 +14,6 @@ export type { GitStatusData } from './useGitStatus';
 export { useTodos } from './useTodos';
 export type { TodoItem } from './useTodos';
 
-export { useBackgroundTasks } from './useBackgroundTasks';
-export type { BackgroundTask } from './useBackgroundTasks';
-
 export { useDiffs } from './useDiffs';
 export type { DiffData } from './useDiffs';
 

@@ -25,7 +25,7 @@ import React from 'react';
 // ============================================================================
 
 const LEFT_SIDEBAR_PANELS = ['changed', 'diffs', 'debug', 'audit-log'] as const;
-const RIGHT_SIDEBAR_PANELS = ['sprint', 'progress', 'background', 'git', 'settings'] as const;
+const RIGHT_SIDEBAR_PANELS = ['sprint', 'progress', 'git', 'settings'] as const;
 const ALL_PANEL_IDS = [...LEFT_SIDEBAR_PANELS, 'message', ...RIGHT_SIDEBAR_PANELS];
 
 // ============================================================================

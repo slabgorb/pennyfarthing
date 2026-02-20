@@ -43,7 +43,6 @@ const PANEL_IDS = {
   WORKFLOW: 'workflow',
   AC: 'ac',
   TODO: 'todo',
-  BACKGROUND: 'background',
   SETTINGS: 'settings',
   PROGRESS: 'progress',
   TANDEM: 'tandem',
@@ -133,10 +132,10 @@ describe('AC2: DockviewWorkspace exports and structure', () => {
     expect(typeof module.registerPanelComponent).toBe('function');
   });
 
-  it('should export PANEL_INVENTORY with 14 panels', async () => {
+  it('should export PANEL_INVENTORY with 13 panels', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(12);
   });
 
   it('should export PanelAdapter component', async () => {
@@ -191,7 +190,6 @@ describe('AC4: Panel draggability configuration', () => {
     expect(PANEL_INVENTORY.WORKFLOW).toBe('workflow');
     expect(PANEL_INVENTORY.AC).toBe('ac');
     expect(PANEL_INVENTORY.TODO).toBe('todo');
-    expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');
     expect(PANEL_INVENTORY.TANDEM).toBe('tandem');
   });
@@ -246,7 +244,6 @@ describe('AC5: Layout persistence', () => {
     expect(layout.rightSidebar.panels).toContain('workflow');
     expect(layout.rightSidebar.panels).toContain('ac');
     expect(layout.rightSidebar.panels).toContain('todo');
-    expect(layout.rightSidebar.panels).toContain('background');
     expect(layout.rightSidebar.panels).toContain('settings');
     expect(layout.rightSidebar.panels).toContain('tandem');
   });
@@ -331,7 +328,7 @@ describe('AC8: Panel functionality preserved', () => {
   it('should export PANEL_INVENTORY constant', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(12);
   });
 
   it('should have all expected panel IDs', async () => {
@@ -346,7 +343,6 @@ describe('AC8: Panel functionality preserved', () => {
     expect(PANEL_INVENTORY.WORKFLOW).toBe('workflow');
     expect(PANEL_INVENTORY.AC).toBe('ac');
     expect(PANEL_INVENTORY.TODO).toBe('todo');
-    expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');
     expect(PANEL_INVENTORY.PROGRESS).toBe('progress');
     expect(PANEL_INVENTORY.TANDEM).toBe('tandem');

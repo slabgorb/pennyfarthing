@@ -158,36 +158,12 @@ export interface BackgroundTask {
 // Background task store
 let backgroundTasks: BackgroundTask[] = [];
 
-// Callback for task completion notifications
-let onBackgroundTaskComplete: ((task: BackgroundTask) => void) | null = null;
-
-// Callback for task start notifications (Story 35-16)
-let onBackgroundTaskStart: ((task: BackgroundTask) => void) | null = null;
-
-/**
- * Register callback for background task completion
- */
-export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void {
-  onBackgroundTaskComplete = callback;
-}
-
-/**
- * Register callback for background task start (Story 35-16)
- */
-export function setBackgroundTaskStartCallback(callback: (task: BackgroundTask) => void): void {
-  onBackgroundTaskStart = callback;
-}
-
 /**
  * Track a new background task
  */
 export function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void {
   const newTask: BackgroundTask = { ...task, status: 'pending' };
   backgroundTasks.push(newTask);
-  // Trigger start callback (Story 35-16)
-  if (onBackgroundTaskStart) {
-    onBackgroundTaskStart(newTask);
-  }
 }
 
 /**
@@ -231,10 +207,6 @@ export function completeBackgroundTask(
     task.success = success;
     task.output = output;
     task.error = error;
-    // Trigger completion callback
-    if (onBackgroundTaskComplete) {
-      onBackgroundTaskComplete(task);
-    }
     return task;
   }
   return null;
@@ -841,9 +813,6 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               // Truncate output to avoid memory bloat
               const rawOutput = event.attributes['tool_output'] as string;
               task.output = rawOutput?.substring(0, 2000);
-              if (onBackgroundTaskComplete) {
-                onBackgroundTaskComplete({ ...task });
-              }
             }
           }
         } catch { /* ignore parse errors */ }

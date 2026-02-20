@@ -11,7 +11,6 @@ export { GitPanel } from './GitPanel';
 export { WorkflowPanel } from './WorkflowPanel';
 export { ACPanel } from './ACPanel';
 export { TodoPanel } from './TodoPanel';
-export { BackgroundPanel } from './BackgroundPanel';
 export { DiffsPanel } from './DiffsPanel';
 export { DiffView } from './DiffView';
 export { DebugPanel } from './DebugPanel';

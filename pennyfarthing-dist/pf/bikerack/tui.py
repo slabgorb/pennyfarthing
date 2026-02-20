@@ -25,7 +25,6 @@ from textual.widgets import Footer, Header, Static, Tab, Tabs
 
 from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack.audit_log_panel import AuditLogPanel
-from pf.bikerack.background_panel import BackgroundPanel
 from pf.bikerack.base_panel import get_panel_icon
 from pf.bikerack.context_meter_footer import ContextMeterFooter
 from pf.bikerack.debug_panel import DebugPanel
@@ -77,7 +76,6 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("sprint", "Sprint"),
     ("git", "Git"),
     ("diffs", "Diffs"),
-    ("background", "Background"),
     ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
@@ -90,7 +88,6 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
     "diffs": "Diffs",
     "todo": "Todo",
     "workflow": "Workflow",
-    "background": "Background",
     "audit-log": "Audit Log",
     "ac": "Acceptance Criteria",
     "debug": "Debug",
@@ -438,10 +435,9 @@ class BikeRackApp(App):
         Binding("1", "switch_panel('sprint')", "Sprint", show=False),
         Binding("2", "switch_panel('git')", "Git", show=False),
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
-        Binding("4", "switch_panel('background')", "Background", show=False),
-        Binding("5", "switch_panel('audit-log')", "Audit Log", show=False),
-        Binding("6", "switch_panel('debug')", "Debug", show=False),
-        Binding("7", "switch_panel('progress')", "Progress", show=False),
+        Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
+        Binding("5", "switch_panel('debug')", "Debug", show=False),
+        Binding("6", "switch_panel('progress')", "Progress", show=False),
         Binding("bracketright", "next_panel", "]Next"),
         Binding("bracketleft", "prev_panel", "[Prev"),
         Binding("tab", "next_panel", show=False, priority=True),
@@ -486,7 +482,6 @@ class BikeRackApp(App):
             yield SprintPanel(client=self._client, id="panel-sprint")
             yield GitPanel(client=self._client, id="panel-git")
             yield DiffsPanel(client=self._client, id="panel-diffs")
-            yield BackgroundPanel(client=self._client, id="panel-background")
             yield AuditLogPanel(client=self._client, id="panel-audit-log")
             yield DebugPanel(client=self._client, id="panel-debug")
             yield ProgressPanel(client=self._client, id="panel-progress")

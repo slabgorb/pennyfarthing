@@ -420,7 +420,6 @@ describe('AC4: Tab headers use Title Case', () => {
       workflow: 'Workflow',
       ac: 'AC',
       todo: 'Todo',
-      background: 'Subagents',
       git: 'Git',
       settings: 'Settings',
       progress: 'Progress',
@@ -460,7 +459,6 @@ describe('AC4: Tab headers use Title Case', () => {
       debug: 'Debug',
       sprint: 'Sprint',
       progress: 'Progress',
-      background: 'Subagents',
       git: 'Git',
       settings: 'Settings',
     };

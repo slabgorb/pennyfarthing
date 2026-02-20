@@ -19,8 +19,6 @@ export { createTelemetryRouter } from './telemetry.js';
 export { createEvaluationRouter } from './evaluation.js';
 // 35-1: Settings API for contextual settings
 export { createSettingsRouter, getSettingsForWebSocket } from './settings.js';
-// 35-16: Background tasks API
-export { createBackgroundTasksRouter, getBackgroundTaskClients, broadcastBackgroundTaskEvent, initBackgroundTaskBroadcast } from './background-tasks.js';
 // MSSCI-11734: Enriched spans API
 export { createSpansRouter } from './spans.js';
 // Bell mode WebSocket broadcast

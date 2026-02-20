@@ -5,7 +5,6 @@ import { join } from 'path';
 import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
 import { getPersonaClients, broadcastPersona, getStreamingState, setStreamingState } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
-import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
@@ -482,9 +481,6 @@ export function setupWebSocketServers(
   // WebSocket server for livereload at /ws/livereload (dev mode)
   const livereloadWss = new WebSocketServer({ noServer: true });
 
-  // WebSocket server for background tasks at /ws/background-tasks (Story 35-16)
-  const backgroundTasksWss = new WebSocketServer({ noServer: true });
-
   // WebSocket server for story updates at /ws/story (MSSCI-11943)
   const storyWss = new WebSocketServer({ noServer: true });
 
@@ -556,10 +552,6 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/livereload') {
       livereloadWss.handleUpgrade(request, socket, head, (ws) => {
         livereloadWss.emit('connection', ws, request);
-      });
-    } else if (pathname === '/ws/background-tasks') {
-      backgroundTasksWss.handleUpgrade(request, socket, head, (ws) => {
-        backgroundTasksWss.emit('connection', ws, request);
       });
     } else if (pathname === '/ws/story') {
       storyWss.handleUpgrade(request, socket, head, (ws) => {
@@ -683,29 +675,6 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       tokenStatsClients.delete(ws);
-    });
-  });
-
-  // Handle background tasks WebSocket connections (Story 35-16)
-  const backgroundTaskClients = getBackgroundTaskClients();
-  backgroundTasksWss.on('connection', (ws: WebSocket) => {
-    // Add client to broadcast set
-    backgroundTaskClients.add(ws);
-
-    // Send initial tasks on connection
-    const tasks = getBackgroundTasks();
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'init', tasks }));
-    }
-
-    // Remove client on disconnect
-    ws.on('close', () => {
-      backgroundTaskClients.delete(ws);
-    });
-
-    // Handle errors gracefully
-    ws.on('error', () => {
-      backgroundTaskClients.delete(ws);
     });
   });
 

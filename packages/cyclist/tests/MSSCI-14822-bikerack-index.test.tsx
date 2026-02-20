@@ -36,7 +36,6 @@ const ALL_PANELS = [
   'diffs',
   'todos',
   'workflow',
-  'background',
   'audit',
   'ac',
   'debug',

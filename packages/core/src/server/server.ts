@@ -33,8 +33,6 @@ import {
   createEvaluationRouter,
   createSettingsRouter,
   initTokenStatsBroadcast,
-  createBackgroundTasksRouter,
-  initBackgroundTaskBroadcast,
   createSpansRouter,
   createHookRequestRouter,
   createIdentityRouter,
@@ -73,7 +71,7 @@ export { setOTLPProvider } from './otlp-receiver.js';
 export type { OTLPProvider } from './otlp-receiver.js';
 
 // Re-exports for Cyclist and external consumers
-export { broadcastStats, initTokenStatsBroadcast, initBackgroundTaskBroadcast } from './api/index.js';
+export { broadcastStats, initTokenStatsBroadcast } from './api/index.js';
 export { getStoryInfo } from './story-parser.js';
 export type { StoryInfo, WorkflowStep, CriteriaItem } from './story-parser.js';
 export { getGitInfo, getAllReposGitInfo, getAllReposGitInfoAsync } from './api/index.js';
@@ -184,7 +182,6 @@ app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
 app.use('/api/settings', createSettingsRouter());
-app.use('/api/background-tasks', createBackgroundTasksRouter());
 app.use('/api/spans', createSpansRouter());
 app.use('/api/hook-request', createHookRequestRouter());
 app.use('/api/identity', createIdentityRouter());
@@ -254,7 +251,6 @@ app.post('/api/bell-consumed', (req, res) => {
 
 // Initialize broadcast callbacks
 initTokenStatsBroadcast();
-initBackgroundTaskBroadcast();
 
 // =============================================================================
 // Server Factory

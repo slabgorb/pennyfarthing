@@ -11,7 +11,6 @@ Shared bash libraries sourced by other scripts.
 | `retry.sh` | Retry logic with exponential backoff |
 | `checkpoint.sh` | Checkpointing for long-running operations |
 | `file-lock.sh` | File locking utilities |
-| `background-tasks.sh` | Background task management |
 | `find-root.sh` | Project root finder |
 
 ## Usage

@@ -45,7 +45,6 @@ import {
   type CyclistSettings,
   type SettingsInput,
 } from '@pennyfarthing/core/dist/server/settings.js';
-import { broadcastBackgroundTaskEvent } from '@pennyfarthing/core/dist/server/api/background-tasks.js';
 import { setBellMode } from '@pennyfarthing/core/dist/server/bell-mode.js';
 // Cyclist modules (real OTLP, WebSocket, ClaudeService, utilities)
 import { parseToolStats, type ToolStats, createEmptyStats } from '@pennyfarthing/cyclist/dist/tool-stats.js';
@@ -64,8 +63,6 @@ import {
   getAuditLogStats,
   getUserEmail,
   setUserEmailCallback,
-  setBackgroundTaskCallback,
-  setBackgroundTaskStartCallback,
   type BackgroundTask,
   trackBackgroundTask,
   completeBackgroundTask,
@@ -87,7 +84,6 @@ import {
   IPC_AUDIT_LOG_CHANNELS,
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
-  IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_LAYOUT_CHANNELS,
   IPC_AVATAR_CHANNELS,
@@ -141,7 +137,6 @@ export {
   IPC_AUDIT_LOG_CHANNELS,
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
-  IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
   IPC_LAYOUT_CHANNELS,
@@ -947,12 +942,6 @@ export function setupDataIPCHandlers(ipcMain: {
     };
   });
 
-  // MSSCI-12784: Background tasks handler - returns all current tasks
-  // Used when Background tab opens to get accurate snapshot
-  ipcMain.handle(IPC_BACKGROUND_TASK_CHANNELS.TASK_GET_ALL, async () => {
-    return getBackgroundTasks();
-  });
-
   console.log('Data IPC handlers registered:', getDataChannels());
 }
 
@@ -997,23 +986,6 @@ export function startProjectWatchers(): void {
     console.log(`User email discovered: ${email}`);
   });
   console.log('User email callback registered for OTLP broadcasts');
-
-  // 35-16: Register background task start callback
-  // Broadcast to BOTH Electron IPC and WebSocket clients
-  setBackgroundTaskStartCallback((task: BackgroundTask) => {
-    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_STARTED, task);
-    broadcastBackgroundTaskEvent('task:started', task);
-    console.log(`Background task started: ${task.subagentType} - ${task.description}`);
-  });
-
-  // 31-15: Register background task completion callback
-  // Broadcast to BOTH Electron IPC and WebSocket clients
-  setBackgroundTaskCallback((task: BackgroundTask) => {
-    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
-    broadcastBackgroundTaskEvent('task:completed', task);
-    console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
-  });
-  console.log('Background task callbacks registered for OTLP broadcasts');
 
   // Register story update callback to bridge WebSocket to Electron IPC
   // This fixes panels not updating without page reload

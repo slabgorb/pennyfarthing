@@ -82,7 +82,6 @@ def bc():
       diffs       - Focus on Diffs panel
       todo        - Focus on Todo panel
       workflow    - Focus on Workflow panel
-      background  - Focus on Background panel
       audit-log   - Focus on Audit Log panel
       ac          - Focus on Acceptance Criteria panel
       debug       - Focus on Debug panel

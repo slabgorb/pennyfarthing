@@ -45,7 +45,6 @@ import {
   WorkflowPanel,
   ACPanel,
   TodoPanel,
-  BackgroundPanel,
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
@@ -73,7 +72,6 @@ registerPanelComponent(PANEL_INVENTORY.SPRINT, EnhancedSprintPanel);
 registerPanelComponent(PANEL_INVENTORY.WORKFLOW, WorkflowPanel);
 registerPanelComponent(PANEL_INVENTORY.AC, ACPanel);
 registerPanelComponent(PANEL_INVENTORY.TODO, TodoPanel);
-registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 registerPanelComponent(PANEL_INVENTORY.TANDEM, TandemPanel);
 

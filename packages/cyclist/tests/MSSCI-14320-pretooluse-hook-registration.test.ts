@@ -33,7 +33,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       const cyclistHook = settings.hooks.PreToolUse.find(
         (entry: { hooks?: Array<{ command?: string }> }) =>
           entry.hooks?.some((h) =>
-            h.command?.includes('cyclist-pretooluse-hook')
+            h.command?.includes('cyclist-pretooluse')
           )
       );
 
@@ -47,7 +47,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       const cyclistHook = settings.hooks.PreToolUse.find(
         (entry: { hooks?: Array<{ command?: string }> }) =>
           entry.hooks?.some((h) =>
-            h.command?.includes('cyclist-pretooluse-hook')
+            h.command?.includes('cyclist-pretooluse')
           )
       );
 
@@ -62,27 +62,26 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       const cyclistHook = settings.hooks.PreToolUse.find(
         (entry: { hooks?: Array<{ command?: string; type?: string }> }) =>
           entry.hooks?.some((h) =>
-            h.command?.includes('cyclist-pretooluse-hook')
+            h.command?.includes('cyclist-pretooluse')
           )
       );
 
       expect(cyclistHook?.hooks?.[0]?.type).toBe('command');
     });
 
-    it('should reference .sh wrapper, not .js file', () => {
+    it('should invoke via pf.sh hooks wrapper', () => {
       if (!settingsExist) return;
       const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
 
       const cyclistHook = settings.hooks.PreToolUse.find(
         (entry: { hooks?: Array<{ command?: string }> }) =>
           entry.hooks?.some((h) =>
-            h.command?.includes('cyclist-pretooluse-hook')
+            h.command?.includes('cyclist-pretooluse')
           )
       );
 
       const command = cyclistHook?.hooks?.[0]?.command || '';
-      expect(command).toContain('.sh');
-      expect(command).not.toContain('.js');
+      expect(command).toContain('pf.sh hooks');
     });
   });
 });

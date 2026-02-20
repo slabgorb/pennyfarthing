@@ -377,46 +377,6 @@ describe('AC5: Background task lifecycle', () => {
     assert.ok(completed!.durationMs! >= 0, 'Should have durationMs');
   });
 
-  it('setBackgroundTaskCallback fires on task completion', async () => {
-    const {
-      trackBackgroundTask,
-      completeBackgroundTask,
-      setBackgroundTaskCallback,
-    } = await import('./otlp-receiver.js');
-
-    let callbackFired = false;
-    setBackgroundTaskCallback(() => { callbackFired = true; });
-
-    trackBackgroundTask({
-      taskId: 'cb-1',
-      description: 'Callback test',
-      subagentType: 'general-purpose',
-      startedAt: Date.now(),
-    });
-    completeBackgroundTask('cb-1', true, 'result');
-
-    // Current stub: setBackgroundTaskCallback is delegating (no-op without provider)
-    // trackBackgroundTask/completeBackgroundTask are plain no-ops
-    assert.strictEqual(callbackFired, true,
-      'Completion callback should fire');
-  });
-
-  it('setBackgroundTaskStartCallback fires on task tracking', async () => {
-    const { trackBackgroundTask, setBackgroundTaskStartCallback } = await import('./otlp-receiver.js');
-
-    let startFired = false;
-    setBackgroundTaskStartCallback(() => { startFired = true; });
-
-    trackBackgroundTask({
-      taskId: 'start-cb-1',
-      description: 'Start callback test',
-      subagentType: 'general-purpose',
-      startedAt: Date.now(),
-    });
-
-    assert.strictEqual(startFired, true,
-      'Start callback should fire when task is tracked');
-  });
 });
 
 // =============================================================================

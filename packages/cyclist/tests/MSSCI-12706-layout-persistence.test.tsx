@@ -85,7 +85,7 @@ const mockNativeDockviewLayout: SerializedDockview = {
         {
           type: 'leaf',
           data: {
-            views: ['sprint', 'progress', 'background', 'git', 'settings'],
+            views: ['sprint', 'progress', 'git', 'settings'],
             activeView: 'sprint',
             id: 'right-sidebar',
           },
@@ -105,7 +105,6 @@ const mockNativeDockviewLayout: SerializedDockview = {
     message: { id: 'message', contentComponent: 'PanelAdapter', title: 'Message', params: { panelId: 'message' } },
     sprint: { id: 'sprint', contentComponent: 'PanelAdapter', title: 'Sprint', params: { panelId: 'sprint' } },
     progress: { id: 'progress', contentComponent: 'PanelAdapter', title: 'Progress', params: { panelId: 'progress' } },
-    background: { id: 'background', contentComponent: 'PanelAdapter', title: 'Background', params: { panelId: 'background' } },
     git: { id: 'git', contentComponent: 'PanelAdapter', title: 'Git', params: { panelId: 'git' } },
     settings: { id: 'settings', contentComponent: 'PanelAdapter', title: 'Settings', params: { panelId: 'settings' } },
   },
@@ -320,7 +319,7 @@ describe('AC2: Layout state restored on app startup', () => {
 
     expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
     expect(screen.getByTestId('grid-width')).toHaveTextContent('1200');
-    expect(screen.getByTestId('panel-count')).toHaveTextContent('9');
+    expect(screen.getByTestId('panel-count')).toHaveTextContent('8');
   });
 
   it('should set loading to false after fetch completes', async () => {

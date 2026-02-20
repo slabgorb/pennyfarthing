@@ -57,8 +57,6 @@ export interface OTLPProvider {
 
   // background-tasks.ts
   getBackgroundTasks(): BackgroundTask[];
-  setBackgroundTaskStartCallback(callback: (task: BackgroundTask) => void): void;
-  setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void;
 
   // otlp.ts
   processOTLPLogs(body: unknown): void;
@@ -92,8 +90,6 @@ const _emptyStats = (): TokenStats => ({
 let _tokenStats: TokenStats = _emptyStats();
 let _tokenStatsListeners: Array<(stats: TokenStats) => void> = [];
 let _backgroundTasks: BackgroundTask[] = [];
-let _backgroundTaskStartCb: ((task: BackgroundTask) => void) | null = null;
-let _backgroundTaskCompleteCb: ((task: BackgroundTask) => void) | null = null;
 let _auditLog: AuditLogEntry[] = [];
 let _toolEventListeners: Array<(event: ToolEvent) => void> = [];
 let _userEmail: string | null = null;
@@ -115,16 +111,6 @@ export function addTokenStatsListener(callback: (stats: TokenStats) => void): vo
 export function getBackgroundTasks(): BackgroundTask[] {
   if (_provider) return _provider.getBackgroundTasks();
   return [..._backgroundTasks];
-}
-
-export function setBackgroundTaskStartCallback(callback: (task: BackgroundTask) => void): void {
-  if (_provider) return _provider.setBackgroundTaskStartCallback(callback);
-  _backgroundTaskStartCb = callback;
-}
-
-export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void {
-  if (_provider) return _provider.setBackgroundTaskCallback(callback);
-  _backgroundTaskCompleteCb = callback;
 }
 
 export function processOTLPLogs(body: unknown): void {
@@ -189,8 +175,6 @@ export function resetEventStore(): void {
   _tokenStats = _emptyStats();
   _tokenStatsListeners = [];
   _backgroundTasks = [];
-  _backgroundTaskStartCb = null;
-  _backgroundTaskCompleteCb = null;
   _auditLog = [];
   _toolEventListeners = [];
   _userEmail = null;
@@ -315,7 +299,6 @@ export function trackBackgroundTask(task: Partial<BackgroundTask>): void {
     status: 'pending',
   };
   _backgroundTasks.push(fullTask);
-  if (_backgroundTaskStartCb) _backgroundTaskStartCb(fullTask);
 }
 
 export function getBackgroundTaskByToolId(toolId: string): BackgroundTask | undefined {
@@ -331,7 +314,6 @@ export function completeBackgroundTask(taskId: string, success: boolean, result?
   task.durationMs = task.completedAt - task.startedAt;
   if (result) task.output = result;
   if (error) task.error = error;
-  if (_backgroundTaskCompleteCb) _backgroundTaskCompleteCb(task);
   return task;
 }
 

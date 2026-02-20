@@ -353,7 +353,7 @@ describe('VALID_FOCUS_PANELS constant', () => {
   it('should contain all expected BikeRack panels', () => {
     const expected = [
       'sprint', 'git', 'diffs', 'todo', 'workflow',
-      'background', 'audit-log', 'changed', 'ac', 'debug', 'settings',
+      'audit-log', 'changed', 'ac', 'debug', 'settings',
     ];
     for (const panel of expected) {
       expect(VALID_FOCUS_PANELS).toContain(panel);

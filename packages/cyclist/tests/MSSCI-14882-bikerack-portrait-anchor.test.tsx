@@ -317,7 +317,7 @@ describe('AC5: Existing Cyclist portrait unchanged', () => {
 // ---------------------------------------------------------------------------
 
 describe('Structural: BikeRack panel count updated', () => {
-  it('BIKERACK_PANELS should have 10 entries (changed panel merged into git panel)', () => {
-    expect(BIKERACK_PANELS.length).toBe(10);
+  it('BIKERACK_PANELS should have 9 entries (background removed)', () => {
+    expect(BIKERACK_PANELS.length).toBe(9);
   });
 });

@@ -20,7 +20,6 @@ import {
   getProjectDir,
   setOTLPProvider,
   initTokenStatsBroadcast,
-  initBackgroundTaskBroadcast,
 } from '@pennyfarthing/core/server';
 
 // Import Cyclist's real WebSocket implementation (1600+ lines)
@@ -32,8 +31,6 @@ import {
   getTokenStats as realGetTokenStats,
   addTokenStatsListener as realAddTokenStatsListener,
   getBackgroundTasks as realGetBackgroundTasks,
-  setBackgroundTaskStartCallback as realSetBackgroundTaskStartCallback,
-  setBackgroundTaskCallback as realSetBackgroundTaskCallback,
   parseOTLPLogs,
   processLogEvents,
   parseOTLPMetrics,
@@ -50,9 +47,9 @@ import {
 import type { OTLPProvider } from '@pennyfarthing/core/server';
 
 // Wire the real OTLP implementation into core's API route stubs.
-// Core's server.ts calls initTokenStatsBroadcast() and initBackgroundTaskBroadcast()
-// at module load (before this runs), so those first calls hit the stub (no-ops).
-// After setting the provider, we re-call both to register the real broadcast callbacks.
+// Core's server.ts calls initTokenStatsBroadcast() at module load (before this runs),
+// so the first call hits the stub (no-op). After setting the provider, we re-call it
+// to register the real broadcast callback.
 //
 // Note: Cyclist's TokenStats/ToolEvent types are structurally compatible with core's
 // but TypeScript sees them as distinct nominal types. The provider cast is safe because
@@ -80,12 +77,6 @@ const provider: OTLPProvider = {
   },
   getBackgroundTasks() {
     return realGetBackgroundTasks() as unknown as ReturnType<OTLPProvider['getBackgroundTasks']>;
-  },
-  setBackgroundTaskStartCallback(callback) {
-    realSetBackgroundTaskStartCallback(callback as unknown as Parameters<typeof realSetBackgroundTaskStartCallback>[0]);
-  },
-  setBackgroundTaskCallback(callback) {
-    realSetBackgroundTaskCallback(callback as unknown as Parameters<typeof realSetBackgroundTaskCallback>[0]);
   },
   processOTLPLogs(body: unknown) {
     const rawEvents = parseOTLPLogs(body);
@@ -118,7 +109,6 @@ setOTLPProvider(provider);
 // Re-initialize broadcast callbacks now that the real provider is set.
 // The first calls during core's module load were no-ops (stub was active).
 initTokenStatsBroadcast();
-initBackgroundTaskBroadcast();
 
 /**
  * Create HTTP server with Cyclist's WebSocket support.

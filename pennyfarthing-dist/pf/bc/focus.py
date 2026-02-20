@@ -29,7 +29,6 @@ VALID_PANELS = [
     "diffs",
     "todo",
     "workflow",
-    "background",
     "audit-log",
     "ac",
     "debug",

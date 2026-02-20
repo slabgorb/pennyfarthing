@@ -163,7 +163,6 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     'diffs',
     'todos',
     'workflow',
-    'background',
     'audit',
     'ac',
     'debug',
@@ -172,7 +171,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     'progress',
   ];
 
-  it('PANEL_REGISTRY should have exactly 12 entries', () => {
+  it('PANEL_REGISTRY should have exactly 11 entries', () => {
     const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
@@ -183,7 +182,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     const registryContent = registryMatch![1];
     // Count key: value pairs (panel entries like "sprint: EnhancedSprintPanel,")
     const entries = registryContent.match(/^\s+\w+\s*:/gm) || [];
-    expect(entries.length).toBe(12);
+    expect(entries.length).toBe(11);
   });
 
   it.each(EXPECTED_PANELS)('PANEL_REGISTRY should contain "%s" panel', (panelName) => {
@@ -217,7 +216,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     expect(importMatch).not.toBeNull();
 
     const importedNames = importMatch![1].split(',').map(s => s.trim()).filter(Boolean);
-    expect(importedNames.length).toBe(12);
+    expect(importedNames.length).toBe(11);
 
     // Each imported name should be exported from panels/index.ts
     for (const name of importedNames) {
@@ -358,7 +357,6 @@ describe('AC8: CE-5 — No new WebSocket channels', () => {
     '/ws/token-stats',
     '/ws/claude',
     '/ws/livereload',
-    '/ws/background-tasks',
     '/ws/story',
     '/ws/git',
     '/ws/bell',

@@ -49,7 +49,6 @@ export const PANEL_INVENTORY = {
   WORKFLOW: 'workflow',
   AC: 'ac',
   TODO: 'todo',
-  BACKGROUND: 'background',
   SETTINGS: 'settings',
   PROGRESS: 'progress',
   TANDEM: 'tandem',
@@ -89,7 +88,6 @@ export const RIGHT_SIDEBAR_PANELS = [
   PANEL_INVENTORY.WORKFLOW,
   PANEL_INVENTORY.AC,
   PANEL_INVENTORY.TODO,
-  PANEL_INVENTORY.BACKGROUND,
   PANEL_INVENTORY.SETTINGS,
   PANEL_INVENTORY.TANDEM,
 ] as const;
@@ -105,7 +103,6 @@ const PANEL_TITLES: Record<string, string> = {
   workflow: 'Workflow',
   ac: 'AC',
   todo: 'Todo',
-  background: 'Subagents',
   settings: 'Settings',
   progress: 'Progress',
   tandem: 'Tandem',
@@ -676,7 +673,6 @@ export function DockviewWorkspace({
     workflow: 'Workflow',
     ac: 'AC',
     todo: 'Todo',
-    background: 'Subagents',
     hotspots: 'Hotspots',
     settings: 'Settings',
   };
