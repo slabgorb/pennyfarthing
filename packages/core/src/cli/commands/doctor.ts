@@ -21,6 +21,7 @@ import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
 import { LEGACY_HOOK_MIGRATIONS, migrateHookPaths } from '../utils/settings.js';
+import { getCurrentTheme } from '../utils/themes.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -629,12 +630,13 @@ export function checkUserFilesBasic(projectRoot: string): CheckResult[] {
     });
   }
 
-  // Check persona config at canonical location
-  const personaConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  // Check persona config — use getCurrentTheme() which checks both
+  // config.local.yaml (priority 1) and persona-config.yaml (priority 2)
+  const detectedTheme = getCurrentTheme(projectRoot);
   results.push({
     name: 'persona-config',
-    status: pathExists(personaConfig) ? 'pass' : 'warn',
-    detail: pathExists(personaConfig) ? undefined : 'No theme configured'
+    status: detectedTheme ? 'pass' : 'warn',
+    detail: detectedTheme ? undefined : 'No theme configured'
   });
 
   // Check settings.local.json exists (CRITICAL - registers hooks with Claude Code)
@@ -722,12 +724,13 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     });
   }
 
-  // Check persona config at canonical location
-  const personaConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  // Check persona config — use getCurrentTheme() which checks both
+  // config.local.yaml (priority 1) and persona-config.yaml (priority 2)
+  const detectedTheme = getCurrentTheme(projectRoot);
   results.push({
     name: 'persona-config',
-    status: pathExists(personaConfig) ? 'pass' : 'warn',
-    detail: pathExists(personaConfig) ? undefined : 'No theme configured'
+    status: detectedTheme ? 'pass' : 'warn',
+    detail: detectedTheme ? undefined : 'No theme configured'
   });
 
   // Check settings.local.json exists (CRITICAL - registers hooks with Claude Code)
@@ -2790,12 +2793,14 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     detail: existsSync(manifestPath) ? undefined : 'Missing .pennyfarthing/manifest.json'
   });
 
-  // 2. Config at .pennyfarthing/config.local.yaml
+  // 2. Theme config — use getCurrentTheme() which checks both
+  // config.local.yaml (priority 1) and persona-config.yaml (priority 2)
   const configPath = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  const layoutTheme = getCurrentTheme(projectRoot);
   results.push({
     name: 'layout/config',
-    status: existsSync(configPath) ? 'pass' : 'warn',
-    detail: existsSync(configPath) ? undefined : 'No theme configured at .pennyfarthing/config.local.yaml'
+    status: layoutTheme ? 'pass' : 'warn',
+    detail: layoutTheme ? undefined : 'No theme configured at .pennyfarthing/config.local.yaml'
   });
 
   // 3. Old config at .claude/persona-config.yaml
