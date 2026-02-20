@@ -260,7 +260,9 @@ afterEach(() => {
 function setupFileMocks(files: Record<string, string | null>) {
   mockExistsSync.mockImplementation((path: string) => {
     for (const [pattern, content] of Object.entries(files)) {
-      if (path.includes(pattern) && content !== null) {
+      // Use endsWith for exact filename matching — includes() is too permissive
+      // and masks bugs like double-prefix paths (epic-epic-42.yaml matching epic-42.yaml)
+      if (path.endsWith(pattern) && content !== null) {
         return true;
       }
     }
@@ -269,7 +271,7 @@ function setupFileMocks(files: Record<string, string | null>) {
 
   mockReadFileSync.mockImplementation((path: string) => {
     for (const [pattern, content] of Object.entries(files)) {
-      if (path.includes(pattern) && content !== null) {
+      if (path.endsWith(pattern) && content !== null) {
         return content;
       }
     }
