@@ -24,6 +24,8 @@ DEFAULTS: dict[str, Any] = {
         "git_monitor": False,
         "relay_mode": False,
         "permission_mode": "standard",
+        "pr_mode": "draft",
+        "pr_merge": "auto",
     },
     "display": {
         "colorPreset": "catppuccin",
