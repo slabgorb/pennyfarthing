@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "11.3.8",
+  "version": "11.4.0",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "main": "./packages/core/dist/index.js",
@@ -22,6 +22,7 @@
   "files": [
     "packages/core/bin/",
     "packages/core/dist/",
+    "packages/core/src/public/",
     "pennyfarthing-dist/agents/",
     "pennyfarthing-dist/commands/",
     "pennyfarthing-dist/gates/",
@@ -62,9 +63,11 @@
     "@pennyfarthing/shared": "^10.0.3",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
+    "express": "^4.18.2",
     "fs-extra": "^11.2.0",
     "inquirer": "^9.2.12",
     "open": "^11.0.0",
+    "ws": "^8.19.0",
     "yaml": "^2.3.4"
   },
   "devDependencies": {

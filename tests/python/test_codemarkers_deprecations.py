@@ -16,15 +16,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
-from unittest.mock import AsyncMock, patch
 from dataclasses import fields as dataclass_fields
+from pathlib import Path
+from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from pf.codemarkers.models import DeprecationMarker
-
 
 # =============================================================================
 # Fixtures: TypeScript files with @deprecated JSDoc tags

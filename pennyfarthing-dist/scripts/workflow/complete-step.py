@@ -15,7 +15,7 @@ If --step N provided, completes that specific step instead of current step.
 import argparse
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
@@ -231,7 +231,7 @@ def main() -> int:
     new_status = "completed" if completed_count >= step_count else "in_progress"
 
     # Update timestamp
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Update session file content
     content = re.sub(

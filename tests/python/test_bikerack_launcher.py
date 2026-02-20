@@ -10,11 +10,6 @@ Verifies:
 Run with: python -m pytest tests/python/test_bikerack_launcher.py -v
 """
 
-import os
-import signal
-import subprocess
-import time
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

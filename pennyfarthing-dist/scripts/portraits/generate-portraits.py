@@ -21,8 +21,8 @@ import argparse
 import os
 import sys
 import warnings
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Suppress progress bars before importing torch/diffusers
 os.environ["TQDM_DISABLE"] = "1"
@@ -38,7 +38,7 @@ except ImportError:
 
 try:
     import torch
-    from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
+    from diffusers import DPMSolverMultistepScheduler, StableDiffusionXLPipeline
     from diffusers.utils import logging as diffusers_logging
     from PIL import Image
     HAS_TORCH = True
@@ -188,7 +188,7 @@ def generate_portrait_filename(short_name: str, ocean: dict) -> str:
 
 def parse_theme_file(theme_path: Path) -> dict:
     """Parse theme YAML file to extract visual prompts for each agent."""
-    with open(theme_path, "r", encoding="utf-8") as f:
+    with open(theme_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     theme_metadata = data.get("theme", {})
@@ -310,7 +310,7 @@ def load_pipeline(engine_name: str):
         }
     else:
         model_id = engine["model_id"]
-        print(f"\nLoading SDXL model on MPS...")
+        print("\nLoading SDXL model on MPS...")
         print(f"  Model: {model_id}")
         print("  (First run downloads ~6.5GB model)")
 
@@ -369,14 +369,14 @@ def generate_portrait(pipeline_components: dict, prompt: str, engine_name: str, 
         pipe = pipeline_components["pipe"]
         generator = torch.Generator().manual_seed(seed)
 
-        kwargs = dict(
-            prompt=prompt,
-            width=gen_size,
-            height=gen_size,
-            num_inference_steps=engine["num_inference_steps"],
-            guidance_scale=engine["guidance_scale"],
-            generator=generator,
-        )
+        kwargs = {
+            "prompt": prompt,
+            "width": gen_size,
+            "height": gen_size,
+            "num_inference_steps": engine["num_inference_steps"],
+            "guidance_scale": engine["guidance_scale"],
+            "generator": generator,
+        }
         if engine["supports_negative_prompt"]:
             kwargs["negative_prompt"] = "color, grayscale, photorealistic, blurry, deformed"
 
@@ -445,7 +445,7 @@ def main():
             print(f"  Searched: {CUSTOM_THEMES_DIR}")
             sys.exit(1)
 
-    print(f"Theme sources:")
+    print("Theme sources:")
     print(f"  Built-in: {BUILTIN_THEMES_DIR}")
     for src in pkg_sources:
         print(f"  Package:  {src}")

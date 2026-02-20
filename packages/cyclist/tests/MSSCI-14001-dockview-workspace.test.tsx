@@ -32,11 +32,10 @@ import React from 'react';
 
 const PANEL_IDS = {
   // Left sidebar panels
-  CHANGED: 'changed',
+  GIT: 'git',
   DIFFS: 'diffs',
   DEBUG: 'debug',
   AUDIT_LOG: 'audit-log',
-  TTY: 'tty',
   // Center panel (sacred)
   MESSAGE: 'message',
   // Right sidebar panels
@@ -45,8 +44,9 @@ const PANEL_IDS = {
   AC: 'ac',
   TODO: 'todo',
   BACKGROUND: 'background',
-  GIT: 'git',
   SETTINGS: 'settings',
+  PROGRESS: 'progress',
+  TANDEM: 'tandem',
 } as const;
 
 const ALL_PANEL_IDS = Object.values(PANEL_IDS);
@@ -136,7 +136,7 @@ describe('AC2: DockviewWorkspace exports and structure', () => {
   it('should export PANEL_INVENTORY with 14 panels', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(14);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should export PanelAdapter component', async () => {
@@ -180,7 +180,7 @@ describe('AC3: MessagePanel configuration', () => {
 describe('AC4: Panel draggability configuration', () => {
   it('should have left sidebar panels defined', async () => {
     const { PANEL_INVENTORY } = await import('../src/public/components/DockviewWorkspace');
-    expect(PANEL_INVENTORY.CHANGED).toBe('changed');
+    expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.DIFFS).toBe('diffs');
     expect(PANEL_INVENTORY.DEBUG).toBe('debug');
   });
@@ -192,8 +192,8 @@ describe('AC4: Panel draggability configuration', () => {
     expect(PANEL_INVENTORY.AC).toBe('ac');
     expect(PANEL_INVENTORY.TODO).toBe('todo');
     expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
-    expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');
+    expect(PANEL_INVENTORY.TANDEM).toBe('tandem');
   });
 });
 
@@ -232,7 +232,7 @@ describe('AC5: Layout persistence', () => {
     const { createWorkspaceLayout } = await import('../src/public/components/DockviewWorkspace');
     const layout = createWorkspaceLayout();
 
-    expect(layout.leftSidebar.panels).toContain('changed');
+    expect(layout.leftSidebar.panels).toContain('git');
     expect(layout.leftSidebar.panels).toContain('diffs');
     expect(layout.leftSidebar.panels).toContain('debug');
     expect(layout.leftSidebar.panels).toContain('audit-log');
@@ -247,8 +247,8 @@ describe('AC5: Layout persistence', () => {
     expect(layout.rightSidebar.panels).toContain('ac');
     expect(layout.rightSidebar.panels).toContain('todo');
     expect(layout.rightSidebar.panels).toContain('background');
-    expect(layout.rightSidebar.panels).toContain('git');
     expect(layout.rightSidebar.panels).toContain('settings');
+    expect(layout.rightSidebar.panels).toContain('tandem');
   });
 
   it('should have message panel in center', async () => {
@@ -331,13 +331,13 @@ describe('AC8: Panel functionality preserved', () => {
   it('should export PANEL_INVENTORY constant', async () => {
     const module = await import('../src/public/components/DockviewWorkspace');
     expect(module.PANEL_INVENTORY).toBeDefined();
-    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(14);
+    expect(Object.keys(module.PANEL_INVENTORY)).toHaveLength(13);
   });
 
   it('should have all expected panel IDs', async () => {
     const { PANEL_INVENTORY } = await import('../src/public/components/DockviewWorkspace');
 
-    expect(PANEL_INVENTORY.CHANGED).toBe('changed');
+    expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.DIFFS).toBe('diffs');
     expect(PANEL_INVENTORY.DEBUG).toBe('debug');
     expect(PANEL_INVENTORY.AUDIT_LOG).toBe('audit-log');
@@ -347,8 +347,9 @@ describe('AC8: Panel functionality preserved', () => {
     expect(PANEL_INVENTORY.AC).toBe('ac');
     expect(PANEL_INVENTORY.TODO).toBe('todo');
     expect(PANEL_INVENTORY.BACKGROUND).toBe('background');
-    expect(PANEL_INVENTORY.GIT).toBe('git');
     expect(PANEL_INVENTORY.SETTINGS).toBe('settings');
+    expect(PANEL_INVENTORY.PROGRESS).toBe('progress');
+    expect(PANEL_INVENTORY.TANDEM).toBe('tandem');
   });
 
   it('should export WorkspaceLayoutConfig type-compatible interface', async () => {

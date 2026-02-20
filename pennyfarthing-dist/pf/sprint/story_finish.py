@@ -133,10 +133,14 @@ def finish_story(
     )
 
     if dry_run:
+        from pf.common.pr_config import get_pr_merge_mode
+
         steps.append({"step": 1, "action": f"Archive session → {archive_dir / archive_name}"})
         if dialogue_path.exists():
             steps.append({"step": "1b", "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}"})
-        if pr_number:
+        if pr_number and get_pr_merge_mode() == "human":
+            steps.append({"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"})
+        elif pr_number:
             steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
         else:
             steps.append({"step": 2, "action": "No PR to merge"})
@@ -162,7 +166,15 @@ def finish_story(
         steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
 
     # --- Step 2: Merge PR ---
-    if pr_number:
+    from pf.common.pr_config import get_pr_merge_mode
+
+    pr_merge_mode = get_pr_merge_mode()
+    if pr_number and pr_merge_mode == "human":
+        steps.append({
+            "step": 2, "action": "merge_pr", "pr": pr_number,
+            "mode": "human", "message": f"PR #{pr_number} ready for human review and merge",
+        })
+    elif pr_number:
         result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
         if result.returncode == 0:
             steps.append({"step": 2, "action": "merge_pr", "pr": pr_number})

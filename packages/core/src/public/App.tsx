@@ -46,7 +46,6 @@ import {
   ACPanel,
   TodoPanel,
   BackgroundPanel,
-  ChangedPanel,
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
@@ -63,7 +62,7 @@ import {
 registerPanelComponent(PANEL_INVENTORY.MESSAGE, MessagePanel);
 
 // Left sidebar panels
-registerPanelComponent(PANEL_INVENTORY.CHANGED, ChangedPanel);
+registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.DIFFS, DiffsPanel);
 registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 registerPanelComponent(PANEL_INVENTORY.AUDIT_LOG, AuditLogPanel);
@@ -75,7 +74,6 @@ registerPanelComponent(PANEL_INVENTORY.WORKFLOW, WorkflowPanel);
 registerPanelComponent(PANEL_INVENTORY.AC, ACPanel);
 registerPanelComponent(PANEL_INVENTORY.TODO, TodoPanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
-registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 registerPanelComponent(PANEL_INVENTORY.TANDEM, TandemPanel);
 

@@ -288,6 +288,50 @@ class TestStoryValidation:
 
         assert result.valid is True
 
+    def test_short_project_key_passes(self) -> None:
+        """Short project key with fewer digits should pass (e.g., DPGD-17)."""
+        story = {
+            "id": "63-1",
+            "title": "Test",
+            "status": "backlog",
+            "points": 3,
+            "jira": "DPGD-17",
+        }
+
+        result = validate_story(story, "epic-63")
+
+        assert result.valid is True
+
+    def test_compound_jira_key_passes(self) -> None:
+        """Compound Jira key with slash separator should pass (e.g., DPGD-10 / DPGD-17)."""
+        story = {
+            "id": "63-1",
+            "title": "Test",
+            "status": "backlog",
+            "points": 3,
+            "jira": "DPGD-10 / DPGD-17",
+        }
+
+        result = validate_story(story, "epic-63")
+
+        assert result.valid is True
+
+    def test_sprint_without_number_and_jira_sprint_id_passes(self) -> None:
+        """Sprint without number and jira_sprint_id should pass (BMAD-imported sprints)."""
+        data = {
+            "sprint": {
+                "goal": "BMAD imported sprint",
+                "start_date": "2026-01-20",
+                "end_date": "2026-02-02",
+                "status": "active",
+            },
+            "epics": [],
+        }
+
+        result = validate_sprint(data)
+
+        assert result.valid is True
+
     def test_error_path_includes_epic_context(self) -> None:
         """Error path should include epic ID for context."""
         story = {"id": "63-1", "title": "Test", "points": 3}  # Missing status

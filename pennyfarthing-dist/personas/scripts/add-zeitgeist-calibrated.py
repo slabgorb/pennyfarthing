@@ -4,9 +4,9 @@
 Inserts zeitgeist block after theme: section without rewriting entire file.
 """
 
-import re
-import yaml
 from pathlib import Path
+
+import yaml
 
 SCRIPT_DIR = Path(__file__).parent
 PERSONAS_DIR = SCRIPT_DIR.parent

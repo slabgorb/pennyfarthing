@@ -8,7 +8,7 @@ Run with: python -m pytest tests/python/ -v
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

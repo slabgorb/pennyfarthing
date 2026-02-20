@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.4.0] - 2026-02-20
+
+### Added
+
+- **Git panel consolidation** — merged Changed panel into Git panel with diff drill-through (MSSCI-15347)
+- **Sprint Panel future initiatives** — show future epics and children in BikeRack TUI Sprint Panel (MSSCI-15345)
+- **Stale artifact cleanup** — detect and remove stale build/session artifacts (117-3)
+- **Hook migration** — migrate bare `pf` hook commands to `pf.sh` wrapper path (117-2)
+- **Settings visibility** — `pf settings show` now displays all settings with defaults
+- **PR merge setting** — `workflow.pr_merge` option for human-reviewed PRs
+
+### Fixed
+
+- **npm packaging** — add `src/public/`, express, and ws dependencies to package files
+- **Hook permissions** — ensure project hook scripts have execute permission on install
+- **Portrait resolver** — add cyclist package fallback for consumer installs
+- **Sprint validator** — accept generic Jira project keys and optional sprint fields
+- **Epic shard paths** — strip `epic-` prefix to prevent double-prefix in merge
+- **pnpm virtual store** — resolve path correctly; fix BMAD sub-story ID collapse
+- **Test suite** — resolve ruff, core test, and cyclist test failures
+
+---
+
 ## [11.3.8] - 2026-02-19
 
 ### Fixed
@@ -2666,7 +2689,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.6...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...HEAD
+[11.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.8...v11.4.0
 [11.3.6]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.5...v11.3.6
 [11.3.5]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.4...v11.3.5
 [11.3.4]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.3...v11.3.4

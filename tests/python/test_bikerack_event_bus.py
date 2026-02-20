@@ -331,8 +331,8 @@ class TestChangedPanelSelectionRendering:
 
         # Find lines for first file (selected) and second file (not selected)
         lines = raw.split("\n")
-        selected_lines = [l for l in lines if "server.ts" in l]
-        unselected_lines = [l for l in lines if "new-file.ts" in l]
+        selected_lines = [line for line in lines if "server.ts" in line]
+        unselected_lines = [line for line in lines if "new-file.ts" in line]
         assert len(selected_lines) > 0, "Selected file not in output"
         assert len(unselected_lines) > 0, "Unselected file not in output"
 

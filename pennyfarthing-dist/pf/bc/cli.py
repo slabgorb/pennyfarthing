@@ -84,7 +84,6 @@ def bc():
       workflow    - Focus on Workflow panel
       background  - Focus on Background panel
       audit-log   - Focus on Audit Log panel
-      changed     - Focus on Changed panel
       ac          - Focus on Acceptance Criteria panel
       debug       - Focus on Debug panel
       settings    - Focus on Settings panel

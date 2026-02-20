@@ -70,8 +70,7 @@ export const MAX_RECENT_COMMANDS = 5;
 
 export const DEFAULT_COMMANDS: Command[] = [
   // Panels
-  { id: 'toggle-changed-panel', name: 'Toggle Changed Files', category: 'Panels', shortcut: 'Cmd+Shift+1' },
-  { id: 'toggle-diffs-panel', name: 'Toggle Diffs', category: 'Panels', shortcut: 'Cmd+Shift+2' },
+  { id: 'toggle-diffs-panel', name: 'Toggle Diffs', category: 'Panels', shortcut: 'Cmd+Shift+1' },
   { id: 'toggle-message-panel', name: 'Toggle Messages', category: 'Panels', shortcut: 'Cmd+Shift+3' },
   { id: 'toggle-debug-panel', name: 'Toggle Debug', category: 'Panels' },
 

@@ -1,4 +1,4 @@
-import { readdirSync, renameSync, unlinkSync, existsSync } from 'fs';
+import { readdirSync, renameSync, unlinkSync, existsSync, chmodSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -214,6 +214,27 @@ async function updateInstalledContent(
     ensureSettingsSymlink(projectRoot);
   }
 
+  // Ensure project hook scripts have execute permission
+  if (!dryRun) {
+    const projectHooksDir = join(projectRoot, '.pennyfarthing/project/hooks');
+    if (existsSync(projectHooksDir)) {
+      try {
+        for (const file of readdirSync(projectHooksDir)) {
+          if (file.endsWith('.sh')) {
+            const hookPath = join(projectHooksDir, file);
+            const stats = statSync(hookPath);
+            if ((stats.mode & 0o111) === 0) {
+              chmodSync(hookPath, 0o755);
+              logger.updated(`${file} → executable`);
+            }
+          }
+        }
+      } catch {
+        // Ignore errors reading project hooks dir
+      }
+    }
+  }
+
   // Refresh git hooks (updates stale copies in .git/hooks/)
   await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
 
@@ -380,7 +401,12 @@ export function removeLegacyClaudeDirectories(
   for (const name of legacyDirs) {
     const legacyPath = join(projectRoot, '.claude', name);
     if (pathExists(legacyPath)) {
-      removeSymlinkOrDirectory(legacyPath, options.dryRun);
+      if (!options.dryRun) {
+        // Force-remove legacy directories including any content.
+        // These directories should only contain Pennyfarthing-managed files —
+        // user content now lives in .pennyfarthing/project/ or .claude/project/.
+        removeSync(legacyPath);
+      }
       logger.info(`Removed legacy .claude/${name}`);
     }
   }
@@ -443,6 +469,10 @@ export function migrateTemplateFiles(
       // Ensure destination directory exists
       ensureDirSync(join(fullNewPath, '..'));
       renameSync(fullOldPath, fullNewPath);
+      // Ensure shell scripts are executable after migration
+      if (newPath.endsWith('.sh')) {
+        chmodSync(fullNewPath, 0o755);
+      }
     }
     migrated++;
   }

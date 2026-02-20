@@ -26,7 +26,6 @@ from pf.bikerack.base_panel import BasePanel
 from pf.bikerack.tui import BikeRackApp
 from pf.bikerack.ws_client import WheelHubClient
 
-
 # ---------------------------------------------------------------------------
 # Test helpers
 # ---------------------------------------------------------------------------

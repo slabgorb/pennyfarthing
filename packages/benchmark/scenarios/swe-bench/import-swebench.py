@@ -12,11 +12,10 @@ This script:
 """
 
 import json
-import os
 import re
 import sys
 from pathlib import Path
-from textwrap import dedent, indent
+from textwrap import indent
 
 # Difficulty mapping: SWE-bench -> Pennyfarthing
 DIFFICULTY_MAP = {

@@ -171,7 +171,6 @@ describe('bikerack.ts entry point', () => {
     const content = readFileSync(bikerackPath, 'utf-8');
 
     expect(content).toMatch(/\.bikerack-port/);
-    expect(content).not.toMatch(/\.bikerack-port/);
   });
 
   it('should import createTerminalServer from server.ts', () => {

@@ -16,7 +16,6 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
 from rich.console import Console
 from rich.console import Group as RichGroup
 from rich.text import Text
@@ -25,7 +24,6 @@ from textual.widgets import Static
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
 from pf.bikerack.git_panel import GitPanel
 from pf.bikerack.ws_client import WheelHubClient
-
 
 # ---------------------------------------------------------------------------
 # Helpers
