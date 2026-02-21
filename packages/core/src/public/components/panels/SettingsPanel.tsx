@@ -34,8 +34,20 @@ interface Settings {
   };
 }
 
-function displayValue(val: unknown): string {
-  if (val === undefined || val === null || val === '') return '\u2014';
+const DEFAULTS: Record<string, string> = {
+  'theme': 'firefly',
+  'display.colorPreset': 'tokyo-night',
+  'display.fonts.uiFont': 'system',
+  'display.fonts.uiFontSize': 'base',
+  'display.fonts.codeFont': 'jetbrains-mono',
+  'display.fonts.codeFontSize': 'base',
+  'workflow.bell_mode': 'false',
+  'workflow.relay_mode': 'false',
+  'workflow.permission_mode': 'plan',
+  'workflow.git_monitor': 'false',
+};
+
+function formatValue(val: unknown): string {
   if (typeof val === 'boolean') return val ? 'true' : 'false';
   return String(val);
 }
@@ -45,10 +57,16 @@ const rowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-
 const labelStyle: React.CSSProperties = { opacity: 0.7 };
 
 function SettingRow({ label, dotPath, value }: { label: string; dotPath: string; value: unknown }) {
+  const isSet = value !== undefined && value !== null && value !== '';
+  const displayText = isSet ? formatValue(value) : DEFAULTS[dotPath] ?? '\u2014';
+  const isDefault = !isSet && dotPath in DEFAULTS;
+
   return (
     <div className="setting-row" style={rowStyle}>
       <span className="setting-label" style={labelStyle}>{label} <span style={{ fontSize: '0.8em', opacity: 0.6 }}>{dotPath}</span></span>
-      <span className="setting-value">{displayValue(value)}</span>
+      <span className="setting-value" style={isDefault ? { fontStyle: 'italic', opacity: 0.6 } : undefined}>
+        {displayText}
+      </span>
     </div>
   );
 }
