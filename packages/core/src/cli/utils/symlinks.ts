@@ -255,6 +255,10 @@ export function createSkillsDirectory(
  * Create a symlink from destPath to sourcePath.
  * This keeps .pennyfarthing pointing to node_modules, which is required
  * for prime.sh to find the pf package via relative path calculation.
+ *
+ * If destPath exists as a directory (copied files from a previous install),
+ * it is force-removed before creating the symlink. This supports migration
+ * from copy-mode installs to symlink-mode installs.
  */
 export function createDirectorySymlink(
   sourcePath: string,
@@ -265,8 +269,24 @@ export function createDirectorySymlink(
     return false;
   }
 
-  // Remove existing symlink or directory (migration from copy mode)
-  removeSymlinkOrDirectory(destPath, dryRun);
+  // Remove existing symlink or directory (migration from copy mode).
+  // Use rmSync for directories to handle non-empty copied directories.
+  if (pathExists(destPath) || isSymlink(destPath)) {
+    if (dryRun) {
+      // In dry-run mode, just confirm we would proceed
+    } else {
+      try {
+        if (isSymlink(destPath)) {
+          unlinkSync(destPath);
+        } else {
+          rmSync(destPath, { recursive: true, force: true });
+        }
+      } catch (e) {
+        logger.warning(`Could not remove existing path ${destPath}: ${e}`);
+        return false;
+      }
+    }
+  }
 
   if (!dryRun) {
     try {

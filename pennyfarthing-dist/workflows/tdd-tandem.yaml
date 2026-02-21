@@ -65,6 +65,18 @@ workflow:
         partner: architect
         scope: file-watch
 
+    - name: verify
+      agent: tea
+      input: [implementation, passing_tests]
+      output: [quality_verified]
+      gate:
+        file: gates/quality-pass
+        type: quality_pass
+        condition: Lint, typecheck, and all tests passing
+      tandem:
+        partner: architect
+        scope: file-watch
+
     - name: review
       agent: reviewer
       input: [implementation, passing_tests, quality_verified]
