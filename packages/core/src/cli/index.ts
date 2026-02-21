@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { initCommand } from './commands/init.js';
 import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
@@ -13,24 +10,9 @@ import { listCommand as themeListCommand, setCommand as themeSetCommand, showCom
 import { listCommand as cmdListCommand, addCommand as cmdAddCommand, removeCommand as cmdRemoveCommand, linkCommand as cmdLinkCommand, syncCommand as cmdSyncCommand } from './commands/command.js';
 import { listSkill as skillListCommand, addSkill as skillAddCommand, removeSkill as skillRemoveCommand, linkSkill as skillLinkCommand, syncSkill as skillSyncCommand } from './commands/skill.js';
 import { cyclistCommand } from './commands/cyclist.js';
+import { getPackageVersion } from './utils/version.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Read version from VERSION file
-const versionFile = join(__dirname, '../../VERSION');
-let version = '2.0.0';
-try {
-  version = readFileSync(versionFile, 'utf8').trim();
-} catch {
-  // Fallback to package.json version
-  try {
-    const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8'));
-    version = pkg.version;
-  } catch {
-    // Use default
-  }
-}
+const version = getPackageVersion();
 
 const program = new Command();
 
