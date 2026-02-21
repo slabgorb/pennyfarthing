@@ -9,9 +9,9 @@ its preferred YAML library.
 """
 
 import warnings
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 def merge_epic_shards(

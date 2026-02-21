@@ -5,9 +5,15 @@ Usage:
     python -m pf.cli [OPTIONS] COMMAND [ARGS]...
     pf [OPTIONS] COMMAND [ARGS]...
 
-This module uses lazy loading to keep startup time under 200ms.
-Heavy imports (httpx, workflow modules) are deferred until needed.
+This module uses lazy loading to keep startup time under 100ms.
+Command groups are imported on demand — only the invoked command's
+module is loaded. The LazyGroup class defers all imports until
+Click resolves the command name.
 """
+
+from __future__ import annotations
+
+from importlib import import_module
 
 import click
 
@@ -15,7 +21,125 @@ import click
 from pf import __version__
 
 
-@click.group()
+class LazyGroup(click.Group):
+    """A Click group that lazily imports subcommands on first access.
+
+    Each entry in ``lazy_commands`` maps a command name to a tuple of
+    (module_path, attribute_name).  The module is only imported when
+    the command is actually invoked or listed.
+    """
+
+    def __init__(
+        self,
+        *args,
+        lazy_commands: dict[str, tuple[str, str]] | None = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._lazy_commands: dict[str, tuple[str, str]] = lazy_commands or {}
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        base = super().list_commands(ctx)
+        lazy = sorted(self._lazy_commands.keys())
+        return sorted(set(base + lazy))
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.BaseCommand | None:
+        # Check eagerly-registered commands first (inline groups like agent/debug)
+        cmd = super().get_command(ctx, cmd_name)
+        if cmd is not None:
+            return cmd
+
+        # Resolve lazy command
+        if cmd_name in self._lazy_commands:
+            module_path, attr_name = self._lazy_commands[cmd_name]
+            mod = import_module(module_path)
+            return getattr(mod, attr_name)
+
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Lazy command registry — maps command name → (module, attribute)
+# These modules are only imported when the user invokes the command.
+# ---------------------------------------------------------------------------
+_LAZY_COMMANDS: dict[str, tuple[str, str]] = {
+    "sprint":       ("pf.sprint.cli", "sprint"),
+    "jira":         ("pf.jira.cli", "jira"),
+    "bmad":         ("pf.bmad.cli", "bmad"),
+    "theme":        ("pf.theme.cli", "theme"),
+    "validate":     ("pf.validate.cli", "validate"),
+    "bikerack":     ("pf.bikerack.cli", "bikerack"),
+    "launch":       ("pf.launch.cli", "launch"),
+    "bc":           ("pf.bc.cli", "bc"),
+    "handoff":      ("pf.handoff.cli", "handoff"),
+    "git":          ("pf.git_group.cli", "git"),
+    "session":      ("pf.session.cli", "session"),
+    "epic":         ("pf.epic.cli", "epic"),
+    "consultation": ("pf.consultation.cli", "consultation"),
+    "hooks":        ("pf.hooks.cli", "hooks"),
+    "settings":     ("pf.settings.cli", "settings"),
+    "workflow":     ("pf.workflow.cli", "workflow"),
+    "hotspots":     ("pf.hotspots.cli", "hotspots"),
+    "deadcode":     ("pf.deadcode.cli", "deadcode"),
+    "healthscore":  ("pf.healthscore.cli", "healthscore"),
+}
+
+
+# ---------------------------------------------------------------------------
+# Sugar shortcuts — resolved lazily via get_command override
+# ---------------------------------------------------------------------------
+_SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
+    # name → (parent_module, parent_attr, sub_command_name)
+    "status":  ("pf.sprint.cli", "sprint", "status"),
+    "backlog": ("pf.sprint.cli", "sprint", "backlog"),
+    "work":    ("pf.sprint.cli", "sprint", "work"),
+    "story":   ("pf.sprint.cli", "sprint", "story"),
+    "gui":     ("pf.launch.cli", "launch", "gui"),
+    "tui":     ("pf.launch.cli", "launch", "tui"),
+}
+
+# Hidden backward-compat aliases — these resolve via _LAZY_COMMANDS
+# but are excluded from help output
+_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore"}
+
+
+class PennyfarthingCLI(LazyGroup):
+    """Top-level CLI group with sugar shortcuts and hidden aliases."""
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        cmds = super().list_commands(ctx)
+        # Add visible sugar shortcuts, exclude hidden aliases
+        cmds.extend(_SUGAR_SHORTCUTS.keys())
+        return sorted(c for c in set(cmds) if c not in _HIDDEN_ALIASES)
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.BaseCommand | None:
+        # Sugar shortcuts — resolve the sub-command from a lazy parent group
+        if cmd_name in _SUGAR_SHORTCUTS:
+            module_path, parent_attr, sub_name = _SUGAR_SHORTCUTS[cmd_name]
+            mod = import_module(module_path)
+            parent = getattr(mod, parent_attr)
+            return parent.commands[sub_name]
+
+        # Normal lazy/eager resolution (handles both regular commands
+        # and hidden aliases since both are in _LAZY_COMMANDS)
+        return super().get_command(ctx, cmd_name)
+
+    def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        """Override to hide sugar shortcuts from main help listing."""
+        commands = []
+        for subcommand in self.list_commands(ctx):
+            cmd = self.get_command(ctx, subcommand)
+            if cmd is None or subcommand in _SUGAR_SHORTCUTS:
+                continue
+            help_text = cmd.get_short_help_str(limit=150)
+            commands.append((subcommand, help_text))
+
+        if commands:
+            with formatter.section("Commands"):
+                formatter.write_dl(commands)
+
+
+@click.group(cls=PennyfarthingCLI, lazy_commands=_LAZY_COMMANDS)
 @click.version_option(version=__version__, prog_name="pf")
 def cli():
     """Pennyfarthing CLI - Agent orchestration utilities.
@@ -43,24 +167,18 @@ def cli():
     pass
 
 
-# Import and register sprint group (lazy registration preserves startup time)
-from pf.sprint.cli import sprint  # noqa: E402
+# ---------------------------------------------------------------------------
+# Eagerly-defined groups (no heavy imports, just Click decorators)
+# ---------------------------------------------------------------------------
 
-cli.add_command(sprint)
-
-# Top-level sugar shortcuts for common sprint operations
-cli.add_command(sprint.commands["status"], "status")
-cli.add_command(sprint.commands["backlog"], "backlog")
-cli.add_command(sprint.commands["work"], "work")
-cli.add_command(sprint.commands["story"], "story")
-
-# Import analysis groups
-from pf.deadcode.cli import deadcode  # noqa: E402
-from pf.healthscore.cli import healthscore  # noqa: E402
-from pf.hotspots.cli import hotspots  # noqa: E402
+_DEBUG_COMMANDS: dict[str, tuple[str, str]] = {
+    "hotspots":    ("pf.hotspots.cli", "hotspots"),
+    "deadcode":    ("pf.deadcode.cli", "deadcode"),
+    "healthscore": ("pf.healthscore.cli", "healthscore"),
+}
 
 
-@cli.group()
+@cli.group(cls=LazyGroup, lazy_commands=_DEBUG_COMMANDS)
 def debug():
     """Debug and analysis tools.
 
@@ -71,91 +189,6 @@ def debug():
       healthscore  - Composite codebase health score
     """
     pass
-
-
-debug.add_command(hotspots)
-debug.add_command(deadcode)
-debug.add_command(healthscore)
-
-# Hidden backward-compat aliases
-cli.add_command(hotspots, "hotspots")
-cli.commands["hotspots"].hidden = True
-cli.add_command(deadcode, "deadcode")
-cli.commands["deadcode"].hidden = True
-cli.add_command(healthscore, "healthscore")
-cli.commands["healthscore"].hidden = True
-
-# Import and register jira group
-from pf.jira.cli import jira  # noqa: E402
-
-cli.add_command(jira)
-
-# Import and register bmad group
-from pf.bmad.cli import bmad  # noqa: E402
-
-cli.add_command(bmad)
-
-# Import and register theme group
-from pf.theme.cli import theme  # noqa: E402
-
-cli.add_command(theme)
-
-# Import and register validate group
-from pf.validate.cli import validate  # noqa: E402
-
-cli.add_command(validate)
-
-# Import and register bikerack group
-from pf.bikerack.cli import bikerack  # noqa: E402
-
-cli.add_command(bikerack)
-
-# Import and register launch group + top-level sugar aliases
-from pf.launch.cli import launch  # noqa: E402
-
-cli.add_command(launch)
-cli.add_command(launch.commands["gui"], "gui")
-cli.add_command(launch.commands["tui"], "tui")
-
-# Import and register bc group
-from pf.bc.cli import bc  # noqa: E402
-
-cli.add_command(bc)
-
-# Import and register handoff group
-from pf.handoff.cli import handoff  # noqa: E402
-
-cli.add_command(handoff)
-
-# Import and register git group
-from pf.git_group.cli import git  # noqa: E402
-
-cli.add_command(git)
-
-# Import and register session group
-from pf.session.cli import session  # noqa: E402
-
-cli.add_command(session)
-
-# Import and register epic group
-from pf.epic.cli import epic  # noqa: E402
-
-cli.add_command(epic)
-
-# Import and register consultation group
-from pf.consultation.cli import consultation  # noqa: E402
-
-cli.add_command(consultation)
-
-# Import and register hooks group
-from pf.hooks.cli import hooks  # noqa: E402
-
-cli.add_command(hooks)
-
-# Import and register settings group
-from pf.settings.cli import settings  # noqa: E402
-
-cli.add_command(settings)
 
 
 @cli.group()
@@ -246,12 +279,6 @@ def agent_heatmap(
         json_output=json_output,
     )
     raise SystemExit(exit_code)
-
-
-# Import and register workflow group
-from pf.workflow.cli import workflow  # noqa: E402
-
-cli.add_command(workflow)
 
 
 @cli.command("help")

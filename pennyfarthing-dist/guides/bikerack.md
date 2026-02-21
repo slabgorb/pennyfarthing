@@ -26,6 +26,25 @@ Cyclist bundles the conversation UI and dashboard panels into one Electron app. 
 
 ## Quick Start
 
+There are two approaches to running BikeRack.
+@arcaven currently uses:
+
+```bash
+# hint - cd ($repo)
+just wheelhub stop # in case it's running, clears left over pid and port files
+just wheelhub start # open browser w/ the URL for GUI
+just claude # handles some env setup
+
+# in another terminal
+# hint - cd ($repo)
+just tui
+
+# or
+just bikerack # your mileage may vary
+```
+
+RoseSecurity has been using:
+
 ```bash
 # Launch BikeRack + Claude CLI together
 pf.sh bikerack start
@@ -116,6 +135,81 @@ pf.sh bc list                 # List saved layouts
 | `packages/core/src/public/components/BikeRackIndex.tsx` | Panel listing index page |
 | `packages/core/src/public/components/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |
 | `pf/bikerack/cli.py` | `pf.sh bikerack` launcher CLI |
+
+## TUI Mode (Terminal Dashboard)
+
+BikeRack also ships a Textual-based TUI that runs entirely in the terminal — no browser needed.
+
+### Prerequisites
+
+- **Python** >= 3.11
+- **uv** (recommended) or pip
+- **just** >= 1.0
+
+### Setup
+
+```bash
+# From the pennyfarthing repo root — create venv and install TUI deps
+python3 -m venv .venv
+uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist[tui]"
+```
+
+This installs the required packages into `.venv/`:
+
+| Package | Purpose |
+|---------|---------|
+| `textual` >= 1.0 | Terminal UI framework |
+| `websockets` >= 12.0 | WheelHub WebSocket client |
+| `rich` | Terminal rendering (textual dependency) |
+| `click` >= 8.0 | CLI framework (base dependency) |
+| `pyyaml` >= 6.0 | YAML parsing (base dependency) |
+| `textual-image` >= 0.7.0 | Agent portrait images (optional, graceful fallback) |
+
+The justfile automatically uses `.venv/bin/python3` when `.venv/` exists.
+
+### Launch
+
+```bash
+# Default — connects to WheelHub on localhost:1898
+just tui
+
+# Point at a specific project directory
+just tui dir=/path/to/project
+
+# Custom WheelHub port
+just tui port=2898
+```
+
+### Panels
+
+The TUI provides tabbed panels navigable via keyboard:
+
+| Key | Action |
+|-----|--------|
+| `Tab` / `]` | Next panel |
+| `[` | Previous panel |
+| `Shift+S` | Split view |
+| `Ctrl+P` | Command palette |
+| `q` | Quit |
+
+Available panels: Sprint, Git, Diffs, Audit Log, Debug, Progress.
+
+### Troubleshooting
+
+**`ModuleNotFoundError: No module named 'textual'`**
+```bash
+# Deps not installed in venv — re-run setup
+uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist[tui]"
+```
+
+**`No module named 'pf'`**
+The justfile sets `PYTHONPATH` automatically. If running manually:
+```bash
+PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.bikerack.tui
+```
+
+**Portrait images not rendering**
+Install `textual-image` (included in the `[tui]` extra). Requires a terminal with Sixel or Kitty graphics protocol support (iTerm2, WezTerm, Kitty). Falls back to text-only in unsupported terminals.
 
 ## Constraints
 

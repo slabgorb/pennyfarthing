@@ -1,5 +1,8 @@
 # Pennyfarthing development tasks
 
+# Python interpreter — use venv when available, fall back to system python3
+venv_python := if path_exists(justfile_directory() / ".venv/bin/python3") == "true" { justfile_directory() / ".venv/bin/python3" } else { "python3" }
+
 # Default recipe - list available commands
 default:
     @just --list
@@ -319,7 +322,7 @@ validate-subagents:
 
 # Validate sprint YAML structure
 validate-sprint *args:
-    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.sprint.validator {{args}}
+    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.sprint.validator {{args}}
 
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
@@ -340,12 +343,12 @@ bikerack *args:
     case "${1:-start}" in
         stop)
             shift
-            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack stop "$@"
+            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.bikerack stop "$@"
             exit 0
             ;;
         status)
             shift
-            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack status "$@"
+            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.bikerack status "$@"
             exit 0
             ;;
     esac
@@ -388,7 +391,7 @@ bikerack *args:
         if [[ -n "$project_dir" ]]; then
             dir_flag="--project-dir $project_dir"
         fi
-        PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack start $dir_flag
+        PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.bikerack start $dir_flag
         exit 0
     fi
 
@@ -458,4 +461,4 @@ tui *args:
         esac
     done
 
-    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" python3 -m pf.bikerack.tui $port_flag $project_dir_flag
+    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.bikerack.tui $port_flag $project_dir_flag

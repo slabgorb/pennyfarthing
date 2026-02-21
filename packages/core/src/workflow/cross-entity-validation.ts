@@ -13,8 +13,6 @@
  * - Bidirectional consistency of all cross-references
  */
 
-import type { WorkflowDefinition } from './workflow-schema.js';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------

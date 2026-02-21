@@ -8,7 +8,7 @@ import { getTokenStatsClients } from './api/token-stats.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTasks, getBackgroundTaskByToolId, addToolEventListener, addTokenStatsListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTaskByToolId, addToolEventListener, addTokenStatsListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';

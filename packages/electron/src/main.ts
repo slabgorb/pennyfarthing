@@ -63,11 +63,9 @@ import {
   getAuditLogStats,
   getUserEmail,
   setUserEmailCallback,
-  type BackgroundTask,
   trackBackgroundTask,
   completeBackgroundTask,
   getBackgroundTaskByToolId,
-  getBackgroundTasks,
 } from '@pennyfarthing/cyclist/dist/otlp-receiver.js';
 import { ClaudeService, type SDKMessage } from '@pennyfarthing/cyclist/dist/claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from '@pennyfarthing/cyclist/dist/todos.js';

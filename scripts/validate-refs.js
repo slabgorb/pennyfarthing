@@ -60,8 +60,8 @@ const SCAN_EXTENSIONS = new Set(['.yaml', '.yml', '.md', '.sh', '.py']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'portraits', 'templates']);
 
 // Absolute path leak pattern
-// Windows pattern requires backslash + word char to avoid matching sed expressions like PR:\*
-const ABS_PATH_LEAK = /(?:\/Users\/[a-zA-Z]|\/home\/[a-zA-Z]|[A-Z]:\\[a-zA-Z])/;
+// Windows pattern requires backslash + 2 word chars to avoid matching escape sequences like \n, \t
+const ABS_PATH_LEAK = /(?:\/Users\/[a-zA-Z]|\/home\/[a-zA-Z]|[A-Z]:\\[a-zA-Z]{2})/;
 
 // Words that indicate a line is *about* absolute paths, not an actual leak
 const LEAK_META_WORDS = ['pattern', 'detect', 'check', 'leak', 'example', 'e.g.', 'ABS_PATH', 'regex'];

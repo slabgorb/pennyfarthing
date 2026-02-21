@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from pf.bmad.sync import (
     BmadSyncChange,
     BmadSyncPlan,
@@ -13,7 +11,6 @@ from pf.bmad.sync import (
     format_sync_plan,
     generate_sync_plan,
 )
-
 
 # =============================================================================
 # Fixtures

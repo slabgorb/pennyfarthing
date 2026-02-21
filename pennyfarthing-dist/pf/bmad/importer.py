@@ -14,7 +14,6 @@ from typing import Any
 from pf.bmad.parser import (
     discover_bmad_epics,
     discover_bmad_stories,
-    map_bmad_to_pf,
 )
 from pf.common.config import get_project_root, load_pennyfarthing_config
 

@@ -19,7 +19,6 @@ import {
   createDirectorySymlink,
   createCommandsDirectory,
   createSkillsDirectory,
-  removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
