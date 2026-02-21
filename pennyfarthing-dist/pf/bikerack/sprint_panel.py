@@ -280,6 +280,16 @@ class SprintPanel(Widget):
             f"In Progress: {in_progress} | "
             f"Velocity: {velocity}"
         )
+        registry = payload.get("registry")
+        if registry and not registry.get("isDefault", True):
+            reg_type = registry.get("type", "")
+            reg_name = registry.get("name", "")
+            if reg_type and reg_name:
+                header_text.append(f" [{reg_type}:{reg_name}]")
+            elif reg_name:
+                header_text.append(f" [{reg_name}]")
+            elif reg_type:
+                header_text.append(f" [{reg_type}]")
         try:
             self.query_one("#sprint-header", Static).update(header_text)
         except Exception:
