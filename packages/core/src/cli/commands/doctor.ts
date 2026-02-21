@@ -17,7 +17,7 @@ import {
   filesMatch
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
-import { findNodeModulesPath } from '../utils/node-modules.js';
+import { findNodeModulesPath, findLocalSymlinkTargets } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
 import { LEGACY_HOOK_MIGRATIONS, migrateHookPaths } from '../utils/settings.js';
@@ -517,26 +517,52 @@ function refreshSkillsCopy(projectRoot: string, builtInSkillsPath: string): void
  */
 function checkSymlinks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
   const results: CheckResult[] = [];
+  const localTargets = findLocalSymlinkTargets(projectRoot);
 
-  // Check if node_modules is available
-  if (!nodeModulesPath) {
+  // Check if we have any source available
+  if (!nodeModulesPath && !localTargets) {
     results.push({
       name: 'core/node_modules',
       status: 'fail',
-      detail: 'pennyfarthing not found in node_modules - run npm install'
+      detail: 'pennyfarthing not found in node_modules and no local symlink targets in repos.yaml'
     });
     return results;
   }
 
-  results.push({
-    name: 'core/node_modules',
-    status: 'pass',
-    detail: relative(projectRoot, nodeModulesPath)
-  });
+  if (localTargets) {
+    results.push({
+      name: 'core/source',
+      status: 'pass',
+      detail: 'repos.yaml local symlink targets'
+    });
+  }
+
+  if (nodeModulesPath) {
+    results.push({
+      name: 'core/node_modules',
+      status: 'pass',
+      detail: relative(projectRoot, nodeModulesPath)
+    });
+  }
 
   for (const { name, link } of ALL_SYMLINKS) {
     const linkPath = join(projectRoot, link);
-    const targetPath = join(nodeModulesPath, name);
+
+    // Determine the correct target: local source preferred, node_modules fallback
+    const localTarget = localTargets?.get(link);
+    const targetPath = localTarget
+      ? localTarget
+      : nodeModulesPath ? join(nodeModulesPath, name) : null;
+
+    if (!targetPath) {
+      results.push({
+        name: `symlink/${name}`,
+        status: 'warn',
+        detail: 'No source path available'
+      });
+      continue;
+    }
+
     const expectedRelative = relative(dirname(linkPath), targetPath);
 
     if (!isSymlink(linkPath)) {
@@ -580,7 +606,7 @@ function checkSymlinks(projectRoot: string, nodeModulesPath: string | null): Che
         results.push({
           name: `symlink/${name}`,
           status: 'fail',
-          detail: 'Broken symlink - run npm install',
+          detail: `Broken symlink (${resolved}) - run update to fix`,
           fix: () => {
             unlinkSync(linkPath);
             symlinkSync(expectedRelative, linkPath);

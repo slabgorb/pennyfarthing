@@ -141,10 +141,11 @@ class TestStartupPerformance:
 
     def test_cli_startup_no_heavy_imports_at_top(self):
         """CLI module should not import heavy modules at top level."""
-        # This test inspects the AST to verify lazy imports
-        cli_file = PROJECT_ROOT / "pf" / "cli.py"
-        if not cli_file.exists():
-            pytest.skip("cli.py does not exist yet")
+        import importlib.util
+        spec = importlib.util.find_spec("pf.cli")
+        if spec is None or spec.origin is None:
+            pytest.skip("pf.cli module not found")
+        cli_file = Path(spec.origin)
 
         source = cli_file.read_text()
         tree = ast.parse(source)

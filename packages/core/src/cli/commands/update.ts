@@ -20,7 +20,7 @@ import {
   createCommandsDirectory,
   createSkillsDirectory,
 } from '../utils/symlinks.js';
-import { findNodeModulesPath } from '../utils/node-modules.js';
+import { findNodeModulesPath, findLocalSymlinkTargets } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
@@ -99,8 +99,9 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Must have node_modules for symlink mode
-  if (!nodeModulesPath) {
+  // Must have node_modules or local symlink targets
+  const localTargets = findLocalSymlinkTargets(projectRoot);
+  if (!nodeModulesPath && !localTargets) {
     logger.error('@pennyfarthing/core (or pennyfarthing) not found');
     logger.error('');
     logger.error('Please ensure pennyfarthing is installed:');
@@ -109,7 +110,9 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   }
 
   // Run versioned migrations (manifest, legacy dirs, templates, sidecars, settings)
-  await executePendingMigrations(nodeModulesPath, projectRoot, manifest, { dryRun });
+  if (nodeModulesPath) {
+    await executePendingMigrations(nodeModulesPath, projectRoot, manifest, { dryRun });
+  }
 
   const settingsUpdated = await mergeSettingsLocalJson(projectRoot, assetsPath, { dryRun });
 
@@ -119,7 +122,9 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   }
 
   // Generate pyproject.toml if missing (enables uv run --project for hooks)
-  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  }
 
   if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0 && !settingsUpdated) {
     logger.success(`Already up to date (v${updateInfo.currentVersion})`);
@@ -137,7 +142,7 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   }
 
   // Update installed content by re-copying from package
-  await updateInstalledContent(projectRoot, nodeModulesPath, manifest, packageVersion, { dryRun });
+  await updateInstalledContent(projectRoot, nodeModulesPath, localTargets, manifest, packageVersion, { dryRun });
 
   // 7. Success
   logger.newline();
@@ -156,7 +161,8 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
  */
 async function updateInstalledContent(
   projectRoot: string,
-  nodeModulesPath: string,
+  nodeModulesPath: string | null,
+  localTargets: Map<string, string> | null,
   manifest: ReturnType<typeof readManifest>,
   version: string,
   options: { dryRun?: boolean }
@@ -169,10 +175,19 @@ async function updateInstalledContent(
   // Note: legacy migrations (manifest, dirs, templates, sidecars, settings)
   // are now handled by versioned migration files in pennyfarthing-dist/migrations/
 
-  // Re-link directories from package to .pennyfarthing/ (symlinks, not copies)
+  // Re-link directories to .pennyfarthing/
+  // Prefer local source (repos.yaml), fall back to node_modules
   for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const sourcePath = join(nodeModulesPath, name);
+    const localTarget = localTargets?.get(link);
+    const sourcePath = localTarget
+      ? localTarget
+      : nodeModulesPath ? join(nodeModulesPath, name) : null;
     const destPath = join(projectRoot, link);
+
+    if (!sourcePath) {
+      logger.warning(`No source found for ${link}`);
+      continue;
+    }
 
     if (createDirectorySymlink(sourcePath, destPath, dryRun)) {
       logger.updated(`${link}/`);
@@ -199,7 +214,9 @@ async function updateInstalledContent(
   }
 
   // Generate pyproject.toml if missing (enables uv run --project for hooks)
-  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  }
 
   // Re-copy commands and skills (use assetsPath for correct pf-* prefix resolution)
   const assetsPath = getAssetsPath();
@@ -235,16 +252,20 @@ async function updateInstalledContent(
   }
 
   // Refresh git hooks (updates stale copies in .git/hooks/)
-  await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+  }
 
   // Ensure Python scripts (pf CLI) are installed
-  await installPythonScripts(nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    await installPythonScripts(nodeModulesPath, { dryRun });
+  }
 
   // Update manifest version
   logger.newline();
   logger.info('Updating manifest...');
 
-  const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
+  const nodeModulesRelPath = nodeModulesPath ? relative(projectRoot, nodeModulesPath) : '';
   const newManifest = createManifest(manifest?.projectName || 'unknown', version, {
     nodeModulesPath: nodeModulesRelPath
   });
@@ -261,7 +282,9 @@ async function updateInstalledContent(
   writeVersionSentinel(projectRoot, version, { dryRun });
 
   // Run versioned migrations (picks up any not already run in updateCommand)
-  await executePendingMigrations(nodeModulesPath, projectRoot, manifest, { dryRun });
+  if (nodeModulesPath) {
+    await executePendingMigrations(nodeModulesPath, projectRoot, manifest, { dryRun });
+  }
 }
 
 /**

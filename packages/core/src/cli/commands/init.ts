@@ -23,7 +23,7 @@ import {
   createSkillsDirectory,
   removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
-import { findNodeModulesPath } from '../utils/node-modules.js';
+import { findNodeModulesPath, findLocalSymlinkTargets } from '../utils/node-modules.js';
 import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { migrateTemplateFiles } from './update.js';
@@ -116,10 +116,11 @@ export async function initCommand(
     }
   }
 
-  // 7. Find node_modules installation (required - copy mode removed in v4.0.4)
+  // 7. Find node_modules installation and/or local symlink targets from repos.yaml
   const nodeModulesPath = findNodeModulesPath(projectRoot);
+  const localTargets = findLocalSymlinkTargets(projectRoot);
 
-  if (!nodeModulesPath) {
+  if (!nodeModulesPath && !localTargets) {
     logger.error('@pennyfarthing/core (or pennyfarthing) not found');
     logger.error('');
     logger.error('Pennyfarthing requires npm installation:');
@@ -131,11 +132,16 @@ export async function initCommand(
   }
 
   // Compute relative path from project root to node_modules pennyfarthing-dist
-  const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
+  const nodeModulesRelPath = nodeModulesPath ? relative(projectRoot, nodeModulesPath) : null;
 
   logger.newline();
   logger.info('Linking Pennyfarthing content to .pennyfarthing/...');
-  logger.info(`  Source: ${nodeModulesRelPath}`);
+  if (localTargets) {
+    logger.info('  Source: repos.yaml local symlink targets');
+  }
+  if (nodeModulesRelPath) {
+    logger.info(`  Fallback: ${nodeModulesRelPath}`);
+  }
 
   // Remove legacy .claude/pennyfarthing/ if it exists (migration from old copy mode)
   const legacyPennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
@@ -156,21 +162,32 @@ export async function initCommand(
     }
   }
 
-  // Symlink directories from node_modules to .pennyfarthing/
-  // Symlinks are required for prime.sh to find pf via path resolution
+  // Symlink directories to .pennyfarthing/
+  // Prefer local source (repos.yaml), fall back to node_modules
   for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const sourcePath = join(nodeModulesPath, name);
+    const localTarget = localTargets?.get(link);
+    const sourcePath = localTarget
+      ? localTarget
+      : nodeModulesPath ? join(nodeModulesPath, name) : null;
     const destPath = join(projectRoot, link);
 
+    if (!sourcePath) {
+      logger.warning(`No source found for ${link}`);
+      continue;
+    }
+
     if (createDirectorySymlink(sourcePath, destPath, dryRun)) {
-      logger.created(`${link}/ (symlinked to package)`);
+      const label = localTarget ? 'local source' : 'package';
+      logger.created(`${link}/ (symlinked to ${label})`);
     } else {
       logger.warning(`Could not symlink ${name} to ${link}`);
     }
   }
 
   // Generate pyproject.toml for consumer projects (enables uv run --project for hooks)
-  generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    generatePyprojectToml(projectRoot, nodeModulesPath, { dryRun });
+  }
 
   // Copy commands directory (allows user commands alongside built-in)
   const builtInCommandsPath = join(assetsPath, 'commands');
@@ -218,10 +235,14 @@ export async function initCommand(
   }
 
   // 9. Install git hooks
-  await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+  }
 
   // 9b. Install Python scripts package (pf → `pf` CLI)
-  await installPythonScripts(nodeModulesPath, { dryRun });
+  if (nodeModulesPath) {
+    await installPythonScripts(nodeModulesPath, { dryRun });
+  }
 
   // 9c. Migrate template files from old .claude/ locations to .pennyfarthing/
   migrateTemplateFiles(projectRoot, { dryRun });
@@ -239,7 +260,7 @@ export async function initCommand(
   logger.info('Writing manifest...');
 
   const manifest = createManifest(finalName, version, {
-    nodeModulesPath: nodeModulesRelPath
+    nodeModulesPath: nodeModulesRelPath || ''
   });
   writeManifest(projectRoot, manifest, { dryRun });
   logger.created('.pennyfarthing/manifest.json');

@@ -56,12 +56,11 @@ workflow:
     handoff_on_complete: true
 
   triggers:
-    # Manual triggers
     commands:
       - "/patch"
       - "/fix-blocker"
-    # Automatic triggers (future)
-    # error_patterns:
-    #   - "No such file or directory"
-    #   - "ModuleNotFoundError"
-    #   - "command not found"
+      # Automatic triggers (future):
+      # error_patterns:
+      #   - "No such file or directory"
+      #   - "ModuleNotFoundError"
+      #   - "command not found"
