@@ -41,8 +41,6 @@ def deprecate(version: str, reason: str, dry_run: bool, package: str):
       pf release deprecate --version=11.3.7 --reason="workspace:* leak"
       pf release deprecate --version=11.3.7 --reason="broken deps" --dry-run
     """
-    import json
-
     from pf.common.config import get_project_root
     from pf.release.deprecate import deprecate_version
 
