@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: 1728cf0428df40a647e7a083af2adfb2
+
 importers:
 
   .:
@@ -187,7 +189,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       dockview-react:
         specifier: ^4.13.1
-        version: 4.13.1(react@19.2.4)
+        version: 4.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.4)
@@ -274,7 +276,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       dockview-react:
         specifier: ^4.13.1
-        version: 4.13.1(react@19.2.4)
+        version: 4.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -2496,6 +2498,7 @@ packages:
     resolution: {integrity: sha512-K8xnYt3Rvkx8MYKHaEsb8aFaPyQclKRRkXS9JcpQPZUgqxumTLnSidgdd6uIfzEps6yJsXoZGQGJ9PtcaKyDcQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: '*'
 
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
@@ -6684,16 +6687,18 @@ snapshots:
 
   dockview-core@4.13.1: {}
 
-  dockview-react@4.13.1(react@19.2.4):
+  dockview-react@4.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      dockview: 4.13.1(react@19.2.4)
+      dockview: 4.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
       - react
+      - react-dom
 
-  dockview@4.13.1(react@19.2.4):
+  dockview@4.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       dockview-core: 4.13.1
       react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   dom-accessibility-api@0.5.16: {}
 
