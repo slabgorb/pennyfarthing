@@ -54,6 +54,34 @@ jobs:
         run: pnpm --filter @pennyfarthing/cyclist test -- --coverage
         continue-on-error: true  # Vitest tests, may have environment issues in CI
 
+  smoke-test:
+    runs-on: [self-hosted, Ubuntu, Common]
+    name: Consumer Install Smoke Test
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Run consumer install smoke test
+        run: ./tests/integration/test_consumer_install.sh
+
   lint:
     runs-on: [self-hosted, Ubuntu, Common]
 
