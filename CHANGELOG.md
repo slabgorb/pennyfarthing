@@ -11,6 +11,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [11.5.0-alpha.0] - 2026-02-21
+
+### Added
+
+- **BikeRack TUI auto-reload** — dev-mode auto-reload for BikeRack TUI panels (120-11)
+- **Story details enrichment** — story details and progress page enrichment with native Textual widgets (120-8)
+- **Jira search** — plain text and JQL search support (MSSCI-15405)
+- **Sprint panel completed epics** — show completed epics section in TUI (120-8)
+- **Kitty graphics passthrough** — wrap Kitty graphics in tmux DCS passthrough for terminal image support (MSSCI-15389)
+- **Debug panel refresh** — improved refresh rate for real-time token tracking (121-1)
+- **SettingsPanel read-only** — convert SettingsPanel to read-only display with CLI reference (122-1, 122-2)
+- **Consumer install smoke test** — CI job to verify consumer npm install works (123-6)
+- **Package contents gate** — assertion test and npm pack gate for package integrity (123-1)
+- **Release CLI tools** — `pf release dry-run` and `pf release deprecate` commands
+- **Changelog automation** — automate comparison link updates in CHANGELOG.md (123-2)
+- **Portrait freeform prompt** — freeform prompt mode for generate-portraits
+- **Sprint canonical ordering** — add refs to STORY_KEY_ORDER for canonical positioning
+- **`get_dist_root()` migration** — refactor all call sites to use centralized dist root resolution (120-7)
+- **npm path resolution fix** — resolve path resolution assuming monorepo layout (MSSCI-15401)
+
+### Changed
+
+- **BackgroundPanel removed** — killed BackgroundPanel and fixed stale tests (MSSCI-15348)
+- **Dead interactive components removed** — removed unused interactive components after SettingsPanel conversion (122-3)
+- **BikeRack footer** — consolidated footer into unified status bar
+- **Portrait images** — excluded portrait images from npm tarballs; moved tandem watermark out of persona portraits
+
+### Fixed
+
+- **Sprint provenance** — add sprint provenance indicator to React and Python TUI (120-6)
+- **Settings display** — show default values in italics when not explicitly set
+- **Cyclist CLI entry** — point CLI command at bikerack.js entry instead of server.js
+- **Cyclist settings** — read display and workflow settings from config.local.yaml
+- **Doctor checks** — fix persona-config false negative when config.local.yaml missing (117-10); detect orchestrator repo layout in checkGitHooks
+- **CLI fixes** — respect repos.yaml symlink targets in init/update/doctor; use getPackageVersion() for --version flag
+- **Context resolution** — replace dots in username when resolving transcript path
+- **Sprint panel** — filter archived epics from active sprint view
+- **CI fixes** — resolve Ruff lint errors and relax startup benchmark threshold
+- **Build** — add react-dom peer dependency extension for dockview
+
+---
+
 ## [11.4.0] - 2026-02-20
 
 ### Added
@@ -2689,7 +2731,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...HEAD
+[11.5.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...v11.5.0-alpha.0
 [11.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.8...v11.4.0
 [11.3.8]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.7...v11.3.8
 [11.3.7]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.6...v11.3.7
