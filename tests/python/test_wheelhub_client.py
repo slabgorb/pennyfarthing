@@ -603,6 +603,107 @@ class TestMultiChannel:
 
 
 # ---------------------------------------------------------------------------
+# Story 120-4: Per-channel state isolation (flicker fix)
+# ---------------------------------------------------------------------------
+
+
+class TestChannelStateIsolation:
+    """Story 120-4: One failing channel must not corrupt aggregate state."""
+
+    async def test_failing_channel_does_not_override_connected(self):
+        """Aggregate stays CONNECTED when one channel fails but another succeeds."""
+        from pf.bikerack.ws_client import (
+            ConnectionState,
+            WheelHubClient,
+        )
+
+        states_seen: list[ConnectionState] = []
+        client = WheelHubClient(port=2898)
+        client.on_state_change(lambda s: states_seen.append(s))
+        client.subscribe("sprint", MagicMock())
+        client.subscribe("bad-channel", MagicMock())
+
+        mock_good_ws = AsyncMock()
+        mock_good_ws.recv = AsyncMock(side_effect=asyncio.CancelledError())
+        mock_good_ws.close = AsyncMock()
+
+        async def mock_connect_fn(url, **kwargs):
+            if "sprint" in url:
+                return mock_good_ws
+            # bad-channel always fails
+            raise ConnectionRefusedError("No such channel")
+
+        with patch(
+            "pf.bikerack.ws_client.websockets", create=True
+        ) as mock_ws_mod:
+            mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
+            with patch(
+                "pf.bikerack.ws_client.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
+                try:
+                    await asyncio.wait_for(client.connect(), timeout=1.0)
+                except (TimeoutError, asyncio.CancelledError):
+                    pass
+
+        # The aggregate should be CONNECTED because sprint succeeded,
+        # even though bad-channel keeps failing
+        assert client.state == ConnectionState.CONNECTED, (
+            f"Aggregate should be CONNECTED when one channel is up, "
+            f"got {client.state}"
+        )
+
+    async def test_all_channels_failing_shows_reconnecting(self):
+        """Aggregate is RECONNECTING when all channels fail."""
+        from pf.bikerack.ws_client import (
+            ConnectionState,
+            WheelHubClient,
+        )
+
+        client = WheelHubClient(port=2898)
+        client.subscribe("bad-a", MagicMock())
+        client.subscribe("bad-b", MagicMock())
+
+        with patch(
+            "pf.bikerack.ws_client.websockets", create=True
+        ) as mock_ws_mod:
+            mock_ws_mod.connect = AsyncMock(
+                side_effect=ConnectionRefusedError("No such channel")
+            )
+            with patch(
+                "pf.bikerack.ws_client.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
+                try:
+                    await asyncio.wait_for(client.connect(), timeout=1.0)
+                except (TimeoutError, asyncio.CancelledError):
+                    pass
+
+        assert client.state == ConnectionState.RECONNECTING, (
+            f"Should be RECONNECTING when all channels fail, got {client.state}"
+        )
+
+    def test_set_state_deduplicates_callbacks(self):
+        """_set_state should not fire callback when state hasn't changed."""
+        from pf.bikerack.ws_client import (
+            ConnectionState,
+            WheelHubClient,
+        )
+
+        states_seen: list[ConnectionState] = []
+        client = WheelHubClient(port=2898)
+        client.on_state_change(lambda s: states_seen.append(s))
+
+        client._set_state(ConnectionState.CONNECTED)
+        client._set_state(ConnectionState.CONNECTED)
+        client._set_state(ConnectionState.CONNECTED)
+
+        assert states_seen == [ConnectionState.CONNECTED], (
+            f"Should fire only once for same state, got {states_seen}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Clean shutdown
 # ---------------------------------------------------------------------------
 
