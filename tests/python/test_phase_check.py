@@ -24,7 +24,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from pf.handoff.phase_check import phase_check_start
 
-
 WORKFLOW_TDD = {
     "workflow": {
         "name": "tdd",

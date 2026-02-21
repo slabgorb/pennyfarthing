@@ -13,11 +13,9 @@ Run with: python -m pytest tests/python/test_release_dry_run.py -v
 
 import json
 import textwrap
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from pf.release.dry_run import dry_run_release
 
 
@@ -103,7 +101,6 @@ class TestCliRegistration:
 
     def test_dry_run_command_in_release_group(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -113,7 +110,6 @@ class TestCliRegistration:
 
     def test_dry_run_command_help(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -124,7 +120,6 @@ class TestCliRegistration:
 
     def test_dry_run_accessible_from_main_cli(self):
         from click.testing import CliRunner
-
         from pf.cli import cli
 
         runner = CliRunner()
@@ -490,7 +485,6 @@ class TestDryRunCliIntegration:
     @patch("pf.release.dry_run.dry_run_release")
     def test_cli_success_output(self, mock_dry_run):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_dry_run.return_value = {
@@ -516,7 +510,6 @@ class TestDryRunCliIntegration:
     @patch("pf.release.dry_run.dry_run_release")
     def test_cli_shows_steps(self, mock_dry_run):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_dry_run.return_value = {
@@ -544,7 +537,6 @@ class TestDryRunCliIntegration:
     @patch("pf.release.dry_run.dry_run_release")
     def test_cli_error_output(self, mock_dry_run):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_dry_run.return_value = {
@@ -559,7 +551,6 @@ class TestDryRunCliIntegration:
     @patch("pf.release.dry_run.dry_run_release")
     def test_cli_version_flag(self, mock_dry_run):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_dry_run.return_value = {
@@ -580,7 +571,6 @@ class TestDryRunCliIntegration:
     @patch("pf.release.dry_run.dry_run_release")
     def test_cli_bump_flag(self, mock_dry_run):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_dry_run.return_value = {

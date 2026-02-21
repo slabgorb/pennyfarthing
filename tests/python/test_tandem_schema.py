@@ -19,15 +19,13 @@ from textwrap import dedent
 
 import pytest
 import yaml
-
+from pf.prime.workflow import get_phase_tandem_config
 from pf.validate.adapters.workflow import (
-    VALID_TANDEM_MODES,
     VALID_TANDEM_MODELS,
-    discover_workflow_files,
+    VALID_TANDEM_MODES,
     run,
     validate_phased,
 )
-from pf.prime.workflow import get_phase_tandem_config
 
 # =============================================================================
 # Test Fixtures — inline YAML strings

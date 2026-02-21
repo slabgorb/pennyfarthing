@@ -17,12 +17,11 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from rich.console import Console
-from textual.message import Message
-
 from pf.bikerack.changed_panel import ChangedPanel
 from pf.bikerack.diffs_panel import DiffsPanel
 from pf.bikerack.ws_client import WheelHubClient
+from rich.console import Console
+from textual.message import Message
 
 # ---------------------------------------------------------------------------
 # Test data fixtures

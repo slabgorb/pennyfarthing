@@ -27,7 +27,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from pf.handoff.complete_phase import complete_phase
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================

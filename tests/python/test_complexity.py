@@ -7,29 +7,27 @@ formatters (table/json/csv), CLI options, and edge cases.
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, patch, MagicMock
-from pathlib import Path
 from dataclasses import asdict
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from click.testing import CliRunner
-
-from pf.complexity.models import (
-    FileComplexity,
-    ComplexityResult,
-)
 from pf.complexity.analyze import (
-    analyze_complexity,
     _find_eslint,
     _parse_eslint_output,
-)
-from pf.complexity.formatters import (
-    format_file_table,
-    export_json,
-    export_csv,
+    analyze_complexity,
 )
 from pf.complexity.cli import complexity
-
+from pf.complexity.formatters import (
+    export_csv,
+    export_json,
+    format_file_table,
+)
+from pf.complexity.models import (
+    ComplexityResult,
+    FileComplexity,
+)
 
 # =============================================================================
 # Sample ESLint JSON output for mocking

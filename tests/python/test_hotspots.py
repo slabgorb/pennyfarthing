@@ -6,35 +6,33 @@ Covers git log parsing, bug-fix detection, scoring, aggregation, formatters, and
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, patch
 from pathlib import Path
-from click.testing import CliRunner
+from unittest.mock import AsyncMock, patch
 
 import pytest
-
+from click.testing import CliRunner
+from pf.hotspots.analyze import (
+    _aggregate_by_directory,
+    _parse_git_log,
+    _should_exclude,
+    analyze_all_repos,
+    analyze_repo,
+    calculate_hotspot_score,
+    is_bug_fix_commit,
+)
+from pf.hotspots.cli import hotspots
+from pf.hotspots.formatters import (
+    export_csv,
+    export_json,
+    format_dir_table,
+    format_file_table,
+)
 from pf.hotspots.models import (
-    FileHotspot,
     DirectoryHotspot,
+    FileHotspot,
     HotspotResult,
     MultiRepoHotspotResult,
 )
-from pf.hotspots.analyze import (
-    _parse_git_log,
-    is_bug_fix_commit,
-    calculate_hotspot_score,
-    _should_exclude,
-    _aggregate_by_directory,
-    analyze_repo,
-    analyze_all_repos,
-)
-from pf.hotspots.formatters import (
-    format_file_table,
-    format_dir_table,
-    export_json,
-    export_csv,
-)
-from pf.hotspots.cli import hotspots
-
 
 # =============================================================================
 # Fixtures

@@ -24,11 +24,9 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import pytest
+from pf.bikerack.story_detail_screen import StoryDetailScreen
 from textual.widget import Widget
 from textual.widgets import Collapsible, Rule, Static
-
-from pf.bikerack.story_detail_screen import StoryDetailScreen
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -492,8 +490,9 @@ class TestProgressPanelHint:
         }
         rendered = panel.render_panel({})
         # Convert to text to check for hint
-        from rich.console import Console
         from io import StringIO
+
+        from rich.console import Console
 
         buf = StringIO()
         console = Console(file=buf, width=80)
@@ -512,8 +511,9 @@ class TestProgressPanelHint:
         panel._story_data = None
         panel._sprint_data = None
         rendered = panel.render_panel({})
-        from rich.console import Console
         from io import StringIO
+
+        from rich.console import Console
 
         buf = StringIO()
         console = Console(file=buf, width=80)
@@ -522,7 +522,7 @@ class TestProgressPanelHint:
 
         # The "no active story" message should not have the drill-through hint
         assert "story details" not in output.lower() or "no active" in output.lower(), (
-            f"Should NOT show drill-through hint without active story"
+            "Should NOT show drill-through hint without active story"
         )
 
 
@@ -550,7 +550,6 @@ class TestKeyboardNavigation:
 
     async def test_tab_navigates_between_sections(self) -> None:
         """Tab key should move focus between Collapsible sections."""
-        from pf.bikerack.story_detail_widget import StoryDetailWidget
         from pf.bikerack.tui import BikeRackApp
 
         mock_client = MagicMock()

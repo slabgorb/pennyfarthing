@@ -21,17 +21,15 @@ from __future__ import annotations
 
 from io import StringIO
 from typing import Any
-from unittest.mock import MagicMock, call
-
-from rich.console import Console
-from rich.text import Text
-from textual.widgets import Static
+from unittest.mock import MagicMock
 
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pf.bikerack.ws_client import WheelHubClient
 
 # Import the panel under test — will fail until implemented
 from pf.bikerack.debug_panel import DebugPanel
+from pf.bikerack.ws_client import WheelHubClient
+from rich.console import Console
+from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub wire formats

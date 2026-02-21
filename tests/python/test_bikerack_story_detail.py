@@ -21,14 +21,13 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from textual.screen import Screen
-
 from pf.bikerack.sprint_panel import SprintPanel
 from pf.bikerack.story_detail_data import (
     _check_context_files,
     fetch_story_detail,
 )
 from pf.bikerack.story_detail_screen import StoryDetailScreen
+from textual.screen import Screen
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -185,9 +184,8 @@ class TestStoryNavigationState:
 
     async def test_tree_has_epic_nodes_after_data(self) -> None:
         """Tree should have epic nodes after receiving sprint data."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -204,9 +202,8 @@ class TestStoryNavigationState:
 
     async def test_tree_epic_has_story_children(self) -> None:
         """Epic node should have story leaf children."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -224,9 +221,8 @@ class TestStoryNavigationState:
 
     async def test_get_selected_story_returns_data_on_story_node(self) -> None:
         """get_selected_story should return data when cursor is on a story."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -247,9 +243,8 @@ class TestStoryNavigationState:
 
     async def test_get_selected_story_none_on_epic_node(self) -> None:
         """get_selected_story should return None when cursor is on an epic node."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -297,9 +292,8 @@ class TestStoryNavigationRender:
 
     async def test_tree_story_nodes_contain_story_ids(self) -> None:
         """Tree story leaf labels should contain story IDs."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -319,9 +313,8 @@ class TestStoryNavigationRender:
 
     async def test_tree_story_nodes_have_status_badges(self) -> None:
         """Tree story labels should include status symbol (not text)."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -790,9 +783,8 @@ class TestDrillThroughIntegration:
 
     async def test_enter_on_selected_story_pushes_detail_screen(self) -> None:
         """Pressing Enter with a selected story should push StoryDetailScreen."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -825,9 +817,8 @@ class TestEdgeCases:
 
     async def test_tree_with_empty_epics(self) -> None:
         """Tree rebuild should be safe with empty epics list."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -842,9 +833,8 @@ class TestEdgeCases:
 
     async def test_tree_with_empty_stories_in_epic(self) -> None:
         """Tree should handle epic with zero stories."""
-        from textual.widgets import Tree
-
         from pf.bikerack.tui import BikeRackApp
+        from textual.widgets import Tree
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())

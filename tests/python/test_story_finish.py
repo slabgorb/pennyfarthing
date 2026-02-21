@@ -10,13 +10,10 @@ Verifies that finish_story correctly:
 Run with: python -m pytest tests/python/test_story_finish.py -v
 """
 
-import os
 import textwrap
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from pf.sprint.story_finish import (
     _extract_branch,
     _extract_jira_key,

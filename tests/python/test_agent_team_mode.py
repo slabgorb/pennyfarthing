@@ -22,7 +22,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from pf.validate.adapters.team_mode import (
     classify_team_mode_agents,
     extract_team_mode_section,

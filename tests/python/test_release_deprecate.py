@@ -13,14 +13,11 @@ Run with: python -m pytest tests/python/test_release_deprecate.py -v
 """
 
 import textwrap
-from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from datetime import UTC, datetime
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from pf.release.deprecate import deprecate_version
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -89,7 +86,6 @@ class TestCliRegistration:
 
     def test_release_group_registered(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -99,7 +95,6 @@ class TestCliRegistration:
 
     def test_deprecate_command_help(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -111,7 +106,6 @@ class TestCliRegistration:
 
     def test_deprecate_requires_version(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -121,7 +115,6 @@ class TestCliRegistration:
 
     def test_deprecate_requires_reason(self):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         runner = CliRunner()
@@ -131,7 +124,6 @@ class TestCliRegistration:
 
     def test_release_visible_in_main_cli(self):
         from click.testing import CliRunner
-
         from pf.cli import cli
 
         runner = CliRunner()
@@ -241,7 +233,7 @@ class TestChangelogUpdate:
         deprecate_version(project_tree, "11.3.7", "workspace:* leak")
 
         changelog = (project_tree / "CHANGELOG.md").read_text()
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
         # The deprecation entry or marker should reference today's date
         # Either in the section header update or in the deprecation notice
         assert today in changelog or "2026-02" in changelog
@@ -466,7 +458,6 @@ class TestDeprecateCliIntegration:
     @patch("pf.release.deprecate.deprecate_version")
     def test_cli_success_output(self, mock_deprecate):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_deprecate.return_value = {
@@ -489,7 +480,6 @@ class TestDeprecateCliIntegration:
     @patch("pf.release.deprecate.deprecate_version")
     def test_cli_error_output(self, mock_deprecate):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_deprecate.return_value = {
@@ -507,7 +497,6 @@ class TestDeprecateCliIntegration:
     @patch("pf.release.deprecate.deprecate_version")
     def test_cli_dry_run_output(self, mock_deprecate):
         from click.testing import CliRunner
-
         from pf.release.cli import release
 
         mock_deprecate.return_value = {

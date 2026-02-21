@@ -19,7 +19,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from pf.validate.adapters.skill_command import (
     discover_command_files,
     discover_skill_registry,

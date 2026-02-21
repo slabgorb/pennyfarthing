@@ -13,12 +13,10 @@ Run with: python -m pytest tests/python/test_bikerack_connection_status.py -v
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from textual.widgets import Static
-
 from pf.bikerack.tui import (
+    STATE_DISPLAY,
     BikeRackApp,
     ConnectionStatus,
-    STATE_DISPLAY,
 )
 from pf.bikerack.ws_client import ConnectionState, WheelHubClient
 

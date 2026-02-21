@@ -21,12 +21,11 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from pf.bikerack.context_meter_footer import ContextMeterFooter
+from pf.bikerack.ws_client import WheelHubClient
 from rich.console import Console
 from rich.text import Text
 from textual.widgets import Footer, Static
-
-from pf.bikerack.context_meter_footer import ContextMeterFooter
-from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/context wire format

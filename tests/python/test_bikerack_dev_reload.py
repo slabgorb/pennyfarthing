@@ -12,9 +12,6 @@ Run with: python -m pytest tests/python/test_bikerack_dev_reload.py -v
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-
 # ============================================================================
 # AC1: Dev mode launcher exists and is importable
 # ============================================================================
@@ -172,7 +169,6 @@ class TestCSSHotReload:
             with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 with patch("pf.bikerack.tui._run_with_reload"):
                     with patch.dict("os.environ", {}, clear=False):
-                        import os
 
                         mock_app = MagicMock()
                         MockApp.return_value = mock_app

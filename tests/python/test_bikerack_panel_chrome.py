@@ -12,11 +12,9 @@ Run with: python -m pytest tests/python/test_bikerack_panel_chrome.py -v
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from textual.widgets import Tabs
-
+from pf.bc.focus import VALID_PANELS
 from pf.bikerack.base_panel import (
     PANEL_ICONS,
     BasePanel,
@@ -27,8 +25,7 @@ from pf.bikerack.tui import (
     PANEL_DISPLAY_NAMES,
     BikeRackApp,
 )
-from pf.bc.focus import VALID_PANELS
-
+from textual.widgets import Tabs
 
 # ---------------------------------------------------------------------------
 # AC1: Panel header/footer displays current panel name

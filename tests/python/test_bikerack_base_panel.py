@@ -18,13 +18,12 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from rich.table import Table
-from rich.text import Text
-from textual.widgets import Static
-
 from pf.bikerack.base_panel import BasePanel
 from pf.bikerack.tui import BikeRackApp
 from pf.bikerack.ws_client import WheelHubClient
+from rich.table import Table
+from rich.text import Text
+from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
 # Test helpers

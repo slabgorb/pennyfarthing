@@ -7,31 +7,28 @@ formatters (table/json/csv), CLI options, and edge cases.
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, patch
-from pathlib import Path
 from dataclasses import asdict
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
-import pytest
 from click.testing import CliRunner
-
-from pf.dependencies.models import (
-    OutdatedPackage,
-    SecurityAdvisory,
-    DependenciesResult,
-)
 from pf.dependencies.analyze import (
-    analyze_dependencies,
-    _parse_outdated_output,
     _parse_audit_output,
-)
-from pf.dependencies.formatters import (
-    format_outdated_table,
-    format_audit_table,
-    export_json,
-    export_csv,
+    _parse_outdated_output,
+    analyze_dependencies,
 )
 from pf.dependencies.cli import dependencies
-
+from pf.dependencies.formatters import (
+    export_csv,
+    export_json,
+    format_audit_table,
+    format_outdated_table,
+)
+from pf.dependencies.models import (
+    DependenciesResult,
+    OutdatedPackage,
+    SecurityAdvisory,
+)
 
 # =============================================================================
 # Sample npm JSON outputs for mocking

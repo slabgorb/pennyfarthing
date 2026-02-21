@@ -20,7 +20,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from pf.validate import ValidateReport
 from pf.validate.adapters.agent import (
     classify_agent_files,

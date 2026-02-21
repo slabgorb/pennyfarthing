@@ -18,7 +18,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
 from pf.validate.adapters.tandem_awareness import (
     ADR_0012_PAIRINGS,
     classify_tandem_roles,

@@ -413,8 +413,9 @@ class TestTypeHints:
 
     def test_jira_sync_has_type_annotations(self):
         """jira_sync.py should have type annotations on public functions."""
-        from pf.jira import sync as jira_sync
         import inspect
+
+        from pf.jira import sync as jira_sync
 
         # Check key functions have annotations
         for func_name in ["sync_story", "sync_epic", "parse_args", "main"]:

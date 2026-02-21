@@ -15,14 +15,11 @@ Run with: python -m pytest tests/python/test_bikerack_context_meter_redraws.py -
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from textual.widgets import Static
-
 from pf.bikerack.context_meter_footer import ContextMeterFooter
 from pf.bikerack.ws_client import WheelHubClient
 

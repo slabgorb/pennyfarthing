@@ -7,34 +7,31 @@ Tests are written in RED state — all should fail until Dev implements the modu
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
+from pf.deadcode.analyze import (
+    DEFAULT_EXCLUDES,
+    SOURCE_EXTENSIONS,
+    _is_source_file,
+    _run_git_command,
+    _should_exclude,
+    analyze_repo,
+    find_stale_files,
+    find_unused_exports,
+)
+from pf.deadcode.cli import deadcode
+from pf.deadcode.formatters import (
+    export_csv,
+    export_json,
+    format_table,
+)
 from pf.deadcode.models import (
-    StaleFile,
     DeadCodeResult,
+    StaleFile,
     UnusedExport,
     UnusedExportResult,
 )
-from pf.deadcode.analyze import (
-    _run_git_command,
-    _should_exclude,
-    _is_source_file,
-    find_stale_files,
-    analyze_repo,
-    find_unused_exports,
-    DEFAULT_EXCLUDES,
-    SOURCE_EXTENSIONS,
-)
-from pf.deadcode.formatters import (
-    format_table,
-    export_json,
-    export_csv,
-)
-from pf.deadcode.cli import deadcode
-
 
 # =============================================================================
 # Model tests (AC: StaleFile model with required fields)

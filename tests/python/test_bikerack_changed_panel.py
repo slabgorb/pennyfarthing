@@ -15,14 +15,13 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
+from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
+from pf.bikerack.changed_panel import ChangedPanel
+from pf.bikerack.ws_client import WheelHubClient
 from rich.console import Console
 from rich.console import Group as RichGroup
 from rich.text import Text
 from textual.widgets import Static
-
-from pf.bikerack.changed_panel import ChangedPanel
-from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
-from pf.bikerack.ws_client import WheelHubClient
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/git wire format

@@ -21,9 +21,8 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
-from rich.console import Console
-
 from pf.bikerack.diffs_panel import DiffsPanel
+from rich.console import Console
 
 # ---------------------------------------------------------------------------
 # Helpers — generate large diffs for testing

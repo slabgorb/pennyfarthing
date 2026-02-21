@@ -15,28 +15,24 @@ Run with: python -m pytest tests/python/test_bellmode_tandem_injection.py -v
 """
 
 import json
-import os
 import sys
 import time
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.hooks import HookResponse, output_hook_response
 from pf.bellmode_hook import (
-    read_bell_queue,
-    read_tandem_observations,
-    get_latest_observation,
-    format_tandem_message,
-    get_tandem_mtime,
-    save_tandem_mtime,
     check_tandem_files,
+    format_tandem_message,
+    get_latest_observation,
+    get_tandem_mtime,
+    read_tandem_observations,
+    save_tandem_mtime,
 )
-
+from pf.hooks import HookResponse
 
 # =============================================================================
 # Fixtures

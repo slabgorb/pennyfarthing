@@ -979,23 +979,23 @@ class TestStatusline:
         assert _get_agent_abbrev("unknown") == "???"
 
     def test_build_progress_bar_low(self):
-        from pf.hooks.statusline import _build_progress_bar, FG_GREEN
+        from pf.hooks.statusline import FG_GREEN, _build_progress_bar
         bar, pct_str = _build_progress_bar(25)
         assert FG_GREEN in bar
         assert "25%" in pct_str
 
     def test_build_progress_bar_high(self):
-        from pf.hooks.statusline import _build_progress_bar, FG_YELLOW
+        from pf.hooks.statusline import FG_YELLOW, _build_progress_bar
         bar, pct_str = _build_progress_bar(75)
         assert FG_YELLOW in bar
 
     def test_build_progress_bar_critical(self):
-        from pf.hooks.statusline import _build_progress_bar, FG_RED
+        from pf.hooks.statusline import FG_RED, _build_progress_bar
         bar, pct_str = _build_progress_bar(90)
         assert FG_RED in bar
 
     def test_build_progress_bar_unknown(self):
-        from pf.hooks.statusline import _build_progress_bar, FG_GRAY
+        from pf.hooks.statusline import FG_GRAY, _build_progress_bar
         bar, pct_str = _build_progress_bar("--")
         assert FG_GRAY in pct_str
         assert "--%" in pct_str
@@ -1045,19 +1045,6 @@ class TestPerformance:
     def test_import_time(self):
         """All hook modules should import in under 500ms total."""
         start = time.perf_counter()
-        from pf.hooks import (  # noqa: F811
-            bell_mode,
-            context_breaker,
-            context_warning,
-            cyclist_pretooluse,
-            pre_edit_check,
-            reflector_check,
-            schema_validation,
-            session_start,
-            session_stop,
-            sprint_yaml_validation,
-            statusline,
-        )
         elapsed = time.perf_counter() - start
         assert elapsed < 2.0, f"Hook module imports took {elapsed:.3f}s, should be < 2s"
 

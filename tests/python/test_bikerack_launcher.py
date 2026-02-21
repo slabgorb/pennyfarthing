@@ -13,7 +13,6 @@ Run with: python -m pytest tests/python/test_bikerack_launcher.py -v
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from pf.bikerack.launcher import (
     read_tui_pid_file,
     start_tui,

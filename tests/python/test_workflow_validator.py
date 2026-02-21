@@ -21,7 +21,6 @@ from textwrap import dedent
 
 import pytest
 import yaml
-
 from pf.validate.adapters.workflow import (
     VALID_GATE_TYPES,
     VALID_TYPES,

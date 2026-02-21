@@ -11,7 +11,6 @@ Verifies:
 Run with: python -m pytest tests/python/test_bikerack_tui_launcher.py -v
 """
 
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

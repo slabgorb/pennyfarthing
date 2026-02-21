@@ -16,11 +16,9 @@ Run with: python -m pytest tests/python/test_wheelhub_client.py -v
 
 import asyncio
 import json
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # AC-import: Module importable, interface correct
@@ -340,7 +338,6 @@ class TestAutoReconnect:
     async def test_reconnects_on_unexpected_close(self):
         """Client should attempt reconnect when server closes connection."""
         from pf.bikerack.ws_client import (
-            ConnectionState,
             WheelHubClient,
         )
 
@@ -372,7 +369,7 @@ class TestAutoReconnect:
             mock_ws_mod.connect = AsyncMock(side_effect=mock_connect_fn)
             try:
                 await asyncio.wait_for(client.connect(), timeout=5.0)
-            except (asyncio.CancelledError, asyncio.TimeoutError):
+            except (TimeoutError, asyncio.CancelledError):
                 pass
 
         assert connect_count >= 2, (
@@ -411,7 +408,7 @@ class TestAutoReconnect:
             ):
                 try:
                     await asyncio.wait_for(client.connect(), timeout=1.0)
-                except (asyncio.CancelledError, asyncio.TimeoutError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass
 
         assert len(timestamps) > 0, "Should have slept at least once for reconnect"
@@ -517,7 +514,7 @@ class TestConnectionState:
             ):
                 try:
                     await asyncio.wait_for(client.connect(), timeout=1.0)
-                except (asyncio.CancelledError, asyncio.TimeoutError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass
 
         assert ConnectionState.RECONNECTING in states_seen, (
@@ -653,7 +650,7 @@ class TestCleanShutdown:
                 await client.disconnect()
                 try:
                     await asyncio.wait_for(connect_task, timeout=1.0)
-                except (asyncio.CancelledError, asyncio.TimeoutError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass
 
         assert client.state == ConnectionState.DISCONNECTED

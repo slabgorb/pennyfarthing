@@ -17,13 +17,12 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
-from rich.console import Console
-from rich.text import Text
-from textual.widgets import Static
-
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
 from pf.bikerack.diffs_panel import DiffsPanel, Syntax
 from pf.bikerack.ws_client import WheelHubClient
+from rich.console import Console
+from rich.text import Text
+from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching actual WheelHub /ws/diffs wire format

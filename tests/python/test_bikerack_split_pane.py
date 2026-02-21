@@ -305,7 +305,6 @@ class TestBcSplitCommand:
     def test_split_command_accepts_two_panel_args(self):
         """pf bc split should accept left and right panel arguments."""
         from click.testing import CliRunner
-
         from pf.bc.cli import bc
 
         runner = CliRunner()
@@ -317,7 +316,6 @@ class TestBcSplitCommand:
     def test_split_command_rejects_invalid_panel(self):
         """pf bc split should reject invalid panel names with a specific error."""
         from click.testing import CliRunner
-
         from pf.bc.cli import bc
 
         runner = CliRunner()
@@ -332,7 +330,6 @@ class TestBcSplitCommand:
     def test_split_command_rejects_same_panel(self):
         """pf bc split should reject the same panel for both sides."""
         from click.testing import CliRunner
-
         from pf.bc.cli import bc
 
         runner = CliRunner()
@@ -347,7 +344,6 @@ class TestBcSplitCommand:
     def test_split_command_writes_to_config(self, tmp_path):
         """pf bc split should write split configuration to config.local.yaml."""
         from pf.bc.focus import _read_config
-
         from pf.bc.split import set_split_layout
 
         result = set_split_layout("sprint", "diffs", project_dir=tmp_path)

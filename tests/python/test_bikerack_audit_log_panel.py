@@ -16,11 +16,10 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 
-from textual.widgets import DataTable, Static
-
 from pf.bikerack.audit_log_panel import AuditLogPanel
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
 from pf.bikerack.ws_client import WheelHubClient
+from textual.widgets import DataTable, Static
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — matching WheelHub /ws/spans wire format

@@ -867,7 +867,6 @@ def watch_filter(change: str, path: str) -> bool:
 
 def _run_with_reload(app: BikeRackApp, watch_paths: list[Path], filter_func) -> None:
     """Run the app with file watching and auto-reload via watchfiles."""
-    import subprocess
     import sys
 
     from watchfiles import run_process

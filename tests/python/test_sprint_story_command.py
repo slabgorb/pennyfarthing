@@ -16,7 +16,6 @@ from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-
 from pf.sprint.cli import sprint
 
 # Project root for path resolution

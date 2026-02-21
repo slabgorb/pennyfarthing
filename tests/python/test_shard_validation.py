@@ -13,12 +13,8 @@ Run with: python -m pytest tests/python/test_shard_validation.py -v
 """
 
 import warnings
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
-
 
 # =============================================================================
 # AC1: validate_epic_shard() rejects epics missing required fields
