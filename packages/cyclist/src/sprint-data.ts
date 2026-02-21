@@ -72,6 +72,7 @@ export interface SprintData {
   currentStory: SprintStory | null;
   nextStory: SprintStory | null;
   epics: SprintEpic[];
+  completedEpics: SprintEpic[];
   futureEpics: FutureEpic[];
   sprint: {
     number: number;
@@ -339,9 +340,8 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
   const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
 
-  // Load archived epics for metrics only — do NOT add to epics array
-  // Archived epics contribute to completed counts but are not rendered in the sprint panel
-  let completedEpicCount = 0;
+  // Load archived epics into a separate array for the "Completed" section
+  const completedEpics: SprintEpic[] = [];
   let archivedDonePoints = 0;
   let archivedDoneStories = 0;
   const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
@@ -361,7 +361,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
               const epicData = parseYaml(shardContent) as YamlEpic;
               if (epicData && epicData.id) {
                 const transformed = transformEpic(epicData, projectDir);
-                completedEpicCount++;
+                completedEpics.push(transformed);
                 for (const story of transformed.stories) {
                   archivedDonePoints += story.points;
                   archivedDoneStories++;
@@ -513,6 +513,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     currentStory,
     nextStory,
     epics,
+    completedEpics,
     futureEpics,
     sprint: {
       number: extractSprintNumber(currentSprint.sprint?.name),
@@ -523,7 +524,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       endDate: currentSprint.sprint?.end_date ?? '',
     },
     metrics: {
-      completed: { points: archivedDonePoints, stories: archivedDoneStories, epics: completedEpicCount },
+      completed: { points: archivedDonePoints, stories: archivedDoneStories, epics: completedEpics.length },
       current: { done, inProgress, remaining, totalPoints: done + inProgress + remaining, storiesDone, storiesInProgress, storiesRemaining },
       future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length, epics: futureEpicCount },
       velocity: done + archivedDonePoints,

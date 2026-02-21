@@ -356,6 +356,54 @@ class SprintPanel(Widget):
             if cursor_node_key == f"epic:{epic_id}":
                 cursor_target = epic_node
 
+        # Completed Epics section (Story 110-6)
+        completed_epics = payload.get("completedEpics", [])
+        if completed_epics:
+            separator_label = Text("── Completed ──", style="bold dim")
+            tree.root.add_leaf(separator_label, data={"type": "separator"})
+
+            for epic in completed_epics:
+                epic_id = epic.get("id", "")
+                epic_title = epic.get("title", "")
+                stories = epic.get("stories", [])
+
+                total_pts = 0
+                done_pts = 0
+                for story in stories:
+                    pts = story.get("points", 0)
+                    if isinstance(pts, (int, float)):
+                        total_pts += pts
+                        if _is_terminal(story.get("status", "")):
+                            done_pts += pts
+
+                label = _build_epic_label(
+                    epic_id, epic_title, done_pts, total_pts,
+                    jira_key=epic.get("jiraKey", ""),
+                )
+                epic_data: dict[str, Any] = {
+                    "type": "epic",
+                    "id": epic_id,
+                    "title": epic_title,
+                }
+                epic_node = tree.root.add(label, data=epic_data)
+
+                for story in stories:
+                    story_label = _build_story_label(story, current_story_id)
+                    story_data: dict[str, Any] = {"type": "story", "story": story}
+                    epic_node.add_leaf(story_label, data=story_data)
+
+                # Completed epics: collapsed by default, respect saved state
+                if epic_id in saved_expanded:
+                    if saved_expanded[epic_id]:
+                        epic_node.expand()
+                    else:
+                        epic_node.collapse()
+                else:
+                    epic_node.collapse()
+
+                if cursor_node_key == f"epic:{epic_id}":
+                    cursor_target = epic_node
+
         # Future Initiatives section (Story 118-1)
         future_epics = payload.get("futureEpics", [])
         if future_epics:
