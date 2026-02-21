@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useStory } from '../../hooks/useStory';
-import { useSprint, type SprintStory, type SprintEpic, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
+import { useSprint, type SprintStory, type SprintEpic, type SprintRegistry, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
 
 // =============================================================================
 // Original SprintPanel (unchanged)
@@ -574,6 +574,14 @@ export function EnhancedSprintPanel(): React.ReactElement {
     <div className="enhanced-sprint-panel" data-testid="enhanced-sprint-panel">
       {errorToast}
       {confirmDialog}
+
+      {/* Provenance indicator for non-default sprint */}
+      {data?.registry && !data.registry.isDefault && (
+        <div className="sprint-provenance flex flex-row items-center gap-2" data-testid="sprint-provenance">
+          <Badge variant="secondary" data-testid="sprint-type-badge">{data.registry.type}</Badge>
+          <span data-testid="sprint-name">{data.registry.name}</span>
+        </div>
+      )}
 
       {/* Section 1: Current Story */}
       <section data-section="current-story">

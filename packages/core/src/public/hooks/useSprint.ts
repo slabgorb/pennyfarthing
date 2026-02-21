@@ -54,6 +54,14 @@ export interface FutureEpic {
   children: FutureEpicChild[];
 }
 
+export interface SprintRegistry {
+  name: string;
+  type: string;
+  description: string;
+  file: string;
+  isDefault: boolean;
+}
+
 export interface SprintData {
   currentStory: SprintStory | null;
   nextStory: SprintStory | null;
@@ -67,6 +75,7 @@ export interface SprintData {
     inProgress: number;
     endDate: string;
   };
+  registry?: SprintRegistry;
 }
 
 interface UseSprintResult {
@@ -113,8 +122,8 @@ export function useSprint(): UseSprintResult {
               const { type: _type, ...sprintData } = msg;
               setData((prev) => {
                 if (!prev) return sprintData as SprintData;
-                // Merge partial updates
-                return { ...prev, ...sprintData } as SprintData;
+                // Merge partial updates; explicitly set registry so absence clears it
+                return { ...prev, ...sprintData, registry: (sprintData as SprintData).registry } as SprintData;
               });
               setIsLoading(false);
               setError(null);
