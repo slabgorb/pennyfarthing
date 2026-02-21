@@ -83,6 +83,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "hotspots":     ("pf.hotspots.cli", "hotspots"),
     "deadcode":     ("pf.deadcode.cli", "deadcode"),
     "healthscore":  ("pf.healthscore.cli", "healthscore"),
+    "package":      ("pf.package.cli", "package"),
 }
 
 

@@ -4,8 +4,7 @@
   "description": "Prestige television themes for Pennyfarthing (optional)",
   "pennyfarthing-theme-pack": true,
   "files": [
-    "themes/",
-    "portraits/"
+    "themes/"
   ],
   "publishConfig": {
     "access": "public"
