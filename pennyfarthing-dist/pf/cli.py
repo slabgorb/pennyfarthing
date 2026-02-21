@@ -79,6 +79,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "hooks":        ("pf.hooks.cli", "hooks"),
     "settings":     ("pf.settings.cli", "settings"),
     "workflow":     ("pf.workflow.cli", "workflow"),
+    "release":      ("pf.release.cli", "release"),
     "hotspots":     ("pf.hotspots.cli", "hotspots"),
     "deadcode":     ("pf.deadcode.cli", "deadcode"),
     "healthscore":  ("pf.healthscore.cli", "healthscore"),
