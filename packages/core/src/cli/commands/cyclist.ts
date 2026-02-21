@@ -171,7 +171,7 @@ export async function cyclistCommand(
 
   // Find cyclist installation
   const cyclistPath = options.cyclistPath ?? findCyclist();
-  const serverPath = join(cyclistPath, 'dist', 'server.js');
+  const serverPath = join(cyclistPath, 'dist', 'bikerack.js');
 
   // Load theme configuration
   const themeConfig = loadThemeConfig(projectDir);

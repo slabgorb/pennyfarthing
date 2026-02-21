@@ -208,7 +208,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       mkdirSync(siblingCyclist, { recursive: true });
       mkdirSync(join(siblingCyclist, 'dist'), { recursive: true });
       writeFileSync(join(siblingCyclist, 'package.json'), JSON.stringify({ name: 'cyclist' }));
-      writeFileSync(join(siblingCyclist, 'dist', 'server.js'), '// mock server');
+      writeFileSync(join(siblingCyclist, 'dist', 'bikerack.js'), '// mock bikerack entry');
 
       // Create theme config at canonical location
       const pennyfarthingDir = join(testDir, '.pennyfarthing');
@@ -295,8 +295,8 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
 
       assert.strictEqual(command, 'node', 'Should spawn node process');
       assert.ok(
-        args[0].includes('server.js'),
-        'Should spawn cyclist server.js'
+        args[0].includes('bikerack.js'),
+        'Should spawn cyclist bikerack.js entry point'
       );
     });
 
@@ -342,7 +342,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       const customPath = join(testDir, 'custom-cyclist');
       mkdirSync(join(customPath, 'dist'), { recursive: true });
       writeFileSync(join(customPath, 'package.json'), JSON.stringify({ name: 'cyclist' }));
-      writeFileSync(join(customPath, 'dist', 'server.js'), '// mock');
+      writeFileSync(join(customPath, 'dist', 'bikerack.js'), '// mock');
 
       await cyclistCommand(
         { cyclistPath: customPath, noOpen: true },
