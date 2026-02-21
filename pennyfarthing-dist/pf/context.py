@@ -177,7 +177,7 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
         os.environ.get("PROJECT_ROOT") or
         os.getcwd()
     )
-    path_with_dashes = project_dir.replace("/", "-")
+    path_with_dashes = project_dir.replace("/", "-").replace(".", "-")
     return Path.home() / ".claude" / "projects" / path_with_dashes
 
 
