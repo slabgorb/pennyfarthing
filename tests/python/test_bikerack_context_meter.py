@@ -233,42 +233,36 @@ class TestContextMeterInLayout:
 
         return BikeRackApp()
 
-    async def test_context_meter_mounted_in_app(self, app):
-        """BikeRackApp should mount a ContextMeterFooter widget."""
+    async def test_status_footer_mounted_in_app(self, app):
+        """BikeRackApp should mount a StatusFooter widget."""
         async with app.run_test() as pilot:
-            meters = app.query("ContextMeterFooter")
-            assert len(meters) > 0, (
-                "BikeRackApp should mount a ContextMeterFooter widget"
+            footers = app.query("StatusFooter")
+            assert len(footers) > 0, (
+                "BikeRackApp should mount a StatusFooter widget"
             )
 
-    async def test_context_meter_not_inside_main_content(self, app):
-        """ContextMeterFooter should NOT be inside #main-content (always visible)."""
+    async def test_status_footer_not_inside_main_content(self, app):
+        """StatusFooter should NOT be inside #main-content (always visible)."""
         async with app.run_test() as pilot:
             main = app.query_one("#main-content")
-            # Check that no ContextMeterFooter is a descendant of main-content
-            meters_in_main = main.query("ContextMeterFooter")
-            assert len(meters_in_main) == 0, (
-                "ContextMeterFooter must be OUTSIDE #main-content to stay visible"
+            footers_in_main = main.query("StatusFooter")
+            assert len(footers_in_main) == 0, (
+                "StatusFooter must be OUTSIDE #main-content to stay visible"
             )
 
-    async def test_context_meter_between_content_and_footer(self, app):
-        """ContextMeterFooter should appear between main-content and BindingFooter."""
+    async def test_status_footer_after_main_content(self, app):
+        """StatusFooter should appear after main-content (docked to bottom)."""
         async with app.run_test() as pilot:
             children = list(app.query("*"))
-            meter_found = False
-            main_idx = footer_idx = meter_idx = -1
+            main_idx = footer_idx = -1
             for i, child in enumerate(children):
                 if getattr(child, "id", None) == "main-content":
                     main_idx = i
-                if type(child).__name__ == "ContextMeterFooter":
-                    meter_idx = i
-                    meter_found = True
-                if type(child).__name__ == "BindingFooter":
+                if type(child).__name__ == "StatusFooter":
                     footer_idx = i
-            assert meter_found, "ContextMeterFooter not found in app widget tree"
-            assert main_idx < meter_idx < footer_idx, (
-                f"ContextMeterFooter (idx={meter_idx}) should be between "
-                f"main-content (idx={main_idx}) and BindingFooter (idx={footer_idx})"
+            assert footer_idx > main_idx, (
+                f"StatusFooter (idx={footer_idx}) should be after "
+                f"main-content (idx={main_idx})"
             )
 
 
@@ -437,8 +431,8 @@ class TestContextMeterWebSocketSubscription:
 # ---------------------------------------------------------------------------
 
 
-class TestContextMeterDoesNotInterfereWithFooter:
-    """AC4: ContextMeterFooter coexists with BindingFooter."""
+class TestStatusFooterIsOnlyFooter:
+    """AC4: StatusFooter replaces BindingFooter — single unified footer."""
 
     @pytest.fixture
     def app(self):
@@ -446,46 +440,28 @@ class TestContextMeterDoesNotInterfereWithFooter:
 
         return BikeRackApp()
 
-    async def test_binding_footer_still_exists(self, app):
-        """BindingFooter should still be present in the app."""
+    async def test_no_binding_footer(self, app):
+        """BindingFooter should NOT be present — replaced by StatusFooter."""
         async with app.run_test() as pilot:
-            footers = app.query("Footer")
-            assert len(footers) > 0, "BindingFooter should still be in the app"
+            from textual.widgets import Footer
 
-    async def test_binding_footer_renders_bindings(self, app):
-        """BindingFooter should still render keybinding hints."""
+            footers = app.query(Footer)
+            assert len(footers) == 0, "BindingFooter should have been removed"
+
+    async def test_status_footer_exists(self, app):
+        """StatusFooter should be the only footer widget."""
         async with app.run_test() as pilot:
-            from pf.bikerack.tui import BindingFooter
+            from pf.bikerack.context_meter_footer import StatusFooter
 
-            binding_footer = app.query_one(BindingFooter)
-            rendered = str(binding_footer.render())
-            # Should contain at least the 'q' quit binding
-            assert "q" in rendered.lower() or "quit" in rendered.lower() or len(rendered) > 0, (
-                f"BindingFooter should render bindings, got: {rendered!r}"
-            )
+            status = app.query(StatusFooter)
+            assert len(status) == 1, "Exactly one StatusFooter should exist"
 
-    async def test_context_meter_is_separate_widget(self, app):
-        """ContextMeterFooter and BindingFooter should be distinct widgets."""
+    async def test_status_footer_visible(self, app):
+        """StatusFooter should be visible."""
         async with app.run_test() as pilot:
-            from pf.bikerack.tui import BindingFooter
+            from pf.bikerack.context_meter_footer import StatusFooter
 
-            meters = app.query("ContextMeterFooter")
-            footers = app.query_one(BindingFooter)
-            assert len(meters) > 0, "ContextMeterFooter should exist"
-            assert meters[0] is not footers, (
-                "ContextMeterFooter and BindingFooter should be different widgets"
-            )
-
-    async def test_both_widgets_visible(self, app):
-        """Both ContextMeterFooter and BindingFooter should be visible."""
-        async with app.run_test() as pilot:
-            from pf.bikerack.tui import BindingFooter
-
-            meter = app.query_one("ContextMeterFooter")
-            footer = app.query_one(BindingFooter)
-            assert meter.display is True or meter.display is not False, (
-                "ContextMeterFooter should be visible"
-            )
+            footer = app.query_one(StatusFooter)
             assert footer.display is True or footer.display is not False, (
-                "BindingFooter should be visible"
+                "StatusFooter should be visible"
             )

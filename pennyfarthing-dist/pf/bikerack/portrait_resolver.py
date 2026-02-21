@@ -41,6 +41,16 @@ def _extract_agent_slug(theme_yaml: Path, agent: str) -> str | None:
     return None
 
 
+def _is_lfs_pointer(path: Path) -> bool:
+    """Check if a file is a git-lfs pointer instead of actual image data."""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(44)
+        return header.startswith(b"version https://git-lfs")
+    except OSError:
+        return False
+
+
 def _find_portrait(portraits_theme_dir: Path, slug: str) -> Path | None:
     """Find a portrait file matching the slug in a theme's portrait directory."""
     if not portraits_theme_dir.is_dir():
@@ -50,11 +60,13 @@ def _find_portrait(portraits_theme_dir: Path, slug: str) -> Path | None:
         if size_dir.is_dir():
             for f in size_dir.iterdir():
                 if f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
-                    return f
+                    if not _is_lfs_pointer(f):
+                        return f
     # Fallback to root of theme dir
     for f in portraits_theme_dir.iterdir():
         if f.is_file() and f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
-            return f
+            if not _is_lfs_pointer(f):
+                return f
     return None
 
 
