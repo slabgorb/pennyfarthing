@@ -3,6 +3,8 @@
 Combines story context, workflow phase, acceptance criteria, todos, and
 git status into a single at-a-glance panel. Subscribes to 4 WS channels:
 /ws/story, /ws/todos, /ws/git, /ws/sprint.
+
+Story 120-8: Added Enter keybinding for story detail drill-through.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from typing import Any
 
 from rich.console import Group
 from rich.text import Text
+from textual.binding import Binding
 
 from pf.bikerack.base_panel import (
     PANEL_ICONS,
@@ -30,6 +33,10 @@ class ProgressPanel(BasePanel):
     channel: str = "story"  # primary channel
     panel_name: str = "Progress"
     icon: str = PANEL_ICONS.get("progress", ("\uf200", "P"))[0]
+
+    BINDINGS = [
+        Binding("enter", "drill_detail", "Story Details", show=False),
+    ]
 
     def __init__(self, client: Any = None, **kwargs: Any) -> None:
         super().__init__(client=client, **kwargs)
@@ -79,6 +86,49 @@ class ProgressPanel(BasePanel):
         except Exception:
             pass
 
+    def drill_into_story(self) -> None:
+        """Push StoryDetailScreen for the current story."""
+        story_data = self._build_story_detail_data()
+        if story_data is None:
+            return
+        from pf.bikerack.story_detail_screen import StoryDetailScreen
+
+        try:
+            self.app.push_screen(StoryDetailScreen(story_data=story_data))
+        except Exception:
+            pass
+
+    def action_drill_detail(self) -> None:
+        """Action handler for Enter keybinding — drill into story details."""
+        self.drill_into_story()
+
+    def _build_story_detail_data(self) -> dict[str, Any] | None:
+        """Build story_data dict suitable for StoryDetailScreen."""
+        story = self._story_data or {}
+        sprint = self._sprint_data or {}
+
+        current = sprint.get("sprint", {}).get("currentStory")
+        if isinstance(current, str) and current:
+            story_id = current
+        else:
+            story_id = story.get("id", "")
+
+        if not story_id and not story.get("title"):
+            return None
+
+        return {
+            "id": story_id,
+            "title": story.get("title", ""),
+            "points": story.get("points", ""),
+            "status": story.get("status", ""),
+            "assignee": story.get("assignee", ""),
+            "workflow": story.get("workflow", ""),
+            "workflow_phase": story.get("phase", ""),
+            **{k: v for k, v in story.items() if k not in (
+                "id", "title", "points", "status", "assignee", "workflow", "phase",
+            )},
+        }
+
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render unified progress view."""
         parts: list[Any] = []
@@ -115,6 +165,10 @@ class ProgressPanel(BasePanel):
         git = self._render_git()
         if git is not None:
             parts.append(git)
+
+        # --- Drill-through hint ---
+        parts.append(Text(""))
+        parts.append(Text("[Enter] Story Details", style="dim"))
 
         return Group(*parts)
 
