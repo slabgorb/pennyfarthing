@@ -845,6 +845,46 @@ class BikeRackApp(App):
 DEFAULT_PORT = 2898
 
 
+def get_watch_paths() -> list[Path]:
+    """Return directories to watch for Python file changes in dev mode."""
+    base = Path(__file__).resolve().parent.parent  # pf/
+    return [
+        base / "bikerack",
+        base / "bc",
+    ]
+
+
+def watch_filter(change: str, path: str) -> bool:
+    """Filter file change events — only accept .py files, ignore caches."""
+    if "__pycache__" in path:
+        return False
+    if path.endswith(".pyc"):
+        return False
+    if not path.endswith(".py"):
+        return False
+    return True
+
+
+def _run_with_reload(app: BikeRackApp, watch_paths: list[Path], filter_func) -> None:
+    """Run the app with file watching and auto-reload via watchfiles."""
+    import subprocess
+    import sys
+
+    from watchfiles import run_process
+
+    # Build the command that launches the TUI normally
+    cmd = [sys.executable, "-m", "pf.bikerack.tui"]
+    if hasattr(app, "_client") and app._client is not None:
+        cmd.extend(["--port", str(app._client._port)])
+
+    run_process(
+        *watch_paths,
+        target=cmd,
+        callback=lambda changes: None,
+        watch_filter=filter_func,
+    )
+
+
 def _patch_tgp_for_tmux() -> None:
     """Monkey-patch textual-image's TGP writer to wrap Kitty graphics
     escapes in tmux DCS passthrough sequences.
@@ -920,6 +960,43 @@ def main(
     client = WheelHubClient(port=port)
     app = BikeRackApp(client=client)
     app.run()
+
+
+def dev_main(
+    port: int | None = None,
+    project_dir: Path | None = None,
+) -> None:
+    """Launch BikeRack TUI in dev mode with auto-reload on Python file changes.
+
+    Sets TEXTUAL env var for CSS hot-reload and uses watchfiles for Python reload.
+    """
+    os.environ["TEXTUAL"] = "devtools"
+
+    from pf.bikerack import portrait_resolver
+
+    portrait_resolver.detect_image_protocol()
+
+    if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
+        _patch_tgp_for_tmux()
+
+    if port is None:
+        if project_dir is not None:
+            port_file = project_dir / ".bikerack-port"
+            if port_file.exists():
+                try:
+                    port = int(port_file.read_text().strip())
+                except (ValueError, OSError):
+                    port = DEFAULT_PORT
+            else:
+                port = DEFAULT_PORT
+        else:
+            port = DEFAULT_PORT
+
+    client = WheelHubClient(port=port)
+    app = BikeRackApp(client=client)
+
+    watch_paths = get_watch_paths()
+    _run_with_reload(app, watch_paths, watch_filter)
 
 
 if __name__ == "__main__":
