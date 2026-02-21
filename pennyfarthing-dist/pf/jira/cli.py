@@ -12,7 +12,7 @@ Commands:
     move         Transition issue status
     assign       Assign issue to user
     link         Link two issues
-    search       Search issues by JQL
+    search       Search issues (plain text or JQL)
     create epic  Create epic + stories from YAML
     create story Create single story from YAML
     sync         Sync epic to Jira
@@ -134,16 +134,127 @@ def link(parent_key, child_key, link_type, dry_run):
 
 
 @jira.command()
-@click.argument("jql")
-def search(jql):
-    """Search issues using JQL (delegates to jira CLI)."""
-    import subprocess
+@click.argument("query")
+@click.option("--project", "-p", default=None, help="Jira project key (default: from config)")
+@click.option("--max-results", "-n", default=50, type=int, help="Maximum results (default: 50)")
+@click.option("--status", "-s", default=None, help="Filter by status (e.g. 'In Progress', 'Done')")
+@click.option("--type", "-t", "issue_type", default=None, help="Filter by issue type (e.g. Story, Epic, Bug)")
+@click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
+def search(query, project, max_results, status, issue_type, json_out):
+    """Search issues using plain text or JQL.
 
-    result = subprocess.run(
-        ["jira", "issue", "list", "--jql", jql, "--plain"],
-        capture_output=False,
+    \b
+    Plain text queries search summary, description, and comments.
+    JQL queries (detected automatically) are passed through directly.
+
+    \b
+    Examples:
+      pf jira search "BikeRack reconnect"
+      pf jira search "sprint fix" --project MSSCI
+      pf jira search "status = 'In Progress' AND assignee = currentUser()"
+      pf jira search "install" --status "To Do" --type Story
+    """
+    import json as json_mod
+
+    from pf.jira.client import JIRA_PROJECT, get_client
+
+    client = get_client()
+    proj = project or JIRA_PROJECT
+
+    jql = _build_search_jql(query, proj, status, issue_type)
+
+    issues = client.search_issues_sync(
+        jql,
+        fields=["key", "summary", "status", "assignee", "customfield_10031", "issuetype"],
+        max_results=max_results,
     )
-    raise SystemExit(result.returncode)
+
+    if json_out:
+        click.echo(json_mod.dumps(issues, indent=2))
+        return
+
+    if not issues:
+        click.echo(f"No issues found. JQL: {jql}")
+        return
+
+    click.echo(f"Found {len(issues)} issue(s):\n")
+    _print_search_results(issues)
+
+
+def _is_jql(query: str) -> bool:
+    """Detect if a query string looks like JQL rather than plain text."""
+    jql_keywords = [
+        " = ", " != ", " ~ ", " !~ ", " IN ", " NOT IN ",
+        " AND ", " OR ", " ORDER BY ", " >= ", " <= ",
+        " IS ", " WAS ", " CHANGED ",
+    ]
+    upper = f" {query} ".upper()
+    return any(kw.upper() in upper for kw in jql_keywords)
+
+
+def _build_search_jql(
+    query: str,
+    project: str,
+    status: str | None,
+    issue_type: str | None,
+) -> str:
+    """Build JQL from query string, project, and optional filters."""
+    if _is_jql(query):
+        jql = query
+        if project and "project" not in query.lower():
+            jql = f"project = {project} AND ({jql})"
+    else:
+        jql = f'project = {project} AND text ~ "{query}"'
+
+    if status:
+        jql += f' AND status = "{status}"'
+    if issue_type:
+        jql += f' AND issuetype = "{issue_type}"'
+
+    jql += " ORDER BY updated DESC"
+    return jql
+
+
+def _print_search_results(issues: list) -> None:
+    """Format and print search results as a table."""
+    from pf.jira.client import get_jira_field
+
+    rows = []
+    for issue in issues:
+        key = issue.get("key", "?")
+        summary = get_jira_field(issue, "fields.summary", "")
+        status_name = get_jira_field(issue, "fields.status.name", "?")
+        issue_type = get_jira_field(issue, "fields.issuetype.name", "?")
+        assignee = get_jira_field(issue, "fields.assignee.displayName", "Unassigned")
+        points = get_jira_field(issue, "fields.customfield_10031")
+        pts_str = str(int(points)) if points else "-"
+        rows.append((key, issue_type, summary, status_name, pts_str, assignee))
+
+    if not rows:
+        return
+
+    # Column widths
+    key_w = max(len(r[0]) for r in rows)
+    type_w = max(len(r[1]) for r in rows)
+    status_w = max(len(r[3]) for r in rows)
+    pts_w = 3
+    assign_w = max(len(r[5]) for r in rows)
+    # Summary gets the rest, capped at 50
+    sum_w = 50
+
+    header = (
+        f"{'Key':<{key_w}}  {'Type':<{type_w}}  {'Summary':<{sum_w}}  "
+        f"{'Status':<{status_w}}  {'Pts':<{pts_w}}  Assignee"
+    )
+    click.echo(header)
+    click.echo("-" * len(header))
+
+    for key, itype, summary, st, pts, assignee in rows:
+        trunc = (summary[:sum_w - 1] + "…") if len(summary) > sum_w else summary
+        click.echo(
+            f"{key:<{key_w}}  {itype:<{type_w}}  {trunc:<{sum_w}}  "
+            f"{st:<{status_w}}  {pts:<{pts_w}}  {assignee}"
+        )
 
 
 @jira.group()

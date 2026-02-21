@@ -572,9 +572,10 @@ class JiraClient:
 
         encoded_jql = urllib.parse.quote(jql)
         fields_param = ",".join(fields)
+        # Jira Cloud deprecated /rest/api/3/search — use /rest/api/3/search/jql
         result = self._call_api_sync(
             "GET",
-            f"/rest/api/3/search?jql={encoded_jql}&fields={fields_param}"
+            f"/rest/api/3/search/jql?jql={encoded_jql}&fields={fields_param}"
             f"&maxResults={max_results}",
         )
         if not result:
