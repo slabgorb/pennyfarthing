@@ -7,6 +7,7 @@ This package provides shared utilities used across all CLI tools:
 
 from pf.common.config import (
     find_project_root,
+    get_dist_root,
     get_project_root,
     load_pennyfarthing_config,
     load_yaml_config,
@@ -42,6 +43,7 @@ __all__ = [
     "_supports_color",
     # Config
     "find_project_root",
+    "get_dist_root",
     "get_project_root",
     "load_pennyfarthing_config",
     "load_yaml_config",

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 
+from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 # Known workflow types
@@ -315,15 +316,24 @@ def validate_procedural(
 def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate all workflow definition files."""
     report = ValidateReport(validator="workflow")
-    workflows_dir = root / "pennyfarthing-dist" / "workflows"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        report.details.append("[ERROR] workflows directory not found")
+        report.errors += 1
+        return report
+    workflows_dir = dist_root / "workflows"
 
     if not workflows_dir.is_dir():
         report.details.append("[ERROR] workflows directory not found")
         report.errors += 1
         return report
 
-    agents_dir = root / "pennyfarthing-dist" / "agents"
+    agents_dir = dist_root / "agents"
     files = discover_workflow_files(workflows_dir)
+
+    if not files:
+        report.warnings += 1
+        report.details.append("[WARN] No workflow files found in workflows directory")
 
     for path in files:
         try:

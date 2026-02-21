@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 
+from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 VALID_MODELS = {"haiku", "sonnet", "opus"}
@@ -191,7 +192,12 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
 def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate all agent definition files."""
     report = ValidateReport(validator="agent")
-    agents_dir = root / "pennyfarthing-dist" / "agents"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        report.details.append("[ERROR] agents directory not found")
+        report.errors += 1
+        return report
+    agents_dir = dist_root / "agents"
 
     if not agents_dir.is_dir():
         report.details.append("[ERROR] agents directory not found")
@@ -199,6 +205,10 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         return report
 
     main_agents, subagents, _skipped = classify_agent_files(agents_dir)
+
+    if not main_agents and not subagents:
+        report.warnings += 1
+        report.details.append("[WARN] No agent files found in agents directory")
 
     for path in main_agents:
         file_errors, file_warnings = validate_main_agent(path, agents_dir)

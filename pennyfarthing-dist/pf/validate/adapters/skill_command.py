@@ -14,6 +14,7 @@ from pathlib import Path
 
 import yaml
 
+from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -25,7 +26,10 @@ def discover_skill_registry(root: Path) -> Path | None:
     Returns:
         Path to skill-registry.yaml, or None if not found.
     """
-    path = root / "pennyfarthing-dist" / "skills" / "skill-registry.yaml"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        return None
+    path = dist_root / "skills" / "skill-registry.yaml"
     return path if path.is_file() else None
 
 
@@ -42,7 +46,10 @@ def discover_command_files(commands_dir: Path) -> list[Path]:
 
 def _load_schema(root: Path) -> dict | None:
     """Load the skill-registry.schema.json file."""
-    schema_path = root / "pennyfarthing-dist" / "skills" / "skill-registry.schema.json"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        return None
+    schema_path = dist_root / "skills" / "skill-registry.schema.json"
     if not schema_path.is_file():
         return None
     try:
@@ -213,7 +220,10 @@ def _get_body(content: str) -> str:
 
 def _discover_registry(root: Path) -> dict | None:
     """Load command-registry.yaml if it exists."""
-    path = root / "pennyfarthing-dist" / "command-registry.yaml"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        return None
+    path = dist_root / "command-registry.yaml"
     if not path.is_file():
         return None
     try:
@@ -413,7 +423,8 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         report.passed += 1
 
     # --- Command file validation ---
-    commands_dir = root / "pennyfarthing-dist" / "commands"
+    dist_root = get_dist_root(project_root=root)
+    commands_dir = (dist_root / "commands") if dist_root else root / "pennyfarthing-dist" / "commands"
     command_files = discover_command_files(commands_dir)
 
     for path in command_files:

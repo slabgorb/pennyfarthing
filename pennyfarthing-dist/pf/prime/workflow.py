@@ -15,7 +15,7 @@ from typing import Any
 
 import yaml
 
-from pf.common.config import get_project_root
+from pf.common.config import get_dist_root, get_project_root
 from pf.prime.models import WorkflowState, WorkflowStatus
 
 
@@ -133,7 +133,11 @@ def get_phase_owner(workflow: str, phase: str, project_root: Path) -> str | None
     Returns:
         Agent name (sm, tea, dev, reviewer), or None if not found
     """
-    workflow_path = project_root / "pennyfarthing-dist" / "workflows" / f"{workflow}.yaml"
+    dist_root = get_dist_root(project_root=project_root)
+    if dist_root:
+        workflow_path = dist_root / "workflows" / f"{workflow}.yaml"
+    else:
+        workflow_path = project_root / "pennyfarthing-dist" / "workflows" / f"{workflow}.yaml"
 
     if not workflow_path.exists():
         # Fallback to symlinked location
@@ -296,7 +300,11 @@ def get_phase_tandem_config(
         or None if no tandem config on this phase.
     """
     root = project_root or get_project_root()
-    workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
+    else:
+        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
 
     if not workflow_path.exists():
         return None

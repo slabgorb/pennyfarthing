@@ -20,7 +20,7 @@ from typing import Any
 
 import yaml
 
-from pf.common.config import get_project_root, load_yaml_config
+from pf.common.config import get_dist_root, get_project_root, load_yaml_config
 
 
 def discover_all_theme_dirs(project_root: Path | None = None) -> list[Path]:
@@ -42,10 +42,12 @@ def discover_all_theme_dirs(project_root: Path | None = None) -> list[Path]:
     if symlink_themes.is_dir():
         dirs.append(symlink_themes)
 
-    # 1b. Core themes via pennyfarthing-dist (development)
-    dist_themes = root / "pennyfarthing-dist" / "personas" / "themes"
-    if dist_themes.is_dir() and dist_themes not in dirs:
-        dirs.append(dist_themes)
+    # 1b. Core themes via pennyfarthing-dist (development or npm)
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        dist_themes = dist_root / "personas" / "themes"
+        if dist_themes.is_dir() and dist_themes not in dirs:
+            dirs.append(dist_themes)
 
     # 2. Theme packages via node_modules
     nm_pf = root / "node_modules" / "@pennyfarthing"

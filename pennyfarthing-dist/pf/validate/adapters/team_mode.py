@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 # Regex to extract <team-mode> section content
@@ -253,7 +254,12 @@ def run(
     report = ValidateReport(validator="team-mode")
 
     # Validate behavior guide
-    guides_dir = root / "pennyfarthing-dist" / "guides"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        report.errors += 1
+        report.details.append("[ERROR] pennyfarthing-dist not found")
+        return report
+    guides_dir = dist_root / "guides"
     behavior_guide = guides_dir / "agent-behavior.md"
     if behavior_guide.is_file():
         file_errors, file_warnings = validate_behavior_guide_team_mode(behavior_guide)
@@ -301,7 +307,7 @@ def run(
         report.details.append("[ERROR] agent-behavior.md guide not found")
 
     # Validate lead agents
-    agents_dir = root / "pennyfarthing-dist" / "agents"
+    agents_dir = dist_root / "agents"
     if agents_dir.is_dir():
         for agent_name in ("dev", "reviewer"):
             agent_path = agents_dir / f"{agent_name}.md"

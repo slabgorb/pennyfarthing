@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from pf.common.config import get_project_root
+from pf.common.config import get_dist_root, get_project_root
 
 
 def load_agent_definition(agent_name: str, project_root: Path | None = None) -> str | None:
@@ -31,10 +31,17 @@ def load_agent_definition(agent_name: str, project_root: Path | None = None) -> 
     root = project_root or get_project_root()
     agent_file = root / ".pennyfarthing" / "agents" / f"{agent_name}.md"
 
-    if not agent_file.exists():
-        return None
+    if agent_file.exists():
+        return agent_file.read_text()
 
-    return agent_file.read_text()
+    # Fallback: pennyfarthing-dist via get_dist_root (npm context)
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        agent_file = dist_root / "agents" / f"{agent_name}.md"
+        if agent_file.exists():
+            return agent_file.read_text()
+
+    return None
 
 
 def load_behavior_guide(project_root: Path | None = None) -> str | None:
@@ -49,10 +56,17 @@ def load_behavior_guide(project_root: Path | None = None) -> str | None:
     root = project_root or get_project_root()
     guide_file = root / ".pennyfarthing" / "guides" / "agent-behavior.md"
 
-    if not guide_file.exists():
-        return None
+    if guide_file.exists():
+        return guide_file.read_text()
 
-    return guide_file.read_text()
+    # Fallback: pennyfarthing-dist via get_dist_root (npm context)
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        guide_file = dist_root / "guides" / "agent-behavior.md"
+        if guide_file.exists():
+            return guide_file.read_text()
+
+    return None
 
 
 def load_sprint_context(project_root: Path | None = None) -> str | None:

@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from pf.common.config import get_dist_root
+
 
 def resolve_gate_file(
     gate_ref: str,
@@ -44,8 +46,10 @@ def resolve_gate_file(
     # Resolution order: local first, built-in fallback
     search_paths = [
         project_root / ".pennyfarthing" / "gates" / f"{name}.md",
-        project_root / "pennyfarthing-dist" / "gates" / f"{name}.md",
     ]
+    dist_root = get_dist_root(project_root=project_root)
+    if dist_root:
+        search_paths.append(dist_root / "gates" / f"{name}.md")
 
     for candidate in search_paths:
         if candidate.is_file():

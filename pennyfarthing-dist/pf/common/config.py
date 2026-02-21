@@ -66,6 +66,49 @@ def get_project_root(start_dir: Path | None = None) -> Path:
 find_project_root = get_project_root
 
 
+def get_dist_root(project_root: Path | None = None) -> Path | None:
+    """Resolve the pennyfarthing-dist directory.
+
+    Checks multiple locations to support both monorepo development
+    and npm-installed consumer projects:
+      1. {project_root}/pennyfarthing-dist/ (monorepo or symlink)
+      2. {project_root}/node_modules/@pennyfarthing/core/pennyfarthing-dist/ (npm)
+      3. Relative to this file (when running from within pennyfarthing-dist/pf/)
+
+    Args:
+        project_root: Project root path (defaults to auto-detect)
+
+    Returns:
+        Path to pennyfarthing-dist directory, or None if not found
+    """
+    try:
+        root = (project_root or get_project_root()).resolve()
+    except FileNotFoundError:
+        return None
+
+    # 1. Direct: monorepo layout or symlink at project root
+    direct = root / "pennyfarthing-dist"
+    if direct.is_dir():
+        return direct
+
+    # 2. npm-installed: node_modules/@pennyfarthing/core/pennyfarthing-dist/
+    npm = root / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+    if npm.is_dir():
+        return npm
+
+    # 3. Relative to this file (when inside pennyfarthing-dist/pf/)
+    # Only use this fallback when no explicit project_root was given,
+    # since an explicit root scopes the search to that directory.
+    if project_root is None:
+        this_file = Path(__file__).resolve()
+        # __file__ is pennyfarthing-dist/pf/common/config.py → up 3 levels
+        candidate = this_file.parent.parent.parent
+        if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
+            return candidate
+
+    return None
+
+
 def load_yaml_config(path: Path) -> dict[str, Any] | None:
     """Load a YAML configuration file.
 
