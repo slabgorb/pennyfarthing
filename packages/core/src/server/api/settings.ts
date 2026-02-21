@@ -31,6 +31,12 @@ export async function getSettingsForWebSocket(projectDir: string): Promise<Setti
       if (config?.theme) {
         response.theme = config.theme;
       }
+      if (config?.display) {
+        response.display = config.display;
+      }
+      if (config?.workflow) {
+        response.workflow = { ...response.workflow as object, ...config.workflow };
+      }
     }
   } catch {
     // Ignore errors reading config
