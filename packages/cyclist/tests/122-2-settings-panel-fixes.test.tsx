@@ -54,73 +54,61 @@ const SPARSE_SETTINGS = {
 };
 
 /**
- * STUB: Matches the CURRENT SettingsPanel after 122-1 (read-only but broken).
- * Has: Notifications section, no styling, String(undefined), no CLI reference.
+ * STUB: Matches the FIXED SettingsPanel after 122-2.
+ * Has: Inline styles, displayValue fallback, no Notifications, CLI reference, dot-path keys.
  */
+function displayValue(val: unknown): string {
+  if (val === undefined || val === null || val === '') return '\u2014';
+  if (typeof val === 'boolean') return val ? 'true' : 'false';
+  return String(val);
+}
+
+const sectionStyle: React.CSSProperties = { padding: '8px 0' };
+const rowStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '2px 0' };
+const labelStyle: React.CSSProperties = { opacity: 0.7 };
+
+function SettingRow({ label, dotPath, value }: { label: string; dotPath: string; value: unknown }) {
+  return (
+    <div className="setting-row" style={rowStyle}>
+      <span className="setting-label" style={labelStyle}>{label} <span style={{ fontSize: '0.8em', opacity: 0.6 }}>{dotPath}</span></span>
+      <span className="setting-value">{displayValue(value)}</span>
+    </div>
+  );
+}
+
 function CurrentSettingsPanel({ settings }: { settings: Record<string, any> }) {
+  const theme = settings.theme || settings.pennyfarthing?.theme;
+
   return (
     <div className="settings-panel" data-testid="settings-panel">
-      <section className="settings-section">
+      <section className="settings-section" style={sectionStyle}>
         <h4>Theme &amp; Display</h4>
-        <div className="setting-row">
-          <span className="setting-label">Theme</span>
-          <span className="setting-value">{settings.pennyfarthing?.theme}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Color Preset</span>
-          <span className="setting-value">{settings.display?.colorPreset}</span>
-        </div>
+        <SettingRow label="Theme" dotPath="theme" value={theme} />
+        <SettingRow label="Color Preset" dotPath="display.colorPreset" value={settings.display?.colorPreset} />
       </section>
 
-      <section className="settings-section">
+      <section className="settings-section" style={sectionStyle}>
         <h4>Fonts</h4>
-        <div className="setting-row">
-          <span className="setting-label">UI Font</span>
-          <span className="setting-value">{settings.display?.fonts?.uiFont}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">UI Font Size</span>
-          <span className="setting-value">{settings.display?.fonts?.uiFontSize}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Code Font</span>
-          <span className="setting-value">{settings.display?.fonts?.codeFont}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Code Font Size</span>
-          <span className="setting-value">{settings.display?.fonts?.codeFontSize}</span>
-        </div>
+        <SettingRow label="UI Font" dotPath="display.fonts.uiFont" value={settings.display?.fonts?.uiFont} />
+        <SettingRow label="UI Font Size" dotPath="display.fonts.uiFontSize" value={settings.display?.fonts?.uiFontSize} />
+        <SettingRow label="Code Font" dotPath="display.fonts.codeFont" value={settings.display?.fonts?.codeFont} />
+        <SettingRow label="Code Font Size" dotPath="display.fonts.codeFontSize" value={settings.display?.fonts?.codeFontSize} />
       </section>
 
-      <section className="settings-section">
+      <section className="settings-section" style={sectionStyle}>
         <h4>Workflow</h4>
-        <div className="setting-row">
-          <span className="setting-label">Bell Mode</span>
-          <span className="setting-value">{String(settings.workflow?.bell_mode)}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Relay Mode</span>
-          <span className="setting-value">{String(settings.workflow?.relay_mode)}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Permission Mode</span>
-          <span className="setting-value">{settings.workflow?.permission_mode}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Git Monitor</span>
-          <span className="setting-value">{String(settings.workflow?.git_monitor)}</span>
-        </div>
+        <SettingRow label="Bell Mode" dotPath="workflow.bell_mode" value={settings.workflow?.bell_mode} />
+        <SettingRow label="Relay Mode" dotPath="workflow.relay_mode" value={settings.workflow?.relay_mode} />
+        <SettingRow label="Permission Mode" dotPath="workflow.permission_mode" value={settings.workflow?.permission_mode} />
+        <SettingRow label="Git Monitor" dotPath="workflow.git_monitor" value={settings.workflow?.git_monitor} />
       </section>
 
-      <section className="settings-section">
-        <h4>Notifications</h4>
-        <div className="setting-row">
-          <span className="setting-label">Phase Change</span>
-          <span className="setting-value">{String(settings.notifications?.phase_change)}</span>
-        </div>
-        <div className="setting-row">
-          <span className="setting-label">Sound</span>
-          <span className="setting-value">{String(settings.notifications?.sound)}</span>
+      <section className="settings-section" style={sectionStyle}>
+        <h4>CLI Reference</h4>
+        <div style={{ fontSize: '0.85em', opacity: 0.8 }}>
+          <div>/pf-settings show</div>
+          <div>/pf-settings get &lt;key&gt;</div>
+          <div>/pf-settings set &lt;key&gt; &lt;value&gt;</div>
         </div>
       </section>
     </div>
