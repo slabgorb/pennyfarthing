@@ -21,6 +21,12 @@ import pytest
 from pf.release.dry_run import dry_run_release
 
 
+def _cmd_contains(call_obj, token: str) -> bool:
+    """Check if a mock call's command list contains a token (ignoring cwd/kwargs)."""
+    args = call_obj.args[0] if call_obj.args else call_obj.kwargs.get("args", [])
+    return any(token in arg for arg in args) if isinstance(args, list) else False
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -367,7 +373,7 @@ class TestNoSideEffects:
 
         git_commit_calls = [
             c for c in mock_run.call_args_list
-            if "git" in str(c) and "commit" in str(c)
+            if _cmd_contains(c, "git") and _cmd_contains(c, "commit")
         ]
         assert len(git_commit_calls) == 0, "Dry run must not git commit"
 
@@ -378,7 +384,7 @@ class TestNoSideEffects:
 
         git_tag_calls = [
             c for c in mock_run.call_args_list
-            if "git" in str(c) and "tag" in str(c)
+            if _cmd_contains(c, "git") and _cmd_contains(c, "tag")
         ]
         assert len(git_tag_calls) == 0, "Dry run must not git tag"
 
@@ -389,7 +395,7 @@ class TestNoSideEffects:
 
         npm_publish_calls = [
             c for c in mock_run.call_args_list
-            if "npm" in str(c) and "publish" in str(c)
+            if _cmd_contains(c, "npm") and _cmd_contains(c, "publish")
         ]
         assert len(npm_publish_calls) == 0, "Dry run must not npm publish"
 
