@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 # Regex to extract <tandem-consultation> section content
@@ -178,7 +179,12 @@ def run(
 ) -> ValidateReport:
     """Validate agent tandem awareness sections."""
     report = ValidateReport(validator="tandem-awareness")
-    agents_dir = root / "pennyfarthing-dist" / "agents"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        report.details.append("[ERROR] agents directory not found")
+        report.errors += 1
+        return report
+    agents_dir = dist_root / "agents"
 
     if not agents_dir.is_dir():
         report.details.append("[ERROR] agents directory not found")

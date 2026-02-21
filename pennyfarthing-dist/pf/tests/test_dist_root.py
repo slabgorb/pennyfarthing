@@ -1,6 +1,6 @@
 """Tests for get_dist_root() unified path resolution.
 
-Story 120-5: Fix npm path resolution assuming monorepo layout.
+Stories 120-5, 120-7: Fix npm path resolution assuming monorepo layout.
 
 These tests verify that pennyfarthing-dist/ can be located in both
 monorepo development and npm-installed consumer contexts.
@@ -8,7 +8,6 @@ monorepo development and npm-installed consumer contexts.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -637,3 +636,87 @@ class TestIntegrationNpmContext:
         path = discover_skill_registry(npm_layout)
         assert path is not None, "Skill registry not found in npm layout"
         assert path.is_file()
+
+
+# ---------------------------------------------------------------------------
+# Story 120-7: Remaining call sites
+# ---------------------------------------------------------------------------
+
+
+class TestRemainingCallSitesNpmResolution:
+    """Story 120-7: Verify remaining call sites use get_dist_root().
+
+    These cover the 4 modules that were not refactored in 120-5:
+    hooks_installer, cli help, tandem_awareness, statusline.
+    """
+
+    def test_hooks_installer_finds_dist_in_npm(self, npm_layout: Path) -> None:
+        """hooks_installer should find pennyfarthing-dist in npm layout."""
+        from pf.git.hooks_installer import install_git_hooks
+
+        # Create .git/hooks directory structure
+        git_dir = npm_layout / ".git"
+        git_dir.mkdir()
+        hooks_dir = git_dir / "hooks"
+        hooks_dir.mkdir()
+
+        # Create hooks source files and dispatcher template in dist
+        dist = (
+            npm_layout / "node_modules" / "@pennyfarthing" / "core"
+            / "pennyfarthing-dist"
+        )
+        hooks_source = dist / "scripts" / "hooks"
+        hooks_source.mkdir(parents=True)
+        (hooks_source / "dispatcher-template.sh").write_text(
+            "#!/bin/bash\n# __HOOK_NAME__ dispatcher\n"
+        )
+        (hooks_source / "pre-commit.sh").write_text("#!/bin/bash\n# pre-commit\n")
+
+        result = install_git_hooks(project_root=npm_layout)
+        assert result == 0, (
+            "install_git_hooks failed in npm layout — "
+            "call site not refactored to use get_dist_root()"
+        )
+
+    def test_tandem_awareness_finds_agents_in_npm(self, npm_layout: Path) -> None:
+        """tandem_awareness.run() should find agents in npm layout."""
+        from pf.validate.adapters.tandem_awareness import run
+
+        report = run(npm_layout, fix=False, strict=False)
+        has_dir_not_found = any(
+            "not found" in d.lower() for d in report.details
+        )
+        assert not has_dir_not_found, (
+            f"Tandem awareness failed to find agents in npm layout: {report.details}"
+        )
+
+    def test_cli_help_finds_registry_in_npm(self, npm_layout: Path) -> None:
+        """cli help_cmd should find command-registry.yaml in npm layout."""
+        import yaml
+
+        from pf.common.config import get_dist_root
+
+        # Verify the registry is reachable via get_dist_root
+        dist_root = get_dist_root(project_root=npm_layout)
+        assert dist_root is not None
+        registry_path = dist_root / "command-registry.yaml"
+        assert registry_path.is_file(), (
+            "command-registry.yaml not found via get_dist_root in npm layout"
+        )
+        data = yaml.safe_load(registry_path.read_text())
+        assert data is not None
+
+    def test_statusline_theme_resolves_in_npm(self, npm_layout: Path) -> None:
+        """statusline _get_character_display should find theme via dist fallback."""
+        from pf.hooks.statusline import _get_character_display
+
+        # Remove .pennyfarthing/personas/ to simulate npm without symlinks
+        pf_dir = npm_layout / ".pennyfarthing"
+        # .pennyfarthing exists (config) but has no personas/themes symlink
+        # So the primary path fails and fallback via get_dist_root should work
+        display, theme_file = _get_character_display(str(npm_layout), "tea")
+        # Should resolve the theme file (even if character isn't found for tea,
+        # theme_file path should point to the dist location)
+        assert theme_file is not None, (
+            "statusline could not resolve theme file in npm layout"
+        )

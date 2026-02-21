@@ -295,10 +295,15 @@ def help_cmd(group: str | None):
 
     import yaml
 
-    from pf.common.config import get_project_root
+    from pf.common.config import get_dist_root, get_project_root
 
     root = get_project_root()
-    registry_path = root / "pennyfarthing-dist" / "command-registry.yaml"
+    dist_root = get_dist_root(project_root=root)
+    if dist_root is None:
+        click.echo("Command registry not found. Run /pf-health-check.", err=True)
+        raise SystemExit(1)
+
+    registry_path = dist_root / "command-registry.yaml"
 
     if not registry_path.is_file():
         click.echo("Command registry not found. Run /pf-health-check.", err=True)

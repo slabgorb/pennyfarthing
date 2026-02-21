@@ -10,9 +10,10 @@ Usage via CLI:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-from pf.common.config import get_project_root
+from pf.common.config import get_dist_root, get_project_root
 
 DISPATCHER_MARKER = "pennyfarthing-dispatcher"
 PF_PREFIX = "10"
@@ -48,9 +49,9 @@ def install_git_hooks(project_root: Path | None = None) -> int:
     if project_root is None:
         project_root = get_project_root()
 
-    pf_dist = project_root / "pennyfarthing-dist"
-    if not pf_dist.is_dir():
-        print("Error: This script requires pennyfarthing-dist/ at the project root")
+    pf_dist = get_dist_root(project_root=project_root)
+    if pf_dist is None or not pf_dist.is_dir():
+        print("Error: pennyfarthing-dist not found")
         print("       End-user projects should use: pennyfarthing init")
         return 1
 
@@ -127,8 +128,8 @@ def install_git_hooks(project_root: Path | None = None) -> int:
             print(f"  NEW  {dest_name} dispatcher")
 
         # Symlink pennyfarthing hook into .d/
-        # Relative path from .git/hooks/{hook}.d/ to pennyfarthing-dist/scripts/hooks/
-        relative_path = Path("../../../pennyfarthing-dist/scripts/hooks") / source_file
+        # Compute relative path from .git/hooks/{hook}.d/ to the hooks source
+        relative_path = Path(os.path.relpath(hooks_source / source_file, d_dir))
 
         if pf_hook_path.is_symlink():
             current_target = pf_hook_path.readlink()

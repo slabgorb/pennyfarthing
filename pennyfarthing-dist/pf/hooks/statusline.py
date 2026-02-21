@@ -257,6 +257,17 @@ def _get_character_display(project_root: str, agent_name: str) -> tuple[str, str
 
     theme_file = Path(project_root) / ".pennyfarthing" / "personas" / "themes" / f"{theme}.yaml"
     if not theme_file.is_file():
+        # Fallback: check pennyfarthing-dist via get_dist_root (npm context)
+        try:
+            from pf.common.config import get_dist_root
+            dist_root = get_dist_root(project_root=Path(project_root))
+            if dist_root:
+                candidate = dist_root / "personas" / "themes" / f"{theme}.yaml"
+                if candidate.is_file():
+                    theme_file = candidate
+        except Exception:
+            pass
+    if not theme_file.is_file():
         # Capitalize theme name as fallback
         return theme[0].upper() + theme[1:] if theme else "", str(theme_file)
 
