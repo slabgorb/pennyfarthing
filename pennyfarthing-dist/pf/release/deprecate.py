@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -122,7 +122,7 @@ def deprecate_version(
     })
 
     # Step 2: Update CHANGELOG.md
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     changelog_ok = _update_changelog(changelog_path, version, reason, today)
     steps.append({
         "action": "changelog_update",

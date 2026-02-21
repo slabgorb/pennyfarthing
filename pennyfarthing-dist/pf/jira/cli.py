@@ -238,7 +238,6 @@ def _print_search_results(issues: list) -> None:
     type_w = max(len(r[1]) for r in rows)
     status_w = max(len(r[3]) for r in rows)
     pts_w = 3
-    assign_w = max(len(r[5]) for r in rows)
     # Summary gets the rest, capped at 50
     sum_w = 50
 

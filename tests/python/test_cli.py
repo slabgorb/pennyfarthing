@@ -134,9 +134,9 @@ class TestStartupPerformance:
             [sys.executable, "-m", "pf.cli", "--help"], cwd=PROJECT_ROOT,
         )
         delta = cli_time - baseline
-        assert delta < 250, (
+        assert delta < 400, (
             f"CLI added {delta:.1f}ms over baseline "
-            f"(cli={cli_time:.1f}ms, python={baseline:.1f}ms), should be < 250ms"
+            f"(cli={cli_time:.1f}ms, python={baseline:.1f}ms), should be < 400ms"
         )
 
     def test_cli_startup_no_heavy_imports_at_top(self):

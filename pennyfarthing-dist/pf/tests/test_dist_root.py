@@ -15,7 +15,6 @@ import pytest
 
 from pf.common.config import get_dist_root
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -711,7 +710,6 @@ class TestRemainingCallSitesNpmResolution:
         from pf.hooks.statusline import _get_character_display
 
         # Remove .pennyfarthing/personas/ to simulate npm without symlinks
-        pf_dir = npm_layout / ".pennyfarthing"
         # .pennyfarthing exists (config) but has no personas/themes symlink
         # So the primary path fails and fallback via get_dist_root should work
         display, theme_file = _get_character_display(str(npm_layout), "tea")
