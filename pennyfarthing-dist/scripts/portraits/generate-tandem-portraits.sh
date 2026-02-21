@@ -10,9 +10,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="${0:A:h}"
-# Source image lives alongside portraits in pennyfarthing-dist
+# Source image lives in packages/core/src/public/images/
 DIST_DIR="${SCRIPT_DIR}/../.."
-SOURCE_IMAGE="${DIST_DIR}/personas/portraits/cyclist-tandem-source.png"
+# Find project root (contains packages/)
+PROJECT_ROOT="${DIST_DIR}"
+[[ -d "${PROJECT_ROOT}/packages" ]] || PROJECT_ROOT="${DIST_DIR}/.."
+SOURCE_IMAGE="${PROJECT_ROOT}/packages/core/src/public/images/cyclist-tandem-source.png"
 PORTRAITS_DIR=""
 
 # Parse arguments
@@ -25,8 +28,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Auto-detect portraits directory if not provided
+# Output goes to packages/cyclist/portraits/ (Cyclist UI asset, not persona portraits)
 if [[ -z "$PORTRAITS_DIR" ]]; then
-  PORTRAITS_DIR="${DIST_DIR}/personas/portraits"
+  PORTRAITS_DIR="${PROJECT_ROOT}/packages/cyclist/portraits"
 fi
 
 # Resolve to absolute path
