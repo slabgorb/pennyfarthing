@@ -15,6 +15,12 @@ Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME] [--engine ENGINE]
     python3 scripts/generate-portraits.py --engine flux --theme gilligans-island --dry-run
     python3 scripts/generate-portraits.py --engine sdxl --role ba --skip-existing
+
+Freeform prompt mode (bypasses theme YAML):
+    python3 scripts/generate-portraits.py --prompt "a steampunk bicycle logo" --output logo.png
+    python3 scripts/generate-portraits.py --prompt "robot on a penny-farthing" --output bot.png --no-style-suffix
+    python3 scripts/generate-portraits.py --prompt "cat riding a bicycle" --output cat.png --style "flat vector logo, minimal, bold colors"
+    python3 scripts/generate-portraits.py --prompt "cat riding a bicycle" --output cat.png --engine flux --seed 99
 """
 
 import argparse
@@ -398,7 +404,55 @@ def main():
     parser.add_argument("--output-dir", type=str, help="Output to different directory (default: pennyfarthing-dist/personas/portraits)")
     parser.add_argument("--engine", type=str, choices=list(ENGINES.keys()), default=DEFAULT_ENGINE,
                         help=f"Image generation engine (default: {DEFAULT_ENGINE})")
+    parser.add_argument("--prompt", type=str, help="Generate a single image from an arbitrary text prompt (bypasses theme YAML)")
+    parser.add_argument("--output", type=str, help="Output file path (required with --prompt)")
+    parser.add_argument("--no-style-suffix", action="store_true", help="Skip appending the default style suffix (use with --prompt)")
+    parser.add_argument("--style", type=str, help="Custom style suffix to append to --prompt (overrides default woodcut style)")
     args = parser.parse_args()
+
+    # Freeform prompt mode — bypass theme loading entirely
+    if args.prompt:
+        if not args.output:
+            print("Error: --output is required when using --prompt")
+            sys.exit(1)
+
+        engine_name = args.engine
+        engine = ENGINES[engine_name]
+
+        if args.no_style_suffix:
+            style_suffix = ""
+        elif args.style:
+            style_suffix = f", {args.style}"
+        else:
+            style_suffix = DEFAULT_STYLE_SUFFIX
+
+        prompt, was_truncated, token_count = build_portrait_prompt(
+            args.prompt, style_suffix, max_tokens=engine["max_tokens"]
+        )
+
+        print(f"Engine: {engine_name.upper()}")
+        print(f"Prompt ({token_count} tokens): {prompt}")
+        if was_truncated:
+            print(f"  WARNING: Truncated to {engine['max_tokens']} token limit")
+
+        if args.dry_run:
+            print("Dry run — no image generated.")
+            return
+
+        if not HAS_TORCH:
+            print(f"Missing required package: {TORCH_ERROR}")
+            print("\nInstall: pip install diffusers transformers accelerate torch pillow")
+            sys.exit(1)
+
+        pipeline_components = load_pipeline(engine_name)
+        out_path = Path(args.output)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        print(f"Generating: {out_path}...")
+        image = generate_portrait(pipeline_components, prompt, engine_name, seed=args.seed)
+        image.save(out_path, "PNG")
+        print(f"Done: {out_path}")
+        return
 
     engine_name = args.engine
     engine = ENGINES[engine_name]

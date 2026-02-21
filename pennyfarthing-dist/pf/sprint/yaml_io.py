@@ -36,7 +36,7 @@ EPIC_KEY_ORDER: list[str] = [
 
 STORY_KEY_ORDER: list[str] = [
     "id", "jira", "title", "description", "points", "priority",
-    "status", "in_sprint", "assigned_to", "started", "repos",
+    "refs", "status", "in_sprint", "assigned_to", "started", "repos",
     "workflow", "acceptance_criteria", "completed", "pr",
     "delivered_in", "notes",
 ]

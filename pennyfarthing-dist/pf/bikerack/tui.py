@@ -870,6 +870,43 @@ class BikeRackApp(App):
 DEFAULT_PORT = 2898
 
 
+def _patch_tgp_for_tmux() -> None:
+    """Monkey-patch textual-image's TGP writer to wrap Kitty graphics
+    escapes in tmux DCS passthrough sequences.
+
+    tmux doesn't forward Kitty APC escapes (\\x1b_G...\\x1b\\\\) natively.
+    They must be wrapped: \\x1bPtmux;<escaped>\\x1b\\\\
+    with any \\x1b in the payload doubled to \\x1b\\x1b.
+    """
+    try:
+        import textual_image.renderable.tgp as tgp
+    except ImportError:
+        return
+
+    _original_send = tgp._send_tgp_message
+
+    def _tmux_send(*, payload: str | None = None, **kwargs: int | str | None) -> None:
+        import sys
+
+        if not sys.__stdout__:
+            return
+
+        inner = [
+            tgp._TGP_MESSAGE_START,
+            ",".join(f"{k}={v}" for k, v in kwargs.items() if v is not None),
+            f";{payload}" if payload else "",
+            tgp._TGP_MESSAGE_END,
+        ]
+        sequence = "".join(inner)
+
+        # Wrap in tmux DCS passthrough: double any ESC inside the payload
+        wrapped = "\x1bPtmux;" + sequence.replace("\x1b", "\x1b\x1b") + "\x1b\\"
+        sys.__stdout__.write(wrapped)
+        sys.__stdout__.flush()
+
+    tgp._send_tgp_message = _tmux_send
+
+
 def main(
     port: int | None = None,
     project_dir: Path | None = None,
@@ -884,6 +921,13 @@ def main(
     from pf.bikerack import portrait_resolver
 
     portrait_resolver.detect_image_protocol()
+
+    # Patch textual-image to wrap Kitty graphics escapes in tmux passthrough.
+    # tmux doesn't natively forward Kitty's APC graphics escapes — they must
+    # be wrapped in DCS passthrough sequences (\x1bPtmux;...\x1b\\).
+    # See: https://github.com/tmux/tmux/wiki/FAQ
+    if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
+        _patch_tgp_for_tmux()
 
     if port is None:
         if project_dir is not None:

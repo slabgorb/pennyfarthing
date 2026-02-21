@@ -126,9 +126,15 @@ export function SettingsPanel(): React.ReactElement {
 
       <section className="settings-section" style={sectionStyle}>
         <h4>Fonts</h4>
-        <SettingRow label="UI Font" dotPath="display.fonts.uiFont" value={settings.display?.fonts?.uiFont} />
+        <SettingRow label="UI Font" dotPath="display.fonts.uiFont"
+          value={settings.display?.fonts?.uiFont === 'custom'
+            ? settings.display?.fonts?.customUiFont
+            : settings.display?.fonts?.uiFont} />
         <SettingRow label="UI Font Size" dotPath="display.fonts.uiFontSize" value={settings.display?.fonts?.uiFontSize} />
-        <SettingRow label="Code Font" dotPath="display.fonts.codeFont" value={settings.display?.fonts?.codeFont} />
+        <SettingRow label="Code Font" dotPath="display.fonts.codeFont"
+          value={settings.display?.fonts?.codeFont === 'custom'
+            ? settings.display?.fonts?.customCodeFont
+            : settings.display?.fonts?.codeFont} />
         <SettingRow label="Code Font Size" dotPath="display.fonts.codeFontSize" value={settings.display?.fonts?.codeFontSize} />
       </section>
 
