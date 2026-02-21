@@ -139,11 +139,11 @@ class TestPeriodicRefreshInApp:
         return BikeRackApp()
 
     async def test_meter_has_active_timer_after_mount(self, app):
-        """After mount, the ContextMeterFooter should have an active refresh timer."""
+        """After mount, the StatusFooter should have an active refresh timer."""
         async with app.run_test() as pilot:
-            meter = app.query_one("ContextMeterFooter")
+            meter = app.query_one("StatusFooter")
             assert hasattr(meter, "_refresh_timer"), (
-                "ContextMeterFooter should have a _refresh_timer after mount"
+                "StatusFooter should have a _refresh_timer after mount"
             )
             assert meter._refresh_timer is not None, (
                 "Refresh timer should be active after mount"
@@ -164,9 +164,9 @@ class TestPanelSwitchRedraw:
         return BikeRackApp()
 
     async def test_panel_switch_triggers_meter_refresh(self, app):
-        """Switching to a different panel should trigger context meter redraw."""
+        """Switching to a different panel should trigger status footer redraw."""
         async with app.run_test() as pilot:
-            meter = app.query_one("ContextMeterFooter")
+            meter = app.query_one("StatusFooter")
             # Seed context data so there's something to redraw
             meter.handle_context_message(CONTEXT_LOW)
 

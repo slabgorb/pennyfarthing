@@ -1,17 +1,18 @@
-"""ContextMeterFooter — Persistent context usage footer bar for BikeRack TUI.
+"""StatusFooter — Unified status bar for BikeRack TUI.
 
-Story 110-5: Context meter footer bar. Displays context window usage
-percentage with color-coded tier thresholds, always visible at the
-bottom of the layout.
+Consolidates project name, model indicator, and context usage into a
+single footer line.  Progress bar is right-aligned.
 
-Story 110-12: Periodic refresh timer, event-driven redraws, and
-throttling for more frequent updates without performance degradation.
+Story 121-3: Replaces BindingFooter + ContextMeterFooter + #project-dir.
 
-Subscribes to /ws/context WebSocket channel.
+Subscribes to:
+  /ws/context — context window usage percentage and tier
+  /ws/stats   — current model name
 """
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -22,21 +23,28 @@ from textual.widgets import Static
 from pf.bikerack.base_panel import render_progress_bar
 
 
-class ContextMeterFooter(Static):
-    """Persistent footer bar showing context window usage.
+def _clean_model_name(model_raw: str) -> str:
+    """Clean model name: strip 'claude-' prefix and trailing date stamp."""
+    model = re.sub(r"^claude-", "", model_raw)
+    model = re.sub(r"-\d+$", "", model)
+    return model[:12]
 
-    Not a Footer subclass — this is a Static widget mounted between
-    #main-content and BindingFooter in the app layout.
+
+class StatusFooter(Static):
+    """Single-line status bar: project │ model │ right-aligned context bar.
+
+    Replaces the old BindingFooter, ContextMeterFooter, and #project-dir
+    widgets with one consolidated footer.
     """
 
     class MeterUpdate(Message, bubble=False):
-        """Context meter data received — routed through Textual message system."""
+        """Trigger a repaint from Textual message context."""
 
         def __init__(self, content: Any) -> None:
             super().__init__()
             self.content = content
 
-    #: WebSocket channel this footer subscribes to
+    #: WebSocket channel (kept for backward compat with tests)
     channel: str = "context"
 
     #: Seconds between periodic refresh redraws
@@ -45,60 +53,86 @@ class ContextMeterFooter(Static):
     #: Minimum seconds between redraws (throttle)
     min_redraw_interval: float = 0.25
 
-    def __init__(self, client: Any = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        project_dir: str = "",
+        client: Any = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
+        self._project_dir = project_dir
         self._client = client
         self._context_data: dict[str, Any] | None = None
+        self._model: str = ""
         self._mounted = False
         self._refresh_timer: Any = None
         self._last_redraw_time: float = 0.0
         self.last_update_time: float = 0.0
+
+    # -- Convenience properties kept for backward compat with tests ----------
 
     @property
     def is_stale(self) -> bool:
         """True if no context data has been received."""
         return self._context_data is None
 
+    # -- Lifecycle -----------------------------------------------------------
+
     def on_mount(self) -> None:
-        """Subscribe to context channel and start periodic refresh on mount."""
+        """Subscribe to context + stats channels; start periodic refresh."""
         self._mounted = True
         if self._client is not None:
-            self._client.subscribe("context", self.handle_context_message)
-            self._client.on_state_change(self.on_connection_state_change)
+            self._client.subscribe("context", self._handle_context_message)
+            self._client.subscribe("stats", self._handle_stats_message)
+            self._client.on_state_change(self._on_connection_state_change)
         try:
             self._refresh_timer = self.set_interval(
                 self.refresh_interval, self.request_refresh
             )
         except RuntimeError:
-            # No running event loop (e.g. unit tests calling on_mount directly)
             pass
 
     def on_unmount(self) -> None:
-        """Stop timer and mark as unmounted so further messages are ignored."""
         self._mounted = False
         if self._refresh_timer is not None:
             self._refresh_timer.stop()
 
-    def on_context_meter_footer_meter_update(self, event: MeterUpdate) -> None:
-        """Process MeterUpdate in Textual message context — triggers repaint."""
+    # -- Message handlers (Textual thread) -----------------------------------
+
+    def on_status_footer_meter_update(self, event: MeterUpdate) -> None:
         self.update(event.content)
 
     def request_refresh(self) -> None:
-        """Redraw from cached context data. Safe to call at any time."""
-        if not self._mounted or self._context_data is None:
+        """Redraw from cached data. Safe to call at any time."""
+        if not self._mounted:
             return
         try:
-            rendered = self.render_meter(self._context_data)
+            rendered = self._render_status()
             self.post_message(self.MeterUpdate(rendered))
         except Exception:
             pass
 
-    def on_connection_state_change(self, state: Any) -> None:
-        """Redraw on WebSocket reconnection."""
+    def _on_connection_state_change(self, _state: Any) -> None:
         self.request_refresh()
 
+    # -- Backward compat aliases ---------------------------------------------
+
+    def render_meter(self, ctx: dict[str, Any]) -> Text:
+        """Compat: render context bar from raw context data."""
+        self._context_data = ctx
+        return self._render_context_bar()
+
     def handle_context_message(self, msg: dict[str, Any] | None) -> None:
-        """Process incoming /ws/context message with throttling."""
+        """Compat: public alias for the context WS handler."""
+        self._handle_context_message(msg)
+
+    def on_connection_state_change(self, state: Any) -> None:
+        """Compat: public alias for connection state handler."""
+        self._on_connection_state_change(state)
+
+    # -- WS handlers (called from WS reader thread) -------------------------
+
+    def _handle_context_message(self, msg: dict[str, Any] | None) -> None:
         if not self._mounted or msg is None:
             return
         ctx = msg.get("context")
@@ -106,25 +140,67 @@ class ContextMeterFooter(Static):
             return
         self._context_data = ctx
         self.last_update_time = time.monotonic()
+        self._throttled_redraw()
 
-        # Throttle: skip redraw if too soon after last one
+    def _handle_stats_message(self, msg: dict[str, Any] | None) -> None:
+        if not self._mounted or msg is None:
+            return
+        model_raw = msg.get("model", "")
+        if model_raw:
+            self._model = _clean_model_name(str(model_raw))
+        self._throttled_redraw()
+
+    def _throttled_redraw(self) -> None:
         now = time.monotonic()
         if now - self._last_redraw_time < self.min_redraw_interval:
             return
         self._last_redraw_time = now
-
         try:
-            rendered = self.render_meter(ctx)
+            rendered = self._render_status()
             self.post_message(self.MeterUpdate(rendered))
         except Exception:
             pass
 
-    def render_meter(self, ctx: dict[str, Any]) -> Text:
-        """Render a compact context usage bar with percentage and tier badge."""
-        percent = ctx.get("percent") or 0
-        tier = ctx.get("tier") or ""
+    # -- Rendering -----------------------------------------------------------
 
-        bar = render_progress_bar(percent, warn_high=True)
+    def _render_status(self) -> Text:
+        """Build the full-width status line."""
+        width = self.size.width if self.size else 80
+
+        # Left section: project + model
+        left = Text()
+        left.append(f" {self._project_dir}", style="bold cyan")
+
+        if self._model:
+            left.append("  ", style="dim")
+            left.append(self._model, style="dim")
+
+        # Right section: context bar
+        right = self._render_context_bar()
+
+        # Pad to push right section flush-right
+        left_len = len(left.plain)
+        right_len = len(right.plain)
+        padding = max(1, width - left_len - right_len)
+
+        result = Text()
+        result.append_text(left)
+        result.append(" " * padding)
+        result.append_text(right)
+        return result
+
+    def _render_context_bar(self) -> Text:
+        """Compact context bar for the right side of the footer."""
+        if self._context_data is None:
+            bar = Text()
+            bar.append("░" * 10, style="dim")
+            bar.append(" --%", style="dim")
+            return bar
+
+        percent = self._context_data.get("percent") or 0
+        tier = self._context_data.get("tier") or ""
+
+        bar = render_progress_bar(percent, width=10, warn_high=True)
 
         if tier:
             if percent < 50:
@@ -136,3 +212,7 @@ class ContextMeterFooter(Static):
             bar.append(f" {tier}", style=f"bold {tier_style}")
 
         return bar
+
+
+# Backward compat alias for existing tests
+ContextMeterFooter = StatusFooter

@@ -21,12 +21,12 @@ from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Static, Tab, Tabs
+from textual.widgets import Header, Static, Tab, Tabs
 
 from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack.audit_log_panel import AuditLogPanel
 from pf.bikerack.base_panel import get_panel_icon
-from pf.bikerack.context_meter_footer import ContextMeterFooter
+from pf.bikerack.context_meter_footer import StatusFooter
 from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel
 from pf.bikerack.git_panel import GitPanel
@@ -106,28 +106,6 @@ SPLIT_PRESETS: dict[str, tuple[str, str]] = {
     "git+diffs": ("git", "diffs"),
     "progress+debug": ("progress", "debug"),
 }
-
-
-class BindingFooter(Footer):
-    """Footer subclass that exposes active binding text via render().
-
-    Textual's Footer uses compose() for visual content, so render() returns
-    Blank. This override makes binding descriptions available through
-    str(footer.render()) for programmatic inspection.
-    """
-
-    def render(self) -> Any:
-        try:
-            bindings = self.screen.active_bindings
-            parts: list[str] = []
-            for _, binding, _enabled, _tooltip in bindings.values():
-                if binding.show:
-                    parts.append(f"{binding.key}:{binding.description}")
-            if parts:
-                return " ".join(parts)
-        except Exception:
-            pass
-        return super().render()
 
 
 def _build_panel_tabs() -> list[Tab]:
@@ -395,11 +373,6 @@ class BikeRackApp(App):
         height: auto;
         width: 1fr;
     }
-    #project-dir {
-        height: 1;
-        padding: 0 1;
-        color: $text-muted;
-    }
     Tabs {
         dock: top;
     }
@@ -412,8 +385,9 @@ class BikeRackApp(App):
     #connection-status {
         height: 1;
     }
-    ContextMeterFooter {
+    StatusFooter {
         height: 1;
+        dock: bottom;
     }
     #split-container {
         display: none;
@@ -430,16 +404,16 @@ class BikeRackApp(App):
     COMMANDS = App.COMMANDS | {PanelCommands}
 
     BINDINGS = [
-        Binding("q", "quit", "Quit"),
-        Binding("shift+s", "toggle_split", "Split"),
+        Binding("q", "quit", "Quit", show=False),
+        Binding("shift+s", "toggle_split", "Split", show=False),
         Binding("1", "switch_panel('sprint')", "Sprint", show=False),
         Binding("2", "switch_panel('git')", "Git", show=False),
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
         Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
-        Binding("bracketright", "next_panel", "]Next"),
-        Binding("bracketleft", "prev_panel", "[Prev"),
+        Binding("bracketright", "next_panel", "Next panel", show=False),
+        Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),
         Binding("shift+tab", "prev_panel", show=False, priority=True),
         Binding("n", "next_diff_file", "Next file", show=False),
@@ -459,7 +433,7 @@ class BikeRackApp(App):
         self._focused_panel: str = "sprint"
         self._previous_panel: str | None = None
         self._programmatic_tab_count: int = 0
-        self._context_meter: ContextMeterFooter | None = None
+        self._status_footer: StatusFooter | None = None
         # Split-pane state (Story 110-4)
         self._split_mode: bool = False
         self._active_split_pane: str = "left"
@@ -472,7 +446,6 @@ class BikeRackApp(App):
         ).name
         yield Header()
         yield AgentHeader(id="agent-header")
-        yield Static(f"[dim]{project_dir_name}[/dim]", id="project-dir")
         yield Tabs(*_build_panel_tabs(), id="tab-bar")
         yield ConnectionStatus(
             STATE_DISPLAY[ConnectionState.DISCONNECTED],
@@ -488,9 +461,11 @@ class BikeRackApp(App):
         with Horizontal(id="split-container"):
             yield VerticalScroll(id="split-left")
             yield VerticalScroll(id="split-right")
-        self._context_meter = ContextMeterFooter(client=self._client)
-        yield self._context_meter
-        yield BindingFooter()
+        self._status_footer = StatusFooter(
+            project_dir=project_dir_name,
+            client=self._client,
+        )
+        yield self._status_footer
 
     async def on_mount(self) -> None:
         # Restore last panel or default to sprint
@@ -553,9 +528,9 @@ class BikeRackApp(App):
         save_last_panel(key, project_dir=None)
         self._update_tab_bar(key)
 
-        # Refresh context meter on panel switch (110-12)
-        if self._context_meter is not None:
-            self._context_meter.request_refresh()
+        # Refresh status footer on panel switch
+        if self._status_footer is not None:
+            self._status_footer.request_refresh()
 
     def action_next_panel(self) -> None:
         """Cycle to the next panel, or toggle pane focus in split mode."""
