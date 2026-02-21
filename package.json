@@ -47,7 +47,7 @@
     "url": "https://github.com/1898andCo/pennyfarthing/issues"
   },
   "scripts": {
-    "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} +",
+    "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh",
     "postinstall": "node scripts/postinstall.cjs",
     "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
     "docs": "./scripts/generate-skill-docs.sh",

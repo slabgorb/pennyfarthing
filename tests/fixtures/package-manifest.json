@@ -1,0 +1,48 @@
+{
+  "description": "Known-good manifest for @pennyfarthing/core npm package contents. Used by test_package_contents.sh to assert npm pack output matches expectations.",
+  "required_root_files": [
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "required_top_level_dirs": [
+    "packages",
+    "pennyfarthing-dist",
+    "scripts"
+  ],
+  "allowed_top_level_entries": [
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "packages",
+    "pennyfarthing-dist",
+    "scripts"
+  ],
+  "required_pennyfarthing_dist_subdirs": [
+    "agents",
+    "commands",
+    "gates",
+    "guides",
+    "output-styles",
+    "personas",
+    "pf",
+    "scripts",
+    "skills",
+    "templates",
+    "workflows"
+  ],
+  "required_packages_subdirs": [
+    "core"
+  ],
+  "critical_files": [
+    "packages/core/bin/pennyfarthing.js",
+    "packages/core/dist/index.js",
+    "packages/core/dist/index.d.ts",
+    "scripts/postinstall.cjs",
+    "pennyfarthing-dist/pyproject.toml"
+  ],
+  "required_pennyfarthing_dist_scripts": [
+    "pennyfarthing-dist/scripts/core/pf.sh",
+    "pennyfarthing-dist/scripts/lib/find-root.sh"
+  ]
+}

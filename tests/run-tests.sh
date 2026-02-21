@@ -55,6 +55,7 @@ echo ""
 
 # Run all test scripts
 run_test "Reference Integrity" "check-references.sh" || true
+run_test "Package Contents" "unit/test_package_contents.sh" || true
 
 # Add more tests here as they are created:
 # run_test "YAML Schema Validation" "check-yaml-schemas.sh" || true
