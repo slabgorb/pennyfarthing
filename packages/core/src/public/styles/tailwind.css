@@ -2871,26 +2871,6 @@
   color: var(--text-secondary, #8b8b8b);
 }
 
-/* Switch (Radix) - explicit colors since Tailwind v4 data-[state] variants don't generate */
-.cyclist-switch {
-  background: var(--bg-tertiary, #2d2d2d);
-  border-color: var(--border-color, #3c3c3c);
-}
-
-.cyclist-switch[data-state="checked"] {
-  background: var(--accent, #4f46e5);
-  border-color: var(--accent, #4f46e5);
-}
-
-.cyclist-switch-thumb {
-  background: var(--text-primary, #e4e4e7);
-}
-
-/* ThemePalette in settings - ensure solid background for dropdown */
-.settings-panel .theme-palette-menu {
-  background: var(--bg-secondary, #252526);
-}
-
 /* Audit Log panel - Tufte-inspired: maximize data-ink, minimize chrome */
 .audit-log-panel {
   font-size: 0.8rem;
