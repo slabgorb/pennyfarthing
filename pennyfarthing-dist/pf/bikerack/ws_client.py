@@ -52,6 +52,7 @@ class WheelHubClient:
         self._port = port
         self._project_dir = project_dir
         self._state = ConnectionState.DISCONNECTED
+        self._channel_states: dict[str, ConnectionState] = {}
         self._handlers: dict[str, list[MessageHandler]] = {}
         self._state_callbacks: list[StateChangeCallback] = []
         self._connections: dict[str, Any] = {}
@@ -70,9 +71,30 @@ class WheelHubClient:
 
     def _set_state(self, new_state: ConnectionState) -> None:
         """Transition to a new state and notify callbacks."""
+        if new_state == self._state:
+            return
         self._state = new_state
         for cb in self._state_callbacks:
             cb(new_state)
+
+    def _set_channel_state(
+        self, channel: str, new_state: ConnectionState
+    ) -> None:
+        """Update per-channel state and recompute aggregate.
+
+        The aggregate state is CONNECTED if at least one channel is
+        connected, so a single failing channel cannot drag the UI to
+        RECONNECTING while other channels are healthy.
+        """
+        self._channel_states[channel] = new_state
+        states = set(self._channel_states.values())
+        if ConnectionState.CONNECTED in states:
+            aggregate = ConnectionState.CONNECTED
+        elif ConnectionState.RECONNECTING in states:
+            aggregate = ConnectionState.RECONNECTING
+        else:
+            aggregate = ConnectionState.DISCONNECTED
+        self._set_state(aggregate)
 
     def discover_port(self) -> int:
         """Read port from .bikerack-port file, fallback to DEFAULT_PORT.
@@ -121,7 +143,9 @@ class WheelHubClient:
                     url = f"ws://localhost:{port}/ws/{channel}"
                     ws = await websockets.connect(url)
                     self._connections[channel] = ws
-                    self._set_state(ConnectionState.CONNECTED)
+                    self._set_channel_state(
+                        channel, ConnectionState.CONNECTED
+                    )
                     while True:
                         raw = await ws.recv()
                         try:
@@ -135,7 +159,9 @@ class WheelHubClient:
                 except Exception:
                     if self._stopped:
                         break
-                    self._set_state(ConnectionState.RECONNECTING)
+                    self._set_channel_state(
+                        channel, ConnectionState.RECONNECTING
+                    )
                     _sleep = asyncio.create_task(
                         asyncio.sleep(RECONNECT_DELAY)
                     )
@@ -172,5 +198,6 @@ class WheelHubClient:
             except Exception:
                 pass
         self._connections = {}
+        self._channel_states = {}
 
         self._set_state(ConnectionState.DISCONNECTED)
