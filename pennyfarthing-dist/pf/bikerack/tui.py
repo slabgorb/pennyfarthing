@@ -880,7 +880,8 @@ def _run_with_reload(app: BikeRackApp, watch_paths: list[Path], filter_func) -> 
 
     run_process(
         *watch_paths,
-        target=cmd,
+        target=" ".join(cmd),
+        target_type="command",
         callback=lambda changes: None,
         watch_filter=filter_func,
     )
