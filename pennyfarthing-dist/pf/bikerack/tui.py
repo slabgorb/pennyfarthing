@@ -918,20 +918,21 @@ def _run_with_reload(app: BikeRackApp, watch_paths: list[Path], filter_func) -> 
 
 
 def _patch_tgp_for_tmux() -> None:
-    """Monkey-patch textual-image's TGP writer to wrap Kitty graphics
-    escapes in tmux DCS passthrough sequences.
+    """Monkey-patch textual-image for tmux compatibility.
 
-    tmux doesn't forward Kitty APC escapes (\\x1b_G...\\x1b\\\\) natively.
-    They must be wrapped: \\x1bPtmux;<escaped>\\x1b\\\\
-    with any \\x1b in the payload doubled to \\x1b\\x1b.
+    Two patches:
+    1. Wrap Kitty APC escapes in tmux DCS passthrough sequences.
+    2. Force image re-upload on every render cycle. tmux pane redraws
+       re-send the Unicode diacritics but the image data reference gets
+       orphaned — resetting terminal_image_id forces a fresh upload each
+       time Textual repaints the widget.
     """
     try:
         import textual_image.renderable.tgp as tgp
     except ImportError:
         return
 
-    _original_send = tgp._send_tgp_message
-
+    # Patch 1: DCS passthrough wrapper
     def _tmux_send(*, payload: str | None = None, **kwargs: int | str | None) -> None:
         import sys
 
@@ -952,6 +953,15 @@ def _patch_tgp_for_tmux() -> None:
         sys.__stdout__.flush()
 
     tgp._send_tgp_message = _tmux_send
+
+    # Patch 2: Force re-upload every render (image data gets lost on tmux redraws)
+    _original_rich_console = tgp.Image.__rich_console__
+
+    def _reupload_rich_console(self, console, options):
+        self.terminal_image_id = None
+        yield from _original_rich_console(self, console, options)
+
+    tgp.Image.__rich_console__ = _reupload_rich_console
 
 
 def main(
