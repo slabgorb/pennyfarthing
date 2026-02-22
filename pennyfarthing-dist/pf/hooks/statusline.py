@@ -284,32 +284,6 @@ def _get_character_display(project_root: str, agent_name: str) -> tuple[str, str
     return theme[0].upper() + theme[1:] if theme else "", str(theme_file)
 
 
-def _get_story_id(project_root: str) -> str:
-    """Find active story ID from session files."""
-    session_dir = Path(project_root) / ".session"
-    if not session_dir.is_dir():
-        return ""
-    sessions = list(session_dir.glob("*-session.md"))
-    if not sessions:
-        return ""
-    name = sessions[0].stem  # e.g. "120-12-session"
-    return name.replace("-session", "")
-
-
-def _get_relative_cwd(cwd: str, project_root: str) -> str:
-    """Get working directory relative to project root, with truncation."""
-    if not cwd or not project_root:
-        return Path(cwd).name if cwd else "?"
-    try:
-        rel = Path(cwd).relative_to(project_root)
-        rel_str = str(rel)
-        if rel_str == ".":
-            return Path(project_root).name
-        return rel_str
-    except ValueError:
-        return Path(cwd).name if cwd else "?"
-
-
 def _get_tandem_partner_display(project_root: str, theme_file: str | None) -> str:
     """Find active tandem partner and return display name."""
     session_dir = Path(project_root) / ".session"
@@ -383,6 +357,7 @@ def main() -> None:
             sys.exit(0)
 
         cwd = data.get("workspace", {}).get("current_dir", "")
+        dir_name = Path(cwd).name if cwd else "?"
         project_root = os.environ.get("CLAUDE_PROJECT_DIR", cwd)
         session_id = data.get("session_id", "")
 
@@ -403,8 +378,6 @@ def main() -> None:
         agent_abbrev = _get_agent_abbrev(agent_name) if agent_name else ""
         theme_display, theme_file = _get_character_display(project_root, agent_name)
         tandem_display = _get_tandem_partner_display(project_root, theme_file)
-        story_id = _get_story_id(project_root)
-        rel_cwd = _get_relative_cwd(cwd, project_root)
 
         # Build progress bar
         progress_bar, pct_display = _build_progress_bar(pct)
@@ -412,18 +385,11 @@ def main() -> None:
         # Branch color
         branch_color = FG_YELLOW if branch_dirty else FG_GREEN
 
-        # Fixed-width formatting — truncate relative cwd to fit
-        cwd_display = rel_cwd[:14]
-        cwd_fmt = f"{cwd_display:<14}"
+        # Fixed-width formatting
+        repo_fmt = f"{dir_name:<14}"
         branch_fmt = f"{branch}{branch_dirty}"[:12]
         branch_fmt = f"{branch_fmt:<12}"
         model_fmt = f"{model:<10}"
-
-        # Story ID segment (only when session active)
-        story_segment = ""
-        if story_id:
-            story_display = story_id[:8]
-            story_segment = f"{FG_YELLOW}{story_display}{RESET} {DIM}│{RESET} "
 
         # Tandem suffix
         tandem_suffix = ""
@@ -455,8 +421,7 @@ def main() -> None:
         output = (
             f"{agent_section}"
             f"{DIM}│{RESET} "
-            f"{story_segment}"
-            f"{FG_CYAN}{cwd_fmt}{RESET}"
+            f"{FG_CYAN}{repo_fmt}{RESET}"
             f"{DIM}│{RESET} "
             f"{branch_color}{branch_fmt}{RESET}"
             f"{DIM}│{RESET} "
