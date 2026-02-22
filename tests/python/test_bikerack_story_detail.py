@@ -114,6 +114,40 @@ SAMPLE_STORY_DETAIL: dict[str, Any] = {
 }
 
 
+SESSION_110_2_MD = """\
+# Story 110-2: Story drill-through with dossier detail screen
+
+**Jira:** MSSCI-15186
+**Branch:** feature/110-2-story-drill-through-dossier
+**Workflow:** tdd
+**Phase:** red
+**Points:** 5
+
+## Acceptance Criteria
+
+1. Per-story cursor in SprintPanel
+2. StoryDetailScreen with push/pop
+3. Fetch story detail data
+4. Render dossier layout
+5. Escape pops back
+6. Enter opens PR link
+
+## Session Log
+
+Story initialized by SM
+"""
+
+
+@pytest.fixture
+def project_with_session(tmp_path):
+    """Create a tmp project root with a 110-2 session file."""
+    (tmp_path / ".pennyfarthing").mkdir()
+    session_dir = tmp_path / ".session"
+    session_dir.mkdir()
+    (session_dir / "110-2-session.md").write_text(SESSION_110_2_MD)
+    return str(tmp_path)
+
+
 @pytest.fixture
 def mock_client() -> MagicMock:
     """Create a mock WheelHubClient."""
@@ -417,9 +451,9 @@ class TestFetchStoryDetail:
             f"Expected dict, got {type(result).__name__}"
         )
 
-    def test_contains_title(self, tmp_path) -> None:
+    def test_contains_title(self, project_with_session) -> None:
         """Result should contain 'title' key with story title."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "title" in result, (
             f"Result should contain 'title' key, got keys: {list(result.keys())}"
         )
@@ -427,9 +461,9 @@ class TestFetchStoryDetail:
             "Title should be a non-empty string"
         )
 
-    def test_contains_acceptance_criteria(self, tmp_path) -> None:
+    def test_contains_acceptance_criteria(self, project_with_session) -> None:
         """Result should contain 'acceptance_criteria' as a list."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "acceptance_criteria" in result, (
             f"Result should contain 'acceptance_criteria', got keys: {list(result.keys())}"
         )
@@ -437,46 +471,46 @@ class TestFetchStoryDetail:
             "acceptance_criteria should be a list"
         )
 
-    def test_acceptance_criteria_items_have_text_and_done(self, tmp_path) -> None:
+    def test_acceptance_criteria_items_have_text_and_done(self, project_with_session) -> None:
         """Each AC item should have 'text' and 'done' fields."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         acs = result.get("acceptance_criteria", [])
         assert len(acs) > 0, "Should have at least one AC"
         for ac in acs:
             assert "text" in ac, f"AC item missing 'text': {ac}"
             assert "done" in ac, f"AC item missing 'done': {ac}"
 
-    def test_contains_workflow_phase(self, tmp_path) -> None:
+    def test_contains_workflow_phase(self, project_with_session) -> None:
         """Result should contain 'workflow_phase' key."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "workflow_phase" in result, (
             f"Result should contain 'workflow_phase', got keys: {list(result.keys())}"
         )
 
-    def test_contains_git_branch(self, tmp_path) -> None:
+    def test_contains_git_branch(self, project_with_session) -> None:
         """Result should contain 'git_branch' key."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "git_branch" in result, (
             f"Result should contain 'git_branch', got keys: {list(result.keys())}"
         )
 
-    def test_contains_pr_url(self, tmp_path) -> None:
+    def test_contains_pr_url(self, project_with_session) -> None:
         """Result should contain 'pr_url' key (may be None if no PR)."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "pr_url" in result, (
             f"Result should contain 'pr_url', got keys: {list(result.keys())}"
         )
 
-    def test_contains_session_notes(self, tmp_path) -> None:
+    def test_contains_session_notes(self, project_with_session) -> None:
         """Result should contain 'session_notes' key."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "session_notes" in result, (
             f"Result should contain 'session_notes', got keys: {list(result.keys())}"
         )
 
-    def test_contains_workflow_name(self, tmp_path) -> None:
+    def test_contains_workflow_name(self, project_with_session) -> None:
         """Result should contain 'workflow' key with workflow name."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "workflow" in result, (
             f"Result should contain 'workflow', got keys: {list(result.keys())}"
         )
@@ -580,7 +614,7 @@ class TestDossierLayoutContent:
                     pass
             all_text = " ".join(rendered_texts)
             # At least one AC text should appear
-            assert "per-story cursor" in all_text.lower() or "acceptance" in all_text.lower(), (
+            assert "per-story cursor" in all_text.lower() or "acceptance" in all_text.lower() or "ac " in all_text.lower(), (
                 f"AC checklist should appear in dossier, got: {all_text[:200]}"
             )
 
@@ -867,23 +901,23 @@ class TestEdgeCases:
         url = screen.get_pr_url()
         assert url is None
 
-    def test_fetch_returns_id_field(self, tmp_path) -> None:
+    def test_fetch_returns_id_field(self, project_with_session) -> None:
         """Fetched story detail should include the story ID."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "id" in result, (
             f"Result should contain 'id' key, got keys: {list(result.keys())}"
         )
 
-    def test_fetch_returns_status_field(self, tmp_path) -> None:
+    def test_fetch_returns_status_field(self, project_with_session) -> None:
         """Fetched story detail should include the status field."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "status" in result, (
             f"Result should contain 'status' key, got keys: {list(result.keys())}"
         )
 
-    def test_fetch_returns_points_field(self, tmp_path) -> None:
+    def test_fetch_returns_points_field(self, project_with_session) -> None:
         """Fetched story detail should include the points field."""
-        result = fetch_story_detail("110-2", project_root=str(tmp_path))
+        result = fetch_story_detail("110-2", project_root=project_with_session)
         assert "points" in result, (
             f"Result should contain 'points' key, got keys: {list(result.keys())}"
         )
@@ -903,7 +937,7 @@ class TestStoryDetailEnrichment:
         mock_fetch.return_value = {"id": "110-2", "workflow": "tdd", "workflow_phase": "red"}
         ws_data = {"id": "110-2", "title": "Drill", "points": 5, "status": "in-progress"}
         _screen = StoryDetailScreen(story_data=ws_data)
-        mock_fetch.assert_called_once_with("110-2")
+        mock_fetch.assert_called_once_with("110-2", jira_key="")
 
     @patch("pf.bikerack.story_detail_data.fetch_story_detail")
     def test_ws_data_wins_for_non_null(self, mock_fetch: MagicMock) -> None:

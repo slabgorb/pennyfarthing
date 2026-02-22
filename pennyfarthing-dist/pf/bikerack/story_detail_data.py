@@ -24,23 +24,45 @@ def _find_project_root() -> str | None:
         path = parent
 
 
-def _find_session_file(story_id: str, project_root: str | None) -> str | None:
-    """Locate the session file for a story, trying given root then walking up."""
+def _find_session_file(
+    story_id: str, project_root: str | None, jira_key: str = ""
+) -> tuple[str | None, bool]:
+    """Locate the session file for a story, trying active then archive.
+
+    Returns:
+        (path, is_archived) tuple. path is None when no session file found.
+    """
     filename = f"{story_id}-session.md"
+    # 1. Active session in project root
     if project_root:
         candidate = os.path.join(project_root, ".session", filename)
         if os.path.isfile(candidate):
-            return candidate
+            return (candidate, False)
     # Walk up from CWD looking for .session/{story_id}-session.md
     path = os.getcwd()
     while True:
         candidate = os.path.join(path, ".session", filename)
         if os.path.isfile(candidate):
-            return candidate
+            return (candidate, False)
         parent = os.path.dirname(path)
         if parent == path:
-            return None
+            break
         path = parent
+
+    # 2. Archive by local ID: sprint/archive/{story_id}-session.md
+    if project_root:
+        candidate = os.path.join(project_root, "sprint", "archive", filename)
+        if os.path.isfile(candidate):
+            return (candidate, True)
+
+    # 3. Archive by Jira key: sprint/archive/{jira_key}-session.md
+    if jira_key and project_root:
+        jira_filename = f"{jira_key}-session.md"
+        candidate = os.path.join(project_root, "sprint", "archive", jira_filename)
+        if os.path.isfile(candidate):
+            return (candidate, True)
+
+    return (None, False)
 
 
 def _parse_session_file(session_path: str) -> dict[str, Any]:
@@ -191,24 +213,28 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
 def fetch_story_detail(
     story_id: str,
     project_root: str | None = None,
+    jira_key: str = "",
 ) -> dict[str, Any]:
     """Fetch detailed story data including ACs, session, workflow, and git info.
 
     Args:
         story_id: Story identifier (e.g. "110-2").
         project_root: Path to project root (for file reads). Auto-detected if None.
+        jira_key: Jira key (e.g. "MSSCI-15397") for archive lookup.
 
     Returns:
         Dict with keys: id, title, points, status, jiraKey,
         acceptance_criteria, workflow, workflow_phase,
-        git_branch, pr_url, session_notes.
+        git_branch, pr_url, session_notes, archived.
         Empty dict if story not found.
     """
-    session_path = _find_session_file(story_id, project_root)
+    session_path, is_archived = _find_session_file(
+        story_id, project_root, jira_key=jira_key
+    )
     if not session_path:
         return {}
 
-    result: dict[str, Any] = {"id": story_id}
+    result: dict[str, Any] = {"id": story_id, "archived": is_archived}
 
     # Parse session file (primary data source)
     session_data = _parse_session_file(session_path)
@@ -230,6 +256,28 @@ def fetch_story_detail(
     context_info = _check_context_files(story_id, root)
     result.update(context_info)
 
+    # Load context file contents
+    if context_info.get("epic_context_path"):
+        try:
+            with open(context_info["epic_context_path"]) as f:
+                result["epic_context_content"] = f.read()
+        except Exception:
+            result["epic_context_content"] = ""
+
+    if context_info.get("story_context_path"):
+        try:
+            with open(context_info["story_context_path"]) as f:
+                result["story_context_content"] = f.read()
+        except Exception:
+            result["story_context_content"] = ""
+
+    # Load raw session file content
+    try:
+        with open(session_path) as f:
+            result["session_file_content"] = f.read()
+    except Exception:
+        result["session_file_content"] = ""
+
     # Ensure all required keys exist with defaults
     result.setdefault("title", "")
     result.setdefault("points", 0)
@@ -243,5 +291,9 @@ def fetch_story_detail(
     result.setdefault("session_notes", "")
     result.setdefault("review_findings", "")
     result.setdefault("review_verdict", "")
+    result.setdefault("epic_context_content", "")
+    result.setdefault("story_context_content", "")
+    result.setdefault("session_file_content", "")
+    result.setdefault("archived", False)
 
     return result
