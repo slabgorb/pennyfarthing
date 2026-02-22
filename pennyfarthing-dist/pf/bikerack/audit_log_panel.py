@@ -19,6 +19,72 @@ from pf.bikerack.base_panel import PANEL_ICONS, BasePanel
 
 MAX_INPUT_LENGTH = 80
 
+
+def _enrich_input(tool_name: str, input_text: str, span: dict[str, Any]) -> str:
+    """Enrich blank input fields using raw tool parameters from the span.
+
+    Falls back to parsing ``toolParameters`` / ``tool_parameters`` JSON
+    when the server-side input extraction didn't populate the field.
+    """
+    if input_text:
+        return input_text
+
+    # Try raw tool parameters stored in span
+    import json
+    import os.path
+
+    raw = span.get("toolParameters") or span.get("tool_parameters") or ""
+    if not raw:
+        return ""
+
+    try:
+        params = json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return ""
+
+    if not isinstance(params, dict):
+        return ""
+
+    tool_lower = tool_name.lower()
+
+    if tool_lower == "read":
+        fp = params.get("file_path", "")
+        if fp:
+            basename = os.path.basename(fp)
+            offset = params.get("offset")
+            limit = params.get("limit")
+            if offset and limit:
+                return f"{basename}  L{offset}\u2013{int(offset) + int(limit)}"
+            return basename
+
+    if tool_lower == "task":
+        return params.get("description", "") or params.get("prompt", "")[:60]
+
+    if tool_lower == "grep":
+        pattern = params.get("pattern", "")
+        file_filter = params.get("glob") or params.get("type") or ""
+        if pattern and file_filter:
+            return f'"{pattern}"  {file_filter}'
+        return pattern
+
+    if tool_lower == "glob":
+        return params.get("pattern", "")
+
+    if tool_lower == "edit":
+        fp = params.get("file_path", "")
+        return os.path.basename(fp) if fp else ""
+
+    if tool_lower == "write":
+        fp = params.get("file_path", "")
+        return os.path.basename(fp) if fp else ""
+
+    # Generic: take first string value
+    for v in params.values():
+        if isinstance(v, str) and v:
+            return v[:80]
+
+    return ""
+
 # Tool name → Rich style (matches GUI CSS custom properties)
 _TOOL_COLORS: dict[str, str] = {
     "read": "blue",
@@ -104,8 +170,9 @@ class AuditLogPanel(BasePanel):
         """Add a single tool event row to the DataTable."""
         timestamp = span.get("timestamp")
         tool_name = span.get("toolName", "")
-        input_text = span.get("input", "")
+        input_text = _enrich_input(tool_name, span.get("input", ""), span)
         success = span.get("success")
+        duration_ms = span.get("durationMs") or span.get("duration_ms")
 
         time_str = _format_timestamp(timestamp)
 
@@ -119,6 +186,17 @@ class AuditLogPanel(BasePanel):
         else:
             result = "\u2014"
 
+        # Append duration inline with result
+        if duration_ms is not None:
+            try:
+                ms = float(duration_ms)
+                if ms >= 1000:
+                    result += f" {ms / 1000:.1f}s"
+                else:
+                    result += f" {int(ms)}ms"
+            except (ValueError, TypeError):
+                pass
+
         self._table.add_row(time_str, tool_name, input_text, result)
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
@@ -130,20 +208,33 @@ class AuditLogPanel(BasePanel):
             return Text("No audit events yet", style="dim italic")
 
         rich_table = RichTable(show_header=True, expand=True, box=None)
-        rich_table.add_column("Time", style="dim", no_wrap=True)
-        rich_table.add_column("Tool", no_wrap=True)
-        rich_table.add_column("Input")
-        rich_table.add_column("Result", justify="center", no_wrap=True)
+        rich_table.add_column("Time", style="dim", no_wrap=True, width=8)
+        rich_table.add_column("Tool", no_wrap=True, width=6)
+        rich_table.add_column("Input", no_wrap=True, overflow="ellipsis", ratio=1)
+        rich_table.add_column("Result", justify="center", no_wrap=True, width=10)
 
         for row_key in reversed(list(self._table.rows)):
             row_data = self._table.get_row(row_key)
             time_str, tool_name, input_text, result = (str(c) for c in row_data)
             tool_style = _TOOL_COLORS.get(tool_name.lower(), "bold cyan")
-            result_style = "green" if result == "\u2713" else "red" if result == "\u2717" else "dim"
+            if result.startswith("\u2713"):
+                result_style = "green"
+            elif result.startswith("\u2717"):
+                result_style = "red"
+            else:
+                result_style = "dim"
+            # Flag slow calls (>5s) with yellow
+            if "s" in result and result_style == "green":
+                try:
+                    dur_part = result.split(" ", 1)[1] if " " in result else ""
+                    if dur_part.endswith("s") and float(dur_part[:-1]) > 5:
+                        result_style = "yellow"
+                except (ValueError, IndexError):
+                    pass
             rich_table.add_row(
                 time_str,
                 Text(tool_name, style=f"bold {tool_style}"),
-                Text(input_text, style="dim") if input_text else Text(""),
+                Text(input_text, style="dim", no_wrap=True, overflow="ellipsis") if input_text else Text(""),
                 Text(result, style=result_style),
             )
 

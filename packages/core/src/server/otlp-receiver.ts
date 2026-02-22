@@ -280,6 +280,7 @@ export function processLogEvents(events: unknown): void {
         input: input?.substring(0, 500),
         success,
         timestamp: event.timestamp,
+        toolParameters: toolParams,
       };
       for (const listener of _toolEventListeners) {
         listener(toolEvent);

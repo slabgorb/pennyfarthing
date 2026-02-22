@@ -164,9 +164,9 @@ def _build_story_label(
     jira_padded = f"{jira:<14}"
     label.append(f"  {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan"))
 
-    # Points right-aligned (2 chars)
-    pts_str = f"{pts:>2}" if isinstance(pts, int) else f"{pts!s:>2}"
-    label.append(f"  {pts_str}", style="dim")
+    # Points right-aligned with unit
+    pts_str = f"{pts}pt" if isinstance(pts, int) else f"{pts!s}pt"
+    label.append(f"  {pts_str:>4}", style="dim")
 
     # Truncate title to fit available width
     # Reserve space for owner suffix on in-progress stories (~12 chars)
@@ -244,7 +244,7 @@ class SprintPanel(Widget):
             "[dim]Waiting for sprint data...[/dim]", id="sprint-header"
         )
         yield Static(
-            "[dim]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim  c:copy ID[/dim]",
+            "[dim bright_black]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim  c:copy ID[/dim bright_black]",
             id="sprint-hints",
         )
         tree: Tree[dict[str, Any]] = Tree("Sprint", id="sprint-tree")
@@ -308,11 +308,13 @@ class SprintPanel(Widget):
         in_progress = sprint.get("inProgress", 0)
         total = done + remaining + in_progress
         pct = int(done / total * 100) if total > 0 else 0
+        # Use compact unit "p" on narrow panes (<55 chars), "pts" otherwise
+        unit = "p" if tree_width < 55 else " pts"
         header_text = Text.from_markup(
             f"Sprint {sprint_num}  "
-            f"[green]\u2713{done}[/green]  "
-            f"\u25ef{remaining}  "
-            f"[yellow]\u27f3{in_progress}[/yellow]  "
+            f"[green]\u2713{done}{unit}[/green]  "
+            f"\u25ef{remaining}{unit}  "
+            f"[yellow]\u27f3{in_progress}{unit}[/yellow]  "
             f"[dim]{pct}%[/dim]"
         )
         registry = payload.get("registry")
