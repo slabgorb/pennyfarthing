@@ -368,11 +368,25 @@ def write_sprint(path: Path, data: Any) -> None:
     sprint_dir = path.parent
     epic_refs = CommentedSeq()
 
+    # Read old index refs so we can detect renamed shards
+    old_indexed: set[Path] = set()
+    yml = _make_yaml()
+    try:
+        with open(path) as f:
+            old_data = yml.load(f)
+        for ref in old_data.get("epics", []):
+            if isinstance(ref, str):
+                old_indexed.add(sprint_dir / f"epic-{ref}.yaml")
+    except Exception:
+        pass
+
+    written_shards: set[Path] = set()
     for epic in data.get("epics", []):
         if isinstance(epic, Mapping):
             ref = _get_epic_ref(epic)
             shard_file = sprint_dir / f"epic-{ref}.yaml"
             _write_yaml_file(shard_file, epic)
+            written_shards.add(shard_file)
             epic_refs.append(ref)
         else:
             epic_refs.append(epic)
@@ -386,3 +400,8 @@ def write_sprint(path: Path, data: Any) -> None:
             index[key] = data[key]
 
     _write_yaml_file(path, index)
+
+    # Remove stale shards that were in the old index but not the new one
+    for stale in old_indexed - written_shards:
+        if stale.exists():
+            stale.unlink()
