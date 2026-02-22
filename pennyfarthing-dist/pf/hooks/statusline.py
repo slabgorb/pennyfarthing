@@ -361,10 +361,12 @@ def main() -> None:
         project_root = os.environ.get("CLAUDE_PROJECT_DIR", cwd)
         session_id = data.get("session_id", "")
 
-        model = _get_model_name(data)
-
-        # Check git_monitor setting — skip git calls when disabled
+        # Check statusbar setting — skip rendering when disabled
         _settings = load_settings(Path(project_root) if project_root else None)
+        if not _settings.statusbar:
+            sys.exit(0)
+
+        model = _get_model_name(data)
         if cwd and _settings.git_monitor:
             branch, branch_dirty = _get_git_info(cwd)
         else:

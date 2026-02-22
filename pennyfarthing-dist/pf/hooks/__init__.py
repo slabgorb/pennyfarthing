@@ -141,6 +141,7 @@ class CyclistSettings:
     relay_mode: bool = False
     bell_mode: bool = False
     git_monitor: bool = False
+    statusbar: bool = True
     theme: str | None = None
 
 
@@ -210,6 +211,10 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
     # Handle git_monitor
     if "git_monitor" in workflow and isinstance(workflow["git_monitor"], bool):
         settings.git_monitor = workflow["git_monitor"]
+
+    # Handle statusbar
+    if "statusbar" in workflow and isinstance(workflow["statusbar"], bool):
+        settings.statusbar = workflow["statusbar"]
 
     return settings
 
