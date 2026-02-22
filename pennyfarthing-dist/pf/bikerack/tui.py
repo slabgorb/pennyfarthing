@@ -24,6 +24,7 @@ from textual.reactive import reactive
 from textual.widgets import Header, Static, Tab, Tabs
 
 from pf.bc.focus import get_last_panel, save_last_panel
+from pf.bikerack import layout_order as _layout_order
 from pf.bikerack.audit_log_panel import AuditLogPanel
 from pf.bikerack.base_panel import get_panel_icon
 from pf.bikerack.context_meter_footer import StatusFooter
@@ -442,32 +443,51 @@ class BikeRackApp(App):
         self._split_left_key: str = "sprint"
         self._split_right_key: str = "diffs"
 
+    def _build_layout_regions(self) -> list[str]:
+        """Return the ordered list of region names to render.
+
+        Reads layout_order from config.local.yaml via the layout_order module.
+        """
+        from pf.common.config import load_pennyfarthing_config
+
+        try:
+            config = load_pennyfarthing_config()
+        except Exception:
+            config = {}
+        return _layout_order.get_layout_order(config)
+
     def compose(self) -> ComposeResult:
         project_dir_name = Path(
             os.environ.get("CYCLIST_PROJECT_DIR", os.getcwd())
         ).name
-        yield Header()
-        yield AgentHeader(id="agent-header")
-        yield Tabs(*_build_panel_tabs(), id="tab-bar")
-        yield ConnectionStatus(
-            STATE_DISPLAY[ConnectionState.DISCONNECTED],
-            id="connection-status",
-        )
-        with VerticalScroll(id="main-content"):
-            yield SprintPanel(client=self._client, id="panel-sprint")
-            yield GitPanel(client=self._client, id="panel-git")
-            yield DiffsPanel(client=self._client, id="panel-diffs")
-            yield AuditLogPanel(client=self._client, id="panel-audit-log")
-            yield DebugPanel(client=self._client, id="panel-debug")
-            yield ProgressPanel(client=self._client, id="panel-progress")
-        with Horizontal(id="split-container"):
-            yield VerticalScroll(id="split-left")
-            yield VerticalScroll(id="split-right")
         self._status_footer = StatusFooter(
             project_dir=project_dir_name,
             client=self._client,
         )
-        yield self._status_footer
+
+        for region in self._build_layout_regions():
+            if region == "menu":
+                yield Header()
+            elif region == "profile":
+                yield AgentHeader(id="agent-header")
+                yield Tabs(*_build_panel_tabs(), id="tab-bar")
+                yield ConnectionStatus(
+                    STATE_DISPLAY[ConnectionState.DISCONNECTED],
+                    id="connection-status",
+                )
+            elif region == "content":
+                with VerticalScroll(id="main-content"):
+                    yield SprintPanel(client=self._client, id="panel-sprint")
+                    yield GitPanel(client=self._client, id="panel-git")
+                    yield DiffsPanel(client=self._client, id="panel-diffs")
+                    yield AuditLogPanel(client=self._client, id="panel-audit-log")
+                    yield DebugPanel(client=self._client, id="panel-debug")
+                    yield ProgressPanel(client=self._client, id="panel-progress")
+                with Horizontal(id="split-container"):
+                    yield VerticalScroll(id="split-left")
+                    yield VerticalScroll(id="split-right")
+            elif region == "status":
+                yield self._status_footer
 
     async def on_mount(self) -> None:
         # Restore last panel or default to sprint
