@@ -113,6 +113,15 @@ ENGINES = {
         "max_tokens": 256,
         "supports_negative_prompt": False,
     },
+    "flux-dev": {
+        "model_name": "flux-dev",
+        "generation_size": 1024,
+        "output_size": 512,
+        "num_inference_steps": 28,
+        "guidance_scale": 3.5,
+        "max_tokens": 256,
+        "supports_negative_prompt": False,
+    },
 }
 
 DEFAULT_ENGINE = "sdxl"
@@ -201,7 +210,9 @@ def parse_theme_file(theme_path: Path) -> dict:
     result = {
         "theme": theme_path.stem,
         "source": theme_metadata.get("source", ""),
+        "portrait_prefix": theme_metadata.get("portrait_prefix", None),
         "portrait_style": theme_metadata.get("portrait_style", None),
+        "negative_prompt": theme_metadata.get("negative_prompt", None),
         "characters": {}
     }
 
@@ -231,19 +242,21 @@ def parse_theme_file(theme_path: Path) -> dict:
     return result
 
 
-def build_portrait_prompt(visual: str, style_suffix: str = None, max_tokens: int = 77) -> tuple[str, bool, int]:
+def build_portrait_prompt(visual: str, style_suffix: str = None, prefix: str = None, max_tokens: int = 77) -> tuple[str, bool, int]:
     """Build a prompt for portrait generation with token limit enforcement.
 
     Args:
         visual: The character's visual description from theme YAML
         style_suffix: Optional theme-specific style suffix. Falls back to DEFAULT_STYLE_SUFFIX.
+        prefix: Optional theme-specific prefix prepended before the visual description.
         max_tokens: Token limit for the engine (77 for SDXL/CLIP, 256 for Flux/T5).
 
     Returns:
         tuple: (prompt, was_truncated, token_count)
     """
     suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
-    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix, max_tokens=max_tokens)
+    prefixed_visual = f"{prefix} {visual}" if prefix else visual
+    prompt, was_truncated = truncate_prompt_to_clip_limit(prefixed_visual, suffix, max_tokens=max_tokens)
     token_count = count_clip_tokens(prompt)
     return prompt, was_truncated, token_count
 
@@ -291,7 +304,7 @@ def load_pipeline(engine_name: str):
     """
     engine = ENGINES[engine_name]
 
-    if engine_name == "flux":
+    if engine_name in ("flux", "flux-dev"):
         model_name = engine["model_name"]
         print(f"\nLoading Flux ({model_name}) on MPS...")
         print("  (First run downloads the model)")
@@ -339,7 +352,7 @@ def generate_portrait(pipeline_components: dict, prompt: str, engine_name: str, 
     gen_size = engine["generation_size"]
     out_size = engine["output_size"]
 
-    if engine_name == "flux":
+    if engine_name in ("flux", "flux-dev"):
         from einops import rearrange
 
         flux = pipeline_components["flux_modules"]
@@ -355,8 +368,10 @@ def generate_portrait(pipeline_components: dict, prompt: str, engine_name: str, 
             device=device, dtype=torch.bfloat16, seed=seed,
         )
         inp = flux["prepare"](t5, clip, x, prompt=prompt)
+        # flux-dev uses shift=True, schnell uses shift=False
+        use_shift = engine_name == "flux-dev"
         timesteps = flux["get_schedule"](
-            engine["num_inference_steps"], inp["img"].shape[1], shift=False,
+            engine["num_inference_steps"], inp["img"].shape[1], shift=use_shift,
         )
 
         with torch.no_grad():
@@ -384,7 +399,8 @@ def generate_portrait(pipeline_components: dict, prompt: str, engine_name: str, 
             "generator": generator,
         }
         if engine["supports_negative_prompt"]:
-            kwargs["negative_prompt"] = "color, grayscale, photorealistic, blurry, deformed"
+            kwargs["negative_prompt"] = pipeline_components.get("negative_prompt",
+                "photorealistic, 3d render, glossy, blurry, deformed")
 
         with torch.no_grad():
             result = pipe(**kwargs)
@@ -533,7 +549,7 @@ def main():
 
                     # Check token count and truncation
                     prompt, was_truncated, token_count = build_portrait_prompt(
-                        char["visual"], parsed["portrait_style"], max_tokens=engine["max_tokens"]
+                        char["visual"], parsed["portrait_style"], prefix=parsed["portrait_prefix"], max_tokens=engine["max_tokens"]
                     )
                     token_status = f"{token_count}tok"
                     if was_truncated:
@@ -579,6 +595,12 @@ def main():
         theme_dir = output_base / theme
         theme_dir.mkdir(parents=True, exist_ok=True)
 
+        # Inject theme-specific negative prompt into pipeline components
+        if parsed["negative_prompt"]:
+            pipeline_components["negative_prompt"] = parsed["negative_prompt"]
+        elif "negative_prompt" in pipeline_components:
+            del pipeline_components["negative_prompt"]
+
         roles_to_gen = [args.role] if args.role else ROLES
         print(f"\n[{theme_idx}/{total_themes}] Theme: {theme}")
 
@@ -593,7 +615,7 @@ def main():
                 continue
 
             prompt, was_truncated, token_count = build_portrait_prompt(
-                char["visual"], parsed["portrait_style"], max_tokens=engine["max_tokens"]
+                char["visual"], parsed["portrait_style"], prefix=parsed["portrait_prefix"], max_tokens=engine["max_tokens"]
             )
 
             if was_truncated:
