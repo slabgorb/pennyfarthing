@@ -51,6 +51,7 @@ def render_progress_bar(
     width: int = 20,
     warn_high: bool = False,
     fill_style: str | None = None,
+    show_percent: bool = True,
 ) -> Text:
     """Render a Unicode progress bar with color based on percentage.
 
@@ -60,6 +61,7 @@ def render_progress_bar(
         warn_high: If True, use red at high values (for resource usage).
                    If False (default), use blue at 100% (for completion).
         fill_style: Override the computed fill color (e.g. ``"dim green"``).
+        show_percent: If False, omit the trailing percentage label.
 
     Returns:
         Rich Text like ``[████████░░░░░░░░░░░░] 22%``
@@ -84,7 +86,7 @@ def render_progress_bar(
     bar.append("[")
     bar.append("█" * filled, style=style)
     bar.append("░" * empty, style="dim")
-    bar.append(f"] {percent}%")
+    bar.append(f"] {percent}%" if show_percent else "]")
     return bar
 
 

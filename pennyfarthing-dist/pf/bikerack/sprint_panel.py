@@ -8,6 +8,8 @@ Subscribes to /ws/sprint, renders sprint status with epic/story tree.
 
 from __future__ import annotations
 
+import platform
+import subprocess
 from typing import Any
 
 from rich.text import Text
@@ -92,29 +94,52 @@ def _should_expand(epic: dict[str, Any]) -> bool:
 
 _EPIC_ID_WIDTH = 11  # "MSSCI-NNNNN" = 11 chars
 
+# Sort order: actionable items first, completed last
+_STATUS_ORDER = {"in-progress": 0, "review": 1, "blocked": 2, "backlog": 3, "done": 4, "canceled": 5}
+
 
 def _build_epic_label(
-    epic_id: str, title: str, done_pts: int, total_pts: int, jira_key: str = ""
+    epic_id: str,
+    title: str,
+    done_pts: int,
+    total_pts: int,
+    jira_key: str = "",
+    completed: bool = False,
+    max_width: int = 80,
 ) -> Text:
     """Build Rich Text label for an epic tree node."""
+    id_style = "dim cyan" if completed else "bold cyan"
+    title_style = "dim" if completed else "bold"
+    bar_fill = "dim" if completed else "dim green"
+
     label = Text(no_wrap=True, overflow="ellipsis")
     display_id = jira_key if jira_key else epic_id
     if len(display_id) > _EPIC_ID_WIDTH:
         display_id = display_id[: _EPIC_ID_WIDTH - 1] + "\u2026"
     display_id = f"{display_id:<{_EPIC_ID_WIDTH}}"
-    label.append(display_id, style="bold cyan")
+    label.append(display_id, style=id_style)
     label.append("  ")
     if total_pts > 0:
         pct = int(done_pts / total_pts * 100)
-        label.append_text(render_progress_bar(pct, width=10, fill_style="dim green"))
+        label.append_text(
+            render_progress_bar(pct, width=10, fill_style=bar_fill, show_percent=False)
+        )
         label.append(f" {done_pts}/{total_pts} pts", style="dim")
     else:
         label.append("0 pts", style="dim")
-    label.append(f"  {title}", style="bold")
+    # Truncate title with ellipsis to fit available width
+    # Account for "  " prefix and tree indent (~4 chars for guides + arrow)
+    used = len(label.plain) + 2  # +2 for "  " before title
+    available = max_width - used - 4  # ~4 for tree indent
+    if available > 0 and len(title) > available:
+        title = title[: available - 1] + "\u2026"
+    label.append(f"  {title}", style=title_style)
     return label
 
 
-def _build_story_label(story: dict[str, Any], current_story_id: str) -> Text:
+def _build_story_label(
+    story: dict[str, Any], current_story_id: str, max_width: int = 80
+) -> Text:
     """Build Rich Text label for a story tree leaf.
 
     Layout: ``✓  MSSCI-14952   2  Story title``
@@ -142,6 +167,15 @@ def _build_story_label(story: dict[str, Any], current_story_id: str) -> Text:
     # Points right-aligned (2 chars)
     pts_str = f"{pts:>2}" if isinstance(pts, int) else f"{pts!s:>2}"
     label.append(f"  {pts_str}", style="dim")
+
+    # Truncate title to fit available width
+    # Reserve space for owner suffix on in-progress stories (~12 chars)
+    used = len(label.plain) + 2  # +2 for "  " before title
+    owner_reserve = 12 if is_in_progress else 0
+    # ~6 for tree indent (deeper than epics: guide_depth + parent + leaf)
+    available = max_width - used - 6 - owner_reserve
+    if available > 0 and len(title) > available:
+        title = title[: available - 1] + "\u2026"
 
     # Title
     label.append(f"  {title}", style="dim" if is_done else "")
@@ -210,7 +244,7 @@ class SprintPanel(Widget):
             "[dim]Waiting for sprint data...[/dim]", id="sprint-header"
         )
         yield Static(
-            "[dim]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim nav[/dim]",
+            "[dim]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim  c:copy ID[/dim]",
             id="sprint-hints",
         )
         tree: Tree[dict[str, Any]] = Tree("Sprint", id="sprint-tree")
@@ -263,22 +297,23 @@ class SprintPanel(Widget):
             return
 
         sprint = payload.get("sprint", {})
-        metrics = payload.get("metrics", {})
         epics = payload.get("epics", [])
         current_story_id = sprint.get("currentStory", "")
+        tree_width = tree.size.width if tree.size.width > 0 else 80
 
-        # Update header
+        # Update header — compact icon format to avoid wrapping on narrow panes
         sprint_num = sprint.get("number", "")
         done = sprint.get("done", 0)
         remaining = sprint.get("remaining", 0)
         in_progress = sprint.get("inProgress", 0)
-        velocity = metrics.get("velocity", 0)
+        total = done + remaining + in_progress
+        pct = int(done / total * 100) if total > 0 else 0
         header_text = Text.from_markup(
             f"Sprint {sprint_num}  "
-            f"[green]Done: {done}[/green] | "
-            f"Remaining: {remaining} | "
-            f"In Progress: {in_progress} | "
-            f"Velocity: {velocity}"
+            f"[green]\u2713{done}[/green]  "
+            f"\u25ef{remaining}  "
+            f"[yellow]\u27f3{in_progress}[/yellow]  "
+            f"[dim]{pct}%[/dim]"
         )
         registry = payload.get("registry")
         if registry and not registry.get("isDefault", True):
@@ -337,6 +372,7 @@ class SprintPanel(Widget):
             label = _build_epic_label(
                 epic_id, epic_title, done_pts, total_pts,
                 jira_key=epic.get("jiraKey", ""),
+                max_width=tree_width,
             )
             epic_data: dict[str, Any] = {
                 "type": "epic",
@@ -345,9 +381,13 @@ class SprintPanel(Widget):
             }
             epic_node = tree.root.add(label, data=epic_data)
 
-            # Add story leaves
+            # Add story leaves — sorted by actionability (in-progress first, done last)
+            stories = sorted(
+                stories,
+                key=lambda s: _STATUS_ORDER.get(_normalize_status(s.get("status", "")), 3),
+            )
             for story in stories:
-                story_label = _build_story_label(story, current_story_id)
+                story_label = _build_story_label(story, current_story_id, max_width=tree_width)
                 story_data: dict[str, Any] = {"type": "story", "story": story}
                 story_node = epic_node.add_leaf(story_label, data=story_data)
 
@@ -389,6 +429,8 @@ class SprintPanel(Widget):
                 label = _build_epic_label(
                     epic_id, epic_title, done_pts, total_pts,
                     jira_key=epic.get("jiraKey", ""),
+                    completed=True,
+                    max_width=tree_width,
                 )
                 epic_data: dict[str, Any] = {
                     "type": "epic",
@@ -398,7 +440,7 @@ class SprintPanel(Widget):
                 epic_node = tree.root.add(label, data=epic_data)
 
                 for story in stories:
-                    story_label = _build_story_label(story, current_story_id)
+                    story_label = _build_story_label(story, current_story_id, max_width=tree_width)
                     story_data: dict[str, Any] = {"type": "story", "story": story}
                     epic_node.add_leaf(story_label, data=story_data)
 
@@ -548,3 +590,47 @@ class SprintPanel(Widget):
             self.app.push_screen(StoryDetailScreen(story_data=story))
         except Exception:
             pass
+
+    def _flash_hints(self, markup: str) -> None:
+        """Flash a message in the hints bar, reverting after 2 seconds."""
+        try:
+            hints = self.query_one("#sprint-hints", Static)
+            original = hints.renderable
+            hints.update(markup)
+            self.set_timer(2.0, lambda: hints.update(original))
+        except Exception:
+            pass
+
+    def copy_selected_id(self) -> None:
+        """Copy Jira key of highlighted story/epic to clipboard."""
+        try:
+            tree = self.query_one("#sprint-tree", Tree)
+            node = tree.get_node_at_line(tree.cursor_line)
+        except Exception:
+            return
+        if not node or not node.data:
+            return
+
+        data = node.data
+        key: str | None = None
+        if data.get("type") == "story":
+            story = data.get("story", {})
+            key = story.get("jiraKey") or story.get("id", "")
+        elif data.get("type") == "epic":
+            key = data.get("id", "")
+
+        if not key:
+            self._flash_hints("[dim]No ID to copy[/dim]")
+            return
+
+        # Copy to system clipboard
+        try:
+            if platform.system() == "Darwin":
+                subprocess.run(["pbcopy"], input=key.encode(), check=True)
+            else:
+                subprocess.run(["xclip", "-selection", "clipboard"], input=key.encode(), check=True)
+        except Exception:
+            self._flash_hints("[bold red]\u2717 Clipboard unavailable[/bold red]")
+            return
+
+        self._flash_hints(f"[bold green]\u25cf Copied {key}[/bold green]")

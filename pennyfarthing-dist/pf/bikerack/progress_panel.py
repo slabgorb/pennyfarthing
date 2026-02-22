@@ -148,10 +148,14 @@ class ProgressPanel(BasePanel):
             )},
         }
 
+    def _separator(self) -> Text:
+        """Return a width-aware horizontal separator."""
+        w = self.size.width - 2 if self.size.width > 4 else 35
+        return Text("\u2500" * w, style="dim")
+
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render unified progress view."""
         parts: list[Any] = []
-        sep = Text("\u2500" * 35, style="dim")
 
         # --- Story Header ---
         story_header = self._render_story_header()
@@ -161,49 +165,49 @@ class ProgressPanel(BasePanel):
                 style="dim italic",
             )
         parts.append(story_header)
-        parts.append(sep)
+        parts.append(self._separator())
 
         # --- Sprint Burndown ---
         burndown = self._render_burndown()
         if burndown is not None:
             parts.append(burndown)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Per-Epic Progress ---
         epics = self._render_epics_progress()
         if epics is not None:
             parts.append(epics)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Velocity & Timeline ---
         velocity = self._render_velocity_timeline()
         if velocity is not None:
             parts.append(velocity)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Recently Completed ---
         recent = self._render_recently_completed()
         if recent is not None:
             parts.append(recent)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Workflow Phase ---
         workflow = self._render_workflow()
         if workflow is not None:
             parts.append(workflow)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Acceptance Criteria ---
         ac = self._render_ac()
         if ac is not None:
             parts.append(ac)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Todos ---
         todos = self._render_todos()
         if todos is not None:
             parts.append(todos)
-            parts.append(sep)
+            parts.append(self._separator())
 
         # --- Git Summary ---
         git = self._render_git()

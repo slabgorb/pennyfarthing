@@ -150,6 +150,14 @@ class AgentHeader(Static):
         self._persona_data: dict[str, Any] = {}
         self._header_text: str = ""
         self._current_portrait: Path | None = None
+        self._was_compact: bool | None = None
+
+    def on_resize(self) -> None:
+        """Re-render header when terminal size changes (compact ↔ full)."""
+        compact = self._is_compact
+        if self._was_compact != compact and self._persona_data:
+            self._was_compact = compact
+            self._render_header()
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -176,6 +184,14 @@ class AgentHeader(Static):
 
             return portrait_resolver.resolve_portrait_path(theme, role)
         return None
+
+    @property
+    def _is_compact(self) -> bool:
+        """True when the terminal is too short for the full portrait layout."""
+        try:
+            return self.app.size.height < 30
+        except Exception:
+            return False
 
     def _render_header(self) -> None:
         """Re-render the header from stored state."""
@@ -214,16 +230,19 @@ class AgentHeader(Static):
 
         line = "  ".join(parts)
 
-        # Catchphrase subtitle (quote is a random catchphrase from the theme)
-        if quote:
-            line += f"\n[italic dim]\"{quote}\"[/italic dim]"
-        elif role_desc:
-            line += f"\n[dim]{role_desc}[/dim]"
+        # Compact mode: single line, no quote, no portrait
+        compact = self._is_compact
+        if not compact:
+            # Catchphrase subtitle (quote is a random catchphrase from the theme)
+            if quote:
+                line += f"\n[italic dim]\"{quote}\"[/italic dim]"
+            elif role_desc:
+                line += f"\n[dim]{role_desc}[/dim]"
 
         self._header_text = line
 
-        # Check portrait and schedule layout update
-        portrait = self._resolve_portrait(data)
+        # Check portrait and schedule layout update (skip portrait in compact mode)
+        portrait = None if compact else self._resolve_portrait(data)
         self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
 
     async def on_agent_header_portrait_layout_update(
@@ -424,6 +443,7 @@ class BikeRackApp(App):
         Binding("j", "next_epic", show=False),
         Binding("k", "prev_epic", show=False),
         Binding("e", "toggle_epic", show=False),
+        Binding("c", "copy_selected_id", show=False),
     ]
 
     def _get_dom_base(self):
@@ -629,6 +649,15 @@ class BikeRackApp(App):
             try:
                 panel = self.query_one("#panel-sprint", SprintPanel)
                 panel.toggle_epic()
+            except Exception:
+                pass
+
+    def action_copy_selected_id(self) -> None:
+        """Copy Jira key of selected story/epic to clipboard."""
+        if self._focused_panel == "sprint":
+            try:
+                panel = self.query_one("#panel-sprint", SprintPanel)
+                panel.copy_selected_id()
             except Exception:
                 pass
 
