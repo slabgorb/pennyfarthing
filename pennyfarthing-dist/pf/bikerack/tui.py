@@ -264,6 +264,7 @@ class AgentHeader(Static):
                 protocol = detect_image_protocol()
                 if protocol is None:
                     # No image protocol — remove skeleton, fall back to text-only
+                    self._current_portrait = None
                     for child in list(self.query("Horizontal")):
                         await child.remove()
                     self.update(self._header_text)
@@ -284,7 +285,8 @@ class AgentHeader(Static):
                     pass
                 await row.mount(img, before=0)
             except (ImportError, Exception):
-                # textual-image not available — remove skeleton, text-only
+                # Image mount failed — reset cache so next update retries
+                self._current_portrait = None
                 for child in list(self.query("Horizontal")):
                     await child.remove()
                 self.update(self._header_text)
