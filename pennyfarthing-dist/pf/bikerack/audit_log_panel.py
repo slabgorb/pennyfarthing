@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import math
-import os.path
 from datetime import UTC, datetime
 from time import time
 from typing import Any
@@ -332,11 +331,22 @@ class AuditLogPanel(BasePanel):
     panel_name: str = "Audit Log"
     icon: str = PANEL_ICONS["audit-log"][0]
 
+    # Key bindings for row selection and drill-through (Story 120-13)
+    BINDINGS = [
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
+        ("down", "cursor_down", "Down"),
+        ("up", "cursor_up", "Up"),
+        ("enter", "select", "Expand"),
+    ]
+
     def __init__(self, client=None, **kwargs):
         super().__init__(client=client, **kwargs)
         self._table = _OfflineDataTable()
         self._table.add_columns("Time", "Tool", "Input", "Status")
         self._spans: list[dict[str, Any]] = []
+        self._selected_index: int | None = None
+        self._expanded_rows: set[int] = set()
 
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming WebSocket messages for tool events.
@@ -376,6 +386,7 @@ class AuditLogPanel(BasePanel):
         """Add a single tool event row to the DataTable and span store."""
         tool_name = span.get("toolName", "")
         input_text = _enrich_input(tool_name, span.get("input", ""), span)
+        span["_enriched_input"] = input_text  # Cache for render_panel reuse
         success = span.get("success")
 
         time_str = _format_timestamp(span.get("timestamp"))
@@ -393,6 +404,15 @@ class AuditLogPanel(BasePanel):
 
         self._table.add_row(time_str, tool_name, input_text, status)
         self._spans.append(span)
+
+        # Enforce MAX_SPANS to bound memory usage
+        if len(self._spans) > MAX_SPANS:
+            overflow = len(self._spans) - MAX_SPANS
+            self._spans = self._spans[overflow:]
+            # Adjust selection and expanded indices after trim
+            if self._selected_index is not None:
+                self._selected_index = max(0, self._selected_index - overflow)
+            self._expanded_rows = {max(0, i - overflow) for i in self._expanded_rows if i >= overflow}
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render tool events as a Tufte-style Rich Table.
@@ -427,9 +447,16 @@ class AuditLogPanel(BasePanel):
         rich_table.add_column("Tool", no_wrap=True, width=11)
         rich_table.add_column("Input", no_wrap=True, overflow="ellipsis", ratio=1)
 
-        for span in reversed(self._spans):
+        # Render rows newest-first; track original index for selection/expand
+        span_count = len(self._spans)
+        for display_idx, span in enumerate(reversed(self._spans)):
+            orig_idx = span_count - 1 - display_idx
+            is_selected = self._selected_index == orig_idx
+            is_expanded = orig_idx in self._expanded_rows
+
             tool_name = span.get("toolName", "")
-            input_text = _enrich_input(tool_name, span.get("input", ""), span)
+            # Use cached enrichment from _add_row; fallback for spans loaded before caching
+            input_text = span.get("_enriched_input") or _enrich_input(tool_name, span.get("input", ""), span)
             success = span.get("success")
             duration_ms = span.get("durationMs") or span.get("duration_ms")
 
@@ -465,20 +492,131 @@ class AuditLogPanel(BasePanel):
             bar_style = "red" if success is False else "blue"
             bar_text = Text(bar_char, style=bar_style)
 
-            # Tool name with color
+            # Tool name with color; selected row gets reverse video
             tool_style = _TOOL_COLORS.get(tool_name.lower(), "bold cyan")
+            row_style = "reverse" if is_selected else ""
 
             rich_table.add_row(
-                time_str,
+                Text(time_str, style=row_style) if is_selected else time_str,
                 dur_text,
                 bar_text,
-                Text(tool_name, style=f"bold {tool_style}"),
-                Text(input_text, style="dim", no_wrap=True, overflow="ellipsis")
+                Text(tool_name, style=f"bold {tool_style} {row_style}".strip()),
+                Text(input_text, style=f"dim {row_style}".strip(), no_wrap=True, overflow="ellipsis")
                 if input_text
                 else Text(""),
+                style=row_style,
             )
 
+            # Expanded detail block (Story 120-13, AC5)
+            if is_expanded:
+                detail = _render_detail_block(span)
+                rich_table.add_row("", "", "", "", detail)
+
         return rich_table
+
+    # --- Row selection (Story 120-13, AC4) ---
+
+    def action_cursor_down(self) -> None:
+        """Move selection down one row (j or down-arrow)."""
+        if not self._spans:
+            return
+        if self._selected_index is None:
+            self._selected_index = 0
+        elif self._selected_index < len(self._spans) - 1:
+            self._selected_index += 1
+        self._refresh_render()
+
+    def action_cursor_up(self) -> None:
+        """Move selection up one row (k or up-arrow)."""
+        if not self._spans:
+            return
+        if self._selected_index is None:
+            self._selected_index = len(self._spans) - 1
+        elif self._selected_index > 0:
+            self._selected_index -= 1
+        self._refresh_render()
+
+    # --- Drill-through expand (Story 120-13, AC5) ---
+
+    def action_select(self) -> None:
+        """Toggle expand on selected row (Enter key)."""
+        self.toggle_expand()
+
+    def toggle_expand(self) -> None:
+        """Toggle inline detail expansion for the currently selected row."""
+        if self._selected_index is None:
+            return
+        if self._selected_index in self._expanded_rows:
+            self._expanded_rows.discard(self._selected_index)
+        else:
+            self._expanded_rows.add(self._selected_index)
+        self._refresh_render()
+
+    def _refresh_render(self) -> None:
+        """Re-render the panel after selection/expand state change."""
+        if not self._mounted or not self._spans:
+            return
+        rendered = self.render_panel(self._last_payload or {})
+        try:
+            self.post_message(self.DataReceived(rendered))
+        except Exception:
+            pass
+
+
+def _render_detail_block(span: dict[str, Any]) -> Any:
+    """Render an expanded detail block for a span (Story 120-13, AC5).
+
+    Shows full untruncated input, output, error, and absolute timestamp.
+    """
+    from rich.text import Text
+
+    parts: list[str] = []
+
+    # Absolute timestamp
+    ts = span.get("timestamp")
+    if ts is not None:
+        try:
+            dt = datetime.fromtimestamp(float(ts) / 1000, tz=UTC)
+            parts.append(f"Time: {dt.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        except (ValueError, TypeError, OSError):
+            pass
+
+    # Full input from toolParameters
+    raw_params = span.get("toolParameters") or span.get("tool_parameters") or ""
+    if raw_params:
+        try:
+            params = json.loads(raw_params) if isinstance(raw_params, str) else raw_params
+            if isinstance(params, dict):
+                for k, v in params.items():
+                    val = str(v)
+                    if len(val) > 200:
+                        val = val[:200] + "\u2026"
+                    parts.append(f"  {k}: {val}")
+        except (json.JSONDecodeError, TypeError):
+            pass
+    elif span.get("input"):
+        parts.append(f"Input: {span['input']}")
+
+    # Output
+    output = span.get("output", "")
+    if output:
+        out_str = str(output)
+        if len(out_str) > 300:
+            out_str = out_str[:300] + "\u2026"
+        parts.append(f"Output: {out_str}")
+
+    # Error
+    error = span.get("error", "")
+    if error:
+        parts.append(f"Error: {error}")
+
+    # Duration
+    dur = span.get("durationMs") or span.get("duration_ms")
+    if dur is not None:
+        parts.append(f"Duration: {_format_duration(dur)}")
+
+    detail_text = "\n".join(parts) if parts else "(no details)"
+    return Text(f"  \u2502 {detail_text.replace(chr(10), chr(10) + '  \u2502 ')}", style="dim italic")
 
 
 def _format_timestamp(ts: Any) -> str:
