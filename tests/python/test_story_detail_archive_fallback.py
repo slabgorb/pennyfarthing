@@ -192,13 +192,16 @@ class TestFetchStoryDetailArchived:
         assert result.get("archived") is True
         assert result.get("workflow") == "tdd"
 
-    def test_empty_dict_when_not_found(self, tmp_path) -> None:
-        """Returns empty dict when no session file found."""
+    def test_defaults_when_not_found(self, tmp_path) -> None:
+        """Returns dict with defaults when no session file found."""
         (tmp_path / ".pennyfarthing").mkdir()
         (tmp_path / ".session").mkdir()
         (tmp_path / "sprint" / "archive").mkdir(parents=True)
+        (tmp_path / "sprint" / "context").mkdir(parents=True)
         result = fetch_story_detail("999-99", project_root=str(tmp_path))
-        assert result == {}
+        assert result.get("id") == "999-99"
+        assert result.get("archived") is False
+        assert result.get("session_file_content", "") == ""
 
 
 # ===========================================================================

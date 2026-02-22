@@ -13,7 +13,7 @@ from rich.text import Text
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Static
+from textual.widgets import Markdown, Static
 
 from pf.bikerack.base_panel import render_progress_bar
 
@@ -78,17 +78,6 @@ def _render_workflow_dots(workflow: str, current_phase: str) -> Text | None:
             line.append(" \u2192 ", style="dim")
 
     return line
-
-
-class _PreviewBlock(Static):
-    """Text block that renders without app context (for testability)."""
-
-    def __init__(self, content: Any, **kwargs: Any) -> None:
-        super().__init__("", **kwargs)
-        self._content = content
-
-    def render(self):
-        return self._content
 
 
 class _MarkdownPreview(VerticalScroll):
@@ -204,22 +193,21 @@ class StoryDetailScreen(Screen):
             ac_line.append(f"  {done_count}/{total}")
             yield Static(ac_line, id="dossier-ac")
 
-        # Context section — single line
+        # Context section — always show so user knows what's available
         has_epic_ctx = data.get("has_epic_context", False)
         has_story_ctx = data.get("has_story_context", False)
-        if has_epic_ctx or has_story_ctx:
-            ctx_text = Text()
-            ctx_text.append("Ctx  ", style="bold")
-            if has_epic_ctx:
-                ctx_text.append("\u2713 Epic", style="green")
-            else:
-                ctx_text.append("\u25cb Epic", style="dim")
-            ctx_text.append("  ")
-            if has_story_ctx:
-                ctx_text.append("\u2713 Story", style="green")
-            else:
-                ctx_text.append("\u25cb Story", style="dim")
-            yield Static(ctx_text, id="dossier-context")
+        ctx_text = Text()
+        ctx_text.append("Ctx  ", style="bold")
+        if has_epic_ctx:
+            ctx_text.append("\u2713 Epic", style="green")
+        else:
+            ctx_text.append("\u25cb Epic", style="dim")
+        ctx_text.append("  ")
+        if has_story_ctx:
+            ctx_text.append("\u2713 Story", style="green")
+        else:
+            ctx_text.append("\u25cb Story", style="dim")
+        yield Static(ctx_text, id="dossier-context")
 
         # Git info section — single line
         branch = data.get("git_branch", "")
@@ -264,20 +252,11 @@ class StoryDetailScreen(Screen):
         if epic_content or story_content or session_content:
             children = []
             if epic_content:
-                epic_text = Text()
-                epic_text.append("Epic Context\n", style="bold underline")
-                epic_text.append(f"{epic_content}\n")
-                children.append(_PreviewBlock(epic_text))
+                children.append(Markdown(epic_content))
             if story_content:
-                st_text = Text()
-                st_text.append("Story Context\n", style="bold underline")
-                st_text.append(f"{story_content}\n")
-                children.append(_PreviewBlock(st_text))
+                children.append(Markdown(story_content))
             if session_content:
-                sess_text = Text()
-                sess_text.append("Session\n", style="bold underline")
-                sess_text.append(f"{session_content}\n")
-                children.append(_PreviewBlock(sess_text))
+                children.append(Markdown(session_content))
             yield _MarkdownPreview(*children, id="dossier-preview")
 
         # Keybinding hint

@@ -226,19 +226,33 @@ def fetch_story_detail(
         Dict with keys: id, title, points, status, jiraKey,
         acceptance_criteria, workflow, workflow_phase,
         git_branch, pr_url, session_notes, archived.
-        Empty dict if story not found.
+        Always returns a populated dict with defaults; enriched with
+        session data when a session file exists.
     """
+    root = project_root or _find_project_root()
+
+    result: dict[str, Any] = {"id": story_id, "archived": False}
+
+    # Parse session file if available
     session_path, is_archived = _find_session_file(
-        story_id, project_root, jira_key=jira_key
+        story_id, root, jira_key=jira_key
     )
-    if not session_path:
-        return {}
+    if session_path:
+        result["archived"] = is_archived
+        session_data = _parse_session_file(session_path)
+        result.update(session_data)
 
-    result: dict[str, Any] = {"id": story_id, "archived": is_archived}
+        # Get PR URL if we have a branch
+        if "pr_url" not in result:
+            pr_url = _get_pr_url(result.get("git_branch", ""))
+            result["pr_url"] = pr_url
 
-    # Parse session file (primary data source)
-    session_data = _parse_session_file(session_path)
-    result.update(session_data)
+        # Load raw session file content
+        try:
+            with open(session_path) as f:
+                result["session_file_content"] = f.read()
+        except Exception:
+            result["session_file_content"] = ""
 
     # Get status from sprint YAML if not in session
     if "status" not in result:
@@ -246,13 +260,7 @@ def fetch_story_detail(
         if status:
             result["status"] = status
 
-    # Get PR URL if we have a branch
-    if "pr_url" not in result:
-        pr_url = _get_pr_url(result.get("git_branch", ""))
-        result["pr_url"] = pr_url
-
-    # Check for context files
-    root = project_root or _find_project_root()
+    # Check for context files (independent of session)
     context_info = _check_context_files(story_id, root)
     result.update(context_info)
 
@@ -270,13 +278,6 @@ def fetch_story_detail(
                 result["story_context_content"] = f.read()
         except Exception:
             result["story_context_content"] = ""
-
-    # Load raw session file content
-    try:
-        with open(session_path) as f:
-            result["session_file_content"] = f.read()
-    except Exception:
-        result["session_file_content"] = ""
 
     # Ensure all required keys exist with defaults
     result.setdefault("title", "")

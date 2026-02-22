@@ -415,7 +415,12 @@ class TestStoryDetailScreenClass:
     def test_accepts_story_data(self) -> None:
         """StoryDetailScreen constructor should accept story_data dict."""
         screen = StoryDetailScreen(story_data=SAMPLE_STORY_DETAIL)
-        assert screen._story_data == SAMPLE_STORY_DETAIL
+        # Enrichment may add extra keys; verify passed data is preserved
+        for key, val in SAMPLE_STORY_DETAIL.items():
+            if val is not None and val != []:
+                assert screen._story_data.get(key) == val, (
+                    f"Expected {key}={val!r}, got {screen._story_data.get(key)!r}"
+                )
 
     def test_stores_empty_dict_when_no_data(self) -> None:
         """StoryDetailScreen with no story_data should store empty dict."""

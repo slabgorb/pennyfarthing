@@ -642,19 +642,26 @@ class TestContextFileContentLoading:
 def _extract_text(widget) -> str:
     """Extract visible text from a Textual widget for assertion checking."""
     from textual.containers import VerticalScroll
+    from textual.widgets import Markdown
 
     texts = []
     if isinstance(widget, VerticalScroll):
         # For containers, check composed children
         for child in widget.compose():
-            try:
-                r = child.render()
-                if hasattr(r, "plain"):
-                    texts.append(r.plain)
-                else:
-                    texts.append(str(r))
-            except Exception:
-                texts.append(str(child))
+            if isinstance(child, Markdown):
+                # Markdown stores raw source in _markdown attribute
+                texts.append(getattr(child, "_initial_markdown", "") or getattr(child, "_markdown", ""))
+            else:
+                try:
+                    r = child.render()
+                    if hasattr(r, "plain"):
+                        texts.append(r.plain)
+                    else:
+                        texts.append(str(r))
+                except Exception:
+                    texts.append(str(child))
+    elif isinstance(widget, Markdown):
+        texts.append(getattr(widget, "_markdown", ""))
     else:
         try:
             r = widget.render()
