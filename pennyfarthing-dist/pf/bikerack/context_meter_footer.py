@@ -238,6 +238,7 @@ class StatusFooter(Static):
         """Compact context bar for the right side of the footer."""
         if self._context_data is None:
             bar = Text()
+            bar.append("ctx ", style="dim")
             bar.append("░" * 10, style="dim")
             bar.append(" --%", style="dim")
             return bar
@@ -245,7 +246,9 @@ class StatusFooter(Static):
         percent = self._context_data.get("percent") or 0
         tier = self._context_data.get("tier") or ""
 
-        bar = render_progress_bar(percent, width=10, warn_high=True)
+        bar = Text()
+        bar.append("ctx ", style="dim")
+        bar.append_text(render_progress_bar(percent, width=10, warn_high=True))
 
         if tier:
             if percent < 50:
