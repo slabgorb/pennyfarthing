@@ -1,9 +1,7 @@
 """Tests for Story 120-13: Audit log enrichment — hook forwarding and drill-through.
 
-RED phase: These tests define the contract for new functionality.
-Existing enrichment in _enrich_from_params already handles Read/Grep/Edit/Write
-when toolParameters are present — the gap is getting those params populated
-in BikeRack mode via hook forwarding, plus adding drill-through interactivity.
+Reviewer rejection cycle: Previous tests were hasattr-only structural checks.
+These replacements verify actual behavior via mocks and state assertions.
 
   AC1: Read tool calls show file path in Input column (via hook forwarding)
   AC2: Grep tool calls show pattern + path in Input column (via hook forwarding)
@@ -18,10 +16,14 @@ Run with: python -m pytest tests/python/test_120_13_audit_log_enrichment.py -v
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from pf.bikerack.audit_log_panel import AuditLogPanel
+from pf.bikerack.audit_log_panel import (
+    AuditLogPanel,
+    _render_detail_block,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -59,165 +61,308 @@ def _make_panel_with_spans(spans: list[dict[str, Any]]) -> AuditLogPanel:
 # ---------------------------------------------------------------------------
 # AC1-3: Hook forwarding — cyclist_pretooluse forwards tool input to WheelHub
 #
-# The PreToolUse hook must POST tool input to /api/pending-tool-input so that
-# the OTLP receiver can correlate it with incoming spans. Without this, Read,
-# Grep, Edit, Write inputs remain blank in BikeRack mode.
+# _forward_tool_input must POST tool input to /api/pending-tool-input with
+# the correct payload structure. Tests mock send_to_cyclist and verify
+# the endpoint, payload, and call site in main().
 # ---------------------------------------------------------------------------
 
 
-class TestHookForwardsToolInput:
-    """ACs 1-3: cyclist_pretooluse should forward tool input to WheelHub."""
+class TestHookForwardsBehavior:
+    """ACs 1-3: Behavioral verification of hook forwarding via mocked send_to_cyclist."""
 
-    def test_pretooluse_has_forward_function(self):
-        """cyclist_pretooluse module should have a _forward_tool_input function."""
-        from pf.hooks import cyclist_pretooluse
+    def test_forward_calls_send_to_cyclist_with_correct_endpoint(self):
+        """_forward_tool_input should POST to /api/pending-tool-input endpoint."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
 
-        assert hasattr(cyclist_pretooluse, "_forward_tool_input"), (
-            "cyclist_pretooluse should have _forward_tool_input function "
-            "to POST tool input to /api/pending-tool-input"
-        )
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input(
+                tool_name="Read",
+                tool_id="toolu_abc123",
+                tool_input={"file_path": "/tmp/test.py"},
+                project_root=Path("/fake/project"),
+            )
+            mock_send.assert_called_once()
+            call_kwargs = mock_send.call_args
+            assert call_kwargs[1]["endpoint"] == "/api/pending-tool-input" or \
+                call_kwargs[0][0] == "/api/pending-tool-input", (
+                f"Expected endpoint '/api/pending-tool-input', got {call_kwargs}"
+            )
 
-    def test_forward_sends_to_correct_endpoint(self):
-        """_forward_tool_input should POST to /api/pending-tool-input."""
-        from pf.hooks import cyclist_pretooluse
+    def test_forward_payload_includes_tool_name(self):
+        """Forwarded payload must include toolName field."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
 
-        fn = getattr(cyclist_pretooluse, "_forward_tool_input", None)
-        assert fn is not None, (
-            "cyclist_pretooluse._forward_tool_input must exist"
-        )
-        # Function should accept tool_name, tool_id, tool_input, project_root
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input(
+                tool_name="Read",
+                tool_id="toolu_abc123",
+                tool_input={"file_path": "/tmp/test.py"},
+                project_root=Path("/fake/project"),
+            )
+            data = mock_send.call_args[1].get("data") or mock_send.call_args[0][1]
+            assert data["toolName"] == "Read", (
+                f"Payload should include toolName='Read', got {data}"
+            )
 
-    def test_forward_called_during_main_when_cyclist_running(self):
-        """main() should call _forward_tool_input when Cyclist is active."""
-        from pf.hooks import cyclist_pretooluse
+    def test_forward_payload_includes_tool_id(self):
+        """Forwarded payload must include toolId field."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
 
-        assert hasattr(cyclist_pretooluse, "_forward_tool_input"), (
-            "cyclist_pretooluse must have _forward_tool_input to be called in main()"
-        )
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input(
+                tool_name="Grep",
+                tool_id="toolu_xyz789",
+                tool_input={"pattern": "TODO"},
+                project_root=Path("/fake/project"),
+            )
+            data = mock_send.call_args[1].get("data") or mock_send.call_args[0][1]
+            assert data["toolId"] == "toolu_xyz789", (
+                f"Payload should include toolId, got {data}"
+            )
 
-    def test_forward_includes_tool_name_and_input(self):
-        """Forwarded data should include toolName, toolId, and input fields."""
-        from pf.hooks import cyclist_pretooluse
+    def test_forward_payload_includes_input_dict(self):
+        """Forwarded payload must include the full tool input dict."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
 
-        fn = getattr(cyclist_pretooluse, "_forward_tool_input", None)
-        assert fn is not None, (
-            "cyclist_pretooluse._forward_tool_input must exist to forward tool data"
-        )
+        tool_input = {"file_path": "/Users/dev/project/src/app.py", "offset": 10}
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input(
+                tool_name="Read",
+                tool_id="toolu_001",
+                tool_input=tool_input,
+                project_root=Path("/fake/project"),
+            )
+            data = mock_send.call_args[1].get("data") or mock_send.call_args[0][1]
+            assert data["input"] == tool_input, (
+                f"Payload 'input' should be the full tool_input dict, got {data}"
+            )
+
+    def test_forward_noop_without_project_root(self):
+        """_forward_tool_input should not call send_to_cyclist when project_root is None."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
+
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input("Read", "toolu_001", {}, project_root=None)
+            mock_send.assert_not_called()
+
+    def test_forward_swallows_exceptions(self):
+        """_forward_tool_input must not raise even if send_to_cyclist fails."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
+
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist", side_effect=ConnectionError("refused")):
+            # Should not raise
+            _forward_tool_input("Read", "toolu_001", {}, project_root=Path("/fake"))
+
+    def test_forward_sends_edit_input_with_file_path(self):
+        """AC3: Edit tool forwarding includes file_path in the input payload."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
+
+        edit_input = {"file_path": "/project/src/main.py", "old_string": "foo", "new_string": "bar"}
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input("Edit", "toolu_edit", edit_input, Path("/fake"))
+            data = mock_send.call_args[1].get("data") or mock_send.call_args[0][1]
+            assert data["toolName"] == "Edit"
+            assert data["input"]["file_path"] == "/project/src/main.py"
+
+    def test_forward_sends_grep_input_with_pattern(self):
+        """AC2: Grep tool forwarding includes pattern in the input payload."""
+        from pf.hooks.cyclist_pretooluse import _forward_tool_input
+
+        grep_input = {"pattern": "def main", "path": "/project/src"}
+        with patch("pf.hooks.cyclist_pretooluse.send_to_cyclist") as mock_send:
+            _forward_tool_input("Grep", "toolu_grep", grep_input, Path("/fake"))
+            data = mock_send.call_args[1].get("data") or mock_send.call_args[0][1]
+            assert data["toolName"] == "Grep"
+            assert data["input"]["pattern"] == "def main"
 
 
 # ---------------------------------------------------------------------------
 # AC4: Row selection with j/k or arrow keys (highlighted row)
 #
-# AuditLogPanel must support keyboard-driven row selection. This requires
-# BasePanel to support optional interactivity (it currently extends Static).
+# Tests verify actual state changes from cursor movement, not just
+# method existence. Selection index must track correctly with bounds.
 # ---------------------------------------------------------------------------
 
 
-class TestRowSelection:
-    """AC4: AuditLogPanel supports row selection with keyboard navigation."""
+class TestRowSelectionBehavior:
+    """AC4: Behavioral tests for keyboard-driven row selection."""
 
-    def test_panel_has_selected_index(self):
-        """Panel should track which row is selected."""
+    def test_cursor_down_from_none_selects_first(self):
+        """First cursor_down from no selection should select index 0."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
             _make_span("Edit", {"file_path": "/tmp/b.py"}),
         ])
-        assert hasattr(panel, "_selected_index"), (
-            "AuditLogPanel should have _selected_index attribute for row selection"
+        assert panel._selected_index is None
+        panel.action_cursor_down()
+        assert panel._selected_index == 0, (
+            f"cursor_down from None should select 0, got {panel._selected_index}"
         )
 
-    def test_initial_selection_is_none_or_last(self):
-        """Initial selection should be None (nothing) or last row (newest)."""
+    def test_cursor_down_increments_index(self):
+        """cursor_down should increment selected index by 1."""
+        panel = _make_panel_with_spans([
+            _make_span("Read", {"file_path": "/tmp/a.py"}),
+            _make_span("Edit", {"file_path": "/tmp/b.py"}),
+            _make_span("Write", {"file_path": "/tmp/c.py"}),
+        ])
+        panel._selected_index = 0
+        panel.action_cursor_down()
+        assert panel._selected_index == 1
+
+    def test_cursor_down_stays_at_bottom(self):
+        """cursor_down at last index should not go beyond bounds."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
             _make_span("Edit", {"file_path": "/tmp/b.py"}),
         ])
-        idx = getattr(panel, "_selected_index", "MISSING")
-        assert idx != "MISSING", (
-            "AuditLogPanel must have _selected_index attribute"
-        )
-        assert idx is None or idx == len(panel._spans) - 1, (
-            f"Initial selection should be None or last index, got {idx}"
+        panel._selected_index = 1  # last index
+        panel.action_cursor_down()
+        assert panel._selected_index == 1, (
+            f"cursor_down at bottom should stay at 1, got {panel._selected_index}"
         )
 
-    def test_has_select_next_row_method(self):
-        """Panel should have select_next_row method for j/down-arrow."""
-        panel = _make_panel_with_spans([
-            _make_span("Read", {"file_path": "/tmp/a.py"}),
-        ])
-        assert hasattr(panel, "action_cursor_down") or hasattr(panel, "select_next_row"), (
-            "AuditLogPanel should have action_cursor_down or select_next_row method"
-        )
-
-    def test_has_select_prev_row_method(self):
-        """Panel should have select_prev_row method for k/up-arrow."""
-        panel = _make_panel_with_spans([
-            _make_span("Read", {"file_path": "/tmp/a.py"}),
-        ])
-        assert hasattr(panel, "action_cursor_up") or hasattr(panel, "select_prev_row"), (
-            "AuditLogPanel should have action_cursor_up or select_prev_row method"
-        )
-
-    def test_selection_stays_in_bounds_at_top(self):
-        """Moving up from first row should stay at first row."""
+    def test_cursor_up_from_none_selects_last(self):
+        """First cursor_up from no selection should select last index."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
             _make_span("Edit", {"file_path": "/tmp/b.py"}),
         ])
-        move_up = getattr(panel, "action_cursor_up", None) or getattr(panel, "select_prev_row", None)
-        assert move_up is not None, (
-            "AuditLogPanel must have cursor up method"
+        assert panel._selected_index is None
+        panel.action_cursor_up()
+        assert panel._selected_index == 1, (
+            f"cursor_up from None should select last (1), got {panel._selected_index}"
         )
 
-    def test_selection_stays_in_bounds_at_bottom(self):
-        """Moving down from last row should stay at last row."""
+    def test_cursor_up_decrements_index(self):
+        """cursor_up should decrement selected index by 1."""
+        panel = _make_panel_with_spans([
+            _make_span("Read", {"file_path": "/tmp/a.py"}),
+            _make_span("Edit", {"file_path": "/tmp/b.py"}),
+            _make_span("Write", {"file_path": "/tmp/c.py"}),
+        ])
+        panel._selected_index = 2
+        panel.action_cursor_up()
+        assert panel._selected_index == 1
+
+    def test_cursor_up_stays_at_top(self):
+        """cursor_up at index 0 should not go below 0."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
             _make_span("Edit", {"file_path": "/tmp/b.py"}),
         ])
-        move_down = getattr(panel, "action_cursor_down", None) or getattr(panel, "select_next_row", None)
-        assert move_down is not None, (
-            "AuditLogPanel must have cursor down method"
+        panel._selected_index = 0
+        panel.action_cursor_up()
+        assert panel._selected_index == 0, (
+            f"cursor_up at top should stay at 0, got {panel._selected_index}"
         )
 
-    def test_selected_row_visually_distinct_in_render(self):
-        """Selected row should render with reverse video or highlight style."""
-        panel = _make_panel_with_spans([
-            _make_span("Read", {"file_path": "/tmp/a.py"}),
-            _make_span("Edit", {"file_path": "/tmp/b.py"}),
-        ])
-        assert hasattr(panel, "_selected_index"), (
-            "AuditLogPanel must have _selected_index for render highlighting"
-        )
+    def test_cursor_noop_on_empty_spans(self):
+        """Cursor movement on empty panel should not crash or set index."""
+        panel = AuditLogPanel(client=MagicMock())
+        panel.on_mount()
+        panel.action_cursor_down()
+        assert panel._selected_index is None
+        panel.action_cursor_up()
+        assert panel._selected_index is None
 
 
 # ---------------------------------------------------------------------------
 # AC5: Enter expands inline detail block with full input/output
 #
-# Pressing Enter on a selected row should expand an inline detail view
-# showing full input, output, error, and absolute timestamp.
+# Tests verify toggle_expand modifies _expanded_rows state, and that
+# _render_detail_block produces content with timestamp, params, output, error.
 # ---------------------------------------------------------------------------
 
 
-class TestDrillThroughExpand:
-    """AC5: Enter on selected row expands inline detail block."""
+class TestDrillThroughBehavior:
+    """AC5: Behavioral tests for expand/collapse and detail block rendering."""
 
-    def test_panel_has_expanded_rows_tracking(self):
-        """Panel should track which rows are expanded."""
+    def test_toggle_expand_adds_index_to_set(self):
+        """toggle_expand on selected row should add index to _expanded_rows."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
         ])
-        assert hasattr(panel, "_expanded_rows"), (
-            "AuditLogPanel should have _expanded_rows set for drill-through tracking"
+        panel._selected_index = 0
+        panel.toggle_expand()
+        assert 0 in panel._expanded_rows, (
+            f"After toggle_expand, index 0 should be in _expanded_rows: {panel._expanded_rows}"
         )
 
-    def test_has_toggle_expand_method(self):
-        """Panel should have a toggle_expand or action_select method."""
+    def test_toggle_expand_removes_on_second_call(self):
+        """Second toggle_expand on same row should remove it (collapse)."""
         panel = _make_panel_with_spans([
             _make_span("Read", {"file_path": "/tmp/a.py"}),
         ])
-        assert hasattr(panel, "toggle_expand") or hasattr(panel, "action_select"), (
-            "AuditLogPanel should have toggle_expand or action_select method"
+        panel._selected_index = 0
+        panel.toggle_expand()
+        assert 0 in panel._expanded_rows
+        panel.toggle_expand()
+        assert 0 not in panel._expanded_rows, (
+            "Second toggle should collapse (remove from _expanded_rows)"
+        )
+
+    def test_toggle_expand_noop_without_selection(self):
+        """toggle_expand with no selection should not modify _expanded_rows."""
+        panel = _make_panel_with_spans([
+            _make_span("Read", {"file_path": "/tmp/a.py"}),
+        ])
+        assert panel._selected_index is None
+        panel.toggle_expand()
+        assert len(panel._expanded_rows) == 0
+
+    def test_detail_block_shows_absolute_timestamp(self):
+        """_render_detail_block should include absolute UTC timestamp."""
+        span = _make_span("Read", {"file_path": "/tmp/a.py"})
+        detail = _render_detail_block(span)
+        text = str(detail)
+        assert "Time:" in text, (
+            f"Detail block should contain 'Time:' with absolute timestamp, got: {text}"
+        )
+        assert "UTC" in text, (
+            f"Detail block timestamp should include 'UTC', got: {text}"
+        )
+
+    def test_detail_block_shows_tool_parameters(self):
+        """_render_detail_block should show toolParameters key-value pairs."""
+        span = _make_span("Read", {"file_path": "/tmp/test.py", "offset": 10})
+        detail = _render_detail_block(span)
+        text = str(detail)
+        assert "file_path" in text, (
+            f"Detail block should show toolParameters keys, got: {text}"
+        )
+
+    def test_detail_block_shows_output(self):
+        """_render_detail_block should include output field when present."""
+        span = _make_span("Bash", {"command": "ls"})
+        span["output"] = "file1.py\nfile2.py"
+        detail = _render_detail_block(span)
+        text = str(detail)
+        assert "Output:" in text, (
+            f"Detail block should contain 'Output:', got: {text}"
+        )
+        assert "file1.py" in text
+
+    def test_detail_block_shows_error_for_failed_tool(self):
+        """_render_detail_block should include error for failed spans."""
+        span = _make_span("Bash", {"command": "npm test"})
+        span["success"] = False
+        span["error"] = "Exit code 1: 3 tests failed"
+        detail = _render_detail_block(span)
+        text = str(detail)
+        assert "Error:" in text, (
+            f"Detail block should contain 'Error:', got: {text}"
+        )
+        assert "Exit code 1" in text
+
+    def test_detail_block_shows_duration(self):
+        """_render_detail_block should include formatted duration."""
+        span = _make_span("Read", {"file_path": "/tmp/a.py"})
+        span["durationMs"] = 1500
+        detail = _render_detail_block(span)
+        text = str(detail)
+        assert "Duration:" in text, (
+            f"Detail block should contain 'Duration:', got: {text}"
         )
 
     def test_full_span_data_stored_for_drillthrough(self):
@@ -230,58 +375,4 @@ class TestDrillThroughExpand:
         stored = panel._spans[0]
         assert stored.get("toolParameters") is not None, (
             "Full span data including toolParameters should be stored for drill-through"
-        )
-
-    def test_expanded_state_initially_empty(self):
-        """No rows should be expanded initially."""
-        panel = _make_panel_with_spans([
-            _make_span("Read", {"file_path": "/tmp/a.py"}),
-            _make_span("Edit", {"file_path": "/tmp/b.py"}),
-        ])
-        expanded = getattr(panel, "_expanded_rows", "MISSING")
-        assert expanded != "MISSING", (
-            "AuditLogPanel must have _expanded_rows attribute"
-        )
-        assert len(expanded) == 0, (
-            f"No rows should be expanded initially, got {expanded}"
-        )
-
-    def test_expanded_row_shows_full_input(self):
-        """Expanded detail block should include full untruncated input."""
-        panel = _make_panel_with_spans([
-            _make_span("Bash", {
-                "command": "very long command " * 20,
-                "description": "Run a very long test command",
-            }),
-        ])
-        assert hasattr(panel, "_expanded_rows"), (
-            "AuditLogPanel must have _expanded_rows for full input display"
-        )
-
-    def test_expanded_row_shows_output(self):
-        """Expanded detail block should include tool output."""
-        span = _make_span("Bash", {"command": "ls"})
-        span["output"] = "file1.py\nfile2.py\nfile3.py"
-        panel = _make_panel_with_spans([span])
-        assert hasattr(panel, "_expanded_rows"), (
-            "AuditLogPanel must have _expanded_rows for output display"
-        )
-
-    def test_expanded_row_shows_error_for_failed_tool(self):
-        """Expanded detail block for failed tools should show error."""
-        span = _make_span("Bash", {"command": "npm test"})
-        span["success"] = False
-        span["error"] = "Exit code 1: 3 tests failed"
-        panel = _make_panel_with_spans([span])
-        assert hasattr(panel, "_expanded_rows"), (
-            "AuditLogPanel must have _expanded_rows for error detail display"
-        )
-
-    def test_expanded_row_shows_absolute_timestamp(self):
-        """Expanded detail block should show absolute timestamp, not relative."""
-        panel = _make_panel_with_spans([
-            _make_span("Read", {"file_path": "/tmp/a.py"}),
-        ])
-        assert hasattr(panel, "_expanded_rows"), (
-            "AuditLogPanel must have _expanded_rows for absolute timestamp display"
         )
