@@ -1,14 +1,18 @@
 """ProgressPanel — Unified story progress view for BikeRack TUI.
 
-Combines story context, workflow phase, acceptance criteria, todos, and
-git status into a single at-a-glance panel. Subscribes to 4 WS channels:
+Combines sprint-level metrics (burndown, epic progress, velocity, recently
+completed) with story context, workflow phase, acceptance criteria, todos,
+and git status into a single at-a-glance panel. Subscribes to 4 WS channels:
 /ws/story, /ws/todos, /ws/git, /ws/sprint.
 
 Story 120-8: Added Enter keybinding for story detail drill-through.
+Story 120-3: Added sprint burndown, epic progress, velocity/timeline,
+             and recently completed sections.
 """
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any
 
 from rich.console import Group
@@ -44,15 +48,30 @@ class ProgressPanel(BasePanel):
         self._todos_data: dict[str, Any] | None = None
         self._git_data: dict[str, Any] | None = None
         self._sprint_data: dict[str, Any] | None = None
+        self._sprint_dates: dict[str, str] = {}
 
     def on_mount(self) -> None:
-        """Subscribe to all 4 channels."""
+        """Subscribe to all 4 channels and load sprint dates."""
         self._mounted = True
+        self._sprint_dates = self._load_sprint_dates()
         if self._client is not None:
             self._client.subscribe("story", self._handle_story)
             self._client.subscribe("todos", self._handle_todos)
             self._client.subscribe("git", self._handle_git)
             self._client.subscribe("sprint", self._handle_sprint)
+
+    def _load_sprint_dates(self) -> dict[str, str]:
+        """Load start/end dates from sprint YAML (once at mount)."""
+        try:
+            from pf.sprint.loader import get_sprint_info
+
+            info = get_sprint_info()
+            return {
+                "start_date": info.get("start_date", ""),
+                "end_date": info.get("end_date", ""),
+            }
+        except Exception:
+            return {}
 
     def _handle_story(self, message: dict[str, Any] | None) -> None:
         if message is None:
@@ -132,6 +151,7 @@ class ProgressPanel(BasePanel):
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render unified progress view."""
         parts: list[Any] = []
+        sep = Text("\u2500" * 35, style="dim")
 
         # --- Story Header ---
         story_header = self._render_story_header()
@@ -141,25 +161,49 @@ class ProgressPanel(BasePanel):
                 style="dim italic",
             )
         parts.append(story_header)
-        parts.append(Text("\u2500" * 35, style="dim"))
+        parts.append(sep)
+
+        # --- Sprint Burndown ---
+        burndown = self._render_burndown()
+        if burndown is not None:
+            parts.append(burndown)
+            parts.append(sep)
+
+        # --- Per-Epic Progress ---
+        epics = self._render_epics_progress()
+        if epics is not None:
+            parts.append(epics)
+            parts.append(sep)
+
+        # --- Velocity & Timeline ---
+        velocity = self._render_velocity_timeline()
+        if velocity is not None:
+            parts.append(velocity)
+            parts.append(sep)
+
+        # --- Recently Completed ---
+        recent = self._render_recently_completed()
+        if recent is not None:
+            parts.append(recent)
+            parts.append(sep)
 
         # --- Workflow Phase ---
         workflow = self._render_workflow()
         if workflow is not None:
             parts.append(workflow)
-            parts.append(Text("\u2500" * 35, style="dim"))
+            parts.append(sep)
 
         # --- Acceptance Criteria ---
         ac = self._render_ac()
         if ac is not None:
             parts.append(ac)
-            parts.append(Text("\u2500" * 35, style="dim"))
+            parts.append(sep)
 
         # --- Todos ---
         todos = self._render_todos()
         if todos is not None:
             parts.append(todos)
-            parts.append(Text("\u2500" * 35, style="dim"))
+            parts.append(sep)
 
         # --- Git Summary ---
         git = self._render_git()
@@ -222,6 +266,134 @@ class ProgressPanel(BasePanel):
             header.append(" \u00b7 ".join(meta_parts), style="dim")
 
         return header
+
+    def _render_burndown(self) -> Text | None:
+        """Render sprint burndown bar with done/remaining/WIP counts."""
+        sprint = (self._sprint_data or {}).get("sprint", {})
+        if not sprint:
+            return None
+
+        done = sprint.get("done", 0)
+        remaining = sprint.get("remaining", 0)
+        in_progress = sprint.get("inProgress", 0)
+        total = done + remaining + in_progress
+        if total == 0:
+            return None
+
+        pct = int(done / total * 100)
+        sprint_num = sprint.get("number", "")
+
+        line = Text()
+        if sprint_num:
+            line.append(f"Sprint {sprint_num}  ", style="bold")
+        line.append_text(render_progress_bar(pct, width=20, fill_style="green"))
+        line.append(f"  {done}d", style="green")
+        line.append(f" \u00b7 {remaining}r", style="dim")
+        line.append(f" \u00b7 {in_progress}w", style="yellow" if in_progress else "dim")
+        return line
+
+    def _render_epics_progress(self) -> Text | None:
+        """Render per-epic progress bars (max 5 active epics)."""
+        epics = (self._sprint_data or {}).get("epics", [])
+        if not epics:
+            return None
+
+        # Filter to epics with at least one non-done story
+        active: list[tuple[dict[str, Any], int, int]] = []
+        for ep in epics:
+            if not isinstance(ep, dict):
+                continue
+            done_s, total_s, _dp, _tp = _epic_stats(ep)
+            if total_s > 0 and done_s < total_s:
+                active.append((ep, done_s, total_s))
+        if not active:
+            return None
+
+        lines = Text()
+        lines.append("Epics\n", style="bold")
+        for ep, done_s, total_s in active[:5]:
+            epic_id = str(ep.get("id", ""))
+            title = ep.get("title", "")
+            pct = int(done_s / total_s * 100)
+            lines.append(f"  {epic_id:<5}", style="dim")
+            lines.append_text(render_progress_bar(pct, width=10, fill_style="dim green"))
+            lines.append(f"  {done_s}/{total_s}   {title}\n")
+        return lines
+
+    def _render_velocity_timeline(self) -> Text | None:
+        """Render days remaining, velocity, and projected completion."""
+        sprint = (self._sprint_data or {}).get("sprint", {})
+        if not sprint:
+            return None
+
+        # Parse dates — prefer YAML-loaded start, WS end, then fallback
+        start_str = self._sprint_dates.get("start_date", "") or sprint.get("startDate", "")
+        end_str = sprint.get("endDate", "") or self._sprint_dates.get("end_date", "")
+        if not start_str or not end_str:
+            return None
+
+        try:
+            start = datetime.strptime(start_str[:10], "%Y-%m-%d").date()
+            end = datetime.strptime(end_str[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            return None
+
+        today = date.today()
+        total_days = max((end - start).days, 1)
+        elapsed = max((today - start).days, 0)
+        days_left = max((end - today).days, 0)
+
+        done = sprint.get("done", 0)
+        remaining = sprint.get("remaining", 0) + sprint.get("inProgress", 0)
+
+        pts_per_day = round(done / max(elapsed, 1), 1)
+        on_track = pts_per_day * days_left >= remaining if days_left > 0 else done >= remaining + done
+
+        line = Text()
+        line.append(f"Day {elapsed}/{total_days}  ", style="bold")
+        line.append(f"{days_left}d left  ", style="dim")
+        line.append(f"{pts_per_day} pts/day  ")
+        if on_track:
+            line.append("on track \u2713", style="green")
+        else:
+            line.append("at risk \u2717", style="red")
+        return line
+
+    def _render_recently_completed(self) -> Text | None:
+        """Render last 3 completed stories."""
+        epics = (self._sprint_data or {}).get("epics", [])
+        if not epics:
+            return None
+
+        done_stories: list[dict[str, Any]] = []
+        for ep in epics:
+            if not isinstance(ep, dict):
+                continue
+            for s in ep.get("stories", []):
+                if isinstance(s, dict) and s.get("status") == "done":
+                    done_stories.append(s)
+
+        if not done_stories:
+            return None
+
+        # Sort by completed date descending, take last 3
+        done_stories.sort(
+            key=lambda s: s.get("completed", "") or "",
+            reverse=True,
+        )
+
+        lines = Text()
+        lines.append("Done\n", style="bold")
+        for s in done_stories[:3]:
+            sid = s.get("id", "")
+            title = s.get("title", "")
+            pts = s.get("points", "")
+            lines.append(f"  \u2713 {sid:<8}", style="green")
+            lines.append(f"{title}")
+            if pts:
+                lines.append(f"  {pts}pt", style="dim")
+            lines.append("\n")
+        return lines
 
     def _render_workflow(self) -> Text | None:
         """Render workflow type badge and phase dots."""
@@ -353,6 +525,26 @@ class ProgressPanel(BasePanel):
             break
 
         return line
+
+
+def _epic_stats(epic: dict[str, Any]) -> tuple[int, int, int, int]:
+    """Return (done_stories, total_stories, done_points, total_points) for an epic."""
+    stories = epic.get("stories", [])
+    total_stories = len(stories)
+    done_stories = 0
+    total_points = 0
+    done_points = 0
+    for s in stories:
+        if not isinstance(s, dict):
+            continue
+        pts = s.get("points", 0)
+        if not isinstance(pts, (int, float)):
+            pts = 0
+        total_points += pts
+        if s.get("status") == "done":
+            done_stories += 1
+            done_points += pts
+    return done_stories, total_stories, done_points, total_points
 
 
 def _phase_before(phase: str, current: str, phases: list) -> bool:
