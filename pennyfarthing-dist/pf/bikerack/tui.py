@@ -150,14 +150,6 @@ class AgentHeader(Static):
         self._persona_data: dict[str, Any] = {}
         self._header_text: str = ""
         self._current_portrait: Path | None = None
-        self._was_compact: bool | None = None
-
-    def on_resize(self) -> None:
-        """Re-render header when terminal size changes (compact ↔ full)."""
-        compact = self._is_compact
-        if self._was_compact != compact and self._persona_data:
-            self._was_compact = compact
-            self._render_header()
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -184,14 +176,6 @@ class AgentHeader(Static):
 
             return portrait_resolver.resolve_portrait_path(theme, role)
         return None
-
-    @property
-    def _is_compact(self) -> bool:
-        """True when the terminal is too short for the full portrait layout."""
-        try:
-            return self.app.size.height < 30
-        except Exception:
-            return False
 
     def _render_header(self) -> None:
         """Re-render the header from stored state."""
@@ -230,19 +214,16 @@ class AgentHeader(Static):
 
         line = "  ".join(parts)
 
-        # Compact mode: single line, no quote, no portrait
-        compact = self._is_compact
-        if not compact:
-            # Catchphrase subtitle (quote is a random catchphrase from the theme)
-            if quote:
-                line += f"\n[italic dim]\"{quote}\"[/italic dim]"
-            elif role_desc:
-                line += f"\n[dim]{role_desc}[/dim]"
+        # Catchphrase subtitle
+        if quote:
+            line += f"\n[italic dim]\"{quote}\"[/italic dim]"
+        elif role_desc:
+            line += f"\n[dim]{role_desc}[/dim]"
 
         self._header_text = line
 
-        # Check portrait and schedule layout update (skip portrait in compact mode)
-        portrait = None if compact else self._resolve_portrait(data)
+        # Always attempt portrait
+        portrait = self._resolve_portrait(data)
         self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
 
     async def on_agent_header_portrait_layout_update(
