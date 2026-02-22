@@ -41,6 +41,8 @@ Fast path for shipping completed work that deserves tracking but doesn't need st
 8. Create PR with summary
 9. Merge PR (squash) and delete branch
 10. Return to develop
+11. Add done story to `current-sprint.yaml` standalone_stories section
+12. Write retroactive session file to `sprint/archive/{JIRA_KEY}-session.md`
 </workflow>
 
 ## Execution
@@ -174,6 +176,64 @@ git pull origin develop
 echo "✅ Done: $JIRA_KEY merged"
 echo "   Jira: https://1898andco.atlassian.net/browse/$JIRA_KEY"
 echo "   PR: $PR_URL"
+```
+
+### Step 7: Sprint Tracking & Session Archive
+
+After merge, register the story in sprint YAML and write an archived session file.
+
+**Add to `current-sprint.yaml` standalone_stories section:**
+
+Append a new entry under `standalone_stories:` in `sprint/current-sprint.yaml` (create the section if it doesn't exist). Use the same field structure as `stories:` entries:
+
+```yaml
+standalone_stories:
+  - id: ${JIRA_KEY}
+    jira: ${JIRA_KEY}
+    title: ${TITLE}
+    points: ${POINTS}
+    status: done
+    repos: ${REPO}        # pennyfarthing or orchestrator (whichever has the changes)
+    pr: ${PR_NUMBER}
+    branch: ${BRANCH}
+```
+
+**Write retroactive session file** to `sprint/archive/${JIRA_KEY}-session.md`:
+
+```markdown
+# Standalone: ${TITLE}
+
+**Jira:** ${JIRA_KEY}
+**Points:** ${POINTS}
+**Priority:** P2
+**Workflow:** standalone
+**Status:** done
+**Repos:** ${REPO}
+**Branch:** ${BRANCH}
+**PR:** ${PR_NUMBER}
+**Started:** ${TODAY}
+**Completed:** ${TODAY}
+
+---
+
+## Description
+
+${DESCRIPTION}
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+${FILE_TABLE}
+```
+
+**Commit both tracking files** in the orchestrator repo:
+
+```bash
+# Return to orchestrator root
+cd ${PROJECT_ROOT}
+git add sprint/current-sprint.yaml sprint/archive/${JIRA_KEY}-session.md
+git commit -m "chore(sprint): add standalone ${JIRA_KEY} to sprint tracking"
 ```
 
 ## Safety
