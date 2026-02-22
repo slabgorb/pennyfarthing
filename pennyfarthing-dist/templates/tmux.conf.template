@@ -1,0 +1,91 @@
+# Pennyfarthing Development - tmux config
+# Usage: ./tmux-dev (launcher script)
+#
+# Layout (top/bottom):
+# ┌──────────────────────────────────────┐
+# │            claude code               │
+# ├──────────────────────────────────────┤
+# │              TUI                     │
+# └──────────────────────────────────────┘
+
+# --- Key passthrough ---
+# Enable extended keys (CSI u mode) so shift+enter, ctrl+enter, etc.
+# are properly distinguished from plain enter in Claude Code CLI
+set -g extended-keys on
+set -g extended-keys-format csi-u
+set -as terminal-features ",*:extkeys"
+
+# Don't let tmux eat modifier keys
+set -g xterm-keys on
+
+# --- Clipboard (OSC 52) ---
+# Claude Code uses OSC 52 for copy-to-clipboard. Without this, copy
+# operations silently fail because tmux strips the escape sequences.
+set -g set-clipboard on
+set -as terminal-overrides ",*:Ms=\\E]52;c;%p2%s\\7"
+
+# --- Bracketed paste ---
+# Prevent tmux from double-wrapping paste sequences, which causes garbled
+# input or character-by-character interpretation in Claude Code CLI
+set -as terminal-overrides ",*:Ss=\\E[%p1%d q:Se=\\E[2 q"
+
+# --- Image passthrough ---
+# Allow inline image protocols (Kitty, iTerm2, Sixel) to pass through tmux
+# so portraits and logos render in the terminal
+set -g allow-passthrough all
+
+# Propagate Kitty env vars into tmux sessions so image protocol
+# detection works (tmux overwrites TERM to tmux-256color)
+set -ga update-environment "KITTY_WINDOW_ID"
+set -ga update-environment "TERM_PROGRAM"
+
+# --- Terminal capabilities ---
+# Truecolor support
+set -g default-terminal "tmux-256color"
+set -as terminal-overrides ",*:Tc"
+
+# Unicode/wide character rendering — tell tmux to trust the terminal's
+# width calculations rather than guessing, reduces box-drawing corruption
+set -gq utf8-option on
+
+# --- Mouse ---
+# Full mouse support: click to select pane, scroll, drag borders to resize
+set -g mouse on
+
+# --- Copy mode (macOS clipboard) ---
+# Use vi-style keys in copy mode
+set -g mode-keys vi
+# Mouse drag auto-enters copy mode; releasing the button copies to clipboard
+bind -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel "pbcopy"
+# 'y' in copy mode also copies to clipboard
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
+# Enter in copy mode copies to clipboard
+bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "pbcopy"
+
+# Allow mouse scroll to enter copy-mode in the normal buffer but pass
+# scroll events through when an app (like Claude Code) uses alternate screen
+set -ga terminal-overrides ",*:smcup@:rmcup@"
+
+# --- Responsiveness ---
+# Low escape time so Esc-based sequences aren't laggy
+set -g escape-time 10
+
+# Pass focus events so apps can detect pane focus/blur
+set -g focus-events on
+
+# Generous scrollback for when you do enter copy-mode
+set -g history-limit 50000
+
+# --- Pane splitting ---
+# New splits target the top pane (Claude Code work area) rather than
+# rearranging the whole layout. The bottom pane (TUI) stays untouched.
+# Vertical split (left/right) within top pane
+bind | split-window -h -t '{top}'
+bind \\ split-window -h -t '{top}'
+# Horizontal split (top/bottom) within top pane
+bind - split-window -v -t '{top}'
+
+# --- Pane resize ---
+# Aggressively resize windows when switching between clients with different
+# terminal sizes (avoids the "small dots" problem in shared sessions)
+set -g aggressive-resize on

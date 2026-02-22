@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ${PROJECT_NAME} — tmux dev layout
+#
+# Layout (top/bottom):
+# ┌──────────────────────────────────────┐
+# │            claude code               │
+# ├──────────────────────────────────────┤
+# │              TUI                     │
+# └──────────────────────────────────────┘
+#
+# Usage: ./tmux-dev [directory]
+#   directory defaults to current working directory
+#
+# Uses a dedicated tmux socket (-L pf) so the project tmux.conf
+# is guaranteed to load, avoiding conflicts with ~/.tmux.conf.
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DIR="${1:-$(pwd)}"
+DIR="$(cd "$DIR" && pwd)"
+SESSION="pf"
+SOCKET="pf"
+
+# Kill existing session on our socket if running
+tmux -L "$SOCKET" kill-session -t "$SESSION" 2>/dev/null || true
+
+# Pass Kitty env vars so image protocol detection works inside tmux
+# (tmux overwrites TERM to tmux-256color, hiding the real terminal)
+export KITTY_WINDOW_ID="${KITTY_WINDOW_ID:-}"
+export TERM_PROGRAM="${TERM_PROGRAM:-}"
+
+# Create session with top pane (claude)
+tmux -L "$SOCKET" -f "$SCRIPT_DIR/tmux.conf" new-session -d -s "$SESSION" -c "$DIR" -e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM"
+tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
+
+# Split vertically → bottom pane (tui)
+tmux -L "$SOCKET" split-window -v -t "$SESSION" -c "$DIR" -e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM"
+tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
+
+# Focus on claude pane
+tmux -L "$SOCKET" select-pane -t "$SESSION.0"
+
+# Attach
+tmux -L "$SOCKET" attach -t "$SESSION"

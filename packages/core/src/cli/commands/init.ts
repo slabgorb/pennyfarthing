@@ -285,6 +285,11 @@ export async function initCommand(
   logger.info('  - Edit .claude/project/docs/shared-context.md with your project info');
   logger.info('  - Configure .pennyfarthing/persona-config.yaml for your preferred theme');
   logger.info('  - Run `pennyfarthing doctor` to verify installation');
+  logger.newline();
+  logger.info('  Quick start:');
+  logger.info('  - Run `just tui` to launch the TUI panel viewer');
+  logger.info('  - Run `just gui` to open the dashboard in a browser');
+  logger.info('  - Run `just tmux-dev` for the full tmux dev layout');
 }
 
 /**
@@ -459,10 +464,14 @@ async function generateTemplateFiles(
     { template: 'agent-scopes.yaml.template', dest: '.pennyfarthing/project/docs/agent-scopes.yaml' },
     { template: 'pennyfarthing-settings.yaml.template', dest: '.pennyfarthing/project/pennyfarthing-settings.yaml' },
     { template: 'setup-env.sh.template', dest: '.pennyfarthing/project/hooks/setup-env.sh' },
-    { template: 'auto-load-sm.sh.template', dest: '.pennyfarthing/project/hooks/auto-load-sm.sh' }
+    { template: 'auto-load-sm.sh.template', dest: '.pennyfarthing/project/hooks/auto-load-sm.sh' },
+    { template: 'justfile.template', dest: 'justfile' },
+    { template: 'tmux-dev.template', dest: 'tmux-dev', executable: true },
+    { template: 'tmux.conf.template', dest: 'tmux.conf' }
   ];
 
-  for (const { template, dest } of skipIfExistsTemplates) {
+  for (const entry of skipIfExistsTemplates) {
+    const { template, dest } = entry;
     const destPath = join(projectRoot, dest);
 
     // Skip if already exists
@@ -479,9 +488,9 @@ async function generateTemplateFiles(
         content = content.replace(/\$\{PROJECT_NAME\}/g, projectName);
         content = content.replace(/\$\{PROJECT_ROOT\}/g, projectRoot);
         ensureDirSync(join(projectRoot, dest, '..'));
-        // Shell scripts need executable permission
-        const isShellScript = template.endsWith('.sh.template');
-        if (isShellScript) {
+        // Shell scripts and explicitly executable templates need executable permission
+        const isExecutable = ('executable' in entry && entry.executable) || template.endsWith('.sh.template');
+        if (isExecutable) {
           writeFileSync(destPath, content, { mode: 0o755 });
         } else {
           writeFileSync(destPath, content, 'utf8');

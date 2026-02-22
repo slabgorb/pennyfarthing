@@ -15,6 +15,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-code-review](#pf-code-review)
   - [pf-systematic-debugging](#pf-systematic-debugging)
   - [pf-testing](#pf-testing)
+  - [pf-ux-tandem](#pf-ux-tandem)
 - [Documentation](#documentation)
   - [pf-changelog](#pf-changelog)
 - [Project Management](#project-management)
@@ -179,6 +180,23 @@ Test commands and TDD workflow patterns
 - Don't skip RED phase in TDD workflow
 
 **Related:** [pf-code-review](#pf-code-review)
+
+### pf-ux-tandem
+
+Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
+
+**Tags:** ux, tandem, review, tmux, collaboration, team
+
+**Keywords:** ux, design, review, tandem, tmux, visual, usability, team
+
+**Examples:**
+- Watch a TUI for usability issues: `/pf-ux-tandem`
+- Watch a running app in another pane: `/pf-ux-tandem`
+
+**Anti-patterns:**
+- Don't use for non-visual targets (use standard tandem-backseat for code review)
+
+**Related:** [pf-code-review](#pf-code-review), [pf-party-mode](#pf-party-mode)
 
 ## Documentation
 
