@@ -778,7 +778,12 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
         try {
           const params = JSON.parse(toolParams);
           // Use description if available, otherwise full_command or first param value
-          input = params.description || params.full_command || params.file_path || params.command || params.pattern || Object.values(params)[0] as string;
+          input = params.description || params.full_command || params.file_path || params.command || params.pattern;
+          // Story 120-14: Better fallback for non-standard params (e.g., MCP tools)
+          if (!input) {
+            const firstVal = Object.values(params)[0];
+            input = typeof firstVal === 'string' ? firstVal : (firstVal !== undefined ? JSON.stringify(firstVal).substring(0, 200) : undefined);
+          }
         } catch {
           input = toolParams; // Use raw string if not valid JSON
         }
@@ -793,6 +798,12 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       const success = rawSuccess === 'true' || rawSuccess === true;
 
       const toolName = event.attributes['tool_name'] as string || 'unknown';
+
+      // Story 120-14: Extract readable display for MCP tools from qualified name
+      if (!input && toolName.startsWith('mcp__')) {
+        const mcpParts = toolName.replace('mcp__', '').split('__');
+        input = mcpParts.join('/');
+      }
 
       // NOTE: Task detection moved to main.ts message stream handler.
       // OTEL logs do NOT emit tool_parameters for Task tools, so the
@@ -930,6 +941,88 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
             }
           }
         } catch { /* ignore enrichment errors */ }
+      } else if (parsedToolParams) {
+        // Story 120-14: CLI mode fallback — enrich directly from OTEL tool_parameters.
+        // In web mode, pendingInput comes from the message stream via storePendingToolInput().
+        // In CLI mode, only OTEL data reaches Cyclist, so we use tool_parameters directly.
+        if (parsedToolParams.file_path) {
+          toolEvent.filePath = parsedToolParams.file_path as string;
+        }
+
+        const syntheticId = `otel-${event.timestamp}-${toolName}`;
+        const otelContext: MessageContext = {
+          messageId: syntheticId,
+          toolName,
+          input: parsedToolParams as Record<string, unknown>,
+        };
+        correlateSpan(syntheticId, {
+          traceId: syntheticId,
+          spanId: syntheticId,
+          toolName,
+          toolUseId: syntheticId,
+          timestamp: event.timestamp,
+          enriched: false,
+          messageContext: otelContext,
+        });
+
+        try {
+          if (toolName === 'Read') {
+            const enrichment = await enrichReadSpan(syntheticId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.lineCount = enrichment.lineCount;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+            }
+          } else if (toolName === 'Edit') {
+            const enrichment = await enrichEditSpan(syntheticId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+              toolEvent.diff = enrichment.diff;
+            }
+          } else if (toolName === 'Write') {
+            const enrichment = await enrichWriteSpan(syntheticId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.lineCount = enrichment.lineCount;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+            }
+          } else if (toolName === 'Bash') {
+            const enrichment = enrichBashSpan(syntheticId, {
+              output: toolEvent.output,
+              error: toolEvent.error,
+              success: toolEvent.success,
+              durationMs: toolEvent.durationMs,
+            });
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.command = enrichment.command;
+              toolEvent.exitCode = enrichment.exitCode;
+              toolEvent.outputSummary = enrichment.outputSummary;
+              toolEvent.workingDirectory = enrichment.workingDirectory;
+            }
+          }
+        } catch { /* ignore enrichment errors */ }
+      }
+
+      // Story 120-14: Track Task tool invocations from OTEL in CLI mode.
+      // In web mode, trackBackgroundTask() is called from websocket.ts message stream.
+      // In CLI mode, we only have OTEL — track and immediately complete since
+      // tool_result means the task is already done.
+      if (toolName === 'Task' && parsedToolParams && !pendingInput) {
+        const otelTaskId = `otel-task-${event.timestamp}`;
+        trackBackgroundTask({
+          taskId: otelTaskId,
+          description: (parsedToolParams.description as string) || (parsedToolParams.prompt as string)?.substring(0, 100) || 'Task',
+          subagentType: (parsedToolParams.subagent_type as string) || 'unknown',
+          startedAt: event.timestamp - ((isNaN(durationMs as number) ? 0 : durationMs as number) || 0),
+          isBackground: parsedToolParams.run_in_background === true || String(parsedToolParams.run_in_background) === 'true',
+        });
+        completeBackgroundTask(otelTaskId, success,
+          success ? (event.attributes['tool_output'] as string)?.substring(0, 2000) : undefined,
+          success ? undefined : (event.attributes['error'] as string || 'Task failed'));
       }
 
       // Story 36-5: Task tool enrichment (works without pendingInput)
