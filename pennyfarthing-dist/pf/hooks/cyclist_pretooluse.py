@@ -55,6 +55,35 @@ def _resolve_agent(session_id: str | None, project_root: Path | None) -> str | N
     return None
 
 
+def _forward_tool_input(
+    tool_name: str,
+    tool_id: str,
+    tool_input: dict,
+    project_root: Path | None,
+) -> None:
+    """Forward tool input to WheelHub for OTEL span correlation.
+
+    Story 120-13: BikeRack's audit log needs tool inputs for Read, Grep, Edit,
+    Write, etc. OTEL tool_result events don't include tool_parameters for these
+    tools. This function sends tool inputs to WheelHub's pending-tool-input
+    endpoint so the OTLP receiver can correlate them with incoming spans.
+    """
+    if not project_root:
+        return
+    try:
+        send_to_cyclist(
+            endpoint="/api/pending-tool-input",
+            data={
+                "toolName": tool_name,
+                "toolId": tool_id,
+                "input": tool_input,
+            },
+            project_root=project_root,
+        )
+    except Exception:
+        pass  # Non-blocking — don't fail the hook if forwarding fails
+
+
 def main() -> None:
     """Main entry point for PreToolUse hook."""
     try:
@@ -69,6 +98,9 @@ def main() -> None:
 
         if not is_cyclist_running(project_root):
             sys.exit(0)
+
+        # Forward tool input for audit log enrichment (Story 120-13)
+        _forward_tool_input(tool_name, tool_id, tool_input, project_root)
 
         settings = load_settings(project_root)
         if settings.permission_mode == "accept":
