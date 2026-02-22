@@ -389,6 +389,23 @@ skills:
     related_skills: [pf-theme]
     keywords: [personas, custom, generation, wizard]
 
+  pf-ux-tandem:
+    name: pf-ux-tandem
+    description: Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
+    category: development
+    tags: [ux, tandem, review, tmux, collaboration, team]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Watch a TUI for usability issues
+        invocation: /pf-ux-tandem
+      - context: Watch a running app in another pane
+        invocation: /pf-ux-tandem
+    anti_patterns:
+      - Don't use for non-visual targets (use standard tandem-backseat for code review)
+    related_skills: [pf-code-review, pf-party-mode]
+    keywords: [ux, design, review, tandem, tmux, visual, usability, team]
+
   pf-workflow:
     name: pf-workflow
     description: Manage workflows - list, show, set, start, resume, and check status
