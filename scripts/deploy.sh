@@ -306,14 +306,14 @@ if $DRY_RUN; then
         log_dry "Prerelease: skipping merge to main"
         log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
         log_dry "git push origin develop --tags"
-        log_dry "npm publish --access public --tag $PRERELEASE_CHANNEL (@pennyfarthing/core)"
+        log_dry "pnpm publish --access public --no-git-checks --tag $PRERELEASE_CHANNEL (@pennyfarthing/core)"
         log_dry "gh release create $TAG_NAME --prerelease"
     else
         log_dry "git checkout main && git merge develop"
         log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
         log_dry "git push origin develop main --tags"
         log_dry "git checkout develop"
-        log_dry "npm publish --access public (@pennyfarthing/core)"
+        log_dry "pnpm publish --access public --no-git-checks (@pennyfarthing/core)"
         log_dry "gh release create $TAG_NAME"
     fi
 else
@@ -366,7 +366,9 @@ else
     fi
 
     # Publish root package (@pennyfarthing/core)
-    (cd "$PROJECT_ROOT" && npm publish --access public $NPM_TAG_FLAG)
+    # IMPORTANT: Use pnpm publish, not npm publish. npm publish does not resolve
+    # workspace:* protocol refs and will leak them into the published tarball.
+    (cd "$PROJECT_ROOT" && pnpm publish --access public --no-git-checks $NPM_TAG_FLAG)
     log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
 
     # Publish all workspace packages (pnpm resolves workspace:* protocols)

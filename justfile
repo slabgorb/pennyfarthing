@@ -214,6 +214,12 @@ test-cyclist:
 install:
     pnpm install
 
+# Publish a package. MUST use pnpm publish, never npm publish.
+# npm publish does not resolve workspace:* refs and leaks them into the tarball.
+# For full releases, use scripts/deploy.sh instead.
+publish pkg:
+    cd packages/{{pkg}} && pnpm publish --access public --no-git-checks
+
 # Generate portraits for a theme (uses SDXL, requires GPU)
 # Usage: just portraits arthurian-mythos
 portraits theme:
