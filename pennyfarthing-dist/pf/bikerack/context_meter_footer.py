@@ -12,8 +12,10 @@ Subscribes to:
 
 from __future__ import annotations
 
+import os
 import re
 import time
+from pathlib import Path
 from typing import Any
 
 from rich.text import Text
@@ -21,6 +23,18 @@ from textual.message import Message
 from textual.widgets import Static
 
 from pf.bikerack.base_panel import render_progress_bar
+
+
+def _get_story_id(project_root: str) -> str:
+    """Find active story ID from session files."""
+    session_dir = Path(project_root) / ".session"
+    if not session_dir.is_dir():
+        return ""
+    sessions = list(session_dir.glob("*-session.md"))
+    if not sessions:
+        return ""
+    name = sessions[0].stem  # e.g. "120-12-session"
+    return name.replace("-session", "")
 
 
 def _clean_model_name(model_raw: str) -> str:
@@ -68,6 +82,11 @@ class StatusFooter(Static):
         self._refresh_timer: Any = None
         self._last_redraw_time: float = 0.0
         self.last_update_time: float = 0.0
+        self._project_root = os.environ.get(
+            "CYCLIST_PROJECT_DIR",
+            os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
+        )
+        self._story_id = _get_story_id(self._project_root)
 
     # -- Convenience properties kept for backward compat with tests ----------
 
@@ -167,9 +186,16 @@ class StatusFooter(Static):
         """Build the full-width status line."""
         width = self.size.width if self.size else 80
 
-        # Left section: project + model
+        # Refresh story ID on each render (session may start/end)
+        self._story_id = _get_story_id(self._project_root)
+
+        # Left section: project + story + model
         left = Text()
         left.append(f" {self._project_dir}", style="bold cyan")
+
+        if self._story_id:
+            left.append("  ", style="dim")
+            left.append(self._story_id, style="bold yellow")
 
         if self._model:
             left.append("  ", style="dim")
