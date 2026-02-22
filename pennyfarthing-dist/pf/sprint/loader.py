@@ -17,6 +17,7 @@ from pf.common.config import (
     load_yaml_config,
     save_pennyfarthing_config_key,
 )
+from pf.core.resolver import resolve_sprint_context
 
 
 def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]:
@@ -41,11 +42,8 @@ def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]
 def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:
     """Load sprint data from project root.
 
-    Resolution order:
-      1. Check .pennyfarthing/config.local.yaml for sprint.active preference
-      2. If set, look up the sprint in sprint/sprints.yaml registry
-      3. Load the referenced sprint file (resolved relative to sprint/)
-      4. If no preference or no registry, fall back to sprint/current-sprint.yaml
+    Delegates path resolution to resolve_sprint_context(), which handles
+    default sprint, multi-sprint registry, and per-user preference.
 
     Supports both monolithic and sharded epic formats. When epics are
     string references, the corresponding epic-{ref}.yaml files are
@@ -58,37 +56,27 @@ def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:
         Sprint data as dict, or None if not found
     """
     root = project_root or get_project_root()
-    sprint_dir = root / "sprint"
 
-    # Check for per-user sprint preference
-    active_name = get_active_sprint_name(root)
-    if active_name:
-        registry = load_sprint_registry(root)
-        if registry:
-            sprints = registry.get("sprints", {})
-            sprint_entry = sprints.get(active_name)
-            if sprint_entry and sprint_entry.get("file"):
-                sprint_path = (sprint_dir / sprint_entry["file"]).resolve()
-                if sprint_path.exists():
-                    data = load_yaml_config(sprint_path)
-                    if data is not None:
-                        # Inject registry metadata for downstream consumers
-                        data["_registry"] = {
-                            "name": active_name,
-                            "type": sprint_entry.get("type", "project"),
-                            "context_root": sprint_entry.get("context_root"),
-                            "session_root": sprint_entry.get("session_root"),
-                            "docs": sprint_entry.get("docs", {}),
-                        }
-                        return _merge_epic_shards(data, sprint_path.parent)
+    try:
+        ctx = resolve_sprint_context(str(root))
+    except (FileNotFoundError, ValueError):
+        return None
 
-    # Default: load sprint/current-sprint.yaml
-    sprint_path = sprint_dir / "current-sprint.yaml"
+    sprint_path = Path(ctx.sprint_file)
     data = load_yaml_config(sprint_path)
     if data is None:
         return None
 
-    return _merge_epic_shards(data, sprint_dir)
+    # Inject registry metadata for non-default contexts
+    if not ctx.is_default:
+        data["_registry"] = {
+            "name": ctx.name,
+            "type": ctx.type,
+            "context_root": ctx.context_root,
+            "session_root": ctx.session_root,
+        }
+
+    return _merge_epic_shards(data, sprint_path.parent)
 
 
 def load_sprint_registry(project_root: Path | None = None) -> dict[str, Any] | None:
