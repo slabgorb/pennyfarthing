@@ -1942,18 +1942,31 @@ completed:
     click.echo("  2. Check status: pf sprint status")
 
 
-# --- Standalone command ---
+# --- Standalone command group ---
 
-@sprint.command()
-@click.argument("title", required=False)
-@click.argument("points", required=False, type=int)
-def standalone(title: str | None, points: int | None):
-    """Wrap current changes into a standalone Jira story, branch, PR, and merge.
+@sprint.group(invoke_without_command=True)
+@click.pass_context
+def standalone(ctx):
+    """Standalone story management.
 
-    This is an agent-executed workflow. Use /standalone to run it interactively.
+    \b
+    Commands:
+      add   - Register a done standalone story in sprint tracking
+
+    Without subcommand: shows usage info (use /standalone skill for the full workflow).
     """
-    click.echo("The standalone command is an agent-executed workflow.")
-    click.echo("Use /standalone to run it interactively with full agent support.")
+    if ctx.invoked_subcommand is None:
+        click.echo("The standalone command is an agent-executed workflow.")
+        click.echo("Use /standalone to run it interactively with full agent support.")
+        click.echo()
+        click.echo("Subcommands:")
+        click.echo("  add  - Register a done standalone story in sprint tracking")
+
+
+# Register standalone add subcommand
+from pf.sprint.standalone_add import standalone_add_command  # noqa: E402
+
+standalone.add_command(standalone_add_command, "add")
 
 
 # --- Backwards compatibility aliases (hidden) ---
