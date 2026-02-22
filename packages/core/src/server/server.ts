@@ -67,8 +67,10 @@ import { broadcastWelcome } from './api/welcome.js';
 import { broadcastBellConsumed } from './api/bell.js';
 
 // OTLP provider registry (lets Cyclist wire its real implementation into core's API routes)
-export { setOTLPProvider } from './otlp-receiver.js';
+export { setOTLPProvider, storePendingToolInput } from './otlp-receiver.js';
 export type { OTLPProvider } from './otlp-receiver.js';
+// Local import for inline route handler (re-export above doesn't bind locally)
+import { storePendingToolInput } from './otlp-receiver.js';
 
 // Re-exports for Cyclist and external consumers
 export { broadcastStats, initTokenStatsBroadcast } from './api/index.js';
@@ -246,6 +248,21 @@ app.post('/api/bell-consumed', (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to broadcast bell consumed' });
+  }
+});
+
+// Story 120-13: Pending tool input endpoint (hook-based forwarding for audit log enrichment)
+app.post('/api/pending-tool-input', (req, res) => {
+  const { toolName, toolId, input } = req.body || {};
+  if (!toolName || !toolId) {
+    res.status(400).json({ error: 'Missing required fields: toolName, toolId' });
+    return;
+  }
+  try {
+    storePendingToolInput(toolId, toolName, input || {});
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to store pending tool input' });
   }
 });
 

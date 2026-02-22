@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import math
-import os.path
 from datetime import UTC, datetime
 from time import time
 from typing import Any
@@ -387,6 +386,7 @@ class AuditLogPanel(BasePanel):
         """Add a single tool event row to the DataTable and span store."""
         tool_name = span.get("toolName", "")
         input_text = _enrich_input(tool_name, span.get("input", ""), span)
+        span["_enriched_input"] = input_text  # Cache for render_panel reuse
         success = span.get("success")
 
         time_str = _format_timestamp(span.get("timestamp"))
@@ -404,6 +404,15 @@ class AuditLogPanel(BasePanel):
 
         self._table.add_row(time_str, tool_name, input_text, status)
         self._spans.append(span)
+
+        # Enforce MAX_SPANS to bound memory usage
+        if len(self._spans) > MAX_SPANS:
+            overflow = len(self._spans) - MAX_SPANS
+            self._spans = self._spans[overflow:]
+            # Adjust selection and expanded indices after trim
+            if self._selected_index is not None:
+                self._selected_index = max(0, self._selected_index - overflow)
+            self._expanded_rows = {max(0, i - overflow) for i in self._expanded_rows if i >= overflow}
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render tool events as a Tufte-style Rich Table.
@@ -446,7 +455,8 @@ class AuditLogPanel(BasePanel):
             is_expanded = orig_idx in self._expanded_rows
 
             tool_name = span.get("toolName", "")
-            input_text = _enrich_input(tool_name, span.get("input", ""), span)
+            # Use cached enrichment from _add_row; fallback for spans loaded before caching
+            input_text = span.get("_enriched_input") or _enrich_input(tool_name, span.get("input", ""), span)
             success = span.get("success")
             duration_ms = span.get("durationMs") or span.get("duration_ms")
 

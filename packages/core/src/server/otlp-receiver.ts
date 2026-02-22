@@ -71,6 +71,9 @@ export interface OTLPProvider {
   exportAuditLogAsJSON(toolType?: string): string;
   exportAuditLogAsCSV(toolType?: string): string;
   resetEventStore(): void;
+
+  // span-correlation.ts (Story 120-13: hook-based tool input forwarding)
+  storePendingToolInput?(toolId: string, toolName: string, input: Record<string, unknown>): void;
 }
 
 let _provider: OTLPProvider | null = null;
@@ -178,6 +181,12 @@ export function resetEventStore(): void {
   _auditLog = [];
   _toolEventListeners = [];
   _userEmail = null;
+}
+
+// Story 120-13: Pending tool input storage (hook-based forwarding)
+export function storePendingToolInput(toolId: string, toolName: string, input: Record<string, unknown>): void {
+  if (_provider?.storePendingToolInput) return _provider.storePendingToolInput(toolId, toolName, input);
+  // Standalone: no-op (pending inputs are consumed by Cyclist's OTLP receiver)
 }
 
 // =============================================================================

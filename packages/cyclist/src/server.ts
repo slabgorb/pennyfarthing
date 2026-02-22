@@ -44,6 +44,9 @@ import {
   resetEventStore as realResetEventStore,
 } from './otlp-receiver.js';
 
+// Story 120-13: Hook-based tool input forwarding for audit log enrichment
+import { storePendingToolInput as realStorePendingToolInput } from './span-correlation.js';
+
 import type { OTLPProvider } from '@pennyfarthing/core/server';
 
 // Wire the real OTLP implementation into core's API route stubs.
@@ -102,6 +105,7 @@ const provider: OTLPProvider = {
   exportAuditLogAsJSON: realExportAuditLogAsJSON,
   exportAuditLogAsCSV: realExportAuditLogAsCSV,
   resetEventStore: realResetEventStore,
+  storePendingToolInput: realStorePendingToolInput,
 };
 
 setOTLPProvider(provider);
