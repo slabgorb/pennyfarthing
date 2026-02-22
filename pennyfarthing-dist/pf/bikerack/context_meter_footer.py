@@ -82,6 +82,7 @@ class StatusFooter(Static):
         self._refresh_timer: Any = None
         self._last_redraw_time: float = 0.0
         self.last_update_time: float = 0.0
+        self._pwd: str = ""
         self._project_root = os.environ.get(
             "CYCLIST_PROJECT_DIR",
             os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
@@ -165,8 +166,11 @@ class StatusFooter(Static):
         if not self._mounted or msg is None:
             return
         model_raw = msg.get("model", "")
-        if model_raw:
+        if model_raw and model_raw != "—":
             self._model = _clean_model_name(str(model_raw))
+        pwd_raw = msg.get("pwd", "")
+        if pwd_raw:
+            self._pwd = pwd_raw
         self._throttled_redraw()
 
     def _throttled_redraw(self) -> None:
@@ -189,13 +193,28 @@ class StatusFooter(Static):
         # Refresh story ID on each render (session may start/end)
         self._story_id = _get_story_id(self._project_root)
 
-        # Left section: project + story + model
+        # Resolve relative cwd from pwd
+        rel_cwd = ""
+        if self._pwd and self._project_root:
+            try:
+                rel = Path(self._pwd).relative_to(self._project_root)
+                rel_str = str(rel)
+                if rel_str != ".":
+                    rel_cwd = rel_str[:20]
+            except ValueError:
+                pass
+
+        # Left section: project + story + cwd + model
         left = Text()
         left.append(f" {self._project_dir}", style="bold cyan")
 
         if self._story_id:
             left.append("  ", style="dim")
             left.append(self._story_id, style="bold yellow")
+
+        if rel_cwd:
+            left.append("  ", style="dim")
+            left.append(rel_cwd, style="cyan")
 
         if self._model:
             left.append("  ", style="dim")
