@@ -166,6 +166,16 @@ class AgentHeader(Static):
         except Exception:
             config = {}
         self._portrait_size: str = config.get("portrait_size", "auto")
+        self._last_effective_size: str | None = None
+
+    def on_resize(self) -> None:
+        """Re-evaluate portrait size on terminal resize (auto mode only)."""
+        if self._portrait_size != "auto":
+            return
+        effective = self._resolve_effective_size()
+        if effective != self._last_effective_size and self._persona_data:
+            self._current_portrait = None  # force full layout rebuild
+            self._render_header()
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -183,21 +193,27 @@ class AgentHeader(Static):
 
         For ``auto``, maps terminal row count to a size bucket.
         For explicit values, returns as-is.
+        Updates ``_last_effective_size`` so resize can detect changes.
         """
         setting = self._portrait_size
         if setting != "auto":
+            self._last_effective_size = setting
             return setting
         try:
             rows = os.get_terminal_size().lines
         except OSError:
-            return "medium"
-        if rows >= 40:
-            return "large"
-        if rows >= 25:
-            return "medium"
-        if rows >= 15:
-            return "small"
-        return "off"
+            effective = "medium"
+        else:
+            if rows >= 40:
+                effective = "large"
+            elif rows >= 25:
+                effective = "medium"
+            elif rows >= 15:
+                effective = "small"
+            else:
+                effective = "off"
+        self._last_effective_size = effective
+        return effective
 
     def _resolve_portrait(self, data: dict[str, Any]) -> Path | None:
         """Get portrait path from persona data or resolve locally."""
