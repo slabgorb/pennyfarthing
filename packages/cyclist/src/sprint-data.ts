@@ -1,19 +1,18 @@
 /**
  * Sprint Data Aggregation Service
  *
- * Parses sprint/*.yaml files and aggregates data for the EnhancedSprintPanel.
- * Story MSSCI-14189 - Enhanced Sprint Panel with story management and epic actions
+ * Thin wrapper around `pf sprint data --json` canonical CLI output.
+ * Calls subprocess and transforms JSON to SprintData for WebSocket broadcast.
+ *
+ * Story MSSCI-15427 - Migrate Cyclist sprint panel to canonical data service
  *
  * Data sources:
- * - sprint/current-sprint.yaml - Active sprint with epics and stories
- * - sprint/future.yaml - Future initiatives and backlog epics
- * - .session/*-session.md - Current active story (if any)
+ * - `pf sprint data --json` subprocess — merged sprint/epic/story data
+ * - .session/*-session.md - Current active story (via story-parser)
  */
 
-import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import { join, dirname } from 'path';
-import { parse as parseYaml } from 'yaml';
+import { join } from 'path';
 import { getStoryInfo } from './story-parser.js';
 
 // =============================================================================
@@ -91,66 +90,57 @@ export interface SprintData {
 }
 
 // =============================================================================
-// YAML Types (internal, matches sprint/*.yaml structure)
+// Canonical CLI Types (internal, matches `pf sprint data --json` output)
 // =============================================================================
 
-interface YamlStory {
+interface CanonicalStory {
   id: string;
+  jira?: string;
   title: string;
   points?: number;
+  priority?: string;
   status?: string;
-  jira?: string;
+  workflow?: string;
   assigned_to?: string;
   completed?: string;
   started?: string;
-  workflow?: string;
-  priority?: string;
   description?: string;
 }
 
-interface YamlEpic {
+interface CanonicalEpic {
   id: string;
-  title: string;
   jira?: string;
-  stories?: YamlStory[];
-  points?: number;
-  status?: string;
+  title: string;
   description?: string;
-}
-
-interface YamlSprint {
-  name?: string;
-  end_date?: string;
-  jira_sprint_id?: number;
-}
-
-interface CurrentSprintYaml {
-  sprint?: YamlSprint;
-  epics?: (YamlEpic | string)[];
-  stories?: YamlStory[];
-}
-
-interface FutureInitiative {
-  name: string;
-  description?: string;
+  priority?: string;
   status?: string;
-  total_points?: number;
-  epics?: (YamlEpic | string)[];
+  repos?: string;
+  stories?: CanonicalStory[];
 }
 
-interface FutureYaml {
-  future?: {
-    initiatives?: (FutureInitiative | string)[];
+interface CanonicalData {
+  sprint: {
+    name: string;
+    number?: number;
+    end_date?: string;
+    jira_sprint_id?: number;
+    jira_sprint_name?: string;
+    goal?: string;
+    start_date?: string;
+    status?: string;
   };
+  epics: CanonicalEpic[];
+  stories?: CanonicalStory[];
+  standalone_stories?: CanonicalStory[];
+  points?: { total: number; completed: number; in_progress: number; backlog: number };
+  stories_count?: { total: number; done: number; in_progress: number; backlog: number };
+  _orphans?: unknown[];
 }
 
 // =============================================================================
 // Helper Functions
 // =============================================================================
 
-/**
- * Map YAML status string to SprintStory status enum
- */
 function mapStoryStatus(status?: string): SprintStory['status'] {
   if (!status) return 'backlog';
   const normalized = status.toLowerCase();
@@ -161,230 +151,52 @@ function mapStoryStatus(status?: string): SprintStory['status'] {
   return 'backlog';
 }
 
-/**
- * Map initiative status to FutureEpic status
- */
-function mapFutureStatus(status?: string): FutureEpic['status'] {
-  if (!status) return 'planning';
-  const normalized = status.toLowerCase();
-  if (normalized === 'ready' || normalized === 'research_complete') return 'ready';
-  if (normalized.includes('block')) return 'blocked';
-  return 'planning';
-}
-
-/**
- * Extract sprint number from name like "TO Sprint 2606"
- */
 function extractSprintNumber(name?: string): number {
   if (!name) return 0;
   const match = name.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 0;
 }
 
-/**
- * Check if epic context file exists
- */
-function checkEpicContext(projectDir: string, epicId: string): boolean {
-  // Extract numeric part from epic ID (e.g., "epic-76" -> "76")
-  const match = epicId.match(/epic-(\d+)/i);
-  if (!match) return false;
-  const contextPath = join(projectDir, 'sprint', 'context', `context-epic-${match[1]}.md`);
-  return existsSync(contextPath);
-}
-
-/**
- * Check if story context file exists
- */
-function checkStoryContext(projectDir: string, storyId: string): boolean {
-  const contextPath = join(projectDir, 'sprint', 'context', `${storyId}-context.md`);
-  return existsSync(contextPath);
-}
-
-/**
- * Transform YAML story to SprintStory
- */
-function transformStory(yamlStory: YamlStory, projectDir: string): SprintStory {
+function getEmptySprintData(): SprintData {
   return {
-    id: yamlStory.id,
-    title: yamlStory.title,
-    points: yamlStory.points ?? 0,
-    status: mapStoryStatus(yamlStory.status),
-    jiraKey: yamlStory.jira ?? null,
-    hasContext: checkStoryContext(projectDir, yamlStory.id),
-    assignedTo: yamlStory.assigned_to ?? null,
-    completed: yamlStory.completed ?? null,
-    started: yamlStory.started ?? null,
-    workflow: yamlStory.workflow ?? null,
-    priority: yamlStory.priority ?? null,
-    description: yamlStory.description ?? null,
+    currentStory: null,
+    nextStory: null,
+    epics: [],
+    completedEpics: [],
+    futureEpics: [],
+    sprint: { number: 0, name: 'Unknown Sprint', done: 0, remaining: 0, inProgress: 0, endDate: '' },
+    metrics: {
+      completed: { points: 0, stories: 0, epics: 0 },
+      current: { done: 0, inProgress: 0, remaining: 0, totalPoints: 0, storiesDone: 0, storiesInProgress: 0, storiesRemaining: 0 },
+      future: { totalPoints: 0, initiatives: 0, epics: 0 },
+      velocity: 0,
+    },
   };
 }
 
-/**
- * Transform YAML epic to SprintEpic
- */
-function transformEpic(yamlEpic: YamlEpic, projectDir: string): SprintEpic {
+function transformCanonicalStory(story: CanonicalStory): SprintStory {
   return {
-    id: yamlEpic.id,
-    title: yamlEpic.title.replace(/^Epic:\s*/i, ''), // Clean "Epic: " prefix
-    jiraKey: yamlEpic.jira ?? null,
-    stories: (yamlEpic.stories ?? []).map((s) => transformStory(s, projectDir)),
-    hasContext: checkEpicContext(projectDir, yamlEpic.id),
+    id: story.id,
+    title: story.title,
+    points: story.points ?? 0,
+    status: mapStoryStatus(story.status),
+    jiraKey: story.jira ?? null,
+    assignedTo: story.assigned_to ?? null,
+    completed: story.completed ?? null,
+    started: story.started ?? null,
+    workflow: story.workflow ?? null,
+    priority: story.priority ?? null,
+    description: story.description ?? null,
   };
 }
 
-/**
- * Merge sharded epic references into full epic objects.
- * When current-sprint.yaml contains string references (e.g. "MSSCI-14298"),
- * load each epic-{ref}.yaml shard and replace the string with parsed content.
- * Handles both bare refs ("42", "MSSCI-14298") and prefixed refs ("epic-42").
- */
-function mergeEpicShards(epics: (YamlEpic | string)[], sprintDir: string): YamlEpic[] {
-  return epics.reduce<YamlEpic[]>((merged, entry) => {
-    if (typeof entry !== 'string') {
-      merged.push(entry);
-      return merged;
-    }
-    // Strip "epic-" prefix if present to avoid double-prefix (epic-epic-42.yaml)
-    const ref = entry.startsWith('epic-') ? entry.slice(5) : entry;
-    const shardPath = join(sprintDir, `epic-${ref}.yaml`);
-    if (existsSync(shardPath)) {
-      try {
-        const content = readFileSync(shardPath, 'utf-8');
-        const epic = parseYaml(content) as YamlEpic;
-        if (epic && epic.id) {
-          merged.push(epic);
-        } else {
-          console.warn(`[sprint-data] Shard epic-${entry}.yaml missing id, skipped`);
-        }
-      } catch (err) {
-        console.error(`[sprint-data] Failed to parse epic-${entry}.yaml:`, err);
-      }
-    } else {
-      console.warn(`[sprint-data] Epic shard not found: ${shardPath}`);
-    }
-    return merged;
-  }, []);
-}
-
-/**
- * Merge sharded initiative references into full initiative objects.
- * When future.yaml contains string references (e.g. "benchmark-reliability"),
- * load each initiative-{ref}.yaml shard and replace the string with parsed content.
- */
-function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprintDir: string): FutureInitiative[] {
-  return initiatives.reduce<FutureInitiative[]>((merged, entry) => {
-    if (typeof entry !== 'string') {
-      merged.push(entry);
-      return merged;
-    }
-    const shardPath = join(sprintDir, `initiative-${entry}.yaml`);
-    if (existsSync(shardPath)) {
-      try {
-        const content = readFileSync(shardPath, 'utf-8');
-        const initiative = parseYaml(content) as FutureInitiative;
-        if (initiative && initiative.name) {
-          merged.push(initiative);
-        } else {
-          console.warn(`[sprint-data] Shard initiative-${entry}.yaml missing name, skipped`);
-        }
-      } catch (err) {
-        console.error(`[sprint-data] Failed to parse initiative-${entry}.yaml:`, err);
-      }
-    } else {
-      console.warn(`[sprint-data] Initiative shard not found: ${shardPath}`);
-    }
-    return merged;
-  }, []);
-}
-
-// =============================================================================
-// Sprint Context Resolution (125-3)
-// =============================================================================
-
-interface ResolvedSprintContext {
-  sprintFile: string;
-  sprintDir: string;
-  contextRoot: string;
-  isDefault: boolean;
-  name: string;
-  type: string;
-}
-
-/**
- * Resolve sprint context: which sprint file to read and from where.
- * Tries Python SprintContext via subprocess, falls back to reading config
- * files directly, falls back to default current-sprint.yaml.
- */
-function resolveSprintContext(projectDir: string): ResolvedSprintContext {
-  const sprintDir = join(projectDir, 'sprint');
-  const defaultResult: ResolvedSprintContext = {
-    sprintFile: join(sprintDir, 'current-sprint.yaml'),
-    sprintDir,
-    contextRoot: projectDir,
-    isDefault: true,
-    name: '',
-    type: 'orchestrator',
+function transformCanonicalEpic(epic: CanonicalEpic): SprintEpic {
+  return {
+    id: epic.id,
+    title: epic.title,
+    jiraKey: epic.jira ?? null,
+    stories: (epic.stories ?? []).map(transformCanonicalStory),
   };
-
-  // Try Python SprintContext via subprocess
-  try {
-    const pfScript = join(projectDir, '.pennyfarthing', 'scripts', 'core', 'pf.sh');
-    const raw = execSync(
-      `"${pfScript}" sprint resolve-context --json`,
-      { cwd: projectDir, encoding: 'utf-8', timeout: 5000 },
-    );
-    const ctx = JSON.parse(raw.trim());
-    if (ctx.sprint_file) {
-      return {
-        sprintFile: ctx.sprint_file,
-        sprintDir: dirname(ctx.sprint_file),
-        contextRoot: ctx.context_root ?? projectDir,
-        isDefault: ctx.is_default ?? true,
-        name: ctx.name ?? '',
-        type: ctx.type ?? 'orchestrator',
-      };
-    }
-  } catch {
-    // Fall through to config file approach
-  }
-
-  // Shared logic: read config files directly
-  try {
-    const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-    if (existsSync(configPath)) {
-      const config = parseYaml(readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
-      const sprintConfig = config?.sprint as Record<string, unknown> | undefined;
-      const activeName = sprintConfig?.active as string | undefined;
-
-      if (activeName) {
-        const registryPath = join(sprintDir, 'sprints.yaml');
-        if (existsSync(registryPath)) {
-          const registry = parseYaml(readFileSync(registryPath, 'utf-8')) as Record<string, unknown>;
-          const sprints = registry?.sprints as Record<string, Record<string, string>> | undefined;
-          const entry = sprints?.[activeName];
-
-          if (entry?.file) {
-            const resolvedFile = join(sprintDir, entry.file);
-            if (existsSync(resolvedFile)) {
-              return {
-                sprintFile: resolvedFile,
-                sprintDir,
-                contextRoot: entry.context_root ?? projectDir,
-                isDefault: false,
-                name: activeName,
-                type: entry.type ?? 'project',
-              };
-            }
-          }
-        }
-      }
-    }
-  } catch {
-    // Fall through to default
-  }
-
-  return defaultResult;
 }
 
 // =============================================================================
@@ -392,93 +204,28 @@ function resolveSprintContext(projectDir: string): ResolvedSprintContext {
 // =============================================================================
 
 /**
- * Get aggregated sprint data for EnhancedSprintPanel
+ * Get aggregated sprint data for EnhancedSprintPanel.
+ * Calls `pf sprint data --json` subprocess and transforms output.
  */
 export function getSprintData(projectDir: string, _userEmail?: string | null): SprintData {
-  const context = resolveSprintContext(projectDir);
-  const currentSprintPath = context.sprintFile;
-  const futurePath = join(context.contextRoot, 'sprint', 'future.yaml');
-
-  // Parse current sprint
-  let currentSprint: CurrentSprintYaml = {};
-  let parseError: string | null = null;
-  if (existsSync(currentSprintPath)) {
-    try {
-      const content = readFileSync(currentSprintPath, 'utf-8');
-      currentSprint = parseYaml(content) as CurrentSprintYaml;
-    } catch (err) {
-      // Provide actionable error message for YAML parse failures
-      const yamlErr = err as { message?: string; linePos?: Array<{ line: number; col: number }> };
-      const lineInfo = yamlErr.linePos?.[0] ? ` at line ${yamlErr.linePos[0].line}` : '';
-      parseError = `YAML parse error${lineInfo}: ${yamlErr.message || 'Unknown error'}`;
-      console.error('[sprint-data] Failed to parse current-sprint.yaml:', parseError);
-      console.error('[sprint-data] TIP: Single-quoted strings cannot contain blank lines. Use literal block scalars (|) instead.');
-    }
+  // Call canonical CLI subprocess
+  let canonical: CanonicalData;
+  try {
+    const pfScript = join(projectDir, '.pennyfarthing', 'scripts', 'core', 'pf.sh');
+    const raw = execSync(
+      `"${pfScript}" sprint data --json`,
+      { cwd: projectDir, encoding: 'utf-8', timeout: 10000 },
+    );
+    canonical = JSON.parse(raw.trim());
+  } catch {
+    return getEmptySprintData();
   }
 
-  // Parse future.yaml
-  let future: FutureYaml = {};
-  if (existsSync(futurePath)) {
-    try {
-      const content = readFileSync(futurePath, 'utf-8');
-      future = parseYaml(content) as FutureYaml;
-    } catch (err) {
-      console.error('[sprint-data] Failed to parse future.yaml:', err);
-    }
-  }
+  // Transform epics
+  const epics: SprintEpic[] = (canonical.epics ?? []).map(transformCanonicalEpic);
 
-  // Get current story from session
-  const storyInfo = getStoryInfo(projectDir);
-
-  // Merge sharded epics (string refs → full objects) then transform
-  const sprintDir = context.sprintDir;
-  const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
-  const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
-
-  // Load archived epics into a separate array for the "Completed" section
-  const completedEpics: SprintEpic[] = [];
-  let archivedDonePoints = 0;
-  let archivedDoneStories = 0;
-  const sprintNumber = extractSprintNumber(currentSprint.sprint?.name);
-  if (sprintNumber > 0) {
-    const completedPath = join(sprintDir, 'archive', `sprint-${sprintNumber}-completed.yaml`);
-    if (existsSync(completedPath)) {
-      try {
-        const completedContent = readFileSync(completedPath, 'utf-8');
-        const completedData = parseYaml(completedContent) as { completed_epics?: string[] };
-        const epicRefs = completedData.completed_epics ?? [];
-
-        for (const ref of epicRefs) {
-          const shardPath = join(sprintDir, 'archive', `epic-${ref}.yaml`);
-          if (existsSync(shardPath)) {
-            try {
-              const shardContent = readFileSync(shardPath, 'utf-8');
-              const epicData = parseYaml(shardContent) as YamlEpic;
-              if (epicData && epicData.id) {
-                const transformed = transformEpic(epicData, projectDir);
-                completedEpics.push(transformed);
-                for (const story of transformed.stories) {
-                  archivedDonePoints += story.points;
-                  archivedDoneStories++;
-                }
-              } else {
-                console.warn(`[sprint-data] Archive shard epic-${ref}.yaml missing id, skipped`);
-              }
-            } catch (err) {
-              console.error(`[sprint-data] Failed to parse archive epic-${ref}.yaml:`, err);
-            }
-          } else {
-            console.warn(`[sprint-data] Archive shard not found: ${shardPath}`);
-          }
-        }
-      } catch (err) {
-        console.error('[sprint-data] Failed to parse completed sprint YAML:', err);
-      }
-    }
-  }
-
-  // Include top-level standalone stories from current-sprint.yaml
-  const standaloneStories = (currentSprint.stories ?? []).map((s) => transformStory(s, projectDir));
+  // Add standalone stories as pseudo-epic
+  const standaloneStories = (canonical.standalone_stories ?? []).map(transformCanonicalStory);
   if (standaloneStories.length > 0) {
     epics.push({
       id: 'standalone',
@@ -488,37 +235,12 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     });
   }
 
-  // Calculate sprint metrics from active + standalone epics (archived handled separately above)
-  // Note: blocked stories are NOT counted in remaining - they're blocked, not available
-  let done = 0;
-  let inProgress = 0;
-  let remaining = 0;
-  let storiesDone = 0;
-  let storiesInProgress = 0;
-  let storiesRemaining = 0;
-
-  for (const epic of epics) {
-    for (const story of epic.stories) {
-      if (story.status === 'done') {
-        done += story.points;
-        storiesDone++;
-      } else if (story.status === 'in_progress') {
-        inProgress += story.points;
-        storiesInProgress++;
-      } else if (story.status === 'backlog') {
-        remaining += story.points;
-        storiesRemaining++;
-      }
-      // blocked stories intentionally not counted in remaining
-    }
-  }
-
-  // Find current story in epics
+  // Get current story from session
+  const storyInfo = getStoryInfo(projectDir);
   let currentStory: SprintStory | null = null;
   let nextStory: SprintStory | null = null;
 
   if (storyInfo.id) {
-    // We have an active session - find the story
     for (const epic of epics) {
       const found = epic.stories.find(s => s.id === storyInfo.id);
       if (found) {
@@ -528,7 +250,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     }
   }
 
-  // Find next backlog story (prefer assigned to current user, skip others' stories)
+  // Find next backlog story (prefer assigned to current user)
   if (!currentStory) {
     let userEmail: string | null = null;
     try {
@@ -537,7 +259,6 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       // No git config available
     }
 
-    // First pass: backlog stories assigned to current user
     if (userEmail) {
       for (const epic of epics) {
         const assigned = epic.stories.find(s => s.status === 'backlog' && s.assignedTo === userEmail);
@@ -548,7 +269,6 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       }
     }
 
-    // Second pass: unassigned backlog stories (skip stories assigned to others)
     if (!nextStory) {
       for (const epic of epics) {
         const unassigned = epic.stories.find(s => s.status === 'backlog' && !s.assignedTo);
@@ -560,77 +280,38 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     }
   }
 
-  // Transform future initiatives to FutureEpic[]
-  // Resolve initiative string refs (e.g. "benchmark-reliability" → initiative-benchmark-reliability.yaml)
-  const futureEpics: FutureEpic[] = [];
-  const rawInitiatives = future.future?.initiatives ?? [];
-  const initiatives = mergeInitiativeShards(rawInitiatives, sprintDir);
-
-  let futureEpicCount = 0;
-  for (const initiative of initiatives) {
-    // Skip completed initiatives
-    if (initiative.status === 'complete') continue;
-
-    // Resolve child epics from initiative's epics refs
-    const rawEpics = initiative.epics ?? [];
-    const resolvedChildEpics = mergeEpicShards(rawEpics, sprintDir);
-    const children: FutureEpicChild[] = resolvedChildEpics.map((epic) => {
-      const storyPoints = (epic.stories ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
-      return {
-        id: String(epic.id),
-        title: epic.title.replace(/^Epic:\s*/i, ''),
-        estimatedPoints: storyPoints,
-        status: mapFutureStatus(epic.status),
-        jiraKey: epic.jira ?? null,
-        storyCount: (epic.stories ?? []).length,
-      };
-    });
-    futureEpicCount += children.length;
-
-    // Add the initiative itself as a promotable epic
-    futureEpics.push({
-      id: initiative.name.toLowerCase().replace(/\s+/g, '-'),
-      title: initiative.name,
-      description: initiative.description ?? '',
-      estimatedPoints: initiative.total_points ?? 0,
-      status: mapFutureStatus(initiative.status),
-      children,
-    });
-  }
-
-  // Compute future metrics from resolved initiatives
-  let futureTotalPoints = 0;
-  for (const fe of futureEpics) {
-    futureTotalPoints += fe.estimatedPoints;
-  }
+  // Use canonical points/counts for metrics
+  const pts = canonical.points ?? { completed: 0, in_progress: 0, backlog: 0, total: 0 };
+  const counts = canonical.stories_count ?? { done: 0, in_progress: 0, backlog: 0, total: 0 };
 
   return {
     currentStory,
     nextStory,
     epics,
-    completedEpics,
-    futureEpics,
+    completedEpics: [],
+    futureEpics: [],
     sprint: {
-      number: extractSprintNumber(currentSprint.sprint?.name),
-      name: currentSprint.sprint?.name ?? 'Unknown Sprint',
-      done: done + archivedDonePoints,
-      remaining,
-      inProgress,
-      endDate: currentSprint.sprint?.end_date ?? '',
+      number: canonical.sprint.number ?? extractSprintNumber(canonical.sprint.name),
+      name: canonical.sprint.name ?? 'Unknown Sprint',
+      done: pts.completed,
+      remaining: pts.backlog,
+      inProgress: pts.in_progress,
+      endDate: canonical.sprint.end_date ?? '',
     },
     metrics: {
-      completed: { points: archivedDonePoints, stories: archivedDoneStories, epics: completedEpics.length },
-      current: { done, inProgress, remaining, totalPoints: done + inProgress + remaining, storiesDone, storiesInProgress, storiesRemaining },
-      future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length, epics: futureEpicCount },
-      velocity: done + archivedDonePoints,
-    },
-    ...(!context.isDefault ? {
-      _registry: {
-        name: context.name,
-        type: context.type,
-        is_default: false,
+      completed: { points: pts.completed, stories: counts.done, epics: 0 },
+      current: {
+        done: pts.completed,
+        inProgress: pts.in_progress,
+        remaining: pts.backlog,
+        totalPoints: pts.total,
+        storiesDone: counts.done,
+        storiesInProgress: counts.in_progress,
+        storiesRemaining: counts.backlog,
       },
-    } : {}),
+      future: { totalPoints: 0, initiatives: 0, epics: 0 },
+      velocity: pts.completed,
+    },
   };
 }
 
@@ -639,7 +320,6 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
  * Returns true if successful, throws on error
  */
 export async function archiveEpic(projectDir: string, epicId: string): Promise<boolean> {
-  // TODO: Implement by calling archive_epic.py script
   console.log(`[sprint-data] Archive epic ${epicId} requested (not yet implemented)`);
   throw new Error('Archive epic not yet implemented');
 }
@@ -649,7 +329,6 @@ export async function archiveEpic(projectDir: string, epicId: string): Promise<b
  * Returns true if successful, throws on error
  */
 export async function promoteEpic(projectDir: string, epicId: string): Promise<boolean> {
-  // TODO: Implement by calling promote-epic.sh script
   console.log(`[sprint-data] Promote epic ${epicId} requested (not yet implemented)`);
   throw new Error('Promote epic not yet implemented');
 }
