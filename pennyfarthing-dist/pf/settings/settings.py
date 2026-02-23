@@ -11,7 +11,7 @@ import yaml
 from pf.common.config import get_project_root, load_pennyfarthing_config
 
 # Top-level keys to show in `pf settings show` (skip layout/panel blobs)
-SHOW_KEYS = ("theme", "bell_mode", "relay_mode", "permission_mode", "workflow", "jira", "display", "split", "last_panel")
+SHOW_KEYS = ("theme", "bell_mode", "relay_mode", "permission_mode", "portrait_size", "workflow", "jira", "display", "split", "last_panel")
 
 # Default values for all known settings
 DEFAULTS: dict[str, Any] = {
@@ -30,6 +30,7 @@ DEFAULTS: dict[str, Any] = {
     "display": {
         "colorPreset": "catppuccin",
     },
+    "portrait_size": "auto",
     "last_panel": "sprint",
 }
 

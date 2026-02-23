@@ -119,6 +119,13 @@ def _build_panel_tabs() -> list[Tab]:
     return tabs
 
 
+# Portrait size configuration: setting → (image_preference, width, height, row_height)
+PORTRAIT_SIZE_CONFIG: dict[str, tuple[str, int, int, int]] = {
+    "large": ("large", 20, 10, 10),
+    "medium": ("medium", 10, 5, 5),
+    "small": ("small", 6, 3, 3),
+}
+
 PORTRAIT_SKELETON = """\
 [dim]┌────────┐
 │░░░░░░░░│
@@ -151,6 +158,15 @@ class AgentHeader(Static):
         self._header_text: str = ""
         self._current_portrait: Path | None = None
 
+        # Read portrait_size setting from config
+        from pf.common.config import load_pennyfarthing_config
+
+        try:
+            config = load_pennyfarthing_config()
+        except Exception:
+            config = {}
+        self._portrait_size: str = config.get("portrait_size", "auto")
+
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
         if data.get("type") == "streaming":
@@ -162,8 +178,32 @@ class AgentHeader(Static):
         self._is_streaming = bool(data.get("isStreaming", False))
         self._render_header()
 
+    def _resolve_effective_size(self) -> str:
+        """Resolve the effective portrait size.
+
+        For ``auto``, maps terminal row count to a size bucket.
+        For explicit values, returns as-is.
+        """
+        setting = self._portrait_size
+        if setting != "auto":
+            return setting
+        try:
+            rows = os.get_terminal_size().lines
+        except OSError:
+            return "medium"
+        if rows >= 40:
+            return "large"
+        if rows >= 25:
+            return "medium"
+        if rows >= 15:
+            return "small"
+        return "off"
+
     def _resolve_portrait(self, data: dict[str, Any]) -> Path | None:
         """Get portrait path from persona data or resolve locally."""
+        effective = self._resolve_effective_size()
+        if effective == "off":
+            return None
         portrait_path = data.get("portraitPath")
         if portrait_path:
             p = Path(portrait_path)
@@ -174,7 +214,10 @@ class AgentHeader(Static):
         if theme and role:
             from pf.bikerack import portrait_resolver
 
-            return portrait_resolver.resolve_portrait_path(theme, role)
+            preferred = PORTRAIT_SIZE_CONFIG.get(effective, (effective,))[0]
+            return portrait_resolver.resolve_portrait_path(
+                theme, role, preferred_size=preferred
+            )
         return None
 
     def _render_header(self) -> None:
@@ -285,6 +328,15 @@ class AgentHeader(Static):
                 except Exception:
                     pass
                 await row.mount(img, before=0)
+
+                # Apply dynamic size from portrait_size config
+                effective = self._resolve_effective_size()
+                size_cfg = PORTRAIT_SIZE_CONFIG.get(effective)
+                if size_cfg:
+                    _, w, h, rh = size_cfg
+                    img.styles.width = w
+                    img.styles.height = h
+                    row.styles.height = rh
             except (ImportError, Exception):
                 # Image mount failed — reset cache so next update retries
                 self._current_portrait = None
@@ -359,7 +411,7 @@ class BikeRackApp(App):
     CSS = """
     #agent-header {
         height: auto;
-        max-height: 7;
+        max-height: 12;
         padding: 0 1;
         border-bottom: solid $accent;
     }

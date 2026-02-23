@@ -51,11 +51,27 @@ def _is_lfs_pointer(path: Path) -> bool:
         return False
 
 
-def _find_portrait(portraits_theme_dir: Path, slug: str) -> Path | None:
-    """Find a portrait file matching the slug in a theme's portrait directory."""
+def _find_portrait(
+    portraits_theme_dir: Path, slug: str, preferred_size: str | None = None
+) -> Path | None:
+    """Find a portrait file matching the slug in a theme's portrait directory.
+
+    Args:
+        portraits_theme_dir: Path to the theme's portrait directory.
+        slug: Portrait slug (shortName-OCEAN).
+        preferred_size: Preferred size bucket. ``"large"`` or ``"medium"``
+            searches large first; ``"small"`` searches small first.
+            ``None`` keeps the default order (medium first).
+    """
     if not portraits_theme_dir.is_dir():
         return None
-    for size in ["medium", "large", "small", "original"]:
+    if preferred_size == "small":
+        size_order = ["small", "medium", "large", "original"]
+    elif preferred_size in ("large", "medium"):
+        size_order = ["large", "medium", "small", "original"]
+    else:
+        size_order = ["medium", "large", "small", "original"]
+    for size in size_order:
         size_dir = portraits_theme_dir / size
         if size_dir.is_dir():
             for f in size_dir.iterdir():
@@ -71,7 +87,10 @@ def _find_portrait(portraits_theme_dir: Path, slug: str) -> Path | None:
 
 
 def resolve_portrait_path(
-    theme: str, agent: str, project_root: Path | None = None
+    theme: str,
+    agent: str,
+    project_root: Path | None = None,
+    preferred_size: str | None = None,
 ) -> Path | None:
     """Resolve the full path to a portrait image.
 
@@ -109,7 +128,7 @@ def resolve_portrait_path(
     # Search portrait directories (sibling of each themes dir)
     for themes_dir in theme_dirs:
         portraits_dir = themes_dir.parent / "portraits" / theme
-        result = _find_portrait(portraits_dir, slug)
+        result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
         if result:
             return result
 
@@ -130,7 +149,7 @@ def resolve_portrait_path(
                 break
 
     for portraits_dir in cyclist_portrait_dirs:
-        result = _find_portrait(portraits_dir, slug)
+        result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
         if result:
             return result
 
