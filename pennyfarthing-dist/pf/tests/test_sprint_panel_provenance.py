@@ -173,6 +173,7 @@ class TestProvenanceIndicator:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -203,6 +204,7 @@ class TestProvenanceIndicator:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -241,6 +243,7 @@ class TestNoProvenanceForDefault:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -273,6 +276,7 @@ class TestNoProvenanceForDefault:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -310,6 +314,7 @@ class TestRichMarkupEscaping:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -351,6 +356,7 @@ class TestRichMarkupEscaping:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -386,6 +392,7 @@ class TestRichMarkupEscaping:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -420,6 +427,7 @@ class TestProvenanceSwitching:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
@@ -452,6 +460,7 @@ class TestProvenanceSwitching:
         with patch.object(panel, "query_one") as mock_query:
             mock_tree = MagicMock()
             mock_tree.root.children = []
+            mock_tree.size.width = 80
             mock_header = MagicMock()
 
             def _query_side_effect(selector: str, *args: Any) -> Any:
