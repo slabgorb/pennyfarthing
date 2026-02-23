@@ -1067,6 +1067,14 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
 
     session_file.write_text(content)
 
+    # Archive completed session
+    if new_status == "completed":
+        import shutil
+        archive_dir = project_root / "sprint" / "archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        archived_path = archive_dir / session_file.name
+        shutil.move(str(session_file), str(archived_path))
+
     # Output
     if new_status == "completed":
         click.echo(f"# Workflow Complete: {workflow_name}")
@@ -1076,7 +1084,7 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
         click.echo(f"**Final Progress:** {completion_pct}%")
         click.echo(f"**Steps Completed:** {new_steps_completed}")
         click.echo("")
-        click.echo(f"Session updated: {session_file}")
+        click.echo(f"Session archived: {archived_path}")
     else:
         click.echo(f"# Step {completing_step} Complete")
         click.echo("")
