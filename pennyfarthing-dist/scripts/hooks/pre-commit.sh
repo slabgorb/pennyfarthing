@@ -155,10 +155,12 @@ if [[ -n "$SPRINT_YAML_FILES" ]]; then
     else
         echo "Running sprint YAML validation..."
 
-        # Set PYTHONPATH to include pennyfarthing source
+        # Set PYTHONPATH to include pennyfarthing source (src/ layout)
         PYTHONPATH_ORIG="${PYTHONPATH:-}"
-        if [[ -d "$PROJECT_ROOT/pennyfarthing" ]]; then
-            export PYTHONPATH="$PROJECT_ROOT/pennyfarthing/pennyfarthing-dist${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
+        if [[ -d "$PROJECT_ROOT/pennyfarthing/pennyfarthing-dist/src" ]]; then
+            export PYTHONPATH="$PROJECT_ROOT/pennyfarthing/pennyfarthing-dist/src${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
+        elif [[ -d "$PROJECT_ROOT/.pennyfarthing/src" ]]; then
+            export PYTHONPATH="$PROJECT_ROOT/.pennyfarthing/src${PYTHONPATH_ORIG:+:$PYTHONPATH_ORIG}"
         fi
 
         VALIDATION_FAILED=0

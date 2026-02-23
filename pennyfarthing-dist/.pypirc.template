@@ -1,0 +1,15 @@
+# CloudSmith PyPI configuration template
+# Copy to ~/.pypirc and fill in your API key
+#
+# Usage:
+#   tox -e release    (uses this config via twine)
+#   twine upload --config-file .pypirc -r cloudsmith dist/*
+
+[distutils]
+index-servers =
+    cloudsmith
+
+[cloudsmith]
+repository = https://upload.cloudsmith.io/1898-and-co/pennyfarthing-scripts/
+username = __token__
+password = <YOUR_CLOUDSMITH_API_KEY>

@@ -1,6 +1,6 @@
 [project]
 name = "pennyfarthing-scripts"
-version = "8.1.0"
+dynamic = ["version"]
 requires-python = ">=3.11"
 dependencies = ["pyyaml>=6.0", "ruamel.yaml>=0.18", "httpx>=0.28", "click>=8.0", "pydriller>=2.6"]
 
@@ -15,4 +15,8 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["pf*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pf.__version__"}

@@ -31,7 +31,8 @@ from pf.handoff.resolve_gate import resolve_gate
 # Paths
 # ---------------------------------------------------------------------------
 
-DIST_DIR = Path(__file__).resolve().parents[2]
+# src/pf/tests -> src/pf -> src -> pennyfarthing-dist
+DIST_DIR = Path(__file__).resolve().parents[3]
 AGENTS_DIR = DIST_DIR / "agents"
 WORKFLOWS_DIR = DIST_DIR / "workflows"
 GATES_DIR = DIST_DIR / "gates"

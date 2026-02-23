@@ -96,13 +96,13 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
     if npm.is_dir():
         return npm
 
-    # 3. Relative to this file (when inside pennyfarthing-dist/pf/)
+    # 3. Relative to this file (when inside pennyfarthing-dist/src/pf/)
     # Only use this fallback when no explicit project_root was given,
     # since an explicit root scopes the search to that directory.
     if project_root is None:
         this_file = Path(__file__).resolve()
-        # __file__ is pennyfarthing-dist/pf/common/config.py → up 3 levels
-        candidate = this_file.parent.parent.parent
+        # __file__ is pennyfarthing-dist/src/pf/common/config.py → up 4 levels
+        candidate = this_file.parent.parent.parent.parent
         if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
             return candidate
 

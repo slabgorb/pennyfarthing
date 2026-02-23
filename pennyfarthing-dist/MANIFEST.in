@@ -1,0 +1,32 @@
+# Include source package
+graft src
+
+# Include project files
+include pyproject.toml
+include README.md
+include LICENSE
+
+# Exclude non-package directories (agent definitions, templates, etc.)
+prune agents
+prune templates
+prune guides
+prune personas
+prune workflows
+prune scripts
+prune skills
+prune commands
+prune output-styles
+prune gates
+prune packages
+prune tests
+prune docs
+
+# Exclude test files from package
+prune src/pf/tests
+
+# Exclude build artifacts and caches
+global-exclude *.py[cod]
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.pem
+global-exclude *.egg-info
