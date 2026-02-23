@@ -60,6 +60,15 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/project/hooks/auto-load-sm.sh"
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/core/pf.sh prime"
+          }
+        ]
       }
     ],
     "Stop": [

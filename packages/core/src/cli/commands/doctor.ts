@@ -713,6 +713,7 @@ export function checkSettingsHooks(projectRoot: string): CheckResult[] {
   results.push(checkSessionStartHooks(projectRoot, installationType));
   results.push(checkOtelAutoStart(projectRoot, installationType));
   results.push(checkAutoLoadSmHook(projectRoot));
+  results.push(checkCompactPrimeHook(projectRoot));
   results.push(checkStopHook(projectRoot, installationType));
   results.push(checkPostToolUseHook(projectRoot, installationType));
   results.push(checkBenchmarkPermissions(projectRoot));
@@ -788,6 +789,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     // Check auto-load-sm hook is configured (auto-invokes /sm on new sessions)
     const autoLoadSmCheck = checkAutoLoadSmHook(projectRoot);
     results.push(autoLoadSmCheck);
+
+    // Check compact/prime hook is configured (re-primes context after compression)
+    const compactPrimeCheck = checkCompactPrimeHook(projectRoot);
+    results.push(compactPrimeCheck);
 
     // Check Stop hook is configured (question reflector enforcement)
     const stopHookCheck = checkStopHook(projectRoot, installationType);
@@ -1207,6 +1212,103 @@ cat <<'HOOKEOF'
 HOOKEOF
 `, { mode: 0o755 });
   }
+}
+
+/**
+ * Check that compact/prime hook is configured in SessionStart hooks.
+ * This re-primes agent context after context window compression.
+ */
+function checkCompactPrimeHook(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    if (!settings.hooks?.SessionStart) {
+      return {
+        name: 'settings/compact-prime',
+        status: 'warn',
+        detail: 'Missing SessionStart hooks - compact/prime not configured',
+        fix: () => {
+          addCompactPrimeHook(projectRoot);
+        }
+      };
+    }
+
+    const hasCompactPrime = settings.hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { matcher?: string; hooks?: Array<{ command?: string }> };
+        return hookEntry.matcher === 'compact' && hookEntry.hooks?.some(h =>
+          h.command?.includes('pf.sh prime')
+        );
+      }
+      return false;
+    });
+
+    if (!hasCompactPrime) {
+      return {
+        name: 'settings/compact-prime',
+        status: 'warn',
+        detail: 'compact/prime not configured - context will not re-prime after compression',
+        fix: () => {
+          addCompactPrimeHook(projectRoot);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/compact-prime',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/compact-prime',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add compact/prime hook to SessionStart in settings.local.json
+ */
+function addCompactPrimeHook(projectRoot: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  const requiredHook = {
+    matcher: 'compact',
+    hooks: [
+      {
+        type: 'command',
+        command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh prime'
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.SessionStart) {
+    hooks.SessionStart = [requiredHook];
+  } else if (Array.isArray(hooks.SessionStart)) {
+    hooks.SessionStart = [...hooks.SessionStart, requiredHook];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 /**

@@ -273,6 +273,24 @@ export async function mergeSettingsLocalJson(
         logger.info('Added missing auto-load-sm hook');
       }
     }
+
+    // Check for compact/prime hook (re-primes context after compression)
+    const hasCompactPrime = (hooks.SessionStart as unknown[]).some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as HookEntry;
+        return hookEntry.matcher === 'compact' && hookEntry.hooks?.some(h => h.command?.includes('pf.sh prime'));
+      }
+      return false;
+    });
+
+    if (!hasCompactPrime && templateContent.hooks?.SessionStart) {
+      const compactPrimeEntry = findHookEntry(templateContent.hooks.SessionStart, 'pf.sh prime');
+      if (compactPrimeEntry) {
+        hooks.SessionStart = [...(hooks.SessionStart as unknown[]), compactPrimeEntry];
+        modified = true;
+        logger.info('Added missing compact/prime hook');
+      }
+    }
   }
 
   // Merge SessionEnd hooks if missing
