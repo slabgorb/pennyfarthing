@@ -1,6 +1,6 @@
 [project]
 name = "pennyfarthing-scripts"
-version = "8.1.0"
+version = "11.5.0-alpha.0"
 description = "Python utilities for Pennyfarthing agent orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,7 +45,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["pennyfarthing-dist"]
+where = ["pennyfarthing-dist/src"]
 include = ["pf*"]
 
 [tool.ruff]
@@ -57,7 +57,7 @@ select = ["E", "F", "W", "I", "B", "C4", "UP"]
 ignore = ["E501"]
 
 [tool.pytest.ini_options]
-testpaths = ["pennyfarthing-dist/pf/tests"]
+testpaths = ["pennyfarthing-dist/src/pf/tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
