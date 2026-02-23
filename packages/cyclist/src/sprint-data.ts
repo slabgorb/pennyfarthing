@@ -12,7 +12,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { getStoryInfo } from './story-parser.js';
 
@@ -83,6 +83,11 @@ export interface SprintData {
     endDate: string;
   };
   metrics: SprintMetrics;
+  _registry?: {
+    name: string;
+    type: string;
+    is_default: boolean;
+  };
 }
 
 // =============================================================================
@@ -294,6 +299,95 @@ function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprin
 }
 
 // =============================================================================
+// Sprint Context Resolution (125-3)
+// =============================================================================
+
+interface ResolvedSprintContext {
+  sprintFile: string;
+  sprintDir: string;
+  contextRoot: string;
+  isDefault: boolean;
+  name: string;
+  type: string;
+}
+
+/**
+ * Resolve sprint context: which sprint file to read and from where.
+ * Tries Python SprintContext via subprocess, falls back to reading config
+ * files directly, falls back to default current-sprint.yaml.
+ */
+function resolveSprintContext(projectDir: string): ResolvedSprintContext {
+  const sprintDir = join(projectDir, 'sprint');
+  const defaultResult: ResolvedSprintContext = {
+    sprintFile: join(sprintDir, 'current-sprint.yaml'),
+    sprintDir,
+    contextRoot: projectDir,
+    isDefault: true,
+    name: '',
+    type: 'orchestrator',
+  };
+
+  // Try Python SprintContext via subprocess
+  try {
+    const pfScript = join(projectDir, '.pennyfarthing', 'scripts', 'core', 'pf.sh');
+    const raw = execSync(
+      `"${pfScript}" sprint resolve-context --json`,
+      { cwd: projectDir, encoding: 'utf-8', timeout: 5000 },
+    );
+    const ctx = JSON.parse(raw.trim());
+    if (ctx.sprint_file) {
+      return {
+        sprintFile: ctx.sprint_file,
+        sprintDir: dirname(ctx.sprint_file),
+        contextRoot: ctx.context_root ?? projectDir,
+        isDefault: ctx.is_default ?? true,
+        name: ctx.name ?? '',
+        type: ctx.type ?? 'orchestrator',
+      };
+    }
+  } catch {
+    // Fall through to config file approach
+  }
+
+  // Shared logic: read config files directly
+  try {
+    const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+    if (existsSync(configPath)) {
+      const config = parseYaml(readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
+      const sprintConfig = config?.sprint as Record<string, unknown> | undefined;
+      const activeName = sprintConfig?.active as string | undefined;
+
+      if (activeName) {
+        const registryPath = join(sprintDir, 'sprints.yaml');
+        if (existsSync(registryPath)) {
+          const registry = parseYaml(readFileSync(registryPath, 'utf-8')) as Record<string, unknown>;
+          const sprints = registry?.sprints as Record<string, Record<string, string>> | undefined;
+          const entry = sprints?.[activeName];
+
+          if (entry?.file) {
+            const resolvedFile = join(sprintDir, entry.file);
+            if (existsSync(resolvedFile)) {
+              return {
+                sprintFile: resolvedFile,
+                sprintDir,
+                contextRoot: entry.context_root ?? projectDir,
+                isDefault: false,
+                name: activeName,
+                type: entry.type ?? 'project',
+              };
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Fall through to default
+  }
+
+  return defaultResult;
+}
+
+// =============================================================================
 // Main Data Aggregation
 // =============================================================================
 
@@ -301,8 +395,9 @@ function mergeInitiativeShards(initiatives: (FutureInitiative | string)[], sprin
  * Get aggregated sprint data for EnhancedSprintPanel
  */
 export function getSprintData(projectDir: string, _userEmail?: string | null): SprintData {
-  const currentSprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
-  const futurePath = join(projectDir, 'sprint', 'future.yaml');
+  const context = resolveSprintContext(projectDir);
+  const currentSprintPath = context.sprintFile;
+  const futurePath = join(context.contextRoot, 'sprint', 'future.yaml');
 
   // Parse current sprint
   let currentSprint: CurrentSprintYaml = {};
@@ -336,7 +431,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   const storyInfo = getStoryInfo(projectDir);
 
   // Merge sharded epics (string refs → full objects) then transform
-  const sprintDir = join(projectDir, 'sprint');
+  const sprintDir = context.sprintDir;
   const resolvedEpics = mergeEpicShards(currentSprint.epics ?? [], sprintDir);
   const epics: SprintEpic[] = resolvedEpics.map((e) => transformEpic(e, projectDir));
 
@@ -529,6 +624,13 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       future: { totalPoints: futureTotalPoints, initiatives: futureEpics.length, epics: futureEpicCount },
       velocity: done + archivedDonePoints,
     },
+    ...(!context.isDefault ? {
+      _registry: {
+        name: context.name,
+        type: context.type,
+        is_default: false,
+      },
+    } : {}),
   };
 }
 
