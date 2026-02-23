@@ -3,6 +3,9 @@
 Story 103-17: Port of the React DebugPanel. Subscribes to /ws/context
 and /ws/token-stats, renders context usage (tokens, percent, tier) and
 token consumption stats (input, output, cache, cost).
+
+Story 121-2: Interactive code quality tool triggers (hotspots, dead code,
+health score) with keybinding-driven view switching.
 """
 
 from __future__ import annotations
@@ -70,6 +73,11 @@ class DebugPanel(BasePanel):
         self._context_data: dict[str, Any] | None = None
         self._token_stats: dict[str, Any] | None = None
         self._sparkline_history: deque[int] = deque(maxlen=20)
+        # Story 121-2: View state for code quality tool triggers
+        self.current_view: str = "normal"
+        self.last_results: Any = None
+        self._loading_message: str = ""
+        self._error_message: str = ""
 
     def on_mount(self) -> None:
         """Subscribe to both context and token-stats channels."""
@@ -107,11 +115,121 @@ class DebugPanel(BasePanel):
         except Exception:
             pass
 
+    # -- Story 121-2: View state management ----------------------------------
+
+    def show_loading(self, message: str) -> None:
+        """Display loading state while analysis runs."""
+        self.loading = True
+        self._loading_message = message
+        self._rerender()
+
+    def show_normal_view(self) -> None:
+        """Return to normal token/context display."""
+        self.current_view = "normal"
+        self.loading = False
+        self._loading_message = ""
+        self._error_message = ""
+        self._rerender()
+
+    def show_error(self, message: str) -> None:
+        """Display an error message with retry option."""
+        self.loading = False
+        self._error_message = message
+        self.current_view = "error"
+        self._rerender()
+
+    def display_hotspots_results(self, result: Any) -> None:
+        """Show hotspots analysis results as a table."""
+        self.current_view = "hotspots"
+        self.last_results = result
+        self.loading = False
+        self._rerender()
+
+    def display_dead_code_results(self, stale_result: Any, exports_result: Any = None) -> None:
+        """Show dead code analysis results (stale files + unused exports)."""
+        self.current_view = "deadcode"
+        self.last_results = (stale_result, exports_result)
+        self.loading = False
+        self._rerender()
+
+    def display_health_score_results(self, result: Any) -> None:
+        """Show health score analysis results with dimension breakdown."""
+        self.current_view = "healthscore"
+        self.last_results = result
+        self.loading = False
+        self._rerender()
+
+    async def run_hotspots_analysis(self) -> None:
+        """Trigger hotspots analysis in a background worker."""
+        from pathlib import Path
+
+        from pf.hotspots.analyze import analyze_all_repos
+
+        self.show_loading("Analyzing hotspots...")
+        try:
+            project_root = Path.cwd()
+            result = await analyze_all_repos(project_root)
+            self.display_hotspots_results(result)
+        except Exception as e:
+            self.show_error(f"Hotspots failed: {e}")
+
+    async def run_dead_code_analysis(self) -> None:
+        """Trigger dead code analysis in a background worker."""
+        from pathlib import Path
+
+        from pf.deadcode.analyze import analyze_repo, find_unused_exports
+
+        self.show_loading("Analyzing dead code...")
+        try:
+            project_root = Path.cwd()
+            stale_result = await analyze_repo("project", project_root)
+            exports_result = await find_unused_exports(project_root)
+            self.display_dead_code_results(stale_result, exports_result)
+        except Exception as e:
+            self.show_error(f"Dead code failed: {e}")
+
+    async def run_health_score_analysis(self) -> None:
+        """Trigger health score analysis in a background worker."""
+        from pathlib import Path
+
+        from pf.healthscore.analyze import analyze_healthscore
+
+        self.show_loading("Analyzing health score...")
+        try:
+            project_root = Path.cwd()
+            result = await analyze_healthscore(project_root)
+            self.display_health_score_results(result)
+        except Exception as e:
+            self.show_error(f"Health score failed: {e}")
+
+    # -- Render dispatch -------------------------------------------------------
+
     def render_panel(self, payload: dict[str, Any]) -> Any:
-        """Render combined context usage and token stats."""
+        """Render panel content based on current view state."""
+        if self.loading:
+            return Text(self._loading_message or "Analyzing...", style="bold yellow")
+
+        if self.current_view == "error":
+            return _render_error(self._error_message)
+
+        if self.current_view == "hotspots":
+            return _render_hotspots(self.last_results)
+
+        if self.current_view == "deadcode":
+            stale, exports = self.last_results if self.last_results else (None, None)
+            return _render_dead_code(stale, exports)
+
+        if self.current_view == "healthscore":
+            return _render_health_score(self.last_results)
+
+        # Default: normal context/token view
+        return self._render_normal(payload)
+
+
+    def _render_normal(self, payload: dict[str, Any]) -> Any:
+        """Render the normal context usage and token stats view."""
         parts: list[Any] = []
 
-        # --- Context Usage Section ---
         ctx = self._context_data
         if ctx:
             parts.append(_render_context(ctx))
@@ -120,16 +238,101 @@ class DebugPanel(BasePanel):
         elif not self._token_stats:
             return Text("No context data", style="dim italic")
 
-        # --- Token Stats Section ---
         if self._token_stats:
             if parts:
-                parts.append(Text(""))  # spacer
+                parts.append(Text(""))
             parts.append(_render_token_stats(self._token_stats))
 
         if not parts:
             return Text("No context data", style="dim italic")
 
         return Group(*parts)
+
+
+def _render_error(message: str) -> Any:
+    """Render an error message with retry hint."""
+    parts: list[Any] = []
+    parts.append(Text(f"Error: {message}", style="bold red"))
+    parts.append(Text("Press escape to return", style="dim"))
+    return Group(*parts)
+
+
+def _render_hotspots(result: Any) -> Any:
+    """Render hotspots analysis results as a Rich Table."""
+    if result is None:
+        return Text("No hotspots data", style="dim italic")
+
+    table = Table(title="Hotspots Analysis", show_edge=False, pad_edge=False)
+    table.add_column("File", style="cyan")
+    table.add_column("Churn", justify="right")
+    table.add_column("Changes", justify="right")
+    table.add_column("Score", justify="right")
+
+    all_hotspots = []
+    for repo_result in result.repo_results:
+        for h in repo_result.file_hotspots:
+            all_hotspots.append(h)
+
+    all_hotspots.sort(key=lambda h: h.churn, reverse=True)
+
+    for h in all_hotspots:
+        table.add_row(h.path, str(h.churn), str(h.change_count), f"{h.hotspot_score:.1f}")
+
+    return table
+
+
+def _render_dead_code(stale_result: Any, exports_result: Any) -> Any:
+    """Render dead code analysis with stale files and unused exports sections."""
+    parts: list[Any] = []
+
+    if stale_result and stale_result.stale_files:
+        stale_table = Table(title="Stale Files", show_edge=False, pad_edge=False)
+        stale_table.add_column("File", style="cyan")
+        stale_table.add_column("Days Stale", justify="right")
+        for f in stale_result.stale_files:
+            stale_table.add_row(f.path, str(f.days_since_last_commit))
+        parts.append(stale_table)
+
+    if exports_result and exports_result.unused_exports:
+        if parts:
+            parts.append(Text(""))
+        exports_table = Table(title="Unused Exports", show_edge=False, pad_edge=False)
+        exports_table.add_column("Symbol", style="cyan")
+        exports_table.add_column("File")
+        exports_table.add_column("Line", justify="right")
+        for e in exports_result.unused_exports:
+            exports_table.add_row(e.symbol, e.file, str(e.line))
+        parts.append(exports_table)
+
+    if not parts:
+        return Text("No dead code found", style="dim italic")
+
+    return Group(*parts)
+
+
+def _render_health_score(result: Any) -> Any:
+    """Render health score with composite score and per-dimension breakdown."""
+    if result is None:
+        return Text("No health score data", style="dim italic")
+
+    parts: list[Any] = []
+
+    composite = Text()
+    composite.append("Health Score: ", style="bold")
+    composite.append(f"{result.composite_score:.1f}", style="bold green")
+    parts.append(composite)
+
+    if result.dimensions:
+        dim_table = Table(title="Dimensions", show_edge=False, pad_edge=False)
+        dim_table.add_column("Dimension", style="cyan")
+        dim_table.add_column("Score", justify="right")
+        dim_table.add_column("Weight", justify="right", style="dim")
+        for d in result.dimensions:
+            score_str = f"{d.score:.0f}" if d.score is not None else "—"
+            dim_table.add_row(d.name, score_str, f"{d.weight:.0%}")
+        parts.append(dim_table)
+
+    return Group(*parts)
 
 
 def _render_context(ctx: dict[str, Any]) -> Any:

@@ -616,7 +616,8 @@ def _render_detail_block(span: dict[str, Any]) -> Any:
         parts.append(f"Duration: {_format_duration(dur)}")
 
     detail_text = "\n".join(parts) if parts else "(no details)"
-    return Text(f"  \u2502 {detail_text.replace(chr(10), chr(10) + '  \u2502 ')}", style="dim italic")
+    sep = chr(10) + "  \u2502 "
+    return Text(f"  \u2502 {detail_text.replace(chr(10), sep)}", style="dim italic")
 
 
 def _format_timestamp(ts: Any) -> str:

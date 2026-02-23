@@ -425,6 +425,11 @@ class BikeRackApp(App):
         Binding("k", "prev_epic", show=False),
         Binding("e", "toggle_epic", show=False),
         Binding("c", "copy_selected_id", show=False),
+        # Story 121-2: Code quality tool triggers (debug panel)
+        Binding("h", "debug_hotspots", "Hotspots", show=False),
+        Binding("d", "debug_deadcode", "Dead Code", show=False),
+        Binding("s", "debug_healthscore", "Health Score", show=False),
+        Binding("escape", "debug_back", "Back", show=False),
     ]
 
     def _get_dom_base(self):
@@ -641,6 +646,50 @@ class BikeRackApp(App):
                 panel.copy_selected_id()
             except Exception:
                 pass
+
+    # ------------------------------------------------------------------
+    # Story 121-2: Code quality tool triggers (debug panel)
+    # ------------------------------------------------------------------
+
+    def action_debug_hotspots(self) -> None:
+        """Trigger hotspots analysis from debug panel."""
+        if self._focused_panel != "debug":
+            return
+        try:
+            debug_panel = self.query_one("#panel-debug", DebugPanel)
+            self.run_worker(debug_panel.run_hotspots_analysis(), exclusive=True)
+        except Exception:
+            pass
+
+    def action_debug_deadcode(self) -> None:
+        """Trigger dead code analysis from debug panel."""
+        if self._focused_panel != "debug":
+            return
+        try:
+            debug_panel = self.query_one("#panel-debug", DebugPanel)
+            self.run_worker(debug_panel.run_dead_code_analysis(), exclusive=True)
+        except Exception:
+            pass
+
+    def action_debug_healthscore(self) -> None:
+        """Trigger health score analysis from debug panel."""
+        if self._focused_panel != "debug":
+            return
+        try:
+            debug_panel = self.query_one("#panel-debug", DebugPanel)
+            self.run_worker(debug_panel.run_health_score_analysis(), exclusive=True)
+        except Exception:
+            pass
+
+    def action_debug_back(self) -> None:
+        """Return to normal debug view from tool results."""
+        if self._focused_panel != "debug":
+            return
+        try:
+            debug_panel = self.query_one("#panel-debug", DebugPanel)
+            debug_panel.show_normal_view()
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Split-pane layout (Story 110-4)

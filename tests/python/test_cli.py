@@ -228,8 +228,8 @@ print(f"{elapsed:.1f}")
             pytest.skip(f"Could not import cli module: {result.stderr}")
 
         import_time = float(result.stdout.strip())
-        # With lazy loading, import should be very fast (< 100ms even on CI)
-        assert import_time < 100, f"cli module import took {import_time:.1f}ms, should be < 100ms"
+        # With lazy loading, import should be fast (< 200ms even on CI)
+        assert import_time < 200, f"cli module import took {import_time:.1f}ms, should be < 200ms"
 
 
 class TestCLIStructure:

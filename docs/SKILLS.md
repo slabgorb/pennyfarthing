@@ -196,7 +196,7 @@ Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest i
 **Anti-patterns:**
 - Don't use for non-visual targets (use standard tandem-backseat for code review)
 
-**Related:** [pf-code-review](#pf-code-review), [pf-party-mode](#pf-party-mode)
+**Related:** [pf-code-review](#pf-code-review)
 
 ## Documentation
 

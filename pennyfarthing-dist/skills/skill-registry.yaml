@@ -403,7 +403,7 @@ skills:
         invocation: /pf-ux-tandem
     anti_patterns:
       - Don't use for non-visual targets (use standard tandem-backseat for code review)
-    related_skills: [pf-code-review, pf-party-mode]
+    related_skills: [pf-code-review]
     keywords: [ux, design, review, tandem, tmux, visual, usability, team]
 
   pf-workflow:
