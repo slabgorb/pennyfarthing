@@ -29,14 +29,19 @@ if [[ "$REAL_DIR" == *"/pennyfarthing-dist/scripts/core" ]]; then
 elif [[ "$REAL_DIR" == *"/node_modules/"* ]]; then
     # In node_modules, walk up to find project root
     PACKAGE_ROOT="${REAL_DIR}"
-    while [[ "$PACKAGE_ROOT" != "/" ]] && [[ ! -d "$PACKAGE_ROOT/pf" ]]; do
+    while [[ "$PACKAGE_ROOT" != "/" ]] && [[ ! -d "$PACKAGE_ROOT/src/pf" ]]; do
         PACKAGE_ROOT="$(dirname "$PACKAGE_ROOT")"
     done
 fi
 
-# Try to find pf
+# Try to find pf (src/ layout)
 PYTHON_MODULE=""
-if [[ -f "$PACKAGE_ROOT/pf/context.py" ]]; then
+if [[ -f "$PACKAGE_ROOT/src/pf/context.py" ]]; then
+    PYTHON_MODULE="$PACKAGE_ROOT/src/pf/context.py"
+elif [[ -f "${PROJECT_ROOT:-}/src/pf/context.py" ]]; then
+    PYTHON_MODULE="${PROJECT_ROOT}/src/pf/context.py"
+# Legacy fallback
+elif [[ -f "$PACKAGE_ROOT/pf/context.py" ]]; then
     PYTHON_MODULE="$PACKAGE_ROOT/pf/context.py"
 elif [[ -f "${PROJECT_ROOT:-}/pf/context.py" ]]; then
     PYTHON_MODULE="${PROJECT_ROOT}/pf/context.py"

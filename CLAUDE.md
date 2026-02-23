@@ -47,7 +47,7 @@ pnpm run lint      # ESLint
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-| `pennyfarthing-dist/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
+| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
 | `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
 | `packages/cyclist/` | Visual terminal (React 19, Tailwind v4, dockview) — thin wrapper over core |
 | `packages/electron/` | Electron shell (legacy, minimal use) |
@@ -61,7 +61,7 @@ pnpm run lint      # ESLint
 - **GUI** — Cyclist web UI with full dockview panel layout in a browser
 - **IDE** — VS Code / Cursor sidebar panels via WheelHub API
 
-**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash/JS) and `pennyfarthing-dist/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
+**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash/JS) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
 </info>
 
 <info>

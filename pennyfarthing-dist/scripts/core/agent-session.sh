@@ -8,12 +8,12 @@
 #
 # Session files stored in .session/agents/<session-id> for multi-session support
 
-# Find package root (where pf/ lives) from script location
+# Find package root from script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
 PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
-# Set PYTHONPATH so Python can find pf package
-export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
+# Set PYTHONPATH so Python can find pf package (src/ layout)
+export PYTHONPATH="${PACKAGE_ROOT}/src:${PYTHONPATH:-}"
 
 # Agents directory for multi-session support
 AGENTS_DIR="$PROJECT_ROOT/.session/agents"
