@@ -320,7 +320,6 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
  * Returns true if successful, throws on error
  */
 export async function archiveEpic(projectDir: string, epicId: string): Promise<boolean> {
-  console.log(`[sprint-data] Archive epic ${epicId} requested (not yet implemented)`);
   throw new Error('Archive epic not yet implemented');
 }
 
@@ -329,6 +328,5 @@ export async function archiveEpic(projectDir: string, epicId: string): Promise<b
  * Returns true if successful, throws on error
  */
 export async function promoteEpic(projectDir: string, epicId: string): Promise<boolean> {
-  console.log(`[sprint-data] Promote epic ${epicId} requested (not yet implemented)`);
   throw new Error('Promote epic not yet implemented');
 }
