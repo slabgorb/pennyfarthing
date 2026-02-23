@@ -124,3 +124,82 @@ def merge_epic_shards(
 
     data["epics"] = merged_epics
     return data
+
+
+def detect_orphan_shards(
+    data: Any,
+    sprint_dir: Path,
+    *,
+    load_file: Callable[[Path], Any],
+) -> list[dict[str, str]]:
+    """Detect orphaned epic shard files not referenced by the sprint index.
+
+    Returns structured orphan entries instead of emitting warnings.
+    Skips shards owned by initiatives.
+
+    Args:
+        data: Sprint data after merging (with full epic dicts in epics list).
+        sprint_dir: Directory containing shard files.
+        load_file: Callable that reads a YAML file and returns parsed data.
+
+    Returns:
+        List of orphan dicts with id, jira, file, and reason fields.
+    """
+    loaded_epic_ids: set[str] = set()
+    loaded_shard_files: set[Path] = set()
+
+    for epic in data.get("epics", []):
+        if not isinstance(epic, Mapping):
+            continue
+        eid = str(epic.get("id", "")).replace("epic-", "")
+        if eid:
+            loaded_epic_ids.add(eid)
+        jira_key = str(epic.get("jira", ""))
+        if jira_key:
+            loaded_epic_ids.add(jira_key)
+        # Reconstruct which shard files were loaded
+        for ref in (eid, jira_key):
+            if ref:
+                shard_file = sprint_dir / f"epic-{ref}.yaml"
+                if shard_file.exists():
+                    loaded_shard_files.add(shard_file.resolve())
+
+    # Collect initiative-owned refs
+    initiative_refs: set[str] = set()
+    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+        try:
+            init_data = load_file(init_file)
+        except Exception:
+            continue
+        if init_data and isinstance(init_data, Mapping):
+            for ref in init_data.get("epics", []):
+                if isinstance(ref, str):
+                    initiative_refs.add(ref)
+                    initiative_refs.add(ref.replace("epic-", ""))
+
+    orphans: list[dict[str, str]] = []
+    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
+        if shard_file.resolve() in loaded_shard_files:
+            continue
+        try:
+            epic_data = load_file(shard_file)
+        except Exception:
+            continue
+        if epic_data is None or not isinstance(epic_data, Mapping) or "id" not in epic_data:
+            continue
+        eid = str(epic_data.get("id", "")).replace("epic-", "")
+        jira_key = str(epic_data.get("jira", ""))
+        if eid in loaded_epic_ids or (jira_key and jira_key in loaded_epic_ids):
+            continue
+        if eid in initiative_refs or jira_key in initiative_refs:
+            continue
+        entry: dict[str, str] = {
+            "id": str(epic_data.get("id", "")),
+            "file": shard_file.name,
+            "reason": "unindexed (not in current-sprint.yaml, not in initiative shards)",
+        }
+        if jira_key:
+            entry["jira"] = jira_key
+        orphans.append(entry)
+
+    return orphans

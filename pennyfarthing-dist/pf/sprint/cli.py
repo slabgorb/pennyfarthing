@@ -1500,6 +1500,134 @@ def info():
     click.echo(json.dumps(result))
 
 
+# --- Data command (canonical JSON output for subprocess consumers) ---
+
+
+@sprint.command()
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON (required)")
+def data(output_json: bool):
+    """Output canonical merged sprint data as JSON.
+
+    \b
+    Provides the single subprocess interface for TypeScript and other
+    consumers. Includes merged epics, all story fields, orphan detection,
+    registry metadata, and computed metrics.
+    """
+    import json
+
+    from pf.common.config import load_yaml_config
+    from pf.core.resolver import resolve_sprint_context
+    from pf.sprint.loader import load_sprint
+    from pf.sprint.shard_merge import detect_orphan_shards
+
+    if not output_json:
+        click.echo("Usage: pf sprint data --json", err=True)
+        raise SystemExit(1)
+
+    sprint_data = load_sprint()
+    if not sprint_data:
+        click.echo(json.dumps({"error": "Sprint file not found"}))
+        raise SystemExit(1)
+
+    # Sprint header
+    sprint_header = sprint_data.get("sprint", {})
+    # Serialize dates to strings
+    header = {}
+    for k, v in sprint_header.items():
+        header[str(k)] = str(v) if hasattr(v, "isoformat") else v
+
+    # Merged epics (already full dicts after load_sprint)
+    epics = sprint_data.get("epics", [])
+
+    # Inherit missing fields from parent epic to stories
+    for epic in epics:
+        if not isinstance(epic, dict):
+            continue
+        epic_priority = epic.get("priority")
+        epic_repos = epic.get("repos")
+        for story in epic.get("stories", []):
+            if isinstance(story, dict):
+                if "priority" not in story and epic_priority:
+                    story["priority"] = epic_priority
+                if "repos" not in story and epic_repos:
+                    story["repos"] = epic_repos
+
+    # Top-level stories and standalone stories
+    stories = sprint_data.get("stories", [])
+    standalone_stories = sprint_data.get("standalone_stories", [])
+
+    # Collect stories from epics + standalone for metrics
+    all_stories = list(standalone_stories)
+    for epic in epics:
+        if isinstance(epic, dict):
+            all_stories.extend(epic.get("stories", []))
+
+    # Compute point metrics
+    done_statuses = {"done", "completed"}
+    backlog_statuses = {"backlog", "planning", "ready"}
+
+    completed_pts = sum(
+        s.get("points", 0) or 0 for s in all_stories if s.get("status") in done_statuses
+    )
+    in_progress_pts = sum(
+        s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_progress"
+    )
+    backlog_pts = sum(
+        s.get("points", 0) or 0
+        for s in all_stories
+        if s.get("status") in backlog_statuses or s.get("status") is None
+    )
+
+    # Compute story count metrics
+    done_count = sum(1 for s in all_stories if s.get("status") in done_statuses)
+    wip_count = sum(1 for s in all_stories if s.get("status") == "in_progress")
+    backlog_count = sum(
+        1
+        for s in all_stories
+        if s.get("status") in backlog_statuses or s.get("status") is None
+    )
+
+    # Detect orphan shards
+    try:
+        from pathlib import Path
+
+        from pf.common.config import get_project_root
+
+        root = get_project_root()
+        ctx = resolve_sprint_context(str(root))
+        sprint_dir = Path(ctx.sprint_file).parent
+        orphans = detect_orphan_shards(sprint_data, sprint_dir, load_file=load_yaml_config)
+    except (FileNotFoundError, ValueError):
+        orphans = []
+
+    # Build output
+    result: dict = {
+        "sprint": header,
+        "epics": epics,
+        "stories": stories,
+        "standalone_stories": standalone_stories,
+        "points": {
+            "total": completed_pts + in_progress_pts + backlog_pts,
+            "completed": completed_pts,
+            "in_progress": in_progress_pts,
+            "backlog": backlog_pts,
+        },
+        "stories_count": {
+            "total": done_count + wip_count + backlog_count,
+            "done": done_count,
+            "in_progress": wip_count,
+            "backlog": backlog_count,
+        },
+        "_orphans": orphans,
+    }
+
+    # Include registry if present (non-default sprint)
+    if "_registry" in sprint_data:
+        result["_registry"] = sprint_data["_registry"]
+
+    click.echo(json.dumps(result, default=str))
+
+
 # --- Metrics command (replaces sprint-metrics.sh) ---
 
 @sprint.command()
