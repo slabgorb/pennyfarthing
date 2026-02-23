@@ -34,7 +34,8 @@ const refreshCallbacks = new Set<RefreshCallback>();
 // Configuration — tighter timings now that reads use --no-optional-locks (lock-free)
 const REFRESH_DELAY_MS = 500; // Wait after invalidation before reading status
 const MAX_INVALIDATION_DELAY_MS = 3000; // Force refresh after this time even if events keep coming
-const STALE_THRESHOLD_MS = 15000; // Force refresh if cache older than 15s
+const STALE_THRESHOLD_MS = 5000; // Force refresh if cache older than 5s (Story 121-4)
+const POLL_INTERVAL_MS = 5000; // Periodic polling interval when clients are connected (Story 121-4)
 
 /**
  * Get or create cache state for a project
@@ -215,4 +216,40 @@ export function hasFreshCache(projectDir: string): boolean {
     return false;
   }
   return (Date.now() - cache.lastFetch) < STALE_THRESHOLD_MS;
+}
+
+// Periodic polling timer reference
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Start periodic git status polling as a safety net.
+ * Catches working tree changes that don't trigger .git/ file watchers
+ * (e.g., file edits without git add) and missed OTLP events.
+ * Only refreshes when the cache is stale (age-based), so cost is minimal
+ * when event-driven invalidation is already working.
+ * Story 121-4
+ *
+ * @param getProjectDir Function to get current project directory
+ * @param hasClients Function that returns true when git WS clients are connected
+ */
+export function startPeriodicPoll(
+  getProjectDir: () => string,
+  hasClients: () => boolean,
+): void {
+  if (pollTimer) return; // Already running
+
+  pollTimer = setInterval(async () => {
+    if (!hasClients()) return;
+
+    const projectDir = getProjectDir();
+    if (!hasFreshCache(projectDir)) {
+      try {
+        await getCachedGitStatus(projectDir);
+      } catch (err) {
+        console.error('[GitCache] Periodic poll error:', err);
+      }
+    }
+  }, POLL_INTERVAL_MS);
+
+  console.log('[GitCache] Periodic polling started (every', POLL_INTERVAL_MS / 1000, 's)');
 }
