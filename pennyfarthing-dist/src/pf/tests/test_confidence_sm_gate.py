@@ -38,9 +38,11 @@ GATE_NAME = "confidence"
 # In the dogfooding context, the project root is the orchestrator, so we need
 # to resolve paths relative to this test file.
 _THIS_DIR = Path(__file__).resolve().parent
-_SCRIPTS_DIR = _THIS_DIR.parent  # pf/
-_FRAMEWORK_ROOT = _SCRIPTS_DIR.parent  # pennyfarthing/
-_GATE_FILE = _FRAMEWORK_ROOT / "pennyfarthing-dist" / "gates" / f"{GATE_NAME}.md"
+# src/pf/tests -> src/pf -> src -> pennyfarthing-dist (project root)
+_DIST_ROOT = _THIS_DIR.parents[2]
+# pennyfarthing-dist -> pennyfarthing (framework root)
+_FRAMEWORK_ROOT = _DIST_ROOT.parent
+_GATE_FILE = _DIST_ROOT / "gates" / f"{GATE_NAME}.md"
 
 
 @pytest.fixture

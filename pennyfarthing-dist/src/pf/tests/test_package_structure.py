@@ -15,9 +15,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-# pennyfarthing-dist/ must be on PYTHONPATH for subprocess -m calls
-_DIST_DIR = str(Path(__file__).resolve().parents[2])
-_ENV = {**os.environ, "PYTHONPATH": _DIST_DIR + os.pathsep + os.environ.get("PYTHONPATH", "")}
+# src/ must be on PYTHONPATH for subprocess -m calls (src-layout)
+# src/pf/tests -> src/pf -> src
+_SRC_DIR = str(Path(__file__).resolve().parents[2])
+_ENV = {**os.environ, "PYTHONPATH": _SRC_DIR + os.pathsep + os.environ.get("PYTHONPATH", "")}
 
 
 def _run_module(*args: str) -> subprocess.CompletedProcess[str]:

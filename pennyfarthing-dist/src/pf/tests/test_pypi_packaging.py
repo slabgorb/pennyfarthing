@@ -21,7 +21,8 @@ from pathlib import Path
 import pytest
 
 # pennyfarthing-dist/ root (where pyproject.toml lives)
-DIST_DIR = Path(__file__).resolve().parents[2]
+# src/pf/tests -> src/pf -> src -> pennyfarthing-dist
+DIST_DIR = Path(__file__).resolve().parents[3]
 SRC_DIR = DIST_DIR / "src"
 PF_PKG = SRC_DIR / "pf"
 

@@ -28,11 +28,10 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _THIS_DIR = Path(__file__).resolve().parent
-_SCRIPTS_DIR = _THIS_DIR.parent  # pf/
-_FRAMEWORK_ROOT = _SCRIPTS_DIR.parent  # pennyfarthing/
+# src/pf/tests -> src/pf -> src -> pennyfarthing-dist (project root)
+_DIST_ROOT = _THIS_DIR.parents[2]
 _EVAL_FILE = (
-    _FRAMEWORK_ROOT
-    / "pennyfarthing-dist"
+    _DIST_ROOT
     / "gates"
     / "evaluations"
     / "confidence-sm.md"

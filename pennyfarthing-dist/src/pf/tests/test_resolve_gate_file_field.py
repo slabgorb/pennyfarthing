@@ -323,7 +323,7 @@ class TestTddWorkflowMigration:
     def tdd_yaml(self) -> dict:
         """Load the actual tdd.yaml from pennyfarthing-dist."""
         tdd_path = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[3]
             / "workflows"
             / "tdd.yaml"
         )
@@ -413,7 +413,7 @@ class TestResolveGateWithRealTddYaml:
     def real_project(self, tmp_path: Path) -> Path:
         """Create a project that uses the actual tdd.yaml from pennyfarthing-dist."""
         tdd_source = (
-            Path(__file__).resolve().parents[2]
+            Path(__file__).resolve().parents[3]
             / "workflows"
             / "tdd.yaml"
         )

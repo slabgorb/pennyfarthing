@@ -1,6 +1,7 @@
 """Pytest configuration for pf tests.
 
 Story 63-9: Reorganize pf into fan-out CLI pattern.
+Story 126-1: Updated for src/ layout migration.
 """
 
 import sys
@@ -9,10 +10,13 @@ from pathlib import Path
 
 import pytest
 
-# Ensure the package is importable
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Project root (where pyproject.toml lives): src/pf/tests -> src/pf -> src -> pennyfarthing-dist
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+# For src-layout, add src/ to sys.path so "import pf" resolves to src/pf/
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 
 @pytest.fixture
