@@ -24,6 +24,7 @@ import {
   onGitCacheRefresh,
   hasFreshCache,
   getCachedGitStatusSync,
+  startPeriodicPoll,
 } from './git-cache.js';
 import { getSettingsForWebSocket } from './api/settings.js';
 import { getCurrentSettings, initializeSettings, onSettingsChange } from '@pennyfarthing/core/dist/server/settings.js';
@@ -1193,12 +1194,20 @@ export function setupWebSocketServers(
   onSettingsChange((newSettings) => {
     const newGitMonitor = newSettings.workflow?.git_monitor === true;
     if (!previousGitMonitor && newGitMonitor) {
-      console.log('[WebSocket] git_monitor enabled dynamically — setting up watchers');
+      console.log('[WebSocket] git_monitor enabled dynamically — setting up watchers + polling');
       setupGitFileWatchers(getProjectDir(), getProjectDir);
+      startPeriodicPoll(getProjectDir, () => gitClients.size > 0);
       forceRefreshGitCache(getProjectDir());
     }
     previousGitMonitor = newGitMonitor;
   });
+
+  // Start periodic git status polling as safety net (Story 121-4)
+  // Catches working tree changes not covered by .git/ file watchers or OTLP events.
+  // Only active when git_monitor is enabled; gated by client count inside the poll.
+  if (gitMonitorSetting) {
+    startPeriodicPoll(getProjectDir, () => gitClients.size > 0);
+  }
 
   // Register git cache refresh callback to broadcast updates
   onGitCacheRefresh((allReposInfo) => {
