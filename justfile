@@ -433,7 +433,7 @@ bikerack *args:
             url="http://127.0.0.1:${port}"
             echo "  BikeRack: $url"
             echo ""
-            open -a "Google Chrome" "$url"
+            open "$url"
             break
         fi
         sleep 0.5
