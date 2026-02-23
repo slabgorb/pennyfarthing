@@ -22,7 +22,6 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -601,7 +600,7 @@ class TestDryRun:
         """Dry run followed by real run should work correctly."""
         from pf.init.core import init_project
 
-        dry_result = init_project(target_dir=target_dir, dist_root=mock_dist, dry_run=True)
+        init_project(target_dir=target_dir, dist_root=mock_dist, dry_run=True)
         assert not (target_dir / ".pennyfarthing").exists()
 
         real_result = init_project(target_dir=target_dir, dist_root=mock_dist)

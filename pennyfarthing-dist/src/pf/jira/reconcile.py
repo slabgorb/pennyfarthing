@@ -144,7 +144,7 @@ def reconcile(
 
     # --- Build report ---
     report_lines = [
-        "# Jira vs YAML Reconciliation Report",
+        "# Jira vs YAML Drift Audit Report",
         "",
         f"**Sprint:** {sprint_name} (Jira Sprint ID: {sprint_id})",
         f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}",
@@ -236,36 +236,17 @@ def reconcile(
     total = len(status_mismatches) + len(missing_jira) + len(orphans) + len(not_in_sprint)
     report_lines.extend(["", "---", ""])
     if total == 0:
-        report_lines.append("Sync Status: CLEAN - No discrepancies found!")
+        report_lines.append("Drift Audit: CLEAN - No discrepancies found!")
     else:
-        report_lines.append(f"Sync Status: {total} issue(s) found")
+        report_lines.append(f"Drift Audit: {total} drift issue(s) found")
 
-    # Fix mode
+    # Fix mode is deprecated — reconcile is audit-only now
     fixed = []
-    if fix and not_in_sprint and sprint_id:
-        report_lines.extend(["", "## Applying Fixes...", ""])
-        for n in not_in_sprint:
-            key = n["jira_key"]
-            print(f"Adding {key} to sprint {sprint_id}...")
-            result = client.add_to_sprint_sync(sprint_id, key)
-            if result.get("success"):
-                print("  Done")
-                fixed.append(key)
-            else:
-                print(f"  Failed: {result.get('error', 'unknown')}")
-
-        report_lines.extend([
-            "",
-            "Fix mode completed. Manual review still needed for:",
-            "- Status mismatches (requires decision on which source is correct)",
-            "- Missing Jira keys (requires creating new issues)",
-            "- Orphan issues (requires adding to YAML or removing from sprint)",
-        ])
 
     report = "\n".join(report_lines)
     print(report)
 
-    return {
+    result = {
         "success": True,
         "report": report,
         "mismatches": status_mismatches,
@@ -274,3 +255,6 @@ def reconcile(
         "not_in_sprint": not_in_sprint,
         "fixed": fixed,
     }
+    if fix:
+        result["fix_deprecated"] = True
+    return result

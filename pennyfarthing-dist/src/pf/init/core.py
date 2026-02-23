@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 # The 5 essential hooks for a minimal Pennyfarthing installation.
 _MINIMAL_SETTINGS: dict = {
@@ -206,7 +205,7 @@ def _write_manifest(target_dir: Path, commands_copied: int, skills_copied: int) 
 
     manifest = {
         "pf_version": __version__,
-        "initialized_at": datetime.now(timezone.utc).isoformat(),
+        "initialized_at": datetime.now(UTC).isoformat(),
         "commands_copied": commands_copied,
         "skills_copied": skills_copied,
     }

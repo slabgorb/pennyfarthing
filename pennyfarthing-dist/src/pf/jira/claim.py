@@ -24,6 +24,16 @@ from pf.jira.client import (
 )
 
 
+def __getattr__(name: str) -> object:
+    """Lazy module attribute for transition_story (avoids circular import)."""
+    if name == "transition_story":
+        from pf.sprint.story_transition import transition_story
+
+        globals()["transition_story"] = transition_story
+        return transition_story
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -117,12 +127,32 @@ def claim_story(issue_key: str) -> dict[str, Any]:
     else:
         errors.append(f"Failed to assign: {assign_result.get('error', 'unknown')}")
 
-    # Move to In Progress via REST API
-    transition_result = client.transition_sync(issue_key, "In Progress")
-    if transition_result.get("success"):
-        actions.append("Moved to In Progress")
-    else:
-        errors.append(f"Failed to move to In Progress: {transition_result.get('error', 'unknown')}")
+    # Move to In Progress via state machine
+    try:
+        from pf.common.config import get_project_root
+        from pf.sprint.story_transition import transition_story
+        from pf.sprint.yaml_io import read_sprint
+
+        root = get_project_root()
+        sprint_path = root / "sprint" / "current-sprint.yaml"
+        if sprint_path.exists():
+            data = read_sprint(sprint_path)
+            story_id = None
+            for epic in data.get("epics", []):
+                if not isinstance(epic, dict):
+                    continue
+                for story in epic.get("stories", []):
+                    if story.get("jira") == issue_key:
+                        story_id = story.get("id")
+                        break
+                if story_id:
+                    break
+            if story_id:
+                t_result = transition_story(root, story_id, "in_progress")
+                if t_result.get("success"):
+                    actions.append("Moved to In Progress")
+    except Exception:
+        pass  # Best-effort — Jira claim already succeeded
 
     if errors:
         return {

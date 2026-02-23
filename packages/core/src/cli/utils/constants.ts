@@ -35,7 +35,7 @@ export const DIRECTORY_SYMLINKS = [
   { name: 'personas', link: '.pennyfarthing/personas' },
   { name: 'scripts', link: '.pennyfarthing/scripts' },
   { name: 'workflows', link: '.pennyfarthing/workflows' },
-  { name: 'pf', link: '.pennyfarthing/pf' }
+  { name: 'src/pf', link: '.pennyfarthing/pf' }
 ] as const;
 
 /**

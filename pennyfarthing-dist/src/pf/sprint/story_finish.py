@@ -22,7 +22,8 @@ from pathlib import Path
 from typing import Any
 
 from pf.sprint.loader import find_epic, find_story
-from pf.sprint.yaml_io import read_sprint, write_sprint
+from pf.sprint.story_transition import transition_story
+from pf.sprint.yaml_io import read_sprint
 
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
@@ -183,36 +184,20 @@ def finish_story(
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
-    # --- Step 3: Transition Jira ---
-    if jira_key:
-        from pf.jira.client import get_client
-
-        jira_result = get_client().transition_sync(jira_key, "Done")
-        if jira_result.get("success"):
+    # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
+    t_result = transition_story(project_root, story_id, "done")
+    if t_result.get("success"):
+        if jira_key:
             steps.append({"step": 3, "action": "jira_done", "key": jira_key})
         else:
-            steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": "Already Done or failed"})
+            steps.append({"step": 3, "action": "jira_done", "skipped": True})
+        steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
     else:
-        steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
-
-    # --- Step 4: Update sprint YAML ---
-    try:
-        data = read_sprint(sprint_path)
-        parts = story_id.split("-")
-        if len(parts) < 2:
-            steps.append({"step": 4, "action": "yaml_update", "error": f"Invalid story ID: {story_id}"})
+        if jira_key:
+            steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": t_result.get("error", "Transition failed")})
         else:
-            epic = find_epic(data, parts[0])
-            story = find_story(epic, story_id) if epic else None
-            if story:
-                story["status"] = "done"
-                story["completed"] = today
-                write_sprint(sprint_path, data)
-                steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
-            else:
-                steps.append({"step": 4, "action": "yaml_update", "warning": f"Story {story_id} not found in YAML"})
-    except Exception as exc:
-        steps.append({"step": 4, "action": "yaml_update", "error": str(exc)})
+            steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
+        steps.append({"step": 4, "action": "yaml_update", "warning": t_result.get("error", "Transition failed")})
 
     # --- Step 5: Archive completed epics ---
     result = _run(

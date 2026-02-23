@@ -15,7 +15,6 @@ from pf.jira.client import get_client
 from pf.sprint.loader import find_epic, find_story
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
-
 # Valid transitions: from_status -> set of allowed to_statuses
 TRANSITIONS: dict[str, set[str]] = {
     "backlog": {"in_progress", "canceled"},
@@ -153,17 +152,26 @@ def transition_story(
     # Check for any step failures
     failed = [s for s in steps if s.get("success") is False]
     if failed:
-        succeeded = len([s for s in steps if s.get("success") is True])
-        total = len([s for s in steps if "success" in s])
-        return {
+        jira_failed = any(
+            s.get("action") == "jira_transition" and s.get("success") is False
+            for s in steps
+        )
+        result: dict[str, Any] = {
             "success": False,
             "story_id": story_id,
             "jira_key": jira_key,
             "from_status": from_status,
             "to_status": target_status,
-            "error": f"Partial failure: {succeeded} of {total} steps completed",
+            "error": f"Jira sync failed: YAML updated to {target_status} but Jira transition failed",
             "steps": steps,
         }
+        if jira_failed:
+            result["drift"] = True
+            jira_target = _JIRA_STATUS.get(target_status, target_status)
+            result["remediation"] = (
+                f'Run `pf jira move {jira_key} "{jira_target}"` to manually sync Jira'
+            )
+        return result
 
     return {
         "success": True,

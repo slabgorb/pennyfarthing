@@ -204,7 +204,7 @@ declare -a REQUIRED_PATHS=(
     "$PF_PKG/pennyfarthing-dist/skills"
     "$PF_PKG/pennyfarthing-dist/workflows"
     "$PF_PKG/pennyfarthing-dist/personas/themes"
-    "$PF_PKG/pennyfarthing-dist/pf"
+    "$PF_PKG/pennyfarthing-dist/src/pf"
     "$PF_PKG/README.md"
 )
 

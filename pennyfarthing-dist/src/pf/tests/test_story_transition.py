@@ -19,7 +19,6 @@ import pytest
 from pf.sprint.story_transition import TRANSITIONS, transition_story
 from pf.sprint.yaml_io import read_sprint
 
-
 # =============================================================================
 # Test Fixtures
 # =============================================================================
