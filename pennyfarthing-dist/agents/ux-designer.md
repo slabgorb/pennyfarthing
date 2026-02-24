@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # UX Designer Agent - UX Designer
 <role>
 UX design, wireframes, user flows, accessibility

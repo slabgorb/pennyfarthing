@@ -19,7 +19,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -244,6 +243,7 @@ class TestPersonaConfigReferencesRemoved:
     def test_themes_get_current_theme_has_no_persona_config_path(self) -> None:
         """get_current_theme() should not reference persona-config.yaml."""
         import inspect
+
         from pf.common.themes import get_current_theme
 
         source = inspect.getsource(get_current_theme)
@@ -254,6 +254,7 @@ class TestPersonaConfigReferencesRemoved:
     def test_statusline_has_no_persona_config_fallback(self) -> None:
         """Statusline hook should not fall back to persona-config.yaml."""
         import inspect
+
         from pf.hooks import statusline
 
         source = inspect.getsource(statusline)
@@ -378,9 +379,8 @@ class TestMigrationCrashSafety:
     ) -> None:
         """If config.local.yaml write fails, preferences.yaml must still exist."""
         import yaml as _yaml
-        from pf import config_migration
 
-        original_dump = _yaml.dump
+        from pf import config_migration
 
         def failing_dump(*args, **kwargs):
             raise OSError("Simulated disk full")
@@ -403,6 +403,7 @@ class TestMigrationCrashSafety:
     ) -> None:
         """If config.local.yaml write fails, persona-config.yaml must still exist."""
         import yaml as _yaml
+
         from pf import config_migration
 
         def failing_dump(*args, **kwargs):

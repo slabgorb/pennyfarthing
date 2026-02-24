@@ -26,7 +26,6 @@ const __dirname = dirname(__filename);
 const BIKERACK_ROOT = join(__dirname, '..');
 const BIKERACK_SRC = join(BIKERACK_ROOT, 'src');
 const CORE_SRC = join(BIKERACK_ROOT, '..', 'core', 'src', 'server');
-const CYCLIST_SRC = join(BIKERACK_ROOT, '..', 'cyclist', 'src');
 
 // =============================================================================
 // AC1: All WebSocket channel handlers are in packages/bikerack/

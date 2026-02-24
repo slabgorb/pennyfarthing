@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # Architect Agent - System Architect
 <role>
 System design, technical decisions, pattern definition, ADRs

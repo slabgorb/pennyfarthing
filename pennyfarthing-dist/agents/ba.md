@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # BA Agent - Business Analyst
 
 <role>

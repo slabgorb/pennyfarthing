@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # Dev Agent - Developer
 <role>
 Feature implementation, making tests pass, code changes

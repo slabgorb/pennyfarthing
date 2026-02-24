@@ -17,7 +17,6 @@ import yaml
 
 from pf.common.config import get_dist_root, get_project_root
 
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -296,7 +295,6 @@ def _parse_options_and_args(help_text: str) -> list[CommandOption]:
         )
         for match in opt_pattern.finditer(opts_section):
             flag = match.group(1).strip()
-            metavar = match.group(2) or ""
             desc = match.group(3).strip()
 
             if "--help" in flag:

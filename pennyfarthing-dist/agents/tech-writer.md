@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # Tech Writer Agent - Technical Writer
 <role>
 Documentation, API docs, user guides, README files

@@ -9,10 +9,6 @@
  * to override default processing. Without a provider, uses in-memory stores.
  */
 
-import { correlateSpan, consumePendingToolInput } from './span-correlation.js';
-import { enrichReadSpan, enrichEditSpan, enrichWriteSpan, enrichBashSpan } from './file-enrichment.js';
-import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
-import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
 
 export interface TokenStats {
   inputTokens: number;
@@ -359,7 +355,7 @@ export function isOtelDebugEnabled(): boolean {
 // Tool Event Recording and Retrieval
 // =============================================================================
 
-let _toolEvents: ToolEvent[] = [];
+const _toolEvents: ToolEvent[] = [];
 
 export function recordToolEvent(event: ToolEvent): void {
   _toolEvents.push(event);

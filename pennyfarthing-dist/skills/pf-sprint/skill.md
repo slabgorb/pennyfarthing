@@ -6,6 +6,10 @@ description: |
   and history.
   IMPORTANT: Always use `pf.sh sprint` CLI commands - never manually edit sprint YAML.
 args: "[status|backlog|work|story|epic|initiative|archive|new|future|info|metrics|validate|standalone]"
+hooks:
+  PostToolUse:
+    - command: pf hooks sprint-yaml
+      matcher: Edit|Write
 ---
 
 # /pf-sprint - Sprint Management

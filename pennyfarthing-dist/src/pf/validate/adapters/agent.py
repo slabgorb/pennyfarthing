@@ -60,10 +60,18 @@ def _extract_section(content: str, tag: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _is_subagent_frontmatter(fm: dict) -> bool:
+    """Check if frontmatter indicates a subagent (has name + tools fields)."""
+    return "name" in fm and "tools" in fm
+
+
 def classify_agent_files(
     agents_dir: Path,
 ) -> tuple[list[Path], list[Path], list[Path]]:
     """Classify agent files into main agents, subagents, and skipped.
+
+    Main agents may have frontmatter with only a `hooks:` key.
+    Subagents have frontmatter with `name`, `tools`, and `model` fields.
 
     Returns:
         (main_agents, subagents, skipped) — three lists of Path objects.
@@ -79,7 +87,11 @@ def classify_agent_files(
 
         content = f.read_text()
         if _has_frontmatter(content):
-            sub.append(f)
+            fm = _parse_frontmatter(content)
+            if _is_subagent_frontmatter(fm):
+                sub.append(f)
+            else:
+                main.append(f)
         else:
             main.append(f)
 
