@@ -197,10 +197,39 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
     parts = story_id.split("-")
     if parts:
         epic_num = parts[0]
-        epic_path = os.path.join(project_root, "sprint", "context", f"context-epic-{epic_num}.md")
+        context_dir = os.path.join(project_root, "sprint", "context")
+        # Try numeric ID first (e.g. context-epic-110.md)
+        epic_path = os.path.join(context_dir, f"context-epic-{epic_num}.md")
         if os.path.isfile(epic_path):
             result["has_epic_context"] = True
             result["epic_context_path"] = epic_path
+        else:
+            # Try MSSCI-keyed context file by reading epic Jira key from shard
+            import glob as _glob
+            sprint_dir = os.path.join(project_root, "sprint")
+            for shard in _glob.glob(os.path.join(sprint_dir, "epic-*.yaml")):
+                try:
+                    with open(shard) as f:
+                        for line in f:
+                            if line.startswith("id:"):
+                                shard_id = line.split(":", 1)[1].strip().strip("'\"")
+                                if shard_id == epic_num:
+                                    break
+                        else:
+                            continue
+                    with open(shard) as f:
+                        for line in f:
+                            if line.startswith("jira:"):
+                                jira_key = line.split(":", 1)[1].strip().strip("'\"")
+                                keyed_path = os.path.join(context_dir, f"context-epic-{jira_key}.md")
+                                if os.path.isfile(keyed_path):
+                                    result["has_epic_context"] = True
+                                    result["epic_context_path"] = keyed_path
+                                break
+                except Exception:
+                    continue
+                if result["has_epic_context"]:
+                    break
 
     story_path = os.path.join(project_root, "sprint", "context", f"context-story-{story_id}.md")
     if os.path.isfile(story_path):

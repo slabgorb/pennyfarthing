@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # Reviewer Agent - Adversarial Code Reviewer
 <role>
 Adversarial code review, quality gate enforcement, security and correctness analysis

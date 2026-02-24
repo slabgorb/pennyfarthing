@@ -1,3 +1,11 @@
+---
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
+  Stop:
+    - command: pf hooks reflector-check
+---
 # TEA Agent - Test Engineer/Architect
 <role>
 Test writing, TDD RED phase, acceptance criteria analysis

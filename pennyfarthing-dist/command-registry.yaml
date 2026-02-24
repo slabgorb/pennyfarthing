@@ -254,9 +254,11 @@ standalone:
       run: { description: "Run CI locally (auto-detects CI system)" }
   docs:
     description: Domain documentation management
+    cli: "pf docs"
     slash: "/pf-docs"
     commands:
       update: { description: "Update CLAUDE-*.md domain documentation files" }
+      sync-skills: { description: "Regenerate usage.md from live CLI help", args: "[--dry-run] [--skill NAME]" }
   help:
     description: Context-aware help
     cli: "pf help"
@@ -294,11 +296,6 @@ standalone:
   retro:
     description: Sprint retrospective
     slash: "/pf-retro"
-  permissions:
-    description: Runtime permission management
-    slash: "/pf-permissions"
-    skill: pf-permissions
-
 agents:
   description: Agent shortcuts (equivalent to pf agent start <role>)
   commands:

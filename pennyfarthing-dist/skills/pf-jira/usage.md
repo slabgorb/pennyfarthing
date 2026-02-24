@@ -1,213 +1,155 @@
 # Jira CLI — Detailed Usage
 
-All commands use `pf.sh jira <command>` as the entry point. REST API is used where possible — no interactive prompt issues.
+## Top-Level Commands
 
-## Commands
+### `pf.sh jira assign`
 
-### View Issue
-
-```bash
-pf.sh jira view <KEY>
-```
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `KEY` | Yes | Jira issue key (e.g., `MSSCI-12345`) |
-
-Delegates to `jira issue view`. Shows summary, status, assignee, description, linked issues.
-
-### Check Availability
-
-```bash
-pf.sh jira check <KEY>
-```
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `KEY` | Yes | Jira issue key |
-
-Exit codes: `0` = available, `1` = assigned, `2` = not found, `3` = error.
-
-### Claim Story
-
-```bash
-pf.sh jira claim <KEY> [--dry-run]
-```
+Assign issue to a user (email or GitHub username).
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `KEY` | Yes | Jira issue key |
-| `--dry-run` | No | Preview without making changes |
+| `KEY` | Yes |  |
+| `USER` | Yes |  |
+| `--dry-run` | No | Preview without applying |
 
-Assigns to self and moves to In Progress.
+### `pf.sh jira bidirectional`
 
-### Move Issue
-
-```bash
-pf.sh jira move <KEY> "<STATUS>" [--dry-run]
-```
+Bidirectional sync between YAML and Jira.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `KEY` | Yes | Jira issue key |
-| `STATUS` | Yes | Target status: `To Do`, `In Progress`, `In Review`, `Done` |
-| `--dry-run` | No | Preview without making changes |
+| `--dry-run` | No | Preview without applying |
+| `--yaml-wins` | No | Prefer YAML values on conflict |
+| `--status` | No | Sync status field |
+| `--points` | No | Sync story points |
+| `--assignee` | No | Sync assignee field (Jira -> YAML only) |
+| `--all` | No | Sync all fields |
+| `--sprint` | No | Target specific sprint |
 
-Checks current status first — skips if already there.
+### `pf.sh jira check`
 
-### Assign Issue
-
-```bash
-pf.sh jira assign <KEY> <USER> [--dry-run]
-```
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `KEY` | Yes | Jira issue key |
-| `USER` | Yes | Email or GitHub username (auto-mapped) |
-| `--dry-run` | No | Preview without making changes |
-
-Checks current assignee — skips if already assigned.
-
-### Link Issues
-
-```bash
-pf.sh jira link <PARENT_KEY> <CHILD_KEY> [LINK_TYPE] [--dry-run]
-```
+Check if a story is available to claim.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `PARENT_KEY` | Yes | Inward issue (parent/blocker) |
-| `CHILD_KEY` | Yes | Outward issue (child/blocked) |
-| `LINK_TYPE` | No | `Relates` (default), `Blocks`, `Parent-Child`, `Duplicate` |
-| `--dry-run` | No | Preview without making changes |
+| `KEY` | Yes |  |
 
-### Search Issues
+### `pf.sh jira claim`
 
-```bash
-pf.sh jira search "<JQL>"
-```
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `JQL` | Yes | JQL query string |
-
-Delegates to `jira issue list --jql`.
-
-### Create Epic
-
-```bash
-pf.sh jira create epic <EPIC_ID> [--dry-run]
-```
+Claim a story (assign to self + move to In Progress).
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID from sprint YAML (e.g., `epic-63` or `63`) |
+| `KEY` | Yes |  |
+| `--dry-run` | No | Show what would be done without making changes |
+
+### `pf.sh jira link`
+
+Link two Jira issues.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `PARENT_KEY` | Yes |  |
+| `CHILD_KEY` | Yes |  |
+| `LINK_TYPE` | No |  |
+| `--dry-run` | No | Preview without applying |
+
+### `pf.sh jira move`
+
+Transition a Jira issue to a new status.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `KEY` | Yes |  |
+| `STATUS` | Yes |  |
+| `--dry-run` | No | Preview without applying |
+
+### `pf.sh jira reconcile`
+
+Reconciliation report: sprint YAML vs Jira.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `--fix` | No | Apply automatic fixes where safe |
+
+### `pf.sh jira search`
+
+Search issues using plain text or JQL.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `QUERY` | Yes |  |
+| `-p, --project` | No | Jira project key (default: from config) |
+| `-n, --max-results` | No | Maximum results (default: 50) |
+| `-s, --status` | No | Filter by status (e.g. 'In Progress', 'Done') |
+| `-t, --type` | No | Filter by issue type (e.g. Story, Epic, Bug) |
+| `--json-output, --json` | No | Output as JSON |
+
+### `pf.sh jira sync`
+
+Sync epic stories from sprint YAML to Jira.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC` | Yes |  |
+| `--dry-run` | No | Preview without applying |
+| `--transition` | No | Sync status to Jira |
+| `--points` | No | Sync story points |
+| `--all` | No | Sync all fields |
+
+### `pf.sh jira view`
+
+View issue details (delegates to jira CLI).
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `KEY` | Yes |  |
+
+---
+
+## Create Commands
+
+### `pf.sh jira create epic`
+
+Create a Jira epic and its child stories from sprint YAML.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | Yes |  |
 | `--dry-run` | No | Preview without creating |
 
-Creates Jira epic and all child stories without existing Jira keys. Updates sprint YAML atomically.
+### `pf.sh jira create standalone`
 
-### Create Story
-
-```bash
-pf.sh jira create story <EPIC_JIRA_KEY> <STORY_ID> [--dry-run]
-```
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_JIRA_KEY` | Yes | Parent epic Jira key (e.g., `MSSCI-12077`) |
-| `STORY_ID` | Yes | Local story ID (e.g., `63-7`) |
-| `--dry-run` | No | Preview without creating |
-
-Sets priority, points, sprint membership. Updates YAML.
-
-### Create Standalone
-
-```bash
-pf.sh jira create standalone "<TITLE>" [--points N] [-d DESC] [--dry-run]
-```
+Create a standalone Jira story, add to sprint, mark Done.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
 | `TITLE` | Yes | Story summary |
 | `--points` | No | Story points (default: 2) |
-| `-d` / `--description` | No | Story description |
+| `-d, --description` | No | Story description |
 | `--dry-run` | No | Preview without creating |
 
-Creates story, adds to current sprint, transitions to Done. All via REST API.
+### `pf.sh jira create story`
 
-### Sync Epic
-
-```bash
-pf.sh jira sync <EPIC> [--transition] [--points] [--all] [--dry-run]
-```
+Create a single Jira story under an epic from sprint YAML.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `EPIC` | Yes | Epic ID or Jira key |
-| `--transition` | No | Sync status to Jira |
-| `--points` | No | Sync story points |
-| `--all` | No | Sync all fields (transition + points) |
-| `--dry-run` | No | Preview without applying |
-
-### Bidirectional Sync
-
-```bash
-pf.sh jira bidirectional [options]
-```
-
-| Option | Description |
-|--------|-------------|
-| `--yaml-wins` | Prefer YAML values on conflict (default: Jira wins) |
-| `--status` | Sync status field |
-| `--points` | Sync story points |
-| `--assignee` | Sync assignee field (Jira to YAML only) |
-| `--all` | Sync all fields |
-| `--sprint <ID>` | Target specific sprint |
-| `--dry-run` | Preview without applying |
-
-### Reconcile
-
-```bash
-pf.sh jira reconcile [--fix]
-```
-
-| Option | Description |
-|--------|-------------|
-| `--fix` | Apply automatic fixes (add missing stories to sprint) |
-
-Reports: status mismatches, missing Jira keys, orphans, sprint membership gaps.
-
-### Sprint Add
-
-```bash
-pf.sh jira sprint add <SPRINT_ID> <ISSUE_KEY> [--dry-run]
-```
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `SPRINT_ID` | Yes | Jira sprint ID number |
-| `ISSUE_KEY` | Yes | Jira issue key |
-| `--dry-run` | No | Preview without making changes |
+| `EPIC_JIRA_KEY` | Yes |  |
+| `STORY_ID` | Yes |  |
+| `--dry-run` | No | Preview without creating |
 
 ---
 
-## GitHub to Jira User Mapping
+## Sprint Commands
 
-| GitHub Username | Jira Email |
-|-----------------|------------|
-| slabgorb | keith.avery@1898andco.io |
-| arcaven | michael.pursifull@1898andco.io |
-| RoseSecurity | michael.rosenfeld@1898andco.io |
-| Zious11 | jared.richards@1898andco.io |
-| drbothen | joshua.magady@1898andco.io |
+### `pf.sh jira sprint add`
 
-## Prerequisites
+Add an issue to a sprint.
 
-```bash
-brew install ankitpokhrel/jira-cli/jira-cli
-jira init
-export JIRA_API_TOKEN='your-token'
-```
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `SPRINT_ID` | Yes |  |
+| `ISSUE_KEY` | Yes |  |
+| `--dry-run` | No | Show what would be done without making changes |
 
-Create token at: https://id.atlassian.com/manage-profile/security/api-tokens
