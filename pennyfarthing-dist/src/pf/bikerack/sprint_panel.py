@@ -113,11 +113,14 @@ def _build_epic_label(
     bar_fill = "dim" if completed else "dim green"
 
     label = Text(no_wrap=True, overflow="ellipsis")
-    display_id = jira_key if jira_key else epic_id
-    if len(display_id) > _EPIC_ID_WIDTH:
-        display_id = display_id[: _EPIC_ID_WIDTH - 1] + "\u2026"
-    display_id = f"{display_id:<{_EPIC_ID_WIDTH}}"
-    label.append(display_id, style=id_style)
+    # Show ordinal ID (e.g. "126") then Jira key if available
+    ordinal_padded = f"{epic_id:<4}"
+    label.append(ordinal_padded, style=id_style)
+    if jira_key:
+        display_jira = jira_key if len(jira_key) <= _EPIC_ID_WIDTH else jira_key[: _EPIC_ID_WIDTH - 1] + "\u2026"
+        label.append(f"  {display_jira:<{_EPIC_ID_WIDTH}}", style="dim cyan" if completed else "cyan")
+    else:
+        label.append(" " * (_EPIC_ID_WIDTH + 2))
     label.append("  ")
     if total_pts > 0:
         pct = int(done_pts / total_pts * 100)
@@ -142,8 +145,8 @@ def _build_story_label(
 ) -> Text:
     """Build Rich Text label for a story tree leaf.
 
-    Layout: ``✓  MSSCI-14952   2  Story title``
-    In-progress adds owner: ``⟳  MSSCI-15186   5  Story title  [K. Avery]``
+    Layout: ``✓  126-1   MSSCI-14952  2pt  Story title``
+    In-progress adds owner: ``⟳  126-3   MSSCI-15186  5pt  Story title  [K. Avery]``
     Done stories are rendered entirely dim.
     """
     story_id = story.get("id", "")
@@ -160,8 +163,12 @@ def _build_story_label(
     label = Text(no_wrap=True, overflow="ellipsis")
     label.append_text(badge)
 
-    # MSSCI key flush left, fixed-width (14 chars — fits "MSSCI-NNNNN" + padding)
-    jira_padded = f"{jira:<14}"
+    # Ordinal ID (e.g. "126-1") — always shown, fixed-width
+    ordinal_padded = f"{story_id:<6}"
+    label.append(f"  {ordinal_padded}", style="dim" if is_done else ("bold" if is_current else ""))
+
+    # MSSCI key flush left, fixed-width (12 chars — fits "MSSCI-NNNNN" + pad)
+    jira_padded = f"{jira:<12}"
     label.append(f"  {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan"))
 
     # Points right-aligned with unit

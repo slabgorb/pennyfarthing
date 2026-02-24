@@ -308,6 +308,7 @@ function EpicGroup({
         >
           {isExpanded ? '▼' : '▶'}
         </Button>
+        <span className="epic-ordinal">{epic.id}</span>
         <span className="epic-title">{epic.title}</span>
         {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
         <CopyButton text={`${epic.id} ${epic.title}`} />
@@ -376,6 +377,7 @@ function EpicGroup({
               >
                 <PriorityDot priority={story.priority} storyId={story.id} />
                 <StatusBadge status={story.status} storyId={story.id} />
+                <span className="story-ordinal" data-testid={`story-ordinal-${story.id}`}>{story.id}</span>
                 {story.jiraKey && <JiraLink jiraKey={story.jiraKey} storyId={story.id} />}
                 <CopyButton text={`${story.id} ${story.title}`} />
                 <div className="story-info">

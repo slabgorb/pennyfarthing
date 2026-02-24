@@ -1615,6 +1615,13 @@
   border-radius: 2px;
 }
 
+.enhanced-sprint-panel .epic-ordinal {
+  font-size: 0.7rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  color: var(--text-secondary, #8b8b8b);
+  flex-shrink: 0;
+}
+
 .enhanced-sprint-panel .epic-title {
   font-weight: 500;
   flex: 1;
@@ -1750,6 +1757,14 @@
   flex-shrink: 0;
   opacity: 0.7;
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+.enhanced-sprint-panel .story-item .story-ordinal {
+  font-size: 0.65rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  color: var(--text-secondary, #8b8b8b);
+  flex-shrink: 0;
+  min-width: 3.5em;
 }
 
 .enhanced-sprint-panel .story-item .story-points {
