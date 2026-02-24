@@ -984,7 +984,7 @@ def epic_promote(epic_id: str, dry_run: bool):
         if not init_data:
             continue
         for e in init_data.get("epics", []):
-            edata = _resolve_epic_ref(e, sprint_dir)
+            edata = _resolve_epic_ref(e, sprint_dir, init_data)
             if not edata:
                 continue
             eid = str(edata.get("id", ""))
@@ -1883,7 +1883,7 @@ def future(epic_id: str | None):
 
         epics = init_data.get("epics", [])
         for e in epics:
-            edata = _resolve_epic_ref(e, sprint_dir)
+            edata = _resolve_epic_ref(e, sprint_dir, init_data)
             if not edata:
                 continue
             eid = edata.get("id", "?")
@@ -1906,8 +1906,13 @@ def future(epic_id: str | None):
     click.echo("To promote an epic: `pf sprint epic promote epic-55`")
 
 
-def _resolve_epic_ref(ref, sprint_dir) -> dict | None:
-    """Resolve an epic reference (string ref or inline dict) to a dict."""
+def _resolve_epic_ref(ref, sprint_dir, init_data=None) -> dict | None:
+    """Resolve an epic reference (string ref or inline dict) to a dict.
+
+    Checks shard files first, then falls back to sibling keys in the
+    initiative data (e.g., ``epic-132:`` as a top-level key alongside
+    ``epics: [epic-132]``).
+    """
     import yaml
 
     if isinstance(ref, dict):
@@ -1917,6 +1922,11 @@ def _resolve_epic_ref(ref, sprint_dir) -> dict | None:
         if shard.exists():
             with open(shard) as f:
                 return yaml.safe_load(f.read())
+        # Fall back to inline sibling key in initiative data
+        if init_data is not None:
+            inline = init_data.get(ref)
+            if isinstance(inline, dict):
+                return inline
     return None
 
 
@@ -1931,7 +1941,7 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
             continue
 
         for e in init_data.get("epics", []):
-            edata = _resolve_epic_ref(e, sprint_dir)
+            edata = _resolve_epic_ref(e, sprint_dir, init_data)
             if not edata:
                 continue
             eid = str(edata.get("id", ""))
