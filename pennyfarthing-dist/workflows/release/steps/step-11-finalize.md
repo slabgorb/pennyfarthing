@@ -11,7 +11,7 @@ Create a GitHub release with release notes, verify everything is consistent, and
 </instructions>
 
 <output>
-Release summary with links to GitHub release, npm packages, and git tag.
+Release summary with links to GitHub release, npm packages, PyPI package, and git tag.
 </output>
 
 ## Execution
@@ -48,6 +48,9 @@ echo "npm:"
 npm view @pennyfarthing/core@{new_version} version 2>/dev/null && echo "  @pennyfarthing/core@{new_version} ✓" || echo "  @pennyfarthing/core@{new_version} ✗"
 npm view @pennyfarthing/cyclist@{new_version} version 2>/dev/null && echo "  @pennyfarthing/cyclist@{new_version} ✓" || echo "  @pennyfarthing/cyclist@{new_version} ✗"
 echo ""
+echo "PyPI:"
+pip index versions pennyfarthing-scripts 2>/dev/null | grep -q "{new_version}" && echo "  pennyfarthing-scripts@{new_version} ✓" || echo "  pennyfarthing-scripts@{new_version} ✗"
+echo ""
 echo "GitHub:"
 gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  No GitHub release"
 ```
@@ -57,40 +60,48 @@ gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  N
 **For stable release:**
 
 ```
-╔══════════════════════════════════════╗
-║       Release {new_version} Complete       ║
-╠══════════════════════════════════════╣
-║                                      ║
-║  Tag:     v{new_version}                   ║
-║  npm:     @pennyfarthing/core        ║
-║           @pennyfarthing/cyclist     ║
-║  GitHub:  (release URL)              ║
-║                                      ║
-║  Branches pushed: develop, main      ║
-║  Current branch:  develop            ║
-║                                      ║
-╚══════════════════════════════════════╝
+╔════════════════════════════════════════════╗
+║       Release {new_version} Complete             ║
+╠════════════════════════════════════════════╣
+║                                            ║
+║  Tag:     v{new_version}                         ║
+║  npm:     @pennyfarthing/core              ║
+║           @pennyfarthing/cyclist           ║
+║  PyPI:    pennyfarthing-scripts            ║
+║  GitHub:  (release URL)                    ║
+║                                            ║
+║  Branches pushed: develop, main            ║
+║  Current branch:  develop                  ║
+║                                            ║
+║  Install:                                  ║
+║    pip install pennyfarthing-scripts       ║
+║    npm install @pennyfarthing/core         ║
+║                                            ║
+╚════════════════════════════════════════════╝
 ```
 
 **For prerelease:**
 
 ```
-╔══════════════════════════════════════════╗
-║  Prerelease {new_version} Complete            ║
-╠══════════════════════════════════════════╣
-║                                          ║
-║  Tag:       v{new_version}                    ║
-║  npm tag:   {prerelease_channel}              ║
-║  npm:       @pennyfarthing/core          ║
-║             @pennyfarthing/cyclist       ║
-║  GitHub:    (prerelease URL)             ║
-║                                          ║
-║  Branch pushed: develop (main unchanged) ║
-║  Current branch: develop                 ║
-║                                          ║
-║  Install: npm i @pennyfarthing/core@{channel} ║
-║                                          ║
-╚══════════════════════════════════════════╝
+╔════════════════════════════════════════════════╗
+║  Prerelease {new_version} Complete                  ║
+╠════════════════════════════════════════════════╣
+║                                                ║
+║  Tag:       v{new_version}                          ║
+║  npm tag:   {prerelease_channel}                    ║
+║  npm:       @pennyfarthing/core                ║
+║             @pennyfarthing/cyclist             ║
+║  PyPI:      pennyfarthing-scripts              ║
+║  GitHub:    (prerelease URL)                   ║
+║                                                ║
+║  Branch pushed: develop (main unchanged)       ║
+║  Current branch: develop                       ║
+║                                                ║
+║  Install:                                      ║
+║    pip install --pre pennyfarthing-scripts     ║
+║    npm i @pennyfarthing/core@{channel}         ║
+║                                                ║
+╚════════════════════════════════════════════════╝
 ```
 
 ---

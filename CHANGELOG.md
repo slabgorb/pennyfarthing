@@ -11,6 +11,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.0.0] - 2026-02-24
+
+### Breaking Changes
+
+- **Python-first installation** — `pip install pennyfarthing-scripts` replaces `npm install @pennyfarthing/core` as primary install path. `pf init` replaces `npx pennyfarthing init`. Epic 126 (MSSCI-15488).
+- **Wrapper chain removed** — `pf.sh`, `run-pf.sh`, and all uv-based invocation removed. All hooks and scripts call `pf` directly (126-4)
+- **Node init removed** — `init.ts`, npx entry point, `postinstall.cjs`, `setup-detector.js`, `session-start.js` all removed (126-9)
+
+### Added
+
+- **`pf init` in Python** — full project bootstrap: directory structure, commands/skills, settings, `--dry-run` support (126-2)
+- **Auto-setup integration** — `pf init` runs repo discovery, theme selection, git hooks, and Node package install automatically (126-3)
+- **`pf upgrade`** — detects npm-based installs and migrates to Python-based structure, preserving custom hooks and config (126-7)
+- **`pf upgrade --clean`** — removes npm artifacts and stale symlinks after migration (126-14)
+- **`pf doctor --fix`** — reduced to ~10 health checks with interactive repair mode (126-8)
+- **Config consolidation** — `preferences.yaml` migrated into `config.local.yaml` as single source of truth (126-5)
+- **Frontmatter hooks** — agent .md files and skill directories declare their own hooks; `settings.local.json` reduced to 5 infrastructure hooks (126-6)
+- **Setup auto-detection** — session-start hook detects incomplete setup and prompts to run `/pf-setup` (126-12)
+- **LFS portrait pull** — `pf init`/`pf-setup` pulls Git LFS portraits for the active theme (126-15)
+- **PyPI publishing** — `pf` CLI published to private PyPI with CI pipeline (126-1)
+- **BikeRack extraction** — server engine, WebSocket/OTLP, display components extracted into `packages/bikerack` (124-1 through 124-6)
+- **DataSource refactor** — `DataSource<T>` pattern for panel data hooks (MSSCI-15554)
+- **Ordinal IDs in sprint panel** — TUI and GUI show ordinal story IDs (MSSCI-15580)
+- **Sprint standalone stories** — `pf sprint standalone add` and session archive steps
+- **Event-driven Jira sync** — sync triggers on story transitions (125-8)
+- **Story lifecycle state machine** — formalized story state transitions (125-7)
+- **SprintContext dataclass** — centralized sprint data resolution (125-1, 125-2)
+- **Sprint data canonical output** — `pf sprint data --json` for subprocess consumption (125-6)
+- **What Is Pennyfarthing** — reference card guide (MSSCI-15616)
+
+### Changed
+
+- **Agent activation simplified** — removed redundant `env.sh` sourcing from all command files
+- **Shared hook constants** — `_INFRASTRUCTURE_HOOKS` extracted and shared between init and upgrade (126-13)
+- **Release workflow updated** — dual npm + PyPI publishing with verification gates
+- **CI consumer smoke test** — disabled during Python migration
+
+### Fixed
+
+- **73 broken tests repaired** — across shared, core, and cyclist packages
+- **Inline initiative epics** — `pf sprint epic promote` and future commands handle inline epics correctly (126-16)
+- **Sprint status filter** — `pf sprint status` filter flag wired up; standalone stories visible in future view
+- **ESLint and ruff compliance** — unused vars, import sorting resolved across packages
+- **pnpm-lock.yaml sync** — bikerack devDependencies synced
+- **Stale init references** — ~30 references to `pennyfarthing init` / `npx pennyfarthing` updated to `pf setup` (126-11)
+- **Hook auto-update** — `pf` CLI auto-updates on git pull to prevent cross-repo contamination
+
+---
+
 ## [11.5.0-alpha.0] - 2026-02-21
 
 ### Added
@@ -2731,7 +2780,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.0.0...HEAD
+[12.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...v12.0.0
 [11.5.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...v11.5.0-alpha.0
 [11.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.8...v11.4.0
 [11.3.8]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.7...v11.3.8

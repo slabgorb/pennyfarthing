@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/benchmark",
-  "version": "11.5.0-alpha.0",
+  "version": "12.0.0",
   "description": "Benchmark aggregation and OCEAN correlation for Pennyfarthing JobFair system",
   "type": "module",
   "main": "dist/index.js",

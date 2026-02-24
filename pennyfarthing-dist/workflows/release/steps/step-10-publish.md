@@ -1,34 +1,35 @@
-# Step 10: Publish to npm
+# Step 10: Publish to npm and PyPI
 
 <purpose>
-Publish all Pennyfarthing packages to the npm registry. Uses `pnpm publish` to
-resolve `workspace:*` dependencies to real version numbers. Verifies authentication,
-checks for conflicts, publishes each package, and verifies registry state.
+Publish all Pennyfarthing packages to npm and the pf CLI to PyPI. Uses `pnpm publish`
+for npm (to resolve `workspace:*` dependencies) and `python -m build` + `twine` for PyPI.
+Verifies authentication, checks for conflicts, publishes, and verifies registry state.
 </purpose>
 
 <critical>
-**MUST use `pnpm publish`** — not `npm publish`. Packages use `workspace:*` protocol
+**npm: MUST use `pnpm publish`** — not `npm publish`. Packages use `workspace:*` protocol
 for inter-package dependencies. `pnpm publish` resolves these to actual version numbers
 at publish time. `npm publish` does NOT — it publishes the literal `workspace:*` string,
 which breaks consumer installs.
 </critical>
 
 <instructions>
-1. Verify npm authentication
-2. Check that versions aren't already published
+1. Verify npm and PyPI authentication
+2. Check that versions aren't already published on either registry
 3. Publish @pennyfarthing/core (root package) via pnpm
 4. Publish workspace packages via pnpm
-5. Verify published versions and resolved dependencies on registry
+5. Build and publish pf CLI to PyPI via twine
+6. Verify published versions on both registries
 </instructions>
 
 <output>
-pnpm publish results for each package, plus registry verification including
-dependency resolution check (no workspace:* in published metadata).
+Publish results for each package on both registries, plus verification including
+dependency resolution check (no workspace:* in published npm metadata).
 </output>
 
 ## Execution
 
-### 10.1 Verify npm Auth
+### 10.1 Verify Authentication
 
 ```bash
 echo "=== npm Authentication ==="
@@ -37,6 +38,11 @@ if [[ $? -ne 0 ]]; then
     echo "ERROR: Not logged in to npm. Run 'npm login' first."
     exit 1
 fi
+
+echo ""
+echo "=== PyPI Authentication ==="
+# Verify twine is available and credentials are configured
+python -m twine --version || echo "ERROR: twine not installed. Run 'pip install twine build'"
 ```
 
 If using a token from `.env`:
@@ -50,16 +56,22 @@ fi
 ### 10.2 Pre-Publish Check
 
 ```bash
-echo "=== Pre-Publish Check ==="
+echo "=== npm Pre-Publish Check ==="
 for PKG_JSON in package.json packages/*/package.json; do
     PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
     npm view "$PKG_NAME@{new_version}" version 2>/dev/null \
         && echo "WARNING: $PKG_NAME@{new_version} already published!" \
         || echo "✓ $PKG_NAME@{new_version} not yet published"
 done
+
+echo ""
+echo "=== PyPI Pre-Publish Check ==="
+pip index versions pennyfarthing-scripts 2>/dev/null | grep -q "{new_version}" \
+    && echo "WARNING: pennyfarthing-scripts@{new_version} already on PyPI!" \
+    || echo "✓ pennyfarthing-scripts@{new_version} not yet published"
 ```
 
-### 10.3 Determine npm Dist-Tag
+### 10.3 Determine Dist-Tags
 
 ```bash
 if [[ "$IS_PRERELEASE" == "true" ]]; then
@@ -74,14 +86,14 @@ else
 fi
 ```
 
-### 10.4 Publish Root Package (Core)
+### 10.4 Publish npm — Root Package (Core)
 
 ```bash
 echo "Publishing @pennyfarthing/core@{new_version}..."
 pnpm publish --access public --no-git-checks $NPM_TAG
 ```
 
-### 10.5 Publish Workspace Packages
+### 10.5 Publish npm — Workspace Packages
 
 ```bash
 for pkg_dir in packages/cyclist packages/shared packages/themes-*; do
@@ -93,7 +105,33 @@ for pkg_dir in packages/cyclist packages/shared packages/themes-*; do
 done
 ```
 
-### 10.6 Verify Published (including workspace:* resolution)
+### 10.6 Publish PyPI — pf CLI
+
+```bash
+echo ""
+echo "=== Building pf CLI for PyPI ==="
+cd pennyfarthing-dist
+
+# Clean previous builds
+rm -rf dist/ build/ *.egg-info
+
+# Build sdist and wheel
+python -m build
+echo ""
+echo "Built artifacts:"
+ls -la dist/
+
+echo ""
+echo "=== Publishing to PyPI ==="
+if [[ "$IS_PRERELEASE" == "true" ]]; then
+    echo "Prerelease — publishing to PyPI (pip install --pre pennyfarthing-scripts)"
+fi
+python -m twine upload dist/*
+
+cd ..
+```
+
+### 10.7 Verify Published
 
 ```bash
 echo "=== Registry Verification ==="
@@ -101,7 +139,7 @@ echo "Waiting 10s for registry propagation..."
 sleep 10
 
 echo ""
-echo "=== Version Check ==="
+echo "=== npm Version Check ==="
 for PKG_JSON in package.json packages/*/package.json; do
     PKG_NAME=$(node -e "console.log(require('./$PKG_JSON').name)")
     npm view "$PKG_NAME@{new_version}" version 2>/dev/null \
@@ -110,7 +148,13 @@ for PKG_JSON in package.json packages/*/package.json; do
 done
 
 echo ""
-echo "=== Dependency Resolution Check ==="
+echo "=== PyPI Version Check ==="
+pip index versions pennyfarthing-scripts 2>/dev/null | grep -q "{new_version}" \
+    && echo "  ✓ pennyfarthing-scripts@{new_version}" \
+    || echo "  ✗ pennyfarthing-scripts@{new_version} NOT FOUND"
+
+echo ""
+echo "=== npm Dependency Resolution Check ==="
 echo "Verifying no workspace:* references leaked to npm..."
 LEAKED=0
 for PKG_JSON in package.json packages/*/package.json; do
@@ -135,8 +179,10 @@ if [[ "$IS_PRERELEASE" == "true" ]]; then
     echo "Checking that 'latest' still points to the stable release..."
     npm view @pennyfarthing/core dist-tags 2>/dev/null
     echo ""
-    echo "Users install stable: npm install @pennyfarthing/core"
-    echo "Users install alpha:  npm install @pennyfarthing/core@$PRERELEASE_CHANNEL"
+    echo "npm stable:  npm install @pennyfarthing/core"
+    echo "npm alpha:   npm install @pennyfarthing/core@$PRERELEASE_CHANNEL"
+    echo "pip stable:  pip install pennyfarthing-scripts"
+    echo "pip pre:     pip install --pre pennyfarthing-scripts"
 fi
 ```
 
@@ -145,6 +191,6 @@ fi
 <!-- GATE -->
 
 **[C]** Continue to GitHub release
-**[S]** Skip GitHub release (npm is already published)
+**[S]** Skip GitHub release (packages are already published)
 
 <!-- CYCLIST:CHOICES:C,S -->

@@ -96,6 +96,9 @@ Set `IS_PRERELEASE=true` and `PRERELEASE_CHANNEL` (alpha/beta/rc) for use in lat
 # Check npm (prerelease uses dist-tag, but still check exact version)
 npm view @pennyfarthing/core@$NEW_VERSION version 2>/dev/null && echo "WARNING: $NEW_VERSION already on npm!"
 
+# Check PyPI
+pip index versions pennyfarthing-scripts 2>/dev/null | grep -q "$NEW_VERSION" && echo "WARNING: $NEW_VERSION already on PyPI!"
+
 # Check git tags
 git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION already exists!"
 
@@ -117,6 +120,7 @@ fi
 | Clean working dir  | ✓/✗    |
 | On develop branch  | ✓/✗    |
 | npm not published  | ✓/✗    |
+| PyPI not published | ✓/✗    |
 | Tag not exists     | ✓/✗    |
 
 **Version:** {CURRENT_VERSION} → {NEW_VERSION}

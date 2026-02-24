@@ -1,17 +1,18 @@
 # Step 2: Bump Version
 
 <purpose>
-Update all version files (VERSION, package.json, workspace packages, README, CHANGELOG) and show the full diff for review before committing anything.
+Update all version files (VERSION, package.json, workspace packages, Python pf CLI, README, CHANGELOG) and show the full diff for review before committing anything.
 </purpose>
 
 <instructions>
 1. Write new version to VERSION file
 2. Update root package.json version
 3. Update all workspace package versions (core, cyclist, shared, theme packs)
-4. Update README.md version badge
-5. Update package-lock.json
-6. Update CHANGELOG.md (version links and header)
-7. Show complete diff of all changes for review
+4. Update Python pf CLI version (`pennyfarthing-dist/src/pf/__init__.py`)
+5. Update README.md version badge
+6. Update package-lock.json
+7. Update CHANGELOG.md (version links and header)
+8. Show complete diff of all changes for review
 </instructions>
 
 <output>
@@ -45,7 +46,15 @@ for PKG_JSON in packages/*/package.json; do
 done
 ```
 
-### 2.4 Update README.md
+### 2.4 Update Python pf CLI Version
+
+```bash
+# Update __version__ in pf/__init__.py (source of truth for PyPI package)
+sed -i '' -E 's/__version__ = "[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?"/__version__ = "{new_version}"/' pennyfarthing-dist/src/pf/__init__.py
+echo "Updated pennyfarthing-dist/src/pf/__init__.py"
+```
+
+### 2.5 Update README.md
 
 **Skip for prerelease** — README should always reflect the latest stable version.
 
@@ -55,13 +64,13 @@ if [[ "$IS_PRERELEASE" != "true" ]]; then
 fi
 ```
 
-### 2.5 Update package-lock.json
+### 2.6 Update package-lock.json
 
 ```bash
 [[ -f package.json ]] && npm install --package-lock-only --silent 2>/dev/null
 ```
 
-### 2.6 Update CHANGELOG.md
+### 2.7 Update CHANGELOG.md
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
@@ -69,7 +78,7 @@ TODAY=$(date +%Y-%m-%d)
 # See deploy.sh for full sed commands
 ```
 
-### 2.7 Show Diff for Review
+### 2.8 Show Diff for Review
 
 ```bash
 echo "=== Version Bump Diff ==="
@@ -86,6 +95,7 @@ git diff --stat
 | `VERSION` | `{new_version}` |
 | `package.json` | `"version": "{new_version}"` |
 | `packages/*/package.json` | `"version": "{new_version}"` (all workspace packages) |
+| `pennyfarthing-dist/src/pf/__init__.py` | `__version__ = "{new_version}"` |
 | `README.md` | Badge updated (stable only) |
 | `CHANGELOG.md` | New version header |
 
