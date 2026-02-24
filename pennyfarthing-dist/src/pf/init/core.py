@@ -171,6 +171,13 @@ def init_project(
     # --- Update .gitignore ---
     _update_gitignore(target_dir)
 
+    # --- Run auto-setup workflow ---
+    from pf.init import setup
+
+    setup_result = setup.run_setup(
+        target_dir=target_dir, dist_root=dist_root, skip_prompts=True, dry_run=True
+    )
+
     return {
         "success": True,
         "data": {
@@ -179,6 +186,7 @@ def init_project(
             "directories_created": len(directories),
             "settings_written": settings_written,
             "gitignore_updated": True,
+            "setup": setup_result.get("data", {}),
         },
     }
 

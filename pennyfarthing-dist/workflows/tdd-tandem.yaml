@@ -4,21 +4,25 @@
 # during implementation provides high value. Use this instead of base tdd when
 # the story involves cross-cutting concerns, new patterns, or complex integrations.
 #
-# Tandem pairings:
-#   - RED phase: TEA + Architect (file-watch) — Architect reviews test strategy
-#   - GREEN phase: Dev + Architect (file-watch) — Architect guides implementation patterns
-#   - VERIFY phase: TEA + Architect (file-watch) — Architect reviews implementation quality
-#   - REVIEW phase: Reviewer + PM (file-watch) — PM validates business requirements
+# Team pairings (native Agent Teams when available):
+#   - RED phase: TEA (lead) + Architect — Architect reviews test strategy
+#   - GREEN phase: Dev (lead) + Architect — Architect guides implementation patterns
+#   - VERIFY phase: TEA (lead) + Architect — Architect reviews implementation quality
+#   - REVIEW phase: Reviewer (lead) + PM — PM validates business requirements
 #
-# Compared to base tdd: Adds tandem observers on every working phase.
+# Fallback: When native teams are unavailable (non-interactive mode, feature
+# flag off, or CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set), phases with
+# team blocks fall back to tandem consultation via the backseat observer pattern.
+#
+# Compared to base tdd: Adds teammate/tandem observers on every working phase.
 # The extra context from partner agents helps catch architectural drift early.
 #
 # Flow: SM → TEA (+Architect) → Dev (+Architect) → TEA (+Architect, verify) → Reviewer (+PM) → SM
 
 workflow:
   name: tdd-tandem
-  description: TDD with full tandem chain — architect and PM consultation across phases
-  version: "2.0.0"
+  description: TDD with full tandem chain — architect and PM collaboration across phases
+  version: "3.0.0"
 
   phases:
     - name: setup
@@ -37,6 +41,10 @@ workflow:
         file: gates/tests-fail
         type: tests_fail
         condition: All acceptance criteria have test coverage
+      team:
+        teammates:
+          - agent: architect
+            task: "Review test strategy and architectural alignment. Flag missing edge cases or coupling concerns via SendMessage."
       tandem:
         partner: architect
         scope: file-watch
@@ -49,6 +57,10 @@ workflow:
         file: gates/dev-exit
         type: dev_exit
         condition: Tests green, tree clean, no debug code, correct branch
+      team:
+        teammates:
+          - agent: architect
+            task: "Review implementation approach and patterns. Guide on coupling, abstractions, and existing conventions via SendMessage."
       tandem:
         partner: architect
         scope: file-watch
@@ -61,18 +73,10 @@ workflow:
         file: gates/quality-pass
         type: quality_pass
         condition: Lint, typecheck, and all tests passing
-      tandem:
-        partner: architect
-        scope: file-watch
-
-    - name: verify
-      agent: tea
-      input: [implementation, passing_tests]
-      output: [quality_verified]
-      gate:
-        file: gates/quality-pass
-        type: quality_pass
-        condition: Lint, typecheck, and all tests passing
+      team:
+        teammates:
+          - agent: architect
+            task: "Review implementation quality against architectural standards. Flag regressions or pattern violations via SendMessage."
       tandem:
         partner: architect
         scope: file-watch
@@ -85,6 +89,10 @@ workflow:
         file: gates/approval
         type: approval
         condition: Code review approved, no blocking issues
+      team:
+        teammates:
+          - agent: pm
+            task: "Validate business requirements and acceptance criteria are met. Flag gaps via SendMessage."
       tandem:
         partner: pm
         scope: file-watch
