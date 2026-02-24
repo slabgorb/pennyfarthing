@@ -235,14 +235,8 @@ def _get_character_display(project_root: str, agent_name: str) -> tuple[str, str
     if not HAS_YAML or not agent_name:
         return "", None
 
-    config_file = None
-    for name in ("config.local.yaml", "persona-config.yaml"):
-        candidate = Path(project_root) / ".pennyfarthing" / name
-        if candidate.is_file():
-            config_file = candidate
-            break
-
-    if not config_file:
+    config_file = Path(project_root) / ".pennyfarthing" / "config.local.yaml"
+    if not config_file.is_file():
         return "", None
 
     try:

@@ -242,10 +242,7 @@ def format_persona_output(
 def is_character_voice_enabled(project_root: Path | None = None) -> bool:
     """Check if character voice is enabled in preferences.
 
-    Checks preferences files in order:
-    1. .claude/pennyfarthing/preferences.local.yaml
-    2. .claude/pennyfarthing/preferences.yaml
-
+    Reads from .pennyfarthing/config.local.yaml preferences section.
     Defaults to True if no preference is set.
 
     Args:
@@ -256,13 +253,10 @@ def is_character_voice_enabled(project_root: Path | None = None) -> bool:
     """
     root = project_root or get_project_root()
 
-    prefs_paths = [
-        root / ".claude" / "pennyfarthing" / "preferences.local.yaml",
-        root / ".claude" / "pennyfarthing" / "preferences.yaml",
-    ]
-
-    for prefs_path in prefs_paths:
-        prefs = load_yaml_config(prefs_path)
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config = load_yaml_config(config_path)
+    if config:
+        prefs = config.get("preferences", {})
         if prefs and "character_voice" in prefs:
             return prefs["character_voice"] is not False
 

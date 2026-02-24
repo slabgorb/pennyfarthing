@@ -371,6 +371,10 @@ def prime(
 
     root = project_root or get_project_root()
 
+    # Run config migration (upgrade path — consolidate legacy config files)
+    from pf.config_migration import migrate_config
+    migrate_config(root)
+
     # Build result for JSON output
     result = PrimeResult(agent_name=agent_name or "")
 
@@ -660,3 +664,58 @@ Examples:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ---------------------------------------------------------------------------
+# Click command for `pf prime` registration
+# ---------------------------------------------------------------------------
+try:
+    import click
+
+    @click.command("prime")
+    @click.argument("name", required=False)
+    @click.option("--session-id", help="Use explicit session ID")
+    @click.option("--no-persona", is_flag=True, help="Skip persona loading")
+    @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+    @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
+    @click.option("--full", is_flag=True, help="Include domain docs")
+    @click.option("--quiet", is_flag=True, help="Suppress section headers")
+    @click.option(
+        "--tier",
+        type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
+        help="Context tier level",
+    )
+    def prime_cmd(
+        name: str | None,
+        session_id: str | None,
+        no_persona: bool,
+        output_json: bool,
+        minimal: bool,
+        full: bool,
+        quiet: bool,
+        tier: str | None,
+    ):
+        """Load agent context (unified bootstrap).
+
+        Equivalent to `pf agent start` — loads agent definition, persona,
+        behavior guide, sprint context, session context, and sidecar memory.
+
+        \b
+        Arguments:
+          NAME  - Agent name (sm, tea, dev, reviewer, etc.)
+        """
+        exit_code = prime(
+            agent_name=name,
+            session_id=session_id,
+            no_persona=no_persona,
+            json_output=output_json,
+            minimal=minimal,
+            full=full,
+            quiet=quiet,
+            tier=tier,
+        )
+        raise SystemExit(exit_code)
+
+except ImportError:
+    # Click not available — CLI registration skipped (argparse fallback still works)
+    pass

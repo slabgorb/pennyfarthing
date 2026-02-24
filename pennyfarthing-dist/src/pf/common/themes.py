@@ -143,9 +143,7 @@ def resolve_theme_path(theme: str, project_root: Path | None = None) -> Path | N
 def get_current_theme(project_root: Path | None = None) -> str | None:
     """Get the currently configured theme.
 
-    Checks config files in priority order:
-    1. .pennyfarthing/config.local.yaml
-    2. .pennyfarthing/persona-config.yaml
+    Reads from .pennyfarthing/config.local.yaml only.
 
     Args:
         project_root: Project root (auto-detected if not provided)
@@ -155,15 +153,10 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
     """
     root = project_root or get_project_root()
 
-    config_paths = [
-        root / ".pennyfarthing" / "config.local.yaml",
-        root / ".pennyfarthing" / "persona-config.yaml",
-    ]
-
-    for config_path in config_paths:
-        config = load_yaml_config(config_path)
-        if config and "theme" in config:
-            return config["theme"]
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config = load_yaml_config(config_path)
+    if config and "theme" in config:
+        return config["theme"]
 
     return None
 
