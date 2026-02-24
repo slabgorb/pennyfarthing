@@ -33,6 +33,8 @@ def update_story(
     description: str | None = None,
     review_findings: str | None = None,
     review_verdict: str | None = None,
+    add_ac: list[str] | None = None,
+    clear_ac: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Update fields on a story in the sprint YAML.
@@ -50,6 +52,8 @@ def update_story(
         description: Story description text
         review_findings: Reviewer findings text
         review_verdict: Review verdict (approved, rejected, pending)
+        add_ac: Acceptance criteria to append
+        clear_ac: If True, clear existing ACs before adding
         dry_run: If True, report changes without writing
 
     Returns:
@@ -114,6 +118,14 @@ def update_story(
                 "error": f"Invalid review_verdict '{review_verdict}'. Must be one of: approved, rejected, pending",
             }
         story["review_verdict"] = review_verdict
+    if clear_ac:
+        story["acceptance_criteria"] = []
+    if add_ac:
+        existing = story.get("acceptance_criteria", [])
+        if not isinstance(existing, list):
+            existing = []
+        existing.extend(add_ac)
+        story["acceptance_criteria"] = existing
 
     # Auto-cleanup rules
     if status == "done":
@@ -173,6 +185,8 @@ def update_story(
 @click.option("--description", default=None, help="Story description text")
 @click.option("--review-findings", default=None, help="Reviewer findings text")
 @click.option("--review-verdict", type=click.Choice(["approved", "rejected", "pending"]), default=None)
+@click.option("--add-ac", multiple=True, help="Acceptance criterion to append (repeatable)")
+@click.option("--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)")
 @click.option("--dry-run", is_flag=True)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
@@ -187,6 +201,8 @@ def story_update_command(
     description: str | None,
     review_findings: str | None,
     review_verdict: str | None,
+    add_ac: tuple[str, ...],
+    clear_ac: bool,
     dry_run: bool,
     sprint_file: str | None,
 ) -> None:
@@ -210,6 +226,8 @@ def story_update_command(
         description=description,
         review_findings=review_findings,
         review_verdict=review_verdict,
+        add_ac=list(add_ac) if add_ac else None,
+        clear_ac=clear_ac,
         dry_run=dry_run,
     )
 
