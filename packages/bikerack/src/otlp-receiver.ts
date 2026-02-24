@@ -1,12 +1,18 @@
 /**
- * OTLP receiver for server module.
+ * OTLP receiver for BikeRack server module.
  * Provides real OTLP processing for standalone mode (BikeRack/WheelHub)
- * without requiring Cyclist's provider.
+ * with full span correlation, file enrichment, and per-agent/story aggregation.
  *
- * Supports a provider pattern: call setOTLPProvider() with the real implementation
- * (e.g. from cyclist's otlp-receiver) to wire live data through the API routes.
- * Without a provider, functions use in-memory stores for standalone operation.
+ * Story 124-2: Moved from Cyclist to BikeRack for standalone operation.
+ *
+ * Supports a provider pattern: call setOTLPProvider() with an external implementation
+ * to override default processing. Without a provider, uses in-memory stores.
  */
+
+import { correlateSpan, consumePendingToolInput } from './span-correlation.js';
+import { enrichReadSpan, enrichEditSpan, enrichWriteSpan, enrichBashSpan } from './file-enrichment.js';
+import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
+import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
 
 export interface TokenStats {
   inputTokens: number;
@@ -335,8 +341,37 @@ export function getUserEmail(): string | null {
   return _userEmail;
 }
 
+// =============================================================================
+// OTEL Debug (Story 36-10)
+// =============================================================================
+
+let _otelDebugEnabled = false;
+
+export function setOtelDebug(enabled: boolean): void {
+  _otelDebugEnabled = enabled;
+}
+
 export function isOtelDebugEnabled(): boolean {
-  return false;
+  return _otelDebugEnabled;
+}
+
+// =============================================================================
+// Tool Event Recording and Retrieval
+// =============================================================================
+
+let _toolEvents: ToolEvent[] = [];
+
+export function recordToolEvent(event: ToolEvent): void {
+  _toolEvents.push(event);
+}
+
+export function getToolEvents(): ToolEvent[] {
+  return [..._toolEvents];
+}
+
+export function resetTokenStats(): void {
+  _tokenStats = _emptyStats();
+  _tokenStatsListeners = [];
 }
 
 export function clearAuditLog(): void {

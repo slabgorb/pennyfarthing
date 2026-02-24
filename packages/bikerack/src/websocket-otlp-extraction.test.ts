@@ -273,7 +273,7 @@ describe('AC2: Real OTLP receiver implementation in packages/bikerack/', () => {
     assert.ok(existsSync(fePath), 'file-enrichment.ts does not exist');
     const content = readFileSync(fePath, 'utf-8');
     assert.ok(
-      /export\s+function\s+enrichReadSpan/.test(content),
+      /export\s+(async\s+)?function\s+enrichReadSpan/.test(content),
       'file-enrichment.ts should export enrichReadSpan'
     );
   });

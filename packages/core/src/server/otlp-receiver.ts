@@ -72,7 +72,7 @@ export interface OTLPProvider {
   exportAuditLogAsCSV(toolType?: string): string;
   resetEventStore(): void;
 
-  // span-correlation.ts (Story 120-13: hook-based tool input forwarding)
+  // Story 120-13: hook-based tool input forwarding
   storePendingToolInput?(toolId: string, toolName: string, input: Record<string, unknown>): void;
 }
 
