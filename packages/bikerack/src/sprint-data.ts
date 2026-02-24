@@ -12,7 +12,6 @@
  */
 
 import { execSync } from 'child_process';
-import { join } from 'path';
 import { getStoryInfo } from './story-parser.js';
 
 // =============================================================================
@@ -211,9 +210,8 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   // Call canonical CLI subprocess
   let canonical: CanonicalData;
   try {
-    const pfScript = join(projectDir, '.pennyfarthing', 'scripts', 'core', 'pf.sh');
     const raw = execSync(
-      `"${pfScript}" sprint data --json`,
+      'pf sprint data --json',
       { cwd: projectDir, encoding: 'utf-8', timeout: 10000 },
     );
     canonical = JSON.parse(raw.trim());
