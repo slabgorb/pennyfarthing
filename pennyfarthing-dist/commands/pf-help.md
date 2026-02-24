@@ -11,6 +11,8 @@ Provides quick-start guidance for new users and context-aware suggestions based 
 
 ## New to Pennyfarthing?
 
+Read the **[What Is Pennyfarthing?](../guides/what-is-pennyfarthing.md)** reference card for a 60-second overview.
+
 Start here:
 
 1. **`/pf-work`** - Smart entry point (resumes existing work or starts new)
