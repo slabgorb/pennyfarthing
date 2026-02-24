@@ -31,7 +31,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test dist/**/*.test.js",
+    "test": "echo 'No bikerack tests — see packages/core and packages/cyclist'",
     "clean": "rm -rf dist/"
   },
   "dependencies": {

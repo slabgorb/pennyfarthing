@@ -6,7 +6,6 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { DataSource } from '@pennyfarthing/core';
 
 export interface UseDataSourceOptions<R, T> {
   /** WebSocket endpoint path, e.g. '/ws/sprint' */

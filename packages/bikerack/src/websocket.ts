@@ -3,16 +3,15 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { watch, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
-import { getPersonaClients, broadcastPersona, getStreamingState, setStreamingState } from './api/persona.js';
+import { getPersonaClients, broadcastPersona, getStreamingState } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
 import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
-import { getTokenStats, getBackgroundTaskByToolId, addToolEventListener, addTokenStatsListener, trackBackgroundTask, completeBackgroundTask, getUserEmail, type ToolEvent } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTaskByToolId, addToolEventListener, addTokenStatsListener, getUserEmail, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { publicDir } from './paths.js';
-import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
 import { getSprintData } from './sprint-data.js';
 import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
@@ -29,14 +28,12 @@ import { getSettingsForWebSocket } from './api/settings.js';
 import { getCurrentSettings, initializeSettings, onSettingsChange } from '@pennyfarthing/core/dist/server/settings.js';
 import { getContextUsage, type ContextInfo } from './api/context.js';
 import { getConfigFocus, shouldBroadcastFocus, createFocusMessage } from './focus.js';
-import { storePendingToolInput } from './span-correlation.js';
 import {
   getAllGitDiffs,
   onDiffCacheRefresh,
   invalidateDiffCache,
   type GitDiffData,
 } from './git-diff.js';
-import { isTodoWriteMessage, extractTodos } from './todos.js';
 
 // =============================================================================
 // Subagent Message Enrichment
@@ -47,7 +44,7 @@ import { isTodoWriteMessage, extractTodos } from './todos.js';
  * If message has parent_tool_use_id, look up the Task that spawned it
  * and add subagent_type and subagent_name for UI display.
  */
-function enrichMessageWithSubagentContext(message: Record<string, unknown>): Record<string, unknown> {
+function _enrichMessageWithSubagentContext(message: Record<string, unknown>): Record<string, unknown> {
   const parentId = (message as { parent_tool_use_id?: string | null }).parent_tool_use_id;
   if (!parentId) return message;
 
