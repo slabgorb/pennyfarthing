@@ -5,7 +5,7 @@ description: Orchestrator - Coordinator of all agents and meta operations
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-source .pennyfarthing/scripts/lib/env.sh && pf agent start "orchestrator"
+pf agent start "orchestrator"
 ```
 This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>

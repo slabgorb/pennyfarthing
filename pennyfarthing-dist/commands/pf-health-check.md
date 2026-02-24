@@ -3,7 +3,7 @@ description: Check Pennyfarthing installation health and apply updates
 ---
 
 ```bash
-source .pennyfarthing/scripts/lib/env.sh && pf agent start "devops"
+pf agent start "devops"
 ```
 
 <agent-activation>
