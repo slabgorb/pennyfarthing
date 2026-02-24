@@ -83,9 +83,9 @@ export type { GitInfo } from './api/index.js';
 export { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory, getDistDir } from './paths.js';
 export { setProjectDirectory, resetProjectDirectory, parseProjectDirArg, isValidProjectDirectory } from './paths.js';
 
-// BikeRack mode detection
-import { isBikeRackMode } from './env.js';
-export { isBikeRackMode };
+// Mode detection — entry point determines mode (Story 124-4)
+import { getMode, setMode } from './env.js';
+export { getMode, setMode };
 
 // =============================================================================
 // Express App
@@ -130,7 +130,7 @@ function serveIndexHtml(_req: express.Request, res: express.Response) {
     res.status(404).send('index.html not found');
     return;
   }
-  const mode = isBikeRackMode() ? 'bikerack' : 'cyclist';
+  const mode = getMode();
   const injected = indexHtmlTemplate.replace(
     '</head>',
     `<script>window.__CYCLIST_MODE__="${mode}";</script>\n</head>`

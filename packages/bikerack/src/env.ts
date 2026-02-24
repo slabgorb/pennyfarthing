@@ -1,10 +1,12 @@
-// BikeRack mode detection (ADR-0024, Rule 1)
-// Extracted to break circular import: server → api/index → mode → server
+// Mode detection — entry point determines mode (Story 124-4)
+// Default is 'bikerack'; Cyclist overrides to 'cyclist' on import.
 
-/**
- * Centralized gate — all mode checks go through this function.
- * Returns true when IS_BIKERACK env var is set (by bikerack.ts entry point).
- */
-export function isBikeRackMode(): boolean {
-  return process.env.IS_BIKERACK === '1';
+let _mode: 'bikerack' | 'cyclist' = 'bikerack';
+
+export function getMode(): 'bikerack' | 'cyclist' {
+  return _mode;
+}
+
+export function setMode(mode: 'bikerack' | 'cyclist'): void {
+  _mode = mode;
 }
