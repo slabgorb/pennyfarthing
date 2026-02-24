@@ -1,8 +1,8 @@
-// BikeRack mode entry point (ADR-0024, Rule 9)
-// Sets IS_BIKERACK=1 BEFORE any imports that check it
-process.env.IS_BIKERACK = '1';
+// BikeRack mode entry point (Story 124-4)
+// Mode is 'bikerack' by default in @pennyfarthing/bikerack — no env var needed.
+// Import directly from bikerack to bypass Cyclist's mode override.
 
-import { createTerminalServer, findAvailablePort } from './server.js';
+import { createTerminalServer, findAvailablePort } from '@pennyfarthing/bikerack/server';
 import { writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
 

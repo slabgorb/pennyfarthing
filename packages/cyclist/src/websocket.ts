@@ -13,7 +13,7 @@ import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
-import { getOtelConfig, isBikeRackMode } from './server.js';
+import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
 import { getSprintData } from './sprint-data.js';
 import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
@@ -546,7 +546,7 @@ export function setupWebSocketServers(
       tokenStatsWss.handleUpgrade(request, socket, head, (ws) => {
         tokenStatsWss.emit('connection', ws, request);
       });
-    } else if (pathname === '/ws/claude' && !isBikeRackMode()) {
+    } else if (pathname === '/ws/claude') {
       claudeWss.handleUpgrade(request, socket, head, (ws) => {
         claudeWss.emit('connection', ws, request);
       });

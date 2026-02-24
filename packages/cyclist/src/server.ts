@@ -1,29 +1,33 @@
 /**
  * Server module for Cyclist.
  *
- * Thin wrapper around @pennyfarthing/core/server that overrides
+ * Thin wrapper around @pennyfarthing/bikerack/server that overrides
  * createTerminalServer to use Cyclist's real WebSocket implementation
- * and wires the real OTLP receiver into core's API routes.
+ * and wires the real OTLP receiver into BikeRack's API routes.
  *
  * All Express app configuration, API routes, settings initialization,
- * and utility functions are provided by core. Cyclist adds WebSocket support
- * and the real OTLP data source.
+ * and utility functions are provided by BikeRack. Cyclist adds WebSocket support,
+ * ClaudeService, and the real OTLP data source.
  *
- * Story 98-17: Move web server and API layer into core.
+ * Story 124-4: Rewire Cyclist to depend on BikeRack directly.
  */
 
 import { createServer, type Server } from 'http';
 
-// Import core's pre-configured Express app, project dir helper, and OTLP provider setter
+// Import BikeRack's pre-configured Express app, project dir helper, and OTLP provider setter
 import {
   app,
   getProjectDir,
   setOTLPProvider,
   initTokenStatsBroadcast,
-} from '@pennyfarthing/core/server';
+  setMode,
+} from '@pennyfarthing/bikerack/server';
+
+// Set Cyclist mode — BikeRack defaults to 'bikerack', Cyclist overrides
+setMode('cyclist');
 
 // Import Cyclist's real WebSocket implementation (1600+ lines)
-// Core has a no-op stub; Cyclist provides the real thing with 15+ channel handlers
+// BikeRack has a no-op stub; Cyclist provides the real thing with 15+ channel handlers
 import { setupWebSocketServers } from './websocket.js';
 
 // Import real OTLP functions from Cyclist's otlp-receiver (~1000 lines)
@@ -47,17 +51,17 @@ import {
 // Story 120-13: Hook-based tool input forwarding for audit log enrichment
 import { storePendingToolInput as realStorePendingToolInput } from './span-correlation.js';
 
-import type { OTLPProvider } from '@pennyfarthing/core/server';
+import type { OTLPProvider } from '@pennyfarthing/bikerack/server';
 
-// Wire the real OTLP implementation into core's API route stubs.
-// Core's server.ts calls initTokenStatsBroadcast() at module load (before this runs),
+// Wire the real OTLP implementation into BikeRack's API route stubs.
+// BikeRack's server.ts calls initTokenStatsBroadcast() at module load (before this runs),
 // so the first call hits the stub (no-op). After setting the provider, we re-call it
 // to register the real broadcast callback.
 //
-// Note: Cyclist's TokenStats/ToolEvent types are structurally compatible with core's
+// Note: Cyclist's TokenStats/ToolEvent types are structurally compatible with BikeRack's
 // but TypeScript sees them as distinct nominal types. The provider cast is safe because
-// cyclist's types are supersets of core's (more fields, same base shape).
-// Map cyclist's TokenStats (totalCostUsd, lastUpdated) to core's (totalCost, index sig)
+// cyclist's types are supersets of BikeRack's (more fields, same base shape).
+// Map cyclist's TokenStats (totalCostUsd, lastUpdated) to BikeRack's (totalCost, index sig)
 function mapTokenStats(stats: ReturnType<typeof realGetTokenStats>) {
   return {
     inputTokens: stats.inputTokens,
@@ -111,13 +115,13 @@ const provider: OTLPProvider = {
 setOTLPProvider(provider);
 
 // Re-initialize broadcast callbacks now that the real provider is set.
-// The first calls during core's module load were no-ops (stub was active).
+// The first calls during BikeRack's module load were no-ops (stub was active).
 initTokenStatsBroadcast();
 
 /**
  * Create HTTP server with Cyclist's WebSocket support.
- * Overrides core's no-op WebSocket stub with the real implementation
- * that handles stats, persona, token-stats, bell, welcome, hooks, etc.
+ * Overrides BikeRack's no-op WebSocket stub with the real implementation
+ * that handles stats, persona, token-stats, bell, welcome, hooks, claude, etc.
  */
 export function createTerminalServer(): Server {
   const server = createServer(app);
@@ -125,11 +129,11 @@ export function createTerminalServer(): Server {
   return server;
 }
 
-// Re-export everything from core's server module that cyclist consumers need.
+// Re-export everything from BikeRack's server module that cyclist consumers need.
 // bikerack.ts needs: createTerminalServer (overridden above), findAvailablePort
 // main.ts needs: getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile,
 //                writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig
-// websocket.ts needs: getOtelConfig, isBikeRackMode
+// websocket.ts needs: getOtelConfig
 export {
   app,
   getProjectDir,
@@ -160,11 +164,12 @@ export {
   isProcessRunning,
   // OTEL
   getOtelConfig,
-  // Env
-  isBikeRackMode,
+  // Mode
+  getMode,
+  setMode,
   // Grants
   clearSessionGrants,
-} from '@pennyfarthing/core/server';
+} from '@pennyfarthing/bikerack/server';
 
 // Type re-exports
 export type {
@@ -173,4 +178,4 @@ export type {
   CriteriaItem,
   GitInfo,
   OtelConfig,
-} from '@pennyfarthing/core/server';
+} from '@pennyfarthing/bikerack/server';
