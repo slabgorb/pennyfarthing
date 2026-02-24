@@ -156,7 +156,37 @@ main() {
     done <<< "$merge_commits"
 }
 
+# Auto-update pf CLI to point at this repo's source after pull
+update_pf_cli() {
+    # Only act if pipx manages pf and pennyfarthing-dist exists here
+    if ! command -v pipx &>/dev/null; then
+        return 0
+    fi
+
+    local dist_dir="$PROJECT_ROOT/pennyfarthing-dist"
+    [[ -d "$dist_dir" ]] || return 0
+
+    # Check if pyproject.toml changed in this merge — skip reinstall if not
+    local changed_files
+    changed_files=$(git diff --name-only HEAD@{1}..HEAD 2>/dev/null || true)
+    if ! echo "$changed_files" | grep -q "pennyfarthing-dist/pyproject.toml"; then
+        # Even if pyproject.toml didn't change, ensure pf points here
+        local current_target
+        current_target=$(pipx runpip pennyfarthing-scripts show pennyfarthing-scripts 2>/dev/null \
+            | grep "Editable project location" | awk '{print $NF}')
+        if [[ "$current_target" == "$dist_dir" ]]; then
+            return 0  # Already pointing here, nothing changed
+        fi
+    fi
+
+    echo "Updating pf CLI to point at $(basename "$(dirname "$PROJECT_ROOT")")/pennyfarthing..."
+    pipx install -e "$dist_dir" --force >/dev/null 2>&1 || {
+        echo "Warning: pf CLI update failed (pipx install -e $dist_dir)" >&2
+    }
+}
+
 # Only run main when executed directly (not when sourced for testing)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
+    update_pf_cli
 fi
