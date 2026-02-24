@@ -11,7 +11,7 @@
  * - Export with metadata and summary statistics
  */
 
-import { getToolEvents, type ToolEvent } from './otlp-receiver.js';
+import { getToolEvents, resetEventStore, type ToolEvent } from './otlp-receiver.js';
 import type { DiffSummary, OutputSummary } from './file-enrichment.js';
 
 // =============================================================================
@@ -184,17 +184,23 @@ export interface EnrichedSpanExport {
  */
 function toolEventToEnrichedSpan(event: ToolEvent): EnrichedSpan {
   const enrichment = buildEnrichmentData(event);
+  const spanId = (event.spanId as string) || `span-${event.timestamp as number}`;
+  const traceId = (event.traceId as string) || 'unknown';
+  const timestamp = (event.timestamp as number) || 0;
+  const durationMs = (event.durationMs as number) || 0;
+  const success = (event.success ?? false) as boolean;
+  const error = event.error as string | undefined;
 
   return {
-    spanId: event.spanId || `span-${event.timestamp}`,
-    traceId: event.traceId || 'unknown',
+    spanId,
+    traceId,
     toolName: event.toolName,
-    startTime: event.timestamp,
-    endTime: event.durationMs ? event.timestamp + event.durationMs : undefined,
-    durationMs: event.durationMs || 0,
-    status: event.error ? 'error' : 'completed',
-    success: event.success,
-    error: event.error,
+    startTime: timestamp,
+    endTime: durationMs ? timestamp + durationMs : undefined,
+    durationMs,
+    status: error ? 'error' : 'completed',
+    success,
+    error,
     enrichment,
   };
 }
@@ -269,6 +275,13 @@ function buildEnrichmentData(event: ToolEvent): EnrichmentData {
 export async function getEnrichedSpans(): Promise<EnrichedSpan[]> {
   const toolEvents = getToolEvents();
   return toolEvents.map(toolEventToEnrichedSpan);
+}
+
+/**
+ * Clear all enriched spans by resetting the underlying event store
+ */
+export function clearEnrichedSpans(): void {
+  resetEventStore();
 }
 
 /**
