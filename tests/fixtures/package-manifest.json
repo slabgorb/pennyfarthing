@@ -23,7 +23,6 @@
     "guides",
     "output-styles",
     "personas",
-    "pf",
     "scripts",
     "skills",
     "templates",
@@ -38,7 +37,6 @@
     "pennyfarthing-dist/pyproject.toml"
   ],
   "required_pennyfarthing_dist_scripts": [
-    "pennyfarthing-dist/scripts/core/pf.sh",
     "pennyfarthing-dist/scripts/lib/find-root.sh"
   ]
 }
