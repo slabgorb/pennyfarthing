@@ -27,6 +27,8 @@
     "clean": "rm -rf dist/"
   },
   "dependencies": {
+    "@pennyfarthing/core": "workspace:*",
+    "@pennyfarthing/shared": "workspace:*",
     "express": "^4.18.2",
     "ws": "^8.19.0",
     "yaml": "^2.3.4"
