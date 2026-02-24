@@ -101,6 +101,33 @@ This file provides guidance to Claude Code when working on this project.
 {test_command} -- --grep "pattern"    # Run specific tests
 ```
 
+## Developer Guidance
+
+{if has_pennyfarthing}
+### Getting Started
+
+- Run `/pf-help` for context-aware help on any command or agent
+- Run `/pf-sprint status` to see current sprint progress
+- Run `/pf-sprint work` to pick up your next story
+
+### Daily Workflow
+
+1. `/sm` — Start or resume a story (Scrum Master handles setup)
+2. Agent handoffs guide you through the workflow automatically
+3. `/reviewer` — Code review when implementation is complete
+4. `/sm` — Finish the story (archive, merge, Jira update)
+
+### Key Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/pf-help` | Context-aware help |
+| `/pf-sprint backlog` | See available work |
+| `/pf-sprint work STORY` | Start a specific story |
+| `/pf-theme show` | See your current persona theme |
+| `/pf-workflow` | Check active workflow status |
+{/if}
+
 ## Important Notes
 
 {Project-specific notes, gotchas, conventions}
@@ -135,7 +162,37 @@ If sprint/ exists:
 - `/pf-sprint work` - Start a story
 ```
 
-### 4. Add Project-Specific Sections
+### 4. Include Developer Guidance
+
+If `.pennyfarthing/` exists (Pennyfarthing is initialized):
+```markdown
+## Developer Guidance
+
+### Getting Started
+
+- Run `/pf-help` for context-aware help on any command or agent
+- Run `/pf-sprint status` to see current sprint progress
+- Run `/pf-sprint work` to pick up your next story
+
+### Daily Workflow
+
+1. `/sm` — Start or resume a story (Scrum Master handles setup)
+2. Agent handoffs guide you through the workflow automatically
+3. `/reviewer` — Code review when implementation is complete
+4. `/sm` — Finish the story (archive, merge, Jira update)
+
+### Key Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/pf-help` | Context-aware help |
+| `/pf-sprint backlog` | See available work |
+| `/pf-sprint work STORY` | Start a specific story |
+| `/pf-theme show` | See your current persona theme |
+| `/pf-workflow` | Check active workflow status |
+```
+
+### 5. Add Project-Specific Sections
 
 Based on tech stack:
 
@@ -179,6 +236,7 @@ Options:
 ✅ Commands are correct and tested
 ✅ Structure matches actual project
 ✅ Workflows appropriate for project type
+✅ Developer guidance included (if Pennyfarthing initialized)
 ✅ User has reviewed and approved
 
 ## NEXT STEP
