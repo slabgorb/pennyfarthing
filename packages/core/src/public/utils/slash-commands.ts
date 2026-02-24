@@ -165,10 +165,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Interrupt-driven bug fix during active story work"
   },
   {
-    "name": "/pf-permissions",
-    "description": "View and manage runtime permission grants - list, grant, revoke, or show details"
-  },
-  {
     "name": "/pf-pm",
     "description": "Product Manager - Strategic planning and prioritization"
   },

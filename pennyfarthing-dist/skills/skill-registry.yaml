@@ -214,27 +214,6 @@ skills:
     related_skills: [pf-cyclist]
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
-  pf-permissions:
-    name: pf-permissions
-    description: Manage runtime permission grants - list, grant, and revoke tool access
-    category: project-management
-    tags: [permissions, security, tools]
-    version: "1.0.0"
-    command_group: permissions
-    prerequisites: []
-    examples:
-      - context: Viewing active grants
-        invocation: /permissions
-      - context: Granting WebFetch access
-        invocation: /permissions grant WebFetch "*.github.com"
-      - context: Revoking tool access
-        invocation: /permissions revoke Bash
-    anti_patterns:
-      - Don't manually edit settings.local.json permissions - use skill
-      - Don't grant overly broad scope patterns
-    related_skills: []
-    keywords: [grants, scopes, tools, runtime, security]
-
   pf-settings:
     name: pf-settings
     description: View and manage .pennyfarthing/config.local.yaml settings

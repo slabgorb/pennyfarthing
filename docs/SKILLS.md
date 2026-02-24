@@ -20,7 +20,6 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-changelog](#pf-changelog)
 - [Project Management](#project-management)
   - [pf-jira](#pf-jira)
-  - [pf-permissions](#pf-permissions)
   - [pf-sprint](#pf-sprint)
   - [pf-story](#pf-story)
   - [pf-workflow](#pf-workflow)
@@ -233,23 +232,6 @@ Jira CLI commands for sprint management
 - Don't bypass Jira for sprint tracking
 
 **Related:** [pf-sprint](#pf-sprint)
-
-### pf-permissions
-
-Manage runtime permission grants - list, grant, and revoke tool access
-
-**Tags:** permissions, security, tools
-
-**Keywords:** grants, scopes, tools, runtime, security
-
-**Examples:**
-- Viewing active grants: `/permissions`
-- Granting WebFetch access: `/permissions grant WebFetch "*.github.com`
-- Revoking tool access: `/permissions revoke Bash`
-
-**Anti-patterns:**
-- Don't manually edit settings.local.json permissions - use skill
-- Don't grant overly broad scope patterns
 
 ### pf-sprint
 

@@ -296,11 +296,6 @@ standalone:
   retro:
     description: Sprint retrospective
     slash: "/pf-retro"
-  permissions:
-    description: Runtime permission management
-    slash: "/pf-permissions"
-    skill: pf-permissions
-
 agents:
   description: Agent shortcuts (equivalent to pf agent start <role>)
   commands:

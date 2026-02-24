@@ -147,7 +147,6 @@ Commands are organized by resource. Each group is accessible via both slash comm
 | `/pf-standalone` | Wrap changes into standalone story |
 | `/pf-ci run` | Detect and run CI locally |
 | `/pf-docs update` | Update domain documentation |
-| `/pf-permissions` | Manage runtime permissions |
 
 ## Benchmarking
 

@@ -39,12 +39,10 @@ EXPECTED_SKILLS = [
     "pf-code-review",
     "pf-context-engineering",
     "pf-cyclist",
-    "pf-dev-patterns",
     "pf-jira",
     "pf-just",
     "pf-mermaid",
     "pf-otel",
-    "pf-permissions",
     "pf-sprint",
     "pf-story",
     "pf-systematic-debugging",
@@ -78,7 +76,6 @@ EXPECTED_COMMANDS = [
     "pf-parallel-work.md",
     "pf-party-mode.md",
     "pf-patch.md",
-    "pf-permissions.md",
     "pf-pm.md",
     "pf-prime.md",
     "pf-release.md",
@@ -160,7 +157,7 @@ class TestAC1SkillDirectoriesRenamed:
         old_names = [
             "agentic-patterns", "bc", "changelog", "code-review",
             "context-engineering", "cyclist", "dev-patterns", "jira",
-            "just", "mermaid", "otel", "permissions", "sprint", "story",
+            "just", "mermaid", "otel", "sprint", "story",
             "systematic-debugging", "testing", "theme", "theme-creation",
             "workflow", "yq",
         ]
@@ -194,12 +191,20 @@ class TestAC1SkillDirectoriesRenamed:
 class TestAC2CommandFilesRenamed:
     """All built-in command files should have pf- prefix."""
 
+    # Deprecated redirect commands that intentionally keep unprefixed names
+    LEGACY_UNPREFIXED_COMMANDS = {
+        "benchmark-control.md", "benchmark.md", "job-fair.md", "solo.md",
+    }
+
     def test_all_command_files_have_pf_prefix(self) -> None:
-        """Every command .md file must start with 'pf-'."""
+        """Every command .md file must start with 'pf-' (except legacy redirects)."""
         cmd_files = _get_command_files()
         assert len(cmd_files) > 0, "No command files found"
 
-        unprefixed = [f for f in cmd_files if not f.startswith("pf-")]
+        unprefixed = [
+            f for f in cmd_files
+            if not f.startswith("pf-") and f not in self.LEGACY_UNPREFIXED_COMMANDS
+        ]
         assert unprefixed == [], (
             f"Found {len(unprefixed)} command files without pf- prefix: "
             f"{unprefixed}"
