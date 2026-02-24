@@ -1862,6 +1862,11 @@ def future(epic_id: str | None):
 
         init_name = init_data.get("name", init_file.stem)
         init_status = init_data.get("status", "planning")
+
+        # Skip canceled initiatives
+        if init_status == "canceled":
+            continue
+
         blocked_by = init_data.get("blocked_by")
         init_points = init_data.get("total_points", 0)
 
@@ -1878,26 +1883,55 @@ def future(epic_id: str | None):
             click.echo(f"**Blocked:** {blocked_by}")
         click.echo("")
 
-        click.echo("| Epic | Title | Pts | Pri | Status |")
-        click.echo("|------|-------|-----|-----|--------|")
-
+        # Resolve epics and collect rows before printing table
         epics = init_data.get("epics", [])
+        epic_rows = []
         for e in epics:
             edata = _resolve_epic_ref(e, sprint_dir, init_data)
             if not edata:
                 continue
-            eid = edata.get("id", "?")
-            etitle = edata.get("title", "?")
-            if len(etitle) > 40:
-                etitle = etitle[:37] + "..."
-            epts = edata.get("points", "?")
-            epri = edata.get("priority", "P2")
-            estat = edata.get("status", "planning")
-            click.echo(f"| {eid} | {etitle} | {epts} | {epri} | {estat} |")
-            total_epics += 1
-            total_points += edata.get("points", 0) or 0
+            # Skip canceled epics within an initiative
+            if edata.get("status") == "canceled":
+                continue
+            epic_rows.append(edata)
 
-        click.echo("")
+        if epic_rows:
+            click.echo("| Epic | Title | Pts | Pri | Status |")
+            click.echo("|------|-------|-----|-----|--------|")
+            for edata in epic_rows:
+                eid = edata.get("id", "?")
+                etitle = edata.get("title", "?")
+                if len(etitle) > 40:
+                    etitle = etitle[:37] + "..."
+                epts = edata.get("points", "?")
+                epri = edata.get("priority", "P2")
+                estat = edata.get("status", "planning")
+                click.echo(f"| {eid} | {etitle} | {epts} | {epri} | {estat} |")
+                total_epics += 1
+                total_points += edata.get("points", 0) or 0
+            click.echo("")
+
+        # Show standalone stories (not nested under epics)
+        standalone = init_data.get("standalone_stories", [])
+        active_standalone = [s for s in standalone if s.get("status") != "canceled"]
+        if active_standalone:
+            click.echo("| ID | Title | Pts | Pri | Status |")
+            click.echo("|----|-------|-----|-----|--------|")
+            for s in active_standalone:
+                stitle = s.get("title", "?")
+                if len(stitle) > 40:
+                    stitle = stitle[:37] + "..."
+                sid = s.get("id", "?")
+                spts = s.get("points", "?")
+                spri = s.get("priority", "P2")
+                sstat = s.get("status", "planning")
+                click.echo(f"| {sid} | {stitle} | {spts} | {spri} | {sstat} |")
+                total_points += s.get("points", 0) or 0
+            click.echo("")
+
+        if not epic_rows and not active_standalone:
+            click.echo("*(No active epics or stories)*")
+            click.echo("")
 
     click.echo("---")
     click.echo(f"**Summary:** {total_epics} epics, {total_points} points total")
