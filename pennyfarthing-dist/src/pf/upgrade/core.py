@@ -12,28 +12,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-# Standard Python-based hooks (mirrors _MINIMAL_SETTINGS from init/core.py).
-_PYTHON_HOOKS: dict = {
-    "SessionStart": [
-        {"hooks": [{"type": "command", "command": "pf hooks session-start"}]}
-    ],
-    "Stop": [
-        {"hooks": [{"type": "command", "command": "pf hooks session-stop"}]}
-    ],
-    "PreToolUse": [
-        {
-            "matcher": "Edit|Write",
-            "hooks": [{"type": "command", "command": "pf hooks pre-edit-check"}],
-        },
-        {
-            "matcher": "Edit|Write|Bash|Task",
-            "hooks": [{"type": "command", "command": "pf hooks context-warning"}],
-        },
-    ],
-    "PostToolUse": [
-        {"hooks": [{"type": "command", "command": "pf hooks bell-mode"}]}
-    ],
-}
+from pf.common.hooks import INFRASTRUCTURE_HOOKS
+
+# Alias for local usage — single source of truth is pf.common.hooks.
+_PYTHON_HOOKS: dict = INFRASTRUCTURE_HOOKS
 
 
 def _is_pf_managed_command(command: str) -> bool:

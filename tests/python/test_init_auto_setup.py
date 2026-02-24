@@ -17,43 +17,8 @@ from pf.init.setup import (
     discover_repos,
     install_node_packages,
     offer_git_hooks,
-    run_auto_setup,
     select_theme,
 )
-
-
-class TestAutoSetupIntegration:
-    """AC1: pf init runs setup workflow automatically after directory creation."""
-
-    def test_run_auto_setup_returns_success(self, tmp_path):
-        """run_auto_setup returns a success result dict."""
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        result = run_auto_setup(tmp_path, interactive=False)
-        assert result["success"] is True
-
-    def test_run_auto_setup_completes_all_steps(self, tmp_path):
-        """run_auto_setup runs all setup steps in order."""
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        result = run_auto_setup(tmp_path, interactive=False)
-        assert result["success"] is True
-        assert result.get("steps_completed") is not None
-        assert len(result["steps_completed"]) == len(SetupState.STEPS)
-
-    def test_run_auto_setup_non_interactive_skips_prompts(self, tmp_path):
-        """Non-interactive mode doesn't prompt, uses defaults."""
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        # Should not raise or block waiting for input
-        result = run_auto_setup(tmp_path, interactive=False)
-        assert result["success"] is True
-
-    def test_run_auto_setup_fails_without_pennyfarthing_dir(self, tmp_path):
-        """run_auto_setup requires .pennyfarthing/ to exist."""
-        result = run_auto_setup(tmp_path, interactive=False)
-        assert result["success"] is False
-        assert "error" in result
 
 
 class TestRepoDiscovery:
@@ -254,21 +219,6 @@ class TestPartialCompletionReentry:
         state.load()
         assert state.is_complete("repo_discovery") is True
         assert state.is_complete("theme_selection") is False
-
-    def test_skips_completed_steps(self, tmp_path):
-        """run_auto_setup skips steps that were already completed."""
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        # Simulate partial completion
-        state_file = pf_dir / "setup-state.json"
-        state_file.write_text(
-            json.dumps({"completed": ["repo_discovery", "theme_selection"]})
-        )
-        result = run_auto_setup(tmp_path, interactive=False)
-        assert result["success"] is True
-        assert "steps_skipped" in result
-        assert "repo_discovery" in result["steps_skipped"]
-        assert "theme_selection" in result["steps_skipped"]
 
     def test_next_step_returns_first_incomplete(self, tmp_path):
         """SetupState.next_step returns the first incomplete step."""

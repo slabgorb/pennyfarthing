@@ -15,61 +15,10 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
-# The 5 essential hooks for a minimal Pennyfarthing installation.
-_MINIMAL_SETTINGS: dict = {
-    "hooks": {
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": 'pf hooks session-start',
-                    }
-                ]
-            }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": 'pf hooks session-stop',
-                    }
-                ]
-            }
-        ],
-        "PreToolUse": [
-            {
-                "matcher": "Edit|Write",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": 'pf hooks pre-edit-check',
-                    }
-                ],
-            },
-            {
-                "matcher": "Edit|Write|Bash|Task",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": 'pf hooks context-warning',
-                    }
-                ],
-            },
-        ],
-        "PostToolUse": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": 'pf hooks bell-mode',
-                    }
-                ]
-            }
-        ],
-    }
-}
+from pf.common.hooks import INFRASTRUCTURE_HOOKS
+
+# Wrap the shared hooks in the settings envelope expected by settings.local.json.
+_MINIMAL_SETTINGS: dict = {"hooks": INFRASTRUCTURE_HOOKS}
 
 # Entries to add to .gitignore.
 _GITIGNORE_ENTRIES: list[str] = [
@@ -112,7 +61,7 @@ def verify_pf_cli() -> dict:
         return {
             "success": False,
             "error": "pf CLI not found on PATH. Hooks require it.",
-            "install_hint": "pipx install -e pennyfarthing-dist/",
+            "install_hint": "pipx install pennyfarthing-scripts",
         }
 
     # Try running pf --version to check it's not a stale shim
@@ -127,7 +76,7 @@ def verify_pf_cli() -> dict:
         return {
             "success": False,
             "error": f"pf found but broken — {exc}",
-            "install_hint": "pipx install -e pennyfarthing-dist/",
+            "install_hint": "pipx install pennyfarthing-scripts",
         }
 
     if result.returncode != 0:
@@ -135,7 +84,7 @@ def verify_pf_cli() -> dict:
         return {
             "success": False,
             "error": f"pf found but broken — stale shim at {pf_path}",
-            "install_hint": "pipx install -e pennyfarthing-dist/",
+            "install_hint": "pipx install pennyfarthing-scripts",
             "detail": stderr,
         }
 
@@ -296,10 +245,20 @@ def _write_manifest(target_dir: Path, commands_copied: int, skills_copied: int) 
 
 
 def _copy_tree(src: Path, dst: Path) -> None:
-    """Copy a directory tree, overwriting existing files."""
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
+    """Copy a directory tree, merging into existing directories.
+
+    Overwrites pf-managed files but preserves user-created files
+    that don't exist in the source tree.
+    """
+    if not dst.exists():
+        shutil.copytree(src, dst)
+        return
+    for item in src.iterdir():
+        dest_item = dst / item.name
+        if item.is_dir():
+            _copy_tree(item, dest_item)
+        else:
+            shutil.copy2(item, dest_item)
 
 
 def _update_gitignore(target_dir: Path) -> None:
