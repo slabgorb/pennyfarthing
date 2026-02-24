@@ -88,6 +88,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "prime":        ("pf.prime.cli", "prime_cmd"),
     "upgrade":      ("pf.upgrade.cli", "upgrade"),
     "docs":         ("pf.docs.cli", "docs"),
+    "doctor":       ("pf.doctor.cli", "doctor"),
 }
 
 
