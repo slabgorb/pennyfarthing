@@ -54,10 +54,10 @@ cd your-project
 npm install --save-dev @pennyfarthing/core
 
 # Initialize project (creates .pennyfarthing/, .claude/ symlinks)
-npx pennyfarthing init
+pf setup
 
 # Verify installation
-npx pennyfarthing doctor
+pf doctor
 
 # Start working (inside Claude Code)
 /pf-work
@@ -73,7 +73,7 @@ Pennyfarthing works in any terminal, but optional dashboards give you real-time 
 | See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
 | One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
-| Full desktop app with embedded terminal | **Cyclist** | `npx pennyfarthing cyclist` |
+| Full desktop app with embedded terminal | **Cyclist** | `pf cyclist` |
 
 ```mermaid
 graph LR
@@ -277,11 +277,11 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 | Command | Description |
 |---------|-------------|
-| `pennyfarthing init` | Initialize in a project |
-| `pennyfarthing update` | Update to latest version |
-| `pennyfarthing doctor` | Check installation health |
-| `pennyfarthing doctor --fix` | Auto-fix common issues |
-| `pennyfarthing uninstall` | Remove for clean reinstall |
+| `pf setup` | Initialize in a project |
+| `pf setup` | Update to latest version |
+| `pf doctor` | Check installation health |
+| `pf doctor --fix` | Auto-fix common issues |
+| `pf uninstall` | Remove for clean reinstall |
 | `pennyfarthing theme list` | Show available themes |
 | `pennyfarthing theme set <name>` | Change active theme |
 | `pennyfarthing cyclist` | Launch Cyclist visual terminal |

@@ -37,10 +37,10 @@ echo "=== Story 8-1: Git Hook for PR Merge Detection ==="
 echo ""
 
 # ==============================================================================
-# AC1: Hook installed via pennyfarthing init (or doctor --fix)
+# AC1: Hook installed via pf setup (or doctor --fix)
 # ==============================================================================
 
-echo "--- AC1: Hook installed via pennyfarthing init ---"
+echo "--- AC1: Hook installed via pf setup ---"
 echo ""
 
 # Test: post-merge.sh hook script exists

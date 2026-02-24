@@ -217,7 +217,7 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   logger.success('Pennyfarthing uninstalled successfully.');
   logger.newline();
   logger.info('To reinstall:');
-  logger.info('  pennyfarthing init');
+  logger.info('  pf setup');
 }
 
 function getPathInfo(fullPath: string): string {

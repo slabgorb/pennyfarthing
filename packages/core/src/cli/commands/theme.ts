@@ -40,7 +40,7 @@ export async function listCommand(): Promise<void> {
   // Check if in a Pennyfarthing project
   if (!projectRoot) {
     console.log('Not in a Pennyfarthing project.');
-    console.log('Run `pennyfarthing init` to install first.');
+    console.log('Run `pf setup` to install first.');
     return;
   }
 
@@ -86,7 +86,7 @@ export async function setCommand(themeName: string): Promise<void> {
 
   if (!projectRoot) {
     console.log('Not in a Pennyfarthing project.');
-    console.log('Run `pennyfarthing init` to install first.');
+    console.log('Run `pf setup` to install first.');
     return;
   }
 
@@ -135,7 +135,7 @@ export async function showCommand(themeName?: string): Promise<void> {
 
   if (!projectRoot) {
     console.log('Not in a Pennyfarthing project.');
-    console.log('Run `pennyfarthing init` to install first.');
+    console.log('Run `pf setup` to install first.');
     return;
   }
 

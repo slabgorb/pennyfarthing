@@ -45,21 +45,21 @@ export async function listCommand(): Promise<void> {
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
   const commandsDir = join(projectRoot, '.claude/commands');
 
   if (!pathExists(commandsDir)) {
-    logger.error('Commands directory not found. Run `pennyfarthing update` to create it.');
+    logger.error('Commands directory not found. Run `pf setup` to create it.');
     process.exit(1);
   }
 
   // Check if it's old-style symlink
   if (isSymlink(commandsDir)) {
     logger.warning('Commands directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` to migrate to new directory structure.');
+    logger.info('Run `pf setup` to migrate to new directory structure.');
     logger.info('(This enables custom commands alongside built-in ones)');
     return;
   }
@@ -132,7 +132,7 @@ export async function addCommand(name: string, options: { template?: string; edi
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -148,7 +148,7 @@ export async function addCommand(name: string, options: { template?: string; edi
   // Check if commands dir is old-style symlink
   if (isSymlink(commandsDir)) {
     logger.error('Commands directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` first to migrate to new directory structure.');
+    logger.info('Run `pf setup` first to migrate to new directory structure.');
     process.exit(1);
   }
 
@@ -284,7 +284,7 @@ export async function removeCommand(name: string, options: { force?: boolean }):
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -345,7 +345,7 @@ export async function linkCommand(name: string): Promise<void> {
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -388,7 +388,7 @@ export async function syncCommand(options: { dryRun?: boolean }): Promise<void> 
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -398,7 +398,7 @@ export async function syncCommand(options: { dryRun?: boolean }): Promise<void> 
   // Check if commands dir is old-style symlink
   if (isSymlink(commandsDir)) {
     logger.error('Commands directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` first to migrate to new directory structure.');
+    logger.info('Run `pf setup` first to migrate to new directory structure.');
     process.exit(1);
   }
 

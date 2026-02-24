@@ -6,7 +6,7 @@ Guide for debugging Claude Code sessions when things go wrong, including verbose
 
 ```bash
 # Check installation health
-pennyfarthing doctor
+pf doctor
 
 # Check context usage
 .pennyfarthing/scripts/core/check-context.sh --human
@@ -29,7 +29,7 @@ Enable detailed output for troubleshooting.
 export PENNYFARTHING_VERBOSE=true
 
 # Enable per-command
-PENNYFARTHING_VERBOSE=true pennyfarthing doctor
+PENNYFARTHING_VERBOSE=true pf doctor
 ```
 
 ### Script Flag
@@ -273,10 +273,10 @@ ls -la .claude/commands/my-command.md
 **Recovery:**
 ```bash
 # Auto-repair with doctor
-pennyfarthing doctor --fix
+pf doctor --fix
 
 # Or reinitialize
-pennyfarthing init --force
+pf setup --force
 ```
 
 ### Pattern: Agent Handoff Failure
@@ -438,10 +438,10 @@ Comprehensive health check with auto-repair.
 
 ```bash
 # Check everything
-pennyfarthing doctor
+pf doctor
 
 # Auto-fix issues
-pennyfarthing doctor --fix
+pf doctor --fix
 ```
 
 ### Checks Performed
@@ -449,7 +449,7 @@ pennyfarthing doctor --fix
 | Check | What It Verifies |
 |-------|------------------|
 | Prerequisites | Node.js, npm, yq, jira CLI |
-| Symlinks | .claude/pennyfarthing, git hooks, scripts |
+| Symlinks | .pennyfarthing/, git hooks, scripts |
 | Build status | dist/ is up to date |
 | Broken symlinks | Finds and can remove dead links |
 | Settings | .claude/settings.local.json exists |
@@ -496,7 +496,7 @@ Monitor in real-time:
 | Issue | Quick Fix |
 |-------|-----------|
 | Context exhausted | `checkpoint_save` → commit → `/pf-session continue` |
-| Symlinks broken | `pennyfarthing doctor --fix` |
+| Symlinks broken | `pf doctor --fix` |
 | Git locked | `rm .git/index.lock` (if stale) |
 | Path errors | Use `$CLAUDE_PROJECT_DIR` |
 | Session corrupt | Read before write, use session-specific files |

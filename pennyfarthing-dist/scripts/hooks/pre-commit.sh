@@ -9,7 +9,7 @@
 # 4. Validates sprint YAML files when sprint/*.yaml is modified
 #
 # Installation:
-#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   End-user projects: pf setup (copies to .git/hooks/)
 #   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 
 set -uo pipefail

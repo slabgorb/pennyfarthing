@@ -6,7 +6,7 @@ Comprehensive troubleshooting for common errors and recovery procedures in Penny
 
 ```bash
 # Check installation health
-pennyfarthing doctor --fix
+pf doctor --fix
 
 # Check context usage
 .pennyfarthing/scripts/core/check-context.sh --human
@@ -32,7 +32,7 @@ git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
 npm install -g @pennyfarthing/core
 
 # Or use npx
-npx pennyfarthing doctor
+pf doctor
 ```
 
 #### "Symlinks broken or missing"
@@ -42,10 +42,10 @@ npx pennyfarthing doctor
 **Solution:**
 ```bash
 # Auto-repair broken symlinks
-pennyfarthing doctor --fix
+pf doctor --fix
 
 # Or reinitialize
-pennyfarthing init --force
+pf setup --force
 ```
 
 #### "config.local.yaml missing"
@@ -54,7 +54,7 @@ pennyfarthing init --force
 
 **Solution:**
 ```bash
-pennyfarthing doctor --fix
+pf doctor --fix
 # Creates default config.local.yaml
 ```
 
@@ -79,7 +79,7 @@ pennyfarthing doctor --fix
 
 **Solution:** Scripts are now in `.pennyfarthing/scripts/` (symlinked to `pennyfarthing-dist/scripts/`). Update with:
 ```bash
-pennyfarthing update
+pf setup
 ```
 
 ### Git and File Lock Issues
@@ -371,7 +371,7 @@ Enable verbose output for troubleshooting:
 export PENNYFARTHING_VERBOSE=true
 
 # Or per-command
-PENNYFARTHING_VERBOSE=true pennyfarthing doctor
+PENNYFARTHING_VERBOSE=true pf doctor
 ```
 
 Most scripts support `--verbose` flag:
@@ -384,7 +384,7 @@ Most scripts support `--verbose` flag:
 ```
 Problem?
 ├── Installation
-│   └── pennyfarthing doctor --fix
+│   └── pf doctor --fix
 ├── Path errors
 │   └── Use $CLAUDE_PROJECT_DIR
 ├── Git locks
@@ -401,7 +401,7 @@ Problem?
 
 ## Getting Help
 
-- Run `pennyfarthing doctor` for automated diagnostics
+- Run `pf doctor` for automated diagnostics
 - Check agent sidecars: `.pennyfarthing/sidecars/{agent}/gotchas.md`
 - Review session file: `.session/{story-id}-session.md`
 - GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues

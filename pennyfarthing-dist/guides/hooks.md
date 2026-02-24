@@ -308,5 +308,5 @@ If a hook fails or behaves unexpectedly:
 | Managed hooks | `.pennyfarthing/scripts/hooks/` | No (symlinked — edit in `pennyfarthing-dist/`) |
 | Project hooks | `.claude/project/hooks/` | Yes |
 | Settings | `.claude/settings.local.json` | Yes |
-| Git hook dispatchers | `.git/hooks/{name}` | No (installed by `pennyfarthing init`) |
+| Git hook dispatchers | `.git/hooks/{name}` | No (installed by `pf setup`) |
 | Git hook scripts | `.git/hooks/{name}.d/` | Yes (add scripts to `.d/` directories) |

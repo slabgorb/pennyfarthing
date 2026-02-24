@@ -228,7 +228,7 @@ export function checkInstallation(projectRoot: string, manifest: ReturnType<type
   results.push({
     name: 'manifest/exists',
     status: manifest ? 'pass' : 'fail',
-    detail: manifest ? `v${manifest.version}` : 'Run `pennyfarthing init`'
+    detail: manifest ? `v${manifest.version}` : 'Run `pf setup`'
   });
 
   return results;

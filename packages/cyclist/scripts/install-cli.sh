@@ -93,7 +93,7 @@ PROJECT_DIR="\$(cd "\$PROJECT_DIR" && pwd)"
 
 if [[ ! -d "\$PROJECT_DIR/.claude" ]]; then
     echo "Error: Not a Pennyfarthing project (no .claude/ directory)"
-    echo "Initialize with: cd \$PROJECT_DIR && npx pennyfarthing init"
+    echo "Initialize with: cd \$PROJECT_DIR && pf setup"
     exit 1
 fi
 

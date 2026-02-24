@@ -4,7 +4,7 @@
 # Checks if sprint files were modified and reminds to sync to Jira.
 #
 # Installation:
-#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   End-user projects: pf setup (copies to .git/hooks/)
 #   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 
 set -uo pipefail

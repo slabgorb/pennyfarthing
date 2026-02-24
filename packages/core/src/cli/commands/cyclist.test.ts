@@ -370,7 +370,7 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       const { execSync } = await import('child_process');
 
       try {
-        const result = execSync('npx pennyfarthing cyclist --help', {
+        const result = execSync('pf cyclist --help', {
           encoding: 'utf-8',
           cwd: testDir
         });

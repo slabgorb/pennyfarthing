@@ -190,7 +190,7 @@ Cyclist requires a project with Pennyfarthing installed. The project must have:
 
 ```
 your-project/
-└── .claude/
+└── .pennyfarthing/
     └── config.local.yaml
 ```
 
@@ -198,7 +198,7 @@ Initialize Pennyfarthing in your project:
 
 ```bash
 cd /path/to/your/project
-npx pennyfarthing init
+pf setup
 ```
 
 ### Port 1898 in use

@@ -78,10 +78,10 @@ cd your-project
 npm install --save-dev @pennyfarthing/core
 
 # Initialize with project name
-npx pennyfarthing init my-project
+pf setup my-project
 
 # Or let it detect from directory name
-npx pennyfarthing init
+pf setup
 ```
 
 The init command:
@@ -94,7 +94,7 @@ The init command:
 ### Verify Installation
 
 ```bash
-npx pennyfarthing doctor
+pf doctor
 ```
 
 This checks:
@@ -106,7 +106,7 @@ This checks:
 Use `--fix` to auto-repair common issues:
 
 ```bash
-npx pennyfarthing doctor --fix
+pf doctor --fix
 ```
 
 ---
@@ -196,7 +196,7 @@ Pennyfarthing works in any terminal, but optional dashboards give you real-time 
 | See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
 | One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
-| Full desktop app with embedded terminal | **Cyclist** | `npx pennyfarthing cyclist` |
+| Full desktop app with embedded terminal | **Cyclist** | `pf cyclist` |
 
 ```mermaid
 graph LR
@@ -211,7 +211,7 @@ graph LR
     end
 
     subgraph "Cyclist (all-in-one desktop app)"
-        G["pennyfarthing cyclist"] --> H["Electron app<br/>Embedded terminal + panels"]
+        G["pf cyclist"] --> H["Electron app<br/>Embedded terminal + panels"]
     end
 ```
 
@@ -241,7 +241,7 @@ Both Cyclist and BikeRack are wrappers around **WheelHub**, the shared Express/W
 ```mermaid
 graph TB
     subgraph "Cyclist (Electron)"
-        C["Electron + React UI"]
+        C["pf cyclist<br/>Electron + React UI"]
     end
     subgraph "BikeRack (CLI)"
         BR["Node.js server"]
@@ -266,16 +266,16 @@ WheelHub never writes a port file — the wrapper does. OTEL auto-configuration 
 
 ## CLI Commands
 
-### `pennyfarthing init [project-name]`
+### `pf setup [project-name]`
 
 Initialize Pennyfarthing in a project.
 
 ```bash
-pennyfarthing init my-project
-pennyfarthing init                    # Auto-detect from directory
-pennyfarthing init -f                 # Force, skip prompts
-pennyfarthing init --dry-run          # Preview changes
-pennyfarthing init --skip-templates   # Skip template generation
+pf setup my-project
+pf setup                    # Auto-detect from directory
+pf setup -f                 # Force, skip prompts
+pf setup --dry-run          # Preview changes
+pf setup --skip-templates   # Skip template generation
 ```
 
 **What it creates:**
@@ -286,7 +286,7 @@ pennyfarthing init --skip-templates   # Skip template generation
 - `sprint/` — Sprint tracking
 - `.session/` — Work session files
 
-### `pennyfarthing update`
+### `pf setup`
 
 Update Pennyfarthing to the latest version.
 
@@ -295,24 +295,24 @@ Update Pennyfarthing to the latest version.
 npm update @pennyfarthing/core
 
 # Or check current version
-npx pennyfarthing version
+pf version
 ```
 
 **Behavior:**
 - Symlinks automatically point to updated package
 - No file copying or overwriting needed
 - `.pennyfarthing/sidecars/` and project customizations always preserved
-- Run `npx pennyfarthing doctor` after major version updates
+- Run `pf doctor` after major version updates
 
-### `pennyfarthing doctor`
+### `pf doctor`
 
 Check installation health and diagnose issues.
 
 ```bash
-pennyfarthing doctor
-pennyfarthing doctor --fix            # Auto-apply fixes
-pennyfarthing doctor --json           # Output as JSON
-pennyfarthing doctor --quiet          # Only show errors
+pf doctor
+pf doctor --fix            # Auto-apply fixes
+pf doctor --json           # Output as JSON
+pf doctor --quiet          # Only show errors
 ```
 
 **Checks performed:**
@@ -323,32 +323,32 @@ pennyfarthing doctor --quiet          # Only show errors
 - SessionStart hooks present (critical for `$PROJECT_ROOT`)
 - Scripts are executable
 
-### `pennyfarthing version`
+### `pf version`
 
 Show version information.
 
 ```bash
-pennyfarthing version
+pf version
 ```
 
-### `pennyfarthing uninstall`
+### `pf uninstall`
 
 Remove Pennyfarthing from the project for a clean reinstall.
 
 ```bash
-pennyfarthing uninstall
-pennyfarthing uninstall --force       # Skip confirmation
-pennyfarthing uninstall --all         # Also remove project files
-pennyfarthing uninstall --dry-run     # Preview what would be removed
+pf uninstall
+pf uninstall --force       # Skip confirmation
+pf uninstall --all         # Also remove project files
+pf uninstall --dry-run     # Preview what would be removed
 ```
 
 ### Other CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `pennyfarthing theme list` | Show available themes |
-| `pennyfarthing theme set <name>` | Change active theme |
-| `pennyfarthing cyclist` | Launch Cyclist visual terminal |
+| `pf theme list` | Show available themes |
+| `pf theme set <name>` | Change active theme |
+| `pf cyclist` | Launch Cyclist visual terminal |
 | `pf bikerack start` | Launch BikeRack dashboard |
 | `pf debug hotspots analyze` | Git change frequency analysis |
 | `pf debug complexity analyze` | Code complexity metrics |
@@ -692,8 +692,8 @@ Or use slash commands in Claude Code:
 Or the CLI:
 
 ```bash
-pennyfarthing theme set star-trek-tos
-pennyfarthing theme list
+pf theme set star-trek-tos
+pf theme list
 ```
 
 ### Installing Theme Packs
@@ -789,7 +789,7 @@ Add project-specific skills in `.claude/project/skills/`:
 
 **Fix:**
 ```bash
-npx pennyfarthing doctor --fix
+pf doctor --fix
 ```
 
 This repairs missing SessionStart hooks in `settings.local.json`.
@@ -799,7 +799,7 @@ This repairs missing SessionStart hooks in `settings.local.json`.
 **Cause:** Theme not set or symlinks broken.
 
 **Fix:**
-1. Run `npx pennyfarthing doctor --fix`
+1. Run `pf doctor --fix`
 2. Check `.pennyfarthing/config.local.yaml` has a valid `theme:` setting
 3. Restart Claude Code session
 
@@ -807,7 +807,7 @@ This repairs missing SessionStart hooks in `settings.local.json`.
 
 **Fix:**
 ```bash
-npx pennyfarthing init
+pf setup
 ```
 
 #### OTEL Telemetry Not Flowing to Dashboard
@@ -836,10 +836,10 @@ The OTEL auto-configuration hook now includes socket liveness checks, so stale p
 
 ```bash
 # Full health check
-npx pennyfarthing doctor
+pf doctor
 
 # Check what version is installed
-npx pennyfarthing version
+pf version
 
 # Check environment variables
 echo $PROJECT_ROOT

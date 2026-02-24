@@ -26,6 +26,6 @@ export async function versionCommand(): Promise<void> {
   } else {
     console.log();
     console.log('Not installed in current project.');
-    console.log('Run `pennyfarthing init` to install.');
+    console.log('Run `pf setup` to install.');
   }
 }

@@ -6,7 +6,7 @@
 # story branch is merged and automatically updating the sprint YAML status.
 #
 # Installation:
-#   End-user projects: pennyfarthing init (copies to .git/hooks/)
+#   End-user projects: pf setup (copies to .git/hooks/)
 #   Framework/orchestrator: install-git-hooks.sh (symlinks to pennyfarthing-dist/)
 #
 # Dependencies:

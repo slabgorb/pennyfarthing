@@ -52,7 +52,7 @@ def install_git_hooks(project_root: Path | None = None) -> int:
     pf_dist = get_dist_root(project_root=project_root)
     if pf_dist is None or not pf_dist.is_dir():
         print("Error: pennyfarthing-dist not found")
-        print("       End-user projects should use: pennyfarthing init")
+        print("       End-user projects should use: pf setup")
         return 1
 
     git_dir = project_root / ".git"

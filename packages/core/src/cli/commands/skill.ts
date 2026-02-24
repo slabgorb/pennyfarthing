@@ -45,21 +45,21 @@ export async function listSkill(): Promise<void> {
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
   const skillsDir = join(projectRoot, '.claude/skills');
 
   if (!pathExists(skillsDir)) {
-    logger.error('Skills directory not found. Run `pennyfarthing update` to create it.');
+    logger.error('Skills directory not found. Run `pf setup` to create it.');
     process.exit(1);
   }
 
   // Check if it's old-style symlink
   if (isSymlink(skillsDir)) {
     logger.warning('Skills directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` to migrate to new directory structure.');
+    logger.info('Run `pf setup` to migrate to new directory structure.');
     logger.info('(This enables custom skills alongside built-in ones)');
     return;
   }
@@ -135,7 +135,7 @@ export async function addSkill(name: string, options: { template?: string; edit?
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -151,7 +151,7 @@ export async function addSkill(name: string, options: { template?: string; edit?
   // Check if skills dir is old-style symlink
   if (isSymlink(skillsDir)) {
     logger.error('Skills directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` first to migrate to new directory structure.');
+    logger.info('Run `pf setup` first to migrate to new directory structure.');
     process.exit(1);
   }
 
@@ -297,7 +297,7 @@ export async function removeSkill(name: string, options: { force?: boolean }): P
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -359,7 +359,7 @@ export async function linkSkill(name: string): Promise<void> {
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -403,7 +403,7 @@ export async function syncSkill(options: { dryRun?: boolean }): Promise<void> {
   const projectRoot = process.cwd();
 
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -413,7 +413,7 @@ export async function syncSkill(options: { dryRun?: boolean }): Promise<void> {
   // Check if skills dir is old-style symlink
   if (isSymlink(skillsDir)) {
     logger.error('Skills directory is using old symlink style.');
-    logger.info('Run `pennyfarthing update` first to migrate to new directory structure.');
+    logger.info('Run `pf setup` first to migrate to new directory structure.');
     process.exit(1);
   }
 
