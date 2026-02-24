@@ -127,6 +127,15 @@ def run_auto_setup(
             discover_repos(project_root)
         elif step == "theme_selection":
             select_theme(project_root, interactive=interactive)
+            # Pull LFS portraits for the selected theme
+            config_path = project_root / ".pennyfarthing" / "config.local.yaml"
+            if config_path.is_file():
+                cfg = yaml.safe_load(config_path.read_text()) or {}
+                t = cfg.get("theme")
+                if t:
+                    from pf.common.themes import ensure_portrait_lfs
+
+                    ensure_portrait_lfs(t, project_root)
         elif step == "git_hooks":
             offer_git_hooks(project_root, interactive=interactive)
         elif step == "package_manager":
@@ -498,6 +507,18 @@ def run_setup(
         write_theme_config(target_dir, theme)
     elif state["theme"]:
         steps_skipped += 1
+
+    # 2b. Pull LFS portraits for the active theme
+    active_theme = theme
+    if not active_theme:
+        config_path = target_dir / ".pennyfarthing" / "config.local.yaml"
+        if config_path.is_file():
+            cfg = yaml.safe_load(config_path.read_text()) or {}
+            active_theme = cfg.get("theme")
+    if active_theme:
+        from pf.common.themes import ensure_portrait_lfs
+
+        ensure_portrait_lfs(active_theme, target_dir)
 
     # 3. Git hooks
     hooks_installed = False

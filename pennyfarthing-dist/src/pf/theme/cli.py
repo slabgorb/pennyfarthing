@@ -144,65 +144,9 @@ def _display_agent(name: str, agent: dict, full: bool) -> None:
 
 def _check_portrait_lfs(theme_name: str, project_root: Path) -> None:
     """Pull LFS portrait stubs for a theme if any are detected."""
-    import subprocess
+    from pf.common.themes import ensure_portrait_lfs
 
-    from pf.bikerack.portrait_resolver import _is_lfs_pointer
-    from pf.common.themes import discover_all_theme_dirs
-
-    theme_dirs = discover_all_theme_dirs(project_root)
-
-    # Find portrait directories for this theme (sibling portraits/ of each themes/ dir)
-    lfs_files: list[Path] = []
-    for themes_dir in theme_dirs:
-        portraits_dir = themes_dir.parent / "portraits" / theme_name
-        if not portraits_dir.is_dir():
-            continue
-        for f in portraits_dir.rglob("*"):
-            if f.is_file() and f.suffix in (".png", ".jpg") and _is_lfs_pointer(f):
-                lfs_files.append(f)
-
-    if not lfs_files:
-        return
-
-    # Determine the git repo root containing the portraits
-    # Walk up from the first LFS file to find .git
-    repo_root = lfs_files[0].parent
-    while repo_root != repo_root.parent:
-        if (repo_root / ".git").exists():
-            break
-        repo_root = repo_root.parent
-    else:
-        return
-
-    # Build the include path relative to the repo root
-    # Find the common portrait base dir for this theme
-    for themes_dir in theme_dirs:
-        base = themes_dir.parent / "portraits" / theme_name
-        if base.is_dir():
-            try:
-                include_path = str(base.relative_to(repo_root)) + "/**"
-                break
-            except ValueError:
-                continue
-    else:
-        return
-
-    try:
-        result = subprocess.run(
-            ["git", "lfs", "pull", f"--include={include_path}"],
-            cwd=str(repo_root),
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode == 0:
-            click.echo(f"Pulled {len(lfs_files)} portrait images for {theme_name}.")
-        else:
-            click.echo(f"Warning: git lfs pull failed: {result.stderr.strip()}", err=True)
-    except FileNotFoundError:
-        click.echo("Warning: git-lfs not installed, portrait images may be missing.", err=True)
-    except subprocess.TimeoutExpired:
-        click.echo("Warning: git lfs pull timed out.", err=True)
+    ensure_portrait_lfs(theme_name, project_root)
 
 
 @theme.command("set")
