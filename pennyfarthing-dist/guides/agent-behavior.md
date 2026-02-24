@@ -3,22 +3,22 @@
 
 **Tests:** Use `testing-runner` subagent, never run directly.
 
-**Handoff:** Run pf.sh `handoff resolve-gate` → gate check → pf.sh `handoff complete-phase` → pf.sh `handoff marker` → EXIT. See `<agent-exit-protocol>`.
+**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `pf handoff marker` → EXIT. See `<agent-exit-protocol>`.
 
 **Sidecars:** Write learnings BEFORE starting exit protocol.
 
 **Scripts:** Pennyfarthing scripts are Python-based (`pf/`), not shell—check before assuming `.sh`.
 
-**pf CLI:** Never call bare `pf` — it is not globally installed. Always use the wrapper:
+**pf CLI:** Call `pf` directly — it is globally installed:
 ```bash
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh <command> [args...]
+pf <command> [args...]
 ```
 </critical>
 
 <critical>
 **Story completion is MANDATORY.** A story is NOT done until:
 1. Reviewer approves and merges the PR
-2. SM runs pf.sh `sprint story finish` (archive session, update Jira, clean up)
+2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
 
 **Never** start new work while stories have open PRs. The merge gate blocks `/pf-sprint work` if open PRs exist.
 
@@ -54,7 +54,7 @@ On activation, check session file for a `**Tandem:**` line (e.g., `**Tandem:** a
 
 **If tandem is configured:**
 
-1. **Resolve backseat persona** from theme using the `pf.sh theme`
+1. **Resolve backseat persona** from theme using `pf theme`
    ```bash
    THEME=$(yq '.theme' .pennyfarthing/config.local.yaml)
    PARTNER_CHARACTER=$(yq ".agents.{PARTNER}.character" .pennyfarthing/personas/themes/${THEME}.yaml)
@@ -227,14 +227,14 @@ When spawned as a teammate (you receive a task via spawn prompt, not a phase han
 1. Write assessment to session
 2. **If team mode active:** Shut down all teammates via `SendMessage`, then `TeamDelete`. Wait for cleanup before proceeding.
 3. Terminate tandem backseat (if active)
-4. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
+4. `pf handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
 5. If blocked → report error, STOP
 6. If skip → jump to step 8
 7. If ready → spawn gate subagent with gate file → GATE_RESULT
    - If fail → fix issues, retry from step 4 (max 3 retries)
    - If pass → continue
-8. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
-9. `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker {next_agent}` → AGENT_COMMAND block
+8. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+9. `pf handoff marker {next_agent}` → AGENT_COMMAND block
 10. **Act on AGENT_COMMAND:**
     - Has `marker:` field → emit the CYCLIST marker (Cyclist path)
     - `action: "inline_handoff"` → run `activation_command` via Bash, output result, adopt new agent identity
@@ -250,12 +250,12 @@ When spawned as a teammate (you receive a task via spawn prompt, not a phase han
 On activation, check if story phase belongs to you:
 
 ```bash
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff phase-check {your_agent_name}
+pf handoff phase-check {your_agent_name}
 ```
 
 If result has `action: "redirect"`:
 
 - **Cyclist:** Emit `<!-- CYCLIST:HANDOFF:/{phase_owner} -->` and EXIT
-- **CLI + relay ON:** Run `source .pennyfarthing/scripts/lib/env.sh && source "$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/run-pf.sh" && run_pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
+- **CLI + relay ON:** Run `pf agent start {phase_owner} --tier handoff --quiet` via Bash, adopt new identity
 - **CLI + relay OFF:** Output `Run /pf-{phase_owner} to continue` and EXIT
 </wrong-phase-detection>

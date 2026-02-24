@@ -7,16 +7,8 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-
-export PROJECT_ROOT="${PROJECT_ROOT:-$PACKAGE_ROOT}"
-
-# Use run-pf.sh for consistent pf invocation (src/ layout)
-source "$SCRIPT_DIR/../lib/run-pf.sh"
-
 if [[ "${1:-}" == "--current-only" ]]; then
-    run_pf theme show --current-only
+    pf theme show --current-only
 else
-    run_pf theme list
+    pf theme list
 fi

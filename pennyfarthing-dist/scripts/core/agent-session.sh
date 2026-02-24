@@ -232,8 +232,7 @@ case "$1" in
       PRIME_ARGS+=(--no-persona)
     fi
 
-    source "$SCRIPT_DIR/../lib/run-pf.sh"
-    run_pf prime "${PRIME_ARGS[@]}"
+    pf prime "${PRIME_ARGS[@]}"
     ;;
   stop)
     # Use provided session ID, fall back to SESSION_ID env var
