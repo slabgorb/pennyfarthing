@@ -3,6 +3,7 @@
  *
  * Story MSSCI-14877: Migrate BikeRack from index page to Dockview layout
  * Epic: 102 (BikeRack Follow-up)
+ * Moved to @pennyfarthing/bikerack in Story 124-5 (MSSCI-15556)
  *
  * Replaces BikeRackIndex with a proper Dockview layout.
  * No MessagePanel (sacred center) — BikeRack is a monitoring dashboard.
@@ -19,12 +20,11 @@ import {
   DockviewDefaultTab,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
-import { ErrorBoundary } from './ErrorBoundary';
-import { panelRegistry } from './panel-registry';
-import PersonaHeader from './PersonaHeader.js';
-import ProjectInfoBar from './ProjectInfoBar.js';
-import { useFocusPanel } from '../hooks/useFocusPanel.js';
-import '../styles/dockview-theme.css';
+import { ErrorBoundary } from '@pennyfarthing/core/components/ErrorBoundary.js';
+import { panelRegistry } from '@pennyfarthing/core/components/panel-registry.js';
+import PersonaHeader from '@pennyfarthing/core/components/PersonaHeader.js';
+import ProjectInfoBar from '@pennyfarthing/core/components/ProjectInfoBar.js';
+import { useFocusPanel } from '@pennyfarthing/core/hooks/useFocusPanel.js';
 
 // =============================================================================
 // BikeRack Panel Definitions

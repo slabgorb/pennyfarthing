@@ -1,51 +1,9 @@
-// BikeRack mode entry point (Story 124-4)
-// Mode is 'bikerack' by default in @pennyfarthing/bikerack — no env var needed.
-// Import directly from bikerack to bypass Cyclist's mode override.
+// BikeRack mode entry point — delegator (Story 124-5)
+// Full launcher logic moved to @pennyfarthing/bikerack/entry.
+// This file remains for backward compatibility with existing build references.
+//
+// To launch BikeRack standalone, use the bikerack package's own entry point:
+//   node packages/bikerack/dist/entry.js
 
-import { createTerminalServer, findAvailablePort } from '@pennyfarthing/bikerack/server';
-import { writeFileSync, unlinkSync, existsSync } from 'fs';
-import { join } from 'path';
-
-const PORT_FILE = '.bikerack-port';
-const DEFAULT_PORT = parseInt(process.env.BIKERACK_PORT || '2898', 10);
-
-function getProjectDir(): string {
-  return process.env.CYCLIST_PROJECT_DIR || process.cwd();
-}
-
-function writePortFile(projectDir: string, port: number): void {
-  writeFileSync(join(projectDir, PORT_FILE), String(port));
-}
-
-function cleanupPortFile(projectDir: string): void {
-  const portFilePath = join(projectDir, PORT_FILE);
-  if (existsSync(portFilePath)) {
-    unlinkSync(portFilePath);
-  }
-}
-
-(async () => {
-  const server = createTerminalServer();
-  const projectDir = getProjectDir();
-  const actualPort = await findAvailablePort(DEFAULT_PORT);
-
-  if (actualPort !== DEFAULT_PORT) {
-    console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
-  }
-
-  server.listen(actualPort, '127.0.0.1', () => {
-    console.log(`BikeRack running at http://127.0.0.1:${actualPort}`);
-    // Write port file AFTER listen() callback (CE-3)
-    writePortFile(projectDir, actualPort);
-    console.log(`[BikeRack] Wrote .bikerack-port to ${projectDir}`);
-  });
-
-  process.on('SIGINT', () => {
-    cleanupPortFile(projectDir);
-    process.exit(0);
-  });
-  process.on('SIGTERM', () => {
-    cleanupPortFile(projectDir);
-    process.exit(0);
-  });
-})();
+console.log('[cyclist/bikerack.ts] Deprecated — use @pennyfarthing/bikerack/entry instead');
+import('@pennyfarthing/bikerack/entry');

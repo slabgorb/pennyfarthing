@@ -3,6 +3,7 @@
  *
  * Story MSSCI-14822: BikeRackIndex panel listing page
  * Epic: 101 (BikeRack Mode)
+ * Moved to @pennyfarthing/bikerack in Story 124-5 (MSSCI-15556)
  *
  * Lists all 13 panels with links to standalone mode via ?panel=X.
  * Styled with Tailwind dark mode, consistent with Cyclist.

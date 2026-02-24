@@ -20,6 +20,10 @@
     "./server": {
       "types": "./dist/server.d.ts",
       "default": "./dist/server.js"
+    },
+    "./entry": {
+      "types": "./dist/entry.d.ts",
+      "default": "./dist/entry.js"
     }
   },
   "files": [
