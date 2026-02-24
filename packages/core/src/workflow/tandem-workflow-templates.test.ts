@@ -79,7 +79,7 @@ describe('AC1: tdd-tandem workflow template', () => {
     assert.strictEqual(result.workflow.name, 'tdd-tandem');
   });
 
-  it('should have same phase flow as base tdd workflow (minus verify)', () => {
+  it('should have same phase flow as base tdd workflow', () => {
     if (!workflowsDir) {
       assert.fail('Workflows directory not found');
     }
@@ -90,11 +90,11 @@ describe('AC1: tdd-tandem workflow template', () => {
     assert.ok(tddResult.success && tddResult.workflow);
     assert.ok(tandemResult.success && tandemResult.workflow);
 
-    const tddPhases = getPhaseNames(tddResult.workflow).filter(p => p !== 'verify');
+    const tddPhases = getPhaseNames(tddResult.workflow);
     const tandemPhases = getPhaseNames(tandemResult.workflow);
 
     assert.deepStrictEqual(tandemPhases, tddPhases,
-      'tdd-tandem should have same phase sequence as tdd (excluding verify)');
+      'tdd-tandem should have same phase sequence as tdd');
   });
 
   it('should have Architect as tandem partner on green phase (Dev + Architect)', () => {

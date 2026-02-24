@@ -40,7 +40,7 @@ describe('Story 9-2: Skill Search Utility', () => {
 
         assert.ok(Array.isArray(results), 'Should return an array');
         assert.ok(results.length > 0, 'Should return skills from registry');
-        assert.ok(results.length === 22, 'Should return all 22 skills when no filters');
+        assert.ok(results.length === 23, 'Should return all 23 skills when no filters');
       });
 
       it('should return skills with required fields', async () => {
@@ -111,7 +111,7 @@ describe('Story 9-2: Skill Search Utility', () => {
         // AC2: Category filter returns expected count
         const results = await searchSkills({ category: 'development' });
 
-        assert.strictEqual(results.length, 3, 'Should return 3 development skills');
+        assert.strictEqual(results.length, 4, 'Should return 4 development skills');
         assert.ok(
           results.every(s => s.category === 'development'),
           'All results should be development category'

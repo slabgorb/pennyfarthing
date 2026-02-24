@@ -192,6 +192,8 @@ export interface UseRawDataSourceOptions {
   onMessage: (data: unknown) => void;
   /** Called on WebSocket close */
   onClose?: () => void;
+  /** Called on WebSocket error */
+  onError?: (error: Error) => void;
   /** Reconnect delay in ms (default: 2000) */
   reconnectMs?: number;
 }
@@ -203,14 +205,16 @@ export interface UseRawDataSourceOptions {
 export function useRawDataSource(options: UseRawDataSourceOptions): {
   send: (message: unknown) => void;
 } {
-  const { endpoint, onMessage, onClose, reconnectMs = 2000 } = options;
+  const { endpoint, onMessage, onClose, onError, reconnectMs = 2000 } = options;
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const isMountedRef = useRef(true);
   const onMessageRef = useRef(onMessage);
   const onCloseRef = useRef(onClose);
+  const onErrorRef = useRef(onError);
   onMessageRef.current = onMessage;
   onCloseRef.current = onClose;
+  onErrorRef.current = onError;
 
   const send = useCallback((message: unknown) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -246,7 +250,7 @@ export function useRawDataSource(options: UseRawDataSourceOptions): {
         };
 
         wsRef.current.onerror = () => {
-          // Will trigger onclose
+          onErrorRef.current?.(new Error('WebSocket connection failed'));
         };
       } catch {
         // Connection failed

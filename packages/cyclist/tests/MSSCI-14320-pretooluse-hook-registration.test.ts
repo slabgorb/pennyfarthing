@@ -40,7 +40,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       expect(cyclistHook).toBeDefined();
     });
 
-    it('should use $CLAUDE_PROJECT_DIR in hook command', () => {
+    it('should use pf hooks CLI in hook command', () => {
       if (!settingsExist) return;
       const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
 
@@ -52,7 +52,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       );
 
       const command = cyclistHook?.hooks?.[0]?.command || '';
-      expect(command).toContain('$CLAUDE_PROJECT_DIR');
+      expect(command).toContain('pf hooks');
     });
 
     it('should use "command" type for hook entry', () => {
@@ -69,7 +69,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       expect(cyclistHook?.hooks?.[0]?.type).toBe('command');
     });
 
-    it('should invoke via pf.sh hooks wrapper', () => {
+    it('should invoke via pf hooks wrapper', () => {
       if (!settingsExist) return;
       const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
 
@@ -81,7 +81,7 @@ describe('MSSCI-14320: PreToolUse hook registration', () => {
       );
 
       const command = cyclistHook?.hooks?.[0]?.command || '';
-      expect(command).toContain('pf.sh hooks');
+      expect(command).toContain('pf hooks cyclist-pretooluse');
     });
   });
 });

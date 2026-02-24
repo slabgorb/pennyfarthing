@@ -398,7 +398,7 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
           errors.push({ field: `workflow.phases[${index}].gate`, message: 'Gate must be an object' });
         } else {
           const gateObj = phaseObj.gate as Record<string, unknown>;
-          const validGateTypes = ['tests_pass', 'tests_fail', 'approval', 'manual', 'quality_pass', 'design_review', 'validation'];
+          const validGateTypes = ['tests_pass', 'tests_fail', 'approval', 'manual', 'quality_pass', 'design_review', 'validation', 'sm_setup_exit', 'dev_exit'];
           const hasType = 'type' in gateObj && gateObj.type !== undefined && gateObj.type !== null;
           const hasFile = 'file' in gateObj && gateObj.file !== undefined && gateObj.file !== null;
 

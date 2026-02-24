@@ -62,10 +62,15 @@ export function usePersona(): UsePersonaResult {
     setIsStreaming(false);
   }, []);
 
+  const handleError = useCallback((err: Error) => {
+    setError(err);
+  }, []);
+
   useRawDataSource({
     endpoint: '/ws/persona',
     onMessage: handleMessage,
     onClose: handleClose,
+    onError: handleError,
   });
 
   return { persona, isStreaming, isLoading, error };

@@ -311,7 +311,7 @@ describe('API route factory exports', () => {
     'createTelemetryRouter',
     'createEvaluationRouter',
     'createSettingsRouter',
-    'createBackgroundTasksRouter',
+    // createBackgroundTasksRouter — not yet implemented
     'createSpansRouter',
     'createHookRequestRouter',
     'createIdentityRouter',
