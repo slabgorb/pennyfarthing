@@ -364,7 +364,7 @@ class TestPfCliVerification:
         with patch("pf.init.core.verify_pf_cli") as mock_verify:
             mock_verify.return_value = {
                 "success": False,
-                "error": "pf found but broken — stale shim at /Users/x/.local/bin/pf",
+                "error": "pf found but broken — stale shim at $HOME/.local/bin/pf",
                 "install_hint": "pipx install -e pennyfarthing-dist/",
             }
             result = init_project(target_dir=target, dist_root=dist)
