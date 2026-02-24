@@ -41,10 +41,23 @@
     "ws": "^8.19.0",
     "yaml": "^2.3.4"
   },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18",
+    "dockview-react": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true },
+    "react-dom": { "optional": true },
+    "dockview-react": { "optional": true }
+  },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.0",
+    "@types/react": "^19",
     "@types/ws": "^8.5.10",
+    "dockview-react": "^4.13.1",
+    "react": "^19.2.4",
     "typescript": "^5.3.3"
   },
   "engines": {

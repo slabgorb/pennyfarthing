@@ -25,6 +25,7 @@ import { panelRegistry } from '@pennyfarthing/core/components/panel-registry.js'
 import PersonaHeader from '@pennyfarthing/core/components/PersonaHeader.js';
 import ProjectInfoBar from '@pennyfarthing/core/components/ProjectInfoBar.js';
 import { useFocusPanel } from '@pennyfarthing/core/hooks/useFocusPanel.js';
+import '@pennyfarthing/core/styles/dockview-theme.css';
 
 // =============================================================================
 // BikeRack Panel Definitions
