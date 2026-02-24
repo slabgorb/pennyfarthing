@@ -238,7 +238,7 @@ The wizard handles validation, file creation, and version tracking.
 For quick creation from command line:
 
 ```bash
-pennyfarthing theme create noir-detective
+pf theme create noir-detective
 ```
 
 Creates a skeleton theme file to edit manually.

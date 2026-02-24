@@ -3,7 +3,7 @@
 # test_consumer_install.sh - Consumer install smoke test
 #
 # Packs @pennyfarthing/core, installs in a clean temp directory,
-# and validates the installation with `pennyfarthing doctor`.
+# and validates the installation with `pf doctor`.
 #
 # Every 11.x packaging bug would have been caught by this test.
 #
@@ -127,19 +127,19 @@ else
     fi
 fi
 
-# --- AC4: Run pennyfarthing doctor ---
+# --- AC4: Run pf doctor ---
 
 echo ""
-echo -e "${BLUE}Step 4: Run pennyfarthing doctor${NC}"
+echo -e "${BLUE}Step 4: Run pf doctor${NC}"
 
 # First, initialize the project non-interactively
 if [[ -f "$PF_BIN" ]]; then
-    INIT_OUTPUT=$(cd "$INSTALL_DIR" && "$PF_BIN" init --force 2>&1)
+    INIT_OUTPUT=$(cd "$INSTALL_DIR" && "$PF_BIN" setup --force 2>&1)
     INIT_EXIT=$?
     if [[ $INIT_EXIT -ne 0 ]]; then
-        warn "pennyfarthing init exited with code $INIT_EXIT (may affect doctor results)"
+        warn "pf setup exited with code $INIT_EXIT (may affect doctor results)"
     else
-        pass "pennyfarthing init completed successfully"
+        pass "pf setup completed successfully"
     fi
 
     # Now run doctor
@@ -147,12 +147,12 @@ if [[ -f "$PF_BIN" ]]; then
     DOCTOR_EXIT=$?
 
     if [[ $DOCTOR_EXIT -ne 0 ]]; then
-        fail "AC4: pennyfarthing doctor exited with code $DOCTOR_EXIT"
-        echo "  --- Doctor output (last 30 lines) ---"
+        fail "AC4: pf doctor exited with code $DOCTOR_EXIT"
+        echo "  --- pf doctor output (last 30 lines) ---"
         echo "$DOCTOR_OUTPUT" | tail -30 | sed 's/^/  /'
-        echo "  -------------------------------------"
+        echo "  ----------------------------------------"
     else
-        # Doctor --json outputs header lines before the JSON array.
+        # pf doctor --json outputs header lines before the JSON array.
         # Extract JSON by finding the first '[' line.
         DOCTOR_JSON=$(echo "$DOCTOR_OUTPUT" | sed -n '/^\[/,$ p')
 
@@ -167,13 +167,13 @@ except (json.JSONDecodeError, KeyError):
 " 2>/dev/null)
 
         if [[ "$CRITICAL_FAILS" == "-1" ]]; then
-            warn "Could not parse doctor JSON output"
+            warn "Could not parse pf doctor JSON output"
             # Fall back to exit code — if 0, it passed
-            pass "AC4: pennyfarthing doctor exited cleanly (exit code 0)"
+            pass "AC4: pf doctor exited cleanly (exit code 0)"
         elif [[ "$CRITICAL_FAILS" == "0" ]]; then
-            pass "AC4: pennyfarthing doctor reports 0 critical failures"
+            pass "AC4: pf doctor reports 0 critical failures"
         else
-            fail "AC4: pennyfarthing doctor reports $CRITICAL_FAILS critical failure(s)"
+            fail "AC4: pf doctor reports $CRITICAL_FAILS critical failure(s)"
             echo "$DOCTOR_JSON" | python3 -c "
 import json, sys
 try:
@@ -187,7 +187,7 @@ except:
         fi
     fi
 else
-    fail "AC4: Skipped — pennyfarthing binary not available"
+    fail "AC4: Skipped — pf binary not available"
 fi
 
 # --- AC5: Verify key installed files ---

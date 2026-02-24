@@ -823,8 +823,8 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 **Usage:**
 ```
 /pf-health-check
-pennyfarthing doctor
-pennyfarthing doctor --fix
+pf doctor
+pf doctor --fix
 ```
 
 **What it does:**

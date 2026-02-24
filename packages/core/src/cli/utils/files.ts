@@ -170,7 +170,7 @@ export function getDirectoryHashes(dirPath: string): Record<string, string> {
  *
  * Checks for markers in priority order:
  * 1. pennyfarthing-dist/ + packages/ together - Framework source repo (unique combination)
- * 2. .pennyfarthing/ - Consumer project (created by `pennyfarthing init`)
+ * 2. .pennyfarthing/ - Consumer project (created by `pf setup`)
  *
  * The first check uses BOTH markers because an orchestrator might have pennyfarthing-dist/
  * via symlink, but only the actual pennyfarthing repo has both pennyfarthing-dist/ AND packages/.

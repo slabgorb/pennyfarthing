@@ -411,7 +411,7 @@ Stories sync to/from Jira via:
 ### Why Symlinks?
 
 - Single source of truth (`pennyfarthing/` directory)
-- Updates propagate automatically via `pennyfarthing update`
+- Updates propagate automatically via `pf setup`
 - No copy/paste drift
 - Clear separation of managed vs project files
 - Official subagents live alongside agent definitions

@@ -14,7 +14,7 @@ Verify the core Pennyfarthing installation exists and is intact. This checks the
 </purpose>
 
 <prerequisites>
-- Project has been initialized with `pennyfarthing init`
+- Project has been initialized with `pf setup`
 - Running from the project root directory
 </prerequisites>
 
@@ -67,7 +67,7 @@ After reviewing foundation results, proceed to step-02-commands.md for Commands 
 ## Failure Modes
 
 - Running from wrong directory (not project root)
-- Manifest missing entirely (needs `pennyfarthing init`)
+- Manifest missing entirely (needs `pf setup`)
 - Broken symlinks after `node_modules` cleanup without reinstall
 
 ## Success Metrics

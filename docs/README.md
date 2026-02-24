@@ -85,10 +85,10 @@ cd your-project
 npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks)
-npx pennyfarthing init
+pf setup
 
 # Verify installation
-npx pennyfarthing doctor
+pf doctor
 
 # Start working (in Claude Code)
 /pf-work
@@ -104,10 +104,10 @@ This is one of many BikeLane workflows. Others include stepped planning workflow
 
 | Command | Purpose |
 |---------|---------|
-| `npx pennyfarthing init` | Initialize in a project |
+| `pf setup` | Initialize in a project |
 | `npm update @pennyfarthing/core` | Update to latest version |
-| `npx pennyfarthing doctor` | Check installation health |
-| `npx pennyfarthing version` | Show version info |
+| `pf doctor` | Check installation health |
+| `pf version` | Show version info |
 
 ## Getting Help
 

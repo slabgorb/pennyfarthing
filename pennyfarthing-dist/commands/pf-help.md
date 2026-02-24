@@ -21,7 +21,7 @@ Start here:
 
 If Pennyfarthing isn't installed yet:
 ```bash
-npx pennyfarthing init
+pf setup
 ```
 
 </quick-start>

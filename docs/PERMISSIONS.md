@@ -260,7 +260,7 @@ This means the benchmark subagent doesn't have the required permissions. Either:
 Run the doctor command with `--fix` to add parallel benchmark permissions:
 
 ```bash
-pennyfarthing doctor --fix
+pf doctor --fix
 ```
 
 ## Troubleshooting

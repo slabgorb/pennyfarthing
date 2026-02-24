@@ -195,11 +195,11 @@ done
 
 ### Installing Hooks
 
-Hooks are installed automatically by `pennyfarthing init`:
+Hooks are installed automatically by `pf setup`:
 
 ```bash
 # Or manually
-pennyfarthing doctor --fix
+pf doctor --fix
 
 # Or install script
 .pennyfarthing/scripts/git/install-git-hooks.sh

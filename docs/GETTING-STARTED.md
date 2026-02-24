@@ -30,7 +30,7 @@ npm install --save-dev @pennyfarthing/cyclist
 ### Step 2: Initialize Your Project
 
 ```bash
-npx pennyfarthing init
+pf setup
 ```
 
 This creates symlinks (no file copying):
@@ -43,10 +43,10 @@ This creates symlinks (no file copying):
 ### Step 3: Verify Installation
 
 ```bash
-npx pennyfarthing doctor
+pf doctor
 ```
 
-All checks should pass. If not, run `npx pennyfarthing doctor --fix`.
+All checks should pass. If not, run `pf doctor --fix`.
 
 ## Configuration
 
@@ -87,8 +87,8 @@ In Claude Code:
 Or via CLI:
 
 ```bash
-pennyfarthing theme list
-pennyfarthing theme set discworld
+pf theme list
+pf theme set discworld
 ```
 
 Or edit `.pennyfarthing/config.local.yaml` directly:
@@ -150,7 +150,7 @@ See [WORKFLOWS.md](WORKFLOWS.md) for all workflow types including stepped workfl
 
 ```bash
 npm update @pennyfarthing/core
-npx pennyfarthing doctor
+pf doctor
 ```
 
 ## Troubleshooting
@@ -158,15 +158,15 @@ npx pennyfarthing doctor
 ### "no such file or directory" errors
 
 ```bash
-npx pennyfarthing doctor --fix
+pf doctor --fix
 ```
 
 ### Fresh reinstall
 
 ```bash
-npx pennyfarthing uninstall
+pf uninstall
 npm install --save-dev @pennyfarthing/core
-npx pennyfarthing init
+pf setup
 ```
 
 ## Scientific Benchmarking (Optional)
@@ -181,7 +181,7 @@ Evaluate persona effectiveness with standardized scenarios:
 /benchmark discworld reviewer --scenario order-service
 ```
 
-**Note:** Sequential benchmarks work with standard interactive prompts. For **parallel benchmarks** (running multiple themes simultaneously), you need explicit permissions for subagents. Run `pennyfarthing doctor --fix` to add them, or see [PERMISSIONS.md](PERMISSIONS.md#benchmarking-permissions-parallel-runs).
+**Note:** Sequential benchmarks work with standard interactive prompts. For **parallel benchmarks** (running multiple themes simultaneously), you need explicit permissions for subagents. Run `pf doctor --fix` to add them, or see [PERMISSIONS.md](PERMISSIONS.md#benchmarking-permissions-parallel-runs).
 
 See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
 

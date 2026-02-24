@@ -54,16 +54,16 @@ Pennyfarthing-specific scripts preserved:
 
 ### 4. Reinstall Pennyfarthing in Pennyfarthing (COMPLETE - 2025-12-23)
 ```
-pennyfarthing uninstall --force
-pennyfarthing init --force
-pennyfarthing doctor  # All checks passed
+pf uninstall --force
+pf setup --force
+pf doctor  # All checks passed
 ```
 
 ### 5. Reinstall Pennyfarthing in Siemulator (COMPLETE - 2025-12-23)
 ```
-pennyfarthing uninstall --force
-pennyfarthing init --force
-pennyfarthing doctor  # All checks passed
+pf uninstall --force
+pf setup --force
+pf doctor  # All checks passed
 ```
 
 ## Status: COMPLETE
@@ -72,7 +72,7 @@ All script path fixes have been applied:
 1. Core files use `./scripts/run.sh <script>` pattern
 2. run.sh deployed to Pennyfarthing and siemulator
 3. Duplicate scripts removed from Pennyfarthing
-4. All projects pass `pennyfarthing doctor`
+4. All projects pass `pf doctor`
 
 ## Key Insight
 The `run.sh` bootstrap handles finding scripts in `scripts/`, `scripts/utils/`, and `scripts/hooks/`:

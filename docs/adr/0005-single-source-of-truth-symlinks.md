@@ -31,9 +31,9 @@ pennyfarthing-dist/           # Canonical definitions (source of truth)
 ### Implementation
 
 1. **Source Directory:** `pennyfarthing-dist/` contains all managed content
-2. **Symlink Creation:** `pennyfarthing init` creates symlinks from discovery locations
-3. **Update Propagation:** `pennyfarthing update` refreshes symlinks to new versions
-4. **Health Checks:** `pennyfarthing doctor --fix` repairs broken symlinks
+2. **Symlink Creation:** `pf setup` creates symlinks from discovery locations
+3. **Update Propagation:** `pf setup` refreshes symlinks to new versions
+4. **Health Checks:** `pf doctor --fix` repairs broken symlinks
 
 ### What Goes Where
 
@@ -59,7 +59,7 @@ Project-specific content lives in non-symlinked directories:
 ### Positive
 
 - **Single source of truth** - Changes made in one place affect all consumers
-- **Automatic updates** - `pennyfarthing update` refreshes all symlinks
+- **Automatic updates** - `pf setup` refreshes all symlinks
 - **No copy drift** - Symlinks always point to current version
 - **Clear separation** - Managed vs project files are obvious
 - **Claude Code compatible** - Symlinks satisfy `.claude/` discovery requirements
@@ -75,7 +75,7 @@ Project-specific content lives in non-symlinked directories:
 
 - **Never modify symlinked directories** - Changes will be lost on update
 - **Always modify `pennyfarthing-dist/`** - This is the canonical source
-- **Run `pennyfarthing doctor`** - After manual file operations
+- **Run `pf doctor`** - After manual file operations
 
 ## Alternatives Considered
 

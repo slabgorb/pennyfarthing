@@ -73,7 +73,7 @@ After reviewing layout results, proceed to step-06-legacy.md for Legacy artifact
 ## Failure Modes
 
 - Moving files manually without updating references in settings.local.json
-- Missing sprint/ or .session/ directories (need `pennyfarthing init`)
+- Missing sprint/ or .session/ directories (need `pf setup`)
 
 ## Success Metrics
 

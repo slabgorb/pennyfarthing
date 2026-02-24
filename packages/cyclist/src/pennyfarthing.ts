@@ -380,7 +380,7 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
 
   // Find theme file path - three sources of truth:
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
-  // 2. Consumer project: .pennyfarthing/personas/themes (after pennyfarthing init)
+  // 2. Consumer project: .pennyfarthing/personas/themes (after pf setup)
   // 3. Dev/dogfooding: monorepo pennyfarthing-dist
   const themeFile = `${config.theme}.yaml`;
 
@@ -493,7 +493,7 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
 
   // Find theme file path - three sources of truth:
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
-  // 2. Consumer project: .pennyfarthing/personas/themes (after pennyfarthing init)
+  // 2. Consumer project: .pennyfarthing/personas/themes (after pf setup)
   // 3. Dev/dogfooding: monorepo pennyfarthing-dist
   const themeFile = `${config.theme}.yaml`;
 

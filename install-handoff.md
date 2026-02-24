@@ -16,19 +16,19 @@ Users install the base `pennyfarthing` package for CLI, and optionally add `@pen
 ```bash
 # Install CLI only (1.1 MB)
 npm install pennyfarthing
-npx pennyfarthing init
-npx pennyfarthing doctor
+pf setup
+pf doctor
 
 # Running cyclist without it installed shows helpful message:
-npx pennyfarthing cyclist
+pf cyclist
 # Error: Cyclist not found.
 # To use the visual terminal, install the optional Cyclist package:
 #   npm install @pennyfarthing/cyclist
-# Then run: npx pennyfarthing cyclist
+# Then run: pf cyclist
 
 # Install optional visual terminal (160 MB, includes portraits)
 npm install @pennyfarthing/cyclist
-npx pennyfarthing cyclist   # Works!
+pf cyclist   # Works!
 ```
 
 ## Package Sizes
@@ -88,13 +88,13 @@ git init && npm init -y
 
 # Install and test base package
 npm install /path/to/pennyfarthing-6.5.0.tgz
-npx pennyfarthing init test-project  # ✓ Works
-npx pennyfarthing doctor             # ✓ Works
-npx pennyfarthing cyclist            # ✓ Shows helpful error
+pf setup test-project  # ✓ Works
+pf doctor             # ✓ Works
+pf cyclist            # ✓ Shows helpful error
 
 # Install and test cyclist
 npm install /path/to/pennyfarthing-cyclist-6.1.0.tgz
-npx pennyfarthing cyclist --no-open  # ✓ Works - server starts
+pf cyclist --no-open  # ✓ Works - server starts
 ```
 
 ## What's NOT Distributed
@@ -161,7 +161,7 @@ your-project/
 
 ### Migration for Existing Installs
 
-Running `pennyfarthing init` or `pennyfarthing update` will:
+Running `pf setup` will:
 1. Remove old symlinks from `.claude/` (agents, guides, personas, scripts)
 2. Create new symlinks in `.pennyfarthing/`
 3. Update settings.local.json hook paths
