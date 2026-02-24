@@ -132,10 +132,10 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "dev":** Run `pf.sh handoff marker $OWNER`, output result, tell user.
+**If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
 </phase-check>
 ```
 

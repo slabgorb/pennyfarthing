@@ -22,7 +22,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start',
+                        "command": 'pf hooks session-start',
                     }
                 ]
             }
@@ -32,7 +32,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-stop',
+                        "command": 'pf hooks session-stop',
                     }
                 ]
             }
@@ -43,7 +43,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks pre-edit-check',
+                        "command": 'pf hooks pre-edit-check',
                     }
                 ],
             },
@@ -52,7 +52,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks context-warning',
+                        "command": 'pf hooks context-warning',
                     }
                 ],
             },
@@ -62,7 +62,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks bell-mode',
+                        "command": 'pf hooks bell-mode',
                     }
                 ]
             }
