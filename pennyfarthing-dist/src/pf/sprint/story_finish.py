@@ -185,7 +185,10 @@ def finish_story(
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
-    t_result = transition_story(project_root, story_id, "done")
+    # Two-step: in_progress → in_review → done (state machine requires review step)
+    t_result = transition_story(project_root, story_id, "in_review")
+    if t_result.get("success"):
+        t_result = transition_story(project_root, story_id, "done")
     if t_result.get("success"):
         if jira_key:
             steps.append({"step": 3, "action": "jira_done", "key": jira_key})

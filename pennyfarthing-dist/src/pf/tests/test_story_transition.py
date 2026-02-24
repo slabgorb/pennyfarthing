@@ -60,7 +60,7 @@ epics:
         title: Focus commands
         points: 2
         priority: p3
-        status: review
+        status: in_review
         jira: MSSCI-15430
         workflow: trivial
       - id: 125-10
@@ -139,12 +139,12 @@ class TestTransitionMap:
         assert TRANSITIONS["backlog"] == {"in_progress", "canceled"}
 
     def test_in_progress_transitions(self) -> None:
-        """in_progress can transition to review or canceled."""
-        assert TRANSITIONS["in_progress"] == {"review", "canceled"}
+        """in_progress can transition to in_review or canceled."""
+        assert TRANSITIONS["in_progress"] == {"in_review", "canceled"}
 
-    def test_review_transitions(self) -> None:
-        """review can transition to done or canceled."""
-        assert TRANSITIONS["review"] == {"done", "canceled"}
+    def test_in_review_transitions(self) -> None:
+        """in_review can transition to done or canceled."""
+        assert TRANSITIONS["in_review"] == {"done", "canceled"}
 
     def test_done_transitions(self) -> None:
         """done can only transition to canceled."""
@@ -156,7 +156,7 @@ class TestTransitionMap:
 
     def test_all_statuses_in_map(self) -> None:
         """Every valid status should be a key in the transitions map."""
-        expected = {"backlog", "in_progress", "review", "done", "canceled"}
+        expected = {"backlog", "in_progress", "in_review", "done", "canceled"}
         assert set(TRANSITIONS.keys()) == expected
 
     def test_canceled_reachable_from_all_non_terminal(self) -> None:
@@ -206,15 +206,15 @@ class TestTransitionStoryHappyPath:
         mock_client.transition_sync.return_value = {"success": True}
         mock_get_client.return_value = mock_client
 
-        result = transition_story(project, "125-8", "review")
+        result = transition_story(project, "125-8", "in_review")
 
         assert result["success"] is True
         assert result["from_status"] == "in_progress"
-        assert result["to_status"] == "review"
+        assert result["to_status"] == "in_review"
 
         data = read_sprint(project / "sprint" / "current-sprint.yaml")
         story = data["epics"][0]["stories"][1]
-        assert story["status"] == "review"
+        assert story["status"] == "in_review"
 
         mock_client.transition_sync.assert_called_once_with("MSSCI-15429", "In Review")
 
@@ -228,7 +228,7 @@ class TestTransitionStoryHappyPath:
         result = transition_story(project, "125-9", "done")
 
         assert result["success"] is True
-        assert result["from_status"] == "review"
+        assert result["from_status"] == "in_review"
         assert result["to_status"] == "done"
 
         data = read_sprint(project / "sprint" / "current-sprint.yaml")
@@ -332,13 +332,13 @@ class TestInvalidTransitions:
         assert result["success"] is False
         assert result["steps"] == []
 
-    def test_backlog_to_review_rejected(self, project: Path) -> None:
-        """backlog → review skips in_progress — not allowed."""
-        result = transition_story(project, "125-7", "review")
+    def test_backlog_to_in_review_rejected(self, project: Path) -> None:
+        """backlog → in_review skips in_progress — not allowed."""
+        result = transition_story(project, "125-7", "in_review")
 
         assert result["success"] is False
         assert "backlog" in result["error"]
-        assert "review" in result["error"]
+        assert "in_review" in result["error"]
 
     def test_backlog_to_done_rejected(self, project: Path) -> None:
         """backlog → done skips intermediate states — not allowed."""
@@ -428,7 +428,7 @@ class TestPartialFailure:
 
         # Overall failure due to partial
         assert result["success"] is False
-        assert "Partial failure" in result["error"]
+        assert "Jira sync failed" in result["error"]
 
         # YAML was still updated (persisted)
         data = read_sprint(project / "sprint" / "current-sprint.yaml")

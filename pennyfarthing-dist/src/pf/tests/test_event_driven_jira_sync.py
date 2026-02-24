@@ -62,7 +62,7 @@ epics:
         title: Focus commands
         points: 2
         priority: p3
-        status: review
+        status: in_review
         jira: MSSCI-15430
         workflow: trivial
       - id: 125-10
@@ -249,24 +249,24 @@ class TestAllTransitionsFireJiraSync:
         mock_client.transition_sync.assert_called_once_with("MSSCI-15428", "In Progress")
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_in_progress_to_review_syncs_jira(
+    def test_in_progress_to_in_review_syncs_jira(
         self, mock_get_client: MagicMock, project: Path
     ) -> None:
-        """in_progress → review should sync to Jira."""
+        """in_progress → in_review should sync to Jira."""
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {"success": True}
         mock_get_client.return_value = mock_client
 
-        result = transition_story(project, "125-8", "review")
+        result = transition_story(project, "125-8", "in_review")
 
         assert result["success"] is True
         mock_client.transition_sync.assert_called_once_with("MSSCI-15429", "In Review")
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_review_to_done_syncs_jira(
+    def test_in_review_to_done_syncs_jira(
         self, mock_get_client: MagicMock, project: Path
     ) -> None:
-        """review → done should sync to Jira."""
+        """in_review → done should sync to Jira."""
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {"success": True}
         mock_get_client.return_value = mock_client

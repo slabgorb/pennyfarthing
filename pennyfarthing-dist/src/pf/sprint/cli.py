@@ -42,7 +42,7 @@ def sprint():
 
 @sprint.command()
 @click.argument("filter", required=False, type=click.Choice(
-    ["backlog", "todo", "in-progress", "review", "done"],
+    ["backlog", "todo", "in-progress", "in-review", "done"],
     case_sensitive=False,
 ))
 def status(filter: str | None):

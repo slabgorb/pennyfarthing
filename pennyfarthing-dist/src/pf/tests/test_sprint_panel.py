@@ -264,8 +264,8 @@ class TestStatusBadge:
         assert "!" in badge.plain
         assert "blocked" not in badge.plain
 
-    def test_review_badge(self) -> None:
-        badge = _status_badge("review")
+    def test_in_review_badge(self) -> None:
+        badge = _status_badge("in-review")
         assert "\u25ce" in badge.plain
         assert "review" not in badge.plain
 

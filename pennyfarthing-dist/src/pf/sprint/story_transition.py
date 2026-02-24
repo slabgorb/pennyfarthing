@@ -18,8 +18,8 @@ from pf.sprint.yaml_io import read_sprint, write_sprint
 # Valid transitions: from_status -> set of allowed to_statuses
 TRANSITIONS: dict[str, set[str]] = {
     "backlog": {"in_progress", "canceled"},
-    "in_progress": {"review", "canceled"},
-    "review": {"done", "canceled"},
+    "in_progress": {"in_review", "canceled"},
+    "in_review": {"done", "canceled"},
     "done": {"canceled"},
     "canceled": set(),
 }
@@ -27,7 +27,7 @@ TRANSITIONS: dict[str, set[str]] = {
 _JIRA_STATUS: dict[str, str] = {
     "backlog": "To Do",
     "in_progress": "In Progress",
-    "review": "In Review",
+    "in_review": "In Review",
     "done": "Done",
     "canceled": "Canceled",
 }

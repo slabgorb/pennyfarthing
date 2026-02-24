@@ -45,7 +45,7 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
         "by_status": status_counts,
         "backlog": status_counts.get("backlog", 0),
         "in_progress": status_counts.get("in_progress", 0),
-        "review": status_counts.get("review", 0),
+        "in_review": status_counts.get("in_review", 0),
         "completed": status_counts.get("done", 0) + status_counts.get("completed", 0),
         "total_points": total_points,
         "completed_points": completed_points,
@@ -79,7 +79,7 @@ def format_status(status: dict[str, Any]) -> str:
     lines.append(f"Total Stories: {status.get('total_stories', 0)}")
     lines.append(f"  Backlog: {status.get('backlog', 0)}")
     lines.append(f"  In Progress: {status.get('in_progress', 0)}")
-    lines.append(f"  In Review: {status.get('review', 0)}")
+    lines.append(f"  In Review: {status.get('in_review', 0)}")
     lines.append(f"  Completed: {status.get('completed', 0)}")
     lines.append("")
 
@@ -104,7 +104,7 @@ def main(args: list[str] | None = None) -> int:
     parser.add_argument(
         "filter",
         nargs="?",
-        choices=["backlog", "todo", "in-progress", "review", "done"],
+        choices=["backlog", "todo", "in-progress", "in-review", "done"],
         help="Filter by status",
     )
 

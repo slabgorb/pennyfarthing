@@ -30,7 +30,7 @@ Python Click CLI for Pennyfarthing. Entry point: `pf/cli.py`. Invoked as `pf`.
 
 | Command | Description | Source |
 |---------|-------------|--------|
-| `pf sprint status [FILTER]` | Show sprint status. Filter: `all`, `backlog`, `in-progress`, `done`, `review` | `sprint/status.py` |
+| `pf sprint status [FILTER]` | Show sprint status. Filter: `all`, `backlog`, `in-progress`, `done`, `in-review` | `sprint/status.py` |
 | `pf sprint backlog` | Available stories grouped by epic | `sprint/cli.py` |
 | `pf sprint work [STORY_ID]` | Start work on a story (`next` for auto-select) | `sprint/work.py` |
 | `pf sprint check IDENTIFIER` | Check story/epic availability (JSON output) | `sprint/cli.py` |

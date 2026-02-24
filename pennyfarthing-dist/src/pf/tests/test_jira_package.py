@@ -101,7 +101,7 @@ class TestStatusMappings:
         assert map_jira_to_status("To Do") == "backlog"
         assert map_jira_to_status("In Progress") == "in_progress"
         assert map_jira_to_status("Done") == "done"
-        assert map_jira_to_status("In Review") == "review"
+        assert map_jira_to_status("In Review") == "in_review"
 
     def test_map_jira_to_status_unknown_defaults_to_backlog(self) -> None:
         """map_jira_to_status should default to 'backlog' for unknown."""

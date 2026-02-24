@@ -43,7 +43,7 @@ def archive_story(
 
     # Check status
     status = story.get("status", "backlog")
-    if status not in ("done", "completed", "review"):
+    if status not in ("done", "completed", "in_review"):
         return {
             "success": False,
             "error": f"Story status is '{status}', expected 'done' or 'completed'",

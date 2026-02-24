@@ -67,7 +67,7 @@ class TestStatusMapping:
         assert jira_module.map_jira_to_status("To Do") == "backlog"
         assert jira_module.map_jira_to_status("In Progress") == "in_progress"
         assert jira_module.map_jira_to_status("Done") == "done"
-        assert jira_module.map_jira_to_status("In Review") == "review"
+        assert jira_module.map_jira_to_status("In Review") == "in_review"
 
 
 class TestJiraKeyExtraction:

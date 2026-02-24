@@ -48,7 +48,7 @@ def _status_badge(status: str) -> Text:
         return Text("\u25ef", style="dim")
     if s == "blocked":
         return Text("!", style="bold red")
-    if s == "review":
+    if s == "in-review":
         return Text("\u25ce", style="cyan")
     return Text("\u2014", style="dim")
 
@@ -95,7 +95,7 @@ def _should_expand(epic: dict[str, Any]) -> bool:
 _EPIC_ID_WIDTH = 11  # "MSSCI-NNNNN" = 11 chars
 
 # Sort order: actionable items first, completed last
-_STATUS_ORDER = {"in-progress": 0, "review": 1, "blocked": 2, "backlog": 3, "done": 4, "canceled": 5}
+_STATUS_ORDER = {"in-progress": 0, "in-review": 1, "blocked": 2, "backlog": 3, "done": 4, "canceled": 5}
 
 
 def _build_epic_label(
