@@ -16,11 +16,7 @@
     },
     "./dist/*": "./packages/core/dist/*"
   },
-  "bin": {
-    "pennyfarthing": "./packages/core/bin/pennyfarthing.js"
-  },
   "files": [
-    "packages/core/bin/",
     "packages/core/dist/",
     "packages/core/src/public/",
     "pennyfarthing-dist/agents/",
@@ -35,7 +31,6 @@
     "pennyfarthing-dist/workflows/",
     "pennyfarthing-dist/src/pf/",
     "pennyfarthing-dist/pyproject.toml",
-    "scripts/postinstall.cjs",
     "README.md"
   ],
   "repository": {
@@ -48,7 +43,6 @@
   },
   "scripts": {
     "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh && ./pennyfarthing-dist/scripts/git/changelog-links.sh --validate",
-    "postinstall": "node scripts/postinstall.cjs",
     "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
     "docs": "./scripts/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",

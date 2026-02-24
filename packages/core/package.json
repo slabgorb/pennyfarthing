@@ -23,9 +23,6 @@
   "bugs": {
     "url": "https://github.com/1898andCo/pennyfarthing/issues"
   },
-  "bin": {
-    "pennyfarthing": "./bin/pennyfarthing.js"
-  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -41,7 +38,6 @@
   },
   "files": [
     "dist/",
-    "bin/",
     "pennyfarthing-dist/agents/",
     "pennyfarthing-dist/commands/",
     "pennyfarthing-dist/guides/",

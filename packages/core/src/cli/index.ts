@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { initCommand } from './commands/init.js';
 import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
 import { uninstallCommand } from './commands/uninstall.js';
@@ -20,15 +19,6 @@ program
   .name('pennyfarthing')
   .description('Claude Code agent framework with TDD workflow and persona system')
   .version(version);
-
-program
-  .command('init')
-  .description('Initialize Pennyfarthing in a project')
-  .argument('[project-name]', 'Name of the project')
-  .option('-f, --force', 'Skip prompts, overwrite existing files')
-  .option('--skip-templates', 'Skip generating template files')
-  .option('--dry-run', 'Show what would be done without doing it')
-  .action(initCommand);
 
 program
   .command('update')

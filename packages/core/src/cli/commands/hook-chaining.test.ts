@@ -30,7 +30,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { execSync } from 'child_process';
 
-import { installGitHooks } from './init.js';
+import { installGitHooks } from '../utils/install-helpers.js';
 
 // Marker string used by pennyfarthing to identify its own hooks
 const PF_MARKER = 'pennyfarthing';

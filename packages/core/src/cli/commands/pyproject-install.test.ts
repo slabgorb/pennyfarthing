@@ -35,7 +35,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Path to the CLI binary (compiled JS)
-const CLI_BIN = resolve(__dirname, '../../../bin/pennyfarthing.js');
+const CLI_BIN = resolve(__dirname, '../index.js');
 
 // Path to the real pennyfarthing-dist (for creating fake node_modules)
 const REAL_PENNYFARTHING_DIST = resolve(__dirname, '../../../../../pennyfarthing-dist');

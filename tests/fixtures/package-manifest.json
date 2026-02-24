@@ -7,16 +7,14 @@
   ],
   "required_top_level_dirs": [
     "packages",
-    "pennyfarthing-dist",
-    "scripts"
+    "pennyfarthing-dist"
   ],
   "allowed_top_level_entries": [
     "package.json",
     "README.md",
     "LICENSE",
     "packages",
-    "pennyfarthing-dist",
-    "scripts"
+    "pennyfarthing-dist"
   ],
   "required_pennyfarthing_dist_subdirs": [
     "agents",
@@ -35,10 +33,8 @@
     "core"
   ],
   "critical_files": [
-    "packages/core/bin/pennyfarthing.js",
     "packages/core/dist/index.js",
     "packages/core/dist/index.d.ts",
-    "scripts/postinstall.cjs",
     "pennyfarthing-dist/pyproject.toml"
   ],
   "required_pennyfarthing_dist_scripts": [
