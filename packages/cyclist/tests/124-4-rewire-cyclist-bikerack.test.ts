@@ -193,6 +193,23 @@ describe('AC5: BikeRack never registers /ws/claude', () => {
       `BikeRack files referencing ClaudeService: ${violations.join(', ')}`
     ).toEqual([]);
   });
+
+  it('should NOT import from claude-service module in bikerack source', () => {
+    const srcFiles = getAllTsFiles(BIKERACK_SRC);
+    const violations: string[] = [];
+
+    for (const file of srcFiles) {
+      const content = readFileSync(file, 'utf-8');
+      if (content.match(/from\s+['"]\.\/claude-service/)) {
+        violations.push(file.replace(BIKERACK_SRC + '/', ''));
+      }
+    }
+
+    expect(
+      violations,
+      `BikeRack files importing from claude-service module: ${violations.join(', ')}`
+    ).toEqual([]);
+  });
 });
 
 // ============================================================================

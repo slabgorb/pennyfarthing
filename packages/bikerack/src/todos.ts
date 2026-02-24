@@ -5,7 +5,8 @@
  * for display in the sidebar.
  */
 
-import type { SDKMessage } from './claude-service.js';
+/** Minimal SDK message shape — only `type` is used by todo extraction. */
+interface SDKMessage { type: string; [key: string]: unknown; }
 
 /**
  * A single todo item from the TodoWrite tool
