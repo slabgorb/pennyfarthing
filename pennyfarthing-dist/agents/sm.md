@@ -25,12 +25,12 @@ The moment you start reading implementation files or planning how code should wo
 </critical>
 
 <critical>
-Use the pf wrapper for all Jira interactions. Key commands:
+Use pf for all Jira interactions. Key commands:
 ```
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira check MSSCI-XXXXX       # Check story availability
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira claim MSSCI-XXXXX       # Claim story (assign + In Progress)
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira move MSSCI-XXXXX "Done" # Transition status
-"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh jira reconcile               # Audit YAML vs Jira
+pf jira check MSSCI-XXXXX       # Check story availability
+pf jira claim MSSCI-XXXXX       # Claim story (assign + In Progress)
+pf jira move MSSCI-XXXXX "Done" # Transition status
+pf jira reconcile               # Audit YAML vs Jira
 ```
 If they are broken, COMPLAIN LOUDLY
 </critical>
@@ -107,7 +107,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 
 2. **Run finish command:**
    ```bash
-   "$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story finish {STORY_ID}
+   pf sprint story finish {STORY_ID}
    ```
 
 3. **Commit results:**
@@ -153,8 +153,8 @@ Present to user:
 
 1. **Get workflow type:**
    ```bash
-   WORKFLOW=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint story field X-Y workflow)
-   WORKFLOW_TYPE=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow type "$WORKFLOW")
+   WORKFLOW=$(pf sprint story field X-Y workflow)
+   WORKFLOW_TYPE=$(pf workflow type "$WORKFLOW")
    ```
 
 2. **Spawn `sm-setup MODE=setup`** with:
@@ -167,7 +167,7 @@ Present to user:
    ```
 
 4. **Route based on workflow type:**
-   - **Phased workflow** → Run exit protocol: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff complete-phase` then `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker`
+   - **Phased workflow** → Run exit protocol: `pf handoff complete-phase` then `pf handoff marker`
    - **Stepped workflow** → Tell user to run `/pf-workflow start {workflow}` (no handoff)
 </session-new-flow>
 
@@ -199,7 +199,7 @@ Enforced by `gates/sm-setup-exit`: session exists, fields set, context exists, b
 > **Triggered when:** `EMPTY_BACKLOG_STATE`
 
 1. Report: "Sprint backlog empty. All stories done or cancelled."
-2. Show future work: `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh sprint future`
+2. Show future work: `pf sprint future`
 3. Offer: "Promote stories from `future.yaml`?" → `/pf-sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
@@ -249,10 +249,10 @@ SM does NOT hand off to agents. Instead, use `/pf-workflow start {name}` to begi
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$("$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh workflow phase-check {workflow} {phase})
+OWNER=$(pf workflow phase-check {workflow} {phase})
 ```
 
-**If OWNER != "sm":** Run `"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh handoff marker $OWNER`, output result, tell user.
+**If OWNER != "sm":** Run `pf handoff marker $OWNER`, output result, tell user.
 
 **Note:** SM also handles `approved` status (finish phase).
 </phase-check>
