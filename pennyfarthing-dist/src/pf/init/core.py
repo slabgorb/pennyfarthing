@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,7 +23,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start',
+                        "command": 'pf hooks session-start',
                     }
                 ]
             }
@@ -32,7 +33,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-stop',
+                        "command": 'pf hooks session-stop',
                     }
                 ]
             }
@@ -43,7 +44,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks pre-edit-check',
+                        "command": 'pf hooks pre-edit-check',
                     }
                 ],
             },
@@ -52,7 +53,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks context-warning',
+                        "command": 'pf hooks context-warning',
                     }
                 ],
             },
@@ -62,7 +63,7 @@ _MINIMAL_SETTINGS: dict = {
                 "hooks": [
                     {
                         "type": "command",
-                        "command": '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks bell-mode',
+                        "command": 'pf hooks bell-mode',
                     }
                 ]
             }
@@ -94,6 +95,70 @@ _CLAUDE_DIRS: list[str] = [
 ]
 
 
+def verify_pf_cli() -> dict:
+    """Verify that the pf CLI is available and functional.
+
+    Checks that `pf --version` succeeds and detects the install method
+    (pipx, pip, or unknown). Returns a stale-shim error if pf is on
+    PATH but its backing virtualenv is broken.
+
+    Returns:
+        Result dict: {success, version?, install_method?, error?, install_hint?}
+    """
+    import shutil as _shutil
+
+    pf_path = _shutil.which("pf")
+    if pf_path is None:
+        return {
+            "success": False,
+            "error": "pf CLI not found on PATH. Hooks require it.",
+            "install_hint": "pipx install -e pennyfarthing-dist/",
+        }
+
+    # Try running pf --version to check it's not a stale shim
+    try:
+        result = subprocess.run(
+            ["pf", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        return {
+            "success": False,
+            "error": f"pf found but broken — {exc}",
+            "install_hint": "pipx install -e pennyfarthing-dist/",
+        }
+
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        return {
+            "success": False,
+            "error": f"pf found but broken — stale shim at {pf_path}",
+            "install_hint": "pipx install -e pennyfarthing-dist/",
+            "detail": stderr,
+        }
+
+    version = result.stdout.strip().removeprefix("pf, version ").strip()
+
+    # Detect install method from pf_path
+    install_method = "unknown"
+    pf_resolved = str(Path(pf_path).resolve())
+    if "pipx" in pf_resolved:
+        install_method = "pipx"
+    elif "uv" in pf_resolved:
+        install_method = "uv"
+    elif "site-packages" in pf_resolved:
+        install_method = "pip"
+
+    return {
+        "success": True,
+        "version": version,
+        "install_method": install_method,
+        "path": pf_path,
+    }
+
+
 def init_project(
     target_dir: Path,
     dist_root: Path,
@@ -118,6 +183,15 @@ def init_project(
         return {"success": False, "error": f"Target directory does not exist: {target_dir}"}
     if not dist_root.is_dir():
         return {"success": False, "error": f"Dist root does not exist: {dist_root}"}
+
+    # --- Verify pf CLI (required for hooks) ---
+    pf_check = verify_pf_cli()
+    if not pf_check["success"]:
+        error_msg = pf_check.get("error", "pf CLI not available")
+        hint = pf_check.get("install_hint", "")
+        if hint:
+            error_msg += f"\nFix: {hint}"
+        return {"success": False, "error": error_msg}
 
     # --- Gather plan ---
     commands_to_copy = _find_pf_commands(dist_root)
