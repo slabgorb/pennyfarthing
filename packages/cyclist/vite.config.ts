@@ -11,6 +11,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, '../core/src/public'),
+      // Cross-package aliases for monorepo vite builds (Story 124-6)
+      '@pennyfarthing/bikerack': resolve(__dirname, '../bikerack/src/_vite-index.ts'),
+      '@pennyfarthing/core/components': resolve(__dirname, '../core/src/public/components'),
+      '@pennyfarthing/core/hooks': resolve(__dirname, '../core/src/public/hooks'),
+      '@pennyfarthing/core/styles': resolve(__dirname, '../core/src/public/styles'),
     },
   },
   // Define Node.js globals for browser - some packages check for these

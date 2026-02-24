@@ -46,6 +46,9 @@ jobs:
       - name: Run tests (shared)
         run: pnpm --filter @pennyfarthing/shared test
 
+      - name: Run tests (bikerack)
+        run: pnpm --filter @pennyfarthing/bikerack test
+
       - name: Run tests (core)
         run: pnpm --filter @pennyfarthing/core test
         continue-on-error: true  # Some tests have pre-existing failures (Story 18-6)

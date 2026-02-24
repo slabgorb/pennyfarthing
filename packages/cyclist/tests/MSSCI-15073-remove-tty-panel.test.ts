@@ -16,11 +16,17 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const CYCLIST_ROOT = join(__dirname, '..');
+const BIKERACK_ROOT = join(__dirname, '..', '..', 'bikerack');
 const SRC_ROOT = join(CYCLIST_ROOT, 'src');
 
-// Helper: read file content as string
+// Helper: read file content as string (relative to cyclist root)
 function readFile(relativePath: string): string {
   return readFileSync(join(CYCLIST_ROOT, relativePath), 'utf-8');
+}
+
+// Helper: read file from bikerack package
+function readBikerackFile(relativePath: string): string {
+  return readFileSync(join(BIKERACK_ROOT, relativePath), 'utf-8');
 }
 
 // =============================================================================
@@ -114,17 +120,17 @@ describe('MSSCI-15073: Remove TTY panel', () => {
     });
 
     it('should not import TTYPanel in StandalonePanel.tsx', () => {
-      const content = readFile('src/public/components/StandalonePanel.tsx');
+      const content = readBikerackFile('src/StandalonePanel.tsx');
       expect(content).not.toMatch(/TTYPanel/);
     });
 
     it('should not have tty in StandalonePanel PANEL_REGISTRY', () => {
-      const content = readFile('src/public/components/StandalonePanel.tsx');
+      const content = readBikerackFile('src/StandalonePanel.tsx');
       expect(content).not.toMatch(/tty:\s*TTYPanel/);
     });
 
     it('should not have tty in BikeRackIndex PANELS', () => {
-      const content = readFile('src/public/components/BikeRackIndex.tsx');
+      const content = readBikerackFile('src/BikeRackIndex.tsx');
       expect(content).not.toMatch(/['"]tty['"]/);
     });
 
@@ -211,7 +217,7 @@ describe('MSSCI-15073: Remove TTY panel', () => {
       // This is a belt-and-suspenders check across all registration points
       const app = readFile('src/public/App.tsx');
       const index = readFile('src/public/components/panels/index.ts');
-      const standalone = readFile('src/public/components/StandalonePanel.tsx');
+      const standalone = readBikerackFile('src/StandalonePanel.tsx');
 
       const combined = app + index + standalone;
       expect(combined).not.toMatch(/TTYPanel/);

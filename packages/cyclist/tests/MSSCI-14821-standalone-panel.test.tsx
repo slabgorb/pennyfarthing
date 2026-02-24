@@ -129,7 +129,7 @@ describe('AC1: ?panel=sprint renders SprintPanel full-screen', () => {
     setSearchParam('panel', 'sprint');
 
     const { StandalonePanel } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     const { container } = render(<StandalonePanel />);
@@ -146,7 +146,7 @@ describe('AC1: ?panel=sprint renders SprintPanel full-screen', () => {
     setSearchParam('panel', 'sprint');
 
     const { StandalonePanel } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     const { container } = render(<StandalonePanel />);
@@ -173,7 +173,7 @@ describe('AC1: ?panel=sprint renders SprintPanel full-screen', () => {
 describe('AC2: All 11 existing panels in PANEL_REGISTRY', () => {
   it('should have exactly 11 panels in PANEL_REGISTRY', async () => {
     const { PANEL_REGISTRY } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     const keys = Object.keys(PANEL_REGISTRY);
@@ -184,7 +184,7 @@ describe('AC2: All 11 existing panels in PANEL_REGISTRY', () => {
     'should include "%s" in PANEL_REGISTRY',
     async (panelName) => {
       const { PANEL_REGISTRY } = await import(
-        '../src/public/components/StandalonePanel'
+        '../../bikerack/src/StandalonePanel'
       );
 
       expect(PANEL_REGISTRY).toHaveProperty(panelName);
@@ -203,7 +203,7 @@ describe('AC3: PANEL_REGISTRY is single source of truth for routing (CE-2)', () 
     setSearchParam('panel', 'sprint');
 
     const { StandalonePanel, PANEL_REGISTRY } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     // PANEL_REGISTRY must have real components, not empty
@@ -214,7 +214,7 @@ describe('AC3: PANEL_REGISTRY is single source of truth for routing (CE-2)', () 
   });
 
   it('should export PANEL_REGISTRY as a named export', async () => {
-    const mod = await import('../src/public/components/StandalonePanel');
+    const mod = await import('../../bikerack/src/StandalonePanel');
     expect(mod).toHaveProperty('PANEL_REGISTRY');
     expect(typeof mod.PANEL_REGISTRY).toBe('object');
   });
@@ -229,7 +229,7 @@ describe('AC4: Invalid ?panel= shows "Panel not found" with link to /bikerack', 
     setSearchParam('panel', 'nonexistent-panel-xyz');
 
     const { StandalonePanel } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     render(<StandalonePanel />);
@@ -241,7 +241,7 @@ describe('AC4: Invalid ?panel= shows "Panel not found" with link to /bikerack', 
     setSearchParam('panel', 'nonexistent-panel-xyz');
 
     const { StandalonePanel } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     render(<StandalonePanel />);
@@ -260,7 +260,7 @@ describe('AC5: No dockview-react imports in StandalonePanel (Rule 7)', () => {
   it('should not import from dockview-react', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/StandalonePanel.tsx',
+      '../../bikerack/src/StandalonePanel.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -277,7 +277,7 @@ describe('AC6: No BikeRack-specific props passed to panels (Rule 2)', () => {
   it('should not pass bikerack or standalone props to panel components', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/StandalonePanel.tsx',
+      '../../bikerack/src/StandalonePanel.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -291,7 +291,7 @@ describe('AC6: No BikeRack-specific props passed to panels (Rule 2)', () => {
     setSearchParam('panel', 'sprint');
 
     const { PANEL_REGISTRY } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     // Sprint panel component should be a standard React component
@@ -315,7 +315,7 @@ describe('AC7: BikeRack detection is URL-based only (Rule 10)', () => {
     setSearchParam('panel', 'debug');
 
     const { getStandalonePanelName } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     expect(getStandalonePanelName()).toBe('debug');
@@ -325,7 +325,7 @@ describe('AC7: BikeRack detection is URL-based only (Rule 10)', () => {
     clearSearchParams();
 
     const { getStandalonePanelName } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     expect(getStandalonePanelName()).toBeNull();
@@ -334,7 +334,7 @@ describe('AC7: BikeRack detection is URL-based only (Rule 10)', () => {
   it('should not check environment variables or process state', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/StandalonePanel.tsx',
+      '../../bikerack/src/StandalonePanel.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -353,7 +353,7 @@ describe('AC8: Normal / URL still loads dockview workspace', () => {
     clearSearchParams();
 
     const { getStandalonePanelName } = await import(
-      '../src/public/components/StandalonePanel'
+      '../../bikerack/src/StandalonePanel'
     );
 
     // No panel param → null → App.tsx should render DockviewWorkspace

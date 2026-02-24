@@ -65,7 +65,7 @@ vi.mock('dockview-react', () => ({
 }));
 
 // Static import — vi.mock calls above are hoisted before this
-import { BikeRackWorkspace, BIKERACK_PANELS } from '../src/public/components/BikeRackWorkspace';
+import { BikeRackWorkspace, BIKERACK_PANELS } from '../../bikerack/src/BikeRackWorkspace';
 
 // ============================================================================
 // Tests
@@ -92,7 +92,7 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
   it('should NOT include portrait in RIGHT_PANELS or LEFT_PANELS groups', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -110,7 +110,7 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
   it('should NOT include portrait in PANEL_TITLES mapping', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -122,7 +122,7 @@ describe('AC1: Portrait extracted from Dockview and reused in BikeRack', () => {
   it('should import PersonaHeader in BikeRackWorkspace', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -138,7 +138,7 @@ describe('AC2: Portrait renders above Dockview tab bar', () => {
   it('BikeRackWorkspace should render PersonaHeader outside DockviewReact', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -184,7 +184,7 @@ describe('AC3: Portrait anchors tab bar open', () => {
   it('BikeRackWorkspace should use a flex column layout (portrait on top, dockview below)', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 

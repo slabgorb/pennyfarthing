@@ -120,14 +120,14 @@ afterEach(() => {
 
 describe('AC1: /bikerack URL renders the index page', () => {
   it('should export BikeRackIndex as a named component', async () => {
-    const mod = await import('../src/public/components/BikeRackIndex');
+    const mod = await import('../../bikerack/src/BikeRackIndex');
     expect(mod).toHaveProperty('BikeRackIndex');
     expect(typeof mod.BikeRackIndex).toBe('function');
   });
 
   it('should render without crashing', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     const { container } = render(<BikeRackIndex />);
@@ -136,7 +136,7 @@ describe('AC1: /bikerack URL renders the index page', () => {
 
   it('should display a heading or title indicating BikeRack', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     render(<BikeRackIndex />);
@@ -174,7 +174,7 @@ describe('AC1: /bikerack URL renders the index page', () => {
 describe('AC2: Lists all 12 panels with links', () => {
   it('should render 12 panel links', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     render(<BikeRackIndex />);
@@ -189,7 +189,7 @@ describe('AC2: Lists all 12 panels with links', () => {
     'should include a link for the "%s" panel',
     async (panelName) => {
       const { BikeRackIndex } = await import(
-        '../src/public/components/BikeRackIndex'
+        '../../bikerack/src/BikeRackIndex'
       );
 
       render(<BikeRackIndex />);
@@ -204,7 +204,7 @@ describe('AC2: Lists all 12 panels with links', () => {
 
   it('should list exactly 12 unique panel entries', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     render(<BikeRackIndex />);
@@ -235,7 +235,7 @@ describe('AC3: Links use ?panel=X format', () => {
     'should have a link with href containing "panel=%s"',
     async (panelName) => {
       const { BikeRackIndex } = await import(
-        '../src/public/components/BikeRackIndex'
+        '../../bikerack/src/BikeRackIndex'
       );
 
       render(<BikeRackIndex />);
@@ -252,7 +252,7 @@ describe('AC3: Links use ?panel=X format', () => {
 
   it('all panel links should use ?panel=X query parameter format', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     render(<BikeRackIndex />);
@@ -279,7 +279,7 @@ describe('AC4: Styled with Tailwind dark mode', () => {
   it('BikeRackIndex.tsx should use Tailwind CSS classes', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackIndex.tsx',
+      '../../bikerack/src/BikeRackIndex.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -298,7 +298,7 @@ describe('AC4: Styled with Tailwind dark mode', () => {
   it('should not use inline styles for primary layout', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackIndex.tsx',
+      '../../bikerack/src/BikeRackIndex.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -313,7 +313,7 @@ describe('AC4: Styled with Tailwind dark mode', () => {
 
   it('should render with dark-themed background', async () => {
     const { BikeRackIndex } = await import(
-      '../src/public/components/BikeRackIndex'
+      '../../bikerack/src/BikeRackIndex'
     );
 
     const { container } = render(<BikeRackIndex />);
@@ -336,7 +336,7 @@ describe('Structural: BikeRackIndex follows ADR-0024 rules', () => {
   it('should not import from dockview-react (Rule 7)', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackIndex.tsx',
+      '../../bikerack/src/BikeRackIndex.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -347,7 +347,7 @@ describe('Structural: BikeRackIndex follows ADR-0024 rules', () => {
   it('should not pass BikeRack-specific props (Rule 2)', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackIndex.tsx',
+      '../../bikerack/src/BikeRackIndex.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -359,7 +359,7 @@ describe('Structural: BikeRackIndex follows ADR-0024 rules', () => {
   it('should not check process.env directly (Rule 10 — URL-based only)', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackIndex.tsx',
+      '../../bikerack/src/BikeRackIndex.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 

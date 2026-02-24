@@ -69,11 +69,13 @@ describe('AC1: Display components moved to packages/bikerack/', () => {
   }
 
   it('should export display components from bikerack package', () => {
-    const indexTs = readFileSync(join(BIKERACK_SRC, 'index.ts'), 'utf-8');
+    // React components are exported via _vite-index.ts (resolved by vite alias)
+    // Server-only code is in index.ts (compiled by tsc) — Story 124-6
+    const viteIndex = readFileSync(join(BIKERACK_SRC, '_vite-index.ts'), 'utf-8');
     for (const component of DISPLAY_COMPONENTS) {
       expect(
-        indexTs,
-        `index.ts should export ${component}`
+        viteIndex,
+        `_vite-index.ts should export ${component}`
       ).toMatch(new RegExp(component));
     }
   });
