@@ -3,6 +3,7 @@
  *
  * Story MSSCI-14821: StandalonePanel wrapper and ?panel=X client routing
  * Epic: 101 (BikeRack Mode)
+ * Moved to @pennyfarthing/bikerack in Story 124-5 (MSSCI-15556)
  *
  * Renders a single panel full-screen based on ?panel=X URL parameter.
  * PANEL_REGISTRY is the single source of truth for routing (CE-2).
@@ -26,7 +27,7 @@ import {
   BikeLanePanel,
   SettingsPanel,
   ProgressPanel,
-} from './panels';
+} from '@pennyfarthing/core/components/panels/index.js';
 
 /**
  * Registry mapping panel URL names to their components.

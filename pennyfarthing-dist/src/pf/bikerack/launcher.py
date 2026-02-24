@@ -84,12 +84,11 @@ def _find_framework_dir() -> Path:
 
 
 def start_wheelhub(project_dir: Path) -> subprocess.Popen:
-    """Start WheelHub server in background with IS_BIKERACK=1."""
+    """Start WheelHub server in background via BikeRack's own entry point."""
     framework_dir = _find_framework_dir()
-    bikerack_entry = framework_dir / "packages" / "cyclist" / "dist" / "bikerack.js"
+    bikerack_entry = framework_dir / "packages" / "bikerack" / "dist" / "entry.js"
 
     env = os.environ.copy()
-    env["IS_BIKERACK"] = "1"
     env["CYCLIST_PROJECT_DIR"] = str(project_dir)
 
     return subprocess.Popen(
