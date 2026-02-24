@@ -21,7 +21,6 @@ from click.testing import CliRunner
 from pf.upgrade.cli import upgrade
 from pf.upgrade.core import cleanup_artifacts, detect_cleanup_targets
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -145,13 +144,13 @@ class TestCleanupArtifacts:
         assert any("node_modules/@pennyfarthing" in r for r in result["removed"])
 
     def test_removes_stale_symlinks(self, npm_project: Path):
-        result = cleanup_artifacts(npm_project)
+        cleanup_artifacts(npm_project)
         assert not (npm_project / ".claude" / "commands" / "old-command.md").exists()
         # Valid symlink should still exist
         assert (npm_project / ".claude" / "commands" / "good-command.md").exists()
 
     def test_removes_old_manifest(self, npm_project: Path):
-        result = cleanup_artifacts(npm_project)
+        cleanup_artifacts(npm_project)
         assert not (npm_project / ".pennyfarthing" / "manifest.json").exists()
         # New manifest should still exist
         assert (npm_project / ".pennyfarthing" / "init-manifest.json").exists()
