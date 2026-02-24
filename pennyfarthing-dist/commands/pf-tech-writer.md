@@ -5,7 +5,7 @@ description: Technical Writer - Documentation creation and maintenance
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-source .pennyfarthing/scripts/lib/env.sh && pf agent start "tech-writer"
+pf agent start "tech-writer"
 ```
 This loads your persona and agent context. Adopt the character shown in the output.
 </agent-activation>
