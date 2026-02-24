@@ -2,292 +2,286 @@
 
 ## Top-Level Commands
 
-### `pf.sh sprint status [FILTER]`
+### `pf.sh sprint active`
 
-| Arg | Required | Type | Description |
-|-----|----------|------|-------------|
-| `FILTER` | No | Choice | `backlog`, `todo`, `in-progress`, `review`, `done` |
+Show which sprint is currently active for this user.
 
-Returns sprint metadata, stories grouped by epic, points breakdown.
+### `pf.sh sprint archive`
 
-### `pf.sh sprint backlog`
-
-No arguments. Shows stories with `backlog`, `ready`, or `planning` status grouped by epic.
-
-### `pf.sh sprint work [STORY_ID] [--dry-run]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `STORY_ID` | No | Story ID, or `next` for highest priority |
-| `--dry-run` | No | Preview without making changes |
-
-Without argument: shows backlog. With `next`: auto-selects highest priority.
-
-### `pf.sh sprint archive <STORY_ID> [PR_NUMBER] [--apply] [--dry-run]`
+Archive a completed story.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
 | `STORY_ID` | Yes | Story ID to archive |
-| `PR_NUMBER` | No | PR number if merged via PR |
+| `PR_NUMBER` | No | Optional PR number if merged via PR |
 | `--apply` | No | Also remove from current-sprint.yaml |
-| `--dry-run` | No | Preview without making changes |
+| `--dry-run` | No | Show what would be done without making changes |
 
-### `pf.sh sprint new <YYWW> <JIRA_ID> <START> <END> <GOAL> [--dry-run]`
+### `pf.sh sprint backlog`
 
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `YYWW` | Yes | Sprint identifier (e.g., `2607`) |
-| `JIRA_ID` | Yes | Jira sprint ID number |
-| `START` | Yes | Start date `YYYY-MM-DD` |
-| `END` | Yes | End date `YYYY-MM-DD` |
-| `GOAL` | Yes | Sprint goal (quoted string) |
-| `--dry-run` | No | Preview without making changes |
+Show available stories grouped by epic.
 
-Creates `sprint/current-sprint.yaml` and `sprint/archive/sprint-{YYWW}-completed.yaml`.
+### `pf.sh sprint check`
 
-### `pf.sh sprint future [EPIC_ID]`
+Check story/epic availability. Returns JSON.
 
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `EPIC_ID` | No | Show detailed stories for a specific epic |
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `ID` | Yes | Story ID, epic ID, or 'next' for highest priority |
 
-Without arg: initiative summary. With arg: full epic detail with stories.
+### `pf.sh sprint data`
+
+Output canonical merged sprint data as JSON.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `--json` | No | Output as JSON (required) |
+
+### `pf.sh sprint future`
+
+Show future work initiatives and epics.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | No | Optional epic ID to show detailed stories (e.g., epic-55) |
 
 ### `pf.sh sprint info`
 
-No arguments. Returns sprint header fields plus computed totals as JSON.
+Output sprint info as JSON.
 
-### `pf.sh sprint metrics [--json]`
+### `pf.sh sprint list`
 
-| Option | Description |
-|--------|-------------|
-| `--json` | Output in JSON format |
+Show all registered sprints from the sprint registry.
 
-Shows points, stories, timeline, and velocity tracking.
+### `pf.sh sprint metrics`
 
-### `pf.sh sprint check <ID>`
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `ID` | Yes | Story ID, epic ID, or `next` |
-
-Returns JSON with `type` (`story`, `epic`, `next`, `not_found`), availability, and details.
-
-### `pf.sh sprint validate [SUBCOMMAND] [--fix] [--strict]`
+Display sprint metrics and progress.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| Subcommand | No | `sprint`, `schema`, `agent`, `workflow` (omit for all) |
-| `--fix` | No | Auto-fix format issues |
-| `--strict` | No | Treat warnings as errors |
+| `--json` | No | Output in JSON format |
 
----
+### `pf.sh sprint new`
 
-## Story Commands
-
-### `pf.sh sprint story show <STORY_ID> [--json]`
+Initialize a new sprint.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `STORY_ID` | Yes | Story ID (e.g., `MSSCI-12664` or `67-1`) |
-| `--json` | No | Output as JSON |
+| `SPRINT_YYWW` | Yes | Sprint identifier in YYWW format (e.g., 2607) |
+| `JIRA_ID` | Yes | Jira sprint ID number (e.g., 278) |
+| `START_DATE` | Yes | Sprint start date YYYY-MM-DD |
+| `END_DATE` | Yes | Sprint end date YYYY-MM-DD |
+| `GOAL` | Yes | Sprint goal (quoted string) |
+| `--dry-run` | No | Show what would be done without making changes |
 
-### `pf.sh sprint story add <EPIC_ID> <TITLE> <POINTS> [options]`
+### `pf.sh sprint status`
 
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_ID` | Yes | Parent epic (e.g., `76`) |
-| `TITLE` | Yes | Story title (quoted) |
-| `POINTS` | Yes | Story points (integer) |
-| `--type` | No | `feature` (default), `bug`, `chore`, `refactor` |
-| `--priority` | No | `p0`, `p1` (default), `p2`, `p3` (case-insensitive) |
-| `--workflow` | No | `tdd` (default), `trivial`, `bdd` |
-| `--jira` | No | Jira issue key |
-| `--initiative` | No | Add as standalone story to initiative slug instead |
-| `--repos` | No | Repository scope (default: `pennyfarthing`) |
-| `--sprint-file` | No | Path to sprint YAML file |
-| `--dry-run` | No | Preview without making changes |
+Show sprint status.
 
-When using `--initiative`, positional args shift: `<TITLE> <POINTS>` (no epic ID).
+### `pf.sh sprint use`
 
-### `pf.sh sprint story update <STORY_ID> [options]`
+Switch the active sprint (per-user preference).
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `STORY_ID` | Yes | Story ID (e.g., `76-4`) |
-| `--status` | No | `backlog`, `ready`, `in_progress`, `done`, `canceled` |
-| `--points` | No | New points value |
-| `--priority` | No | New priority |
-| `--assigned-to` | No | Assignee email |
-| `--workflow` | No | New workflow type |
-| `--completed` | No | Completed date (ISO format) |
-| `--started` | No | Started date (ISO format) |
-| `--sprint-file` | No | Path to sprint YAML file |
-| `--dry-run` | No | Preview without making changes |
+| `NAME` | Yes | Sprint name from the registry, or "default" to clear |
 
-Auto-sets `completed` date when status is `done`. Auto-sets `started` and `assigned_to` when status is `in_progress`.
+### `pf.sh sprint validate`
 
-### `pf.sh sprint story field <STORY_ID> <FIELD>`
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `STORY_ID` | Yes | Story ID (e.g., `79-1` or `MSSCI-12345`) |
-| `FIELD` | Yes | Field name: `workflow`, `status`, `jira`, `points`, `title`, `repos`, `priority` |
-
-Returns field value or `null`. Defaults: `workflow=tdd`, `status=backlog`, `repos=pennyfarthing`.
-
-### `pf.sh sprint story size [POINTS]`
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `POINTS` | No | Specific point value |
-
-### `pf.sh sprint story template [TYPE]`
-
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `TYPE` | No | `feature`, `bug`, `refactor`, `chore` |
-
-### `pf.sh sprint story finish <STORY_ID> [--dry-run]`
+Validate sprint YAML for syntax, schema, and format issues.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `STORY_ID` | Yes | Story ID (e.g., `83-2`) |
-| `--dry-run` | No | Show steps without executing |
+| `FILE` | No |  |
+| `--fix` | No | Automatically repair format issues |
 
-Requires: session file exists, PR approved, reviewer phase complete.
+### `pf.sh sprint work`
 
-### `pf.sh sprint story claim <STORY_ID> [--claim/--unclaim] [--dry-run]`
+Start work on a story.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `STORY_ID` | Yes | Story ID / Jira key |
-| `--claim/--unclaim` | No | Claim (default) or unclaim |
-| `--dry-run` | No | Preview without making changes |
+| `STORY_ID` | No | Story ID to work on, or 'next' for highest priority |
+| `--dry-run` | No | Show what would be done without making changes |
 
 ---
 
 ## Epic Commands
 
-### `pf.sh sprint epic show <EPIC_ID> [--json]`
+### `pf.sh sprint epic archive`
+
+Archive completed epics.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-42`, `42`, or `MSSCI-14298`) |
-| `--json` | No | Output as JSON |
-
-Searches both current sprint and future initiative shards.
-
-### `pf.sh sprint epic add <EPIC_ID> <TITLE> [options]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-85`) |
-| `TITLE` | Yes | Epic title |
-| `--priority` | No | `p0`, `p1` (default), `p2`, `p3` (case-insensitive) |
-| `--status` | No | `backlog` (default), `ready`, `in_progress` |
-| `--repos` | No | Repository scope (default: `pennyfarthing`) |
-| `--jira` | No | Jira epic key |
-| `--description` / `-d` | No | Epic description |
-| `--sprint-file` | No | Path to sprint YAML file |
-| `--dry-run` | No | Preview without making changes |
-
-### `pf.sh sprint epic update <EPIC_ID> [options]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `103`, `epic-103`, or `MSSCI-14951`) |
-| `--status` | No | `backlog`, `canceled`, `done`, `in_progress` |
-| `--priority` | No | New priority (e.g., `P0`, `P1`) |
-| `--sprint-file` | No | Path to sprint YAML file |
-| `--dry-run` | No | Preview without making changes |
-
-### `pf.sh sprint epic promote <EPIC_ID> [--dry-run]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-41` or `41`) |
-| `--dry-run` | No | Preview without making changes |
-
-Moves epic from initiative shard to current-sprint.yaml. Detects ID collisions. Validates before writing.
-
-### `pf.sh sprint epic archive [EPIC_ID] [--dry-run] [--jira]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `EPIC_ID` | No | Specific epic (omit to scan all completed) |
-| `--dry-run` | No | Preview without making changes |
+| `EPIC_ID` | No | Epic ID to archive (omit to scan all completed epics) |
+| `--dry-run` | No | Show what would be done without making changes |
 | `--jira` | No | Also update Jira epic status to Done |
 
-### `pf.sh sprint epic cancel <EPIC_ID> [--jira] [--dry-run]`
+### `pf.sh sprint epic cancel`
+
+Cancel an epic and all its stories.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-42` or `MSSCI-14298`) |
-| `--jira` | No | Also cancel in Jira |
-| `--dry-run` | No | Preview without making changes |
+| `EPIC_ID` | Yes | Epic ID (e.g., epic-42 or MSSCI-14298) |
+| `--jira` | No | Also cancel the epic in Jira |
+| `--dry-run` | No | Show what would be done without making changes |
 
-### `pf.sh sprint epic import <FILE> [INITIATIVE] [--marker TAG] [--dry-run]`
+### `pf.sh sprint epic field`
 
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `FILE` | Yes | Path to BMAD epics-and-stories markdown |
-| `INITIATIVE` | No | Initiative name (extracted from file if omitted) |
-| `--marker` | No | Marker tag for stories (default: `imported`) |
-| `--dry-run` | No | Preview without making changes |
-
-### `pf.sh sprint epic remove <EPIC_ID> [--dry-run]`
+Get a field value from an epic.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-41`) |
-| `--dry-run` | No | Preview without making changes |
+| `EPIC_ID` | Yes | Epic ID (e.g., epic-79 or 79) |
+| `FIELD_NAME` | Yes | Field to extract (e.g., jira, title, status) |
 
-### `pf.sh sprint epic field <EPIC_ID> <FIELD>`
+### `pf.sh sprint epic import`
 
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `EPIC_ID` | Yes | Epic ID (e.g., `epic-35` or `35`) |
-| `FIELD` | Yes | Field name: `jira`, `title`, `description`, `status` |
+Import BMAD epics-and-stories output to future.yaml.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPICS_FILE` | Yes | Path to markdown file from epics-and-stories workflow |
+| `INITIATIVE_NAME` | No | Name for the initiative (optional, extracted from file) |
+| `--marker` | No | Marker tag for stories (default: imported) |
+| `--dry-run` | No | Show what would be done without making changes |
+
+### `pf.sh sprint epic promote`
+
+Move an epic from future initiatives to current-sprint.yaml.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | Yes | Epic ID (e.g., epic-41 or 41) |
+| `--dry-run` | No | Show what would be done without making changes |
+
+### `pf.sh sprint epic remove`
+
+Remove an epic from future.yaml (for cancelled pre-Jira epics).
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | Yes | Epic ID to remove (e.g., epic-41) |
+| `--dry-run` | No | Show what would be removed without making changes |
+
+### `pf.sh sprint epic show`
+
+Show details for a specific epic.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | Yes | Epic ID (e.g., epic-42 or MSSCI-14298) |
+| `--json` | No | Output as JSON |
+
+### `pf.sh sprint epic update`
+
+Update an epic's fields by ID.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `EPIC_ID` | Yes | Epic ID (e.g., 103, epic-103, or MSSCI-14951) |
+| `--status` | No | New epic status |
+| `--priority` | No | New priority (e.g., P0, P1) |
+| `--dry-run` | No | Show changes without writing |
+| `--sprint-file` | No | Path to sprint YAML file |
 
 ---
 
 ## Initiative Commands
 
-### `pf.sh sprint initiative show <NAME> [--json]`
+### `pf.sh sprint initiative cancel`
+
+Cancel an initiative and all its epics/stories.
 
 | Arg/Option | Required | Description |
 |------------|----------|-------------|
-| `NAME` | Yes | Initiative slug (e.g., `benchmark-reliability`) |
-| `--json` | No | Output as JSON |
-
-### `pf.sh sprint initiative cancel <NAME> [--jira] [--dry-run]`
-
-| Arg/Option | Required | Description |
-|------------|----------|-------------|
-| `NAME` | Yes | Initiative slug |
+| `NAME` | Yes | Initiative slug (e.g., benchmark-reliability, technical-debt) |
 | `--jira` | No | Also cancel epics in Jira |
-| `--dry-run` | No | Preview without making changes |
+| `--dry-run` | No | Show what would be done without making changes |
+
+### `pf.sh sprint initiative show`
+
+Show details for a specific initiative.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `NAME` | Yes | Initiative slug (e.g., benchmark-reliability, technical-debt) |
+| `--json` | No | Output as JSON |
 
 ---
 
-## File Locations
+## Standalone Commands
 
-| File | Purpose |
-|------|---------|
-| `sprint/current-sprint.yaml` | Active/backlog work |
-| `sprint/archive/sprint-{YYWW}-completed.yaml` | Completed stories |
-| `sprint/initiative-*.yaml` | Future initiative shards |
-| `sprint/epic-*.yaml` | Epic shard files |
-| `sprint/future.yaml` | Future initiative index |
+### `pf.sh sprint standalone add`
 
-## YAML Constraints
+Add a done standalone story to current sprint tracking.
 
-| Field | Valid Values |
-|-------|-------------|
-| Sprint name | `"TO Sprint YYWW"` |
-| Status | `backlog`, `ready`, `in_progress`, `done`, `canceled` |
-| Workflow | `tdd`, `trivial`, `bdd`, `tdd-tandem`, `bdd-tandem`, `agent-docs` |
-| Priority | `P0`, `P1`, `P2`, `P3` |
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `JIRA_KEY` | Yes |  |
+| `TITLE` | Yes |  |
+| `POINTS` | Yes |  |
+| `--repos` | No | Target repo (default: pennyfarthing) |
+| `--pr` | No | PR number |
+| `--branch` | No | Branch name |
+| `--sprint-file` | No | Path to sprint YAML file |
+| `--dry-run` | No | Show what would be done without making changes |
 
-Note: `tdd-tandem` and `bdd-tandem` are valid workflow values in YAML but the `pf.sh sprint story add --workflow` CLI choice is limited to `tdd`, `trivial`, `bdd`. Set tandem workflows via `pf.sh sprint story update --workflow tdd-tandem`.
+---
+
+## Story Commands
+
+### `pf.sh sprint story claim`
+
+Claim or unclaim a story in Jira.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `STORY_ID` | Yes | Story ID / Jira key to claim |
+| `--dry-run` | No | Show what would be done without making changes |
+
+### `pf.sh sprint story field`
+
+Get a field value from a story.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `STORY_ID` | Yes | Story ID (e.g., 79-1 or MSSCI-12345) |
+| `FIELD_NAME` | Yes | Field to extract (e.g., workflow, status, points) |
+
+### `pf.sh sprint story finish`
+
+Complete a story: archive session, merge PR, transition Jira, update sprint YAML.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `STORY_ID` | Yes | Story ID (e.g., 83-2) |
+| `--dry-run` | No | Show what would be done without executing |
+
+### `pf.sh sprint story show`
+
+Show details for a specific story.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `STORY_ID` | Yes | Story ID (e.g., MSSCI-12664 or 67-1) |
+| `--json` | No | Output as JSON |
+
+### `pf.sh sprint story size`
+
+Display story sizing guidelines.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `POINTS` | No | Optional specific point value to show guidance for |
+
+### `pf.sh sprint story template`
+
+Display story templates by type.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `TEMPLATE_TYPE` | No |  |
+
