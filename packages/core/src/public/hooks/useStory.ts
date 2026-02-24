@@ -9,7 +9,7 @@
  * Uses DataSource via useDataSource for real-time updates (no polling).
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDataSource } from './useDataSource.js';
 
 // Import types from story-parser for criteria and workflow

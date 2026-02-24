@@ -1,6 +1,7 @@
 """Core upgrade logic — detect npm-based install and migrate to Python-based.
 
 Story 126-7: pf upgrade command.
+Story 126-14: pf upgrade cleanup — remove npm artifacts and stale symlinks.
 
 Detects npm-based Pennyfarthing installations (node_modules/@pennyfarthing)
 and migrates to the Python-based structure. Preserves user custom hooks,
@@ -10,6 +11,7 @@ commands, and skills. Migrates config files. Removes npm artifacts.
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 from pf.common.hooks import INFRASTRUCTURE_HOOKS
@@ -247,6 +249,109 @@ def migrate_config_files(project_root: Path, dry_run: bool = False) -> dict:
     return {"success": True, "migrated": ["preferences.yaml"]}
 
 
+def detect_cleanup_targets(project_root: Path) -> dict:
+    """Detect npm-era artifacts that can be cleaned up.
+
+    Scans for:
+    - node_modules/@pennyfarthing directory
+    - Stale symlinks in .claude/commands/ pointing to node_modules
+    - Old .pennyfarthing/manifest.json when init-manifest.json exists
+
+    Args:
+        project_root: Project root path
+
+    Returns:
+        Result dict: {success, targets: list[dict], error?}
+    """
+    targets: list[dict] = []
+
+    # 1. node_modules/@pennyfarthing directory
+    npm_pf_dir = project_root / "node_modules" / "@pennyfarthing"
+    if npm_pf_dir.exists():
+        targets.append({
+            "type": "directory",
+            "path": str(npm_pf_dir.relative_to(project_root)),
+            "reason": "npm-era @pennyfarthing package directory",
+        })
+
+    # 2. Stale symlinks in .claude/commands/ pointing to node_modules
+    commands_dir = project_root / ".claude" / "commands"
+    if commands_dir.exists():
+        for entry in sorted(commands_dir.iterdir()):
+            if entry.is_symlink():
+                link_target = str(entry.resolve())
+                if "node_modules" in link_target:
+                    targets.append({
+                        "type": "symlink",
+                        "path": str(entry.relative_to(project_root)),
+                        "target": link_target,
+                        "reason": "symlink pointing to node_modules",
+                    })
+
+    # 3. Old manifest.json when init-manifest.json exists
+    pf_dir = project_root / ".pennyfarthing"
+    old_manifest = pf_dir / "manifest.json"
+    new_manifest = pf_dir / "init-manifest.json"
+    if old_manifest.exists() and new_manifest.exists():
+        targets.append({
+            "type": "file",
+            "path": str(old_manifest.relative_to(project_root)),
+            "reason": "Node-era manifest superseded by init-manifest.json",
+        })
+
+    return {"success": True, "targets": targets}
+
+
+def cleanup_artifacts(
+    project_root: Path, dry_run: bool = False
+) -> dict:
+    """Remove npm-era artifacts from a migrated project.
+
+    Args:
+        project_root: Project root path
+        dry_run: If True, show what would be cleaned without acting
+
+    Returns:
+        Result dict: {success, removed: list[str], skipped: list[str], error?}
+    """
+    detection = detect_cleanup_targets(project_root)
+    if not detection["success"]:
+        return detection
+
+    targets = detection["targets"]
+    removed: list[str] = []
+    skipped: list[str] = []
+
+    for target in targets:
+        rel_path = target["path"]
+        full_path = project_root / rel_path
+
+        if dry_run:
+            removed.append(f"{rel_path} (dry-run)")
+            continue
+
+        if target["type"] == "directory":
+            shutil.rmtree(full_path, ignore_errors=True)
+            if not full_path.exists():
+                removed.append(rel_path)
+            else:
+                skipped.append(f"{rel_path} (removal failed)")
+        elif target["type"] == "symlink":
+            full_path.unlink(missing_ok=True)
+            if not full_path.exists():
+                removed.append(rel_path)
+            else:
+                skipped.append(f"{rel_path} (removal failed)")
+        elif target["type"] == "file":
+            full_path.unlink(missing_ok=True)
+            if not full_path.exists():
+                removed.append(rel_path)
+            else:
+                skipped.append(f"{rel_path} (removal failed)")
+
+    return {"success": True, "removed": removed, "skipped": skipped}
+
+
 def generate_report(results: dict) -> str:
     """Generate a human-readable report of what changed during upgrade.
 
@@ -303,10 +408,23 @@ def generate_report(results: dict) -> str:
             lines.append(f"  - {m}")
         lines.append("")
 
+    cleanup = results.get("cleanup", {})
+    cleanup_removed = cleanup.get("removed", [])
+    cleanup_skipped = cleanup.get("skipped", [])
+    if cleanup_removed or cleanup_skipped:
+        lines.append("**Cleanup:**")
+        for r in cleanup_removed:
+            lines.append(f"  - Removed: {r}")
+        for s in cleanup_skipped:
+            lines.append(f"  - Skipped: {s}")
+        lines.append("")
+
     return "\n".join(lines)
 
 
-def run_upgrade(project_root: Path, dry_run: bool = False) -> dict:
+def run_upgrade(
+    project_root: Path, dry_run: bool = False, clean: bool = False
+) -> dict:
     """Run the full upgrade from npm-based to Python-based install.
 
     Orchestrates all migration steps:
@@ -315,11 +433,13 @@ def run_upgrade(project_root: Path, dry_run: bool = False) -> dict:
     3. Preserve custom hooks
     4. Migrate settings
     5. Migrate config files
-    6. Generate report
+    6. Clean up npm artifacts (if --clean)
+    7. Generate report
 
     Args:
         project_root: Project root path
         dry_run: If True, show plan without executing
+        clean: If True, remove npm-era artifacts after migration
 
     Returns:
         Result dict: {success, report: str, changes: dict, error?}
@@ -328,12 +448,18 @@ def run_upgrade(project_root: Path, dry_run: bool = False) -> dict:
     if not detection["success"]:
         return detection
 
+    cleanup_result: dict = {}
+
     if not detection["is_npm"]:
+        # Even without active npm install, --clean can remove leftover artifacts
+        if clean:
+            cleanup_result = cleanup_artifacts(project_root, dry_run=dry_run)
         report = generate_report({
             "detection": detection,
             "directory": {"changes": []},
             "hooks": {},
             "config": {"migrated": []},
+            "cleanup": cleanup_result,
         })
         return {"success": True, "report": report, "changes": {}}
 
@@ -342,11 +468,15 @@ def run_upgrade(project_root: Path, dry_run: bool = False) -> dict:
     settings_result = migrate_settings(project_root, dry_run=dry_run)
     config_result = migrate_config_files(project_root, dry_run=dry_run)
 
+    if clean:
+        cleanup_result = cleanup_artifacts(project_root, dry_run=dry_run)
+
     results = {
         "detection": detection,
         "directory": dir_result,
         "hooks": settings_result,
         "config": config_result,
+        "cleanup": cleanup_result,
     }
     report = generate_report(results)
 
