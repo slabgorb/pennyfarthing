@@ -1,2 +1,3 @@
 // @pennyfarthing/bikerack — Session observer and data infrastructure
-// Stub: will be populated by extraction from core and cyclist
+export { WebSocketDataSource } from './websocket-data-source.js';
+export type { WebSocketDataSourceConfig } from './websocket-data-source.js';

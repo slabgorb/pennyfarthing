@@ -3,14 +3,16 @@
  *
  * React hook for fetching and subscribing to stats strip data.
  * Story MSSCI-12699 - StatsStrip Component
+ * Story 124-3 - Refactored to use DataSource<T> pattern
  *
- * IPC DEPRECATED - Now uses WebSocket for all data:
- * - /ws/context: Context percentage, used/total tokens
- * - /ws/stats: Model name
+ * Multi-source DataSource composition:
+ * - /ws/context: Context percentage, used/total tokens (WebSocket DataSource)
+ * - /ws/stats: Model name (WebSocket DataSource)
  * - /api/identity: PWD, Jira email, GitHub username (REST, fetched once)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRawDataSource } from './useDataSource.js';
 
 export interface ContextData {
   percent: number;
@@ -36,8 +38,6 @@ interface UseStatsStripResult {
   error: Error | null;
 }
 
-const WS_RECONNECT_DELAY = 2000;
-
 export function useStatsStrip(): UseStatsStripResult {
   const [context, setContext] = useState<ContextData | null>(null);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -59,129 +59,59 @@ export function useStatsStrip(): UseStatsStripResult {
     }
   }, []);
 
-  // WebSocket for /ws/context
-  useEffect(() => {
-    let ws: WebSocket | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let mounted = true;
-
-    const connect = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${protocol}//${window.location.host}/ws/context`);
-
-      ws.onopen = () => {
-        console.log('[useStatsStrip] Context WebSocket connected');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'init' || data.type === 'update') {
-            const ctx = data.context;
-            if (ctx) {
-              setContext({
-                percent: ctx.percent ?? 0,
-                used: ctx.tokens ?? undefined,
-                total: ctx.available ? (ctx.tokens ?? 0) + ctx.available : undefined,
-              });
-            }
-            if (!loadStateRef.current.context) {
-              loadStateRef.current.context = true;
-              checkLoadComplete();
-            }
-          }
-        } catch (err) {
-          console.error('[useStatsStrip] Failed to parse context message:', err);
-        }
-      };
-
-      ws.onclose = () => {
-        if (mounted) {
-          reconnectTimer = setTimeout(connect, WS_RECONNECT_DELAY);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error('[useStatsStrip] Context WebSocket error:', err);
-        ws?.close();
-      };
-    };
-
-    connect();
-
-    return () => {
-      mounted = false;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      ws?.close();
-    };
+  // DataSource for /ws/context
+  const handleContextMessage = useCallback((data: unknown) => {
+    const msg = data as { type?: string; context?: { percent?: number; tokens?: number; available?: number } };
+    if (msg.type === 'init' || msg.type === 'update') {
+      const ctx = msg.context;
+      if (ctx) {
+        setContext({
+          percent: ctx.percent ?? 0,
+          used: ctx.tokens ?? undefined,
+          total: ctx.available ? (ctx.tokens ?? 0) + ctx.available : undefined,
+        });
+      }
+      if (!loadStateRef.current.context) {
+        loadStateRef.current.context = true;
+        checkLoadComplete();
+      }
+    }
   }, [checkLoadComplete]);
 
-  // WebSocket for /ws/stats
-  useEffect(() => {
-    let ws: WebSocket | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let mounted = true;
+  useRawDataSource({
+    endpoint: '/ws/context',
+    onMessage: handleContextMessage,
+  });
 
-    const connect = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      ws = new WebSocket(`${protocol}//${window.location.host}/ws/stats`);
-
-      ws.onopen = () => {
-        console.log('[useStatsStrip] Stats WebSocket connected');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          // Stats sends data directly (not wrapped in type)
-          setStats({ model: data.model ?? null });
-          // Also extract pwd from stats (updated on Bash tool completions)
-          if (data.pwd) {
-            setProjectInfo(prev => ({
-              pwd: data.pwd,
-              jiraEmail: prev?.jiraEmail ?? null,
-              githubUsername: prev?.githubUsername ?? null,
-            }));
-          }
-          if (!loadStateRef.current.stats) {
-            loadStateRef.current.stats = true;
-            checkLoadComplete();
-          }
-        } catch (err) {
-          console.error('[useStatsStrip] Failed to parse stats message:', err);
-        }
-      };
-
-      ws.onclose = () => {
-        if (mounted) {
-          reconnectTimer = setTimeout(connect, WS_RECONNECT_DELAY);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error('[useStatsStrip] Stats WebSocket error:', err);
-        ws?.close();
-      };
-    };
-
-    connect();
-
-    return () => {
-      mounted = false;
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      ws?.close();
-    };
+  // DataSource for /ws/stats
+  const handleStatsMessage = useCallback((data: unknown) => {
+    const msg = data as { model?: string; pwd?: string };
+    setStats({ model: msg.model ?? null });
+    if (msg.pwd) {
+      setProjectInfo(prev => ({
+        pwd: msg.pwd!,
+        jiraEmail: prev?.jiraEmail ?? null,
+        githubUsername: prev?.githubUsername ?? null,
+      }));
+    }
+    if (!loadStateRef.current.stats) {
+      loadStateRef.current.stats = true;
+      checkLoadComplete();
+    }
   }, [checkLoadComplete]);
 
-  // REST for /api/identity (jiraEmail, githubUsername - fetched once)
-  // pwd comes from /ws/stats (updated on Bash tool completions)
+  useRawDataSource({
+    endpoint: '/ws/stats',
+    onMessage: handleStatsMessage,
+  });
+
+  // REST for /api/identity (fetched once)
   useEffect(() => {
     const fetchIdentity = async () => {
       try {
         const response = await fetch('/api/identity');
         if (response.ok) {
           const data = await response.json();
-          // Merge with existing projectInfo (preserve pwd from stats)
           setProjectInfo(prev => ({
             pwd: prev?.pwd ?? '',
             jiraEmail: data.jiraEmail ?? null,

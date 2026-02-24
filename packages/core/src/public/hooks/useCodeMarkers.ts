@@ -1,5 +1,6 @@
 /**
  * useCodeMarkers React hook — Story 80-3 (MSSCI-14456)
+ * Story 124-3 - DataSource<T> pattern (REST variant)
  *
  * Wraps /api/code-markers endpoint with AbortController,
  * loading/error/data state management, and manual refresh.
