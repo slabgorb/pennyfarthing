@@ -67,9 +67,7 @@ pnpm run lint      # ESLint
 <info>
 ## Workflows & Agents
 
-BikeLane workflow types: **Phased** (agent-driven handoffs: tdd, trivial, bdd, agent-docs, patch) and **Stepped** (progressive gates: architecture, release, git-cleanup).
-
-TDD flow: SM → TEA → Dev → Reviewer → SM
+BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (progressive gates). Workflow definitions live in `pennyfarthing-dist/workflows/*.yaml` — read the YAML for phase order, agents, tandem/team pairings, and gates. Use `pf workflow list` and `pf workflow show <name>` to inspect.
 
 | Agent | Role | Agent | Role |
 |-------|------|-------|------|

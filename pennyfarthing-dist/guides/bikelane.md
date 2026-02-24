@@ -8,14 +8,7 @@ Workflow orchestration engine. Coordinates multi-agent development through three
 
 ### Phased — Agent-driven with automatic handoffs
 
-| Workflow | Flow |
-|----------|------|
-| `tdd` | SM → TEA (RED) → Dev (GREEN) → Reviewer → SM |
-| `tdd-tandem` | SM → TEA+Architect (RED) → Dev+TEA (GREEN) → Reviewer+PM → SM |
-| `bdd` | SM → UX → TEA → Dev → Reviewer → SM |
-| `bdd-tandem` | SM → UX+Architect → TEA → Dev+UX (GREEN) → Reviewer+PM → SM |
-| `trivial` | SM → Dev → Reviewer → SM |
-| `agent-docs` | SM → Orchestrator → Tech Writer → SM |
+Workflow definitions live in `pennyfarthing-dist/workflows/*.yaml`. Each YAML defines phases, agents, tandem/team pairings, and gates. Use `pf workflow list` to see all available workflows, `pf workflow show <name>` for phase details. **Read the YAML — don't rely on summaries.**
 
 ### Stepped — Progressive disclosure with user gates
 

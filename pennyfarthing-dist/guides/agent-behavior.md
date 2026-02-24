@@ -32,7 +32,7 @@
 ## Reference
 
 <info>
-**Workflow:** SM → TEA → Dev → Reviewer → SM. Trivial skips TEA.
+**Workflow:** Read the active workflow YAML at `pennyfarthing-dist/workflows/` for phase order, agents, and tandem/team pairings. Session file `**Workflow:**` line tells you which one is active. `pf workflow show <name>` for details.
 
 **Skills:** `/pf-sprint`, `/pf-testing`, `/pf-jira`, `/pf-just`
 
