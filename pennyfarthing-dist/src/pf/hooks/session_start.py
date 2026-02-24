@@ -9,6 +9,7 @@ Handles:
 3. WheelHub auto-start (ensure BikeRack server is running)
 4. OTEL auto-configuration via CLAUDE_ENV_FILE
 5. Welcome message display (CLI ASCII art or Cyclist API)
+6. Setup auto-detection (Story 126-12) — nudge if pf init ran but /pf-setup did not
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+import yaml
 
 from pf.hooks import (
     is_cyclist_running,
@@ -264,6 +267,78 @@ def _show_welcome(project_dir: Path) -> None:
 
 
 # =============================================================================
+# Setup Auto-Detection (Story 126-12)
+# =============================================================================
+
+
+def detect_incomplete_setup(project_dir: Path) -> str | None:
+    """Detect if pf init ran but /pf-setup did not.
+
+    Returns additionalContext string if setup is incomplete, None otherwise.
+    Fast path (setup complete) uses file existence checks only — no YAML parsing.
+
+    Args:
+        project_dir: Project root directory
+
+    Returns:
+        additionalContext string if setup is incomplete, None if complete or not initialized
+    """
+    pf_dir = project_dir / ".pennyfarthing"
+
+    # Not initialized at all — nothing to nudge about
+    if not pf_dir.is_dir():
+        return None
+
+    # Fast path: all files exist and are non-empty → setup complete, no parsing
+    config_path = pf_dir / "config.local.yaml"
+    repos_path = pf_dir / "repos.yaml"
+    settings_path = project_dir / ".claude" / "settings.local.json"
+
+    if (
+        config_path.is_file()
+        and config_path.stat().st_size > 0
+        and repos_path.is_file()
+        and repos_path.stat().st_size > 0
+        and settings_path.is_file()
+    ):
+        return None
+
+    # Slow path: something is missing or empty — build detailed report
+    missing: list[str] = []
+
+    if not settings_path.is_file():
+        missing.append("settings.local.json (Claude Code hooks)")
+
+    if not config_path.is_file():
+        missing.append("config.local.yaml (theme and preferences)")
+    elif config_path.stat().st_size == 0:
+        missing.append("theme selection in config.local.yaml")
+    else:
+        # File exists and is non-empty — check for theme key
+        try:
+            content = yaml.safe_load(config_path.read_text())
+            if not isinstance(content, dict) or not content.get("theme"):
+                missing.append("theme selection in config.local.yaml")
+        except Exception:
+            missing.append("config.local.yaml (unreadable)")
+
+    if not repos_path.is_file():
+        missing.append("repos.yaml (repository discovery)")
+    elif repos_path.stat().st_size == 0:
+        missing.append("repos.yaml (empty — needs repo discovery)")
+
+    if not missing:
+        return None
+
+    items = "\n".join(f"  - {m}" for m in missing)
+    return (
+        "Pennyfarthing setup is incomplete. Run `/pf-setup` to finish configuration.\n"
+        f"\nMissing:\n{items}\n"
+        "\nThis usually means `pf init` ran but the interactive setup was skipped."
+    )
+
+
+# =============================================================================
 # Entry Point
 # =============================================================================
 
@@ -279,6 +354,16 @@ def main() -> None:
 
         _setup_session_dir(project_dir, session_id, source_type)
         _validate_checkpoint(project_dir)
+
+        # Detect incomplete setup and emit additionalContext if needed
+        setup_context = detect_incomplete_setup(project_dir)
+        if setup_context:
+            from pf.hooks import HookResponse, output_hook_response
+
+            output_hook_response(HookResponse(
+                event_name="SessionStart",
+                additional_context=setup_context,
+            ))
 
         otel_port = _ensure_wheelhub(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
