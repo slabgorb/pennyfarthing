@@ -10,7 +10,7 @@ next: step-08-summary
 </step-meta>
 
 <purpose>
-Check optional components that enhance but are not required for core Pennyfarthing functionality. These include the Cyclist visual terminal and the pf Python CLI.
+Check the pf Python CLI (required — all hooks depend on it) and optional components like the Cyclist visual terminal.
 </purpose>
 
 <prerequisites>
@@ -23,8 +23,8 @@ Check optional components that enhance but are not required for core Pennyfarthi
    - **cyclist/installed**: Cyclist is the Electron visual terminal for Pennyfarthing. It provides a graphical UI with panels for sprint tracking, diffs, workflow visualization, and more. Not required for CLI-only usage.
    - **cyclist/node-pty**: node-pty powers the terminal panel in Cyclist. Without it, the embedded terminal won't work but other panels still function.
    - **cyclist/spawn-helper**: The native binary that node-pty uses to spawn processes. Must have execute permission on macOS/Linux. Missing permission causes `posix_spawnp` failures.
-   - **tools/pf-cli**: The Python `pf` command provides agent activation (`pf agent start`), hook dispatch (`pf hooks`), and sprint management. Required for agent workflows. Installable via `uv tool install pennyfarthing-scripts` or `pipx install pennyfarthing-scripts`.
-3. For missing tools, explain whether they're required or optional based on the user's workflow
+   - **tools/pf-cli**: **REQUIRED.** The Python `pf` command provides agent activation (`pf agent start`), hook dispatch (`pf hooks`), and sprint management. All Claude Code hooks call `pf` directly — without it, every session is broken. Install via `pipx install -e pennyfarthing-dist/` (editable) or `pipx install pennyfarthing-scripts` (released).
+3. For missing tools: pf CLI is **required** (hooks depend on it), Cyclist is optional based on the user's workflow
 4. Present the collaboration menu
 </instructions>
 
@@ -72,9 +72,10 @@ After reviewing tools, proceed to step-08-summary.md for the final health report
 
 - Installing Cyclist when only CLI usage is needed (unnecessary complexity)
 - spawn-helper permission issues after pnpm install (common on macOS)
+- Stale pf shim from deprecated uv install pointing to dead virtualenv
 
 ## Success Metrics
 
-- User understands which tools they need
-- Required tools (pf CLI) are installed
+- **pf CLI is installed and functional** (non-negotiable — hooks are broken without it)
+- User understands which optional tools they need
 - Optional tools have clear install path if wanted

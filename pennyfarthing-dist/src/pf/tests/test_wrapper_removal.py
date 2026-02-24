@@ -251,3 +251,123 @@ class TestDeprecatedWrappersClean:
         assert not violations, (
             f"Deprecated wrappers still source run-pf.sh: {violations}"
         )
+
+
+# ---------------------------------------------------------------------------
+# AC 6: pf init verifies pf CLI availability before writing hooks
+# ---------------------------------------------------------------------------
+
+
+class TestPfCliVerification:
+    """AC 6: init_project must verify pf CLI is available before writing hooks.
+
+    With the wrapper chain removed, every hook calls bare `pf`. If pf
+    isn't installed globally (pipx/pip), hooks will silently fail and
+    brick the entire Claude Code session. init_project must catch this
+    early with a clear error.
+    """
+
+    def test_verify_pf_cli_exists(self) -> None:
+        """verify_pf_cli function should be importable from init.core."""
+        from pf.init.core import verify_pf_cli
+
+        assert callable(verify_pf_cli)
+
+    def test_verify_pf_cli_returns_result_dict(self) -> None:
+        """verify_pf_cli should return {success, ...} result dict."""
+        from pf.init.core import verify_pf_cli
+
+        result = verify_pf_cli()
+        assert "success" in result
+
+    def test_verify_pf_cli_succeeds_when_pf_available(self) -> None:
+        """verify_pf_cli should succeed in this test environment (pf is installed)."""
+        from pf.init.core import verify_pf_cli
+
+        result = verify_pf_cli()
+        assert result["success"] is True
+
+    def test_verify_pf_cli_reports_version(self) -> None:
+        """verify_pf_cli should report the detected pf version."""
+        from pf.init.core import verify_pf_cli
+
+        result = verify_pf_cli()
+        assert "version" in result
+
+    def test_verify_pf_cli_reports_install_method(self) -> None:
+        """verify_pf_cli should report how pf is installed (pipx, pip, etc)."""
+        from pf.init.core import verify_pf_cli
+
+        result = verify_pf_cli()
+        assert "install_method" in result
+
+    def test_init_project_calls_verify(self, tmp_path: Path) -> None:
+        """init_project should call verify_pf_cli before writing hooks."""
+        from unittest.mock import patch
+
+        from pf.init.core import init_project
+
+        target = tmp_path / "project"
+        target.mkdir()
+
+        # Create minimal dist
+        dist = tmp_path / "dist"
+        dist.mkdir()
+        (dist / "commands").mkdir()
+        (dist / "skills").mkdir()
+
+        with patch("pf.init.core.verify_pf_cli") as mock_verify:
+            mock_verify.return_value = {"success": True, "version": "11.5.0", "install_method": "pipx"}
+            init_project(target_dir=target, dist_root=dist)
+            mock_verify.assert_called_once()
+
+    def test_init_project_fails_if_pf_not_available(self, tmp_path: Path) -> None:
+        """init_project should fail early if verify_pf_cli reports failure."""
+        from unittest.mock import patch
+
+        from pf.init.core import init_project
+
+        target = tmp_path / "project"
+        target.mkdir()
+
+        dist = tmp_path / "dist"
+        dist.mkdir()
+        (dist / "commands").mkdir()
+        (dist / "skills").mkdir()
+
+        with patch("pf.init.core.verify_pf_cli") as mock_verify:
+            mock_verify.return_value = {
+                "success": False,
+                "error": "pf CLI not found on PATH",
+            }
+            result = init_project(target_dir=target, dist_root=dist)
+
+        assert result["success"] is False
+        assert "pf" in result["error"].lower()
+        # Should NOT have created hooks/settings
+        assert not (target / ".claude" / "settings.local.json").exists()
+
+    def test_init_project_warns_on_stale_shim(self, tmp_path: Path) -> None:
+        """init_project should include a warning if pf shim points to dead venv."""
+        from unittest.mock import patch
+
+        from pf.init.core import init_project
+
+        target = tmp_path / "project"
+        target.mkdir()
+
+        dist = tmp_path / "dist"
+        dist.mkdir()
+        (dist / "commands").mkdir()
+        (dist / "skills").mkdir()
+
+        with patch("pf.init.core.verify_pf_cli") as mock_verify:
+            mock_verify.return_value = {
+                "success": False,
+                "error": "pf found but broken — stale shim at /Users/x/.local/bin/pf",
+                "install_hint": "pipx install -e pennyfarthing-dist/",
+            }
+            result = init_project(target_dir=target, dist_root=dist)
+
+        assert result["success"] is False
+        assert "pipx install" in result.get("error", "")

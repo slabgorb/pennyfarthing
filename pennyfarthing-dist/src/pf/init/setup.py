@@ -156,19 +156,26 @@ def discover_repos(project_root: Path) -> dict[str, Any]:
         project_root: Project root directory
 
     Returns:
-        Result dict: {success, repos?, repos_file?, error?}
+        Result dict: {success, data: {repos: {name: config}}}
     """
-    repos: list[dict[str, str]] = []
+    repos: dict[str, Any] = {}
 
     if (project_root / ".git").is_dir():
-        repos.append({"path": ".", "type": "project"})
+        name = project_root.resolve().name
+        default_branch = _detect_default_branch(project_root)
+        repos[name] = {
+            "path": ".",
+            "type": "standalone",
+            "default_branch": default_branch,
+            "branch_strategy": "trunk-based",
+        }
 
     pf_dir = project_root / ".pennyfarthing"
     if pf_dir.is_dir() and repos:
         repos_file = pf_dir / "repos.yaml"
         repos_file.write_text(yaml.dump({"repos": repos}, default_flow_style=False))
 
-    return {"success": True, "repos": repos}
+    return {"success": True, "data": {"repos": repos}}
 
 
 def select_theme(
@@ -240,24 +247,35 @@ def detect_package_manager(project_root: Path) -> str | None:
     Checks for lock files in priority order:
     pnpm-lock.yaml > yarn.lock > package-lock.json
 
+    Walks up parent directories to support monorepo layouts where the
+    lockfile lives at the workspace root.
+
     Args:
         project_root: Project root directory
 
     Returns:
         Package manager name ("pnpm", "yarn", "npm") or None
     """
-    if (project_root / "pnpm-lock.yaml").exists():
-        return "pnpm"
-    if (project_root / "yarn.lock").exists():
-        return "yarn"
-    if (project_root / "package-lock.json").exists():
-        return "npm"
+    current = project_root.resolve()
+    root = Path(current.anchor)
+
+    while current != root:
+        if (current / "pnpm-lock.yaml").exists():
+            return "pnpm"
+        if (current / "yarn.lock").exists():
+            return "yarn"
+        if (current / "package-lock.json").exists():
+            return "npm"
+        current = current.parent
+
     return None
 
 
 def install_node_packages(
     project_root: Path,
     package_manager: str,
+    *,
+    dry_run: bool = False,
 ) -> dict[str, Any]:
     """Install Node packages using the detected package manager.
 
@@ -267,10 +285,25 @@ def install_node_packages(
     Args:
         project_root: Project root directory
         package_manager: One of "pnpm", "yarn", "npm"
+        dry_run: If True, report the command without executing
 
     Returns:
-        Result dict: {success, package_manager?, error?}
+        Result dict: {success, data?, error?}
     """
+    if package_manager not in _VALID_MANAGERS:
+        return {
+            "success": False,
+            "error": f"Unsupported package manager: {package_manager}",
+        }
+
+    command = _INSTALL_COMMANDS[package_manager]
+
+    if dry_run:
+        return {
+            "success": True,
+            "data": {"action": "dry-run", "command": command},
+        }
+
     result = subprocess.run(
         [package_manager, "install"],
         cwd=project_root,
@@ -280,10 +313,9 @@ def install_node_packages(
     if result.returncode != 0:
         return {
             "success": False,
-            "package_manager": package_manager,
             "error": result.stderr or f"{package_manager} install failed",
         }
-    return {"success": True, "package_manager": package_manager}
+    return {"success": True, "data": {"package_manager": package_manager}}
 
 
 # --- Extended functions from develop (used by init CLI) ---
