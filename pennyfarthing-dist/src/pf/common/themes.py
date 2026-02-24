@@ -15,6 +15,7 @@ Discovery order (deduped by theme ID, first source wins):
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -246,3 +247,108 @@ def format_theme_list(
         lines.append("".join(row))
 
     return "\n".join(lines)
+
+
+def _is_lfs_pointer(path: Path) -> bool:
+    """Check if a file is a git-lfs pointer instead of actual image data."""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(44)
+        return header.startswith(b"version https://git-lfs")
+    except OSError:
+        return False
+
+
+def ensure_portrait_lfs(
+    theme_name: str,
+    project_root: Path | None = None,
+    *,
+    quiet: bool = False,
+) -> dict[str, Any]:
+    """Pull LFS portrait files for a theme if any are detected as stubs.
+
+    Checks portrait directories for the given theme. If any files are
+    LFS pointers (not real images), runs ``git lfs pull`` scoped to
+    that theme's portrait directory.
+
+    Args:
+        theme_name: Theme ID (e.g. "discworld")
+        project_root: Project root (auto-detected if not provided)
+        quiet: If True, suppress informational output
+
+    Returns:
+        Result dict: {success, pulled?, skipped?, error?}
+    """
+    root = project_root or get_project_root()
+    theme_dirs = discover_all_theme_dirs(root)
+
+    lfs_files: list[Path] = []
+    for themes_dir in theme_dirs:
+        portraits_dir = themes_dir.parent / "portraits" / theme_name
+        if not portraits_dir.is_dir():
+            continue
+        for f in portraits_dir.rglob("*"):
+            if f.is_file() and f.suffix in (".png", ".jpg") and _is_lfs_pointer(f):
+                lfs_files.append(f)
+
+    if not lfs_files:
+        return {"success": True, "skipped": True}
+
+    # Find the git repo root containing the portraits
+    repo_root = lfs_files[0].parent
+    while repo_root != repo_root.parent:
+        if (repo_root / ".git").exists():
+            break
+        repo_root = repo_root.parent
+    else:
+        return {"success": True, "skipped": True}
+
+    # Build include path relative to repo root
+    include_path: str | None = None
+    for themes_dir in theme_dirs:
+        base = themes_dir.parent / "portraits" / theme_name
+        if base.is_dir():
+            try:
+                include_path = str(base.relative_to(repo_root)) + "/**"
+                break
+            except ValueError:
+                continue
+
+    if include_path is None:
+        return {"success": True, "skipped": True}
+
+    try:
+        result = subprocess.run(
+            ["git", "lfs", "pull", f"--include={include_path}"],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode == 0:
+            if not quiet:
+                import click
+
+                click.echo(
+                    f"Pulled {len(lfs_files)} portrait images for {theme_name}."
+                )
+            return {"success": True, "pulled": len(lfs_files)}
+        return {
+            "success": False,
+            "error": f"git lfs pull failed: {result.stderr.strip()}",
+        }
+    except FileNotFoundError:
+        if not quiet:
+            import click
+
+            click.echo(
+                "Warning: git-lfs not installed, portrait images may be missing.",
+                err=True,
+            )
+        return {"success": True, "skipped": True, "error": "git-lfs not installed"}
+    except subprocess.TimeoutExpired:
+        if not quiet:
+            import click
+
+            click.echo("Warning: git lfs pull timed out.", err=True)
+        return {"success": True, "skipped": True, "error": "git lfs pull timed out"}
