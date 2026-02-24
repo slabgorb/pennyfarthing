@@ -41,7 +41,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Path to the CLI binary (compiled JS)
-const CLI_BIN = resolve(__dirname, '../../../bin/pennyfarthing.js');
+const CLI_BIN = resolve(__dirname, '../index.js');
 
 // Path to the real pennyfarthing-dist (for creating fake node_modules)
 // From dist/cli/commands/ → packages/core/dist/cli/commands/ → 5 levels up to repo root

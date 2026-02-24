@@ -24,7 +24,7 @@ import { findNodeModulesPath, findLocalSymlinkTargets } from '../utils/node-modu
 import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
 import { mergeSettingsLocalJson, ensureSettingsSymlink } from '../utils/settings.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
-import { installGitHooks, generatePyprojectToml } from './init.js';
+import { installGitHooks, generatePyprojectToml } from '../utils/install-helpers.js';
 import { writeVersionSentinel } from '../utils/version-sentinel.js';
 import {
   listMigrationFiles,
@@ -54,7 +54,7 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
 
   // 1. Check for manifest
   if (!manifestExists(projectRoot)) {
-    logger.error('Pennyfarthing not initialized. Run `pennyfarthing init` first.');
+    logger.error('Pennyfarthing not initialized. Run `pf setup` first.');
     process.exit(1);
   }
 
@@ -95,7 +95,7 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     logger.error('');
     logger.error('Please reinstall with npm:');
     logger.error('  npm install pennyfarthing');
-    logger.error('  npx pennyfarthing init --force');
+    logger.error('  pf setup --force');
     process.exit(1);
   }
 
