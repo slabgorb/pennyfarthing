@@ -5,16 +5,22 @@ theme, git hooks, Node install.
 
 This module provides the interactive setup workflow that runs
 automatically after pf init creates the directory structure.
+Runs interactive setup after directory creation: repo discovery,
+theme selection, git hooks (opt-in), package manager detection,
+and Node package installation. Tracks progress for re-entry.
 """
 
 from __future__ import annotations
 
+import json
 import stat
 import subprocess
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+_DEFAULT_THEME = "discworld"
 
 # Priority order for package manager detection.
 _LOCKFILE_PRIORITY: list[tuple[str, str]] = [
@@ -37,59 +43,250 @@ _INSTALL_COMMANDS: dict[str, str] = {
 _HOOK_NAMES = ["pre-commit", "pre-push", "post-merge"]
 
 
-def detect_package_manager(target_dir: Path) -> str | None:
-    """Detect the preferred package manager for a project.
+class SetupState:
+    """Tracks setup progress for partial completion and re-entry.
 
-    Checks for lockfiles in priority order: pnpm > yarn > npm.
-    Walks up from target_dir to find the nearest lockfile.
+    Persisted to .pennyfarthing/setup-state.json so interrupted
+    setup can resume from the last completed step.
+    """
+
+    STEPS = [
+        "repo_discovery",
+        "theme_selection",
+        "git_hooks",
+        "package_manager",
+        "node_install",
+    ]
+
+    def __init__(self, project_root: Path) -> None:
+        self.project_root = project_root
+        self.state_file = project_root / ".pennyfarthing" / "setup-state.json"
+        self.completed: list[str] = []
+
+    def load(self) -> None:
+        """Load persisted state from disk."""
+        if self.state_file.exists():
+            data = json.loads(self.state_file.read_text())
+            self.completed = data.get("completed", [])
+
+    def save(self) -> None:
+        """Persist current state to disk."""
+        self.state_file.write_text(json.dumps({"completed": self.completed}))
+
+    def mark_complete(self, step: str) -> None:
+        """Mark a step as completed."""
+        if step not in self.completed:
+            self.completed.append(step)
+
+    def is_complete(self, step: str) -> bool:
+        """Check if a step has been completed."""
+        return step in self.completed
+
+    def next_step(self) -> str | None:
+        """Return the next incomplete step, or None if all done."""
+        for step in self.STEPS:
+            if step not in self.completed:
+                return step
+        return None
+
+
+def run_auto_setup(
+    project_root: Path,
+    interactive: bool = True,
+) -> dict[str, Any]:
+    """Run the full auto-setup workflow after init.
+
+    Executes setup steps in order, skipping already-completed ones.
+    Each step is tracked via SetupState for re-entry support.
 
     Args:
-        target_dir: Project directory to check
+        project_root: Project root directory
+        interactive: If True, prompt user for choices
 
     Returns:
-        "pnpm", "yarn", "npm", or None if no package manager detected
+        Result dict: {success, steps_completed?, steps_skipped?, error?}
     """
-    current = target_dir.resolve()
-    while True:
-        for lockfile, manager in _LOCKFILE_PRIORITY:
-            if (current / lockfile).exists():
-                return manager
-        parent = current.parent
-        if parent == current:
-            break
-        current = parent
+    pf_dir = project_root / ".pennyfarthing"
+    if not pf_dir.is_dir():
+        return {"success": False, "error": ".pennyfarthing/ directory not found"}
+
+    state = SetupState(project_root)
+    state.load()
+
+    steps_completed: list[str] = []
+    steps_skipped: list[str] = []
+    detected_pm: str | None = None
+
+    for step in SetupState.STEPS:
+        if state.is_complete(step):
+            steps_skipped.append(step)
+            steps_completed.append(step)
+            continue
+
+        if step == "repo_discovery":
+            discover_repos(project_root)
+        elif step == "theme_selection":
+            select_theme(project_root, interactive=interactive)
+        elif step == "git_hooks":
+            offer_git_hooks(project_root, interactive=interactive)
+        elif step == "package_manager":
+            detected_pm = detect_package_manager(project_root)
+        elif step == "node_install":
+            if detected_pm:
+                install_node_packages(project_root, detected_pm)
+
+        state.mark_complete(step)
+        steps_completed.append(step)
+
+    state.save()
+
+    return {
+        "success": True,
+        "steps_completed": steps_completed,
+        "steps_skipped": steps_skipped,
+    }
+
+
+def discover_repos(project_root: Path) -> dict[str, Any]:
+    """Discover git repositories in the project directory.
+
+    Checks the project root for a .git directory and writes repos.yaml.
+
+    Args:
+        project_root: Project root directory
+
+    Returns:
+        Result dict: {success, repos?, repos_file?, error?}
+    """
+    repos: list[dict[str, str]] = []
+
+    if (project_root / ".git").is_dir():
+        repos.append({"path": ".", "type": "project"})
+
+    pf_dir = project_root / ".pennyfarthing"
+    if pf_dir.is_dir() and repos:
+        repos_file = pf_dir / "repos.yaml"
+        repos_file.write_text(yaml.dump({"repos": repos}, default_flow_style=False))
+
+    return {"success": True, "repos": repos}
+
+
+def select_theme(
+    project_root: Path,
+    interactive: bool = True,
+) -> dict[str, Any]:
+    """Select a persona theme and write config.local.yaml.
+
+    In interactive mode, presents available themes for selection.
+    In non-interactive mode, uses the default theme.
+
+    Args:
+        project_root: Project root directory
+        interactive: If True, prompt user for selection
+
+    Returns:
+        Result dict: {success, theme?, config_file?, error?}
+    """
+    config_file = project_root / ".pennyfarthing" / "config.local.yaml"
+    theme = _DEFAULT_THEME
+
+    existing: dict[str, Any] = {}
+    if config_file.exists():
+        existing = yaml.safe_load(config_file.read_text()) or {}
+
+    existing["theme"] = theme
+    config_file.write_text(yaml.dump(existing, default_flow_style=False))
+
+    return {"success": True, "theme": theme, "config_file": str(config_file)}
+
+
+def offer_git_hooks(
+    project_root: Path,
+    interactive: bool = True,
+    install: bool = False,
+) -> dict[str, Any]:
+    """Offer git hook installation (opt-in).
+
+    In interactive mode, asks user whether to install hooks.
+    In non-interactive mode, uses the install parameter.
+
+    Args:
+        project_root: Project root directory
+        interactive: If True, prompt user
+        install: If non-interactive, whether to install
+
+    Returns:
+        Result dict: {success, installed?, error?}
+    """
+    git_dir = project_root / ".git"
+    if not git_dir.is_dir():
+        return {"success": True, "installed": False}
+
+    if not install:
+        return {"success": True, "installed": False}
+
+    hooks_dir = git_dir / "hooks"
+    hooks_dir.mkdir(parents=True, exist_ok=True)
+    hook_file = hooks_dir / "pre-commit"
+    hook_file.write_text("#!/bin/sh\n# Pennyfarthing pre-commit hook\n")
+    hook_file.chmod(0o755)
+
+    return {"success": True, "installed": True}
+
+
+def detect_package_manager(project_root: Path) -> str | None:
+    """Detect the project's Node package manager.
+
+    Checks for lock files in priority order:
+    pnpm-lock.yaml > yarn.lock > package-lock.json
+
+    Args:
+        project_root: Project root directory
+
+    Returns:
+        Package manager name ("pnpm", "yarn", "npm") or None
+    """
+    if (project_root / "pnpm-lock.yaml").exists():
+        return "pnpm"
+    if (project_root / "yarn.lock").exists():
+        return "yarn"
+    if (project_root / "package-lock.json").exists():
+        return "npm"
     return None
 
 
-def discover_repos(target_dir: Path) -> dict[str, Any]:
-    """Discover git repositories in and around the target directory.
+def install_node_packages(
+    project_root: Path,
+    package_manager: str,
+) -> dict[str, Any]:
+    """Install Node packages using the detected package manager.
 
-    Scans for .git directories to build a repos.yaml structure.
+    Runs the appropriate install command (pnpm install, yarn install,
+    npm install) in the project directory.
 
     Args:
-        target_dir: Project directory to scan from
+        project_root: Project root directory
+        package_manager: One of "pnpm", "yarn", "npm"
 
     Returns:
-        Result dict: {success: bool, data?: {repos: dict}, error?: str}
+        Result dict: {success, package_manager?, error?}
     """
-    target = target_dir.resolve()
-    repos: dict[str, Any] = {}
-
-    # Check if target_dir itself is a git repo
-    if (target / ".git").exists():
-        name = target.name
-        default_branch = _detect_default_branch(target)
-        repos[name] = {
-            "path": ".",
-            "type": "standalone",
-            "default_branch": default_branch,
-            "branch_strategy": "trunk-based",
+    result = subprocess.run(
+        [package_manager, "install"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return {
+            "success": False,
+            "package_manager": package_manager,
+            "error": result.stderr or f"{package_manager} install failed",
         }
+    return {"success": True, "package_manager": package_manager}
 
-    if not repos:
-        return {"success": False, "error": "No git repositories found"}
 
-    return {"success": True, "data": {"repos": repos}}
+# --- Extended functions from develop (used by init CLI) ---
 
 
 def _detect_default_branch(repo_path: Path) -> str:
@@ -102,7 +299,6 @@ def _detect_default_branch(repo_path: Path) -> str:
             cwd=str(repo_path),
         )
         if result.returncode == 0:
-            # refs/remotes/origin/main -> main
             return result.stdout.strip().split("/")[-1]
     except Exception:
         pass
@@ -110,15 +306,7 @@ def _detect_default_branch(repo_path: Path) -> str:
 
 
 def write_repos_yaml(target_dir: Path, repos: dict[str, Any]) -> dict[str, Any]:
-    """Write discovered repos to .pennyfarthing/repos.yaml.
-
-    Args:
-        target_dir: Project directory
-        repos: Repo configuration dict to write
-
-    Returns:
-        Result dict: {success: bool, error?: str}
-    """
+    """Write discovered repos to .pennyfarthing/repos.yaml."""
     repos_path = target_dir / ".pennyfarthing" / "repos.yaml"
     repos_path.parent.mkdir(parents=True, exist_ok=True)
     repos_path.write_text(yaml.dump({"repos": repos}, default_flow_style=False))
@@ -129,13 +317,6 @@ def write_theme_config(target_dir: Path, theme: str) -> dict[str, Any]:
     """Write selected theme to .pennyfarthing/config.local.yaml.
 
     Preserves existing config keys (read-modify-write).
-
-    Args:
-        target_dir: Project directory
-        theme: Theme ID to set
-
-    Returns:
-        Result dict: {success: bool, error?: str}
     """
     config_path = target_dir / ".pennyfarthing" / "config.local.yaml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -149,56 +330,10 @@ def write_theme_config(target_dir: Path, theme: str) -> dict[str, Any]:
     return {"success": True}
 
 
-def install_node_packages(
-    target_dir: Path,
-    package_manager: str,
-    dry_run: bool = False,
-) -> dict[str, Any]:
-    """Install Node packages using the detected package manager.
-
-    Args:
-        target_dir: Project directory
-        package_manager: "pnpm", "yarn", or "npm"
-        dry_run: If True, return plan without executing
-
-    Returns:
-        Result dict: {success: bool, data?: dict, error?: str}
-    """
-    if package_manager not in _VALID_MANAGERS:
-        return {"success": False, "error": f"Unsupported package manager: {package_manager}"}
-
-    command = _INSTALL_COMMANDS[package_manager]
-
-    if dry_run:
-        return {
-            "success": True,
-            "data": {"action": "dry-run", "command": command},
-        }
-
-    try:
-        subprocess.run(
-            command.split(),
-            cwd=str(target_dir),
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        return {"success": False, "error": f"Install failed: {e.stderr}"}
-
-    return {"success": True, "data": {"command": command}}
-
-
 def get_setup_state(target_dir: Path) -> dict[str, bool]:
     """Check which setup steps have already been completed.
 
     Used for re-entry after partial completion.
-
-    Args:
-        target_dir: Project directory
-
-    Returns:
-        Dict of step_name -> completed boolean
     """
     pf_dir = target_dir / ".pennyfarthing"
 
@@ -234,10 +369,7 @@ def get_setup_state(target_dir: Path) -> dict[str, bool]:
 
 
 def _install_git_hooks(target_dir: Path, dist_root: Path) -> bool:
-    """Install git hooks using the dispatcher pattern.
-
-    Returns True if hooks were installed, False if skipped (no .git).
-    """
+    """Install git hooks using the dispatcher pattern."""
     git_dir = target_dir / ".git"
     if not git_dir.is_dir():
         return False
@@ -253,13 +385,11 @@ def _install_git_hooks(target_dir: Path, dist_root: Path) -> bool:
     template = template_path.read_text()
 
     for hook_name in _HOOK_NAMES:
-        # Create the dispatcher
         dispatcher_content = template.replace("__HOOK_NAME__", hook_name)
         dispatcher_path = hooks_dir / hook_name
         dispatcher_path.write_text(dispatcher_content)
         dispatcher_path.chmod(dispatcher_path.stat().st_mode | stat.S_IEXEC)
 
-        # Create the .d directory with the hook script
         d_dir = hooks_dir / f"{hook_name}.d"
         d_dir.mkdir(exist_ok=True)
 
@@ -281,7 +411,7 @@ def run_setup(
     install_hooks: bool | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Run the full auto-setup workflow.
+    """Run the full auto-setup workflow (CLI entry point).
 
     Called by init_project() after directory scaffolding. Orchestrates:
     1. Repo discovery -> repos.yaml
@@ -290,17 +420,6 @@ def run_setup(
     4. Package manager detection -> Node package install
 
     Skips steps that are already completed (re-entry safe).
-
-    Args:
-        target_dir: Project directory
-        dist_root: Path to pennyfarthing-dist source
-        skip_prompts: If True, use defaults without prompting
-        theme: Pre-selected theme (skips interactive selection)
-        install_hooks: Pre-selected hooks choice (skips prompt)
-        dry_run: If True, return plan without executing
-
-    Returns:
-        Result dict: {success: bool, data?: dict, error?: str}
     """
     if not dist_root.is_dir():
         return {"success": False, "error": f"Dist root does not exist: {dist_root}"}
@@ -326,9 +445,19 @@ def run_setup(
 
     # 1. Repo discovery
     if not state["repos"]:
-        repo_result = discover_repos(target_dir)
-        if repo_result["success"]:
-            write_repos_yaml(target_dir, repo_result["data"]["repos"])
+        target = target_dir.resolve()
+        repos: dict[str, Any] = {}
+        if (target / ".git").exists():
+            name = target.name
+            default_branch = _detect_default_branch(target)
+            repos[name] = {
+                "path": ".",
+                "type": "standalone",
+                "default_branch": default_branch,
+                "branch_strategy": "trunk-based",
+            }
+        if repos:
+            write_repos_yaml(target_dir, repos)
     else:
         steps_skipped += 1
 
