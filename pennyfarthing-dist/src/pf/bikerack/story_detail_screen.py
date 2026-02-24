@@ -32,7 +32,7 @@ _PHASE_LABELS: dict[str, str] = {
     "setup": "SM",
     "red": "TEA",
     "green": "Dev",
-    "verify": "Dev",
+    "verify": "TEA",
     "review": "Rev",
     "finish": "SM",
     "design": "UX",
