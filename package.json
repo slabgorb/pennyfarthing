@@ -43,7 +43,7 @@
   },
   "scripts": {
     "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh && ./pennyfarthing-dist/scripts/git/changelog-links.sh --validate",
-    "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core build && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
+    "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core run build:tsc && pnpm --filter @pennyfarthing/bikerack build && pnpm --filter @pennyfarthing/core run build:react && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
     "docs": "./scripts/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",

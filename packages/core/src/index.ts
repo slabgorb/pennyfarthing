@@ -2,6 +2,13 @@
 // For use by other tools and slash commands
 
 export { getPackageVersion, getAssetsPath } from './cli/utils/version.js';
+
+// DataSource interface (Story 124-3, exported Story 124-6)
+export type {
+  DataSource,
+  DataSourceOptions,
+  Unsubscribe,
+} from './data-source.js';
 export {
   readManifest,
   writeManifest,

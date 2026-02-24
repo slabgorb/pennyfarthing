@@ -126,21 +126,21 @@ afterEach(() => {
 
 describe('AC1: BikeRack renders Dockview layout instead of index page', () => {
   it('should export BikeRackWorkspace as a named component', async () => {
-    const mod = await import('../src/public/components/BikeRackWorkspace');
+    const mod = await import('../../bikerack/src/BikeRackWorkspace');
     expect(mod).toHaveProperty('BikeRackWorkspace');
     expect(typeof mod.BikeRackWorkspace).toBe('function');
   });
 
   it('should render without crashing', async () => {
     const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
     expect(() => render(<BikeRackWorkspace />)).not.toThrow();
   });
 
   it('should render with cyclist-dockview CSS class (Dockview container)', async () => {
     const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
     render(<BikeRackWorkspace />);
 
@@ -163,7 +163,7 @@ describe('AC1: BikeRack renders Dockview layout instead of index page', () => {
   it('BikeRackWorkspace.tsx should import from dockview-react', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -174,7 +174,7 @@ describe('AC1: BikeRack renders Dockview layout instead of index page', () => {
 
   it('should NOT render the old BikeRackIndex listing page content', async () => {
     const { BikeRackWorkspace } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
     render(<BikeRackWorkspace />);
 
@@ -191,7 +191,7 @@ describe('AC1: BikeRack renders Dockview layout instead of index page', () => {
 describe('AC2: Panel tabs navigable like base Cyclist', () => {
   it('should export BIKERACK_PANELS with correct panel count', async () => {
     const { BIKERACK_PANELS } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
 
     expect(BIKERACK_PANELS).toBeDefined();
@@ -203,7 +203,7 @@ describe('AC2: Panel tabs navigable like base Cyclist', () => {
     'should include "%s" in BIKERACK_PANELS',
     async (panelName) => {
       const { BIKERACK_PANELS } = await import(
-        '../src/public/components/BikeRackWorkspace'
+        '../../bikerack/src/BikeRackWorkspace'
       );
 
       // Panel must be present (may have variant IDs like 'audit' or 'audit-log')
@@ -218,7 +218,7 @@ describe('AC2: Panel tabs navigable like base Cyclist', () => {
     'should NOT include "%s" in BIKERACK_PANELS (Cyclist-only)',
     async (panelName) => {
       const { BIKERACK_PANELS } = await import(
-        '../src/public/components/BikeRackWorkspace'
+        '../../bikerack/src/BikeRackWorkspace'
       );
 
       expect(BIKERACK_PANELS).not.toContain(panelName);
@@ -227,7 +227,7 @@ describe('AC2: Panel tabs navigable like base Cyclist', () => {
 
   it('should have all BIKERACK_PANELS as unique entries', async () => {
     const { BIKERACK_PANELS } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
 
     const uniquePanels = new Set(BIKERACK_PANELS);
@@ -259,7 +259,7 @@ describe('AC3: StandalonePanel/?panel=X routing still works', () => {
   it('StandalonePanel.tsx should still export StandalonePanel and helpers', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/StandalonePanel.tsx',
+      '../../bikerack/src/StandalonePanel.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -352,7 +352,7 @@ describe('AC4: No regressions in base Cyclist Dockview behavior', () => {
 describe('Structural: BikeRackWorkspace architecture', () => {
   it('should NOT include MessagePanel in BikeRack mode', async () => {
     const { BIKERACK_PANELS } = await import(
-      '../src/public/components/BikeRackWorkspace'
+      '../../bikerack/src/BikeRackWorkspace'
     );
 
     // MessagePanel is sacred to Cyclist — BikeRack is a monitoring dashboard
@@ -362,7 +362,7 @@ describe('Structural: BikeRackWorkspace architecture', () => {
   it('BikeRackWorkspace should use DockviewReact component', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -373,7 +373,7 @@ describe('Structural: BikeRackWorkspace architecture', () => {
   it('should not pass BikeRack-specific props to individual panels (Rule 2)', () => {
     const filePath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const source = fs.readFileSync(filePath, 'utf-8');
 
@@ -384,7 +384,7 @@ describe('Structural: BikeRackWorkspace architecture', () => {
   it('BikeRackWorkspace should be a separate file from DockviewWorkspace', () => {
     const bikerackPath = path.resolve(
       __dirname,
-      '../src/public/components/BikeRackWorkspace.tsx',
+      '../../bikerack/src/BikeRackWorkspace.tsx',
     );
     const dockviewPath = path.resolve(
       __dirname,

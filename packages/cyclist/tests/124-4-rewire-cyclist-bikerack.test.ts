@@ -248,15 +248,15 @@ describe('AC6: IDE control plane stays in Cyclist', () => {
     ).toEqual([]);
   });
 
-  it('should NOT have bikerack depend on electron or dockview', () => {
+  it('should NOT have bikerack depend on electron', () => {
+    // Story 124-5 moved display components into bikerack, so dockview-react
+    // is now a legitimate optional peer dependency. Electron must stay out.
     const pkg = JSON.parse(readFileSync(join(BIKERACK_DIR, 'package.json'), 'utf-8'));
     const allDeps = {
       ...pkg.dependencies,
       ...pkg.devDependencies,
     };
     expect(allDeps).not.toHaveProperty('electron');
-    expect(allDeps).not.toHaveProperty('dockview-react');
-    expect(allDeps).not.toHaveProperty('dockview');
   });
 });
 

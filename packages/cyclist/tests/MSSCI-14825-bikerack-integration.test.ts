@@ -25,42 +25,29 @@ import { tmpdir } from 'os';
 const SRC_DIR = resolve(__dirname, '..', 'src');
 const PANELS_DIR = join(SRC_DIR, 'public', 'components', 'panels');
 const COMPONENTS_DIR = join(SRC_DIR, 'public', 'components');
+// After 124-5, display components moved to the bikerack package
+const BIKERACK_SRC = resolve(__dirname, '..', '..', 'bikerack', 'src');
+const BIKERACK_ENTRY = join(BIKERACK_SRC, 'entry.ts');
 
 // ============================================================================
 // AC1: pf bikerack start → WheelHub starts, panels serve data
 // ============================================================================
 
 describe('AC1: BikeRack server startup', () => {
-  it('bikerack.ts should set IS_BIKERACK=1 before server creation', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
-
-    const envSetIndex = content.indexOf("process.env.IS_BIKERACK = '1'");
-    const serverImportIndex = content.indexOf('createTerminalServer');
-
-    expect(envSetIndex).not.toBe(-1);
-    expect(serverImportIndex).not.toBe(-1);
-    // env must be set before server is used
-    expect(envSetIndex).toBeLessThan(serverImportIndex);
-  });
-
-  it('bikerack.ts should create server using shared createTerminalServer', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should create server using shared createTerminalServer', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/createTerminalServer\(\)/);
   });
 
-  it('bikerack.ts should call server.listen with a port', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should call server.listen with a port', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/server\.listen\(/);
   });
 
-  it('bikerack.ts should write port file AFTER listen callback (CE-3)', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should write port file AFTER listen callback (CE-3)', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     // Port file write call (not definition) must be inside listen callback
     const listenIndex = content.indexOf('server.listen(');
@@ -88,40 +75,34 @@ describe('AC1: BikeRack server startup', () => {
 // ============================================================================
 
 describe('AC2: Graceful shutdown cleanup', () => {
-  it('bikerack.ts should register SIGINT handler', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should register SIGINT handler', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/process\.on\s*\(\s*['"]SIGINT['"]/);
   });
 
-  it('bikerack.ts should register SIGTERM handler', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should register SIGTERM handler', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/process\.on\s*\(\s*['"]SIGTERM['"]/);
   });
 
   it('SIGINT handler should call cleanupPortFile', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
-    // Extract SIGINT handler block and verify cleanup
     const sigintMatch = content.match(/process\.on\s*\(\s*['"]SIGINT['"][\s\S]*?cleanupPortFile/);
     expect(sigintMatch).not.toBeNull();
   });
 
   it('SIGTERM handler should call cleanupPortFile', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     const sigtermMatch = content.match(/process\.on\s*\(\s*['"]SIGTERM['"][\s\S]*?cleanupPortFile/);
     expect(sigtermMatch).not.toBeNull();
   });
 
-  it('bikerack.ts cleanupPortFile should target .bikerack-port (shared port file)', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts cleanupPortFile should target .bikerack-port (shared port file)', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/\.bikerack-port/);
   });
@@ -134,20 +115,19 @@ describe('AC2: Graceful shutdown cleanup', () => {
 describe('AC3: PID file for manual cleanup', () => {
   it('Python launcher should write .wheelhub-pid file', () => {
     // Verify the launcher module exports write_pid_file
-    const launcherPath = resolve(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'pf', 'bikerack', 'launcher.py');
+    const launcherPath = resolve(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'src', 'pf', 'bikerack', 'launcher.py');
     expect(existsSync(launcherPath)).toBe(true);
 
     const content = readFileSync(launcherPath, 'utf-8');
     expect(content).toMatch(/write_pid_file|wheelhub-pid/);
   });
 
-  it('bikerack.ts signal handlers should NOT delete PID file (launcher owns it)', () => {
-    // bikerack.ts only manages .bikerack-port
+  it('entry.ts signal handlers should NOT delete PID file (launcher owns it)', () => {
+    // entry.ts only manages .bikerack-port
     // .wheelhub-pid is managed by the Python launcher
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
-    // bikerack.ts should NOT reference .wheelhub-pid
+    // entry.ts should NOT reference .wheelhub-pid
     expect(content).not.toMatch(/\.wheelhub-pid/);
   });
 });
@@ -172,7 +152,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
   ];
 
   it('PANEL_REGISTRY should have exactly 11 entries', () => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
     // Extract PANEL_REGISTRY object (multiline)
@@ -186,7 +166,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
   });
 
   it.each(EXPECTED_PANELS)('PANEL_REGISTRY should contain "%s" panel', (panelName) => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
     // Each panel should be a key in the registry
@@ -195,7 +175,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
   });
 
   it('PANEL_REGISTRY should NOT contain portrait panel (extracted in 102-6)', () => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
     expect(content).not.toMatch(/portrait\s*:\s*PortraitPanel/);
@@ -208,11 +188,11 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
     const content = readFileSync(indexPath, 'utf-8');
 
     // StandalonePanel imports these specific components
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const standaloneContent = readFileSync(standalonePath, 'utf-8');
 
-    // Extract import names from StandalonePanel
-    const importMatch = standaloneContent.match(/import\s*\{([^}]+)\}\s*from\s*['"]\.\/panels['"]/);
+    // Extract import names from StandalonePanel (imports from @pennyfarthing/core/components/panels/index.js)
+    const importMatch = standaloneContent.match(/import\s*\{([^}]+)\}\s*from\s*['"]@pennyfarthing\/core\/components\/panels\/index\.js['"]/);
     expect(importMatch).not.toBeNull();
 
     const importedNames = importMatch![1].split(',').map(s => s.trim()).filter(Boolean);
@@ -225,7 +205,7 @@ describe('AC4: PANEL_REGISTRY completeness', () => {
   });
 
   it('BikeRackIndex should list all 12 panels', () => {
-    const indexPath = join(COMPONENTS_DIR, 'BikeRackIndex.tsx');
+    const indexPath = join(BIKERACK_SRC, 'BikeRackIndex.tsx');
     const content = readFileSync(indexPath, 'utf-8');
 
     // Each panel name should appear as a link target
@@ -246,14 +226,14 @@ describe('AC5: PersonaHeader in BikeRackWorkspace (replaces PortraitPanel)', () 
   });
 
   it('BikeRackWorkspace should import PersonaHeader directly', () => {
-    const workspacePath = join(COMPONENTS_DIR, 'BikeRackWorkspace.tsx');
+    const workspacePath = join(BIKERACK_SRC, 'BikeRackWorkspace.tsx');
     const content = readFileSync(workspacePath, 'utf-8');
 
     expect(content).toMatch(/import.*PersonaHeader.*from/);
   });
 
   it('BikeRackWorkspace should render PersonaHeader above DockviewReact in JSX', () => {
-    const workspacePath = join(COMPONENTS_DIR, 'BikeRackWorkspace.tsx');
+    const workspacePath = join(BIKERACK_SRC, 'BikeRackWorkspace.tsx');
     const content = readFileSync(workspacePath, 'utf-8');
 
     // Find the return statement with the specific cyclist-app div
@@ -291,15 +271,13 @@ describe('AC6: Port isolation — no collision', () => {
   });
 
   it('BikeRack default port should be 2898', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/2898/);
   });
 
   it('BikeRack and Cyclist should share .bikerack-port file', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const bikerackContent = readFileSync(bikerackPath, 'utf-8');
+    const bikerackContent = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     // After port file consolidation, both use .bikerack-port
     const serverPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'server.ts');
@@ -311,8 +289,7 @@ describe('AC6: Port isolation — no collision', () => {
   });
 
   it('BikeRack should use findAvailablePort for conflict resolution', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).toMatch(/findAvailablePort/);
   });
@@ -388,20 +365,21 @@ describe('AC8: CE-5 — No new WebSocket channels', () => {
   });
 
   it('no WebSocket channels should be added by BikeRack-related files', () => {
-    // bikerack.ts should NOT create any WebSocket servers
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+    // entry.ts should NOT create any WebSocket servers
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).not.toMatch(/WebSocketServer/);
     expect(content).not.toMatch(/new\s+WebSocket/);
   });
 
-  it('/ws/claude should be gated by isBikeRackMode()', () => {
+  it('/ws/claude gating handled by mode architecture (124-4)', () => {
+    // After 124-4, cyclist no longer gates /ws/claude via isBikeRackMode.
+    // Mode detection uses setMode('cyclist'|'bikerack') in server startup.
     const wsPath = join(SRC_DIR, 'websocket.ts');
     const content = readFileSync(wsPath, 'utf-8');
 
-    // The /ws/claude upgrade should check isBikeRackMode
-    expect(content).toMatch(/\/ws\/claude.*&&.*!isBikeRackMode\(\)/);
+    // Cyclist's websocket.ts should NOT reference isBikeRackMode
+    expect(content).not.toMatch(/isBikeRackMode/);
   });
 });
 
@@ -411,7 +389,7 @@ describe('AC8: CE-5 — No new WebSocket channels', () => {
 
 describe('AC9: Rule 2 — No BikeRack-specific props to panels', () => {
   it('StandalonePanel should render panels with zero props', () => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
     // Panel rendering should be <PanelComponent /> with no props
@@ -451,13 +429,12 @@ describe('AC9: Rule 2 — No BikeRack-specific props to panels', () => {
 // ============================================================================
 
 describe('AC10: Rule 1 — Only isBikeRackMode() for mode detection', () => {
-  it('server.ts should export isBikeRackMode as the single gate', () => {
-    const serverPath = join(SRC_DIR, 'server.ts');
-    const content = readFileSync(serverPath, 'utf-8');
+  it('isBikeRackMode should be defined in core env.ts', () => {
+    // After 124-4, isBikeRackMode lives in core's env.ts, not cyclist's server.ts
+    const envPath = resolve(__dirname, '..', '..', 'core', 'src', 'server', 'env.ts');
+    const content = readFileSync(envPath, 'utf-8');
 
-    // After 98-17, cyclist's server.ts re-exports isBikeRackMode from core
-    expect(content).toMatch(/isBikeRackMode/);
-    expect(content).toMatch(/from\s+['"]@pennyfarthing\/core\/server['"]/);
+    expect(content).toMatch(/export\s+function\s+isBikeRackMode/);
   });
 
   it('isBikeRackMode should check process.env.IS_BIKERACK === "1"', () => {
@@ -507,13 +484,11 @@ describe('AC10: Rule 1 — Only isBikeRackMode() for mode detection', () => {
     expect(violations, `Files with direct IS_BIKERACK checks: ${violations.join(', ')}`).toEqual([]);
   });
 
-  it('websocket.ts should use isBikeRackMode() import, not direct env check', () => {
+  it('websocket.ts should not have direct env checks', () => {
     const wsPath = join(SRC_DIR, 'websocket.ts');
     const content = readFileSync(wsPath, 'utf-8');
 
-    // Should import isBikeRackMode
-    expect(content).toMatch(/import.*isBikeRackMode.*from.*server/);
-    // Should NOT have direct env checks
+    // After 124-4, mode gating moved to bikerack server module
     expect(content).not.toMatch(/process\.env\.IS_BIKERACK/);
   });
 });
@@ -523,29 +498,26 @@ describe('AC10: Rule 1 — Only isBikeRackMode() for mode detection', () => {
 // ============================================================================
 
 describe('Architectural integrity', () => {
-  it('bikerack.ts should not import Electron modules (Rule 9)', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should not import Electron modules (Rule 9)', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).not.toMatch(/from\s+['"]electron/);
   });
 
-  it('bikerack.ts should not import dockview (Rule 7)', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should not import dockview (Rule 7)', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).not.toMatch(/from\s+['"]dockview/);
   });
 
-  it('bikerack.ts should not import main.ts (Rule 9)', () => {
-    const bikerackPath = join(SRC_DIR, 'bikerack.ts');
-    const content = readFileSync(bikerackPath, 'utf-8');
+  it('entry.ts should not import main.ts (Rule 9)', () => {
+    const content = readFileSync(BIKERACK_ENTRY, 'utf-8');
 
     expect(content).not.toMatch(/from\s+['"]\.\/main/);
   });
 
   it('StandalonePanel should not import dockview (Rule 7)', () => {
-    const standalonePath = join(COMPONENTS_DIR, 'StandalonePanel.tsx');
+    const standalonePath = join(BIKERACK_SRC, 'StandalonePanel.tsx');
     const content = readFileSync(standalonePath, 'utf-8');
 
     expect(content).not.toMatch(/from\s+['"]dockview/);
@@ -557,6 +529,7 @@ describe('Architectural integrity', () => {
 // ============================================================================
 
 describe('Runtime: isBikeRackMode() gate function', () => {
+  // After 124-4, isBikeRackMode lives in core's server module
   const originalEnv = process.env.IS_BIKERACK;
 
   afterEach(() => {
@@ -567,34 +540,34 @@ describe('Runtime: isBikeRackMode() gate function', () => {
     }
   });
 
-  it('should be an exported function from server module', async () => {
-    const serverModule = await import('../src/server.js');
+  it('should be an exported function from core server module', async () => {
+    const serverModule = await import('../../core/src/server/server.js');
     expect(serverModule).toHaveProperty('isBikeRackMode');
     expect(typeof serverModule.isBikeRackMode).toBe('function');
   });
 
   it('should return true when IS_BIKERACK is "1"', async () => {
     process.env.IS_BIKERACK = '1';
-    const { isBikeRackMode } = await import('../src/server.js');
+    const { isBikeRackMode } = await import('../../core/src/server/server.js');
     expect(isBikeRackMode()).toBe(true);
   });
 
   it('should return false when IS_BIKERACK is not set', async () => {
     delete process.env.IS_BIKERACK;
-    const { isBikeRackMode } = await import('../src/server.js');
+    const { isBikeRackMode } = await import('../../core/src/server/server.js');
     expect(isBikeRackMode()).toBe(false);
   });
 });
 
 describe('Runtime: createTerminalServer()', () => {
-  it('should be an exported function from server module', async () => {
-    const serverModule = await import('../src/server.js');
+  it('should be an exported function from bikerack server module', async () => {
+    const serverModule = await import('../../bikerack/src/server.js');
     expect(serverModule).toHaveProperty('createTerminalServer');
     expect(typeof serverModule.createTerminalServer).toBe('function');
   });
 
   it('should return an HTTP Server with listen and close methods', async () => {
-    const { createTerminalServer } = await import('../src/server.js');
+    const { createTerminalServer } = await import('../../bikerack/src/server.js');
     const server = createTerminalServer();
     try {
       expect(server).toBeDefined();
@@ -608,14 +581,14 @@ describe('Runtime: createTerminalServer()', () => {
 });
 
 describe('Runtime: findAvailablePort()', () => {
-  it('should be an exported async function from server module', async () => {
-    const serverModule = await import('../src/server.js');
+  it('should be an exported async function from bikerack server module', async () => {
+    const serverModule = await import('../../bikerack/src/server.js');
     expect(serverModule).toHaveProperty('findAvailablePort');
     expect(typeof serverModule.findAvailablePort).toBe('function');
   });
 
   it('should return an available port number', async () => {
-    const { findAvailablePort } = await import('../src/server.js');
+    const { findAvailablePort } = await import('../../bikerack/src/server.js');
     const port = await findAvailablePort(19000);
     expect(typeof port).toBe('number');
     expect(port).toBeGreaterThanOrEqual(19000);

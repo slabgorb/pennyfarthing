@@ -187,7 +187,7 @@ describe('AC1: ProgressPanel renders in dockview layout', () => {
   });
 
   it('should be registered in PANEL_REGISTRY for BikeRack standalone mode', async () => {
-    const { PANEL_REGISTRY } = await import('../src/public/components/StandalonePanel');
+    const { PANEL_REGISTRY } = await import('../../bikerack/src/StandalonePanel');
     expect(PANEL_REGISTRY).toHaveProperty('progress');
   });
 
