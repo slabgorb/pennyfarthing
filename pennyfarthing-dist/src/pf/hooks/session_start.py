@@ -339,6 +339,26 @@ def detect_incomplete_setup(project_dir: Path) -> str | None:
 
 
 # =============================================================================
+# Portrait LFS Check
+# =============================================================================
+
+
+def _ensure_theme_portraits(project_dir: Path) -> None:
+    """Pull git-lfs portrait images for the current theme if needed."""
+    try:
+        settings = load_settings(project_dir)
+        theme = settings.theme
+        if not theme:
+            return
+
+        from pf.common.themes import ensure_portrait_lfs
+
+        ensure_portrait_lfs(theme, project_root=project_dir, quiet=True)
+    except Exception:
+        pass
+
+
+# =============================================================================
 # Entry Point
 # =============================================================================
 
@@ -367,6 +387,7 @@ def main() -> None:
 
         otel_port = _ensure_wheelhub(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
+        _ensure_theme_portraits(project_dir)
         _show_welcome(project_dir)
 
     except Exception:
