@@ -57,6 +57,8 @@ def init(dry_run: bool, target: str) -> None:
         click.echo(f"  {data['directories_created']} directories created")
         if data.get("settings_written"):
             click.echo("  settings.local.json written")
+        elif data.get("hooks_upgraded"):
+            click.echo("  settings.local.json upgraded (deprecated hooks removed)")
         else:
             click.echo("  settings.local.json already exists (kept)")
         jf = data.get("justfile", {})

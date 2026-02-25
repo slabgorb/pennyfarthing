@@ -195,12 +195,15 @@ def init_project(
     justfile_result = update_framework_justfile(target_dir, dist_root)
     justfile_data = justfile_result.get("data", {}) if justfile_result["success"] else {}
 
-    # --- Write settings.local.json (only if missing) ---
+    # --- Write or upgrade settings.local.json ---
     settings_path = target_dir / ".claude" / "settings.local.json"
     settings_written = False
+    hooks_upgraded = False
     if not settings_path.exists():
         settings_path.write_text(json.dumps(_MINIMAL_SETTINGS, indent=2) + "\n")
         settings_written = True
+    else:
+        hooks_upgraded = _upgrade_hooks(settings_path)
 
     # --- Write init manifest ---
     _write_manifest(target_dir, commands_copied, skills_copied)
@@ -222,6 +225,7 @@ def init_project(
             "skills_copied": skills_copied,
             "directories_created": len(directories),
             "settings_written": settings_written,
+            "hooks_upgraded": hooks_upgraded,
             "gitignore_updated": True,
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
@@ -274,6 +278,79 @@ def _copy_tree(src: Path, dst: Path) -> None:
             _copy_tree(item, dest_item)
         else:
             shutil.copy2(item, dest_item)
+
+
+def _upgrade_hooks(settings_path: Path) -> bool:
+    """Remove deprecated pf.sh hook entries and ensure canonical hooks exist.
+
+    Hooks referencing `.pennyfarthing/scripts/core/pf.sh` are deprecated.
+    This function removes them and ensures the canonical `pf hooks` entries
+    from INFRASTRUCTURE_HOOKS are present. Also upgrades statusLine.
+
+    Returns:
+        True if any changes were made.
+    """
+    try:
+        data = json.loads(settings_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    changed = False
+    hooks = data.get("hooks", {})
+
+    # Remove hook entries referencing pf.sh (deprecated)
+    for hook_type in list(hooks.keys()):
+        entries = hooks[hook_type]
+        if not isinstance(entries, list):
+            continue
+        cleaned = []
+        for entry in entries:
+            hook_list = entry.get("hooks", [])
+            has_deprecated = any(
+                "pf.sh" in h.get("command", "")
+                for h in hook_list
+                if isinstance(h, dict)
+            )
+            if has_deprecated:
+                changed = True
+            else:
+                cleaned.append(entry)
+        hooks[hook_type] = cleaned
+
+    # Ensure canonical hooks exist
+    for hook_type, canonical_entries in INFRASTRUCTURE_HOOKS.items():
+        existing = hooks.get(hook_type, [])
+        for canonical in canonical_entries:
+            canonical_cmd = canonical["hooks"][0]["command"]
+            already_present = any(
+                any(
+                    h.get("command") == canonical_cmd
+                    for h in entry.get("hooks", [])
+                    if isinstance(h, dict)
+                )
+                for entry in existing
+            )
+            if not already_present:
+                existing.append(canonical)
+                changed = True
+        hooks[hook_type] = existing
+
+    data["hooks"] = hooks
+
+    # Upgrade statusLine from pf.sh to pf (only if one already exists)
+    if "statusLine" in data:
+        status_line = data["statusLine"]
+        if isinstance(status_line, dict) and "pf.sh" in status_line.get("command", ""):
+            data["statusLine"] = {
+                "type": "command",
+                "command": "pf hooks statusline",
+            }
+            changed = True
+
+    if changed:
+        settings_path.write_text(json.dumps(data, indent=2) + "\n")
+
+    return changed
 
 
 def _update_gitignore(target_dir: Path) -> None:
