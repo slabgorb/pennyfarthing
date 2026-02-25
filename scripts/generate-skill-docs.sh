@@ -80,11 +80,12 @@ if [[ ! -f "$REGISTRY_PATH" ]]; then
   exit 1
 fi
 
-# Build the TypeScript module if needed
-DIST_FILE="${PROJECT_ROOT}/packages/shared/dist/generate-skill-docs.js"
+# Find the compiled generator (now in core, previously in shared)
+DIST_FILE="${PROJECT_ROOT}/packages/core/dist/shared/generate-skill-docs.js"
 if [[ ! -f "$DIST_FILE" ]]; then
-  echo "Building shared package..." >&2
-  (cd "${PROJECT_ROOT}/packages/shared" && npm run build) >&2
+  echo "Error: generate-skill-docs.js not found at $DIST_FILE" >&2
+  echo "  Build core first: pnpm --filter @pennyfarthing/core run build:tsc" >&2
+  exit 1
 fi
 
 # Run the generator
