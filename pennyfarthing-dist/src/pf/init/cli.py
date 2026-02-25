@@ -46,6 +46,9 @@ def init(dry_run: bool, target: str) -> None:
         click.echo(f"  Copy {len(data['skills'])} skills: {', '.join(data['skills'])}")
         click.echo(f"  Write {data['settings']}")
         click.echo(f"  Update .gitignore ({len(data['gitignore_entries'])} entries)")
+        jf = data.get("justfile", {})
+        for action in jf.get("actions", []):
+            click.echo(f"  {action}")
     else:
         data = result["data"]
         click.echo(f"Initialized Pennyfarthing project in {target_dir}")
@@ -56,6 +59,19 @@ def init(dry_run: bool, target: str) -> None:
             click.echo("  settings.local.json written")
         else:
             click.echo("  settings.local.json already exists (kept)")
+        jf = data.get("justfile", {})
+        if jf.get("justfile_created"):
+            click.echo("  justfile created with framework import")
+        elif jf.get("import_added"):
+            migrated = jf.get("recipes_migrated", [])
+            if migrated:
+                click.echo(
+                    f"  justfile updated (import added, {len(migrated)} legacy recipes migrated)"
+                )
+            else:
+                click.echo("  justfile updated (import added)")
+        if jf.get("justfile_pf_written"):
+            click.echo("  .pennyfarthing/justfile.pf updated (framework recipes)")
         click.echo()
         click.echo("Next steps:")
         click.echo("  1. Start Claude Code in this directory")

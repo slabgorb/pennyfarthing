@@ -148,6 +148,13 @@ def init_project(
     directories = _PENNYFARTHING_DIRS + _CLAUDE_DIRS
 
     if dry_run:
+        from pf.init.justfile import update_framework_justfile
+
+        justfile_result = update_framework_justfile(
+            target_dir, dist_root, dry_run=True
+        )
+        justfile_data = justfile_result.get("data", {}) if justfile_result["success"] else {}
+
         return {
             "success": True,
             "data": {
@@ -156,6 +163,7 @@ def init_project(
                 "skills": [s.name for s in skills_to_copy],
                 "settings": ".claude/settings.local.json",
                 "gitignore_entries": _GITIGNORE_ENTRIES,
+                "justfile": justfile_data,
             },
         }
 
@@ -180,6 +188,12 @@ def init_project(
         # Copy to .claude/skills/
         _copy_tree(skill_dir, target_dir / ".claude" / "skills" / skill_dir.name)
         skills_copied += 1
+
+    # --- Update framework justfile ---
+    from pf.init.justfile import update_framework_justfile
+
+    justfile_result = update_framework_justfile(target_dir, dist_root)
+    justfile_data = justfile_result.get("data", {}) if justfile_result["success"] else {}
 
     # --- Write settings.local.json (only if missing) ---
     settings_path = target_dir / ".claude" / "settings.local.json"
@@ -209,6 +223,7 @@ def init_project(
             "directories_created": len(directories),
             "settings_written": settings_written,
             "gitignore_updated": True,
+            "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
         },
     }
