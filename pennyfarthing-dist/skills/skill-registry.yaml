@@ -289,26 +289,6 @@ skills:
     related_skills: [pf-testing, pf-agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
-  pf-story:
-    name: pf-story
-    description: "DEPRECATED: Use /pf-sprint story instead. Story commands consolidated under /pf-sprint."
-    category: project-management
-    tags: [stories, sizing, workflow, deprecated]
-    version: "2.0.0"
-    deprecated: true
-    redirect: pf-sprint
-    prerequisites: []
-    examples:
-      - context: Creating new stories
-        invocation: /pf-sprint story add
-      - context: Sizing stories
-        invocation: /pf-sprint story size
-    anti_patterns:
-      - Don't create stories without acceptance criteria
-      - Don't use /story directly - use /pf-sprint story instead
-    related_skills: [pf-sprint, pf-jira]
-    keywords: [user-stories, estimation, points, acceptance-criteria]
-
   pf-testing:
     name: pf-testing
     description: Test commands and TDD workflow patterns
@@ -348,25 +328,9 @@ skills:
         invocation: /pf-theme maker
     anti_patterns:
       - Don't edit config.local.yaml directly - use skill
-      - Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
     related_skills: []
     keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard]
 
-  pf-theme-creation:
-    name: pf-theme-creation
-    description: "DEPRECATED: Use /pf-theme maker instead"
-    category: theming
-    tags: [personas, themes, creation]
-    version: "2.0.0"
-    deprecated: true
-    redirect: pf-theme
-    prerequisites: []
-    examples:
-      - context: Interactive theme wizard
-        invocation: /pf-theme maker
-    anti_patterns: []
-    related_skills: [pf-theme]
-    keywords: [personas, custom, generation, wizard]
 
   pf-ux-tandem:
     name: pf-ux-tandem
