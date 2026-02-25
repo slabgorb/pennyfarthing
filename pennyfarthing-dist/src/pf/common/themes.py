@@ -294,8 +294,12 @@ def ensure_portrait_lfs(
     if not lfs_files:
         return {"success": True, "skipped": True}
 
-    # Find the git repo root containing the portraits
-    repo_root = lfs_files[0].parent
+    # Find the git repo root containing the portraits.
+    # Resolve symlinks first — in monorepo setups, portrait paths may go
+    # through symlinks (e.g. .pennyfarthing/personas → pennyfarthing/
+    # pennyfarthing-dist/personas) and the unresolved path would find
+    # the wrong git root (orchestrator instead of framework repo).
+    repo_root = lfs_files[0].resolve().parent
     while repo_root != repo_root.parent:
         if (repo_root / ".git").exists():
             break
@@ -303,10 +307,10 @@ def ensure_portrait_lfs(
     else:
         return {"success": True, "skipped": True}
 
-    # Build include path relative to repo root
+    # Build include path relative to repo root using resolved paths
     include_path: str | None = None
     for themes_dir in theme_dirs:
-        base = themes_dir.parent / "portraits" / theme_name
+        base = (themes_dir.parent / "portraits" / theme_name).resolve()
         if base.is_dir():
             try:
                 include_path = str(base.relative_to(repo_root)) + "/**"
