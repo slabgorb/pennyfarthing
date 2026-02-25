@@ -1,0 +1,281 @@
+# Context Schema — Pennyfarthing Prime Context System
+#
+# Machine-readable schema defining the structure of context documents
+# that Prime assembles for agent activation. Used by:
+#   - pf validate context (129-3: Context Validator)
+#   - pf context template (129-4: Template Generator)
+#
+# Each component maps to a loader function in pf/prime/loader.py
+# and is assembled by pf/prime/tiers.py based on the active tier.
+
+schema:
+  name: context
+  version: "1.0.0"
+  description: Schema for Prime agent context documents
+
+# --- Tier Definitions ---
+# Each tier specifies which components to load and a token budget.
+# Tiers are selected based on session state (see prime.md guide).
+
+tiers:
+  FULL:
+    description: First turn of new session — all components
+    token_budget: 4000
+    components:
+      - workflow_state
+      - agent_definition
+      - persona
+      - behavior_guide
+      - sprint_context
+      - repos_topology
+      - session_header
+      - session_assessment
+      - sidecars
+
+  REFRESH:
+    description: Resumed session, same agent — dynamic state only
+    token_budget: 600
+    components:
+      - workflow_state
+      - sprint_context
+      - repos_topology
+      - session_header
+
+  HANDOFF:
+    description: Resumed session, different agent — agent essentials
+    token_budget: 700
+    components:
+      - workflow_state
+      - agent_definition
+      - persona_compressed
+      - repos_topology
+
+  MINIMAL:
+    description: Deep conversation (turn 3+) — routing only
+    token_budget: 200
+    components:
+      - workflow_state
+
+# --- Component Definitions ---
+# Each component defines its source, type, validation rules, and
+# which tiers include it.
+
+components:
+  workflow_state:
+    description: Current workflow state for routing decisions
+    type: structured
+    source:
+      module: pf.prime.workflow
+      function: detect_workflow_state
+    required: true
+    fields:
+      state:
+        type: enum
+        values: [NEW_WORK_STATE, IN_PROGRESS_STATE, FINISH_STATE, EMPTY_BACKLOG_STATE]
+        required: true
+      story_id:
+        type: string
+        required: false
+        description: Active story ID (present when IN_PROGRESS or FINISH)
+      phase:
+        type: string
+        required: false
+        description: Current workflow phase (setup, red, green, review, finish, implement, etc.)
+      phase_owner:
+        type: enum
+        values: [sm, tea, dev, reviewer, architect, pm, tech-writer, ux-designer, devops, ba]
+        required: false
+        description: Agent that owns the current phase
+      workflow:
+        type: string
+        required: false
+        description: Active workflow name (tdd, trivial, bdd, etc.)
+      backlog_count:
+        type: integer
+        required: false
+        default: 0
+        description: Stories available in backlog
+      session_file:
+        type: path
+        required: false
+        description: Path to active session file
+
+  agent_definition:
+    description: Agent identity, instructions, and workflow
+    type: markdown
+    source:
+      path: .pennyfarthing/agents/{agent_name}.md
+      fallback: pennyfarthing-dist/agents/{agent_name}.md
+    required: true
+    validation:
+      min_length: 100
+      required_sections:
+        - role
+      recommended_sections:
+        - critical
+        - helpers
+        - workflow
+        - exit
+
+  persona:
+    description: Full character persona from theme (FULL tier only)
+    type: formatted_text
+    source:
+      module: pf.prime.persona
+      function: format_persona_output
+      config: .pennyfarthing/config.local.yaml
+      config_key: theme
+    required: false
+    condition: character_voice_enabled
+    fields:
+      character:
+        type: string
+        required: true
+      style:
+        type: string
+        required: true
+      role:
+        type: string
+        required: true
+      trait:
+        type: string
+        required: false
+      quirk:
+        type: string
+        required: false
+      motto:
+        type: string
+        required: false
+      helper_name:
+        type: string
+        required: false
+        description: Subagent display name
+
+  persona_compressed:
+    description: Compressed persona for HANDOFF tier
+    type: formatted_text
+    source:
+      module: pf.prime.persona
+      function: format_persona_compressed
+    required: false
+    condition: character_voice_enabled
+    fields:
+      character:
+        type: string
+        required: true
+      style:
+        type: string
+        required: true
+      role:
+        type: string
+        required: true
+
+  behavior_guide:
+    description: Shared agent behavior protocols
+    type: markdown
+    source:
+      path: .pennyfarthing/guides/agent-behavior.md
+      fallback: pennyfarthing-dist/guides/agent-behavior.md
+    required: true
+    validation:
+      min_length: 500
+      required_sections:
+        - critical
+        - agent-exit-protocol
+
+  sprint_context:
+    description: Current sprint name, goal, and progress
+    type: text
+    source:
+      module: pf.prime.loader
+      function: load_sprint_context
+      data_file: sprint/current-sprint.yaml
+    required: false
+    validation:
+      pattern: "^Sprint \\d+:"
+      description: Must start with "Sprint N:" format
+
+  repos_topology:
+    description: Repository ownership, symlinks, and edit zones
+    type: text
+    source:
+      module: pf.prime.loader
+      function: load_repos_topology
+      data_file: .pennyfarthing/repos.yaml
+    required: false
+    validation:
+      required_fields:
+        - path
+        - type
+      recommended_fields:
+        - owns
+        - never_edit
+        - symlinks
+
+  session_header:
+    description: Active session metadata (story, workflow, phase)
+    type: text
+    source:
+      module: pf.prime.loader
+      function: load_session_context
+      data_file: .session/{story_id}-session.md
+    required: false
+    validation:
+      required_fields:
+        - "Story Details"
+        - "Workflow Tracking"
+      description: Extracted from session markdown header (before first ## heading)
+
+  session_assessment:
+    description: Most recent agent assessment from session
+    type: text
+    source:
+      module: pf.prime.loader
+      function: load_session_context
+      data_file: .session/{story_id}-session.md
+    required: false
+    validation:
+      pattern: "## .* Assessment"
+      description: Extracted section matching "## {Agent} Assessment"
+
+  sidecars:
+    description: Agent learning files (patterns, gotchas, decisions)
+    type: collection
+    source:
+      path: .pennyfarthing/sidecars/{agent_name}/
+    required: false
+    items:
+      patterns.md:
+        description: Stable patterns confirmed across interactions
+        type: markdown
+        priority: 1
+        validation:
+          recommended_tags: [pattern]
+      gotchas.md:
+        description: Common pitfalls and workarounds
+        type: markdown
+        priority: 2
+        validation:
+          recommended_tags: [gotcha]
+      decisions.md:
+        description: Architecture decisions and their rationale
+        type: markdown
+        priority: 3
+        validation:
+          recommended_tags: [decision]
+
+# --- Output Assembly Order ---
+# Components are assembled in this order in the final context payload.
+# This order matches the agent attention curve (highest attention first).
+# See docs/agent-context-heatmap.md for compliance data.
+
+assembly_order:
+  - workflow_state
+  - agent_definition
+  - persona           # or persona_compressed for HANDOFF
+  - behavior_guide
+  - sprint_context
+  - repos_topology
+  - session_header
+  - session_assessment
+  - sidecars
