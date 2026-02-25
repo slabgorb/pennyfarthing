@@ -1,9 +1,0 @@
-{
-  "run_number": 6,
-  "judge_timestamp": "2026-01-01T01:15:54Z",
-  "score": 82,
-  "judge_token_usage": {
-    "input_tokens": 2,
-    "output_tokens": 541
-  }
-}

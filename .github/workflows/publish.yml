@@ -5,14 +5,6 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      package:
-        description: 'Package to publish'
-        required: true
-        type: choice
-        options:
-          - core
-          - shared
-          - all
       dry_run:
         description: 'Dry run (no actual publish)'
         required: false
@@ -29,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -48,33 +42,18 @@ jobs:
         run: pnpm run build
 
       - name: Run tests
-        run: pnpm --filter @pennyfarthing/shared test
+        run: pnpm --filter @pennyfarthing/core test
 
-      # Publish @pennyfarthing/shared (dependency of other packages)
-      - name: Publish @pennyfarthing/shared
-        if: github.event_name == 'release' || inputs.package == 'shared' || inputs.package == 'all'
-        run: |
-          cd packages/shared
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
-          else
-            npm publish --access public --provenance
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # Publish @pennyfarthing/core
+      # Publish @pennyfarthing/core (the only published package)
       - name: Publish @pennyfarthing/core
-        if: github.event_name == 'release' || inputs.package == 'core' || inputs.package == 'all'
         run: |
           cd packages/core
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
+            pnpm publish --dry-run --access public --no-git-checks
           else
-            npm publish --access public --provenance
+            pnpm publish --access public --no-git-checks
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Note: @pennyfarthing/cyclist is private (not published to npm)
-      # It's distributed as a packaged Electron app instead

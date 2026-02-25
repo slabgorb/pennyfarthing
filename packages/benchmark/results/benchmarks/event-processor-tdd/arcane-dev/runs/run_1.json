@@ -1,9 +1,0 @@
-{
-  "spec": "arcane:dev",
-  "character": "Vi",
-  "cli_timestamp": "2026-01-02T05:43:59Z",
-  "response_length": 3107,
-  "input_tokens": 8732,
-  "output_tokens": 1009,
-  "total_cost_usd": 0.09677849999999999
-}

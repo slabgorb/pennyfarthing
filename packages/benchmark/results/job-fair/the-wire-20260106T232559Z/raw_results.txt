@@ -1,5 +1,0 @@
-orchestrator:The Greek:architect:80.00:2
-sm:Lester Freamon:architect:80.00:2
-tea:Stringer Bell:architect:80.00:2
-dev:D'Angelo Barksdale:architect:77.50:2
-reviewer:Proposition Joe:architect:80.00:2

@@ -1,5 +1,0 @@
-orchestrator:Dan Dreiberg (Nite Owl II):architect:80.00:2
-sm:Hollis Mason (Nite Owl I):architect:78.75:2
-tea:Laurie Juspeczyk (Silk Spectre II):architect:77.50:2
-dev:The Comedian (Edward Blake):architect:81.25:2
-reviewer:Doctor Manhattan:architect:86.25:2

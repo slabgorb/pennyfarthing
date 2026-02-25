@@ -1,8 +1,0 @@
-{"type":"result","subtype":"success","is_error":false,"duration_ms":5752,"duration_api_ms":8184,"num_turns":1,"result":"I don't see any response to evaluate. You've asked me to evaluate a software bug analysis response, but no response content was provided after \"Response:\".
-
-Could you please share the actual bug analysis response you'd like me to score? Once you provide it, I'll evaluate it against:
-
-- **Root Cause (30%)**: Location identification, explanation of why it's broken
-- **Fix Quality (40%)**: Whether fix addresses the issue, minimality, syntactic correctness
-- **Completeness (20%)**: Edge cases, test coverage
-- **Persona (10%)**: Professional developer character","session_id":"b667e4d0-bf47-484b-8951-5c7336908874","total_cost_usd":0.026251,"usage":{"input_tokens":3984,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":131,"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":0}},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":2321,"outputTokens":147,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.003056,"contextWindow":200000},"claude-opus-4-5-20251101":{"inputTokens":3984,"outputTokens":131,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.023195,"contextWindow":200000}},"permission_denials":[],"uuid":"2237de75-9a55-47dd-b800-b5e55b6ac820"}

@@ -1,7 +1,0 @@
-{
-  "timestamp": "2026-01-02T20:34:00Z",
-  "spec": "control:dev",
-  "scenario": "matplotlib-14623",
-  "input_tokens": 4632,
-  "output_tokens": 838
-}

@@ -1,5 +1,0 @@
-orchestrator:Jesse Pinkman:architect:71.25:2
-sm:Hank Schrader:architect:80.00:2
-tea:Saul Goodman:architect:80.00:2
-dev:Gustavo Fring:architect:80.00:2
-reviewer:Mike Ehrmantraut:architect:83.75:2

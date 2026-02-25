@@ -1,5 +1,0 @@
-orchestrator:President Josiah Bartlet:architect:85.00:2
-sm:Leo McGarry:architect:81.25:2
-tea:Sam Seaborn:architect:80.00:2
-dev:Toby Ziegler:architect:83.75:2
-reviewer:Josh Lyman:architect:80.00:2

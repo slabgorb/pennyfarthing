@@ -1,5 +1,0 @@
-orchestrator:The Investigator:architect:80.00:2
-sm:Camina Drummer:architect:81.25:2
-tea:Amos Burton:architect:80.00:2
-dev:Naomi Nagata:architect:82.50:2
-reviewer:Chrisjen Avasarala:architect:86.25:2

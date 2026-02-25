@@ -1,3 +1,0 @@
-=== Job Fair: arthurian-mythos ===
-Runs per combo: 4
-Output: /Users/keithavery/Projects/pennyfarthing-orchestrator/pennyfarthing/internal/results/job-fair/arthurian-mythos-20260129-000418

@@ -1,7 +1,7 @@
 /**
  * Server module for Cyclist.
  *
- * Thin wrapper around @pennyfarthing/bikerack/server that overrides
+ * Thin wrapper around @pennyfarthing/core/bikerack/server that overrides
  * createTerminalServer to use Cyclist's real WebSocket implementation
  * and wires the real OTLP receiver into BikeRack's API routes.
  *
@@ -21,7 +21,7 @@ import {
   setOTLPProvider,
   initTokenStatsBroadcast,
   setMode,
-} from '@pennyfarthing/bikerack/server';
+} from '@pennyfarthing/core/bikerack/server';
 
 // Set Cyclist mode — BikeRack defaults to 'bikerack', Cyclist overrides
 setMode('cyclist');
@@ -51,7 +51,7 @@ import {
 // Story 120-13: Hook-based tool input forwarding for audit log enrichment
 import { storePendingToolInput as realStorePendingToolInput } from './span-correlation.js';
 
-import type { OTLPProvider } from '@pennyfarthing/bikerack/server';
+import type { OTLPProvider } from '@pennyfarthing/core/bikerack/server';
 
 // Wire the real OTLP implementation into BikeRack's API route stubs.
 // BikeRack's server.ts calls initTokenStatsBroadcast() at module load (before this runs),
@@ -169,7 +169,7 @@ export {
   setMode,
   // Grants
   clearSessionGrants,
-} from '@pennyfarthing/bikerack/server';
+} from '@pennyfarthing/core/bikerack/server';
 
 // Type re-exports
 export type {
@@ -178,4 +178,4 @@ export type {
   CriteriaItem,
   GitInfo,
   OtelConfig,
-} from '@pennyfarthing/bikerack/server';
+} from '@pennyfarthing/core/bikerack/server';

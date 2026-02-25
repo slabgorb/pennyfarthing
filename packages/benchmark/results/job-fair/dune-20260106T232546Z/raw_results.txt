@@ -1,5 +1,0 @@
-orchestrator:Duncan Idaho:architect:80.00:2
-sm:Stilgar:architect:80.00:2
-tea:Reverend Mother Gaius Helen Mohiam:architect:90.00:2
-dev:Thufir Hawat:architect:88.75:2
-reviewer:Leto II (The God Emperor):architect:83.75:2

@@ -93,9 +93,14 @@ describe('Server re-exports for Cyclist', () => {
     assert.strictEqual(typeof getStoryInfo, 'function');
   });
 
-  it('re-exports isBikeRackMode as a function', async () => {
-    const { isBikeRackMode } = await import('./server.js');
-    assert.strictEqual(typeof isBikeRackMode, 'function');
+  it('re-exports getMode as a function', async () => {
+    const { getMode } = await import('./server.js');
+    assert.strictEqual(typeof getMode, 'function');
+  });
+
+  it('re-exports setMode as a function', async () => {
+    const { setMode } = await import('./server.js');
+    assert.strictEqual(typeof setMode, 'function');
   });
 
   it('re-exports getGitInfo as a function', async () => {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { isBikeRackMode } from '../env.js';
+import { getMode } from '../env.js';
 
 /**
  * Runtime mode information for Cyclist
@@ -34,7 +34,7 @@ export function getModeInfo(): ModeInfo {
 
   return {
     mode,
-    isBikeRack: isBikeRackMode(),
+    isBikeRack: getMode() === 'bikerack',
     version: electronVersion || 'N/A',
     nodeVersion: process.version,
     platform: process.platform,

@@ -1,5 +1,0 @@
-orchestrator:Grace Hopper:dev-codegen:55.62:4
-sm:Margaret Hamilton:dev-codegen:61.87:4
-tea:Dennis Ritchie:dev-codegen:61.87:4
-dev:Donald Knuth:dev-codegen:60.62:4
-reviewer:Linus Torvalds:dev-codegen:49.37:4
