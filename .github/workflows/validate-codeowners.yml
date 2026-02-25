@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate-codeowners:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Ubuntu, Common]
     steps:
     - name: "Checkout source code at current commit"
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # https://github.com/actions/checkout/releases/tag/v4.2.2
