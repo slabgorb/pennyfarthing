@@ -51,6 +51,20 @@ def _is_lfs_pointer(path: Path) -> bool:
         return False
 
 
+def _has_lfs_stubs(portraits_theme_dir: Path, slug: str) -> bool:
+    """Check if a portrait directory has LFS stubs for the given slug."""
+    if not portraits_theme_dir.is_dir():
+        return False
+    for size_dir in portraits_theme_dir.iterdir():
+        if not size_dir.is_dir():
+            continue
+        for f in size_dir.iterdir():
+            if f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
+                if _is_lfs_pointer(f):
+                    return True
+    return False
+
+
 def _find_portrait(
     portraits_theme_dir: Path, slug: str, preferred_size: str | None = None
 ) -> Path | None:
@@ -131,6 +145,25 @@ def resolve_portrait_path(
         result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
         if result:
             return result
+
+    # Self-healing: if portraits exist as LFS stubs, pull them and retry
+    for themes_dir in theme_dirs:
+        portraits_dir = themes_dir.parent / "portraits" / theme
+        if _has_lfs_stubs(portraits_dir, slug):
+            try:
+                from pf.common.themes import ensure_portrait_lfs
+
+                pull_result = ensure_portrait_lfs(theme, project_root, quiet=True)
+                if pull_result.get("pulled"):
+                    # Retry after successful LFS pull
+                    for td in theme_dirs:
+                        pd = td.parent / "portraits" / theme
+                        found = _find_portrait(pd, slug, preferred_size=preferred_size)
+                        if found:
+                            return found
+            except Exception:
+                pass
+            break  # Only attempt LFS pull once
 
     # Fallback: search Cyclist package portrait directories
     # Portraits are bundled in @pennyfarthing/cyclist, not alongside theme YAMLs
