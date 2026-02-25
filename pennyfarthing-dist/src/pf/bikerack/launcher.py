@@ -77,22 +77,39 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     return Path.cwd()
 
 
-def _find_framework_dir() -> Path:
-    """Locate the pennyfarthing framework root from this package's location."""
-    # pf/bikerack/launcher.py -> pennyfarthing/
-    return Path(__file__).resolve().parent.parent.parent
+def _find_wheelhub_entry() -> Path:
+    """Locate the WheelHub entry point.
+
+    Search order:
+      1. Bundled in pip package: pf/_dist/server/wheelhub.mjs
+      2. Monorepo: pennyfarthing/packages/core/dist/server/entry.js
+    """
+    # 1. Bundled pip package
+    bundled = Path(__file__).resolve().parent.parent / "_dist" / "server" / "wheelhub.mjs"
+    if bundled.is_file():
+        return bundled
+
+    # 2. Monorepo: pf/bikerack/launcher.py -> src/pf/ -> src/ -> pennyfarthing-dist/ -> pennyfarthing/
+    framework_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
+    monorepo_entry = framework_dir / "packages" / "core" / "dist" / "server" / "entry.js"
+    if monorepo_entry.is_file():
+        return monorepo_entry
+
+    raise FileNotFoundError(
+        "Could not find WheelHub entry point.\n"
+        "Expected: pf/_dist/server/wheelhub.mjs (pip) or packages/core/dist/server/entry.js (monorepo)"
+    )
 
 
 def start_wheelhub(project_dir: Path) -> subprocess.Popen:
     """Start WheelHub server in background via BikeRack's own entry point."""
-    framework_dir = _find_framework_dir()
-    bikerack_entry = framework_dir / "packages" / "bikerack" / "dist" / "entry.js"
+    entry = _find_wheelhub_entry()
 
     env = os.environ.copy()
     env["CYCLIST_PROJECT_DIR"] = str(project_dir)
 
     return subprocess.Popen(
-        ["node", str(bikerack_entry)],
+        ["node", str(entry)],
         env=env,
         cwd=str(project_dir),
         stdout=subprocess.DEVNULL,

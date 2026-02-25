@@ -15,5 +15,30 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["pf*"]
 
+[tool.setuptools.package-data]
+"pf._dist" = [
+    "agents/**/*",
+    "commands/**/*",
+    "gates/**/*",
+    "guides/**/*",
+    "output-styles/**/*",
+    "personas/portraits/**/*",
+    "personas/themes/**/*",
+    "personas/attributes.yaml",
+    "personas/*.md",
+    "personas/*.yaml",
+    "scripts/**/*",
+    "skills/**/*",
+    "templates/**/*",
+    "workflows/**/*",
+    "server/**/*",
+]
+
+[tool.setuptools.exclude-package-data]
+"pf._dist" = [
+    "personas/spiders/**",
+    "**/__pycache__/**",
+]
+
 [tool.setuptools.dynamic]
 version = {attr = "pf.__version__"}

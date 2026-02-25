@@ -19,7 +19,13 @@ from pathlib import Path
 from pf.common.hooks import INFRASTRUCTURE_HOOKS
 
 # Wrap the shared hooks in the settings envelope expected by settings.local.json.
-_MINIMAL_SETTINGS: dict = {"hooks": INFRASTRUCTURE_HOOKS}
+_MINIMAL_SETTINGS: dict = {
+    "hooks": INFRASTRUCTURE_HOOKS,
+    "statusLine": {
+        "type": "command",
+        "command": "pf hooks statusline",
+    },
+}
 
 # Entries to add to .gitignore.
 _GITIGNORE_ENTRIES: list[str] = [
@@ -187,6 +193,9 @@ def init_project(
                 "justfile": justfile_data,
             },
         }
+
+    # --- Clean stale npm-era artifacts ---
+    _clean_stale_artifacts(target_dir)
 
     # --- Create directories ---
     for d in directories:
@@ -373,20 +382,42 @@ def _upgrade_hooks(settings_path: Path) -> bool:
 
     data["hooks"] = hooks
 
-    # Upgrade statusLine from pf.sh to pf (only if one already exists)
-    if "statusLine" in data:
-        status_line = data["statusLine"]
-        if isinstance(status_line, dict) and "pf.sh" in status_line.get("command", ""):
-            data["statusLine"] = {
-                "type": "command",
-                "command": "pf hooks statusline",
-            }
-            changed = True
+    # Ensure statusLine exists; upgrade pf.sh references
+    canonical_status = {"type": "command", "command": "pf hooks statusline"}
+    if "statusLine" not in data:
+        data["statusLine"] = canonical_status
+        changed = True
+    elif isinstance(data["statusLine"], dict) and "pf.sh" in data["statusLine"].get("command", ""):
+        data["statusLine"] = canonical_status
+        changed = True
 
     if changed:
         settings_path.write_text(json.dumps(data, indent=2) + "\n")
 
     return changed
+
+
+def _clean_stale_artifacts(target_dir: Path) -> None:
+    """Remove stale npm-era artifacts from .pennyfarthing/.
+
+    The old npm install created a pyproject.toml, uv.lock, and .venv
+    inside .pennyfarthing/ for uv-based hook execution. Now that pf is
+    installed globally via pipx, these are stale and cause conflicts
+    (e.g. uv tries to build from the empty local project instead of
+    using the global pf).
+    """
+    pf_dir = target_dir / ".pennyfarthing"
+    stale_files = ["pyproject.toml", "uv.lock", ".installed-version"]
+    for name in stale_files:
+        path = pf_dir / name
+        if path.is_file():
+            path.unlink()
+
+    stale_dirs = [".venv", "pennyfarthing_scripts.egg-info"]
+    for name in stale_dirs:
+        path = pf_dir / name
+        if path.is_dir():
+            shutil.rmtree(path)
 
 
 def _update_gitignore(target_dir: Path) -> None:

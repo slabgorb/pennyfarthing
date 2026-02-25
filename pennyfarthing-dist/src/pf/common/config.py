@@ -69,11 +69,12 @@ find_project_root = get_project_root
 def get_dist_root(project_root: Path | None = None) -> Path | None:
     """Resolve the pennyfarthing-dist directory.
 
-    Checks multiple locations to support both monorepo development
-    and npm-installed consumer projects:
+    Checks multiple locations to support monorepo development,
+    npm-installed, and pip-installed consumer projects:
       1. {project_root}/pennyfarthing-dist/ (monorepo or symlink)
       2. {project_root}/node_modules/@pennyfarthing/core/pennyfarthing-dist/ (npm)
       3. Relative to this file (when running from within pennyfarthing-dist/pf/)
+      4. Bundled pip package (pf._dist with content dirs)
 
     Args:
         project_root: Project root path (defaults to auto-detect)
@@ -105,6 +106,13 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
         candidate = this_file.parent.parent.parent.parent
         if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
             return candidate
+
+    # 4. Bundled pip package: content lives in pf._dist/
+    # This is the final fallback for pipx-installed consumers with no
+    # pennyfarthing-dist/ directory or node_modules.
+    from pf._dist import is_populated, get_root
+    if is_populated():
+        return get_root()
 
     return None
 
