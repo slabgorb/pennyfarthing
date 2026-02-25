@@ -229,7 +229,7 @@ Cyclist automatically finds the next available port (1899, 1900, etc.). Check co
 
 ### Wheelhub
 
-**Wheelhub** is Cyclist's internal coordination server—the central hub where all communication converges. Like a bicycle wheel's hub, it remains stable while handling:
+**WheelHub** is Cyclist's internal coordination server—the central hub where all communication converges. Like a bicycle wheel's hub, it remains stable while handling:
 
 - **API endpoints** - REST routes for stats, personas, git, stories, settings, etc.
 - **WebSocket servers** - Real-time communication with the terminal and UI
@@ -248,7 +248,7 @@ Wheelhub is implemented in `server.ts` and its supporting modules.
 - **Reloads the current agent** - Relaunches with the same agent command (e.g., `/dev`)
 - **Preserves workflow state** - Session files in `.session/` persist across reloads
 
-TirePump is triggered by the Compact button (appears at 50% context usage) or automatically at critical thresholds. Implementation spans `main.ts` (IPC handler), `stats-strip.js` (UI), and `preload.ts` (API bridge).
+TirePump button is always visible in the ControlBar, with a warning style applied at 70%+ context usage. Implementation spans `main.ts` (IPC handler), `stats-strip.js` (UI), and `preload.ts` (API bridge).
 
 ### JobFair
 

@@ -342,5 +342,5 @@ New format:
 |------|---------|
 | `guides/xml-tags.md` | Complete XML tag taxonomy |
 | `guides/session-artifacts.md` | Session file naming conventions |
-| `scripts/session/create-session.sh` | Create new session files |
-| `scripts/session/update-session.sh` | Update session fields |
+| `scripts/core/agent-session.sh` | Create new session files |
+| `scripts/workflow/fix-session-phase.sh` | Update session fields |

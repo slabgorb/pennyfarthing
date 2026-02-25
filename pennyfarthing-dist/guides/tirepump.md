@@ -30,7 +30,7 @@ User clicks TirePump (or CONTEXT_CLEAR marker fires)
 
 ## UI Behavior
 
-- Button visible when context >= 50%
+- Button always visible
 - Warning style (visual alert) when context >= 70%
 - Disabled when no agent is loaded
 

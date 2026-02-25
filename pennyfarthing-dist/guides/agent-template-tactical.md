@@ -32,7 +32,7 @@ This template defines the standard structure for tactical agents. All tactical a
 # {NAME} Agent - {Role Title}
 
 <persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
+Auto-loaded by `pf agent start` from theme config. See output above.
 
 **Fallback if not loaded:** {Brief personality description}
 </persona>
@@ -128,7 +128,7 @@ After completing work:
 <exit>
 To exit: "Exit {Agent}" or "Switch to [other agent]"
 
-On exit, run: `.pennyfarthing/scripts/core/agent-session.sh stop`
+Follow exit protocol from `agent-behavior.md` (resolve-gate → complete-phase → marker). EXIT.
 </exit>
 ```
 

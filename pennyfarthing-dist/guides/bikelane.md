@@ -75,6 +75,3 @@ Workflow state lives in session files (`.session/{story-id}-session.md`):
 | `/pf-workflow resume` | Resume interrupted workflow |
 | `/pf-workflow status` | Show current progress |
 
-<info>
-**Full docs:** `docs/BIKELANE.md`, `docs/BIKELANE-DIAGRAMS.md`
-</info>
