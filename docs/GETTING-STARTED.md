@@ -14,49 +14,57 @@ This guide walks you through installation, core concepts, and your first complet
 
 Before installing, make sure you have:
 
-- **Node.js 18+** — runtime for core packages
-- **Python 3.11+** — runtime for the `pf` CLI
+- **Python 3.11+** — primary runtime for the `pf` CLI
 - **Git** — version control (Pennyfarthing manages branches for you)
 - **Claude Code CLI** — the AI coding assistant Pennyfarthing orchestrates
 - **yq** — YAML processor (`brew install yq`)
 - **jq** — JSON processor (`brew install jq`)
+- **Node.js 18+** *(optional)* — installed automatically by `pf init` if needed for BikeRack/Cyclist visual panels
 
 ---
 
 ## Installation
 
-### Step 1: Install the Package
+### Step 1: Install the CLI
 
 ```bash
-cd your-project
-npm install --save-dev @pennyfarthing/core
+pip install pf
 ```
 
-This gives you 30 built-in themes. Want more? Install additional theme packs:
+This installs the `pf` command globally. Verify with:
 
 ```bash
-# Optional: 70+ additional themes across genres
-npm install --save-dev @pennyfarthing/themes-comedy
-npm install --save-dev @pennyfarthing/themes-scifi
-npm install --save-dev @pennyfarthing/themes-prestige-tv
-# ... and more (see full list with `pf theme list` after setup)
+pf --version
 ```
+
+> **Alternative:** `pipx install pennyfarthing-scripts` if you prefer isolated Python tool installs.
 
 ### Step 2: Initialize Your Project
 
 ```bash
+cd your-project
 pf init
 ```
 
-This creates the Pennyfarthing directory structure using **symlinks** (not copies):
+This creates the Pennyfarthing directory structure and configures your project:
 
 | Created | Purpose |
 |---------|---------|
 | `.pennyfarthing/` | Runtime framework — agents, guides, personas, scripts |
 | `.claude/commands/` | Slash commands (e.g., `/pf-work`, `/pf-sm`) |
 | `.claude/skills/` | Multi-step skills for agents |
+| `.claude/settings.local.json` | Claude Code hooks for agent workflows |
 | `sprint/` | Sprint tracking files |
 | `.session/` | Active work session files |
+
+`pf init` also auto-detects your package manager (pnpm/yarn/npm) and installs any required Node dependencies. You don't need to run `npm install` yourself.
+
+> **Want more themes?** After init, install additional theme packs:
+> ```bash
+> pf package install comedy    # 70+ additional themes across genres
+> pf package install scifi
+> pf package list              # See all available packs
+> ```
 
 ### Step 3: Interactive Setup
 
@@ -72,6 +80,8 @@ This walks you through:
 3. **Theme selection** — pick a persona theme (you can change this anytime)
 4. **Jira integration** — optional sprint tracking connection
 
+> `pf init` prepares the project structure; `/pf-setup` configures it interactively inside Claude Code.
+
 ### Step 4: Verify
 
 ```bash
@@ -85,10 +95,8 @@ You should see all checks passing:
 [OK] pennyfarthing_dir: .pennyfarthing/ exists
 [OK] config_file: config.local.yaml valid
 [OK] settings_hooks: Settings hooks present
-[OK] symlinks: All symlinks valid
 [OK] commands: 36 pf-* commands found
 [OK] skills: 21 pf-* skills found
-[OK] node_packages: node_modules/ present
 [OK] theme: Theme: discworld
 ```
 
@@ -303,7 +311,7 @@ Pennyfarthing works in three display modes:
 |------|-------------|----------|
 | **CLI** | Just use Claude Code normally | Simplest setup, terminal-only |
 | **BikeRack** (TUI) | `pf bikerack start` | Split-pane terminal dashboard |
-| **Cyclist** (GUI) | `npm run dev:web` in cyclist package | Full browser UI with panels |
+| **Cyclist** (GUI) | `pf cyclist start` | Full browser UI with panels |
 
 **Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack and Cyclist add visual dashboards (sprint boards, session viewers, agent portraits) but are optional.
 
@@ -349,14 +357,8 @@ Pennyfarthing works in three display modes:
 ## Updating
 
 ```bash
-npm update @pennyfarthing/core
+pip install --upgrade pf
 pf doctor
-```
-
-If you installed theme packs, update those too:
-
-```bash
-npm update @pennyfarthing/themes-comedy @pennyfarthing/themes-scifi
 ```
 
 ---
@@ -365,7 +367,7 @@ npm update @pennyfarthing/themes-comedy @pennyfarthing/themes-scifi
 
 ### "No such file or directory" errors
 
-Symlinks may be broken. Auto-repair:
+Files may be missing or corrupted. Auto-repair:
 
 ```bash
 pf doctor --fix
@@ -390,7 +392,7 @@ The agent will read the session file and determine what phase it should be in.
 
 ```bash
 pf uninstall
-npm install --save-dev @pennyfarthing/core
+pip install pf
 pf init
 ```
 
