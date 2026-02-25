@@ -151,7 +151,7 @@ BikeRack also ships a Textual-based TUI that runs entirely in the terminal — n
 ```bash
 # From the pennyfarthing repo root — create venv and install TUI deps
 python3 -m venv .venv
-uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist[tui]"
+uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist"
 ```
 
 This installs the required packages into `.venv/`:
@@ -161,9 +161,9 @@ This installs the required packages into `.venv/`:
 | `textual` >= 1.0 | Terminal UI framework |
 | `websockets` >= 12.0 | WheelHub WebSocket client |
 | `rich` | Terminal rendering (textual dependency) |
-| `click` >= 8.0 | CLI framework (base dependency) |
-| `pyyaml` >= 6.0 | YAML parsing (base dependency) |
-| `textual-image` >= 0.7.0 | Agent portrait images (optional, graceful fallback) |
+| `click` >= 8.0 | CLI framework |
+| `pyyaml` >= 6.0 | YAML parsing |
+| `textual-image` >= 0.7.0 | Agent portrait images |
 
 The justfile automatically uses `.venv/bin/python3` when `.venv/` exists.
 
@@ -199,7 +199,7 @@ Available panels: Sprint, Git, Diffs, Audit Log, Debug, Progress.
 **`ModuleNotFoundError: No module named 'textual'`**
 ```bash
 # Deps not installed in venv — re-run setup
-uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist[tui]"
+uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist"
 ```
 
 **`No module named 'pf'`**
@@ -209,7 +209,7 @@ PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.bikerack.tui
 ```
 
 **Portrait images not rendering**
-Install `textual-image` (included in the `[tui]` extra). Requires a terminal with Sixel or Kitty graphics protocol support (iTerm2, WezTerm, Kitty). Falls back to text-only in unsupported terminals.
+`textual-image` is included in the base install. Requires a terminal with Sixel or Kitty graphics protocol support (iTerm2, WezTerm, Kitty). Falls back to text-only in unsupported terminals.
 
 ## Constraints
 
