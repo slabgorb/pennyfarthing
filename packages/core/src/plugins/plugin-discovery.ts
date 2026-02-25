@@ -10,7 +10,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 /** Packages that are part of the framework, not plugins */
-const EXCLUDED_PACKAGES = ['core', 'shared', 'benchmark'];
+const EXCLUDED_PACKAGES = ['core', 'shared', 'benchmark', 'bikerack'];
 
 /**
  * Manifest shape declared in a plugin's package.json under the "pennyfarthing" field.

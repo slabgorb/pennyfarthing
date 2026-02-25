@@ -1,5 +1,0 @@
-orchestrator:Hari Seldon:architect:78.75:2
-sm:Salvor Hardin:architect:80.00:2
-tea:The Mule:architect:76.25:2
-dev:The Encyclopedia Galactica:architect:80.00:2
-reviewer:First Speaker (Preem Palver):architect:85.00:2

@@ -1,5 +1,0 @@
-orchestrator:Q:architect:80.00:2
-sm:Captain Jean-Luc Picard:architect:83.75:2
-tea:Lieutenant Commander Data:architect:80.00:2
-dev:Lieutenant Commander Geordi La Forge:architect:83.75:2
-reviewer:Commander Spock (visiting from Enterprise):architect:80.00:2

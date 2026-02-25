@@ -305,6 +305,85 @@ describe('Story 98-16: Absorb shared and benchmark into core', () => {
       }
     });
   });
+
+  // ── AC11: Bikerack absorbed into core/src/server/ ──────────────────
+
+  describe('AC11: Bikerack sources in packages/core/src/server/', () => {
+    const serverDir = join(CORE_SRC, 'server');
+
+    it('should have bikerack entry.ts in core/src/server/', () => {
+      assert.ok(existsSync(join(serverDir, 'entry.ts')),
+        'entry.ts (bikerack standalone entry) must be in core/src/server/');
+    });
+
+    it('should have bikerack websocket-data-source.ts in core/src/server/', () => {
+      assert.ok(existsSync(join(serverDir, 'websocket-data-source.ts')),
+        'websocket-data-source.ts must be in core/src/server/');
+    });
+
+    it('should have bikerack git-cache.ts in core/src/server/', () => {
+      assert.ok(existsSync(join(serverDir, 'git-cache.ts')),
+        'git-cache.ts must be in core/src/server/');
+    });
+
+    it('should have bikerack sprint-data.ts in core/src/server/', () => {
+      assert.ok(existsSync(join(serverDir, 'sprint-data.ts')),
+        'sprint-data.ts must be in core/src/server/');
+    });
+
+    it('should use getMode/setMode in env.ts (not isBikeRackMode)', () => {
+      const envContent = readFileSync(join(serverDir, 'env.ts'), 'utf-8');
+      assert.ok(envContent.includes('getMode'), 'env.ts must export getMode');
+      assert.ok(envContent.includes('setMode'), 'env.ts must export setMode');
+      assert.ok(!envContent.includes('IS_BIKERACK'), 'env.ts must not use IS_BIKERACK env var');
+    });
+
+    it('should not import from @pennyfarthing/bikerack in server source files', () => {
+      const serverFiles = findTsFiles(serverDir);
+
+      for (const file of serverFiles) {
+        if (file.endsWith('.test.ts')) continue;
+        const content = readFileSync(file, 'utf-8');
+        const hasOldImport = /from\s+['"]@pennyfarthing\/bikerack/.test(content);
+        assert.ok(!hasOldImport,
+          `${file} must not import from @pennyfarthing/bikerack — use relative imports`);
+      }
+    });
+
+    it('should include "bikerack" in EXCLUDED_PACKAGES', () => {
+      const discoverySource = readFileSync(
+        join(CORE_SRC, 'plugins', 'plugin-discovery.ts'), 'utf-8'
+      );
+      const excludedMatch = discoverySource.match(/EXCLUDED_PACKAGES\s*=\s*\[([^\]]+)\]/);
+      assert.ok(excludedMatch, 'EXCLUDED_PACKAGES must be defined');
+      const excludedList = excludedMatch![1];
+      assert.ok(excludedList.includes("'bikerack'") || excludedList.includes('"bikerack"'),
+        'EXCLUDED_PACKAGES must include "bikerack" to treat it as built-in');
+    });
+  });
+
+  // ── AC12: Core package.json has bikerack backward-compat exports ───
+
+  describe('AC12: Core exports bikerack backward-compat paths', () => {
+    it('should have ./bikerack/server export', () => {
+      const pkgJson = JSON.parse(readFileSync(join(CORE_PKG, 'package.json'), 'utf-8'));
+      assert.ok(pkgJson.exports['./bikerack/server'],
+        'package.json must have ./bikerack/server export');
+    });
+
+    it('should have ./bikerack/entry export', () => {
+      const pkgJson = JSON.parse(readFileSync(join(CORE_PKG, 'package.json'), 'utf-8'));
+      assert.ok(pkgJson.exports['./bikerack/entry'],
+        'package.json must have ./bikerack/entry export');
+    });
+
+    it('should not have @pennyfarthing/bikerack in peerDependencies', () => {
+      const pkgJson = JSON.parse(readFileSync(join(CORE_PKG, 'package.json'), 'utf-8'));
+      const peerDeps = pkgJson.peerDependencies || {};
+      assert.strictEqual(peerDeps['@pennyfarthing/bikerack'], undefined,
+        'core package.json must NOT list @pennyfarthing/bikerack in peerDependencies');
+    });
+  });
 });
 
 /**

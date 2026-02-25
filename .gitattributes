@@ -1,11 +1,4 @@
 # Git LFS — track portrait images
-# Theme packages (distributed via npm, portraits downloaded separately)
-packages/themes-*/portraits/**/*.png filter=lfs diff=lfs merge=lfs -text
-packages/themes-*/portraits/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-packages/themes-*/portraits/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
-packages/themes-*/portraits/**/*.webp filter=lfs diff=lfs merge=lfs -text
-
-# Core portraits (pennyfarthing-dist)
 pennyfarthing-dist/personas/portraits/**/*.png filter=lfs diff=lfs merge=lfs -text
 pennyfarthing-dist/personas/portraits/**/*.jpg filter=lfs diff=lfs merge=lfs -text
 pennyfarthing-dist/personas/portraits/**/*.jpeg filter=lfs diff=lfs merge=lfs -text

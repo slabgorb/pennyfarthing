@@ -1,8 +1,0 @@
-{
-  "spec": "avatar-the-last-airbender:dev",
-  "character": "Aang",
-  "cli_timestamp": "2026-01-02T05:48:55Z",
-  "response_length": 2847,
-  "input_tokens": 8867,
-  "output_tokens": 998
-}

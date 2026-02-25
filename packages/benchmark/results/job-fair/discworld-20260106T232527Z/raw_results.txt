@@ -1,5 +1,0 @@
-orchestrator:DEATH:architect:41.25:2
-sm:Captain Carrot Ironfoundersson:architect:85.00:2
-tea:Granny Weatherwax (Esmerelda Weatherwax):architect:81.25:2
-dev:Ponder Stibbons:architect:81.25:2
-reviewer:Igor:architect:77.50:2

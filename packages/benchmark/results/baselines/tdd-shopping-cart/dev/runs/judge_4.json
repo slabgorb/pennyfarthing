@@ -1,1 +1,0 @@
-{"timestamp": "2026-01-01T22:43:30Z", "scores": {"control:dev": 65}, "dimensions": {"correctness": 5, "depth": 7, "quality": 7, "persona": 10}, "notes": "Type mismatches would fail compile, over-engineered with error returns"}

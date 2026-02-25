@@ -1,3 +1,0 @@
-=== Job Fair: greek-mythology ===
-Runs per combo: 4
-Output: /Users/keithavery/Projects/pennyfarthing-orchestrator/pennyfarthing/internal/results/job-fair/greek-mythology-20260129-000418

@@ -1,5 +1,0 @@
-orchestrator:The Chorus:architect:85.00:1
-sm:Prospero:architect:90.00:1
-tea:Hamlet, Prince of Denmark:architect:80.00:1
-dev:Puck (Robin Goodfellow):architect:87.50:1
-reviewer:Portia:architect:90.00:1

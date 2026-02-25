@@ -1,5 +1,0 @@
-orchestrator:Leia Organa:architect:80.00:2
-sm:Grand Admiral Thrawn:architect:82.50:2
-tea:Han Solo:architect:76.25:2
-dev:Yoda:architect:80.00:2
-reviewer:Obi-Wan Kenobi:architect:80.00:2

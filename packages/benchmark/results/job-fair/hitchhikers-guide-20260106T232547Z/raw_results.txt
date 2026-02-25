@@ -1,5 +1,0 @@
-orchestrator:Marvin the Paranoid Android:architect:76.25:2
-sm:Slartibartfast:architect:76.25:2
-tea:Deep Thought:architect:87.50:2
-dev:Trillian:architect:81.25:2
-reviewer:Arthur Dent:architect:77.50:2

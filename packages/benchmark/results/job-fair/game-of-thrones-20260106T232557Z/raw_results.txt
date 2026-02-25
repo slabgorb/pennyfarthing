@@ -1,5 +1,0 @@
-orchestrator:Samwell Tarly:architect:80.00:2
-sm:Lord Varys:architect:80.00:2
-tea:Tywin Lannister:architect:86.25:2
-dev:Tyrion Lannister:architect:85.00:2
-reviewer:Petyr Baelish (Littlefinger):architect:80.00:2

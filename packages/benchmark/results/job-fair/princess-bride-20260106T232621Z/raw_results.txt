@@ -1,5 +1,0 @@
-orchestrator:The Grandfather:architect:80.00:2
-sm:Vizzini:architect:80.00:2
-tea:Fezzik:architect:78.75:2
-dev:Inigo Montoya:architect:80.00:2
-reviewer:Westley (The Dread Pirate Roberts):architect:80.00:2

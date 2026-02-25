@@ -1,5 +1,0 @@
-orchestrator:Kosh Naranek:architect:78.75:2
-sm:Commander/Captain John Sheridan:architect:77.50:2
-tea:Alfred Bester:architect:80.00:2
-dev:Vir Cotto:architect:77.50:2
-reviewer:G'Kar:architect:80.00:2

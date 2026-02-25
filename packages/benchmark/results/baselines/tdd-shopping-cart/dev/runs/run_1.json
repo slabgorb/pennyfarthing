@@ -1,1 +1,0 @@
-{"timestamp": "2026-01-01T22:37:17Z", "agent": {"theme": "control", "role": "dev", "spec": "control:dev"}, "scenario": {"name": "tdd-shopping-cart", "category": "dev"}, "score": 90, "token_usage": {"input_tokens": 4727, "output_tokens": 1120}}

@@ -1,5 +1,0 @@
-orchestrator:Orchestrator (baseline control):architect:72.50:2
-sm:Scrum Master (baseline control):architect:77.50:2
-tea:Test Engineer (baseline control):architect:68.75:2
-dev:Developer (baseline control):architect:75.00:2
-reviewer:Code Reviewer (baseline control):architect:77.50:2

@@ -1,1 +1,0 @@
-{"timestamp": "2026-01-01T22:40:00Z", "scores": {"control:dev": 85}, "dimensions": {"correctness": 8, "depth": 8, "quality": 9, "persona": 9}, "notes": "Deduction for attempting tool use despite --tools flag"}

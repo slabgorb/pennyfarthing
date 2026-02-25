@@ -1,5 +1,0 @@
-orchestrator:Silco:architect:80.00:2
-sm:Caitlyn Kiramman:architect:80.00:2
-tea:Jinx (Powder):architect:71.25:2
-dev:Vi:architect:71.25:2
-reviewer:Heimerdinger:architect:77.50:2

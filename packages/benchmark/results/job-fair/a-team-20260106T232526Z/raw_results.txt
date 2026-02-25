@@ -1,5 +1,0 @@
-orchestrator:Colonel John "Hannibal" Smith:architect:81.25:2
-sm:Lieutenant Templeton "Faceman" Peck:architect:80.00:2
-tea:Captain H.M. "Howling Mad" Murdock:architect:77.50:2
-dev:Sergeant Bosco "B.A." Baracus:architect:80.00:2
-reviewer:Colonel Lynch / Colonel Decker:architect:80.00:2

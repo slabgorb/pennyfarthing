@@ -1,5 +1,0 @@
-orchestrator:Eldon Tyrell:architect:85.00:2
-sm:Captain Bryant:architect:77.50:2
-tea:Rick Deckard:architect:80.00:2
-dev:Roy Batty:architect:80.00:2
-reviewer:J.F. Sebastian:architect:77.50:2

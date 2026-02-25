@@ -1,9 +1,0 @@
-{
-  "spec": "princess-bride:dev",
-  "character": "Fezzik",
-  "scenario": "django-10097",
-  "generated": "2026-01-03T05:41:00Z",
-  "scores": [55.0, 62.5, 67.5, 57.5],
-  "mean": 60.625,
-  "std_dev": 5.07
-}

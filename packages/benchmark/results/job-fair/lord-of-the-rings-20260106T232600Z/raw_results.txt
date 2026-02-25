@@ -1,5 +1,0 @@
-orchestrator:Aragorn:architect:80.00:2
-sm:Elrond:architect:90.00:2
-tea:Legolas:architect:75.00:2
-dev:Gandalf:architect:85.00:2
-reviewer:Saruman:architect:77.50:2

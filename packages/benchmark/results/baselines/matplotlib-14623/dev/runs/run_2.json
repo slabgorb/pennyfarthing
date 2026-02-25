@@ -1,8 +1,0 @@
-{
-  "timestamp": "2026-01-02T20:32:00Z",
-  "spec": "control:dev",
-  "character": "Developer (baseline control)",
-  "scenario": "matplotlib-14623",
-  "input_tokens": 4637,
-  "output_tokens": 1106
-}

@@ -1,9 +1,0 @@
-{
-  "spec": "big-lebowski:dev",
-  "character": "The Dude (Jeffrey Lebowski)",
-  "cli_timestamp": "2026-01-02T06:39:57Z",
-  "response_length": 2891,
-  "input_tokens": 9315,
-  "output_tokens": 973,
-  "total_cost_usd": 0.08681875
-}

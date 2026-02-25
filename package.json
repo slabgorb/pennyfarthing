@@ -14,6 +14,14 @@
       "types": "./packages/core/dist/server/server.d.ts",
       "default": "./packages/core/dist/server/server.js"
     },
+    "./bikerack/server": {
+      "types": "./packages/core/dist/server/server.d.ts",
+      "default": "./packages/core/dist/server/server.js"
+    },
+    "./bikerack/entry": {
+      "types": "./packages/core/dist/server/entry.d.ts",
+      "default": "./packages/core/dist/server/entry.js"
+    },
     "./dist/*": "./packages/core/dist/*"
   },
   "files": [
@@ -25,6 +33,7 @@
     "pennyfarthing-dist/guides/",
     "pennyfarthing-dist/output-styles/",
     "pennyfarthing-dist/personas/themes/",
+    "pennyfarthing-dist/personas/portraits/",
     "pennyfarthing-dist/scripts/",
     "pennyfarthing-dist/skills/",
     "pennyfarthing-dist/templates/",
@@ -43,7 +52,7 @@
   },
   "scripts": {
     "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh && ./pennyfarthing-dist/scripts/git/changelog-links.sh --validate",
-    "build": "pnpm --filter @pennyfarthing/shared build && pnpm --filter @pennyfarthing/core run build:tsc && pnpm --filter @pennyfarthing/bikerack build && pnpm --filter @pennyfarthing/core run build:react && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
+    "build": "pnpm --filter @pennyfarthing/core run build:tsc && pnpm --filter @pennyfarthing/core run build:react && pnpm --filter @pennyfarthing/cyclist build && ./scripts/generate-skill-docs.sh",
     "docs": "./scripts/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
@@ -54,7 +63,6 @@
     "clean": "pnpm -r clean"
   },
   "dependencies": {
-    "@pennyfarthing/shared": "^10.0.3",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
     "express": "^4.18.2",

@@ -1,5 +1,0 @@
-orchestrator:Laughing Bull:architect:77.50:2
-sm:Spike Spiegel:architect:80.00:2
-tea:Jet Black:architect:77.50:2
-dev:Faye Valentine:architect:81.25:2
-reviewer:Edward Wong Hau Pepelu Tivrusky IV:architect:76.25:2
