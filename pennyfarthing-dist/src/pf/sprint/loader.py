@@ -237,19 +237,48 @@ def get_sprint_info() -> dict[str, Any]:
 
 
 def get_all_stories() -> list[dict[str, Any]]:
-    """Get all stories from all epics.
+    """Get all stories from epics, standalone_stories, and top-level stories.
 
     Returns:
         Flat list of all story dicts
     """
     data = load_sprint()
-    if not data or "epics" not in data:
+    if not data:
         return []
 
     stories = []
-    for epic in data["epics"]:
-        if "stories" in epic:
+    for epic in data.get("epics", []):
+        if isinstance(epic, dict) and "stories" in epic:
             stories.extend(epic["stories"])
+    for s in data.get("standalone_stories", []):
+        stories.append(s)
+    for s in data.get("stories", []):
+        stories.append(s)
+    return stories
+
+
+def get_archived_stories(project_root: Path | None = None) -> list[dict[str, Any]]:
+    """Get completed stories from sprint archive shards.
+
+    Reads sprint/archive/sprint-*-completed.yaml files and returns
+    their completed_stories lists.
+
+    Args:
+        project_root: Project root path (defaults to auto-detect)
+
+    Returns:
+        Flat list of archived story dicts
+    """
+    root = project_root or get_project_root()
+    archive_dir = root / "sprint" / "archive"
+    if not archive_dir.is_dir():
+        return []
+
+    stories = []
+    for path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+        data = load_yaml_config(path)
+        if data and "completed_stories" in data:
+            stories.extend(data["completed_stories"])
     return stories
 
 
