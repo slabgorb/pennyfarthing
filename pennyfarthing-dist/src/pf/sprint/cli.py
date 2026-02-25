@@ -1635,12 +1635,12 @@ def data(output_json: bool):
 def metrics(output_json: bool):
     """Display sprint metrics and progress.
 
-    Shows points, stories, timeline, and velocity tracking.
+    Shows points, stories, timeline, velocity tracking, and archived sprint totals.
     """
     import json
     from datetime import date, datetime
 
-    from pf.sprint.loader import get_all_stories, get_sprint_info
+    from pf.sprint.loader import get_all_stories, get_archived_stories, get_sprint_info
 
     sprint_data = get_sprint_info()
     stories = get_all_stories()
@@ -1664,6 +1664,10 @@ def metrics(output_json: bool):
     backlog_pts = sum(s.get("points", 0) or 0 for s in backlog_stories)
     total_pts = done_pts + wip_pts + backlog_pts
 
+    # Archive data
+    archived = get_archived_stories()
+    archive_pts = sum(s.get("points", 0) or 0 for s in archived)
+
     # Date calculations
     today = date.today()
     try:
@@ -1677,6 +1681,7 @@ def metrics(output_json: bool):
     days_elapsed = max(0, (today - start_date).days)
     days_remaining = max(0, (end_date - today).days)
 
+    all_done_pts = done_pts + archive_pts
     pct_complete = (done_pts * 100 // total_pts) if total_pts > 0 else 0
     pct_time = (days_elapsed * 100 // total_days) if total_days > 0 else 0
 
@@ -1697,12 +1702,16 @@ def metrics(output_json: bool):
                 "in_progress": wip_pts,
                 "backlog": backlog_pts,
                 "velocity_target": velocity_target,
+                "archived": archive_pts,
+                "all_completed": all_done_pts,
             },
             "stories": {
                 "total": len(stories),
                 "done": len(done_stories),
                 "in_progress": len(wip_stories),
                 "backlog": len(backlog_stories),
+                "archived": len(archived),
+                "all_done": len(done_stories) + len(archived),
             },
             "progress": {
                 "percent_complete": pct_complete,
@@ -1729,6 +1738,10 @@ def metrics(output_json: bool):
     click.echo(f"  Points:  {done_pts} done / {wip_pts} WIP / {backlog_pts} backlog = {total_pts} total ({pct_complete}%)")
     click.echo(f"  Stories: {len(done_stories)} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories)} total")
     click.echo("")
+    if archived:
+        click.echo(f"  Archive: {len(archived)} stories / {archive_pts} points (from prior sprints)")
+        click.echo(f"  All-time: {len(done_stories) + len(archived)} done / {all_done_pts} points")
+        click.echo("")
     click.echo(f"  Velocity: {done_pts}/{expected_pts} expected ({velocity_target} target)")
     if done_pts >= expected_pts:
         click.echo("  Status: On track")

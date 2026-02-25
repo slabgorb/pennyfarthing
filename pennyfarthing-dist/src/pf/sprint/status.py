@@ -49,6 +49,10 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     for s in data.get("standalone_stories", []):
         s["_epic_title"] = "(standalone)"
         stories.append(s)
+    # Include top-level stories (not under any epic)
+    for s in data.get("stories", []):
+        s["_epic_title"] = "(standalone)"
+        stories.append(s)
 
     if not stories:
         return {}
