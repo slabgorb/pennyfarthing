@@ -327,8 +327,9 @@ class TestSettingsFile:
         data = json.loads(settings_path.read_text())
         assert "hooks" in data
 
-    def test_settings_has_exactly_five_hooks(self, target_dir: Path, mock_dist: Path) -> None:
-        """settings.local.json should have exactly 5 essential hook entries."""
+    def test_settings_has_expected_hook_count(self, target_dir: Path, mock_dist: Path) -> None:
+        """settings.local.json should have all infrastructure hook entries."""
+        from pf.common.hooks import INFRASTRUCTURE_HOOKS
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
@@ -339,7 +340,8 @@ class TestSettingsFile:
 
         # Count total hook entries across all hook types
         total_hooks = sum(len(entries) for entries in hooks.values())
-        assert total_hooks == 5, f"Expected 5 hooks, got {total_hooks}"
+        expected = sum(len(entries) for entries in INFRASTRUCTURE_HOOKS.values())
+        assert total_hooks == expected, f"Expected {expected} hooks, got {total_hooks}"
 
     def test_settings_has_session_start_hook(self, target_dir: Path, mock_dist: Path) -> None:
         """Should include session-start hook under SessionStart."""

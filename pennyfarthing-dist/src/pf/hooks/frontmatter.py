@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-# The 5 infrastructure hooks that stay in settings.local.json.
+# Infrastructure hooks that stay in settings.local.json.
 # Everything else lives in agent/skill frontmatter.
 INFRASTRUCTURE_HOOKS: set[str] = {
     "session-start",
@@ -24,6 +24,7 @@ INFRASTRUCTURE_HOOKS: set[str] = {
     "pre-edit-check",
     "context-warning",
     "bell-mode",
+    "agent-reload",
 }
 
 
@@ -210,7 +211,7 @@ def merge_with_infrastructure(
     frontmatter-declared hooks to the appropriate event arrays.
 
     Args:
-        infrastructure: Base settings dict with 5 infrastructure hooks
+        infrastructure: Base settings dict with infrastructure hooks
         frontmatter_hooks: Collected frontmatter hooks by event type
 
     Returns:

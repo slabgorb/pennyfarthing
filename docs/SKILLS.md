@@ -21,11 +21,9 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
 - [Project Management](#project-management)
   - [pf-jira](#pf-jira)
   - [pf-sprint](#pf-sprint)
-  - [pf-story](#pf-story)
   - [pf-workflow](#pf-workflow)
 - [Theming](#theming)
   - [pf-theme](#pf-theme)
-  - [pf-theme-creation](#pf-theme-creation)
 - [Tools](#tools)
   - [pf-bc](#pf-bc)
   - [pf-cyclist](#pf-cyclist)
@@ -253,24 +251,6 @@ Sprint status, backlog, story, and epic management for Pennyfarthing
 
 **Related:** [pf-jira](#pf-jira)
 
-### pf-story
-
-DEPRECATED: Use /pf-sprint story instead. Story commands consolidated under /pf-sprint.
-
-**Tags:** stories, sizing, workflow, deprecated
-
-**Keywords:** user-stories, estimation, points, acceptance-criteria
-
-**Examples:**
-- Creating new stories: `/pf-sprint story add`
-- Sizing stories: `/pf-sprint story size`
-
-**Anti-patterns:**
-- Don't create stories without acceptance criteria
-- Don't use /story directly - use /pf-sprint story instead
-
-**Related:** [pf-sprint](#pf-sprint), [pf-jira](#pf-jira)
-
 ### pf-workflow
 
 Manage workflows - list, show, set, start, resume, and check status
@@ -308,20 +288,6 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 
 **Anti-patterns:**
 - Don't edit config.local.yaml directly - use skill
-- Don't use deprecated /set-theme, /show-theme, /list-themes, /create-theme, /theme-maker
-
-### pf-theme-creation
-
-DEPRECATED: Use /pf-theme maker instead
-
-**Tags:** personas, themes, creation
-
-**Keywords:** personas, custom, generation, wizard
-
-**Examples:**
-- Interactive theme wizard: `/pf-theme maker`
-
-**Related:** [pf-theme](#pf-theme)
 
 ## Tools
 
