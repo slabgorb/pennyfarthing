@@ -28,8 +28,8 @@ function resolvePennyfarthingDist(): string | null {
 
   // 2. Packaged Electron app: Contents/Resources/pennyfarthing-dist/
   // In packaged app, __dirname is inside app.asar, process.resourcesPath points to Resources
-  if (process.resourcesPath) {
-    const electronResourcesPath = join(process.resourcesPath, 'pennyfarthing-dist');
+  if ((process as any).resourcesPath) {
+    const electronResourcesPath = join((process as any).resourcesPath, 'pennyfarthing-dist');
     if (existsSync(electronResourcesPath)) {
       return electronResourcesPath;
     }
