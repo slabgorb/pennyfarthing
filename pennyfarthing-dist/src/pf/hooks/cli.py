@@ -89,6 +89,13 @@ def sprint_yaml():
     main()
 
 
+@hooks.command("agent-reload")
+def agent_reload():
+    """SessionStart hook — reload active agent after compact/clear."""
+    from pf.hooks.agent_reload import main
+    main()
+
+
 @hooks.command("statusline")
 def statusline():
     """statusLine hook — render Claude Code status bar."""

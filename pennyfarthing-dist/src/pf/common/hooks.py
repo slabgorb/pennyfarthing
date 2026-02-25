@@ -1,6 +1,6 @@
 """Shared hook constants for Pennyfarthing infrastructure.
 
-The 5 essential hooks required for a minimal Pennyfarthing installation.
+The essential hooks required for a minimal Pennyfarthing installation.
 Used by both init (fresh project) and upgrade (npm-to-Python migration).
 """
 
@@ -10,7 +10,15 @@ from __future__ import annotations
 # import from here instead of maintaining independent copies.
 INFRASTRUCTURE_HOOKS: dict = {
     "SessionStart": [
-        {"hooks": [{"type": "command", "command": "pf hooks session-start"}]}
+        {"hooks": [{"type": "command", "command": "pf hooks session-start"}]},
+        {
+            "matcher": "compact",
+            "hooks": [{"type": "command", "command": "pf hooks agent-reload"}],
+        },
+        {
+            "matcher": "clear",
+            "hooks": [{"type": "command", "command": "pf hooks agent-reload"}],
+        },
     ],
     "Stop": [
         {"hooks": [{"type": "command", "command": "pf hooks session-stop"}]}
