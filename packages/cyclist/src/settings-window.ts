@@ -114,7 +114,7 @@ export function openSettingsWindow(parentWindow?: unknown): void {
     if (!BrowserWindowRef) {
       throw new Error('BrowserWindow not initialized - call setBrowserWindowRef first');
     }
-    const BrowserWindow = BrowserWindowRef as typeof Electron.BrowserWindow;
+    const BrowserWindow = BrowserWindowRef as any;
     console.log('[Settings] Using BrowserWindow from ref, mainWindowRef:', !!mainWindowRef);
 
     const parent = parentWindow || mainWindowRef;
@@ -123,7 +123,7 @@ export function openSettingsWindow(parentWindow?: unknown): void {
 
     const settingsWindow = new BrowserWindow({
       ...config,
-      parent: parent as Electron.BrowserWindow | undefined,
+      parent: parent as any,
       show: false, // Don't show until ready
     });
 
