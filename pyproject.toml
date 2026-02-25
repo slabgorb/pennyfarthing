@@ -12,16 +12,13 @@ dependencies = [
     "httpx>=0.28",
     "click>=8.0",
     "pydriller>=2.6",
-]
-
-[project.optional-dependencies]
-tui = [
     "textual>=1.0",
     "websockets>=12.0",
     "textual-image>=0.7.0",
     "watchfiles>=1.0",
 ]
 
+[project.optional-dependencies]
 portraits = [
     "torch>=2.0",
     "diffusers>=0.36",
