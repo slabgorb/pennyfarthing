@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pf.common.hooks import INFRASTRUCTURE_HOOKS
+from pf.hooks.frontmatter import collect_all_frontmatter_hooks, merge_with_infrastructure
 
 # Wrap the shared hooks in the settings envelope expected by settings.local.json.
 _MINIMAL_SETTINGS: dict = {
@@ -243,11 +244,19 @@ def init_project(
     settings_path = target_dir / ".claude" / "settings.local.json"
     settings_written = False
     hooks_upgraded = False
+    frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
     if not settings_path.exists():
-        settings_path.write_text(json.dumps(_MINIMAL_SETTINGS, indent=2) + "\n")
+        merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
+        settings_path.write_text(json.dumps(merged, indent=2) + "\n")
         settings_written = True
     else:
         hooks_upgraded = _upgrade_hooks(settings_path)
+        # Merge frontmatter hooks into existing settings
+        data = json.loads(settings_path.read_text())
+        merged = merge_with_infrastructure(data, frontmatter_hooks)
+        if merged != data:
+            settings_path.write_text(json.dumps(merged, indent=2) + "\n")
+            hooks_upgraded = True
 
     # --- Write init manifest ---
     _write_manifest(target_dir, commands_copied, skills_copied)
