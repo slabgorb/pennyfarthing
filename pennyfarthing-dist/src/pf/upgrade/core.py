@@ -214,6 +214,10 @@ def migrate_settings(project_root: Path, dry_run: bool = False) -> dict:
 def migrate_config_files(project_root: Path, dry_run: bool = False) -> dict:
     """Migrate config files (preferences.yaml -> config.local.yaml).
 
+    Checks both npm-era locations for preferences.yaml:
+    - .pennyfarthing/preferences.yaml (npm postinstall location)
+    - .claude/pennyfarthing/preferences.yaml (legacy location)
+
     Args:
         project_root: Project root path
         dry_run: If True, show plan without executing
@@ -225,13 +229,19 @@ def migrate_config_files(project_root: Path, dry_run: bool = False) -> dict:
 
     pf_dir = project_root / ".pennyfarthing"
     config_path = pf_dir / "config.local.yaml"
-    prefs_path = project_root / ".claude" / "pennyfarthing" / "preferences.yaml"
 
-    if not prefs_path.exists():
+    # Check both possible locations for preferences.yaml
+    prefs_candidates = [
+        pf_dir / "preferences.yaml",
+        project_root / ".claude" / "pennyfarthing" / "preferences.yaml",
+    ]
+    prefs_path = next((p for p in prefs_candidates if p.exists()), None)
+
+    if prefs_path is None:
         return {"success": True, "migrated": []}
 
     if dry_run:
-        return {"success": True, "migrated": ["preferences.yaml (planned)"]}
+        return {"success": True, "migrated": [f"{prefs_path.name} (planned)"]}
 
     config: dict = {}
     if config_path.exists():
@@ -246,7 +256,7 @@ def migrate_config_files(project_root: Path, dry_run: bool = False) -> dict:
     with open(config_path, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
-    return {"success": True, "migrated": ["preferences.yaml"]}
+    return {"success": True, "migrated": [str(prefs_path.name)]}
 
 
 def detect_cleanup_targets(project_root: Path) -> dict:
@@ -254,8 +264,10 @@ def detect_cleanup_targets(project_root: Path) -> dict:
 
     Scans for:
     - node_modules/@pennyfarthing directory
-    - Stale symlinks in .claude/commands/ pointing to node_modules
+    - Stale symlinks in .claude/commands/ and .pennyfarthing/ pointing to node_modules
+    - npm-era Python artifacts (.venv, pyproject.toml, uv.lock, egg-info, etc.)
     - Old .pennyfarthing/manifest.json when init-manifest.json exists
+    - @pennyfarthing dependencies in package.json
 
     Args:
         project_root: Project root path
@@ -264,6 +276,7 @@ def detect_cleanup_targets(project_root: Path) -> dict:
         Result dict: {success, targets: list[dict], error?}
     """
     targets: list[dict] = []
+    pf_dir = project_root / ".pennyfarthing"
 
     # 1. node_modules/@pennyfarthing directory
     npm_pf_dir = project_root / "node_modules" / "@pennyfarthing"
@@ -288,8 +301,38 @@ def detect_cleanup_targets(project_root: Path) -> dict:
                         "reason": "symlink pointing to node_modules",
                     })
 
-    # 3. Old manifest.json when init-manifest.json exists
-    pf_dir = project_root / ".pennyfarthing"
+    # 3. Stale symlinks in .pennyfarthing/ pointing to node_modules
+    if pf_dir.exists():
+        for entry in sorted(pf_dir.iterdir()):
+            if entry.is_symlink():
+                raw_target = str(entry.readlink())
+                if "node_modules" in raw_target:
+                    targets.append({
+                        "type": "symlink",
+                        "path": str(entry.relative_to(project_root)),
+                        "target": raw_target,
+                        "reason": "npm-era symlink to node_modules",
+                    })
+
+    # 4. npm-era Python artifacts in .pennyfarthing/
+    _npm_python_artifacts = [
+        (".installed-version", "file", "npm-era version stamp"),
+        ("pyproject.toml", "file", "npm postinstall pyproject"),
+        ("uv.lock", "file", "npm postinstall lockfile"),
+        ("pennyfarthing_scripts.egg-info", "directory", "npm postinstall egg-info"),
+        (".venv", "directory", "npm postinstall virtualenv"),
+        ("persona-config.yaml", "file", "npm-era persona config (replaced by config.local.yaml)"),
+    ]
+    for name, artifact_type, reason in _npm_python_artifacts:
+        path = pf_dir / name
+        if path.exists() or path.is_symlink():
+            targets.append({
+                "type": artifact_type,
+                "path": str(path.relative_to(project_root)),
+                "reason": reason,
+            })
+
+    # 5. Old manifest.json when init-manifest.json exists
     old_manifest = pf_dir / "manifest.json"
     new_manifest = pf_dir / "init-manifest.json"
     if old_manifest.exists() and new_manifest.exists():
@@ -298,6 +341,25 @@ def detect_cleanup_targets(project_root: Path) -> dict:
             "path": str(old_manifest.relative_to(project_root)),
             "reason": "Node-era manifest superseded by init-manifest.json",
         })
+
+    # 6. @pennyfarthing entries in package.json dependencies
+    pkg_json = project_root / "package.json"
+    if pkg_json.is_file():
+        try:
+            pkg_data = json.loads(pkg_json.read_text())
+            pf_deps = [
+                k for k in pkg_data.get("dependencies", {})
+                if k.startswith("@pennyfarthing/")
+            ]
+            if pf_deps:
+                targets.append({
+                    "type": "package_json",
+                    "path": "package.json",
+                    "reason": f"npm-era @pennyfarthing deps: {', '.join(pf_deps)}",
+                    "deps": pf_deps,
+                })
+        except (json.JSONDecodeError, OSError):
+            pass
 
     return {"success": True, "targets": targets}
 
@@ -338,7 +400,7 @@ def cleanup_artifacts(
                 skipped.append(f"{rel_path} (removal failed)")
         elif target["type"] == "symlink":
             full_path.unlink(missing_ok=True)
-            if not full_path.exists():
+            if not full_path.exists() and not full_path.is_symlink():
                 removed.append(rel_path)
             else:
                 skipped.append(f"{rel_path} (removal failed)")
@@ -348,8 +410,30 @@ def cleanup_artifacts(
                 removed.append(rel_path)
             else:
                 skipped.append(f"{rel_path} (removal failed)")
+        elif target["type"] == "package_json":
+            _remove_pf_deps_from_package_json(full_path, target.get("deps", []))
+            removed.append(f"{rel_path} (@pennyfarthing deps removed)")
 
     return {"success": True, "removed": removed, "skipped": skipped}
+
+
+def _remove_pf_deps_from_package_json(pkg_path: Path, deps: list[str]) -> None:
+    """Remove @pennyfarthing/* entries from package.json dependencies."""
+    try:
+        data = json.loads(pkg_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return
+
+    changed = False
+    for section in ("dependencies", "devDependencies"):
+        section_data = data.get(section, {})
+        for dep in deps:
+            if dep in section_data:
+                del section_data[dep]
+                changed = True
+
+    if changed:
+        pkg_path.write_text(json.dumps(data, indent=2) + "\n")
 
 
 def generate_report(results: dict) -> str:

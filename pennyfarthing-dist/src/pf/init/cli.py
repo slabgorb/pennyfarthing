@@ -26,7 +26,9 @@ def init(dry_run: bool, target: str) -> None:
     from pf.init.core import init_project
 
     target_dir = Path(target).resolve()
-    dist_root = get_dist_root()
+    # Scope dist_root resolution to the target directory, not the calling
+    # session's CLAUDE_PROJECT_DIR which may point elsewhere.
+    dist_root = get_dist_root(project_root=target_dir)
 
     if dist_root is None:
         click.echo("Could not locate pennyfarthing-dist. Is pf installed?", err=True)
@@ -44,6 +46,9 @@ def init(dry_run: bool, target: str) -> None:
         click.echo(f"  Create {len(data['directories'])} directories")
         click.echo(f"  Copy {len(data['commands'])} commands: {', '.join(data['commands'])}")
         click.echo(f"  Copy {len(data['skills'])} skills: {', '.join(data['skills'])}")
+        content = data.get("content_dirs", [])
+        if content:
+            click.echo(f"  Copy {len(content)} content dirs: {', '.join(content)}")
         click.echo(f"  Write {data['settings']}")
         click.echo(f"  Update .gitignore ({len(data['gitignore_entries'])} entries)")
         jf = data.get("justfile", {})
@@ -54,6 +59,9 @@ def init(dry_run: bool, target: str) -> None:
         click.echo(f"Initialized Pennyfarthing project in {target_dir}")
         click.echo(f"  {data['commands_copied']} commands copied")
         click.echo(f"  {data['skills_copied']} skills copied")
+        content_count = data.get("content_dirs_copied", 0)
+        if content_count:
+            click.echo(f"  {content_count} content directories copied")
         click.echo(f"  {data['directories_created']} directories created")
         if data.get("settings_written"):
             click.echo("  settings.local.json written")
