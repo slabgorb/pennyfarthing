@@ -3,8 +3,9 @@
 Story 126-2: Rewrite pf init in Python.
 
 Creates .pennyfarthing/ and .claude/ directory structures,
-copies pf-* commands and skills, writes settings.local.json,
-and updates .gitignore. Idempotent and deterministic.
+copies pf-* commands, skills, and content directories (agents, guides,
+personas, etc.), writes settings.local.json, and updates .gitignore.
+Idempotent and deterministic.
 """
 
 from __future__ import annotations
@@ -41,6 +42,20 @@ _CLAUDE_DIRS: list[str] = [
     ".claude",
     ".claude/commands",
     ".claude/skills",
+]
+
+# Content directories copied from dist_root to .pennyfarthing/.
+# These provide agents, guides, personas, etc. that the framework reads at runtime.
+# In the npm era these were symlinks to node_modules; now they're direct copies.
+_CONTENT_DIRS: list[str] = [
+    "agents",
+    "gates",
+    "guides",
+    "output-styles",
+    "personas",
+    "scripts",
+    "templates",
+    "workflows",
 ]
 
 
@@ -147,6 +162,11 @@ def init_project(
     skills_to_copy = _find_pf_skills(dist_root)
     directories = _PENNYFARTHING_DIRS + _CLAUDE_DIRS
 
+    # --- Identify content dirs to copy ---
+    content_dirs_to_copy = [
+        name for name in _CONTENT_DIRS if (dist_root / name).is_dir()
+    ]
+
     if dry_run:
         from pf.init.justfile import update_framework_justfile
 
@@ -161,6 +181,7 @@ def init_project(
                 "directories": directories,
                 "commands": [c.name for c in commands_to_copy],
                 "skills": [s.name for s in skills_to_copy],
+                "content_dirs": content_dirs_to_copy,
                 "settings": ".claude/settings.local.json",
                 "gitignore_entries": _GITIGNORE_ENTRIES,
                 "justfile": justfile_data,
@@ -169,7 +190,11 @@ def init_project(
 
     # --- Create directories ---
     for d in directories:
-        (target_dir / d).mkdir(parents=True, exist_ok=True)
+        path = target_dir / d
+        # Remove stale symlinks (npm era) that block directory creation
+        if path.is_symlink():
+            path.unlink()
+        path.mkdir(parents=True, exist_ok=True)
 
     # --- Copy commands ---
     commands_copied = 0
@@ -188,6 +213,16 @@ def init_project(
         # Copy to .claude/skills/
         _copy_tree(skill_dir, target_dir / ".claude" / "skills" / skill_dir.name)
         skills_copied += 1
+
+    # --- Copy content directories (agents, guides, personas, etc.) ---
+    content_dirs_copied = 0
+    for dir_name in content_dirs_to_copy:
+        dest = target_dir / ".pennyfarthing" / dir_name
+        # Remove stale symlinks (npm era) before copying
+        if dest.is_symlink():
+            dest.unlink()
+        _copy_tree(dist_root / dir_name, dest)
+        content_dirs_copied += 1
 
     # --- Update framework justfile ---
     from pf.init.justfile import update_framework_justfile
@@ -223,6 +258,7 @@ def init_project(
         "data": {
             "commands_copied": commands_copied,
             "skills_copied": skills_copied,
+            "content_dirs_copied": content_dirs_copied,
             "directories_created": len(directories),
             "settings_written": settings_written,
             "hooks_upgraded": hooks_upgraded,
@@ -354,7 +390,11 @@ def _upgrade_hooks(settings_path: Path) -> bool:
 
 
 def _update_gitignore(target_dir: Path) -> None:
-    """Add pennyfarthing entries to .gitignore, avoiding duplicates."""
+    """Add pennyfarthing entries to .gitignore, avoiding duplicates.
+
+    Normalizes patterns so that e.g. `.session/*` is recognized as
+    covering `.session/` to avoid redundant entries.
+    """
     gitignore_path = target_dir / ".gitignore"
 
     existing_lines: set[str] = set()
@@ -363,7 +403,22 @@ def _update_gitignore(target_dir: Path) -> None:
         existing_content = gitignore_path.read_text()
         existing_lines = {line.strip() for line in existing_content.splitlines()}
 
-    new_entries = [e for e in _GITIGNORE_ENTRIES if e.strip() not in existing_lines]
+    # Build a set of normalized paths for overlap detection.
+    # ".session/*" and ".session/" both cover the same directory.
+    normalized_existing: set[str] = set()
+    for line in existing_lines:
+        normalized_existing.add(line)
+        # ".session/*" covers ".session/"
+        if line.endswith("/*"):
+            normalized_existing.add(line[:-1])  # ".session/*" -> ".session/"
+        # ".session/" covers ".session/*"
+        if line.endswith("/") and not line.endswith("/*"):
+            normalized_existing.add(line + "*")  # ".session/" -> ".session/*"
+
+    new_entries = [
+        e for e in _GITIGNORE_ENTRIES
+        if e.strip() not in normalized_existing
+    ]
 
     if new_entries:
         # Ensure trailing newline before appending
