@@ -107,12 +107,20 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
         if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
             return candidate
 
-    # 4. Bundled pip package: content lives in pf._dist/
+    # 4. Inlined framework repo: {project_root}/pennyfarthing/pennyfarthing-dist/
+    inlined = root / "pennyfarthing" / "pennyfarthing-dist"
+    if inlined.is_dir():
+        return inlined
+
+    # 5. Bundled pip package: content lives in pf._dist/
     # This is the final fallback for pipx-installed consumers with no
     # pennyfarthing-dist/ directory or node_modules.
-    from pf._dist import is_populated, get_root
-    if is_populated():
-        return get_root()
+    try:
+        from pf._dist import is_populated, get_root
+        if is_populated():
+            return get_root()
+    except (ImportError, ModuleNotFoundError):
+        pass
 
     return None
 
