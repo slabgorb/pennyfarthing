@@ -26,7 +26,7 @@ User queues message in Editor
 |------|---------|
 | `packages/cyclist/src/bell-mode.ts` | State management: `isBellModeEnabled()`, `setBellMode()`, `toggleBellMode()` |
 | `packages/cyclist/src/api/bell.ts` | WebSocket broadcast of bell-consumed events |
-| `pf.sh hooks bell-mode` | PostToolUse hook — reads queue, returns `additionalContext` |
+| `pf hooks bell-mode` | PostToolUse hook — reads queue, returns `additionalContext` |
 | `packages/cyclist/src/public/hooks/useMessageQueue.ts` | React hook: `queueMessage()`, `dequeueMessage()`, `injectMessage()`, `handleTurnComplete()` |
 | `packages/cyclist/src/public/contexts/MessageQueueContext.tsx` | Shared React context (single queue instance across components) |
 | `packages/cyclist/src/public/components/ControlBar.tsx` | Bell mode toggle button |
@@ -58,7 +58,7 @@ workflow:
 - Max 10 queued messages
 - Queue syncs to file even when bell mode is off
 - On turn complete, remaining queued messages are sent normally
-- `MessageQueueContext` prevents dual-instance bug (MSSCI-14191)
+- `MessageQueueContext` prevents dual-instance queue bug (multiple React trees competing to dequeue the same message)
 
 <info>
 **ADR:** `docs/adr/0016-bell-mode-message-injection.md`

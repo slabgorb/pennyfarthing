@@ -9,7 +9,7 @@ skills/{skill-name}/SKILL.md
 ```
 
 **Examples:**
-- `skills/sprint/SKILL.md`
+- `skills/pf-sprint/SKILL.md`
 - `skills/testing/SKILL.md`
 - `skills/jira/SKILL.md`
 
@@ -73,7 +73,7 @@ Another command description...
 <agent-activation>
 Load agent persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "agent-name"
+pf agent start "agent-name"
 ```
 </agent-activation>
 
@@ -146,7 +146,7 @@ args: "[arg1|arg2]"       # Optional: argument summary
 **Example:**
 ```xml
 <run>
-pf.sh sprint status [filter]
+pf sprint status [filter]
 </run>
 ```
 
@@ -195,7 +195,7 @@ pf.sh sprint status [filter]
 **Example:**
 ```xml
 <example>
-pf.sh sprint check MSSCI-12038
+pf sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 ```
@@ -259,7 +259,7 @@ Next steps after promote:
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
+pf agent start "sm"
 ```
 </agent-activation>
 ```
@@ -292,7 +292,7 @@ Never manually edit sprint YAML. Use the provided commands.
 Add a new story to an epic.
 
 <run>
-pf.sh sprint story add <epic-id> "<title>" <points>
+pf sprint story add <epic-id> "<title>" <points>
 </run>
 
 <args>
@@ -304,7 +304,7 @@ pf.sh sprint story add <epic-id> "<title>" <points>
 </args>
 
 <example>
-pf.sh sprint story add epic-76 "Add user authentication" 3
+pf sprint story add epic-76 "Add user authentication" 3
 </example>
 
 <output>
@@ -322,7 +322,7 @@ After creating, use `/pf-sprint story size` for sizing guidelines.
 Complete a story after PR merge.
 
 <run>
-pf.sh sprint story finish <story-id>
+pf sprint story finish <story-id>
 </run>
 
 <args>
@@ -332,7 +332,7 @@ pf.sh sprint story finish <story-id>
 </args>
 
 <example>
-pf.sh sprint story finish MSSCI-12052
+pf sprint story finish MSSCI-12052
 # Archives story, updates Jira, cleans session files
 </example>
 
@@ -351,7 +351,7 @@ Use after PR is merged and story work is complete.
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
+pf agent start "sm"
 ```
 </agent-activation>
 
@@ -407,5 +407,5 @@ When updating existing skill files:
 | File | Purpose |
 |------|---------|
 | `guides/xml-tags.md` | Complete XML tag taxonomy |
-| `skills/sprint/SKILL.md` | Reference implementation |
+| `skills/pf-sprint/SKILL.md` | Reference implementation |
 | `skill-registry.yaml` | Skill registration |

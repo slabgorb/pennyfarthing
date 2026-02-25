@@ -5,7 +5,7 @@ Tandem mode pairs a background observer ("backseat") with the primary agent duri
 ## Architecture
 
 ```
-Primary Agent (Opus)          Backseat Agent (Haiku, background)
+Primary Agent                 Backseat Agent (Haiku, background)
      │                              │
      ├── works on story             ├── watches via git diff / file reads
      │                              │
@@ -13,7 +13,7 @@ Primary Agent (Opus)          Backseat Agent (Haiku, background)
      │                              │   .session/{story}-tandem-{partner}.md
      │                              │
      ├── PostToolUse hook fires ────┤
-     │   pf.sh hooks bell-mode detects │
+     │   pf hooks bell-mode detects │
      │   new observation, injects   │
      │   "[Tandem] Character: ..."  │
      │                              │
@@ -157,14 +157,14 @@ For active, synchronous agent-to-agent questions (as opposed to passive observat
 
 ## Related Infrastructure
 
-| Component | Status | Purpose |
-|-----------|--------|---------|
-| `tandem-lifecycle.ts` | Built | Library module for future WheelHub integration |
-| `observation-writer.ts` | Built | TypeScript API for observation file I/O |
-| `file-watch.ts` | Built | File system change detection |
-| `tool-watch.ts` | Built | Tool call log monitoring |
-| `pf.sh hooks bell-mode` | Built | PostToolUse hook with tandem injection |
-| `bellmode_hook.py` | Built | Python implementation of bell mode hook |
-| `pf.sh hooks statusline` | Built | CLI statusline with tandem indicator |
-| `tandem-backseat.md` | Built | Backseat agent prompt template |
-| `agent-behavior.md` | Built | Shared agent behavior with tandem protocol |
+| Component | Purpose |
+|-----------|---------|
+| `tandem-lifecycle.ts` | Library module for future WheelHub integration |
+| `observation-writer.ts` | TypeScript API for observation file I/O |
+| `file-watch.ts` | File system change detection |
+| `tool-watch.ts` | Tool call log monitoring |
+| `pf hooks bell-mode` | PostToolUse hook with tandem injection |
+| `bellmode_hook.py` | Python implementation of bell mode hook |
+| `pf hooks statusline` | CLI statusline with tandem indicator |
+| `tandem-backseat.md` | Backseat agent prompt template |
+| `agent-behavior.md` | Shared agent behavior with tandem protocol |

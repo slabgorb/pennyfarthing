@@ -21,6 +21,8 @@ Gates live in `pennyfarthing-dist/gates/` and are referenced by workflow YAML fi
 | **merge-ready** | `gates/merge-ready.md` | No open non-draft PRs | SM new work gate |
 | **release-ready** | `gates/release-ready.md` | Composite: tests-pass + build, version, changelog | DevOps pre-deploy |
 | **reviewer-preflight-check** | `gates/reviewer-preflight-check.md` | Composite: tests-pass + code smells, error boundaries | Reviewer preflight |
+| **context-ok** | `gates/context-ok.md` | Verify context usage is below threshold before phase transition | Any phase transition gate |
+| **quality-pass** | `gates/quality-pass.md` | Composite: lint + type checks + tests via check.py quality runner | Dev → Reviewer transitions |
 
 ## Gate File Format
 
@@ -83,14 +85,14 @@ Agents interact with gates through the handoff CLI during their exit sequence:
 
 ```
 1. Agent writes assessment to session file
-2. pf.sh handoff resolve-gate {story-id} {workflow} {phase}
+2. pf handoff resolve-gate {story-id} {workflow} {phase}
    → Reads workflow YAML, finds gate for current phase
    → Returns RESOLVE_RESULT: {status: ready|skip|blocked, gate_file: ...}
 3. If ready → spawn Haiku subagent with gate file → GATE_RESULT
 4. If GATE_RESULT.status == fail → fix issues, retry (max 3)
 5. If GATE_RESULT.status == pass → continue to complete-phase
-6. pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
-7. pf.sh handoff marker {next-agent}
+6. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
+7. pf handoff marker {next-agent}
 ```
 
 If a phase has no `gate:` block, `resolve-gate` returns `status: skip` and the agent proceeds directly to `complete-phase`.

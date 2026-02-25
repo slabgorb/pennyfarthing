@@ -95,7 +95,7 @@ Support Agents
     ├── commands/                       # 42 slash commands
     ├── guides/                         # Behavior guides and patterns
     ├── skills/                         # Knowledge domain skills
-    ├── personas/themes/                # 102 themed personas
+    ├── personas/themes/                # 100 themed personas
     └── scripts/                        # Utility scripts
 ```
 
@@ -118,7 +118,7 @@ Support Agents
 **Context Loading:**
 ```yaml
 On Activation:
-  1. sprint/sprint-status.yaml     # Full sprint status
+  1. sprint/current-sprint.yaml     # Full sprint status
   2. API/.claude/context.md      # API context
   3. UI/.claude/context.md       # UI context
   4. API/docs/epics.md         # Epic definitions (PM only)
@@ -142,7 +142,7 @@ On Activation:
 **Context Loading:**
 ```yaml
 On Activation:
-  1. sprint/sprint-status.yaml     # Current sprint (story section)
+  1. sprint/current-sprint.yaml     # Current sprint (story section)
   2. .session/{STORY_ID}-session.md        # Active story
   3. Determine target repo from story "Repos:" field
   4. Load target repo context:
@@ -155,7 +155,7 @@ On Activation:
 
 ### Base Directory Context
 
-#### `sprint/sprint-status.yaml`
+#### `sprint/current-sprint.yaml`
 **Purpose:** Unified sprint tracking for all stories
 **Size:** ~100-200 lines
 **Loaded By:** All agents
@@ -375,7 +375,7 @@ SM → TEA → Dev → Reviewer → SM
 ```
 PM Agent Example:
   - pm.md:                    200 lines
-  - sprint-status.yaml:       150 lines
+  - current-sprint.yaml:      150 lines
   - API/context:     30 lines
   - UI/context:      30 lines
   - epics.md (summary):       100 lines
@@ -387,7 +387,7 @@ PM Agent Example:
 ```
 Dev Agent Example (API story):
   - dev.md:                   300 lines
-  - sprint-status (story):     50 lines
+  - current-sprint (story):    50 lines
   - API/context:     30 lines
   - active work:               50 lines
   Total:                      430 lines ✓
@@ -433,7 +433,7 @@ Dev Agent Example (API story):
 - State detection via session file in `.session/`
 - Handoffs via Haiku subagents in `.pennyfarthing/agents/`
 - SM handles finish-story when status = `approved`
-- 102 themed personas for agent personality
+- 100 themed personas for agent personality
 
 ### Directory Structure
 ```

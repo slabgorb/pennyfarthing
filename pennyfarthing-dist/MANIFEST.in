@@ -1,4 +1,4 @@
-# Include source package
+# Include source package (includes src/pf/_dist/ symlinks which resolve to content)
 graft src
 
 # Include project files
@@ -6,7 +6,7 @@ include pyproject.toml
 include README.md
 include LICENSE
 
-# Exclude non-package directories (agent definitions, templates, etc.)
+# Exclude top-level content directories (content is included via src/pf/_dist/ symlinks)
 prune agents
 prune templates
 prune guides
@@ -20,6 +20,9 @@ prune gates
 prune packages
 prune tests
 prune docs
+
+# Exclude large binary content from bundled _dist
+prune src/pf/_dist/personas/spiders
 
 # Exclude test files from package
 prune src/pf/tests

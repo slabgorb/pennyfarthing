@@ -387,8 +387,8 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   let themePath: string | null = null;
 
   // Packaged app takes priority
-  if (process.resourcesPath) {
-    const bundledPath = join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
+  if ((process as any).resourcesPath) {
+    const bundledPath = join((process as any).resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(bundledPath)) {
       themePath = bundledPath;
     }
@@ -500,8 +500,8 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
   let themePath: string | null = null;
 
   // Packaged app takes priority
-  if (process.resourcesPath) {
-    const bundledPath = join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
+  if ((process as any).resourcesPath) {
+    const bundledPath = join((process as any).resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(bundledPath)) {
       themePath = bundledPath;
     }

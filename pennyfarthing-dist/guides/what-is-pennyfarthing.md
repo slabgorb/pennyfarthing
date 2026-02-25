@@ -7,7 +7,7 @@ A Claude Code agent orchestration framework. It coordinates multiple AI agents t
 | Pillar | What It Does |
 |--------|-------------|
 | **Development Platform** | 11 agents hand off work through BikeLane workflows. Phased workflows (TDD, BDD, trivial, agent-docs, patch) drive agents through phases automatically. Stepped workflows (architecture, research, PRD) guide users through gated steps. |
-| **Personality Research** | 102 themed persona sets (Discworld, Star Trek, Breaking Bad, etc.) studied for how character traits affect agent behavior. OCEAN profiling, TRAIL error taxonomy, benchmarking. |
+| **Personality Research** | 100 themed persona sets (Discworld, Star Trek, Breaking Bad, etc.) studied for how character traits affect agent behavior. OCEAN profiling, TRAIL error taxonomy, benchmarking. |
 | **Integration & Tooling** | Visual dashboards (Cyclist desktop app, BikeRack browser/TUI panels), Jira sync, sprint tracking, codebase health analysis. |
 
 ## How BikeLane Workflows Work
@@ -68,7 +68,7 @@ Each agent does its job, writes an assessment, passes the gate, and hands off to
 |------|-----|-----|
 | **CLI only** | `claude` | Agents in your terminal, no dashboard |
 | **BikeRack GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
-| **BikeRack TUI** | `just tui` + `just claude` | Dashboard in terminal alongside Claude |
+| **BikeRack TUI** | `pf bikerack start` or `just tui` + `just claude` | Dashboard in terminal alongside Claude |
 | **Cyclist** | `pf cyclist` | Desktop app with everything |
 
 ## What Pennyfarthing Is NOT

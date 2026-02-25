@@ -65,7 +65,7 @@ Tags that define agent personality and role.
 
 ```markdown
 <persona>
-Auto-loaded by `agent-session.sh start` from theme config.
+Auto-loaded by `pf agent start` from theme config.
 **Fallback if not loaded:** Supportive, methodical, detail-oriented
 </persona>
 ```
@@ -124,7 +124,7 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 **Purpose:** Verify agent owns the current workflow phase before proceeding. Prevents agents from acting on stories they shouldn't own.
 
-**Usage:** SM, TEA, Dev, Reviewer - runs `pf.sh workflow phase-check` on activation to determine correct owner.
+**Usage:** SM, TEA, Dev, Reviewer - runs `pf workflow phase-check` on activation to determine correct owner.
 
 ```markdown
 <phase-check>
@@ -132,7 +132,7 @@ Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Revie
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(pf workflow phase-check {workflow} {phase})
+OWNER=$(pf handoff phase-check {agent})
 ```
 
 **If OWNER != "dev":** Run `pf handoff marker $OWNER`, output result, tell user.
@@ -150,9 +150,9 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Assessment to session file
-- [ ] Run `pf.sh handoff resolve-gate` — verify gate status
-- [ ] Run `pf.sh handoff complete-phase` — atomic session update
-- [ ] Run `pf.sh handoff marker {next_agent}` — emit marker and EXIT
+- [ ] Run `pf handoff resolve-gate` — verify gate status
+- [ ] Run `pf handoff complete-phase` — atomic session update
+- [ ] Run `pf handoff marker {next_agent}` — emit marker and EXIT
 </handoff-gate>
 ```
 
@@ -181,7 +181,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 Tags used specifically by Haiku subagents for parameter contracts.
 
-### `<params>`
+### `<arguments>`
 
 **Purpose:** Define the parameter contract for subagents. Specifies what the calling agent must provide in the prompt.
 
@@ -189,13 +189,13 @@ Tags used specifically by Haiku subagents for parameter contracts.
 
 **Standard format (table):**
 ```markdown
-<params>
+<arguments>
 | Param | Required | Description |
 |-------|----------|-------------|
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
 | `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
 | `FILTER` | No | Test name pattern for filtered runs |
-</params>
+</arguments>
 ```
 
 **Note:** Use `<info>` for contextual information that isn't a parameter contract.
@@ -448,7 +448,7 @@ Tags used in skill files (`skills/{name}/SKILL.md`) for command documentation.
 
 ```markdown
 <run>
-pf.sh sprint status [filter]
+pf sprint status [filter]
 </run>
 ```
 
@@ -474,7 +474,7 @@ pf.sh sprint status [filter]
 
 ```markdown
 <example>
-pf.sh sprint check MSSCI-12038
+pf sprint check MSSCI-12038
 # Returns: {"type": "story", "available": true}
 </example>
 ```
@@ -502,7 +502,7 @@ pf.sh sprint check MSSCI-12038
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
+pf agent start "sm"
 ```
 </agent-activation>
 ```

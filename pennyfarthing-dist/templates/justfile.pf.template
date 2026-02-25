@@ -19,7 +19,7 @@ wheelhub *args:
 
 # Launch TUI panel viewer (starts WheelHub if needed)
 tui:
-    uv run --project "{{root}}/.pennyfarthing" pf launch tui --foreground
+    pf launch tui --foreground
 
 # Launch GUI dashboard in browser (starts WheelHub if needed)
 gui:

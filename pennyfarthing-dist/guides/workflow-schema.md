@@ -8,7 +8,7 @@ Workflows define agent sequences for different work types. Instead of the hardco
 
 ## File Location
 
-Workflows are defined in `.claude/workflows/*.yaml`
+Workflows are defined in `pennyfarthing-dist/workflows/*.yaml`
 
 ## Schema
 
@@ -68,6 +68,7 @@ workflow:
 |------|-------------|
 | `tests_pass` | All tests must pass |
 | `tests_fail` | Tests must be failing (RED phase) |
+| `quality_pass` | Lint, typecheck, and all tests passing (verify phase) |
 | `approval` | Requires reviewer approval |
 | `manual` | Manual confirmation required |
 
@@ -157,9 +158,16 @@ workflow:
       gate:
         type: tests_pass
 
+    - name: verify
+      agent: tea
+      input: [implementation, passing_tests]
+      output: [quality_verified]
+      gate:
+        type: quality_pass
+
     - name: review
       agent: reviewer
-      input: [implementation]
+      input: [implementation, passing_tests, quality_verified]
       output: [approval]
       gate:
         type: approval

@@ -5,7 +5,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
-    "types": ["node", "electron"],
+    "types": ["node"],
     "paths": {
       "@pennyfarthing/core": ["../core/src/index.ts"],
       "@pennyfarthing/core/server": ["../core/src/server/server.ts"],

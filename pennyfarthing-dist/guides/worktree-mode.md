@@ -86,8 +86,8 @@ Ports are stored in the session file and passed to agents.
 | Command | Purpose |
 |---------|---------|
 | `/pf-session parallel` | Start a new parallel work session |
-| `pf.sh git worktree list` | Show active worktrees |
-| `pf.sh git worktree remove <name>` | Clean up a worktree |
+| `pf git worktree list` | Show active worktrees |
+| `pf git worktree remove <name>` | Clean up a worktree |
 
 ## TDD Flow in Worktrees
 
@@ -104,7 +104,7 @@ Agents use worktree paths from session file for all operations.
 When story is complete, SM archives the session and the worktree can be removed:
 
 ```bash
-pf.sh git worktree remove wt-5-3a
+pf git worktree remove wt-5-3a
 ```
 
 This removes:

@@ -1,7 +1,7 @@
 # Handoff CLI
 
 <info>
-Python CLI for managing workflow phase transitions. Agents use `pf.sh handoff` to resolve gates, complete phase transitions, and generate handoff markers during their exit protocol.
+Python CLI for managing workflow phase transitions. Agents use `pf handoff` to resolve gates, complete phase transitions, and generate handoff markers during their exit protocol.
 </info>
 
 ## Commands
@@ -11,7 +11,7 @@ Python CLI for managing workflow phase transitions. Agents use `pf.sh handoff` t
 Check whether the current phase has a gate and what state it's in.
 
 ```bash
-pf.sh handoff resolve-gate STORY_ID WORKFLOW PHASE
+pf handoff resolve-gate STORY_ID WORKFLOW PHASE
 ```
 
 **Arguments:**
@@ -39,7 +39,7 @@ RESOLVE_RESULT:
 Atomically update the session file to record a phase transition.
 
 ```bash
-pf.sh handoff complete-phase STORY_ID WORKFLOW FROM_PHASE TO_PHASE GATE_TYPE
+pf handoff complete-phase STORY_ID WORKFLOW FROM_PHASE TO_PHASE GATE_TYPE
 ```
 
 **Arguments:**
@@ -66,8 +66,8 @@ Updates the session file: `**Phase:**` line, timestamps, and phase history table
 Generate an environment-aware handoff marker block.
 
 ```bash
-pf.sh handoff marker NEXT_AGENT
-pf.sh handoff marker --error "Tests failing"
+pf handoff marker NEXT_AGENT
+pf handoff marker --error "Tests failing"
 ```
 
 **Arguments:**
@@ -88,14 +88,14 @@ The handoff CLI is used in sequence during agent exit:
 
 ```
 1. Write assessment to session file
-2. pf.sh handoff resolve-gate {story-id} {workflow} {phase}
+2. pf handoff resolve-gate {story-id} {workflow} {phase}
    ├── blocked → report error, STOP
    ├── skip → jump to step 4
    └── ready → spawn gate subagent → GATE_RESULT
        ├── fail → fix issues, retry (max 3)
        └── pass → continue
-3. pf.sh handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
-4. pf.sh handoff marker {next-agent} → emit marker → EXIT
+3. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
+4. pf handoff marker {next-agent} → emit marker → EXIT
 ```
 
 See `guides/gates.md` for gate file format and evaluation details.

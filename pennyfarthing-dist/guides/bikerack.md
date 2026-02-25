@@ -27,7 +27,8 @@ Cyclist bundles the conversation UI and dashboard panels into one Electron app. 
 ## Quick Start
 
 There are two approaches to running BikeRack.
-@arcaven currently uses:
+
+**Approach 1: Manual just commands**
 
 ```bash
 # hint - cd ($repo)
@@ -43,11 +44,11 @@ just tui
 just bikerack # your mileage may vary
 ```
 
-RoseSecurity has been using:
+**Approach 2: pf CLI**
 
 ```bash
 # Launch BikeRack + Claude CLI together
-pf.sh bikerack start
+pf bikerack start
 
 # Or via just recipe
 just bikerack
@@ -56,10 +57,10 @@ just bikerack
 just bikerack dir=/path/to/project
 
 # Stop a running instance
-pf.sh bikerack stop
+pf bikerack stop
 
 # Check status
-pf.sh bikerack status
+pf bikerack status
 ```
 
 BikeRack opens a browser with the Dockview panel layout. Claude CLI runs in the foreground. When Claude exits, BikeRack shuts down automatically via `trap EXIT`.
@@ -90,7 +91,7 @@ BikeRack supports two modes:
 
 ## How It Works
 
-1. **Launcher** (`pf.sh bikerack start`) starts WheelHub with `IS_BIKERACK=1`
+1. **Launcher** (`pf bikerack start`) starts WheelHub with `IS_BIKERACK=1`
 2. **WheelHub** listens on port 2898 (separate from Cyclist's 1898)
 3. **ClaudeService is skipped** — no `/ws/claude` WebSocket channel
 4. **OTEL telemetry** flows from Claude CLI to WheelHub's OTLP receiver
@@ -112,7 +113,7 @@ Client-side detection is URL-based: the presence of `?panel=X` triggers standalo
 | File | Purpose |
 |------|---------|
 | `.bikerack-port` | Port number, written after `server.listen()` — readiness signal |
-| `.wheelhub-pid` | WheelHub PID, written by launcher — enables `pf.sh bikerack stop` |
+| `.wheelhub-pid` | WheelHub PID, written by launcher — enables `pf bikerack stop` |
 
 Both are deleted on shutdown. Shared with Cyclist (single WheelHub namespace).
 
@@ -121,9 +122,9 @@ Both are deleted on shutdown. Shared with Cyclist (single WheelHub namespace).
 Save and restore BikeRack panel layouts:
 
 ```bash
-pf.sh bc save my-layout      # Save current layout
-pf.sh bc load my-layout      # Restore a saved layout
-pf.sh bc list                 # List saved layouts
+pf bc save my-layout      # Save current layout
+pf bc load my-layout      # Restore a saved layout
+pf bc list                 # List saved layouts
 ```
 
 ## Key Files
@@ -131,10 +132,10 @@ pf.sh bc list                 # List saved layouts
 | File | Purpose |
 |------|---------|
 | `packages/cyclist/src/bikerack.ts` | BikeRack WheelHub entry point |
-| `packages/core/src/public/components/BikeRackWorkspace.tsx` | Dockview layout for BikeRack |
-| `packages/core/src/public/components/BikeRackIndex.tsx` | Panel listing index page |
-| `packages/core/src/public/components/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |
-| `pf/bikerack/cli.py` | `pf.sh bikerack` launcher CLI |
+| `packages/core/src/server/BikeRackWorkspace.tsx` | Dockview layout for BikeRack |
+| `packages/core/src/server/BikeRackIndex.tsx` | Panel listing index page |
+| `packages/core/src/server/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |
+| `pf/bikerack/cli.py` | `pf bikerack` launcher CLI |
 
 ## TUI Mode (Terminal Dashboard)
 

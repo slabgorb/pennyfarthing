@@ -97,8 +97,8 @@ The core activation sequence for every agent. The `CRITICAL="TRUE"` attribute si
 3. READ its entire contents
 4. LOAD SIDECAR MEMORY:
    ```bash
-   SIDECAR="$CLAUDE_PROJECT_DIR/.claude/project/agents/{agent}-sidecar"
-   [ -d "$SIDECAR" ] && cat "$SIDECAR"/*.md 2>/dev/null | head -150
+   SIDECAR="$CLAUDE_PROJECT_DIR/.pennyfarthing/sidecars"
+   [ -d "$SIDECAR" ] && cat "$SIDECAR"/{agent}-*.md 2>/dev/null | head -150
    ```
 5. Execute ALL activation steps exactly as written
 6. Apply the loaded persona throughout the session
@@ -115,7 +115,7 @@ Cleanup steps when the agent exits or switches.
 <agent-exit>
 When the user says "exit", "switch agent", or ends the session:
 1. CAPTURE LEARNINGS: Ask yourself - any patterns, gotchas, or decisions to save?
-   If yes, append to `.claude/project/agents/{agent}-sidecar/{patterns|gotchas|decisions}.md`
+   If yes, append to `.pennyfarthing/sidecars/{agent}-{patterns|gotchas|decisions}.md`
 2. Run: [session stop command]
 3. Confirm session closed.
 </agent-exit>

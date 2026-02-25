@@ -31,11 +31,11 @@ A scientific study of how strong personalities affect AI agent behavior:
 - **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
-The 98 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The 100 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. Integration & Tooling
 
-- **Cyclist Visual Terminal** - Electron-based IDE with 17 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
+- **Cyclist Visual Terminal** - Electron-based IDE with 15 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
 - **BikeRack** - Standalone panel viewer for CLI-first developers — dashboard panels in your browser, Claude in your terminal
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
@@ -96,7 +96,7 @@ graph LR
 
 ## Visual Dashboards
 
-Whether you use Cyclist or BikeRack, you get the same 17 dashboard panels showing real-time agent activity:
+Whether you use Cyclist or BikeRack, you get the same 15 dashboard panels showing real-time agent activity:
 
 <!-- TODO: Screenshot of Cyclist with multiple panels visible -->
 <!-- ![Cyclist Dashboard](docs/images/cyclist-dashboard.png) -->
@@ -133,7 +133,7 @@ All panels are draggable, floatable, and splittable:
 | **Runtime** | Electron desktop app | Node.js server + browser/TUI |
 | **Terminal** | Embedded (node-pty) | Your own terminal |
 | **Conversation UI** | Built-in MessagePanel | Not included (by design) |
-| **Dashboard panels** | 17 Dockview panels | Same 17 panels |
+| **Dashboard panels** | 15 Dockview panels | Same 15 panels |
 | **OTEL telemetry** | Automatic | Via `just claude` or `pf bikerack start` |
 | **Install** | `npm i @pennyfarthing/cyclist` | Included in `@pennyfarthing/core` |
 
@@ -194,8 +194,8 @@ Prime uses **tiered injection** to manage token overhead:
 | Tier | Tokens | When |
 |------|--------|------|
 | **Full** | ~4000 | New session or new agent |
-| **Refresh** | ~2000 | Same agent, stale context |
-| **Handoff** | ~1000 | Agent-to-agent transition |
+| **Refresh** | ~600 | Same agent, stale context |
+| **Handoff** | ~700 | Agent-to-agent transition |
 | **Minimal** | ~200 | Deep in same agent session |
 
 ## Agent Sidecars
@@ -374,7 +374,7 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v11.0.0
+## What's New in v12.0.0
 
 - **Single Package Consolidation** — `@pennyfarthing/shared` absorbed into `@pennyfarthing/core`. WheelHub server, React UI build, and all shared utilities now live in core. Cyclist is a thin wrapper adding WebSocket + OTLP.
 - **Workflow Gate System** — Conditional checks (tests-pass, tests-fail, approval, confidence) that block phase transitions until quality thresholds are met
