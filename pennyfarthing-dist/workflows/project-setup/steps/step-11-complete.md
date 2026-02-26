@@ -140,6 +140,7 @@ Commands Available:
 ═════════════════════════
 
 IMMEDIATE:
+  □ Take the tour (/guided-tour) to learn the framework
   □ Review CLAUDE.md and customize for your project
   □ Add project-specific notes to shared-context.md
   □ Create your first sprint in sprint/current-sprint.yaml
@@ -174,6 +175,7 @@ Your agents now use the '{theme}' theme.
 {/if}
 
 Quick commands:
+  /guided-tour     - Take the guided tour
   /sm              - Start managing work
   /sprint status   - View sprint
   /help            - Get help
@@ -185,6 +187,29 @@ Launch Cyclist for the visual experience:
 
 Happy coding! 🚴
 ```
+
+## GUIDED TOUR
+
+Now that setup is complete, offer the user a guided tour of the framework.
+
+Use the AskUserQuestion tool as a switch-gate to let the user choose:
+
+<switch>
+**Prompt the user with AskUserQuestion:**
+
+"Would you like to take a guided tour of Pennyfarthing? The tour walks through agents, workflows, and key commands."
+
+**Options:**
+
+1. **Yes, start the tour** — Load and begin the `guided-tour` workflow. Run `/guided-tour` to launch it.
+2. **Later** — Skip for now. The user can start the tour any time by running `/guided-tour`.
+3. **Skip** — Continue without the tour. Setup is complete.
+
+**Behavior per selection:**
+- **Yes:** Execute `/guided-tour` to start the guided-tour workflow.
+- **Later:** Display: "No problem! Run `/guided-tour` whenever you're ready."
+- **Skip:** Proceed directly to WORKFLOW COMPLETE.
+</switch>
 
 ## WORKFLOW COMPLETE
 
