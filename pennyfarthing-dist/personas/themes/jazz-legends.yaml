@@ -304,7 +304,7 @@ agents:
     helper:
       name: The All-American Rhythm Section
       style: Reliable swing
-    shortName: Count
+      shortName: Count
 
   ba:
     character: Nat Hentoff
@@ -331,7 +331,7 @@ agents:
     helper:
       name: Liner Notes
       style: Deep listening analysis
-    shortName: Nat
+      shortName: Nat
 
 additional_characters:
   billie_holiday:

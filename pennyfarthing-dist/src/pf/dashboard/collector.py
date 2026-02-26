@@ -17,8 +17,6 @@ from typing import Any
 
 import yaml
 
-from pf.doctor.core import run_doctor
-
 
 def collect_all(project_root: Path) -> dict[str, Any]:
     """Collect all dashboard fields from subsystems."""

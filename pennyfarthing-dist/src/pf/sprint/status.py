@@ -8,7 +8,6 @@ from typing import Any
 
 from pf.sprint.loader import get_sprint_info, load_sprint
 
-
 # Map CLI filter names to YAML status values
 _FILTER_MAP: dict[str, set[str]] = {
     "backlog": {"backlog", "ready", "planning"},

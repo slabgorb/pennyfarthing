@@ -114,7 +114,8 @@ export function openSettingsWindow(parentWindow?: unknown): void {
     if (!BrowserWindowRef) {
       throw new Error('BrowserWindow not initialized - call setBrowserWindowRef first');
     }
-    const BrowserWindow = BrowserWindowRef as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Electron BrowserWindow constructor passed dynamically
+    const BrowserWindow = BrowserWindowRef as new (opts: Record<string, unknown>) => any;
     console.log('[Settings] Using BrowserWindow from ref, mainWindowRef:', !!mainWindowRef);
 
     const parent = parentWindow || mainWindowRef;
@@ -123,7 +124,7 @@ export function openSettingsWindow(parentWindow?: unknown): void {
 
     const settingsWindow = new BrowserWindow({
       ...config,
-      parent: parent as any,
+      parent: parent as InstanceType<typeof BrowserWindow>,
       show: false, // Don't show until ready
     });
 

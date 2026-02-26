@@ -54,9 +54,7 @@ Tooling to smooth out annoying development processes:
 ### Personality Research
 | Document | Description |
 |----------|-------------|
-| [Benchmarking](../packages/benchmark/docs/BENCHMARKING.md) | Scientific persona evaluation methodology |
 | [TRAIL-OCEAN Mapping](../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) | Hypothesis-driven personality testing |
-| [OCEAN Benchmarking](../packages/benchmark/docs/OCEAN-BENCHMARKING.md) | Empirical findings on personality correlations |
 | [Personas](PERSONAS.md) | Persona system overview |
 
 ### Integration & Operations

@@ -291,7 +291,7 @@ agents:
     helper:
       name: The Land
       style: Where meaning is found
-    shortName: Levin
+      shortName: Levin
 
   ba:
     character: Porfiry Petrovich
@@ -318,7 +318,7 @@ agents:
     helper:
       name: Psychology
       style: Understanding the soul
-    shortName: Porfiry
+      shortName: Porfiry
 
 additional_characters:
   dmitri_karamazov:

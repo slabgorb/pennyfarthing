@@ -59,8 +59,8 @@ let themeMetadataCache: ThemeMetadata[] | null = null;
  */
 function findThemesDir(): string | null {
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
-  if ((process as any).resourcesPath) {
-    const bundledThemes = join((process as any).resourcesPath, 'pennyfarthing-dist', 'personas', 'themes');
+  if ((process as unknown as Record<string, unknown>).resourcesPath) {
+    const bundledThemes = join((process as unknown as Record<string, unknown>).resourcesPath as string, 'pennyfarthing-dist', 'personas', 'themes');
     if (fs.existsSync(bundledThemes)) {
       return bundledThemes;
     }

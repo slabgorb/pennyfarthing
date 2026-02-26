@@ -116,7 +116,7 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
     # This is the final fallback for pipx-installed consumers with no
     # pennyfarthing-dist/ directory or node_modules.
     try:
-        from pf._dist import is_populated, get_root
+        from pf._dist import get_root, is_populated
         if is_populated():
             return get_root()
     except (ImportError, ModuleNotFoundError):

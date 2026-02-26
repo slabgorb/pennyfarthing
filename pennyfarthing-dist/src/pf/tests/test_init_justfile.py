@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -204,8 +203,8 @@ class TestExistingJustfileWithoutImport:
 
         content = (target_dir / "justfile").read_text()
         lines = content.splitlines()
-        import_idx = next(i for i, l in enumerate(lines) if "import" in l and "justfile.pf" in l)
-        env_idx = next(i for i, l in enumerate(lines) if "env :=" in l)
+        import_idx = next(i for i, line in enumerate(lines) if "import" in line and "justfile.pf" in line)
+        env_idx = next(i for i, line in enumerate(lines) if "env :=" in line)
         assert import_idx > env_idx
 
     def test_does_not_create_justfile_created_flag(

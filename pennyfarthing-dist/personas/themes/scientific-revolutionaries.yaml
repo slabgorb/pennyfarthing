@@ -303,7 +303,7 @@ agents:
     helper:
       name: The Analytical Engine
       style: Potential made real
-    shortName: Ada
+      shortName: Ada
 
   ba:
     character: James Watson (& Francis Crick)
@@ -330,7 +330,7 @@ agents:
     helper:
       name: Photo 51
       style: Visual evidence analysis
-    shortName: Watson
+      shortName: Watson
 
 additional_characters:
   rosalind_franklin:

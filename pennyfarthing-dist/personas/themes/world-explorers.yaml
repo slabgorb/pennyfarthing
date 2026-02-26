@@ -301,7 +301,7 @@ agents:
     helper:
       name: Tenzing Norgay
       style: Partnership in the heights
-    shortName: Edmund
+      shortName: Edmund
 
   ba:
     character: Mary Kingsley
@@ -328,7 +328,7 @@ agents:
     helper:
       name: Local Knowledge
       style: Cultural immersion
-    shortName: Mary
+      shortName: Mary
 
 additional_characters:
   zheng_he:

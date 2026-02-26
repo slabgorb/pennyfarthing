@@ -322,4 +322,4 @@ agents:
     helper:
       name: Legal Analysis
       style: Interrogative discovery
-    shortName: Carolyn
+      shortName: Carolyn

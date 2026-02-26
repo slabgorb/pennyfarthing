@@ -57,7 +57,7 @@ const STRICT = process.argv.includes('--strict');
 // --- Constants ---
 
 const SCAN_EXTENSIONS = new Set(['.yaml', '.yml', '.md', '.sh', '.py']);
-const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', 'dist', 'portraits', 'templates']);
+const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', 'dist', 'build', 'portraits', 'templates']);
 
 // Absolute path leak pattern
 // Windows pattern requires backslash + 2 word chars to avoid matching escape sequences like \n, \t
@@ -145,6 +145,9 @@ function getPythonModules() {
   const scriptsDir = join(PROJECT_ROOT, 'pennyfarthing-dist', 'src', 'pf');
   if (!existsSync(scriptsDir)) return new Set();
   const modules = new Set();
+
+  // _dist is the pip-bundled content directory — only exists in packaged builds, not in source tree
+  modules.add('_dist');
 
   function walk(dir, prefix) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {

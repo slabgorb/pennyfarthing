@@ -10,8 +10,6 @@ REAL pennyfarthing-dist directory and test the full CLI flow.
 from __future__ import annotations
 
 import json
-import os
-import shutil
 from pathlib import Path
 from unittest.mock import patch
 
@@ -538,7 +536,7 @@ class TestIdempotency:
             init_project(fresh_project, REAL_DIST)
 
         gitignore = (fresh_project / ".gitignore").read_text()
-        lines = [l.strip() for l in gitignore.splitlines() if l.strip()]
+        lines = [line.strip() for line in gitignore.splitlines() if line.strip()]
 
         # Each entry should appear at most once
         assert lines.count(".session/") == 1
