@@ -3,11 +3,15 @@
 <purpose>
 Verify SM has completed story setup before handing off to the next agent.
 Without a properly configured session file, the next agent cannot function.
-Extracts the inline pre-handoff checklist from sm.md.
+
+Checks: session exists, fields set, epic context validated, story context
+validated, branch created. Context checks use a cascade pattern — validate
+first, report actionable recovery on failure.
 </purpose>
 
 <pass>
-Run these checks in order:
+Run these checks in order. Extract the epic number {N} and story ID {N-N}
+from the story ID in the session file.
 
 1. **session-exists:** Check `.session/{story-id}-session.md` exists.
    ```bash
@@ -18,12 +22,32 @@ Run these checks in order:
    - `**Workflow:**` field present and non-empty
    - `**Phase:**` field present and set to `setup`
 
-3. **story-context-exists:** Verify:
-   - `sprint/context/context-epic-{N}.md` exists (extract epic number from story ID)
-   - Session file contains technical approach section
-   - Session file contains acceptance criteria
+3. **epic-context-validated:** Validate epic context document.
+   ```bash
+   pf context-docs validate epic {N}
+   ```
+   - Exit 0: PASS — epic context exists and is valid
+   - Exit 2 (not found): FAIL — file `sprint/context/context-epic-{N}.md` missing
+   - Exit 1 (invalid): FAIL — report validation errors from stdout
 
-4. **branch-created:** For each repo in session `**Repos:**`:
+   **Fallback** (if `pf context-docs` is not available): check that
+   `sprint/context/context-epic-{N}.md` exists and is non-empty.
+
+4. **story-context-validated:** Validate story context document.
+   ```bash
+   pf context-docs validate story {N-N}
+   ```
+   - Exit 0: PASS — story context exists and is valid
+   - Exit 2 (not found): FAIL — file `sprint/context/context-story-{N-N}.md` missing
+   - Exit 1 (invalid): FAIL — report validation errors from stdout
+
+   **Fallback** (if `pf context-docs` is not available): check that
+   `sprint/context/context-story-{N-N}.md` exists. If no story context file
+   exists, check that the session file contains an SM Assessment section
+   with technical approach — this is acceptable for stories without
+   dedicated context files.
+
+5. **branch-created:** For each repo in session `**Repos:**`:
    - Run `git branch --show-current`
    - Confirm not on `main` or `develop`
 
@@ -41,9 +65,12 @@ GATE_RESULT:
     - name: session-fields-set
       status: pass
       detail: "Workflow: {workflow}, Phase: setup"
-    - name: story-context-exists
+    - name: epic-context-validated
       status: pass
-      detail: "Epic context and story ACs present"
+      detail: "sprint/context/context-epic-{N}.md valid"
+    - name: story-context-validated
+      status: pass
+      detail: "sprint/context/context-story-{N-N}.md valid (or SM Assessment present)"
     - name: branch-created
       status: pass
       detail: "Branch {branch} created in {repos}"
@@ -65,16 +92,20 @@ GATE_RESULT:
     - name: session-fields-set
       status: pass | fail
       detail: "{fields present or missing fields list}"
-    - name: story-context-exists
+    - name: epic-context-validated
       status: pass | fail
-      detail: "{context present or missing sections}"
+      detail: "{valid, missing, or validation errors}"
+    - name: story-context-validated
+      status: pass | fail
+      detail: "{valid, missing, or validation errors}"
     - name: branch-created
       status: pass | fail
       detail: "{branch status per repo}"
   recovery:
     - "Run sm-setup to create session file"
     - "Set Workflow and Phase fields in session"
-    - "Write story context with technical approach and ACs"
+    - "Run `/pf-context create epic {N}` to create epic context"
+    - "Run `/pf-context create story {N-N}` to create story context"
     - "Create feature branch: git checkout -b feat/{story-slug}"
 ```
 </fail>
