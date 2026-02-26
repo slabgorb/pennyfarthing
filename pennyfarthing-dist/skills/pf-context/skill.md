@@ -4,8 +4,8 @@ description: |
   Create epic or story context documents. Reads sprint YAML for epic/story data,
   reads context-schema.yaml for required sections, populates templates, and writes
   output to sprint/context/. Epic context is a single-agent operation (no tandem).
-  Story context uses PM + tandem partner (added in 130-2/130-3).
-args: "create epic {id} | create story {id}"
+  Story context uses PM + tandem partner for domain-specific observations.
+args: "create epic {id} | create story {id} [--no-tandem] [--tandem architect|ux]"
 ---
 
 # /pf-context — Context Document Creation
@@ -119,7 +119,27 @@ Find the story in sprint data:
 2. **Get story metadata:** Run `pf sprint story show {id}` to get title, points, workflow, type, acceptance criteria
 3. **Get epic metadata:** Run `pf sprint epic show {N}` for parent epic context
 
-### Step 3: Validate Parent Epic Context
+### Step 3: Select Tandem Partner
+
+Determine the tandem partner based on the story's workflow field from Step 2. The partner provides domain-specific observations during context creation.
+
+**Partner selection mapping:**
+
+| Workflow | Partner | Observation Focus |
+|----------|---------|-------------------|
+| `tdd` | architect | Technical guardrails, dependencies, constraints |
+| `trivial` | architect | Technical guardrails, dependencies, constraints |
+| `bdd` | ux-designer | Interaction patterns, accessibility, visual constraints |
+| `bdd-tandem` | ux-designer | Interaction patterns, accessibility, visual constraints |
+
+**Override flags:**
+
+- `--no-tandem` — Skip partner spawn entirely. PM creates context solo. Use as escape hatch when tandem is unnecessary or unavailable.
+- `--tandem architect` or `--tandem ux` — Override automatic selection. Forces a specific partner regardless of workflow type.
+
+If no flag is provided, use the mapping table above. If the workflow doesn't match any row, default to `architect`.
+
+### Step 4: Validate Parent Epic Context
 
 Check that the parent epic context document exists:
 
@@ -134,18 +154,34 @@ If the parent epic context file is missing, **fail with a clear error message:**
 
 Do not proceed with story context creation if the parent epic context is missing.
 
-### Step 4: Load the Template
+### Step 5: Load the Template
 
 Read the story context template at `pennyfarthing-dist/templates/context-story-template.md`.
 
-### Step 5: Fill the Template
+### Step 6: Spawn Tandem Backseat
+
+If tandem is enabled (not `--no-tandem`), spawn a backseat observer using the tandem protocol. The backseat runs in the background and writes observations to `.session/{story_id}-tandem-{partner}.md`.
+
+**Spawn the backseat** per `pennyfarthing-dist/guides/tandem-protocol.md`:
+
+```
+PARTNER: "{partner from Step 3}"
+CHARACTER: "{resolve from theme}"
+STORY_ID: "{story_id}"
+SCOPE: "context-creation"
+OBSERVATION_FILE: ".session/{story_id}-tandem-{partner}.md"
+```
+
+**Graceful degradation:** If the backseat fails to spawn or errors during observation, log a warning and continue solo. Tandem failure is silent — PM continues without partner observations. Context is still valid but may lack specialist input.
+
+### Step 7: Fill the Template
 
 Read the parent epic context and story metadata. Populate each section:
 
 | Section | Source |
 |---------|--------|
 | **Business Context** | From epic context overview + story ACs — WHY this story matters, business value |
-| **Technical Guardrails** | From epic architecture section — constraints, patterns, key files to use/avoid |
+| **Technical Guardrails** | From epic architecture section + tandem observations — constraints, patterns, key files to use/avoid |
 | **Scope Boundaries** | From story metadata — explicit in-scope and out-of-scope items |
 | **AC Context** | From story ACs — expand terse acceptance criteria into testable detail |
 
@@ -154,7 +190,11 @@ Read the parent epic context and story metadata. Populate each section:
 - **Accessibility Requirements** — a11y constraints (for frontend stories)
 - **Visual Constraints** — design system, layout rules (for UI stories)
 
-### Step 6: Write the Output
+As you draft each section, incorporate any tandem observations that have been injected. The backseat partner contributes domain-specific detail:
+- **Architect** observations enrich Technical Guardrails and Scope Boundaries
+- **UX-Designer** observations enrich Interaction Patterns, Accessibility, and Visual Constraints
+
+### Step 8: Write the Output
 
 Write YAML frontmatter followed by the completed context document:
 
@@ -178,7 +218,9 @@ sprint/context/context-story-{id}.md
 
 Where `{id}` is the story ID (e.g., `130-2`).
 
-### Step 7: Validate (if available)
+### Step 9: Cleanup and Validate
+
+If a tandem backseat is running, terminate it before finishing.
 
 If the context validator is available, run:
 
@@ -191,7 +233,8 @@ Report any validation errors. If the validator is not yet installed, skip this s
 ## Constraints — Story Context
 
 - **Schema-driven:** Always read `context-schema.yaml` for sections (ADR-0029 Rule #2)
-- **PM-only mode:** No tandem partner spawning (deferred to 130-3)
+- **Tandem selection:** Workflow field determines partner — tdd/trivial→architect, bdd/bdd-tandem→ux-designer (ADR-0029 Rule #5)
+- **Tandem optional:** `--no-tandem` skips partner spawn; backseat failure continues solo (ADR-0029 Rule #9)
 - **Parent required:** Must validate parent epic context exists before creating story context
 - **Frontmatter required:** Story contexts must include `parent:` field in YAML frontmatter
 - **Naming convention:** `context-story-{id}.md` with story ID (ADR-0029 Rule #1)
