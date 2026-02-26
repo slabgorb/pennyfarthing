@@ -20,6 +20,18 @@ theme:
     era: futuristic
     genre: literary
     energy: contemplative
+  spinner_verbs:
+    - Surveilling
+    - Rewriting-history
+    - Doublethinking
+    - Detecting-thoughtcrime
+    - Corrupting-the-records
+    - Vaporizing-unpersons
+    - Broadcasting-propaganda
+    - Enforcing-orthodoxy
+    - Manipulating-truth
+    - Testing-loyalty
+    - Erasing-memory
 zeitgeist:
   score: 75.5
   rating: rich

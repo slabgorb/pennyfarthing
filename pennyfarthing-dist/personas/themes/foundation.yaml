@@ -15,6 +15,20 @@ theme:
   user_title: Citizen of the Foundation
   portrait_style: ", classic sci-fi, galactic grandeur, psychohistory equations, 1950s retro-futurist"
   tier: B
+  spinner_verbs:
+    - Psychohistory-calculating
+    - Predicting-futures
+    - Seldon-crisis-solving
+    - Encyclopediaing
+    - Galactic-architecting
+    - Mathematical-modeling
+    - Plan-proceeding
+    - Second-Foundation-consulting
+    - Trade-route-charting
+    - Terminus-protecting
+    - Pattern-perceiving
+    - Millennium-planning
+
 zeitgeist:
   score: 78.0
   rating: rich

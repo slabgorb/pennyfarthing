@@ -15,6 +15,18 @@ theme:
   user_title: Hooplehead
   portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
   tier: D
+  spinner_verbs:
+    - Swearing-profusely
+    - Prospecting-for-gold
+    - Monologuing-to-heads
+    - Building-the-camp
+    - Manipulating-cocksuckers
+    - Running-the-Gem
+    - Bribing-the-lawman
+    - Mining-claims
+    - Settling-debts
+    - Imposing-order
+    - Scheming-brutally
 zeitgeist:
   score: 86.0
   rating: rich

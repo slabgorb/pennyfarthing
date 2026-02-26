@@ -14,6 +14,19 @@ theme:
   user_title: Dear Reader
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
   tier: B
+  spinner_verbs:
+    - Redeeming-souls
+    - Exposing-workhouses
+    - Transforming-misers
+    - Haunting-with-consequences
+    - Revealing-secrets
+    - Seeking-redemption
+    - Documenting-poverty
+    - Rescuing-orphans
+    - Mourning-loss
+    - Celebrating-redemption
+    - Pointing-forward
+    - Gesturing-silently
 
 zeitgeist:
   score: 77.5

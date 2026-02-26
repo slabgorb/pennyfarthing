@@ -15,6 +15,17 @@ theme:
   user_title: Friend
   portrait_style: ", Pacific Northwest noir style, surrealist dreamscape, red curtains"
   tier: A
+  spinner_verbs:
+    - Damn-fine-coffee-drinking
+    - Log-lady-consulting
+    - Owl-watching
+    - Black-Lodge-entering
+    - Red-curtain-walking
+    - Twin-Peaks-investigating
+    - Cryptic-speaking
+    - Tibetan-meditating
+    - Diane-recording
+    - Damn-fine-pie-eating
 
 zeitgeist:
   score: 88.0

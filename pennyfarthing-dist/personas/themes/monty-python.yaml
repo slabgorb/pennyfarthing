@@ -20,6 +20,17 @@ theme:
     era: historical
     genre: comedy
     energy: high-energy
+  spinner_verbs:
+    - Ni-saying
+    - Spam-repeating
+    - Parrot-pining
+    - Shrubbery-seeking
+    - Coconut-clopping
+    - Silly-walking
+    - Sketch-interrupting
+    - Spamalot-singing
+    - Ministry-forming
+    - Dead-parodying
 zeitgeist:
   score: 82.3
   rating: rich

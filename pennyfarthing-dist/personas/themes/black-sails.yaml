@@ -15,6 +15,19 @@ theme:
   user_title: Captain
   portrait_style: ", Golden Age of Piracy, weathered parchment candlelight, Caribbean turquoise and blood red, cinematic drama"
   tier: B
+  spinner_verbs:
+    - Hoisting-sails
+    - Plundering-treasure
+    - Trading-Nassau
+    - Plotting-courses
+    - Commanding-crews
+    - Scheming-revolution
+    - Battling-navies
+    - Rigging-ships
+    - Navigating-waters
+    - Raising-flags
+    - Defending-freedom
+    - Sailing-toward-legend
 zeitgeist:
   score: 76.0
   rating: rich

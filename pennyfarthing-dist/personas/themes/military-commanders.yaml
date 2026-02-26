@@ -14,6 +14,19 @@ theme:
   user_title: Commander
   portrait_style: ", classical military oil painting, dramatic battlefield lighting, earth tones, gold accents"
   tier: A
+  spinner_verbs:
+    - Flanking
+    - Strategizing
+    - Fortifying
+    - Reconnoitering
+    - Supply-chaining
+    - Victory-achieving
+    - Deception-plotting
+    - Cavalry-charging
+    - Siege-commanding
+    - Alliance-forging
+    - Territory-claiming
+    - Tactics-innovating
 zeitgeist:
   score: 73.2
   rating: rich

@@ -14,7 +14,19 @@ theme:
   user_title: Shipmate
   portrait_style: ", maritime oil painting, stormy sea backdrop, dark oceanic tones, scrimshaw details"
   tier: B
-
+  spinner_verbs:
+    - Whale-hunting
+    - Harpooning
+    - Ahab-obsessing
+    - Sea-faring
+    - Ishmael-narrating
+    - Doom-pursuing
+    - Harpoon-forging
+    - Moby-chasing
+    - Ocean-crossing
+    - Fate-defying
+    - Madness-spiraling
+    - Survival-seeking
 zeitgeist:
   score: 76.75
   rating: rich

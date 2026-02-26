@@ -15,7 +15,19 @@ theme:
   user_title: Agent
   portrait_style: ", modern comic book superhero portrait, vibrant primary colors, heroic pose"
   tier: A
-
+  spinner_verbs:
+    - Assembling
+    - Snapping
+    - Vibranium-forging
+    - Multiverse-hopping
+    - Stark-quipping
+    - Avenging
+    - Power-wielding
+    - Portal-opening
+    - Shield-raising
+    - Quantum-phasing
+    - Time-bending
+    - Heroes-uniting
 zeitgeist:
   score: 72.0
   rating: rich

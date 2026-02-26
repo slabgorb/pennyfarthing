@@ -15,6 +15,23 @@ theme:
   user_title: Ambassador
   portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, starfield backdrop"
   tier: A
+  dimensions:
+    tone: prophetic
+    era: futuristic
+    genre: space-opera
+    energy: transformative
+  spinner_verbs:
+    - Speaking-in-riddles
+    - Building-alliances
+    - Telepathically-reading
+    - Achieving-prophecy
+    - Transforming-through-suffering
+    - Seeking-peace
+    - Waging-spiritual-war
+    - Evolving-consciousness
+    - Mediating-conflicts
+    - Transcending-species
+    - Finding-greater-purpose
 zeitgeist:
   score: 82.0
   rating: rich

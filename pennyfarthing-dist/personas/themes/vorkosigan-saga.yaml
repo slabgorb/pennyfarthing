@@ -15,6 +15,18 @@ theme:
   user_title: My Lord
   portrait_style: ", art noveau style, vintage illustration, Klimt-inspired"
   tier: A
+  spinner_verbs:
+    - Vor-maneuvering
+    - Galactic-politicking
+    - Clone-wrangling
+    - Fast-penta-dosing
+    - Jump-ship-engineering
+    - Dendarii-leading
+    - Barrayar-navigating
+    - Betan-analyzing
+    - Imperial-scheming
+    - Impossible-achieving
+
 zeitgeist:
   score: 76.0
   rating: rich

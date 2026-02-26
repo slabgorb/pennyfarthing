@@ -20,6 +20,19 @@ theme:
     era: contemporary
     genre: drama
     energy: measured
+  spinner_verbs:
+    - That's-what-she-said-ing
+    - Dundie-awarding
+    - Beet-farming
+    - Schrute-bucking
+    - Documentary-filming
+    - Mundane-surviving
+    - Love-triangle-navigating
+    - Awkwardness-embracing
+    - Workplace-coping
+    - Pranks-orchestrating
+    - Meetings-enduring
+    - Relationships-complicating
 
 zeitgeist:
   score: 82.5

@@ -15,6 +15,23 @@ theme:
   user_title: Soldier
   portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, command console glow"
   tier: A
+  dimensions:
+    tone: gritty
+    era: contemporary-future
+    genre: military-sci-fi
+    energy: desperate
+  spinner_verbs:
+    - Jumping-FTL
+    - Detecting-Cylons
+    - Managing-the-fleet
+    - Questioning-humanity
+    - Surviving-impossible-odds
+    - Executing-plans
+    - Testing-faith
+    - Maintaining-stations
+    - Analyzing-patterns
+    - Bearing-witness
+    - Seeking-earth
 zeitgeist:
   score: 81.0
   rating: rich

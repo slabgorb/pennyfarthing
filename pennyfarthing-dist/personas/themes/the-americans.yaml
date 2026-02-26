@@ -15,6 +15,19 @@ theme:
   user_title: Comrade
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, red and black color scheme"
   tier: B
+  spinner_verbs:
+    - Spy-crafting
+    - Dead-dropping
+    - Wig-donning
+    - Handler-reporting
+    - Identity-maintaining
+    - Secrets-guarding
+    - Missions-executing
+    - Covers-protecting
+    - Defection-contemplating
+    - Loyalties-testing
+    - Kremlin-serving
+    - Families-juggling
 
 zeitgeist:
   score: 72.0

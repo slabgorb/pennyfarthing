@@ -14,6 +14,17 @@ theme:
   user_title: Colleague
   portrait_style: ", WWII command, 1940s sepia photography, military uniform, Allied leadership newsreel aesthetic"
   tier: B
+  spinner_verbs:
+    - Rallying-forces
+    - War-rooming
+    - Strategizing
+    - Mobilizing-armies
+    - Churchill-oratory
+    - D-Day-planning
+    - Code-breaking
+    - Arsenal-building
+    - Coalition-managing
+    - Victory-pursuing
 
 zeitgeist:
   score: 76.0

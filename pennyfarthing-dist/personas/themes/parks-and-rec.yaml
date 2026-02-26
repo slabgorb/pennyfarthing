@@ -14,6 +14,20 @@ theme:
   user_title: Citizen of Pawnee
   portrait_style: ", bright cheerful illustrated portrait, warm office lighting, small town aesthetic"
   tier: B
+  spinner_verbs:
+    - Waffle-making
+    - Leslie-Knoping
+    - Treat-yo-selfing
+    - Government-optimizing
+    - Binder-organizing
+    - Parks-advocating
+    - Breakfast-praising
+    - Pawnee-serving
+    - Committee-forming
+    - Enthusiasm-maximizing
+    - Swanson-building
+    - Happily-ending
+
 zeitgeist:
   score: 86.0
   rating: rich

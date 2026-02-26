@@ -15,6 +15,19 @@ theme:
   user_title: Child
   portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
   tier: B
+  spinner_verbs:
+    - Daemon-settling
+    - Alethiometer-reading
+    - Dust-gathering
+    - Subtle-knifing
+    - Compass-consulting
+    - Aurora-watching
+    - Armour-forging
+    - Witchcraft-practicing
+    - World-walking
+    - Severing-doing
+    - Particle-studying
+    - Journey-undertaking
 zeitgeist:
   score: 82.5
   rating: rich

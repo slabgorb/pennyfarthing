@@ -15,6 +15,20 @@ theme:
   user_title: Partner
   portrait_style: ", modern Western, Harlan County Kentucky, amber and sepia tones, coal country, cowboy hat silhouette"
   tier: S
+  spinner_verbs:
+    - Quick-drawing
+    - Holstering
+    - Harlan-patrolling
+    - Coal-mining
+    - Hat-tipping
+    - Digging
+    - Shooting-justifying
+    - Outlaw-tracking
+    - Bourbon-drinking
+    - Stetson-wearing
+    - Feuding
+    - Marshalling
+
 zeitgeist:
   score: 78.0
   rating: rich

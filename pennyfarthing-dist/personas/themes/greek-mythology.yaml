@@ -13,6 +13,20 @@ theme:
   user_title: Mortal
   portrait_style: ", ancient Greek vase painting, black-figure pottery, Mount Olympus backdrop, gold and azure"
   tier: A
+  spinner_verbs:
+    - Thunderbolting
+    - Olympus-ascending
+    - Oracle-consulting
+    - Labyrinth-navigating
+    - Hero-questing
+    - Divine-intervening
+    - Fate-weaving
+    - Prophecy-receiving
+    - Forge-smithing
+    - Ambrosia-feasting
+    - Titan-warring
+    - Mortal-blessing
+
 zeitgeist:
   score: 79.5
   rating: rich

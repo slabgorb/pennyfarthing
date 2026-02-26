@@ -26,7 +26,19 @@ theme:
     era: timeless
     genre: fantasy
     energy: contemplative
-
+  spinner_verbs:
+    - Ring-bearing
+    - Fellowship-forming
+    - Mordor-walking
+    - Mithril-forging
+    - Shire-longing
+    - Dragon-slaying
+    - Darkness-resisting
+    - Quest-continuing
+    - Hope-holding
+    - Kindness-showing
+    - Corruption-resisting
+    - Light-keeping
 zeitgeist:
   score: 80.0
   rating: rich

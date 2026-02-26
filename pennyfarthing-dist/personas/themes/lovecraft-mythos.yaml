@@ -13,6 +13,19 @@ theme:
   user_title: Seeker
   portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
   tier: A
+  spinner_verbs:
+    - Eldritch-glimpsing
+    - Sanity-checking
+    - Tentacle-sensing
+    - Cthulhu-summoning
+    - Grimoire-reading
+    - Reality-bending
+    - Madness-spiraling
+    - Forbidden-knowing
+    - Dimension-crossing
+    - Mystery-uncovering
+    - Cosmic-perceiving
+    - Necromancy-practicing
 zeitgeist:
   score: 80.75
   rating: rich

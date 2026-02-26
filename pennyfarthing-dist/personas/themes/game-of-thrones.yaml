@@ -15,6 +15,20 @@ theme:
   user_title: Sire
   portrait_style: ", medieval fantasy,  gritty lighting, ice and fire"
   tier: S
+  spinner_verbs:
+    - Winter-coming
+    - Iron-throne-claiming
+    - Valyrian-commanding
+    - Raven-sending
+    - Scheming-plotting
+    - Knee-bending
+    - Dragon-breathing
+    - Sword-wielding
+    - Kingdom-ruling
+    - Betrayal-brewing
+    - House-warring
+    - Prophecy-fulfilling
+
 zeitgeist:
   score: 79.3
   rating: rich

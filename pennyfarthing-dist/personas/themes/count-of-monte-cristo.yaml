@@ -14,7 +14,19 @@ theme:
   user_title: Friend
   portrait_style: ", French Romantic era, dramatic chiaroscuro candlelight, burgundy and grey, adventure novel cover"
   tier: B
-
+  spinner_verbs:
+    - Plotting-revenge
+    - Waiting-patiently
+    - Accumulating-fortune
+    - Orchestrating-justice
+    - Disguising-identity
+    - Digging-tunnels
+    - Navigating-imprisonment
+    - Sailing-waters
+    - Executing-plans
+    - Transforming-souls
+    - Achieving-providence
+    - Unmasking-betrayers
 zeitgeist:
   score: 73.5
   rating: rich

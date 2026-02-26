@@ -20,6 +20,19 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: contemplative
+  spinner_verbs:
+    - Harvesting-spice
+    - Riding-sandworms
+    - Prescient-seeing
+    - Training-Bene-Gesserit
+    - Mentating-analysis
+    - Terraforming-Arrakis
+    - Breathing-stillsuit
+    - Computing-futures
+    - Manipulating-politics
+    - Guiding-the-imperium
+    - Channeling-other-memory
+    - Fulfilling-prophecy
 zeitgeist:
   score: 77.5
   rating: rich

@@ -1,0 +1,21 @@
+# Pennyfarthing Feature Discovery Tips
+#
+# These are shown in the Claude Code spinner alongside default tips.
+# Keep tips short (< 80 chars), actionable, and focused on feature discovery.
+
+tips:
+  - "Try /pf-sprint to check your backlog"
+  - "Use /pf-work to resume where you left off"
+  - "Run /pf-theme to browse and set persona themes"
+  - "Use /pf-workflow to see available workflow types"
+  - "/pf-help gives context-aware help for any command"
+  - "Run pf theme list to see all available themes"
+  - "Use /pf-git for multi-repo status and cleanup"
+  - "Try /pf-architect for system design sessions"
+  - "/pf-reviewer runs adversarial code review"
+  - "Use /pf-check to run quality gates before handoff"
+  - "Run /pf-bc to manage BikeRack panel focus"
+  - "Try /pf-standalone to wrap changes into a quick PR"
+  - "/pf-tea starts a TDD session with the Test Engineer"
+  - "Use pf bikerack start for a panel dashboard alongside CLI"
+  - "Run /pf-settings to view and manage your config"

@@ -20,6 +20,19 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: high-energy
+  spinner_verbs:
+    - Red-pilling
+    - Bullet-timing
+    - Jacking-in
+    - Kung-fu-downloading
+    - Spoon-bending
+    - Code-seeing
+    - Reality-questioning
+    - Agents-evading
+    - Freedom-fighting
+    - Truth-seeking
+    - Illusions-shattering
+    - Humanity-saving
 zeitgeist:
   score: 85.0
   rating: rich

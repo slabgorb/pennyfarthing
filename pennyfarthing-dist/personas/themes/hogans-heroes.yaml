@@ -4,6 +4,19 @@ theme:
   source: "Hogan's Heroes (1965-1971)"
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
+  spinner_verbs:
+    - Tunneling
+    - Scheming
+    - Stalag-escaping
+    - Hogan-maneuvering
+    - Radio-signaling
+    - Forging-documents
+    - Sabotaging-quietly
+    - "I know nothing-ing"
+    - Explosives-building
+    - Undercover-operating
+    - Kommandant-fooling
+    - Dynamite-detonating
 
 agents:
   orchestrator:

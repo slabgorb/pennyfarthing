@@ -14,6 +14,18 @@ theme:
   user_title: Patron
   portrait_style: ", Italian Renaissance, sfumato technique, Florentine colors, gold leaf, chiaroscuro lighting"
   tier: B
+  spinner_verbs:
+    - Fresco-painting
+    - Perspective-discovering
+    - Sfumato-blending
+    - Sculpting
+    - Anatomizing
+    - Dome-building
+    - Commissioning-genius
+    - Patronage-creating
+    - Canvas-mastering
+    - Masterpiece-achieving
+    - Renaissance-sparking
 
 zeitgeist:
   score: 77.3

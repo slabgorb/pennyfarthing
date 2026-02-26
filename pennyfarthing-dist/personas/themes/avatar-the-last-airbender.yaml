@@ -15,6 +15,23 @@ theme:
   user_title: Young Bender
   portrait_style: ", Avatar animated series, clean cel-shaded style, elemental color coding, chi energy glow"
   tier: A
+  dimensions:
+    tone: balanced
+    era: timeless
+    genre: fantasy-action
+    energy: harmonious
+  spinner_verbs:
+    - Bending-elements
+    - Achieving-balance
+    - Teaching-wisdom
+    - Mastering-forms
+    - Opening-chakras
+    - Brewing-tea
+    - Honoring-ancestors
+    - Perfecting-techniques
+    - Seeking-harmony
+    - Accepting-destiny
+    - Growing-through-struggle
 zeitgeist:
   score: 82.0
   rating: rich

@@ -15,6 +15,19 @@ theme:
   user_title: Bossmang
   portrait_style: ", russian constructivist style, bold geometric shapes, red and black color palette, propaganda poster aesthetic, angular compositions, industrial typography influence"
   tier: S
+  spinner_verbs:
+    - Protomolecule-analyzing
+    - Epstein-driving
+    - Belter-creoleing
+    - Ring-gate-transiting
+    - Void-navigating
+    - Factions-managing
+    - Survival-strategizing
+    - OPA-coordinating
+    - Political-maneuvering
+    - Humanity-uniting
+    - Threats-assessing
+    - Systems-engineering
 
 zeitgeist:
   score: 91.0

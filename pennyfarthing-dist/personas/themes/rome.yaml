@@ -15,6 +15,19 @@ theme:
   user_title: Citizen
   portrait_style: ", ancient Roman mosaic portrait, tessera tile fragments, scratched graffito details, Pompeii wall art style, geometric earth tones, stone texture"
   tier: A
+  spinner_verbs:
+    - Conquering
+    - Senatoring
+    - Legion-marching
+    - Toga-draping
+    - Alea-iacta-ing
+    - Clementia-showing
+    - Rubicon-crossing
+    - Forum-orating
+    - Empire-building
+    - Republic-forging
+    - Veni-vidi-vici-ing
+
 zeitgeist:
   score: 80.0
   rating: rich

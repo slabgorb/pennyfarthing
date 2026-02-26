@@ -14,6 +14,23 @@ theme:
   user_title: Client
   portrait_style: ", 1980s action TV, bold primary colors, explosion orange background, vintage VHS aesthetic"
   tier: B
+  dimensions:
+    tone: comedic
+    era: retro
+    genre: action
+    energy: explosive
+  spinner_verbs:
+    - Planning-the-mission
+    - Improvising-the-con
+    - Building-contraptions
+    - Flying-something-crazy
+    - Escaping-the-army
+    - Charming-the-mark
+    - Fixing-the-van
+    - Running-the-jazz
+    - Getting-the-team-together
+    - Outmaneuvering-Lynch
+    - Breaking-everything-first
 zeitgeist:
   score: 89.0
   rating: rich

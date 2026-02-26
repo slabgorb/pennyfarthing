@@ -20,6 +20,19 @@ theme:
     era: historical
     genre: fantasy
     energy: high-energy
+  spinner_verbs:
+    - Mjolnir-hurling
+    - Rune-reading
+    - Yggdrasil-climbing
+    - Ragnarok-preparing
+    - Bifrost-guarding
+    - Valhalla-feasting
+    - Seidr-casting
+    - Asgard-orchestrating
+    - Fenrir-binding
+    - Mead-brewing
+    - Saga-singing
+
 zeitgeist:
   score: 79.0
   rating: rich

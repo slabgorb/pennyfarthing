@@ -15,6 +15,19 @@ theme:
   user_title: Bestie
   portrait_style: ", afterlife comedy, bright pastel colors, ethereal glow, warm illustrated style"
   tier: B
+  spinner_verbs:
+    - Forking
+    - Point-calculating
+    - Trolley-problem-solving
+    - Afterlife-redesigning
+    - Ethics-analyzing
+    - Goodness-learning
+    - Redemption-pursuing
+    - Neighborhoods-designing
+    - Growth-facilitating
+    - Morality-questioning
+    - Judgment-pondering
+    - Improvement-iterating
 
 zeitgeist:
   score: 84.0

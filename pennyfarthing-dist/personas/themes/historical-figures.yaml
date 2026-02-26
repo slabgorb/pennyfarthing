@@ -14,6 +14,19 @@ theme:
   user_title: Colleague
   portrait_style: ", classical oil portrait, museum quality, period attire, earth tones, Renaissance master painter style"
   tier: D
+  spinner_verbs:
+    - Inventing
+    - Discovering
+    - Revolutionizing
+    - Pioneering
+    - Theorizing
+    - Designing
+    - Analyzing
+    - Experimenting
+    - Observing
+    - Philosophizing
+    - Engineering
+    - Innovating
 zeitgeist:
   score: 66.8
   rating: moderate

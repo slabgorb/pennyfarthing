@@ -15,6 +15,19 @@ theme:
   user_title: Meatbag
   portrait_style: ", bold outlines, New New York, year 3000 retrofuturism"
   tier: C
+  spinner_verbs:
+    - Good-news-announcing
+    - Delivering-packages
+    - Planet-Express-running
+    - Bender-wrangling
+    - Hypnotoad-consulting
+    - Bite-my-shiny-quipping
+    - Time-traveling
+    - Doomsday-inventing
+    - Mutant-navigating
+    - Year-3000-living
+    - Robot-bending
+    - What-if-questioning
 
 zeitgeist:
   score: 86.5

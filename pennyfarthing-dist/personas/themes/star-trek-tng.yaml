@@ -19,6 +19,20 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: measured
+  spinner_verbs:
+    - Engaging
+    - Making-it-so
+    - Hailing-frequencies
+    - Holodeck-running
+    - Picard-maneuvering
+    - Warp-engaging
+    - Transporter-buffering
+    - Q-confronting
+    - Tea-brewing
+    - Dilemma-resolving
+    - Crew-leading
+    - Enterprise-commanding
+
 zeitgeist:
   score: 86.0
   rating: rich

@@ -15,6 +15,19 @@ theme:
   user_title: Jedi
   portrait_style: ", space opera cinematic, retro sci-fi concept art, art deco"
   tier: D
+  spinner_verbs:
+    - Force-channeling
+    - Lightsaber-igniting
+    - Jedi-mind-tricking
+    - Hyperspace-jumping
+    - Empire-resisting
+    - Destiny-embracing
+    - Galaxy-saving
+    - Dark-side-resisting
+    - Rebellion-building
+    - Wisdom-sharing
+    - Balance-seeking
+    - Starship-piloting
 
 zeitgeist:
   score: 76.8

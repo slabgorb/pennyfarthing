@@ -15,6 +15,19 @@ theme:
   user_title: Patient
   portrait_style: ", dark psychological thriller, chiaroscuro lighting, baroque aesthetic, burgundy tones, unsettling elegance"
   tier: S
+  spinner_verbs:
+    - Fine-dining
+    - Profiling-deeply
+    - Becoming-becoming
+    - Memory-palacing
+    - Chesapeake-rigging
+    - Manipulation-orchestrating
+    - Murder-aestheticizing
+    - Therapy-corrupting
+    - Empathy-channeling
+    - Pattern-discerning
+    - Darkness-cultivating
+    - Conversation-analyzing
 
 zeitgeist:
   score: 84.5

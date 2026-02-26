@@ -20,6 +20,19 @@ theme:
     era: historical
     genre: literary
     energy: measured
+  spinner_verbs:
+    - Crashing-repeatedly
+    - Recognizing-absurdity
+    - Raising-missions
+    - Trading-syndicate-shares
+    - Documenting-chaos
+    - Surviving-impossibly
+    - Paradox-looping
+    - Escaping-to-Sweden
+    - Achieving-catch-22
+    - Feathering-hierarchies
+    - Mailroom-controlling
+    - Bombing-bases
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system

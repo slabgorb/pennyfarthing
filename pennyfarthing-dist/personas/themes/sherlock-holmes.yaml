@@ -14,6 +14,20 @@ theme:
   user_title: Dear Client
   portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
   tier: A
+  spinner_verbs:
+    - Deducing
+    - Elementary-analyzing
+    - Violin-playing
+    - Magnifying-clues
+    - Baker-Street-investigating
+    - Pipe-smoking-thoughtfully
+    - Pattern-spotting
+    - Truth-revealing
+    - Logic-applying
+    - Case-solving
+    - Disguise-perfecting
+    - Three-pipe-pondering
+
 zeitgeist:
   score: 85.0
   rating: rich

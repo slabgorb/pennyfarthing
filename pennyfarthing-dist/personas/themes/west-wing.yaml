@@ -15,6 +15,18 @@ theme:
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
   tier: S
+  spinner_verbs:
+    - Walk-and-talking
+    - Briefing-preparing
+    - Bartlet-inspiring
+    - Situation-rooming
+    - Oval-office-strategizing
+    - Press-briefing
+    - Crisis-managing
+    - Constitutional-citing
+    - Idealism-channeling
+    - Speech-crafting
+
 zeitgeist:
   score: 84.5
   rating: rich

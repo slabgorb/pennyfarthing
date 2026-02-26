@@ -14,6 +14,19 @@ theme:
   user_title: Audience
   portrait_style: ", cinematic, dramatic chiaroscuro lighting, film set, director's chair, classic cinema golden age"
   tier: B
+  spinner_verbs:
+    - Framing-the-shot
+    - Auteur-visioning
+    - Long-take-orchestrating
+    - Scene-blocking
+    - Storyboarding
+    - Mise-en-scene-crafting
+    - Camera-tracking
+    - Montage-assembling
+    - Cut-timing
+    - Cinematic-lighting
+    - Directing-talent
+    - Vision-realizing
 
 zeitgeist:
   score: 76.5
@@ -283,6 +296,19 @@ agents:
     helper:
       name: Production Design
       style: Building worlds
+  spinner_verbs:
+    - Framing
+    - Directing
+    - Scene-setting
+    - Auteur-visioning
+    - Long-taking
+    - Cutting
+    - Lighting-designing
+    - Camera-tracking
+    - Storyboarding
+    - Blocking-movement
+    - Cinematic-crafting
+    - Vision-realizing
 
   ba:
     character: Orson Welles

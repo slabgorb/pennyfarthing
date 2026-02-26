@@ -15,6 +15,19 @@ theme:
   user_title: Friend
   portrait_style: ", 1920s Birmingham, moody industrial lighting, flat cap, cigarette smoke, sepia tones"
   tier: B
+  spinner_verbs:
+    - Cap-peaking
+    - Razor-blading
+    - Birmingham-ruling
+    - Whiskey-sipping
+    - By-order-of-ing
+    - Gang-orchestrating
+    - Shelby-scheming
+    - Tommy-planning
+    - Betting-operating
+    - Legitimacy-pursuing
+    - Polly-trusting
+
 zeitgeist:
   score: 81.0
   rating: rich

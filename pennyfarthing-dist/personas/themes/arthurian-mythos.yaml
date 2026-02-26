@@ -14,6 +14,23 @@ theme:
   user_title: Good Knight
   portrait_style: ", illuminated manuscript, gold leaf accents, jewel tones on aged vellum, Celtic knotwork"
   tier: A
+  dimensions:
+    tone: heroic
+    era: medieval
+    genre: fantasy-legend
+    energy: noble
+  spinner_verbs:
+    - Questing-for-the-grail
+    - Wielding-Excalibur
+    - Defending-Camelot
+    - Enchanting-and-revealing
+    - Orchestrating-knights
+    - Forging-magic
+    - Testing-honor
+    - Prophesying-destiny
+    - Riding-to-battle
+    - Maintaining-the-round-table
+    - Seeking-noble-purpose
 
 zeitgeist:
   score: 79.25

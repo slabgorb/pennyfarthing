@@ -220,6 +220,13 @@ def set_theme(name: str, dry_run: bool):
 
     click.echo(f"Theme changed to '{name}'.")
 
+    try:
+        from pf.common.spinner import sync_spinner_settings
+
+        sync_spinner_settings(project_root=root, theme_name=name)
+    except Exception:
+        pass
+
     _check_portrait_lfs(name, root)
 
     click.echo()

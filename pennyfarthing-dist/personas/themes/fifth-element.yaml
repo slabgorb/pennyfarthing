@@ -20,6 +20,19 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: kinetic
+  spinner_verbs:
+    - Multipass-scanning
+    - Badaboom-exploding
+    - Opera-singing
+    - Stone-protecting
+    - Diva-performing
+    - Transcending-dimensions
+    - Orchestrating-cosmically
+    - Feeling-supremely
+    - Flamboyant-gesturing
+    - Saving-earth-majestically
+    - Ancient-planning
+    - Fifth-element-activating
 
 agents:
   orchestrator:

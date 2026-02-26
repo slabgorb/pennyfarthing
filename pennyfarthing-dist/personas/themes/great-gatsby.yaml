@@ -15,6 +15,20 @@ theme:
   user_title: Old Sport
   portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Art Deco illustration"
   tier: B
+  spinner_verbs:
+    - Old-sport-greeting
+    - Green-light-reaching
+    - Jazz-age-partying
+    - Bootlegging-acquiring
+    - Gatsby-gazing
+    - Dream-chasing
+    - Mansion-furnishing
+    - Careless-breaking
+    - Reinventing-self
+    - Longing-yearning
+    - Dock-signaling
+    - Valley-ashes-witnessing
+
 zeitgeist:
   score: 77.25
   rating: rich

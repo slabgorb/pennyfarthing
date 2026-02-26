@@ -4,6 +4,19 @@ theme:
   source: "Stephen King literary universe"
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
+  spinner_verbs:
+    - Redrum-typing
+    - Overlook-haunting
+    - Derry-floating
+    - Dark-Tower-seeking
+    - Shining-channeling
+    - Curse-unraveling
+    - Horror-weaving
+    - Supernatural-encountering
+    - Dead-zones-sensing
+    - Carrie-raging
+    - IT-summoning
+    - Apocalypse-surviving
 
 agents:
   orchestrator:

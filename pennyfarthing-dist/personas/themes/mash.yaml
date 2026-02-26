@@ -15,7 +15,19 @@ theme:
   user_title: Doctor
   portrait_style: ", Norman Rockwell Saturday Evening Post illustration, warm nostalgic Americana, soft lighting, idealized realism, painterly brushstrokes, 1950s illustration style"
   tier: A
-
+  spinner_verbs:
+    - Triage-sorting
+    - Martini-mixing
+    - Hawkeye-wisecracking
+    - Klinger-dressing
+    - Radar-sensing
+    - Surgery-performing
+    - Bureaucracy-frustrating
+    - Mercy-showing
+    - Laughter-healing
+    - Survival-seeking
+    - Compassion-giving
+    - War-coping
 zeitgeist:
   score: 74.25
   rating: rich

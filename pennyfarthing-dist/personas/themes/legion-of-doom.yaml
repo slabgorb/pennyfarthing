@@ -14,6 +14,19 @@ theme:
   user_title: Fellow Villain
   portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
   tier: A
+  spinner_verbs:
+    - Scheming
+    - Plotting
+    - Monologuing
+    - Doom-legioning
+    - Lair-building
+    - World-conquering
+    - Henchman-assembling
+    - Trap-setting
+    - Cackling-maniacally
+    - Contingency-planning
+    - Power-usurping
+    - Fortress-fortifying
 zeitgeist:
   score: 78.5
   rating: rich

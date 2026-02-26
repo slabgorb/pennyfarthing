@@ -14,6 +14,19 @@ theme:
   user_title: Colleague
   portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
   tier: D
+  spinner_verbs:
+    - Hypothesizing
+    - Observing-carefully
+    - Experimenting
+    - Calculating-equations
+    - Discovering-patterns
+    - Publishing-findings
+    - Citing-sources
+    - Challenging-dogma
+    - Measuring-precisely
+    - Revolutionary-thinking
+    - Peer-reviewing
+    - Standing-on-shoulders
 
 zeitgeist:
   score: 68.5

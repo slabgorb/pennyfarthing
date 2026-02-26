@@ -15,6 +15,17 @@ theme:
   user_title: Agent
   portrait_style: ", 90s FBI procedural style, dark atmospheric lighting, paranoid tension"
   tier: A
+  spinner_verbs:
+    - Truth-seeking
+    - Abduction-investigating
+    - Mulder-believing
+    - Scully-skepticizing
+    - Conspiracy-uncovering
+    - Evidence-analyzing
+    - FBI-maneuvering
+    - Paranormal-exploring
+    - Files-cross-referencing
+    - Truth-documenting
 
 zeitgeist:
   score: 82.0

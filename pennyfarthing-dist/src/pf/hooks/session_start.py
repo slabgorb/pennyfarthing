@@ -359,6 +359,21 @@ def _ensure_theme_portraits(project_dir: Path) -> None:
 
 
 # =============================================================================
+# Spinner Settings Reconciliation
+# =============================================================================
+
+
+def _sync_spinner_settings(project_dir: Path) -> None:
+    """Reconcile spinner verbs and tips in settings.local.json."""
+    try:
+        from pf.common.spinner import sync_spinner_settings
+
+        sync_spinner_settings(project_root=project_dir)
+    except Exception:
+        pass
+
+
+# =============================================================================
 # Entry Point
 # =============================================================================
 
@@ -388,6 +403,7 @@ def main() -> None:
         otel_port = _ensure_wheelhub(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
         _ensure_theme_portraits(project_dir)
+        _sync_spinner_settings(project_dir)
         _show_welcome(project_dir)
 
     except Exception:

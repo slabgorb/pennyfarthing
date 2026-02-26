@@ -15,6 +15,23 @@ theme:
   user_title: my Dear
   portrait_style: ", John Tenniel engraving, fine crosshatching, 1865 original edition style"
   tier: B
+  dimensions:
+    tone: whimsical
+    era: timeless
+    genre: fantasy
+    energy: chaotic
+  spinner_verbs:
+    - Growing-and-shrinking
+    - Consulting-the-caterpillar
+    - Questioning-logic
+    - Following-the-rabbit
+    - Painting-roses-red
+    - Serving-tea-at-the-hatter's
+    - Running-from-the-queen
+    - Changing-rules-midgame
+    - Grinning-like-a-cat
+    - Falling-down-rabbit-holes
+    - Believing-impossible-things
 zeitgeist:
   score: 85.0
   rating: rich

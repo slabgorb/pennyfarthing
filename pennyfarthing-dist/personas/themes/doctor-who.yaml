@@ -15,6 +15,19 @@ theme:
   user_title: Companion
   portrait_style: ", British sci-fi, 60's vibe, swirling time vortex, blue and gold palette, theatrical lighting"
   tier: S
+  spinner_verbs:
+    - Time-traveling
+    - Regenerating
+    - Sonic-screwdrivering
+    - Arriving-late
+    - Escaping-Daleks
+    - Paradox-solving
+    - Saving-civilizations
+    - Saying-allons-y
+    - Running-toward-danger
+    - Fixing-the-TARDIS
+    - Befriending-companions
+    - Rewriting-time
 zeitgeist:
   score: 87.0
   rating: rich

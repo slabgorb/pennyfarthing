@@ -22,6 +22,19 @@ theme:
     era: timeless
     genre: fantasy
     energy: measured
+  spinner_verbs:
+    - Headologizing
+    - Narrativium-channeling
+    - Consulting-the-Librarian
+    - Calibrating-Hex
+    - Witching-with-headology
+    - Sweeping-history
+    - Scrying-futures
+    - Riding-Binky
+    - Watching-the-Disc-turn
+    - Computing-fate
+    - Borrowing-perspectives
+    - Defying-narrative-law
 zeitgeist:
   score: 98.0
   rating: exceptional

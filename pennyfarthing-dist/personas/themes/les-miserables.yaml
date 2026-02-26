@@ -14,6 +14,19 @@ theme:
   user_title: Citizen
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
   tier: D
+  spinner_verbs:
+    - Barricade-building
+    - Revolutionary-singing
+    - Bread-stealing
+    - Redemption-seeking
+    - Javert-pursuing
+    - Mercy-granting
+    - Sacrifice-offering
+    - Uprising-rising
+    - Conviction-following
+    - Love-enduring
+    - Justice-pursuing
+    - Conscience-wrestling
 zeitgeist:
   score: 67.75
   rating: moderate

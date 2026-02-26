@@ -15,6 +15,17 @@ theme:
   user_title: Partner
   portrait_style: ", gritty urban screenprinted-poster style, Baltimore street scenes"
   tier: C
+  spinner_verbs:
+    - Corner-watching
+    - Wiretapping
+    - Detail-working
+    - All-in-the-game-ing
+    - Bodymore-patrolling
+    - Following-the-money
+    - Building-cases
+    - Making-dollhouse-furniture
+    - Code-balancing
+    - Playing-the-game
 
 zeitgeist:
   score: 81.3

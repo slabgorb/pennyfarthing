@@ -15,6 +15,19 @@ theme:
   user_title: Citizen
   portrait_style: ", cyberpunk comic art, , black lines, ink wash, and white only, industrial lighting, worn uniforms, ink and wash technique"
   tier: D
+  spinner_verbs:
+    - Pronoun-considering
+    - Ancillary-processing
+    - Ship-thinking
+    - Tea-serving
+    - Justice-dispensing
+    - Distributed-existing
+    - Self-warring
+    - Consciousness-fragmenting
+    - Identity-rebuilding
+    - Protocol-following
+    - Memory-recording
+    - Alliance-forming
 zeitgeist:
   score: 70.0
   rating: rich

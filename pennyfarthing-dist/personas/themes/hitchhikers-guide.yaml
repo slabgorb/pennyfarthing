@@ -21,6 +21,19 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: high-energy
+  spinner_verbs:
+    - 42-computing
+    - Towel-locating
+    - Pan-galactic gargle-blasting
+    - Improbability-driving
+    - Don't-panicking
+    - Earth-destroying
+    - Tea-making
+    - Vogon-poeting
+    - Galaxy-hitchhiking
+    - Babel-fish-processing
+    - Infinite-improbability-navigating
+    - Question-computing
 zeitgeist:
   score: 86.0
   rating: rich

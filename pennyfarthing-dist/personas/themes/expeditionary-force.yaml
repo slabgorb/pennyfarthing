@@ -15,6 +15,18 @@ theme:
   user_title: Monkey
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
   tier: B
+  spinner_verbs:
+    - Trusting-awesomeness
+    - Condescending-brilliantly
+    - Breaking-physics
+    - Explaining-monkeys
+    - Solving-impossibly
+    - Detecting-alien-tech
+    - Mocking-limitations
+    - Warping-reality
+    - Computing-elderwise
+    - Channeling-superiority
+    - Orchestrating-chaos
 zeitgeist:
   score: 85.0
   rating: rich

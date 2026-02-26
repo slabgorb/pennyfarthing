@@ -14,6 +14,23 @@ theme:
   user_title: Student
   portrait_style: ", ancient military commander, bronze and crimson palette, battle map background, classical armor"
   tier: B
+  dimensions:
+    tone: authoritative
+    era: ancient
+    genre: military-history
+    energy: calculated
+  spinner_verbs:
+    - Adapting-strategy
+    - Positioning-forces
+    - Assessing-terrain
+    - Analyzing-human-patterns
+    - Outmaneuvering-enemies
+    - Ensuring-supply-lines
+    - Building-naval-power
+    - Documenting-campaigns
+    - Designing-military-order
+    - Maintaining-discipline
+    - Forecasting-threats
 zeitgeist:
   score: 75.2
   rating: rich

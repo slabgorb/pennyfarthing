@@ -15,6 +15,19 @@ theme:
   user_title: Springfield Resident
   portrait_style: ", animated sitcom style, bold black outlines"
   tier: A
+  spinner_verbs:
+    - D'oh-exclaiming
+    - Donut-consuming
+    - Couch-gag-performing
+    - Springfield-navigating
+    - Beer-drinking
+    - Squishee-slurping
+    - Shenanigans-causing
+    - Family-bickering
+    - School-evading
+    - Nuclear-working
+    - Chaos-spreading
+    - Love-surviving
 
 zeitgeist:
   score: 85.5

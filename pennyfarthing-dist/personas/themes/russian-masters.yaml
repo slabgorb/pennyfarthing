@@ -14,6 +14,19 @@ theme:
   user_title: Dear Soul
   portrait_style: ", 19th century Russian realist, Russian realist painting, melancholic shadows, Orthodox gold"
   tier: B
+  spinner_verbs:
+    - Soul-searching
+    - Troika-riding
+    - Samovar-brewing
+    - Existential-questioning
+    - Suffering-embracing
+    - Redemption-seeking
+    - Pistol-loading
+    - Cathedral-venerating
+    - Aristocracy-questioning
+    - Peasant-understanding
+    - Tolstoy-writing
+
 zeitgeist:
   score: 81.5
   rating: rich

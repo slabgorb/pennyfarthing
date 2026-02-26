@@ -63,6 +63,7 @@ _CLAUDE_DIRS: list[str] = [
 # In the npm era these were symlinks to node_modules; now they're direct copies.
 _CONTENT_DIRS: list[str] = [
     "agents",
+    "data",
     "gates",
     "guides",
     "output-styles",

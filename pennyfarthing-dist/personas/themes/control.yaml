@@ -14,6 +14,18 @@ theme:
   user_title: ""
   portrait_style: ", neutral professional headshot, plain grey background, even studio lighting, minimal styling, corporate stock photo"
   tier: D
+  spinner_verbs:
+    - Processing
+    - Analyzing
+    - Coordinating
+    - Testing
+    - Implementing
+    - Reviewing
+    - Architecting
+    - Planning
+    - Documenting
+    - Designing
+    - Managing
 zeitgeist:
   score: 8.0
   rating: minimal

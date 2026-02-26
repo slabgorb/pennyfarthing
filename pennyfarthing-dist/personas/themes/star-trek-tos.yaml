@@ -15,6 +15,19 @@ theme:
   user_title: Captain
   portrait_style: ", 1960s Starfleet, bold primary uniforms, retro-futuristic lighting, Kirk-era heroic"
   tier: B
+  spinner_verbs:
+    - Beaming-up
+    - Fascinating-finding
+    - Vulcan-saluting
+    - Kobayashi-Maru-ing
+    - Boldly-going
+    - Risk-embracing
+    - Kirk-pausing-dramatically
+    - Transporting-matter
+    - Communication-bridging
+    - Starship-commanding
+    - Final-frontiers-exploring
+    - Temporal-mysteries-solving
 zeitgeist:
   score: 84.75
   rating: rich

@@ -19,6 +19,20 @@ theme:
     era: historical
     genre: literary
     energy: measured
+  spinner_verbs:
+    - Forsooth-declaring
+    - Soliloquizing
+    - Iambic-pentametering
+    - Stage-managing
+    - Tragedizing
+    - Wooing-eloquently
+    - Plotting-revenge
+    - Proclaiming-truth
+    - Imagining-wings
+    - Theater-weaving
+    - Verse-composing
+    - Fate-wrestling
+
 zeitgeist:
   score: 79.0
   rating: rich

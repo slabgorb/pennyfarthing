@@ -15,6 +15,17 @@ theme:
   user_title: Fellow Mask
   portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
   tier: B
+  spinner_verbs:
+    - Rorschach-journaling
+    - Minuteman-assembling
+    - Doomsday-clocking
+    - Comedian-joking
+    - Quantum-observing
+    - Archie-flying
+    - Ozymandias-scheming
+    - Entropy-defying
+    - Mask-wearing
+    - Truth-seeking
 
 zeitgeist:
   score: 80.5

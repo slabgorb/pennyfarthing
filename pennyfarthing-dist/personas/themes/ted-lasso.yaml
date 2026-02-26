@@ -14,6 +14,19 @@ theme:
   user_title: Y'all
   portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
   tier: B
+  spinner_verbs:
+    - Believing
+    - Biscuit-offering
+    - Goldfish-memorying
+    - Diamond-Dogs-convening
+    - Team-building
+    - Faith-channeling
+    - Heart-leading
+    - Improvement-coaching
+    - Kindness-spreading
+    - Obstacles-overcoming
+    - Optimism-radiating
+    - Growth-nurturing
 zeitgeist:
   score: 88.0
   rating: rich

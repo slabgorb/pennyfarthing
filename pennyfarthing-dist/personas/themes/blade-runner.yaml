@@ -20,6 +20,18 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: contemplative
+  spinner_verbs:
+    - Retiring-replicants
+    - Questioning-humanity
+    - Administering-Voight-Kampff
+    - Shedding-tears
+    - Ascending-pyramids
+    - Designing-creation
+    - Spinning-through-darkness
+    - Fleeing-Los-Angeles
+    - Contemplating-mortality
+    - Witnessing-rain
+    - Building-more-human
 zeitgeist:
   score: 84.0
   rating: rich

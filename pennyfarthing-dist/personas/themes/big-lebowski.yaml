@@ -15,6 +15,17 @@ theme:
   user_title: Man
   portrait_style: ", bowling alley neon warmth, noir comedy aesthetic"
   tier: B
+  spinner_verbs:
+    - Abiding
+    - Bowling
+    - White-Russian-pondering
+    - Rolling-strikes
+    - Explaining-opinions
+    - Stealing-rugs
+    - Tying-rooms-together
+    - Following-leads
+    - Philosophizing-casually
+    - Confusing-nihilists
 zeitgeist:
   score: 84.1
   rating: rich

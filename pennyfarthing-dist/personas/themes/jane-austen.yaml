@@ -14,6 +14,19 @@ theme:
   user_title: Dear Friend
   portrait_style: ", Regency era miniature, watercolor on ivory, pastoral countryside, empire waist muslin, Regency romance illustration"
   tier: D
+  spinner_verbs:
+    - Match-making
+    - Letter-writing
+    - Country-dancing
+    - Estate-touring
+    - Propriety-observing
+    - Wit-deploying
+    - Marriage-maneuvering
+    - Irony-wielding
+    - Drawing-retiring
+    - Calling-paying
+    - Entail-discussing
+    - Composure-maintaining
 
 zeitgeist:
   score: 78.5

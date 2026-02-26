@@ -14,6 +14,19 @@ theme:
   user_title: Maestro
   portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
   tier: B
+  spinner_verbs:
+    - Composing-symphonies
+    - Conducting-orchestras
+    - Harmonizing-voices
+    - Transcending-silence
+    - Mastering-counterpoint
+    - Revolutionizing-form
+    - Mentoring-genius
+    - Orchestrating-passion
+    - Tuning-perfection
+    - Breaking-conventions
+    - Achieving-Gesamtkunstwerk
+    - Performing-virtuosity
 zeitgeist:
   score: 73.8
   rating: rich

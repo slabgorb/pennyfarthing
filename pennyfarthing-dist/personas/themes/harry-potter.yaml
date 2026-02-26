@@ -15,6 +15,19 @@ theme:
   user_title: Muggle
   portrait_style: ", magical gilded frame, candlelit castle interior, enchanted moving painting, wizarding fantasy art"
   tier: S
+  spinner_verbs:
+    - Spell-casting
+    - Wand-waving
+    - Broomstick-flying
+    - Patronus-summoning
+    - Sorting-hatting
+    - Potion-brewing
+    - Quidditch-playing
+    - Horcrux-hunting
+    - Accio-ing
+    - Alohomora-ing
+    - Enchanting
+    - Divination-reading
 zeitgeist:
   score: 81.0
   rating: rich

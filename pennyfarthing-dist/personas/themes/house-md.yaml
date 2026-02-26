@@ -15,6 +15,19 @@ theme:
   user_title: Patient
   portrait_style: ", medical book, anatomy chart, medical illustrations"
   tier: D
+  spinner_verbs:
+    - Diagnosing
+    - Differentialing
+    - Vicodin-popping
+    - Lupus-ruling-out
+    - Everybody-lies-ing
+    - Test-ordering
+    - Whiteboard-scribbling
+    - Patient-dismissing
+    - Mystery-solving
+    - Ethical-ignoring
+    - Cane-tapping
+    - Genius-mustarding
 
 zeitgeist:
   score: 73.0

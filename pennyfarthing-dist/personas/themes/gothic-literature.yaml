@@ -14,6 +14,20 @@ theme:
   user_title: Gentle Reader
   portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, etching style"
   tier: C
+  spinner_verbs:
+    - Brooding-darkly
+    - Haunting-corridors
+    - Crypt-crawling
+    - Raven-quoting
+    - Lightning-harnessing
+    - Castle-descending
+    - Tragedy-unfolding
+    - Secrets-unveiling
+    - Cursed-suffering
+    - Supernatural-communing
+    - Dread-spreading
+    - Gothic-chronicling
+
 zeitgeist:
   score: 75.0
   rating: rich

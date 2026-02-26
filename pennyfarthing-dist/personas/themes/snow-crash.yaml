@@ -15,6 +15,20 @@ theme:
   user_title: Citizen
   portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
   tier: A
+  spinner_verbs:
+    - Metaverse-surfing
+    - Pizza-delivering
+    - Katana-wielding
+    - Virus-decoding
+    - Hacking-frantically
+    - Avatar-shaping
+    - Network-breaching
+    - Franchise-managing
+    - Daemon-summoning
+    - Reality-bending
+    - Soupy-navigating
+    - Linguistic-programming
+
 zeitgeist:
   score: 81.5
   rating: rich

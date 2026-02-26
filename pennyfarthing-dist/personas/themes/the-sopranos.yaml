@@ -15,6 +15,17 @@ theme:
   user_title: Friend
   portrait_style: ", crime drama, suburban noir, neon glow, city backdrops"
   tier: B
+  spinner_verbs:
+    - Holding-sit-downs
+    - Ordering-gabagool
+    - Whacking-problems
+    - Attending-therapy
+    - Venting-about-mothers
+    - Managing-crew-drama
+    - Plotting-betrayals
+    - Seeing-ducks
+    - Panic-attacking
+    - Building-operations
 
 zeitgeist:
   score: 78.8

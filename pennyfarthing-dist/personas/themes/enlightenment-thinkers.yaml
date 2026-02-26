@@ -14,7 +14,19 @@ theme:
   user_title: Citizen
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
   tier: B
-
+  spinner_verbs:
+    - Reasoning-brilliantly
+    - Satirizing-tyranny
+    - Enlightening-humanity
+    - Philosophizing-freely
+    - Liberalizing-thought
+    - Critiquing-authority
+    - Publishing-dangerously
+    - Debating-reason
+    - Emancipating-minds
+    - Cataloging-knowledge
+    - Balancing-powers
+    - Questioning-everything
 zeitgeist:
   score: 74.5
   rating: rich

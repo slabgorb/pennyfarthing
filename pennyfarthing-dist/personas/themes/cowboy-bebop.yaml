@@ -15,7 +15,19 @@ theme:
   user_title: Cowboy
   portrait_style: ", 1990s anime cel-shaded, noir shadows, jazz palette, cigarette smoke, space western"
   tier: B
-
+  spinner_verbs:
+    - Bounty-hunting
+    - Jazz-riffing
+    - Flying-Bebop
+    - Chasing-woolong
+    - Smoking-casually
+    - Reading-stars
+    - Hacking-networks
+    - Fixing-ships
+    - Running-from-past
+    - Seeking-Julia
+    - Dancing-gravity
+    - Improvising-fate
 zeitgeist:
   score: 74.5
   rating: rich

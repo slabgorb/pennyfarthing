@@ -15,6 +15,23 @@ theme:
   user_title: Dear Reader
   portrait_style: ", 1920s Art Deco, muted sepia tones, gaslight atmosphere, mystery novel cover"
   tier: B
+  dimensions:
+    tone: analytical
+    era: interwar
+    genre: mystery
+    energy: methodical
+  spinner_verbs:
+    - Deducing-motives
+    - Examining-clues
+    - Interviewing-suspects
+    - Consulting-little-grey-cells
+    - Disguising-the-truth
+    - Spotting-red-herrings
+    - Organizing-evidence
+    - Reading-mannerisms
+    - Unmasking-the-culprit
+    - Recording-observations
+    - Solving-the-mystery
 
 zeitgeist:
   score: 71.75

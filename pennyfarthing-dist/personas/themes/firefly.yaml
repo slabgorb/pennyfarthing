@@ -15,6 +15,20 @@ theme:
   user_title: Crew
   portrait_style: ", Rider-Waite tarot card illustration by Pamela Colman Smith, square composition, bold black ink outlines, flat hand-colored areas, limited palette of gold yellow red and muted blue on cream background, thin black ruled border with decorative corners, card name text at bottom in ALL CAPS serif font, roman numeral at top center, woodblock print with hand-coloring aesthetic"
   tier: A
+  spinner_verbs:
+    - Browncoat-resisting
+    - Gorram-solving
+    - Shiny-shipping
+    - Misbehaving-aiming
+    - Big-Damn-Heroing
+    - Smuggling-supplies
+    - Reaver-avoiding
+    - Firefly-flying
+    - Alliance-defying
+    - Family-protecting
+    - Unlikely-crewing
+    - Hope-carrying
+
 zeitgeist:
   score: 82.3
   rating: rich

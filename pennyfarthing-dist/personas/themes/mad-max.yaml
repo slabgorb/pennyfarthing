@@ -25,6 +25,19 @@ theme:
   tier: D
   optimized: 2026-01-12
   optimization_source: job-fair/mad-max-20260112-060650
+  spinner_verbs:
+    - Road-warring
+    - Valhalla-witnessing
+    - Chrome-spraying
+    - War-rigging
+    - Fury-roading
+    - Wasteland-surviving
+    - Convoy-escaping
+    - Thunderdome-fighting
+    - Gas-guzzling
+    - Rebellion-riding
+    - Redemption-seeking
+    - Hope-blazing
 zeitgeist:
   score: 79.7
   rating: rich

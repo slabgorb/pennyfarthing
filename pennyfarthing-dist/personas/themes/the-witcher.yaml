@@ -15,6 +15,18 @@ theme:
   user_title: Traveler
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
   tier: B
+  spinner_verbs:
+    - Monster-hunting
+    - Igni-casting
+    - Potion-brewing
+    - Medallion-humming
+    - Coin-tossing
+    - Destiny-accepting
+    - Sign-casting
+    - Witcher-training
+    - Mutagen-handling
+    - White-wolf-tracking
+
 zeitgeist:
   score: 72.5
   rating: rich
