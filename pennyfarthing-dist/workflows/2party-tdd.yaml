@@ -103,6 +103,10 @@ workflow:
       agent: tea
       input: [final_story, session_file]
       output: [failing_tests]
+      entry_gate:
+        file: gates/tea-context
+        type: tea_context
+        condition: Story context validated before RED phase
       instructions: |
         Write failing tests for all acceptance criteria.
 

@@ -15,7 +15,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pf.context import check_context, load_config
+from pf.context_window import check_context, load_config
 
 
 def _checkpoint_save(project_dir: str, label: str, data: str) -> None:

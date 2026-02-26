@@ -8,7 +8,7 @@ Story: 105-4 (Script-First Handoff)
 
 from __future__ import annotations
 
-from pf.context import check_context
+from pf.context_window import check_context
 
 
 def generate_marker(

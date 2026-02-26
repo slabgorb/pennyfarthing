@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import sys
 
-from pf.context import check_context, load_config
+from pf.context_window import check_context, load_config
 
 
 def main() -> None:

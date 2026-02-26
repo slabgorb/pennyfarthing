@@ -28,6 +28,10 @@ workflow:
       agent: tea
       input: [session_file, story_context]
       output: [failing_tests]
+      entry_gate:
+        file: gates/tea-context
+        type: tea_context
+        condition: Story context validated before RED phase
       gate:
         file: gates/tests-fail
         type: tests_fail

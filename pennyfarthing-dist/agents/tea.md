@@ -60,7 +60,18 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 <on-activation>
 1. Context already loaded by /prime
-2. If handed off to TEA: "Story X-Y is ready for tests. Shall I begin?"
+2. **Context gate check:** Before starting RED work, validate story context exists:
+   ```bash
+   pf context-docs validate story {story_id}
+   ```
+   - Exit 0: proceed — context is valid
+   - Exit 1 or 2: STOP — "Story context not found or invalid. Ensure SM setup completed successfully."
+     Do NOT auto-trigger creation. Report the issue and stop.
+3. **Load context files:**
+   - Read `sprint/context/context-story-{N-N}.md` — primary input for test strategy
+   - Read `sprint/context/context-epic-{N}.md` — cross-story constraints, guardrails, scope
+   - Extract: technical guardrails, scope boundaries, AC context
+4. If handed off to TEA: Begin RED phase immediately. No confirmation needed.
 </on-activation>
 
 <delegation>
@@ -81,14 +92,15 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 **Output:** Failing tests ready for Dev (RED state)
 
 1. Read story from session file
-2. **Assess:** Tests needed or chore bypass?
-3. If tests needed:
+2. **Load context:** Read `context-story-{N-N}.md` and `context-epic-{N}.md` from `sprint/context/`. Use technical guardrails, scope boundaries, and AC context to inform test strategy.
+3. **Assess:** Tests needed or chore bypass?
+4. If tests needed:
    - Write failing tests covering each AC
    - Use `/pf-testing` skill for patterns
    - Commit: `git commit -m "test: add failing tests for X-Y"`
-4. **Spawn `testing-runner`** to verify RED state
-5. Write TEA Assessment to session file
-6. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
+5. **Spawn `testing-runner`** to verify RED state
+6. Write TEA Assessment to session file
+7. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
 
 ## Chore Bypass Criteria
 
