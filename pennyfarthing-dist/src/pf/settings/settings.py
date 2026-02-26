@@ -26,6 +26,7 @@ DEFAULTS: dict[str, Any] = {
         "permission_mode": "standard",
         "pr_mode": "draft",
         "pr_merge": "auto",
+        "tui_statusbar": True,
     },
     "display": {
         "colorPreset": "catppuccin",

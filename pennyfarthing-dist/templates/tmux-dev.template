@@ -38,8 +38,18 @@ tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
 tmux -L "$SOCKET" split-window -v -t "$SESSION" -c "$DIR" -e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM"
 tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
 
+# Label panes
+tmux -L "$SOCKET" select-pane -t "$SESSION.0" -T "Claude Code"
+tmux -L "$SOCKET" select-pane -t "$SESSION.1" -T "TUI"
+
 # Focus on claude pane
 tmux -L "$SOCKET" select-pane -t "$SESSION.0"
 
 # Attach
 tmux -L "$SOCKET" attach -t "$SESSION"
+
+# --- Team agent pane recipes (for reference) ---
+# Spawn a new agent pane alongside Claude Code:
+#   tmux -L pf split-window -h -t "$SESSION" -c "$DIR"
+#   tmux -L pf select-pane -t "$SESSION.{last}" -T "Dev Agent"
+#   tmux -L pf send-keys -t "$SESSION.{last}" "claude -p '/pf-dev'" C-m

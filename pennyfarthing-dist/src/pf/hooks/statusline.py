@@ -337,6 +337,65 @@ def _build_progress_bar(pct: str | int) -> tuple[str, str]:
     return bar, pct_str
 
 
+def _get_story_id(project_root: str) -> str:
+    """Get active story ID from session file basename."""
+    session_dir = Path(project_root) / ".session"
+    if not session_dir.is_dir():
+        return ""
+    try:
+        for f in session_dir.iterdir():
+            if f.name.endswith("-session.md") and f.is_file():
+                return f.name.removesuffix("-session.md")
+    except OSError:
+        pass
+    return ""
+
+
+def _tmux_context_bar(pct: str | int) -> str:
+    """Build a tmux-formatted context bar using tmux style tags."""
+    bar_width = 10
+
+    if pct == "--" or not isinstance(pct, int):
+        return f"#[fg=colour240]{'░' * bar_width} --%#[default]"
+
+    filled = max(0, min(bar_width, pct * bar_width // 100))
+
+    if pct > 95:
+        color = "fg=colour196,bold"
+    elif pct > 85:
+        color = "fg=colour196"
+    elif pct > 70:
+        color = "fg=colour214"
+    else:
+        color = "fg=colour34"
+
+    bar = f"#[{color}]{'▓' * filled}#[fg=colour240]{'░' * (bar_width - filled)}#[default]"
+    return f"{bar} #[{color}]{pct}%#[default]"
+
+
+def _write_tmux_cache(project_root: str, pct: str | int,
+                      story_id: str, dir_name: str) -> None:
+    """Write tmux-formatted status to .pennyfarthing/tmux-status-left and right."""
+    pf_dir = Path(project_root) / ".pennyfarthing"
+    if not pf_dir.is_dir():
+        return
+
+    sep = " #[fg=colour238]│#[default] "
+
+    try:
+        # Left: story + dir
+        left_parts: list[str] = []
+        if story_id:
+            left_parts.append(f"#[fg=colour214]{story_id}#[default]")
+        left_parts.append(f"#[fg=colour67]{dir_name}#[default]")
+        (pf_dir / "tmux-status-left").write_text(sep.join(left_parts))
+
+        # Right: context bar
+        (pf_dir / "tmux-status-right").write_text(_tmux_context_bar(pct))
+    except OSError:
+        pass
+
+
 # =============================================================================
 # Entry Point
 # =============================================================================
@@ -355,7 +414,14 @@ def main() -> None:
         project_root = os.environ.get("CLAUDE_PROJECT_DIR", cwd)
         session_id = data.get("session_id", "")
 
-        # Check statusbar setting — skip rendering when disabled
+        pct = _get_context_pct(data)
+        story_id = _get_story_id(project_root)
+
+        # Always write tmux cache (side-channel for tmux status line)
+        _write_tmux_cache(project_root, pct, story_id, dir_name)
+
+        # Check statusbar setting — skip Claude Code statusline when disabled
+        # (tmux users can set workflow.statusbar: false to save vertical space)
         _settings = load_settings(Path(project_root) if project_root else None)
         if not _settings.statusbar:
             sys.exit(0)
@@ -365,8 +431,6 @@ def main() -> None:
             branch, branch_dirty = _get_git_info(cwd)
         else:
             branch, branch_dirty = "", ""
-
-        pct = _get_context_pct(data)
 
         agent_name = _resolve_agent(project_root, session_id)
         agent_abbrev = _get_agent_abbrev(agent_name) if agent_name else ""

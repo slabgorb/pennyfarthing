@@ -15,7 +15,7 @@ DEFAULT_ORDER: list[str] = ["menu", "profile", "content", "status"]
 
 # Maps region name → workflow config toggle key
 _BAR_TOGGLE_MAP: dict[str, str] = {
-    "status": "statusbar",
+    "status": "tui_statusbar",
     "profile": "profile_bar",
     "menu": "menu_bar",
 }

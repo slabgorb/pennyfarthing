@@ -169,15 +169,68 @@ def _check_tandem_files(project_root: Path) -> list[dict]:
 # =============================================================================
 
 
+def _write_tmux_activity(project_root: Path, raw_input: str) -> None:
+    """Write current tool activity to .pennyfarthing/tmux-activity for tmux status."""
+    pf_dir = project_root / ".pennyfarthing"
+    if not pf_dir.is_dir():
+        return
+    try:
+        data = json.loads(raw_input) if raw_input else {}
+    except (json.JSONDecodeError, ValueError):
+        return
+
+    tool_name = data.get("tool_name", "")
+    tool_input = data.get("tool_input", {})
+
+    # Derive a short human-readable label
+    label = ""
+    if tool_name == "Bash":
+        label = tool_input.get("description", "")
+        if not label:
+            cmd = tool_input.get("command", "")
+            label = cmd[:60] if cmd else "shell"
+    elif tool_name in ("Read", "Edit", "Write"):
+        fp = tool_input.get("file_path", "")
+        fname = Path(fp).name if fp else ""
+        label = f"{tool_name} {fname}" if fname else tool_name
+    elif tool_name == "Grep":
+        pattern = tool_input.get("pattern", "")
+        label = f"Grep {pattern[:40]}" if pattern else "Grep"
+    elif tool_name == "Glob":
+        pattern = tool_input.get("pattern", "")
+        label = f"Glob {pattern[:40]}" if pattern else "Glob"
+    elif tool_name == "Task":
+        desc = tool_input.get("description", "")
+        label = desc[:50] if desc else "subagent"
+    elif tool_name == "WebSearch":
+        query = tool_input.get("query", "")
+        label = f"Search: {query[:40]}" if query else "web search"
+    elif tool_name == "WebFetch":
+        label = "fetching URL"
+    else:
+        label = tool_name or ""
+
+    if not label:
+        return
+
+    try:
+        (pf_dir / "tmux-activity").write_text(label[:80])
+    except OSError:
+        pass
+
+
 def main() -> None:
     """Main entry point for PostToolUse hook."""
     try:
-        # Read and discard stdin (required by hook protocol)
-        sys.stdin.read()
+        # Read stdin (required by hook protocol)
+        raw_input = sys.stdin.read()
 
         project_root = find_project_root()
         if not project_root:
             sys.exit(0)
+
+        # Write tool activity for tmux status line
+        _write_tmux_activity(project_root, raw_input)
 
         # --- Bell queue (Cyclist only, requires bell_mode: true) ---
         is_cyclist = read_port_file(CYCLIST_PORT_FILE, project_root) is not None
