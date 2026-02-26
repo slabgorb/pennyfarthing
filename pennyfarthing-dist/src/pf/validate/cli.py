@@ -23,6 +23,7 @@ VALIDATORS = {
     "workflow": "pf.validate.adapters.workflow",
     "skill-command": "pf.validate.adapters.skill_command",
     "tandem-awareness": "pf.validate.adapters.tandem_awareness",
+    "context": "pf.validate.adapters.context",
 }
 
 
@@ -159,6 +160,16 @@ def validate_skill_command(ctx):
 def validate_tandem_awareness(ctx):
     """Validate agent tandem consultation sections (ADR-0012 pairings, roles)."""
     report = _run_validator("tandem-awareness", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("context")
+@click.pass_context
+def validate_context(ctx):
+    """Validate context sources against context schema (components, tiers, assembly)."""
+    report = _run_validator("context", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)

@@ -65,6 +65,7 @@ class LazyGroup(click.Group):
 _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "sprint":       ("pf.sprint.cli", "sprint"),
     "jira":         ("pf.jira.cli", "jira"),
+    "context":      ("pf.context.cli", "context"),
     "bmad":         ("pf.bmad.cli", "bmad"),
     "theme":        ("pf.theme.cli", "theme"),
     "validate":     ("pf.validate.cli", "validate"),
