@@ -217,6 +217,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     "description": "Manage persona themes - list, show, set, create, or interactive wizard"
   },
   {
+    "name": "/pf-tour",
+    "description": "/guided-tour - Interactive Guided Tour"
+  },
+  {
     "name": "/pf-ux-designer",
     "description": "UX Designer - User experience design and UI patterns"
   },

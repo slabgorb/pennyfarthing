@@ -66,30 +66,30 @@ def update_story(
             "error": f"Invalid status '{status}'. Must be one of: {', '.join(sorted(VALID_STORY_STATUSES))}",
         }
 
-    # Parse story ID to find epic
-    parts = story_id.split("-")
-    if len(parts) < 2:
-        return {
-            "success": False,
-            "error": f"Invalid story ID format '{story_id}'. Expected format: <epic>-<seq> (e.g., '76-4')",
-        }
-
-    epic_num = parts[0]
-
     data = read_sprint(sprint_path)
 
-    epic = find_epic(data, epic_num)
-    if epic is None:
-        return {
-            "success": False,
-            "error": f"Epic '{epic_num}' not found for story '{story_id}'",
-        }
+    # Fast path: try epic-format lookup (e.g., "76-4")
+    story = None
+    parts = story_id.split("-")
+    if len(parts) >= 2:
+        epic = find_epic(data, parts[0])
+        if epic is not None:
+            story = find_story(epic, story_id)
 
-    story = find_story(epic, story_id)
+    # Fallback: search standalone_stories and top-level stories
+    if story is None:
+        for section in ("standalone_stories", "stories"):
+            for s in data.get(section, []):
+                if isinstance(s, dict) and (s.get("id") == story_id or s.get("jira") == story_id):
+                    story = s
+                    break
+            if story:
+                break
+
     if story is None:
         return {
             "success": False,
-            "error": f"Story '{story_id}' not found in epic '{epic_num}'",
+            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
         }
 
     # Apply field updates

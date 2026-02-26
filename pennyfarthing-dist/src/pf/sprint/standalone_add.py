@@ -23,17 +23,19 @@ def add_standalone_story(
     title: str,
     points: int,
     *,
+    status: str = "done",
     repos: str = "pennyfarthing",
     pr: int | None = None,
     branch: str | None = None,
 ) -> dict[str, Any]:
-    """Add a done standalone story to current-sprint.yaml.
+    """Add a standalone story to current-sprint.yaml.
 
     Args:
         sprint_path: Path to sprint YAML index file
         jira_key: Jira issue key (e.g., MSSCI-15501)
         title: Story title
         points: Story points
+        status: Story status (default: done)
         repos: Target repo (default: pennyfarthing)
         pr: PR number (optional)
         branch: Branch name (optional)
@@ -50,7 +52,7 @@ def add_standalone_story(
         "jira": jira_key,
         "title": title,
         "points": points,
-        "status": "done",
+        "status": status,
         "repos": repos,
     }
     if pr is not None:
@@ -90,6 +92,7 @@ def add_standalone_story(
 @click.argument("jira_key", type=str)
 @click.argument("title", type=str)
 @click.argument("points", type=int)
+@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "done", "canceled"]), default="done", help="Story status (default: done)")
 @click.option("--repos", type=str, default="pennyfarthing", help="Target repo (default: pennyfarthing)")
 @click.option("--pr", type=int, default=None, help="PR number")
 @click.option("--branch", type=str, default=None, help="Branch name")
@@ -99,21 +102,23 @@ def standalone_add_command(
     jira_key: str,
     title: str,
     points: int,
+    status: str,
     repos: str,
     pr: int | None,
     branch: str | None,
     sprint_file: str | None,
     dry_run: bool,
 ) -> None:
-    """Add a done standalone story to current sprint tracking.
+    """Add a standalone story to current sprint tracking.
 
     \b
     Usage:
       pf sprint standalone add MSSCI-15501 "Auto-pull LFS portraits" 2
       pf sprint standalone add MSSCI-15501 "Fix bug" 1 --pr 1070 --repos pennyfarthing
+      pf sprint standalone add TEST-001 "Backlog item" 3 --status backlog
     """
     if dry_run:
-        click.echo(f"[DRY-RUN] Would add standalone story {jira_key}: {title} [{points}pts]")
+        click.echo(f"[DRY-RUN] Would add standalone story {jira_key}: {title} [{points}pts] (status: {status})")
         if pr:
             click.echo(f"  PR: {pr}")
         if branch:
@@ -132,6 +137,7 @@ def standalone_add_command(
         jira_key=jira_key,
         title=title,
         points=points,
+        status=status,
         repos=repos,
         pr=pr,
         branch=branch,

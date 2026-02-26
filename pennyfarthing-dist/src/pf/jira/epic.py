@@ -145,7 +145,26 @@ def create_epic_from_yaml(epic_id: str, *, dry_run: bool = False) -> dict[str, A
     title = epic.get("title", f"Epic {epic_id}")
     description = epic.get("description", "")
 
-    return create_epic(title, description, dry_run=dry_run)
+    result = create_epic(title, description, dry_run=dry_run)
+
+    # Write Jira key back to YAML on successful creation
+    if result.get("success") and not result.get("dry_run") and result.get("key"):
+        try:
+            from pf.common.config import get_project_root
+            from pf.sprint.yaml_io import read_sprint, write_sprint
+
+            sprint_path = get_project_root() / "sprint" / "current-sprint.yaml"
+            sprint_data = read_sprint(sprint_path)
+            target = find_epic(sprint_data, epic_id)
+            if target:
+                target["jira"] = result["key"]
+                write_sprint(sprint_path, sprint_data)
+                result["jira_writeback"] = True
+        except Exception:
+            # Don't fail the creation if writeback fails
+            result["jira_writeback"] = False
+
+    return result
 
 
 def main(args: list[str] | None = None) -> int:

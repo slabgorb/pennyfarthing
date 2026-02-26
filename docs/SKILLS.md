@@ -19,6 +19,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
 - [Documentation](#documentation)
   - [pf-changelog](#pf-changelog)
 - [Project Management](#project-management)
+  - [pf-context](#pf-context)
   - [pf-jira](#pf-jira)
   - [pf-sprint](#pf-sprint)
   - [pf-workflow](#pf-workflow)
@@ -213,6 +214,24 @@ Maintain changelogs following Keep a Changelog format with conventional commits
 - Don't manually edit CHANGELOG.md entries after generation
 
 ## Project Management
+
+### pf-context
+
+Create epic or story context documents from sprint data and planning docs
+
+**Tags:** context, creation, epic, story, sprint
+
+**Keywords:** context, epic, story, template, schema, planning, creation
+
+**Examples:**
+- Creating epic context document: `/pf-context create epic 130`
+- Creating epic context by Jira key: `/pf-context create epic MSSCI-15685`
+
+**Anti-patterns:**
+- Don't hardcode section names — read context-schema.yaml
+- Don't create story context without existing parent epic context
+
+**Related:** [pf-sprint](#pf-sprint), [pf-context-engineering](#pf-context-engineering)
 
 ### pf-jira
 

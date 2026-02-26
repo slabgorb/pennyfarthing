@@ -470,6 +470,11 @@ from pf.sprint.story_update import story_update_command  # noqa: E402
 
 story.add_command(story_update_command, "update")
 
+# Register story-remove as story.remove
+from pf.sprint.story_remove import story_remove_command  # noqa: E402
+
+story.add_command(story_remove_command, "remove")
+
 
 # --- Epic subgroup ---
 
@@ -1133,6 +1138,11 @@ epic.add_command(epic_add_command, "add")
 from pf.sprint.epic_update import epic_update_command  # noqa: E402
 
 epic.add_command(epic_update_command, "update")
+
+# Register epic-reindex as epic.reindex
+from pf.sprint.epic_reindex import epic_reindex_command  # noqa: E402
+
+epic.add_command(epic_reindex_command, "reindex")
 
 
 # --- Initiative subgroup ---
