@@ -17,6 +17,15 @@ workflow:
         file: gates/sm-setup-exit
         type: sm_setup_exit
         condition: Session file created with workflow, phase, context, and branch
+        recovery:
+          epic-context-validated:
+            action: create_context
+            type: epic
+            max_attempts: 1
+          story-context-validated:
+            action: create_context
+            type: story
+            max_attempts: 1
 
     - name: red
       agent: tea

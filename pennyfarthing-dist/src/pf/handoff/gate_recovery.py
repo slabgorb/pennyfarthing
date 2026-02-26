@@ -16,6 +16,8 @@ Key constraints:
 
 from __future__ import annotations
 
+import re
+
 
 def get_recovery_actions(
     gate_result: dict,
@@ -43,7 +45,35 @@ def get_recovery_actions(
             target_id: str - epic number or story ID
             max_attempts: int
     """
-    raise NotImplementedError("RED state — implementation pending")
+    if not recovery_config:
+        return []
+
+    epic_id, _ = parse_story_id(story_id)
+    actions: list[dict] = []
+
+    for check in gate_result.get("checks", []):
+        if check.get("status") != "fail":
+            continue
+
+        name = check.get("name", "")
+        if name not in recovery_config:
+            continue
+
+        if not _is_recoverable(check):
+            continue
+
+        cfg = recovery_config[name]
+        context_type = cfg["type"]
+        target_id = epic_id if context_type == "epic" else story_id
+
+        actions.append({
+            "check_name": name,
+            "context_type": context_type,
+            "target_id": target_id,
+            "max_attempts": cfg.get("max_attempts", 1),
+        })
+
+    return actions
 
 
 def format_recovery_outcome(
@@ -70,7 +100,27 @@ def format_recovery_outcome(
             message: str | None (None = continue silently)
             severity: "info" | "warning" | "error"
     """
-    raise NotImplementedError("RED state — implementation pending")
+    path = f"sprint/context/context-{context_type}-{target_id}.md"
+
+    if not created:
+        return {
+            "message": (
+                f"Context creation failed. "
+                f"Run `/pf-context create {context_type} {target_id}` manually"
+            ),
+            "severity": "error",
+        }
+
+    if validated:
+        return {"message": None, "severity": "info"}
+
+    return {
+        "message": (
+            f"Context created but has validation errors. "
+            f"Manual fix needed at {path}"
+        ),
+        "severity": "warning",
+    }
 
 
 def parse_story_id(story_id: str) -> tuple[str, str]:
@@ -85,4 +135,23 @@ def parse_story_id(story_id: str) -> tuple[str, str]:
     Raises:
         ValueError: If story_id format is invalid
     """
-    raise NotImplementedError("RED state — implementation pending")
+    if not story_id:
+        raise ValueError(f"Invalid story ID: {story_id!r}")
+
+    match = re.match(r"^(\d+)-(\d+)$", story_id)
+    if not match:
+        raise ValueError(f"Invalid story ID format: {story_id!r}")
+
+    return match.group(1), story_id
+
+
+def _is_recoverable(check: dict) -> bool:
+    """Check if a failed gate check is recoverable (missing vs invalid).
+
+    Returns True if the check failed because the target was not found,
+    not because it had validation errors.
+    """
+    detail = check.get("detail", "").lower()
+    if "validation error" in detail:
+        return False
+    return any(kw in detail for kw in ("missing", "not found", "not exist"))
