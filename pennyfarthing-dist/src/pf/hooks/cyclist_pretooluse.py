@@ -96,11 +96,12 @@ def main() -> None:
         project_root = find_project_root()
         agent_name = _resolve_agent(session_id, project_root)
 
+        # Forward tool input for audit log enrichment (Story 120-13)
+        # Runs in both Cyclist and BikeRack modes — fails silently if no WheelHub
+        _forward_tool_input(tool_name, tool_id, tool_input, project_root)
+
         if not is_cyclist_running(project_root):
             sys.exit(0)
-
-        # Forward tool input for audit log enrichment (Story 120-13)
-        _forward_tool_input(tool_name, tool_id, tool_input, project_root)
 
         settings = load_settings(project_root)
         if settings.permission_mode == "accept":
