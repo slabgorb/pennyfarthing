@@ -72,6 +72,30 @@ Components can specify validation rules that the validator (129-3) will enforce:
 - **`required_fields`**: Fields that must be present in structured content
 - **`recommended_tags`**: XML tags that items should use
 
+## Template Generator Usage
+
+Generate blank context document templates from the schema:
+
+```bash
+pf context template                          # All components → ./context-templates/
+pf context template --tier FULL              # FULL tier components only
+pf context template --tier MINIMAL           # Just workflow_state
+pf context template -o ./my-templates        # Custom output directory
+pf context template --overwrite              # Replace existing files
+```
+
+Generated files use appropriate extensions per component type:
+
+| Type | Extension | Example |
+|------|-----------|---------|
+| `structured` | `.yaml` | `workflow_state.yaml` |
+| `markdown` | `.md` | `agent_definition.md` |
+| `text` | `.txt` | `sprint_context.txt` |
+| `formatted_text` | `.txt` | `persona.txt` |
+| `collection` | `.yaml` | `sidecars.yaml` |
+
+Each template includes inline comments documenting the component's description, required fields, validation rules, and expected content format.
+
 ## Related
 
 - [Prime Guide](prime.md) — How context is loaded and assembled

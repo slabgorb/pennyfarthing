@@ -1,6 +1,6 @@
-"""Context CLI — commands for context validation and inspection.
+"""Context CLI — commands for context validation, inspection, and template generation.
 
-Story: MSSCI-15683 (129-3) — Build Context Validator Python Module and CLI
+Stories: MSSCI-15683 (129-3), MSSCI-15684 (129-4)
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ def context():
     \b
     Commands:
       validate  - Validate context files against schema
+      template  - Generate blank templates from schema
     """
     pass
 
@@ -80,3 +81,42 @@ def validate_cmd(file: str | None, tier: str | None, strict: bool) -> None:
             for err in result.errors:
                 click.echo(f"[ERROR] {err.component}: {err.message}", err=True)
             raise SystemExit(1)
+
+
+@context.command("template")
+@click.option("--tier", type=click.Choice(
+    ["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False,
+), help="Generate templates for a specific tier only")
+@click.option("--output", "-o", type=click.Path(), default="./context-templates",
+              help="Output directory (default: ./context-templates/)")
+@click.option("--overwrite", is_flag=True, help="Overwrite existing template files")
+def template_cmd(tier: str | None, output: str, overwrite: bool) -> None:
+    """Generate blank context document templates from the schema.
+
+    \b
+    Creates template files for each component defined in the context
+    schema, with inline documentation and placeholder content.
+
+    \b
+    Examples:
+      pf context template                          # All components
+      pf context template --tier FULL              # FULL tier only
+      pf context template -o ./my-templates        # Custom output dir
+      pf context template --overwrite              # Replace existing
+    """
+    from pf.context.templates import generate_templates
+
+    output_dir = Path(output)
+
+    try:
+        written = generate_templates(output_dir, tier=tier, overwrite=overwrite)
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1) from None
+
+    if written:
+        click.echo(f"Generated {len(written)} template(s) in {output_dir}/")
+        for p in written:
+            click.echo(f"  {p.name}")
+    else:
+        click.echo("No templates generated (files may already exist, use --overwrite)")
