@@ -19,6 +19,14 @@ Learn how Pennyfarthing organizes work using sprints, epics, and stories. Then p
 - Developer knows key sprint commands
 </output>
 
+<gate>
+## Completion Criteria
+- [ ] User has seen the sprint status
+- [ ] User understands the epic/story hierarchy
+- [ ] User knows how to start work with `/pf-sprint work`
+- [ ] User understands the YAML shard structure
+</gate>
+
 ## SPRINT CONCEPTS
 
 Pennyfarthing uses a three-level hierarchy to organize work:
@@ -65,12 +73,8 @@ pf sprint story show <story-id>
 ```
 
 <switch>
-**How would you like to proceed?**
-
-Use AskUserQuestion to offer:
-
-1. **Try It** — Run `pf sprint status` and `pf sprint backlog` to see your sprint data live.
-2. **Continue** — Move on to the hands-on practice exercise.
+<option label="Try It" action="try-it" description="Run pf sprint status and pf sprint backlog to see your sprint data live" />
+<option label="Continue" action="continue" description="Move on to the hands-on practice exercise" />
 </switch>
 
 ## HANDS-ON PRACTICE
@@ -159,53 +163,59 @@ pf sprint status
 
 The practice epic and story should be gone.
 
-## DEEP DIVE
+<deep-dive>
+## Deep-Dive: Sprint System Internals
 
-<switch>
-**Want to dig deeper into sprint internals?**
+When the user selects Dig In, explore these topics interactively:
 
-Use AskUserQuestion to offer:
-
-1. **Dig In** — Learn about YAML shards, epic lifecycle, archive process, and Jira sync.
-2. **Skip** — Continue to the next step.
-</switch>
-
-### YAML Shards
-
-Sprint data is split across multiple files to avoid merge conflicts:
-
-```
-sprint/
-  current-sprint.yaml    # Index: sprint metadata + epic refs
-  epic-MSSCI-15616.yaml  # One shard per epic
-  epic-MSSCI-15620.yaml
-  archive/               # Completed story sessions
-```
-
-The index file (`current-sprint.yaml`) lists which epics are active. Each epic shard contains the epic metadata and its stories. This means two agents working on different epics never touch the same file.
+### YAML Shard Structure
+Sprint tracking uses a sharded YAML architecture:
+- **`current-sprint.yaml`** is the index file containing sprint metadata and epic references (as string keys like `MSSCI-14510`)
+- **`epic-MSSCI-XXXXX.yaml`** shard files contain the actual story details for each epic
+- The `load_sprint()` loader merges shards into a unified data structure
+- `write_sprint()` handles writing back to the correct shard files
 
 ### Epic Lifecycle
+- Epics are created via `pf sprint epic add` or imported from BMAD via `pf sprint epic import`
+- Each epic gets its own shard file: `sprint/epic-{jira-key}.yaml`
+- Stories within epics track points, priority, status, workflow, and acceptance criteria
+- Completed epics can be archived via `pf sprint epic archive`
 
-Epics flow through: `planning` → `active` → `completed` → archived.
-
-- `pf sprint epic add` creates a new epic
-- Stories are added with `pf sprint story add`
-- When all stories are done, the epic can be archived with `pf sprint epic archive`
+### Story Lifecycle
+Full lifecycle: backlog → in_progress → done → archived
+- **backlog**: Story exists in YAML, not yet claimed
+- **in_progress**: Claimed via `/pf-sprint work`, Jira moved to In Progress
+- **done**: All phases complete, PR merged, Jira moved to Done
+- **archived**: Session file moved to `sprint/archive/`, YAML updated
 
 ### Archive Process
+When a story finishes (`pf sprint story finish`):
+1. Session file archived to `sprint/archive/{jira-key}-session.md`
+2. PR auto-merged (if open)
+3. Jira status moved to Done
+4. Sprint YAML updated with completion date
+5. Feature branch cleaned up
 
-When a story is finished (`pf sprint story finish`):
-1. The session file is moved to `sprint/archive/`
-2. The story status is set to `done`
-3. Jira is updated (if configured)
+### Jira Sync and Reconciliation
+- `pf jira create story EPIC_KEY STORY_ID` — Create Jira issue from YAML
+- `pf jira sync EPIC_ID` — Push YAML changes to Jira
+- `pf jira bidirectional` — Two-way sync (Jira wins by default)
+- `pf jira reconcile` — Audit report of mismatches between YAML and Jira
+- Sprint association via `pf jira sprint add`
 
-### Jira Sync
+Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
+</deep-dive>
 
-Bidirectional sync keeps YAML and Jira in agreement:
-- `pf jira sync` pushes YAML → Jira
-- `pf jira bidirectional` pulls Jira → YAML (Jira wins by default)
-- `pf jira reconcile` reports mismatches without changing anything
+<switch>
+<option label="Continue" action="continue" description="Proceed to hooks and configuration" />
+<option label="Dig In" action="dig-in" description="Explore YAML shard structure, epic lifecycle, archive process, and Jira sync" />
+<option label="Try It" action="try-it" description="Run pf sprint status or pf sprint backlog" />
+<option label="Skip" action="skip" description="Move to configuration" />
+</switch>
 
-## NEXT
-
-Proceed to step 5 to learn about configuration and customization.
+<collaboration-menu>
+- Continue — Proceed to hooks and configuration
+- Dig In — Explore YAML shards, epic lifecycle, archive, and Jira sync
+- Try It — Run `pf sprint status` or `pf sprint backlog`
+- Skip — Move to configuration
+</collaboration-menu>

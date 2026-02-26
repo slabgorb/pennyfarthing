@@ -9,7 +9,7 @@
 workflow:
   name: guided-tour
   description: Interactive guided tour for new developer onboarding. Walks through Pennyfarthing's key features step-by-step with hands-on verification gates.
-  version: "1.0.0"
+  version: "2.0.0"
   type: stepped
 
   steps:
@@ -25,18 +25,23 @@ workflow:
     gate_marker: "<!-- GATE -->"
 
   collaboration:
+    gate_type: switch
     menus:
       - key: C
         name: Continue
+        action: continue
         description: Proceed to next tour stop
+      - key: D
+        name: Dig In
+        action: dig-in
+        description: Interactive deep-dive into this feature
       - key: T
         name: Try It
+        action: try-it
         description: Run the suggested command yourself
-      - key: H
-        name: Help
-        description: Get more explanation about this feature
       - key: S
         name: Skip
+        action: skip
         description: Skip this tour stop
 
   agent: orchestrator

@@ -56,9 +56,31 @@ Available themes: {theme_list}
 - [ ] Current theme is displayed (or user has selected one)
 </gate>
 
+<deep-dive>
+## Deep-Dive: Theme System Internals
+
+When the user selects Dig In, explore these topics interactively:
+
+- **Theme discovery**: How themes are found (core dist → `@pennyfarthing/themes-*` packages → project custom → user custom)
+- **Theme tiers**: A/B/C/D/S/U ratings and what they mean for persona quality
+- **Character mapping**: How each theme maps all 11 agent roles to characters
+- **Custom themes**: Creating your own theme with `pf theme create <name>`
+- **Theme packages**: `@pennyfarthing/themes-*` packages and how they're discovered
+- **OCEAN traits**: How personality traits influence agent behavior in benchmarks
+
+Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
+</deep-dive>
+
+<switch>
+<option label="Continue" action="continue" description="Proceed to agent activation" />
+<option label="Dig In" action="dig-in" description="Explore theme discovery, tiers, custom themes, and OCEAN traits" />
+<option label="Try It" action="try-it" description="Run pf theme list and pf theme show" />
+<option label="Skip" action="skip" description="Keep current theme and move on" />
+</switch>
+
 <collaboration-menu>
-- **[C] Continue** — Proceed to agent activation
-- **[T] Try It** — Run `pf theme list` and `pf theme show`
-- **[H] Help** — Explain how themes affect agent behavior
-- **[S] Skip** — Keep current theme and move on
+- Continue — Proceed to agent activation
+- Dig In — Explore theme discovery, tiers, and custom themes
+- Try It — Run `pf theme list` and `pf theme show`
+- Skip — Keep current theme and move on
 </collaboration-menu>

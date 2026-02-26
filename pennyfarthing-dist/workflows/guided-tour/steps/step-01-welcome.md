@@ -57,9 +57,30 @@ Use `/pf-help` anytime for quick reference.
 - [ ] User understands they can use `/pf-help` for reference
 </gate>
 
+<deep-dive>
+## Deep-Dive: Pennyfarthing Architecture
+
+When the user selects Dig In, explore these topics interactively:
+
+- **Framework structure**: `.pennyfarthing/` directory, `pennyfarthing-dist/`, symlinks
+- **Display modes**: TUI (BikeRack), GUI (Cyclist), IDE (WheelHub)
+- **Component codenames**: WheelHub (server), TirePump (context clearing), BikeRack (panel viewer), BikeLane (workflow engine)
+- **Getting-started guide**: Walk through the companion reference document
+- **Installation health**: Explain each validator and what it checks
+
+Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
+</deep-dive>
+
+<switch>
+<option label="Continue" action="continue" description="Proceed to theme selection" />
+<option label="Dig In" action="dig-in" description="Explore Pennyfarthing architecture, display modes, and component codenames" />
+<option label="Try It" action="try-it" description="Run /pf-help to see the help system" />
+<option label="Skip" action="skip" description="Jump ahead to themes" />
+</switch>
+
 <collaboration-menu>
-- **[C] Continue** — Proceed to theme selection
-- **[T] Try It** — Run `/pf-help` to see the help system
-- **[H] Help** — Learn more about Pennyfarthing's architecture
-- **[S] Skip** — Jump ahead to themes
+- Continue — Proceed to theme selection
+- Dig In — Explore Pennyfarthing architecture and components
+- Try It — Run `/pf-help` to see the help system
+- Skip — Jump ahead to themes
 </collaboration-menu>

@@ -20,7 +20,7 @@ Introduce the agent system and workflow patterns. Agents are specialized roles (
 
 <instructions>
 1. Explain the agent model: each agent has a specific role and expertise
-2. Show the available agents and their slash commands
+2. Show the available agents and their slash commands (all use /pf- prefix)
 3. Explain the workflow concept: agents hand off to each other in sequence
 4. Show workflow types: phased (TDD, trivial) vs stepped (architecture, this tour)
 5. Demonstrate a workflow listing with `pf workflow list`
@@ -29,7 +29,7 @@ Introduce the agent system and workflow patterns. Agents are specialized roles (
 <actions>
 - Run: `pf workflow list` to show all available workflows
 - Run: `pf workflow show tdd` to display the TDD workflow phases
-- Show: agent commands table (e.g., `/dev`, `/tea`, `/reviewer`, `/sm`)
+- Show: full agent commands table with /pf- prefix
 </actions>
 
 <output>
@@ -42,15 +42,21 @@ Present the agent and workflow overview:
 
 | Command | Agent | Role |
 |---------|-------|------|
-| `/sm` | Scrum Master | Story setup, completion |
-| `/tea` | Test Engineer | Failing tests (RED) |
-| `/dev` | Developer | Implementation (GREEN) |
-| `/reviewer` | Code Reviewer | Adversarial review |
-| `/architect` | System Architect | Technical design |
+| `/pf-sm` | Scrum Master | Story setup, sprint coordination, story completion |
+| `/pf-tea` | Test Engineer | Test design, TDD RED phase, acceptance criteria analysis |
+| `/pf-dev` | Developer | Feature implementation, making tests GREEN |
+| `/pf-reviewer` | Code Reviewer | Adversarial review, quality enforcement |
+| `/pf-architect` | System Architect | Technical design, architecture decisions |
+| `/pf-pm` | Product Manager | Strategic planning, prioritization |
+| `/pf-tech-writer` | Technical Writer | Documentation creation and maintenance |
+| `/pf-ux-designer` | UX Designer | User experience design and UI patterns |
+| `/pf-devops` | DevOps Engineer | Infrastructure, deployment, CI/CD |
+| `/pf-ba` | Business Analyst | Requirements discovery, stakeholder analysis |
+| `/pf-orchestrator` | Orchestrator | Meta-operations, agent coordination |
 
 **Workflows** define how agents collaborate:
-- **TDD** (phased): SM → TEA → Dev → Reviewer → SM
-- **Trivial** (phased): SM → Dev → Reviewer → SM
+- **TDD** (phased): `/pf-sm` → `/pf-tea` → `/pf-dev` → `/pf-reviewer` → `/pf-sm`
+- **Trivial** (phased): `/pf-sm` → `/pf-dev` → `/pf-reviewer` → `/pf-sm`
 - **Stepped** workflows guide you through interactive steps (like this tour)
 ```
 </output>
@@ -58,13 +64,37 @@ Present the agent and workflow overview:
 <gate>
 ## Completion Criteria
 - [ ] User understands the agent role model
+- [ ] User has seen the full 11-agent roster with /pf- commands
 - [ ] User has seen the workflow list
 - [ ] User understands phased vs stepped workflow types
 </gate>
 
+<deep-dive>
+## Deep-Dive: Agents & Workflows
+
+When the user selects Dig In, explore these topics interactively:
+
+- **Agent activation**: How `/pf-{agent}` loads persona, session, and tools via `pf agent start`
+- **Phased workflows**: TDD, BDD, trivial — phase order, gates between phases, handoff protocol
+- **Stepped workflows**: BikeLane engine, step files, collaboration menus, verification gates
+- **Tandem mode**: Background observer pairing (e.g., Architect watching Dev)
+- **Team mode**: Native Claude Code agent teams for parallel collaboration within a phase
+- **Subagents**: Haiku-powered helpers (testing-runner, sm-setup, reviewer-preflight)
+- **Handoff protocol**: resolve-gate → complete-phase → marker → next agent activates
+
+Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
+</deep-dive>
+
+<switch>
+<option label="Continue" action="continue" description="Proceed to sprint commands" />
+<option label="Dig In" action="dig-in" description="Explore agent activation, handoff protocol, tandem, and team mode" />
+<option label="Try It" action="try-it" description="Run pf workflow list or pf workflow show tdd" />
+<option label="Skip" action="skip" description="Move to sprint management" />
+</switch>
+
 <collaboration-menu>
-- **[C] Continue** — Proceed to sprint commands
-- **[T] Try It** — Run `pf workflow list` or `pf workflow show tdd`
-- **[H] Help** — Deep dive on a specific agent or workflow
-- **[S] Skip** — Move to sprint management
+- Continue — Proceed to sprint commands
+- Dig In — Explore agent activation, handoff protocol, and team mode
+- Try It — Run `pf workflow list` or `pf workflow show tdd`
+- Skip — Move to sprint management
 </collaboration-menu>
