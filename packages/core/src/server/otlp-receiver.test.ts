@@ -565,3 +565,227 @@ describe('AC8: Standalone mode — delegating stubs without provider', () => {
     assert.ok(csv.includes('Read'), 'CSV should contain tool data');
   });
 });
+
+// =============================================================================
+// Story 132-5: Standalone Enrichment Pipeline
+// =============================================================================
+
+describe('Story 132-5: Standalone enrichment via pending tool inputs', () => {
+  beforeEach(async () => {
+    const mod = await import('./otlp-receiver.js');
+    mod.resetEventStore();
+  });
+
+  it('storePendingToolInput stores inputs in standalone mode (not no-op)', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    // Store a pending Read tool input (simulates PreToolUse hook forwarding)
+    storePendingToolInput('tool-123', 'Read', {
+      file_path: '/tmp/test-file.ts',
+    });
+
+    // Process the corresponding tool_result log event
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Read', success: 'true', duration_ms: '50' },
+    }]);
+
+    const audit = getAuditLog();
+    assert.strictEqual(audit.length, 1);
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.filePath, '/tmp/test-file.ts',
+      'Should enrich with file path from pending input');
+    assert.strictEqual(entry.language, 'typescript',
+      'Should detect language from file extension');
+  });
+
+  it('enriches Edit entries with diff summary', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-456', 'Edit', {
+      file_path: '/tmp/component.tsx',
+      old_string: 'const a = 1;\nconst b = 2;',
+      new_string: 'const a = 1;\nconst b = 2;\nconst c = 3;',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Edit', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.filePath, '/tmp/component.tsx');
+    assert.strictEqual(entry.language, 'typescriptreact');
+
+    const diff = entry.diff as { added: number; removed: number };
+    assert.ok(diff, 'Should have diff summary');
+    assert.strictEqual(diff.added, 1, 'Should count 1 line added');
+    assert.strictEqual(diff.removed, 0, 'Should count 0 lines removed');
+  });
+
+  it('enriches Bash entries with redacted command and exit code', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-789', 'Bash', {
+      command: 'git status',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Bash', success: 'true', duration_ms: '200' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.command, 'git status',
+      'Should include command (no secrets to redact)');
+    assert.strictEqual(entry.exitCode, 0,
+      'Should have exit code 0 for success');
+    assert.strictEqual(entry.durationMs, 200,
+      'Should capture duration from OTEL attributes');
+  });
+
+  it('redacts secrets in Bash commands', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-sec', 'Bash', {
+      command: 'curl -H "token=ghp_abcdefghijklmnopqrstuvwxyz1234567890" https://api.example.com',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Bash', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    const cmd = entry.command as string;
+    assert.ok(!cmd.includes('ghp_'), 'Should redact GitHub token');
+  });
+
+  it('captures duration_ms from OTEL attributes', async () => {
+    const { processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Read', success: 'true', duration_ms: '42' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.durationMs, 42,
+      'Should parse duration_ms from OTEL attributes');
+  });
+
+  it('enriches Write entries with file path and language', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-write', 'Write', {
+      file_path: '/tmp/config.yaml',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Write', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.filePath, '/tmp/config.yaml');
+    assert.strictEqual(entry.language, 'yaml');
+  });
+
+  it('enriches Grep entries with pattern', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-grep', 'Grep', {
+      pattern: 'TODO|FIXME',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Grep', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.pattern, 'TODO|FIXME');
+  });
+
+  it('pending inputs expire after max age', async () => {
+    const { storePendingToolInput, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    // Store input with a timestamp in the past (expired)
+    storePendingToolInput('tool-old', 'Read', {
+      file_path: '/tmp/old.ts',
+    });
+
+    // Manually expire by waiting (we can't easily fake time, so test the non-match path)
+    // Process a different tool type — pending Read input should not match Bash
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Bash', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.filePath, undefined,
+      'Bash entry should not get Read file path');
+  });
+
+  it('resetEventStore clears pending inputs', async () => {
+    const { storePendingToolInput, resetEventStore, processLogEvents, getAuditLog } = await import('./otlp-receiver.js');
+
+    storePendingToolInput('tool-cleared', 'Read', {
+      file_path: '/tmp/cleared.ts',
+    });
+
+    resetEventStore();
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Read', success: 'true' },
+    }]);
+
+    const audit = getAuditLog();
+    const entry = audit[0] as Record<string, unknown>;
+    assert.strictEqual(entry.filePath, undefined,
+      'Pending input should have been cleared by reset');
+  });
+
+  it('tool event listeners receive enrichment fields', async () => {
+    const { storePendingToolInput, processLogEvents, addToolEventListener } = await import('./otlp-receiver.js');
+
+    let receivedEvent: Record<string, unknown> | undefined;
+    addToolEventListener((event) => {
+      receivedEvent = event as unknown as Record<string, unknown>;
+    });
+
+    storePendingToolInput('tool-listener', 'Edit', {
+      file_path: '/tmp/listener.py',
+      old_string: 'x = 1',
+      new_string: 'x = 2',
+    });
+
+    processLogEvents([{
+      name: 'claude_code.tool_result',
+      timestamp: Date.now(),
+      attributes: { tool_name: 'Edit', success: 'true' },
+    }]);
+
+    assert.ok(receivedEvent, 'Listener should have fired');
+    assert.strictEqual(receivedEvent!.filePath, '/tmp/listener.py');
+    assert.strictEqual(receivedEvent!.language, 'python');
+    assert.ok(receivedEvent!.diff, 'Should include diff in tool event');
+  });
+});

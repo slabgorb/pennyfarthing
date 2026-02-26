@@ -4,10 +4,23 @@
  * with full span correlation, file enrichment, and per-agent/story aggregation.
  *
  * Story 124-2: Moved from Cyclist to BikeRack for standalone operation.
+ * Story 132-5: Standalone enrichment — pending tool inputs are stored locally
+ *   and correlated with incoming log events for file/edit/bash enrichment.
  *
  * Supports a provider pattern: call setOTLPProvider() with an external implementation
  * to override default processing. Without a provider, uses in-memory stores.
  */
+
+import {
+  detectLanguage,
+  calculateDiffSummary,
+  getFileSize,
+  getLineCount,
+  getGitStatus,
+  redactSecrets,
+  createOutputSummary,
+  extractExitCode,
+} from './file-enrichment.js';
 
 
 export interface TokenStats {
@@ -183,12 +196,41 @@ export function resetEventStore(): void {
   _auditLog = [];
   _toolEventListeners = [];
   _userEmail = null;
+  _pendingToolInputs = [];
+}
+
+// =============================================================================
+// Standalone pending tool input queue (Story 132-5)
+// Tool inputs arrive from PreToolUse hook BEFORE OTEL tool_result log events.
+// Store them here and consume when matching log events arrive.
+// =============================================================================
+
+interface PendingInput {
+  toolId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  timestamp: number;
+}
+
+let _pendingToolInputs: PendingInput[] = [];
+const PENDING_INPUT_MAX_AGE_MS = 10000;
+
+function consumePendingInput(toolName: string): PendingInput | undefined {
+  const now = Date.now();
+  _pendingToolInputs = _pendingToolInputs.filter(p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS);
+  const index = _pendingToolInputs.findIndex(p => p.toolName === toolName);
+  if (index === -1) return undefined;
+  const [match] = _pendingToolInputs.splice(index, 1);
+  return match;
 }
 
 // Story 120-13: Pending tool input storage (hook-based forwarding)
+// Story 132-5: Standalone mode now stores locally instead of no-op
 export function storePendingToolInput(toolId: string, toolName: string, input: Record<string, unknown>): void {
   if (_provider?.storePendingToolInput) return _provider.storePendingToolInput(toolId, toolName, input);
-  // Standalone: no-op (pending inputs are consumed by Cyclist's OTLP receiver)
+  const now = Date.now();
+  _pendingToolInputs = _pendingToolInputs.filter(p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS);
+  _pendingToolInputs.push({ toolId, toolName, input, timestamp: now });
 }
 
 // =============================================================================
@@ -267,36 +309,141 @@ export function processLogEvents(events: unknown): void {
     if (event.name === 'claude_code.tool_result') {
       const toolName = (event.attributes?.tool_name as string) ?? 'unknown';
       const success = event.attributes?.success === 'true';
+      const durationMs = parseInt(event.attributes?.duration_ms as string, 10) || 0;
+
       const entry: AuditLogEntry = {
         timestamp: event.timestamp,
         type: 'tool_result',
         tool: toolName,
         toolName,
         success,
+        durationMs,
       };
-      _auditLog.push(entry);
+
+      // Story 132-5: Consume pending tool input for enrichment
+      const pendingInput = consumePendingInput(toolName);
+
       // Parse tool_parameters for input excerpt (matches Cyclist's enrichment)
       let input: string | undefined;
       const toolParams = event.attributes?.tool_parameters as string | undefined;
+      let parsedParams: Record<string, unknown> | undefined;
       if (toolParams) {
         try {
-          const params = JSON.parse(toolParams);
-          input = params.description || params.full_command || params.file_path || params.command || params.pattern || (Object.values(params)[0] as string);
+          parsedParams = JSON.parse(toolParams);
+          input = (parsedParams!.description || parsedParams!.full_command || parsedParams!.file_path || parsedParams!.command || parsedParams!.pattern || (Object.values(parsedParams!)[0] as string)) as string;
         } catch {
           input = toolParams;
         }
       }
+
+      // Story 132-5: Enrich from pending tool input (has full params not in OTEL)
+      const toolInput = pendingInput?.input ?? parsedParams;
+      if (toolInput) {
+        enrichEntrySync(entry, toolName, toolInput, success, durationMs);
+        // Async enrichment updates entry in place (file size, line count, git status)
+        enrichEntryAsync(entry, toolName, toolInput).catch(() => {});
+      }
+
+      _auditLog.push(entry);
+
       const toolEvent: ToolEvent = {
         toolName,
         input: input?.substring(0, 500),
         success,
         timestamp: event.timestamp,
         toolParameters: toolParams,
+        durationMs,
+        // Copy enrichment fields to tool event
+        ...(entry.filePath ? { filePath: entry.filePath } : {}),
+        ...(entry.language ? { language: entry.language } : {}),
+        ...(entry.diff ? { diff: entry.diff } : {}),
+        ...(entry.command ? { command: entry.command } : {}),
+        ...(entry.exitCode !== undefined ? { exitCode: entry.exitCode } : {}),
+        ...(entry.outputSummary ? { outputSummary: entry.outputSummary } : {}),
       };
       for (const listener of _toolEventListeners) {
         listener(toolEvent);
       }
     }
+  }
+}
+
+/**
+ * Synchronous enrichment — adds fields to audit entry immediately.
+ * Story 132-5
+ */
+function enrichEntrySync(
+  entry: AuditLogEntry,
+  toolName: string,
+  toolInput: Record<string, unknown>,
+  success: boolean,
+  durationMs: number,
+): void {
+  switch (toolName) {
+    case 'Read':
+    case 'Write': {
+      const filePath = toolInput.file_path as string;
+      if (filePath) {
+        entry.filePath = filePath;
+        entry.language = detectLanguage(filePath);
+      }
+      break;
+    }
+    case 'Edit': {
+      const filePath = toolInput.file_path as string;
+      if (filePath) {
+        entry.filePath = filePath;
+        entry.language = detectLanguage(filePath);
+      }
+      const oldStr = toolInput.old_string as string | undefined;
+      const newStr = toolInput.new_string as string | undefined;
+      if (oldStr !== undefined && newStr !== undefined) {
+        entry.diff = calculateDiffSummary(oldStr, newStr);
+      }
+      break;
+    }
+    case 'Bash': {
+      const command = toolInput.command as string;
+      if (command) {
+        entry.command = redactSecrets(command);
+      }
+      entry.exitCode = extractExitCode(undefined, undefined, success);
+      entry.workingDirectory = (toolInput.cwd as string) || undefined;
+      break;
+    }
+    case 'Grep':
+    case 'Glob': {
+      const pattern = toolInput.pattern as string;
+      if (pattern) {
+        entry.pattern = pattern;
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Async enrichment — updates audit entry in place with filesystem data.
+ * Fire-and-forget; failures are silently ignored.
+ * Story 132-5
+ */
+async function enrichEntryAsync(
+  entry: AuditLogEntry,
+  toolName: string,
+  toolInput: Record<string, unknown>,
+): Promise<void> {
+  const filePath = toolInput.file_path as string;
+  if (!filePath) return;
+
+  if (toolName === 'Read' || toolName === 'Edit' || toolName === 'Write') {
+    const [fileSize, lineCount, gitStatus] = await Promise.all([
+      getFileSize(filePath),
+      getLineCount(filePath),
+      getGitStatus(filePath),
+    ]);
+    entry.fileSize = fileSize;
+    entry.lineCount = lineCount;
+    entry.gitStatus = gitStatus;
   }
 }
 
