@@ -96,6 +96,24 @@ skills:
     keywords: [context-window, tokens, summarization, lazy-loading]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
+  pf-context:
+    name: pf-context
+    description: Create epic or story context documents from sprint data and planning docs
+    category: project-management
+    tags: [context, creation, epic, story, sprint]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Creating epic context document
+        invocation: /pf-context create epic 130
+      - context: Creating epic context by Jira key
+        invocation: /pf-context create epic MSSCI-15685
+    anti_patterns:
+      - Don't hardcode section names — read context-schema.yaml
+      - Don't create story context without existing parent epic context
+    related_skills: [pf-sprint, pf-context-engineering]
+    keywords: [context, epic, story, template, schema, planning, creation]
+
   pf-cyclist:
     name: pf-cyclist
     description: Launch Cyclist visual terminal for Claude Code monitoring
