@@ -15,6 +15,7 @@ const welcomeClients = new Set<WebSocket>();
 export interface WelcomeMessage {
   project: string;
   theme: string;
+  showNudge?: boolean;
 }
 
 /**
@@ -32,6 +33,7 @@ export function broadcastWelcome(message: WelcomeMessage): void {
     type: 'welcome',
     project: message.project,
     theme: message.theme,
+    showNudge: message.showNudge ?? false,
     timestamp: Date.now(),
   });
 

@@ -24,6 +24,7 @@ from pathlib import Path
 import yaml
 
 from pf.hooks import (
+    CyclistSettings,
     is_cyclist_running,
     load_settings,
     send_to_cyclist,
@@ -216,7 +217,9 @@ def _get_project_name(project_root: Path) -> str:
     return project_root.name
 
 
-def _display_cli_welcome(project_name: str, theme: str | None) -> None:
+def _display_cli_welcome(
+    project_name: str, theme: str | None, show_nudge: bool = False
+) -> None:
     """Display ASCII art welcome for CLI mode."""
     print("""
        ___
@@ -237,33 +240,79 @@ def _display_cli_welcome(project_name: str, theme: str | None) -> None:
         print(f"    Project: {project_name}")
     if theme:
         print(f"    Theme:   {theme}")
+    if show_nudge:
+        print()
+        print("    Tip: Run /pf-help to explore commands, agents, and workflows")
     print()
 
 
-def _show_welcome(project_dir: Path) -> None:
-    """Show welcome message (once per session)."""
+def _should_show_nudge(project_dir: Path, settings: CyclistSettings) -> bool:
+    """Check if discovery nudge should be shown.
+
+    Shows on first session only. Controlled by discovery_nudge config setting
+    and a persistent marker file.
+    """
+    if not settings.discovery_nudge:
+        return False
+
+    pf_dir = project_dir / ".pennyfarthing"
+    if not pf_dir.is_dir():
+        return False
+
+    marker = pf_dir / ".discovery-nudge-shown"
+    if marker.exists():
+        return False
+
+    return True
+
+
+def _mark_nudge_shown(project_dir: Path) -> None:
+    """Write persistent marker so nudge only shows once."""
+    marker = project_dir / ".pennyfarthing" / ".discovery-nudge-shown"
+    try:
+        marker.touch()
+    except OSError:
+        pass
+
+
+def _show_welcome(project_dir: Path) -> bool:
+    """Show welcome message (once per session).
+
+    Returns:
+        True if discovery nudge was shown (for additionalContext injection).
+    """
     lock_path = _get_welcome_lock_path(project_dir)
     if lock_path.exists():
-        return
+        return False
 
     lock_path.touch()
 
     project_name = _get_project_name(project_dir)
     settings = load_settings(project_dir)
     theme = settings.theme
+    show_nudge = _should_show_nudge(project_dir, settings)
 
     if is_cyclist_running(project_dir):
         try:
             send_to_cyclist(
                 endpoint="/api/welcome",
-                data={"project": project_name or "", "theme": theme or ""},
+                data={
+                    "project": project_name or "",
+                    "theme": theme or "",
+                    "show_nudge": show_nudge,
+                },
                 project_root=project_dir,
                 timeout=5,
             )
         except Exception:
             pass
     else:
-        _display_cli_welcome(project_name, theme)
+        _display_cli_welcome(project_name, theme, show_nudge=show_nudge)
+
+    if show_nudge:
+        _mark_nudge_shown(project_dir)
+
+    return show_nudge
 
 
 # =============================================================================
@@ -404,7 +453,21 @@ def main() -> None:
         _write_env_file(project_dir, session_id, otel_port)
         _ensure_theme_portraits(project_dir)
         _sync_spinner_settings(project_dir)
-        _show_welcome(project_dir)
+        nudge_shown = _show_welcome(project_dir)
+
+        if nudge_shown:
+            from pf.hooks import HookResponse, output_hook_response
+
+            output_hook_response(HookResponse(
+                event_name="SessionStart",
+                additional_context=(
+                    "This appears to be a new user session. "
+                    "The welcome banner included a discovery nudge. "
+                    "If the user asks for help getting started, suggest `/pf-help` "
+                    "for commands and workflows, or mention the "
+                    "`what-is-pennyfarthing` guide for a framework overview."
+                ),
+            ))
 
     except Exception:
         pass

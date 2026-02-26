@@ -143,6 +143,7 @@ class CyclistSettings:
     git_monitor: bool = False
     statusbar: bool = True
     theme: str | None = None
+    discovery_nudge: bool = True
 
 
 def load_settings(project_root: Path | None = None) -> CyclistSettings:
@@ -215,6 +216,10 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
     # Handle statusbar
     if "statusbar" in workflow and isinstance(workflow["statusbar"], bool):
         settings.statusbar = workflow["statusbar"]
+
+    # Handle discovery_nudge
+    if "discovery_nudge" in workflow and isinstance(workflow["discovery_nudge"], bool):
+        settings.discovery_nudge = workflow["discovery_nudge"]
 
     return settings
 

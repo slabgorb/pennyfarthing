@@ -274,7 +274,7 @@ class TestSessionStartIntegration:
                 {"CLAUDE_PROJECT_DIR": str(complete_project)},
             ),
             patch("pf.hooks.session_start._ensure_wheelhub", return_value=None),
-            patch("pf.hooks.session_start._show_welcome"),
+            patch("pf.hooks.session_start._show_welcome", return_value=False),
             patch("pf.hooks.session_start._write_env_file"),
         ):
             from pf.hooks.session_start import main

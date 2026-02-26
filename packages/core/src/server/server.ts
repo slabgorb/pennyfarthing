@@ -204,9 +204,9 @@ app.use('/v1', createOTLPRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 app.post('/api/welcome', (req, res) => {
-  const { project, theme } = req.body || {};
+  const { project, theme, show_nudge } = req.body || {};
   try {
-    broadcastWelcome({ project: project || '', theme: theme || '' });
+    broadcastWelcome({ project: project || '', theme: theme || '', showNudge: !!show_nudge });
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to broadcast welcome' });
