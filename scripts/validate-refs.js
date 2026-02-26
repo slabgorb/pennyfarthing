@@ -57,7 +57,7 @@ const STRICT = process.argv.includes('--strict');
 // --- Constants ---
 
 const SCAN_EXTENSIONS = new Set(['.yaml', '.yml', '.md', '.sh', '.py']);
-const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', 'dist', 'build', 'portraits', 'templates']);
+const SKIP_DIRS = new Set(['node_modules', '.git', '.venv', 'venv', 'dist', 'build', 'portraits', 'templates']);
 
 // Absolute path leak pattern
 // Windows pattern requires backslash + 2 word chars to avoid matching escape sequences like \n, \t
@@ -626,12 +626,16 @@ function checkThemeAgentKeys(filePath, content, agents) {
   let doc;
   try { doc = parseDocument(content); } catch { return { issues, refs }; }
 
+  // Non-agent keys that may appear under the agents: map in theme YAML
+  const NON_AGENT_KEYS = new Set(['spinner_verbs']);
+
   const agentsNode = doc.get('agents', true);
   if (!agentsNode || !isMap(agentsNode)) return { issues, refs };
 
   for (const item of agentsNode.items) {
     const key = item.key?.value;
     if (typeof key === 'string') {
+      if (NON_AGENT_KEYS.has(key)) continue;
       refs++;
       if (!agents.has(key)) {
         const line = item.key.range ? offsetToLine(content, item.key.range[0]) : undefined;
