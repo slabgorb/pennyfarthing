@@ -1,49 +1,90 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ${PROJECT_NAME} — tmux dev layout
+# Pennyfarthing Development - tmux launcher
 #
-# Layout (top/bottom):
-# ┌──────────────────────────────────────┐
-# │            claude code               │
-# ├──────────────────────────────────────┤
-# │              TUI                     │
-# └──────────────────────────────────────┘
+# Usage: ./tmux-dev [layout] [directory]
+#   layout:    vert (default), right, left
+#   directory: defaults to current working directory
 #
-# Usage: ./tmux-dev [directory]
-#   directory defaults to current working directory
+# Layouts:
+#   vert   ┌──────────┐   right  ┌───────┬────┐   left  ┌────┬───────┐
+#           │  claude  │          │claude │TUI │         │TUI │claude │
+#           ├──────────┤          │       │    │         │    │       │
+#           │   TUI    │          └───────┴────┘         └────┴───────┘
+#           └──────────┘
 #
 # Uses a dedicated tmux socket (-L pf) so the project tmux.conf
 # is guaranteed to load, avoiding conflicts with ~/.tmux.conf.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Parse layout argument (vert, right, left)
+LAYOUT="vert"
+if [[ "${1:-}" =~ ^(vert|right|left)$ ]]; then
+  LAYOUT="$1"
+  shift
+fi
+
 DIR="${1:-$(pwd)}"
 DIR="$(cd "$DIR" && pwd)"
-SESSION="pf"
 SOCKET="pf"
+BASE="pf-$(basename "$DIR")"
 
-# Kill existing session on our socket if running
-tmux -L "$SOCKET" kill-session -t "$SESSION" 2>/dev/null || true
+# Pick the right config file
+CONF="$SCRIPT_DIR/tmux.conf"
+if [[ -f "$SCRIPT_DIR/tmux.conf.${LAYOUT}" ]]; then
+  CONF="$SCRIPT_DIR/tmux.conf.${LAYOUT}"
+elif [[ -f "$SCRIPT_DIR/tmux.conf.${LAYOUT}-sample" ]]; then
+  CONF="$SCRIPT_DIR/tmux.conf.${LAYOUT}-sample"
+fi
+
+# Find next available session number for this directory
+N=0
+while tmux -L "$SOCKET" has-session -t "${BASE}-${N}" 2>/dev/null; do
+  N=$((N + 1))
+done
+SESSION="${BASE}-${N}"
 
 # Pass Kitty env vars so image protocol detection works inside tmux
 # (tmux overwrites TERM to tmux-256color, hiding the real terminal)
 export KITTY_WINDOW_ID="${KITTY_WINDOW_ID:-}"
 export TERM_PROGRAM="${TERM_PROGRAM:-}"
 
-# Create session with top pane (claude)
-tmux -L "$SOCKET" -f "$SCRIPT_DIR/tmux.conf" new-session -d -s "$SESSION" -c "$DIR" -e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM"
-tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
+ENV_ARGS=(-e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM")
 
-# Split vertically → bottom pane (tui)
-tmux -L "$SOCKET" split-window -v -t "$SESSION" -c "$DIR" -e "KITTY_WINDOW_ID=$KITTY_WINDOW_ID" -e "TERM_PROGRAM=$TERM_PROGRAM"
-tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
-
-# Label panes
-tmux -L "$SOCKET" select-pane -t "$SESSION.0" -T "Claude Code"
-tmux -L "$SOCKET" select-pane -t "$SESSION.1" -T "TUI"
-
-# Focus on claude pane
-tmux -L "$SOCKET" select-pane -t "$SESSION.0"
+case "$LAYOUT" in
+  vert)
+    # Claude Code on top, TUI on bottom
+    tmux -L "$SOCKET" -f "$CONF" new-session -d -s "$SESSION" -c "$DIR" "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
+    tmux -L "$SOCKET" split-window -v -t "$SESSION" -c "$DIR" "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
+    tmux -L "$SOCKET" select-pane -t "$SESSION.0" -T "Claude Code"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.1" -T "TUI"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.0"
+    ;;
+  right)
+    # Claude Code on left, TUI sidebar on right
+    tmux -L "$SOCKET" -f "$CONF" new-session -d -s "$SESSION" -c "$DIR" "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
+    tmux -L "$SOCKET" split-window -h -t "$SESSION" -c "$DIR" -l 35% "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
+    tmux -L "$SOCKET" select-pane -t "$SESSION.0" -T "Claude Code"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.1" -T "TUI"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.0"
+    ;;
+  left)
+    # TUI sidebar on left, Claude Code on right
+    tmux -L "$SOCKET" -f "$CONF" new-session -d -s "$SESSION" -c "$DIR" "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just tui" Enter
+    tmux -L "$SOCKET" split-window -h -t "$SESSION" -c "$DIR" -l 65% "${ENV_ARGS[@]}"
+    tmux -L "$SOCKET" send-keys -t "$SESSION" "just claude" Enter
+    tmux -L "$SOCKET" select-pane -t "$SESSION.0" -T "TUI"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.1" -T "Claude Code"
+    tmux -L "$SOCKET" select-pane -t "$SESSION.1"
+    ;;
+esac
 
 # Attach
 tmux -L "$SOCKET" attach -t "$SESSION"

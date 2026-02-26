@@ -112,11 +112,13 @@ set -g status-right-length 60
 set -g status-left " #(cat #{pane_current_path}/.pennyfarthing/tmux-status-left 2>/dev/null)"
 
 # Right: context bar + clock (flush right)
-set -g status-right "#(cat #{pane_current_path}/.pennyfarthing/tmux-status-right 2>/dev/null) #[fg=colour238]│#[default] #[fg=colour248]%H:%M "
+set -g status-right "#(cat #{pane_current_path}/.pennyfarthing/tmux-status-right 2>/dev/null) #[fg=colour238]│#[default] #[fg=colour248]%I:%M%p "
 
 # Center: tool activity (via window-status, since status-justify centre positions it)
+set -g window-status-style "default"
+set -g window-status-current-style "default"
 set -g window-status-format ""
-set -g window-status-current-format "#[fg=colour245,italics]#(cat #{pane_current_path}/.pennyfarthing/tmux-activity 2>/dev/null)#[default]"
+set -g window-status-current-format "#[fg=colour240,dim,italics]#(cat #{pane_current_path}/.pennyfarthing/tmux-activity 2>/dev/null)#[default]"
 
 # --- Pane labels ---
 set -g pane-border-status top

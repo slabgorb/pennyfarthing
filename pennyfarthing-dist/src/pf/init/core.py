@@ -34,6 +34,13 @@ _GITIGNORE_ENTRIES: list[str] = [
     ".session/",
     ".claude/settings.local.json",
     ".pennyfarthing/config.local.yaml",
+    "# tmux runtime cache files",
+    ".pennyfarthing/tmux-status",
+    ".pennyfarthing/tmux-status-left",
+    ".pennyfarthing/tmux-status-right",
+    ".pennyfarthing/tmux-activity",
+    "# Local tmux config (copied from sample)",
+    "tmux.conf",
 ]
 
 # Directories to create under the target project.
@@ -234,6 +241,9 @@ def init_project(
         _copy_tree(dist_root / dir_name, dest)
         content_dirs_copied += 1
 
+    # --- Install tmux config samples and launcher ---
+    tmux_installed = _install_tmux_files(target_dir, dist_root)
+
     # --- Update framework justfile ---
     from pf.init.justfile import update_framework_justfile
 
@@ -281,6 +291,7 @@ def init_project(
             "settings_written": settings_written,
             "hooks_upgraded": hooks_upgraded,
             "gitignore_updated": True,
+            "tmux_installed": tmux_installed,
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
         },
@@ -332,6 +343,43 @@ def _copy_tree(src: Path, dst: Path) -> None:
             _copy_tree(item, dest_item)
         else:
             shutil.copy2(item, dest_item)
+
+
+def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
+    """Install tmux config samples and launcher to the project root.
+
+    Copies tmux.conf.template variants as *-sample files and installs
+    the tmux-dev launcher. Skips files that already exist (user may
+    have customized them).
+
+    Returns:
+        List of installed file names.
+    """
+    templates_dir = dist_root / "templates"
+    installed: list[str] = []
+
+    # Map template files to their installed names
+    tmux_files = {
+        "tmux.conf.vert.template": "tmux.conf.vert-sample",
+        "tmux.conf.right.template": "tmux.conf.right-sample",
+        "tmux.conf.left.template": "tmux.conf.left-sample",
+        "tmux-dev.template": "tmux-dev",
+    }
+
+    for template_name, dest_name in tmux_files.items():
+        src = templates_dir / template_name
+        dest = target_dir / dest_name
+        if not src.is_file():
+            continue
+        if dest.exists():
+            continue  # Don't overwrite user customizations
+        shutil.copy2(src, dest)
+        # Make tmux-dev executable
+        if dest_name == "tmux-dev":
+            dest.chmod(dest.stat().st_mode | 0o111)
+        installed.append(dest_name)
+
+    return installed
 
 
 def _upgrade_hooks(settings_path: Path) -> bool:
