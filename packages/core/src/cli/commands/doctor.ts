@@ -1,6 +1,6 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, mkdirSync, renameSync, copyFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, _mkdirSync, renameSync, copyFileSync } from 'fs';
 import { join, relative, dirname } from 'path';
-import YAML from 'yaml';
+import _YAML from 'yaml';
 import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
 
@@ -1931,7 +1931,7 @@ export function checkHooks(projectRoot: string): CheckResult[] {
 
   // Detect installation type from manifest
   const manifest = readManifest(projectRoot);
-  const installationType = manifest?.installationType || 'copy';
+  const _installationType = manifest?.installationType || 'copy';
   const scriptBase = '.pennyfarthing/scripts';
 
   // Check hook scripts exist based on installation type
