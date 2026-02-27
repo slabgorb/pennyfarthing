@@ -339,7 +339,8 @@ export function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: st
     results.push({
       name: 'core/commands',
       status: 'fail',
-      detail: 'Missing .claude/commands/ — run pennyfarthing update'
+      detail: 'Missing .claude/commands/ — run pennyfarthing update',
+      fix: () => { refreshCommandsCopy(projectRoot, builtInCommandsPath); }
     });
   } else if (pathExists(builtInCommandsPath)) {
     const sourceCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md') && f.startsWith('pf-'));
@@ -396,7 +397,8 @@ export function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: st
     results.push({
       name: 'core/skills',
       status: 'fail',
-      detail: 'Missing .claude/skills/ — run pennyfarthing update'
+      detail: 'Missing .claude/skills/ — run pennyfarthing update',
+      fix: () => { refreshSkillsCopy(projectRoot, builtInSkillsPath); }
     });
   } else if (pathExists(builtInSkillsPath)) {
     const sourceSkills = readdirSync(builtInSkillsPath).filter(f => {
