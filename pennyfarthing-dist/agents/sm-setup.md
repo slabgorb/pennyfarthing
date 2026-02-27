@@ -169,6 +169,16 @@ pf jira claim {JIRA_KEY}
 | Phase | Started | Ended | Duration |
 |-------|---------|-------|----------|
 | setup | {NOW} | - | - |
+
+## Delivery Findings
+
+Agents record upstream observations discovered during their phase.
+Each finding is one list item. Use "No upstream findings" if none.
+
+**Types:** Gap, Conflict, Question, Improvement
+**Urgency:** blocking, non-blocking
+
+<!-- Agents: append findings below this line. Do not edit other agents' entries. -->
 ```
 
 ## Step 5: Create Branch
