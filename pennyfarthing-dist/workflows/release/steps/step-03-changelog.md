@@ -98,12 +98,13 @@ Replace `[Unreleased]` placeholder content with the draft, and add a fresh empty
 ...
 ```
 
-Also update the comparison links at the bottom of CHANGELOG.md:
+Then regenerate comparison links automatically:
 
-```markdown
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v{new_version}...HEAD
-[{new_version}]: https://github.com/1898andCo/pennyfarthing/compare/v{previous_version}...v{new_version}
+```bash
+pennyfarthing-dist/scripts/git/changelog-links.sh --fix
 ```
+
+This parses version headers and rebuilds all comparison links at the bottom of CHANGELOG.md.
 
 ### 3.6 Show Draft for Review
 

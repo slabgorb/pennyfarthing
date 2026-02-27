@@ -166,6 +166,16 @@ if [[ -f "pnpm-workspace.yaml" ]] && [[ -d "packages" ]]; then
     info "Workspace dependency versions match"
 fi
 
+# Validate changelog comparison links
+LINKS_SCRIPT="$(cd "$(dirname "$0")" && pwd)/changelog-links.sh"
+if [[ -x "$LINKS_SCRIPT" ]]; then
+    if ! "$LINKS_SCRIPT" --validate; then
+        error "CHANGELOG.md comparison links are invalid. Run: changelog-links.sh --fix"
+    else
+        info "CHANGELOG.md comparison links valid"
+    fi
+fi
+
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
 info "Current branch: $CURRENT_BRANCH"

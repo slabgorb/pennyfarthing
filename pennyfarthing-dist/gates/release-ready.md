@@ -23,9 +23,14 @@ CHANGELOG.md has an entry for the new version.
 Grep `CHANGELOG.md` for the current package.json version string.
 </check>
 
+<check name="changelog-links-valid">
+CHANGELOG.md comparison links are correct.
+Run `pennyfarthing-dist/scripts/git/changelog-links.sh --validate`. Exit code 0 = pass.
+</check>
+
 <pass>
 Run all checks from `gates/tests-pass` (test-suite, working-tree, branch-status),
-then run build-succeeds, version-bumped, and changelog-updated.
+then run build-succeeds, version-bumped, changelog-updated, and changelog-links-valid.
 
 If ALL pass, return:
 
@@ -53,6 +58,9 @@ GATE_RESULT:
     - name: changelog-updated
       status: pass
       detail: "CHANGELOG.md has entry for v{version}"
+    - name: changelog-links-valid
+      status: pass
+      detail: "Comparison links correct ({count} versions)"
 ```
 </pass>
 
@@ -83,12 +91,16 @@ GATE_RESULT:
     - name: changelog-updated
       status: pass | fail
       detail: "{changelog status}"
+    - name: changelog-links-valid
+      status: pass | fail
+      detail: "{link validation result}"
   recovery:
     - "Fix failing tests before release"
     - "Commit or stash uncommitted changes"
     - "Resolve build errors"
     - "Run: npm version patch|minor|major"
     - "Add changelog entry for v{version}"
+    - "Run: pennyfarthing-dist/scripts/git/changelog-links.sh --fix"
 ```
 </fail>
 

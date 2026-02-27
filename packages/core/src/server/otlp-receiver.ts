@@ -18,7 +18,6 @@ import {
   getLineCount,
   getGitStatus,
   redactSecrets,
-  createOutputSummary,
   extractExitCode,
 } from './file-enrichment.js';
 
@@ -377,7 +376,7 @@ function enrichEntrySync(
   toolName: string,
   toolInput: Record<string, unknown>,
   success: boolean,
-  durationMs: number,
+  _durationMs: number,
 ): void {
   switch (toolName) {
     case 'Read':
