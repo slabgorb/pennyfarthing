@@ -29,7 +29,6 @@ import {
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-import { checkLegacyFiles, type CheckResult } from './doctor.js';
 import { migrateTemplateFiles } from './update.js';
 import { mergeSettingsLocalJson } from '../utils/settings.js';
 
@@ -464,100 +463,6 @@ describe('MSSCI-14368: Move project hooks into .pennyfarthing/project', () => {
     });
   });
 
-  // ─── AC6: Doctor detects legacy hook paths ────────────────────────
-
-  describe('AC6: Doctor detects hooks in old location', () => {
-    it('checkLegacyFiles should detect .claude/project/hooks/setup-env.sh', () => {
-      writeFileSync(
-        join(claudeDir, 'project/hooks/setup-env.sh'),
-        '#!/bin/bash\n'
-      );
-
-      const results = checkLegacyFiles(testDir);
-
-      const hookResult = results.find(
-        (r: CheckResult) =>
-          r.name.includes('project/hooks') || r.name.includes('setup-env')
-      );
-      assert.ok(
-        hookResult,
-        'Doctor should detect legacy setup-env.sh at .claude/project/hooks/'
-      );
-      assert.strictEqual(
-        hookResult.status,
-        'warn',
-        'Should warn about legacy hook location'
-      );
-    });
-
-    it('checkLegacyFiles should provide a fix for legacy hooks', () => {
-      writeFileSync(
-        join(claudeDir, 'project/hooks/setup-env.sh'),
-        '#!/bin/bash\nexport PROJECT_NAME="test"\n'
-      );
-
-      const results = checkLegacyFiles(testDir);
-      const hookResult = results.find(
-        (r: CheckResult) =>
-          r.name.includes('project/hooks') || r.name.includes('setup-env')
-      );
-
-      assert.ok(hookResult?.fix, 'Should provide a fix function');
-    });
-
-    it('checkLegacyFiles fix should move hook to .pennyfarthing/project/hooks/', () => {
-      const hookContent = '#!/bin/bash\nexport PROJECT_NAME="test"\n';
-      writeFileSync(
-        join(claudeDir, 'project/hooks/setup-env.sh'),
-        hookContent
-      );
-
-      const results = checkLegacyFiles(testDir);
-      const hookResult = results.find(
-        (r: CheckResult) =>
-          r.name.includes('project/hooks') || r.name.includes('setup-env')
-      );
-
-      assert.ok(hookResult?.fix, 'Should have fix function');
-      hookResult!.fix!();
-
-      assert.ok(
-        existsSync(join(pennyfarthingDir, 'project/hooks/setup-env.sh')),
-        'Hook should be moved to .pennyfarthing/project/hooks/'
-      );
-      assert.ok(
-        !existsSync(join(claudeDir, 'project/hooks/setup-env.sh')),
-        'Legacy hook should be removed after fix'
-      );
-
-      const migratedContent = readFileSync(
-        join(pennyfarthingDir, 'project/hooks/setup-env.sh'),
-        'utf8'
-      );
-      assert.strictEqual(migratedContent, hookContent, 'Content should be preserved');
-    });
-
-    it('checkLegacyFiles should not flag hooks already at .pennyfarthing/', () => {
-      // Hook ONLY at new location — no warning
-      writeFileSync(
-        join(pennyfarthingDir, 'project/hooks/setup-env.sh'),
-        '#!/bin/bash\n'
-      );
-
-      const results = checkLegacyFiles(testDir);
-      const hookResult = results.find(
-        (r: CheckResult) =>
-          r.name.includes('project/hooks') || r.name.includes('setup-env')
-      );
-
-      assert.strictEqual(
-        hookResult,
-        undefined,
-        'Should not flag hooks that are already at .pennyfarthing/'
-      );
-    });
-  });
-
   // ─── Settings template path correctness ───────────────────────────
 
   describe('Settings template: setup-env.sh path', () => {
@@ -615,32 +520,4 @@ describe('MSSCI-14368: Move project hooks into .pennyfarthing/project', () => {
     });
   });
 
-  // ─── Doctor hard-coded path correctness ───────────────────────────
-
-  describe('Doctor: addSessionStartHooks and createSettingsLocalJson paths', () => {
-    it('doctor-generated settings should use .pennyfarthing/project/hooks/setup-env.sh', () => {
-      // This tests that doctor.ts addSessionStartHooks() and createSettingsLocalJson()
-      // use the new path. Since we can't easily call those internal functions directly,
-      // we verify through checkLegacyFiles that doctor doesn't generate legacy paths.
-
-      // A properly configured install should pass all doctor checks
-      writeFileSync(
-        join(pennyfarthingDir, 'project/hooks/setup-env.sh'),
-        '#!/bin/bash\n'
-      );
-
-      const results = checkLegacyFiles(testDir);
-
-      // No warnings about hook paths
-      const hookWarnings = results.filter(
-        (r: CheckResult) =>
-          r.name.includes('project/hooks') || r.name.includes('setup-env')
-      );
-      assert.strictEqual(
-        hookWarnings.length,
-        0,
-        'Doctor should not warn when hooks are at correct .pennyfarthing/ location'
-      );
-    });
-  });
 });

@@ -20,7 +20,6 @@ import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import { findNodeModulesPath, findLocalSymlinkTargets } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 import { getPfVersion, installPfCli } from '../utils/python.js';
-import { LEGACY_HOOK_MIGRATIONS, migrateHookPaths } from '../utils/settings.js';
 import { getCurrentTheme } from '../utils/themes.js';
 
 interface DoctorOptions {
@@ -42,7 +41,6 @@ export const CATEGORY_CHECKS: Record<string, string[]> = {
   'hooks':        ['checkSettingsHooks'],
   'scripts':      ['checkHooks', 'checkGitHooks'],
   'layout':       ['checkDirectories', 'checkFileLayout'],
-  'legacy':       ['checkLegacyFiles', 'checkLegacyStatuslinePath', 'checkLegacyHookCommands'],
   'tools':        ['checkCyclist', 'checkPfCli'],
 };
 
@@ -130,9 +128,6 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     if (activeChecks.has('checkHooks'))               results.push(...checkHooks(projectRoot));
     if (activeChecks.has('checkGitHooks'))            results.push(...checkGitHooks(projectRoot, nodeModulesPath));
     if (activeChecks.has('checkFileLayout'))          results.push(...checkFileLayout(projectRoot));
-    if (activeChecks.has('checkLegacyFiles'))         results.push(...checkLegacyFiles(projectRoot));
-    if (activeChecks.has('checkLegacyStatuslinePath')) results.push(checkLegacyStatuslinePath(projectRoot));
-    if (activeChecks.has('checkLegacyHookCommands'))  results.push(checkLegacyHookCommands(projectRoot));
     if (activeChecks.has('checkCyclist'))             results.push(...checkCyclist(projectRoot));
     if (activeChecks.has('checkPfCli'))               results.push(checkPfCli(nodeModulesPath));
   } else {
@@ -140,14 +135,12 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     results.push(...checkInstallation(projectRoot, manifest));
     results.push(...checkCoreFiles(projectRoot, manifest));
     results.push(...checkCommandsAndSkills(projectRoot, nodeModulesPath));
-    results.push(...checkUserFiles(projectRoot));
+    results.push(...checkUserFilesBasic(projectRoot));
+    results.push(...checkSettingsHooks(projectRoot));
     results.push(...checkDirectories(projectRoot));
     results.push(...checkHooks(projectRoot));
     results.push(...checkGitHooks(projectRoot, nodeModulesPath));
     results.push(...checkFileLayout(projectRoot));
-    results.push(...checkLegacyFiles(projectRoot));
-    results.push(checkLegacyStatuslinePath(projectRoot));
-    results.push(checkLegacyHookCommands(projectRoot));
     results.push(...checkCyclist(projectRoot));
     results.push(checkPfCli(nodeModulesPath));
   }
@@ -168,7 +161,6 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
     { name: 'Git Hooks', filter: (r: CheckResult) => r.name.startsWith('git-hook/') },
     { name: 'File Layout', filter: (r: CheckResult) => r.name.startsWith('layout/') },
-    { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') },
     { name: 'Cyclist', filter: (r: CheckResult) => r.name.startsWith('cyclist/') },
     { name: 'Tools', filter: (r: CheckResult) => r.name.startsWith('tools/') }
   ];
@@ -726,104 +718,6 @@ export function checkSettingsHooks(projectRoot: string): CheckResult[] {
   return results;
 }
 
-function checkUserFiles(projectRoot: string): CheckResult[] {
-  const results: CheckResult[] = [];
-
-  // Detect installation type from manifest
-  const manifest = readManifest(projectRoot);
-  const installationType = manifest?.installationType || 'copy';
-
-  // Check project directory
-  const projectDir = join(projectRoot, '.claude/project');
-  results.push({
-    name: 'project/directory',
-    status: pathExists(projectDir) ? 'pass' : 'warn',
-    detail: pathExists(projectDir) ? undefined : 'Run init to create'
-  });
-
-  // Check agent sidecars (now in .pennyfarthing/sidecars/)
-  const sidecarsDir = join(projectRoot, '.pennyfarthing/sidecars');
-  if (pathExists(sidecarsDir)) {
-    const existingSidecars = CORE_AGENTS.filter(a => pathExists(join(sidecarsDir, a)));
-
-    results.push({
-      name: 'project/sidecars',
-      status: existingSidecars.length > 0 ? 'pass' : 'warn',
-      detail: `${existingSidecars.length} agent sidecars configured`
-    });
-  }
-
-  // Check persona config — use getCurrentTheme() which checks both
-  // config.local.yaml (priority 1) and persona-config.yaml (priority 2)
-  const detectedTheme = getCurrentTheme(projectRoot);
-  results.push({
-    name: 'persona-config',
-    status: detectedTheme ? 'pass' : 'warn',
-    detail: detectedTheme ? undefined : 'No theme configured'
-  });
-
-  // Check settings.local.json exists (CRITICAL - registers hooks with Claude Code)
-  const settingsLocal = join(projectRoot, '.claude/settings.local.json');
-  if (!pathExists(settingsLocal)) {
-    results.push({
-      name: 'settings.local.json',
-      status: 'fail',
-      detail: 'Missing - hooks not registered with Claude Code!',
-      fix: () => {
-        createSettingsLocalJson(projectRoot, installationType);
-      }
-    });
-  } else {
-    results.push({
-      name: 'settings.local.json',
-      status: 'pass',
-      detail: undefined
-    });
-
-    // Check SessionStart hooks are configured (critical for PROJECT_ROOT)
-    const hookCheck = checkSessionStartHooks(projectRoot, installationType);
-    results.push(hookCheck);
-
-    // Check OTEL auto-configuration (WheelHub auto-start + telemetry env vars)
-    const otelCheck = checkOtelAutoStart(projectRoot, installationType);
-    results.push(otelCheck);
-
-    // Check auto-load-sm hook is configured (auto-invokes /sm on new sessions)
-    const autoLoadSmCheck = checkAutoLoadSmHook(projectRoot);
-    results.push(autoLoadSmCheck);
-
-    // Check compact/prime hook is configured (re-primes context after compression)
-    const compactPrimeCheck = checkCompactPrimeHook(projectRoot);
-    results.push(compactPrimeCheck);
-
-    // Check Stop hook is configured (question reflector enforcement)
-    const stopHookCheck = checkStopHook(projectRoot, installationType);
-    results.push(stopHookCheck);
-
-    // Check PostToolUse hook is configured (bell mode - MSSCI-12275)
-    const postToolUseHookCheck = checkPostToolUseHook(projectRoot, installationType);
-    results.push(postToolUseHookCheck);
-
-    // Check benchmark permissions (needed for /benchmark, /solo subagents)
-    const benchmarkCheck = checkBenchmarkPermissions(projectRoot);
-    results.push(benchmarkCheck);
-
-    // Check PreToolUse hooks for context-circuit-breaker
-    const circuitBreakerCheck = checkContextCircuitBreaker(projectRoot, installationType);
-    results.push(circuitBreakerCheck);
-
-    // Check PreToolUse hooks for schema-validation
-    const schemaValidationCheck = checkSchemaValidationHook(projectRoot, installationType);
-    results.push(schemaValidationCheck);
-
-    // Check PostToolUse hooks for sprint-yaml-validation
-    const sprintYamlValidationCheck = checkSprintYamlValidationHook(projectRoot, installationType);
-    results.push(sprintYamlValidationCheck);
-  }
-
-  return results;
-}
-
 /**
  * Check that benchmark-required permissions are configured in settings.local.json
  * Subagents need explicit Bash(claude:*) permission since they run non-interactively
@@ -1008,28 +902,6 @@ function checkOtelAutoStart(projectRoot: string, installationType: string): Chec
       };
     }
 
-    // Check if using legacy .sh (only sets 2 of 5 OTEL vars)
-    const hasLegacySh = settings.hooks.SessionStart.some((entry: unknown) => {
-      if (typeof entry === 'object' && entry !== null) {
-        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
-        return hookEntry.hooks?.some(h =>
-          h.command?.includes('session-start.sh')
-        );
-      }
-      return false;
-    });
-
-    if (hasLegacySh) {
-      return {
-        name: 'settings/otel-auto-start',
-        status: 'warn',
-        detail: 'Using legacy session-start.sh — missing WheelHub auto-start and 3 OTEL env vars. Migrate to `pf hooks session-start`',
-        fix: () => {
-          migrateSessionStartToPfHooks(projectRoot);
-        },
-      };
-    }
-
     return {
       name: 'settings/otel-auto-start',
       status: 'warn',
@@ -1044,33 +916,6 @@ function checkOtelAutoStart(projectRoot: string, installationType: string): Chec
       status: 'warn',
       detail: 'Could not parse settings.local.json',
     };
-  }
-}
-
-/**
- * Migrate legacy session-start.sh hooks to `pf hooks session-start`
- */
-function migrateSessionStartToPfHooks(projectRoot: string): void {
-  const settingsPath = join(projectRoot, '.claude/settings.local.json');
-
-  try {
-    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
-
-    if (Array.isArray(settings.hooks?.SessionStart)) {
-      for (const entry of settings.hooks.SessionStart) {
-        if (typeof entry === 'object' && entry !== null && Array.isArray(entry.hooks)) {
-          for (const h of entry.hooks) {
-            if (h.command?.includes('session-start.sh')) {
-              h.command = '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks session-start';
-            }
-          }
-        }
-      }
-    }
-
-    writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
-  } catch {
-    // Silent fail — doctor will re-report on next run
   }
 }
 
@@ -1832,17 +1677,6 @@ function addStopHook(projectRoot: string, _installationType: string): void {
 }
 
 /**
- * Get the script base path based on installation type
- * - symlink mode: .pennyfarthing/scripts/
- * - copy mode: .claude/pennyfarthing/scripts/ (legacy)
- */
-function getScriptBasePath(installationType: string): string {
-  return installationType === 'symlink'
-    ? '.pennyfarthing/scripts'
-    : '.claude/pennyfarthing/scripts';
-}
-
-/**
  * Fix function: Add SessionStart hooks to settings.local.json
  */
 function addSessionStartHooks(projectRoot: string, _installationType: string): void {
@@ -2098,7 +1932,7 @@ export function checkHooks(projectRoot: string): CheckResult[] {
   // Detect installation type from manifest
   const manifest = readManifest(projectRoot);
   const installationType = manifest?.installationType || 'copy';
-  const scriptBase = getScriptBasePath(installationType);
+  const scriptBase = '.pennyfarthing/scripts';
 
   // Check hook scripts exist based on installation type
   const hooks = [
@@ -2548,374 +2382,29 @@ export function checkPfCli(nodeModulesPath: string | null): CheckResult {
   };
 }
 
-/**
- * Known legacy statusline paths from various Pennyfarthing versions.
- * These should be detected and cleaned up when proper statusline exists.
- */
-const LEGACY_STATUSLINE_PATHS = [
-  '.claude/core/statusline.sh',
-  '.claude/statusline.sh',
-  '.claude/pennyfarthing/statusline.sh',     // v4.0.0-4.0.3
-  '.claude/pennyfarthing/scripts/statusline.sh', // v4.0.5
-  '.claude/scripts/statusline.sh',           // pre-v6.6
-  '.pennyfarthing/scripts/statusline.sh'     // before v7.0.3
-] as const;
 
-/**
- * Canonical statusline path for current version (v7.x)
- */
-const CANONICAL_STATUSLINE_PATH = '.pennyfarthing/scripts/misc/statusline.sh';
-
-/**
- * Check for legacy files that may shadow or conflict with current Pennyfarthing files.
- * Returns results with fix functions for --fix mode.
- */
-export function checkLegacyFiles(projectRoot: string): CheckResult[] {
-  const results: CheckResult[] = [];
-
-  // Check for legacy .claude/scripts/statusline.sh
-  const legacyStatusline = join(projectRoot, '.claude/scripts/statusline.sh');
-  const properStatusline = join(projectRoot, CANONICAL_STATUSLINE_PATH);
-
-  if (pathExists(legacyStatusline)) {
-    if (pathExists(properStatusline)) {
-      // Both exist - legacy shadows proper
-      results.push({
-        name: 'legacy/.claude/scripts/statusline.sh',
-        status: 'warn',
-        detail: 'Shadows proper pennyfarthing statusline',
-        fix: () => {
-          unlinkSync(legacyStatusline);
-        }
-      });
-    }
-    // If only legacy exists, don't warn - user may have custom setup
-  }
-
-  // Check for legacy .claude/persona-config.yaml
-  const legacyPersonaConfig = join(projectRoot, '.claude/persona-config.yaml');
-  const properThemeConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
-
-  if (pathExists(legacyPersonaConfig)) {
-    const detail = pathExists(properThemeConfig)
-      ? 'May conflict with .pennyfarthing/config.local.yaml'
-      : 'Should be migrated to .pennyfarthing/config.local.yaml';
-
-    results.push({
-      name: 'legacy/.claude/persona-config.yaml',
-      status: 'warn',
-      detail,
-      fix: () => {
-        // Read theme from legacy file
-        try {
-          const legacyContent = readFileSync(legacyPersonaConfig, 'utf8');
-          const legacyConfig = YAML.parse(legacyContent);
-          const legacyTheme = legacyConfig?.theme;
-
-          if (legacyTheme) {
-            // Read existing config.local.yaml or start fresh
-            let config: Record<string, unknown> = {};
-            if (pathExists(properThemeConfig)) {
-              try {
-                config = YAML.parse(readFileSync(properThemeConfig, 'utf8')) || {};
-              } catch {
-                config = {};
-              }
-            }
-
-            // Only set theme if not already present in config.local.yaml
-            if (!config.theme) {
-              config.theme = legacyTheme;
-              const configDir = dirname(properThemeConfig);
-              if (!existsSync(configDir)) {
-                mkdirSync(configDir, { recursive: true });
-              }
-              writeFileSync(properThemeConfig, YAML.stringify(config), 'utf8');
-            }
-          }
-          unlinkSync(legacyPersonaConfig);
-        } catch {
-          logger.warning(`Cannot parse ${legacyPersonaConfig} — fix YAML syntax and re-run doctor --fix`);
-        }
-      }
-    });
-  }
-
-  // Check for legacy sidecar directories at .claude/project/agents/{agent}-sidecar/
-  const legacyAgentsDir = join(projectRoot, '.claude/project/agents');
-  if (pathExists(legacyAgentsDir)) {
-    const legacySidecars = CORE_AGENTS.filter(a =>
-      pathExists(join(legacyAgentsDir, `${a}-sidecar`))
-    );
-    if (legacySidecars.length > 0) {
-      results.push({
-        name: 'legacy/.claude/project/agents/sidecars',
-        status: 'warn',
-        detail: `${legacySidecars.length} legacy sidecar dirs (should be at .pennyfarthing/sidecars/)`,
-        fix: () => {
-          for (const agent of legacySidecars) {
-            const legacyDir = join(legacyAgentsDir, `${agent}-sidecar`);
-            const newDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
-            // Only remove if new location already has the sidecar
-            if (pathExists(newDir)) {
-              removeSync(legacyDir);
-            }
-          }
-          // Remove agents/ dir if empty
-          try {
-            const remaining = readdirSync(legacyAgentsDir);
-            if (remaining.length === 0) {
-              removeSync(legacyAgentsDir);
-            }
-          } catch {
-            // Ignore
-          }
-        }
-      });
-    }
-  }
-
-  // Check for legacy sidecar directories at sprint/sidecars/
-  const legacySprintSidecars = join(projectRoot, 'sprint/sidecars');
-  if (pathExists(legacySprintSidecars)) {
-    results.push({
-      name: 'legacy/sprint/sidecars',
-      status: 'warn',
-      detail: 'Legacy sidecar location (should be at .pennyfarthing/sidecars/)',
-      fix: () => {
-        // Only remove if all agents have been migrated
-        try {
-          const remaining = readdirSync(legacySprintSidecars);
-          const allMigrated = remaining.every(item => {
-            const itemPath = join(legacySprintSidecars, item);
-            if (!isDirectory(itemPath)) return false;
-            return pathExists(join(projectRoot, `.pennyfarthing/sidecars/${item}`));
-          });
-          if (allMigrated) {
-            removeSync(legacySprintSidecars);
-          }
-        } catch {
-          // Ignore
-        }
-      }
-    });
-  }
-
-  // Check for legacy .claude/project/hooks/setup-env.sh
-  const legacyProjectHook = join(projectRoot, '.claude/project/hooks/setup-env.sh');
-  const properProjectHook = join(projectRoot, '.pennyfarthing/project/hooks/setup-env.sh');
-
-  if (pathExists(legacyProjectHook)) {
-    const detail = pathExists(properProjectHook)
-      ? 'May conflict with .pennyfarthing/project/hooks/setup-env.sh'
-      : 'Should be migrated to .pennyfarthing/project/hooks/setup-env.sh';
-
-    results.push({
-      name: 'legacy/.claude/project/hooks/setup-env.sh',
-      status: 'warn',
-      detail,
-      fix: () => {
-        if (!pathExists(properProjectHook)) {
-          const destDir = dirname(properProjectHook);
-          if (!existsSync(destDir)) {
-            mkdirSync(destDir, { recursive: true });
-          }
-          renameSync(legacyProjectHook, properProjectHook);
-        } else {
-          unlinkSync(legacyProjectHook);
-        }
-      }
-    });
-  }
-
-  return results;
+/** @deprecated Removed in v12 — pre-v10 legacy checks no longer supported. */
+export function checkLegacyFiles(_projectRoot: string): CheckResult[] {
+  return [];
 }
 
-/**
- * Check if settings.local.json has statusline configured.
- * The statusLine config is a TOP-LEVEL key (not inside hooks), with structure:
- * { "statusLine": { "type": "command", "command": "path/to/script" } }
- *
- * Returns result with fix function to update to canonical path if needed.
- */
-export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
-  const settingsPath = join(projectRoot, '.claude/settings.local.json');
-
-  // No settings file - nothing to check
-  if (!pathExists(settingsPath)) {
-    return {
-      name: 'settings/statusline-path',
-      status: 'pass',
-      detail: 'No settings file'
-    };
-  }
-
-  let settings: Record<string, unknown>;
-  try {
-    settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
-  } catch {
-    return {
-      name: 'settings/statusline-path',
-      status: 'warn',
-      detail: 'Cannot parse settings.local.json'
-    };
-  }
-
-  // statusLine is a TOP-LEVEL key, not inside hooks
-  // Format: { type: "command", command: "..." }
-  const statusLine = settings.statusLine as { type?: string; command?: string } | undefined;
-  if (!statusLine || !statusLine.command) {
-    // No statusline configured
-    return {
-      name: 'settings/statusline-path',
-      status: 'pass',
-      detail: 'No statusline configured'
-    };
-  }
-
-  // Extract the path from the command (may have $CLAUDE_PROJECT_DIR prefix)
-  const command = statusLine.command;
-  // Match patterns like "$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/misc/statusline.sh
-  // or plain paths like .pennyfarthing/scripts/misc/statusline.sh
-  const pathMatch = command.match(/(?:\"\$CLAUDE_PROJECT_DIR\"\/)?([^\s"]+)/);
-  const currentPath = pathMatch ? pathMatch[1] : command;
-
-  // Check if it's the canonical pf hooks command or the legacy .sh path
-  if (command.includes('pf.sh hooks statusline') || command === 'pf hooks statusline' || currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
-    return {
-      name: 'settings/statusline-path',
-      status: 'pass',
-      detail: 'Configured'
-    };
-  }
-
-  // Check if it's a known legacy path
-  const isLegacy = LEGACY_STATUSLINE_PATHS.some(legacyPath =>
-    currentPath.includes(legacyPath) || command.includes(legacyPath)
-  );
-
-  if (isLegacy) {
-    // Check if proper statusline exists before offering fix
-    const properStatusline = join(projectRoot, CANONICAL_STATUSLINE_PATH);
-    if (pathExists(properStatusline)) {
-      return {
-        name: 'settings/statusline-path',
-        status: 'warn',
-        detail: `Legacy path in command`,
-        fix: () => {
-          const updatedSettings = { ...settings };
-          (updatedSettings.statusLine as { type: string; command: string }) = {
-            type: 'command',
-            command: '"$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/core/pf.sh hooks statusline'
-          };
-          writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
-        }
-      };
-    }
-  }
-
-  // Has statusline configured (custom or valid)
-  return {
-    name: 'settings/statusline-path',
-    status: 'pass',
-    detail: 'Configured'
-  };
+/** @deprecated Removed in v12 — pre-v10 legacy checks no longer supported. */
+export function checkLegacyStatuslinePath(_projectRoot: string): CheckResult {
+  return { name: 'settings/statusline-path', status: 'pass', detail: 'Legacy check removed' };
 }
 
-/**
- * Check if settings.local.json contains legacy .sh hook commands that should
- * be migrated to `pf hooks` commands. The .sh scripts still work (they're shims)
- * but `pf hooks` is the canonical path — faster, no shell indirection.
- */
-export function checkLegacyHookCommands(projectRoot: string): CheckResult {
-  const settingsPath = join(projectRoot, '.claude/settings.local.json');
-
-  if (!pathExists(settingsPath)) {
-    return { name: 'legacy/hook-commands', status: 'pass', detail: 'No settings file' };
-  }
-
-  let settings: Record<string, unknown>;
-  try {
-    settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
-  } catch {
-    return { name: 'legacy/hook-commands', status: 'warn', detail: 'Cannot parse settings.local.json' };
-  }
-
-  if (!settings.hooks) {
-    return { name: 'legacy/hook-commands', status: 'pass' };
-  }
-
-  // Count how many hook commands still reference .sh scripts
-  const hooks = settings.hooks as Record<string, unknown>;
-  let legacyCount = 0;
-
-  for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
-    if (!Array.isArray(hooks[hookType])) continue;
-    for (const entry of hooks[hookType] as Array<{ hooks?: Array<{ command?: string }> }>) {
-      if (!entry.hooks) continue;
-      for (const h of entry.hooks) {
-        if (!h.command) continue;
-        for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
-          if (h.command.includes(shName)) {
-            legacyCount++;
-          }
-        }
-      }
-    }
-  }
-
-  // Also check statusLine
-  const statusLine = settings.statusLine as { command?: string } | undefined;
-  if (statusLine?.command && !statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
-    for (const shName of Object.keys(LEGACY_HOOK_MIGRATIONS)) {
-      if (statusLine.command.includes(shName)) {
-        legacyCount++;
-      }
-    }
-  }
-
-  if (legacyCount === 0) {
-    return { name: 'legacy/hook-commands', status: 'pass' };
-  }
-
-  return {
-    name: 'legacy/hook-commands',
-    status: 'warn',
-    detail: `${legacyCount} hook(s) still use .sh scripts — should use pf hooks commands`,
-    fix: () => {
-      // Migrate all hook arrays
-      for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
-        if (Array.isArray(hooks[hookType])) {
-          migrateHookPaths(hooks[hookType] as unknown[]);
-        }
-      }
-
-      // Migrate statusLine
-      if (statusLine?.command && !statusLine.command.includes('pf.sh hooks statusline') && statusLine.command !== 'pf hooks statusline') {
-        for (const [shName, pfCommand] of Object.entries(LEGACY_HOOK_MIGRATIONS)) {
-          if (statusLine.command.includes(shName)) {
-            statusLine.command = pfCommand;
-            break;
-          }
-        }
-      }
-
-      writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
-    }
-  };
+/** @deprecated Removed in v12 — pre-v10 legacy checks no longer supported. */
+export function checkLegacyHookCommands(_projectRoot: string): CheckResult {
+  return { name: 'legacy/hook-commands', status: 'pass', detail: 'Legacy check removed' };
 }
 
 /**
  * Check file layout — validate files are at correct .pennyfarthing/ locations.
- * Flags old .claude/ locations with migration instructions.
- * Fix functions migrate files automatically without overwriting existing files.
- *
- * MSSCI-14372
  */
 export function checkFileLayout(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
-  // 1. Manifest at .pennyfarthing/manifest.json
+  // Manifest at .pennyfarthing/manifest.json
   const manifestPath = join(projectRoot, '.pennyfarthing/manifest.json');
   results.push({
     name: 'layout/manifest',
@@ -2923,9 +2412,7 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     detail: existsSync(manifestPath) ? undefined : 'Missing .pennyfarthing/manifest.json'
   });
 
-  // 2. Theme config — use getCurrentTheme() which checks both
-  // config.local.yaml (priority 1) and persona-config.yaml (priority 2)
-  const configPath = join(projectRoot, '.pennyfarthing/config.local.yaml');
+  // Theme config
   const layoutTheme = getCurrentTheme(projectRoot);
   results.push({
     name: 'layout/config',
@@ -2933,28 +2420,7 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     detail: layoutTheme ? undefined : 'No theme configured at .pennyfarthing/config.local.yaml'
   });
 
-  // 3. Old config at .claude/persona-config.yaml
-  const oldConfigPath = join(projectRoot, '.claude/persona-config.yaml');
-  if (existsSync(oldConfigPath)) {
-    results.push({
-      name: 'layout/config-old-location',
-      status: 'warn',
-      detail: 'Migrate to .pennyfarthing/config.local.yaml',
-      fix: () => {
-        if (!existsSync(configPath)) {
-          const configDir = dirname(configPath);
-          if (!existsSync(configDir)) {
-            mkdirSync(configDir, { recursive: true });
-          }
-          renameSync(oldConfigPath, configPath);
-        } else {
-          unlinkSync(oldConfigPath);
-        }
-      }
-    });
-  }
-
-  // 4. Settings at .claude/settings.local.json
+  // Settings at .claude/settings.local.json
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
   results.push({
     name: 'layout/settings',
@@ -2962,7 +2428,7 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     detail: existsSync(settingsPath) ? undefined : 'Missing .claude/settings.local.json — hooks not registered'
   });
 
-  // 5. Sidecars at .pennyfarthing/sidecars/
+  // Sidecars at .pennyfarthing/sidecars/
   const sidecarsPath = join(projectRoot, '.pennyfarthing/sidecars');
   if (existsSync(sidecarsPath) && isDirectory(sidecarsPath)) {
     results.push({
@@ -2972,42 +2438,7 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     });
   }
 
-  // 6. Old sidecars at .claude/project/agents/*-sidecar/
-  const oldAgentsDir = join(projectRoot, '.claude/project/agents');
-  if (existsSync(oldAgentsDir)) {
-    try {
-      const entries = readdirSync(oldAgentsDir);
-      const sidecarDirs = entries.filter(e =>
-        e.endsWith('-sidecar') && isDirectory(join(oldAgentsDir, e))
-      );
-      if (sidecarDirs.length > 0) {
-        results.push({
-          name: 'layout/sidecars-old-location',
-          status: 'warn',
-          detail: `${sidecarDirs.length} legacy sidecar dir(s) — migrate to .pennyfarthing/sidecars/`,
-          fix: () => {
-            for (const dir of sidecarDirs) {
-              const agentName = dir.replace(/-sidecar$/, '');
-              const srcDir = join(oldAgentsDir, dir);
-              const destDir = join(projectRoot, `.pennyfarthing/sidecars/${agentName}`);
-              if (!existsSync(destDir)) {
-                ensureDirSync(destDir);
-                const files = readdirSync(srcDir);
-                for (const file of files) {
-                  renameSync(join(srcDir, file), join(destDir, file));
-                }
-              }
-              removeSync(srcDir);
-            }
-          }
-        });
-      }
-    } catch {
-      // Ignore read errors
-    }
-  }
-
-  // 7. Project hooks at .pennyfarthing/project/hooks/
+  // Project hooks at .pennyfarthing/project/hooks/
   const projectHooksPath = join(projectRoot, '.pennyfarthing/project/hooks');
   if (existsSync(projectHooksPath) && isDirectory(projectHooksPath)) {
     results.push({
@@ -3035,46 +2466,6 @@ export function checkFileLayout(projectRoot: string): CheckResult[] {
     } catch {
       // Ignore read errors
     }
-  }
-
-  // 8. Old project hooks at .claude/project/hooks/
-  const oldProjectHooksPath = join(projectRoot, '.claude/project/hooks');
-  if (existsSync(oldProjectHooksPath) && isDirectory(oldProjectHooksPath)) {
-    results.push({
-      name: 'layout/project-hooks-old-location',
-      status: 'warn',
-      detail: 'Migrate to .pennyfarthing/project/hooks/',
-      fix: () => {
-        if (!existsSync(projectHooksPath)) {
-          ensureDirSync(dirname(projectHooksPath));
-          renameSync(oldProjectHooksPath, projectHooksPath);
-        } else {
-          // Copy individual files that don't exist at destination
-          try {
-            const files = readdirSync(oldProjectHooksPath);
-            for (const file of files) {
-              const dest = join(projectHooksPath, file);
-              if (!existsSync(dest)) {
-                renameSync(join(oldProjectHooksPath, file), dest);
-              }
-            }
-          } catch {
-            // Ignore
-          }
-          removeSync(oldProjectHooksPath);
-        }
-        // Ensure migrated shell scripts are executable
-        try {
-          for (const file of readdirSync(projectHooksPath)) {
-            if (file.endsWith('.sh')) {
-              chmodSync(join(projectHooksPath, file), 0o755);
-            }
-          }
-        } catch {
-          // Ignore
-        }
-      }
-    });
   }
 
   return results;
