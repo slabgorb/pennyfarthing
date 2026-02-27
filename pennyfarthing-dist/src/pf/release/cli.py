@@ -6,6 +6,7 @@ Usage:
 Commands:
     deprecate    Mark a published version as deprecated
     dry-run      Simulate release pipeline without executing
+    verify       Verify package contents against manifest
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ def release():
     Commands:
       deprecate  - Mark a published version as deprecated
       dry-run    - Simulate release pipeline without executing
+      verify     - Verify package contents against manifest
     """
     pass
 
@@ -109,4 +111,42 @@ def dry_run(version: str | None, bump: str | None):
             click.echo(f"  [{status}] {step['action']}: {step.get('detail', '')}")
     else:
         click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+
+@release.command()
+@click.option("--manifest", default=None, type=click.Path(), help="Path to manifest JSON (default: tests/fixtures/package-manifest.json)")
+def verify(manifest: str | None):
+    """Verify package contents against a known-good manifest.
+
+    Runs npm pack --dry-run --json and validates the tarball would contain
+    all required files, directories, and nothing unexpected.
+
+    \b
+    Examples:
+      pf release verify
+      pf release verify --manifest=custom-manifest.json
+    """
+    from pathlib import Path
+
+    from pf.common.config import get_project_root
+    from pf.release.verify_contents import verify_contents
+
+    root = get_project_root()
+    manifest_path = Path(manifest) if manifest else None
+    result = verify_contents(root, manifest_path=manifest_path)
+
+    if result["success"]:
+        data = result.get("data", {})
+        click.echo("Package Contents Verification")
+        click.echo(f"  Files: {data.get('total_files', '?')}")
+        click.echo("")
+        for step in result.get("steps", []):
+            status = "ok" if step.get("success", True) else "FAIL"
+            click.echo(f"  [{status}] {step['action']}: {step.get('detail', '')}")
+    else:
+        click.echo(f"Error: {result['error']}", err=True)
+        for step in result.get("steps", []):
+            status = "ok" if step.get("success", True) else "FAIL"
+            click.echo(f"  [{status}] {step['action']}: {step.get('detail', '')}")
         raise SystemExit(1)
