@@ -271,6 +271,45 @@ class TestFormatFinding:
         )
         assert "code review" in result
 
+    def test_unknown_phase_passes_through(self):
+        """Phase not in PHASE_NAMES should pass through as-is."""
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="desc",
+            path="p",
+            what_changes="w",
+            agent="SM",
+            phase="setup",
+        )
+        assert "during setup.*" in result
+
+    def test_description_with_backticks(self):
+        """Backticks in description should not break R1 format."""
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="Missing `validate()` call",
+            path="src/parser.py",
+            what_changes="add call",
+            agent="TEA",
+            phase="red",
+        )
+        assert "`validate()`" in result
+        assert "Affects `src/parser.py`" in result
+
+    def test_whitespace_only_description_raises(self):
+        with pytest.raises(ValueError, match="description"):
+            format_finding(
+                finding_type="Gap",
+                urgency="blocking",
+                description="   ",
+                path="p",
+                what_changes="w",
+                agent="TEA",
+                phase="red",
+            )
+
 
 # =============================================================================
 # parse_delivery_findings() tests
@@ -318,6 +357,22 @@ class TestParseDeliveryFindings:
         findings = parse_delivery_findings(content)
         structured = [f for f in findings if f.get("type") != "none"]
         assert structured[0]["path"] == "src/parser.py"
+
+    def test_parse_skips_malformed_findings(self):
+        """Malformed R1 entries should be silently skipped."""
+        content = SESSION_WITH_FINDINGS_SECTION.replace(
+            "<!-- Agents: append findings below this line. Do not edit other agents' entries. -->",
+            "<!-- Agents: append findings below this line. Do not edit other agents' entries. -->\n\n"
+            "### TEA (test design)\n"
+            "- **Gap** (blocking): valid finding. Affects `src/a.py` (fix). *Found by TEA during test design.*\n"
+            "- This is not a valid R1 finding\n"
+            "- **NotAType** (blocking): invalid type. Affects `src/b.py` (fix). *Found by TEA during test design.*\n",
+        )
+        findings = parse_delivery_findings(content)
+        # Only the valid R1 finding should be parsed
+        structured = [f for f in findings if f.get("type") != "none"]
+        assert len(structured) == 1
+        assert structured[0]["type"] == "Gap"
 
 
 # =============================================================================
@@ -411,6 +466,29 @@ class TestAppendFindings:
         marker_pos = updated.find("<!-- Agents: append findings below this line.")
         finding_pos = updated.find("### TEA (test design)")
         assert finding_pos > marker_pos, "Findings must appear after the marker comment"
+
+    def test_append_nonexistent_file(self, tmp_path):
+        """Appending to a non-existent file should return error."""
+        session = tmp_path / "does-not-exist.md"
+        result = append_findings_to_session(session, "TEA", "red", [])
+        assert result["success"] is False
+        assert "not found" in result["error"].lower()
+
+    def test_append_duplicate_agent_allowed(self, tmp_path):
+        """Appending twice for same agent should create two blocks (no dedup)."""
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_FINDINGS_SECTION)
+
+        finding1 = "- **Gap** (blocking): First. Affects `a.py` (fix). *Found by TEA during test design.*"
+        finding2 = "- **Gap** (blocking): Second. Affects `b.py` (fix). *Found by TEA during test design.*"
+
+        append_findings_to_session(session, "TEA", "red", [finding1])
+        append_findings_to_session(session, "TEA", "red", [finding2])
+
+        updated = session.read_text()
+        assert updated.count("### TEA (test design)") == 2
+        assert "First" in updated
+        assert "Second" in updated
 
 
 # =============================================================================
