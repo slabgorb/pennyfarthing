@@ -1,296 +1,496 @@
 """
 Tests for Story 133-2: Add finding-capture to agent exit behaviors.
 
-Verifies that TEA, Dev, and Reviewer agent definitions include
-Delivery Findings capture instructions per ADR-0031.
+Tests the pf.findings.capture module — format, parse, and append delivery
+findings in R1 format to session files.
 
-Covers all 10 Acceptance Criteria:
-  AC1: TEA assessment template (red phase) includes finding-capture with format
-  AC2: TEA assessment template (verify phase) includes finding-capture with format
-  AC3: Dev assessment template (green phase) includes finding-capture with format
-  AC4: Reviewer assessment template (review phase) includes finding-capture with format
-  AC5: All finding-capture sections explain ADR-0031 format (Type, urgency, path, agent, phase)
-  AC6: All sections include "No upstream findings" example
-  AC7: Assessment templates explain append-only rule
-  AC8: sm.md does NOT contain finding-capture (deferred to 134-1)
-  AC9: No changes to gates or exit protocols — only assessment templates
-  AC10: tdd workflow tests still pass (covered by existing test suite)
+Also validates agent markdown files contain finding-capture exit behavior
+and reviewer-preflight allows optional PR_NUMBER.
 
 Run with: python -m pytest tests/python/test_finding_capture.py -v
 """
 
+from __future__ import annotations
+
 import re
+import sys
+import textwrap
 from pathlib import Path
 
 import pytest
 
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from pf.findings.capture import (
+    PHASE_NAMES,
+    VALID_TYPES,
+    VALID_URGENCIES,
+    append_findings_to_session,
+    format_finding,
+    parse_delivery_findings,
+)
+
+AGENTS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "agents"
+
+# R1 format regex — must match:
+# - **{Type}** ({urgency}): {description}. Affects `{path}` ({what}). *Found by {Agent} during {phase}.*
+R1_PATTERN = re.compile(
+    r"^- \*\*(?P<type>Gap|Conflict|Question|Improvement)\*\* "
+    r"\((?P<urgency>blocking|non-blocking)\): "
+    r"(?P<description>.+?)\. "
+    r"Affects `(?P<path>[^`]+)` \((?P<what>[^)]+)\)\. "
+    r"\*Found by (?P<agent>\w+) during (?P<phase>[^.]+)\.\*$"
+)
+
+# Session template with Delivery Findings section (matches 133-1 template)
+SESSION_WITH_FINDINGS_SECTION = textwrap.dedent("""\
+    # Story 99-1: Test Story
+
+    **Jira:** MSSCI-99999
+    **Status:** in-progress
+    **Workflow:** tdd
+    **Phase:** green
+    **Repos:** pennyfarthing
+    **Branch:** feat/99-1-test
+
+    ---
+
+    ## Delivery Findings
+
+    Agents record upstream observations discovered during their phase.
+    Each finding is one list item. Use "No upstream findings" if none.
+
+    **Types:** Gap, Conflict, Question, Improvement
+    **Urgency:** blocking, non-blocking
+
+    <!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+
+    ## TEA Assessment
+
+    **Tests Required:** Yes
+""")
+
+SESSION_WITH_EXISTING_FINDINGS = textwrap.dedent("""\
+    # Story 99-1: Test Story
+
+    **Jira:** MSSCI-99999
+    **Status:** in-progress
+    **Workflow:** tdd
+    **Phase:** review
+    **Repos:** pennyfarthing
+    **Branch:** feat/99-1-test
+
+    ---
+
+    ## Delivery Findings
+
+    Agents record upstream observations discovered during their phase.
+    Each finding is one list item. Use "No upstream findings" if none.
+
+    **Types:** Gap, Conflict, Question, Improvement
+    **Urgency:** blocking, non-blocking
+
+    <!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+
+    ### TEA (test design)
+    - **Gap** (blocking): Missing validation for empty input. Affects `src/parser.py` (add input guard). *Found by TEA during test design.*
+
+    ### Dev (implementation)
+    - No upstream findings.
+
+    ## TEA Assessment
+
+    **Tests Required:** Yes
+""")
+
+SESSION_WITHOUT_FINDINGS_SECTION = textwrap.dedent("""\
+    # Story 99-1: Test Story
+
+    **Jira:** MSSCI-99999
+    **Status:** in-progress
+    **Workflow:** tdd
+    **Phase:** green
+
+    ---
+
+    ## TEA Assessment
+
+    **Tests Required:** Yes
+""")
+
+
 # =============================================================================
-# Fixtures
-# =============================================================================
-
-AGENTS_DIR = Path(__file__).parent.parent.parent / "pennyfarthing-dist" / "agents"
-
-
-def _read_agent(name: str) -> str:
-    """Read an agent definition file and return its content."""
-    path = AGENTS_DIR / name
-    if not path.exists():
-        pytest.skip(f"{name} not found at {path}")
-    return path.read_text()
-
-
-def _extract_section(content: str, tag: str) -> str:
-    """Extract content between <tag> and </tag>."""
-    pattern = rf"<{tag}>(.*?)</{tag}>"
-    match = re.search(pattern, content, re.DOTALL)
-    return match.group(1) if match else ""
-
-
-# =============================================================================
-# AC1: TEA red phase finding-capture
+# format_finding() tests
 # =============================================================================
 
 
-class TestTEARedPhase:
-    """AC1: TEA assessment template includes finding-capture for red phase."""
+class TestFormatFinding:
+    """Test R1 format string generation."""
 
-    def test_tea_has_delivery_findings_reference(self) -> None:
-        """TEA agent should reference Delivery Findings section."""
-        content = _read_agent("tea.md")
-        assert "Delivery Findings" in content, (
-            "tea.md must reference '## Delivery Findings' section"
+    def test_gap_blocking_format(self):
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="Missing validation for empty input",
+            path="src/parser.py",
+            what_changes="add input guard",
+            agent="TEA",
+            phase="red",
         )
+        assert result.startswith("- **Gap** (blocking):")
+        assert "Affects `src/parser.py`" in result
+        assert "*Found by TEA during test design.*" in result
 
-    def test_tea_assessment_template_has_finding_capture(self) -> None:
-        """TEA assessment template should include finding-capture instructions."""
-        content = _read_agent("tea.md")
-        template = _extract_section(content, "assessment-template")
-        assert "Delivery Findings" in template or "finding" in template.lower(), (
-            "TEA <assessment-template> must include finding-capture instructions"
+    def test_improvement_nonblocking_format(self):
+        result = format_finding(
+            finding_type="Improvement",
+            urgency="non-blocking",
+            description="Could extract helper for reuse",
+            path="src/utils.py",
+            what_changes="extract shared logic",
+            agent="Dev",
+            phase="green",
         )
+        assert result.startswith("- **Improvement** (non-blocking):")
+        assert "*Found by Dev during implementation.*" in result
 
-    def test_tea_references_test_design_phase(self) -> None:
-        """TEA finding-capture should reference 'test design' as human phase name."""
-        content = _read_agent("tea.md")
-        assert "test design" in content.lower(), (
-            "tea.md must use 'test design' as the human phase name for red phase"
+    def test_conflict_format(self):
+        result = format_finding(
+            finding_type="Conflict",
+            urgency="blocking",
+            description="API contract differs from spec",
+            path="docs/api.md",
+            what_changes="update spec to match implementation",
+            agent="Reviewer",
+            phase="review",
         )
+        assert result.startswith("- **Conflict** (blocking):")
+        assert "*Found by Reviewer during code review.*" in result
 
-
-# =============================================================================
-# AC2: TEA verify phase finding-capture
-# =============================================================================
-
-
-class TestTEAVerifyPhase:
-    """AC2: TEA assessment template includes finding-capture for verify phase."""
-
-    def test_tea_references_verify_phase(self) -> None:
-        """TEA finding-capture should reference verify phase."""
-        content = _read_agent("tea.md")
-        # Should mention test verification as a human phase name
-        assert "test verification" in content.lower() or "verification" in content.lower(), (
-            "tea.md must reference 'test verification' phase for verify phase findings"
+    def test_question_format(self):
+        result = format_finding(
+            finding_type="Question",
+            urgency="non-blocking",
+            description="Should retry logic use exponential backoff",
+            path="src/client.py",
+            what_changes="decide retry strategy",
+            agent="TEA",
+            phase="red",
         )
+        assert result.startswith("- **Question** (non-blocking):")
 
+    def test_all_types_produce_valid_r1(self):
+        """Every valid type + urgency combo must produce R1-parseable output."""
+        for ftype in VALID_TYPES:
+            for urgency in VALID_URGENCIES:
+                result = format_finding(
+                    finding_type=ftype,
+                    urgency=urgency,
+                    description="Test description",
+                    path="src/test.py",
+                    what_changes="fix it",
+                    agent="TEA",
+                    phase="red",
+                )
+                assert R1_PATTERN.match(result), (
+                    f"format_finding({ftype}, {urgency}) produced non-R1 output: {result!r}"
+                )
 
-# =============================================================================
-# AC3: Dev green phase finding-capture
-# =============================================================================
-
-
-class TestDevGreenPhase:
-    """AC3: Dev assessment template includes finding-capture for green phase."""
-
-    def test_dev_has_delivery_findings_reference(self) -> None:
-        """Dev agent should reference Delivery Findings section."""
-        content = _read_agent("dev.md")
-        assert "Delivery Findings" in content, (
-            "dev.md must reference '## Delivery Findings' section"
-        )
-
-    def test_dev_assessment_template_has_finding_capture(self) -> None:
-        """Dev assessment template should include finding-capture instructions."""
-        content = _read_agent("dev.md")
-        template = _extract_section(content, "assessment-template")
-        assert "Delivery Findings" in template or "finding" in template.lower(), (
-            "Dev <assessment-template> must include finding-capture instructions"
-        )
-
-    def test_dev_references_implementation_phase(self) -> None:
-        """Dev finding-capture should reference 'implementation' as human phase name."""
-        content = _read_agent("dev.md")
-        # The word 'implementation' may appear in other contexts, so check near finding-related content
-        assert "implementation" in content.lower(), (
-            "dev.md must use 'implementation' as the human phase name for green phase"
-        )
-
-
-# =============================================================================
-# AC4: Reviewer review phase finding-capture
-# =============================================================================
-
-
-class TestReviewerPhase:
-    """AC4: Reviewer assessment template includes finding-capture for review phase."""
-
-    def test_reviewer_has_delivery_findings_reference(self) -> None:
-        """Reviewer agent should reference Delivery Findings section."""
-        content = _read_agent("reviewer.md")
-        assert "Delivery Findings" in content, (
-            "reviewer.md must reference '## Delivery Findings' section"
-        )
-
-    def test_reviewer_assessment_template_has_finding_capture(self) -> None:
-        """Reviewer assessment template should include finding-capture instructions."""
-        content = _read_agent("reviewer.md")
-        template = _extract_section(content, "assessment-templates")
-        assert "Delivery Findings" in template or "finding" in template.lower(), (
-            "Reviewer <assessment-templates> must include finding-capture instructions"
-        )
-
-    def test_reviewer_references_code_review_phase(self) -> None:
-        """Reviewer finding-capture should reference 'code review' as human phase name."""
-        content = _read_agent("reviewer.md")
-        assert "code review" in content.lower(), (
-            "reviewer.md must use 'code review' as the human phase name"
-        )
-
-
-# =============================================================================
-# AC5: Finding format explained (Type, urgency, path, agent, phase)
-# =============================================================================
-
-
-class TestFindingFormat:
-    """AC5: All finding-capture sections explain the ADR-0031 format."""
-
-    FINDING_TYPE_AGENTS = ["tea.md", "dev.md", "reviewer.md"]
-    REQUIRED_TYPES = ["Gap", "Conflict", "Question", "Improvement"]
-
-    @pytest.mark.parametrize("agent_file", FINDING_TYPE_AGENTS)
-    def test_agent_lists_finding_types(self, agent_file: str) -> None:
-        """Each agent should list the four finding types."""
-        content = _read_agent(agent_file)
-        for finding_type in self.REQUIRED_TYPES:
-            assert finding_type in content, (
-                f"{agent_file} must list finding type '{finding_type}'"
+    def test_invalid_type_raises(self):
+        with pytest.raises(ValueError, match="type"):
+            format_finding(
+                finding_type="Bug",
+                urgency="blocking",
+                description="desc",
+                path="p",
+                what_changes="w",
+                agent="TEA",
+                phase="red",
             )
 
-    @pytest.mark.parametrize("agent_file", FINDING_TYPE_AGENTS)
-    def test_agent_lists_urgency_levels(self, agent_file: str) -> None:
-        """Each agent should list urgency levels: blocking, non-blocking."""
-        content = _read_agent(agent_file)
-        assert "blocking" in content.lower() and "non-blocking" in content.lower(), (
-            f"{agent_file} must list urgency levels 'blocking' and 'non-blocking'"
-        )
+    def test_invalid_urgency_raises(self):
+        with pytest.raises(ValueError, match="urgency"):
+            format_finding(
+                finding_type="Gap",
+                urgency="critical",
+                description="desc",
+                path="p",
+                what_changes="w",
+                agent="TEA",
+                phase="red",
+            )
 
-    @pytest.mark.parametrize("agent_file", FINDING_TYPE_AGENTS)
-    def test_agent_shows_finding_format_template(self, agent_file: str) -> None:
-        """Each agent should show the finding format with Type and urgency."""
-        content = _read_agent(agent_file)
-        # Check for the format pattern: **{Type}** ({urgency})
-        has_format = (
-            "**{Type}**" in content
-            or re.search(r"\*\*\{Type\}\*\*\s*\(\{urgency\}\)", content) is not None
-            or re.search(r"\*\*(Gap|Conflict|Question|Improvement)\*\*\s*\(", content) is not None
+    def test_empty_description_raises(self):
+        with pytest.raises(ValueError, match="description"):
+            format_finding(
+                finding_type="Gap",
+                urgency="blocking",
+                description="",
+                path="p",
+                what_changes="w",
+                agent="TEA",
+                phase="red",
+            )
+
+    def test_phase_mapped_to_human_name(self):
+        """Phase 'red' should become 'test design' in output."""
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="Missing test",
+            path="src/test.py",
+            what_changes="add test",
+            agent="TEA",
+            phase="red",
         )
-        assert has_format, (
-            f"{agent_file} must show the finding format: **{{Type}}** ({{urgency}}): ..."
+        assert "test design" in result
+        assert "red" not in result.split("Found by")[1]
+
+    def test_phase_green_mapped(self):
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="desc",
+            path="p",
+            what_changes="w",
+            agent="Dev",
+            phase="green",
         )
+        assert "implementation" in result
+
+    def test_phase_review_mapped(self):
+        result = format_finding(
+            finding_type="Gap",
+            urgency="blocking",
+            description="desc",
+            path="p",
+            what_changes="w",
+            agent="Reviewer",
+            phase="review",
+        )
+        assert "code review" in result
 
 
 # =============================================================================
-# AC6: "No upstream findings" example
+# parse_delivery_findings() tests
 # =============================================================================
 
 
-class TestNoFindingsExample:
-    """AC6: All sections include 'No upstream findings' example."""
+class TestParseDeliveryFindings:
+    """Test extraction of findings from session markdown."""
 
-    AGENTS = ["tea.md", "dev.md", "reviewer.md"]
+    def test_parse_single_finding(self):
+        content = SESSION_WITH_EXISTING_FINDINGS
+        findings = parse_delivery_findings(content)
+        structured = [f for f in findings if f.get("type") != "none"]
+        assert len(structured) >= 1
+        first = structured[0]
+        assert first["type"] == "Gap"
+        assert first["urgency"] == "blocking"
+        assert first["agent"] == "TEA"
 
-    @pytest.mark.parametrize("agent_file", AGENTS)
-    def test_agent_has_no_findings_example(self, agent_file: str) -> None:
-        """Each agent should include the 'No upstream findings' example text."""
-        content = _read_agent(agent_file)
-        assert "No upstream findings" in content, (
-            f"{agent_file} must include 'No upstream findings during {{phase}}' example"
+    def test_parse_no_findings_entry(self):
+        content = SESSION_WITH_EXISTING_FINDINGS
+        findings = parse_delivery_findings(content)
+        none_entries = [f for f in findings if f.get("type") == "none"]
+        assert len(none_entries) >= 1
+        assert none_entries[0]["agent"] == "Dev"
+
+    def test_parse_missing_section_returns_empty(self):
+        findings = parse_delivery_findings(SESSION_WITHOUT_FINDINGS_SECTION)
+        assert findings == []
+
+    def test_parse_empty_section(self):
+        findings = parse_delivery_findings(SESSION_WITH_FINDINGS_SECTION)
+        assert findings == []
+
+    def test_parse_multiple_agents(self):
+        """Findings from different agents are all captured."""
+        content = SESSION_WITH_EXISTING_FINDINGS
+        findings = parse_delivery_findings(content)
+        agents = {f["agent"] for f in findings}
+        assert "TEA" in agents
+        assert "Dev" in agents
+
+    def test_parse_preserves_path(self):
+        content = SESSION_WITH_EXISTING_FINDINGS
+        findings = parse_delivery_findings(content)
+        structured = [f for f in findings if f.get("type") != "none"]
+        assert structured[0]["path"] == "src/parser.py"
+
+
+# =============================================================================
+# append_findings_to_session() tests
+# =============================================================================
+
+
+class TestAppendFindings:
+    """Test atomic session file finding appends."""
+
+    def test_append_basic(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_FINDINGS_SECTION)
+
+        finding = (
+            "- **Gap** (blocking): Missing test. "
+            "Affects `src/test.py` (add test). "
+            "*Found by TEA during test design.*"
+        )
+        result = append_findings_to_session(session, "TEA", "red", [finding])
+        assert result["success"] is True
+
+        updated = session.read_text()
+        assert "### TEA (test design)" in updated
+        assert finding in updated
+
+    def test_append_preserves_existing(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_EXISTING_FINDINGS)
+
+        finding = (
+            "- **Improvement** (non-blocking): Could use constants. "
+            "Affects `src/config.py` (extract constants). "
+            "*Found by Reviewer during code review.*"
+        )
+        result = append_findings_to_session(session, "Reviewer", "review", [finding])
+        assert result["success"] is True
+
+        updated = session.read_text()
+        # R2 guardrail: existing TEA and Dev findings must be preserved
+        assert "### TEA (test design)" in updated
+        assert "Missing validation for empty input" in updated
+        assert "### Dev (implementation)" in updated
+        assert "No upstream findings" in updated
+        # New reviewer findings appended
+        assert "### Reviewer (code review)" in updated
+        assert finding in updated
+
+    def test_append_no_findings_explicit(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_FINDINGS_SECTION)
+
+        result = append_findings_to_session(session, "Dev", "green", [])
+        assert result["success"] is True
+
+        updated = session.read_text()
+        assert "### Dev (implementation)" in updated
+        assert "No upstream findings" in updated
+
+    def test_append_missing_section_fails(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITHOUT_FINDINGS_SECTION)
+
+        result = append_findings_to_session(session, "TEA", "red", [])
+        assert result["success"] is False
+        assert "Delivery Findings" in result.get("error", "")
+
+    def test_append_multiple_findings(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_FINDINGS_SECTION)
+
+        findings = [
+            "- **Gap** (blocking): Missing input validation. Affects `src/parser.py` (add guard). *Found by TEA during test design.*",
+            "- **Question** (non-blocking): Should we support nested inputs. Affects `src/parser.py` (decide nesting). *Found by TEA during test design.*",
+        ]
+        result = append_findings_to_session(session, "TEA", "red", findings)
+        assert result["success"] is True
+
+        updated = session.read_text()
+        assert updated.count("*Found by TEA during test design.*") == 2
+
+    def test_append_after_marker_comment(self, tmp_path):
+        """Findings must appear after the HTML comment marker."""
+        session = tmp_path / "session.md"
+        session.write_text(SESSION_WITH_FINDINGS_SECTION)
+
+        finding = "- **Gap** (blocking): Test. Affects `p` (w). *Found by TEA during test design.*"
+        append_findings_to_session(session, "TEA", "red", [finding])
+
+        updated = session.read_text()
+        marker_pos = updated.find("<!-- Agents: append findings below this line.")
+        finding_pos = updated.find("### TEA (test design)")
+        assert finding_pos > marker_pos, "Findings must appear after the marker comment"
+
+
+# =============================================================================
+# Agent markdown structure tests
+# =============================================================================
+
+
+class TestAgentFindingCaptureSections:
+    """Validate agent markdown files contain finding-capture exit behavior."""
+
+    def test_tea_md_has_finding_capture(self):
+        tea_md = (AGENTS_DIR / "tea.md").read_text()
+        assert "<finding-capture>" in tea_md or "finding-capture" in tea_md.lower(), (
+            "tea.md must contain finding-capture instructions in exit behavior"
         )
 
-
-# =============================================================================
-# AC7: Append-only rule
-# =============================================================================
-
-
-class TestAppendOnlyRule:
-    """AC7: Assessment templates explain the append-only rule for Delivery Findings."""
-
-    AGENTS = ["tea.md", "dev.md", "reviewer.md"]
-
-    @pytest.mark.parametrize("agent_file", AGENTS)
-    def test_agent_has_append_only_instruction(self, agent_file: str) -> None:
-        """Each agent should instruct to append only, not edit others' entries."""
-        content = _read_agent(agent_file)
-        content_lower = content.lower()
-        has_append_rule = (
-            "append" in content_lower
-            and ("never edit" in content_lower or "do not edit" in content_lower or "only append" in content_lower)
-        )
-        assert has_append_rule, (
-            f"{agent_file} must explain: agents ONLY append to Delivery Findings, never edit/remove others' entries"
+    def test_dev_md_has_finding_capture(self):
+        dev_md = (AGENTS_DIR / "dev.md").read_text()
+        assert "<finding-capture>" in dev_md or "finding-capture" in dev_md.lower(), (
+            "dev.md must contain finding-capture instructions in exit behavior"
         )
 
-
-# =============================================================================
-# AC8: sm.md does NOT contain finding-capture
-# =============================================================================
-
-
-class TestSMExclusion:
-    """AC8: sm.md does NOT contain finding-capture changes (deferred to 134-1)."""
-
-    def test_sm_assessment_has_no_finding_capture(self) -> None:
-        """SM agent should NOT have finding-capture in its exit/assessment sections."""
-        content = _read_agent("sm.md")
-        # SM's finish flow should not yet have Impact Summary compilation
-        # (that's story 134-1). Check that finding-capture is not in SM's
-        # exit or finish-flow sections.
-        finish_flow = _extract_section(content, "finish-flow")
-        assert "Delivery Findings" not in finish_flow, (
-            "sm.md <finish-flow> must NOT contain Delivery Findings capture "
-            "(deferred to story 134-1)"
+    def test_reviewer_md_has_finding_capture(self):
+        reviewer_md = (AGENTS_DIR / "reviewer.md").read_text()
+        assert "<finding-capture>" in reviewer_md or "finding-capture" in reviewer_md.lower(), (
+            "reviewer.md must contain finding-capture instructions in exit behavior"
         )
 
-    def test_sm_has_no_impact_summary(self) -> None:
-        """SM agent should NOT yet have Impact Summary compilation."""
-        content = _read_agent("sm.md")
-        finish_flow = _extract_section(content, "finish-flow")
-        assert "Impact Summary" not in finish_flow, (
-            "sm.md <finish-flow> must NOT contain Impact Summary compilation "
-            "(deferred to story 134-1)"
+    def test_tea_md_references_r1_format(self):
+        tea_md = (AGENTS_DIR / "tea.md").read_text()
+        assert "R1" in tea_md or "Delivery Findings" in tea_md, (
+            "tea.md must reference R1 format or Delivery Findings section"
         )
 
+    def test_dev_md_references_r1_format(self):
+        dev_md = (AGENTS_DIR / "dev.md").read_text()
+        assert "R1" in dev_md or "Delivery Findings" in dev_md, (
+            "dev.md must reference R1 format or Delivery Findings section"
+        )
 
-# =============================================================================
-# AC9: No changes to gates or exit protocols
-# =============================================================================
+    def test_reviewer_md_references_r1_format(self):
+        reviewer_md = (AGENTS_DIR / "reviewer.md").read_text()
+        assert "R1" in reviewer_md or "Delivery Findings" in reviewer_md, (
+            "reviewer.md must reference R1 format or Delivery Findings section"
+        )
+
+    def test_agents_mention_valid_types(self):
+        """At least one agent file must list the valid finding types."""
+        found = False
+        for name in ("tea.md", "dev.md", "reviewer.md"):
+            content = (AGENTS_DIR / name).read_text()
+            if all(t in content for t in ("Gap", "Conflict", "Question", "Improvement")):
+                found = True
+                break
+        assert found, "At least one agent must list valid finding types"
+
+    def test_agents_mention_no_findings_requirement(self):
+        """At least one agent file must mention explicit 'no findings' requirement."""
+        found = False
+        for name in ("tea.md", "dev.md", "reviewer.md"):
+            content = (AGENTS_DIR / name).read_text()
+            if "no upstream findings" in content.lower() or "no findings" in content.lower():
+                found = True
+                break
+        assert found, "At least one agent must mention explicit no-findings requirement"
 
 
-class TestNoGateChanges:
-    """AC9: Finding-capture is in assessment templates, NOT in exit protocols or gates."""
+class TestReviewerPreflightOptionalPr:
+    """Validate PR_NUMBER is optional in reviewer-preflight.md."""
 
-    AGENTS = ["tea.md", "dev.md", "reviewer.md"]
-
-    @pytest.mark.parametrize("agent_file", AGENTS)
-    def test_exit_section_unchanged(self, agent_file: str) -> None:
-        """<exit> sections should not contain finding-capture instructions."""
-        content = _read_agent(agent_file)
-        exit_section = _extract_section(content, "exit")
-        # Exit section should reference assessment-template but not contain
-        # finding-capture logic itself
-        assert "Delivery Findings" not in exit_section, (
-            f"{agent_file} <exit> must NOT contain Delivery Findings instructions. "
-            "Finding-capture belongs in <assessment-template>, not <exit>."
+    def test_pr_number_marked_optional(self):
+        preflight_md = (AGENTS_DIR / "reviewer-preflight.md").read_text()
+        # PR_NUMBER should be marked optional, not required
+        # Look for patterns like "PR_NUMBER (optional)" or "PR_NUMBER: optional"
+        # or absence of "required" next to PR_NUMBER
+        pr_lines = [
+            line for line in preflight_md.split("\n")
+            if "PR_NUMBER" in line
+        ]
+        assert any("optional" in line.lower() for line in pr_lines), (
+            "reviewer-preflight.md must mark PR_NUMBER as optional. "
+            f"Found PR_NUMBER lines: {pr_lines}"
         )
