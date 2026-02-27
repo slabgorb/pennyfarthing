@@ -257,7 +257,11 @@ def get_all_stories() -> list[dict[str, Any]]:
     return stories
 
 
-def get_archived_stories(project_root: Path | None = None) -> list[dict[str, Any]]:
+def get_archived_stories(
+    project_root: Path | None = None,
+    exclude_current: bool = False,
+    only_current: bool = False,
+) -> list[dict[str, Any]]:
     """Get completed stories from sprint archive shards.
 
     Reads sprint/archive/sprint-*-completed.yaml files and returns
@@ -265,6 +269,8 @@ def get_archived_stories(project_root: Path | None = None) -> list[dict[str, Any
 
     Args:
         project_root: Project root path (defaults to auto-detect)
+        exclude_current: If True, exclude the current sprint's archive
+        only_current: If True, return only the current sprint's archive
 
     Returns:
         Flat list of archived story dicts
@@ -274,11 +280,26 @@ def get_archived_stories(project_root: Path | None = None) -> list[dict[str, Any
     if not archive_dir.is_dir():
         return []
 
+    current_number = None
+    if exclude_current or only_current:
+        sprint_info = get_sprint_info()
+        current_number = sprint_info.get("number")
+
     stories = []
     for path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
         data = load_yaml_config(path)
-        if data and "completed_stories" in data:
-            stories.extend(data["completed_stories"])
+        if not data or "completed_stories" not in data:
+            continue
+
+        if current_number is not None:
+            archive_number = data.get("sprint", {}).get("number")
+            is_current = archive_number == current_number
+            if exclude_current and is_current:
+                continue
+            if only_current and not is_current:
+                continue
+
+        stories.extend(data["completed_stories"])
     return stories
 
 

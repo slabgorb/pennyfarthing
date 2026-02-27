@@ -32,6 +32,7 @@ from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel
 from pf.bikerack.git_panel import GitPanel
 from pf.bikerack.progress_panel import ProgressPanel
+from pf.bikerack.settings_panel import SettingsPanel
 from pf.bikerack.sprint_panel import SprintPanel
 from pf.bikerack.ws_client import ConnectionState, WheelHubClient
 
@@ -80,6 +81,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
+    ("settings", "Settings"),
 ]
 
 # Human-readable display names for panels (full set for external focus messages)
@@ -483,6 +485,7 @@ class BikeRackApp(App):
         Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
+        Binding("7", "switch_panel('settings')", "Settings", show=False),
         Binding("bracketright", "next_panel", "Next panel", show=False),
         Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),
@@ -557,6 +560,7 @@ class BikeRackApp(App):
                     yield AuditLogPanel(client=self._client, id="panel-audit-log")
                     yield DebugPanel(client=self._client, id="panel-debug")
                     yield ProgressPanel(client=self._client, id="panel-progress")
+                    yield SettingsPanel(id="panel-settings")
                 with Horizontal(id="split-container"):
                     yield VerticalScroll(id="split-left")
                     yield VerticalScroll(id="split-right")

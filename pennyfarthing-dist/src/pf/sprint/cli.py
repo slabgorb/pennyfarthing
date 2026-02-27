@@ -1527,7 +1527,7 @@ def data(output_json: bool):
 
     from pf.common.config import load_yaml_config
     from pf.core.resolver import resolve_sprint_context
-    from pf.sprint.loader import load_sprint
+    from pf.sprint.loader import get_archived_stories, load_sprint
     from pf.sprint.shard_merge import detect_orphan_shards
 
     if not output_json:
@@ -1572,13 +1572,16 @@ def data(output_json: bool):
         if isinstance(epic, dict):
             all_stories.extend(epic.get("stories", []))
 
+    # Include archived stories from the current sprint in done counts
+    current_sprint_archived = get_archived_stories(only_current=True)
+
     # Compute point metrics
     done_statuses = {"done", "completed"}
     backlog_statuses = {"backlog", "planning", "ready"}
 
     completed_pts = sum(
         s.get("points", 0) or 0 for s in all_stories if s.get("status") in done_statuses
-    )
+    ) + sum(s.get("points", 0) or 0 for s in current_sprint_archived)
     in_progress_pts = sum(
         s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_progress"
     )
@@ -1589,7 +1592,9 @@ def data(output_json: bool):
     )
 
     # Compute story count metrics
-    done_count = sum(1 for s in all_stories if s.get("status") in done_statuses)
+    done_count = sum(1 for s in all_stories if s.get("status") in done_statuses) + len(
+        current_sprint_archived
+    )
     wip_count = sum(1 for s in all_stories if s.get("status") == "in_progress")
     backlog_count = sum(
         1
@@ -1664,19 +1669,24 @@ def metrics(output_json: bool):
     start_date_str = sprint_data.get("start_date", "")
     end_date_str = sprint_data.get("end_date", "")
 
-    # Count stories/points by status
+    # Count stories/points by status (from current-sprint.yaml)
     done_stories = [s for s in stories if s.get("status") in ("done", "completed")]
     wip_stories = [s for s in stories if s.get("status") == "in_progress"]
     backlog_stories = [s for s in stories if s.get("status") in ("backlog", "planning", "ready", None)]
 
-    done_pts = sum(s.get("points", 0) or 0 for s in done_stories)
+    # Include archived stories from the current sprint in done counts
+    current_archived = get_archived_stories(only_current=True)
+    current_archived_pts = sum(s.get("points", 0) or 0 for s in current_archived)
+
+    done_pts = sum(s.get("points", 0) or 0 for s in done_stories) + current_archived_pts
+    done_count = len(done_stories) + len(current_archived)
     wip_pts = sum(s.get("points", 0) or 0 for s in wip_stories)
     backlog_pts = sum(s.get("points", 0) or 0 for s in backlog_stories)
     total_pts = done_pts + wip_pts + backlog_pts
 
-    # Archive data
-    archived = get_archived_stories()
-    archive_pts = sum(s.get("points", 0) or 0 for s in archived)
+    # Prior sprint archive data (excludes current sprint)
+    prior_archived = get_archived_stories(exclude_current=True)
+    prior_archive_pts = sum(s.get("points", 0) or 0 for s in prior_archived)
 
     # Date calculations
     today = date.today()
@@ -1691,7 +1701,7 @@ def metrics(output_json: bool):
     days_elapsed = max(0, (today - start_date).days)
     days_remaining = max(0, (end_date - today).days)
 
-    all_done_pts = done_pts + archive_pts
+    all_done_pts = done_pts + prior_archive_pts
     pct_complete = (done_pts * 100 // total_pts) if total_pts > 0 else 0
     pct_time = (days_elapsed * 100 // total_days) if total_days > 0 else 0
 
@@ -1712,16 +1722,16 @@ def metrics(output_json: bool):
                 "in_progress": wip_pts,
                 "backlog": backlog_pts,
                 "velocity_target": velocity_target,
-                "archived": archive_pts,
+                "archived": prior_archive_pts,
                 "all_completed": all_done_pts,
             },
             "stories": {
-                "total": len(stories),
-                "done": len(done_stories),
+                "total": len(stories) + len(current_archived),
+                "done": done_count,
                 "in_progress": len(wip_stories),
                 "backlog": len(backlog_stories),
-                "archived": len(archived),
-                "all_done": len(done_stories) + len(archived),
+                "archived": len(prior_archived),
+                "all_done": done_count + len(prior_archived),
             },
             "progress": {
                 "percent_complete": pct_complete,
@@ -1746,11 +1756,11 @@ def metrics(output_json: bool):
     click.echo(f"  Timeline: {start_date_str} to {end_date_str} (Day {days_elapsed}/{total_days}, {days_remaining} remaining)")
     click.echo("")
     click.echo(f"  Points:  {done_pts} done / {wip_pts} WIP / {backlog_pts} backlog = {total_pts} total ({pct_complete}%)")
-    click.echo(f"  Stories: {len(done_stories)} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories)} total")
+    click.echo(f"  Stories: {done_count} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories) + len(current_archived)} total")
     click.echo("")
-    if archived:
-        click.echo(f"  Archive: {len(archived)} stories / {archive_pts} points (from prior sprints)")
-        click.echo(f"  All-time: {len(done_stories) + len(archived)} done / {all_done_pts} points")
+    if prior_archived:
+        click.echo(f"  Archive: {len(prior_archived)} stories / {prior_archive_pts} points (from prior sprints)")
+        click.echo(f"  All-time: {done_count + len(prior_archived)} done / {all_done_pts} points")
         click.echo("")
     click.echo(f"  Velocity: {done_pts}/{expected_pts} expected ({velocity_target} target)")
     if done_pts >= expected_pts:
