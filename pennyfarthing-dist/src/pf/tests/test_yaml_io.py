@@ -798,6 +798,51 @@ class TestShardedReadWrite:
 
         assert canonical_dump(data1) == canonical_dump(data2)
 
+    def test_promote_preserves_existing_shards(self, sharded_sprint_dir: Path) -> None:
+        """Adding an inline epic dict must not delete existing shard files.
+
+        Regression test: epic_promote reads the raw index (string refs) and
+        appends a new epic as a dict.  write_sprint must not treat the
+        existing string-ref shards as stale.
+        """
+        import yaml
+
+        index_path = sharded_sprint_dir / "current-sprint.yaml"
+
+        # Simulate what epic_promote does: read raw index, append inline dict
+        with open(index_path) as f:
+            raw_data = yaml.safe_load(f)
+
+        # raw_data["epics"] is ['MSSCI-14298', '40'] (string refs)
+        new_epic = {
+            "id": "99",
+            "type": "epic",
+            "title": "Epic: Promoted Epic",
+            "status": "backlog",
+            "stories": [
+                {"id": "99-1", "title": "First story", "points": 2, "status": "backlog"},
+            ],
+        }
+        raw_data["epics"].append(new_epic)
+
+        write_sprint(index_path, raw_data)
+
+        # Existing shard files must still exist
+        assert (sharded_sprint_dir / "epic-MSSCI-14298.yaml").exists(), \
+            "Existing shard epic-MSSCI-14298.yaml was deleted"
+        assert (sharded_sprint_dir / "epic-40.yaml").exists(), \
+            "Existing shard epic-40.yaml was deleted"
+
+        # New shard must be created
+        assert (sharded_sprint_dir / "epic-99.yaml").exists(), \
+            "New shard epic-99.yaml was not created"
+
+        # Index should have all three as string refs
+        with open(index_path) as f:
+            updated_index = yaml.safe_load(f)
+        assert len(updated_index["epics"]) == 3
+        assert all(isinstance(e, str) for e in updated_index["epics"])
+
     def test_non_sharded_write_unchanged(self, tmp_path: Path, full_sprint_file: Path) -> None:
         """write_sprint on non-sharded data should write a single file."""
         data = read_sprint(full_sprint_file)
