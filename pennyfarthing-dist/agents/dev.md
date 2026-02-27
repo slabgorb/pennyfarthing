@@ -158,6 +158,24 @@ Write to session file BEFORE starting exit protocol:
 
 **Handoff:** To next phase (verify or review)
 ```
+
+### Delivery Findings Capture
+
+After writing your assessment, append any upstream findings to the `## Delivery Findings` section
+in the session file. Use the ADR-0031 format:
+
+```markdown
+- **{Type}** ({urgency}): {One sentence description}.
+  Affects `{relative/path/to/file}` ({what needs to change}).
+  *Found by Dev during implementation.*
+```
+
+**Types:** Gap, Conflict, Question, Improvement
+**Urgency:** blocking, non-blocking
+
+If no findings: `- No upstream findings during implementation.`
+
+**Append-only rule:** ONLY append to `## Delivery Findings`. Never edit or remove another agent's entries.
 </assessment-template>
 
 <self-review>
@@ -173,9 +191,25 @@ Tests green, working tree clean, no debug code, correct branch.
 - [ ] Error handling implemented
 </self-review>
 
+<finding-capture>
+## Delivery Findings (Before Exit)
+
+Before writing your assessment, record any upstream observations in the session file's "Delivery Findings" section.
+
+**R1 format:** `- **{Type}** ({urgency}): {description}. Affects \`{path}\` ({what needs to change}). *Found by Dev during implementation.*`
+
+**Valid types:** Gap, Conflict, Question, Improvement
+**Valid urgencies:** blocking, non-blocking
+
+If you discovered no upstream issues, write explicitly: `- No upstream findings.`
+
+Append your findings under a `### Dev (implementation)` subheading after the marker comment. Never edit or remove findings from other agents.
+</finding-capture>
+
 <exit>
-1. Write Dev Assessment to session file (see <assessment-template>)
-2. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
+1. Capture delivery findings (see <finding-capture>)
+2. Write Dev Assessment to session file (see <assessment-template>)
+3. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>

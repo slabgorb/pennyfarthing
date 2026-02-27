@@ -128,23 +128,58 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 **Handoff:** Back to Dev for fixes
 ```
+
+### Delivery Findings Capture
+
+After writing your assessment, append any upstream findings to the `## Delivery Findings` section
+in the session file. Use the ADR-0031 format:
+
+```markdown
+- **{Type}** ({urgency}): {One sentence description}.
+  Affects `{relative/path/to/file}` ({what needs to change}).
+  *Found by Reviewer during code review.*
+```
+
+**Types:** Gap, Conflict, Question, Improvement
+**Urgency:** blocking, non-blocking
+
+If no findings: `- No upstream findings during code review.`
+
+**Append-only rule:** ONLY append to `## Delivery Findings`. Never edit or remove another agent's entries.
 </assessment-templates>
+
+<finding-capture>
+## Delivery Findings (Before Exit)
+
+Before writing your assessment, record any upstream observations in the session file's "Delivery Findings" section.
+
+**R1 format:** `- **{Type}** ({urgency}): {description}. Affects \`{path}\` ({what needs to change}). *Found by Reviewer during code review.*`
+
+**Valid types:** Gap, Conflict, Question, Improvement
+**Valid urgencies:** blocking, non-blocking
+
+If you discovered no upstream issues, write explicitly: `- No upstream findings.`
+
+Append your findings under a `### Reviewer (code review)` subheading after the marker comment. Never edit or remove findings from other agents.
+</finding-capture>
 
 <exit>
 ### If APPROVED:
-1. Write Reviewer Assessment (verdict: APPROVED)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
-3. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
-4. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
+1. Capture delivery findings (see <finding-capture>)
+2. Write Reviewer Assessment (verdict: APPROVED)
+3. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
+4. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
+5. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
-1. Write Reviewer Assessment (verdict: REJECTED, with severity table)
-2. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
-3. If findings are testable (logic bugs, missing edge cases):
+1. Capture delivery findings (see <finding-capture>)
+2. Write Reviewer Assessment (verdict: REJECTED, with severity table)
+3. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
+4. If findings are testable (logic bugs, missing edge cases):
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)
-4. If findings are lint/format/dead-code only:
+5. If findings are lint/format/dead-code only:
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker dev)
-5. **DO NOT merge or create PRs.**
+6. **DO NOT merge or create PRs.**
 
 Nothing after the marker. EXIT.
 </exit>

@@ -11,7 +11,7 @@ model: haiku
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
 | `REPOS` | Yes | Repository name(s) |
 | `BRANCH` | Yes | Feature branch name |
-| `PR_NUMBER` | Yes | Pull request number |
+| `PR_NUMBER` | No (optional) | Pull request number — skip PR checks if not provided |
 </arguments>
 
 <gate>
