@@ -18,6 +18,7 @@ Consistent naming enables:
 | `test` | Test execution output | Cleaned after 1 day or story completion |
 | `lint` | Lint execution output | Cleaned after 1 day or story completion |
 | `handoff` | Agent-to-agent transition data | Cleaned on story completion |
+| `findings` | Delivery Findings section in session file | Archived with session on completion |
 
 ## Naming Patterns
 
@@ -113,6 +114,156 @@ handoff-{STORY_ID}-{FROM_AGENT}.json
 
 **Created by:** Handoff subagents (`tea-handoff`, `dev-handoff`, `reviewer-handoff-*`)
 **Cleaned by:** `session-cleanup.sh --story {STORY_ID}`
+
+---
+
+## Delivery Findings
+
+The Delivery Findings section is a structured area within each session file where agents record upstream observations discovered during their phase. It enables cross-phase visibility into gaps, conflicts, and improvement opportunities.
+
+### Section Template
+
+Created automatically by `sm-setup` in every session file:
+
+```markdown
+## Delivery Findings
+
+Agents record upstream observations discovered during their phase.
+Each finding is one list item. Use "No upstream findings" if none.
+
+**Types:** Gap, Conflict, Question, Improvement
+**Urgency:** blocking, non-blocking
+
+<!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+```
+
+The HTML comment is the **append marker**. All agent findings go below it; content above is static header.
+
+### R1 Format
+
+Every finding is a single markdown list item following R1 format exactly:
+
+```markdown
+- **{Type}** ({urgency}): {description}. Affects `{path}` ({what needs to change}). *Found by {Agent} during {human-phase-name}.*
+```
+
+**Valid types:** `Gap`, `Conflict`, `Question`, `Improvement`
+
+| Type | When to use |
+|------|-------------|
+| Gap | Something expected is missing (a test, validation, doc section) |
+| Conflict | Two specs or implementations contradict each other |
+| Question | An ambiguity that needs a decision from PM or Architect |
+| Improvement | Something works but could be better (non-blocking by definition) |
+
+**Valid urgencies:** `blocking`, `non-blocking`
+
+- `blocking` — must be resolved before the story can ship
+- `non-blocking` — should be addressed but does not block delivery
+
+**Human phase names:** Agents use internal phase names; findings display human-readable names.
+
+| Internal phase | Human name |
+|----------------|------------|
+| `red` | test design |
+| `green` | implementation |
+| `review` | code review |
+
+Unknown phases pass through as-is (e.g., `setup` stays `setup`).
+
+### Correct Examples
+
+```markdown
+- **Gap** (blocking): Missing validation for empty input. Affects `src/parser.py` (add input guard). *Found by TEA during test design.*
+- **Conflict** (non-blocking): API contract differs from updated spec. Affects `docs/api.md` (update spec to match). *Found by Reviewer during code review.*
+- **Question** (non-blocking): Should retry logic use exponential backoff. Affects `src/client.py` (decide retry strategy). *Found by Dev during implementation.*
+- **Improvement** (non-blocking): Could extract helper for reuse. Affects `src/utils.py` (extract shared logic). *Found by Dev during implementation.*
+```
+
+### Incorrect Examples
+
+```markdown
+# WRONG: Missing type
+- (blocking): Something is missing. Affects `src/foo.py` (fix). *Found by TEA during test design.*
+
+# WRONG: Invalid type "Bug"
+- **Bug** (blocking): Crash on null. Affects `src/foo.py` (fix). *Found by TEA during test design.*
+
+# WRONG: Missing urgency
+- **Gap**: Missing validation. Affects `src/foo.py` (fix). *Found by TEA during test design.*
+
+# WRONG: Missing "Affects" clause
+- **Gap** (blocking): Missing validation. *Found by TEA during test design.*
+
+# WRONG: Missing attribution
+- **Gap** (blocking): Missing validation. Affects `src/foo.py` (fix).
+```
+
+### Agent Behavior
+
+Each agent appends findings to the session file's Delivery Findings section **before** writing their assessment during exit. The flow:
+
+1. Agent completes phase work
+2. Agent records findings (or explicit "no findings") under a `### {Agent} ({phase})` subheading
+3. Agent writes assessment
+4. Agent runs exit protocol
+
+**Append-only rule (R2):** Agents only append their own block. They never edit or remove another agent's entries.
+
+**Explicit "no findings" (R3):** If an agent has no observations, they write `- No upstream findings.` to distinguish "checked and found nothing" from "forgot to check."
+
+Example of accumulated findings across phases:
+
+```markdown
+<!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+
+### TEA (test design)
+- **Gap** (blocking): Missing validation for empty input. Affects `src/parser.py` (add input guard). *Found by TEA during test design.*
+
+### Dev (implementation)
+- No upstream findings.
+
+### Reviewer (code review)
+- **Improvement** (non-blocking): Could use constants for magic numbers. Affects `src/config.py` (extract constants). *Found by Reviewer during code review.*
+```
+
+### Validation Gate
+
+Story 133-3 added a validation gate (`pf.findings.capture.parse_delivery_findings`) that parses findings and checks R1 format compliance. Malformed entries are silently skipped during parsing — only well-formed R1 entries are captured. The gate runs before downstream consumers (Impact Summary in Epic 134, Sprint Aggregation in Epic 135) to ensure data quality.
+
+### Path References (R4)
+
+All paths in `Affects \`{path}\`` use relative paths from the project root. Never use absolute paths.
+
+```markdown
+# CORRECT
+Affects `pennyfarthing-dist/src/pf/findings/capture.py`
+
+# WRONG
+Affects `/Users/keithavery/Projects/pf-1/pennyfarthing/pennyfarthing-dist/src/pf/findings/capture.py`
+```
+
+### Python API
+
+The `pf.findings.capture` module provides programmatic access:
+
+| Function | Purpose |
+|----------|---------|
+| `format_finding()` | Generate a single R1-format finding string |
+| `parse_delivery_findings()` | Extract structured findings from session markdown |
+| `append_findings_to_session()` | Atomically append findings to session file |
+
+These are used by the validation gate and will be consumed by Epic 134 (Impact Summary) and Epic 135 (Sprint Aggregation).
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Finding not parsed | Doesn't match R1 regex | Check type spelling, urgency value, and `Affects` clause |
+| "Delivery Findings section not found" | Session predates 133-1 template | Add the section manually with the marker comment |
+| "Delivery Findings marker comment not found" | Marker was deleted or modified | Restore: `<!-- Agents: append findings below this line. Do not edit other agents' entries. -->` |
+| Duplicate agent headings | Agent appended twice | By design — append-only, no dedup |
+| Missing agent block | Agent skipped finding capture | Agent exit protocol bug — should always write findings or "no findings" |
 
 ---
 
