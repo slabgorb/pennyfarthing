@@ -11,13 +11,11 @@ import yaml
 from pf.common.config import get_project_root, load_pennyfarthing_config
 
 # Top-level keys to show in `pf settings show` (skip layout/panel blobs)
-SHOW_KEYS = ("theme", "bell_mode", "relay_mode", "permission_mode", "portrait_size", "workflow", "jira", "display", "split", "last_panel")
+SHOW_KEYS = ("theme", "permission_mode", "portrait_size", "workflow", "jira", "display", "split", "last_panel")
 
 # Default values for all known settings
 DEFAULTS: dict[str, Any] = {
     "theme": "firefly",
-    "bell_mode": "standard",
-    "relay_mode": False,
     "permission_mode": "standard",
     "workflow": {
         "bell_mode": False,
@@ -88,6 +86,26 @@ def set_setting(key: str, value: str) -> dict:
     config = load_pennyfarthing_config(root)
     coerced = _coerce_value(value)
     _set_by_path(config, key, coerced)
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, "w") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+    return config
+
+
+def set_setting_typed(key: str, value: Any) -> dict:
+    """Set a setting value by dot-path without string coercion.
+
+    Like set_setting() but takes a native Python value (bool, str, int)
+    directly — no _coerce_value() pass. Use this when the value already
+    has the correct type (e.g. from a Switch or Select widget).
+    """
+    root = get_project_root()
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
+
+    config = load_pennyfarthing_config(root)
+    _set_by_path(config, key, value)
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     with open(config_path, "w") as f:

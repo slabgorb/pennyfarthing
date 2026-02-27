@@ -98,7 +98,7 @@ def check_commands(root: Path) -> CheckResult:
     cmd_dir = root / ".claude" / "commands"
     if not cmd_dir.is_dir():
         return CheckResult(name="commands", status="fail", detail=".claude/commands/ missing")
-    pf_cmds = list(cmd_dir.glob("pf-*"))
+    pf_cmds = [f for f in cmd_dir.glob("pf-*.md") if f.is_file()]
     if not pf_cmds:
         return CheckResult(name="commands", status="fail", detail="No pf-* commands found")
     return CheckResult(name="commands", status="pass", detail=f"{len(pf_cmds)} pf-* commands found")

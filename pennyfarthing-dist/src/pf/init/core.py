@@ -304,7 +304,7 @@ def _find_pf_commands(dist_root: Path) -> list[Path]:
     commands_dir = dist_root / "commands"
     if not commands_dir.is_dir():
         return []
-    return sorted(commands_dir.glob("pf-*.md"))
+    return sorted(f for f in commands_dir.glob("pf-*.md") if f.is_file())
 
 
 def _find_pf_skills(dist_root: Path) -> list[Path]:
