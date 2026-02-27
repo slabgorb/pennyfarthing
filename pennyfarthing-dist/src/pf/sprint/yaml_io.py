@@ -389,6 +389,8 @@ def write_sprint(path: Path, data: Any) -> None:
             written_shards.add(shard_file)
             epic_refs.append(ref)
         else:
+            # String ref — shard already exists on disk, don't delete it
+            written_shards.add(sprint_dir / f"epic-{epic}.yaml")
             epic_refs.append(epic)
 
     # Write index with string refs instead of full epic dicts
