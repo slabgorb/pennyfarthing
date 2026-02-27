@@ -3,6 +3,7 @@ import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import type { ContextTier } from '../prime.js';
+import { resolvePennyfarthingDist } from '../../shared/portrait-resolver.js';
 
 /**
  * Context usage information from check-context.sh
@@ -46,6 +47,14 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
     join(projectDir, 'pennyfarthing-dist', 'scripts', 'core', 'check-context.sh'),
     join(projectDir, '.pennyfarthing', 'scripts', 'core', 'check-context.sh'),
   ];
+
+  // Resolve via npm-installed dist path as fallback
+  const distRoot = resolvePennyfarthingDist();
+  if (distRoot) {
+    pythonPaths.push(join(distRoot, 'pf', 'context.py'));
+    pythonPaths.push(join(distRoot, 'src', 'pf', 'context.py'));
+    shellPaths.push(join(distRoot, 'scripts', 'core', 'check-context.sh'));
+  }
 
   let scriptPath: string | null = null;
   let isPython = false;
