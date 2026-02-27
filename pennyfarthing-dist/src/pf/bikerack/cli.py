@@ -76,7 +76,7 @@ def start(project_dir, dry_run):
         proc = start_wheelhub(project_dir)
         write_pid_file(project_dir, proc.pid)
 
-        port = poll_for_port_file(project_dir)
+        port = poll_for_port_file(project_dir, proc=proc)
         click.echo(f"WheelHub listening on http://localhost:{port}")
 
         otel_env = build_otel_env(port)
@@ -87,10 +87,7 @@ def start(project_dir, dry_run):
         click.echo(f"Dashboard: http://localhost:{port}/bikerack")
         click.echo("Starting Claude CLI...")
         exec_claude(otel_env, project_dir)
-    except TimeoutError as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-    except Exception as e:
+    except (TimeoutError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 

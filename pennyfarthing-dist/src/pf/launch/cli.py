@@ -38,7 +38,7 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
     click.echo("Starting WheelHub server...")
     proc = start_wheelhub(project_dir)
     write_pid_file(project_dir, proc.pid)
-    port = poll_for_port_file(project_dir)
+    port = poll_for_port_file(project_dir, proc=proc)
     click.echo(f"WheelHub listening on http://localhost:{port}")
     click.echo(
         "Note: OTEL telemetry requires Claude to be started with BikeRack env vars. "
@@ -88,7 +88,7 @@ def gui(project_dir, no_open, dry_run):
 
     try:
         port, pid, reused = _ensure_wheelhub(project_dir)
-    except TimeoutError as e:
+    except (TimeoutError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 

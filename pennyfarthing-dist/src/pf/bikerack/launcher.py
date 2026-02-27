@@ -81,55 +81,94 @@ def _find_wheelhub_entry() -> Path:
     """Locate the WheelHub entry point.
 
     Search order:
-      1. Bundled in pip package: pf/_dist/server/wheelhub.mjs
-      2. Monorepo: pennyfarthing/packages/core/dist/server/entry.js
+      1. Monorepo: pennyfarthing/packages/core/dist/server/entry.js
+         (preferred — has proper node_modules, bundled .mjs may crash)
+      2. Bundled in pip package: pf/_dist/server/wheelhub.mjs
     """
-    # 1. Bundled pip package
-    bundled = Path(__file__).resolve().parent.parent / "_dist" / "server" / "wheelhub.mjs"
-    if bundled.is_file():
-        return bundled
-
-    # 2. Monorepo: pf/bikerack/launcher.py -> src/pf/ -> src/ -> pennyfarthing-dist/ -> pennyfarthing/
+    # 1. Monorepo: pf/bikerack/launcher.py -> src/pf/ -> src/ -> pennyfarthing-dist/ -> pennyfarthing/
     framework_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
     monorepo_entry = framework_dir / "packages" / "core" / "dist" / "server" / "entry.js"
     if monorepo_entry.is_file():
         return monorepo_entry
 
+    # 2. Bundled pip package (standalone install without monorepo)
+    bundled = Path(__file__).resolve().parent.parent / "_dist" / "server" / "wheelhub.mjs"
+    if bundled.is_file():
+        return bundled
+
     raise FileNotFoundError(
         "Could not find WheelHub entry point.\n"
-        "Expected: pf/_dist/server/wheelhub.mjs (pip) or packages/core/dist/server/entry.js (monorepo)"
+        "Expected: packages/core/dist/server/entry.js (monorepo) or pf/_dist/server/wheelhub.mjs (pip)"
     )
 
 
+def _wheelhub_log_path(project_dir: Path) -> Path:
+    """Return the WheelHub log file path, ensuring parent dir exists."""
+    session_dir = project_dir / ".session"
+    session_dir.mkdir(exist_ok=True)
+    return session_dir / "wheelhub.log"
+
+
 def start_wheelhub(project_dir: Path) -> subprocess.Popen:
-    """Start WheelHub server in background via BikeRack's own entry point."""
+    """Start WheelHub server in background via BikeRack's own entry point.
+
+    Logs stdout/stderr to .session/wheelhub.log for diagnostics.
+    """
     entry = _find_wheelhub_entry()
+    log_path = _wheelhub_log_path(project_dir)
 
     env = os.environ.copy()
     env["CYCLIST_PROJECT_DIR"] = str(project_dir)
 
+    log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
         ["node", str(entry)],
         env=env,
         cwd=str(project_dir),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=log_file,
+        stderr=log_file,
     )
 
 
 def poll_for_port_file(
-    project_dir: Path, timeout: float = 5.0, interval: float = 0.1
+    project_dir: Path,
+    timeout: float = 10.0,
+    interval: float = 0.2,
+    proc: subprocess.Popen | None = None,
 ) -> int:
-    """Poll for .bikerack-port file, return port number."""
+    """Poll for .bikerack-port file, return port number.
+
+    If proc is provided, checks whether the process is still alive each tick.
+    On early exit, reads .session/wheelhub.log and includes it in the error.
+    """
     port_file = project_dir / ".bikerack-port"
     deadline = time.monotonic() + timeout
 
     while True:
         if port_file.exists():
             return int(port_file.read_text().strip())
+
+        if proc is not None and proc.poll() is not None:
+            log_path = _wheelhub_log_path(project_dir)
+            log_tail = ""
+            if log_path.exists():
+                log_tail = log_path.read_text().strip()
+                if log_tail:
+                    log_tail = f"\n\nWheelHub log:\n{log_tail}"
+            raise RuntimeError(
+                f"WheelHub exited with code {proc.returncode} before writing port file{log_tail}"
+            )
+
         if time.monotonic() >= deadline:
+            log_path = _wheelhub_log_path(project_dir)
+            log_tail = ""
+            if log_path.exists():
+                log_tail = log_path.read_text().strip()
+                if log_tail:
+                    lines = log_tail.splitlines()
+                    log_tail = "\n\nWheelHub log (last 20 lines):\n" + "\n".join(lines[-20:])
             raise TimeoutError(
-                f"Timed out waiting for {port_file} after {timeout}s"
+                f"Timed out waiting for {port_file} after {timeout}s{log_tail}"
             )
         time.sleep(interval)
 
@@ -160,12 +199,17 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
     """Check if BikeRack is already running.
 
     Returns (is_running, pid_or_none, port_or_none).
-    Cleans up stale files if PID is dead.
+    Cleans up stale/orphaned files if PID is dead or files are inconsistent.
     """
     pid = read_pid_file(project_dir)
     port = read_port_file(project_dir)
 
-    if pid is None or port is None:
+    # Orphaned port file without pid file (or vice versa) — clean up
+    if (pid is None) != (port is None):
+        cleanup_files(project_dir)
+        return (False, None, None)
+
+    if pid is None:
         return (False, None, None)
 
     if is_process_alive(pid):
