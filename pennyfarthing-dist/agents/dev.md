@@ -158,6 +158,24 @@ Write to session file BEFORE starting exit protocol:
 
 **Handoff:** To next phase (verify or review)
 ```
+
+### Delivery Findings Capture
+
+After writing your assessment, append any upstream findings to the `## Delivery Findings` section
+in the session file. Use the ADR-0031 format:
+
+```markdown
+- **{Type}** ({urgency}): {One sentence description}.
+  Affects `{relative/path/to/file}` ({what needs to change}).
+  *Found by Dev during implementation.*
+```
+
+**Types:** Gap, Conflict, Question, Improvement
+**Urgency:** blocking, non-blocking
+
+If no findings: `- No upstream findings during implementation.`
+
+**Append-only rule:** ONLY append to `## Delivery Findings`. Never edit or remove another agent's entries.
 </assessment-template>
 
 <self-review>
