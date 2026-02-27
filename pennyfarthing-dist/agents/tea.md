@@ -153,9 +153,25 @@ If no findings: `- No upstream findings during {phase-name}.`
 **Append-only rule:** ONLY append to `## Delivery Findings`. Never edit or remove another agent's entries.
 </assessment-template>
 
+<finding-capture>
+## Delivery Findings (Before Exit)
+
+Before writing your assessment, record any upstream observations in the session file's "Delivery Findings" section.
+
+**R1 format:** `- **{Type}** ({urgency}): {description}. Affects \`{path}\` ({what needs to change}). *Found by TEA during test design.*`
+
+**Valid types:** Gap, Conflict, Question, Improvement
+**Valid urgencies:** blocking, non-blocking
+
+If you discovered no upstream issues, write explicitly: `- No upstream findings.`
+
+Append your findings under a `### TEA (test design)` subheading after the marker comment. Never edit or remove findings from other agents.
+</finding-capture>
+
 <exit>
-1. Write TEA Assessment to session file (see <assessment-template>)
-2. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
+1. Capture delivery findings (see <finding-capture>)
+2. Write TEA Assessment to session file (see <assessment-template>)
+3. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>
