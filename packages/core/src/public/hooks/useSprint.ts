@@ -14,13 +14,20 @@ import { useDataSource } from './useDataSource.js';
 // Types matching EnhancedSprintPanel expectations
 // =============================================================================
 
+export interface EpicProgress {
+  done: number;
+  total: number;
+  cancelled: number;
+  percentage: number;
+}
+
 export interface SprintStory {
   id: string;
   title: string;
   points: number;
   status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
-  hasContext?: boolean;
+  hasContext: boolean;
   assignedTo?: string | null;
   completed?: string | null;
   started?: string | null;
@@ -34,7 +41,9 @@ export interface SprintEpic {
   title: string;
   jiraKey: string | null;
   stories: SprintStory[];
-  hasContext?: boolean;
+  hasContext: boolean;
+  progress: EpicProgress;
+  isCompleted: boolean;
 }
 
 export interface FutureEpicChild {
@@ -67,6 +76,7 @@ export interface SprintData {
   currentStory: SprintStory | null;
   nextStory: SprintStory | null;
   epics: SprintEpic[];
+  completedEpics: SprintEpic[];
   futureEpics: FutureEpic[];
   sprint: {
     number: number;

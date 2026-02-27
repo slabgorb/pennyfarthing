@@ -12,11 +12,20 @@
  */
 
 import { execSync } from 'child_process';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { getStoryInfo } from './story-parser.js';
 
 // =============================================================================
 // Types matching EnhancedSprintPanel expectations
 // =============================================================================
+
+export interface EpicProgress {
+  done: number;
+  total: number;
+  cancelled: number;
+  percentage: number;
+}
 
 export interface SprintStory {
   id: string;
@@ -24,7 +33,7 @@ export interface SprintStory {
   points: number;
   status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
-  hasContext?: boolean;
+  hasContext: boolean;
   assignedTo?: string | null;
   completed?: string | null;
   started?: string | null;
@@ -38,7 +47,9 @@ export interface SprintEpic {
   title: string;
   jiraKey: string | null;
   stories: SprintStory[];
-  hasContext?: boolean;
+  hasContext: boolean;
+  progress: EpicProgress;
+  isCompleted: boolean;
 }
 
 export interface FutureEpicChild {
@@ -156,6 +167,34 @@ function extractSprintNumber(name?: string): number {
   return match ? parseInt(match[1], 10) : 0;
 }
 
+export function computeEpicProgress(stories: SprintStory[]): EpicProgress {
+  let done = 0;
+  let cancelled = 0;
+  let allPoints = 0;
+  for (const s of stories) {
+    allPoints += s.points;
+    if (s.status === 'done') done += s.points;
+    if (s.status === 'cancelled') cancelled += s.points;
+  }
+  const total = allPoints - cancelled;
+  const percentage = total > 0 ? Math.round((done / total) * 100) : 0;
+  return { done, total, cancelled, percentage };
+}
+
+export function computeEpicCompleted(stories: SprintStory[]): boolean {
+  return stories.length > 0 && stories.every(s => s.status === 'done' || s.status === 'cancelled');
+}
+
+export function checkEpicContext(projectDir: string, epicId: string): boolean {
+  return existsSync(join(projectDir, 'sprint/context', `context-epic-${epicId}.md`));
+}
+
+export function checkStoryContext(projectDir: string, storyId: string): boolean {
+  const contextDir = join(projectDir, 'sprint/context');
+  return existsSync(join(contextDir, `context-story-${storyId}.md`)) ||
+    existsSync(join(contextDir, `context-${storyId}.md`));
+}
+
 function getEmptySprintData(): SprintData {
   return {
     currentStory: null,
@@ -173,13 +212,14 @@ function getEmptySprintData(): SprintData {
   };
 }
 
-function transformCanonicalStory(story: CanonicalStory): SprintStory {
+function transformCanonicalStory(story: CanonicalStory, projectDir: string): SprintStory {
   return {
     id: story.id,
     title: story.title,
     points: story.points ?? 0,
     status: mapStoryStatus(story.status),
     jiraKey: story.jira ?? null,
+    hasContext: checkStoryContext(projectDir, story.id),
     assignedTo: story.assigned_to ?? null,
     completed: story.completed ?? null,
     started: story.started ?? null,
@@ -189,12 +229,17 @@ function transformCanonicalStory(story: CanonicalStory): SprintStory {
   };
 }
 
-function transformCanonicalEpic(epic: CanonicalEpic): SprintEpic {
+function transformCanonicalEpic(epic: CanonicalEpic, projectDir: string): SprintEpic {
+  const stories = (epic.stories ?? []).map(s => transformCanonicalStory(s, projectDir));
+  const progress = computeEpicProgress(stories);
   return {
     id: epic.id,
     title: epic.title,
     jiraKey: epic.jira ?? null,
-    stories: (epic.stories ?? []).map(transformCanonicalStory),
+    stories,
+    hasContext: checkEpicContext(projectDir, epic.id),
+    progress,
+    isCompleted: computeEpicCompleted(stories),
   };
 }
 
@@ -220,18 +265,26 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   }
 
   // Transform epics
-  const epics: SprintEpic[] = (canonical.epics ?? []).map(transformCanonicalEpic);
+  const allEpics: SprintEpic[] = (canonical.epics ?? []).map(e => transformCanonicalEpic(e, projectDir));
 
   // Add standalone stories as pseudo-epic
-  const standaloneStories = (canonical.standalone_stories ?? []).map(transformCanonicalStory);
+  const standaloneStories = (canonical.standalone_stories ?? []).map(s => transformCanonicalStory(s, projectDir));
   if (standaloneStories.length > 0) {
-    epics.push({
+    const progress = computeEpicProgress(standaloneStories);
+    allEpics.push({
       id: 'standalone',
       title: 'Standalone Stories',
       jiraKey: null,
       stories: standaloneStories,
+      hasContext: false,
+      progress,
+      isCompleted: computeEpicCompleted(standaloneStories),
     });
   }
+
+  // Split into active and completed
+  const epics = allEpics.filter(e => !e.isCompleted);
+  const completedEpics = allEpics.filter(e => e.isCompleted);
 
   // Get current story from session
   const storyInfo = getStoryInfo(projectDir);
@@ -239,7 +292,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   let nextStory: SprintStory | null = null;
 
   if (storyInfo.id) {
-    for (const epic of epics) {
+    for (const epic of allEpics) {
       const found = epic.stories.find(s => s.id === storyInfo.id);
       if (found) {
         currentStory = found;
@@ -258,7 +311,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     }
 
     if (userEmail) {
-      for (const epic of epics) {
+      for (const epic of allEpics) {
         const assigned = epic.stories.find(s => s.status === 'backlog' && s.assignedTo === userEmail);
         if (assigned) {
           nextStory = assigned;
@@ -268,7 +321,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     }
 
     if (!nextStory) {
-      for (const epic of epics) {
+      for (const epic of allEpics) {
         const unassigned = epic.stories.find(s => s.status === 'backlog' && !s.assignedTo);
         if (unassigned) {
           nextStory = unassigned;
@@ -286,7 +339,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
     currentStory,
     nextStory,
     epics,
-    completedEpics: [],
+    completedEpics,
     futureEpics: [],
     sprint: {
       number: canonical.sprint.number ?? extractSprintNumber(canonical.sprint.name),

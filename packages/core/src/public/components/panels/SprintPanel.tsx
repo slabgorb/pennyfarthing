@@ -102,24 +102,6 @@ function formatAssignee(email: string | null | undefined): string | null {
 }
 
 /**
- * Calculate epic progress (done points / total points)
- */
-function calculateEpicProgress(epic: SprintEpic): { done: number; total: number } {
-  const total = epic.stories.reduce((sum, s) => sum + s.points, 0);
-  const done = epic.stories
-    .filter((s) => s.status === 'done')
-    .reduce((sum, s) => sum + s.points, 0);
-  return { done, total };
-}
-
-/**
- * Check if epic is fully completed (all stories done)
- */
-function isEpicCompleted(epic: SprintEpic): boolean {
-  return epic.stories.length > 0 && epic.stories.every((s) => s.status === 'done' || s.status === 'cancelled');
-}
-
-/**
  * Get status badge content and class for a story status
  */
 function getStatusBadgeInfo(status: SprintStory['status']): { icon: React.ReactElement; className: string } {
@@ -287,8 +269,8 @@ function EpicGroup({
   onKeyDown: (id: string, e: React.KeyboardEvent) => void;
   onArchive: (id: string) => void;
 }): React.ReactElement {
-  const { done, total } = calculateEpicProgress(epic);
-  const completed = isEpicCompleted(epic);
+  const { done, total, percentage } = epic.progress;
+  const completed = epic.isCompleted;
 
   return (
     <div
@@ -312,7 +294,7 @@ function EpicGroup({
         <span className="epic-title">{epic.title}</span>
         {epic.jiraKey && <span className="epic-jira">{epic.jiraKey}</span>}
         <CopyButton text={`${epic.id} ${epic.title}`} />
-        <ContextIndicator hasContext={epic.hasContext ?? false} testIdPrefix="epic" id={epic.id} />
+        <ContextIndicator hasContext={epic.hasContext} testIdPrefix="epic" id={epic.id} />
         {completed && epic.hasContext && (
           <Badge variant="default" className="epic-ready-badge" data-testid={`epic-ready-badge-${epic.id}`}>
             Ready
@@ -328,7 +310,7 @@ function EpicGroup({
         >
           <div
             className="progress-bar"
-            style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
+            style={{ width: `${percentage}%` }}
           />
         </div>
         <span
@@ -363,7 +345,7 @@ function EpicGroup({
       {isExpanded && (
         <div className="epic-stories">
           {epic.stories.map((story) => {
-            const hasContext = story.hasContext ?? false;
+            const hasContext = story.hasContext;
             const isBlocked = story.status === 'blocked';
             const assigneeDisplay = formatAssignee(story.assignedTo);
             return (
@@ -436,9 +418,9 @@ export function EnhancedSprintPanel(): React.ReactElement {
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
   const [actionError, setActionError] = useState<Error | null>(null);
 
-  // Split epics into active (has non-done stories) vs completed (all stories done)
-  const activeEpics = data?.epics.filter((e) => !isEpicCompleted(e)) ?? [];
-  const completedEpics = data?.epics.filter((e) => isEpicCompleted(e)) ?? [];
+  // Use pre-computed active/completed split from backend
+  const activeEpics = data?.epics ?? [];
+  const completedEpics = data?.completedEpics ?? [];
 
   // Expand only active epics by default when data first loads (once only)
   // Completed epics start collapsed
