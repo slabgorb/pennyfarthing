@@ -112,6 +112,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 1. **Spawn `sm-finish` with PHASE=preflight**
    - Provide: STORY_ID, JIRA_KEY (from session `Jira:` field), REPOS, BRANCH
    - **Never construct JIRA_KEY from epic number** - read it from session/YAML
+   - sm-finish compiles the Impact Summary from Delivery Findings before running preflight checks
 
 2. **Run finish command:**
    ```bash

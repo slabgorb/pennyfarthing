@@ -32,7 +32,27 @@ PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`
 If a PR already exists, skip creation.
 
-## 2. Run Preflight Script
+## 2. Compile Impact Summary
+
+Compile Delivery Findings from the session file into an Impact Summary section.
+Uses `pf.findings.summary.write_impact_summary_to_session()` which reads the
+session, parses R1-format findings via `pf.findings.capture.parse_delivery_findings()`,
+and writes the `## Impact Summary` section between Delivery Findings and agent assessments.
+
+```bash
+source .venv/bin/activate && python -c "
+from pathlib import Path
+from pf.findings.summary import write_impact_summary_to_session
+import json
+result = write_impact_summary_to_session(Path('.session/{STORY_ID}-session.md'))
+print(json.dumps(result))
+"
+```
+
+- If `success: true`: Impact Summary compiled. Log `finding_count` and `blocking_count`.
+- If `success: false`: Log the error but continue with preflight — Impact Summary is non-blocking.
+
+## 3. Run Preflight Script
 
 The preflight script runs all checks in parallel using asyncio:
 
