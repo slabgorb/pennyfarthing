@@ -427,6 +427,10 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     commands_dir = (dist_root / "commands") if dist_root else root / "pennyfarthing-dist" / "commands"
     command_files = discover_command_files(commands_dir)
 
+    if not command_files:
+        report.warnings += 1
+        report.details.append("[WARN] No command files found in commands directory")
+
     for path in command_files:
         file_errors, file_warnings = validate_command_file(path)
 
