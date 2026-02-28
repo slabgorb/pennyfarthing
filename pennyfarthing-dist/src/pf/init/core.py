@@ -6,11 +6,16 @@ Creates .pennyfarthing/ and .claude/ directory structures,
 copies pf-* commands, skills, and content directories (agents, guides,
 personas, etc.), writes settings.local.json, and updates .gitignore.
 Idempotent and deterministic.
+
+Portrait images are centralized to ~/.local/share/pennyfarthing/portraits/
+(XDG_DATA_HOME) and symlinked into each project to avoid duplicating ~1.1GB
+of portrait data per consumer.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -252,6 +257,10 @@ def init_project(
         _copy_tree(dist_root / dir_name, dest)
         content_dirs_copied += 1
 
+    # --- Centralize portraits to shared XDG location ---
+    portrait_result = _install_portraits(dist_root)
+    portraits_linked = _symlink_portraits(target_dir)
+
     # --- Install tmux config samples and launcher ---
     tmux_installed = _install_tmux_files(target_dir, dist_root)
 
@@ -289,7 +298,7 @@ def init_project(
     from pf.init import setup
 
     setup_result = setup.run_setup(
-        target_dir=target_dir, dist_root=dist_root, skip_prompts=True, dry_run=True
+        target_dir=target_dir, dist_root=dist_root, skip_prompts=True
     )
 
     return {
@@ -306,6 +315,8 @@ def init_project(
             "shim_installed": shim_result.get("success", False),
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
+            "portraits": portrait_result,
+            "portraits_linked": portraits_linked,
         },
     }
 
@@ -499,24 +510,235 @@ def _upgrade_hooks(settings_path: Path) -> bool:
 def _clean_stale_artifacts(target_dir: Path) -> None:
     """Remove stale npm-era artifacts from .pennyfarthing/.
 
-    The old npm install created a pyproject.toml, uv.lock, and .venv
-    inside .pennyfarthing/ for uv-based hook execution. Now that pf is
-    installed globally via pipx, these are stale and cause conflicts
-    (e.g. uv tries to build from the empty local project instead of
-    using the global pf).
+    Covers three generations of install artifacts:
+
+    npm-era (pre-12.x):
+    - pyproject.toml, uv.lock, .venv/ — uv-based in-project hook execution
+    - .installed-version — old version stamp
+    - pennyfarthing_scripts.egg-info/ — editable install remnant
+    - pf (symlink) — symlinked to ../../node_modules/pennyfarthing/pennyfarthing-dist/pf;
+      replaced by .pennyfarthing/bin/pf shim
+    - manifest.json — old npm install manifest (replaced by init-manifest.json)
+    - settings.local.json — settings were incorrectly placed here; canonical
+      location is .claude/settings.local.json
+
+    node_modules-era (any remaining @pennyfarthing packages):
+    - node_modules/@pennyfarthing/core/ — npm package, now replaced by pipx
+    - node_modules/pennyfarthing/ — older single-package layout
     """
     pf_dir = target_dir / ".pennyfarthing"
-    stale_files = ["pyproject.toml", "uv.lock", ".installed-version"]
+    stale_files = [
+        "pyproject.toml",
+        "uv.lock",
+        ".installed-version",
+        "manifest.json",
+        "settings.local.json",
+        "preferences.yaml",
+    ]
     for name in stale_files:
         path = pf_dir / name
         if path.is_file():
             path.unlink()
+
+    # Remove the old pf symlink (npm-era entry point, replaced by bin/pf shim)
+    pf_symlink = pf_dir / "pf"
+    if pf_symlink.is_symlink():
+        pf_symlink.unlink()
 
     stale_dirs = [".venv", "pennyfarthing_scripts.egg-info"]
     for name in stale_dirs:
         path = pf_dir / name
         if path.is_dir():
             shutil.rmtree(path)
+
+    # Remove stale node_modules/@pennyfarthing packages if present
+    nm = target_dir / "node_modules"
+    if nm.is_dir():
+        for pkg in ["@pennyfarthing/core", "@pennyfarthing/shared", "pennyfarthing"]:
+            pkg_path = nm / pkg
+            if pkg_path.is_symlink():
+                pkg_path.unlink()
+            elif pkg_path.is_dir():
+                shutil.rmtree(pkg_path)
+
+    # Remove @pennyfarthing/* deps from package.json if present
+    _clean_package_json(target_dir)
+
+
+def _clean_package_json(target_dir: Path) -> bool:
+    """Remove stale @pennyfarthing/* dependencies from package.json.
+
+    Returns True if changes were made.
+    """
+    pkg_json = target_dir / "package.json"
+    if not pkg_json.is_file():
+        return False
+
+    try:
+        data = json.loads(pkg_json.read_text())
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    changed = False
+    for section in ("dependencies", "devDependencies"):
+        if section not in data or not isinstance(data[section], dict):
+            continue
+        stale_keys = [k for k in data[section] if k.startswith("@pennyfarthing/")]
+        for key in stale_keys:
+            del data[section][key]
+            changed = True
+
+    if changed:
+        pkg_json.write_text(json.dumps(data, indent=2) + "\n")
+
+    return changed
+
+
+def _get_portraits_data_dir() -> Path:
+    """Return the XDG-compliant shared portraits directory.
+
+    Uses $XDG_DATA_HOME/pennyfarthing/portraits/ (defaults to
+    ~/.local/share/pennyfarthing/portraits/).
+    """
+    xdg = os.environ.get("XDG_DATA_HOME")
+    if xdg:
+        base = Path(xdg)
+    else:
+        base = Path.home() / ".local" / "share"
+    return base / "pennyfarthing" / "portraits"
+
+
+def _is_lfs_pointer(file_path: Path) -> bool:
+    """Check if a file is a Git LFS pointer (not a real image)."""
+    try:
+        if file_path.stat().st_size > 200:
+            return False
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+        return content.startswith("version https://git-lfs")
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def _find_portraits_source(dist_root: Path) -> Path | None:
+    """Find a source of real portrait images (not LFS pointers).
+
+    Checks dist_root first, then falls back to the pip-installed _dist
+    package which contains real images from the wheel build.
+
+    Returns:
+        Path to a portraits directory with real images, or None.
+    """
+    # Check dist_root portraits
+    dist_portraits = dist_root / "personas" / "portraits"
+    if dist_portraits.is_dir():
+        # Spot-check one PNG to see if it's real or an LFS pointer
+        sample = next(dist_portraits.rglob("*.png"), None)
+        if sample and not _is_lfs_pointer(sample):
+            return dist_portraits
+
+    # Fall back to pip-installed _dist (always has real images from wheel)
+    try:
+        from pf._dist import get_root, is_populated
+        if is_populated():
+            pip_portraits = get_root() / "personas" / "portraits"
+            if pip_portraits.is_dir():
+                sample = next(pip_portraits.rglob("*.png"), None)
+                if sample and not _is_lfs_pointer(sample):
+                    return pip_portraits
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    return None
+
+
+def _install_portraits(dist_root: Path) -> dict:
+    """Install portraits to the shared XDG data directory.
+
+    Copies portrait images to ~/.local/share/pennyfarthing/portraits/
+    once, then consumer projects symlink to this shared cache. Skips
+    re-copy if the manifest version matches the current pf version.
+
+    Returns:
+        Result dict with keys: installed (bool), path (str),
+        source (str), skipped_reason (str|None).
+    """
+    from pf import __version__
+
+    target = _get_portraits_data_dir()
+    manifest_path = target / ".manifest.json"
+
+    # Check if already installed at current version
+    if manifest_path.is_file():
+        try:
+            manifest = json.loads(manifest_path.read_text())
+            if manifest.get("pf_version") == __version__:
+                return {
+                    "installed": False,
+                    "path": str(target),
+                    "source": "cached",
+                    "skipped_reason": f"already at {__version__}",
+                }
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # Find a source with real images
+    source = _find_portraits_source(dist_root)
+    if source is None:
+        return {
+            "installed": False,
+            "path": str(target),
+            "source": "none",
+            "skipped_reason": "no portrait source with real images found (LFS pointers only)",
+        }
+
+    # Copy portraits to shared location
+    target.mkdir(parents=True, exist_ok=True)
+    _copy_tree(source, target)
+
+    # Write version manifest
+    manifest_path.write_text(json.dumps({
+        "pf_version": __version__,
+        "installed_at": datetime.now(UTC).isoformat(),
+        "source": str(source),
+    }, indent=2) + "\n")
+
+    return {
+        "installed": True,
+        "path": str(target),
+        "source": str(source),
+        "skipped_reason": None,
+    }
+
+
+def _symlink_portraits(target_dir: Path) -> bool:
+    """Replace .pennyfarthing/personas/portraits/ with a symlink to the shared cache.
+
+    Returns True if symlink was created or already exists correctly.
+    """
+    shared_portraits = _get_portraits_data_dir()
+
+    if not shared_portraits.is_dir():
+        return False
+
+    personas_dir = target_dir / ".pennyfarthing" / "personas"
+    if not personas_dir.is_dir():
+        return False
+
+    portraits_link = personas_dir / "portraits"
+
+    # Already a correct symlink
+    if portraits_link.is_symlink():
+        if portraits_link.resolve() == shared_portraits.resolve():
+            return True
+        portraits_link.unlink()
+
+    # Remove existing directory (copied portraits from previous init)
+    if portraits_link.is_dir():
+        shutil.rmtree(portraits_link)
+
+    # Create symlink
+    portraits_link.symlink_to(shared_portraits)
+    return True
 
 
 def _update_gitignore(target_dir: Path) -> None:

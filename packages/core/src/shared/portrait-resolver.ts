@@ -10,6 +10,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
@@ -244,6 +245,14 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
   // Fall back to agent role name if theme YAML doesn't have shortName/OCEAN
   const searchSlug = slug || agent;
 
+  // 0. Check shared XDG portraits cache (~/.local/share/pennyfarthing/portraits/)
+  const xdgData = process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share');
+  const xdgPortraits = join(xdgData, 'pennyfarthing', 'portraits');
+  if (existsSync(xdgPortraits)) {
+    const xdgResult = findPortraitInDir(join(xdgPortraits, theme), searchSlug);
+    if (xdgResult) return xdgResult;
+  }
+
   // 1. Check core portraits
   if (distPath) {
     const paths = getPortraitPaths(distPath);
@@ -270,6 +279,11 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
  */
 export function resolveTandemBrandingPath(theme: string, size: 'medium' | 'large' = 'medium'): string | null {
   const filename = 'cyclist-tandem.png';
+
+  // Check shared XDG portraits cache first
+  const xdgData = process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share');
+  const xdgPath = join(xdgData, 'pennyfarthing', 'portraits', theme, size, filename);
+  if (existsSync(xdgPath)) return xdgPath;
 
   // Check core portraits
   const distPath = resolvePennyfarthingDist();
