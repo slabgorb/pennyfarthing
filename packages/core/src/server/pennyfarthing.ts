@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync, statSync, watch, type FSWatcher 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
+import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
 
 // Electron adds resourcesPath to process; not in Node.js types
 const electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
@@ -400,4 +401,20 @@ export function watchAgentChanges(
   return () => {
     watcher.close();
   };
+}
+
+/**
+ * Resolve the framework package root using multi-strategy discovery.
+ * Story 136-2 AC5: Replace hardcoded `join(__dirname, '..', '..', '..')`
+ * with `resolvePennyfarthingDist()` from portrait-resolver.
+ *
+ * Falls back to __dirname traversal only when resolution returns null.
+ */
+export function resolvePackageRoot(): string {
+  const distPath = resolvePennyfarthingDist();
+  if (distPath) {
+    return dirname(distPath);
+  }
+  // Fallback to __dirname traversal when resolution returns null
+  return PACKAGE_ROOT;
 }

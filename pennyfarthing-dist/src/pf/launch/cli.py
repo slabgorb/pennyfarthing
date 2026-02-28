@@ -37,6 +37,8 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
 
     click.echo("Starting WheelHub server...")
     proc = start_wheelhub(project_dir)
+    if isinstance(proc, dict):
+        raise RuntimeError(proc['error'])
     write_pid_file(project_dir, proc.pid)
     port = poll_for_port_file(project_dir, proc=proc)
     click.echo(f"WheelHub listening on http://localhost:{port}")
@@ -143,7 +145,7 @@ def tui(project_dir, mode, port, dry_run):
     if port is None:
         try:
             port, _pid, _reused = _ensure_wheelhub(project_dir)
-        except TimeoutError as e:
+        except (TimeoutError, RuntimeError) as e:
             click.echo(f"Error: {e}", err=True)
             sys.exit(1)
 
