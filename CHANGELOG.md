@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Shim not installed during `pf init`** — `init_project()` now calls `resolve_pf_binary()` and `write_shim()` to create `.pennyfarthing/bin/pf`, fixing broken hooks in consuming repos
+- **Duplicate hooks on repeated `pf init`** — `None` vs `""` matcher mismatch caused canonical hooks to be re-added; bare `pf hooks X` commands not recognized as duplicates of `.pennyfarthing/bin/pf hooks X`
+- **Shim not executable for .py paths** — `PF_BINARY` env var pointed to `pf_launcher.py` but shim tried to exec it as bash; now detects `.py` paths and prefixes with `python3`
 
 ---
 
