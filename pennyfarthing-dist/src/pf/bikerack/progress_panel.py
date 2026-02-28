@@ -159,12 +159,17 @@ class ProgressPanel(BasePanel):
 
         # --- Story Header ---
         story_header = self._render_story_header()
-        if story_header is None:
-            return Text(
-                "No active story \u2014 start with /sprint work",
-                style="dim italic",
-            )
-        parts.append(story_header)
+        if story_header is not None:
+            parts.append(story_header)
+        else:
+            next_header = self._render_next_story()
+            if next_header is not None:
+                parts.append(next_header)
+            else:
+                parts.append(Text(
+                    "No stories \u2014 backlog empty",
+                    style="dim italic",
+                ))
         parts.append(self._separator())
 
         # --- Sprint Burndown ---
@@ -270,6 +275,28 @@ class ProgressPanel(BasePanel):
             header.append(" \u00b7 ".join(meta_parts), style="dim")
 
         return header
+
+    def _render_next_story(self) -> Text | None:
+        """Render the next backlog story as a 'Next Story' header."""
+        try:
+            from pf.sprint.loader import get_stories_by_status
+            backlog = get_stories_by_status("backlog")
+            if not backlog:
+                return None
+            s = backlog[0]
+            header = Text()
+            header.append("Next Story  ", style="dim italic")
+            header.append(s.get("id", ""), style="bold cyan")
+            header.append("  ")
+            header.append(s.get("title", ""), style="bold")
+            pts = s.get("points", "")
+            if pts:
+                header.append(f"  {pts}pt", style="dim")
+            header.append("\n")
+            header.append("/sprint work to start", style="dim italic")
+            return header
+        except Exception:
+            return None
 
     def _render_burndown(self) -> Text | None:
         """Render sprint burndown bar with done/remaining/WIP counts."""
