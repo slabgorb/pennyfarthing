@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.1.2] - 2026-02-28
+
+### Fixed
+
+- **Shim not installed during `pf init`** — `init_project()` now calls `resolve_pf_binary()` and `write_shim()` to create `.pennyfarthing/bin/pf`, fixing broken hooks in consuming repos
+
+---
+
 ## [12.1.1] - 2026-02-28
 
 ### Changed
