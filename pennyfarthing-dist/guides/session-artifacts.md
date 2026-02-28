@@ -19,6 +19,8 @@ Consistent naming enables:
 | `lint` | Lint execution output | Cleaned after 1 day or story completion |
 | `handoff` | Agent-to-agent transition data | Cleaned on story completion |
 | `findings` | Delivery Findings section in session file | Archived with session on completion |
+| `impact` | Impact Summary compiled from findings | Written during SM finish, archived with session |
+| `pr-body` | Boss-readable PR description | Generated during SM finish from session data |
 
 ## Naming Patterns
 
@@ -253,7 +255,7 @@ The `pf.findings.capture` module provides programmatic access:
 | `parse_delivery_findings()` | Extract structured findings from session markdown |
 | `append_findings_to_session()` | Atomically append findings to session file |
 
-These are used by the validation gate and will be consumed by Epic 134 (Impact Summary) and Epic 135 (Sprint Aggregation).
+These are used by the validation gate and consumed by Impact Summary compilation (`pf.findings.summary`) and Epic 135 (Sprint Aggregation).
 
 ### Troubleshooting
 
@@ -264,6 +266,158 @@ These are used by the validation gate and will be consumed by Epic 134 (Impact S
 | "Delivery Findings marker comment not found" | Marker was deleted or modified | Restore: `<!-- Agents: append findings below this line. Do not edit other agents' entries. -->` |
 | Duplicate agent headings | Agent appended twice | By design — append-only, no dedup |
 | Missing agent block | Agent skipped finding capture | Agent exit protocol bug — should always write findings or "no findings" |
+
+---
+
+## Impact Summary
+
+The Impact Summary is a compiled section written to the session file during the SM finish flow. It transforms raw Delivery Findings into a quick-scan summary so the boss can understand a story's upstream effects in 30 seconds.
+
+### Lifecycle
+
+1. Agents capture R1-format Delivery Findings during their phases (Epic 133)
+2. SM triggers `sm-finish`, which calls `pf.findings.summary.write_impact_summary_to_session()`
+3. The function parses findings via `pf.findings.capture.parse_delivery_findings()`, compiles them, and writes the `## Impact Summary` section to the session file
+4. The section is preserved intact when the session is archived
+
+### Section Placement
+
+Impact Summary is inserted **after** `## Delivery Findings` and **before** agent assessment sections (e.g., `## TEA Assessment`, `## Dev Assessment`). This ordering reflects the data flow: raw findings first, then the compiled summary, then per-agent assessments.
+
+```
+## Delivery Findings        ← Raw agent observations (Epic 133)
+## Impact Summary            ← Compiled summary (this section)
+## TEA Assessment            ← Agent assessments follow
+## Dev Assessment
+## Reviewer Assessment
+```
+
+### Format
+
+#### With findings (including blocking)
+
+```markdown
+## Impact Summary
+
+**Upstream Effects:** 3 findings (1 Gap, 1 Conflict, 0 Question, 1 Improvement)
+**Blocking:** 1 BLOCKING items — see below
+
+**BLOCKING:**
+- **Gap:** Missing validation for empty input. Affects `src/parser.py`.
+
+- **Conflict:** API contract differs from updated spec. Affects `docs/api.md`.
+- **Improvement:** Could extract helper for reuse. Affects `src/utils.py`.
+```
+
+Blocking findings are listed first under the `**BLOCKING:**` heading, followed by non-blocking findings.
+
+#### With findings (no blocking)
+
+```markdown
+## Impact Summary
+
+**Upstream Effects:** 2 findings (0 Gap, 1 Conflict, 0 Question, 1 Improvement)
+**Blocking:** None
+
+- **Conflict:** API contract differs from updated spec. Affects `docs/api.md`.
+- **Improvement:** Could extract helper for reuse. Affects `src/utils.py`.
+```
+
+#### No findings
+
+```markdown
+## Impact Summary
+
+**Upstream Effects:** No upstream effects noted
+**Blocking:** None
+```
+
+This is generated when all agents wrote "No upstream findings" or when the session has no `## Delivery Findings` section (backward compatibility with legacy sessions).
+
+### Finding Counts
+
+The `**Upstream Effects:**` line counts findings by type in canonical order: Gap, Conflict, Question, Improvement. Entries where agents wrote "No upstream findings" (type `none`) are excluded from counts. The count parts always show all four types, even when zero.
+
+### Compilation Rules
+
+- **Verbatim (R6):** Finding descriptions are taken directly from R1 entries. SM compiles, does not editorialize or reinterpret.
+- **Idempotent:** Running compilation twice replaces the existing Impact Summary section rather than duplicating it.
+- **Non-blocking:** If compilation fails, the SM finish flow continues — Impact Summary is advisory, not a gate.
+
+### Python API
+
+| Function | Module | Purpose |
+|----------|--------|---------|
+| `compile_impact_summary()` | `pf.findings.summary` | Compile parsed findings into Impact Summary markdown |
+| `write_impact_summary_to_session()` | `pf.findings.summary` | Read session, compile summary, write it back atomically |
+
+---
+
+## PR Body Generation
+
+After review approval, the SM finish flow generates a boss-readable PR description from the session file. The PR body uses zero framework jargon and is structured for quick comprehension.
+
+### Six-Section Structure
+
+```markdown
+## Summary
+## What Was Done
+## What This Work Revealed (Impact Summary)
+## Docs That May Need Updating
+## Details
+  ### Test Design
+  ### Implementation
+  ### Code Review
+  ### Full Findings
+```
+
+| Section | Source | Content |
+|---------|--------|---------|
+| **Summary** | Session title | One-line story description |
+| **What Was Done** | Dev Assessment | Implementation highlights (metadata lines stripped) |
+| **What This Work Revealed** | Impact Summary section | Compiled upstream effects |
+| **Docs That May Need Updating** | Impact Summary + Delivery Findings | Paths extracted from `Affects \`{path}\`` clauses |
+| **Details > Test Design** | TEA Assessment | Test design rationale |
+| **Details > Implementation** | Dev Assessment | Full implementation details |
+| **Details > Code Review** | Reviewer Assessment | Review observations |
+| **Details > Full Findings** | Delivery Findings | Raw findings (only when real findings exist) |
+
+### Jargon Translation
+
+All framework-internal terminology is translated to plain language:
+
+| Framework Term | Boss-Readable |
+|----------------|---------------|
+| TEA Assessment | Test Design |
+| Dev Assessment | Implementation Summary |
+| Reviewer Assessment | Code Review Summary |
+| SM Assessment | Story Summary |
+| SM agent | story management |
+| RED phase | test design phase |
+| GREEN phase | implementation phase |
+| Phase Log | Timeline |
+| `### TEA (...)` | **Test Design:** |
+| `### Dev (...)` | **Implementation:** |
+| `### Reviewer (...)` | **Code Review:** |
+| `### SM (...)` | **Story Completion:** |
+
+### Late PR Creation
+
+PRs are created **after** review approval, not before. This means the PR body includes the complete Impact Summary and all agent assessments. The `sm-finish` subagent handles PR creation as its first step, before compiling the Impact Summary and running preflight checks.
+
+### Python API
+
+| Function | Module | Purpose |
+|----------|--------|---------|
+| `generate_pr_body()` | `pf.findings.pr_body` | Generate boss-readable PR body from session file |
+
+### Fallback Behavior
+
+When session data is missing or empty, each section degrades gracefully:
+- Missing assessment → "No {phase} information available."
+- No Impact Summary → "No upstream effects noted during delivery."
+- No findings with `Affects` clauses → "None identified." in Docs section
+- Empty session file → Minimal body with placeholder text for all sections
 
 ---
 
