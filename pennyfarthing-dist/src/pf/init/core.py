@@ -373,8 +373,9 @@ def _copy_tree(src: Path, dst: Path) -> None:
 def _clean_stale_content(src: Path, dst: Path) -> None:
     """Remove files in dst that no longer exist in src.
 
-    Only removes .md files to avoid deleting user-created content like
-    sidecars or local config. Recurses into subdirectories.
+    Removes any file type (.md, .py, .sh, .mjs, etc.) since content dirs
+    are fully pf-managed. Sidecars are NOT in _CONTENT_DIRS so they are
+    never touched. Recurses into subdirectories.
     """
     if not dst.is_dir() or not src.is_dir():
         return
@@ -383,7 +384,7 @@ def _clean_stale_content(src: Path, dst: Path) -> None:
             src_item = src / item.name
             if src_item.is_dir():
                 _clean_stale_content(src_item, item)
-        elif item.suffix == ".md" and not (src / item.name).exists():
+        elif item.is_file() and not (src / item.name).exists():
             item.unlink()
 
 
