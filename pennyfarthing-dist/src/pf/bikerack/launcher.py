@@ -96,6 +96,14 @@ def _find_wheelhub_entry(start_path: Path | None = None) -> Path:
 
     attempted: list[str] = []
 
+    # Strategy 0: Project-local .pennyfarthing/server/wheelhub.mjs (installed by pf init)
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if project_dir:
+        local_wheelhub = Path(project_dir) / ".pennyfarthing" / "server" / "wheelhub.mjs"
+        if local_wheelhub.is_file():
+            return local_wheelhub
+        attempted.append(str(local_wheelhub))
+
     # Strategy 1: PENNYFARTHING_DIST env var override
     env_dist = os.environ.get("PENNYFARTHING_DIST")
     if env_dist:
