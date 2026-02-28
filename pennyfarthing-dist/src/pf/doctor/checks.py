@@ -15,8 +15,9 @@ import yaml
 
 from pf.doctor.models import CheckResult
 
-# Expected symlink target directories under .pennyfarthing/
-_SYMLINK_DIRS = (
+# Expected content directories under .pennyfarthing/
+# In the pip era these are file copies; in monorepo dev they may be symlinks.
+_CONTENT_DIR_NAMES = (
     "agents", "commands", "guides", "personas", "scripts",
     "skills", "workflows", "templates", "output-styles",
 )
@@ -78,19 +79,19 @@ def check_settings_hooks(root: Path) -> CheckResult:
     return CheckResult(name="settings_hooks", status="pass", detail="Settings hooks present")
 
 
-def check_symlinks(root: Path) -> CheckResult:
-    """Check .pennyfarthing/ symlinks point to valid targets."""
+def check_content_dirs(root: Path) -> CheckResult:
+    """Check .pennyfarthing/ has required content directories."""
     pf_dir = root / ".pennyfarthing"
     if not pf_dir.is_dir():
-        return CheckResult(name="symlinks", status="fail", detail=".pennyfarthing/ missing")
-    missing = [d for d in _SYMLINK_DIRS if not (pf_dir / d).exists()]
+        return CheckResult(name="content_dirs", status="fail", detail=".pennyfarthing/ missing")
+    missing = [d for d in _CONTENT_DIR_NAMES if not (pf_dir / d).exists()]
     if missing:
         return CheckResult(
-            name="symlinks",
+            name="content_dirs",
             status="fail",
             detail=f"Missing: {', '.join(missing)}",
         )
-    return CheckResult(name="symlinks", status="pass", detail="All symlink targets present")
+    return CheckResult(name="content_dirs", status="pass", detail="All content directories present")
 
 
 def check_commands(root: Path) -> CheckResult:
@@ -116,9 +117,20 @@ def check_skills(root: Path) -> CheckResult:
 
 
 def check_node_packages(root: Path) -> CheckResult:
-    """Check Node packages are installed (node_modules exists)."""
+    """Check Node packages are installed (node_modules exists).
+
+    For pip-installed projects (no package.json), node_modules is not
+    expected and the check returns pass.
+    """
     if (root / "node_modules").is_dir():
         return CheckResult(name="node_packages", status="pass", detail="node_modules/ present")
+    # If no package.json exists, this is a pip consumer — npm not required
+    if not (root / "package.json").is_file():
+        return CheckResult(
+            name="node_packages",
+            status="pass",
+            detail="Node packages not required (pip install)",
+        )
     return CheckResult(name="node_packages", status="warn", detail="node_modules/ missing — run npm install")
 
 
@@ -171,7 +183,7 @@ CHECKS: list[tuple[str, str]] = [
     ("pennyfarthing_dir", ".pennyfarthing/ directory exists"),
     ("config_file", "config.local.yaml is valid"),
     ("settings_hooks", "Claude Code hooks configured"),
-    ("symlinks", "Symlink targets present"),
+    ("content_dirs", "Content directories present"),
     ("commands", "pf-* commands installed"),
     ("skills", "pf-* skills installed"),
     ("node_packages", "Node packages installed"),
