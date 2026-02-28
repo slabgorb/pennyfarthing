@@ -1,7 +1,7 @@
 """
 Workflow step file auditing tools.
 
-Audits workflow step files for conformance to guides/workflow-step-schema.md.
+Audits workflow step files for conformance to schemas/workflow-step-schema.md.
 """
 
 from __future__ import annotations

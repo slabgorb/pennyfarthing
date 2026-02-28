@@ -507,6 +507,6 @@ When updating existing step files:
 
 | File | Purpose |
 |------|---------|
-| `guides/xml-tags.md` | Complete XML tag taxonomy |
-| `guides/workflow-schema.md` | Workflow YAML configuration |
+| `guides/taxonomy/xml-tags.md` | Complete XML tag taxonomy |
+| `schemas/workflow-schema.md` | Workflow YAML configuration |
 | `workflows/architecture/steps/step-01-initialize.md` | Reference implementation |

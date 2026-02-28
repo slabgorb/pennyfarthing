@@ -23,4 +23,8 @@ def is_populated() -> bool:
     which indicates the package was built with content included.
     """
     root = get_root()
-    return (root / "agents").is_dir() and (root / "commands").is_dir()
+    return (
+        (root / "agents").is_dir()
+        and (root / "commands").is_dir()
+        and (root / "skills").is_dir()
+    )

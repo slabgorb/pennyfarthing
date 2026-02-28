@@ -17,7 +17,7 @@ from pf.doctor.checks import (
     check_python_install,
     check_settings_hooks,
     check_skills,
-    check_symlinks,
+    check_content_dirs,
     check_theme,
 )
 from pf.doctor.models import DoctorReport
@@ -28,7 +28,7 @@ _CHECK_FNS = {
     "pennyfarthing_dir": check_pennyfarthing_dir,
     "config_file": check_config_file,
     "settings_hooks": check_settings_hooks,
-    "symlinks": check_symlinks,
+    "content_dirs": check_content_dirs,
     "commands": check_commands,
     "skills": check_skills,
     "node_packages": check_node_packages,

@@ -219,8 +219,9 @@ Gate 'tests-pass' is valid
 
 ## Related
 
+- [Gates Guide](../guides/gates.md) — Built-in gate inventory, agent exit protocol, and workflow integration
 - [Workflow Schema](workflow-schema.md) — How gates are referenced in workflow definitions
-- [Approval Gates Pattern](patterns/approval-gates-pattern.md) — Pattern for approval-style gates
+- [Approval Gates Pattern](../patterns/approval-gates-pattern.md) — Pattern for approval-style gates
 - Story 106-2: Gate subagent runner with GATE_RESULT contract
 - Story 106-4: Gate file discovery and resolution
 - Story 107-1: Gate schema validation at parse time

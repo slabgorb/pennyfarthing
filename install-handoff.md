@@ -1,3 +1,10 @@
+> **ARCHIVED** (2026-02-28): This document describes a package restructuring from Jan 2026 (v6.5.0).
+> The `.pennyfarthing/` migration (Part 2) was completed. The npm packaging (Part 1) diverged —
+> package is now `@pennyfarthing/core` (v12.1.0), workspace deps remain. See current `README.md` for
+> install instructions.
+
+---
+
 # Install Experience Handoff
 
 **Branch:** `fix/npm-install-experience`
