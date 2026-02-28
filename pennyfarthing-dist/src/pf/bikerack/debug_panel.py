@@ -94,6 +94,9 @@ class DebugPanel(BasePanel):
             return
         ctx = message.get("context")
         if isinstance(ctx, dict):
+            # If WheelHub sent an error, try local Python fallback
+            if ctx.get("error"):
+                ctx = self._local_context_fallback() or ctx
             self._context_data = ctx
             pct = _safe_int(ctx.get("percent"))
             if pct is not None:
@@ -101,6 +104,32 @@ class DebugPanel(BasePanel):
         else:
             self._context_data = {}
         self._rerender()
+
+    def _local_context_fallback(self) -> dict[str, Any] | None:
+        """Call context_window.check_context() directly as fallback."""
+        try:
+            from pf.context_window import check_context
+            result = check_context()
+            if result.error:
+                return None
+            return {
+                "percent": result.percent,
+                "tokens": result.tokens,
+                "status": result.status,
+                "baseline": result.baseline,
+                "usableTokens": result.usable_tokens,
+                "usablePercent": result.usable_percent,
+                "available": result.available,
+                "tier": (
+                    "MINIMAL" if result.usable_percent >= 85
+                    else "HANDOFF" if result.usable_percent >= 65
+                    else "REFRESH" if result.usable_percent >= 50
+                    else "FULL"
+                ),
+                "error": None,
+            }
+        except Exception:
+            return None
 
     def _handle_token_stats_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming token-stats channel message."""

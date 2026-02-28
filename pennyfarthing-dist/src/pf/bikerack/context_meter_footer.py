@@ -160,9 +160,40 @@ class StatusFooter(Static):
         ctx = msg.get("context")
         if ctx is None:
             return
+        # If WheelHub sent an error, try local Python fallback
+        if isinstance(ctx, dict) and ctx.get("error"):
+            local = self._local_context_fallback()
+            if local:
+                ctx = local
         self._context_data = ctx
         self.last_update_time = time.monotonic()
         self._throttled_redraw()
+
+    def _local_context_fallback(self) -> dict[str, Any] | None:
+        """Call context_window.check_context() directly as fallback."""
+        try:
+            from pf.context_window import check_context
+            result = check_context()
+            if result.error:
+                return None
+            return {
+                "percent": result.percent,
+                "tokens": result.tokens,
+                "status": result.status,
+                "baseline": result.baseline,
+                "usableTokens": result.usable_tokens,
+                "usablePercent": result.usable_percent,
+                "available": result.available,
+                "tier": (
+                    "MINIMAL" if result.usable_percent >= 85
+                    else "HANDOFF" if result.usable_percent >= 65
+                    else "REFRESH" if result.usable_percent >= 50
+                    else "FULL"
+                ),
+                "error": None,
+            }
+        except Exception:
+            return None
 
     def _handle_stats_message(self, msg: dict[str, Any] | None) -> None:
         if not self._mounted or msg is None:
