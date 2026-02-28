@@ -40,7 +40,7 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 ## Setup
 
 ```bash
-# Repo config available via: pf.sh git status, or Python API:
+# Repo config available via: pf git status, or Python API:
 # from pf.git.repos import load_repos_config
 source .pennyfarthing/scripts/test/test-setup.sh
 

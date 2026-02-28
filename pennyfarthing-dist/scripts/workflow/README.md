@@ -6,7 +6,7 @@ Scripts for workflow mechanics, phase transitions, and quality gates.
 
 | Script | Purpose |
 |--------|---------|
-| `finish-story.sh` | **DEPRECATED** — forwards to `pf.sh sprint story finish` |
+| `finish-story.sh` | **DEPRECATED** — forwards to `pf sprint story finish` |
 | `fix-session-phase.sh` | Repair session file phase state |
 | `check.sh` | Quality gates runner (lint, type check, tests) |
 | `list-workflows.sh` | List available workflows |
@@ -18,7 +18,7 @@ Scripts for workflow mechanics, phase transitions, and quality gates.
 ## Usage
 
 ```bash
-pf.sh sprint story finish MSSCI-12345
+pf sprint story finish MSSCI-12345
 .pennyfarthing/scripts/workflow/start-workflow.sh prd --mode create
 ```
 

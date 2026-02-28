@@ -9,7 +9,7 @@ Uncategorized utilities and one-off scripts.
 | `deploy.sh` | Deployment script |
 | `doctor-dogfood.sh` | Health check for framework/orchestrator development setup |
 | `run-ci.sh` | Run CI locally |
-| `pf.sh hooks statusline` | Status line configuration |
+| `pf hooks statusline` | Status line configuration |
 | `uninstall.sh` | Uninstall Pennyfarthing from project |
 | `backlog.sh` | Backlog operations |
 | `repo-utils.sh` | Multi-repo utilities |

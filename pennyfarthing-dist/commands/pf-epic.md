@@ -16,8 +16,8 @@ Manage epic lifecycle. Start an epic by moving it to the current sprint and gene
 Start an epic — move to current sprint and generate technical context.
 
 ```bash
-pf.sh epic start 79
-pf.sh epic start epic-79
+pf epic start 79
+pf epic start epic-79
 ```
 
 <workflow>
@@ -33,8 +33,8 @@ pf.sh epic start epic-79
 Close an epic — verify completion, update status, and archive context.
 
 ```bash
-pf.sh epic close 79
-pf.sh epic close epic-79
+pf epic close 79
+pf epic close epic-79
 ```
 
 <workflow>
@@ -57,8 +57,8 @@ pf.sh epic close epic-79
 ## CLI Equivalent
 
 ```bash
-pf.sh epic start <epic-id>
-pf.sh epic close <epic-id>
+pf epic start <epic-id>
+pf epic close <epic-id>
 ```
 
 ## Related

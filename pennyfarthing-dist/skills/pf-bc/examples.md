@@ -4,80 +4,80 @@
 
 ```bash
 # Focus on Sprint panel
-pf.sh bc sprint
+pf bc sprint
 
 # Focus on Diffs panel
-pf.sh bc diffs
+pf bc diffs
 
 # Focus on Acceptance Criteria
-pf.sh bc ac
+pf bc ac
 
 # Focus on Git panel
-pf.sh bc git
+pf bc git
 
 # Preview without changing
-pf.sh bc sprint --dry-run
+pf bc sprint --dry-run
 ```
 
 ## Clearing Focus
 
 ```bash
 # Remove focus setting
-pf.sh bc reset
+pf bc reset
 
 # Preview
-pf.sh bc reset --dry-run
+pf bc reset --dry-run
 ```
 
 ## Named Layouts
 
 ```bash
 # Save current layout as "normal"
-pf.sh bc save normal
+pf bc save normal
 
 # Save current layout as "review"
-pf.sh bc save review
+pf bc save review
 
 # Save current layout as "debug"
-pf.sh bc save debug
+pf bc save debug
 
 # List all saved layouts
-pf.sh bc list
+pf bc list
 
 # Switch to review layout
-pf.sh bc load review
+pf bc load review
 
 # Switch back to normal
-pf.sh bc load normal
+pf bc load normal
 
 # Delete a specific layout
-pf.sh bc clear review
+pf bc clear review
 
 # Delete all layouts
-pf.sh bc clear-all
+pf bc clear-all
 ```
 
 ## Common Workflows
 
 ### During code review
 ```bash
-pf.sh bc save normal          # Save current layout first
-pf.sh bc diffs                # Focus on diffs
+pf bc save normal          # Save current layout first
+pf bc diffs                # Focus on diffs
 # ... do review ...
-pf.sh bc load normal          # Restore normal layout
+pf bc load normal          # Restore normal layout
 ```
 
 ### Debugging session
 ```bash
-pf.sh bc save normal
-pf.sh bc debug                # Focus debug panel
+pf bc save normal
+pf bc debug                # Focus debug panel
 # ... debug ...
-pf.sh bc reset                # Clear focus
+pf bc reset                # Clear focus
 ```
 
 ### Sprint planning
 ```bash
-pf.sh bc sprint               # Focus sprint panel
+pf bc sprint               # Focus sprint panel
 # ... review backlog ...
-pf.sh bc reset
+pf bc reset
 ```

@@ -4,54 +4,54 @@
 
 ```bash
 # List all available themes with tiers
-pf.sh theme list
+pf theme list
 
 # Show current theme
-pf.sh theme show
+pf theme show
 
 # Show specific theme
-pf.sh theme show blade-runner
+pf theme show blade-runner
 
 # Show full details (OCEAN, quirks, catchphrases)
-pf.sh theme show blade-runner --full
-pf.sh theme show fifth-element --full
+pf theme show blade-runner --full
+pf theme show fifth-element --full
 ```
 
 ## Changing Theme
 
 ```bash
 # Set theme
-pf.sh theme set blade-runner
+pf theme set blade-runner
 
 # Preview without changing
-pf.sh theme set blade-runner --dry-run
+pf theme set blade-runner --dry-run
 
 # Refresh agent persona after change
-pf.sh agent start "sm"
+pf agent start "sm"
 ```
 
 ## Creating Custom Themes
 
 ```bash
 # Create from current theme
-pf.sh theme create my-team
+pf theme create my-team
 
 # Create from specific base
-pf.sh theme create my-team --base blade-runner
+pf theme create my-team --base blade-runner
 
 # Create as user-level (available across projects)
-pf.sh theme create my-team --user
+pf theme create my-team --user
 
 # Create from specific base as user-level
-pf.sh theme create my-team --base fifth-element --user
+pf theme create my-team --base fifth-element --user
 
 # Preview
-pf.sh theme create my-team --base blade-runner --dry-run
+pf theme create my-team --base blade-runner --dry-run
 ```
 
 After creation:
 1. Edit the theme file to customize agents
-2. Run `pf.sh theme set my-team` to activate
+2. Run `pf theme set my-team` to activate
 
 ## Theme Maker (Interactive)
 
@@ -73,7 +73,7 @@ Specify character name, style, and quote for each agent. Skip agents for default
 ### After Creation
 ```bash
 # Activate the new theme
-pf.sh theme set my-universe
+pf theme set my-universe
 
 # Generate portraits (optional, requires GPU)
 ./scripts/generate-portraits.sh --theme my-universe

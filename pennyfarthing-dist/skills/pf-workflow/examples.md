@@ -4,86 +4,86 @@
 
 ```bash
 # List all available workflows
-pf.sh workflow list
+pf workflow list
 
 # Show TDD workflow details
-pf.sh workflow show tdd
+pf workflow show tdd
 
 # Show current session's workflow
-pf.sh workflow show
+pf workflow show
 
 # Show trivial workflow
-pf.sh workflow show trivial
+pf workflow show trivial
 ```
 
 ## Checking State
 
 ```bash
 # Check current workflow state
-pf.sh workflow check
-pf.sh workflow check --json
+pf workflow check
+pf workflow check --json
 
 # Who owns the "review" phase in TDD?
-pf.sh workflow phase-check tdd review
+pf workflow phase-check tdd review
 # Returns: reviewer
 
 # Who owns the "implement" phase in trivial?
-pf.sh workflow phase-check trivial implement
+pf workflow phase-check trivial implement
 # Returns: dev
 
 # Get workflow type
-pf.sh workflow type tdd
+pf workflow type tdd
 # Returns: phased
 
-pf.sh workflow type architecture
+pf workflow type architecture
 # Returns: stepped
 
 # Emit handoff marker for Cyclist
-pf.sh workflow handoff reviewer
+pf workflow handoff reviewer
 ```
 
 ## Stepped Workflows (BikeLane)
 
 ```bash
 # Start architecture workflow in create mode (default)
-pf.sh workflow start architecture
+pf workflow start architecture
 
 # Start in validate mode
-pf.sh workflow start architecture --mode validate
+pf workflow start architecture --mode validate
 
 # Check progress
-pf.sh workflow status
+pf workflow status
 
 # Resume after interruption
-pf.sh workflow resume
-pf.sh workflow resume architecture
+pf workflow resume
+pf workflow resume architecture
 
 # Complete current step and advance
-pf.sh workflow complete-step
-pf.sh workflow complete-step architecture --step 3
+pf workflow complete-step
+pf workflow complete-step architecture --step 3
 ```
 
 ## Phase Repair
 
 ```bash
 # Preview phase fix
-pf.sh workflow fix-phase 56-1 review --dry-run
+pf workflow fix-phase 56-1 review --dry-run
 
 # Fix phase to review (after Dev completed)
-pf.sh workflow fix-phase 56-1 review
+pf workflow fix-phase 56-1 review
 
 # Fix phase to approved (after Reviewer approved)
-pf.sh workflow fix-phase 56-1 approved
+pf workflow fix-phase 56-1 approved
 
 # Using Jira key
-pf.sh workflow fix-phase MSSCI-12190 approved
+pf workflow fix-phase MSSCI-12190 approved
 ```
 
 ## Switching Workflow Mid-Session
 
 1. Verify the target workflow exists:
    ```bash
-   pf.sh workflow show trivial
+   pf workflow show trivial
    ```
 
 2. Edit the session file:
@@ -97,16 +97,16 @@ pf.sh workflow fix-phase MSSCI-12190 approved
 ### Story upgraded from trivial to TDD
 ```bash
 # Check current state
-pf.sh workflow check --json
+pf workflow check --json
 # Edit session to change workflow from trivial to tdd
 # Fix phase to match where you are
-pf.sh workflow fix-phase 56-1 red
+pf workflow fix-phase 56-1 red
 ```
 
 ### Agent activated on wrong phase
 ```bash
 # Check who owns the current phase
-pf.sh workflow phase-check tdd review
+pf workflow phase-check tdd review
 # Returns: reviewer — hand off if you're not the reviewer
-pf.sh workflow handoff reviewer
+pf workflow handoff reviewer
 ```

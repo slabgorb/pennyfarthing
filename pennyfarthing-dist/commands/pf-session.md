@@ -16,19 +16,19 @@ Manage work session lifecycle. Start new stories from the backlog or resume from
 Start the next available story from the sprint backlog.
 
 ```bash
-pf.sh session new
+pf session new
 ```
 
-Equivalent to `pf.sh sprint work next`. Auto-selects the highest priority story.
+Equivalent to `pf sprint work next`. Auto-selects the highest priority story.
 
 ### `/pf-session continue [--list] [--story-id ID]`
 
 Resume work from a saved checkpoint after context circuit breaker.
 
 ```bash
-pf.sh session continue            # Interactive checkpoint selection
-pf.sh session continue --list     # Show available checkpoints
-pf.sh session continue --story-id MSSCI-12345  # Resume specific story
+pf session continue            # Interactive checkpoint selection
+pf session continue --list     # Show available checkpoints
+pf session continue --story-id MSSCI-12345  # Resume specific story
 ```
 
 ## Quick Reference
@@ -41,8 +41,8 @@ pf.sh session continue --story-id MSSCI-12345  # Resume specific story
 ## CLI Equivalent
 
 ```bash
-pf.sh session new
-pf.sh session continue [--list] [--story-id ID]
+pf session new
+pf session continue [--list] [--story-id ID]
 ```
 
 ## Related

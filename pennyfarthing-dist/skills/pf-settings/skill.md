@@ -14,9 +14,9 @@ View and manage `.pennyfarthing/config.local.yaml` settings.
 
 | Command | CLI | Purpose |
 |---------|-----|---------|
-| `/pf-settings show` | `pf.sh settings show` | Pretty-print all settings |
-| `/pf-settings get <key>` | `pf.sh settings get <key>` | Get value by dot-path |
-| `/pf-settings set <key> <value>` | `pf.sh settings set <key> <value>` | Set value by dot-path |
+| `/pf-settings show` | `pf settings show` | Pretty-print all settings |
+| `/pf-settings get <key>` | `pf settings get <key>` | Get value by dot-path |
+| `/pf-settings set <key> <value>` | `pf settings set <key> <value>` | Set value by dot-path |
 
 ## Config Structure
 
@@ -52,24 +52,24 @@ Settings live in `.pennyfarthing/config.local.yaml`. Keys are nested — always 
 
 ```bash
 # Show all interesting settings (theme, workflow, display, split, last_panel)
-pf.sh settings show
+pf settings show
 
 # Get a specific value
-pf.sh settings get theme                    # → mash
-pf.sh settings get workflow.relay_mode       # → True
-pf.sh settings get display.colorPreset      # → Midnight
+pf settings get theme                    # → mash
+pf settings get workflow.relay_mode       # → True
+pf settings get display.colorPreset      # → Midnight
 
 # Set workflow flags (these are under workflow.*, not top-level)
-pf.sh settings set workflow.bell_mode false
-pf.sh settings set workflow.relay_mode true
-pf.sh settings set workflow.statusbar true
+pf settings set workflow.bell_mode false
+pf settings set workflow.relay_mode true
+pf settings set workflow.statusbar true
 
 # Set display settings
-pf.sh settings set display.colorPreset monokai
+pf settings set display.colorPreset monokai
 
 # Set top-level values
-pf.sh settings set theme discworld
-pf.sh settings set last_panel diffs
+pf settings set theme discworld
+pf settings set last_panel diffs
 ```
 
 ## Notes

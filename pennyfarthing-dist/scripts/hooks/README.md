@@ -6,22 +6,22 @@ Git hooks and Claude Code hooks.
 
 | Script | Purpose |
 |--------|---------|
-| `pf.sh hooks context-breaker` | Claude hook: halt at context limit |
-| `pf.sh hooks context-warning` | Claude hook: warn on high context |
+| `pf hooks context-breaker` | Claude hook: halt at context limit |
+| `pf hooks context-warning` | Claude hook: warn on high context |
 | `otel-auto-config.sh` | Claude hook: configure OTEL |
 | `post-merge.sh` | Git hook: post-merge actions |
 | `pre-commit.sh` | Git hook: branch protection, agent validation, sprint YAML validation |
-| `pf.sh hooks pre-edit-check` | Claude hook: validate before edit |
+| `pf hooks pre-edit-check` | Claude hook: validate before edit |
 | `pre-push.sh` | Git hook: pre-push validation |
-| `pf.sh hooks session-start` | Claude hook: session start |
-| `pf.sh hooks session-stop` | Claude hook: session stop |
+| `pf hooks session-start` | Claude hook: session start |
+| `pf hooks session-stop` | Claude hook: session stop |
 
 ## Installation
 
 Git hooks are installed via:
 
 ```bash
-pf.sh git install-hooks
+pf git install-hooks
 ```
 
 Claude hooks are configured in `.claude/settings.json`.

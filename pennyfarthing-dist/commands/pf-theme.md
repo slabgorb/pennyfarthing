@@ -16,10 +16,10 @@ Manage persona themes: list available themes, view details, switch themes, creat
 Show current theme or specific theme details.
 
 ```bash
-pf.sh theme show [name]
+pf theme show [name]
 
 # Show extended details (OCEAN scores, quirks, catchphrases)
-pf.sh theme show [name] --full
+pf theme show [name] --full
 ```
 
 ### `/theme list`
@@ -27,7 +27,7 @@ pf.sh theme show [name] --full
 List all available themes with current theme highlighted.
 
 ```bash
-pf.sh theme list
+pf theme list
 ```
 
 Output shows current theme marked with `*` and tier brackets: `[S]` elite, `[A]` excellent, `[B]` strong, `[C]` good, `[D]` below average, `[U]` unbenchmarked.
@@ -37,12 +37,12 @@ Output shows current theme marked with `*` and tier brackets: `[S]` elite, `[A]`
 Set the active persona theme.
 
 ```bash
-pf.sh theme set <name>
+pf theme set <name>
 ```
 
 After setting, refresh the current agent's persona:
 ```bash
-pf.sh agent start "sm"
+pf agent start "sm"
 ```
 
 ### `/theme create <name> [--base <theme>] [--user]`
@@ -51,13 +51,13 @@ Create a new custom theme by copying from a base.
 
 ```bash
 # Create from default base (minimalist)
-pf.sh theme create my-theme
+pf theme create my-theme
 
 # Create from specific base
-pf.sh theme create my-theme --base blade-runner
+pf theme create my-theme --base blade-runner
 
 # Create as user-level theme (available across all projects)
-pf.sh theme create my-theme --user
+pf theme create my-theme --user
 ```
 
 ### `/theme maker`
@@ -90,6 +90,6 @@ Interactive wizard for AI-driven theme creation. Supports three modes:
 
 <reference>
 - **Skill:** `.claude/skills/theme/skill.md`
-- **CLI:** `pf.sh theme [list|show|set|create]`
+- **CLI:** `pf theme [list|show|set|create]`
 - **Config:** `.pennyfarthing/config.local.yaml`
 </reference>
