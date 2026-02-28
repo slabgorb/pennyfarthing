@@ -16,6 +16,7 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
+from pf.common.discovery import resolve_pf_binary, write_shim
 from pf.common.hooks import INFRASTRUCTURE_HOOKS
 from pf.hooks.frontmatter import collect_all_frontmatter_hooks, merge_with_infrastructure
 
@@ -205,6 +206,13 @@ def init_project(
             },
         }
 
+    # --- Install pf shim at .pennyfarthing/bin/pf ---
+    discovery_result = resolve_pf_binary()
+    if discovery_result["success"]:
+        shim_result = write_shim(str(target_dir), discovery_result)
+    else:
+        shim_result = {"success": False, "error": discovery_result.get("error", "pf not found")}
+
     # --- Clean stale npm-era artifacts ---
     _clean_stale_artifacts(target_dir)
 
@@ -295,6 +303,7 @@ def init_project(
             "hooks_upgraded": hooks_upgraded,
             "gitignore_updated": True,
             "tmux_installed": tmux_installed,
+            "shim_installed": shim_result.get("success", False),
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
         },
