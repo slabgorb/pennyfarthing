@@ -324,7 +324,7 @@ class TestContextMeterFooterUsesSharedConstants:
 
         from pf.bikerack import context_meter_footer
 
-        source = inspect.getsource(context_meter_footer._render_context_bar)
+        source = inspect.getsource(context_meter_footer.StatusFooter._render_context_bar)
         assert "percent < 50" not in source, (
             "_render_context_bar should use warn_style(), not inline thresholds"
         )

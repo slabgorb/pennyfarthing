@@ -23,6 +23,7 @@ from textual.message import Message
 from textual.widgets import Static
 
 from pf.bikerack.base_panel import render_progress_bar
+from pf.bikerack.colors import warn_style
 
 
 def _get_story_id(project_root: str) -> str:
@@ -296,13 +297,7 @@ class StatusFooter(Static):
         bar.append_text(render_progress_bar(percent, width=10, warn_high=True))
 
         if tier:
-            if percent <= 70:
-                tier_style = "green"
-            elif percent <= 85:
-                tier_style = "yellow"
-            else:
-                tier_style = "red"
-            bar.append(f" {tier}", style=f"bold {tier_style}")
+            bar.append(f" {tier}", style=f"bold {warn_style(percent)}")
 
         return bar
 
