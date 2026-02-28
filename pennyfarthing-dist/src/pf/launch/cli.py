@@ -37,6 +37,9 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
 
     click.echo("Starting WheelHub server...")
     proc = start_wheelhub(project_dir)
+    if isinstance(proc, dict):
+        click.echo(f"Error: {proc['error']}", err=True)
+        return None, None, False
     write_pid_file(project_dir, proc.pid)
     port = poll_for_port_file(project_dir, proc=proc)
     click.echo(f"WheelHub listening on http://localhost:{port}")

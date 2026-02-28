@@ -155,6 +155,8 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
     # Start WheelHub
     try:
         proc = start_wheelhub(project_dir)
+        if isinstance(proc, dict):
+            return None
         write_pid_file(project_dir, proc.pid)
         return poll_for_port_file(project_dir)
     except Exception:
