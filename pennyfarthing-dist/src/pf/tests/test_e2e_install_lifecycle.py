@@ -214,15 +214,24 @@ class TestFreshInit:
         for event in ["SessionStart", "Stop", "PreToolUse", "PostToolUse"]:
             assert event in hooks, f"Missing hook event: {event}"
 
-        # All hook commands must use 'pf hooks' prefix (not npx)
+        # All pf-managed hook commands must use the shim path or bare pf prefix
+        # (not npx pennyfarthing, not old pf.sh references)
         for _event, hook_list in hooks.items():
             for entry in hook_list:
                 for hook in entry.get("hooks", []):
                     if hook.get("type") == "command":
                         cmd = hook["command"]
-                        assert cmd.startswith("pf hooks"), (
-                            f"Hook command not using pf prefix: {cmd}"
+                        is_pf_hook = (
+                            "pf hooks" in cmd or ".pennyfarthing/bin/pf" in cmd
                         )
+                        is_user_hook = not is_pf_hook
+                        if not is_user_hook:
+                            assert "npx pennyfarthing" not in cmd, (
+                                f"Hook command still uses npx: {cmd}"
+                            )
+                            assert "pf.sh" not in cmd, (
+                                f"Hook command still uses pf.sh: {cmd}"
+                            )
 
     def test_writes_init_manifest(self, fresh_project: Path) -> None:
         """Init writes init-manifest.json with version and counts."""

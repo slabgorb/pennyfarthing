@@ -82,6 +82,13 @@ def init(dry_run: bool, target: str) -> None:
                 click.echo("  justfile updated (import added)")
         if jf.get("justfile_pf_written"):
             click.echo("  .pennyfarthing/justfile.pf updated (framework recipes)")
+        portraits = data.get("portraits", {})
+        if portraits.get("installed"):
+            click.echo(f"  portraits installed to {portraits['path']}")
+        elif portraits.get("skipped_reason"):
+            click.echo(f"  portraits: {portraits['skipped_reason']}")
+        if data.get("portraits_linked"):
+            click.echo("  portraits symlinked (shared cache)")
         click.echo()
         click.echo("Next steps:")
         click.echo("  1. Start Claude Code in this directory")

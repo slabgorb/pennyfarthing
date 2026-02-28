@@ -7,6 +7,7 @@
  */
 
 import { fileURLToPath } from 'url';
+import { homedir } from 'os';
 import { dirname, join } from 'path';
 import { existsSync, statSync } from 'fs';
 
@@ -217,6 +218,13 @@ export function getNodeModulesDir(): string {
 
 // Resolve portraits directory
 export function getPortraitsDir(): string | null {
+  // 0. Shared XDG portraits cache (~/.local/share/pennyfarthing/portraits/)
+  const xdgData = process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share');
+  const xdgPortraits = join(xdgData, 'pennyfarthing', 'portraits');
+  if (existsSync(xdgPortraits)) {
+    return xdgPortraits;
+  }
+
   // 1. Portraits bundled with package
   const bundledPortraits = join(__dirname, '..', 'portraits');
   if (existsSync(bundledPortraits)) {
