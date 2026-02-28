@@ -43,7 +43,7 @@ def compile_impact_summary(findings: list[dict]) -> dict:
         lines.append("**Blocking:** None")
     else:
         # Count by type in canonical order
-        type_counts = {t: 0 for t in VALID_TYPES}
+        type_counts = dict.fromkeys(VALID_TYPES, 0)
         for f in structured:
             if f["type"] in type_counts:
                 type_counts[f["type"]] += 1
