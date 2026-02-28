@@ -11,6 +11,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.1.0] - 2026-02-28
+
+### Added
+
+- **Context engineering system** — schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context create epic`, `/pf-context create story`) (Epics 129, 130)
+- **Context gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing (Epic 131)
+- **Session artifacts pipeline** — finding capture during agent exit, Delivery Findings section in session template, Impact Summary compilation, and boss-readable PR body generation (Epics 133, 134)
+- **Guided tour workflow** — interactive stepped onboarding with switch gates, deep-dives, practice stories, and setup completion prompt (Epic 132, MSSCI-15640)
+- **`pf dashboard`** — terminal dashboard command for project status overview (132-11)
+- **Discovery nudges** — welcome banner discovery prompt and theme-based spinner verbs with feature tips (MSSCI-15748)
+- **Frontmatter hooks** — agent and skill files declare their own hooks; integrated into `pf init` pipeline (129-5, 129-6)
+- **Stale hook detection** — session start detects deprecated hooks and prompts upgrade
+- **OTLP enrichment** — standalone telemetry enrichment for BikeRack TUI mode (132-5)
+- **Release workflow enhancements** — package contents verification step, automated changelog comparison link updates (132-2, 132-3)
+- **Sprint calculations backend** — moved sprint metric computation to backend (MSSCI-15763)
+- **tmux overhaul** — CSI u keyboard fix, mouse copy support, integrated status bar, layout templates (MSSCI-15736)
+- **Portrait bundling** — portraits included in wheel distribution; auto-pull LFS portraits on session start
+
+### Changed
+
+- **Monorepo consolidation** — workspace packages consolidated into single publishable `@pennyfarthing/core` package
+- **Doctor modernized** — removed pre-v10 legacy checks and migrations; added fix for missing commands/skills dirs
+
+### Fixed
+
+- **Installation reliability** — `pf_launcher` module included in non-editable installs; TUI dependencies made required; electron type dependencies removed for clean builds
+- **Init/upgrade fixes** — content directory copying, npm artifact cleanup, deprecated hook upgrade, justfile template fixes, file-type filtering for `pf-*` prefix matching
+- **Sprint metrics** — archive shards and all story sources included in metrics; archived stories counted in done totals; epic promote no longer deletes existing shards
+- **Context resolution** — `context.py` resolved via shared dist resolver for npm installs; inlined framework repo handling fixed
+- **Agent reload** — active agent correctly reloaded after context clear/compaction
+- **Portrait resolution** — symlink handling fixed for git root detection; auto-pull on LFS stub detection in BikeRack
+- **Validation** — warning added when no command files found in commands directory
+
+### Documentation
+
+- Rewritten Getting Started guide reconciled with ADR-0028 (MSSCI-15617)
+- Accuracy and cross-reference fixes across 26 guide files
+- Session-artifacts guide updated with Delivery Findings, Impact Summary, and PR body sections
+
+---
+
 ## [12.0.0] - 2026-02-24
 
 ### Breaking Changes
@@ -2780,7 +2821,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.0.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.0...HEAD
+[12.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.0.0...v12.1.0
 [12.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...v12.0.0
 [11.5.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...v11.5.0-alpha.0
 [11.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.3.8...v11.4.0

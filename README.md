@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.0.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.1.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,9 +15,9 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **14 BikeLane Workflows** - Phased (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, TDD-Team, BDD-Team, Review-Tandem, Patch, Agent-Docs), Stepped (Architecture, Release, Git Cleanup)
-- **60 Slash Commands** - Entry points for agent activation and workflows
-- **23 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
+- **35 BikeLane Workflows** - 14 local (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, TDD-Team, BDD-Team, Review-Tandem, Patch, Agent-Docs, Architecture, Release, Git Cleanup) + 21 reference workflows (PRD, Sprint Planning, UX Design, Research, and more)
+- **59 Slash Commands** - Entry points for agent activation and workflows
+- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
@@ -374,20 +374,21 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.0.0
+## What's New in v12.1.0
 
-- **Single Package Consolidation** — `@pennyfarthing/shared` absorbed into `@pennyfarthing/core`. WheelHub server, React UI build, and all shared utilities now live in core. Cyclist is a thin wrapper adding WebSocket + OTLP.
-- **Workflow Gate System** — Conditional checks (tests-pass, tests-fail, approval, confidence) that block phase transitions until quality thresholds are met
-- **Handoff CLI** — Python CLI (`pf handoff`) for gate resolution, session transitions, and environment-aware marker generation
-- **Tandem Consultation Protocol** — Synchronous agent-to-agent questions via Sonnet (complements passive backseat observation)
-- **Output Styles** — Configurable response modes (terse, verbose, teaching) that adjust agent communication without changing behavior
-- **Codebase Analysis Tools** — `pf debug` suite: hotspots, complexity, dead code, dependencies, code markers, health score — with WheelHub API routes for panel integration
-- **Context Circuit Breaker** — Hard stop at 80% context usage, auto-saves agent state for `/continue-session` recovery
-- **Git Hook Chaining** — Dispatcher `.d/` pattern allows multiple tools to install hooks without overwriting each other
-- **v11 Migration Automation** — Detects and removes old packages during upgrade
+- **Context Engineering System** — Schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context`)
+- **Context Gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing
+- **Session Artifacts Pipeline** — Finding capture during agent exit, Delivery Findings, Impact Summary compilation, and boss-readable PR body generation
+- **Guided Tour** — Interactive stepped onboarding workflow with switch gates, deep-dives, and practice stories
+- **`pf dashboard`** — Terminal dashboard command for project status overview
+- **Discovery UX** — Welcome banner nudges, theme-based spinner verbs, and feature discovery tips
+- **Frontmatter Hooks** — Agent and skill files declare their own hooks; stale hook detection on session start
+- **21 Reference Workflows** — PRD, Sprint Planning, UX Design, Research, Code Review, Retrospective, and more
+- **Portrait Bundling** — Portraits included in wheel distribution with auto-pull on session start
 
 ### Previous Highlights
 
+- **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
 - **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
 - **v10.1** - Codebase health dashboard, tool dialog system, 2party-TDD workflow, cross-file reference validator
