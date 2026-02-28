@@ -75,7 +75,7 @@ fi
 
 <!-- GATE -->
 
-**[C]** Continue to npm publish
-**[A]** Abort (skip publishing — git is already pushed)
+**[C]** Continue to GitHub release
+**[S]** Skip (git is already pushed)
 
 <!-- CYCLIST:CHOICES:C,A -->

@@ -3,9 +3,9 @@
 #
 # Flow: Preflight → Bump → [Approve] → Changelog → [Approve] → README →
 #       CLAUDE.md → Retro (optional) → Commit → [Approve] → Merge →
-#       Push → [Approve] → Publish → [Approve] → Finalize
+#       Push → [Approve] → Reinstall → Finalize
 #
-# Use for: releasing new versions of Pennyfarthing to npm and GitHub
+# Use for: releasing new versions of Pennyfarthing
 #
 # Key features:
 # - Gates at every destructive/irreversible point
@@ -41,7 +41,7 @@ workflow:
 
   # User approval gates
   gates:
-    after_steps: [2, 3, 7, 9, 10]  # After bump, changelog, commit, push, publish
+    after_steps: [2, 3, 7, 9]  # After bump, changelog, commit, push
     gate_marker: "<!-- GATE -->"
 
   # Collaboration menus

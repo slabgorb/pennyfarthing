@@ -10,9 +10,8 @@ Update all version files (VERSION, package.json, workspace packages, Python pf C
 3. Update all workspace package versions (core, cyclist, shared, theme packs)
 4. Update Python pf CLI version (`pennyfarthing-dist/src/pf/__init__.py`)
 5. Update README.md version badge
-6. Update package-lock.json
-7. Update CHANGELOG.md (version links and header)
-8. Show complete diff of all changes for review
+6. Update CHANGELOG.md (version links and header)
+7. Show complete diff of all changes for review
 </instructions>
 
 <output>
@@ -64,13 +63,7 @@ if [[ "$IS_PRERELEASE" != "true" ]]; then
 fi
 ```
 
-### 2.6 Update package-lock.json
-
-```bash
-[[ -f package.json ]] && npm install --package-lock-only --silent 2>/dev/null
-```
-
-### 2.7 Update CHANGELOG.md
+### 2.6 Update CHANGELOG.md
 
 ```bash
 TODAY=$(date +%Y-%m-%d)
@@ -78,7 +71,7 @@ TODAY=$(date +%Y-%m-%d)
 # See deploy.sh for full sed commands
 ```
 
-### 2.8 Show Diff for Review
+### 2.7 Show Diff for Review
 
 ```bash
 echo "=== Version Bump Diff ==="

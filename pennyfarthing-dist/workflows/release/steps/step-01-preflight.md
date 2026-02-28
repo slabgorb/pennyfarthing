@@ -10,16 +10,14 @@ Verify the repo is in a clean, releasable state. Compute the new version number 
 3. Read current version from VERSION file
 4. Ask user for bump type (major/minor/patch) if not already known
 5. Compute new version number
-6. Check npm registry for conflicts (version not already published)
-7. Check git tags for conflicts (tag doesn't already exist)
-8. Show summary of what will happen
+6. Check git tags for conflicts (tag doesn't already exist)
+7. Show summary of what will happen
 </instructions>
 
 <output>
 Preflight report showing:
 - Current version and new version
 - Branch status
-- npm registry status
 - Git tag status
 - List of files that will be modified
 - Ready for user to continue or abort
@@ -93,21 +91,8 @@ Set `IS_PRERELEASE=true` and `PRERELEASE_CHANNEL` (alpha/beta/rc) for use in lat
 ### 1.4 Conflict Checks
 
 ```bash
-# Check npm (prerelease uses dist-tag, but still check exact version)
-npm view @pennyfarthing/core@$NEW_VERSION version 2>/dev/null && echo "WARNING: $NEW_VERSION already on npm!"
-
-# Check PyPI
-pip index versions pennyfarthing-scripts 2>/dev/null | grep -q "$NEW_VERSION" && echo "WARNING: $NEW_VERSION already on PyPI!"
-
 # Check git tags
 git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION already exists!"
-
-# For prereleases, check what's currently on the dist-tag
-if [[ "$IS_PRERELEASE" == "true" ]]; then
-    echo ""
-    echo "=== Current npm dist-tags ==="
-    npm view @pennyfarthing/core dist-tags 2>/dev/null || echo "(not yet published)"
-fi
 ```
 
 ### 1.5 Preview
@@ -119,21 +104,18 @@ fi
 |--------------------|--------|
 | Clean working dir  | ✓/✗    |
 | On develop branch  | ✓/✗    |
-| npm not published  | ✓/✗    |
-| PyPI not published | ✓/✗    |
 | Tag not exists     | ✓/✗    |
 
 **Version:** {CURRENT_VERSION} → {NEW_VERSION}
 **Release type:** {stable | prerelease (alpha/beta/rc)}
 **Tag:** v{NEW_VERSION}
-**npm dist-tag:** {latest | alpha | beta | rc}
 
 **Files to modify:**
 - VERSION
 - package.json
 - packages/*/package.json (all workspace packages)
 - CHANGELOG.md
-- package-lock.json (if present)
+- pennyfarthing-dist/src/pf/__init__.py
 {if stable: - README.md, - CLAUDE.md}
 
 **Steps that will be skipped for prerelease:**

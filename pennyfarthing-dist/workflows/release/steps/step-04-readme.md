@@ -80,8 +80,7 @@ grep -A 20 "## Quick Start" README.md
 ```
 
 Ensure:
-- Install command is correct (`npm install github:1898andCo/pennyfarthing`)
-- Node version requirement matches `engines` in package.json
+- Install command is correct (`pipx install pennyfarthing-scripts`)
 - Example commands are valid
 
 ### 4.5 Show Diff
