@@ -152,8 +152,8 @@ def generate_shim_content(discovery_result: dict, project_root: str | None = Non
 
     lines = ["#!/usr/bin/env bash"]
 
-    if method == "monorepo":
-        lines.append(f'exec /usr/bin/python3 "{path}" "$@"')
+    if method == "monorepo" or path.endswith(".py"):
+        lines.append(f'exec /usr/bin/env python3 "{path}" "$@"')
     else:
         lines.append(f'exec "{path}" "$@"')
 
