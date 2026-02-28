@@ -4,6 +4,18 @@
 #
 # Requires `root := justfile_directory()` in the parent justfile.
 
+# Run pf CLI command (no global install needed)
+# Usage: just pf doctor, just pf sprint status, just pf settings show
+pf *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PF_PROJECT="{{root}}/node_modules/@pennyfarthing/core/pennyfarthing-dist"
+    if [[ -z "{{args}}" ]]; then
+        uv run --project "$PF_PROJECT" pf --help || true
+    else
+        uv run --project "$PF_PROJECT" pf {{args}}
+    fi
+
 # Start WheelHub server (API + WebSocket)
 # Usage: just wheelhub [start|stop|status]
 wheelhub *args:
@@ -11,19 +23,19 @@ wheelhub *args:
     set -euo pipefail
     subcmd="{{args}}"
     case "${subcmd:-start}" in
-        start)  pf launch gui --no-open ;;
-        stop)   pf launch stop ;;
-        status) pf launch status ;;
+        start)  just pf launch gui --no-open ;;
+        stop)   just pf launch stop ;;
+        status) just pf launch status ;;
         *)      echo "Usage: just wheelhub [start|stop|status]"; exit 1 ;;
     esac
 
 # Launch TUI panel viewer (starts WheelHub if needed)
 tui:
-    pf launch tui --foreground
+    just pf launch tui --foreground
 
 # Launch GUI dashboard in browser (starts WheelHub if needed)
 gui:
-    pf launch gui
+    just pf launch gui
 
 # Launch Claude with OTEL pre-configured for WheelHub/BikeRack
 claude:
