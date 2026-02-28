@@ -305,6 +305,26 @@ def save_last_panel(panel_name: str, project_dir: Path | None = None) -> dict:
         return {"success": False, "error": str(exc)}
 
 
+def swap_portrait_position(project_dir: Path | None = None) -> dict:
+    """Toggle portrait_position between 'left' and 'right' in config.local.yaml.
+
+    Args:
+        project_dir: Override project root (for testing)
+
+    Returns:
+        {success: bool, position?: str, error?: str}
+    """
+    try:
+        config_path, config = _read_config(project_dir)
+        current = config.get("portrait_position", "left")
+        new_position = "right" if current == "left" else "left"
+        config["portrait_position"] = new_position
+        _write_config(config_path, config)
+        return {"success": True, "position": new_position}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
 def get_panel_focus(project_dir: Path | None = None) -> dict:
     """Read current focus setting from config.local.yaml.
 

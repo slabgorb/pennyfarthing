@@ -225,6 +225,23 @@ def split_layout(left: str, right: str, dry_run: bool):
         sys.exit(1)
 
 
+@bc.command("swap-portrait")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+def swap_portrait(dry_run: bool):
+    """Toggle portrait position between left and right."""
+    if dry_run:
+        click.echo(json.dumps({"dry_run": True, "action": "swap_portrait"}))
+        return
+    from pf.bc.focus import swap_portrait_position
+
+    result = swap_portrait_position()
+    if result["success"]:
+        click.echo(json.dumps({"success": True, "position": result["position"]}))
+    else:
+        click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
+        sys.exit(1)
+
+
 @bc.command("clear-all")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def clear_all_layouts(dry_run: bool):
