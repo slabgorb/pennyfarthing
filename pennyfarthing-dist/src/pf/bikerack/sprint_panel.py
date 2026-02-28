@@ -245,6 +245,9 @@ class SprintPanel(Widget):
         self._client = client
         self._last_payload: dict[str, Any] | None = None
         self._mounted = False
+        # Story 136-5: Three-state tracking (loading/error/data)
+        self._sprint_state: str = "loading"
+        self._loading_timeout: int = 10
 
     def compose(self) -> ComposeResult:
         yield Static(
