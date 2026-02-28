@@ -558,7 +558,12 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
     ]
     for name in stale_files:
         path = pf_dir / name
-        if path.is_file():
+        if path.is_file() or path.is_symlink():
+            # If .claude/settings.local.json symlinks here, break it first
+            if name == "settings.local.json":
+                claude_settings = target_dir / ".claude" / "settings.local.json"
+                if claude_settings.is_symlink():
+                    claude_settings.unlink()
             path.unlink()
 
     # Remove the old pf symlink (npm-era entry point, replaced by bin/pf shim)
