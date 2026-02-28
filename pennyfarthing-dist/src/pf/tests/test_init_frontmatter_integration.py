@@ -1,15 +1,16 @@
-"""Tests for Story 129-5: Integrate frontmatter hooks into pf init pipeline.
+"""Tests for frontmatter hooks integration with dispatcher.
 
 Verifies that pf init collects frontmatter hook declarations from agent .md
-and skill SKILL.md files and merges them with infrastructure hooks into
-settings.local.json.
+and skill SKILL.md files, and that dispatcher-managed hooks (pf hooks <name>)
+are NOT added as separate settings.local.json entries (they run in-process
+via pf.hooks.dispatch instead).
 
 Acceptance Criteria:
   AC1: pf init collects frontmatter hooks from all agents and skills
-  AC2: Frontmatter hooks merged with infrastructure hooks (no duplicates)
-  AC3: settings.local.json contains both infrastructure and frontmatter hooks
+  AC2: Dispatcher-managed hooks are NOT duplicated in settings.local.json
+  AC3: settings.local.json has exactly 4 dispatcher entries (one per event)
   AC4: pf init is idempotent — running twice produces same result
-  AC5: Existing tests continue to pass (no regression)
+  AC5: Graceful fallback when no agents directory exists
 
 Run with: python -m pytest pennyfarthing-dist/src/pf/tests/test_init_frontmatter_integration.py -v
 """
@@ -165,12 +166,13 @@ def _count_command_occurrences(settings: dict, command: str) -> int:
 
 
 class TestInitCollectsFrontmatterHooks:
-    """AC1: pf init should collect frontmatter hooks from agents and skills."""
+    """AC1: pf init should collect frontmatter hooks but not add them as
+    separate settings entries (dispatcher handles them in-process)."""
 
-    def test_settings_contains_agent_pretooluse_hook(
+    def test_frontmatter_pf_hooks_not_added_separately(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """settings.local.json should contain schema-validation from agent frontmatter."""
+        """pf hooks commands from frontmatter should NOT appear as separate entries."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
@@ -178,33 +180,10 @@ class TestInitCollectsFrontmatterHooks:
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(data)
-        assert "pf hooks schema-validation" in commands
-
-    def test_settings_contains_agent_stop_hook(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
-        """settings.local.json should contain reflector-check from agent frontmatter."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-        commands = _extract_all_hook_commands(data)
-        assert "pf hooks reflector-check" in commands
-
-    def test_settings_contains_skill_posttooluse_hook(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
-        """settings.local.json should contain sprint-yaml from skill frontmatter."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-        commands = _extract_all_hook_commands(data)
-        assert "pf hooks sprint-yaml" in commands
+        # These are handled by the dispatcher, not as individual entries
+        assert "pf hooks schema-validation" not in commands
+        assert "pf hooks reflector-check" not in commands
+        assert "pf hooks sprint-yaml" not in commands
 
     def test_settings_skips_readme_hooks(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
@@ -221,73 +200,58 @@ class TestInitCollectsFrontmatterHooks:
 
 
 # ===================================================================
-# AC2: Frontmatter hooks merged without duplicates
+# AC2: Dispatcher-managed hooks are not duplicated
 # ===================================================================
 
 
 class TestNoDuplicateHooks:
-    """AC2: Frontmatter hooks should be merged without duplicates."""
+    """AC2: No duplicate hook entries should appear in settings."""
 
-    def test_schema_validation_appears_once(
+    def test_only_dispatcher_entries(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """schema-validation declared in two agents should appear only once."""
+        """Settings should only have dispatcher entries, not individual hooks."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
 
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
-        count = _count_command_occurrences(data, "pf hooks schema-validation")
-        assert count == 1, f"schema-validation duplicated: found {count} times"
+        commands = _extract_all_hook_commands(data)
+        for cmd in commands:
+            # All hook commands should be dispatcher or statusline
+            assert "dispatch" in cmd or "statusline" in cmd, (
+                f"Unexpected individual hook entry: {cmd}"
+            )
 
-    def test_reflector_check_appears_once(
+    def test_each_dispatcher_appears_once(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """reflector-check declared in two agents should appear only once."""
+        """Each dispatcher entry should appear exactly once."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
 
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
-        count = _count_command_occurrences(data, "pf hooks reflector-check")
-        assert count == 1, f"reflector-check duplicated: found {count} times"
-
-    def test_infrastructure_hooks_not_duplicated(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
-        """Infrastructure hooks should appear exactly once even after merge."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-
-        for infra_cmd in [
-            "pf hooks session-start",
-            "pf hooks session-stop",
-            "pf hooks pre-edit-check",
-            "pf hooks context-warning",
-            "pf hooks bell-mode",
-        ]:
-            count = _count_command_occurrences(data, infra_cmd)
-            assert count == 1, f"{infra_cmd} duplicated: found {count} times"
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+            cmd = f".pennyfarthing/bin/pf hooks dispatch {event}"
+            count = _count_command_occurrences(data, cmd)
+            assert count == 1, f"dispatch {event} found {count} times (expected 1)"
 
 
 # ===================================================================
-# AC3: settings.local.json contains both infrastructure and frontmatter
+# AC3: settings.local.json has exactly 4 dispatcher entries
 # ===================================================================
 
 
-class TestSettingsContainsBothHookSets:
-    """AC3: Settings should contain infrastructure AND frontmatter hooks."""
+class TestSettingsDispatcherEntries:
+    """AC3: Settings should have exactly 4 dispatcher entries."""
 
-    def test_has_more_than_five_hooks(
+    def test_has_four_hook_entries(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """With frontmatter agents, total hook count should exceed 5 infrastructure hooks."""
+        """With frontmatter agents, total hook count should be 4 (one per event)."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
@@ -296,13 +260,12 @@ class TestSettingsContainsBothHookSets:
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
         total = sum(len(entries) for entries in hooks.values())
-        # 5 infrastructure + at least schema-validation, reflector-check, sprint-yaml = 8
-        assert total > 5, f"Expected >5 hooks (infra + frontmatter), got {total}"
+        assert total == 4, f"Expected 4 dispatcher entries, got {total}"
 
-    def test_all_infrastructure_hooks_present(
+    def test_all_events_have_dispatcher(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """All 5 infrastructure hooks must still be present after merge."""
+        """All 4 event types must have a dispatcher entry."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
@@ -311,52 +274,10 @@ class TestSettingsContainsBothHookSets:
         data = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(data)
 
-        for infra_cmd in [
-            "pf hooks session-start",
-            "pf hooks session-stop",
-            "pf hooks pre-edit-check",
-            "pf hooks context-warning",
-            "pf hooks bell-mode",
-        ]:
-            assert infra_cmd in commands, f"Infrastructure hook missing: {infra_cmd}"
-
-    def test_all_frontmatter_hooks_present(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
-        """All frontmatter-declared hooks should be present."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-        commands = _extract_all_hook_commands(data)
-
-        assert "pf hooks schema-validation" in commands
-        assert "pf hooks reflector-check" in commands
-        assert "pf hooks sprint-yaml" in commands
-
-    def test_frontmatter_hook_has_correct_matcher(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
-        """Frontmatter hooks with matchers should preserve them in settings."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-
-        # Find schema-validation entry — should have matcher "Write"
-        pre_tool = data["hooks"].get("PreToolUse", [])
-        schema_entry = None
-        for entry in pre_tool:
-            for h in entry.get("hooks", []):
-                if h.get("command") == "pf hooks schema-validation":
-                    schema_entry = entry
-                    break
-        assert schema_entry is not None, "schema-validation entry not found"
-        assert schema_entry.get("matcher") == "Write"
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+            assert any(f"dispatch {event}" in cmd for cmd in commands), (
+                f"Missing dispatcher for {event}"
+            )
 
     def test_statusline_preserved(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
@@ -369,7 +290,7 @@ class TestSettingsContainsBothHookSets:
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
         assert "statusLine" in data
-        assert data["statusLine"]["command"] == "pf hooks statusline"
+        assert data["statusLine"]["command"] == ".pennyfarthing/bin/pf hooks statusline"
 
 
 # ===================================================================
@@ -422,42 +343,48 @@ class TestFrontmatterIdempotency:
 
         assert first_count == second_count
 
-    def test_upgrade_path_adds_frontmatter_hooks(
+    def test_upgrade_consolidates_old_hooks(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """Re-init on existing settings should add missing frontmatter hooks."""
+        """Re-init on old-style settings should consolidate to dispatcher."""
         from pf.init.core import init_project
 
-        # First init creates settings
+        # First init creates dispatcher settings
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
 
-        # Simulate old settings with only infrastructure hooks (remove frontmatter ones)
+        # Simulate old-style settings with individual hook entries
         settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-        # Strip non-infrastructure hooks
-        for event in list(data["hooks"].keys()):
-            data["hooks"][event] = [
-                entry for entry in data["hooks"][event]
-                if any(
-                    h.get("command", "").split()[-1] in {
-                        "session-start", "session-stop", "pre-edit-check",
-                        "context-warning", "bell-mode",
-                    }
-                    for h in entry.get("hooks", [])
-                )
-            ]
-            if not data["hooks"][event]:
-                del data["hooks"][event]
-        settings_path.write_text(json.dumps(data, indent=2) + "\n")
+        old_settings = {
+            "hooks": {
+                "PreToolUse": [
+                    {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks pre-edit-check"}]},
+                    {"matcher": "Edit|Write|Bash|Task", "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks context-warning"}]},
+                ],
+                "PostToolUse": [
+                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks bell-mode"}]},
+                ],
+                "SessionStart": [
+                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-start"}]},
+                ],
+                "Stop": [
+                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-stop"}]},
+                ],
+            },
+            "statusLine": {"type": "command", "command": ".pennyfarthing/bin/pf hooks statusline"},
+        }
+        settings_path.write_text(json.dumps(old_settings, indent=2) + "\n")
 
-        # Re-init should add frontmatter hooks back
+        # Re-init should consolidate to dispatcher entries
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
 
         restored = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(restored)
-        assert "pf hooks schema-validation" in commands
-        assert "pf hooks reflector-check" in commands
-        assert "pf hooks sprint-yaml" in commands
+        # Should have dispatcher entries, not individual hooks
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+            assert any(f"dispatch {event}" in cmd for cmd in commands)
+        # Individual hooks should be gone
+        assert ".pennyfarthing/bin/pf hooks pre-edit-check" not in commands
+        assert ".pennyfarthing/bin/pf hooks context-warning" not in commands
 
 
 # ===================================================================
@@ -466,7 +393,7 @@ class TestFrontmatterIdempotency:
 
 
 class TestGracefulFallback:
-    """No agents directory should fall back to infrastructure-only hooks."""
+    """No agents directory should fall back to dispatcher-only hooks."""
 
     def test_no_agents_dir_still_succeeds(
         self, target_dir: Path, mock_dist_no_agents: Path
@@ -477,10 +404,10 @@ class TestGracefulFallback:
         result = init_project(target_dir=target_dir, dist_root=mock_dist_no_agents)
         assert result["success"] is True
 
-    def test_no_agents_dir_has_infrastructure_hooks(
+    def test_no_agents_dir_has_four_dispatcher_entries(
         self, target_dir: Path, mock_dist_no_agents: Path
     ) -> None:
-        """Without agents, settings should still have 5 infrastructure hooks."""
+        """Without agents, settings should have 4 dispatcher entries."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_no_agents)
@@ -489,12 +416,12 @@ class TestGracefulFallback:
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
         total = sum(len(entries) for entries in hooks.values())
-        assert total == 5, f"Expected exactly 5 infrastructure hooks, got {total}"
+        assert total == 4, f"Expected exactly 4 dispatcher entries, got {total}"
 
-    def test_no_agents_dir_no_frontmatter_hooks(
+    def test_no_agents_dir_no_individual_hooks(
         self, target_dir: Path, mock_dist_no_agents: Path
     ) -> None:
-        """Without agents, no component-specific hooks should appear."""
+        """Without agents, no individual hook commands should appear."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_no_agents)

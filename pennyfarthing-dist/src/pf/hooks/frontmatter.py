@@ -16,14 +16,19 @@ from pathlib import Path
 
 import yaml
 
-# Infrastructure hooks that stay in settings.local.json.
-# Everything else lives in agent/skill frontmatter.
-INFRASTRUCTURE_HOOKS: set[str] = {
+# All hooks managed by the dispatcher — these live in the dispatch registry
+# (pf.hooks.dispatch) rather than as individual settings.local.json entries.
+DISPATCHER_MANAGED_HOOKS: set[str] = {
     "session-start",
     "session-stop",
     "pre-edit-check",
     "context-warning",
+    "context-breaker",
+    "schema-validation",
+    "cyclist-pretooluse",
     "bell-mode",
+    "sprint-yaml",
+    "reflector-check",
     "agent-reload",
 }
 
@@ -231,6 +236,16 @@ def merge_with_infrastructure(
 
     for event, declarations in frontmatter_hooks.items():
         existing = hooks_section.get(event, [])
+
+        # If dispatcher handles this event, skip all pf hooks commands
+        # (they run in-process via the dispatch registry instead).
+        has_dispatcher = any(
+            "pf hooks dispatch" in h.get("command", "")
+            for entry in existing
+            for h in entry.get("hooks", [])
+            if isinstance(h, dict)
+        )
+
         # Collect existing commands for dedup, normalizing bare "pf hooks"
         # to ".pennyfarthing/bin/pf hooks" so both forms match.
         existing_commands: set[str] = set()
@@ -242,6 +257,9 @@ def merge_with_infrastructure(
         new_entries = []
         for decl in declarations:
             if _normalize_pf_command(decl.command) in existing_commands:
+                continue
+            # Skip pf hooks that the dispatcher manages
+            if has_dispatcher and "pf hooks " in decl.command:
                 continue
             new_entries.append(decl)
 

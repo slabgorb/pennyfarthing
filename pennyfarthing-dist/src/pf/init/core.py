@@ -394,12 +394,23 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
     return installed
 
 
-def _upgrade_hooks(settings_path: Path) -> bool:
-    """Remove deprecated pf.sh hook entries and ensure canonical hooks exist.
+def _is_old_pf_hook_command(cmd: str) -> bool:
+    """Check if a command is an old-style individual pf hook (not dispatcher)."""
+    if "pf hooks dispatch" in cmd:
+        return False
+    if "pf hooks " in cmd:
+        return True
+    if "pf.sh" in cmd:
+        return True
+    return False
 
-    Hooks referencing `.pennyfarthing/scripts/core/pf.sh` are deprecated.
-    This function removes them and ensures the canonical `pf hooks` entries
-    from INFRASTRUCTURE_HOOKS are present. Also upgrades statusLine.
+
+def _upgrade_hooks(settings_path: Path) -> bool:
+    """Consolidate per-hook entries into single dispatcher entries.
+
+    Migrates from old-style individual hook commands (``pf hooks <name>``,
+    ``pf.sh`` references) to a single ``pf hooks dispatch <Event>`` entry
+    per event type.  Non-pf hooks (project-specific commands) are preserved.
 
     Returns:
         True if any changes were made.
@@ -412,58 +423,54 @@ def _upgrade_hooks(settings_path: Path) -> bool:
     changed = False
     hooks = data.get("hooks", {})
 
-    # Remove hook entries referencing pf.sh (deprecated)
-    for hook_type in list(hooks.keys()):
-        entries = hooks[hook_type]
-        if not isinstance(entries, list):
-            continue
-        cleaned = []
-        for entry in entries:
-            hook_list = entry.get("hooks", [])
-            has_deprecated = any(
-                "pf.sh" in h.get("command", "")
-                for h in hook_list
-                if isinstance(h, dict)
-            )
-            if has_deprecated:
-                changed = True
-            else:
-                cleaned.append(entry)
-        hooks[hook_type] = cleaned
-
-    # Rewrite bare "pf hooks X" → ".pennyfarthing/bin/pf hooks X"
-    for hook_type in list(hooks.keys()):
-        entries = hooks[hook_type]
-        if not isinstance(entries, list):
-            continue
-        for entry in entries:
-            for hook in entry.get("hooks", []):
-                if not isinstance(hook, dict):
-                    continue
-                cmd = hook.get("command", "")
-                if cmd.startswith("pf hooks ") and not cmd.startswith(".pennyfarthing/"):
-                    hook["command"] = ".pennyfarthing/bin/" + cmd
-                    changed = True
-
-    # Ensure canonical hooks exist
     for hook_type, canonical_entries in INFRASTRUCTURE_HOOKS.items():
         existing = hooks.get(hook_type, [])
-        for canonical in canonical_entries:
-            canonical_cmd = canonical["hooks"][0]["command"]
-            canonical_matcher = canonical.get("matcher")
-            already_present = any(
-                (entry.get("matcher") or "") == (canonical_matcher or "")
-                and any(
-                    h.get("command") == canonical_cmd
-                    for h in entry.get("hooks", [])
+        if not isinstance(existing, list):
+            existing = []
+
+        # Check if dispatcher already present
+        has_dispatcher = any(
+            "pf hooks dispatch" in h.get("command", "")
+            for entry in existing
+            for h in entry.get("hooks", [])
+            if isinstance(h, dict)
+        )
+
+        if has_dispatcher:
+            # Remove any remaining old-style pf hook entries
+            cleaned = []
+            for entry in existing:
+                hook_list = entry.get("hooks", [])
+                is_old_pf = any(
+                    _is_old_pf_hook_command(h.get("command", ""))
+                    for h in hook_list
                     if isinstance(h, dict)
                 )
-                for entry in existing
-            )
-            if not already_present:
-                existing.append(canonical)
+                if is_old_pf:
+                    changed = True
+                else:
+                    cleaned.append(entry)
+            hooks[hook_type] = cleaned
+        else:
+            # No dispatcher yet — consolidate
+            project_hooks = []
+            had_old_hooks = False
+            for entry in existing:
+                hook_list = entry.get("hooks", [])
+                is_old_pf = any(
+                    _is_old_pf_hook_command(h.get("command", ""))
+                    for h in hook_list
+                    if isinstance(h, dict)
+                )
+                if is_old_pf:
+                    had_old_hooks = True
+                else:
+                    project_hooks.append(entry)
+
+            # Add dispatcher entry + preserved project hooks
+            hooks[hook_type] = canonical_entries + project_hooks
+            if had_old_hooks or not existing:
                 changed = True
-        hooks[hook_type] = existing
 
     data["hooks"] = hooks
 

@@ -8,7 +8,7 @@ Tests verify:
 2. pf init creates .claude/ directory structure
 3. Commands copied with pf-* prefix
 4. Skills copied with pf-* prefix
-5. Minimal settings.local.json written (5 hooks only)
+5. Minimal settings.local.json written (4 dispatcher entries)
 6. .gitignore updated
 7. Idempotent — running twice produces same result
 8. --dry-run shows what would be done without doing it
@@ -291,12 +291,12 @@ class TestSkillsCopy:
 
 
 # ===================================================================
-# AC 5: Minimal settings.local.json written (5 hooks only)
+# AC 5: Minimal settings.local.json written (4 dispatcher entries)
 # ===================================================================
 
 
 class TestSettingsFile:
-    """AC: Minimal settings.local.json written (5 hooks only)."""
+    """AC: Minimal settings.local.json written (4 dispatcher entries)."""
 
     def test_creates_settings_file(self, target_dir: Path, mock_dist: Path) -> None:
         """Should create .claude/settings.local.json."""
@@ -343,8 +343,8 @@ class TestSettingsFile:
         expected = sum(len(entries) for entries in INFRASTRUCTURE_HOOKS.values())
         assert total_hooks == expected, f"Expected {expected} hooks, got {total_hooks}"
 
-    def test_settings_has_session_start_hook(self, target_dir: Path, mock_dist: Path) -> None:
-        """Should include session-start hook under SessionStart."""
+    def test_settings_has_session_start_dispatcher(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should include dispatcher for SessionStart."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
@@ -355,10 +355,10 @@ class TestSettingsFile:
         assert "SessionStart" in hooks
         session_start = hooks["SessionStart"]
         commands = _extract_hook_commands(session_start)
-        assert any("session-start" in cmd for cmd in commands)
+        assert any("dispatch SessionStart" in cmd for cmd in commands)
 
-    def test_settings_has_session_stop_hook(self, target_dir: Path, mock_dist: Path) -> None:
-        """Should include session-stop hook under Stop."""
+    def test_settings_has_stop_dispatcher(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should include dispatcher for Stop."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
@@ -369,10 +369,10 @@ class TestSettingsFile:
         assert "Stop" in hooks
         stop = hooks["Stop"]
         commands = _extract_hook_commands(stop)
-        assert any("session-stop" in cmd for cmd in commands)
+        assert any("dispatch Stop" in cmd for cmd in commands)
 
-    def test_settings_has_pre_edit_check_hook(self, target_dir: Path, mock_dist: Path) -> None:
-        """Should include pre-edit-check hook under PreToolUse."""
+    def test_settings_has_pretooluse_dispatcher(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should include dispatcher for PreToolUse."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
@@ -382,23 +382,10 @@ class TestSettingsFile:
         hooks = data.get("hooks", {})
         pre_tool = hooks.get("PreToolUse", [])
         commands = _extract_hook_commands(pre_tool)
-        assert any("pre-edit-check" in cmd for cmd in commands)
+        assert any("dispatch PreToolUse" in cmd for cmd in commands)
 
-    def test_settings_has_context_warning_hook(self, target_dir: Path, mock_dist: Path) -> None:
-        """Should include context-warning hook under PreToolUse."""
-        from pf.init.core import init_project
-
-        init_project(target_dir=target_dir, dist_root=mock_dist)
-
-        settings_path = target_dir / ".claude" / "settings.local.json"
-        data = json.loads(settings_path.read_text())
-        hooks = data.get("hooks", {})
-        pre_tool = hooks.get("PreToolUse", [])
-        commands = _extract_hook_commands(pre_tool)
-        assert any("context-warning" in cmd for cmd in commands)
-
-    def test_settings_has_bell_mode_hook(self, target_dir: Path, mock_dist: Path) -> None:
-        """Should include bell-mode hook under PostToolUse."""
+    def test_settings_has_posttooluse_dispatcher(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should include dispatcher for PostToolUse."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
@@ -408,7 +395,20 @@ class TestSettingsFile:
         hooks = data.get("hooks", {})
         post_tool = hooks.get("PostToolUse", [])
         commands = _extract_hook_commands(post_tool)
-        assert any("bell-mode" in cmd for cmd in commands)
+        assert any("dispatch PostToolUse" in cmd for cmd in commands)
+
+    def test_single_entry_per_event(self, target_dir: Path, mock_dist: Path) -> None:
+        """Each event type should have exactly one dispatcher entry."""
+        from pf.init.core import init_project
+
+        init_project(target_dir=target_dir, dist_root=mock_dist)
+
+        settings_path = target_dir / ".claude" / "settings.local.json"
+        data = json.loads(settings_path.read_text())
+        hooks = data.get("hooks", {})
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+            entries = hooks.get(event, [])
+            assert len(entries) == 1, f"{event} should have 1 entry, got {len(entries)}"
 
 
 # ===================================================================

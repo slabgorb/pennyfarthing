@@ -19,6 +19,14 @@ def hooks():
     pass
 
 
+@hooks.command("dispatch")
+@click.argument("event", type=click.Choice(["PreToolUse", "PostToolUse", "SessionStart", "Stop"]))
+def dispatch(event):
+    """Run all hooks for EVENT in a single process."""
+    from pf.hooks.dispatch import dispatch as run_dispatch
+    run_dispatch(event)
+
+
 @hooks.command("session-start")
 def session_start():
     """SessionStart hook — session setup, WheelHub auto-start, OTEL config."""
