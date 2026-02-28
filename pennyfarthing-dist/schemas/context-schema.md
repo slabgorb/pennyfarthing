@@ -98,7 +98,7 @@ Each template includes inline comments documenting the component's description, 
 
 ## Related
 
-- [Prime Guide](prime.md) — How context is loaded and assembled
+- [Prime Guide](../guides/prime.md) — How context is loaded and assembled
 - [Session Schema](session-schema.md) — Schema for session files (a context source)
 - [Workflow Schema](workflow-schema.md) — Schema for workflow definitions
 - Story 129-3: Build Context Validator Python Module and CLI

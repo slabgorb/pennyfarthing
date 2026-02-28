@@ -74,6 +74,9 @@ def start(project_dir, dry_run):
     click.echo("Starting BikeRack mode...")
     try:
         proc = start_wheelhub(project_dir)
+        if isinstance(proc, dict):
+            click.echo(f"Error: {proc['error']}", err=True)
+            sys.exit(1)
         write_pid_file(project_dir, proc.pid)
 
         port = poll_for_port_file(project_dir, proc=proc)

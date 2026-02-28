@@ -37,7 +37,7 @@ Task tool:
     {PARAMETERS}
 ```
 
-**See `agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
+See [Background Subagent Execution](#background-subagent-execution) below for when to use background vs foreground execution.
 
 - **`sm-setup.md`** - Research OR setup mode (Story 31-11)
 - **`sm-finish.md`** - Preflight OR execute phase (Story 31-11)
@@ -242,8 +242,6 @@ $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/agent-session.sh  # BROKEN!
 ## Background Subagent Execution
 
 Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the user to continue interacting while slow operations complete asynchronously.
-
-**IMPORTANT:** See `agent-behavior.md` → "Interactive Background Task Protocol" for the authoritative guidance.
 
 ### The Key Insight
 

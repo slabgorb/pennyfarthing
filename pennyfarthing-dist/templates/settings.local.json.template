@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks session-start"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks session-start"
           }
         ]
       },
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf prime"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf prime"
           }
         ]
       }
@@ -77,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks reflector-check"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks reflector-check"
           }
         ]
       },
@@ -86,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks session-stop"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks session-stop"
           }
         ]
       }
@@ -97,7 +97,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks bell-mode"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks bell-mode"
           }
         ]
       },
@@ -106,7 +106,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks sprint-yaml"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks sprint-yaml"
           }
         ]
       }
@@ -117,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks pre-edit-check"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks pre-edit-check"
           }
         ]
       },
@@ -126,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks schema-validation"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks schema-validation"
           }
         ]
       },
@@ -135,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks context-warning"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks context-warning"
           }
         ]
       },
@@ -144,7 +144,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks context-breaker"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks context-breaker"
           }
         ]
       },
@@ -152,7 +152,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pf hooks cyclist-pretooluse"
+            "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks cyclist-pretooluse"
           }
         ]
       }
@@ -160,6 +160,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "pf hooks statusline"
+    "command": "uv run --project \"$CLAUDE_PROJECT_DIR/node_modules/@pennyfarthing/core/pennyfarthing-dist\" pf hooks statusline"
   }
 }

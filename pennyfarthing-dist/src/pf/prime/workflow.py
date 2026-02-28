@@ -323,3 +323,88 @@ def get_phase_tandem_config(
         return None
     except Exception:
         return None
+
+
+def get_phase_team_config(
+    workflow_name: str, phase_name: str, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract team configuration for a specific workflow phase.
+
+    Reads the workflow YAML and returns the team block for the given phase,
+    or None if the phase has no team configuration.
+
+    Args:
+        workflow_name: Workflow name (tdd-team, etc.)
+        phase_name: Phase name (red, green, review, etc.)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with team config (teammates list, model, etc.)
+        or None if no team config on this phase.
+    """
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
+    else:
+        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+
+    if not workflow_path.exists():
+        return None
+
+    try:
+        data = yaml.safe_load(workflow_path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+
+        for phase in phases:
+            if isinstance(phase, dict) and phase.get("name") == phase_name:
+                team = phase.get("team")
+                if isinstance(team, dict):
+                    return dict(team)
+                return None
+
+        return None
+    except Exception:
+        return None
+
+
+def get_phase_gate_recovery(
+    workflow_name: str, phase_name: str, project_root: Path | None = None
+) -> bool:
+    """Check if a workflow phase gate has a recovery configuration.
+
+    Reads the workflow YAML and returns True if the given phase's gate
+    has a ``recovery:`` block.
+
+    Args:
+        workflow_name: Workflow name (tdd, trivial, bdd, etc.)
+        phase_name: Phase name (setup, red, green, review, etc.)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        True if the phase gate has recovery config, False otherwise.
+    """
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
+    else:
+        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+
+    if not workflow_path.exists():
+        return False
+
+    try:
+        data = yaml.safe_load(workflow_path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+
+        for phase in phases:
+            if isinstance(phase, dict) and phase.get("name") == phase_name:
+                gate = phase.get("gate")
+                if isinstance(gate, dict) and gate.get("recovery"):
+                    return True
+                return False
+
+        return False
+    except Exception:
+        return False

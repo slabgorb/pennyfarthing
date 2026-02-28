@@ -85,22 +85,58 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 <context>
 ## Component Guides
 
-Guides at `pennyfarthing-dist/guides/`. Read for detailed behavior, key files, and APIs.
+Read guides for detailed behavior, key files, and APIs. All paths relative to `pennyfarthing-dist/`.
+
+### Guides (`guides/`)
 
 | Component | Guide | Purpose |
 |-----------|-------|---------|
-| BikeLane | `bikelane.md` | Workflow engine — phased, stepped, procedural |
-| BikeRack | `bikerack.md` | Standalone panel viewer for CLI-first dev |
-| Gates | `gates.md` | Phase transition quality checks |
-| Handoff CLI | `handoff-cli.md` | Gate resolution, session transitions, markers |
-| Hooks | `hooks.md` | Claude Code hooks — session, pre/post tool use |
-| Bell Mode | `bell-mode.md` | Message queue injection via PostToolUse |
-| Relay Mode | `relay-mode.md` | Auto-handoff execution |
-| TirePump | `tirepump.md` | Context clearing and session reload |
-| Prime | `prime.md` | Agent activation with tiered context |
-| Reflector | `reflector.md` | Agent-to-UI markers for QuickActions |
-| Tandem | `tandem-protocol.md` | Background observer pairing |
-| Output Styles | `output-styles.md` | Response modes (terse, verbose, teaching) |
-| Brownfield | `brownfield-tools.md` | Codebase analysis — hotspots, complexity, health |
-| Benchmarks | `../packages/benchmark/docs/benchmarks-guide.md` | Persona evaluation (OCEAN traits) |
+| BikeLane | `guides/bikelane.md` | Workflow engine — phased, stepped, procedural |
+| BikeRack | `guides/bikerack.md` | Standalone panel viewer for CLI-first dev |
+| Gates | `guides/gates.md` | Phase transition quality checks |
+| Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
+| Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |
+| Bell Mode | `guides/bell-mode.md` | Message queue injection via PostToolUse |
+| Relay Mode | `guides/relay-mode.md` | Auto-handoff execution |
+| TirePump | `guides/tirepump.md` | Context clearing and session reload |
+| Prime | `guides/prime.md` | Agent activation with tiered context |
+| Reflector | `guides/reflector.md` | Agent-to-UI markers for QuickActions |
+| Tandem | `guides/tandem-protocol.md` | Background observer pairing |
+| Output Styles | `guides/output-styles.md` | Response modes (terse, verbose, teaching) |
+| Brownfield | `guides/brownfield-tools.md` | Codebase analysis — hotspots, complexity, health |
+
+### Schemas (`schemas/`)
+
+| Schema | File | Purpose |
+|--------|------|---------|
+| Gate | `schemas/gate-schema.md` | Gate file format and GATE_RESULT contract |
+| Session | `schemas/session-schema.md` | Session file XML structure |
+| Workflow | `schemas/workflow-schema.md` | Workflow YAML configuration schema |
+| Workflow Step | `schemas/workflow-step-schema.md` | Step file XML tag schema |
+| Skill | `schemas/skill-schema.md` | Skill file structure and XML tags |
+| Context | `schemas/context-schema.md` | Context document sections and validation |
+
+### Patterns (`patterns/`)
+
+| Pattern | File | Purpose |
+|---------|------|---------|
+| Fan-out/Fan-in | `patterns/fan-out-fan-in-pattern.md` | Parallel agent execution and result aggregation |
+| Approval Gates | `patterns/approval-gates-pattern.md` | Human/agent approval checkpoints |
+| Helper Delegation | `patterns/helper-delegation-pattern.md` | Delegating mechanical work to subagents |
+| TDD Flow | `patterns/tdd-flow-pattern.md` | RED-GREEN-REFACTOR agent workflow |
+
+### Agent Templates (`agents/templates/`)
+
+| Template | File | Purpose |
+|----------|------|---------|
+| Strategic | `agents/templates/agent-template-strategic.md` | Template for strategic (Opus-class) agents |
+| Tactical | `agents/templates/agent-template-tactical.md` | Template for tactical (Haiku-class) subagents |
+
+### Taxonomy (`guides/taxonomy/`)
+
+| Resource | File | Purpose |
+|----------|------|---------|
+| XML Tags | `guides/taxonomy/xml-tags.md` | Complete XML tag reference for all file types |
+| Command Tag Taxonomy | `guides/taxonomy/command-tag-taxonomy.md` | Tag classification and usage rules |
+| Prompt Patterns | `guides/taxonomy/prompt-patterns.md` | Prompt engineering patterns and XML usage |
 </context>

@@ -28,7 +28,7 @@ from pf.doctor.checks import (
     check_python_install,
     check_settings_hooks,
     check_skills,
-    check_symlinks,
+    check_content_dirs,
     check_theme,
 )
 from pf.doctor.cli import doctor
@@ -210,15 +210,15 @@ class TestIndividualChecks:
         result = check_settings_hooks(broken_project)
         assert result.status == "fail"
 
-    def test_check_symlinks_passes(self, healthy_project):
-        """check_symlinks returns pass when all symlink targets exist."""
-        result = check_symlinks(healthy_project)
+    def test_check_content_dirs_passes(self, healthy_project):
+        """check_content_dirs returns pass when all content directories exist."""
+        result = check_content_dirs(healthy_project)
         assert result.status == "pass"
-        assert result.name == "symlinks"
+        assert result.name == "content_dirs"
 
-    def test_check_symlinks_fails_when_targets_missing(self, broken_project):
-        """check_symlinks returns fail when .pennyfarthing/ subdirs missing."""
-        result = check_symlinks(broken_project)
+    def test_check_content_dirs_fails_when_dirs_missing(self, broken_project):
+        """check_content_dirs returns fail when .pennyfarthing/ subdirs missing."""
+        result = check_content_dirs(broken_project)
         assert result.status == "fail"
 
     def test_check_commands_passes(self, healthy_project):
@@ -249,9 +249,18 @@ class TestIndividualChecks:
         assert result.status == "pass"
         assert result.name == "node_packages"
 
-    def test_check_node_packages_warns_when_missing(self, broken_project):
-        """check_node_packages returns warn (not fail) when node_modules missing."""
+    def test_check_node_packages_passes_for_pip_install(self, broken_project):
+        """check_node_packages returns pass when no package.json (pip consumer)."""
         result = check_node_packages(broken_project)
+        assert result.status == "pass"
+        assert "pip install" in result.detail
+
+    def test_check_node_packages_warns_for_npm_project(self, tmp_path):
+        """check_node_packages returns warn when package.json exists but no node_modules."""
+        root = tmp_path / "npm_project"
+        root.mkdir()
+        (root / "package.json").write_text('{"name": "test"}')
+        result = check_node_packages(root)
         assert result.status == "warn"
 
     def test_check_git_hooks_passes(self, healthy_project):

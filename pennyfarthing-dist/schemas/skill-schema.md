@@ -406,6 +406,6 @@ When updating existing skill files:
 
 | File | Purpose |
 |------|---------|
-| `guides/xml-tags.md` | Complete XML tag taxonomy |
+| `guides/taxonomy/xml-tags.md` | Complete XML tag taxonomy |
 | `skills/pf-sprint/SKILL.md` | Reference implementation |
 | `skill-registry.yaml` | Skill registration |

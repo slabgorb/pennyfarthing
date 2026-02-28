@@ -23,6 +23,7 @@ REAL_DIR="$(cd "$(dirname "$REAL_SCRIPT")" && pwd -P)"
 
 # Determine if we're in pennyfarthing-dist (3 levels up to package root)
 # or in node_modules (need to find project root differently)
+PACKAGE_ROOT=""
 if [[ "$REAL_DIR" == *"/pennyfarthing-dist/scripts/core" ]]; then
     # In pennyfarthing source or node_modules/@pennyfarthing/core
     PACKAGE_ROOT="${REAL_DIR%/pennyfarthing-dist/scripts/core}"

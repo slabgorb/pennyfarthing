@@ -32,7 +32,6 @@ from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel
 from pf.bikerack.git_panel import GitPanel
 from pf.bikerack.progress_panel import ProgressPanel
-from pf.bikerack.settings_panel import SettingsPanel
 from pf.bikerack.sprint_panel import SprintPanel
 from pf.bikerack.ws_client import ConnectionState, WheelHubClient
 
@@ -81,7 +80,6 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
-    ("settings", "Settings"),
 ]
 
 # Human-readable display names for panels (full set for external focus messages)
@@ -168,6 +166,7 @@ class AgentHeader(Static):
         except Exception:
             config = {}
         self._portrait_size: str = config.get("portrait_size", "auto")
+        self._portrait_position: str = config.get("portrait_position", "left")
         self._last_effective_size: str | None = None
 
     def on_resize(self) -> None:
@@ -178,6 +177,51 @@ class AgentHeader(Static):
         if effective != self._last_effective_size and self._persona_data:
             self._current_portrait = None  # force full layout rebuild
             self._render_header()
+
+    # Cycle order for portrait size stepping
+    _SIZE_CYCLE = ["small", "medium", "large"]
+
+    def _cycle_portrait_size(self) -> str:
+        """Step through portrait sizes: small → medium → large → small."""
+        try:
+            idx = self._SIZE_CYCLE.index(self._portrait_size)
+        except ValueError:
+            # auto or off — resolve effective then step from there
+            effective = self._resolve_effective_size()
+            try:
+                idx = self._SIZE_CYCLE.index(effective)
+            except ValueError:
+                idx = -1
+        new_idx = (idx + 1) % len(self._SIZE_CYCLE)
+        self._portrait_size = self._SIZE_CYCLE[new_idx]
+        self._last_effective_size = None
+        self._current_portrait = None  # force full layout rebuild
+        self._render_header()
+        # Persist to config.local.yaml
+        try:
+            from pf.bc.focus import _read_config, _write_config
+
+            config_path, config = _read_config()
+            config["portrait_size"] = self._portrait_size
+            _write_config(config_path, config)
+        except Exception:
+            pass
+        return self._portrait_size
+
+    def _toggle_portrait_position(self) -> None:
+        """Flip portrait between left and right, persist to config."""
+        self._portrait_position = "right" if self._portrait_position == "left" else "left"
+        self._current_portrait = None  # force full layout rebuild
+        self._render_header()
+        # Persist to config.local.yaml
+        try:
+            from pf.bc.focus import _read_config, _write_config
+
+            config_path, config = _read_config()
+            config["portrait_position"] = self._portrait_position
+            _write_config(config_path, config)
+        except Exception:
+            pass
 
     def _apply_persona(self, data: dict[str, Any]) -> None:
         """Render persona data into the header."""
@@ -314,7 +358,10 @@ class AgentHeader(Static):
             self._current_portrait = event.portrait_path
             skeleton = Static(PORTRAIT_SKELETON, id="portrait-skeleton")
             text = Static(self._header_text, id="agent-text")
-            row = Horizontal(skeleton, text, id="portrait-row")
+            if self._portrait_position == "right":
+                row = Horizontal(text, skeleton, id="portrait-row")
+            else:
+                row = Horizontal(skeleton, text, id="portrait-row")
             await self.mount(row)
 
             # Now try to load the real image and swap it in
@@ -345,7 +392,12 @@ class AgentHeader(Static):
                     await skel.remove()
                 except Exception:
                     pass
-                await row.mount(img, before=0)
+                if self._portrait_position == "right":
+                    await row.mount(img)  # append after text
+                    img.styles.margin = (0, 0, 0, 1)
+                else:
+                    await row.mount(img, before=0)
+                    # CSS default margin (0 1 0 0) handles left position
 
                 # Apply dynamic size from portrait_size config
                 effective = self._resolve_effective_size()
@@ -478,29 +530,34 @@ class BikeRackApp(App):
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=False),
-        Binding("shift+s", "toggle_split", "Split", show=False),
+        Binding("p", "toggle_portrait_position", "Portrait", show=False),
+        Binding("P", "cycle_portrait_size", "Portrait Size", show=False),
+        Binding("S", "toggle_split", "Split", show=False),
         Binding("1", "switch_panel('sprint')", "Sprint", show=False),
         Binding("2", "switch_panel('git')", "Git", show=False),
         Binding("3", "switch_panel('diffs')", "Diffs", show=False),
         Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
-        Binding("7", "switch_panel('settings')", "Settings", show=False),
         Binding("bracketright", "next_panel", "Next panel", show=False),
         Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),
         Binding("shift+tab", "prev_panel", show=False, priority=True),
-        Binding("n", "next_diff_file", "Next file", show=False),
-        Binding("p", "prev_diff_file", "Prev file", show=False),
-        Binding("j", "next_epic", show=False),
-        Binding("k", "prev_epic", show=False),
+        Binding("j", "nav_down", show=False),
+        Binding("down", "nav_down", show=False),
+        Binding("k", "nav_up", show=False),
+        Binding("up", "nav_up", show=False),
+        Binding("h", "nav_left", show=False),
+        Binding("left", "nav_left", show=False),
+        Binding("l", "nav_right", show=False),
+        Binding("right", "nav_right", show=False),
         Binding("e", "toggle_epic", show=False),
         Binding("c", "copy_selected_id", show=False),
         # Story 121-2: Code quality tool triggers (debug panel)
-        Binding("h", "debug_hotspots", "Hotspots", show=False),
         Binding("d", "debug_deadcode", "Dead Code", show=False),
         Binding("s", "debug_healthscore", "Health Score", show=False),
         Binding("escape", "debug_back", "Back", show=False),
+        Binding("t", "toggle_toasts", "Toasts", show=False),
     ]
 
     def _get_dom_base(self):
@@ -519,6 +576,7 @@ class BikeRackApp(App):
         self._active_split_pane: str = "left"
         self._split_left_key: str = "sprint"
         self._split_right_key: str = "diffs"
+        self._toasts_enabled: bool = False
 
     def _build_layout_regions(self) -> list[str]:
         """Return the ordered list of region names to render.
@@ -560,7 +618,6 @@ class BikeRackApp(App):
                     yield AuditLogPanel(client=self._client, id="panel-audit-log")
                     yield DebugPanel(client=self._client, id="panel-debug")
                     yield ProgressPanel(client=self._client, id="panel-progress")
-                    yield SettingsPanel(id="panel-settings")
                 with Horizontal(id="split-container"):
                     yield VerticalScroll(id="split-left")
                     yield VerticalScroll(id="split-right")
@@ -601,6 +658,20 @@ class BikeRackApp(App):
             self._client.subscribe("persona", self._handle_persona_message)
             self.run_worker(self._client.connect(), exclusive=True, name="ws-client")
 
+    def _toast(self, message: str, timeout: float = 2) -> None:
+        """Show a toast notification if toasts are enabled."""
+        if self._toasts_enabled:
+            self.notify(message, timeout=timeout)
+
+    def action_toggle_toasts(self) -> None:
+        """Toggle toast notifications on/off."""
+        self._toasts_enabled = not self._toasts_enabled
+        # Always show this one so user knows the state
+        self.notify(
+            f"Toasts {'on' if self._toasts_enabled else 'off'}",
+            timeout=2,
+        )
+
     def action_switch_panel(self, key: str) -> None:
         """Switch to a panel by key."""
         if key not in _PANEL_KEYS:
@@ -627,6 +698,8 @@ class BikeRackApp(App):
         self._focused_panel = key
         save_last_panel(key, project_dir=None)
         self._update_tab_bar(key)
+        display = PANEL_DISPLAY_NAMES.get(key, key)
+        self._toast(f"Panel: {display}")
 
         # Refresh status footer on panel switch
         if self._status_footer is not None:
@@ -665,39 +738,75 @@ class BikeRackApp(App):
         prev_idx = (idx - 1) % len(_PANEL_KEYS)
         self.action_switch_panel(_PANEL_KEYS[prev_idx])
 
-    def action_next_diff_file(self) -> None:
-        """Advance to next file in diffs panel."""
+    # ------------------------------------------------------------------
+    # Panel-aware vi/arrow navigation
+    # ------------------------------------------------------------------
+
+    def _scroll_active_panel(self, direction: str) -> None:
+        """Scroll the active panel's content area."""
+        try:
+            container = self.query_one("#main-content")
+            if direction == "down":
+                container.scroll_down()
+            else:
+                container.scroll_up()
+        except Exception:
+            pass
+
+    def action_nav_down(self) -> None:
+        """j/down — next item in current panel."""
         if self._focused_panel == "diffs":
             try:
-                panel = self.query_one("#panel-diffs", DiffsPanel)
-                panel.next_file()
+                self.query_one("#panel-diffs", DiffsPanel).next_file()
+                self._toast("Next file")
             except Exception:
                 pass
+        elif self._focused_panel == "sprint":
+            try:
+                self.query_one("#panel-sprint", SprintPanel).next_epic()
+                self._toast("Next epic")
+            except Exception:
+                pass
+        elif self._focused_panel in ("audit-log", "progress"):
+            self._scroll_active_panel("down")
+            self._toast("Scroll down")
 
-    def action_prev_diff_file(self) -> None:
-        """Go to previous file in diffs panel."""
+    def action_nav_up(self) -> None:
+        """k/up — prev item in current panel."""
         if self._focused_panel == "diffs":
             try:
-                panel = self.query_one("#panel-diffs", DiffsPanel)
-                panel.prev_file()
+                self.query_one("#panel-diffs", DiffsPanel).prev_file()
+                self._toast("Prev file")
             except Exception:
                 pass
-
-    def action_next_epic(self) -> None:
-        """Move to next epic in sprint panel."""
-        if self._focused_panel == "sprint":
+        elif self._focused_panel == "sprint":
             try:
-                panel = self.query_one("#panel-sprint", SprintPanel)
-                panel.next_epic()
+                self.query_one("#panel-sprint", SprintPanel).prev_epic()
+                self._toast("Prev epic")
             except Exception:
                 pass
+        elif self._focused_panel in ("audit-log", "progress"):
+            self._scroll_active_panel("up")
+            self._toast("Scroll up")
 
-    def action_prev_epic(self) -> None:
-        """Move to previous epic in sprint panel."""
-        if self._focused_panel == "sprint":
+    def action_nav_left(self) -> None:
+        """h/left — prev in diffs, hotspots in debug."""
+        if self._focused_panel == "diffs":
             try:
-                panel = self.query_one("#panel-sprint", SprintPanel)
-                panel.prev_epic()
+                self.query_one("#panel-diffs", DiffsPanel).prev_file()
+                self._toast("Prev file")
+            except Exception:
+                pass
+        elif self._focused_panel == "debug":
+            self._toast("Hotspots")
+            self.action_debug_hotspots()
+
+    def action_nav_right(self) -> None:
+        """l/right — next in diffs."""
+        if self._focused_panel == "diffs":
+            try:
+                self.query_one("#panel-diffs", DiffsPanel).next_file()
+                self._toast("Next file")
             except Exception:
                 pass
 
@@ -707,6 +816,7 @@ class BikeRackApp(App):
             try:
                 panel = self.query_one("#panel-sprint", SprintPanel)
                 panel.toggle_epic()
+                self._toast("Toggle epic")
             except Exception:
                 pass
 
@@ -716,6 +826,7 @@ class BikeRackApp(App):
             try:
                 panel = self.query_one("#panel-sprint", SprintPanel)
                 panel.copy_selected_id()
+                self._toast("Copied to clipboard")
             except Exception:
                 pass
 
@@ -730,6 +841,7 @@ class BikeRackApp(App):
         try:
             debug_panel = self.query_one("#panel-debug", DebugPanel)
             self.run_worker(debug_panel.run_hotspots_analysis(), exclusive=True)
+            self._toast("Running hotspots analysis")
         except Exception:
             pass
 
@@ -740,6 +852,7 @@ class BikeRackApp(App):
         try:
             debug_panel = self.query_one("#panel-debug", DebugPanel)
             self.run_worker(debug_panel.run_dead_code_analysis(), exclusive=True)
+            self._toast("Running dead code analysis")
         except Exception:
             pass
 
@@ -750,6 +863,7 @@ class BikeRackApp(App):
         try:
             debug_panel = self.query_one("#panel-debug", DebugPanel)
             self.run_worker(debug_panel.run_health_score_analysis(), exclusive=True)
+            self._toast("Running health score analysis")
         except Exception:
             pass
 
@@ -760,6 +874,25 @@ class BikeRackApp(App):
         try:
             debug_panel = self.query_one("#panel-debug", DebugPanel)
             debug_panel.show_normal_view()
+            self._toast("Back to debug")
+        except Exception:
+            pass
+
+    def action_toggle_portrait_position(self) -> None:
+        """Toggle portrait between left and right side of header."""
+        try:
+            header = self.query_one("#agent-header", AgentHeader)
+            header._toggle_portrait_position()
+            self._toast(f"Portrait: {header._portrait_position}")
+        except Exception:
+            pass
+
+    def action_cycle_portrait_size(self) -> None:
+        """Cycle portrait size: small → medium → large → small."""
+        try:
+            header = self.query_one("#agent-header", AgentHeader)
+            new_size = header._cycle_portrait_size()
+            self._toast(f"Portrait size: {new_size}")
         except Exception:
             pass
 
@@ -869,6 +1002,7 @@ class BikeRackApp(App):
         """Toggle split mode on/off (Shift+S keybinding)."""
         if self._split_mode:
             self._exit_split()
+            self._toast("Split off")
         else:
             # Default: current panel left, next panel right
             left_key = self._focused_panel
@@ -878,6 +1012,7 @@ class BikeRackApp(App):
                 idx = 0
             right_key = _PANEL_KEYS[(idx + 1) % len(_PANEL_KEYS)]
             self._enter_split(left_key, right_key)
+            self._toast(f"Split: {left_key} | {right_key}")
 
     def action_apply_split_preset(self, name: str) -> None:
         """Apply a named split preset (synchronous)."""

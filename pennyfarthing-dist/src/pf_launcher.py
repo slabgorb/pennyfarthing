@@ -43,6 +43,35 @@ def _find_local_src() -> str | None:
     return None
 
 
+_pf_binary_path: str | None = None
+
+
+def _export_pf_binary() -> None:
+    """Resolve and export PF_BINARY for child processes (AC9)."""
+    global _pf_binary_path
+    if "PF_BINARY" in os.environ:
+        _pf_binary_path = os.environ["PF_BINARY"]
+        return
+
+    # In monorepo, the launcher itself is the entry point
+    local_src = _find_local_src()
+    if local_src:
+        _pf_binary_path = str(Path(__file__).resolve())
+        os.environ["PF_BINARY"] = _pf_binary_path
+        return
+
+    # Fallback: try PATH
+    import shutil
+    pf_path = shutil.which("pf")
+    if pf_path:
+        _pf_binary_path = pf_path
+        os.environ["PF_BINARY"] = pf_path
+
+
+# Export PF_BINARY on module load so child processes inherit it
+_export_pf_binary()
+
+
 def main() -> None:
     """Entry point — resolve project-local pf, then run CLI."""
     local_src = _find_local_src()

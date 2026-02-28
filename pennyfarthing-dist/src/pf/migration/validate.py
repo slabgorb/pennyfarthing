@@ -2,9 +2,9 @@
 XML schema validation for Pennyfarthing files.
 
 Validates files against their respective schemas:
-- Session files -> guides/session-schema.md
-- Skill files -> guides/skill-schema.md
-- Workflow step files -> guides/workflow-step-schema.md
+- Session files -> schemas/session-schema.md
+- Skill files -> schemas/skill-schema.md
+- Workflow step files -> schemas/workflow-step-schema.md
 """
 
 from __future__ import annotations

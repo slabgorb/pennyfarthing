@@ -32,9 +32,11 @@ from pf.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
     load_domain_docs,
+    load_gate_recovery_guide,
     load_session_context,
     load_sidecars,
     load_sprint_context,
+    load_team_mode_guide,
 )
 from pf.prime.models import PrimeComponent, PrimeResult, WorkflowState
 from pf.prime.persona import (
@@ -47,7 +49,12 @@ from pf.prime.persona import (
 )
 from pf.prime.session import cleanup_old_sessions, register_session
 from pf.prime.tiers import ContextTier, load_tier_components, tier_from_string
-from pf.prime.workflow import check_redirect, detect_workflow_state
+from pf.prime.workflow import (
+    check_redirect,
+    detect_workflow_state,
+    get_phase_gate_recovery,
+    get_phase_team_config,
+)
 
 
 def _print_header(title: str, quiet: bool) -> None:
@@ -101,6 +108,8 @@ def _component_header(name: str, agent_name: str | None) -> str:
         "persona": f"Persona: {agent_name}",
         "persona_compressed": f"Persona: {agent_name} (compressed)",
         "behavior_guide": "Agent Behavior Guide",
+        "team_mode_guide": "Team Mode Guide",
+        "gate_recovery_guide": "Gate Recovery Guide",
         "sprint_context": "Sprint Context",
         "repos_topology": "Repos Topology",
         "session_header": "Active Session",
@@ -118,6 +127,8 @@ def _component_source(name: str, agent_name: str | None, root: Path) -> str | No
         "persona": None,
         "persona_compressed": None,
         "behavior_guide": ".pennyfarthing/guides/agent-behavior.md",
+        "team_mode_guide": ".pennyfarthing/guides/team-mode.md",
+        "gate_recovery_guide": ".pennyfarthing/guides/gate-recovery.md",
         "sprint_context": "sprint/current-sprint.yaml",
         "repos_topology": ".pennyfarthing/repos.yaml",
         "session_header": None,
@@ -470,6 +481,31 @@ def prime(
         if guide_content:
             _print_header("Agent Behavior Guide", quiet)
             print(guide_content)
+
+    # ==========================================================================
+    # PRIORITY 4b: Team mode guide (only when workflow phase has team: block)
+    # ==========================================================================
+    if agent_name and not json_output and result.workflow_status:
+        ws = result.workflow_status
+        if ws.workflow and ws.phase:
+            team_config = get_phase_team_config(ws.workflow, ws.phase, root)
+            if team_config:
+                team_guide = load_team_mode_guide(root)
+                if team_guide:
+                    _print_header("Team Mode Guide", quiet)
+                    print(team_guide)
+
+    # ==========================================================================
+    # PRIORITY 4c: Gate recovery guide (only when phase gate has recovery config)
+    # ==========================================================================
+    if agent_name and not json_output and result.workflow_status:
+        ws = result.workflow_status
+        if ws.workflow and ws.phase:
+            if get_phase_gate_recovery(ws.workflow, ws.phase, root):
+                gate_guide = load_gate_recovery_guide(root)
+                if gate_guide:
+                    _print_header("Gate Recovery Guide", quiet)
+                    print(gate_guide)
 
     # ==========================================================================
     # PRIORITY 5: Sprint context
