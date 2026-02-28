@@ -452,7 +452,7 @@ def _upgrade_hooks(settings_path: Path) -> bool:
             canonical_cmd = canonical["hooks"][0]["command"]
             canonical_matcher = canonical.get("matcher")
             already_present = any(
-                entry.get("matcher") == canonical_matcher
+                (entry.get("matcher") or "") == (canonical_matcher or "")
                 and any(
                     h.get("command") == canonical_cmd
                     for h in entry.get("hooks", [])

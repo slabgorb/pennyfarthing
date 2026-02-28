@@ -201,6 +201,13 @@ def to_settings_format(hooks: list[HookDeclaration]) -> list[dict]:
     return entries
 
 
+def _normalize_pf_command(cmd: str) -> str:
+    """Normalize bare 'pf hooks X' to '.pennyfarthing/bin/pf hooks X' for dedup."""
+    if cmd.startswith("pf hooks ") and not cmd.startswith(".pennyfarthing/"):
+        return ".pennyfarthing/bin/" + cmd
+    return cmd
+
+
 def merge_with_infrastructure(
     infrastructure: dict,
     frontmatter_hooks: dict[str, list[HookDeclaration]],
@@ -224,15 +231,17 @@ def merge_with_infrastructure(
 
     for event, declarations in frontmatter_hooks.items():
         existing = hooks_section.get(event, [])
-        # Collect existing commands for dedup
+        # Collect existing commands for dedup, normalizing bare "pf hooks"
+        # to ".pennyfarthing/bin/pf hooks" so both forms match.
         existing_commands: set[str] = set()
         for entry in existing:
             for h in entry.get("hooks", []):
-                existing_commands.add(h.get("command", ""))
+                cmd = h.get("command", "")
+                existing_commands.add(_normalize_pf_command(cmd))
 
         new_entries = []
         for decl in declarations:
-            if decl.command in existing_commands:
+            if _normalize_pf_command(decl.command) in existing_commands:
                 continue
             new_entries.append(decl)
 
