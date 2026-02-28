@@ -401,3 +401,14 @@ export function watchAgentChanges(
     watcher.close();
   };
 }
+
+/**
+ * Resolve the framework package root using multi-strategy discovery.
+ * Story 136-2 AC5: Replace hardcoded `join(__dirname, '..', '..', '..')`
+ * with `resolvePennyfarthingDist()` from portrait-resolver.
+ *
+ * Falls back to __dirname traversal only when resolution returns null.
+ */
+export function resolvePackageRoot(): string {
+  throw new Error('Not implemented: 136-2 — resolvePackageRoot pending implementation');
+}

@@ -200,3 +200,14 @@ export function createContextRouter(getProjectDir: () => string): Router {
 
   return router;
 }
+
+/**
+ * Resolve the context.py script path using multi-strategy discovery.
+ * Story 136-2 AC3: Add pip-installed path candidates (site-packages/pf/context.py).
+ *
+ * Returns the resolved path and whether it's Python, plus the full list of
+ * paths checked (for diagnostics and testing).
+ */
+export function resolveContextScript(projectDir: string): { path: string | null; isPython: boolean; paths: string[] } {
+  throw new Error('Not implemented: 136-2 — resolveContextScript pending implementation');
+}

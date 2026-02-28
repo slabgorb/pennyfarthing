@@ -77,29 +77,21 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     return Path.cwd()
 
 
-def _find_wheelhub_entry() -> Path:
-    """Locate the WheelHub entry point.
+def _find_wheelhub_entry(start_path: Path | None = None) -> Path:
+    """Locate the WheelHub entry point via multi-strategy discovery.
 
     Search order:
-      1. Monorepo: pennyfarthing/packages/core/dist/server/entry.js
-         (preferred — has proper node_modules, bundled .mjs may crash)
-      2. Bundled in pip package: pf/_dist/server/wheelhub.mjs
+      1. PENNYFARTHING_DIST env var (explicit override)
+      2. Monorepo walk-up from start_path: packages/core/dist/server/entry.js
+      3. Bundled in pip package: pf/_dist/server/wheelhub.mjs
+
+    Args:
+        start_path: Reference path for walk-up discovery. Defaults to __file__.
+
+    Raises:
+        FileNotFoundError: With list of attempted paths when no entry found.
     """
-    # 1. Monorepo: pf/bikerack/launcher.py -> src/pf/ -> src/ -> pennyfarthing-dist/ -> pennyfarthing/
-    framework_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
-    monorepo_entry = framework_dir / "packages" / "core" / "dist" / "server" / "entry.js"
-    if monorepo_entry.is_file():
-        return monorepo_entry
-
-    # 2. Bundled pip package (standalone install without monorepo)
-    bundled = Path(__file__).resolve().parent.parent / "_dist" / "server" / "wheelhub.mjs"
-    if bundled.is_file():
-        return bundled
-
-    raise FileNotFoundError(
-        "Could not find WheelHub entry point.\n"
-        "Expected: packages/core/dist/server/entry.js (monorepo) or pf/_dist/server/wheelhub.mjs (pip)"
-    )
+    raise NotImplementedError("136-2: multi-strategy WheelHub discovery pending implementation")
 
 
 def _wheelhub_log_path(project_dir: Path) -> Path:
