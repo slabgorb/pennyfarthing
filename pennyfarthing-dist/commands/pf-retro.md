@@ -16,6 +16,9 @@ cat sprint/current-sprint.yaml
 # Check completed work
 ls -la sprint/archive/
 
+# Load aggregated delivery findings from the sprint
+pf sprint findings
+
 # Check any session handoffs
 cat .session/{STORY_ID}-session.md 2>/dev/null || echo "No active work"
 ```

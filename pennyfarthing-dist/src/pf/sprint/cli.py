@@ -2224,6 +2224,11 @@ from pf.sprint.validate_cmd import validate_command  # noqa: E402
 
 sprint.add_command(validate_command)
 
+# Register findings command from findings_cmd module
+from pf.sprint.findings_cmd import findings_command  # noqa: E402
+
+sprint.add_command(findings_command)
+
 
 # For backwards compatibility when running as module
 def main(args: list[str] | None = None) -> int:
