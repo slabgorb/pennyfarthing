@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.0.0. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.1.0. ES module monorepo (pnpm, TypeScript, Node >=18).
 
 <critical>
 ## Implementation Rules
@@ -50,9 +50,7 @@ pnpm run lint      # ESLint
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
 | `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
 | `packages/cyclist/` | Visual terminal (React 19, Tailwind v4, dockview) — thin wrapper over core |
-| `packages/electron/` | Electron shell (legacy, minimal use) |
-| `packages/benchmark/` | Persona benchmarking (JobFair) |
-| `packages/themes-*/` | Theme packages (comedy, literary, mythology-fantasy, prestige-tv, realistic, scifi, superheroes) |
+| `packages/shared/` | Shared types and utilities |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 
@@ -79,7 +77,7 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Subagents** (Task tool): `sm-setup`, `sm-finish`, `sm-file-summary`, `testing-runner`, `reviewer-preflight`, `tandem-backseat`
 
-**Handoff:** Agent writes assessment → `pf.sh handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
+**Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
 **Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (panel viewer)
 </info>
