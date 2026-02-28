@@ -78,6 +78,8 @@ class DebugPanel(BasePanel):
         self.last_results: Any = None
         self._loading_message: str = ""
         self._error_message: str = ""
+        # Story 136-5: Loading timeout (seconds) before showing error
+        self._loading_timeout: int = 10
 
     def on_mount(self) -> None:
         """Subscribe to both context and token-stats channels."""
@@ -232,9 +234,16 @@ class DebugPanel(BasePanel):
 
         ctx = self._context_data
         if ctx:
-            parts.append(_render_context(ctx))
-            if len(self._sparkline_history) >= 2:
-                parts.append(_render_sparkline(self._sparkline_history))
+            # Story 136-5: Check for error in context channel data
+            error = ctx.get("error")
+            if error and isinstance(error, str):
+                error_text = Text()
+                error_text.append(f"Context error: {error}", style="bold red")
+                parts.append(error_text)
+            else:
+                parts.append(_render_context(ctx))
+                if len(self._sparkline_history) >= 2:
+                    parts.append(_render_sparkline(self._sparkline_history))
         elif not self._token_stats:
             return Text("No context data", style="dim italic")
 

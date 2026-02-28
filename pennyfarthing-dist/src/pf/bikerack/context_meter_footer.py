@@ -88,6 +88,8 @@ class StatusFooter(Static):
             os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
         )
         self._story_id = _get_story_id(self._project_root)
+        # Story 136-5: Loading timeout (seconds) before showing error
+        self._loading_timeout: int = 10
 
     # -- Convenience properties kept for backward compat with tests ----------
 
@@ -191,7 +193,9 @@ class StatusFooter(Static):
         width = self.size.width if self.size else 80
 
         # Refresh story ID on each render (session may start/end)
-        self._story_id = _get_story_id(self._project_root)
+        new_story_id = _get_story_id(self._project_root)
+        if new_story_id:
+            self._story_id = new_story_id
 
         # Resolve relative cwd from pwd
         rel_cwd = ""
@@ -241,6 +245,15 @@ class StatusFooter(Static):
             bar.append("ctx ", style="dim")
             bar.append("░" * 10, style="dim")
             bar.append(" --%", style="dim")
+            return bar
+
+        # Story 136-5: Check for error in context data
+        error = self._context_data.get("error")
+        if error and isinstance(error, str):
+            bar = Text()
+            bar.append("ctx ", style="dim")
+            bar.append("[err] ", style="bold red")
+            bar.append(error[:30], style="red")
             return bar
 
         percent = self._context_data.get("percent") or 0
