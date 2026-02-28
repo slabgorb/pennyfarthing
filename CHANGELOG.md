@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.1.1] - 2026-02-28
+
+### Changed
+
+- **Gate recovery extracted to conditional guide** — moved 52-line `<gate-recovery>` procedure from SM agent to `guides/gate-recovery.md`; loads conditionally only when workflow phase gate has `recovery:` config (~512 token reduction for SM agent)
+- **Agent behavior guide trimmed** — removed duplicated tandem protocol section (now lives in dedicated guide)
+- **WheelHub discovery improvements** — pip install resolution and context API enhancements
+
+---
+
 ## [12.1.0] - 2026-02-28
 
 ### Added
@@ -2821,7 +2831,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.1...HEAD
+[12.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.0...v12.1.1
 [12.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.0.0...v12.1.0
 [12.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...v12.0.0
 [11.5.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.4.0...v11.5.0-alpha.0

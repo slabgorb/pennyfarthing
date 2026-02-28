@@ -70,10 +70,8 @@ TAG_CATEGORIES: dict[str, str] = {
     "user-title": "persona",
     "crew": "persona",
     # Shared (behavior guide)
-    "tandem-protocol": "shared",
-    "agent-exit-protocol": "shared",
-    "wrong-phase-detection": "shared",
     "info": "shared",
+    "team-mode": "shared",
 }
 
 # Top-level header → default category (for content directly under the header)
@@ -81,6 +79,8 @@ HEADER_CATEGORIES: dict[str, str] = {
     "Workflow State": "routing",
     "Sprint Context": "shared",
     "Repos Topology": "shared",
+    "Team Mode Guide": "shared",
+    "Gate Recovery Guide": "shared",
 }
 
 # Primary agents (ordered by typical workflow position)
@@ -184,6 +184,8 @@ def parse_sections(raw_output: str) -> list[Section]:
         "Agent Definition",
         "Persona:",
         "Agent Behavior Guide",
+        "Team Mode Guide",
+        "Gate Recovery Guide",
         "Sprint Context",
         "Repos Topology",
         "Agent Sidecar:",
@@ -259,6 +261,18 @@ def parse_sections(raw_output: str) -> list[Section]:
                 current_section_name = "BG: Preamble"
                 in_agent_def = False
                 in_behavior_guide = True
+            elif header_text.startswith("Team Mode Guide"):
+                current_component = "team_mode_guide"
+                current_section_category = "shared"
+                current_section_name = "Team Mode (conditional)"
+                in_agent_def = False
+                in_behavior_guide = False
+            elif header_text.startswith("Gate Recovery Guide"):
+                current_component = "gate_recovery_guide"
+                current_section_category = "shared"
+                current_section_name = "Gate Recovery (conditional)"
+                in_agent_def = False
+                in_behavior_guide = False
             elif header_text.startswith("Sprint Context"):
                 current_component = "sprint_context"
                 current_section_category = "shared"

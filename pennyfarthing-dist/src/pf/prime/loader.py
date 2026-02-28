@@ -252,6 +252,56 @@ def load_domain_docs(project_root: Path | None = None) -> list[tuple[str, str]]:
     return docs
 
 
+def load_team_mode_guide(project_root: Path | None = None) -> str | None:
+    """Load team mode guide (conditional — only when workflow phase has team config).
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Team mode guide content, or None if not found
+    """
+    root = project_root or get_project_root()
+    guide_file = root / ".pennyfarthing" / "guides" / "team-mode.md"
+
+    if guide_file.exists():
+        return guide_file.read_text()
+
+    # Fallback: pennyfarthing-dist via get_dist_root (npm context)
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        guide_file = dist_root / "guides" / "team-mode.md"
+        if guide_file.exists():
+            return guide_file.read_text()
+
+    return None
+
+
+def load_gate_recovery_guide(project_root: Path | None = None) -> str | None:
+    """Load gate recovery guide (conditional — only when phase gate has recovery config).
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Gate recovery guide content, or None if not found
+    """
+    root = project_root or get_project_root()
+    guide_file = root / ".pennyfarthing" / "guides" / "gate-recovery.md"
+
+    if guide_file.exists():
+        return guide_file.read_text()
+
+    # Fallback: pennyfarthing-dist via get_dist_root (npm context)
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        guide_file = dist_root / "guides" / "gate-recovery.md"
+        if guide_file.exists():
+            return guide_file.read_text()
+
+    return None
+
+
 def load_repos_topology(project_root: Path | None = None) -> str | None:
     """Load repos.yaml topology as formatted context for agents.
 
