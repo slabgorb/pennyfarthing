@@ -80,3 +80,7 @@ def main() -> None:
 
     from pf.cli import main as cli_main
     cli_main()
+
+
+if __name__ == "__main__":
+    main()
