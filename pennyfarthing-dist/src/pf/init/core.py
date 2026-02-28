@@ -263,6 +263,9 @@ def init_project(
     portrait_result = _install_portraits(dist_root)
     portraits_linked = _symlink_portraits(target_dir)
 
+    # --- Install WheelHub server bundle ---
+    _install_wheelhub(target_dir, dist_root)
+
     # --- Install tmux config samples and launcher ---
     tmux_installed = _install_tmux_files(target_dir, dist_root)
 
@@ -386,6 +389,31 @@ def _clean_stale_content(src: Path, dst: Path) -> None:
                 _clean_stale_content(src_item, item)
         elif item.is_file() and not (src / item.name).exists():
             item.unlink()
+
+
+def _install_wheelhub(target_dir: Path, dist_root: Path) -> None:
+    """Install the bundled WheelHub server to .pennyfarthing/server/.
+
+    WheelHub is a self-contained ~1.8MB Node.js bundle (express, ws, yaml
+    all baked in). Consumer projects need it for TUI/GUI but it's not in
+    _CONTENT_DIRS since it lives in _dist/server/.
+    """
+    # Check dist_root first (dev environment)
+    source = dist_root / "server" / "wheelhub.mjs"
+    if not source.is_file():
+        # Fall back to pip-installed _dist
+        try:
+            from pf._dist import get_root, is_populated
+
+            if is_populated():
+                source = get_root() / "server" / "wheelhub.mjs"
+        except (ImportError, ModuleNotFoundError):
+            pass
+    if not source.is_file():
+        return
+    dest_dir = target_dir / ".pennyfarthing" / "server"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, dest_dir / "wheelhub.mjs")
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
