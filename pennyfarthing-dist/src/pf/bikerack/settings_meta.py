@@ -68,7 +68,7 @@ _SPECS: list[SettingSpec] = [
         key="portrait_size",
         label="Portrait Size",
         widget_type="select",
-        group="General",
+        group="TUI",
         options=[
             ("Auto", "auto"),
             ("Large", "large"),
@@ -77,6 +77,14 @@ _SPECS: list[SettingSpec] = [
             ("Off", "off"),
         ],
         description="Agent portrait display size",
+    ),
+    SettingSpec(
+        key="portrait_position",
+        label="Portrait Position",
+        widget_type="select",
+        group="TUI",
+        options=[("Left", "left"), ("Right", "right")],
+        description="Agent portrait side (p to toggle)",
     ),
     SettingSpec(
         key="workflow.bell_mode",
@@ -127,8 +135,15 @@ _SPECS: list[SettingSpec] = [
         key="workflow.tui_statusbar",
         label="TUI Statusbar",
         widget_type="switch",
-        group="Workflow",
+        group="TUI",
         description="Show statusbar in TUI",
+    ),
+    SettingSpec(
+        key="tui.toasts",
+        label="Toast Notifications",
+        widget_type="switch",
+        group="TUI",
+        description="Show action feedback toasts (t to toggle)",
     ),
     SettingSpec(
         key="display.colorPreset",

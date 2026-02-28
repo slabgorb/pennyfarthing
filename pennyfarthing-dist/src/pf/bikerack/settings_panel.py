@@ -11,6 +11,7 @@ from typing import Any
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
+from textual.message import Message
 from textual.timer import Timer
 from textual.widget import Widget
 from textual.widgets import Collapsible, Input, Label, Select, Static, Switch
@@ -68,6 +69,14 @@ SettingsPanel #settings-status {
 
 class SettingsPanel(Widget):
     """Settings editor panel with native Textual form widgets."""
+
+    class SettingChanged(Message):
+        """Posted when a setting value changes so the app can react."""
+
+        def __init__(self, key: str, value: Any) -> None:
+            super().__init__()
+            self.key = key
+            self.value = value
 
     DEFAULT_CSS = SETTINGS_CSS
 
@@ -164,6 +173,18 @@ class SettingsPanel(Widget):
             pass
         self._status_timer = None
 
+    def _save_and_notify(self, spec: SettingSpec, value: Any, coerce: bool = False) -> None:
+        """Save a setting and post a SettingChanged message."""
+        try:
+            if coerce:
+                set_setting(spec.key, value)
+            else:
+                set_setting_typed(spec.key, value)
+            self._show_status(f"[green]Saved {spec.key}[/green]")
+            self.post_message(self.SettingChanged(spec.key, value))
+        except Exception as exc:
+            self._show_status(f"[red]Error: {exc}[/red]")
+
     def on_switch_changed(self, event: Switch.Changed) -> None:
         """Handle toggle switch changes."""
         if event.switch.id is None:
@@ -171,11 +192,7 @@ class SettingsPanel(Widget):
         spec = self._find_spec_for_widget(event.switch.id)
         if spec is None:
             return
-        try:
-            set_setting_typed(spec.key, event.value)
-            self._show_status(f"[green]Saved {spec.key}[/green]")
-        except Exception as exc:
-            self._show_status(f"[red]Error: {exc}[/red]")
+        self._save_and_notify(spec, event.value)
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Handle dropdown selection changes."""
@@ -184,11 +201,7 @@ class SettingsPanel(Widget):
         spec = self._find_spec_for_widget(event.select.id)
         if spec is None:
             return
-        try:
-            set_setting_typed(spec.key, event.value)
-            self._show_status(f"[green]Saved {spec.key}[/green]")
-        except Exception as exc:
-            self._show_status(f"[red]Error: {exc}[/red]")
+        self._save_and_notify(spec, event.value)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle text input submission (Enter key)."""
@@ -197,8 +210,4 @@ class SettingsPanel(Widget):
         spec = self._find_spec_for_widget(event.input.id)
         if spec is None:
             return
-        try:
-            set_setting(spec.key, event.value)
-            self._show_status(f"[green]Saved {spec.key}[/green]")
-        except Exception as exc:
-            self._show_status(f"[red]Error: {exc}[/red]")
+        self._save_and_notify(spec, event.value, coerce=True)

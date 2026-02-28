@@ -32,6 +32,7 @@ from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel
 from pf.bikerack.git_panel import GitPanel
 from pf.bikerack.progress_panel import ProgressPanel
+from pf.bikerack.settings_panel import SettingsPanel
 from pf.bikerack.sprint_panel import SprintPanel
 from pf.bikerack.ws_client import ConnectionState, WheelHubClient
 
@@ -80,6 +81,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("audit-log", "Audit Log"),
     ("debug", "Debug"),
     ("progress", "Progress"),
+    ("settings", "Settings"),
 ]
 
 # Human-readable display names for panels (full set for external focus messages)
@@ -576,7 +578,11 @@ class BikeRackApp(App):
         self._active_split_pane: str = "left"
         self._split_left_key: str = "sprint"
         self._split_right_key: str = "diffs"
-        self._toasts_enabled: bool = False
+        try:
+            from pf.settings.settings import get_setting
+            self._toasts_enabled: bool = bool(get_setting("tui.toasts"))
+        except Exception:
+            self._toasts_enabled: bool = False
 
     def _build_layout_regions(self) -> list[str]:
         """Return the ordered list of region names to render.
@@ -618,6 +624,7 @@ class BikeRackApp(App):
                     yield AuditLogPanel(client=self._client, id="panel-audit-log")
                     yield DebugPanel(client=self._client, id="panel-debug")
                     yield ProgressPanel(client=self._client, id="panel-progress")
+                    yield SettingsPanel(id="panel-settings")
                 with Horizontal(id="split-container"):
                     yield VerticalScroll(id="split-left")
                     yield VerticalScroll(id="split-right")
@@ -666,6 +673,11 @@ class BikeRackApp(App):
     def action_toggle_toasts(self) -> None:
         """Toggle toast notifications on/off."""
         self._toasts_enabled = not self._toasts_enabled
+        try:
+            from pf.settings.settings import set_setting_typed
+            set_setting_typed("tui.toasts", self._toasts_enabled)
+        except Exception:
+            pass
         # Always show this one so user knows the state
         self.notify(
             f"Toasts {'on' if self._toasts_enabled else 'off'}",
@@ -895,6 +907,38 @@ class BikeRackApp(App):
             self._toast(f"Portrait size: {new_size}")
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # Live settings updates
+    # ------------------------------------------------------------------
+
+    def on_settings_panel_setting_changed(
+        self, event: SettingsPanel.SettingChanged
+    ) -> None:
+        """Apply setting changes immediately without restart."""
+        key, value = event.key, event.value
+        try:
+            header = self.query_one("#agent-header", AgentHeader)
+        except Exception:
+            header = None
+
+        if key == "portrait_size" and header is not None:
+            header._portrait_size = str(value)
+            header._last_effective_size = None
+            header._current_portrait = None
+            header._render_header()
+        elif key == "portrait_position" and header is not None:
+            header._portrait_position = str(value)
+            header._current_portrait = None
+            header._render_header()
+        elif key == "tui.toasts":
+            self._toasts_enabled = bool(value)
+        elif key == "workflow.tui_statusbar":
+            try:
+                footer = self.query_one(StatusFooter)
+                footer.display = bool(value)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Split-pane layout (Story 110-4)
