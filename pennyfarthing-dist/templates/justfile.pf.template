@@ -61,9 +61,12 @@ claude:
     exec claude
 
 # Launch tmux dev layout (Claude + TUI in split panes)
-tmux-dev:
-    exec "{{root}}/tmux-dev"
+# Usage: just tmux-dev [layout] [split]
+#   layout: bottom (default), top, right, left — where to place the TUI
+#   split:  TUI pane size % (default: 50 for top/bottom, 35 for right/left)
+tmux-dev layout="bottom" split="":
+    exec "{{root}}/tmux-dev" "{{layout}}" {{split}}
 
 # Launch tmux dev layout for a specific directory
-tmux dir=invocation_directory():
-    "{{root}}/tmux-dev" "{{dir}}"
+tmux layout="bottom" split="" dir=invocation_directory():
+    "{{root}}/tmux-dev" "{{layout}}" {{split}} "{{dir}}"
