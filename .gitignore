@@ -71,6 +71,7 @@ uv.lock
 # Pennyfarthing runtime
 .session/*
 !.session/.gitkeep
+pennyfarthing-dist/src/.session/
 .claude/settings.local.json
 .claude/persona-config.local.yaml
 .pennyfarthing/config.local.yaml
