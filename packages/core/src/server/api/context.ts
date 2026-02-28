@@ -209,5 +209,47 @@ export function createContextRouter(getProjectDir: () => string): Router {
  * paths checked (for diagnostics and testing).
  */
 export function resolveContextScript(projectDir: string): { path: string | null; isPython: boolean; paths: string[] } {
-  throw new Error('Not implemented: 136-2 — resolveContextScript pending implementation');
+  const paths: string[] = [];
+
+  // Python candidates (preferred)
+  const pythonCandidates = [
+    join(projectDir, 'pennyfarthing-dist', 'pf', 'context.py'),
+    join(projectDir, '.pennyfarthing', 'pf', 'context.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context.py'),
+  ];
+
+  // Pip-installed / site-packages candidates
+  const distRoot = resolvePennyfarthingDist();
+  if (distRoot) {
+    pythonCandidates.push(join(distRoot, 'pf', 'context.py'));
+    pythonCandidates.push(join(distRoot, 'src', 'pf', 'context.py'));
+  }
+
+  // Always include pip site-packages pattern for diagnostics
+  pythonCandidates.push(join('site-packages', 'pf', 'context.py'));
+
+  for (const p of pythonCandidates) {
+    paths.push(p);
+    if (existsSync(p)) {
+      return { path: p, isPython: true, paths };
+    }
+  }
+
+  // Shell fallback candidates
+  const shellCandidates = [
+    join(projectDir, 'pennyfarthing-dist', 'scripts', 'core', 'check-context.sh'),
+    join(projectDir, '.pennyfarthing', 'scripts', 'core', 'check-context.sh'),
+  ];
+  if (distRoot) {
+    shellCandidates.push(join(distRoot, 'scripts', 'core', 'check-context.sh'));
+  }
+
+  for (const p of shellCandidates) {
+    paths.push(p);
+    if (existsSync(p)) {
+      return { path: p, isPython: false, paths };
+    }
+  }
+
+  return { path: null, isPython: false, paths };
 }

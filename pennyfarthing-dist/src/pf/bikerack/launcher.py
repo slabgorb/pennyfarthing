@@ -91,7 +91,60 @@ def _find_wheelhub_entry(start_path: Path | None = None) -> Path:
     Raises:
         FileNotFoundError: With list of attempted paths when no entry found.
     """
-    raise NotImplementedError("136-2: multi-strategy WheelHub discovery pending implementation")
+    if start_path is None:
+        start_path = Path(__file__)
+
+    attempted: list[str] = []
+
+    # Strategy 1: PENNYFARTHING_DIST env var override
+    env_dist = os.environ.get("PENNYFARTHING_DIST")
+    if env_dist:
+        env_dist_path = Path(env_dist)
+        if env_dist_path.exists():
+            # Env var points to pennyfarthing-dist/, parent is the repo root
+            repo_root = env_dist_path.parent
+            entry = repo_root / "packages" / "core" / "dist" / "server" / "entry.js"
+            if entry.is_file():
+                return entry
+            attempted.append(str(entry))
+            # Also check for pip-style bundled wheelhub.mjs relative to env var
+            wheelhub = env_dist_path / "server" / "wheelhub.mjs"
+            if wheelhub.is_file():
+                return wheelhub
+            attempted.append(str(wheelhub))
+
+    # Strategy 2: Monorepo walk-up from start_path
+    current = start_path.parent if start_path.is_file() else start_path
+    while True:
+        entry = current / "packages" / "core" / "dist" / "server" / "entry.js"
+        if entry.is_file():
+            return entry
+        attempted.append(str(entry))
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+
+    # Strategy 3: Pip-installed layout — find pf/ package root, check _dist/server/wheelhub.mjs
+    # Walk up from start_path to find the pf/ package directory
+    current = start_path.parent if start_path.is_file() else start_path
+    while True:
+        if current.name == "pf" or (current / "__init__.py").exists():
+            wheelhub = current / "_dist" / "server" / "wheelhub.mjs"
+            if wheelhub.is_file():
+                return wheelhub
+            attempted.append(str(wheelhub))
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+
+    raise FileNotFoundError(
+        "Could not find WheelHub entry point. Searched for:\n"
+        f"  - entry.js (monorepo): checked walk-up from {start_path}\n"
+        f"  - wheelhub.mjs (pip): checked _dist/server/ under pf package\n"
+        "Attempted paths:\n" + "\n".join(f"  {p}" for p in attempted)
+    )
 
 
 def _wheelhub_log_path(project_dir: Path) -> Path:
@@ -101,12 +154,17 @@ def _wheelhub_log_path(project_dir: Path) -> Path:
     return session_dir / "wheelhub.log"
 
 
-def start_wheelhub(project_dir: Path) -> subprocess.Popen:
+def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     """Start WheelHub server in background via BikeRack's own entry point.
 
     Logs stdout/stderr to .session/wheelhub.log for diagnostics.
+    Returns a result dict with {success: False, error: ...} if entry point not found.
     """
-    entry = _find_wheelhub_entry()
+    try:
+        entry = _find_wheelhub_entry()
+    except FileNotFoundError as exc:
+        return {"success": False, "error": str(exc)}
+
     log_path = _wheelhub_log_path(project_dir)
 
     env = os.environ.copy()

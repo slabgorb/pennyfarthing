@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync, statSync, watch, type FSWatcher 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
+import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
 
 // Electron adds resourcesPath to process; not in Node.js types
 const electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
@@ -410,5 +411,10 @@ export function watchAgentChanges(
  * Falls back to __dirname traversal only when resolution returns null.
  */
 export function resolvePackageRoot(): string {
-  throw new Error('Not implemented: 136-2 — resolvePackageRoot pending implementation');
+  const distPath = resolvePennyfarthingDist();
+  if (distPath) {
+    return dirname(distPath);
+  }
+  // Fallback to __dirname traversal when resolution returns null
+  return PACKAGE_ROOT;
 }

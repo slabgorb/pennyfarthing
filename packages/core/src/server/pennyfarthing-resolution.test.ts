@@ -58,7 +58,7 @@ describe('Story 136-2 AC3: context.py pip resolution', () => {
 
   it('resolveContextScript includes pip site-packages candidates', async () => {
     const { resolveContextScript } = await import('./api/context.js') as {
-      resolveContextScript: (projectDir: string) => { paths: string[]; found: string | null } | null;
+      resolveContextScript: (projectDir: string) => { path: string | null; isPython: boolean; paths: string[] };
     };
     const result = resolveContextScript('/tmp/nonexistent-project');
     // Even with a nonexistent project, should return the list of paths it checked
