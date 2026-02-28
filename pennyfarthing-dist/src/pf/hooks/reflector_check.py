@@ -1,11 +1,10 @@
 """
-CYCLIST reflector marker enforcement hook (Stop hook).
+DEPRECATED — Reflector-check hook removed from dispatch registry and CLI.
 
-Ensures every turn end has a CYCLIST reflector marker so the Cyclist UI
-can render appropriate buttons/actions.
+This module is no longer registered in the dispatch registry or CLI.
+It remains on disk for reference only. Safe to delete.
 
-Delegates to the existing question_reflector_check module which contains
-all detection logic and patterns.
+Original purpose: Stop hook enforcing CYCLIST reflector markers.
 """
 
 from __future__ import annotations

@@ -26,9 +26,7 @@ DISPATCHER_MANAGED_HOOKS: set[str] = {
     "context-breaker",
     "schema-validation",
     "cyclist-pretooluse",
-    "bell-mode",
     "sprint-yaml",
-    "reflector-check",
     "agent-reload",
 }
 
@@ -38,7 +36,7 @@ class HookDeclaration:
     """A single hook declaration from frontmatter."""
 
     event: str  # SessionStart, Stop, PreToolUse, PostToolUse
-    command: str  # e.g. "pf hooks reflector-check"
+    command: str  # e.g. "pf hooks schema-validation"
     matcher: str | None = None  # tool name regex, e.g. "Edit|Write"
 
 
@@ -94,8 +92,6 @@ def parse_agent_hooks(content: str) -> list[HookDeclaration]:
       PreToolUse:
         - command: pf hooks schema-validation
           matcher: Write
-      Stop:
-        - command: pf hooks reflector-check
     ---
 
     Returns:

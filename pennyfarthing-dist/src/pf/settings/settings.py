@@ -18,7 +18,6 @@ DEFAULTS: dict[str, Any] = {
     "theme": "firefly",
     "permission_mode": "standard",
     "workflow": {
-        "bell_mode": False,
         "git_monitor": False,
         "relay_mode": False,
         "permission_mode": "standard",

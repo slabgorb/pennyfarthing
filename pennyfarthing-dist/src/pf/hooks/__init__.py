@@ -139,7 +139,6 @@ class CyclistSettings:
 
     permission_mode: str = "manual"  # plan, manual, accept
     relay_mode: bool = False
-    bell_mode: bool = False
     git_monitor: bool = False
     statusbar: bool = True
     theme: str | None = None
@@ -205,10 +204,6 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
         elif workflow.get("auto_handoff") is True:
             settings.relay_mode = True
 
-    # Handle bell_mode
-    if "bell_mode" in workflow and isinstance(workflow["bell_mode"], bool):
-        settings.bell_mode = workflow["bell_mode"]
-
     # Handle git_monitor
     if "git_monitor" in workflow and isinstance(workflow["git_monitor"], bool):
         settings.git_monitor = workflow["git_monitor"]
@@ -235,17 +230,6 @@ def is_relay_mode_enabled(project_root: Path | None = None) -> bool:
     """
     return load_settings(project_root).relay_mode
 
-
-def is_bell_mode_enabled(project_root: Path | None = None) -> bool:
-    """Check if bell mode is enabled.
-
-    Args:
-        project_root: Project root directory (auto-detected if not provided)
-
-    Returns:
-        True if bell mode is enabled
-    """
-    return load_settings(project_root).bell_mode
 
 
 # =============================================================================

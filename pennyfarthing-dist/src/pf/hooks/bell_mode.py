@@ -1,18 +1,10 @@
 """
-PostToolUse Hook — Bell Mode + Tandem Injection.
+DEPRECATED — Bell mode hook removed from dispatch registry and CLI.
 
-Called by Claude Code after each tool execution. Handles two independent
-injection systems:
+This module is no longer registered in the dispatch registry or CLI.
+It remains on disk for reference only. Safe to delete.
 
-1. Bell queue (Cyclist only) — injects queued user messages when Cyclist
-   is running and bell_mode is enabled. In CLI sessions this is a no-op.
-2. Tandem observations (always active) — injects backseat agent observations
-   when tandem observation files exist. No configuration required.
-
-Bell queue takes precedence: if a queued message exists, tandem is
-deferred to the next hook invocation.
-
-Consolidates bellmode_hook.py into the hooks subpackage.
+Original purpose: PostToolUse hook for bell queue + tandem injection.
 """
 
 from __future__ import annotations

@@ -293,6 +293,9 @@ def init_project(
             settings_path.write_text(json.dumps(merged, indent=2) + "\n")
             hooks_upgraded = True
 
+    # --- Clean parked Cyclist hooks from settings and config ---
+    parked_cleaned = _clean_parked_hooks(settings_path, target_dir)
+
     # --- Write init manifest ---
     _write_manifest(target_dir, commands_copied, skills_copied)
 
@@ -551,6 +554,72 @@ def _upgrade_hooks(settings_path: Path) -> bool:
 
     if changed:
         settings_path.write_text(json.dumps(data, indent=2) + "\n")
+
+    return changed
+
+
+# Hooks that are parked (Cyclist features, not active).
+# These are stripped from settings.local.json and config.local.yaml
+# during init/upgrade so existing installs don't fire dead hooks.
+_PARKED_HOOKS: set[str] = {"bell-mode", "reflector-check"}
+
+
+def _clean_parked_hooks(settings_path: Path, target_dir: Path) -> bool:
+    """Remove parked hook entries from settings.local.json and config.
+
+    Strips individual hook entries for Cyclist features (bell-mode,
+    reflector-check) that are no longer active. Also removes bell_mode
+    from config.local.yaml workflow section.
+
+    Returns:
+        True if any changes were made.
+    """
+    changed = False
+
+    # --- Strip from settings.local.json ---
+    try:
+        data = json.loads(settings_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        data = None
+
+    if data:
+        hooks = data.get("hooks", {})
+        for event_type in list(hooks.keys()):
+            entries = hooks[event_type]
+            if not isinstance(entries, list):
+                continue
+            cleaned = []
+            for entry in entries:
+                hook_list = entry.get("hooks", [])
+                is_parked = any(
+                    any(parked in h.get("command", "") for parked in _PARKED_HOOKS)
+                    for h in hook_list
+                    if isinstance(h, dict)
+                )
+                if is_parked:
+                    changed = True
+                else:
+                    cleaned.append(entry)
+            hooks[event_type] = cleaned
+        if changed:
+            data["hooks"] = hooks
+            settings_path.write_text(json.dumps(data, indent=2) + "\n")
+
+    # --- Strip bell_mode from config.local.yaml ---
+    config_path = target_dir / ".pennyfarthing" / "config.local.yaml"
+    if config_path.is_file():
+        try:
+            import yaml
+
+            config = yaml.safe_load(config_path.read_text()) or {}
+            workflow = config.get("workflow", {})
+            if isinstance(workflow, dict) and "bell_mode" in workflow:
+                del workflow["bell_mode"]
+                with open(config_path, "w") as f:
+                    yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+                changed = True
+        except Exception:
+            pass
 
     return changed
 

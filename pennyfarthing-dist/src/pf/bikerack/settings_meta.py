@@ -87,13 +87,6 @@ _SPECS: list[SettingSpec] = [
         description="Agent portrait side (p to toggle)",
     ),
     SettingSpec(
-        key="workflow.bell_mode",
-        label="Bell Mode",
-        widget_type="switch",
-        group="Workflow",
-        description="Bell notifications in workflows",
-    ),
-    SettingSpec(
         key="workflow.git_monitor",
         label="Git Monitor",
         widget_type="switch",

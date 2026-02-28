@@ -24,7 +24,6 @@ interface Settings {
   };
   workflow?: {
     permission_mode?: string;
-    bell_mode?: boolean;
     relay_mode?: boolean;
     git_monitor?: boolean;
     handoff_mode?: string;
@@ -41,7 +40,6 @@ const DEFAULTS: Record<string, string> = {
   'display.fonts.uiFontSize': 'base',
   'display.fonts.codeFont': 'jetbrains-mono',
   'display.fonts.codeFontSize': 'base',
-  'workflow.bell_mode': 'false',
   'workflow.relay_mode': 'false',
   'workflow.permission_mode': 'plan',
   'workflow.git_monitor': 'false',
@@ -140,7 +138,6 @@ export function SettingsPanel(): React.ReactElement {
 
       <section className="settings-section" style={sectionStyle}>
         <h4>Workflow</h4>
-        <SettingRow label="Bell Mode" dotPath="workflow.bell_mode" value={settings.workflow?.bell_mode} />
         <SettingRow label="Relay Mode" dotPath="workflow.relay_mode" value={settings.workflow?.relay_mode} />
         <SettingRow label="Permission Mode" dotPath="workflow.permission_mode" value={settings.workflow?.permission_mode} />
         <SettingRow label="Git Monitor" dotPath="workflow.git_monitor" value={settings.workflow?.git_monitor} />

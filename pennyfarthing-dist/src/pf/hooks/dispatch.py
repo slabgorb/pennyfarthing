@@ -26,11 +26,9 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("cyclist-pretooluse", None, "pf.hooks.cyclist_pretooluse"),
     ],
     "PostToolUse": [
-        ("bell-mode", None, "pf.hooks.bell_mode"),
         ("sprint-yaml", "Edit|Write", "pf.hooks.sprint_yaml_validation"),
     ],
     "Stop": [
-        ("reflector-check", None, "pf.hooks.reflector_check"),
         ("session-stop", None, "pf.hooks.session_stop"),
     ],
     "SessionStart": [

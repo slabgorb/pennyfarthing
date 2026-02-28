@@ -6,7 +6,6 @@ JSON/text to stdout. Exit codes: 0=allow, 2=block (PreToolUse).
 
 Usage in settings.local.json:
   "command": "pf hooks session-start"
-  "command": "pf hooks bell-mode"
   "command": "pf hooks statusline"
 """
 
@@ -40,12 +39,6 @@ def session_stop():
     from pf.hooks.session_stop import main
     main()
 
-
-@hooks.command("reflector-check")
-def reflector_check():
-    """Stop hook — enforce CYCLIST reflector markers on every turn."""
-    from pf.hooks.reflector_check import main
-    main()
 
 
 @hooks.command("pre-edit-check")
@@ -82,12 +75,6 @@ def schema_validation():
     from pf.hooks.schema_validation import main
     main()
 
-
-@hooks.command("bell-mode")
-def bell_mode():
-    """PostToolUse hook — bell queue + tandem observation injection."""
-    from pf.hooks.bell_mode import main
-    main()
 
 
 @hooks.command("sprint-yaml")
