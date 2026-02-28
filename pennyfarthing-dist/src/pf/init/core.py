@@ -542,8 +542,10 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
       location is .claude/settings.local.json
 
     node_modules-era (any remaining @pennyfarthing packages):
-    - node_modules/@pennyfarthing/core/ — npm package, now replaced by pipx
+    - node_modules/@pennyfarthing/{core,shared,cyclist}/ — npm packages
     - node_modules/pennyfarthing/ — older single-package layout
+    - node_modules/.pnpm/@pennyfarthing* — pnpm store cache entries
+    - node_modules/.bin/pennyfarthing — broken symlink to old npm package
     """
     pf_dir = target_dir / ".pennyfarthing"
     stale_files = [
@@ -570,15 +572,32 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
         if path.is_dir():
             shutil.rmtree(path)
 
-    # Remove stale node_modules/@pennyfarthing packages if present
+    # Remove stale node_modules/@pennyfarthing packages and pnpm cache if present
     nm = target_dir / "node_modules"
     if nm.is_dir():
-        for pkg in ["@pennyfarthing/core", "@pennyfarthing/shared", "pennyfarthing"]:
+        for pkg in ["@pennyfarthing/core", "@pennyfarthing/shared",
+                     "@pennyfarthing/cyclist", "pennyfarthing"]:
             pkg_path = nm / pkg
             if pkg_path.is_symlink():
                 pkg_path.unlink()
             elif pkg_path.is_dir():
                 shutil.rmtree(pkg_path)
+        # Clean @pennyfarthing entries from pnpm store cache
+        pnpm_dir = nm / ".pnpm"
+        if pnpm_dir.is_dir():
+            for entry in pnpm_dir.iterdir():
+                if entry.name.startswith("@pennyfarthing"):
+                    if entry.is_dir():
+                        shutil.rmtree(entry)
+                    elif entry.is_symlink():
+                        entry.unlink()
+        # Remove broken .bin symlinks pointing to @pennyfarthing
+        bin_dir = nm / ".bin"
+        if bin_dir.is_dir():
+            for link in bin_dir.iterdir():
+                if link.is_symlink() and "pennyfarthing" in str(link.name):
+                    if not link.resolve().exists():
+                        link.unlink()
 
     # Remove @pennyfarthing/* deps from package.json if present
     _clean_package_json(target_dir)
