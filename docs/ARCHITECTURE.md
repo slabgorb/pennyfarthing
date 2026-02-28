@@ -1,5 +1,7 @@
 # Pennyfarthing Architecture
 
+**Version:** 12.1.0
+
 This document describes the system design and architectural principles of Pennyfarthing.
 
 ## Core Principles
@@ -40,22 +42,19 @@ Context is loaded only when needed:
 
 ```
 pennyfarthing/
-├── pennyfarthing-dist/             # Source files (copied on install)
-│   ├── agents/                     # 19 agent definitions (includes subagents)
-│   ├── commands/                   # 46 slash commands
+├── pennyfarthing-dist/             # Source files (source of truth)
+│   ├── agents/                     # 11 main agents + 6 official subagents
+│   ├── commands/                   # Slash commands
 │   ├── guides/                     # Behavior guides
-│   ├── skills/                     # 23 knowledge domains
-│   ├── personas/                   # 102 theme files
-│   └── workflows/                  # 19 workflow definitions
+│   ├── skills/                     # Knowledge domains
+│   ├── personas/                   # Theme files
+│   ├── workflows/                  # Workflow definitions
+│   └── src/pf/                     # Python CLI package (hooks, jira, sprint, story, prime, handoff)
 │
-├── src/                            # NPM CLI source
-│
-├── scripts/                        # Utility scripts
-│   ├── agent-session.sh
-│   └── utils/                      # Reusable utilities
-│       ├── retry.sh                # Exponential backoff
-│       ├── checkpoint.sh           # Session state persistence
-│       └── repo-scan.sh            # Cross-repo git status
+├── packages/
+│   ├── core/                       # @pennyfarthing/core — CLI, WheelHub server, API routes
+│   ├── cyclist/                    # Visual terminal (React 19, Tailwind v4, dockview)
+│   └── shared/                     # Shared types and utilities
 │
 └── tests/                          # Framework tests
 
@@ -136,33 +135,31 @@ Pennyfarthing's BikeLane system provides flexible workflow orchestration through
     |
     v
 SM (Story Setup)
-    |-- Helper: Status Check
-    |-- Helper: Research Backlog
-    |-- I: Select Story & Write Context
-    |-- Helper: File Summary
-    |-- Helper: Story Setup
+    |-- Subagent: sm-setup (MODE=research)
+    |-- Subagent: sm-setup (MODE=setup)
+    |-- Subagent: sm-file-summary
+    |-- Exit: pf handoff → TEA
     |
     v
 TEA (Write Tests - RED)
-    |-- Helper: Run Tests
-    |-- Helper: Handoff
+    |-- Subagent: testing-runner
+    |-- Exit: pf handoff resolve-gate → complete-phase → marker → Dev
     |
     v
 Dev (Implement - GREEN)
-    |-- Helper: Run Tests
-    |-- I: Write Code
-    |-- Helper: Handoff
+    |-- Subagent: testing-runner
+    |-- Exit: pf handoff resolve-gate → complete-phase → marker → Reviewer
     |
     v
 Reviewer (Adversarial Review)
-    |-- Helper: Preflight
-    |-- I: Review Code
-    |-- Helper: Approve/Reject
+    |-- Subagent: reviewer-preflight
+    |-- Subagent: testing-runner
+    |-- Exit: pf handoff → SM (approve) or Dev (reject)
     |
     v
 SM (Finish - Cleanup)
-    |-- Helper: Bookkeeping
-    |-- Helper: Execution
+    |-- Subagent: sm-finish (PHASE=preflight)
+    |-- Subagent: sm-finish (PHASE=execute)
 ```
 
 ### Workflow Definitions
@@ -178,119 +175,114 @@ The workflow system enables:
 
 ## Official Subagent System
 
-Pennyfarthing includes 13 official subagents - Haiku-based coordinators that manage state transitions. They use Claude Code's official agent format and are invoked via `Task tool` with `subagent_type: "{name}"`.
+Pennyfarthing includes 6 official subagents — Haiku-based coordinators for mechanical tasks. They are invoked via the Task tool with `subagent_type: "general-purpose"` and `model: "haiku"`.
 
-Error handling is centralized in the calling agent (see `tactical-agent-behavior.md`). Subagents return structured results with `status: success|blocked`.
+Error handling is centralized in the calling agent (see `guides/agent-behavior.md`). Subagents return structured results with `status: success|blocked`.
 
-### SM Subagents
-
-| Subagent | Purpose |
-|----------|---------|
-| `workflow-status-check` | Detect workflow state |
-| `sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
-| `sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
-| `sm-file-summary` | Summarize file changes |
-| `sm-handoff` | Handoff bookkeeping when SM work done |
-
-### TEA Subagents
-
-| Subagent | Purpose |
-|----------|---------|
-| `testing-runner` | Execute tests, report results |
-| `tea-handoff` | Update session after tests (RED) |
-
-### Dev Subagents
-
-| Subagent | Purpose |
-|----------|---------|
-| `testing-runner` | Verify tests pass |
-| `dev-handoff` | Update session after PR (GREEN) |
-
-### Reviewer Subagents
-
-| Subagent | Purpose |
-|----------|---------|
-| `testing-runner` | Run tests |
-| `reviewer-preflight` | Gather review data |
-| `reviewer-handoff-approve` | Approve and route to SM |
-| `reviewer-handoff-reject` | Reject and route to Dev |
+| Subagent | Purpose | Used By |
+|----------|---------|---------|
+| `sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) | SM |
+| `sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) | SM |
+| `sm-file-summary` | Summarize file changes for session log | SM |
+| `testing-runner` | Execute tests and report results | TEA, Dev, Reviewer |
+| `reviewer-preflight` | Gather code review data | Reviewer |
+| `tandem-backseat` | Background observer for tandem mode | All agents |
 
 ## Context Loading Strategy
 
-### Strategic Agents
+Context loading is managed by the **Prime** system — a unified agent activation mechanism that assembles identity, workflow state, session context, and behavioral guides into a single payload before the agent begins working.
 
-Load full project context:
-```yaml
-On Activation:
-  1. sprint/current-sprint.yaml   # Full sprint
-  2. API/.claude/context.md       # API context
-  3. UI/.claude/context.md        # UI context
-  4. .session/{story-id}-session.md     # Active work
-```
+### Prime Tiers
 
-**Budget:** ~500-800 lines
+Prime selects a context tier based on session state to manage token overhead:
 
-### Tactical Agents
+| Tier | ~Tokens | When Used |
+|------|---------|-----------|
+| **FULL** | ~4000 | First turn of a new session (no prior agent) |
+| **REFRESH** | ~600 | Resumed session, same agent, turns 0-3 |
+| **HANDOFF** | ~700 | Resumed session, different agent |
+| **MINIMAL** | ~200 | Deep conversation (turn > 3), same agent |
 
-Load focused context:
-```yaml
-On Activation:
-  1. sprint/current-sprint.yaml   # Story section only
-  2. .session/{story-id}-session.md     # Active work
-  3. Target repo context          # Based on story
-```
+### Priority Order
 
-**Budget:** ~450-600 lines
+Prime outputs context in priority order (highest attention first):
+1. Workflow State (routing decision)
+2. Agent Definition (identity)
+3. Persona (character voice)
+4. Behavior Guide (shared protocols)
+5. Sprint Context
+6. Session Context (story state)
+7. Sidecars (patterns/gotchas/decisions)
 
-### Context Budget Breakdown
+### Agent Context Scope
 
-**Strategic Agent (PM):**
-```
-pm.md:                    200 lines
-sprint-status.yaml:       150 lines
-API/context:              30 lines
-UI/context:               30 lines
-epics.md (summary):       100 lines
-active work:              50 lines
-----------------------------
-Total:                    560 lines
-```
+**Strategic Agents** (PM, Orchestrator, Architect) load broad project context:
+- Full sprint status
+- Both API and UI contexts
+- Epic definitions
+- Active work
+- **Budget:** ~500-800 lines
 
-**Tactical Agent (Dev):**
-```
-dev.md:                   300 lines
-sprint-status (story):    50 lines
-API/context:              30 lines
-active work:              50 lines
-----------------------------
-Total:                    430 lines
+**Tactical Agents** (SM, TEA, Dev, Reviewer) load focused context:
+- Story section of sprint status only
+- Active session file
+- Target repo context (based on story)
+- **Budget:** ~450-600 lines
+
+### Invocation
+
+```bash
+# Via pf CLI (used by agent commands)
+pf agent start "<agent>" --quiet
+
+# TypeScript API (used by Cyclist)
+getPrimeContext(agentName, projectDir)
+getPrimeContextWithTier(agentName, projectDir, tier)
 ```
 
 ## Session Files
 
 ### `.session/{story-id}-session.md`
 
-Active work session context:
-```markdown
-# Current Work Session
+Session files use XML-tagged markdown. This structured format enables reliable machine parsing by agents and scripts while remaining human-readable.
 
-## Story
-- **ID:** PROJ-123
-- **Title:** Implement user authentication
-- **Repos:** API, UI
+```xml
+<session story="PROJ-123" workflow="tdd">
+  <meta>
+    <jira>PROJ-123</jira>
+    <epic>PROJ-100</epic>
+    <points>3</points>
+    <started>2026-01-22</started>
+  </meta>
 
-## Progress
-- [x] SM: Story setup complete
-- [x] TEA: Tests written (RED)
-- [ ] Dev: Implementation
-- [ ] Reviewer: Code review
+  <status phase="green" next-agent="reviewer" handoff-ready="false"/>
 
-## Context
-[Story details, acceptance criteria]
+  <acceptance-criteria>
+    <ac id="1" status="done">User can log in with valid credentials</ac>
+    <ac id="2" status="in-progress">Invalid credentials show error message</ac>
+    <ac id="3" status="pending">Session persists across page refresh</ac>
+  </acceptance-criteria>
 
-## Notes
-[Progress notes, decisions made]
+  <context>
+    Implementing authentication feature.
+    Key files: src/auth/login.ts, src/auth/session.ts
+  </context>
+
+  <work-log>
+    <entry agent="sm" date="2026-01-22">
+      Story setup complete. Branch created, Jira claimed.
+    </entry>
+    <entry agent="tea" date="2026-01-22" phase="red">
+      Wrote failing tests for all 3 ACs. All verified RED.
+    </entry>
+    <entry agent="dev" date="2026-01-22" phase="green">
+      Implementing login handler and session management.
+    </entry>
+  </work-log>
+</session>
 ```
+
+The `<status>` element is the primary machine-readable routing signal — `phase`, `next-agent`, and `handoff-ready` are updated atomically by `pf handoff complete-phase` at each phase transition. See `guides/session-schema.md` for the full element reference.
 
 ### `sprint/current-sprint.yaml`
 
@@ -298,8 +290,8 @@ Sprint tracking:
 ```yaml
 sprint:
   name: Sprint 23
-  start: 2025-01-06
-  end: 2025-01-20
+  start: 2026-02-03
+  end: 2026-02-17
   goal: Complete authentication epic
 
 stories:
@@ -318,23 +310,32 @@ stories:
 
 ## Handoff Protocol
 
-### Agent to Agent
+Agents drive phase transitions directly using the `pf handoff` CLI — no handoff subagents are involved. The exit protocol is:
 
-1. Current agent completes work
-2. Spawns appropriate subagent
-3. Subagent updates session file
-4. Subagent outputs handoff phrase
-5. Next agent activates and reads state
+```
+1. Write assessment to session file (<work-log> or <assessment> entry)
+2. pf handoff resolve-gate {story-id} {workflow} {phase}
+   ├── blocked → report error, STOP
+   ├── skip    → jump to step 4
+   └── ready   → spawn gate subagent → GATE_RESULT
+       ├── fail → fix issues, retry (max 3)
+       └── pass → continue
+3. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
+4. pf handoff marker {next-agent} → emit marker → EXIT
+```
 
-### Handoff Phrases
+### `pf handoff` Commands
 
-| Transition | Phrase |
-|------------|--------|
-| SM -> TEA | "TEA, Story X needs tests. Write failing tests for these ACs." |
-| TEA -> Dev | "Dev, tests are RED and ready. Make them GREEN." |
-| Dev -> Reviewer | "Reviewer, PR #N is ready. All tests GREEN." |
-| Reviewer -> SM | "SM, Story X approved. Run finish-story." |
-| Reviewer -> Dev | "Dev, {N} issues found. See assessment." |
+| Command | Purpose |
+|---------|---------|
+| `pf handoff resolve-gate STORY WORKFLOW PHASE` | Check gate status (`ready`, `skip`, `blocked`) |
+| `pf handoff complete-phase STORY WORKFLOW FROM TO GATE_TYPE` | Atomically update session file phase |
+| `pf handoff marker NEXT_AGENT` | Generate environment-aware routing marker |
+| `pf handoff phase-check AGENT` | Verify the active phase belongs to this agent |
+
+The marker generator is environment-aware: it emits a Cyclist `<!-- CYCLIST:HANDOFF:/agent -->` marker in GUI mode, or a plain text `AGENT_COMMAND` block in CLI mode. In relay mode, the next agent activates automatically.
+
+See `guides/handoff-cli.md` for full command reference and `guides/gates.md` for gate evaluation details.
 
 ## Persona System
 
@@ -430,62 +431,29 @@ Stories sync to/from Jira via:
 - Extensibility: Projects can add custom workflows
 - Reusability: Common patterns encoded as reusable workflows
 
-## Resilience Utilities
+## Script Architecture
 
-Sprint 1 introduced reusable utilities in `scripts/utils/` for robust agent workflows.
+Pennyfarthing scripts are Python-based under `pennyfarthing-dist/src/pf/`, not shell scripts. The `pf` CLI is the primary interface for all agent operations.
 
-### Retry with Backoff
+### Python CLI (`pf`)
 
-`scripts/utils/retry.sh` provides exponential backoff for transient failures:
-
-```bash
-source scripts/utils/retry.sh
-
-# retry_with_backoff MAX_ATTEMPTS INITIAL_DELAY MAX_DELAY COMMAND
-retry_with_backoff 3 1 10 curl -s https://api.example.com/health
-
-# Primary with fallback
-command_with_fallback "git pull --ff-only" "git pull --no-rebase"
-```
-
-### Session Checkpoints
-
-`scripts/utils/checkpoint.sh` enables session state persistence:
+The `pf` command is globally installed and provides all agent-facing operations:
 
 ```bash
-source scripts/utils/checkpoint.sh
-
-# Save/restore state
-checkpoint_save "story_phase" "dev"
-phase=$(checkpoint_restore "story_phase")
-
-# Maintenance
-checkpoint_list    # Show recent
-checkpoint_rotate 500  # Prevent unbounded growth
+pf agent start <agent>           # Activate an agent with primed context
+pf handoff resolve-gate ...      # Check gate status before phase transition
+pf handoff complete-phase ...    # Atomically record phase transition in session
+pf handoff marker <next-agent>   # Generate routing marker
+pf sprint story finish <id>      # Archive session, update Jira, clean up
+pf workflow list                 # List available workflows
+pf workflow show <name>          # Show workflow phase details
 ```
 
-Format: `ISO_TIMESTAMP|LABEL|DATA`
+### Shell Utilities
 
-### Repo Scanning
+Thin shell wrappers exist in `pennyfarthing-dist/scripts/` for operations that integrate directly with the file system. Path resolution uses `find-root.sh` (walks up looking for `.pennyfarthing/`) — agents never hardcode absolute paths.
 
-`scripts/utils/repo-scan.sh` provides cross-repo git status:
-
-```bash
-source scripts/utils/repo-scan.sh
-
-# Single repo: returns repo|branch|uncommitted|ahead
-scan_repo_git_status pennyfarthing
-
-# All configured repos
-scan_all_repos_status
-
-# Check for open PR
-check_repo_pr pennyfarthing feature/my-branch
-```
-
-Used by the `workflow-status-check.md` subagent for state detection
-
-## OpenTelemetry Integration (v6.5+)
+## OpenTelemetry Integration
 
 Pennyfarthing integrates with Claude Code's telemetry for observability and cost tracking.
 

@@ -1,3 +1,9 @@
+> **ARCHIVED** (2026-02-28): The regex-based detection system described here was replaced by
+> CYCLIST marker-only detection (PR #200, 2026-01-12). All 6 recommendations are moot.
+> See `useMarkerActions.ts` and `QuickActions.tsx` for current implementation.
+
+---
+
 # Quick Actions Detection Audit
 
 **Story:** 25-1 - Audit Current Quick Actions Detection

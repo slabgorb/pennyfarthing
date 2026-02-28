@@ -340,7 +340,7 @@ New format:
 
 | File | Purpose |
 |------|---------|
-| `guides/xml-tags.md` | Complete XML tag taxonomy |
+| `guides/taxonomy/xml-tags.md` | Complete XML tag taxonomy |
 | `guides/session-artifacts.md` | Session file naming conventions |
 | `scripts/core/agent-session.sh` | Create new session files |
 | `scripts/workflow/fix-session-phase.sh` | Update session fields |

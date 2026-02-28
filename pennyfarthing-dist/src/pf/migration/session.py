@@ -2,7 +2,7 @@
 Session file migration tools.
 
 Converts session files from markdown format to XML format
-per guides/session-schema.md.
+per schemas/session-schema.md.
 """
 
 from __future__ import annotations

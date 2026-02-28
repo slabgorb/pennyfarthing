@@ -1,20 +1,20 @@
 # Pennyfarthing Agent Coordination Architecture
 
+> Architectural reference for how agents coordinate. For runtime behavior protocol, see `agent-behavior.md`.
+
 ## Overview
 
 This document describes how Pennyfarthing agents are coordinated. The framework supports both single-repo and multi-repo projects.
 
-**Key Principle:** Single entry point (`/pf-session new` or `/pf-work`), state detection via session files, handoffs via Haiku subagents.
+**Key Principle:** State detection via session files, phase transitions via `pf handoff` CLI, handoff markers route to the next agent.
 
 ## The TDD Flow
 
 SM → TEA → Dev → Reviewer → SM (setup → red → green → review → finish)
 
-Handoffs between agents are managed by Haiku subagents.
-
-**Entry points:** `/pf-session new` (new story) or `/pf-work` (smart resume/start)
-**State detection:** Agents read session file on activation
-**Handoffs:** Agents spawn Haiku subagents to update session file
+**Entry points:** `/pf-sprint work` (smart resume/start) or `/pf-session new` (explicit new story)
+**State detection:** Agents read session file on activation — `**Phase:**`, `**Workflow:**`, `**Repos:**`
+**Phase transitions:** Agents drive exit directly using `pf handoff` CLI (no handoff subagent)
 **Finish:** SM handles when status = `approved`
 
 ## Architecture Principles
@@ -54,16 +54,16 @@ Support Agents
 ## Directory Structure
 
 ```
-/$CLAUDE_PROJECT_DIR/
+/$PROJECT_ROOT/
 ├── .pennyfarthing/                       # Pennyfarthing coordination directory (symlinks to node_modules)
 │   ├── agents/                         # Agent definitions (symlinks to pennyfarthing-dist)
 │   │   ├── orchestrator.md             # Master orchestrator
 │   │   ├── pm.md                       # Product Manager
 │   │   ├── sm.md                       # Scrum Master (+ sm-*.md subagents)
 │   │   ├── architect.md                # System Architect
-│   │   ├── dev.md                      # Developer (+ dev-handoff.md)
-│   │   ├── tea.md                      # Test Engineer (+ tea-handoff.md)
-│   │   ├── reviewer.md                 # Code Reviewer (+ reviewer-*.md subagents)
+│   │   ├── dev.md                      # Developer
+│   │   ├── tea.md                      # Test Engineer
+│   │   ├── reviewer.md                 # Code Reviewer (+ reviewer-preflight.md)
 │   │   ├── tech-writer.md              # Technical Writer
 │   │   ├── ux-designer.md              # UX Designer
 │   │   └── devops.md                   # DevOps Engineer
@@ -91,11 +91,11 @@ Support Agents
 │   └── sidecars/                       # Agent learning files
 │
 └── pennyfarthing-dist/                 # Source of truth (if Pennyfarthing project itself)
-    ├── agents/                         # 10 main agents + 14 subagents
-    ├── commands/                       # 42 slash commands
+    ├── agents/                         # 11 main agents + 6 subagents
+    ├── commands/                       # Slash commands
     ├── guides/                         # Behavior guides and patterns
     ├── skills/                         # Knowledge domain skills
-    ├── personas/themes/                # 100 themed personas
+    ├── personas/themes/                # Themed personas
     └── scripts/                        # Utility scripts
 ```
 
@@ -110,7 +110,7 @@ Support Agents
 - Coordinate work across repos
 
 **Agents:**
-- **Pennyfarthing Master:** Orchestrates all agents and workflows
+- **Orchestrator:** Orchestrates all agents and workflows
 - **PM:** Plans sprints, prioritizes epics, manages backlog
 - **SM:** Creates stories, adds technical context, validates readiness
 - **Architect:** Makes design decisions, defines patterns, ensures consistency
@@ -119,10 +119,10 @@ Support Agents
 ```yaml
 On Activation:
   1. sprint/current-sprint.yaml     # Full sprint status
-  2. API/.claude/context.md      # API context
-  3. UI/.claude/context.md       # UI context
-  4. API/docs/epics.md         # Epic definitions (PM only)
-  5. .session/{STORY_ID}-session.md        # Active work
+  2. API/.claude/context.md         # API context
+  3. UI/.claude/context.md          # UI context
+  4. API/docs/epics.md              # Epic definitions (PM only)
+  5. .session/{STORY_ID}-session.md # Active work
 ```
 
 ### Tactical Agents (Story-Scoped)
@@ -143,7 +143,7 @@ On Activation:
 ```yaml
 On Activation:
   1. sprint/current-sprint.yaml     # Current sprint (story section)
-  2. .session/{STORY_ID}-session.md        # Active story
+  2. .session/{STORY_ID}-session.md # Active story
   3. Determine target repo from story "Repos:" field
   4. Load target repo context:
      - If API:  API/.claude/context.md
@@ -182,33 +182,11 @@ On Activation:
 **Purpose:** API-specific patterns and structure
 **Size:** ~30-50 lines
 **Loaded By:** Strategic agents + Dev/TEA when working on API
-**Content:**
-- Tech stack (Go, PostgreSQL, MongoDB, Redis)
-- Key patterns (Repository, DI, REST, Middleware)
-- Project structure
-- Quick links to key directories
 
 #### `UI/.claude/context.md`
 **Purpose:** UI-specific patterns and structure
 **Size:** ~30-50 lines
 **Loaded By:** Strategic agents + Dev/TEA/UX when working on UI
-**Content:**
-- Tech stack (React, TypeScript, TailwindCSS)
-- Key patterns (Components, Hooks, Context API)
-- Project structure
-- Quick links to key directories
-
-### Documentation
-
-#### `API/docs/epics.md`
-**Purpose:** All epic definitions for API
-**Size:** ~800+ lines (load summary only)
-**Loaded By:** PM, Architect
-**Content:**
-- Epic descriptions
-- Story breakdowns
-- Technical context
-- Dependencies
 
 ## Agent Activation Protocol
 
@@ -240,110 +218,79 @@ Show: Loaded context summary
 Ready: For user input
 ```
 
-## Agent Workflows
-
-### Strategic Agent Workflow (PM Example)
-
-```
-User: @/pm
-
-1. Load PM agent definition (.pennyfarthing/agents/pm.md)
-2. Load all strategic context:
-   - Sprint status (full)
-   - API context
-   - UI context
-   - Epic definitions
-   - Active work
-3. Present PM menu with options
-4. Execute PM tasks (sprint planning, backlog grooming, etc.)
-5. Update sprint status
-6. Hand off to SM or other agents as needed
-```
-
-### Tactical Agent Workflow (Dev Example)
-
-```
-User: @/pf-dev
-
-1. Load Dev agent definition (.pennyfarthing/agents/dev.md)
-2. Load base context:
-   - Sprint status (story section)
-   - Active work
-3. Determine target repo from active work "Repos:" field
-4. Load target repo context:
-   - If API: API/.claude/context.md
-   - If UI: UI/.claude/context.md
-   - If Both: Load both
-5. Present Dev ready state
-6. Implement story in target repo(s)
-7. Update sprint status to 'review'
-8. Hand off to TEA or SM
-```
-
 ## Agent Handoffs (TDD Flow)
 
-Handoffs are automated via Haiku subagents in `.pennyfarthing/agents/`.
+Phase transitions are driven by the active agent using `pf handoff` commands directly — no dedicated handoff subagent. Each agent runs the exit protocol when their phase is complete.
 
 ### The Flow
 
 ```
 SM → TEA → Dev → Reviewer → SM
-│      │     │        │       │
-│      │     │        │       └── sm-finish PHASE=execute
-│      │     │        └── handoff VERDICT=approved/rejected
-│      │     └── handoff CURRENT_PHASE=green
-│      └── handoff CURRENT_PHASE=red
-└── sm-setup MODE=setup + sm-handoff
 ```
 
-### Complete Subagent Inventory
+### Exit Protocol (All Tactical Agents)
 
-| Subagent File | Purpose | Model |
-|--------------|---------|-------|
-| **SM Subagents** | | |
-| `sm-setup.md` | Research backlog (MODE=research) or setup story (MODE=setup) | haiku |
-| `sm-finish.md` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) | haiku |
-| `sm-handoff.md` | SM → TEA/Dev handoff with Jira/branch verification | haiku |
-| `sm-file-summary.md` | Summarize file changes for commits | haiku |
-| **Shared Subagents** | | |
-| `handoff.md` | Workflow-driven phase transitions (TEA, Dev, Reviewer) | haiku |
-| `testing-runner.md` | Run tests and report results | haiku |
-| **Reviewer Subagents** | | |
-| `reviewer-preflight.md` | Pre-flight checks before review | haiku |
+```
+1. Write assessment to session file
+2. pf handoff resolve-gate {story-id} {workflow} {phase}
+   ├── blocked → report error, STOP
+   ├── skip    → jump to step 4
+   └── ready   → spawn gate subagent → GATE_RESULT
+       ├── fail → fix issues, retry (max 3)
+       └── pass → continue
+3. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
+4. pf handoff marker {next-agent} → emit marker → EXIT
+```
+
+See `handoff-cli.md` for full command reference and `gates.md` for gate file format.
+
 ### SM → TEA (Story Setup)
-**Trigger:** User selects story via `/pf-session new`
-**Subagent:** `sm-setup MODE=setup` then `sm-handoff`
-**Action:** Claim Jira, write session file, create branches
-**Handoff phrase:** "TEA, Story X-Y needs tests. Write failing tests for these ACs."
+**Trigger:** User selects story to start
+**Action:** SM runs `sm-setup` subagent (MODE=setup) to claim Jira, write session file, create branches
+**Exit:** SM runs exit protocol → `pf handoff marker tea`
 
 ### TEA → Dev (Tests Written)
-**Trigger:** TEA completes failing tests
-**Subagent:** `handoff CURRENT_PHASE=red`
-**Action:** Update session file, transition to green phase
-**Handoff phrase:** "Dev, tests are RED and ready. Make them GREEN."
+**Trigger:** TEA completes failing tests (RED phase)
+**Exit:** TEA runs exit protocol → `pf handoff complete-phase {id} {workflow} red green tests_fail` → `pf handoff marker dev`
 
 ### Dev → Reviewer (Implementation Complete)
-**Trigger:** Dev creates PR with passing tests
-**Subagent:** `handoff CURRENT_PHASE=green`
-**Action:** Update session file, transition to review phase
-**Handoff phrase:** "Reviewer, PR #N is ready. All tests GREEN."
+**Trigger:** Dev creates PR with passing tests (GREEN phase)
+**Exit:** Dev runs exit protocol → `pf handoff complete-phase {id} {workflow} green review tests_pass` → `pf handoff marker reviewer`
 
 ### Reviewer → SM (Approved)
 **Trigger:** Reviewer approves PR
-**Subagent:** `handoff VERDICT=approved`
-**Action:** Update status to `approved`, transition to finish phase
-**Handoff phrase:** "SM, Story X-Y approved. Run finish-story."
+**Exit:** Reviewer runs exit protocol → `pf handoff complete-phase {id} {workflow} review finish approved` → `pf handoff marker sm`
 
 ### Reviewer → Dev (Rejected)
-**Trigger:** Reviewer finds issues
-**Subagent:** `handoff VERDICT=rejected`
-**Action:** Update session with issues, route back to implement phase
-**Handoff phrase:** "Dev, {N} issues found. See assessment for details."
+**Trigger:** Reviewer finds issues requiring changes
+**Exit:** Reviewer runs exit protocol → routes back to implement phase → `pf handoff marker dev`
 
 ### SM → Done (Finish)
 **Trigger:** Status = `approved`
-**Subagent:** `sm-finish PHASE=execute`
-**Action:** Archive session, create summary, update sprint YAML, sync Jira
+**Action:** SM runs `sm-finish` subagent (PHASE=execute) — archives session, creates summary, updates sprint YAML, syncs Jira
+
+### Wrong Phase Detection
+
+On activation, any agent can verify they own the current phase:
+
+```bash
+pf handoff phase-check {your_agent_name}
+```
+
+If result has `action: "redirect"`, the agent emits a marker to the correct phase owner and exits without doing any work.
+
+## Complete Subagent Inventory
+
+Subagents are lightweight Haiku-based agents for mechanical tasks. Invoked via `Task tool`.
+
+| Subagent File | Purpose | Model |
+|--------------|---------|-------|
+| `sm-setup.md` | Research backlog (MODE=research) or setup story (MODE=setup) | haiku |
+| `sm-finish.md` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) | haiku |
+| `sm-file-summary.md` | Summarize file changes for commits | haiku |
+| `reviewer-preflight.md` | Pre-flight checks before review | haiku |
+| `testing-runner.md` | Run tests and report results | haiku |
+| `tandem-backseat.md` | Background observer for tandem mode | haiku |
 
 ## Support Agent Handoffs
 
@@ -376,8 +323,8 @@ SM → TEA → Dev → Reviewer → SM
 PM Agent Example:
   - pm.md:                    200 lines
   - current-sprint.yaml:      150 lines
-  - API/context:     30 lines
-  - UI/context:      30 lines
+  - API/context:               30 lines
+  - UI/context:                30 lines
   - epics.md (summary):       100 lines
   - active work:               50 lines
   Total:                      560 lines ✓
@@ -388,37 +335,32 @@ PM Agent Example:
 Dev Agent Example (API story):
   - dev.md:                   300 lines
   - current-sprint (story):    50 lines
-  - API/context:     30 lines
+  - API/context:               30 lines
   - active work:               50 lines
   Total:                      430 lines ✓
 ```
 
 ## Benefits
 
-### ✅ Single Source of Truth
+### Single Source of Truth
 - All agents defined in one place
 - No duplicate or conflicting agent files
 - Easy to update and maintain
 
-### ✅ Coordinated Planning
+### Coordinated Planning
 - Strategic agents see full project scope
 - Unified sprint tracking
 - Clear cross-repo dependencies
 
-### ✅ Focused Implementation
+### Focused Implementation
 - Tactical agents load only what they need
 - Reduced context overhead
 - Faster agent activation
 
-### ✅ Clear Hierarchy
+### Clear Hierarchy
 - Strategic agents coordinate
 - Tactical agents execute
 - Clean handoffs between agents
-
-### ✅ Scalable
-- Easy to add new agents
-- Context budgets stay manageable
-- Works for solo dev or team
 
 ## Architecture History
 
@@ -427,47 +369,45 @@ Dev Agent Example (API story):
 - Manual handoff documentation
 - No subagent extraction
 
-### Current Architecture (January 2026)
+### Intermediate Architecture (January 2026)
 - Smart entry point: `/pf-work` (resumes or starts new)
-- Alternative: `/pf-session new` (explicitly start new story)
 - State detection via session file in `.session/`
-- Handoffs via Haiku subagents in `.pennyfarthing/agents/`
-- SM handles finish-story when status = `approved`
+- Handoffs via dedicated Haiku subagents (`handoff.md`, `sm-handoff.md`)
 - 100 themed personas for agent personality
 
-### Directory Structure
-```
-.pennyfarthing/agents/             # Agent definitions (symlinked)
-.pennyfarthing/commands/           # Slash commands (symlinked)
-.pennyfarthing/skills/             # Knowledge domain skills (symlinked)
-.session/                          # Session files
-sprint/                            # Sprint tracking
-```
+### Current Architecture
+- Entry: `/pf-sprint work` or `/pf-session new`
+- Session file drives state: `**Phase:**`, `**Workflow:**`, `**Repos:**`
+- Agents drive their own exit via `pf handoff` CLI — no handoff subagent
+- Exit sequence: write assessment → `resolve-gate` → `complete-phase` → `marker` → EXIT
+- Wrong-phase detection via `pf handoff phase-check`
+- 6 active subagents for mechanical tasks (sm-setup, sm-finish, sm-file-summary, reviewer-preflight, testing-runner, tandem-backseat)
 
-### Commands Reference
+## Commands Reference
+
 ```bash
 # Entry points
-/pf-work        # Smart entry - resume or start new
-/pf-session new # Explicitly start new story
+/pf-sprint work     # Smart entry - resume or start new
+/pf-session new     # Explicitly start new story
 
 # TDD Flow agents
-/pf-sm          # Scrum Master (setup + finish)
-/pf-tea         # Test Engineer (RED phase)
-/pf-dev         # Developer (GREEN phase)
-/pf-reviewer    # Code Reviewer
+/pf-sm              # Scrum Master (setup + finish)
+/pf-tea             # Test Engineer (RED phase)
+/pf-dev             # Developer (GREEN phase)
+/pf-reviewer        # Code Reviewer
 
 # Support agents
-/pf-architect   # Architecture design
-/tech-writer   # Documentation
-/ux-designer   # UI/UX design
-/devops        # Infrastructure
+/pf-architect       # Architecture design
+/pf-tech-writer     # Documentation
+/pf-ux-designer     # UI/UX design
+/pf-devops          # Infrastructure
 
 # Utility
-/check         # Run quality gates before handoff
-/chore         # Quick commit for small changes
-/pf-git release # Merge develop to main
+/pf-check           # Run quality gates before handoff
+/pf-chore           # Quick commit for small changes
+/pf-git             # Git operations
 ```
 
 ---
 
-**Smart entry. State detection. Subagent handoffs. Themed personas.**
+**State detection. pf handoff CLI. Themed personas.**

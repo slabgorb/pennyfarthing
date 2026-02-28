@@ -432,7 +432,7 @@ Tags used in session files (`.session/{story-id}-session.md`) for workflow state
 </assessment>
 ```
 
-**See also:** `guides/session-schema.md` for complete session file schema.
+**See also:** `schemas/session-schema.md` for complete session file schema.
 
 ---
 
@@ -507,7 +507,7 @@ pf agent start "sm"
 </agent-activation>
 ```
 
-**See also:** `guides/skill-schema.md` for complete skill file schema.
+**See also:** `schemas/skill-schema.md` for complete skill file schema.
 
 ---
 
@@ -614,7 +614,230 @@ After gate passes, proceed to step-02-context.md
 </next-step>
 ```
 
-**See also:** `guides/workflow-step-schema.md` for complete workflow step schema.
+**See also:** `schemas/workflow-step-schema.md` for complete workflow step schema.
+
+---
+
+## Agent File Validation Rules
+
+This section documents the structural constraints enforced by `validate-agent-schema.sh` on agent files.
+
+### Tag Categories
+
+| Category | Purpose | Validation |
+|----------|---------|------------|
+| **Required** | Must exist in every primary agent | Error if missing |
+| **Mindset** | Steers agent behavior against failure modes | Error if missing |
+| **Structural** | Organizes agent content | Warning if missing when applicable |
+| **Workflow** | Documents agent-specific workflows | No validation |
+| **Subagent** | Used in subagent files | Error/Warning per tag |
+
+### Required Tags for Primary Agents
+
+Every primary agent MUST have these three tags:
+
+| Tag | Purpose | Position Constraint |
+|-----|---------|---------------------|
+| `<role>` | One-line role description | Lines 2–4 (immediately after `# Header`) |
+| `<helpers>` | Subagent table and model info | After mindset/critical sections |
+| `<exit>` | Final exit instruction | Must be the last tag in the file |
+
+### Mindset Tags
+
+Each primary agent has ONE mindset tag that counters its natural failure mode. The mindset tag goes after `<role>` and before the first `<critical>`.
+
+| Agent | Mindset Tag | Counters |
+|-------|-------------|----------|
+| SM | `<coordination-discipline>` | Scope creep into implementation |
+| TEA | `<test-paranoia>` | Happy-path-only testing |
+| Dev | `<minimalist-discipline>` | Over-engineering, gold-plating |
+| Reviewer | `<adversarial-mindset>` | Rubber-stamping, approval bias |
+| Orchestrator | `<systems-thinking>` | Symptom-fixing vs system-fixing |
+| Architect | `<pragmatic-restraint>` | Premature abstraction, not reusing |
+| PM | `<ruthless-prioritization>` | Feature bloat, scope creep |
+| DevOps | `<automation-discipline>` | Manual processes, one-off fixes |
+| Tech Writer | `<clarity-obsession>` | Unclear documentation |
+| UX Designer | `<consistency-guardian>` | Introducing unnecessary patterns |
+
+**Mindset tag structure:**
+```xml
+<{mindset-tag}>
+**You are not here to {default behavior}. You are here to {correct behavior}.**
+
+{Context paragraph explaining the failure mode.}
+
+**Default stance:** {One word}. {Question to ask self?}
+
+- {Counter-example 1}
+- {Counter-example 2}
+- {Counter-example 3}
+
+**{Closing maxim.}**
+</{mindset-tag}>
+```
+
+### `<parameters>`
+
+**Purpose:** Documents what parameters to pass to each subagent.
+
+**Usage:** Paired with `<helpers>` — should follow it immediately. Validation emits a warning if `<helpers>` exists without `<parameters>`.
+
+```markdown
+<parameters>
+## Subagent Parameters
+
+### testing-runner
+```yaml
+REPOS: {repo name or "all"}
+CONTEXT: "Verifying GREEN state for Story {STORY_ID}"
+RUN_ID: "{STORY_ID}-dev-green"
+```
+</parameters>
+```
+
+### `<delegation>`
+
+**Purpose:** Documents the Opus vs Haiku responsibility division for an agent.
+
+**Usage:** Clarifies what the primary agent does vs what it delegates to helper subagents.
+
+```markdown
+<delegation>
+## What I Do vs What Helper Does
+
+| I Do (Opus) | Helper Does (Haiku) |
+|-------------|------------------|
+| Read tests, plan implementation | Run tests, report results |
+| Write code to pass tests | Update session for handoff |
+</delegation>
+```
+
+### Gate Tags Summary
+
+| Tag | Purpose | Used By |
+|-----|---------|---------|
+| `<gate>` | General checklist gate | Subagents, SM |
+| `<handoff-gate>` | Pre-handoff checklist | TEA, Dev, Reviewer |
+| `<self-review>` | Self-review before handoff | Dev |
+| `<review-checklist>` | Mandatory review steps | Reviewer |
+
+### Workflow Tags
+
+**Generic workflow tags:**
+
+| Tag | Purpose |
+|-----|---------|
+| `<workflow>` | Single primary workflow |
+| `<workflows>` | Multiple workflow sections |
+| `<workflow-participation>` | Role in agent-docs workflow |
+
+**SM-specific flow tags:**
+
+| Tag | Purpose |
+|-----|---------|
+| `<finish-flow>` | Story completion flow |
+| `<new-work-flow>` | Starting new work flow |
+| `<empty-backlog-flow>` | Empty backlog handling |
+| `<workflow-routing>` | Workflow → agent routing table |
+
+**Assessment tags:**
+
+| Tag | Purpose | Used By |
+|-----|---------|---------|
+| `<assessment-template>` | Single assessment format | TEA, Dev |
+| `<assessment-templates>` | Multiple assessment formats | Reviewer |
+
+**Exit tags:**
+
+| Tag | Purpose |
+|-----|---------|
+| `<exit-sequence>` | Detailed exit steps |
+| `<exit>` | Final exit instruction (required) |
+
+**Specialized tags:**
+
+| Tag | Purpose | Used By |
+|-----|---------|---------|
+| `<severity-levels>` | Review severity table | Reviewer |
+| `<design-principles>` | UX design rules | UX Designer |
+| `<coordination>` | Agent coordination table | Orchestrator |
+| `<handoff-protocol>` | Handoff procedure | Tech Writer |
+
+### File Structure Template
+
+**Primary agent:**
+```
+# {Name} Agent - {Title}
+<role>...</role>
+
+<{mindset-tag}>...</{mindset-tag}>
+
+<critical>...</critical>
+
+<helpers>...</helpers>
+
+<parameters>...</parameters>
+
+<context>...</context>
+
+<phase-check>...</phase-check>
+
+<on-activation>...</on-activation>
+
+<delegation>...</delegation>
+
+<workflow(s)>...</workflow(s)>
+
+<gate>...</gate>
+
+<assessment-template>...</assessment-template>
+
+<exit-sequence>...</exit-sequence>
+
+<handoffs>...</handoffs>
+
+<skills>...</skills>
+
+<exit>...</exit>
+```
+
+**Subagent:**
+```
+---
+name: {subagent-name}
+description: {one-line description}
+tools: Bash, Read, Edit
+model: haiku
+---
+
+<info>...</info>
+
+<arguments>...</arguments>
+
+<critical>...</critical>
+
+<gate>...</gate>
+
+{## Workflow steps}
+
+<output>...</output>
+```
+
+### Validation Rules
+
+The validator (`validate-agent-schema.sh`) enforces:
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| Required tags present | Error | `<role>`, `<helpers>`, `<exit>` |
+| Mindset tag present | Error | Agent-specific mindset tag |
+| All content in tags | Error | No orphan content outside tags |
+| XML tags balanced | Error | Every `<tag>` has `</tag>` |
+| `<parameters>` with `<helpers>` | Warning | Should have both |
+| `<arguments>` in subagents | Warning | Expected in all subagents |
+| First `<critical>` position | Warning | Should be ≤ line 30 |
+| `<on-activation>` position | Warning | Should be ≤ line 100 |
+| File length | Error | Max 300 lines |
 
 ---
 

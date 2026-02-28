@@ -1,7 +1,7 @@
 """
 Skill file auditing tools.
 
-Audits skill files for conformance to guides/skill-schema.md.
+Audits skill files for conformance to schemas/skill-schema.md.
 """
 
 from __future__ import annotations

@@ -58,8 +58,8 @@ Workflow state lives in session files (`.session/{story-id}-session.md`):
 | File | Purpose |
 |------|---------|
 | `pennyfarthing-dist/workflows/*.yaml` | Workflow definitions (19 total) |
-| `pennyfarthing-dist/guides/workflow-schema.md` | YAML schema reference |
-| `pennyfarthing-dist/guides/workflow-step-schema.md` | Step file XML tag schema |
+| `pennyfarthing-dist/schemas/workflow-schema.md` | YAML schema reference |
+| `pennyfarthing-dist/schemas/workflow-step-schema.md` | Step file XML tag schema |
 | `packages/cyclist/src/public/components/panels/BikeLanePanel.tsx` | Workflow visualization panel |
 | `packages/cyclist/src/public/hooks/useStory.ts` | Story/workflow state hook |
 | `pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs` | BMAD 6.0 import migration |

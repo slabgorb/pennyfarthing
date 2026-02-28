@@ -26,45 +26,11 @@ Gates live in `pennyfarthing-dist/gates/` and are referenced by workflow YAML fi
 
 ## Gate File Format
 
-Gates use XML-style tags with `<pass>` and `<fail>` sections:
-
-```xml
-<gate name="tests-pass" model="haiku">
-
-<purpose>
-What this gate checks and why.
-</purpose>
-
-<pass>
-Instructions for the gate subagent when checks succeed.
-Must return a GATE_RESULT YAML block with status: pass.
-</pass>
-
-<fail>
-Instructions for diagnosing failures.
-Must return a GATE_RESULT YAML block with status: fail
-and actionable recovery guidance.
-</fail>
-
-</gate>
-```
+See [Gate Schema](../schemas/gate-schema.md) for the complete gate file format and XML structure.
 
 ## GATE_RESULT Contract
 
-Gate subagents must return a structured YAML result:
-
-```yaml
-GATE_RESULT:
-  status: pass | fail
-  gate: gate-name
-  message: "Human-readable summary"
-  checks:
-    - name: check-name
-      status: pass | fail
-      detail: "What was checked and the result"
-  recovery:          # Only on fail
-    - "Actionable step to fix the issue"
-```
+See [Gate Schema](../schemas/gate-schema.md#gate_result-contract) for the full `GATE_RESULT` YAML contract.
 
 ## Workflow Integration
 
