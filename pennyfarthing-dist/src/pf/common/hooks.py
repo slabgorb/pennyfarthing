@@ -10,30 +10,30 @@ from __future__ import annotations
 # import from here instead of maintaining independent copies.
 INFRASTRUCTURE_HOOKS: dict = {
     "SessionStart": [
-        {"hooks": [{"type": "command", "command": "pf hooks session-start"}]},
+        {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-start"}]},
         {
             "matcher": "compact",
-            "hooks": [{"type": "command", "command": "pf hooks agent-reload"}],
+            "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks agent-reload"}],
         },
         {
             "matcher": "clear",
-            "hooks": [{"type": "command", "command": "pf hooks agent-reload"}],
+            "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks agent-reload"}],
         },
     ],
     "Stop": [
-        {"hooks": [{"type": "command", "command": "pf hooks session-stop"}]}
+        {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-stop"}]}
     ],
     "PreToolUse": [
         {
             "matcher": "Edit|Write",
-            "hooks": [{"type": "command", "command": "pf hooks pre-edit-check"}],
+            "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks pre-edit-check"}],
         },
         {
             "matcher": "Edit|Write|Bash|Task",
-            "hooks": [{"type": "command", "command": "pf hooks context-warning"}],
+            "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks context-warning"}],
         },
     ],
     "PostToolUse": [
-        {"hooks": [{"type": "command", "command": "pf hooks bell-mode"}]}
+        {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks bell-mode"}]}
     ],
 }

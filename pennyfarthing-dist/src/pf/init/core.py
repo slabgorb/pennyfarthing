@@ -24,7 +24,7 @@ _MINIMAL_SETTINGS: dict = {
     "hooks": INFRASTRUCTURE_HOOKS,
     "statusLine": {
         "type": "command",
-        "command": "pf hooks statusline",
+        "command": ".pennyfarthing/bin/pf hooks statusline",
     },
 }
 
@@ -34,6 +34,8 @@ _GITIGNORE_ENTRIES: list[str] = [
     ".session/",
     ".claude/settings.local.json",
     ".pennyfarthing/config.local.yaml",
+    "# Local pf shim (machine-specific absolute paths)",
+    ".pennyfarthing/bin/",
     "# tmux runtime cache files",
     ".pennyfarthing/tmux-status",
     ".pennyfarthing/tmux-status-left",
@@ -420,6 +422,20 @@ def _upgrade_hooks(settings_path: Path) -> bool:
                 cleaned.append(entry)
         hooks[hook_type] = cleaned
 
+    # Rewrite bare "pf hooks X" → ".pennyfarthing/bin/pf hooks X"
+    for hook_type in list(hooks.keys()):
+        entries = hooks[hook_type]
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            for hook in entry.get("hooks", []):
+                if not isinstance(hook, dict):
+                    continue
+                cmd = hook.get("command", "")
+                if cmd.startswith("pf hooks ") and not cmd.startswith(".pennyfarthing/"):
+                    hook["command"] = ".pennyfarthing/bin/" + cmd
+                    changed = True
+
     # Ensure canonical hooks exist
     for hook_type, canonical_entries in INFRASTRUCTURE_HOOKS.items():
         existing = hooks.get(hook_type, [])
@@ -442,8 +458,15 @@ def _upgrade_hooks(settings_path: Path) -> bool:
 
     data["hooks"] = hooks
 
+    # Rewrite bare pf in statusLine
+    if isinstance(data.get("statusLine"), dict):
+        status_cmd = data["statusLine"].get("command", "")
+        if status_cmd.startswith("pf hooks") and not status_cmd.startswith(".pennyfarthing/"):
+            data["statusLine"]["command"] = ".pennyfarthing/bin/" + status_cmd
+            changed = True
+
     # Ensure statusLine exists; upgrade pf.sh references
-    canonical_status = {"type": "command", "command": "pf hooks statusline"}
+    canonical_status = {"type": "command", "command": ".pennyfarthing/bin/pf hooks statusline"}
     if "statusLine" not in data:
         data["statusLine"] = canonical_status
         changed = True
