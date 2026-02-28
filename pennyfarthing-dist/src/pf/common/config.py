@@ -70,10 +70,10 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
     """Resolve the pennyfarthing-dist directory.
 
     Checks multiple locations to support monorepo development,
-    npm-installed, and pip-installed consumer projects:
+    inlined repos, and pip-installed consumer projects:
       1. {project_root}/pennyfarthing-dist/ (monorepo or symlink)
-      2. {project_root}/node_modules/@pennyfarthing/core/pennyfarthing-dist/ (npm)
-      3. Relative to this file (when running from within pennyfarthing-dist/pf/)
+      2. Relative to this file (when running from within pennyfarthing-dist/pf/)
+      3. {project_root}/pennyfarthing/pennyfarthing-dist/ (inlined framework)
       4. Bundled pip package (pf._dist with content dirs)
 
     Args:
@@ -92,12 +92,7 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
     if direct.is_dir():
         return direct
 
-    # 2. npm-installed: node_modules/@pennyfarthing/core/pennyfarthing-dist/
-    npm = root / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
-    if npm.is_dir():
-        return npm
-
-    # 3. Relative to this file (when inside pennyfarthing-dist/src/pf/)
+    # 2. Relative to this file (when inside pennyfarthing-dist/src/pf/)
     # Only use this fallback when no explicit project_root was given,
     # since an explicit root scopes the search to that directory.
     if project_root is None:
@@ -107,12 +102,12 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
         if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
             return candidate
 
-    # 4. Inlined framework repo: {project_root}/pennyfarthing/pennyfarthing-dist/
+    # 3. Inlined framework repo: {project_root}/pennyfarthing/pennyfarthing-dist/
     inlined = root / "pennyfarthing" / "pennyfarthing-dist"
     if inlined.is_dir():
         return inlined
 
-    # 5. Bundled pip package: content lives in pf._dist/
+    # 4. Bundled pip package: content lives in pf._dist/
     # This is the final fallback for pipx-installed consumers with no
     # pennyfarthing-dist/ directory or node_modules.
     try:
