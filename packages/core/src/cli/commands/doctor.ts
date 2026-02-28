@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, _mkdirSync, renameSync, copyFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync, renameSync, copyFileSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import _YAML from 'yaml';
 import { spawnSync } from 'child_process';
