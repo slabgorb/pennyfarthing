@@ -73,7 +73,7 @@ The script returns JSON with:
 <critical>
 ## Jira Transition
 
-The Jira transition to Done is handled by `pf.sh sprint story finish`.
+The Jira transition to Done is handled by `pf sprint story finish`.
 Do NOT transition Jira here - that would duplicate the finish script's work.
 This subagent only performs preflight checks and assessment.
 </critical>

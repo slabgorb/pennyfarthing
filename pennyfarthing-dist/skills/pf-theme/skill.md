@@ -12,18 +12,18 @@ Manage persona themes for agent characters.
 
 | Command | CLI | Purpose |
 |---------|-----|---------|
-| `/theme` | `pf.sh theme show` | Show current theme |
-| `/theme list` | `pf.sh theme list` | List all available themes |
-| `/theme show [name]` | `pf.sh theme show [name] [--full]` | Show theme details |
-| `/theme set <name>` | `pf.sh theme set <name> [--dry-run]` | Set active theme |
-| `/theme create <name>` | `pf.sh theme create <name> [--base X] [--user] [--dry-run]` | Create from base theme |
+| `/theme` | `pf theme show` | Show current theme |
+| `/theme list` | `pf theme list` | List all available themes |
+| `/theme show [name]` | `pf theme show [name] [--full]` | Show theme details |
+| `/theme set <name>` | `pf theme set <name> [--dry-run]` | Set active theme |
+| `/theme create <name>` | `pf theme create <name> [--base X] [--user] [--dry-run]` | Create from base theme |
 | `/theme maker` | *(interactive wizard)* | AI-driven theme creation |
 
 ### After Setting a Theme
 
 Refresh the current agent persona:
 ```bash
-pf.sh agent start "sm"
+pf agent start "sm"
 ```
 Adopt the new character immediately.
 

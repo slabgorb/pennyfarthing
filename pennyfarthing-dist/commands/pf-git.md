@@ -16,7 +16,7 @@ Manage git operations across all configured repos. Consolidates repository statu
 Check git status of all project repos.
 
 ```bash
-pf.sh git status [--brief]
+pf git status [--brief]
 ```
 
 Shows branch, uncommitted changes, and ahead/behind status for each configured repo.
@@ -28,17 +28,17 @@ Organize uncommitted changes into proper commits and branches.
 **When this subcommand is invoked, immediately start the stepped workflow:**
 
 ```bash
-pf.sh workflow start git-cleanup
+pf workflow start git-cleanup
 ```
 
-Then follow each step's instructions. Use `pf.sh workflow complete-step git-cleanup` to advance between steps. The workflow handles multi-repo analysis, change categorization, branch creation, commits, and push.
+Then follow each step's instructions. Use `pf workflow complete-step git-cleanup` to advance between steps. The workflow handles multi-repo analysis, change categorization, branch creation, commits, and push.
 
 ### `/pf-git branches <story-id>`
 
 Create feature branches in both repos from a story.
 
 ```bash
-pf.sh git branches 86-3
+pf git branches 86-3
 ```
 
 ### `/pf-git release`
@@ -46,7 +46,7 @@ pf.sh git branches 86-3
 Interactive release with verification gates.
 
 ```bash
-pf.sh git release
+pf git release
 ```
 
 Starts the release stepped workflow — an 11-step process with gates at each stage.
@@ -62,13 +62,13 @@ Starts the release stepped workflow — an 11-step process with gates at each st
 
 ## CLI Equivalent
 
-All commands are also available via `pf.sh git`:
+All commands are also available via `pf git`:
 
 ```bash
-pf.sh git status
-pf.sh git cleanup
-pf.sh git branches 86-3
-pf.sh git release
+pf git status
+pf git cleanup
+pf git branches 86-3
+pf git release
 ```
 
 ## Related

@@ -2,7 +2,7 @@
 
 ## Top-Level Commands
 
-### `pf.sh jira assign`
+### `pf jira assign`
 
 Assign issue to a user (email or GitHub username).
 
@@ -12,7 +12,7 @@ Assign issue to a user (email or GitHub username).
 | `USER` | Yes |  |
 | `--dry-run` | No | Preview without applying |
 
-### `pf.sh jira bidirectional`
+### `pf jira bidirectional`
 
 Bidirectional sync between YAML and Jira.
 
@@ -26,7 +26,7 @@ Bidirectional sync between YAML and Jira.
 | `--all` | No | Sync all fields |
 | `--sprint` | No | Target specific sprint |
 
-### `pf.sh jira check`
+### `pf jira check`
 
 Check if a story is available to claim.
 
@@ -34,7 +34,7 @@ Check if a story is available to claim.
 |------------|----------|-------------|
 | `KEY` | Yes |  |
 
-### `pf.sh jira claim`
+### `pf jira claim`
 
 Claim a story (assign to self + move to In Progress).
 
@@ -43,7 +43,7 @@ Claim a story (assign to self + move to In Progress).
 | `KEY` | Yes |  |
 | `--dry-run` | No | Show what would be done without making changes |
 
-### `pf.sh jira link`
+### `pf jira link`
 
 Link two Jira issues.
 
@@ -54,7 +54,7 @@ Link two Jira issues.
 | `LINK_TYPE` | No |  |
 | `--dry-run` | No | Preview without applying |
 
-### `pf.sh jira move`
+### `pf jira move`
 
 Transition a Jira issue to a new status.
 
@@ -64,7 +64,7 @@ Transition a Jira issue to a new status.
 | `STATUS` | Yes |  |
 | `--dry-run` | No | Preview without applying |
 
-### `pf.sh jira reconcile`
+### `pf jira reconcile`
 
 Reconciliation report: sprint YAML vs Jira.
 
@@ -72,7 +72,7 @@ Reconciliation report: sprint YAML vs Jira.
 |------------|----------|-------------|
 | `--fix` | No | Apply automatic fixes where safe |
 
-### `pf.sh jira search`
+### `pf jira search`
 
 Search issues using plain text or JQL.
 
@@ -85,7 +85,7 @@ Search issues using plain text or JQL.
 | `-t, --type` | No | Filter by issue type (e.g. Story, Epic, Bug) |
 | `--json-output, --json` | No | Output as JSON |
 
-### `pf.sh jira sync`
+### `pf jira sync`
 
 Sync epic stories from sprint YAML to Jira.
 
@@ -97,7 +97,7 @@ Sync epic stories from sprint YAML to Jira.
 | `--points` | No | Sync story points |
 | `--all` | No | Sync all fields |
 
-### `pf.sh jira view`
+### `pf jira view`
 
 View issue details (delegates to jira CLI).
 
@@ -109,7 +109,7 @@ View issue details (delegates to jira CLI).
 
 ## Create Commands
 
-### `pf.sh jira create epic`
+### `pf jira create epic`
 
 Create a Jira epic and its child stories from sprint YAML.
 
@@ -118,7 +118,7 @@ Create a Jira epic and its child stories from sprint YAML.
 | `EPIC_ID` | Yes |  |
 | `--dry-run` | No | Preview without creating |
 
-### `pf.sh jira create standalone`
+### `pf jira create standalone`
 
 Create a standalone Jira story, add to sprint, mark Done.
 
@@ -129,7 +129,7 @@ Create a standalone Jira story, add to sprint, mark Done.
 | `-d, --description` | No | Story description |
 | `--dry-run` | No | Preview without creating |
 
-### `pf.sh jira create story`
+### `pf jira create story`
 
 Create a single Jira story under an epic from sprint YAML.
 
@@ -143,7 +143,7 @@ Create a single Jira story under an epic from sprint YAML.
 
 ## Sprint Commands
 
-### `pf.sh jira sprint add`
+### `pf jira sprint add`
 
 Add an issue to a sprint.
 

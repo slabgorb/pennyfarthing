@@ -2,7 +2,7 @@
 
 ## Commands
 
-### `pf.sh settings get`
+### `pf settings get`
 
 Get a setting value by dot-path (e.g. workflow.relay_mode).
 
@@ -10,7 +10,7 @@ Get a setting value by dot-path (e.g. workflow.relay_mode).
 |------------|----------|-------------|
 | `KEY` | Yes |  |
 
-### `pf.sh settings set`
+### `pf settings set`
 
 Set a setting value by dot-path (e.g. workflow.bell_mode true).
 
@@ -19,7 +19,7 @@ Set a setting value by dot-path (e.g. workflow.bell_mode true).
 | `KEY` | Yes |  |
 | `VALUE` | Yes |  |
 
-### `pf.sh settings show`
+### `pf settings show`
 
 Pretty-print all interesting settings.
 
