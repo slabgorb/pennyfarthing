@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pf.common.discovery import resolve_pf_binary, write_shim
-from pf.common.hooks import INFRASTRUCTURE_HOOKS
+from pf.common.hooks import INFRASTRUCTURE_HOOKS, resolve_hook_paths
 from pf.hooks.frontmatter import collect_all_frontmatter_hooks, merge_with_infrastructure
 
 # Wrap the shared hooks in the settings envelope expected by settings.local.json.
@@ -378,6 +378,7 @@ def init_project(
     frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
     if not settings_path.exists():
         merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
+        resolve_hook_paths(merged, target_dir)
         settings_path.write_text(json.dumps(merged, indent=2) + "\n")
         settings_written = True
     else:
@@ -385,6 +386,7 @@ def init_project(
         # Merge frontmatter hooks into existing settings
         data = json.loads(settings_path.read_text())
         merged = merge_with_infrastructure(data, frontmatter_hooks)
+        resolve_hook_paths(merged, target_dir)
         if merged != data:
             settings_path.write_text(json.dumps(merged, indent=2) + "\n")
             hooks_upgraded = True
