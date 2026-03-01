@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.1.3] - 2026-03-01
+
+### Added
+
+- **Zero-friction bootstrap** — `pf init` now auto-installs hooks, settings, and shim with dogfooding detection for the framework repo itself
+- **WheelHub consumer install** — `pf init` installs the bundled WheelHub server to consumer projects (no npm required)
+- **Portrait centralization** — portraits centralized to `~/.local/share/pennyfarthing/portraits/` (XDG shared cache) with stale npm artifact cleanup
+- **BikeRack backlog preview** — shows next backlog story when no active story is in progress
+- **BikeRack live settings** — `portrait_position` and `tui.toasts` settings apply immediately without restart
+- **BikeRack Python fallback** — local Python fallback when WheelHub context API errors
+- **Single hook dispatcher** — single dispatcher process replaces per-hook spawning, reducing overhead
+
+### Fixed
+
+- **Hook absolute paths** — `pf init` uses absolute paths for hook commands in `settings.local.json`
+- **`pf_launcher` main guard** — added `__main__` guard to prevent double-execution
+- **WheelHub Node 24 compat** — patched esbuild shim for Node 24 ESM compatibility
+- **Init stale cleanup** — cleans all stale file types from content dirs (not just `.md`), handles settings symlinks, removes broken `.bin` symlinks and pnpm store cache
+- **`pf.sh` references removed** — replaced all `pf.sh` references with `pf` across distributed files
+- **Stale npm dist_root strategy removed** — no longer attempts npm-based framework resolution
+- **Version file sync** — aligned VERSION, package.json, workspace packages, and Python `__version__` which had drifted across 12.1.1/12.1.2 releases
+
+---
+
 ## [12.1.2] - 2026-02-28
 
 ### Fixed
@@ -2841,7 +2865,9 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...HEAD
+[12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3
+[12.1.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.1...v12.1.2
 [12.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.0...v12.1.1
 [12.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.0.0...v12.1.0
 [12.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v11.5.0-alpha.0...v12.0.0
