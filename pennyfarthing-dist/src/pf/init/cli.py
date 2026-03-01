@@ -57,11 +57,19 @@ def init(dry_run: bool, target: str) -> None:
     else:
         data = result["data"]
         click.echo(f"Initialized Pennyfarthing project in {target_dir}")
-        click.echo(f"  {data['commands_copied']} commands copied")
-        click.echo(f"  {data['skills_copied']} skills copied")
-        content_count = data.get("content_dirs_copied", 0)
-        if content_count:
-            click.echo(f"  {content_count} content directories copied")
+        if data.get("dogfooding"):
+            # Dogfooding mode — symlinks instead of copies
+            symlinks_fixed = data.get("symlinks_fixed", 0)
+            if symlinks_fixed:
+                click.echo(f"  dogfooding mode: {symlinks_fixed} symlinks created/repaired")
+            else:
+                click.echo("  dogfooding mode: all symlinks intact")
+        else:
+            click.echo(f"  {data['commands_copied']} commands copied")
+            click.echo(f"  {data['skills_copied']} skills copied")
+            content_count = data.get("content_dirs_copied", 0)
+            if content_count:
+                click.echo(f"  {content_count} content directories copied")
         click.echo(f"  {data['directories_created']} directories created")
         if data.get("settings_written"):
             click.echo("  settings.local.json written")
@@ -89,8 +97,9 @@ def init(dry_run: bool, target: str) -> None:
             click.echo(f"  portraits: {portraits['skipped_reason']}")
         if data.get("portraits_linked"):
             click.echo("  portraits symlinked (shared cache)")
-        click.echo()
-        click.echo("Next steps:")
-        click.echo("  1. Start Claude Code in this directory")
-        click.echo("  2. Run /pf-setup for interactive configuration")
-        click.echo("  3. Run pf theme set <name> to pick a persona theme")
+        if not data.get("dogfooding"):
+            click.echo()
+            click.echo("Next steps:")
+            click.echo("  1. Start Claude Code in this directory")
+            click.echo("  2. Run /pf-setup for interactive configuration")
+            click.echo("  3. Run pf theme set <name> to pick a persona theme")

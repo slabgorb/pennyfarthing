@@ -81,6 +81,73 @@ _CONTENT_DIRS: list[str] = [
     "workflows",
 ]
 
+# Symlink map for dogfooding mode.  Keys are paths relative to the project
+# root; values are the symlink *targets* (also relative to the project root).
+# In dogfooding repos these directories must be symlinks so that edits to
+# pennyfarthing-dist/ are reflected immediately at runtime.
+_DOGFOODING_SYMLINKS: dict[str, str] = {
+    ".pennyfarthing/agents": "pennyfarthing/pennyfarthing-dist/agents",
+    ".pennyfarthing/commands": "pennyfarthing/pennyfarthing-dist/commands",
+    ".pennyfarthing/data": "pennyfarthing/pennyfarthing-dist/data",
+    ".pennyfarthing/gates": "pennyfarthing/pennyfarthing-dist/gates",
+    ".pennyfarthing/guides": "pennyfarthing/pennyfarthing-dist/guides",
+    ".pennyfarthing/output-styles": "pennyfarthing/pennyfarthing-dist/output-styles",
+    ".pennyfarthing/personas": "pennyfarthing/pennyfarthing-dist/personas",
+    ".pennyfarthing/scripts": "pennyfarthing/pennyfarthing-dist/scripts",
+    ".pennyfarthing/skills": "pennyfarthing/pennyfarthing-dist/skills",
+    ".pennyfarthing/templates": "pennyfarthing/pennyfarthing-dist/templates",
+    ".pennyfarthing/workflows": "pennyfarthing/pennyfarthing-dist/workflows",
+    ".claude/commands": "pennyfarthing/pennyfarthing-dist/commands",
+    ".claude/skills": "pennyfarthing/pennyfarthing-dist/skills",
+}
+
+
+def _is_dogfooding_repo(target_dir: Path, dist_root: Path) -> bool:
+    """Detect if this is the framework dogfooding repo.
+
+    A dogfooding repo has pennyfarthing/pennyfarthing-dist/ inlined and
+    that directory *is* the dist_root we were given.
+    """
+    inlined = target_dir / "pennyfarthing" / "pennyfarthing-dist"
+    if not inlined.is_dir():
+        return False
+    try:
+        return inlined.resolve() == dist_root.resolve()
+    except OSError:
+        return False
+
+
+def _ensure_dogfooding_symlinks(target_dir: Path) -> int:
+    """Create or repair dogfooding symlinks.
+
+    Returns the number of symlinks created or repaired.
+    """
+    fixed = 0
+    for link_path_str, target_str in _DOGFOODING_SYMLINKS.items():
+        link_path = target_dir / link_path_str
+        # Build relative target from the link's parent directory
+        rel_target = os.path.relpath(target_dir / target_str, link_path.parent)
+
+        # Already a correct symlink?
+        if link_path.is_symlink():
+            try:
+                if link_path.resolve() == (target_dir / target_str).resolve():
+                    continue
+            except OSError:
+                pass
+            link_path.unlink()
+
+        # Remove flat-copy directory that init would have created
+        if link_path.is_dir():
+            shutil.rmtree(link_path)
+        elif link_path.exists():
+            link_path.unlink()
+
+        link_path.parent.mkdir(parents=True, exist_ok=True)
+        link_path.symlink_to(rel_target)
+        fixed += 1
+    return fixed
+
 
 def verify_pf_cli() -> dict:
     """Verify that the pf CLI is available and functional.
@@ -180,6 +247,9 @@ def init_project(
             error_msg += f"\nFix: {hint}"
         return {"success": False, "error": error_msg}
 
+    # --- Detect dogfooding mode ---
+    is_dogfooding = _is_dogfooding_repo(target_dir, dist_root)
+
     # --- Gather plan ---
     commands_to_copy = _find_pf_commands(dist_root)
     skills_to_copy = _find_pf_skills(dist_root)
@@ -208,6 +278,7 @@ def init_project(
                 "settings": ".claude/settings.local.json",
                 "gitignore_entries": _GITIGNORE_ENTRIES,
                 "justfile": justfile_data,
+                "dogfooding": is_dogfooding,
             },
         }
 
@@ -221,47 +292,72 @@ def init_project(
     # --- Clean stale npm-era artifacts ---
     _clean_stale_artifacts(target_dir)
 
-    # --- Create directories ---
-    for d in directories:
-        path = target_dir / d
-        # Remove stale symlinks (npm era) that block directory creation
-        if path.is_symlink():
-            path.unlink()
-        path.mkdir(parents=True, exist_ok=True)
+    if is_dogfooding:
+        # --- Dogfooding mode: symlink instead of copy ---
+        # Create only the base directories (not those that will be symlinks)
+        symlink_targets = {p.split("/")[0] + "/" + p.split("/")[1] for p in _DOGFOODING_SYMLINKS}
+        for d in directories:
+            path = target_dir / d
+            if d in symlink_targets:
+                continue  # Will be created as symlink
+            if path.is_symlink():
+                # Preserve existing correct symlinks
+                continue
+            path.mkdir(parents=True, exist_ok=True)
 
-    # --- Copy commands ---
-    commands_copied = 0
-    for cmd_file in commands_to_copy:
-        # Copy to .pennyfarthing/commands/
-        shutil.copy2(cmd_file, target_dir / ".pennyfarthing" / "commands" / cmd_file.name)
-        # Copy to .claude/commands/
-        shutil.copy2(cmd_file, target_dir / ".claude" / "commands" / cmd_file.name)
-        commands_copied += 1
+        # Create/repair all dogfooding symlinks
+        symlinks_fixed = _ensure_dogfooding_symlinks(target_dir)
 
-    # --- Copy skills ---
-    skills_copied = 0
-    for skill_dir in skills_to_copy:
-        # Copy to .pennyfarthing/skills/
-        _copy_tree(skill_dir, target_dir / ".pennyfarthing" / "skills" / skill_dir.name)
-        # Copy to .claude/skills/
-        _copy_tree(skill_dir, target_dir / ".claude" / "skills" / skill_dir.name)
-        skills_copied += 1
+        # Skip portrait symlinking — personas dir is already a symlink
+        portrait_result = _install_portraits(dist_root)
+        portraits_linked = False
 
-    # --- Copy content directories (agents, guides, personas, etc.) ---
-    content_dirs_copied = 0
-    for dir_name in content_dirs_to_copy:
-        dest = target_dir / ".pennyfarthing" / dir_name
-        # Remove stale symlinks (npm era) before copying
-        if dest.is_symlink():
-            dest.unlink()
-        _copy_tree(dist_root / dir_name, dest)
-        # Clean files that no longer exist in source (renamed/moved)
-        _clean_stale_content(dist_root / dir_name, dest)
-        content_dirs_copied += 1
+    else:
+        # --- Consumer mode: flat copies ---
 
-    # --- Centralize portraits to shared XDG location ---
-    portrait_result = _install_portraits(dist_root)
-    portraits_linked = _symlink_portraits(target_dir)
+        # --- Create directories ---
+        for d in directories:
+            path = target_dir / d
+            # Remove stale symlinks (npm era) that block directory creation
+            if path.is_symlink():
+                path.unlink()
+            path.mkdir(parents=True, exist_ok=True)
+
+        # --- Copy commands ---
+        commands_copied = 0
+        for cmd_file in commands_to_copy:
+            # Copy to .pennyfarthing/commands/
+            shutil.copy2(cmd_file, target_dir / ".pennyfarthing" / "commands" / cmd_file.name)
+            # Copy to .claude/commands/
+            shutil.copy2(cmd_file, target_dir / ".claude" / "commands" / cmd_file.name)
+            commands_copied += 1
+
+        # --- Copy skills ---
+        skills_copied = 0
+        for skill_dir in skills_to_copy:
+            # Copy to .pennyfarthing/skills/
+            _copy_tree(skill_dir, target_dir / ".pennyfarthing" / "skills" / skill_dir.name)
+            # Copy to .claude/skills/
+            _copy_tree(skill_dir, target_dir / ".claude" / "skills" / skill_dir.name)
+            skills_copied += 1
+
+        # --- Copy content directories (agents, guides, personas, etc.) ---
+        content_dirs_copied = 0
+        for dir_name in content_dirs_to_copy:
+            dest = target_dir / ".pennyfarthing" / dir_name
+            # Remove stale symlinks (npm era) before copying
+            if dest.is_symlink():
+                dest.unlink()
+            _copy_tree(dist_root / dir_name, dest)
+            # Clean files that no longer exist in source (renamed/moved)
+            _clean_stale_content(dist_root / dir_name, dest)
+            content_dirs_copied += 1
+
+        # --- Centralize portraits to shared XDG location ---
+        portrait_result = _install_portraits(dist_root)
+        portraits_linked = _symlink_portraits(target_dir)
+
+        symlinks_fixed = 0
 
     # --- Install WheelHub server bundle ---
     _install_wheelhub(target_dir, dist_root)
@@ -297,7 +393,10 @@ def init_project(
     parked_cleaned = _clean_parked_hooks(settings_path, target_dir)
 
     # --- Write init manifest ---
-    _write_manifest(target_dir, commands_copied, skills_copied)
+    if is_dogfooding:
+        _write_manifest(target_dir, 0, 0)
+    else:
+        _write_manifest(target_dir, commands_copied, skills_copied)
 
     # --- Update .gitignore ---
     _update_gitignore(target_dir)
@@ -306,12 +405,34 @@ def init_project(
     from pf.init import setup
 
     setup_result = setup.run_setup(
-        target_dir=target_dir, dist_root=dist_root, skip_prompts=True
+        target_dir=target_dir,
+        dist_root=dist_root,
+        skip_prompts=True,
+        is_dogfooding=is_dogfooding,
     )
+
+    if is_dogfooding:
+        return {
+            "success": True,
+            "data": {
+                "dogfooding": True,
+                "symlinks_fixed": symlinks_fixed,
+                "directories_created": len(directories),
+                "settings_written": settings_written,
+                "hooks_upgraded": hooks_upgraded,
+                "gitignore_updated": True,
+                "tmux_installed": tmux_installed,
+                "shim_installed": shim_result.get("success", False),
+                "justfile": justfile_data,
+                "setup": setup_result.get("data", {}),
+                "portraits": portrait_result,
+            },
+        }
 
     return {
         "success": True,
         "data": {
+            "dogfooding": False,
             "commands_copied": commands_copied,
             "skills_copied": skills_copied,
             "content_dirs_copied": content_dirs_copied,

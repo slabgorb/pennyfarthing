@@ -385,6 +385,7 @@ def run_setup(
     theme: str | None = None,
     install_hooks: bool | None = None,
     dry_run: bool = False,
+    is_dogfooding: bool = False,
 ) -> dict[str, Any]:
     """Run the full auto-setup workflow (CLI entry point).
 
@@ -393,6 +394,11 @@ def run_setup(
     2. Theme selection -> config.local.yaml
     3. Git hooks installation (opt-in)
     4. Package manager detection -> Node package install
+
+    In dogfooding mode, skips repo discovery (preserves hand-maintained
+    repos.yaml), theme selection (preserves existing config), and LFS
+    portrait pull (personas dir is a symlink). Git hooks and package
+    manager steps still run (harmless).
 
     Skips steps that are already completed (re-entry safe).
     """
@@ -404,9 +410,9 @@ def run_setup(
 
     if dry_run:
         steps: list[str] = []
-        if not state["repos"]:
+        if not is_dogfooding and not state["repos"]:
             steps.append("discover_repos -> write repos.yaml")
-        if not state["theme"]:
+        if not is_dogfooding and not state["theme"]:
             steps.append(f"write theme config ({theme or 'interactive selection'})")
         if install_hooks and not state["git_hooks"]:
             steps.append("install git hooks")
@@ -415,11 +421,13 @@ def run_setup(
             steps.append(f"install node packages via {pm}")
         return {
             "success": True,
-            "data": {"steps": steps, "dry_run": True},
+            "data": {"steps": steps, "dry_run": True, "dogfooding": is_dogfooding},
         }
 
-    # 1. Repo discovery
-    if not state["repos"]:
+    # 1. Repo discovery — skip in dogfooding (preserve hand-maintained repos.yaml)
+    if is_dogfooding:
+        steps_skipped += 1
+    elif not state["repos"]:
         target = target_dir.resolve()
         repos: dict[str, Any] = {}
         if (target / ".git").exists():
@@ -436,23 +444,26 @@ def run_setup(
     else:
         steps_skipped += 1
 
-    # 2. Theme selection
-    if not state["theme"] and theme:
+    # 2. Theme selection — skip in dogfooding (preserve existing config)
+    if is_dogfooding:
+        steps_skipped += 1
+    elif not state["theme"] and theme:
         write_theme_config(target_dir, theme)
     elif state["theme"]:
         steps_skipped += 1
 
-    # 2b. Pull LFS portraits for the active theme
-    active_theme = theme
-    if not active_theme:
-        config_path = target_dir / ".pennyfarthing" / "config.local.yaml"
-        if config_path.is_file():
-            cfg = yaml.safe_load(config_path.read_text()) or {}
-            active_theme = cfg.get("theme")
-    if active_theme:
-        from pf.common.themes import ensure_portrait_lfs
+    # 2b. Pull LFS portraits for the active theme — skip in dogfooding
+    if not is_dogfooding:
+        active_theme = theme
+        if not active_theme:
+            config_path = target_dir / ".pennyfarthing" / "config.local.yaml"
+            if config_path.is_file():
+                cfg = yaml.safe_load(config_path.read_text()) or {}
+                active_theme = cfg.get("theme")
+        if active_theme:
+            from pf.common.themes import ensure_portrait_lfs
 
-        ensure_portrait_lfs(active_theme, target_dir)
+            ensure_portrait_lfs(active_theme, target_dir)
 
     # 3. Git hooks
     hooks_installed = False
@@ -470,5 +481,6 @@ def run_setup(
             "package_manager": pm,
             "git_hooks_installed": hooks_installed,
             "steps_skipped": steps_skipped,
+            "dogfooding": is_dogfooding,
         },
     }
