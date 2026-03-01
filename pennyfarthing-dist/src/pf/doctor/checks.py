@@ -8,6 +8,7 @@ Each check function takes a project root Path and returns a CheckResult.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -144,6 +145,46 @@ def check_git_hooks(root: Path) -> CheckResult:
     return CheckResult(name="git_hooks", status="pass", detail="Git hooks present")
 
 
+def check_bootstrap(root: Path) -> CheckResult:
+    """Check committed bootstrap hook for zero-friction onboarding."""
+    bootstrap_sh = root / ".claude" / "hooks" / "bootstrap.sh"
+    settings_json = root / ".claude" / "settings.json"
+
+    issues = []
+
+    if not bootstrap_sh.is_file():
+        issues.append("bootstrap.sh missing")
+    elif not os.access(bootstrap_sh, os.X_OK):
+        issues.append("bootstrap.sh not executable")
+
+    if not settings_json.is_file():
+        issues.append("settings.json missing")
+    else:
+        try:
+            data = json.loads(settings_json.read_text())
+            hooks = data.get("hooks", {})
+            session_start = hooks.get("SessionStart", [])
+            has_bootstrap = any(
+                "bootstrap.sh" in h.get("command", "")
+                for entry in session_start
+                for h in entry.get("hooks", [])
+                if isinstance(h, dict)
+            )
+            if not has_bootstrap:
+                issues.append("settings.json missing bootstrap SessionStart hook")
+        except (json.JSONDecodeError, OSError):
+            issues.append("settings.json unreadable")
+
+    if issues:
+        return CheckResult(
+            name="bootstrap",
+            status="fail",
+            detail="; ".join(issues),
+            fix_fn=lambda: _fix_bootstrap(root),
+        )
+    return CheckResult(name="bootstrap", status="pass", detail="Bootstrap hook configured")
+
+
 def check_theme(root: Path) -> CheckResult:
     """Check active theme is valid and persona files exist."""
     config = root / ".pennyfarthing" / "config.local.yaml"
@@ -174,6 +215,28 @@ def _fix_default_config(path: Path) -> bool:
     return path.is_file()
 
 
+def _fix_bootstrap(root: Path) -> bool:
+    """Restore bootstrap.sh and settings.json via init logic."""
+    from pf.common.discovery import resolve_pf_binary
+    from pf.init.core import _write_bootstrap_settings
+
+    # Find dist_root from the pf binary's package location
+    discovery = resolve_pf_binary()
+    if not discovery["success"]:
+        return False
+    try:
+        from pf._dist import get_root, is_populated
+
+        if is_populated():
+            dist_root = get_root()
+        else:
+            return False
+    except (ImportError, ModuleNotFoundError):
+        return False
+
+    return _write_bootstrap_settings(root, dist_root)
+
+
 # ---------------------------------------------------------------------------
 # Check registry
 # ---------------------------------------------------------------------------
@@ -183,6 +246,7 @@ CHECKS: list[tuple[str, str]] = [
     ("pennyfarthing_dir", ".pennyfarthing/ directory exists"),
     ("config_file", "config.local.yaml is valid"),
     ("settings_hooks", "Claude Code hooks configured"),
+    ("bootstrap", "Bootstrap hook for zero-friction onboarding"),
     ("content_dirs", "Content directories present"),
     ("commands", "pf-* commands installed"),
     ("skills", "pf-* skills installed"),

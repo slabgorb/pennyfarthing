@@ -35,6 +35,12 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("session-start", None, "pf.hooks.session_start"),
         ("agent-reload", "compact|clear", "pf.hooks.agent_reload"),
     ],
+    "SessionEnd": [
+        ("session-end", None, "pf.hooks.session_end"),
+    ],
+    "PreCompact": [
+        ("pre-compact", None, "pf.hooks.pre_compact"),
+    ],
 }
 
 # Match field per event type

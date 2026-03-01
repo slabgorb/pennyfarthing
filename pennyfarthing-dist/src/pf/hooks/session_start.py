@@ -426,6 +426,12 @@ def main() -> None:
         _setup_session_dir(project_dir, session_id, source_type)
         _validate_checkpoint(project_dir)
 
+        # Detect bootstrap-just-ran marker (zero-friction first clone)
+        bootstrap_marker = project_dir / ".pennyfarthing" / ".bootstrap-just-ran"
+        is_bootstrap = bootstrap_marker.is_file()
+        if is_bootstrap:
+            bootstrap_marker.unlink(missing_ok=True)
+
         # Detect incomplete setup and emit additionalContext if needed
         setup_context = detect_incomplete_setup(project_dir)
         if setup_context:
@@ -453,6 +459,23 @@ def main() -> None:
                     "If the user asks for help getting started, suggest `/pf-help` "
                     "for commands and workflows, or mention the "
                     "`what-is-pennyfarthing` guide for a framework overview."
+                ),
+            ))
+
+        if is_bootstrap:
+            from pf.hooks import HookResponse, output_hook_response
+
+            output_hook_response(HookResponse(
+                event_name="SessionStart",
+                additional_context=(
+                    "Pennyfarthing was just automatically installed and configured "
+                    "for this project via bootstrap. The developer is likely new to "
+                    "this codebase. Greet them warmly and let them know:\n"
+                    "- Their workspace is ready — hooks, commands, and skills are active\n"
+                    "- Run `/pf-help` to explore available commands and agents\n"
+                    "- Run `/pf-setup` if they want to customize their theme or configuration\n"
+                    "- Run `/guided-tour` for an interactive walkthrough of the framework\n"
+                    "Keep it brief and welcoming. Don't overwhelm."
                 ),
             ))
 

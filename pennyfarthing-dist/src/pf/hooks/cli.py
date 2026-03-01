@@ -19,7 +19,10 @@ def hooks():
 
 
 @hooks.command("dispatch")
-@click.argument("event", type=click.Choice(["PreToolUse", "PostToolUse", "SessionStart", "Stop"]))
+@click.argument("event", type=click.Choice([
+    "PreToolUse", "PostToolUse", "SessionStart", "Stop",
+    "SessionEnd", "PreCompact",
+]))
 def dispatch(event):
     """Run all hooks for EVENT in a single process."""
     from pf.hooks.dispatch import dispatch as run_dispatch
@@ -39,6 +42,19 @@ def session_stop():
     from pf.hooks.session_stop import main
     main()
 
+
+@hooks.command("session-end")
+def session_end():
+    """SessionEnd hook — cleanup BikeRack, tmux status, final checkpoint."""
+    from pf.hooks.session_end import main
+    main()
+
+
+@hooks.command("pre-compact")
+def pre_compact():
+    """PreCompact hook — save context checkpoint before compaction."""
+    from pf.hooks.pre_compact import main
+    main()
 
 
 @hooks.command("pre-edit-check")

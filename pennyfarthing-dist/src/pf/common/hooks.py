@@ -33,6 +33,21 @@ INFRASTRUCTURE_HOOKS: dict = {
     "PostToolUse": [
         {"hooks": [{"type": "command", "command": f"{_SHIM_REL} hooks dispatch PostToolUse"}]},
     ],
+    "SessionEnd": [
+        {"hooks": [{"type": "command", "command": f"{_SHIM_REL} hooks dispatch SessionEnd"}]},
+    ],
+    "PreCompact": [
+        {"hooks": [{"type": "command", "command": f"{_SHIM_REL} hooks dispatch PreCompact"}]},
+    ],
+}
+
+# Bootstrap hook for committed settings.json (not settings.local.json).
+# Uses a relative path so it works on any machine after clone.
+# When pf is already set up, bootstrap.sh exits in <50ms (fast path).
+BOOTSTRAP_HOOKS: dict = {
+    "SessionStart": [
+        {"hooks": [{"type": "command", "command": "bash .claude/hooks/bootstrap.sh"}]},
+    ],
 }
 
 
