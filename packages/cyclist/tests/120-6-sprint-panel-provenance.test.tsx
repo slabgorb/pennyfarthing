@@ -39,6 +39,9 @@ interface MockSprintDataWithRegistry {
     id: string;
     title: string;
     jiraKey: string | null;
+    hasContext: boolean;
+    progress: { done: number; total: number; cancelled: number; percentage: number };
+    isCompleted: boolean;
     stories: Array<{ id: string; title: string; points: number; status: string; jiraKey: string }>;
   }>;
   futureEpics: Array<{
@@ -78,6 +81,9 @@ function createSprintDataWithRegistry(registry?: SprintRegistry): MockSprintData
         id: 'epic-120',
         title: 'Installation, agents and workflows',
         jiraKey: 'MSSCI-15400',
+        hasContext: true,
+        progress: { done: 0, total: 5, cancelled: 0, percentage: 0 },
+        isCompleted: false,
         stories: [
           { id: '120-6', title: 'Sprint panel active sprint preference', points: 5, status: 'in_progress', jiraKey: 'MSSCI-15411' },
         ],

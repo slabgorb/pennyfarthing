@@ -47,6 +47,9 @@ interface MockEpic {
   title: string;
   jiraKey: string | null;
   stories: MockStory[];
+  hasContext: boolean;
+  progress: { done: number; total: number; cancelled: number; percentage: number };
+  isCompleted: boolean;
 }
 
 interface MockFutureEpic {
@@ -96,6 +99,9 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
         id: 'epic-76',
         title: 'Dockview Panel Migration',
         jiraKey: 'MSSCI-14186',
+        hasContext: true,
+        progress: { done: 3, total: 16, cancelled: 0, percentage: 19 },
+        isCompleted: false,
         stories: [
           { id: 'MSSCI-14187', title: 'Tab overflow bug', points: 3, status: 'done', jiraKey: 'MSSCI-14187' },
           { id: 'MSSCI-14189', title: 'Enhanced Sprint Panel', points: 8, status: 'in_progress', jiraKey: 'MSSCI-14189' },
@@ -106,6 +112,9 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
         id: 'epic-75',
         title: 'Completed Epic',
         jiraKey: 'MSSCI-14100',
+        hasContext: false,
+        progress: { done: 8, total: 8, cancelled: 0, percentage: 100 },
+        isCompleted: true,
         stories: [
           { id: 'MSSCI-14101', title: 'Done story 1', points: 3, status: 'done', jiraKey: 'MSSCI-14101' },
           { id: 'MSSCI-14102', title: 'Done story 2', points: 5, status: 'done', jiraKey: 'MSSCI-14102' },
@@ -648,6 +657,9 @@ describe('AC7: Promote action', () => {
       id: 'epic-77',
       title: 'Future Initiative 1',
       jiraKey: null,
+      hasContext: false,
+      progress: { done: 0, total: 0, cancelled: 0, percentage: 0 },
+      isCompleted: false,
       stories: [],
     };
 
@@ -863,6 +875,7 @@ describe('AC9: Real-time updates', () => {
         epics: [
           {
             ...createMockSprintData().epics[0],
+            progress: { done: 11, total: 16, cancelled: 0, percentage: 69 },
             stories: createMockSprintData().epics[0].stories.map((s) =>
               s.id === 'MSSCI-14189' ? { ...s, status: 'done' as const } : s
             ),

@@ -44,7 +44,9 @@ interface MockEpic {
   title: string;
   jiraKey: string | null;
   stories: MockStory[];
-  hasContext?: boolean; // NEW: epic context file exists
+  hasContext: boolean;
+  progress: { done: number; total: number; cancelled: number; percentage: number };
+  isCompleted: boolean;
 }
 
 interface MockFutureEpic {
@@ -98,6 +100,8 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
         title: 'Dockview Panel Migration',
         jiraKey: 'MSSCI-14186',
         hasContext: true, // context-epic-76.md exists
+        progress: { done: 3, total: 13, cancelled: 0, percentage: 23 },
+        isCompleted: false,
         stories: [
           {
             id: 'MSSCI-14187',
@@ -138,6 +142,8 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
         title: 'Tool Use Visualization',
         jiraKey: 'MSSCI-13394',
         hasContext: true, // context-epic-74.md exists
+        progress: { done: 3, total: 3, cancelled: 0, percentage: 100 },
+        isCompleted: true,
         stories: [
           {
             id: 'MSSCI-13395',
@@ -154,6 +160,8 @@ function createMockSprintData(overrides: Partial<MockSprintData> = {}): MockSpri
         title: 'Future Epic (no context)',
         jiraKey: 'MSSCI-14300',
         hasContext: false, // No context file yet
+        progress: { done: 0, total: 0, cancelled: 0, percentage: 0 },
+        isCompleted: false,
         stories: [],
       },
     ],
@@ -288,6 +296,8 @@ describe('AC1: Epic context existence indicator', () => {
           title: 'Tool Use Visualization',
           jiraKey: 'MSSCI-13394',
           hasContext: true,
+          progress: { done: 3, total: 3, cancelled: 0, percentage: 100 },
+          isCompleted: true,
           stories: [
             {
               id: 'MSSCI-13395',
@@ -399,6 +409,8 @@ describe('AC2: Story Jira ticket clickable link', () => {
           title: 'Test Epic',
           jiraKey: null,
           hasContext: true,
+          progress: { done: 0, total: 2, cancelled: 0, percentage: 0 },
+          isCompleted: false,
           stories: [
             {
               id: 'LOCAL-001',

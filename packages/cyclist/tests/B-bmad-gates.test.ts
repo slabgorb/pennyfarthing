@@ -213,8 +213,10 @@ describe('B-bmad-gates: BMAD Gate Behavior', () => {
       }
     });
 
-    it('first step should not be a gate (need work before approval)', () => {
+    it('first step should not be a gate unless workflow is interactive', () => {
+      const interactiveWorkflows = ['guided-tour'];
       for (const gate of workflowsWithGates) {
+        if (interactiveWorkflows.includes(gate.workflowName)) continue;
         expect(
           gate.afterSteps[0],
           `${gate.workflowName} has gate after step 1`
