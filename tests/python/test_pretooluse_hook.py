@@ -232,14 +232,14 @@ class TestPortDiscovery:
 
     def test_read_port_file_returns_valid_port(self, tmp_project):
         """read_port_file should return parsed port for valid content."""
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431\n")
+        (tmp_project / CYCLIST_PORT_FILE).write_text("2898\n")
 
         result = read_port_file(CYCLIST_PORT_FILE, tmp_project)
-        assert result == 7431
+        assert result == 2898
 
     def test_find_project_root_finds_cyclist_port(self, tmp_project):
         """find_project_root should find directory containing .bikerack-port."""
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / CYCLIST_PORT_FILE).write_text("2898")
         subdir = tmp_project / "deep" / "nested"
         subdir.mkdir(parents=True)
 
@@ -398,7 +398,7 @@ class TestIsCyclistRunning:
         This is the core bug. A leftover port file should be irrelevant
         because detection is env-var-based, not file-based.
         """
-        (tmp_project / CYCLIST_PORT_FILE).write_text("7431")
+        (tmp_project / CYCLIST_PORT_FILE).write_text("2898")
         with patch.dict(os.environ, {}, clear=True):
             assert is_cyclist_running(tmp_project) is False
 

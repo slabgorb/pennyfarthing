@@ -180,13 +180,13 @@ class TestSessionStart:
         from pf.hooks.session_start import _write_env_file
         env_file = tmp_project / ".session" / "claude-env"
         with patch.dict(os.environ, {"CLAUDE_ENV_FILE": str(env_file)}):
-            _write_env_file(tmp_project, "sess-123", 7431)
+            _write_env_file(tmp_project, "sess-123", 2898)
 
         content = env_file.read_text()
         assert "PROJECT_ROOT" in content
         assert "SESSION_ID" in content
         assert "OTEL_EXPORTER_OTLP_ENDPOINT" in content
-        assert "7431" in content
+        assert "2898" in content
 
     def test_write_env_file_no_otel(self, tmp_project):
         from pf.hooks.session_start import _write_env_file

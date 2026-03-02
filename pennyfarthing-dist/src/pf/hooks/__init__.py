@@ -32,8 +32,8 @@ import yaml
 # Per ADR-0004: "the hub where all communication converges"
 CYCLIST_PORT_FILE = ".bikerack-port"
 
-# Default port if file not found
-DEFAULT_CYCLIST_PORT = 7431
+# Default port if file not found (must match BikeRack entry.ts DEFAULT_PORT)
+DEFAULT_CYCLIST_PORT = 2898
 
 # HTTP timeout for Cyclist communication
 HTTP_TIMEOUT_SECONDS = 120
