@@ -573,8 +573,9 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-        if dest.exists():
-            continue  # Don't overwrite user customizations
+        # Always overwrite tmux-dev (framework code), skip config samples if customized
+        if dest.exists() and dest_name != "tmux-dev":
+            continue
         shutil.copy2(src, dest)
         # Make tmux-dev executable
         if dest_name == "tmux-dev":
