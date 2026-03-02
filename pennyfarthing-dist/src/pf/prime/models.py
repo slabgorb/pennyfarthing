@@ -16,6 +16,7 @@ class WorkflowState(Enum):
 
     FINISH_STATE = "FINISH_STATE"
     IN_PROGRESS_STATE = "IN_PROGRESS_STATE"
+    STEPPED_IN_PROGRESS_STATE = "STEPPED_IN_PROGRESS_STATE"
     NEW_WORK_STATE = "NEW_WORK_STATE"
     EMPTY_BACKLOG_STATE = "EMPTY_BACKLOG_STATE"
 
@@ -41,6 +42,10 @@ class WorkflowStatus:
     workflow: str | None = None
     backlog_count: int = 0
     session_file: str | None = None
+    current_step: int | None = None
+    total_steps: int | None = None
+    step_name: str | None = None
+    completion_status: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -52,6 +57,10 @@ class WorkflowStatus:
             "workflow": self.workflow,
             "backlog_count": self.backlog_count,
             "session_file": self.session_file,
+            "current_step": self.current_step,
+            "total_steps": self.total_steps,
+            "step_name": self.step_name,
+            "completion_status": self.completion_status,
         }
 
 

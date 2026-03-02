@@ -42,6 +42,7 @@ from pf.prime.loader import (  # noqa: E402
     load_session_context,
     load_sidecars,
     load_sprint_context,
+    load_step_content,
 )
 from pf.prime.persona import (  # noqa: E402
     format_persona_compressed,
@@ -50,6 +51,7 @@ from pf.prime.persona import (  # noqa: E402
     is_character_voice_enabled,
     load_persona,
 )
+from pf.prime.models import WorkflowState  # noqa: E402
 from pf.prime.workflow import detect_workflow_state  # noqa: E402
 
 
@@ -122,6 +124,21 @@ def load_tier_components(
     # All tiers include workflow state
     workflow_status = detect_workflow_state(project_root)
     add_component("workflow_state", workflow_status)
+
+    # Load step content for stepped workflows (FULL and REFRESH tiers)
+    if (
+        workflow_status.state == WorkflowState.STEPPED_IN_PROGRESS_STATE
+        and workflow_status.current_step
+        and workflow_status.workflow
+        and tier in (ContextTier.FULL, ContextTier.REFRESH)
+    ):
+        step_text = load_step_content(
+            workflow_name=workflow_status.workflow,
+            current_step=workflow_status.current_step,
+            project_root=project_root,
+        )
+        if step_text:
+            add_component("step_content", step_text)
 
     if tier == ContextTier.MINIMAL:
         # MINIMAL: Just workflow state

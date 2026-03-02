@@ -94,6 +94,12 @@ def _format_workflow_state_text(result: PrimeResult) -> str:
         lines.append(f"phase_owner: {ws.phase_owner}")
     if ws.workflow:
         lines.append(f"workflow: {ws.workflow}")
+    if ws.current_step is not None:
+        lines.append(f"current_step: {ws.current_step}")
+    if ws.total_steps is not None:
+        lines.append(f"total_steps: {ws.total_steps}")
+    if ws.step_name:
+        lines.append(f"step_name: {ws.step_name}")
     if ws.backlog_count > 0:
         lines.append(f"backlog_count: {ws.backlog_count}")
 

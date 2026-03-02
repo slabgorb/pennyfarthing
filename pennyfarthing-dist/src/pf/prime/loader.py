@@ -302,6 +302,47 @@ def load_gate_recovery_guide(project_root: Path | None = None) -> str | None:
     return None
 
 
+def load_step_content(
+    workflow_name: str,
+    current_step: int,
+    project_root: Path | None = None,
+) -> str | None:
+    """Load the content of a stepped workflow's current step file.
+
+    Finds step files matching the pattern step-{NN}-*.md where NN is the
+    zero-padded step number.
+
+    Args:
+        workflow_name: Workflow name (e.g., "architecture")
+        current_step: Current step number (1-indexed)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Step file content, or None if not found
+    """
+    root = project_root or get_project_root()
+    step_num = f"{current_step:02d}"
+    pattern = f"step-{step_num}-*.md"
+
+    # Check .pennyfarthing/workflows/{name}/steps/
+    steps_dir = root / ".pennyfarthing" / "workflows" / workflow_name / "steps"
+    if steps_dir.is_dir():
+        matches = list(steps_dir.glob(pattern))
+        if matches:
+            return matches[0].read_text()
+
+    # Fallback: pennyfarthing-dist via get_dist_root
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        steps_dir = dist_root / "workflows" / workflow_name / "steps"
+        if steps_dir.is_dir():
+            matches = list(steps_dir.glob(pattern))
+            if matches:
+                return matches[0].read_text()
+
+    return None
+
+
 def load_repos_topology(project_root: Path | None = None) -> str | None:
     """Load repos.yaml topology as formatted context for agents.
 

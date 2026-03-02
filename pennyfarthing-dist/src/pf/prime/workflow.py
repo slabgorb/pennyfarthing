@@ -72,17 +72,18 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
     if filename.endswith("-session"):
         result["story_id"] = filename[:-8]  # Remove "-session"
 
-    # Track which sections we're in (we care about Story Context and Workflow Phase)
+    # Track which sections we're in (we care about Story Context, Workflow Phase, Workflow State)
     in_relevant_section = True  # Start True to capture content before any ##
 
     for line in lines:
         # Track section headers
         if line.startswith("## "):
-            # We care about Story Context and Workflow Phase sections
+            # We care about Story Context, Workflow Phase, and Workflow State sections
             section_name = line[3:].strip().lower()
             in_relevant_section = (
                 "story context" in section_name or
                 "workflow phase" in section_name or
+                "workflow state" in section_name or
                 "branch" in section_name
             )
             # Stop at assessment sections (too far down)
@@ -104,6 +105,8 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
 
             if key == "workflow":
                 result["workflow"] = value.lower()
+            elif key == "workflow name":
+                result["workflow"] = value.lower()
             elif key in ("current phase", "phase"):
                 # Extract phase name, handling "(APPROVED)" suffix
                 # Matches both "**Current Phase:**" and "**Phase:**"
@@ -112,6 +115,20 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
                     result["phase"] = phase_match.group(1).lower()
                     if phase_match.group(2):
                         result["phase_status"] = phase_match.group(2).lower()
+            elif key == "type":
+                result["workflow_type"] = value.lower()
+            elif key == "current step":
+                try:
+                    result["current_step"] = int(value)
+                except ValueError:
+                    pass
+            elif key == "total steps":
+                try:
+                    result["total_steps"] = int(value)
+                except ValueError:
+                    pass
+            elif key == "step name":
+                result["step_name"] = value
             elif key == "id" and "story_id" not in result:
                 result["story_id"] = value
             elif key == "status":
@@ -210,6 +227,39 @@ def detect_workflow_state(project_root: Path | None = None) -> WorkflowStatus:
         workflow = header.get("workflow", "tdd")
         phase = header.get("phase")
         phase_status = header.get("phase_status", "")
+        workflow_type = header.get("workflow_type")
+
+        # Handle stepped workflows
+        if workflow_type == "stepped":
+            current_step = header.get("current_step")
+            total_steps = header.get("total_steps")
+            step_name = header.get("step_name")
+            status = header.get("status", "")
+
+            # Completed stepped workflow → FINISH_STATE
+            if status == "completed":
+                return WorkflowStatus(
+                    state=WorkflowState.FINISH_STATE,
+                    story_id=story_id,
+                    workflow=workflow,
+                    session_file=str(session_file),
+                    current_step=current_step,
+                    total_steps=total_steps,
+                    step_name=step_name,
+                    completion_status=status,
+                )
+
+            # In-progress stepped workflow → STEPPED_IN_PROGRESS_STATE
+            return WorkflowStatus(
+                state=WorkflowState.STEPPED_IN_PROGRESS_STATE,
+                story_id=story_id,
+                workflow=workflow,
+                session_file=str(session_file),
+                current_step=current_step,
+                total_steps=total_steps,
+                step_name=step_name,
+                completion_status=status or "in_progress",
+            )
 
         # Check for finish state
         if phase in ("approved", "review-approved", "finish"):
