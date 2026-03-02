@@ -11,6 +11,8 @@ Panel navigation: Mount all panels, tab bar, keyboard switching, command palette
 from __future__ import annotations
 
 import os
+import sys
+import termios
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -1264,6 +1266,24 @@ def _patch_tgp_for_tmux() -> None:
     tgp.Image.__rich_console__ = _reupload_rich_console
 
 
+def _flush_terminal_input() -> None:
+    """Flush any pending terminal query responses from stdin.
+
+    detect_image_protocol() may send escape sequences (e.g. \\x1b[16t for cell
+    size) and read responses via cbreak mode.  If a response arrives late or
+    times out, residual bytes linger in the input buffer.  When Textual then
+    enters application mode and enables mouse/focus tracking, the stale input
+    confuses the terminal state and the SGR enable sequences leak as raw text.
+
+    Draining stdin before app.run() guarantees a clean handoff.
+    """
+    if sys.stdin.isatty():
+        try:
+            termios.tcflush(sys.stdin.fileno(), termios.TCIFLUSH)
+        except (termios.error, OSError):
+            pass
+
+
 def main(
     port: int | None = None,
     project_dir: Path | None = None,
@@ -1286,6 +1306,9 @@ def main(
     if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
         _patch_tgp_for_tmux()
 
+    # Story 103-22: drain stale terminal responses before Textual takes over
+    _flush_terminal_input()
+
     if port is None:
         if project_dir is not None:
             port_file = project_dir / ".bikerack-port"
@@ -1301,7 +1324,7 @@ def main(
 
     client = WheelHubClient(port=port)
     app = BikeRackApp(client=client)
-    app.run(mouse=False)
+    app.run()
 
 
 def dev_main(
@@ -1320,6 +1343,9 @@ def dev_main(
 
     if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
         _patch_tgp_for_tmux()
+
+    # Story 103-22: drain stale terminal responses before Textual takes over
+    _flush_terminal_input()
 
     if port is None:
         if project_dir is not None:
