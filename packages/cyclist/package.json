@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/cyclist",
-  "version": "12.1.3",
+  "version": "12.2.0",
   "description": "Visual terminal interface for Claude Code",
   "author": "1898andCo",
   "type": "module",

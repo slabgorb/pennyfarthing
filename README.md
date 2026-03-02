@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.1.3** | *The outer loop goes once, the inner loop goes many times.*
+**v12.2.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -16,7 +16,7 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
 - **35 BikeLane Workflows** - 14 local (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, TDD-Team, BDD-Team, Review-Tandem, Patch, Agent-Docs, Architecture, Release, Git Cleanup) + 21 reference workflows (PRD, Sprint Planning, UX Design, Research, and more)
-- **59 Slash Commands** - Entry points for agent activation and workflows
+- **37 Slash Commands** - Entry points for agent activation and workflows
 - **22 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
@@ -175,7 +175,7 @@ Cyclist and BikeRack render tool use as human-readable summaries instead of raw 
 <!-- TODO: Screenshot of agent portrait in conversation -->
 <!-- ![Agent Portrait](docs/images/agent-portrait.png) -->
 
-Each of the 319 persona characters across 29 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+Each of the 1101 persona characters across 100 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
 ### Workflow Modes
 
@@ -316,32 +316,19 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 ## Available Themes (100)
 
-Core includes 29 themes. Optional theme packs add 71 more across 7 packages:
+All 100 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
 
-| Package | Themes | Examples |
-|---------|--------|----------|
-| `@pennyfarthing/core` (included) | 29 | `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element` |
-| `@pennyfarthing/themes-prestige-tv` | 17 | `succession`, `the-wire`, `mad-men`, `fargo`, `the-sopranos` |
-| `@pennyfarthing/themes-literary` | 15 | `shakespeare`, `jane-austen`, `sherlock-holmes`, `1984`, `great-gatsby` |
-| `@pennyfarthing/themes-realistic` | 14 | `ancient-philosophers`, `jazz-legends`, `film-auteurs`, `software-pioneers` |
-| `@pennyfarthing/themes-comedy` | 8 | `the-office`, `parks-and-rec`, `ted-lasso`, `monty-python`, `futurama` |
-| `@pennyfarthing/themes-scifi` | 9 | `foundation`, `snow-crash`, `neuromancer`, `babylon-5` |
-| `@pennyfarthing/themes-mythology-fantasy` | 4 | `greek-mythology`, `norse-mythology`, `his-dark-materials`, `the-witcher` |
-| `@pennyfarthing/themes-superheroes` | 4 | `marvel-mcu`, `avatar-the-last-airbender`, `legion-of-doom` |
+`the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element`, `succession`, `the-wire`, `mad-men`, `shakespeare`, `jane-austen`, `dune`, `game-of-thrones`, `the-office`, `monty-python`, `greek-mythology`, `blade-runner`, `doctor-who`, `harry-potter`, `foundation`, `ted-lasso`, and 80 more.
 
 All themes include OCEAN (Big Five) personality profiles. See [Personas](docs/PERSONAS.md) for personality analysis.
 
-### Installing Theme Packs
+### Setting a Theme
 
 ```bash
-# Install individual packs
-npm install --save-dev @pennyfarthing/themes-prestige-tv
-
-# Or install all theme packs at once
-npm install --save-dev @pennyfarthing/themes-{comedy,literary,mythology-fantasy,prestige-tv,realistic,scifi,superheroes}
+pf theme set the-expanse
 ```
 
-Configure in `.pennyfarthing/config.local.yaml`:
+Or configure directly in `.pennyfarthing/config.local.yaml`:
 ```yaml
 theme: the-expanse
 ```
@@ -393,7 +380,7 @@ your-project/
 - **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
 - **v10.1** - Codebase health dashboard, tool dialog system, 2party-TDD workflow, cross-file reference validator
 - **v10.0** - Clean install consolidation, tool use approval system, plan mode exit UI
-- **v9.3** - Theme packages (97 themes across 7 packs), release workflow, shadcn/ui migration
+- **v9.3** - Theme expansion (100 themes bundled), release workflow, shadcn/ui migration
 - **v9.0** - Dockview panel system, React 19 rewrite, tool visualization, prime context, bell/relay modes
 - **v8.x** - BikeLane workflows, scientific benchmarking, JobFair, agent sidecars
 

@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.2.0] - 2026-03-02
+
+### Added
+
+- **Stepped workflow gate validation** — stepped workflows now validate gate conditions before advancing to the next step (137-3)
+- **Interactive AskUserQuestion menus** — stepped workflow static menus migrated to `<switch tool="AskUserQuestion">` tags for native Claude Code integration (137-2)
+
+### Fixed
+
+- **Terminal SGR escape leak** — flush terminal input before Textual startup to prevent raw SGR sequences from leaking into BikeRack TUI (103-22)
+- **BikeRack mouse mode leak** — disable mouse mode to prevent raw SGR escape sequences in TUI panels
+- **WheelHub port alignment** — align `DEFAULT_CYCLIST_PORT` with WheelHub default (7431 → 2898)
+- **Sprint status point totals** — include archived stories in sprint status point calculations (136-15)
+- **WheelHub bundle isolation** — exclude benchmark module from bundle to prevent `findMonorepoRoot` crash in consumer environments (MSSCI-15933)
+
+---
+
 ## [12.1.3] - 2026-03-01
 
 ### Added
@@ -2865,7 +2882,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...HEAD
+[12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
 [12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3
 [12.1.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.1...v12.1.2
 [12.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.0...v12.1.1
