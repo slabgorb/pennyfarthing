@@ -32,10 +32,6 @@ wheelhub *args:
 tui:
     just pf launch tui --foreground
 
-# Launch GUI dashboard in browser (starts WheelHub if needed)
-gui:
-    just pf launch gui
-
 # Launch Claude with OTEL pre-configured for WheelHub/BikeRack
 claude:
     #!/usr/bin/env bash
