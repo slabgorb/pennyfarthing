@@ -1322,6 +1322,11 @@ def main(
         else:
             port = DEFAULT_PORT
 
+    # Flush any queued SGR mouse/focus escape sequences that tmux delivers
+    # before Textual enters alt-screen mode (startup race condition, see #1220).
+    if os.environ.get("TMUX") and sys.stdout.isatty():
+        os.write(sys.stdout.fileno(), b"\033[?1003l\033[?1006l\033[?1004l")
+
     client = WheelHubClient(port=port)
     app = BikeRackApp(client=client)
     app.run()
@@ -1359,6 +1364,10 @@ def dev_main(
                 port = DEFAULT_PORT
         else:
             port = DEFAULT_PORT
+
+    # Flush any queued SGR mouse/focus escape sequences (see #1220).
+    if os.environ.get("TMUX") and sys.stdout.isatty():
+        os.write(sys.stdout.fileno(), b"\033[?1003l\033[?1006l\033[?1004l")
 
     client = WheelHubClient(port=port)
     app = BikeRackApp(client=client)
