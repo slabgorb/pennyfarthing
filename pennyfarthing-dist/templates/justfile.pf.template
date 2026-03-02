@@ -15,18 +15,27 @@ pf *args:
         "{{root}}/.pennyfarthing/bin/pf" {{args}}
     fi
 
-# Start WheelHub server (API + WebSocket)
-# Usage: just wheelhub [start|stop|status]
-wheelhub *args:
+# Start WheelHub server (API + WebSocket + OTEL ingestion)
+# Stops existing instance first if running. Writes .bikerack-port and bikerack-pid.
+wheelhub:
     #!/usr/bin/env bash
     set -euo pipefail
-    subcmd="{{args}}"
-    case "${subcmd:-start}" in
-        start)  just pf launch gui --no-open ;;
-        stop)   just pf launch stop ;;
-        status) just pf launch status ;;
-        *)      echo "Usage: just wheelhub [start|stop|status]"; exit 1 ;;
-    esac
+    project_dir="{{root}}"
+    pid_file="$project_dir/bikerack-pid"
+    port_file="$project_dir/.bikerack-port"
+
+    # Stop if already running
+    if [[ -f "$pid_file" ]]; then
+        old_pid=$(cat "$pid_file" 2>/dev/null)
+        if [[ "$old_pid" =~ ^[0-9]+$ ]] && kill -0 "$old_pid" 2>/dev/null; then
+            echo "[wheelhub] Stopping existing instance (PID $old_pid)" >&2
+            kill "$old_pid" 2>/dev/null || true
+            sleep 0.5
+        fi
+        rm -f "$pid_file" "$port_file"
+    fi
+
+    just pf launch gui --no-open
 
 # Launch TUI panel viewer (starts WheelHub if needed)
 tui:
@@ -59,7 +68,7 @@ claude:
         export OTEL_METRICS_EXPORTER="otlp"
     else
         echo "[just claude] No WheelHub/BikeRack running — launching without OTEL" >&2
-        echo "[just claude] Start one first: just wheelhub start" >&2
+        echo "[just claude] Start one first: just wheelhub" >&2
     fi
 
     exec claude

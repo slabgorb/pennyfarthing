@@ -7,7 +7,7 @@
  * 1. Export a working Express app with all API routes mounted
  * 2. Export createTerminalServer() that returns an HTTP server with WebSocket support
  * 3. Re-export key functions (broadcastStats, getStoryInfo, isBikeRackMode, etc.)
- * 4. Manage port files (.bikerack-port, .wheelhub-pid)
+ * 4. Manage port files (.bikerack-port, bikerack-pid)
  * 5. Initialize settings and grants on startup
  * 6. Support plugin router loading
  *
@@ -223,13 +223,13 @@ describe('Port file management', () => {
     assert.ok(!existsSync(join(testDir, '.bikerack-port')), 'Port file should be removed after cleanup');
   });
 
-  it('writePidFile creates .wheelhub-pid file', async () => {
+  it('writePidFile creates bikerack-pid file', async () => {
     const { writePidFile, readPidFile } = await import('./server.js');
 
     writePidFile(testDir, 12345);
 
-    const pidFilePath = join(testDir, '.wheelhub-pid');
-    assert.ok(existsSync(pidFilePath), '.wheelhub-pid file should exist');
+    const pidFilePath = join(testDir, 'bikerack-pid');
+    assert.ok(existsSync(pidFilePath), 'bikerack-pid file should exist');
 
     const pid = readPidFile(testDir);
     assert.strictEqual(pid, 12345, 'readPidFile should return the written PID');

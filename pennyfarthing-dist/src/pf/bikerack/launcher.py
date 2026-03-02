@@ -26,8 +26,8 @@ def is_process_alive(pid: int) -> bool:
 
 
 def cleanup_files(project_dir: Path) -> None:
-    """Clean up .bikerack-port, .wheelhub-pid, and .wheelhub-gui-pid files."""
-    for name in (".bikerack-port", ".wheelhub-pid", ".wheelhub-gui-pid"):
+    """Clean up .bikerack-port, bikerack-pid, and bikerack-tui-pid files."""
+    for name in (".bikerack-port", "bikerack-pid", "bikerack-tui-pid"):
         try:
             (project_dir / name).unlink()
         except FileNotFoundError:
@@ -43,16 +43,16 @@ def read_port_file(project_dir: Path) -> int | None:
 
 
 def read_pid_file(project_dir: Path) -> int | None:
-    """Read PID from .wheelhub-pid file. Returns None if not found."""
+    """Read PID from bikerack-pid file. Returns None if not found."""
     try:
-        return int((project_dir / ".wheelhub-pid").read_text().strip())
+        return int((project_dir / "bikerack-pid").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def write_pid_file(project_dir: Path, pid: int) -> None:
-    """Write .wheelhub-pid file."""
-    (project_dir / ".wheelhub-pid").write_text(str(pid))
+    """Write bikerack-pid file."""
+    (project_dir / "bikerack-pid").write_text(str(pid))
 
 
 def build_otel_env(port: int) -> dict[str, str]:
@@ -357,23 +357,23 @@ def get_status(project_dir: Path) -> dict:
 
 
 def read_tui_pid_file(project_dir: Path) -> int | None:
-    """Read TUI PID from .wheelhub-gui-pid file. Returns None if not found."""
+    """Read TUI PID from bikerack-tui-pid file. Returns None if not found."""
     try:
-        return int((project_dir / ".wheelhub-gui-pid").read_text().strip())
+        return int((project_dir / "bikerack-tui-pid").read_text().strip())
     except (FileNotFoundError, ValueError):
         return None
 
 
 def write_tui_pid_file(project_dir: Path, pid: int) -> None:
-    """Write .wheelhub-gui-pid file."""
-    (project_dir / ".wheelhub-gui-pid").write_text(str(pid))
+    """Write bikerack-tui-pid file."""
+    (project_dir / "bikerack-tui-pid").write_text(str(pid))
 
 
 def start_tui(project_dir: Path, port: int) -> subprocess.Popen:
     """Start TUI as independent subprocess.
 
     Uses start_new_session=True so TUI survives parent exit.
-    Writes .wheelhub-gui-pid for lifecycle tracking.
+    Writes bikerack-tui-pid for lifecycle tracking.
     """
     import sys
 
