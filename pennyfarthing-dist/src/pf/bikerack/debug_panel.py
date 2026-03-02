@@ -18,14 +18,7 @@ from rich.table import Table
 from rich.text import Text
 
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel, render_progress_bar
-
-# Tier → Rich style mapping
-_TIER_STYLES: dict[str, str] = {
-    "FULL": "bold green",
-    "REFRESH": "bold yellow",
-    "HANDOFF": "bold cyan",
-    "MINIMAL": "bold red",
-}
+from pf.bikerack.colors import TIER_STYLES as _TIER_STYLES, warn_style
 
 
 def _safe_int(value: Any) -> int | None:
@@ -437,13 +430,7 @@ def _render_sparkline(history: deque[int]) -> Text:
     text.append("Context trend: ", style="dim")
     for pct in history:
         level = min(7, max(0, int(pct / 100 * 7.99)))
-        if pct <= 70:
-            style = "green"
-        elif pct <= 85:
-            style = "yellow"
-        else:
-            style = "red"
-        text.append(_SPARKLINE_CHARS[level], style=style)
+        text.append(_SPARKLINE_CHARS[level], style=warn_style(pct))
     return text
 
 

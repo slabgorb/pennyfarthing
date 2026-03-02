@@ -13,6 +13,8 @@ from rich.text import Text
 from textual.message import Message
 from textual.widgets import Static
 
+from pf.bikerack.colors import warn_style
+
 # Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
 PANEL_ICONS: dict[str, tuple[str, str]] = {
     "sprint": ("\uf0e7", "#"),       # nf-fa-bolt
@@ -73,12 +75,7 @@ def render_progress_bar(
     if fill_style is not None:
         style = fill_style
     elif warn_high:
-        if percent <= 70:
-            style = "green"
-        elif percent <= 85:
-            style = "yellow"
-        else:
-            style = "red"
+        style = warn_style(percent)
     else:
         style = "blue"
 
