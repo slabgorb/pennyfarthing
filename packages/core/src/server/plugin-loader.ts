@@ -7,8 +7,8 @@
  */
 
 import type { Express } from 'express';
-import { discoverPlugins, getPluginRouters } from '../index.js';
-import type { PluginRouter } from '../index.js';
+import { discoverPlugins, getPluginRouters } from '../plugins/plugin-discovery.js';
+import type { PluginRouter } from '../plugins/plugin-discovery.js';
 
 export interface PluginRouterResult {
   mountPath: string;

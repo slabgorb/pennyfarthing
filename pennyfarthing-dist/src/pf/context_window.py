@@ -278,6 +278,7 @@ def detect_cyclist(project_dir: str | None = None) -> bool:
     # Port file check - verify Cyclist is actually running
     project_dir = (
         project_dir or
+        os.environ.get("WHEELHUB_PROJECT_DIR") or
         os.environ.get("CYCLIST_PROJECT_DIR") or
         os.environ.get("PROJECT_ROOT") or
         os.getcwd()

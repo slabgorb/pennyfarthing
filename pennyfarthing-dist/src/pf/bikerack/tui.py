@@ -599,7 +599,7 @@ class BikeRackApp(App):
 
     def compose(self) -> ComposeResult:
         project_dir_name = Path(
-            os.environ.get("CYCLIST_PROJECT_DIR", os.getcwd())
+            os.environ.get("WHEELHUB_PROJECT_DIR") or os.environ.get("CYCLIST_PROJECT_DIR") or os.getcwd()
         ).name
         self._status_footer = StatusFooter(
             project_dir=project_dir_name,

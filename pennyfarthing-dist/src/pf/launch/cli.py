@@ -68,7 +68,7 @@ def launch():
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR / CYCLIST_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--no-open", is_flag=True, help="Print URL only, don't open browser.")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
@@ -108,7 +108,7 @@ def gui(project_dir, no_open, dry_run):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR / CYCLIST_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--foreground", "mode", flag_value="foreground", help="Force TUI in current terminal.")
 @click.option("--detach", "mode", flag_value="detach", help="Force TUI in new Terminal.app window.")
@@ -185,7 +185,7 @@ def _launch_tui_detached(project_dir: Path, port: int) -> None:
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR / CYCLIST_PROJECT_DIR env var, then cwd.",
 )
 def status(project_dir):
     """Show WheelHub running state."""
@@ -210,7 +210,7 @@ def status(project_dir):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to CYCLIST_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR / CYCLIST_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def stop(project_dir, dry_run):

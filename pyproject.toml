@@ -45,6 +45,9 @@ build-backend = "setuptools.build_meta"
 where = ["pennyfarthing-dist/src"]
 include = ["pf*"]
 
+[tool.setuptools.package-data]
+"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.js", "**/*.mjs", "**/*.txt", "**/*.toml"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

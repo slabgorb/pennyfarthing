@@ -71,7 +71,7 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     """
     if project_dir:
         return Path(project_dir)
-    env = os.environ.get("CYCLIST_PROJECT_DIR")
+    env = os.environ.get("WHEELHUB_PROJECT_DIR") or os.environ.get("CYCLIST_PROJECT_DIR")
     if env:
         return Path(env)
     return Path.cwd()
@@ -176,7 +176,7 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     log_path = _wheelhub_log_path(project_dir)
 
     env = os.environ.copy()
-    env["CYCLIST_PROJECT_DIR"] = str(project_dir)
+    env["WHEELHUB_PROJECT_DIR"] = str(project_dir)
 
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(

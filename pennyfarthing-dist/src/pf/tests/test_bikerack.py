@@ -79,7 +79,7 @@ class TestStartWheelHub:
             assert env.get("IS_BIKERACK") == "1"
 
     def test_sets_project_dir_env(self, tmp_path: Path) -> None:
-        """start_wheelhub should set CYCLIST_PROJECT_DIR in subprocess env."""
+        """start_wheelhub should set WHEELHUB_PROJECT_DIR in subprocess env."""
         with patch("pf.bikerack.launcher.subprocess.Popen") as mock_popen:
             mock_popen.return_value = MagicMock(pid=12345)
 
@@ -87,7 +87,7 @@ class TestStartWheelHub:
 
             popen_kwargs = mock_popen.call_args
             env = popen_kwargs.kwargs.get("env") or popen_kwargs[1].get("env")
-            assert env.get("CYCLIST_PROJECT_DIR") == str(tmp_path)
+            assert env.get("WHEELHUB_PROJECT_DIR") == str(tmp_path)
 
     def test_process_is_background(self, tmp_path: Path) -> None:
         """start_wheelhub should not block (background process)."""

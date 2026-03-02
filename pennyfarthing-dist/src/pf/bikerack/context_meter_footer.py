@@ -83,9 +83,11 @@ class StatusFooter(Static):
         self._last_redraw_time: float = 0.0
         self.last_update_time: float = 0.0
         self._pwd: str = ""
-        self._project_root = os.environ.get(
-            "CYCLIST_PROJECT_DIR",
-            os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()),
+        self._project_root = (
+            os.environ.get("WHEELHUB_PROJECT_DIR")
+            or os.environ.get("CYCLIST_PROJECT_DIR")
+            or os.environ.get("CLAUDE_PROJECT_DIR")
+            or os.getcwd()
         )
         self._story_id = _get_story_id(self._project_root)
         # Story 136-5: Loading timeout (seconds) before showing error

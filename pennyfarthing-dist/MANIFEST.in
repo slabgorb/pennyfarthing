@@ -21,8 +21,7 @@ prune packages
 prune tests
 prune docs
 
-# Exclude large binary content from bundled _dist
-prune src/pf/_dist/personas/spiders
+# Large binary exclusions (spiders, portraits) handled by setup.py build_py override
 
 # Exclude test files from package
 prune src/pf/tests
