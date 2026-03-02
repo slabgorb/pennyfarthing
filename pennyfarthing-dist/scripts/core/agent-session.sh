@@ -278,8 +278,8 @@ case "$1" in
           HAS_HANDOFF="yes"
         fi
 
-        # Also check for CYCLIST:HANDOFF marker (handoff output)
-        if [ "$HAS_HANDOFF" = "no" ] && grep -q "CYCLIST:HANDOFF" "$ACTIVE_SESSION" 2>/dev/null; then
+        # Also check for PF:HANDOFF marker (handoff output)
+        if [ "$HAS_HANDOFF" = "no" ] && grep -qE "PF:HANDOFF" "$ACTIVE_SESSION" 2>/dev/null; then
           HAS_HANDOFF="yes"
         fi
 

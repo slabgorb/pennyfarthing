@@ -63,7 +63,7 @@ Use `/pf-help` anytime for quick reference.
 When the user selects Dig In, explore these topics interactively:
 
 - **Framework structure**: `.pennyfarthing/` directory, `pennyfarthing-dist/`, symlinks
-- **Display modes**: TUI (BikeRack), GUI (Cyclist), IDE (WheelHub)
+- **Display modes**: TUI (BikeRack), GUI (BikeRack GUI), IDE (WheelHub)
 - **Component codenames**: WheelHub (server), TirePump (context clearing), BikeRack (panel viewer), BikeLane (workflow engine)
 - **Getting-started guide**: Walk through the companion reference document
 - **Installation health**: Explain each validator and what it checks

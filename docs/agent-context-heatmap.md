@@ -129,7 +129,7 @@ The shared Agent Behavior Guide (~290 lines) is loaded after the agent definitio
 ### Critical Protocols (Lines 200-240)
 
 6 `<critical>` blocks covering:
-- Reflector markers (Cyclist UI)
+- Reflector markers (BikeRack GUI)
 - Absolute paths requirement
 - Session file extraction
 - Handoff action sequence
@@ -146,7 +146,7 @@ Generic information about workflow, skills, project structure.
 
 ### Reflector + Exit Protocol (Lines 340-500)
 
-Detailed instructions for Cyclist UI markers and exit sequences.
+Detailed instructions for BikeRack GUI markers and exit sequences.
 
 **Compliance: 🟡 MEDIUM** - Important but late in context. Agents often need reminders via hook feedback.
 

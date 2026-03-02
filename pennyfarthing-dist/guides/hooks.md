@@ -39,13 +39,13 @@ Project-specific environment setup. Edit this file to:
 
 **Location:** `.pennyfarthing/scripts/hooks/otel-auto-config.sh`
 
-Auto-configures OTEL telemetry for Cyclist web mode. Checks for a `.bikerack-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Cyclist/BikeRack server.
+Auto-configures OTEL telemetry for BikeRack GUI. Checks for a `.bikerack-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running BikeRack server.
 
 #### pf hooks session-start (welcome)
 
 **Location:** `pf hooks session-start`
 
-Welcome display is now folded into `pf hooks session-start`. In CLI mode, shows ASCII art. In Cyclist mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
+Welcome display is now folded into `pf hooks session-start`. In CLI mode, shows ASCII art. In BikeRack GUI mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
 
 ### PreToolUse Hooks
 
@@ -58,11 +58,11 @@ Protects sensitive files from accidental edits:
 - Blocks: `.git/`, `node_modules/`, `vendor/`
 - Blocks: `.pennyfarthing/*` (managed files)
 
-#### pf hooks cyclist-pretooluse
+#### pf hooks pretooluse-forward
 
-**Location:** `pf hooks cyclist-pretooluse`
+**Location:** `pf hooks pretooluse-forward`
 
-Cyclist-specific pre-tool validation. Runs additional safety checks when operating inside Cyclist.
+BikeRack GUI pre-tool validation. Runs additional safety checks when operating inside BikeRack GUI.
 
 #### pf hooks context-warning
 
@@ -104,11 +104,13 @@ Bell mode message injection. Checks the bell mode queue and injects queued messa
 
 Cleans up session state when Claude Code exits.
 
-#### pf hooks reflector-check
+#### pf hooks reflector-check (deprecated)
 
 **Location:** `pf hooks reflector-check`
 
-Stop hook enforcing that every agent turn ends with a CYCLIST marker. Detects questions, handoff phrases, and validates marker presence. Blocks turns without valid markers in Cyclist mode.
+> **Deprecated.** This hook is part of the legacy marker protocol. It may be removed in a future release.
+
+Stop hook enforcing that every agent turn ends with a reflector marker. Detects questions, handoff phrases, and validates marker presence. Blocks turns without valid markers in BikeRack GUI mode.
 
 ### Git Hooks
 

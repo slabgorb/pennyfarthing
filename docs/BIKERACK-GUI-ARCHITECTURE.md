@@ -1,16 +1,16 @@
-# Cyclist Architecture
+# BikeRack GUI Architecture
 
-Cyclist is a desktop application for running Claude Code with a visual terminal interface. It provides real-time agent personas, session statistics, story progress tracking, and a rich text editor - all wrapped in an Electron app.
+BikeRack GUI is the browser-based visual interface for Claude Code with Pennyfarthing integration. It provides real-time agent personas, session statistics, story progress tracking, and a rich text editor.
 
 ## Overview
 
-As of v9.0, Cyclist uses a **React-based UI** with **Dockview panels** (see ADR-0019). It uses:
+As of v9.0, BikeRack GUI uses a **React-based UI** with **Dockview panels** (see ADR-0019). It uses:
 
-- **Electron** for the desktop application shell
+- **Express** for serving the UI and handling API requests
 - **React 19** for the UI layer (`src/public/components/`)
 - **Dockview** for panel management (floating, splitting, dragging)
 - **Express** for serving the UI and handling API requests
-- **node-pty** for pseudo-terminal emulation (Electron mode)
+- **WebSocket** for real-time communication
 - **TipTap** for rich text editing
 
 ## Quick Start
@@ -24,7 +24,7 @@ pnpm install
 pnpm run dev
 ```
 
-This launches Electron with hot reload enabled - changes to `dist/*` trigger automatic refresh.
+This launches the dev server with hot reload enabled.
 
 ### Single Run (No Hot Reload)
 
@@ -32,38 +32,11 @@ This launches Electron with hot reload enabled - changes to `dist/*` trigger aut
 pnpm run dev:once
 ```
 
-### Build Distributable App
-
-```bash
-pnpm run build:electron
-```
-
-Build artifacts are placed in `packages/cyclist/release/`:
-
-| Platform | Output |
-|----------|--------|
-| macOS | `Cyclist-{version}.dmg`, `Cyclist-{version}-mac.zip` |
-| Windows | `Cyclist Setup {version}.exe`, `Cyclist {version}.exe` (portable) |
-| Linux | `Cyclist-{version}.AppImage`, `cyclist_{version}_amd64.deb` |
-
-## Project Directory
-
-Cyclist needs a project directory to operate on. Specify it via:
-
-1. **CLI Argument** (recommended for scripts):
-   ```bash
-   electron . --project-dir=/path/to/project
-   ```
-
-2. **Folder Picker** (default when no argument):
-   - Shows native folder picker on launch
-   - If canceled, app quits gracefully
-
-## Architecture
+## Architecture## Architecture
 
 ### Internal Codenames
 
-Cyclist uses bicycle-themed internal codenames for major subsystems:
+BikeRack GUI uses bicycle-themed internal codenames for major subsystems:
 
 | Codename | Component | Description |
 |----------|-----------|-------------|
@@ -75,47 +48,11 @@ See `packages/cyclist/README.md` for detailed implementation notes.
 
 ### Multi-Instance Support
 
-Cyclist supports running multiple instances for different projects simultaneously:
+BikeRack GUI supports running multiple instances for different projects simultaneously:
 
 - **File > New Window** (Cmd+Shift+N) - Opens folder picker for a new project
 - Each instance runs on a separate port with isolated state
 - Port files (`.bikerack-port`) prevent cross-instance conflicts
-
-### Process Model
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Electron Main Process                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ PTY (Claude)│  │ OTLP Server │  │ Pennyfarthing Detection │  │
-│  │ node-pty    │  │ Port 4318   │  │ Theme/Persona Loading   │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│         │                │                      │                │
-│         └────────────────┼──────────────────────┘                │
-│                          │                                       │
-│                    IPC Channels                                  │
-│                          │                                       │
-└──────────────────────────┼───────────────────────────────────────┘
-                           │
-┌──────────────────────────┼───────────────────────────────────────┐
-│                    Preload Script                                │
-│              (contextBridge - secure IPC)                        │
-└──────────────────────────┼───────────────────────────────────────┘
-                           │
-┌──────────────────────────┼───────────────────────────────────────┐
-│                    Renderer Process                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ MessageView │  │   Sidebar   │  │   Tab Panel             │  │
-│  │ (terminal)  │  │  (persona,  │  │ (diffs, files, browser) │  │
-│  │             │  │   stats)    │  │                         │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │              TipTap Rich Text Editor                        ││
-│  │         (prompt input with formatting toolbar)              ││
-│  └─────────────────────────────────────────────────────────────┘│
-└──────────────────────────────────────────────────────────────────┘
-```
 
 ### Key Source Files
 
@@ -151,7 +88,7 @@ The UI is now React-based. Key components in `src/public/components/`:
 | `ToolStatus.tsx` | Pending/success/error indicators |
 | `Editor.tsx` | TipTap rich text input |
 | `ControlBar.tsx` | Mode toggles and controls |
-| `QuickActions.tsx` | CYCLIST marker detection and buttons |
+| `QuickActions.tsx` | PF marker detection and buttons |
 | `StatsStrip.tsx` | Compact stats bar |
 | `PersonaHeader.tsx` | Agent persona in message header |
 | `DiffViewer.tsx` | Side-by-side diff display |
@@ -335,11 +272,11 @@ const portraitPath = resolvePortraitPath(theme, character, oceanSlug);
 
 | Variable | Purpose |
 |----------|---------|
-| `CYCLIST_COMMAND` | Override Claude CLI path |
-| `CYCLIST_SESSION_ID` | Session ID for persona lookup |
-| `CYCLIST_PROJECT_DIR` | Project directory path |
-| `CYCLIST_THEME` | Active theme name |
-| `CYCLIST_ACTIVE` | Set to "1" when running in Cyclist |
+| `PF_COMMAND` | Override Claude CLI path |
+| `PF_SESSION_ID` | Session ID for persona lookup |
+| `PF_PROJECT_DIR` | Project directory path |
+| `PF_THEME` | Active theme name |
+| `PF_GUI_ACTIVE` | Set to "1" when running in BikeRack GUI |
 | `PORT` | Server port (default: 1898) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint for telemetry |
 
@@ -347,7 +284,7 @@ const portraitPath = resolvePortraitPath(theme, character, oceanSlug);
 
 ### Theme Detection
 
-Cyclist reads theme configuration from the project:
+BikeRack GUI reads theme configuration from the project:
 
 ```typescript
 import { loadThemeConfig, loadThemeYaml } from './pennyfarthing.js';
@@ -361,7 +298,7 @@ const agents = loadThemeYaml(themePath);
 
 ### Agent Watching
 
-Cyclist monitors `.session/agents/` for agent changes:
+BikeRack GUI monitors `.session/agents/` for agent changes:
 
 ```typescript
 import { watchAgentChanges } from './pennyfarthing.js';
@@ -375,11 +312,11 @@ const cleanup = watchAgentChanges(
 
 ### Statusbar Suppression
 
-When `CYCLIST_ACTIVE=1` is set, Pennyfarthing's statusline hook outputs nothing - Cyclist's sidebar displays the same information.
+When `PF_GUI_ACTIVE=1` is set, Pennyfarthing's statusline hook outputs nothing - BikeRack GUI's sidebar displays the same information.
 
 ## Hook Approval System
 
-Cyclist consolidates all hook communication through WheelHub for secure tool approval.
+BikeRack GUI consolidates all hook communication through WheelHub for secure tool approval.
 
 ### Flow
 
@@ -418,7 +355,7 @@ interface HookRequest {
 
 ## OpenTelemetry Integration
 
-Cyclist includes an OTLP receiver on port 4318 that captures:
+BikeRack GUI includes an OTLP receiver on port 4318 that captures:
 
 - Token usage (input/output/cache)
 - API request timings
@@ -475,21 +412,9 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 2. Check OCEAN-slug filename matches character
 3. Confirm `@pennyfarthing/shared` resolver is working
 
-### High memory usage
-
-The Electron process includes Chromium overhead. For lighter usage:
-- Use standalone mode: `pnpm run dev:server` (browser-based) - see [Web Mode Guide](../packages/cyclist/docs/WEB-MODE.md)
-- Close unused tabs in the tab panel
-
-### Hot reload not working
-
-1. Ensure you're running `pnpm run dev` (not `dev:once`)
-2. Check `electron-reload` is installed
-3. Verify `dist/` is being updated by TypeScript compiler
-
 ## Multi-Repo Git Status
 
-For monorepo or multi-project setups, Cyclist displays git status for all configured repositories.
+For monorepo or multi-project setups, BikeRack GUI displays git status for all configured repositories.
 
 ### Configuration
 
@@ -543,5 +468,3 @@ Tests follow the `B-*.test.ts` naming convention (57 total tests).
 - [User Guide](USER-GUIDE.md) - Complete Pennyfarthing documentation
 - [Personas](PERSONAS.md) - Theme customization and OCEAN profiles
 - [Architecture](ARCHITECTURE.md) - System design principles
-- [Web Mode Guide](../packages/cyclist/docs/WEB-MODE.md) - Browser-based usage and feature parity
-- [Quick Action Setup](../packages/cyclist/docs/QUICK-ACTION-SETUP.md) - Finder integration

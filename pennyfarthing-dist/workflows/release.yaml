@@ -30,7 +30,7 @@ workflow:
   variables:
     version_file: VERSION
     project_root: .
-    packages: "core cyclist shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes"
+    packages: "core shared themes-comedy themes-literary themes-mythology-fantasy themes-prestige-tv themes-realistic themes-scifi themes-superheroes"
     # Set during preflight based on user choice:
     # IS_PRERELEASE: "true" | "false"
     # PRERELEASE_CHANNEL: "alpha" | "beta" | "rc" (only when IS_PRERELEASE=true)

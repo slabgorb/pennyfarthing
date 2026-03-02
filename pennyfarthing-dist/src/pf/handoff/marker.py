@@ -45,9 +45,9 @@ def generate_marker(
 
     if not ctx.relay_mode:
         # Relay off — ask for confirmation
-        if ctx.is_cyclist:
+        if ctx.is_gui:
             return _block(
-                marker="<!-- CYCLIST:QUESTION:yesno -->",
+                marker=f"<!-- PF:QUESTION:yesno -->",
                 question=f"Ready to hand off to {cmd}?",
                 fallback=f"Run `{cmd}` to continue",
             )
@@ -58,21 +58,21 @@ def generate_marker(
         )
 
     # Relay on — auto-handoff
-    # Cyclist uses its feedback loop (QuickActions → slash command injection).
-    # Non-Cyclist: we're already in the session, invoke the agent directly.
+    # BikeRack GUI uses its feedback loop (QuickActions → slash command injection).
+    # Non-GUI: we're already in the session, invoke the agent directly.
     marker = None
     if ctx.use_tirepump:
-        marker = f"<!-- CYCLIST:CONTEXT_CLEAR:{cmd} -->" if ctx.is_cyclist else None
+        marker = f"<!-- PF:CONTEXT_CLEAR:{cmd} -->" if ctx.is_gui else None
     else:
-        marker = f"<!-- CYCLIST:HANDOFF:{cmd} -->" if ctx.is_cyclist else None
+        marker = f"<!-- PF:HANDOFF:{cmd} -->" if ctx.is_gui else None
 
-    if ctx.is_cyclist:
+    if ctx.is_gui:
         return _block(
             marker=marker,
             fallback=f"Run `{cmd}` to continue",
         )
 
-    # Non-Cyclist relay: return structured action for the agent to act on.
+    # Non-GUI relay: return structured action for the agent to act on.
     # The calling agent reads the `action` field and executes accordingly.
     if ctx.use_tirepump:
         return _block(

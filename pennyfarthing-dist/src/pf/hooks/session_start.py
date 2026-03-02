@@ -24,10 +24,8 @@ from pathlib import Path
 import yaml
 
 from pf.hooks import (
-    CyclistSettings,
-    is_cyclist_running,
+    PennySettings,
     load_settings,
-    send_to_cyclist,
 )
 
 # =============================================================================
@@ -139,15 +137,6 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
         write_pid_file,
     )
 
-    # Skip if full Cyclist is running
-    cyclist_port_file = project_dir / ".bikerack-port"
-    if cyclist_port_file.exists():
-        try:
-            return int(cyclist_port_file.read_text().strip())
-        except (ValueError, OSError):
-            return None
-
-    # Check if BikeRack WheelHub is already running
     running, _pid, port = is_already_running(project_dir)
     if running:
         return port
@@ -183,7 +172,7 @@ def _write_env_file(project_dir: Path, session_id: str, otel_port: int | None) -
     if otel_port is not None:
         from pf.bikerack.launcher import build_otel_env
 
-        lines.append("# OTEL auto-configuration for Cyclist/WheelHub")
+        lines.append("# OTEL auto-configuration for WheelHub")
         for key, value in build_otel_env(otel_port).items():
             lines.append(f'export {key}="{value}"')
 
@@ -233,7 +222,7 @@ def _display_cli_welcome(
     print()
 
 
-def _should_show_nudge(project_dir: Path, settings: CyclistSettings) -> bool:
+def _should_show_nudge(project_dir: Path, settings: PennySettings) -> bool:
     """Check if discovery nudge should be shown.
 
     Shows on first session only. Controlled by discovery_nudge config setting
@@ -279,22 +268,7 @@ def _show_welcome(project_dir: Path) -> bool:
     theme = settings.theme
     show_nudge = _should_show_nudge(project_dir, settings)
 
-    if is_cyclist_running(project_dir):
-        try:
-            send_to_cyclist(
-                endpoint="/api/welcome",
-                data={
-                    "project": project_name or "",
-                    "theme": theme or "",
-                    "show_nudge": show_nudge,
-                },
-                project_root=project_dir,
-                timeout=5,
-            )
-        except Exception:
-            pass
-    else:
-        _display_cli_welcome(project_name, theme, show_nudge=show_nudge)
+    _display_cli_welcome(project_name, theme, show_nudge=show_nudge)
 
     if show_nudge:
         _mark_nudge_shown(project_dir)

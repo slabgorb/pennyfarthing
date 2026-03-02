@@ -35,9 +35,9 @@ Changes may span multiple repos. Group by **initiative**, not by repo:
 
 ```
 Group: "Todos WebSocket feature"
-  - pennyfarthing/packages/cyclist/src/main.ts
-  - pennyfarthing/packages/cyclist/src/websocket.ts
-  - pennyfarthing/packages/cyclist/src/public/hooks/useTodos.ts
+  - pennyfarthing/packages/core/src/main.ts
+  - pennyfarthing/packages/core/src/websocket.ts
+  - pennyfarthing/packages/core/src/hooks/useTodos.ts
 ```
 
 All files in a group get committed together in their respective repos.
@@ -87,8 +87,8 @@ Present proposed groups in this format:
 **Commit:** `{type}({scope}): {message}`
 
 **Repo: pennyfarthing**
-- `packages/cyclist/src/main.ts` (M)
-- `packages/cyclist/src/websocket.ts` (M)
+- `packages/core/src/main.ts` (M)
+- `packages/core/src/websocket.ts` (M)
 
 **Repo: pennyfarthing-orchestrator**
 - `sprint/current-sprint.yaml` (M)
@@ -144,7 +144,6 @@ Ready to proceed?
 **[C]** Continue to execution
 
 <!-- GATE -->
-<!-- CYCLIST:CHOICES:E,T,S,C -->
 
 <switch tool="AskUserQuestion">
   <case value="edit-groupings" next="LOOP">

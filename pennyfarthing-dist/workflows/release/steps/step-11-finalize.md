@@ -95,5 +95,3 @@ gh release view "v{new_version}" --json url --jq '.url' 2>/dev/null || echo "  N
 ---
 
 Release workflow complete. All systems updated.
-
-<!-- CYCLIST:CONTINUE -->

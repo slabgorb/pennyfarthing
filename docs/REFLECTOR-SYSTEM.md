@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-The **Reflector** system is Pennyfarthing's protocol for signaling UI actions from Claude agent output to the visual terminal (Cyclist) and VS Code extension. It uses HTML comment markers that are parsed and converted to interactive UI elements.
+The **Reflector** system is Pennyfarthing's protocol for signaling UI actions from Claude agent output to the visual terminal (BikeRack GUI) and VS Code extension. It uses HTML comment markers that are parsed and converted to interactive UI elements.
 
 ---
 
@@ -23,15 +23,15 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
        |                                            |
        | Outputs marker verbatim                    v
        |         +---------------------------------------------+
-       +-------->|  <!-- CYCLIST:HANDOFF:/pf-dev -->            |
-                 |  <!-- CYCLIST:CONTEXT_CLEAR:/pf-reviewer --> |
+       +-------->|  <!-- PF:HANDOFF:/pf-dev -->                |
+                 |  <!-- PF:CONTEXT_CLEAR:/pf-reviewer -->     |
                  +---------------------------------------------+
                                     |
               +---------------------+---------------------+
               |                                           |
               v                                           v
    +------------------------+              +----------------------------+
-   |  Cyclist Terminal      |              |  VS Code Extension         |
+   |  BikeRack GUI          |              |  VS Code Extension         |
    |  quick-actions.js      |              |  reflector.ts              |
    |  detectStructuredMarkers()            |  detectMarkers()           |
    +------------------------+              +----------------------------+
@@ -49,11 +49,11 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
 
 | Marker Type | Format | Purpose | UI Action |
 |-------------|--------|---------|-----------|
-| `HANDOFF` | `<!-- CYCLIST:HANDOFF:/agent -->` | Phase transition | Button: "Continue with {agent}" |
-| `CONTEXT_CLEAR` | `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` | High context handoff | Clear session + reload agent |
-| `INVOKE` | `<!-- CYCLIST:INVOKE:/agent -->` | Turbo mode auto-execute | Auto-submit agent command |
-| `QUESTION` | `<!-- CYCLIST:QUESTION:yesno -->` | Binary decision | Yes/No buttons |
-| `CHOICES` | `<!-- CYCLIST:CHOICES:1,2,3 -->` | Multiple options | Numbered choice buttons |
+| `HANDOFF` | `<!-- PF:HANDOFF:/agent -->` | Phase transition | Button: "Continue with {agent}" |
+| `CONTEXT_CLEAR` | `<!-- PF:CONTEXT_CLEAR:/agent -->` | High context handoff | Clear session + reload agent |
+| `INVOKE` | `<!-- PF:INVOKE:/agent -->` | Auto-execute | Auto-submit agent command |
+| `QUESTION` | `<!-- PF:QUESTION:yesno -->` | Binary decision | Yes/No buttons |
+| `CHOICES` | `<!-- PF:CHOICES:1,2,3 -->` | Multiple options | Numbered choice buttons |
 
 ---
 
@@ -72,7 +72,7 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
                             |
                             v
                   +--------------------+
-                  | IS_CYCLIST == true?|
+                  | IS_GUI == true?    |
                   +---------+----------+
                       |            |
                      YES          NO
@@ -80,7 +80,7 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
                       v            v
           +------------------+   +------------------+
           | permission_mode  |   | marker: ""       |
-          | == "turbo"?      |   | (no marker)      |
+          | == "accept"?     |   | (no marker)      |
           +--------+---------+   +------------------+
                |         |
               YES       NO
@@ -114,10 +114,10 @@ context_budget:
 ```
 
 TirePump activates when:
-1. `permission_mode == "turbo"` (auto-handoff enabled)
+1. `permission_mode == "accept"` (auto-handoff enabled)
 2. `usable_percent > 60%` (tirepump_threshold)
 
-### IPC Channel Flow (Cyclist)
+### IPC Channel Flow (BikeRack GUI)
 
 ```
 +-------------+   context:clearAndLoad    +--------------+
@@ -164,7 +164,7 @@ TirePump activates when:
        |                                    |
        |  ---                               |
        |  AGENT_COMMAND:                    |
-       |    marker: "<!-- CYCLIST:...-->"   |
+       |    marker: "<!-- PF:...-->"        |
        |    fallback: "Run `/pf-dev`..."    |
        |  ---                               |
        |                                    |
@@ -172,7 +172,7 @@ TirePump activates when:
        |     in direct text output          |
        v                                    |
    +----------------------------------+     |
-   | <!-- CYCLIST:HANDOFF:/pf-dev --> |     |
+   | <!-- PF:HANDOFF:/pf-dev -->      |     |
    |                                  |     |
    | Run `/pf-dev` to continue        |     |
    +----------------------------------+     |
@@ -191,13 +191,13 @@ TirePump activates when:
 
 ## Implementation Locations
 
-### Cyclist Terminal
+### BikeRack GUI
 
 **Parser:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
 
 ```javascript
 // Marker detection regex (line ~161)
-const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+const markerPattern = /<!--\s*PF:(\w+):([^>]+?)\s*-->/gi;
 
 // Key functions:
 // - detectStructuredMarkers(text) -> Marker[] | null
@@ -211,7 +211,7 @@ const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
 
 ```typescript
 // Same marker pattern (line ~32)
-const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+const MARKER_PATTERN = /<!--\s*PF:(\w+):([^>]+?)\s*-->/gi;
 
 // Key functions:
 // - detectMarkers(text) -> Marker[] | null
@@ -224,7 +224,7 @@ const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
 **Command:** `pf handoff marker` (`pf/handoff/marker.py`)
 
 Single source of truth for marker format. Handles:
-- IS_CYCLIST detection
+- IS_GUI detection
 - USE_TIREPUMP decision
 - Error case (empty marker)
 
@@ -235,7 +235,7 @@ Single source of truth for marker format. Handles:
 Outputs environment variables:
 - `CONTEXT_PERCENT` - Total context usage
 - `CONTEXT_USABLE_PERCENT` - User conversation usage
-- `IS_CYCLIST` - Running in Cyclist terminal
+- `IS_GUI` - Running in BikeRack GUI
 - `USE_TIREPUMP` - Should use CONTEXT_CLEAR marker
 
 ---
@@ -285,7 +285,7 @@ packages/vscode-extension/
 |-----------|------|---------|
 | Marker Generator | `pf/handoff/marker.py` | Single source of truth for marker format |
 | Context Checker | `pennyfarthing-dist/scripts/core/check-context.sh` | Calculates context %, TirePump decision |
-| Cyclist Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
+| BikeRack GUI Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
 | VS Code Parser | `packages/vscode-extension/src/adapters/reflector.ts` | VS Code marker detection |
 | IPC Channels | `packages/cyclist/src/ipc-channels.ts` | Channel constants for TirePump |
 | Preload API | `packages/cyclist/src/preload.ts` | `clearAndReload()` API |
@@ -306,7 +306,7 @@ The Reflector system provides a reliable, extensible mechanism for agent-to-UI c
 
 1. **Design shared marker package structure** - Where in `@pennyfarthing/shared`?
 2. **Extract shared code** - Move detection/stripping to shared package
-3. **Update consumers** - Cyclist and VS Code extension import from shared
+3. **Update consumers** - BikeRack GUI and VS Code extension import from shared
 4. **Add configuration** - Make TirePump threshold configurable via YAML
 5. **Test coverage** - Unified tests for marker parsing
 6. **Consider marker versioning** - For future extensibility

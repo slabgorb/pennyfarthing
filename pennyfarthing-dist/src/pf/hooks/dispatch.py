@@ -23,7 +23,7 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("context-warning", "Edit|Write|Bash|Task", "pf.hooks.context_warning"),
         ("context-breaker", "Edit|Write|Bash|Task", "pf.hooks.context_breaker"),
         ("schema-validation", "Write", "pf.hooks.schema_validation"),
-        ("cyclist-pretooluse", None, "pf.hooks.cyclist_pretooluse"),
+        ("pretooluse-forward", None, "pf.hooks.pretooluse_forward"),
     ],
     "PostToolUse": [
         ("sprint-yaml", "Edit|Write", "pf.hooks.sprint_yaml_validation"),

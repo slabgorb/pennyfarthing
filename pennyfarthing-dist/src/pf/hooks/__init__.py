@@ -6,7 +6,7 @@ Provides common functionality for all hooks:
 - Port file discovery
 - Settings loading (relay_mode, permission_mode)
 - Context state checking
-- HTTP communication with Cyclist
+- HTTP communication with WheelHub
 
 All hooks should import from this module for consistency.
 
@@ -30,12 +30,12 @@ import yaml
 
 # WheelHub port file - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-CYCLIST_PORT_FILE = ".bikerack-port"
+BIKERACK_PORT_FILE = ".bikerack-port"
 
 # Default port if file not found (must match BikeRack entry.ts DEFAULT_PORT)
-DEFAULT_CYCLIST_PORT = 2898
+DEFAULT_BIKERACK_PORT = 2898
 
-# HTTP timeout for Cyclist communication
+# HTTP timeout for WheelHub communication
 HTTP_TIMEOUT_SECONDS = 120
 
 
@@ -62,8 +62,8 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     current = current.resolve()
 
     while current != current.parent:
-        # Check for Cyclist port files first (indicates Cyclist is running)
-        if (current / CYCLIST_PORT_FILE).exists():
+        # Check for port file first (indicates WheelHub is running)
+        if (current / BIKERACK_PORT_FILE).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
@@ -81,7 +81,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
 
 
 def read_port_file(file_name: str, project_root: Path | None = None) -> int | None:
-    """Read a port number from a Cyclist port file.
+    """Read a port number from a WheelHub port file.
 
     Args:
         file_name: Name of the port file (e.g. .bikerack-port)
@@ -109,11 +109,11 @@ def read_port_file(file_name: str, project_root: Path | None = None) -> int | No
     return None
 
 
-def get_cyclist_port(project_root: Path | None = None) -> int:
+def get_bikerack_port(project_root: Path | None = None) -> int:
     """Get the WheelHub server port.
 
-    WheelHub is the central coordination server for all Cyclist communication,
-    including hook requests, OTEL, REST APIs, and WebSocket.
+    WheelHub is the central coordination server for all Pennyfarthing
+    communication, including hook requests, OTEL, REST APIs, and WebSocket.
 
     Args:
         project_root: Project root directory (auto-detected if not provided)
@@ -121,11 +121,11 @@ def get_cyclist_port(project_root: Path | None = None) -> int:
     Returns:
         Port number (default if file not found)
     """
-    port = read_port_file(CYCLIST_PORT_FILE, project_root)
+    port = read_port_file(BIKERACK_PORT_FILE, project_root)
     if port:
         return port
 
-    return DEFAULT_CYCLIST_PORT
+    return DEFAULT_BIKERACK_PORT
 
 
 # =============================================================================
@@ -134,8 +134,8 @@ def get_cyclist_port(project_root: Path | None = None) -> int:
 
 
 @dataclass
-class CyclistSettings:
-    """Cyclist workflow settings from config.local.yaml."""
+class PennySettings:
+    """Pennyfarthing workflow settings from config.local.yaml."""
 
     permission_mode: str = "manual"  # plan, manual, accept
     relay_mode: bool = False
@@ -145,8 +145,8 @@ class CyclistSettings:
     discovery_nudge: bool = True
 
 
-def load_settings(project_root: Path | None = None) -> CyclistSettings:
-    """Load Cyclist settings from .pennyfarthing/config.local.yaml.
+def load_settings(project_root: Path | None = None) -> PennySettings:
+    """Load Pennyfarthing settings from .pennyfarthing/config.local.yaml.
 
     Handles legacy setting migrations:
     - permission_mode: 'turbo' -> 'accept' + relay_mode: True
@@ -157,9 +157,9 @@ def load_settings(project_root: Path | None = None) -> CyclistSettings:
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
-        CyclistSettings with current configuration
+        PennySettings with current configuration
     """
-    settings = CyclistSettings()
+    settings = PennySettings()
 
     root = project_root or find_project_root()
     if not root:
@@ -249,19 +249,19 @@ class ContextState:
 
 
 def get_context_state(project_root: Path | None = None) -> ContextState:
-    """Get current context usage from Cyclist API.
+    """Get current context usage from WheelHub API.
 
-    Calls Cyclist's /api/context endpoint which runs check-context.sh.
+    Calls WheelHub's /api/context endpoint which runs check-context.sh.
 
     Args:
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
-        ContextState with current usage (defaults if Cyclist not running)
+        ContextState with current usage (defaults if WheelHub not running)
     """
     state = ContextState()
 
-    port = get_cyclist_port(project_root)
+    port = get_bikerack_port(project_root)
     url = f"http://127.0.0.1:{port}/api/context"
 
     try:
@@ -274,25 +274,25 @@ def get_context_state(project_root: Path | None = None) -> ContextState:
             state.is_high = state.percentage > 60
             state.is_critical = state.percentage > 80
     except (urllib.error.URLError, json.JSONDecodeError, OSError):
-        # Cyclist not running or error - return defaults
+        # WheelHub not running or error - return defaults
         pass
 
     return state
 
 
 # =============================================================================
-# Cyclist HTTP Communication
+# WheelHub HTTP Communication
 # =============================================================================
 
 
-def send_to_cyclist(
+def send_to_wheelhub(
     endpoint: str,
     data: dict[str, Any],
     port: int | None = None,
     project_root: Path | None = None,
     timeout: int = HTTP_TIMEOUT_SECONDS,
 ) -> dict[str, Any] | None:
-    """Send a POST request to WheelHub (Cyclist's central coordination server).
+    """Send a POST request to WheelHub.
 
     All endpoints go through WheelHub per ADR-0004.
 
@@ -307,7 +307,7 @@ def send_to_cyclist(
         Response JSON as dict, or None on error
     """
     if port is None:
-        port = get_cyclist_port(project_root)
+        port = get_bikerack_port(project_root)
 
     url = f"http://127.0.0.1:{port}{endpoint}"
     json_data = json.dumps(data).encode("utf-8")
@@ -323,7 +323,7 @@ def send_to_cyclist(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read().decode())
     except urllib.error.URLError as e:
-        # Connection refused means Cyclist isn't running
+        # Connection refused means WheelHub isn't running
         if "Connection refused" in str(e):
             return None
         raise
@@ -394,29 +394,13 @@ def read_stdin_json() -> dict[str, Any]:
 # =============================================================================
 
 
-def is_cyclist_running(project_root: Path | None = None) -> bool:
-    """Check if Cyclist server is running.
-
-    Checks the CYCLIST environment variable set by ClaudeService when
-    spawning Claude inside Cyclist. No file I/O, no HTTP, no signals —
-    this runs on every tool invocation and must be instant.
-
-    The project_root parameter is kept for backward compatibility but
-    is no longer used.
-
-    Returns:
-        True if running inside a Cyclist-spawned Claude process
-    """
-    return os.environ.get("CYCLIST") == "1"
-
-
-def should_auto_approve(settings: CyclistSettings) -> bool:
+def should_auto_approve(settings: PennySettings) -> bool:
     """Check if requests should be auto-approved based on settings.
 
     Auto-approve when permission_mode is 'accept' (formerly turbo).
 
     Args:
-        settings: Current Cyclist settings
+        settings: Current Pennyfarthing settings
 
     Returns:
         True if auto-approval is enabled
@@ -424,11 +408,11 @@ def should_auto_approve(settings: CyclistSettings) -> bool:
     return settings.permission_mode == "accept"
 
 
-def should_auto_handoff(settings: CyclistSettings) -> bool:
+def should_auto_handoff(settings: PennySettings) -> bool:
     """Check if handoffs should be automatic based on settings.
 
     Args:
-        settings: Current Cyclist settings
+        settings: Current Pennyfarthing settings
 
     Returns:
         True if relay_mode is enabled

@@ -28,7 +28,7 @@ Verify all 9 hook configurations in settings.local.json. Hooks are the runtime i
    - **auto-load-sm**: Auto-invokes `/sm` agent on new sessions. Without it, users must manually run `/sm` every time.
 
    **Stop hooks:**
-   - **stop-hook**: Runs reflector-check to enforce CYCLIST markers at turn end. Without it, Cyclist QuickActions won't render.
+   - **stop-hook**: Runs reflector-check to enforce UI markers at turn end. Without it, BikeRack GUI QuickActions won't render.
 
    **PostToolUse hooks:**
    - **post-tool-use-hook**: Bell mode — injects queued messages via `additionalContext`. Without it, `/bell` messages are lost.

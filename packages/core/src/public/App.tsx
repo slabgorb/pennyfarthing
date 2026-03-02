@@ -31,7 +31,7 @@ import type { ApprovalRequest, GrantScope } from './components/ApprovalModal';
 // Environment discriminator injected by server.ts (ADR-0024)
 declare global {
   interface Window {
-    __CYCLIST_MODE__?: 'cyclist' | 'bikerack';
+    __PF_MODE__?: 'gui' | 'bikerack';
   }
 }
 
@@ -204,7 +204,7 @@ function RootErrorFallback(): React.ReactElement {
 
 export default function App(): React.ReactElement {
   // Detect route mode (computed before hooks, used after)
-  const isBikeRackIndex = window.__CYCLIST_MODE__ === 'bikerack';
+  const isBikeRackIndex = window.__PF_MODE__ === 'bikerack';
   const standalonePanelName = getStandalonePanelName();
 
   // --- All hooks called unconditionally (React rules of hooks) ---

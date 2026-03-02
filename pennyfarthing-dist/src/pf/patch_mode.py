@@ -320,16 +320,12 @@ def exit_patch_mode(
     # Only pop after successful merge
     stack.pop()
 
-    # Build handoff marker for original agent
-    handoff_marker = f"<!-- CYCLIST:HANDOFF:/{state.agent} -->"
-
     return {
         "story_id": state.story_id,
         "workflow": state.workflow,
         "phase": state.phase,
         "agent": state.agent,
         "feature_branch": state.feature_branch,
-        "handoff_marker": handoff_marker,
         "relay_mode_disabled": False,
     }
 

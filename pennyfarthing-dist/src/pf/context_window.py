@@ -52,7 +52,7 @@ class ContextResult:
     relay_mode: bool = False
     handoff_mode: str = "ask"  # ask, auto
     use_tirepump: bool = False
-    is_cyclist: bool = False
+    is_gui: bool = False
 
     # Error state
     error: str | None = None
@@ -74,7 +74,7 @@ class ContextResult:
             f"RELAY_MODE={str(self.relay_mode).lower()}",
             f"HANDOFF_MODE={self.handoff_mode}",
             f"USE_TIREPUMP={str(self.use_tirepump).lower()}",
-            f"IS_CYCLIST={str(self.is_cyclist).lower()}",
+            f"IS_GUI={str(self.is_gui).lower()}",
         ]
 
         if self.warning:
@@ -264,45 +264,37 @@ def parse_transcript(transcript_path: Path) -> tuple[int | None, int | None]:
     return first_total, last_total
 
 
-def detect_cyclist(project_dir: str | None = None) -> bool:
-    """Detect if running inside Cyclist.
+def detect_gui(project_dir: str | None = None) -> bool:
+    """Detect if running inside a GUI (BikeRack).
 
     Checks:
-    1. CYCLIST env var set to '1' (Electron mode - definitive)
+    1. PF_GUI env var set to '1' (primary)
     2. .bikerack-port file exists AND port is responding (Web mode)
     """
-    # Env var is definitive - set by Cyclist when it spawns Claude
-    if os.environ.get("CYCLIST") == "1":
+    # PF_GUI is the primary env var
+    if os.environ.get("PF_GUI") == "1":
         return True
 
-    # Port file check - verify Cyclist is actually running
+    # Port file check - verify BikeRack is actually running
     project_dir = (
         project_dir or
         os.environ.get("WHEELHUB_PROJECT_DIR") or
-        os.environ.get("CYCLIST_PROJECT_DIR") or
         os.environ.get("PROJECT_ROOT") or
         os.getcwd()
     )
 
-    port_files = [
-        Path(project_dir) / "packages" / "cyclist" / ".bikerack-port",
-        Path(os.getcwd()) / ".bikerack-port",
-    ]
-
-    for port_file in port_files:
-        if port_file.exists():
-            try:
-                port = int(port_file.read_text().strip())
-                # Quick check if port is responding
-                import socket
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(0.5)
-                    result = s.connect_ex(("127.0.0.1", port))
-                    if result == 0:
-                        return True
-            except (ValueError, OSError):
-                # Port file invalid or port not responding
-                continue
+    port_file = Path(project_dir) / ".bikerack-port"
+    if port_file.exists():
+        try:
+            port = int(port_file.read_text().strip())
+            import socket
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.5)
+                result = s.connect_ex(("127.0.0.1", port))
+                if result == 0:
+                    return True
+        except (ValueError, OSError):
+            pass
 
     return False
 
@@ -375,8 +367,8 @@ def check_context(
         usable_pct > config.tirepump_threshold
     )
 
-    # Cyclist detection
-    result.is_cyclist = detect_cyclist(project_dir)
+    # GUI detection
+    result.is_gui = detect_gui(project_dir)
 
     # Warnings
     if usable_pct >= config.critical_threshold:

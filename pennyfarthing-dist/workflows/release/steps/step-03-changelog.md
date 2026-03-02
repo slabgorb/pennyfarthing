@@ -123,8 +123,6 @@ head -60 CHANGELOG.md
 **[R]** Revise changelog entries
 **[A]** Abort release
 
-<!-- CYCLIST:CHOICES:C,R,A -->
-
 <switch tool="AskUserQuestion">
   <case value="continue-to-readme-update" next="step-04-readme">
     Continue to README update

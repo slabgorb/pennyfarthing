@@ -23,8 +23,8 @@ import {
   setMode,
 } from '@pennyfarthing/core/bikerack/server';
 
-// Set Cyclist mode — BikeRack defaults to 'bikerack', Cyclist overrides
-setMode('cyclist');
+// Set GUI mode — BikeRack defaults to 'bikerack', GUI overrides
+setMode('gui');
 
 // Import Cyclist's real WebSocket implementation (1600+ lines)
 // BikeRack has a no-op stub; Cyclist provides the real thing with 15+ channel handlers

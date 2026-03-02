@@ -53,7 +53,7 @@ pennyfarthing/
 │
 ├── packages/
 │   ├── core/                       # @pennyfarthing/core — CLI, WheelHub server, API routes
-│   ├── cyclist/                    # Visual terminal (React 19, Tailwind v4, dockview)
+│   ├── cyclist/                    # BikeRack GUI (React 19, Tailwind v4, dockview)
 │   └── shared/                     # Shared types and utilities
 │
 └── tests/                          # Framework tests
@@ -79,7 +79,7 @@ your-project/
     ├── sidecars/                   # Agent learning files
     │   └── {agent}/                # patterns.md, gotchas.md, decisions.md
     ├── config.local.yaml           # Theme configuration
-    └── cyclist.yaml                # Cyclist settings
+    └── cyclist.yaml                # BikeRack GUI settings
 ```
 
 ## Agent Hierarchy
@@ -235,7 +235,7 @@ Prime outputs context in priority order (highest attention first):
 # Via pf CLI (used by agent commands)
 pf agent start "<agent>" --quiet
 
-# TypeScript API (used by Cyclist)
+# TypeScript API (used by BikeRack GUI)
 getPrimeContext(agentName, projectDir)
 getPrimeContextWithTier(agentName, projectDir, tier)
 ```
@@ -333,7 +333,7 @@ Agents drive phase transitions directly using the `pf handoff` CLI — no handof
 | `pf handoff marker NEXT_AGENT` | Generate environment-aware routing marker |
 | `pf handoff phase-check AGENT` | Verify the active phase belongs to this agent |
 
-The marker generator is environment-aware: it emits a Cyclist `<!-- CYCLIST:HANDOFF:/agent -->` marker in GUI mode, or a plain text `AGENT_COMMAND` block in CLI mode. In relay mode, the next agent activates automatically.
+The marker generator is environment-aware: it emits a `<!-- PF:HANDOFF:/agent -->` marker in GUI mode, or a plain text `AGENT_COMMAND` block in CLI mode. In relay mode, the next agent activates automatically.
 
 See `guides/handoff-cli.md` for full command reference and `guides/gates.md` for gate evaluation details.
 
@@ -485,7 +485,7 @@ Enable telemetry by setting the OTLP endpoint:
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
 
-Cyclist's built-in OTLP receiver (port 4318) captures and displays this data in:
+BikeRack GUI's built-in OTLP receiver (port 4318) captures and displays this data in:
 - Stats strip (token counts, context %)
 - Audit log (tool execution history)
 - Cost calculator (USD estimates)

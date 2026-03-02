@@ -63,9 +63,9 @@ WHY:  repos.yaml orchestrator.owns: [sprint/**], not pennyfarthing.owns
 
 **Mistake 4: Editing build output**
 ```
-BAD:  Edit packages/cyclist/dist/index.js
+BAD:  Edit packages/core/dist/index.js
       → Build artifacts are regenerated and your changes are lost
-FIX:  Edit packages/cyclist/src/index.ts, then run pnpm build
+FIX:  Edit packages/core/src/index.ts, then run pnpm build
 WHY:  repos.yaml never_edit: [packages/*/dist/**]
 ```
 </critical>

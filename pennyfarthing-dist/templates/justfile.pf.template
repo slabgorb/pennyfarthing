@@ -44,18 +44,15 @@ claude:
     project_dir="{{root}}"
     PORT=""
 
-    # Check .cyclist-port first, then .bikerack-port
-    for port_file in "$project_dir/.cyclist-port" "$project_dir/.bikerack-port"; do
-        if [[ -f "$port_file" ]]; then
-            candidate=$(cat "$port_file" 2>/dev/null)
-            if [[ "$candidate" =~ ^[0-9]+$ ]]; then
-                if (echo >/dev/tcp/localhost/"$candidate") 2>/dev/null; then
-                    PORT="$candidate"
-                    break
-                fi
+    port_file="$project_dir/.bikerack-port"
+    if [[ -f "$port_file" ]]; then
+        candidate=$(cat "$port_file" 2>/dev/null)
+        if [[ "$candidate" =~ ^[0-9]+$ ]]; then
+            if (echo >/dev/tcp/localhost/"$candidate") 2>/dev/null; then
+                PORT="$candidate"
             fi
         fi
-    done
+    fi
 
     if [[ -n "$PORT" ]]; then
         echo "[just claude] OTEL configured → http://localhost:$PORT" >&2

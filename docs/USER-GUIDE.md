@@ -63,11 +63,6 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 npm install --save-dev @pennyfarthing/core
 ```
 
-**Optional:** For the Cyclist visual terminal with agent portraits:
-
-```bash
-npm install --save-dev @pennyfarthing/cyclist
-```
 
 ### Initialize a Project
 
@@ -196,7 +191,7 @@ Pennyfarthing works in any terminal, but optional dashboards give you real-time 
 | See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
 | One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
-| Full desktop app with embedded terminal | **Cyclist** | `pf cyclist` |
+
 
 ```mermaid
 graph LR
@@ -210,8 +205,8 @@ graph LR
         D --> F["Dashboard panels<br/>(browser or TUI)"]
     end
 
-    subgraph "Cyclist (all-in-one desktop app)"
-        G["pf cyclist"] --> H["Electron app<br/>Embedded terminal + panels"]
+    subgraph "BikeRack GUI (browser dashboard)"
+        G["pf bikerack start"] --> H["Browser dashboard<br/>Dashboard panels"]
     end
 ```
 
@@ -223,25 +218,14 @@ Claude Code's OTEL SDK initializes before session hooks run. The `CLAUDE_ENV_FIL
 
 > **See the full [BikeRack Guide](../pennyfarthing-dist/guides/bikerack.md)** for detailed quickstart paths, OTEL telemetry setup, and command reference.
 
-### Cyclist vs BikeRack
-
-| | Cyclist | BikeRack |
-|---|---------|----------|
-| **Runtime** | Electron desktop app | Node.js server + browser/TUI |
-| **Terminal** | Embedded (node-pty) | Your own terminal |
-| **Conversation UI** | Built-in MessagePanel | Not included (by design) |
-| **Dashboard panels** | 17 Dockview panels | Same 17 panels |
-| **OTEL telemetry** | Automatic | Via `just claude` or `pf bikerack start` |
-| **Install** | `npm i @pennyfarthing/cyclist` | Included in `@pennyfarthing/core` |
-
 ### Architecture
 
-Both Cyclist and BikeRack are wrappers around **WheelHub**, the shared Express/WebSocket server:
+Both display modes are wrappers around **WheelHub**, the shared Express/WebSocket server:
 
 ```mermaid
 graph TB
-    subgraph "Cyclist (Electron)"
-        C["pf cyclist<br/>Electron + React UI"]
+    subgraph "BikeRack GUI (Browser)"
+        C["pf bikerack start<br/>Electron + React UI"]
     end
     subgraph "BikeRack (CLI)"
         BR["Node.js server"]
@@ -250,7 +234,7 @@ graph TB
     C --> WH["WheelHub<br/>(shared server)"]
     BR --> WH
 
-    C -- "writes" --> CP[".cyclist-port"]
+    C -- "writes" --> BP2[".bikerack-port"]
     BR -- "writes" --> BP[".bikerack-port"]
 
     WH --> API["/api/* endpoints"]
@@ -258,9 +242,9 @@ graph TB
     WH --> OTLP["/v1/* OTLP receiver"]
 ```
 
-WheelHub never writes a port file — the wrapper does. OTEL auto-configuration checks `.cyclist-port` then `.bikerack-port` with socket liveness checks, skipping stale files from crashed processes.
+WheelHub never writes a port file — the wrapper does. OTEL auto-configuration checks `.bikerack-port` with socket liveness checks, skipping stale files from crashed processes.
 
-> **See [Cyclist Architecture](CYCLIST-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
+> **See [BikeRack GUI Architecture](BIKERACK-GUI-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
 
 ---
 
@@ -348,7 +332,7 @@ pf uninstall --dry-run     # Preview what would be removed
 |---------|-------------|
 | `pf theme list` | Show available themes |
 | `pf theme set <name>` | Change active theme |
-| `pf cyclist` | Launch Cyclist visual terminal |
+| `pf bikerack start` | Launch BikeRack GUI dashboard |
 | `pf bikerack start` | Launch BikeRack dashboard |
 | `pf debug hotspots analyze` | Git change frequency analysis |
 | `pf debug complexity analyze` | Code complexity metrics |
@@ -639,7 +623,7 @@ build_order:
 | Mode | Description |
 |------|-------------|
 | **Permission Mode** | `plan` / `manual` / `accept` — controls how much Claude can do without approval |
-| **Relay Mode** | Automatic agent handoffs — detects `CYCLIST:HANDOFF` markers and runs the next agent |
+| **Relay Mode** | Automatic agent handoffs — detects `PF:HANDOFF` markers and runs the next agent |
 | **Bell Mode** | Queue messages while Claude works — injected at next tool execution via hooks |
 
 Configure in `.pennyfarthing/config.local.yaml`:
@@ -818,7 +802,7 @@ pf setup
 
 #### Stale Port File (Dashboard Won't Connect)
 
-**Cause:** WheelHub crashed without cleaning up `.cyclist-port` or `.bikerack-port`.
+**Cause:** WheelHub crashed without cleaning up `.bikerack-port`.
 
 **Fix:**
 ```bash

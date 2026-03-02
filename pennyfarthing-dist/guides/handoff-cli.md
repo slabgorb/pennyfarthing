@@ -76,10 +76,11 @@ pf handoff marker --error "Tests failing"
 **Options:**
 - `--error MSG` — Generate an error marker instead of a handoff
 
-The marker generator detects the current environment (Cyclist, relay mode, context usage) and produces the appropriate marker type:
+The marker generator detects the current environment and produces the appropriate marker type:
 
-- **Cyclist + relay mode:** `<!-- CYCLIST:HANDOFF:/agent -->` (auto-executed)
-- **Cyclist + high context:** `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` (clears context first)
+> **Note:** The legacy marker protocol is deprecated. New integrations should use the CLI `AGENT_COMMAND` block format.
+
+- **BikeRack GUI (legacy):** `<!-- PF:HANDOFF:/agent -->` or `<!-- PF:CONTEXT_CLEAR:/agent -->`
 - **CLI mode:** Plain text `AGENT_COMMAND` block
 
 ## Agent Exit Protocol

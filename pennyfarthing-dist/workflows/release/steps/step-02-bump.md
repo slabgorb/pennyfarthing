@@ -7,7 +7,7 @@ Update all version files (VERSION, package.json, workspace packages, Python pf C
 <instructions>
 1. Write new version to VERSION file
 2. Update root package.json version
-3. Update all workspace package versions (core, cyclist, shared, theme packs)
+3. Update all workspace package versions (core, shared, theme packs)
 4. Update Python pf CLI version (`pennyfarthing-dist/src/pf/__init__.py`)
 5. Update README.md version badge
 6. Update CHANGELOG.md (version links and header)
@@ -101,8 +101,6 @@ git diff --stat
 **[C]** Continue to commit
 **[R]** Revise a file before committing
 **[A]** Abort release (revert all changes with `git checkout .`)
-
-<!-- CYCLIST:CHOICES:C,R,A -->
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-commit" next="step-03-changelog">

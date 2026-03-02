@@ -1,10 +1,10 @@
 """
 Tests for hooks/ subpackage — bash-to-Python migration.
 
-Validates all 11 hook modules migrated from bash scripts to Python:
+Validates hook modules:
 - session_start, session_stop, reflector_check, cyclist_pretooluse
 - context_warning, context_breaker, pre_edit_check, schema_validation
-- bell_mode, sprint_yaml_validation, statusline
+- sprint_yaml_validation, statusline
 
 Run with: python -m pytest tests/python/test_hooks_subpackage.py -v
 """
@@ -77,17 +77,17 @@ class TestCLIGroup:
         from pf.hooks.cli import hooks
         command_names = sorted(hooks.list_commands(None))
         expected = sorted([
-            "bell-mode", "context-breaker", "context-warning",
-            "cyclist-pretooluse", "pre-edit-check", "reflector-check",
-            "schema-validation", "session-start", "session-stop",
-            "sprint-yaml", "statusline",
+            "context-breaker", "context-warning",
+            "cyclist-pretooluse", "dispatch", "pre-edit-check",
+            "agent-reload", "pre-compact", "reflector-check",
+            "schema-validation", "session-end", "session-start",
+            "session-stop", "sprint-yaml", "statusline",
         ])
         assert command_names == expected
 
     def test_all_modules_import(self):
-        """All 11 hook modules should import without errors."""
+        """All hook modules should import without errors."""
         from pf.hooks import (
-            bell_mode,
             context_breaker,
             context_warning,
             cyclist_pretooluse,
@@ -101,7 +101,7 @@ class TestCLIGroup:
         )
         # Each module should have a main() entry point
         for mod in [
-            bell_mode, context_breaker, context_warning,
+            context_breaker, context_warning,
             cyclist_pretooluse, pre_edit_check, reflector_check,
             schema_validation, session_start, session_stop,
             sprint_yaml_validation, statusline,
@@ -711,101 +711,6 @@ class TestSchemaValidation:
 
 
 # =============================================================================
-# bell_mode
-# =============================================================================
-
-
-class TestBellMode:
-    """Bell mode + tandem injection hook."""
-
-    def test_read_bell_queue_empty(self, tmp_project):
-        from pf.hooks.bell_mode import _read_bell_queue
-        assert _read_bell_queue(tmp_project) == []
-
-    def test_read_bell_queue_with_messages(self, tmp_project):
-        from pf.hooks.bell_mode import _read_bell_queue
-        queue_path = tmp_project / ".pennyfarthing" / "bell-queue.json"
-        queue_path.write_text(json.dumps([{"text": "hello"}]))
-        result = _read_bell_queue(tmp_project)
-        assert len(result) == 1
-        assert result[0]["text"] == "hello"
-
-    def test_dequeue_message(self, tmp_project):
-        from pf.hooks.bell_mode import _dequeue_message, _read_bell_queue
-        queue_path = tmp_project / ".pennyfarthing" / "bell-queue.json"
-        queue_path.write_text(json.dumps([{"text": "first"}, {"text": "second"}]))
-
-        _dequeue_message(tmp_project)
-        remaining = _read_bell_queue(tmp_project)
-        assert len(remaining) == 1
-        assert remaining[0]["text"] == "second"
-
-    def test_tandem_observation_detection(self, tmp_project):
-        from pf.hooks.bell_mode import _read_tandem_observations
-        (tmp_project / ".session" / "86-3-tandem-reviewer.md").write_text("# obs")
-        files = _read_tandem_observations(tmp_project)
-        assert len(files) == 1
-
-    def test_tandem_observation_empty_session(self, tmp_project):
-        from pf.hooks.bell_mode import _read_tandem_observations
-        files = _read_tandem_observations(tmp_project)
-        assert files == []
-
-    def test_get_latest_observation(self):
-        from pf.hooks.bell_mode import _get_latest_observation
-        content = (
-            "# Tandem Observations\n"
-            "**Observer:** reviewer (The Queen)\n\n---\n\n"
-            "## [14:00] Observation\n**Trigger:** edit\nFirst obs\n\n---\n\n"
-            "## [14:05] Observation\n**Trigger:** edit\nSecond obs\n\n---\n"
-        )
-        obs = _get_latest_observation(content)
-        assert obs is not None
-        assert obs["persona"] == "The Queen"
-        assert "Second obs" in obs["text"]
-
-    def test_get_latest_observation_empty(self):
-        from pf.hooks.bell_mode import _get_latest_observation
-        content = "# Header only\n**Observer:** tea (Caterpillar)\n\n---\n"
-        obs = _get_latest_observation(content)
-        assert obs is None
-
-    def test_tandem_mtime_roundtrip(self, tmp_project):
-        from pf.hooks.bell_mode import _get_tandem_mtime, _save_tandem_mtime
-        _save_tandem_mtime(tmp_project, "reviewer", 12345.678)
-        result = _get_tandem_mtime(tmp_project, "reviewer")
-        assert result == pytest.approx(12345.678)
-
-    def test_tandem_mtime_default(self, tmp_project):
-        from pf.hooks.bell_mode import _get_tandem_mtime
-        assert _get_tandem_mtime(tmp_project, "nobody") == 0.0
-
-    def test_check_tandem_files_detects_new(self, tmp_project):
-        from pf.hooks.bell_mode import _check_tandem_files
-        obs_file = tmp_project / ".session" / "86-3-tandem-reviewer.md"
-        obs_file.write_text(
-            "# Obs\n**Observer:** reviewer (Queen)\n\n---\n\n"
-            "## [14:00] Observation\n**Trigger:** edit\nSomething notable\n\n---\n"
-        )
-        results = _check_tandem_files(tmp_project)
-        assert len(results) == 1
-        assert "[Tandem]" in results[0]["message"]
-        assert "Queen" in results[0]["message"]
-
-    def test_check_tandem_files_skips_seen(self, tmp_project):
-        from pf.hooks.bell_mode import _check_tandem_files, _save_tandem_mtime
-        obs_file = tmp_project / ".session" / "86-3-tandem-reviewer.md"
-        obs_file.write_text(
-            "# Obs\n**Observer:** reviewer (Queen)\n\n---\n\n"
-            "## [14:00] Observation\n**Trigger:** edit\nSomething\n\n---\n"
-        )
-        _save_tandem_mtime(tmp_project, "reviewer", obs_file.stat().st_mtime)
-
-        results = _check_tandem_files(tmp_project)
-        assert len(results) == 0
-
-
-# =============================================================================
 # sprint_yaml_validation
 # =============================================================================
 
@@ -847,40 +752,16 @@ class TestSprintYamlValidation:
 
 
 class TestCyclistPretooluse:
-    """Cyclist PreToolUse hook — route approval through WheelHub."""
+    """PreToolUse hook — forward tool inputs to WheelHub."""
 
-    def test_resolve_agent_from_session_file(self, tmp_project):
-        from pf.hooks.cyclist_pretooluse import _resolve_agent
-        (tmp_project / ".session" / "agents" / "sess-1").write_text("dev")
-        agent = _resolve_agent("sess-1", tmp_project)
-        assert agent == "dev"
-
-    def test_resolve_agent_fallback_to_latest(self, tmp_project):
-        from pf.hooks.cyclist_pretooluse import _resolve_agent
-        # Create two agent files with different mtimes
-        f1 = tmp_project / ".session" / "agents" / "sess-old"
-        f1.write_text("sm")
-        time.sleep(0.01)
-        f2 = tmp_project / ".session" / "agents" / "sess-new"
-        f2.write_text("dev")
-
-        agent = _resolve_agent("nonexistent", tmp_project)
-        assert agent == "dev"
-
-    def test_resolve_agent_no_agents(self, tmp_project):
-        from pf.hooks.cyclist_pretooluse import _resolve_agent
-        agent = _resolve_agent("sess-1", tmp_project)
-        assert agent is None
-
-    def test_exits_zero_when_cyclist_not_running(self):
+    def test_exits_zero(self):
         from pf.hooks import cyclist_pretooluse
 
         with patch("sys.stdin", StringIO('{"tool_name": "Bash"}')):
-            with patch("pf.hooks.cyclist_pretooluse.is_cyclist_running", return_value=False):
-                with patch("pf.hooks.cyclist_pretooluse.find_project_root", return_value=None):
-                    with pytest.raises(SystemExit) as exc_info:
-                        cyclist_pretooluse.main()
-                    assert exc_info.value.code == 0
+            with patch("pf.hooks.cyclist_pretooluse.find_project_root", return_value=None):
+                with pytest.raises(SystemExit) as exc_info:
+                    cyclist_pretooluse.main()
+                assert exc_info.value.code == 0
 
 
 # =============================================================================

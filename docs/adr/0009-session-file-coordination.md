@@ -69,7 +69,7 @@ All agents coordinate via a structured session file at `.session/{story-id}-sess
 1. **Agent completes work** - Performs their phase responsibilities
 2. **Agent writes assessment** - Documents findings in their section
 3. **Agent spawns handoff subagent** - Updates Workflow Tracking
-4. **Subagent emits marker** - `<!-- CYCLIST:HANDOFF:/next-agent -->`
+4. **Subagent emits marker** - `<!-- PF:HANDOFF:/next-agent -->`
 5. **Next agent reads state** - Loads session file on activation
 
 ### Critical Rule
@@ -155,7 +155,7 @@ Track all state in `sprint/current-sprint.yaml`.
 Session files were introduced in v5.0 and refined through v6 and v7:
 - v5: Basic phase tracking
 - v6: Added Workflow Tracking section
-- v7: Added CYCLIST markers for UI integration
+- v7: Added PF markers for UI integration
 
 Key files:
 - `.session/{story-id}-session.md` - Active session

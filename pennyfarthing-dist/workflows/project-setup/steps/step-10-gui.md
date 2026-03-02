@@ -1,31 +1,29 @@
-# Step 10: Install Cyclist (Optional)
+# Step 10: BikeRack GUI (Optional)
 
 <purpose>
-Optionally install Cyclist, the visual terminal interface for Claude Code. Cyclist provides a graphical interface with panels for sprint tracking, workflow visualization, and enhanced tool display.
+Optionally configure the BikeRack GUI, the graphical panel viewer for Claude Code. BikeRack renders sprint tracking, workflow visualization, and enhanced tool display panels in a browser window alongside your terminal.
 </purpose>
 
 <instructions>
-1. Explain what Cyclist provides
-2. Check if Cyclist is already installed
-3. Offer installation options
-4. Guide through setup if desired
-5. Verify installation works
+1. Explain what BikeRack GUI provides
+2. Show the three display modes (TUI, GUI, IDE)
+3. Offer to configure GUI mode
+4. Verify the setup works
 </instructions>
 
 <output>
-- User informed about Cyclist features
-- Cyclist installed if user requested
-- Basic verification completed
-- User knows how to launch Cyclist
+- User informed about BikeRack GUI features
+- GUI configured if user requested
+- User knows the three display modes
 </output>
 
-## WHAT IS CYCLIST?
+## WHAT IS BIKERACK GUI?
 
 ```
-🚴 Cyclist - Visual Terminal for Claude Code
+BikeRack GUI - Panel Viewer for Claude Code
 ═════════════════════════════════════════════
 
-Cyclist provides a graphical interface that enhances Claude Code with:
+BikeRack renders framework panels in three display modes:
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                │
@@ -46,158 +44,80 @@ Cyclist provides a graphical interface that enhances Claude Code with:
 │  └───────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 
-Features:
-  • 📊 Sprint panel - Live sprint status and story tracking
-  • 🔄 Workflow panel - BikeLane phase visualization
-  • 📁 Changed files panel - Git diff integration
-  • 🎨 Themed personas - Character portraits and styles
-  • 🛠️ Tool visualization - Enhanced tool call display
-  • ⌨️ Quick actions - One-click workflow commands
+Display Modes:
+  • TUI  — `pf bikerack start` — terminal panels alongside Claude Code CLI
+  • GUI  — `just gui` — full browser UI with dockview panel layout
+  • IDE  — VS Code / Cursor sidebar panels via WheelHub API
+
+Panels:
+  • Sprint panel - Live sprint status and story tracking
+  • Workflow panel - BikeLane phase visualization
+  • Changed files panel - Git diff integration
+  • Themed personas - Character portraits and styles
+  • Tool visualization - Enhanced tool call display
+  • Quick actions - One-click workflow commands
 ```
 
-## INSTALLATION CHECK
-
-```bash
-# Check if Cyclist is installed
-npm list @pennyfarthing/cyclist 2>/dev/null || echo "Not installed"
-
-# Check for global installation
-which cyclist 2>/dev/null || echo "No global cyclist"
-
-# Check for local installation
-ls -la node_modules/@pennyfarthing/cyclist 2>/dev/null || echo "Not in node_modules"
-```
-
-## INSTALLATION OPTIONS
+## DISPLAY MODE SELECTION
 
 ```
-🚴 Cyclist Installation
+BikeRack Display Modes
 ═══════════════════════
 
-Cyclist is the visual terminal for Pennyfarthing. Would you like to install it?
+How would you like to view BikeRack panels?
 
-[1] Install Cyclist (recommended)
-    npm install @pennyfarthing/cyclist
-    Adds ~160MB to node_modules
+[1] TUI mode (recommended for terminal users)
+    pf bikerack start
+    Panels render in tmux panes alongside Claude Code
 
-[2] Install globally
-    npm install -g @pennyfarthing/cyclist
-    Available system-wide
+[2] GUI mode (full browser experience)
+    just gui
+    Full dockview layout in a browser window
 
-[3] Use standalone app (macOS)
-    Download Cyclist.app from releases
-    No npm installation needed
+[3] IDE mode (VS Code / Cursor)
+    Sidebar panels via WheelHub API
+    Requires WheelHub server running
 
 [4] Skip - I'll use terminal only
-    Cyclist is optional, CLI works fine without it
-
-[5] Learn more about Cyclist
-    Show detailed feature breakdown
-```
-
-### Installation Flow
-
-If user selects [1] or [2]:
-
-```bash
-# Local installation
-npm install @pennyfarthing/cyclist
-
-# Or global installation
-npm install -g @pennyfarthing/cyclist
-```
-
-### Post-Installation Setup
-
-```
-✓ Cyclist installed successfully
-
-Quick setup:
-  1. Add to justfile (if created):
-     cyclist:
-         npx cyclist
-
-  2. Or run directly:
-     npx cyclist
-
-  3. Or add to package.json scripts:
-     "cyclist": "cyclist"
+    BikeRack is optional, CLI works fine without it
 ```
 
 ## VERIFICATION
 
-After installation:
+After configuration:
 
 ```bash
-# Verify installation
-npx cyclist --version
+# Check WheelHub server
+curl -s http://localhost:3457/api/health | head -1
 
-# Quick test (opens Cyclist)
-npx cyclist --help
-```
+# TUI mode test
+pf bikerack start --dry-run
 
-```
-✓ Cyclist v9.1.1 installed
-
-Launching Cyclist for verification...
-
-{Cyclist window opens or web preview starts}
-
-Did Cyclist launch correctly?
-[Y] Yes, it works
-[N] No, troubleshoot
-[S] Skip verification
-```
-
-### Troubleshooting
-
-If issues:
-
-```
-🔧 Cyclist Troubleshooting
-═══════════════════════════
-
-Common issues:
-
-1. "Cannot find module" error
-   → Run: npm install @pennyfarthing/cyclist
-
-2. Port already in use
-   → Kill existing process: lsof -i :3457 | kill
-
-3. Electron not found
-   → Cyclist needs Electron: npm install electron
-
-4. Blank window
-   → Check browser console for errors
-   → Try: npx cyclist --no-sandbox
-
-[R] Retry installation
-[M] More troubleshooting options
-[S] Skip Cyclist for now
+# GUI mode test
+just gui --help 2>/dev/null || echo "Add 'gui' recipe to justfile"
 ```
 
 ## JUSTFILE INTEGRATION
 
-If justfile was created in step 6, offer to add Cyclist recipe:
+If justfile was created in step 6, offer to add GUI recipe:
 
 ```
-Add Cyclist recipe to justfile?
+Add GUI recipe to justfile?
 
 [Y] Yes, add recipe:
-    cyclist:
-        npx cyclist
+    gui:
+        cd pennyfarthing/packages/core && npm run dev:web
 
 [N] No, I'll launch it manually
 ```
 
-## CYCLIST FEATURES DEEP DIVE
+## BIKERACK FEATURES DEEP DIVE
 
 If user selects "Learn more":
 
 ```
-🚴 Cyclist Features
-════════════════════
+BikeRack Panel Features
+════════════════════════
 
 PANELS (draggable, resizable):
 ┌────────────────┬─────────────────────────────────────────────┐
@@ -227,31 +147,30 @@ PERSONA INTEGRATION:
   • Agent popup with role info
 
 QUICK ACTIONS:
-  • Detected from CYCLIST markers
   • One-click workflow commands
   • Handoff buttons
 ```
 
 ## SUCCESS CRITERIA
 
-✅ User informed about Cyclist features
-✅ Installation completed (if requested)
-✅ Verification passed (if installed)
-✅ Justfile updated (if applicable)
-✅ User knows how to launch Cyclist
+- User informed about BikeRack display modes
+- Preferred display mode configured (if requested)
+- Justfile updated (if applicable)
+- User knows how to launch panels
 
 ## NEXT STEP
 
-After Cyclist setup, proceed to `step-11-complete.md` to finalize project setup and run validation.
+After BikeRack GUI setup, proceed to `step-11-complete.md` to finalize project setup and run validation.
 
 <switch tool="AskUserQuestion">
-  <case value="retry-installation" next="LOOP">
-    Retry installation
+  <case value="try-tui" next="LOOP">
+    Try TUI mode
   </case>
-  <case value="more-troubleshooting-options" next="LOOP">
-    More troubleshooting options
+  <case value="try-gui" next="LOOP">
+    Try GUI mode
   </case>
-  <case value="skip-cyclist-for-now" next="step-11-complete">
-    Skip Cyclist for now
+  <case value="skip" next="step-11-complete">
+    Skip BikeRack for now
   </case>
 </switch>
+</output>

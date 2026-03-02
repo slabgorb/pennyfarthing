@@ -45,7 +45,7 @@ interface ConfigLocalYaml {
 
 /**
  * Get the project root directory (where .pennyfarthing lives)
- * Uses CYCLIST_PROJECT_DIR or CLI arg, falling back to cwd
+ * Uses PF_PROJECT_DIR or CLI arg, falling back to cwd
  */
 function getProjectRoot(): string {
   // Use the same project directory resolution as the rest of the app

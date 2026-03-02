@@ -115,8 +115,6 @@ All should read `{new_version}`. If any don't match, **abort before pushing.**
 **[R]** Revise (amend commit or fix an issue)
 **[A]** Abort release (reset develop to before the merge)
 
-<!-- CYCLIST:CHOICES:C,R,A -->
-
 <switch tool="AskUserQuestion">
   <case value="continue-to-merge-to-main" next="step-08-merge">
     Continue to merge to main

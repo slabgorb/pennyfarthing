@@ -440,7 +440,7 @@ export class ClaudeService extends EventEmitter {
       '/opt/homebrew/bin',
     ].join(':');
     const augmentedPath = `${extraPaths}:${process.env.PATH ?? ''}`;
-    const env = { ...process.env, ...this.defaultEnv, ...options?.env, CYCLIST: '1', PATH: augmentedPath };
+    const env = { ...process.env, ...this.defaultEnv, ...options?.env, PF_GUI: '1', PATH: augmentedPath };
 
     console.log('[ClaudeService] Spawning new Claude process (persistent mode)');
     const proc = this.spawner('claude', args, {

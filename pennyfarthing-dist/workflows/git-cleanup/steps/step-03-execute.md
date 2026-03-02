@@ -212,7 +212,6 @@ Ready to verify and push?
 **[C]** Continue to verification
 
 <!-- GATE -->
-<!-- CYCLIST:CHOICES:A,C -->
 
 <switch tool="AskUserQuestion">
   <case value="abort-current-group" next="EXIT">

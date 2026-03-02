@@ -19,7 +19,7 @@ Before installing, make sure you have:
 - **Claude Code CLI** — the AI coding assistant Pennyfarthing orchestrates
 - **yq** — YAML processor (`brew install yq`)
 - **jq** — JSON processor (`brew install jq`)
-- **Node.js 18+** *(optional)* — installed automatically by `pf init` if needed for BikeRack/Cyclist visual panels
+- **Node.js 18+* *(optional)* — installed automatically by `pf init` if needed for BikeRack visual panels
 
 ---
 
@@ -311,9 +311,9 @@ Pennyfarthing works in three display modes:
 |------|-------------|----------|
 | **CLI** | Just use Claude Code normally | Simplest setup, terminal-only |
 | **BikeRack** (TUI) | `pf bikerack start` | Split-pane terminal dashboard |
-| **Cyclist** (GUI) | `pf cyclist start` | Full browser UI with panels |
+| **BikeRack** (GUI) | `pf bikerack start` | Full browser UI with panels |
 
-**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack and Cyclist add visual dashboards (sprint boards, session viewers, agent portraits) but are optional.
+**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack adds visual dashboards (sprint boards, session viewers, agent portraits) but are optional.
 
 ---
 

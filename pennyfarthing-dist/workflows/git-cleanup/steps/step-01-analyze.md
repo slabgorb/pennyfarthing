@@ -100,8 +100,6 @@ Unpushed: {count} commits
 **[A]** Analyze a specific repo in more detail
 **[C]** Continue to categorization
 
-<!-- CYCLIST:CHOICES:A,C -->
-
 <switch tool="AskUserQuestion">
   <case value="analyze-a-specific-repo-in-more-detail" next="LOOP">
     Analyze a specific repo in more detail

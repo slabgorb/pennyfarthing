@@ -83,7 +83,7 @@ class TestHookShimsClean:
         "context-warning.sh",
         "pre-edit-check.sh",
         "question-reflector-check.sh",
-        "cyclist-pretooluse-hook.sh",
+        "pretooluse-forward-hook.sh",
         "schema-validation.sh",
     ]
 

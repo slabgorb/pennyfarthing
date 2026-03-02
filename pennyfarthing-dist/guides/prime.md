@@ -55,17 +55,17 @@ Prime selects a context tier based on session state to manage token overhead:
 # From agent commands (via pf CLI)
 pf agent start "<agent>" --quiet
 
-# TypeScript API (from Cyclist)
+# TypeScript API (from BikeRack GUI)
 getPrimeContext(agentName, projectDir)
 getPrimeContextWithTier(agentName, projectDir, tier)
-getPrimeContextJson(agentName, projectDir, tier)  # JSON for Cyclist
+getPrimeContextJson(agentName, projectDir, tier)  # JSON for BikeRack GUI
 ```
 
 ## Integration Points
 
 - **Agent commands** (`/pf-sm`, `/pf-dev`, `/pf-tea`) invoke prime on activation
 - **TirePump** calls prime to reload agent context after clearing
-- **Cyclist** uses JSON output for context display and token tracking
+- **BikeRack GUI** uses JSON output for context display and token tracking
 
 <info>
 **ADR:** `docs/adr/0015-prime-activation-system.md`

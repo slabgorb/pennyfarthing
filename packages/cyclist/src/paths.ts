@@ -156,7 +156,7 @@ export function getProjectDirectory(): string | null {
   }
 
   // Check environment variable (useful for web mode)
-  const envDir = process.env.CYCLIST_PROJECT_DIR;
+  const envDir = process.env.PF_PROJECT_DIR;
   if (envDir && isValidProjectDirectory(envDir)) {
     if (!hasLoggedProjectDir) {
       console.log('[Cyclist] Project directory from env:', envDir);

@@ -13,8 +13,8 @@
  * - Any OTLP endpoint
  *
  * Configuration via env vars (matching claude_telemetry pattern):
- * - CYCLIST_OTEL_EXPORT_ENDPOINT: OTLP endpoint URL
- * - CYCLIST_OTEL_EXPORT_HEADERS: Comma-separated key=value pairs
+ * - PF_OTEL_EXPORT_ENDPOINT: OTLP endpoint URL
+ * - PF_OTEL_EXPORT_HEADERS: Comma-separated key=value pairs
  */
 
 import type { AgentSpan, ToolSpan, PromptEvent } from './telemetry-types.js';
@@ -211,12 +211,12 @@ let exporterEnabled = false;
  * Initialize the exporter from environment variables
  *
  * Reads:
- * - CYCLIST_OTEL_EXPORT_ENDPOINT: OTLP endpoint URL
- * - CYCLIST_OTEL_EXPORT_HEADERS: Comma-separated key=value pairs
+ * - PF_OTEL_EXPORT_ENDPOINT: OTLP endpoint URL
+ * - PF_OTEL_EXPORT_HEADERS: Comma-separated key=value pairs
  */
 export function initExporter(): void {
-  const endpoint = process.env.CYCLIST_OTEL_EXPORT_ENDPOINT;
-  const headersStr = process.env.CYCLIST_OTEL_EXPORT_HEADERS;
+  const endpoint = process.env.PF_OTEL_EXPORT_ENDPOINT;
+  const headersStr = process.env.PF_OTEL_EXPORT_HEADERS;
 
   exporterConfig = {
     endpoint: endpoint || undefined,

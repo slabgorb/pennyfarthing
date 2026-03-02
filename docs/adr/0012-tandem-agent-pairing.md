@@ -290,13 +290,13 @@ workflow:
 
 ## Future Phases
 
-### Phase 2: Cyclist Integration
+### Phase 2: BikeRack GUI Integration
 
 WheelHub routes real-time communication between sessions:
 
 ```
 ┌─────────────────────────────────────────┐
-│            WheelHub (Cyclist)           │
+│            WheelHub                     │
 │                                         │
 │  ┌─────────┐  tandem   ┌─────────────┐  │
 │  │ Leader  │◄─channel─►│  Partner    │  │

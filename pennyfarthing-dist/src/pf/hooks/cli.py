@@ -78,10 +78,10 @@ def context_breaker():
     main()
 
 
-@hooks.command("cyclist-pretooluse")
-def cyclist_pretooluse():
-    """PreToolUse hook — route approval through WheelHub when Cyclist is running."""
-    from pf.hooks.cyclist_pretooluse import main
+@hooks.command("pretooluse-forward")
+def pretooluse_forward():
+    """PreToolUse hook — forward tool inputs to WheelHub for audit log enrichment."""
+    from pf.hooks.pretooluse_forward import main
     main()
 
 

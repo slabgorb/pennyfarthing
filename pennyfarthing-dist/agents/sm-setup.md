@@ -71,7 +71,7 @@ RESEARCH_RESULT:
 <critical>
 Session file header MUST be: `# Story {STORY_ID}: {TITLE}`
 
-Other formats break Cyclist detection.
+Other formats break BikeRack GUI detection.
 </critical>
 
 <gate>
@@ -114,8 +114,7 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 
 1. Check if a matching grant exists (same tool + scope)
 2. If missing, prompt user for permission:
-   - First output marker: `<!-- CYCLIST:QUESTION:yesno -->`
-   - Then use AskUserQuestion with the prompt:
+   - Use AskUserQuestion with the prompt:
      ```
      "The {WORKFLOW} workflow requires {tool} access for: {reason}
      Grant permission for {tool} with scope '{scope}'?"

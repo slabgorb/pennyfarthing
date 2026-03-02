@@ -10,7 +10,7 @@ next: step-08-summary
 </step-meta>
 
 <purpose>
-Check the pf Python CLI (required — all hooks depend on it) and optional components like the Cyclist visual terminal.
+Check the pf Python CLI (required — all hooks depend on it).
 </purpose>
 
 <prerequisites>
@@ -20,17 +20,13 @@ Check the pf Python CLI (required — all hooks depend on it) and optional compo
 <instructions>
 1. Run the doctor command for the tools category
 2. For each result, explain what the tool provides and when it's needed:
-   - **cyclist/installed**: Cyclist is the Electron visual terminal for Pennyfarthing. It provides a graphical UI with panels for sprint tracking, diffs, workflow visualization, and more. Not required for CLI-only usage.
-   - **cyclist/node-pty**: node-pty powers the terminal panel in Cyclist. Without it, the embedded terminal won't work but other panels still function.
-   - **cyclist/spawn-helper**: The native binary that node-pty uses to spawn processes. Must have execute permission on macOS/Linux. Missing permission causes `posix_spawnp` failures.
    - **tools/pf-cli**: **REQUIRED.** The Python `pf` command provides agent activation (`pf agent start`), hook dispatch (`pf hooks`), and sprint management. All Claude Code hooks call `pf` directly — without it, every session is broken. Install via `pipx install -e pennyfarthing-dist/` (editable) or `pipx install pennyfarthing-scripts` (released).
-3. For missing tools: pf CLI is **required** (hooks depend on it), Cyclist is optional based on the user's workflow
+3. For missing tools: pf CLI is **required** (hooks depend on it)
 4. Present the collaboration menu
 </instructions>
 
 <actions>
 - Run: `pennyfarthing doctor --json --category tools`
-- Check: Cyclist package location and node-pty health
 - Check: `pf` CLI is available and reports a version
 </actions>
 
@@ -38,14 +34,7 @@ Check the pf Python CLI (required — all hooks depend on it) and optional compo
 Present results:
 
 ```markdown
-## Optional Tools Check Results
-
-### Cyclist Visual Terminal
-| Check | Status | Detail |
-|-------|--------|--------|
-| installed | ... | ... |
-| node-pty | ... | ... |
-| spawn-helper | ... | ... |
+## Tools Check Results
 
 ### Python CLI
 | Check | Status | Detail |
@@ -53,16 +42,16 @@ Present results:
 | pf CLI | ... | ... |
 
 ### Recommendation
-[Based on results, recommend which tools to install for the user's use case]
+[Based on results, recommend installation if pf CLI is missing]
 ```
 </output>
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category tools` to fix permissions or install pf CLI
+    Fix — Run `pennyfarthing doctor --fix --category tools` to install pf CLI
   </case>
   <case value="explain" next="LOOP">
-    Explain — Deep dive on a specific tool's purpose
+    Explain — Deep dive on the pf CLI's purpose
   </case>
   <case value="continue" next="step-08-summary">
     Continue — Proceed to Summary
@@ -78,8 +67,6 @@ After reviewing tools, proceed to step-08-summary.md for the final health report
 
 ## Failure Modes
 
-- Installing Cyclist when only CLI usage is needed (unnecessary complexity)
-- spawn-helper permission issues after pnpm install (common on macOS)
 - Stale pf shim from deprecated uv install pointing to dead virtualenv
 
 ## Success Metrics
@@ -87,3 +74,4 @@ After reviewing tools, proceed to step-08-summary.md for the final health report
 - **pf CLI is installed and functional** (non-negotiable — hooks are broken without it)
 - User understands which optional tools they need
 - Optional tools have clear install path if wanted
+</output>

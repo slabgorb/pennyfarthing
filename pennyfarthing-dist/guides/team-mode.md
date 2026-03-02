@@ -87,12 +87,12 @@ When spawned as a teammate (you receive a task via spawn prompt, not a phase han
 | Channel | Scope | Used For |
 |---------|-------|----------|
 | `SendMessage` | Intra-phase (within team) | Lead ↔ teammate collaboration, status updates, task assignment |
-| Reflector markers (`<!-- CYCLIST:... -->`) | Inter-phase (between phases) | Handoff from one phase agent to the next — **unchanged** |
+| Handoff markers | Inter-phase (between phases) | Handoff from one phase agent to the next — **unchanged** |
 | Session file | Cross-phase persistence | Story state, assessments, ACs — written by lead only in team mode |
 | Sidecar files | Agent learning | Teammates may write to their own sidecar with file locking |
 
 <critical>
 **Never use SendMessage for inter-phase handoff.** Markers and `pf handoff` are the only way to transition between phases. SendMessage is for real-time collaboration within a phase.
 
-**Never use markers for intra-phase communication.** Markers are routing signals for Cyclist UI and the handoff system. They have no meaning inside a team.
+**Never use markers for intra-phase communication.** Markers are routing signals for BikeRack GUI and the handoff system. They have no meaning inside a team.
 </critical>

@@ -639,7 +639,7 @@ export function setupWebSocketServers(
 
     // Send initial persona on connection (includes isStreaming state per Story 94-1)
     const projectDir = getProjectDir();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.PF_GUI_SESSION_ID;
     const persona = getCurrentPersona(projectDir, sessionId);
     if (persona && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ ...persona, isStreaming: getStreamingState() }));
@@ -1102,7 +1102,7 @@ export function setupWebSocketServers(
 
   // Set up agent file watcher for persona broadcasts
   const projectDir = getProjectDir();
-  const sessionId = process.env.CYCLIST_SESSION_ID;
+  const sessionId = process.env.PF_GUI_SESSION_ID;
   if (detectPennyfarthingProject(projectDir)) {
     watchAgentChanges(projectDir, sessionId, (_agentRole: string) => {
       // When agent changes, get the new persona and broadcast
@@ -1263,7 +1263,7 @@ export function setupWebSocketServers(
   // Handle Claude WebSocket connections
   // In Electron mode: clients receive broadcasts from main.ts (no local ClaudeService)
   // In Web mode: each client gets its own ClaudeService subprocess
-  const isElectronMode = process.env.CYCLIST_ELECTRON_MODE === '1';
+  const isElectronMode = process.env.PF_GUI_ELECTRON_MODE === '1';
 
   claudeWss.on('connection', (ws: WebSocket) => {
     console.log('[WebSocket] Claude client connected (electron mode:', isElectronMode, ')');
@@ -1589,7 +1589,7 @@ export function setupWebSocketServers(
   });
 
   // Set up livereload file watcher in dev mode
-  if (process.env.CYCLIST_DEV_WEB === '1') {
+  if (process.env.PF_GUI_DEV_WEB === '1') {
     console.log('[Livereload] Watching public directory for changes:', publicDir);
 
     // Watch the public directory recursively

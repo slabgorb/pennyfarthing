@@ -6,9 +6,9 @@
 
 ## Context
 
-The Reflector system provides agent-to-UI communication through HTML comment markers (`<!-- CYCLIST:TYPE:value -->`). This system is implemented in two locations:
+The Reflector system provides agent-to-UI communication through HTML comment markers (`<!-- PF:TYPE:value -->`). This system is implemented in two locations:
 
-1. **Cyclist Terminal:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
+1. **BikeRack GUI:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
 2. **VS Code Extension:** `packages/vscode-extension/src/adapters/reflector.ts`
 
 Both implementations contain:
@@ -31,7 +31,7 @@ Consolidate Reflector marker parsing into `@pennyfarthing/shared` as a new `mark
 
 ### Current Duplication
 
-| Component | Cyclist (quick-actions.js) | VS Code (reflector.ts) |
+| Component | BikeRack GUI (quick-actions.js) | VS Code (reflector.ts) |
 |-----------|---------------------------|------------------------|
 | Regex pattern | Line 161 | Line 32 |
 | Detection function | `detectStructuredMarkers()` | `detectMarkers()` |
@@ -103,11 +103,11 @@ export interface MarkerResult {
 
 ```typescript
 /**
- * Regex pattern for CYCLIST markers.
- * Format: <!-- CYCLIST:TYPE:value -->
- * Case-insensitive for CYCLIST prefix and TYPE, preserves value case
+ * Regex pattern for PF markers.
+ * Format: <!-- PF:TYPE:value -->
+ * Case-insensitive for PF prefix and TYPE, preserves value case
  */
-export const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+export const MARKER_PATTERN = /<!--\s*PF:(\w+):([^>]+?)\s*-->/gi;
 
 /**
  * Known marker type constants
@@ -129,7 +129,7 @@ import type { Marker, MarkerType } from './types.js';
 import { stripCodeBlocks } from './strip.js';
 
 /**
- * Detect CYCLIST markers in text.
+ * Detect PF markers in text.
  *
  * @param text - Text to scan for markers
  * @returns Array of markers found, or null if none
@@ -182,7 +182,7 @@ export function stripCodeBlocks(text: string): string {
 }
 
 /**
- * Strip CYCLIST markers from text for display.
+ * Strip PF markers from text for display.
  *
  * @param text - Text containing markers
  * @returns Text with markers removed
@@ -211,11 +211,11 @@ export {
 
 ## Consumer Updates
 
-### Cyclist (quick-actions.js)
+### BikeRack GUI (quick-actions.js)
 
 ```javascript
 // Before
-const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+const markerPattern = /<!--\s*PF:(\w+):([^>]+?)\s*-->/gi;
 export function detectStructuredMarkers(text) { ... }
 
 // After
@@ -227,7 +227,7 @@ import { detectMarkers, stripMarkers, MARKER_TYPES } from '@pennyfarthing/shared
 
 ```typescript
 // Before
-const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+const MARKER_PATTERN = /<!--\s*PF:(\w+):([^>]+?)\s*-->/gi;
 export function detectMarkers(text: string): Marker[] | null { ... }
 
 // After
@@ -253,8 +253,8 @@ context_budget:
 
 ### 2. Unified Function Naming
 
-| Old (Cyclist) | Old (VS Code) | New (Shared) |
-|---------------|---------------|--------------|
+| Old (BikeRack GUI) | Old (VS Code) | New (Shared) |
+|--------------------|---------------|--------------|
 | `detectStructuredMarkers` | `detectMarkers` | `detectMarkers` |
 | inline | `stripMarkers` | `stripMarkers` |
 | inline | `stripCodeBlocks` | `stripCodeBlocks` |
@@ -278,12 +278,12 @@ Create `packages/shared/src/marker/detect.test.ts` with unified tests:
 4. Export from `packages/shared/src/index.ts`
 5. Build and verify
 
-### Phase 2: Migrate Cyclist (1 story)
+### Phase 2: Migrate BikeRack GUI (1 story)
 1. Add `@pennyfarthing/shared` dependency (already workspace member)
 2. Import shared functions in `quick-actions.js`
 3. Remove duplicated code
-4. Verify Cyclist tests pass
-5. Manual testing in Electron app
+4. Verify BikeRack GUI tests pass
+5. Manual testing in browser app
 
 ### Phase 3: Migrate VS Code Extension (1 story)
 1. Add `@pennyfarthing/shared` dependency
@@ -309,9 +309,9 @@ Create `packages/shared/src/marker/detect.test.ts` with unified tests:
 
 ### Negative
 
-- **Build dependency** - Cyclist/VS Code now depend on shared package building first
+- **Build dependency** - BikeRack GUI/VS Code now depend on shared package building first
 - **Migration effort** - ~4 stories of work
-- **JavaScript consumer** - Cyclist uses .js, will need to import from compiled output
+- **JavaScript consumer** - BikeRack GUI uses .js, will need to import from compiled output
 
 ### Neutral
 
@@ -332,7 +332,7 @@ New package just for markers.
 
 **Rejected:** Overkill for ~150 lines of code. Better to use existing `@pennyfarthing/shared`.
 
-### 3. Keep Cyclist implementation in JS, VS Code in TS
+### 3. Keep BikeRack GUI implementation in JS, VS Code in TS
 
 Only share types, not implementation.
 
@@ -383,7 +383,7 @@ describe('detectMarkers', () => {
   it('detects CHOICES marker with text labels');
   it('handles multiple markers in order');
   it('ignores markers inside code blocks');
-  it('is case-insensitive for CYCLIST and type');
+  it('is case-insensitive for PF prefix and type');
   it('handles whitespace inside marker');
   it('preserves value case');
 });

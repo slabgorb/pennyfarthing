@@ -65,7 +65,7 @@ All cleanup branches should be deleted after merge.
 **pennyfarthing:**
 | Commit | Message |
 |--------|---------|
-| abc1234 | feat(cyclist): replace todos REST polling with WebSocket |
+| abc1234 | feat(core): replace todos REST polling with WebSocket |
 
 **pennyfarthing-orchestrator:**
 | Commit | Message |
@@ -93,8 +93,6 @@ git -C {repo_path} push origin develop
 **[P]** Push all repos to remote
 **[L]** Keep local (don't push yet)
 **[R]** Review commits again
-
-<!-- CYCLIST:CHOICES:P,L,R -->
 
 <switch tool="AskUserQuestion">
   <case value="push-all-repos-to-remote" next="LOOP">

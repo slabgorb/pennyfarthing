@@ -95,7 +95,7 @@ while IFS= read -r session_file; do
   fi
 
   # Check for SM drift: handoff sections without proper structure
-  # Note: CYCLIST:HANDOFF markers are optional - we check for structured handoff content
+  # Note: PF:HANDOFF markers are optional - we check for structured handoff content
   if grep -qi "## Handoff\|Handoff to" "$session_file" 2>/dev/null; then
     # Good handoff should mention target agent AND have some context
     if ! grep -qiE "handoff.*(TEA|Dev|Reviewer)|→.*(TEA|Dev|Reviewer)" "$session_file" 2>/dev/null; then
@@ -145,7 +145,7 @@ else
     echo "- **Dev:** Always include test run output when declaring GREEN"
   fi
   if [[ "$SM_ISSUES" -gt 0 ]]; then
-    echo "- **SM:** Use handoff markers (CYCLIST:HANDOFF) for Cyclist integration"
+    echo "- **SM:** Use handoff markers (PF:HANDOFF) for GUI integration"
   fi
   if [[ "$TEA_ISSUES" -gt 0 ]]; then
     echo "- **TEA:** Reference specific test files when handing off to Dev"

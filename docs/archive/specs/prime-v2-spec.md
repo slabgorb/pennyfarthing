@@ -17,7 +17,7 @@ Prime v2 consolidates agent activation into a single entry point:
 - `workflow-status-check` subagent (state detection)
 
 **Keeps separate:**
-- `agent-session.sh status` (statusline JSON for Cyclist)
+- `agent-session.sh status` (statusline JSON for BikeRack GUI)
 - `agent-session.sh stop` (session cleanup)
 
 ## CLI Interface
@@ -442,12 +442,12 @@ Context is output in attention-priority order:
 
 ## Integration Points
 
-### Cyclist TirePump
+### BikeRack GUI TirePump
 
 TirePump calls prime for context reload:
 
 ```javascript
-// In Cyclist's context-clear handler
+// In BikeRack GUI's context-clear handler
 async function reloadContext(agent) {
   const result = await exec(`python3 -m pf.prime --agent ${agent} --json`);
   const bootstrap = JSON.parse(result.stdout);
@@ -548,7 +548,7 @@ story_id: 63-8
 # Agent Definition: dev
 ...
 
-<!-- CYCLIST:HANDOFF:/pf-reviewer -->
+<!-- PF:HANDOFF:/pf-reviewer -->
 ```
 
 ### Audit Mode

@@ -74,5 +74,3 @@ pf git status
 ---
 
 **Cleanup complete.** All repos are organized.
-
-<!-- CYCLIST:CONTINUE -->

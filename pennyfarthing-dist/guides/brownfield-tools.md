@@ -117,7 +117,7 @@ Each tool has a corresponding HTTP API in WheelHub for panel integration:
 | `/api/code-markers` | Code marker scan |
 | `/api/health-score` | Composite health score |
 
-These power the **HotspotsPanel** in Cyclist and BikeRack.
+These power the **HotspotsPanel** in BikeRack.
 
 ## Key Files
 

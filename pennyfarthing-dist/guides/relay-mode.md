@@ -1,7 +1,9 @@
 # Relay Mode
 
 <info>
-Automatic agent handoff execution. When enabled, Cyclist auto-executes `<!-- CYCLIST:HANDOFF:/agent -->` markers without waiting for user confirmation.
+> **Deprecated.** Relay mode was designed for the legacy marker protocol. It may be removed in a future release.
+
+Automatic agent handoff execution. When enabled, BikeRack GUI auto-executes handoff markers without waiting for user confirmation.
 </info>
 
 <critical>
@@ -32,8 +34,8 @@ workflow:
 
 | File | Purpose |
 |------|---------|
-| `packages/cyclist/src/settings.ts` | Settings management, legacy migration |
-| `packages/cyclist/src/api/settings.ts` | `GET/PATCH /api/settings` for relay_mode |
+| `packages/core/src/server/settings.ts` | Settings management, legacy migration |
+| `packages/core/src/server/api/settings.ts` | `GET/PATCH /api/settings` for relay_mode |
 | `packages/cyclist/src/public/components/QuickActions.tsx` | Auto-execution logic on marker detection |
 | `packages/cyclist/src/public/components/ControlBar.tsx` | Relay toggle (Cmd+4) |
 

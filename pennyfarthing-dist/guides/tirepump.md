@@ -25,7 +25,7 @@ User clicks TirePump (or CONTEXT_CLEAR marker fires)
 | Trigger | How |
 |---------|-----|
 | Manual | TirePump button in ControlBar (pump icon) |
-| Marker | `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` in agent output |
+| Marker | `<!-- PF:CONTEXT_CLEAR:/agent -->` in agent output (BikeRack GUI protocol) |
 | Plan mode | `usePlanModeExit` offers TirePump after plan approval |
 
 ## UI Behavior
@@ -41,7 +41,6 @@ User clicks TirePump (or CONTEXT_CLEAR marker fires)
 | `packages/cyclist/src/public/components/ControlBar.tsx` | TirePump button, visibility/warning thresholds |
 | `packages/cyclist/src/public/contexts/ClaudeContext.tsx` | `clearAndReload()` — sends WebSocket message, fires clear callbacks |
 | `packages/cyclist/src/websocket.ts` | Handles `clearAndReload` message — resets all state, reloads agent |
-| `packages/cyclist/src/main.ts` | Electron mode: broadcasts AGENT_LAUNCH to renderer |
 | `packages/cyclist/src/public/hooks/usePlanModeExit.ts` | Offers TirePump choice after plan approval |
 
 ## What Gets Reset

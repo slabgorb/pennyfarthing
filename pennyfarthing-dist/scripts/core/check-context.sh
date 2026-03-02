@@ -162,7 +162,7 @@ if last_total:
     status = 'HIGH' if usable_pct > $WARNING_THRESHOLD else 'OK'
     relay = '$RELAY_MODE' == 'true'
     tirepump = (relay or '$PERMISSION_MODE' == 'turbo') and usable_pct > $TIREPUMP_THRESHOLD
-    is_cyclist = os.environ.get('CYCLIST') == '1' or Path('$PROJECT_DIR/.bikerack-port').exists() or Path('$PROJECT_DIR/packages/cyclist/.bikerack-port').exists()
+    is_gui = os.environ.get('PF_GUI') == '1' or Path('$PROJECT_DIR/.bikerack-port').exists() or Path('$PROJECT_DIR/packages/cyclist/.bikerack-port').exists()
 
     print(f'CONTEXT_TOKENS={last_total}')
     print(f'CONTEXT_PERCENT={total_pct}')
@@ -175,7 +175,7 @@ if last_total:
     print(f'RELAY_MODE=$RELAY_MODE')
     print(f'HANDOFF_MODE={\"auto\" if relay else \"ask\"}')
     print(f'USE_TIREPUMP={str(tirepump).lower()}')
-    print(f'IS_CYCLIST={str(is_cyclist).lower()}')
+    print(f'IS_GUI={str(is_gui).lower()}')
     if usable_pct >= $CRITICAL_THRESHOLD:
         print('CONTEXT_WARNING=Critical')
         print(\"CONTEXT_RECOMMENDATION='checkpoint and handoff recommended'\")

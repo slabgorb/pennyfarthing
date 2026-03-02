@@ -260,14 +260,14 @@ Subagents can run in background using Claude Code's `run_in_background` paramete
 - Handoff operations that must complete before continuing
 - Any operation where you need the result to proceed
 
-### Cyclist Integration
+### BikeRack GUI Integration
 
-When running in Cyclist, background tasks are automatically tracked:
+When running in BikeRack GUI, background tasks are automatically tracked:
 - OTEL spans detect `run_in_background: true` Task calls
 - Completion notifications appear in MessageView
 - User can expand to see full output
 
-**This means:** Fire the task, tell the user it's running, and keep working. Cyclist handles the notification when it finishes.
+**This means:** Fire the task, tell the user it's running, and keep working. BikeRack GUI handles the notification when it finishes.
 
 ### Tracking Background Tasks in Session Files
 

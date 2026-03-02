@@ -46,13 +46,13 @@ context_budget:
   critical_threshold: 85      # Context critical threshold (percent)
   max_tokens: 200000          # Maximum tokens
 
-# Display options (Cyclist terminal)
+# Display options (BikeRack GUI)
 display:
   show_flow: true             # Show workflow visualization
   show_ocean: false           # Show OCEAN personality scores
   sidebar_width: 300          # Sidebar width in pixels
 
-# Notifications (Cyclist terminal)
+# Notifications (BikeRack GUI)
 notifications:
   phase_change: true          # Notify on phase changes
   sound: false                # Play sounds
@@ -154,7 +154,7 @@ Controls agent-to-agent handoff behavior.
 
 #### `workflow.bell_mode`
 
-Enable or disable bell notifications in Cyclist.
+Enable or disable bell notifications in BikeRack GUI.
 
 | Value | Description |
 |-------|-------------|
@@ -205,23 +205,23 @@ Maximum token budget. Default: `200000`.
 
 #### `display.show_flow`
 
-Show workflow visualization in Cyclist terminal. Default: `true`.
+Show workflow visualization in BikeRack GUI. Default: `true`.
 
 #### `display.show_ocean`
 
-Show OCEAN personality scores in Cyclist terminal. Default: `false`.
+Show OCEAN personality scores in BikeRack GUI. Default: `false`.
 
 #### `display.sidebar_width`
 
-Sidebar width in pixels for Cyclist terminal. Default: `300`.
+Sidebar width in pixels for BikeRack GUI. Default: `300`.
 
 #### `notifications.phase_change`
 
-Enable notifications on workflow phase changes in Cyclist. Default: `true`.
+Enable notifications on workflow phase changes in BikeRack GUI. Default: `true`.
 
 #### `notifications.sound`
 
-Enable sound notifications in Cyclist. Default: `false`.
+Enable sound notifications in BikeRack GUI. Default: `false`.
 
 ---
 

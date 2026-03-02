@@ -69,8 +69,8 @@ Tooling to smooth out annoying development processes:
 ### Tools
 | Document | Description |
 |----------|-------------|
-| [Cyclist Guide](CYCLIST-GUIDE.md) | Visual terminal user guide |
-| [Cyclist Architecture](CYCLIST-ARCHITECTURE.md) | Cyclist internals and IPC |
+| [BikeRack GUI Guide](BIKERACK-GUI-GUIDE.md) | BikeRack GUI user guide |
+| [BikeRack GUI Architecture](BIKERACK-GUI-ARCHITECTURE.md) | BikeRack GUI internals and API |
 | [Skills](SKILLS.md) | Skills reference |
 | [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
 

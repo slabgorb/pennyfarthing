@@ -27,7 +27,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [pf-theme](#pf-theme)
 - [Tools](#tools)
   - [pf-bc](#pf-bc)
-  - [pf-cyclist](#pf-cyclist)
+  - [pf-gui](#pf-gui)
   - [pf-just](#pf-just)
   - [pf-mermaid](#pf-mermaid)
   - [pf-otel](#pf-otel)
@@ -312,11 +312,11 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 
 ### pf-bc
 
-Panel focus management for Cyclist — set, clear, save, and load panel layouts
+Panel focus management for BikeRack — set, clear, save, and load panel layouts
 
-**Tags:** cyclist, panels, layout, bikerack
+**Tags:** panels, layout, bikerack
 
-**Keywords:** bikerack, cyclist, panel, focus, layout, dockview
+**Keywords:** bikerack, panel, focus, layout, dockview
 
 **Examples:**
 - Focusing the Sprint panel: `/bc sprint`
@@ -326,22 +326,22 @@ Panel focus management for Cyclist — set, clear, save, and load panel layouts
 **Anti-patterns:**
 - Don't manually edit config.local.yaml to set panel focus — use this skill
 
-**Related:** [pf-cyclist](#pf-cyclist)
+**Related:** [pf-gui](#pf-gui)
 
-### pf-cyclist
+### pf-gui
 
-Launch Cyclist visual terminal for Claude Code monitoring
+BikeRack GUI detection and status for Claude Code monitoring
 
-**Tags:** visual, monitoring, terminal
+**Tags:** visual, monitoring, gui, bikerack
 
-**Keywords:** tui, terminal, visualization, dashboard
+**Keywords:** gui, bikerack, visualization, dashboard
 
 **Examples:**
-- Starting visual monitor: `/cyclist`
-- Debugging sessions: `/cyclist debug`
+- Checking GUI status: `/gui`
+- Debugging sessions: `/gui debug`
 
 **Anti-patterns:**
-- Don't run Cyclist in headless environments
+- Don't run BikeRack GUI in headless environments
 
 ### pf-just
 
@@ -387,12 +387,12 @@ Claude Code OTEL telemetry format documentation for span interception and enrich
 
 **Examples:**
 - Working with OTEL spans: `/otel`
-- Enriching tool telemetry in Cyclist: `/otel enrichment`
+- Enriching tool telemetry in BikeRack GUI: `/otel enrichment`
 
 **Anti-patterns:**
 - Don't assume fields exist - verify against this documentation
 
-**Related:** [pf-cyclist](#pf-cyclist)
+**Related:** [pf-gui](#pf-gui)
 
 ### pf-settings
 

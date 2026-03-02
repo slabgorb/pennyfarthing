@@ -29,7 +29,7 @@ Primary Agent                 Backseat Agent (Haiku, background)
 - Workflow must have `tandem:` block on the phase (e.g., `tdd-tandem`, `bdd-tandem`)
 - Session file must contain `**Tandem:** {partner} ({scope})` line (written by handoff subagent)
 
-No configuration required. Tandem injection is always active in the PostToolUse hook — the presence of observation files in `.session/` is the only signal needed. Works in both CLI and Cyclist.
+No configuration required. Tandem injection is always active in the PostToolUse hook — the presence of observation files in `.session/` is the only signal needed. Works in both CLI and BikeRack GUI.
 
 ## How It Works
 

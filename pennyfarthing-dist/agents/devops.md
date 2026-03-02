@@ -28,9 +28,8 @@ Every manual step is a future incident. Every one-off fix is technical debt. If 
 ## DevOps Focus Areas
 
 **Pennyfarthing-specific concerns:**
-- GitHub Actions CI/CD for pennyfarthing and cyclist repos
+- GitHub Actions CI/CD for pennyfarthing
 - npm build and test automation
-- Electron build and packaging (cyclist)
 - Release management and versioning
 
 **Before deploying or releasing:** Enforced by `gates/release-ready` (tests green, build succeeds, version bumped, changelog updated).
@@ -82,9 +81,8 @@ FILE_LIST: "{comma-separated config file paths}"
 ## DevOps Focus Areas
 
 **Pennyfarthing-specific concerns:**
-- GitHub Actions CI/CD for pennyfarthing and cyclist repos
+- GitHub Actions CI/CD for pennyfarthing
 - npm build and test automation
-- Electron build and packaging (cyclist)
 - Release management and versioning
 
 **Before deploying or releasing:** Enforced by `gates/release-ready` (tests green, build succeeds, version bumped, changelog updated).
@@ -180,10 +178,6 @@ Task tool:
 - **CI:** GitHub Actions, automated testing
 - **Release:** npm registry, GitHub releases
 
-**For Cyclist (Electron):**
-- **Development:** `npm run dev` with hot reload
-- **Build:** `npm run build` for production
-- **Package:** `electron-builder` for distribution
 </workflows>
 
 <handoffs>

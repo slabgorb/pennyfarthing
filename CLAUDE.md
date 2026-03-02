@@ -20,7 +20,7 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 
 This repo is inlined at `pennyfarthing/` inside `pennyfarthing-orchestrator`. The `.pennyfarthing/` directory lives at the **orchestrator root**, not here.
 
-Cyclist debugging: `CYCLIST_PROJECT_DIR=/path/to/pennyfarthing-orchestrator npm run dev:web`
+GUI debugging: `PF_PROJECT_DIR=/path/to/pennyfarthing-orchestrator npm run dev:web`
 (must point to orchestrator root where `.pennyfarthing/` exists)
 </critical>
 
@@ -49,14 +49,14 @@ pnpm run lint      # ESLint
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
 | `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
-| `packages/cyclist/` | Visual terminal (React 19, Tailwind v4, dockview) — thin wrapper over core |
+| `packages/cyclist/` | BikeRack GUI (React 19, Tailwind v4, dockview) — browser UI over core |
 | `packages/shared/` | Shared types and utilities |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 
 **Display modes:** BikeRack panels render in three contexts:
 - **TUI** — `pf bikerack start` launches panels alongside Claude Code CLI in the terminal
-- **GUI** — Cyclist web UI with full dockview panel layout in a browser
+- **GUI** — BikeRack browser UI with full dockview panel layout
 - **IDE** — VS Code / Cursor sidebar panels via WheelHub API
 
 **Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash/JS) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).

@@ -176,9 +176,9 @@ sprint:
 backlog:
     @.pennyfarthing/scripts/sprint/sprint-cli.sh backlog
 
-# Start Cyclist visual terminal
-cyclist:
-    cd {cyclist_path} && npm run dev:once
+# Start BikeRack GUI
+gui:
+    cd {gui_path} && npm run dev:web
 ```
 
 ### CI/CD Recipes
@@ -211,7 +211,7 @@ Generated recipes:
   ✓ test-all, build-all, install-all
   ✓ Per-repo: test-{repo}, build-{repo}, dev-{repo}
   ✓ Orchestrator: dev, status, clone-repos
-  ✓ Sprint: sprint, backlog, cyclist
+  ✓ Sprint: sprint, backlog, gui
 
 Options:
 [A] Accept and write justfile

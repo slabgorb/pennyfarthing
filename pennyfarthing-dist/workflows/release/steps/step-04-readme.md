@@ -97,8 +97,6 @@ If no changes were needed beyond the version badge, that's fine — just confirm
 **[R]** Revise README content
 **[S]** Skip (no README changes needed beyond version badge)
 
-<!-- CYCLIST:CHOICES:C,R,S -->
-
 <switch tool="AskUserQuestion">
   <case value="continue-to-claudemd-update" next="step-05-claude-md">
     Continue to CLAUDE.md update

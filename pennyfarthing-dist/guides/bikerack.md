@@ -1,12 +1,12 @@
 # BikeRack
 
 <info>
-Standalone panel viewer for CLI-first developers. BikeRack runs WheelHub (the Express/WebSocket server) without Cyclist's conversation UI, serving dashboard panels in a browser while Claude Code runs in your own terminal.
+Unified dashboard brand with two modes: **GUI** (browser-based panel layout) and **TUI** (terminal-based panels). BikeRack runs WheelHub (the Express/WebSocket server), serving dashboard panels while Claude Code runs in your own terminal.
 </info>
 
 ## Overview
 
-Cyclist bundles the conversation UI and dashboard panels into one Electron app. BikeRack decouples them: you get the panels (sprint status, git diffs, workflow state, etc.) in a browser, and Claude Code stays in your terminal.
+BikeRack provides dashboard panels (sprint status, git diffs, workflow state, etc.) alongside Claude Code in your terminal. It supports two modes: a browser-based GUI with full Dockview layout, and a terminal-based TUI using Textual.
 
 ```
 ┌─────────────────┐       ┌──────────────────────┐
@@ -92,11 +92,11 @@ BikeRack supports two modes:
 ## How It Works
 
 1. **Launcher** (`pf bikerack start`) starts WheelHub with `IS_BIKERACK=1`
-2. **WheelHub** listens on port 2898 (separate from Cyclist's 1898)
+2. **WheelHub** listens on port 2898
 3. **ClaudeService is skipped** — no `/ws/claude` WebSocket channel
 4. **OTEL telemetry** flows from Claude CLI to WheelHub's OTLP receiver
 5. **File watchers** detect changes to `.session/`, `sprint/`, and git state
-6. **Panels** render as React components consuming WebSocket data — identical components to Cyclist
+6. **Panels** render as React components consuming WebSocket data
 
 ### Mode Detection
 
@@ -115,7 +115,7 @@ Client-side detection is URL-based: the presence of `?panel=X` triggers standalo
 | `.bikerack-port` | Port number, written after `server.listen()` — readiness signal |
 | `.wheelhub-pid` | WheelHub PID, written by launcher — enables `pf bikerack stop` |
 
-Both are deleted on shutdown. Shared with Cyclist (single WheelHub namespace).
+Both are deleted on shutdown.
 
 ## Layout Persistence
 

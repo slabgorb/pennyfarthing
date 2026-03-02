@@ -36,7 +36,7 @@ Sprint tracking data lives in `sprint/current-sprint.yaml`, a structured YAML fi
 pf sprint status              # Sprint status and metrics
 pf sprint backlog             # List available stories by epic
 pf sprint check <id>          # Check story/epic availability (JSON)
-pf sprint info                # Sprint info JSON (Cyclist sidebar)
+pf sprint info                # Sprint info JSON (BikeRack sidebar)
 pf sprint metrics             # Velocity and progress metrics
 pf sprint future              # Show future initiatives and epics
 pf sprint new                 # Initialize a new sprint

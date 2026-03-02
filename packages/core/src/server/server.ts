@@ -133,7 +133,7 @@ function serveIndexHtml(_req: express.Request, res: express.Response) {
   const mode = getMode();
   const injected = indexHtmlTemplate.replace(
     '</head>',
-    `<script>window.__CYCLIST_MODE__="${mode}";</script>\n</head>`
+    `<script>window.__PF_MODE__="${mode}";</script>\n</head>`
   );
   res.set('Cache-Control', 'no-cache');
   res.type('html').send(injected);
@@ -282,7 +282,7 @@ export function createTerminalServer(): Server {
 // Start server only when run directly (not imported for tests)
 const DEFAULT_PORT = parseInt(process.env.PORT || '1898', 10);
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] === fileURLToPath(import.meta.url) && import.meta.url.endsWith('/server.js')) {
   (async () => {
     const server = createTerminalServer();
     const projectDir = getProjectDir();

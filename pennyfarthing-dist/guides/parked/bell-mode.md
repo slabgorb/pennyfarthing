@@ -1,5 +1,7 @@
 # Bell Mode
 
+> **Deprecated.** Bell mode is a legacy feature. The file-based message queue mechanism remains functional in BikeRack GUI but is not recommended for new integrations. This guide is parked for reference only.
+
 <info>
 Message queue injection system. Users queue messages while Claude works; messages inject into Claude's context via the PostToolUse hook.
 </info>

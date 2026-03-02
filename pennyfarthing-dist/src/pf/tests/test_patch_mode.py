@@ -413,8 +413,8 @@ class TestSessionPatches:
 class TestTirepumpIntegration:
     """Tests for AC9: Tirepump integration auto-handoff back to original agent."""
 
-    def test_exit_patch_mode_returns_handoff_marker(self) -> None:
-        """AC9: exit_patch_mode should return handoff marker for original agent."""
+    def test_exit_patch_mode_returns_agent(self) -> None:
+        """AC9: exit_patch_mode should return original agent for handoff."""
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         with patch("pf.patch_mode.get_patch_stack") as mock_stack:
@@ -431,10 +431,8 @@ class TestTirepumpIntegration:
                 mock_run.return_value = MagicMock(returncode=0)
                 result = exit_patch_mode()
 
-                # Should include handoff marker
-                assert "handoff_marker" in result or hasattr(result, "handoff_marker")
-                marker = result.get("handoff_marker") or result.handoff_marker
-                assert "/dev" in marker or "dev" in marker
+                # Should include agent for handoff (CYCLIST marker deprecated)
+                assert result["agent"] == "dev"
 
     def test_exit_preserves_relay_mode(self) -> None:
         """AC9: Exiting patch mode should preserve relay mode setting."""

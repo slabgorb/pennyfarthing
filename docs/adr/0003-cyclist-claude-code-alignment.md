@@ -1,4 +1,4 @@
-# ADR-0003: Cyclist Alignment with Claude Code 2.1.0
+# ADR-0003: BikeRack GUI Alignment with Claude Code 2.1.0
 
 **Status:** Superseded
 **Date:** 2026-01-09
@@ -8,7 +8,7 @@
 
 ## Context
 
-Claude Code 2.1.0 introduced significant features that overlap with Cyclist's planned and existing functionality. As a visual terminal for Claude Code, Cyclist should align with upstream patterns where appropriate while maintaining its unique value proposition.
+Claude Code 2.1.0 introduced significant features that overlap with BikeRack GUI's planned and existing functionality. As a visual terminal for Claude Code, BikeRack GUI should align with upstream patterns where appropriate while maintaining its unique value proposition.
 
 Key upstream additions in 2.1.0:
 - Real-time steering (send messages while Claude works)
@@ -19,7 +19,7 @@ Key upstream additions in 2.1.0:
 - Forked sub-agent context for skills
 - Hooks in agent/skill frontmatter
 
-Cyclist's Story 17-1 (Message Input Buffer) directly addresses the same problem as "real-time steering" but with a different architectural approach.
+BikeRack GUI's Story 17-1 (Message Input Buffer) directly addresses the same problem as "real-time steering" but with a different architectural approach.
 
 ## Decision
 
@@ -28,7 +28,7 @@ Cyclist's Story 17-1 (Message Input Buffer) directly addresses the same problem 
 We will adopt a **selective alignment** strategy:
 
 1. **Validate our approach** where upstream confirms our direction
-2. **Adopt patterns** that enhance Cyclist's value
+2. **Adopt patterns** that enhance BikeRack GUI's value
 3. **Diverge intentionally** where our UX goals differ
 4. **Document differences** as deliberate choices, not limitations
 
@@ -36,7 +36,7 @@ We will adopt a **selective alignment** strategy:
 
 #### 1. Message Queueing vs Real-Time Steering
 
-| Aspect | Claude Code (Steering) | Cyclist (Queue) |
+| Aspect | Claude Code (Steering) | BikeRack GUI (Queue) |
 |--------|------------------------|-----------------|
 | Mechanism | Inject into active stream | FIFO queue after completion |
 | User Experience | Immediate influence | Predictable, ordered |
@@ -65,13 +65,13 @@ if (isDemoMode) {
 }
 ```
 
-**Rationale:** Zero-cost feature that enables Cyclist demos and recordings.
+**Rationale:** Zero-cost feature that enables BikeRack GUI demos and recordings.
 
 #### 3. Thinking Block Display
 
 **Decision:** Audit existing implementation.
 
-**Action:** Verify Cyclist's thinking animation properly handles:
+**Action:** Verify BikeRack GUI's thinking animation properly handles:
 - Real-time streaming display
 - Collapse/expand behavior
 - Memory cleanup
@@ -93,16 +93,16 @@ if (isDemoMode) {
 
 #### 6. Hooks in Frontmatter
 
-**Decision:** Adopt for Cyclist personas/skills if we add custom skills.
+**Decision:** Adopt for BikeRack GUI personas/skills if we add custom skills.
 
-**Rationale:** Enables lifecycle hooks scoped to Cyclist's agent workflows.
+**Rationale:** Enables lifecycle hooks scoped to BikeRack GUI's agent workflows.
 
 #### 7. Security Audit
 
 **Decision:** Required audit based on upstream fixes.
 
 **Action Items:**
-| Fix | Cyclist Concern | Action |
+| Fix | BikeRack GUI Concern | Action |
 |-----|-----------------|--------|
 | Command injection | User input → bash | Audit all exec/spawn calls |
 | Memory leak (tree-sitter) | Syntax highlighting? | Check if tree-sitter used |

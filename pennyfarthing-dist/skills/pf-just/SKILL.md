@@ -2,7 +2,7 @@
 name: just
 description: |
   Run just recipes for project tasks. This skill should be used when starting dev servers,
-  running tests, managing Cyclist, generating portraits, or writing new justfile recipes.
+  running tests, managing BikeRack GUI, generating portraits, or writing new justfile recipes.
 args: "[recipe] [args...]"
 ---
 
@@ -11,7 +11,7 @@ args: "[recipe] [args...]"
 <run>
 Main commands:
 - `just --list` - List all available recipes
-- `just <recipe>` - Run a specific recipe (e.g., `just build`, `just test`, `just cyclist`)
+- `just <recipe>` - Run a specific recipe (e.g., `just build`, `just test`, `just gui`)
 </run>
 
 <output>
@@ -62,26 +62,26 @@ just test
 
 ---
 
-### `/pf-just test-cyclist`
+### `/pf-just test-gui`
 
-Run tests for the Cyclist package only.
+Run tests for the GUI package only.
 
 **Run:**
 ```bash
-just test-cyclist
+just test-gui
 ```
 
 **What it does:** Runs `npm test` in `packages/cyclist/`.
 
 ---
 
-### `/pf-just test-cyclist-watch`
+### `/pf-just test-gui-watch`
 
-Run Cyclist tests in watch mode for TDD workflow.
+Run GUI tests in watch mode for TDD workflow.
 
 **Run:**
 ```bash
-just test-cyclist-watch
+just test-gui-watch
 ```
 
 **What it does:** Runs Vitest in watch mode, re-running tests on file changes.
@@ -101,86 +101,72 @@ just install
 
 ---
 
-## Cyclist Commands
+## GUI Commands
 
-The `cyclist` recipe is the main entry point for Cyclist operations.
+The `gui` recipe is the main entry point for BikeRack GUI operations.
 
-### `/pf-just cyclist` (default)
+### `/pf-just gui` (default)
 
-Launch Cyclist in Electron mode with folder picker.
-
-**Run:**
-```bash
-just cyclist
-```
-
-**What it does:** Starts Cyclist Electron app, prompting to select a project directory.
-
----
-
-### `/pf-just cyclist here`
-
-Launch Cyclist for the current directory.
+Launch BikeRack GUI in web dev mode with hot reload.
 
 **Run:**
 ```bash
-just cyclist here
-```
-
-**What it does:** Starts Cyclist Electron app with `pwd` as the project directory.
-
----
-
-### `/pf-just cyclist web`
-
-Launch Cyclist in web dev mode with hot reload.
-
-**Run:**
-```bash
-just cyclist web
+just gui
 ```
 
 **What it does:** Starts the web server with Vite for browser-based development.
 
 ---
 
-### `/pf-just cyclist server`
+### `/pf-just gui here`
 
-Start Cyclist web server only (no browser).
+Launch BikeRack GUI for the current directory.
 
 **Run:**
 ```bash
-just cyclist server
+just gui here
+```
+
+**What it does:** Starts the web server with `pwd` as the project directory.
+
+---
+
+### `/pf-just gui server`
+
+Start BikeRack GUI web server only (no browser).
+
+**Run:**
+```bash
+just gui server
 ```
 
 **What it does:** Starts the backend server for headless or remote access.
 
 ---
 
-### `/pf-just cyclist verbose`
+### `/pf-just gui verbose`
 
 Enable debug logging for troubleshooting.
 
 **Run:**
 ```bash
-just cyclist verbose
+just gui verbose
 ```
 
 **Combine flags:**
 ```bash
-just cyclist here verbose
-just cyclist web verbose
+just gui here verbose
 ```
 
 ---
 
-### `/pf-just cyclist dir=<path>`
+### `/pf-just gui dir=<path>`
 
-Launch Cyclist for a specific project directory.
+Launch BikeRack GUI for a specific project directory.
 
 **Run:**
 ```bash
-just cyclist dir=/path/to/project
+just gui dir=/path/to/project
 ```
 
 **Arguments:**
@@ -190,31 +176,30 @@ just cyclist dir=/path/to/project
 
 ---
 
-### `/pf-just cyclist setup`
+### `/pf-just gui setup`
 
-First-time setup for Cyclist development.
+First-time setup for BikeRack GUI development.
 
 **Run:**
 ```bash
-just cyclist setup
+just gui setup
 ```
 
 **What it does:**
 1. Cleans stale artifacts (`rm -rf packages/cyclist/dist/`)
 2. Installs dependencies (`pnpm install`)
-3. Rebuilds native modules (`npx electron-rebuild`)
-4. Builds TypeScript (`pnpm run build`)
+3. Builds TypeScript (`pnpm run build`)
 
 ---
 
-### `/pf-just cyclist doctor`
+### `/pf-just gui doctor`
 
-Diagnose Cyclist setup issues.
+Diagnose BikeRack GUI setup issues.
 
 **Run:**
 ```bash
-just cyclist doctor
-just cyclist doctor --fix
+just gui doctor
+just gui doctor --fix
 ```
 
 **Arguments:**
@@ -226,72 +211,29 @@ just cyclist doctor --fix
 
 ---
 
-### `/pf-just cyclist build`
+### `/pf-just gui build`
 
-Build Cyclist TypeScript only.
+Build BikeRack GUI TypeScript only.
 
 **Run:**
 ```bash
-just cyclist build
+just gui build
 ```
 
 **What it does:** Compiles TypeScript in `packages/cyclist/`. Builds workspace dependencies first if missing.
 
 ---
 
-### `/pf-just cyclist clean`
+### `/pf-just gui clean`
 
-Remove Cyclist build artifacts.
+Remove BikeRack GUI build artifacts.
 
 **Run:**
 ```bash
-just cyclist clean
+just gui clean
 ```
 
 **What it does:** Removes `packages/cyclist/dist/` directory.
-
----
-
-### `/pf-just cyclist rebuild`
-
-Rebuild native modules (node-pty) for Electron.
-
-**Run:**
-```bash
-just cyclist rebuild
-```
-
-**What it does:** Runs `npx electron-rebuild` in `packages/cyclist/`.
-
-**When needed:** After Node.js version changes or native module errors.
-
----
-
-### `/pf-just cyclist package`
-
-Build Cyclist Electron app for distribution.
-
-**Run:**
-```bash
-just cyclist package
-```
-
-**What it does:** Runs `npm run build:electron` to create distributable app.
-
----
-
-### `/pf-just cyclist install`
-
-Install Cyclist app and CLI.
-
-**Run:**
-```bash
-just cyclist install
-```
-
-**What it does:**
-1. Installs `Cyclist.app` to `/Applications`
-2. Installs `cyclist` CLI to `/usr/local/bin`
 
 ---
 
@@ -350,11 +292,11 @@ Just recipes accept arguments directly (no `--` separator needed):
 
 ```bash
 # Correct
-just test-cyclist --filter "B-001"
-just cyclist here verbose
+just test-gui --filter "B-001"
+just gui here verbose
 
 # WRONG - don't use --
-just test-cyclist -- --filter "B-001"
+just test-gui -- --filter "B-001"
 ```
 
 ---
@@ -370,7 +312,7 @@ just --show <recipe>
 
 **Example:**
 ```bash
-just --show cyclist
+just --show gui
 # Shows the full recipe implementation
 ```
 
@@ -383,20 +325,16 @@ just --show cyclist
 | `just` | List available recipes |
 | `just build` | Build all packages |
 | `just test` | Run all tests |
-| `just test-cyclist` | Run Cyclist tests |
-| `just test-cyclist-watch` | Cyclist tests in watch mode |
+| `just test-gui` | Run GUI tests |
+| `just test-gui-watch` | GUI tests in watch mode |
 | `just install` | Install dependencies |
-| `just cyclist` | Electron + folder picker |
-| `just cyclist here` | Electron + current directory |
-| `just cyclist web` | Web dev mode |
-| `just cyclist server` | Web server only |
-| `just cyclist setup` | First-time setup |
-| `just cyclist doctor` | Diagnose issues |
-| `just cyclist build` | Build TypeScript |
-| `just cyclist clean` | Remove dist/ |
-| `just cyclist rebuild` | Rebuild native modules |
-| `just cyclist package` | Build Electron app |
-| `just cyclist install` | Install app + CLI |
+| `just gui` | Web dev mode (default) |
+| `just gui here` | Web dev + current directory |
+| `just gui server` | Web server only |
+| `just gui setup` | First-time setup |
+| `just gui doctor` | Diagnose issues |
+| `just gui build` | Build TypeScript |
+| `just gui clean` | Remove dist/ |
 | `just portraits <theme>` | Generate theme portraits |
 | `just portraits-all` | Generate all portraits |
 | `just portraits-preview <theme>` | Preview portraits |

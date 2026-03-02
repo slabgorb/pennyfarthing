@@ -14,7 +14,7 @@ The `pennyfarthing-dist/personas/portraits/` directory contains approximately 60
 4. **Developer friction**: Long clone times for new contributors
 
 The portraits are used by:
-- Cyclist UI (displays active agent persona)
+- BikeRack GUI (displays active agent persona)
 - Showcase site (character gallery)
 - Documentation
 
@@ -148,7 +148,7 @@ This clones/downloads portraits to `~/.pennyfarthing/portraits/`.
 2. **Phase 2: Schema Migration**
    - Update theme YAML schema to support portrait object
    - Write migration script for existing themes
-   - Update Cyclist UI portrait resolver
+   - Update BikeRack GUI portrait resolver
 
 3. **Phase 3: Cleanup**
    - Remove `pennyfarthing-dist/personas/portraits/` from main repo
@@ -156,7 +156,7 @@ This clones/downloads portraits to `~/.pennyfarthing/portraits/`.
    - Document local cache installation
 
 4. **Phase 4: Verification**
-   - Test Cyclist UI with CDN portraits
+   - Test BikeRack GUI with CDN portraits
    - Test offline mode with local cache
    - Verify showcase site
    - Monitor jsDelivr performance

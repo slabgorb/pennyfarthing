@@ -25,7 +25,7 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 | Check workflow state | `pf workflow check [--json]` | Current story, phase, state |
 | Check phase owner | `pf workflow phase-check <workflow> <phase>` | Which agent owns a phase |
 | Get workflow type | `pf workflow type <workflow>` | phased/stepped/procedural |
-| Emit handoff marker | `pf workflow handoff <next-agent>` | CYCLIST handoff marker |
+| Emit handoff marker | `pf workflow handoff <next-agent>` | Handoff marker for BikeRack GUI |
 | Complete step | `pf workflow complete-step [name] [--step N]` | Advance stepped workflow |
 
 ### Built-in Workflows

@@ -1,14 +1,14 @@
 ---
 name: bc
 description: |
-  Panel focus management for Cyclist. Set which panel BikeRack/Cyclist should focus on,
+  Panel focus management for BikeRack. Set which panel BikeRack should focus on,
   or clear the focus setting. Save and load named layouts. Writes to `.pennyfarthing/config.local.yaml`.
 args: "[panel|reset|save|load|list|clear|clear-all] [name]"
 ---
 
 # /bc - Panel Focus & Layout Management
 
-Set or clear the focused panel in Cyclist/BikeRack. Save and restore named layouts.
+Set or clear the focused panel in BikeRack. Save and restore named layouts.
 
 ## Quick Reference
 
@@ -43,7 +43,7 @@ Set or clear the focused panel in Cyclist/BikeRack. Save and restore named layou
 
 - The `message` panel (sacred center) is not focusable
 - Config written to `.pennyfarthing/config.local.yaml` under `focus` / `named_layouts` keys
-- `save` requires a running Cyclist/BikeRack server
+- `save` requires a running BikeRack server
 
 ---
 

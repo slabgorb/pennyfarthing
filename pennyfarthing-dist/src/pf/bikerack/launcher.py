@@ -10,6 +10,8 @@ import os
 import signal
 import subprocess
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import NoReturn
 
@@ -71,7 +73,7 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     """
     if project_dir:
         return Path(project_dir)
-    env = os.environ.get("WHEELHUB_PROJECT_DIR") or os.environ.get("CYCLIST_PROJECT_DIR")
+    env = os.environ.get("WHEELHUB_PROJECT_DIR")
     if env:
         return Path(env)
     return Path.cwd()
@@ -253,27 +255,55 @@ def exec_claude(otel_env: dict[str, str], project_dir: Path | None = None) -> No
     os.execvpe("claude", ["claude"], env)
 
 
+def _probe_wheelhub(port: int, timeout: float = 1.0) -> bool:
+    """HTTP liveness probe — GET http://127.0.0.1:{port}/health."""
+    try:
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/health")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status == 200
+    except (urllib.error.URLError, OSError, ValueError):
+        return False
+
+
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
     """Check if BikeRack is already running.
 
     Returns (is_running, pid_or_none, port_or_none).
-    Cleans up stale/orphaned files if PID is dead or files are inconsistent.
+    Uses HTTP liveness probes in addition to PID/port file checks.
+    Cleans up stale/orphaned files when detection fails.
     """
     pid = read_pid_file(project_dir)
     port = read_port_file(project_dir)
 
-    # Orphaned port file without pid file (or vice versa) — clean up
-    if (pid is None) != (port is None):
+    # Both files present — verify PID alive AND port responding
+    if pid is not None and port is not None:
+        if is_process_alive(pid) and _probe_wheelhub(port):
+            return (True, pid, port)
+        # Stale files — clean up
         cleanup_files(project_dir)
         return (False, None, None)
 
-    if pid is None:
+    # Port file only (no PID) — probe before assuming orphaned
+    if port is not None and pid is None:
+        if _probe_wheelhub(port):
+            return (True, None, port)
+        cleanup_files(project_dir)
         return (False, None, None)
 
-    if is_process_alive(pid):
-        return (True, pid, port)
+    # PID file only (no port) — check PID, scan default range
+    if pid is not None and port is None:
+        if is_process_alive(pid):
+            for p in range(2898, 2909):
+                if _probe_wheelhub(p):
+                    return (True, pid, p)
+        cleanup_files(project_dir)
+        return (False, None, None)
 
-    cleanup_files(project_dir)
+    # No files — scan default range as last resort
+    for p in range(2898, 2909):
+        if _probe_wheelhub(p):
+            return (True, None, p)
+
     return (False, None, None)
 
 

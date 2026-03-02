@@ -1,6 +1,6 @@
 ---
 name: otel
-description: Claude Code OTEL telemetry format documentation. Use when working with OTEL span interception, enrichment, or correlation in Cyclist.
+description: Claude Code OTEL telemetry format documentation. Use when working with OTEL span interception, enrichment, or correlation in BikeRack GUI.
 allowed_tools: [Read, Glob, Grep, Task]
 ---
 
@@ -19,13 +19,10 @@ Document the actual OTEL data Claude Code emits. This is ground truth, not specu
 ## Quick Start - Enable Debug Logging
 
 ```bash
-# Option 1: Via just command
-just cyclist-electron true
-
-# Option 2: Via environment variable
+# Option 1: Via environment variable
 OTEL_DEBUG=true npm run dev
 
-# Option 3: Runtime toggle (in code or devtools)
+# Option 2: Runtime toggle (in code or devtools)
 import { setOtelDebug } from './otlp-receiver.js';
 setOtelDebug(true);
 ```

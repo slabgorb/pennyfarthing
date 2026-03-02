@@ -99,8 +99,6 @@ If no changes were needed beyond the version, that's fine — confirm and contin
 **[R]** Revise CLAUDE.md content
 **[S]** Skip (no CLAUDE.md changes needed beyond version)
 
-<!-- CYCLIST:CHOICES:C,R,S -->
-
 <switch tool="AskUserQuestion">
   <case value="continue-to-retro" next="step-06-retro">
     Continue to retro (optional)

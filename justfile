@@ -8,30 +8,25 @@ default:
     @just --list
 
 # =============================================================================
-# Cyclist - Main Command
+# GUI - Main Command
 # =============================================================================
 
-# Cyclist - unified command for all Cyclist operations
+# GUI - unified command for BikeRack GUI operations
 #
 # Run modes:
-#   just cyclist              # Electron + folder picker (default)
-#   just cyclist here         # Electron + current directory
-#   just cyclist cdp          # Electron + CDP debugging (port 9222 for Playwright)
-#   just cyclist web          # Web dev mode (browser + hot reload)
-#   just cyclist server       # Web server only
-#   just cyclist verbose      # Enable debug logging
-#   just cyclist here verbose # Combine flags (any order)
-#   just cyclist dir=/path    # Specific project directory
+#   just gui              # Web dev mode (browser + hot reload, default)
+#   just gui here         # Web dev + current directory
+#   just gui server       # Web server only
+#   just gui verbose      # Enable debug logging
+#   just gui here verbose # Combine flags (any order)
+#   just gui dir=/path    # Specific project directory
 #
 # Maintenance:
-#   just cyclist setup        # First-time setup (clean, install, rebuild, build)
-#   just cyclist doctor       # Diagnose setup issues (add --fix to auto-repair)
-#   just cyclist build        # Build TypeScript
-#   just cyclist clean        # Remove dist/
-#   just cyclist rebuild      # Rebuild native modules (node-pty)
-#   just cyclist package      # Build Electron app for distribution
-#   just cyclist install      # Install app to /Applications + CLI to /usr/local/bin
-cyclist *args:
+#   just gui setup        # First-time setup (clean, install, build)
+#   just gui doctor       # Diagnose setup issues (add --fix to auto-repair)
+#   just gui build        # Build TypeScript
+#   just gui clean        # Remove dist/
+gui *args:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -41,27 +36,22 @@ cyclist *args:
     # Check for maintenance subcommands first
     case "${1:-}" in
         setup)
-            echo "🚴 Setting up Cyclist..."
+            echo "🚴 Setting up BikeRack GUI..."
             echo ""
-            echo "Step 1/4: Cleaning stale artifacts..."
+            echo "Step 1/3: Cleaning stale artifacts..."
             rm -rf packages/cyclist/dist/
             echo ""
-            echo "Step 2/4: Installing dependencies..."
+            echo "Step 2/3: Installing dependencies..."
             pnpm install
             echo ""
-            echo "Step 3/4: Rebuilding native modules (node-pty)..."
-            cd packages/cyclist && npx electron-rebuild
-            cd - > /dev/null
-            echo ""
-            echo "Step 4/4: Building TypeScript..."
+            echo "Step 3/3: Building TypeScript..."
             pnpm run build
             echo ""
-            echo "✓ Cyclist setup complete!"
+            echo "✓ BikeRack GUI setup complete!"
             echo ""
             echo "Next steps:"
-            echo "  just cyclist           # Electron with folder picker"
-            echo "  just cyclist here      # Electron in current directory"
-            echo "  just cyclist web       # Web dev mode"
+            echo "  just gui here      # Web dev in current directory"
+            echo "  just gui web       # Web dev mode"
             exit 0
             ;;
         doctor)
@@ -83,43 +73,21 @@ cyclist *args:
             echo "✓ Cleaned packages/cyclist/dist/"
             exit 0
             ;;
-        rebuild)
-            cd packages/cyclist && npx electron-rebuild
-            exit 0
-            ;;
-        package)
-            cd packages/cyclist && npm run build:electron
-            exit 0
-            ;;
-        install)
-            cd packages/cyclist
-            ./scripts/install-app.sh
-            ./scripts/install-cli.sh
-            echo ""
-            echo "✓ Cyclist installation complete!"
-            echo "  - Launch from Applications: Cyclist.app"
-            echo "  - Launch from terminal: cyclist [path]"
-            exit 0
-            ;;
     esac
 
     # Parse run mode arguments
-    mode="electron"
+    mode="web"
     project_dir=""
     here="false"
     verbose="false"
-    cdp="false"
 
     for arg in "$@"; do
         case "$arg" in
-            electron|web|server)
+            web|server)
                 mode="$arg"
                 ;;
             here)
                 here="true"
-                ;;
-            cdp)
-                cdp="true"
                 ;;
             verbose)
                 verbose="true"
@@ -131,22 +99,17 @@ cyclist *args:
                 echo "Unknown argument: $arg"
                 echo ""
                 echo "Run modes:"
-                echo "  just cyclist              # Electron + folder picker"
-                echo "  just cyclist here         # Electron + current directory"
-                echo "  just cyclist cdp          # Electron + CDP debugging (port 9222)"
-                echo "  just cyclist web          # Web dev mode"
-                echo "  just cyclist server       # Web server only"
-                echo "  just cyclist verbose      # Enable debug logging"
-                echo "  just cyclist dir=/path    # Specific directory"
+                echo "  just gui              # Web dev mode (default)"
+                echo "  just gui here         # Web dev + current directory"
+                echo "  just gui server       # Web server only"
+                echo "  just gui verbose      # Enable debug logging"
+                echo "  just gui dir=/path    # Specific directory"
                 echo ""
                 echo "Maintenance:"
-                echo "  just cyclist setup        # First-time setup"
-                echo "  just cyclist doctor       # Diagnose issues"
-                echo "  just cyclist build        # Build TypeScript"
-                echo "  just cyclist clean        # Remove dist/"
-                echo "  just cyclist rebuild      # Rebuild native modules"
-                echo "  just cyclist package      # Build Electron app"
-                echo "  just cyclist install      # Install app + CLI"
+                echo "  just gui setup        # First-time setup"
+                echo "  just gui doctor       # Diagnose issues"
+                echo "  just gui build        # Build TypeScript"
+                echo "  just gui clean        # Remove dist/"
                 exit 1
                 ;;
         esac
@@ -164,7 +127,7 @@ cyclist *args:
     fi
 
     # Web/server modes require a directory (default to pwd)
-    if [[ -z "$project_dir" ]] && [[ "$mode" != "electron" ]]; then
+    if [[ -z "$project_dir" ]]; then
         project_dir="$(pwd)"
     fi
 
@@ -172,27 +135,17 @@ cyclist *args:
 
     # Build environment
     env_vars=""
-    [[ -n "$project_dir" ]] && env_vars="CYCLIST_PROJECT_DIR=$project_dir"
-    [[ "$verbose" == "true" ]] && env_vars="$env_vars CYCLIST_VERBOSE=true"
+    [[ -n "$project_dir" ]] && env_vars="PF_PROJECT_DIR=$project_dir"
+    [[ "$verbose" == "true" ]] && env_vars="$env_vars PF_VERBOSE=true"
 
     case "$mode" in
-        electron)
-            echo "Starting Cyclist (Electron)..."
-            [[ -n "$project_dir" ]] && echo "  Project: $project_dir" || echo "  Project: (folder picker)"
-            if [[ "$cdp" == "true" ]]; then
-                echo "  CDP: enabled on port 9222 (Playwright)"
-                eval $env_vars npm run dev:cdp
-            else
-                eval $env_vars npm run dev
-            fi
-            ;;
         web)
-            echo "Starting Cyclist (Web dev mode)..."
+            echo "Starting BikeRack GUI (Web dev mode)..."
             echo "  Project: $project_dir"
             eval $env_vars npm run dev:web
             ;;
         server)
-            echo "Starting Cyclist (Web server)..."
+            echo "Starting BikeRack GUI (Web server)..."
             echo "  Project: $project_dir"
             eval $env_vars npm start
             ;;
@@ -206,8 +159,8 @@ build:
 test:
     pnpm test
 
-# Run tests for cyclist package only
-test-cyclist:
+# Run tests for GUI package only
+test-gui:
     cd packages/cyclist && npm test
 
 # Install dependencies
@@ -234,8 +187,8 @@ portraits-preview theme:
 portraits-all:
     ./pennyfarthing-dist/scripts/portraits/generate-portraits.sh --skip-existing
 
-# Run Cyclist tests in watch mode
-test-cyclist-watch:
+# Run GUI tests in watch mode
+test-gui-watch:
     cd packages/cyclist && npm test -- --watch
 
 # Check sidecar files for bloat
@@ -404,17 +357,17 @@ bikerack *args:
     # Default: hot-reload server + vite rebuild watcher
     cd packages/cyclist
     export IS_BIKERACK=1
-    export CYCLIST_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
+    export PF_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
     echo "BikeRack — hot reload mode"
-    echo "  Project dir: $CYCLIST_PROJECT_DIR"
+    echo "  Project dir: $PF_PROJECT_DIR"
     echo "  Server: tsx watch src/bikerack.ts"
     echo "  Frontend: vite build --watch"
     echo ""
-    logfile="$CYCLIST_PROJECT_DIR/.session/bikerack_debug.log"
+    logfile="$PF_PROJECT_DIR/.session/bikerack_debug.log"
     mkdir -p "$(dirname "$logfile")"
     echo "  Log: $logfile"
     # Clean stale port file before starting
-    rm -f "$CYCLIST_PROJECT_DIR/.bikerack-port"
+    rm -f "$PF_PROJECT_DIR/.bikerack-port"
     npx concurrently -k \
         -n server,vite \
         -c green,magenta \
@@ -423,10 +376,10 @@ bikerack *args:
         >> "$logfile" 2>&1 &
     bg_pid=$!
     echo "  PID: $bg_pid"
-    echo "$bg_pid" > "$CYCLIST_PROJECT_DIR/.wheelhub-pid"
+    echo "$bg_pid" > "$PF_PROJECT_DIR/.wheelhub-pid"
     echo ""
     # Wait for server to write .bikerack-port (up to 10s)
-    port_file="$CYCLIST_PROJECT_DIR/.bikerack-port"
+    port_file="$PF_PROJECT_DIR/.bikerack-port"
     for i in $(seq 1 20); do
         if [[ -f "$port_file" ]]; then
             port=$(cat "$port_file")
@@ -444,7 +397,7 @@ bikerack *args:
     echo "BikeRack running in background. Use 'tail -f $logfile' to watch logs."
     echo ""
     # Launch Claude Code in the project directory
-    cd "$CYCLIST_PROJECT_DIR" && exec claude
+    cd "$PF_PROJECT_DIR" && exec claude
 
 # Launch BikeRack TUI (connects to running WheelHub)
 tui *args:

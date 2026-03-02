@@ -62,7 +62,7 @@ Directories:
   {✓|✗} .session/           - Work sessions
 
 Optional:
-  {✓|✗} Cyclist installed
+  {✓|✗} BikeRack GUI configured
   {✓|✗} Subrepos cloned
 ```
 
@@ -96,7 +96,7 @@ Commands Available:
   just test-all          - Run all tests
   just build-all         - Build all repos
   just dev               - Start development
-  just cyclist           - Launch Cyclist (if installed)
+  just gui               - Launch BikeRack GUI (if configured)
 ```
 
 ## QUICK-START GUIDE
@@ -123,10 +123,10 @@ Commands Available:
 4. WORKFLOW
    Story flow: SM → TEA → Dev → Reviewer → SM
 
-5. LAUNCH CYCLIST (if installed)
-   just cyclist          # Visual terminal
+5. LAUNCH BIKERACK GUI (if configured)
+   just gui              # Browser UI
    # OR
-   npx cyclist
+   pf bikerack start     # Terminal panels
 
 6. GET HELP
    /help                 # Context-aware help
@@ -180,9 +180,9 @@ Quick commands:
   /sprint status   - View sprint
   /help            - Get help
 
-{if cyclist_installed}
-Launch Cyclist for the visual experience:
-  just cyclist
+{if gui_configured}
+Launch BikeRack GUI for the visual experience:
+  just gui
 {/if}
 
 Happy coding! 🚴
@@ -224,7 +224,7 @@ This workflow is now complete. The user has:
 ✅ Selected a persona theme
 ✅ Optionally installed additional theme packs
 ✅ Configured Jira project key
-✅ Optionally installed Cyclist
+✅ Optionally configured BikeRack GUI
 ✅ Validated the setup
 
 The project is ready for development with Pennyfarthing.

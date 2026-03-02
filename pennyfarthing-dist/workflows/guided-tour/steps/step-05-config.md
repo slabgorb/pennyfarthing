@@ -46,7 +46,7 @@ Present hooks and config overview:
 | session-start | SessionStart | Setup, welcome banner, WheelHub connection |
 | bell-mode | PostToolUse | Message queue injection and tandem observations |
 | pre-edit-check | PreToolUse | Block edits to protected files (.pennyfarthing/, node_modules/) |
-| reflector-check | Stop | Enforce Cyclist markers on every agent turn |
+| reflector-check | Stop | Enforce UI markers on every agent turn |
 | context-warning | PreToolUse | Warn when context usage exceeds threshold |
 | schema-validation | PreToolUse:Write | Validate session/skill/step file schemas |
 | sprint-yaml | PostToolUse | Validate sprint YAML after modifications |
@@ -100,7 +100,7 @@ When the user selects Dig In, explore these topics interactively:
 ### Session-Start Hook
 The session-start hook fires on every new Claude Code session:
 - Loads checkpoint from previous session for continuity
-- Starts WheelHub server (if Cyclist/BikeRack is active)
+- Starts WheelHub server (if BikeRack is active)
 - Displays welcome banner with project name and theme
 - Sets up the status line display
 
@@ -132,7 +132,7 @@ When relay_mode is enabled:
 ### Other Configuration
 - `theme`: Active persona theme (e.g., discworld, star-trek-tng)
 - `statusbar`: Enable/disable the Claude Code status line
-- `layout`: Cyclist/BikeRack panel arrangement
+- `layout`: BikeRack panel arrangement
 - `display`: Color presets and font settings
 
 Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.

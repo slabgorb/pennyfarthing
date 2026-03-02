@@ -10,7 +10,7 @@ Every Pennyfarthing agent activation requires loading multiple context sources: 
 
 **Problems with the old approach:**
 - Each agent script loaded context differently
-- No single entry point for Cyclist integration
+- No single entry point for BikeRack GUI integration
 - Workflow state detection was duplicated
 - Session registration was manual and error-prone
 - Persona loading wasn't centralized
@@ -94,7 +94,7 @@ python -m pf.prime --agent dev --minimal
 # Full (include domain docs)
 python -m pf.prime --agent architect --full
 
-# JSON output for Cyclist
+# JSON output for BikeRack GUI
 python -m pf.prime --agent tea --json
 
 # Skip specific loading
@@ -146,7 +146,7 @@ workflow: tdd
 | Consumer | Usage |
 |----------|-------|
 | `/agent` commands | Shell wrapper calls `prime.sh` |
-| Cyclist | JSON output for UI state |
+| BikeRack GUI | JSON output for UI state |
 | `agent-session.sh` | Thin wrapper around prime |
 | Phase check scripts | Workflow state detection |
 
@@ -156,7 +156,7 @@ workflow: tdd
 
 - **Single entry point** - All agent activation goes through prime
 - **Consistent loading** - Same order, same validation for all agents
-- **Cyclist integration** - JSON output enables rich UI state
+- **BikeRack GUI integration** - JSON output enables rich UI state
 - **Session tracking** - UUID-based session registration
 - **Workflow awareness** - Agents know their state before starting
 - **Testable** - Python modules can be unit tested
@@ -182,7 +182,7 @@ Keep everything in bash scripts.
 
 ### 2. TypeScript Implementation
 
-Use Node.js for consistency with Cyclist.
+Use Node.js for consistency with BikeRack GUI.
 
 **Rejected:** Python is already used for Jira scripts, YAML handling is cleaner in Python.
 

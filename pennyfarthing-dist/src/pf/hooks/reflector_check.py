@@ -178,7 +178,7 @@ def _load_config(project_dir: str) -> dict[str, Any]:
 
 
 def _should_skip_enforcement() -> bool:
-    return os.environ.get('CYCLIST') != '1'
+    return os.environ.get('PF_GUI') != '1'
 
 
 def _read_transcript(transcript_path: str) -> tuple[str, list[dict[str, Any]]]:
