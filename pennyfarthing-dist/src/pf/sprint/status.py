@@ -6,7 +6,7 @@ Provides functions for getting and displaying sprint status.
 
 from typing import Any
 
-from pf.sprint.loader import get_sprint_info, load_sprint
+from pf.sprint.loader import get_archived_stories, get_sprint_info, load_sprint
 
 # Map CLI filter names to YAML status values
 _FILTER_MAP: dict[str, set[str]] = {
@@ -51,6 +51,12 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     # Include top-level stories (not under any epic)
     for s in data.get("stories", []):
         s["_epic_title"] = "(standalone)"
+        stories.append(s)
+
+    # Include archived stories from the current sprint
+    archived = get_archived_stories(only_current=True)
+    for s in archived:
+        s["_epic_title"] = "(archived)"
         stories.append(s)
 
     if not stories:
