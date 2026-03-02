@@ -35,17 +35,13 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
     if running:
         return port, pid, True
 
-    click.echo("Starting WheelHub server...")
+    click.echo("Starting WheelHub server...", err=True)
     proc = start_wheelhub(project_dir)
     if isinstance(proc, dict):
         raise RuntimeError(proc['error'])
     write_pid_file(project_dir, proc.pid)
     port = poll_for_port_file(project_dir, proc=proc)
-    click.echo(f"WheelHub listening on http://localhost:{port}")
-    click.echo(
-        "Note: OTEL telemetry requires Claude to be started with BikeRack env vars. "
-        "File-based panels (sprint, git, diffs) work independently."
-    )
+    click.echo(f"WheelHub listening on http://localhost:{port}", err=True)
     return port, proc.pid, False
 
 
@@ -61,6 +57,32 @@ def launch():
       stop    - Stop WheelHub server
     """
     pass
+
+
+@launch.command()
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, resolve_path=True),
+    default=None,
+    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+)
+def wheelhub(project_dir):
+    """Start WheelHub server (idempotent).
+
+    Starts WheelHub if not already running, prints the port number.
+    Safe to call multiple times — reuses existing instance.
+    """
+    from pf.bikerack.launcher import resolve_project_dir
+
+    project_dir = resolve_project_dir(project_dir)
+
+    try:
+        port, pid, reused = _ensure_wheelhub(project_dir)
+    except (TimeoutError, RuntimeError) as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+    click.echo(f"{port}")
 
 
 @launch.command()

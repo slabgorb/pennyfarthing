@@ -65,7 +65,9 @@ def main() -> None:
         session_id = input_data.get("session_id", "unknown")
         project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
-        _cleanup_bikerack(project_dir)
+        # Don't stop WheelHub on session end — it's shared across
+        # tmux panes and should outlive individual Claude sessions.
+        # Use `pf launch stop` to stop it explicitly.
         _cleanup_tmux_status(project_dir)
         _write_final_checkpoint(project_dir, session_id)
 
