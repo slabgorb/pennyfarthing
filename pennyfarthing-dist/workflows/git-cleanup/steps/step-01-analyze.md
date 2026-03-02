@@ -101,3 +101,12 @@ Unpushed: {count} commits
 **[C]** Continue to categorization
 
 <!-- CYCLIST:CHOICES:A,C -->
+
+<switch tool="AskUserQuestion">
+  <case value="analyze-a-specific-repo-in-more-detail" next="LOOP">
+    Analyze a specific repo in more detail
+  </case>
+  <case value="continue-to-categorization" next="step-02-categorize">
+    Continue to categorization
+  </case>
+</switch>

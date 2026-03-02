@@ -53,12 +53,20 @@ Present results in a clear table format:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category installation` to auto-repair
-- **[E] Explain** - Deep dive on a specific check result
-- **[C] Continue** - Proceed to Commands & Skills check
-- **[R] Recheck** - Re-run after manual changes
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category installation` to auto-repair
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific check result
+  </case>
+  <case value="continue" next="step-02-commands">
+    Continue — Proceed to Commands & Skills check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual changes
+  </case>
+</switch>
 
 <next-step>
 After reviewing foundation results, proceed to step-02-commands.md for Commands & Skills verification.

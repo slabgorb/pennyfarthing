@@ -160,6 +160,19 @@ Ensure metrics align with product vision and user needs:
 Prepare the following structure for document append:
 
 ```markdown
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue" next="step-05-scope">
+    Continue
+  </case>
+</switch>
+
 ## Success Metrics
 
 [Success metrics content based on conversation]

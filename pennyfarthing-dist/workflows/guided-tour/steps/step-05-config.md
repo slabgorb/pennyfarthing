@@ -138,16 +138,17 @@ When relay_mode is enabled:
 Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
 </deep-dive>
 
-<switch>
-<option label="Continue" action="continue" description="Complete the tour" />
-<option label="Dig In" action="dig-in" description="Explore hooks, permission modes, relay mode, and bell mode in detail" />
-<option label="Try It" action="try-it" description="View your config file" />
-<option label="Skip" action="skip" description="Finish the tour" />
+<switch tool="AskUserQuestion">
+  <case value="continue" next="complete">
+    Continue — Complete the tour
+  </case>
+  <case value="dig-in" next="LOOP">
+    Dig In — Explore hooks, permission modes, and relay mode in detail
+  </case>
+  <case value="try-it" next="LOOP">
+    Try It — View your config file
+  </case>
+  <case value="skip" next="complete">
+    Skip — Finish the tour
+  </case>
 </switch>
-
-<collaboration-menu>
-- Continue — Complete the tour
-- Dig In — Explore hooks, permission modes, and relay mode in detail
-- Try It — View your config file
-- Skip — Finish the tour
-</collaboration-menu>

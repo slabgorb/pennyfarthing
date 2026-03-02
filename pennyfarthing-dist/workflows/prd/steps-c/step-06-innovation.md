@@ -230,3 +230,15 @@ Skip this step and load `{nextStepFile}` if:
 After user selects 'C' and content is saved to document (or step is skipped), load `{nextStepFile}`.
 
 Remember: Do NOT proceed to step-07 until user explicitly selects 'C' from the A/P/C menu (or confirms step skip)!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-project-type-analysis" next="step-07-project-type">
+    Continue to Project Type Analysis (Step 7 of 11)
+  </case>
+</switch>

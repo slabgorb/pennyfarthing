@@ -588,15 +588,35 @@ Set up the architecture session by gathering inputs and establishing context.
 </actions>
 ```
 
+### `<switch>`
+
+**Purpose:** Conditional navigation with branching. Maps to `AskUserQuestion` tool for user choices.
+
+**Usage:** When any menu option leads to a different step. Replaces `<collaboration-menu>` for branching menus.
+
+**Attributes:** `tool="AskUserQuestion"` (user choice) or `on="{condition}"` (agent-evaluated).
+
+**Children:** `<case value="" next="">` and optional `<default next="">`.
+
+```xml
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-04-components">
+    Continue — Proceed to Component Design
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Re-evaluate current output
+  </case>
+</switch>
+```
+
 ### `<collaboration-menu>`
 
-**Purpose:** Present user options after step completion.
+**Purpose:** Present user options when ALL options loop back (no step transitions).
 
-**Usage:** Standard menu with keyboard shortcuts.
+**Usage:** Simple loop menus only. Use `<switch>` when any option branches to a different step.
 
 ```markdown
 <collaboration-menu>
-- **[C] Continue** - Proceed to next step
 - **[R] Revise** - Make changes
 - **[H] Help** - Get guidance
 </collaboration-menu>

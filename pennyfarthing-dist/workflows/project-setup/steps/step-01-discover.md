@@ -202,3 +202,15 @@ Detected Commands:
 ## NEXT STEP
 
 After user confirms with [C], proceed to `step-02-clone-repos.md` to optionally clone subrepos and set up the orchestrator pattern.
+
+<switch tool="AskUserQuestion">
+  <case value="confirm-and-continue-to-reposyaml-generation" next="step-02-clone-repos">
+    Confirm and continue to repos.yaml generation
+  </case>
+  <case value="edit" next="LOOP">
+    Edit — let me provide corrections
+  </case>
+  <case value="rescan-with-different-parameters" next="LOOP">
+    Rescan with different parameters
+  </case>
+</switch>

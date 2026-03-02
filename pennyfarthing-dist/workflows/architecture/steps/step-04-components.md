@@ -142,6 +142,22 @@ When user selects [P]:
 - Implementation consistency rules documented
 - User confirmed design before proceeding
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to explore alternative component structures or hidden dependencies
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring multiple perspectives to evaluate component boundaries from different angles
+  </case>
+  <case value="continue" next="step-05-interfaces">
+    Continue — Save the content and proceed to interface definition
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to reconsider component structure or boundaries
+  </case>
+</switch>
+
 ## Failure Modes
 
 - Ambiguous component responsibilities

@@ -213,3 +213,12 @@ Ready to verify and push?
 
 <!-- GATE -->
 <!-- CYCLIST:CHOICES:A,C -->
+
+<switch tool="AskUserQuestion">
+  <case value="abort-current-group" next="EXIT">
+    Abort current group (leave those changes uncommitted)
+  </case>
+  <case value="continue-to-verification" next="step-04-verify">
+    Continue to verification
+  </case>
+</switch>

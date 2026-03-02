@@ -243,3 +243,15 @@ QUICK ACTIONS:
 ## NEXT STEP
 
 After Cyclist setup, proceed to `step-11-complete.md` to finalize project setup and run validation.
+
+<switch tool="AskUserQuestion">
+  <case value="retry-installation" next="LOOP">
+    Retry installation
+  </case>
+  <case value="more-troubleshooting-options" next="LOOP">
+    More troubleshooting options
+  </case>
+  <case value="skip-cyclist-for-now" next="step-11-complete">
+    Skip Cyclist for now
+  </case>
+</switch>

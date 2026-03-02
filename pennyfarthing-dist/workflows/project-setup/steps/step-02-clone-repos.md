@@ -215,3 +215,15 @@ Repositories:
 ## NEXT STEP
 
 After repos are cloned and discovery is refreshed, proceed to `step-03-repos-yaml.md` to generate the repos.yaml configuration.
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-reposyaml-generation" next="step-03-repos-yaml">
+    Continue to repos.yaml generation
+  </case>
+  <case value="add-another-repo" next="LOOP">
+    Add another repo
+  </case>
+  <case value="remove-a-repo-from-tracking" next="LOOP">
+    Remove a repo from tracking
+  </case>
+</switch>

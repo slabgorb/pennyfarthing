@@ -97,12 +97,20 @@ Present results grouped by hook type:
 - [ ] User confirmed hook configuration is acceptable
 </gate>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category hooks` to add missing hooks
-- **[E] Explain** - Deep dive on a specific hook's behavior
-- **[C] Continue** - Approve configuration and proceed to Scripts check
-- **[R] Recheck** - Re-run after manual edits to settings.local.json
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category hooks` to add missing hooks
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific hook's behavior
+  </case>
+  <case value="continue" next="step-04-scripts">
+    Continue — Approve configuration and proceed to Scripts check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual edits to settings.local.json
+  </case>
+</switch>
 
 <next-step>
 After user approves hook configuration, proceed to step-04-scripts.md for Hook Scripts verification.

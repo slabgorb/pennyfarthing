@@ -60,12 +60,20 @@ Present results in two sections:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category scripts` to fix permissions and stale hooks
-- **[E] Explain** - Deep dive on a specific script's behavior
-- **[C] Continue** - Proceed to Layout check
-- **[R] Recheck** - Re-run after manual changes
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category scripts` to fix permissions and stale hooks
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific script's behavior
+  </case>
+  <case value="continue" next="step-05-layout">
+    Continue — Proceed to Layout check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual changes
+  </case>
+</switch>
 
 <next-step>
 After reviewing script results, proceed to step-05-layout.md for Directory & File Layout verification.

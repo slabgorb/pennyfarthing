@@ -108,6 +108,19 @@ After completing initialization, present options:
 - Not detecting PRD requirement
 - Not confirming inputs with user before proceeding
 
+
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-02-context">
+    Continue — Inputs gathered, proceed to Context Analysis
+  </case>
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to find additional context
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to locate missing inputs before proceeding
+  </case>
+</switch>
+
 ## Next Step
 
 After user selects [C], proceed to Context Analysis to understand the technical landscape.

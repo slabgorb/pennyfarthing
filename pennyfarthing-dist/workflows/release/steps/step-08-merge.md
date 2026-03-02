@@ -88,3 +88,12 @@ Everything is local. The next step pushes to the remote — that's the point of 
 **[A]** Abort (delete tag{if stable: , reset main})
 
 <!-- CYCLIST:CHOICES:C,A -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-push" next="step-09-push">
+    Continue to push
+  </case>
+  <case value="abort" next="EXIT">
+    Abort (delete tag{if stable: , reset main})
+  </case>
+</switch>

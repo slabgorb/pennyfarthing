@@ -223,3 +223,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-05-inspiration.md` to analyze UX patterns from inspiring products.
 
 Remember: Do NOT proceed to step-05 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine the emotional response definition
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on user emotional needs
+  </case>
+  <case value="continue" next="step-05-inspiration">
+    Continue — Save this to the document and move to inspiration analysis
+  </case>
+</switch>

@@ -79,12 +79,21 @@ Present the final report:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix` to auto-repair all fixable issues
-- **[E] Explain** - Deep dive on any remaining issue
-- **[C] Continue** - Complete the health check workflow
-- **[R] Recheck** - Run full check again to verify fixes
-</collaboration-menu>
+
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix` to auto-repair all fixable issues
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on any remaining issue
+  </case>
+  <case value="continue" next="complete">
+    Continue — Complete the health check workflow
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Run full check again to verify fixes
+  </case>
+</switch>
 
 ## Failure Modes
 

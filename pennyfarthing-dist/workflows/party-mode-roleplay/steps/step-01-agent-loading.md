@@ -48,9 +48,11 @@ What would you like to discuss with the team?
 ```
 </output>
 
-<collaboration-menu>
-- **[C] Continue** — User provides a topic and discussion begins
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-02-discussion">
+    Continue — User provides a topic and discussion begins
+  </case>
+</switch>
 
 <next-step>
 After user provides a topic, proceed to step-02-discussion.md for multi-round discussion orchestration.

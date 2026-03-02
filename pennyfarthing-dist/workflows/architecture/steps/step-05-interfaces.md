@@ -140,6 +140,22 @@ When user selects [P]:
 - Inconsistent naming conventions
 - Proceeding without user confirmation
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to identify missing contracts or edge cases
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring multiple perspectives to evaluate API design from different consumer viewpoints
+  </case>
+  <case value="continue" next="step-06-risks">
+    Continue — Save the content and proceed to risk assessment
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to reconsider interface design or add missing contracts
+  </case>
+</switch>
+
 ## Next Step
 
 After user selects [C], proceed to Risk Assessment to identify potential issues.

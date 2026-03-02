@@ -97,6 +97,19 @@ After user selects [R]:
 - Continuation or restart handled smoothly
 - No data loss (archive before restart)
 
+
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-02-context">
+    Continue — Resume from step {next_step}
+  </case>
+  <case value="restart" next="LOOP">
+    Restart — Start fresh (will archive existing document)
+  </case>
+  <case value="view" next="LOOP">
+    View — Show complete document before deciding
+  </case>
+</switch>
+
 ## Failure Modes
 
 - Proceeding without user confirmation

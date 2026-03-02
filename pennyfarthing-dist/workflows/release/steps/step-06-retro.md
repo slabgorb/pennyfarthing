@@ -57,3 +57,12 @@ Continue to the commit step. Any retro notes are captured separately — they do
 **[R]** Run `/retro` first
 
 <!-- CYCLIST:CHOICES:C,R -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-commit" next="step-07-commit">
+    Continue to commit (skip retro)
+  </case>
+  <case value="run-retro-first" next="LOOP">
+    Run `/retro` first
+  </case>
+</switch>

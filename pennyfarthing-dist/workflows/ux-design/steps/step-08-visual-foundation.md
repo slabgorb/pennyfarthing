@@ -228,3 +228,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-09-design-directions.md` to generate design direction mockups.
 
 Remember: Do NOT proceed to step-09 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine our visual foundation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring design perspectives on visual choices
+  </case>
+  <case value="continue" next="step-09-design-directions">
+    Continue — Save this to the document and move to design directions
+  </case>
+</switch>

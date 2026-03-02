@@ -191,3 +191,12 @@ b) **HALT and wait for user selection.**
 - [ ] WIP check performed FIRST before any greeting.
 - [ ] `{wipFile}` created with correct frontmatter, Overview, Context for Development, and `stepsCompleted: [1]`.
 - [ ] User selected [C] to continue.
+
+<switch tool="AskUserQuestion">
+  <case value="continue-existing" next="step-02-investigate">
+    Continue existing: — Jump directly to the appropriate step based on `stepsCompleted`:
+  </case>
+  <case value="archive-and-start-fresh" next="LOOP">
+    Archive and start fresh: — Rename `{wipFile}` to `{implementation_artifacts}/tech-spec-{slug}-archived-{date}.md`
+  </case>
+</switch>

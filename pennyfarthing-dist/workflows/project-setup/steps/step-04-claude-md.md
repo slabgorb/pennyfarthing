@@ -242,3 +242,21 @@ Options:
 ## NEXT STEP
 
 After CLAUDE.md is written, proceed to `step-05-shared-context.md` to populate the shared-context.md file.
+
+<switch tool="AskUserQuestion">
+  <case value="accept-and-write-to-claudemd" next="LOOP">
+    Accept and write to CLAUDE.md
+  </case>
+  <case value="edit-a-section" next="LOOP">
+    Edit a section
+  </case>
+  <case value="add-a-new-section" next="LOOP">
+    Add a new section
+  </case>
+  <case value="regenerate-with-different-focus" next="LOOP">
+    Regenerate with different focus
+  </case>
+  <case value="preview-full-content" next="LOOP">
+    Preview full content
+  </case>
+</switch>

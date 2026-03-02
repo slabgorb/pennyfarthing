@@ -72,11 +72,6 @@ This shows available stories grouped by epic. You can also look at individual st
 pf sprint story show <story-id>
 ```
 
-<switch>
-<option label="Try It" action="try-it" description="Run pf sprint status and pf sprint backlog to see your sprint data live" />
-<option label="Continue" action="continue" description="Move on to the hands-on practice exercise" />
-</switch>
-
 ## HANDS-ON PRACTICE
 
 Now let's practice the full sprint lifecycle. You'll create a practice story, claim it, make a change, and complete it — experiencing the real workflow.
@@ -206,16 +201,17 @@ When a story finishes (`pf sprint story finish`):
 Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
 </deep-dive>
 
-<switch>
-<option label="Continue" action="continue" description="Proceed to hooks and configuration" />
-<option label="Dig In" action="dig-in" description="Explore YAML shard structure, epic lifecycle, archive process, and Jira sync" />
-<option label="Try It" action="try-it" description="Run pf sprint status or pf sprint backlog" />
-<option label="Skip" action="skip" description="Move to configuration" />
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-05-config">
+    Continue — Proceed to hooks and configuration
+  </case>
+  <case value="dig-in" next="LOOP">
+    Dig In — Explore YAML shards, epic lifecycle, archive, and Jira sync
+  </case>
+  <case value="try-it" next="LOOP">
+    Try It — Run `pf sprint status` or `pf sprint backlog`
+  </case>
+  <case value="skip" next="step-05-config">
+    Skip — Move to configuration
+  </case>
 </switch>
-
-<collaboration-menu>
-- Continue — Proceed to hooks and configuration
-- Dig In — Explore YAML shards, epic lifecycle, archive, and Jira sync
-- Try It — Run `pf sprint status` or `pf sprint backlog`
-- Skip — Move to configuration
-</collaboration-menu>

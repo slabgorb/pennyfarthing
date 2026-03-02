@@ -190,3 +190,18 @@ Ship it!"
 - [ ] Requested changes implemented.
 - [ ] Spec verified against **READY FOR DEVELOPMENT** standard.
 - [ ] `stepsCompleted: [1, 2, 3, 4]` set and file renamed.
+
+<switch tool="AskUserQuestion">
+  <case value="adversarial-review" next="LOOP">
+    Adversarial Review — critique of the spec (recommended)
+  </case>
+  <case value="begin-development" next="LOOP">
+    Begin Development — start implementing now (not recommended)
+  </case>
+  <case value="done" next="LOOP">
+    Done — exit workflow
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — get expert feedback before dev
+  </case>
+</switch>

@@ -58,12 +58,20 @@ Present results in a clear table format:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category commands` to auto-repair
-- **[E] Explain** - Deep dive on a specific check result
-- **[C] Continue** - Proceed to Hook Configuration check
-- **[R] Recheck** - Re-run after manual changes
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category commands` to auto-repair
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific check result
+  </case>
+  <case value="continue" next="step-03-hooks">
+    Continue — Proceed to Hook Configuration check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual changes
+  </case>
+</switch>
 
 <next-step>
 After reviewing command and skill results, proceed to step-03-hooks.md for Hook Configuration verification.

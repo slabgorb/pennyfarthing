@@ -57,12 +57,20 @@ Present results:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category tools` to fix permissions or install pf CLI
-- **[E] Explain** - Deep dive on a specific tool's purpose
-- **[C] Continue** - Proceed to Summary
-- **[R] Recheck** - Re-run after installing tools
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category tools` to fix permissions or install pf CLI
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific tool's purpose
+  </case>
+  <case value="continue" next="step-08-summary">
+    Continue — Proceed to Summary
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after installing tools
+  </case>
+</switch>
 
 <next-step>
 After reviewing tools, proceed to step-08-summary.md for the final health report.

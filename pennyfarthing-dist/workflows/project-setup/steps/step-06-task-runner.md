@@ -277,3 +277,21 @@ test-ui: ## Run UI tests
 ## NEXT STEP
 
 After task runner is created, proceed to `step-07-theme.md` to configure the persona theme.
+
+<switch tool="AskUserQuestion">
+  <case value="accept-and-write-justfile" next="LOOP">
+    Accept and write justfile
+  </case>
+  <case value="edit-recipes" next="LOOP">
+    Edit recipes
+  </case>
+  <case value="generate-makefile-instead" next="LOOP">
+    Generate Makefile instead
+  </case>
+  <case value="preview-full-file" next="LOOP">
+    Preview full file
+  </case>
+  <case value="skip" next="step-07-theme">
+    Skip — I'll create my own
+  </case>
+</switch>

@@ -85,16 +85,17 @@ When the user selects Dig In, explore these topics interactively:
 Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
 </deep-dive>
 
-<switch>
-<option label="Continue" action="continue" description="Proceed to sprint commands" />
-<option label="Dig In" action="dig-in" description="Explore agent activation, handoff protocol, tandem, and team mode" />
-<option label="Try It" action="try-it" description="Run pf workflow list or pf workflow show tdd" />
-<option label="Skip" action="skip" description="Move to sprint management" />
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-04-sprint">
+    Continue — Proceed to sprint commands
+  </case>
+  <case value="dig-in" next="LOOP">
+    Dig In — Explore agent activation, handoff protocol, and team mode
+  </case>
+  <case value="try-it" next="LOOP">
+    Try It — Run `pf workflow list` or `pf workflow show tdd`
+  </case>
+  <case value="skip" next="step-04-sprint">
+    Skip — Move to sprint management
+  </case>
 </switch>
-
-<collaboration-menu>
-- Continue — Proceed to sprint commands
-- Dig In — Explore agent activation, handoff protocol, and team mode
-- Try It — Run `pf workflow list` or `pf workflow show tdd`
-- Skip — Move to sprint management
-</collaboration-menu>

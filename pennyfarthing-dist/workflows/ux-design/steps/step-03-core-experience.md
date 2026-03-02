@@ -220,3 +220,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-04-emotional-response.md` to define desired emotional responses.
 
 Remember: Do NOT proceed to step-04 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine the core experience definition
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on the user experience
+  </case>
+  <case value="continue" next="step-04-emotional-response">
+    Continue — Save this to the document and move to emotional response definition
+  </case>
+</switch>

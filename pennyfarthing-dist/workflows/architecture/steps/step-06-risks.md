@@ -145,6 +145,22 @@ When user selects [P]:
 - AI implementation risks identified and mitigated
 - User confirmed risks are acceptable before proceeding
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to explore hidden risks or unconsidered failure modes
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring multiple perspectives to identify risks from different operational angles
+  </case>
+  <case value="continue" next="step-07-document">
+    Continue — Save the content and proceed to documentation
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to address unacceptable risks before proceeding
+  </case>
+</switch>
+
 ## Failure Modes
 
 - Overlooking critical failure scenarios

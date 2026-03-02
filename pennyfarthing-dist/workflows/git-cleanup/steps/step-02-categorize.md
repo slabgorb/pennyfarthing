@@ -145,3 +145,18 @@ Ready to proceed?
 
 <!-- GATE -->
 <!-- CYCLIST:CHOICES:E,T,S,C -->
+
+<switch tool="AskUserQuestion">
+  <case value="edit-groupings" next="LOOP">
+    Edit groupings (modify a group)
+  </case>
+  <case value="track-a-group-in-jira" next="LOOP">
+    Track a group in Jira (promote to standalone story)
+  </case>
+  <case value="skip-a-group" next="step-03-execute">
+    Skip a group (leave those files uncommitted)
+  </case>
+  <case value="continue-to-execution" next="step-03-execute">
+    Continue to execution
+  </case>
+</switch>
