@@ -297,9 +297,9 @@ class StatusFooter(Static):
         bar.append_text(render_progress_bar(percent, width=10, warn_high=True))
 
         if tier:
-            if percent < 50:
+            if percent <= 70:
                 tier_style = "green"
-            elif percent <= 80:
+            elif percent <= 85:
                 tier_style = "yellow"
             else:
                 tier_style = "red"

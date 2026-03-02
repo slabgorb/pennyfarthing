@@ -73,9 +73,9 @@ def render_progress_bar(
     if fill_style is not None:
         style = fill_style
     elif warn_high:
-        if percent < 50:
+        if percent <= 70:
             style = "green"
-        elif percent <= 80:
+        elif percent <= 85:
             style = "yellow"
         else:
             style = "red"

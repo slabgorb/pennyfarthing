@@ -437,9 +437,9 @@ def _render_sparkline(history: deque[int]) -> Text:
     text.append("Context trend: ", style="dim")
     for pct in history:
         level = min(7, max(0, int(pct / 100 * 7.99)))
-        if pct < 50:
+        if pct <= 70:
             style = "green"
-        elif pct <= 80:
+        elif pct <= 85:
             style = "yellow"
         else:
             style = "red"
