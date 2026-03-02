@@ -275,6 +275,19 @@ ONLY WHEN [C continue option] is selected and [all epics and stories saved to do
 
 ---
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue" next="step-04-final-validation">
+    Continue
+  </case>
+</switch>
+
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

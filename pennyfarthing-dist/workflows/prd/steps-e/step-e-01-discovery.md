@@ -229,6 +229,16 @@ Present MENU OPTIONS below for user selection
 
 ---
 
+
+<switch tool="AskUserQuestion">
+  <case value="use-validation-report" next="LOOP">
+    Use validation report — Load it to guide and prioritize edits
+  </case>
+  <case value="skip" next="LOOP">
+    Skip — Proceed with manual edit discovery"
+  </case>
+</switch>
+
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

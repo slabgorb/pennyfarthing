@@ -228,3 +228,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-10-user-journeys.md` to design user journey flows.
 
 Remember: Do NOT proceed to step-10 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine our design direction
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on visual choices
+  </case>
+  <case value="continue" next="step-10-user-journeys">
+    Continue — Save this to the document and move to user journey flows
+  </case>
+</switch>

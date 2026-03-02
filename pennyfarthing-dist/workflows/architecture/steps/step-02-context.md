@@ -120,6 +120,22 @@ When user selects [P]:
 - Key concerns identified with rationale
 - User confirmed context before proceeding
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to develop deeper insights about project context and architectural implications
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring multiple perspectives to analyze project requirements from different architectural angles
+  </case>
+  <case value="continue" next="step-03-patterns">
+    Continue — Save the content to the document and proceed to pattern selection
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to gather more information or clarify constraints
+  </case>
+</switch>
+
 ## Failure Modes
 
 - Generating requirements not found in documents

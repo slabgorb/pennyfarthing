@@ -157,3 +157,21 @@ repos:
 ## NEXT STEP
 
 After repos.yaml is written and approved, proceed to `step-04-claude-md.md` to generate the CLAUDE.md file.
+
+<switch tool="AskUserQuestion">
+  <case value="accept-and-write-to-outputrepos" next="LOOP">
+    Accept and write to {output_repos}
+  </case>
+  <case value="edit-a-specific-repo-entry" next="LOOP">
+    Edit a specific repo entry
+  </case>
+  <case value="add-a-new-repo-entry" next="LOOP">
+    Add a new repo entry
+  </case>
+  <case value="delete-a-repo-entry" next="LOOP">
+    Delete a repo entry
+  </case>
+  <case value="preview-in-different-format" next="LOOP">
+    Preview in different format
+  </case>
+</switch>

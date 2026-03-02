@@ -59,12 +59,20 @@ Present results:
 ```
 </output>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category layout` to migrate files
-- **[E] Explain** - Deep dive on the file layout evolution
-- **[C] Continue** - Proceed to Legacy cleanup check
-- **[R] Recheck** - Re-run after manual moves
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category layout` to migrate files
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on the file layout evolution
+  </case>
+  <case value="continue" next="step-06-legacy">
+    Continue — Proceed to Legacy cleanup check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual moves
+  </case>
+</switch>
 
 <next-step>
 After reviewing layout results, proceed to step-06-legacy.md for Legacy artifact cleanup.

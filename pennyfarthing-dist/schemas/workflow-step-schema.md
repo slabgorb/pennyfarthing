@@ -282,33 +282,71 @@ Add to session file:
 
 ---
 
-### `<collaboration-menu>`
+### `<switch>`
 
-**Purpose:** Present user options after step completion.
+**Purpose:** Conditional navigation with branching. Maps to `AskUserQuestion` tool for user choices or agent-evaluated conditions.
 
-**Required:** Recommended for interactive workflows.
+**Required:** When step has branching navigation (options lead to different next steps).
 
-**Content:** Standard menu options with keyboard shortcuts.
+**Attributes:**
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `tool` | No | `AskUserQuestion` for user-facing choices. Omit for agent-evaluated conditions. |
+| `on` | No | Variable or condition driving the switch. Omit for user-choice switches. |
 
-**Standard Options:**
-| Option | Description |
-|--------|-------------|
-| `[C] Continue` | Proceed to next step |
-| `[R] Revise` | Make changes to current output |
-| `[H] Help` | Get guidance or clarification |
-| `[S] Skip` | Skip optional step |
-| `[B] Back` | Return to previous step |
-| `[A] Advanced` | Access additional features |
+**Child elements:**
+- `<case value="" next="">` — Each branch option. `next` is step filename, `LOOP` (re-present switch), or `EXIT`.
+- `<default next="">` — Fallback branch. Optional when `tool="AskUserQuestion"`.
+
+**Example (user choice):**
+```xml
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-04-components">
+    Continue — Save content and proceed to Component Design
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Re-evaluate current output
+  </case>
+  <case value="advanced" next="LOOP">
+    Advanced Elicitation — Explore deeper insights
+  </case>
+  <case value="party" next="LOOP">
+    Party Mode — Multiple perspectives on the analysis
+  </case>
+</switch>
+```
+
+**Example (agent-evaluated):**
+```xml
+<switch on="execution_mode">
+  <case value="tech-spec" next="step-03-execute">
+    Tech-spec mode — load spec directly
+  </case>
+  <default next="step-02-context-gathering">
+    Direct mode — gather context first
+  </default>
+</switch>
+```
+
+**Note:** Use `<switch>` when any option transitions to a different step. Use `<collaboration-menu>` only when ALL options loop back (no step transitions). See ADR-0032.
+
+---
+
+### `<collaboration-menu>` (Simple Loops Only)
+
+**Purpose:** Present user options when ALL options loop back to the current step (no branching).
+
+**Required:** Only when no option causes a step transition. Prefer `<switch>` for branching menus.
 
 **Example:**
 ```xml
 <collaboration-menu>
-- **[C] Continue** - Proceed to Component Design
-- **[R] Revise** - Update pattern selection
-- **[H] Help** - Get guidance on pattern trade-offs
-- **[B] Back** - Return to Context Analysis
+- **[R] Revise** - Make changes to current output
+- **[H] Help** - Get guidance or clarification
 </collaboration-menu>
 ```
+
+**Migration:** If any option (e.g., `[C] Continue`) navigates to a different step, replace with `<switch tool="AskUserQuestion">`. See ADR-0032.
 
 ---
 

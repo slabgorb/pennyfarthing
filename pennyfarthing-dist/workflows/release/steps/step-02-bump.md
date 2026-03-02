@@ -103,3 +103,15 @@ git diff --stat
 **[A]** Abort release (revert all changes with `git checkout .`)
 
 <!-- CYCLIST:CHOICES:C,R,A -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-commit" next="step-03-changelog">
+    Continue to commit
+  </case>
+  <case value="revise-a-file-before-committing" next="LOOP">
+    Revise a file before committing
+  </case>
+  <case value="abort-release" next="EXIT">
+    Abort release (revert all changes with `git checkout .`)
+  </case>
+</switch>

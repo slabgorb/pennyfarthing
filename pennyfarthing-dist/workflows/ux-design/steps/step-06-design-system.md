@@ -256,3 +256,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-07-defining-experience.md` to define the core user interaction.
 
 Remember: Do NOT proceed to step-07 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine our design system decision
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring technical perspectives on design systems
+  </case>
+  <case value="continue" next="step-07-defining-experience">
+    Continue — Save this to the document and move to defining experience
+  </case>
+</switch>

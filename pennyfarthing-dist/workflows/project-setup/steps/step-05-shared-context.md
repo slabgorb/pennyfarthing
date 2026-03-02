@@ -183,3 +183,18 @@ Options:
 ## NEXT STEP
 
 After shared-context.md is updated, proceed to `step-06-task-runner.md` to create justfile/makefile for orchestrator command proxying.
+
+<switch tool="AskUserQuestion">
+  <case value="accept-and-write-changes" next="LOOP">
+    Accept and write changes
+  </case>
+  <case value="edit-a-specific-section" next="LOOP">
+    Edit a specific section
+  </case>
+  <case value="view-full-file" next="LOOP">
+    View full file
+  </case>
+  <case value="show-diff-from-original" next="LOOP">
+    Show diff from original
+  </case>
+</switch>

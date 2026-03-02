@@ -207,6 +207,19 @@ ONLY WHEN [C continue option] is selected and [classification saved to frontmatt
 
 ---
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-product-vision" next="step-03-success">
+    Continue to Product Vision (Step 2b of 13)
+  </case>
+</switch>
+
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

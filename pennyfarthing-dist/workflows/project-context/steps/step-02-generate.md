@@ -347,3 +347,15 @@ When user selects 'C' for a category, append the content directly to `{output_fo
 After completing all rule categories and user selects 'C' for the final category, load `./step-03-complete.md` to finalize the project context file.
 
 Remember: Do NOT proceed to step-03 until all categories are complete and user explicitly selects 'C' for each!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Explore nuanced rules for this category
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Review from different implementation perspectives
+  </case>
+  <case value="continue" next="step-03-complete">
+    Continue — Save these rules and move to next category
+  </case>
+</switch>

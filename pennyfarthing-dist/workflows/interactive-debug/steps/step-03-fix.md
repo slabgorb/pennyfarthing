@@ -122,6 +122,28 @@ Maintain a running list:
 - **[V] Verify all** - Re-check all fixes together
 - **[C] Commit** - All issues fixed, ready to commit
 
+
+<switch tool="AskUserQuestion">
+  <case value="yes" next="LOOP">
+    Yes — Mark fixed, next issue
+  </case>
+  <case value="no" next="LOOP">
+    No — Needs adjustment
+  </case>
+  <case value="revert" next="LOOP">
+    Revert — Undo this change
+  </case>
+  <case value="add-issue" next="LOOP">
+    Add issue — Found another issue while fixing
+  </case>
+  <case value="verify-all" next="LOOP">
+    Verify all — Re-check all fixes together
+  </case>
+  <case value="commit" next="step-04-commit">
+    Commit — All issues fixed, ready to commit
+  </case>
+</switch>
+
 ## Next Step
 
 When all issues are fixed and verified, proceed to commit.

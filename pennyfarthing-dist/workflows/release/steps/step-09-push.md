@@ -79,3 +79,12 @@ fi
 **[S]** Skip (git is already pushed)
 
 <!-- CYCLIST:CHOICES:C,A -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-github-release" next="step-10-publish">
+    Continue to GitHub release
+  </case>
+  <case value="skip" next="step-10-publish">
+    Skip (git is already pushed)
+  </case>
+</switch>

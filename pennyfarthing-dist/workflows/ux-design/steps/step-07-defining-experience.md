@@ -258,3 +258,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-08-visual-foundation.md` to establish visual design foundation.
 
 Remember: Do NOT proceed to step-08 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine the core experience definition
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on the defining interaction
+  </case>
+  <case value="continue" next="step-08-visual-foundation">
+    Continue — Save this to the document and move to visual foundation
+  </case>
+</switch>

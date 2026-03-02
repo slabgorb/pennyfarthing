@@ -98,3 +98,15 @@ If no changes were needed beyond the version badge, that's fine — just confirm
 **[S]** Skip (no README changes needed beyond version badge)
 
 <!-- CYCLIST:CHOICES:C,R,S -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-claudemd-update" next="step-05-claude-md">
+    Continue to CLAUDE.md update
+  </case>
+  <case value="revise-readme-content" next="LOOP">
+    Revise README content
+  </case>
+  <case value="skip" next="step-05-claude-md">
+    Skip (no README changes needed beyond version badge)
+  </case>
+</switch>

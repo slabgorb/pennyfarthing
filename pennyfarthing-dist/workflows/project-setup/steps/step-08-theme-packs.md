@@ -140,3 +140,12 @@ To see what's available: /theme list
 ## NEXT STEP
 
 After theme packs, proceed to `step-09-jira.md` to configure the Jira project key.
+
+<switch tool="AskUserQuestion">
+  <case value="install-all-packs" next="LOOP">
+    Install ALL packs (71 additional themes)
+  </case>
+  <case value="skip" next="step-09-jira">
+    Skip — base themes are enough for now
+  </case>
+</switch>

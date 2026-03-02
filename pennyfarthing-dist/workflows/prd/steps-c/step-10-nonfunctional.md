@@ -246,3 +246,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load {nextStepFile} to finalize the PRD and complete the workflow.
 
 Remember: Do NOT proceed to step-11 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-polish-document" next="step-11-polish">
+    Continue to Polish Document (Step 11 of 12)
+  </case>
+</switch>

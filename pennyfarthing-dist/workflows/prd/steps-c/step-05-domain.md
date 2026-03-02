@@ -188,6 +188,19 @@ ONLY WHEN [C continue option] is selected and [content saved or skipped], will y
 
 ---
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue" next="step-06-innovation">
+    Continue — Save and Proceed to Innovation (Step 6 of 13)
+  </case>
+</switch>
+
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

@@ -165,6 +165,22 @@ The architecture workflow is complete. The decision document is ready for review
 - Document written to appropriate location
 - User confirmed completion
 
+
+<switch tool="AskUserQuestion">
+  <case value="validate" next="LOOP">
+    Validate — Run comprehensive validation checks on the complete architecture
+  </case>
+  <case value="edit" next="LOOP">
+    Edit — Make revisions to specific sections
+  </case>
+  <case value="complete" next="CONTINUE">
+    Complete — Finalize document and end workflow
+  </case>
+  <case value="restart-section" next="LOOP">
+    Restart Section — Go back to a specific step
+  </case>
+</switch>
+
 ## Failure Modes
 
 - Missing sections from previous steps

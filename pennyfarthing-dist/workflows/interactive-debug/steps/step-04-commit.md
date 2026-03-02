@@ -120,3 +120,24 @@ The fixes have been committed. You can:
 ## Workflow Complete
 
 This concludes the interactive-debug workflow.
+
+<switch tool="AskUserQuestion">
+  <case value="commit" next="CONTINUE">
+    Commit — Bundle into chore commit
+  </case>
+  <case value="review" next="LOOP">
+    Review — Show me the diffs first
+  </case>
+  <case value="split" next="LOOP">
+    Split — These should be separate commits
+  </case>
+  <case value="cancel" next="EXIT">
+    Cancel — Don't commit yet
+  </case>
+  <case value="push" next="LOOP">
+    Push — Push to remote branch
+  </case>
+  <case value="debug-more" next="LOOP">
+    Debug more — Start another debug session (back to step 1)
+  </case>
+</switch>

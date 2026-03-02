@@ -238,3 +238,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-06-design-system.md` to choose the appropriate design system approach.
 
 Remember: Do NOT proceed to step-06 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's deepen our UX pattern analysis
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on inspiration sources
+  </case>
+  <case value="continue" next="step-06-design-system">
+    Continue — Save this to the document and move to design system choice
+  </case>
+</switch>

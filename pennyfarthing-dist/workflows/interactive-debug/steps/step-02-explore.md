@@ -102,6 +102,22 @@ For each area the user wants to explore:
 - **[F] Fix issues** - Ready to start fixing what we found
 - **[D] Done** - No issues found, exit workflow
 
+
+<switch tool="AskUserQuestion">
+  <case value="explore-more" next="LOOP">
+    Explore more — Look at another section
+  </case>
+  <case value="investigate-issue" next="LOOP">
+    Investigate issue — Dig deeper into a specific problem
+  </case>
+  <case value="fix-issues" next="LOOP">
+    Fix issues — Ready to start fixing what we found
+  </case>
+  <case value="done" next="LOOP">
+    Done — No issues found, exit workflow
+  </case>
+</switch>
+
 ## Next Step
 
 When user is ready to fix issues, proceed to the fix phase.

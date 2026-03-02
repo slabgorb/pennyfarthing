@@ -268,3 +268,15 @@ When user selects 'C', append the content directly to the document using the str
 After user selects 'C' and content is saved to document, load `./step-14-complete.md` to finalize the UX design workflow.
 
 Remember: Do NOT proceed to step-14 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Let's refine our responsive/accessibility strategy
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring different perspectives on inclusive design
+  </case>
+  <case value="continue" next="step-14-complete">
+    Continue — Save this to the document and complete the workflow
+  </case>
+</switch>

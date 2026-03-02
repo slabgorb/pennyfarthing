@@ -221,3 +221,15 @@ When user selects 'C', replace the entire document content with the polished ver
 After user selects 'C' and polished document is saved, load `./step-12-complete.md` to complete the workflow.
 
 Remember: Do NOT proceed to step-12 until user explicitly selects 'C' from the A/P/C menu and polished document is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-complete-prd" next="step-12-complete">
+    Continue to Complete PRD (Step 12 of 12)
+  </case>
+</switch>

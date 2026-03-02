@@ -71,16 +71,17 @@ When the user selects Dig In, explore these topics interactively:
 Use AskUserQuestion to let the user pick which sub-topic to explore. Continue the deep-dive loop until the user chooses to move on.
 </deep-dive>
 
-<switch>
-<option label="Continue" action="continue" description="Proceed to agent activation" />
-<option label="Dig In" action="dig-in" description="Explore theme discovery, tiers, custom themes, and OCEAN traits" />
-<option label="Try It" action="try-it" description="Run pf theme list and pf theme show" />
-<option label="Skip" action="skip" description="Keep current theme and move on" />
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-03-agents">
+    Continue — Proceed to agent activation
+  </case>
+  <case value="dig-in" next="LOOP">
+    Dig In — Explore theme discovery, tiers, and custom themes
+  </case>
+  <case value="try-it" next="LOOP">
+    Try It — Run `pf theme list` and `pf theme show`
+  </case>
+  <case value="skip" next="step-03-agents">
+    Skip — Keep current theme and move on
+  </case>
 </switch>
-
-<collaboration-menu>
-- Continue — Proceed to agent activation
-- Dig In — Explore theme discovery, tiers, and custom themes
-- Try It — Run `pf theme list` and `pf theme show`
-- Skip — Keep current theme and move on
-</collaboration-menu>

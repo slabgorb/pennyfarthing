@@ -95,3 +95,15 @@ git -C {repo_path} push origin develop
 **[R]** Review commits again
 
 <!-- CYCLIST:CHOICES:P,L,R -->
+
+<switch tool="AskUserQuestion">
+  <case value="push-all-repos-to-remote" next="LOOP">
+    Push all repos to remote
+  </case>
+  <case value="keep-local" next="LOOP">
+    Keep local (don't push yet)
+  </case>
+  <case value="review-commits-again" next="LOOP">
+    Review commits again
+  </case>
+</switch>

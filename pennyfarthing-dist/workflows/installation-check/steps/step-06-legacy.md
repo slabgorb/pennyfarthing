@@ -70,12 +70,20 @@ Present results:
 - [ ] No unapproved file deletions performed
 </gate>
 
-<collaboration-menu>
-- **[F] Fix** - Run `pennyfarthing doctor --fix --category legacy` to clean up (requires gate approval)
-- **[E] Explain** - Deep dive on a specific legacy artifact's history
-- **[C] Continue** - Approve cleanup and proceed to Tools check
-- **[R] Recheck** - Re-run after manual cleanup
-</collaboration-menu>
+<switch tool="AskUserQuestion">
+  <case value="fix" next="LOOP">
+    Fix — Run `pennyfarthing doctor --fix --category legacy` to clean up (requires gate approval)
+  </case>
+  <case value="explain" next="LOOP">
+    Explain — Deep dive on a specific legacy artifact's history
+  </case>
+  <case value="continue" next="step-07-tools">
+    Continue — Approve cleanup and proceed to Tools check
+  </case>
+  <case value="recheck" next="LOOP">
+    Recheck — Re-run after manual cleanup
+  </case>
+</switch>
 
 <next-step>
 After user approves legacy cleanup, proceed to step-07-tools.md for Optional Tools verification.

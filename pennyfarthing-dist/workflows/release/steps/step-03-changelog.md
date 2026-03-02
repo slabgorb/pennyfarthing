@@ -124,3 +124,15 @@ head -60 CHANGELOG.md
 **[A]** Abort release
 
 <!-- CYCLIST:CHOICES:C,R,A -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-readme-update" next="step-04-readme">
+    Continue to README update
+  </case>
+  <case value="revise-changelog-entries" next="LOOP">
+    Revise changelog entries
+  </case>
+  <case value="abort-release" next="EXIT">
+    Abort release
+  </case>
+</switch>

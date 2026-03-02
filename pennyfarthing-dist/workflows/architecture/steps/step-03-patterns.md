@@ -140,6 +140,22 @@ When user selects [P]:
 - Selecting overly complex patterns for simple problems
 - Proceeding without user confirmation
 
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation — Use discovery protocols to explore unconventional patterns or custom approaches
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode — Bring multiple perspectives to evaluate pattern trade-offs for different use cases
+  </case>
+  <case value="continue" next="step-04-components">
+    Continue — Save the content and proceed to component design
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Need to reconsider patterns or gather more information
+  </case>
+</switch>
+
 ## Next Step
 
 After user selects [C], proceed to Component Design to define the system structure.

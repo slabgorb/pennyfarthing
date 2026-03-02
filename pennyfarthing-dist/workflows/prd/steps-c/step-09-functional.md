@@ -235,3 +235,15 @@ Emphasize to user: "This FR list is now binding. Any feature not listed here wil
 After user selects 'C' and content is saved to document, load {nextStepFile} to define non-functional requirements.
 
 Remember: Do NOT proceed to step-10 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-non" next="step-10-nonfunctional">
+    Continue to Non — Functional Requirements (Step 10 of 11)
+  </case>
+</switch>

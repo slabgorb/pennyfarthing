@@ -230,3 +230,15 @@ If working in regulated domains (healthcare, fintech, govtech):
 After user selects 'C' and content is saved to document, load `./step-04-journeys.md` to map user journeys.
 
 Remember: Do NOT proceed to step-04 until user explicitly selects 'C' from the A/P/C menu and content is saved!
+
+<switch tool="AskUserQuestion">
+  <case value="advanced-elicitation" next="LOOP">
+    Advanced Elicitation
+  </case>
+  <case value="party-mode" next="LOOP">
+    Party Mode
+  </case>
+  <case value="continue-to-user-journey-mapping" next="step-04-journeys">
+    Continue to User Journey Mapping (Step 4 of 11)
+  </case>
+</switch>

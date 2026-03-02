@@ -43,3 +43,12 @@ pf init .
 **[S]** Skip GitHub release
 
 <!-- CYCLIST:CHOICES:C,S -->
+
+<switch tool="AskUserQuestion">
+  <case value="continue-to-github-release" next="step-11-finalize">
+    Continue to GitHub release
+  </case>
+  <case value="skip-github-release" next="step-11-finalize">
+    Skip GitHub release
+  </case>
+</switch>

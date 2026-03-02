@@ -252,6 +252,34 @@ Ready to explore the UI.
 - **[R] Reconnect** - Try a different URL or restart app
 - **[T] Toggle Mode** - Switch between Electron/Web if both available
 
+
+<switch tool="AskUserQuestion">
+  <case value="connect" next="step-02-explore">
+    Connect — Use the existing server at {dev_url}
+  </case>
+  <case value="new" next="LOOP">
+    New — Kill it and start fresh with `{dev_command}`
+  </case>
+  <case value="url" next="LOOP">
+    URL — Specify a different URL to connect to
+  </case>
+  <case value="start" next="LOOP">
+    Start — Launch with `{dev_command}`
+  </case>
+  <case value="manual" next="LOOP">
+    Manual — I'll start the server myself, then continue
+  </case>
+  <case value="retry" next="LOOP">
+    Retry — Check again after restarting
+  </case>
+  <case value="web-mode" next="LOOP">
+    Web Mode — Switch to web mode instead (if available)
+  </case>
+  <case value="toggle-mode" next="LOOP">
+    Toggle Mode — Switch between Electron/Web if both available
+  </case>
+</switch>
+
 ## Next Step
 
 After user confirms connection, proceed to UI exploration.

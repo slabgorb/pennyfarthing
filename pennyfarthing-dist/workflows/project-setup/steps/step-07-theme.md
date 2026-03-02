@@ -198,3 +198,15 @@ Recommended for {project_type}:
 ## NEXT STEP
 
 After theme is configured, proceed to `step-08-theme-packs.md` to optionally install additional theme packs.
+
+<switch tool="AskUserQuestion">
+  <case value="select-dune" next="LOOP">
+    Select 'dune'
+  </case>
+  <case value="preview-another" next="LOOP">
+    Preview another
+  </case>
+  <case value="back-to-options" next="LOOP">
+    Back to options
+  </case>
+</switch>
