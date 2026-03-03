@@ -437,38 +437,6 @@ Session file tracks phase:
 
 ## GitHub Actions Examples
 
-### Deploy Showcase
-
-```yaml
-name: Deploy Showcase
-on:
-  push:
-    branches: [develop]
-  workflow_dispatch:
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: pnpm install
-      - run: pnpm run build
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: './internal/showcase/dist'
-      - uses: actions/deploy-pages@v4
-```
-
 ### Run Tests on PR
 
 ```yaml

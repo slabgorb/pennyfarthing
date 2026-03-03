@@ -362,4 +362,3 @@ If working with a team, consider:
 ## See Also
 
 - [THEME-COMPARISON.md](THEME-COMPARISON.md) - Complete theme list with OCEAN profiles and visual mappings
-- [Showcase Website](SHOWCASE.md) - Interactive theme gallery

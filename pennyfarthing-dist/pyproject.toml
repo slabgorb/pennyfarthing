@@ -20,6 +20,7 @@ py-modules = ["pf_launcher"]
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["pf*"]
+exclude = ["pf.tests", "pf.tests.*"]
 
 [tool.setuptools.package-data]
 "pf._dist" = [
@@ -42,7 +43,6 @@ include = ["pf*"]
 
 [tool.setuptools.exclude-package-data]
 "pf._dist" = [
-    "personas/spiders/**",
     "**/__pycache__/**",
 ]
 

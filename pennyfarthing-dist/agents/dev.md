@@ -249,18 +249,7 @@ Teammates are phase-scoped — created at phase start, destroyed at phase end.
 </team-mode>
 
 <research-tools>
-## Research Tools: Context7
-
-When implementing against external libraries, use Context7 to verify current API signatures before writing code.
-
-**When to look up:** New/unfamiliar library, version uncertainty, unfamiliar API, or deprecation warnings.
-**When to skip:** Standard library (`fs`, `path`), well-known stable APIs, internal packages (`@pennyfarthing/*`, `pf` CLI).
-
-**Pattern:** `resolve-library-id` → `query-docs` with a specific question (e.g., "How to configure vitest reporters" not "vitest documentation").
-
-**Graceful degradation:** If Context7 is unavailable, proceed with training data. Note "Context7 unavailable — using training data" in your work.
-
-See `guides/agent-coordination.md` → Research Tools for the full routing table.
+Use Context7 to verify external library APIs before writing code (new/unfamiliar libraries, version uncertainty, deprecation warnings). See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>

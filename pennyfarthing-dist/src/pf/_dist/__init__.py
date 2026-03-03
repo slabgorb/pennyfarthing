@@ -5,7 +5,7 @@ When installed via pip/pipx, this package contains the content directories
 projects by ``pf init``.
 
 At dev time these are symlinks into the source tree; in the wheel they are
-real copies (minus portraits/ and spiders/).
+real copies (minus portraits/).
 """
 
 from pathlib import Path
