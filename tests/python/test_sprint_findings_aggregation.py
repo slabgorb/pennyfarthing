@@ -15,18 +15,15 @@ import sys
 import textwrap
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.findings.aggregate import (
+from pf.findings.aggregate import (  # noqa: E402
     aggregate_findings,
     collect_session_files,
     detect_patterns,
     format_report,
 )
-from pf.findings.capture import parse_delivery_findings
 
 # ---------------------------------------------------------------------------
 # Fixtures: session file content with various findings states

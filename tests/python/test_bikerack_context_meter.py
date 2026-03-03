@@ -234,7 +234,7 @@ class TestContextMeterInLayout:
 
     async def test_status_footer_mounted_in_app(self, app):
         """BikeRackApp should mount a StatusFooter widget."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             footers = app.query("StatusFooter")
             assert len(footers) > 0, (
                 "BikeRackApp should mount a StatusFooter widget"
@@ -242,7 +242,7 @@ class TestContextMeterInLayout:
 
     async def test_status_footer_not_inside_main_content(self, app):
         """StatusFooter should NOT be inside #main-content (always visible)."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             main = app.query_one("#main-content")
             footers_in_main = main.query("StatusFooter")
             assert len(footers_in_main) == 0, (
@@ -251,7 +251,7 @@ class TestContextMeterInLayout:
 
     async def test_status_footer_after_main_content(self, app):
         """StatusFooter should appear after main-content (docked to bottom)."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             children = list(app.query("*"))
             main_idx = footer_idx = -1
             for i, child in enumerate(children):
@@ -441,7 +441,7 @@ class TestStatusFooterIsOnlyFooter:
 
     async def test_no_binding_footer(self, app):
         """BindingFooter should NOT be present — replaced by StatusFooter."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             from textual.widgets import Footer
 
             footers = app.query(Footer)
@@ -449,7 +449,7 @@ class TestStatusFooterIsOnlyFooter:
 
     async def test_status_footer_exists(self, app):
         """StatusFooter should be the only footer widget."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             from pf.bikerack.context_meter_footer import StatusFooter
 
             status = app.query(StatusFooter)
@@ -457,7 +457,7 @@ class TestStatusFooterIsOnlyFooter:
 
     async def test_status_footer_visible(self, app):
         """StatusFooter should be visible."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             from pf.bikerack.context_meter_footer import StatusFooter
 
             footer = app.query_one(StatusFooter)

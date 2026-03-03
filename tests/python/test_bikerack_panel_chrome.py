@@ -38,15 +38,15 @@ class TestPanelNameDisplay:
     async def test_tab_bar_widget_exists(self):
         """App should have a Tabs widget."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             tab_bar = app.query("#tab-bar")
             assert len(tab_bar) > 0, "App should have a tab bar widget"
 
     async def test_tab_bar_shows_name(self):
         """Tabs widget should contain tab with panel names."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", Tabs)
+        async with app.run_test():
+            app.query_one("#tab-bar", Tabs)
             # Check that Sprint tab exists
             sprint_tab = app.query_one("#tab-sprint")
             assert sprint_tab is not None, "Tab bar should have a Sprint tab"
@@ -124,8 +124,8 @@ class TestIconVisibility:
     async def test_tab_bar_visible_on_launch(self):
         """Tabs widget should be rendered on app launch with tabs."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
-            tab_bar = app.query_one("#tab-bar", Tabs)
+        async with app.run_test():
+            app.query_one("#tab-bar", Tabs)
             # Tabs should have children (the individual Tab widgets)
             from textual.widgets import Tab
 
@@ -135,7 +135,7 @@ class TestIconVisibility:
     async def test_tab_bar_contains_icon_character(self):
         """Tabs should contain Nerd Font icon characters in tab labels."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             from textual.widgets import Tab
 
             tabs = list(app.query(Tab))
@@ -258,7 +258,7 @@ class TestAsciifallback:
 
     def test_all_panels_have_ascii_fallback(self):
         """Every panel icon should have an ASCII fallback character."""
-        for name, (nerd, ascii_fb) in PANEL_ICONS.items():
+        for name, (_nerd, ascii_fb) in PANEL_ICONS.items():
             assert ascii_fb.isascii(), (
                 f"PANEL_ICONS['{name}'] fallback should be ASCII, got: '{ascii_fb}'"
             )

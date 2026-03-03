@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
 
-from pf.hooks.statusline import _get_story_id, _get_relative_cwd
+from pf.hooks.statusline import _get_relative_cwd, _get_story_id
 
 
 class TestGetStoryId:

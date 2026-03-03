@@ -12,11 +12,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from pf.bikerack.launcher import _find_wheelhub_entry, start_wheelhub
-
 
 # ---------------------------------------------------------------------------
 # Fixtures: filesystem layouts

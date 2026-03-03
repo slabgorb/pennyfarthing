@@ -13,12 +13,10 @@ Run with: python -m pytest tests/python/test_release_verify_contents.py -v
 """
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pf.release.verify_contents import verify_contents
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -8,15 +8,11 @@ Run with: python -m pytest tests/python/test_setup_detection.py -v
 """
 
 import json
-import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
-
 from pf.hooks.session_start import detect_incomplete_setup
-
 
 # =============================================================================
 # Fixtures
@@ -236,7 +232,6 @@ class TestSessionStartIntegration:
             from pf.hooks.session_start import main
 
             captured = []
-            original_print = print
 
             def capture_print(*args, **kwargs):
                 captured.append(" ".join(str(a) for a in args))

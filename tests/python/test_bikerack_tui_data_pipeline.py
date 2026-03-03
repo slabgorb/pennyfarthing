@@ -22,13 +22,10 @@ from io import StringIO
 from typing import Any
 from unittest.mock import MagicMock
 
-from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.context_meter_footer import StatusFooter
+from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.sprint_panel import SprintPanel
-from pf.bikerack.ws_client import WheelHubClient
 from rich.console import Console
-from rich.text import Text
-
 
 # ---------------------------------------------------------------------------
 # Test data fixtures — WheelHub wire formats
@@ -307,7 +304,7 @@ class TestStatusFooterErrorState:
         # Error first
         footer._context_data = CONTEXT_ERROR["context"]
         bar_error = footer._render_context_bar()
-        output_error = _render_to_string(bar_error)
+        _render_to_string(bar_error)
 
         # Then recovery
         footer._context_data = CONTEXT_VALID["context"]
@@ -445,7 +442,7 @@ class TestAutomaticRecovery:
         # Error
         footer._context_data = CONTEXT_ERROR["context"]
         error_bar = footer._render_context_bar()
-        error_output = _render_to_string(error_bar)
+        _render_to_string(error_bar)
 
         # Recovery
         footer._context_data = CONTEXT_VALID["context"]

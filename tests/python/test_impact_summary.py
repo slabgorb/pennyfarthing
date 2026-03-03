@@ -13,12 +13,13 @@ import sys
 import textwrap
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.findings.summary import compile_impact_summary, write_impact_summary_to_session
+from pf.findings.summary import (  # noqa: E402
+    compile_impact_summary,
+    write_impact_summary_to_session,
+)
 
 AGENTS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "agents"
 

@@ -112,7 +112,7 @@ class TestStartupPerformance:
     @staticmethod
     def _avg_subprocess_ms(cmd, *, cwd, runs=5):
         """Time a subprocess command, returning average ms over *runs* invocations."""
-        kw = dict(capture_output=True, text=True, cwd=str(cwd), timeout=10)
+        kw = {"capture_output": True, "text": True, "cwd": str(cwd), "timeout": 10}
         # Warm-up — prime OS/disk caches so we measure steady-state
         subprocess.run(cmd, **kw)
         times = []

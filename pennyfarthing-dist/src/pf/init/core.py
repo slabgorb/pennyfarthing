@@ -392,7 +392,7 @@ def init_project(
             hooks_upgraded = True
 
     # --- Clean parked Cyclist hooks from settings and config ---
-    parked_cleaned = _clean_parked_hooks(settings_path, target_dir)
+    _clean_parked_hooks(settings_path, target_dir)
 
     # --- Write init manifest ---
     if is_dogfooding:

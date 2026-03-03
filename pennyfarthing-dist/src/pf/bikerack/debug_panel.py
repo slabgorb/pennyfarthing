@@ -18,7 +18,8 @@ from rich.table import Table
 from rich.text import Text
 
 from pf.bikerack.base_panel import PANEL_ICONS, BasePanel, render_progress_bar
-from pf.bikerack.colors import TIER_STYLES as _TIER_STYLES, warn_style
+from pf.bikerack.colors import TIER_STYLES as _TIER_STYLES
+from pf.bikerack.colors import warn_style
 
 
 def _safe_int(value: Any) -> int | None:

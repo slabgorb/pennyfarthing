@@ -383,6 +383,59 @@ Dev Agent Example (API story):
 - Wrong-phase detection via `pf handoff phase-check`
 - 6 active subagents for mechanical tasks (sm-setup, sm-finish, sm-file-summary, reviewer-preflight, testing-runner, tandem-backseat)
 
+## Research Tools
+
+Agents have access to two external research tools via MCP for combating training data staleness. Use them to verify library APIs, check for breaking changes, and ground decisions in current documentation.
+
+### Context7 (Library Documentation)
+
+Context7 provides versioned, semantically-searched documentation for public libraries. Two tools:
+
+1. **`resolve-library-id`** — Maps a package name to a Context7 library ID. Always call this first.
+2. **`query-docs`** — Retrieves current documentation and code examples for a resolved library ID.
+
+**Two-step lookup pattern:** Always `resolve-library-id` first, then `query-docs`. Never call `query-docs` without a valid library ID.
+
+**Three-call limit:** Do not call Context7 tools more than 3 times per question. Resolve once, query up to twice.
+
+**Internal tool carve-out:** Context7 indexes external/public libraries only. Internal tools (`pf` CLI, `@pennyfarthing/*` packages, project-specific code) are NOT in Context7. Use training data, skill docs, and guides for internal APIs.
+
+**Graceful degradation:** If Context7 is unavailable or `resolve-library-id` returns no matches, proceed with training data knowledge. Note "Context7 unavailable — using training data" in your work. Do NOT block, retry in a loop, or ask the user to fix MCP configuration.
+
+### Perplexity (Web Research)
+
+Perplexity provides real-time web intelligence for broader knowledge needs. Four tools with different speed/depth tradeoffs:
+
+| Tool | Speed | Best For |
+|------|-------|----------|
+| `perplexity_search` | Fast | URLs, changelogs, release notes |
+| `perplexity_ask` | Fast | Quick factual Q&A (default choice) |
+| `perplexity_reason` | Medium | Trade-off analysis, logical problems |
+| `perplexity_research` | Slow (2-4 min) | Deep multi-source investigation (Architect only) |
+
+_Note: Perplexity tool details will be expanded when story 136-20 lands._
+
+### Routing: Which Tool for Which Need?
+
+| Information Need | First Try | Escalate To | Never Use |
+|-----------------|-----------|-------------|-----------|
+| Current API signature for known library | Context7 `query-docs` | Perplexity `perplexity_ask` | `perplexity_research` |
+| "Does library X support feature Y?" | Context7 `query-docs` | Perplexity `perplexity_ask` | — |
+| Best practice for general pattern | Perplexity `perplexity_ask` | `perplexity_reason` | Context7 (not library-specific) |
+| Comparing two technologies | Perplexity `perplexity_reason` | `perplexity_research` (Architect only) | Context7 (single-library tool) |
+| Finding a library for a task | Perplexity `perplexity_search` | `perplexity_ask` | Context7 (need name first) |
+| Known vulnerabilities / CVEs | Perplexity `perplexity_ask` | `perplexity_search` | Context7 (not security-focused) |
+| Error diagnosis (unfamiliar error) | Perplexity `perplexity_ask` | Context7 if library-specific | `perplexity_research` |
+| Internal tool documentation (`pf` CLI) | Training data / skill docs | — | Context7 or Perplexity (not indexed) |
+
+### Shared Principles
+
+- **Citation discipline:** Decisions informed by research get a citation in session file or commit message.
+- **Scoped queries:** Queries must relate to the active story/task. No open-ended browsing.
+- **Trust but verify:** Research output informs decisions but is never ground truth. Always run the code.
+- **Graceful degradation:** If either tool is unavailable, proceed with training data and note the gap.
+- **Subagent exclusion:** Subagents (haiku model) should NOT use Context7 or Perplexity. MCP round-trips on mechanical tasks are waste. Only strategic agents (Opus) use research tools.
+
 ## Commands Reference
 
 ```bash

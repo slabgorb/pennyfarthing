@@ -118,11 +118,11 @@ class TestMigrateDirectoryStructure:
         """Dry run reports changes without executing them."""
         _create_npm_install(tmp_path)
         # Record state before
-        before_contents = set(p.name for p in tmp_path.rglob("*") if p.is_file())
+        before_contents = {p.name for p in tmp_path.rglob("*") if p.is_file()}
         result = migrate_directory_structure(tmp_path, dry_run=True)
         assert result["success"] is True
         # State should be unchanged
-        after_contents = set(p.name for p in tmp_path.rglob("*") if p.is_file())
+        after_contents = {p.name for p in tmp_path.rglob("*") if p.is_file()}
         assert before_contents == after_contents
 
     def test_idempotent_on_already_migrated(self, tmp_path):

@@ -7,24 +7,18 @@ resolve_sprint_context() instead of using hardcoded paths.
 Run with: python -m pytest tests/python/test_sprint_context_integration.py -v
 """
 
-import ast
 import inspect
-import textwrap
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
-
 from pf.core.models import SprintContext
 from pf.core.resolver import resolve_sprint_context
 from pf.sprint.loader import (
-    get_active_sprint_name,
     load_sprint,
-    load_sprint_registry,
     switch_sprint,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

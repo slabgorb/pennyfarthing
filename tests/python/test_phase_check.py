@@ -22,7 +22,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.handoff.phase_check import phase_check_start
+from pf.handoff.phase_check import phase_check_start  # noqa: E402
 
 WORKFLOW_TDD = {
     "workflow": {

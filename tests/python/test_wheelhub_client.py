@@ -385,7 +385,6 @@ class TestAutoReconnect:
 
         timestamps = []
 
-        original_sleep = asyncio.sleep
 
         async def mock_sleep(delay):
             timestamps.append(delay)

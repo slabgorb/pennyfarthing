@@ -11,17 +11,14 @@ Run with: python -m pytest tests/python/test_story_detail_archive_fallback.py -v
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import patch
 
 import pytest
-from rich.text import Text
-from textual.widgets import Static
-
 from pf.bikerack.story_detail_data import _find_session_file, fetch_story_detail
 from pf.bikerack.story_detail_screen import (
     StoryDetailScreen,
     _render_workflow_dots,
 )
+from textual.widgets import Static
 
 
 def _static_plain(widget: Static) -> str:

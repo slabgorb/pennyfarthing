@@ -113,5 +113,5 @@ See `guides/gates.md` for gate file format and evaluation details.
 | `pf/handoff/gate_file.py` | Gate file discovery |
 
 <info>
-**Related:** `guides/gates.md` (gate system), `agents/agent-behavior.md` (exit protocol), `guides/reflector.md` (marker types)
+**Related:** `guides/gates.md` (gate system), `agents/agent-behavior.md` (exit protocol)
 </info>

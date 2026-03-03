@@ -28,7 +28,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.workflow.team_lifecycle import (
+from pf.workflow.team_lifecycle import (  # noqa: E402
     _reset_for_testing,
     acquire_sidecar_lock,
     check_gate_on_task_completed,

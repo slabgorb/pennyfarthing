@@ -22,7 +22,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.hooks import (
+from pf.hooks import (  # noqa: E402
     BIKERACK_PORT_FILE,
     DEFAULT_BIKERACK_PORT,
     HookResponse,

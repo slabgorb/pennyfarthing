@@ -8,17 +8,13 @@ Run with: python -m pytest tests/python/test_sprint_context.py -v
 """
 
 import dataclasses
-import os
 import textwrap
-from pathlib import Path
 from typing import get_type_hints
 
 import pytest
 import yaml
-
 from pf.core.models import SprintContext
 from pf.core.resolver import resolve_sprint_context
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

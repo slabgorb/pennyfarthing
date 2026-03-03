@@ -22,8 +22,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.findings.capture import (
-    PHASE_NAMES,
+from pf.findings.capture import (  # noqa: E402
     VALID_TYPES,
     VALID_URGENCIES,
     append_findings_to_session,

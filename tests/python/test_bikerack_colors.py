@@ -17,7 +17,6 @@ Run with: python -m pytest tests/python/test_bikerack_colors.py -v
 
 from __future__ import annotations
 
-import importlib
 import sys
 from collections import deque
 from io import StringIO
@@ -382,10 +381,12 @@ class TestNoVisualRegression:
 
     def test_all_modules_importable(self):
         """All modified modules should import without errors."""
-        from pf.bikerack import base_panel  # noqa: F401
-        from pf.bikerack import colors  # noqa: F401
-        from pf.bikerack import context_meter_footer  # noqa: F401
-        from pf.bikerack import debug_panel  # noqa: F401
+        from pf.bikerack import (
+            base_panel,  # noqa: F401
+            colors,  # noqa: F401
+            context_meter_footer,  # noqa: F401
+            debug_panel,  # noqa: F401
+        )
 
     def test_no_circular_imports(self):
         """Importing colors then all consumers should not cause circular import."""
@@ -393,10 +394,12 @@ class TestNoVisualRegression:
         if "pf.bikerack.colors" in sys.modules:
             del sys.modules["pf.bikerack.colors"]
 
-        from pf.bikerack import colors  # noqa: F401
-        from pf.bikerack import base_panel  # noqa: F401
-        from pf.bikerack import debug_panel  # noqa: F401
-        from pf.bikerack import context_meter_footer  # noqa: F401
+        from pf.bikerack import (
+            base_panel,  # noqa: F401
+            colors,  # noqa: F401
+            context_meter_footer,  # noqa: F401
+            debug_panel,  # noqa: F401
+        )
 
     def test_footer_context_bar_boundary_values(self):
         """StatusFooter context bar at boundary percents should show tier correctly."""

@@ -446,7 +446,7 @@ class TestFormatters:
         ]
         table = format_file_table(files, top_n=5)
         # Count data lines (excluding header and separator)
-        lines = [l for l in table.split("\n") if l.strip()]
+        lines = [l for l in table.split("\n") if l.strip()]  # noqa: E741
         # Header + separator + 5 data = 7 lines
         assert len(lines) == 7
 

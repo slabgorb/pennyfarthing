@@ -13,13 +13,9 @@ Integration tests (added after reviewer rejection) verify wiring:
 
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from pf.prime.models import WorkflowState, WorkflowStatus
 from pf.prime.workflow import detect_workflow_state, parse_session_header
-
 
 # --- AC1: detect_workflow_state() parses stepped workflow sessions ---
 

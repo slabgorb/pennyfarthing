@@ -30,25 +30,25 @@ class TestConnectionStatusWidget:
 
     async def test_connection_status_widget_exists(self, app):
         """AC1: TUI header area has a connection status widget."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             status = app.query("#connection-status")
             assert len(status) > 0
 
     async def test_widget_is_connection_status_type(self, app):
         """Widget should be a ConnectionStatus instance."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#connection-status")
             assert isinstance(widget, ConnectionStatus)
 
     async def test_default_state_is_disconnected(self, app):
         """Default state should be DISCONNECTED."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#connection-status", ConnectionStatus)
             assert widget.connection_state == ConnectionState.DISCONNECTED
 
     async def test_disconnected_shows_indicator(self, app):
         """AC2: Disconnected state shows indicator text."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#connection-status")
             rendered = widget.render()
             text = rendered.plain if hasattr(rendered, "plain") else str(rendered)
@@ -136,7 +136,7 @@ class TestTUIResponsiveness:
     async def test_app_without_client_is_functional(self):
         """App is fully functional without a WheelHub client."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             assert len(app.query("Header")) > 0
             assert len(app.query("Footer")) > 0
             assert len(app.query("#connection-status")) > 0
@@ -149,7 +149,7 @@ class TestConnectionStatusPersistence:
     async def test_status_outside_main_content(self):
         """Connection status widget is NOT inside #main-content."""
         app = BikeRackApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             main = app.query_one("#main-content")
             status_in_main = main.query("#connection-status")
             assert len(status_in_main) == 0, (

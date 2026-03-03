@@ -80,7 +80,7 @@ class TestSplitPaneStructure:
 
     async def test_split_mode_attribute_defaults_false(self, app):
         """App should have _split_mode attribute defaulting to False."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             assert hasattr(app, "_split_mode"), (
                 "BikeRackApp should have a _split_mode attribute"
             )
@@ -267,7 +267,7 @@ class TestNamedPresets:
 
     async def test_apply_preset_activates_split(self, app):
         """Applying a preset should activate split mode with correct panels."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             app.action_apply_split_preset("sprint+diffs")
             assert app._split_mode is True, (
                 "Applying a preset should activate split mode"
@@ -275,7 +275,7 @@ class TestNamedPresets:
 
     async def test_apply_preset_sets_correct_panels(self, app):
         """Applying sprint+diffs should show sprint left, diffs right."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             app.action_apply_split_preset("sprint+diffs")
             left = app.query_one("#split-left")
             right = app.query_one("#split-right")

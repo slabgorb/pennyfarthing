@@ -137,7 +137,7 @@ class TestPeriodicRefreshInApp:
 
     async def test_meter_has_active_timer_after_mount(self, app):
         """After mount, the StatusFooter should have an active refresh timer."""
-        async with app.run_test() as pilot:
+        async with app.run_test():
             meter = app.query_one("StatusFooter")
             assert hasattr(meter, "_refresh_timer"), (
                 "StatusFooter should have a _refresh_timer after mount"
@@ -263,7 +263,6 @@ class TestRedrawThrottling:
         footer._mounted = True
 
         redraws = []
-        original_post = footer.post_message
 
         def tracking_post(msg):
             redraws.append(time.monotonic())

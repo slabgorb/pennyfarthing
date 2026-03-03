@@ -17,9 +17,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.common.hooks import INFRASTRUCTURE_HOOKS
-from pf.hooks.stale_detection import detect_stale_hooks
-
+from pf.common.hooks import INFRASTRUCTURE_HOOKS  # noqa: E402
+from pf.hooks.stale_detection import detect_stale_hooks  # noqa: E402
 
 # =============================================================================
 # Fixtures

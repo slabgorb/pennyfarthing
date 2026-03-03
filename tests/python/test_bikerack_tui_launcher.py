@@ -155,7 +155,7 @@ class TestMainCreatesClientAndApp:
         """main() should call app.run() to start the Textual event loop."""
         from pf.bikerack.tui import main
 
-        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+        with patch("pf.bikerack.tui.WheelHubClient"):
             with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 mock_app = MagicMock()
                 MockApp.return_value = mock_app
@@ -219,7 +219,7 @@ class TestJustTuiRecipe:
         # Check that there's a tui recipe that involves bikerack.tui or similar
         has_tui = False
         lines = content.split("\n")
-        for i, line in enumerate(lines):
+        for _i, line in enumerate(lines):
             if line.startswith("tui") and ":" in line:
                 has_tui = True
                 break

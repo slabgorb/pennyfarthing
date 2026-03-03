@@ -16,13 +16,11 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import yaml
 
 from pf.workflow.step_gate import resolve_step_gate
-
 
 # ---------------------------------------------------------------------------
 # Fixtures: Step meta structures

@@ -365,7 +365,7 @@ class TestFormatters:
         ]
         table = format_file_table(hotspots, top_n=5)
         # Should only show 5 data rows + header + separator
-        lines = [l for l in table.split("\n") if l.strip()]
+        lines = [l for l in table.split("\n") if l.strip()]  # noqa: E741
         assert len(lines) == 7  # header + separator + 5 data
 
 

@@ -21,12 +21,9 @@ from __future__ import annotations
 
 import os
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
-
 from pf.bikerack.story_detail_data import (
-    _check_context_files,
     fetch_story_detail,
 )
 from pf.bikerack.story_detail_screen import StoryDetailScreen

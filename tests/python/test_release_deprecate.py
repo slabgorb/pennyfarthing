@@ -241,7 +241,7 @@ class TestChangelogUpdate:
     @patch("pf.release.deprecate.subprocess.run")
     def test_does_not_corrupt_other_sections(self, mock_run, project_tree):
         mock_run.return_value = _make_run_result(0, stdout="11.3.7")
-        original = (project_tree / "CHANGELOG.md").read_text()
+        (project_tree / "CHANGELOG.md").read_text()
         deprecate_version(project_tree, "11.3.7", "workspace:* leak")
 
         changelog = (project_tree / "CHANGELOG.md").read_text()

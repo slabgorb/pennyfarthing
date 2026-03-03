@@ -24,7 +24,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.bellmode_hook import (
+from pf.bellmode_hook import (  # noqa: E402
     check_tandem_files,
     format_tandem_message,
     get_latest_observation,
@@ -32,7 +32,7 @@ from pf.bellmode_hook import (
     read_tandem_observations,
     save_tandem_mtime,
 )
-from pf.hooks import HookResponse
+from pf.hooks import HookResponse  # noqa: E402
 
 # =============================================================================
 # Fixtures

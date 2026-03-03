@@ -14,7 +14,7 @@ Story: MSSCI-12409 - Hook consistency and relay mode compatibility
 """
 
 import json
-import os
+import os  # noqa: F401
 import sys
 import urllib.error
 import urllib.request

@@ -8,7 +8,6 @@ Run with: python -m pytest tests/python/test_init_auto_setup.py -v
 """
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from pf.init.setup import (

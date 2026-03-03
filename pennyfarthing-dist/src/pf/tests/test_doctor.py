@@ -22,13 +22,13 @@ from pf.doctor.checks import (
     CHECKS,
     check_commands,
     check_config_file,
+    check_content_dirs,
     check_git_hooks,
     check_node_packages,
     check_pennyfarthing_dir,
     check_python_install,
     check_settings_hooks,
     check_skills,
-    check_content_dirs,
     check_theme,
 )
 from pf.doctor.cli import doctor

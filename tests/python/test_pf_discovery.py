@@ -18,8 +18,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "pennyfarthing-dist" / "src"))
 
-from pf.common.discovery import resolve_pf_binary
-
+from pf.common.discovery import resolve_pf_binary  # noqa: E402
 
 # =============================================================================
 # Fixtures
@@ -79,7 +78,7 @@ def monorepo_project(tmp_path):
     dist_src = project / "pennyfarthing-dist" / "src"
     dist_src.mkdir(parents=True)
     # pf_launcher.py at dist root
-    launcher = dist_src.parent / "src" / "pf_launcher.py"
+    dist_src.parent / "src" / "pf_launcher.py"
     # Actually put it where it should be
     launcher_file = project / "pennyfarthing-dist" / "src" / "pf_launcher.py"
     launcher_file.write_text("# launcher stub\n")
@@ -392,7 +391,6 @@ class TestLauncherPfBinaryExport:
         """After launcher runs, PF_BINARY is set in os.environ."""
         # We test this by importing and calling the modified launcher logic
         # The actual launcher wraps main() — we test the export side-effect
-        from pf_launcher import main as launcher_main
 
         # Save original PF_BINARY value
         original = os.environ.get("PF_BINARY")
@@ -404,6 +402,7 @@ class TestLauncherPfBinaryExport:
             # that the module-level code in pf_launcher exports it
             # This test will fail until pf_launcher is modified to export PF_BINARY
             import importlib
+
             import pf_launcher
             importlib.reload(pf_launcher)
 

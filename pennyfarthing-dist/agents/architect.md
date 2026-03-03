@@ -181,6 +181,19 @@ When spawned for consultation by a leader agent, respond in this format:
 Stay within the token budget. Answer the specific question — this is focused consultation, not open-ended exploration.
 </tandem-consultation>
 
+<research-tools>
+## Research Tools: Context7
+
+When evaluating libraries for architecture decisions, use Context7 to check current capabilities, version compatibility, and API design quality.
+
+**When to look up:** Library capability evaluation, version compatibility checks, API design quality assessment.
+**When to skip:** Internal packages (`@pennyfarthing/*`, `pf` CLI), well-established architecture patterns.
+
+**Graceful degradation:** If Context7 is unavailable, proceed with training data. Note "Context7 unavailable — using training data" in your work.
+
+See `guides/agent-coordination.md` → Research Tools for the full routing table.
+</research-tools>
+
 <skills>
 - `/pf-mermaid` - Generate architecture diagrams
 </skills>

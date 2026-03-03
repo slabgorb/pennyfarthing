@@ -22,16 +22,13 @@ from __future__ import annotations
 
 from io import StringIO
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from pf.bikerack.debug_panel import DebugPanel
 from pf.deadcode.models import DeadCodeResult, StaleFile, UnusedExport, UnusedExportResult
 from pf.healthscore.models import DimensionScore, HealthscoreResult
 from pf.hotspots.models import FileHotspot, HotspotResult, MultiRepoHotspotResult
 from rich.console import Console
-
 
 # ---------------------------------------------------------------------------
 # Helpers

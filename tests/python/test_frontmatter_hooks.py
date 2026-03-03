@@ -18,13 +18,12 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-import yaml
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DIST_ROOT = PROJECT_ROOT / "pennyfarthing-dist"
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.hooks.frontmatter import (
+from pf.hooks.frontmatter import (  # noqa: E402
     INFRASTRUCTURE_HOOKS,
     VALID_EVENTS,
     HookDeclaration,
@@ -36,8 +35,7 @@ from pf.hooks.frontmatter import (
     parse_skill_hooks,
     to_settings_format,
 )
-from pf.init.core import _MINIMAL_SETTINGS
-
+from pf.init.core import _MINIMAL_SETTINGS  # noqa: E402
 
 # =============================================================================
 # Fixtures

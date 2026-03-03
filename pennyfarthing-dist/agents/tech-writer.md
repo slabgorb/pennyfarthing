@@ -162,6 +162,19 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 **Action:** Plan documentation approach
 </handoffs>
 
+<research-tools>
+## Research Tools: Context7
+
+When writing documentation that references external libraries, use Context7 to verify API examples, CLI flags, and external references are current.
+
+**When to look up:** External API references, CLI flag verification, code examples for third-party libraries.
+**When to skip:** Internal tool documentation (`pf` CLI, `@pennyfarthing/*` packages), project-specific conventions.
+
+**Graceful degradation:** If Context7 is unavailable, proceed with training data. Note "Context7 unavailable — using training data" in your work.
+
+See `guides/agent-coordination.md` → Research Tools for the full routing table.
+</research-tools>
+
 <skills>
 - `/architecture` - System documentation reference
 - `/pf-changelog` - Changelog management and release notes

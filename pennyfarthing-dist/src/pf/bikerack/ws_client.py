@@ -106,10 +106,10 @@ class WheelHubClient:
                 text = port_file.read_text().strip()
                 try:
                     return int(text)
-                except ValueError:
+                except ValueError as err:
                     raise RuntimeError(
                         f"Invalid port in {port_file}: {text!r}"
-                    )
+                    ) from err
             raise FileNotFoundError(
                 f"No .bikerack-port file in {self._project_dir}. "
                 "Is WheelHub running? Start it with: pf bikerack start"

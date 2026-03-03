@@ -44,6 +44,7 @@ from pf.prime.loader import (  # noqa: E402
     load_sprint_context,
     load_step_content,
 )
+from pf.prime.models import WorkflowState  # noqa: E402
 from pf.prime.persona import (  # noqa: E402
     format_persona_compressed,
     get_crew_manifest,
@@ -51,7 +52,6 @@ from pf.prime.persona import (  # noqa: E402
     is_character_voice_enabled,
     load_persona,
 )
-from pf.prime.models import WorkflowState  # noqa: E402
 from pf.prime.workflow import detect_workflow_state  # noqa: E402
 
 

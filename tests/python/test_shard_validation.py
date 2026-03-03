@@ -252,7 +252,7 @@ class TestWritePathIntegration:
             "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate:
             mock_validate.return_value = MagicMock(valid=True, errors=[])
-            result = add_epic(
+            add_epic(
                 sprint_path=sprint_file,
                 epic_id="epic-100",
                 title="New Epic",
@@ -392,7 +392,7 @@ class TestWritePathIntegration:
             "pf.sprint.import_epic.get_project_root", return_value=tmp_path
         ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
-            result = import_epic(str(md_file), project_root=tmp_path)
+            import_epic(str(md_file), project_root=tmp_path)
             # Validator should have been called for each parsed epic
             assert mock_validate.call_count >= 1, (
                 f"Expected validator to be called at least once, got {mock_validate.call_count}"
@@ -415,7 +415,7 @@ class TestLoaderWarnings:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = _merge_epic_shards(data, tmp_path)
+            _merge_epic_shards(data, tmp_path)
 
             # Should have emitted warnings for both missing refs
             warning_messages = [str(warning.message) for warning in w]
@@ -450,7 +450,7 @@ class TestLoaderWarnings:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = _merge_epic_shards(data, tmp_path)
+            _merge_epic_shards(data, tmp_path)
 
             shard_warnings = [
                 x for x in w if "MSSCI-14510" in str(x.message)
@@ -471,7 +471,7 @@ class TestLoaderWarnings:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = _merge_epic_shards(data, tmp_path)
+            _merge_epic_shards(data, tmp_path)
 
             warning_messages = [str(x.message) for x in w]
             # Should warn about MISSING-REF

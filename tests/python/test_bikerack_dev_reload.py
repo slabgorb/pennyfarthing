@@ -66,7 +66,7 @@ class TestWatchScope:
         from pf.bikerack.tui import get_watch_paths
 
         paths = get_watch_paths()
-        bikerack_dir = Path(__file__).resolve().parent.parent.parent / "pennyfarthing-dist" / "pf" / "bikerack"
+        Path(__file__).resolve().parent.parent.parent / "pennyfarthing-dist" / "pf" / "bikerack"
         # At least one path should be or contain the bikerack directory
         path_strs = [str(p) for p in paths]
         assert any("bikerack" in s for s in path_strs), (
@@ -138,7 +138,7 @@ class TestCleanRestart:
         """dev_main(port=3456) should pass port to the underlying app."""
         from pf.bikerack.tui import dev_main
 
-        with patch("pf.bikerack.tui.WheelHubClient") as MockClient:
+        with patch("pf.bikerack.tui.WheelHubClient"):
             with patch("pf.bikerack.tui.BikeRackApp") as MockApp:
                 with patch("pf.bikerack.tui._run_with_reload") as mock_reload:
                     mock_app = MagicMock()

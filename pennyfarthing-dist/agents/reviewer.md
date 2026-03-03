@@ -205,6 +205,19 @@ When the review phase has a `team:` block in workflow YAML, Reviewer acts as **l
 Teammates are phase-scoped — created at phase start, destroyed at phase end.
 </team-mode>
 
+<research-tools>
+## Research Tools: Context7
+
+When reviewing code that uses external libraries, use Context7 to spot-check suspicious API patterns.
+
+**When to look up:** Deprecated APIs, changed method signatures, patterns that look wrong or outdated.
+**When to skip:** Common well-known patterns, internal packages. This is for "something looks off" — not blanket verification of every import.
+
+**Graceful degradation:** If Context7 is unavailable, proceed with training data. Note "Context7 unavailable — using training data" in your work.
+
+See `guides/agent-coordination.md` → Research Tools for the full routing table.
+</research-tools>
+
 <skills>
 - `/pf-code-review` - Review checklists, security/performance patterns
 - `/pf-testing` - Test commands for verification

@@ -9,8 +9,6 @@ The metrics command already handles this correctly via get_archived_stories().
 
 from unittest.mock import patch
 
-import pytest
-
 from pf.sprint.status import format_status, get_sprint_status
 
 

@@ -258,7 +258,7 @@ class TestChangedPanelRendering:
         output = _render_to_string(result)
         # The line with "src/server.ts" (status " M") should have some icon/indicator
         # Check that the output has more than just the path — it includes an icon
-        lines = [l for l in output.split("\n") if "server.ts" in l]
+        lines = [l for l in output.split("\n") if "server.ts" in l]  # noqa: E741
         assert len(lines) > 0, "server.ts line not found in output"
         # The line should contain more than just the path (icon + status)
         line = lines[0]
@@ -271,7 +271,7 @@ class TestChangedPanelRendering:
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_SINGLE_REPO)
         output = _render_to_string(result)
-        lines = [l for l in output.split("\n") if "new-file.ts" in l]
+        lines = [l for l in output.split("\n") if "new-file.ts" in l]  # noqa: E741
         assert len(lines) > 0, "new-file.ts line not found in output"
 
     def test_deleted_file_has_icon(self):
@@ -279,7 +279,7 @@ class TestChangedPanelRendering:
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_SINGLE_REPO)
         output = _render_to_string(result)
-        lines = [l for l in output.split("\n") if "old-file.ts" in l]
+        lines = [l for l in output.split("\n") if "old-file.ts" in l]  # noqa: E741
         assert len(lines) > 0, "old-file.ts (deleted) line not found in output"
 
 
@@ -304,7 +304,7 @@ class TestChangedPanelStatusIcons:
         result = panel.render_panel(SAMPLE_ALL_STATUS_TYPES)
         output = _render_to_string(result)
         # Find the line for the added file
-        lines = [l for l in output.split("\n") if "staged-added.ts" in l]
+        lines = [l for l in output.split("\n") if "staged-added.ts" in l]  # noqa: E741
         assert len(lines) > 0, "staged-added.ts not found"
         line = lines[0].lower()
         has_added = any(
@@ -320,7 +320,7 @@ class TestChangedPanelStatusIcons:
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_ALL_STATUS_TYPES)
         output = _render_to_string(result)
-        lines = [l for l in output.split("\n") if "staged-deleted.ts" in l]
+        lines = [l for l in output.split("\n") if "staged-deleted.ts" in l]  # noqa: E741
         assert len(lines) > 0, "staged-deleted.ts not found"
         line = lines[0].lower()
         has_deleted = any(
@@ -336,7 +336,7 @@ class TestChangedPanelStatusIcons:
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_ALL_STATUS_TYPES)
         output = _render_to_string(result)
-        lines = [l for l in output.split("\n") if "untracked.ts" in l]
+        lines = [l for l in output.split("\n") if "untracked.ts" in l]  # noqa: E741
         assert len(lines) > 0, "untracked.ts not found"
         line = lines[0].lower()
         has_untracked = any(
@@ -352,7 +352,7 @@ class TestChangedPanelStatusIcons:
         panel = ChangedPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_ALL_STATUS_TYPES)
         output = _render_to_string(result)
-        lines = [l for l in output.split("\n") if "working-modified.ts" in l]
+        lines = [l for l in output.split("\n") if "working-modified.ts" in l]  # noqa: E741
         assert len(lines) > 0, "working-modified.ts not found"
         line = lines[0].lower()
         has_modified = any(

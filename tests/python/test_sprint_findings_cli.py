@@ -15,14 +15,12 @@ import textwrap
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.sprint.findings_cmd import findings_command
-
+from pf.sprint.findings_cmd import findings_command  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures: session files and sprint-completed YAML

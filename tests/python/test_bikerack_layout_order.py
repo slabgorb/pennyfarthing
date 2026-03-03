@@ -12,14 +12,11 @@ Run with: python -m pytest tests/python/test_bikerack_layout_order.py -v
 """
 
 import pytest
-
 from pf.bikerack.layout_order import (
     DEFAULT_ORDER,
-    VALID_REGIONS,
     get_layout_order,
     validate_layout_order,
 )
-
 
 # ---------------------------------------------------------------------------
 # AC1 + AC2: layout_order setting accepts an ordered list of four regions

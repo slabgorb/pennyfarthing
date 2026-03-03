@@ -12,15 +12,13 @@ import os
 import stat
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "pennyfarthing-dist" / "src"))
 
-from pf.common.discovery import generate_shim_content, write_shim
-
+from pf.common.discovery import generate_shim_content, write_shim  # noqa: E402
 
 # =============================================================================
 # Fixtures
@@ -252,10 +250,10 @@ class TestBackwardCompatibility:
         settings_path.write_text(json.dumps(settings))
 
         from pf.init.core import _upgrade_hooks
-        changed = _upgrade_hooks(settings_path)
+        _upgrade_hooks(settings_path)
 
         data = json.loads(settings_path.read_text())
-        for hook_type, entries in data["hooks"].items():
+        for _hook_type, entries in data["hooks"].items():
             for entry in entries:
                 for hook in entry.get("hooks", []):
                     cmd = hook.get("command", "")
