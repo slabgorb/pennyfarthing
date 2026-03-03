@@ -16,6 +16,7 @@ Create a justfile or Makefile in the orchestrator that proxies commands to subre
 - justfile or Makefile created/updated
 - Recipes for each subrepo
 - Common orchestrator commands (test-all, build-all, dev)
+- Framework recipes imported (wheelhub, bikerack, tui, claude, tmux-dev)
 - User has approved the configuration
 </output>
 
@@ -161,11 +162,13 @@ build-api:
 
 ## COMMON ORCHESTRATOR RECIPES
 
-### Sprint Management Integration
+### Framework Recipes (from `.pennyfarthing/justfile.pf`)
+
+The root justfile imports `.pennyfarthing/justfile.pf` which provides these recipes automatically:
 
 ```just
 # ============================================
-# PENNYFARTHING / SPRINT
+# PENNYFARTHING FRAMEWORK (auto-imported)
 # ============================================
 
 # Show current sprint status
@@ -176,10 +179,26 @@ sprint:
 backlog:
     pf sprint backlog
 
-# Start BikeRack GUI
-gui:
-    cd {gui_path} && npm run dev:web
+# Start WheelHub server (API + WebSocket + OTEL ingestion)
+wheelhub
+
+# Open BikeRack dashboard in browser (starts WheelHub if needed)
+bikerack
+
+# Launch TUI panel viewer (starts WheelHub if needed)
+tui
+
+# Launch Claude with OTEL pre-configured for WheelHub
+claude
+
+# Launch tmux dev layout (Claude + TUI in split panes)
+tmux-dev
+
+# Run any pf CLI command
+pf <command>
 ```
+
+These recipes delegate to `pf launch` commands and handle server lifecycle (start, stop, port detection) automatically.
 
 ### CI/CD Recipes
 
@@ -211,7 +230,7 @@ Generated recipes:
   ✓ test-all, build-all, install-all
   ✓ Per-repo: test-{repo}, build-{repo}, dev-{repo}
   ✓ Orchestrator: dev, status, clone-repos
-  ✓ Sprint: sprint, backlog, gui
+  ✓ Framework: wheelhub, bikerack, tui, claude, tmux-dev, pf
 
 (switch prompt presents options)
 ```
@@ -267,6 +286,7 @@ test-ui: ## Run UI tests
 ✅ All repos have standard recipes (test, build, dev, lint)
 ✅ Aggregated commands work (test-all, build-all)
 ✅ Orchestrator commands included
+✅ Framework recipes available (wheelhub, bikerack, tui via `.pennyfarthing/justfile.pf`)
 ✅ User has reviewed and approved
 
 ## NEXT STEP
