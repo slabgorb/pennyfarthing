@@ -86,6 +86,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "healthscore":  ("pf.healthscore.cli", "healthscore"),
     "package":      ("pf.package.cli", "package"),
     "init":         ("pf.init.cli", "init"),
+    "setup":        ("pf.init.cli", "init"),
     "prime":        ("pf.prime.cli", "prime_cmd"),
     "upgrade":      ("pf.upgrade.cli", "upgrade"),
     "docs":         ("pf.docs.cli", "docs"),
@@ -109,7 +110,7 @@ _SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
 
 # Hidden backward-compat aliases — these resolve via _LAZY_COMMANDS
 # but are excluded from help output
-_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore"}
+_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore", "init"}
 
 
 class PennyfarthingCLI(LazyGroup):
