@@ -95,9 +95,8 @@ for i in $(seq 1 20); do
   sleep 0.25
 done
 if [[ ! -f "$PORT_FILE" ]]; then
-  echo "Error: WheelHub failed to start (no .bikerack-port after 5s)" >&2
+  echo "Warning: WheelHub failed to start (no .bikerack-port after 5s)" >&2
   kill "$WHEELHUB_BG" 2>/dev/null || true
-  exit 1
 fi
 
 case "$LAYOUT" in
