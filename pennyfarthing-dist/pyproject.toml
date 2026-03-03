@@ -42,7 +42,6 @@ include = ["pf*"]
 
 [tool.setuptools.exclude-package-data]
 "pf._dist" = [
-    "personas/spiders/**",
     "**/__pycache__/**",
 ]
 
