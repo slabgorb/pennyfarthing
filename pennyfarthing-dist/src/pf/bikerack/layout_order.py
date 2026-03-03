@@ -57,8 +57,10 @@ def validate_layout_order(order: Any) -> dict[str, Any]:
 def get_layout_order(config: dict[str, Any]) -> list[str]:
     """Resolve the effective layout order from config.
 
-    Reads ``layout_order`` from *config*, validates it, and filters out
-    any bars disabled via ``workflow.<toggle>`` settings.
+    Uses ``portrait_dock`` (top/bottom) to position the profile region
+    relative to content.  Falls back to ``layout_order`` list if set.
+
+    Filters out any bars disabled via ``workflow.<toggle>`` settings.
 
     Args:
         config: The full pennyfarthing config dict.
@@ -66,11 +68,17 @@ def get_layout_order(config: dict[str, Any]) -> list[str]:
     Returns:
         Ordered list of region names to render.
     """
-    raw = config.get("layout_order")
-    if raw is not None and validate_layout_order(raw)["success"]:
-        order = list(raw)
+    portrait_dock = config.get("portrait_dock", "top")
+
+    if portrait_dock == "bottom":
+        order = ["menu", "content", "profile", "status"]
     else:
-        order = list(DEFAULT_ORDER)
+        # Check legacy layout_order for backward compat
+        raw = config.get("layout_order")
+        if raw is not None and validate_layout_order(raw)["success"]:
+            order = list(raw)
+        else:
+            order = list(DEFAULT_ORDER)
 
     workflow = config.get("workflow") or {}
     return [r for r in order if _is_bar_enabled(r, workflow)]

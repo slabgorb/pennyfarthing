@@ -87,6 +87,14 @@ _SPECS: list[SettingSpec] = [
         description="Agent portrait side (p to toggle)",
     ),
     SettingSpec(
+        key="portrait_dock",
+        label="Portrait Dock",
+        widget_type="select",
+        group="TUI",
+        options=[("Top", "top"), ("Bottom", "bottom")],
+        description="Portrait panel above or below content",
+    ),
+    SettingSpec(
         key="workflow.git_monitor",
         label="Git Monitor",
         widget_type="switch",
@@ -130,6 +138,13 @@ _SPECS: list[SettingSpec] = [
         widget_type="switch",
         group="TUI",
         description="Show statusbar in TUI",
+    ),
+    SettingSpec(
+        key="workflow.statusbar",
+        label="CLI Statusbar",
+        widget_type="switch",
+        group="Workflow",
+        description="Show Claude Code status line",
     ),
     SettingSpec(
         key="tui.toasts",
