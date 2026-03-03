@@ -43,7 +43,7 @@ def dry_run_release(
     if bump and bump not in _VALID_BUMPS:
         return {"success": False, "error": f"Invalid bump type: {bump}"}
 
-    if version and not _SEMVER_RE.match(version):
+    if version is not None and not _SEMVER_RE.match(version):
         return {"success": False, "error": f"Invalid version: {version}"}
 
     # --- Read current version from package.json ---
