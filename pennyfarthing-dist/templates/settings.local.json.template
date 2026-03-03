@@ -18,15 +18,15 @@
       "Write(sprint/**)",
       "Write(.session/**)",
       "Write(results/**)",
-      "Skill(sm)",
-      "Skill(tea)",
-      "Skill(dev)",
-      "Skill(reviewer)",
-      "Skill(solo)",
-      "Skill(benchmark)",
-      "Skill(benchmark-control)",
-      "Skill(judge)",
-      "Skill(finalize-run)"
+      "Skill(pf-sm)",
+      "Skill(pf-tea)",
+      "Skill(pf-dev)",
+      "Skill(pf-reviewer)",
+      "Skill(pf-solo)",
+      "Skill(pf-benchmark)",
+      "Skill(pf-benchmark-control)",
+      "Skill(pf-judge)",
+      "Skill(pf-finalize-run)"
     ]
   },
   "context_budget": {

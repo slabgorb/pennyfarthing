@@ -8,7 +8,7 @@ cat <<'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "IMPORTANT: Auto-invoke the /sm agent immediately. Run the Skill tool with skill: \"sm\" as your first action. Do not greet the user or do anything else first."
+    "additionalContext": "IMPORTANT: Auto-invoke the /sm agent immediately. Run the Skill tool with skill: \"pf-sm\" as your first action. Do not greet the user or do anything else first."
   }
 }
 EOF

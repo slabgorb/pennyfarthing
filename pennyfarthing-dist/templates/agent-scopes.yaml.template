@@ -45,8 +45,8 @@ strategic_agents:
       - Edit(sprint/**)
       - Edit(.session/**)
       - Write(sprint/**)
-      - Skill(sm)
-      - Skill(architect)
+      - Skill(pf-sm)
+      - Skill(pf-architect)
     context_files:
       - sprint/current-sprint.yaml
       - .claude/project/docs/shared-context.md
@@ -64,9 +64,9 @@ strategic_agents:
       - Edit(.session/**)
       - Write(sprint/**)
       - Write(.session/**)
-      - Skill(tea)
-      - Skill(dev)
-      - Skill(reviewer)
+      - Skill(pf-tea)
+      - Skill(pf-dev)
+      - Skill(pf-reviewer)
       - Task(sm-*)
     context_files:
       - sprint/current-sprint.yaml
@@ -251,7 +251,7 @@ helper_subagents:
 #   Bash          - Execute shell commands
 #   Edit(path)    - Edit files matching path pattern
 #   Write(path)   - Create files matching path pattern
-#   Skill(name)   - Invoke named skill/agent
+#   Skill(pf-name) - Invoke named skill/agent (all skills use pf- prefix)
 #   Task(type)    - Spawn subagent of type
 #
 # Path Patterns:
