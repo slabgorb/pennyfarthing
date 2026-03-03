@@ -1344,7 +1344,7 @@ def main(
     else:
         client = WheelHubClient(project_dir=project_dir or Path.cwd())
     app = BikeRackApp(client=client)
-    app.run(mouse=False)
+    app.run()
 
 
 def dev_main(
