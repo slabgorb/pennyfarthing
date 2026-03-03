@@ -67,6 +67,7 @@ async def create_team(
         "teamName": team_name,
         "storyId": story_id,
         "phase": phase["name"],
+        "scope": scope,
         "teammates": [],
         "createdAt": datetime.now(UTC).isoformat(),
     }
@@ -197,6 +198,7 @@ def generate_team_summary(handle: dict[str, Any]) -> dict[str, Any]:
         "teamName": handle["teamName"],
         "storyId": handle["storyId"],
         "phase": handle["phase"],
+        "scope": handle.get("scope", "phase"),
         "members": [
             {"agent": t["agent"], "status": t["status"], "task": t["task"]}
             for t in handle["teammates"]

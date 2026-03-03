@@ -7,10 +7,10 @@ get_step_team_config(), and step-scoped team lifecycle.
 Run with: python -m pytest tests/python/test_step_tandem_team.py -v
 """
 
+import asyncio
 import sys
 import textwrap
 from pathlib import Path
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -209,8 +209,7 @@ class TestGetStepTeamConfig:
 class TestStepScopedTeamLifecycle:
     """Tests for step-scoped team creation and management."""
 
-    @pytest.mark.asyncio
-    async def test_create_team_with_step_scope(self):
+    def test_create_team_with_step_scope(self):
         """create_team with scope='step' should use step name in team name."""
         step = {
             "name": "step-06-risks",
@@ -219,14 +218,13 @@ class TestStepScopedTeamLifecycle:
                 "model": "haiku",
             },
         }
-        result = await create_team(step, "137-5", scope="step")
+        result = asyncio.run(create_team(step, "137-5", scope="step"))
         assert result["success"] is True
         handle = result["data"]
         assert handle["scope"] == "step"
         assert "step" in handle["teamName"].lower() or "step-06" in handle["teamName"]
 
-    @pytest.mark.asyncio
-    async def test_create_team_default_scope_is_phase(self):
+    def test_create_team_default_scope_is_phase(self):
         """Default scope should be 'phase' for backward compat."""
         phase = {
             "name": "green",
@@ -234,14 +232,12 @@ class TestStepScopedTeamLifecycle:
                 "teammates": [{"agent": "architect", "task": "Review"}],
             },
         }
-        result = await create_team(phase, "137-5")
+        result = asyncio.run(create_team(phase, "137-5"))
         assert result["success"] is True
         handle = result["data"]
-        # Default scope should not include 'step' marker
         assert handle.get("scope", "phase") == "phase"
 
-    @pytest.mark.asyncio
-    async def test_generate_summary_includes_scope(self):
+    def test_generate_summary_includes_scope(self):
         """Team summary should include scope field (phase or step)."""
         step = {
             "name": "step-06-risks",
@@ -249,10 +245,8 @@ class TestStepScopedTeamLifecycle:
                 "teammates": [{"agent": "devops", "task": "Review"}],
             },
         }
-        result = await create_team(step, "137-5", scope="step")
+        result = asyncio.run(create_team(step, "137-5", scope="step"))
         handle = result["data"]
-
-        # Manually set a teammate for summary
         handle["teammates"] = [
             {"agent": "devops", "task": "Review", "status": "shutdown"}
         ]

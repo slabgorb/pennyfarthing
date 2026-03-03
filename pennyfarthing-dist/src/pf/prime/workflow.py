@@ -435,7 +435,7 @@ def get_step_tandem_config(
         Dict with tandem config (partner, scope, model, token_budget)
         or None if no tandem config on this step.
     """
-    return None  # TODO: implement in GREEN phase
+    return _get_step_config_block(workflow_name, step_number, "tandem", project_root)
 
 
 def get_step_team_config(
@@ -455,7 +455,37 @@ def get_step_team_config(
         Dict with team config (teammates list, model, etc.)
         or None if no team config on this step.
     """
-    return None  # TODO: implement in GREEN phase
+    return _get_step_config_block(workflow_name, step_number, "team", project_root)
+
+
+def _get_step_config_block(
+    workflow_name: str, step_number: int, block: str, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Shared helper to extract a config block from a stepped workflow step."""
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    base = dist_root if dist_root else root / "pennyfarthing-dist"
+
+    # Try flat file first, then directory-based workflow
+    for candidate in [
+        base / "workflows" / f"{workflow_name}.yaml",
+        base / "workflows" / workflow_name / "workflow.yaml",
+    ]:
+        if not candidate.exists():
+            continue
+        try:
+            data = yaml.safe_load(candidate.read_text())
+            steps_cfg = data.get("workflow", {}).get("steps", {})
+            config = steps_cfg.get("config", {})
+            step_cfg = config.get(step_number, {})
+            if isinstance(step_cfg, dict):
+                value = step_cfg.get(block)
+                if isinstance(value, dict):
+                    return dict(value)
+            return None
+        except Exception:
+            return None
+    return None
 
 
 def get_phase_gate_recovery(

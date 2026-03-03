@@ -22,6 +22,17 @@ workflow:
     path: ./steps/
     pattern: step-{nn}-*.md
     # Note: step-01b-continue.md is loaded conditionally by step-01 when existing workflow detected
+    config:
+      4:
+        tandem:
+          partner: pm
+          scope: tool-watch
+      6:
+        team:
+          teammates:
+            - agent: devops
+              task: "Review infrastructure and deployment risks"
+          model: haiku
 
   # Variables available in step files
   variables:
