@@ -21,16 +21,36 @@ theme:
     genre: comedy
     energy: high-energy
   spinner_verbs:
-    - Ni-saying
-    - Spam-repeating
-    - Parrot-pining
-    - Shrubbery-seeking
-    - Coconut-clopping
-    - Silly-walking
-    - Sketch-interrupting
-    - Spamalot-singing
-    - Ministry-forming
-    - Dead-parodying
+    - Saying Ni
+    - Repeating spam
+    - Pining for the fjords
+    - Seeking a shrubbery
+    - Clopping coconuts
+    - Performing silly walks
+    - Interrupting this sketch
+    - Nobody expects this
+    - Just a flesh wound
+    - Running away bravely
+    - Answering three questions
+    - Always look on the bright side
+    - Not dead yet
+    - Lumberjacking on Tuesdays
+    - Holy Grail questing
+    - Calculating airspeed
+    - Spanish Inquisition arriving
+    - Being repressed
+    - Curating the cheese shop
+    - Nudge nudge winking
+    - Visiting the argument clinic
+    - Bicycle repairing
+    - MY BRAIN HURTS
+    - Crucifixion queuing
+    - Taunting a second time
+    - And now for something completely different
+    - Black Knight debating
+    - Camelot avoiding
+    - Conducting the Ministry
+    - Strange women in ponds
 zeitgeist:
   score: 82.3
   rating: rich

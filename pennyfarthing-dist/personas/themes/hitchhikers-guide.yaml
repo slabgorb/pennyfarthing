@@ -22,18 +22,36 @@ theme:
     genre: sci-fi
     energy: high-energy
   spinner_verbs:
-    - 42-computing
-    - Towel-locating
-    - Pan-galactic gargle-blasting
-    - Improbability-driving
-    - Don't-panicking
-    - Earth-destroying
-    - Tea-making
-    - Vogon-poeting
-    - Galaxy-hitchhiking
-    - Babel-fish-processing
-    - Infinite-improbability-navigating
-    - Question-computing
+    - Don't Panic
+    - Towel locating
+    - Pan Galactic Gargle Blasting
+    - Computing 42
+    - Hitchhiking the galaxy
+    - Babel fish inserting
+    - Enduring Vogon poetry
+    - Infinite improbability driving
+    - Earth mourning
+    - Making tea
+    - Norwegian fjord designing
+    - Magrathea visiting
+    - Total Perspective Vortex surviving
+    - Guide consulting
+    - Thumb extending
+    - Mostly Harmless
+    - Sirius Cybernetics complaining
+    - Heart of Gold flying
+    - Sperm whale pondering
+    - Petunias materializing
+    - So long and thanks for all the fish
+    - Sub-Etha sensing
+    - Filling in Form 27B-6
+    - Seeking the Question
+    - Bistromathics computing
+    - Sharing a nice cup of tea
+    - Marvin monologuing
+    - Restaurant at the End of the Universe
+    - Brain the size of a planet
+    - Galaxy guide updating
 zeitgeist:
   score: 86.0
   rating: rich

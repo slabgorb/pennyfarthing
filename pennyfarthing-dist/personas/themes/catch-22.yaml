@@ -21,18 +21,36 @@ theme:
     genre: literary
     energy: measured
   spinner_verbs:
-    - Crashing-repeatedly
-    - Recognizing-absurdity
-    - Raising-missions
-    - Trading-syndicate-shares
-    - Documenting-chaos
-    - Surviving-impossibly
-    - Paradox-looping
-    - Escaping-to-Sweden
-    - Achieving-catch-22
-    - Feathering-hierarchies
-    - Mailroom-controlling
-    - Bombing-bases
+    - Finding the catch
+    - Sweden escaping
+    - Raising the missions
+    - Bombing your own base
+    - Recognizing absurdity
+    - Trading with the enemy
+    - Everyone has a share
+    - Officially dying
+    - Window leaping
+    - Paradox looping
+    - That's a catch-22
+    - Milo Minderbinder scheming
+    - Censoring letters
+    - Proving you're sane
+    - Feathers and black eyes
+    - Orr crashing again
+    - Surviving impossibly
+    - Rules citing
+    - War profiteering
+    - Logic looping
+    - Mission refusing
+    - Blackmailing headquarters
+    - Catch-22 applying
+    - Apples in cheeks
+    - Practicing crashing
+    - Everything has a catch
+    - Prolix rejecting
+    - Cotton selling
+    - Major Major avoiding
+    - Double jeopardy
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system

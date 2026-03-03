@@ -16,15 +16,35 @@ theme:
   tier: B
   spinner_verbs:
     - Cartographing
-    - Expedition-mounting
-    - Horizon-chasing
-    - Compass-reading
-    - Polar-navigating
-    - Silk-Road-trading
-    - Discovery-documenting
-    - Ocean-exploring
-    - Mountain-climbing
-    - World-circumnavigating
+    - Mounting expeditions
+    - Chasing horizons
+    - Reading the compass
+    - Polar navigating
+    - Silk Road trading
+    - Documenting discoveries
+    - Ocean exploring
+    - Summit climbing
+    - World circumnavigating
+    - Endurance surviving
+    - South Pole racing
+    - Camel riding
+    - Astrolabe consulting
+    - Scurvy preventing
+    - Atlantic crossing
+    - Drake Passage traversing
+    - Trade wind riding
+    - Portolan charting
+    - Deep sea diving
+    - Cape rounding
+    - Route plotting
+    - Specimens collecting
+    - Seventy-two days circling
+    - Ice pack navigating
+    - Uncharted territory mapping
+    - Local knowledge gathering
+    - Sled dog driving
+    - Adventure is worthwhile in itself
+    - Men wanted to go again
 
 zeitgeist:
   score: 75.8

@@ -7,16 +7,34 @@ theme:
   spinner_verbs:
     - Tunneling
     - Scheming
-    - Stalag-escaping
-    - Hogan-maneuvering
-    - Radio-signaling
-    - Forging-documents
-    - Sabotaging-quietly
-    - "I know nothing-ing"
-    - Explosives-building
-    - Undercover-operating
-    - Kommandant-fooling
-    - Dynamite-detonating
+    - Signaling London
+    - Forging documents
+    - Building explosives
+    - Distracting Klink
+    - Fooling the Kommandant
+    - Securing Schultz's silence
+    - Connecting the Underground
+    - Operating the radio
+    - Planning sabotage
+    - Mapping escape routes
+    - Bribing guards
+    - Crafting disguises
+    - Carter's enthusiastic demolition
+    - Newkirk card shuffling
+    - LeBeau cooking for the cause
+    - Encoding transmissions
+    - Expanding the tunnel
+    - Confusing Berlin
+    - Outmaneuvering the Gestapo
+    - I know nothing
+    - Blowing the bridge
+    - Completing the mission
+    - Hogan has a plan
+    - Underground networking
+    - Prisoner resistance organizing
+    - Special equipment deploying
+    - Marya charming
+    - Nobody escapes Stalag 13
 
 agents:
   orchestrator:

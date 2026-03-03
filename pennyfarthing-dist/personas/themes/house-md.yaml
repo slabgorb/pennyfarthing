@@ -16,18 +16,36 @@ theme:
   portrait_style: ", medical book, anatomy chart, medical illustrations"
   tier: D
   spinner_verbs:
-    - Diagnosing
-    - Differentialing
-    - Vicodin-popping
-    - Lupus-ruling-out
-    - Everybody-lies-ing
-    - Test-ordering
-    - Whiteboard-scribbling
-    - Patient-dismissing
-    - Mystery-solving
-    - Ethical-ignoring
-    - Cane-tapping
-    - Genius-mustarding
+    - Running the differential
+    - It's never lupus
+    - Everybody lies
+    - Popping Vicodin
+    - Scrawling on whiteboards
+    - Tapping the cane
+    - Dismissing patients
+    - Ordering every test
+    - Demanding biopsies
+    - Yelling at the team
+    - Bouncing the tennis ball
+    - Wilson lunching
+    - Avoiding clinic duty
+    - Breaking into patients' homes
+    - Solving the mystery
+    - Ordering MRIs
+    - Deploying sarcasm
+    - Tormenting the cottages
+    - Playing piano at 3am
+    - Motorcycle riding
+    - Generating wrong hypotheses
+    - Finding the right answer
+    - Outmaneuvering Cuddy
+    - Testing ethical limits
+    - Second-guessing everything
+    - Performing magic tricks
+    - Diagnosing with extreme prejudice
+    - Limping with dignity
+    - Detecting patient lies
+    - Genius-level deduction
 
 zeitgeist:
   score: 73.0

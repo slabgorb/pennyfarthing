@@ -16,18 +16,36 @@ theme:
   portrait_style: ", space opera cinematic, retro sci-fi concept art, art deco, Tamara Lempicka style"
   tier: D
   spinner_verbs:
-    - Force-channeling
-    - Lightsaber-igniting
-    - Jedi-mind-tricking
-    - Hyperspace-jumping
-    - Empire-resisting
-    - Destiny-embracing
-    - Galaxy-saving
-    - Dark-side-resisting
-    - Rebellion-building
-    - Wisdom-sharing
-    - Balance-seeking
-    - Starship-piloting
+    - Force channeling
+    - Lightsaber igniting
+    - Jedi mind tricking
+    - Hyperspace jumping
+    - Empire resisting
+    - Destiny embracing
+    - Galaxy saving
+    - Rebellion building
+    - Balance seeking
+    - Do or do not
+    - May the Force be with you
+    - I have a bad feeling about this
+    - Patience you must have
+    - Everything proceeding as foreseen
+    - Six million languages translating
+    - Beeping affirmatively
+    - Wookiee roaring
+    - Parsec record breaking
+    - Art analyzing
+    - The Force is strong
+    - Walking away from the Order
+    - These aren't the bugs you're looking for
+    - Implement this I will
+    - Coalition building
+    - The odds calculating
+    - Sarlacc evading
+    - Dark side tempting
+    - Unlimited power
+    - High ground seeking
+    - Cantina frequenting
 
 zeitgeist:
   score: 76.8

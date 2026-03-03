@@ -16,18 +16,36 @@ theme:
   portrait_style: ", 1960s Starfleet, bold primary uniforms, retro-futuristic lighting, Kirk-era heroic"
   tier: B
   spinner_verbs:
-    - Beaming-up
-    - Fascinating-finding
-    - Vulcan-saluting
-    - Kobayashi-Maru-ing
-    - Boldly-going
-    - Risk-embracing
-    - Kirk-pausing-dramatically
-    - Transporting-matter
-    - Communication-bridging
-    - Starship-commanding
-    - Final-frontiers-exploring
-    - Temporal-mysteries-solving
+    - Beaming up
+    - Boldly going
+    - Fascinating finding
+    - Vulcan saluting
+    - Kobayashi Maru refusing
+    - Risk embracing
+    - Dramatically pausing
+    - Transporting matter
+    - Final frontier exploring
+    - Risk is our business
+    - Highly illogical
+    - I'm a doctor not a
+    - I cannae change the laws
+    - Givin' her all she's got
+    - Live long and prosper
+    - Space the final frontier
+    - Shirt tearing
+    - Three dimensional chess playing
+    - Vulcan nerve pinching
+    - Hailing frequencies open
+    - Tricorder scanning
+    - Redshirt deploying
+    - No win scenario defeating
+    - Needs of the many calculating
+    - Klingon confronting
+    - Time portal jumping
+    - Miracle working
+    - Guardian consulting
+    - Yeoman assisting
+    - 47 logical inconsistencies finding
 zeitgeist:
   score: 84.75
   rating: rich

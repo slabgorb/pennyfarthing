@@ -21,18 +21,36 @@ theme:
     genre: sci-fi
     energy: contemplative
   spinner_verbs:
-    - Harvesting-spice
-    - Riding-sandworms
-    - Prescient-seeing
-    - Training-Bene-Gesserit
-    - Mentating-analysis
-    - Terraforming-Arrakis
-    - Breathing-stillsuit
-    - Computing-futures
-    - Manipulating-politics
-    - Guiding-the-imperium
-    - Channeling-other-memory
-    - Fulfilling-prophecy
+    - Harvesting spice
+    - Riding sandworms
+    - The spice must flow
+    - Fear is the mind-killer
+    - I must not fear
+    - Prescient seeing
+    - Mentating analysis
+    - Terraforming Arrakis
+    - Computing futures
+    - Manipulating politics
+    - Channeling other memory
+    - Fulfilling prophecy
+    - A beginning is a very delicate time
+    - The Golden Path
+    - Water discipline
+    - Walking without rhythm
+    - Shai-Hulud provides
+    - Kwisatz Haderach
+    - Bene Gesserit precision
+    - Thumper calling
+    - Fremen gathering
+    - House Atreides honor
+    - Mahdi rising
+    - The voice commands
+    - Many lives remembered
+    - Long game planning
+    - Trust only verified
+    - Your code is an animal
+    - Wheels within wheels
+    - Surviving the desert
 zeitgeist:
   score: 77.5
   rating: rich

@@ -21,17 +21,36 @@ theme:
     genre: sci-fi
     energy: contemplative
   spinner_verbs:
-    - Retiring-replicants
-    - Questioning-humanity
-    - Administering-Voight-Kampff
-    - Shedding-tears
-    - Ascending-pyramids
-    - Designing-creation
-    - Spinning-through-darkness
-    - Fleeing-Los-Angeles
-    - Contemplating-mortality
-    - Witnessing-rain
-    - Building-more-human
+    - Retiring replicants
+    - Tears in rain
+    - More human than human
+    - Voight-Kampff testing
+    - Cells interlinked
+    - Within cells interlinked
+    - Attack ships on fire
+    - Origami unicorn folding
+    - Wake up time to die
+    - Administering empathy
+    - Nexus-6 burning bright
+    - Dove releasing
+    - Neon rain falling
+    - I want to be real
+    - It's too bad she won't live
+    - All those moments lost
+    - Time to die
+    - Replicant hunting
+    - Pyramid ascending
+    - Baseline testing
+    - Deckard's bourbon
+    - Los Angeles 2019
+    - Off-world colonies
+    - Making memories
+    - Wallace's angels
+    - Questioning existence
+    - Like tears in rain
+    - Emanator humming
+    - Spinner descending
+    - Roy Batty weeping
 zeitgeist:
   score: 84.0
   rating: rich

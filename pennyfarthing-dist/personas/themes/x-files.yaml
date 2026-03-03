@@ -16,16 +16,36 @@ theme:
   portrait_style: ", 90s FBI procedural style, dark atmospheric lighting, paranoid tension"
   tier: A
   spinner_verbs:
-    - Truth-seeking
-    - Abduction-investigating
-    - Mulder-believing
-    - Scully-skepticizing
-    - Conspiracy-uncovering
-    - Evidence-analyzing
-    - FBI-maneuvering
-    - Paranormal-exploring
-    - Files-cross-referencing
-    - Truth-documenting
+    - Truth seeking
+    - Abduction investigating
+    - I want to believe
+    - Scully skepticizing
+    - Conspiracy uncovering
+    - Evidence analyzing
+    - FBI filing
+    - Paranormal exploring
+    - Cross-referencing files
+    - Trust no one
+    - Morley smoking
+    - Sunflower seed munching
+    - Parking garage meeting
+    - Lone Gunman publishing
+    - Syndicate watching
+    - Black oil avoiding
+    - Alien autopsying
+    - Deep Throat meeting
+    - The truth is out there
+    - Shape-shifter hunting
+    - Crop circle examining
+    - Classified accessing
+    - Government exposing
+    - DNA testing
+    - Skinner reporting
+    - X marking the spot
+    - Mulder believing anyway
+    - Scully writing the rational explanation
+    - Cigarette lighting in shadows
+    - War of the Coprophages
 
 zeitgeist:
   score: 82.0

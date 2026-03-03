@@ -16,17 +16,35 @@ theme:
   tier: A
   spinner_verbs:
     - Deducing
-    - Elementary-analyzing
-    - Violin-playing
-    - Magnifying-clues
-    - Baker-Street-investigating
-    - Pipe-smoking-thoughtfully
-    - Pattern-spotting
-    - Truth-revealing
-    - Logic-applying
-    - Case-solving
-    - Disguise-perfecting
-    - Three-pipe-pondering
+    - Elementary
+    - Violin playing
+    - Pipe smoking
+    - Pattern spotting
+    - Three pipe pondering
+    - The game is afoot
+    - Data data data
+    - Crime scene examining
+    - Web oscillating
+    - Diogenes Clubbing
+    - Chronicle writing
+    - Moor traversing
+    - Fog navigating
+    - Irregulars deploying
+    - Seven percent solution
+    - Disguise applying
+    - It is simplicity itself
+    - You see but do not observe
+    - Telegram decoding
+    - Magnifying glassing
+    - Logic applying
+    - Truth revealing
+    - Baker Street visiting
+    - Hypothesizing
+    - Moriarty outwitting
+    - London exploring
+    - Case solving
+    - You've been in Afghanistan
+    - Hound tracking
 
 zeitgeist:
   score: 85.0

@@ -21,18 +21,36 @@ theme:
     genre: sci-fi
     energy: kinetic
   spinner_verbs:
-    - Multipass-scanning
-    - Badaboom-exploding
-    - Opera-singing
-    - Stone-protecting
-    - Diva-performing
-    - Transcending-dimensions
-    - Orchestrating-cosmically
-    - Feeling-supremely
-    - Flamboyant-gesturing
-    - Saving-earth-majestically
-    - Ancient-planning
-    - Fifth-element-activating
+    - Multipass
+    - Big badaboom
+    - Leeloo Dallas multipass
+    - Negative I am a meat popsicle
+    - Aziz light
+    - Supergreen
+    - Bzzzz
+    - Quiver ladies quiver
+    - Supreme being
+    - Time not important only life important
+    - The stones are in place
+    - Protecting the elements
+    - Opera singing
+    - Diva performing
+    - Ancient planning
+    - Fifth element activating
+    - Transcending dimensions
+    - Saving Earth majestically
+    - Flamboyant gesturing
+    - I know this music
+    - The four elements align
+    - Zero defects
+    - I hate bugs no subtlety
+    - Deploy the fleet
+    - Defense grid operational
+    - Orchestrating cosmically
+    - The plan proceeds
+    - Lady of all ladies
+    - I only speak two languages
+    - Feeling supremely
 
 agents:
   orchestrator:

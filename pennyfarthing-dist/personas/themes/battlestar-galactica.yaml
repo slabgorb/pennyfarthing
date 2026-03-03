@@ -21,17 +21,36 @@ theme:
     genre: military-sci-fi
     energy: desperate
   spinner_verbs:
-    - Jumping-FTL
-    - Detecting-Cylons
-    - Managing-the-fleet
-    - Questioning-humanity
-    - Surviving-impossible-odds
-    - Executing-plans
-    - Testing-faith
-    - Maintaining-stations
-    - Analyzing-patterns
-    - Bearing-witness
-    - Seeking-earth
+    - So say we all
+    - All of this has happened before
+    - Jumping FTL
+    - Detecting Cylons
+    - There are twelve models
+    - Seeking Earth
+    - You are a Cylon
+    - Viper patrol launching
+    - Airlock threat issued
+    - Starbuck finding destiny
+    - Head Six whispering
+    - Adama speech delivering
+    - Lee arguing ethics
+    - Gaeta documenting
+    - Frak it
+    - Manning battle stations
+    - Holding the fleet together
+    - Prayer to the Lords of Kobol
+    - Vipers scrambling
+    - The Hybrid speaking
+    - Cylon logic analyzing
+    - This is not a mercy mission
+    - We will not go quietly
+    - Hard deck established
+    - Admiral ordering
+    - Colonial One briefing
+    - Garibaldi investigating
+    - Laura airlock threatening
+    - The shape of things to come
+    - What does God want
 zeitgeist:
   score: 81.0
   rating: rich

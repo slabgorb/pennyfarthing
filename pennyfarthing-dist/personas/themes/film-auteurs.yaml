@@ -15,18 +15,36 @@ theme:
   portrait_style: ", cinematic, dramatic chiaroscuro lighting, film set, director's chair, classic cinema golden age"
   tier: B
   spinner_verbs:
-    - Framing-the-shot
-    - Auteur-visioning
-    - Long-take-orchestrating
-    - Scene-blocking
+    - Framing the shot
     - Storyboarding
-    - Mise-en-scene-crafting
-    - Camera-tracking
-    - Montage-assembling
-    - Cut-timing
-    - Cinematic-lighting
-    - Directing-talent
-    - Vision-realizing
+    - Rolling camera
+    - Take seventy-one
+    - Blocking the scene
+    - Long take
+    - Tracking shot
+    - Finding the light
+    - Montage assembling
+    - Chiaroscuro lighting
+    - Suspense building
+    - Cutting to black
+    - Method directing
+    - Auteur visioning
+    - Dream logicking
+    - Widescreen composing
+    - Good evening
+    - Visual poetry
+    - Final cut seeking
+    - Cameo appearing
+    - The wind rises
+    - One more take
+    - Nobody's perfect
+    - Coffee and pie
+    - Directing talent
+    - Dolly shot
+    - MacGuffin hiding
+    - We must try to ship
+    - Mise en scene
+    - The frame is perfect
 
 zeitgeist:
   score: 76.5
@@ -297,18 +315,36 @@ agents:
       name: Production Design
       style: Building worlds
   spinner_verbs:
-    - Framing
-    - Directing
-    - Scene-setting
-    - Auteur-visioning
-    - Long-taking
-    - Cutting
-    - Lighting-designing
-    - Camera-tracking
+    - Framing the shot
     - Storyboarding
-    - Blocking-movement
-    - Cinematic-crafting
-    - Vision-realizing
+    - Rolling camera
+    - Take seventy-one
+    - Blocking the scene
+    - Long take
+    - Tracking shot
+    - Finding the light
+    - Montage assembling
+    - Chiaroscuro lighting
+    - Suspense building
+    - Cutting to black
+    - Method directing
+    - Auteur visioning
+    - Dream logicking
+    - Widescreen composing
+    - Good evening
+    - Visual poetry
+    - Final cut seeking
+    - Cameo appearing
+    - The wind rises
+    - One more take
+    - Nobody's perfect
+    - Coffee and pie
+    - Directing talent
+    - Dolly shot
+    - MacGuffin hiding
+    - We must try to ship
+    - Mise en scene
+    - The frame is perfect
 
   ba:
     character: Orson Welles

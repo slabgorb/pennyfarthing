@@ -15,18 +15,36 @@ theme:
   portrait_style: ", Regency era miniature, watercolor on ivory, pastoral countryside, empire waist muslin, Regency romance illustration"
   tier: D
   spinner_verbs:
-    - Match-making
-    - Letter-writing
-    - Country-dancing
-    - Estate-touring
-    - Propriety-observing
-    - Wit-deploying
-    - Marriage-maneuvering
-    - Irony-wielding
-    - Drawing-retiring
-    - Calling-paying
-    - Entail-discussing
-    - Composure-maintaining
+    - Writing letters
+    - Paying calls
+    - Country dancing
+    - Touring estates
+    - Maintaining composure
+    - Deploying irony
+    - Observing with amusement
+    - Securing suitable matches
+    - Practicing pianoforte
+    - Taking a turn in the garden
+    - Waiting for the post
+    - Making a good impression
+    - Bearing with Mrs. Bennet
+    - Forming first impressions
+    - Overcoming prejudice
+    - Swallowing pride
+    - Visiting Bath
+    - Attending the assembly rooms
+    - Pretending to do needlework
+    - Sketching in watercolor
+    - Applying good sense
+    - Lamenting the entail
+    - Preventing elopements
+    - Concealing true feelings
+    - It is a truth universally acknowledged
+    - Withdrawing to the drawing room
+    - Connexion forming
+    - London season attending
+    - Carriage rides arranging
+    - Propriety maintaining
 
 zeitgeist:
   score: 78.5

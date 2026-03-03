@@ -15,18 +15,36 @@ theme:
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
   tier: D
   spinner_verbs:
-    - Barricade-building
-    - Revolutionary-singing
-    - Bread-stealing
-    - Redemption-seeking
-    - Javert-pursuing
-    - Mercy-granting
-    - Sacrifice-offering
-    - Uprising-rising
-    - Conviction-following
-    - Love-enduring
-    - Justice-pursuing
-    - Conscience-wrestling
+    - Barricade building
+    - Redemption seeking
+    - Bread stealing
+    - Conscience wrestling
+    - Stars aligning
+    - Grace extending
+    - Javert pursuing
+    - Sewer escaping
+    - Revolutionary singing
+    - Mercy granting
+    - Sacrifice offering
+    - Law enforcing
+    - Rain enduring
+    - Uprising rising
+    - Justice pursuing
+    - Silver candlestick giving
+    - Hugo digressing
+    - Valjean carrying
+    - Love enduring
+    - Another story beginning
+    - Waterloo surviving
+    - Liberty waving
+    - 24601
+    - I dreamed a dream
+    - One day more
+    - Do you hear the people sing
+    - Stars fixed in their course
+    - Thenardier scheming
+    - Cosette protecting
+    - The bishop forgiving
 zeitgeist:
   score: 67.75
   rating: moderate

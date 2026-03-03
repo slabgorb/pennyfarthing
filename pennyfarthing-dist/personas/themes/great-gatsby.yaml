@@ -16,18 +16,36 @@ theme:
   portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Art Deco illustration"
   tier: B
   spinner_verbs:
-    - Old-sport-greeting
-    - Green-light-reaching
-    - Jazz-age-partying
-    - Bootlegging-acquiring
-    - Gatsby-gazing
-    - Dream-chasing
-    - Mansion-furnishing
-    - Careless-breaking
-    - Reinventing-self
-    - Longing-yearning
-    - Dock-signaling
-    - Valley-ashes-witnessing
+    - Old sport greeting
+    - Green light reaching
+    - Parties throwing
+    - Bootlegging
+    - Dream chasing
+    - Reinventing self
+    - Shirt collecting
+    - Old money flaunting
+    - Jazz age reveling
+    - Careless breaking
+    - So we beat on
+    - Boats against the current
+    - Voice full of money
+    - West Egg gazing
+    - Dock signaling
+    - Valley ashing
+    - Champagne pouring
+    - Nick observing
+    - Daisy calling
+    - Mansion glowing
+    - Green light glowing
+    - Honestly Gatsby
+    - Can't repeat the past
+    - Of course you can
+    - The orgastic future
+    - Swimming pool floating
+    - Yellow car driving
+    - Longing yearning
+    - We shall repeat the past
+    - Born anew
 
 zeitgeist:
   score: 77.25

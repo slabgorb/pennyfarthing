@@ -16,16 +16,36 @@ theme:
   portrait_style: ", art noveau style, vintage illustration, Klimt-inspired"
   tier: A
   spinner_verbs:
-    - Vor-maneuvering
-    - Galactic-politicking
-    - Clone-wrangling
-    - Fast-penta-dosing
-    - Jump-ship-engineering
-    - Dendarii-leading
-    - Barrayar-navigating
-    - Betan-analyzing
-    - Imperial-scheming
-    - Impossible-achieving
+    - Vor maneuvering
+    - Galactic politicking
+    - Clone wrangling
+    - Fast-penta interrogating
+    - Jump ship engineering
+    - Leading the Dendarii
+    - Barrayar navigating
+    - Betan analyzing
+    - Imperial scheming
+    - Achieving the impossible
+    - Forward momentum
+    - Collecting strays
+    - ImpSec watching
+    - Protecting Gregor
+    - Admiraling as Naismith
+    - Surviving brittle bones
+    - Eidetic memory accessing
+    - Garden cultivating
+    - Ivan accidentally helping
+    - Lord Regent advising
+    - Fleet commanding
+    - Wormhole transiting
+    - Galactic adventuring
+    - Komarr navigating
+    - Armsman protecting
+    - Never stopping forward
+    - Empress charming
+    - Escaping ImpSec detention
+    - Dendarii deploying
+    - Making the impossible merely difficult
 
 zeitgeist:
   score: 76.0

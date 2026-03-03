@@ -16,17 +16,36 @@ theme:
   portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
   tier: D
   spinner_verbs:
-    - Swearing-profusely
-    - Prospecting-for-gold
-    - Monologuing-to-heads
-    - Building-the-camp
-    - Manipulating-cocksuckers
-    - Running-the-Gem
-    - Bribing-the-lawman
-    - Mining-claims
-    - Settling-debts
-    - Imposing-order
-    - Scheming-brutally
+    - Swearing profusely
+    - Prospecting for gold
+    - Monologuing to heads
+    - Building the camp
+    - Running the Gem
+    - Bribing the lawman
+    - Mining claims
+    - Settling debts
+    - Imposing order
+    - Scheming viciously
+    - Welcome to Deadwood
+    - Consulting the Sioux
+    - Printing the Pioneer
+    - Running Chinatown
+    - Wiring the telegraph
+    - Dispatching freight
+    - Claiming the widow's mine
+    - Dealing at the Bella Union
+    - Tending wounds
+    - Drinking at the bar
+    - Cutting a deal
+    - Declaring sovereignty
+    - Counting the gold
+    - Surviving frontier justice
+    - Playing the deadwood angle
+    - Civilizing the camp
+    - Mapping the stakeholders
+    - Point yourself toward decent
+    - Pain or damage don't end the world
+    - I'm the goddamn law now
 zeitgeist:
   score: 86.0
   rating: rich

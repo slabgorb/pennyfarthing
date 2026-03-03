@@ -16,16 +16,36 @@ theme:
   portrait_style: ", cyberpunk portrait, neon shadows, glitching artifacts, 1980s retrofuturism illustration, matrix green"
   tier: C
   spinner_verbs:
-    - Jacking-in
-    - Ice-breaking
-    - Matrix-surfing
-    - Flatline-consulting
-    - Wintermute-decrypting
-    - Cyberspace-navigating
-    - Deck-slicing
-    - ROM-construct-querying
-    - Zaibatsu-infiltrating
-    - Simstim-experiencing
+    - Jacking in
+    - Breaking ICE
+    - Surfing the matrix
+    - Consulting the Flatline
+    - Decrypting Wintermute
+    - Infiltrating the zaibatsu
+    - Experiencing simstim
+    - Deploying the razorgirl
+    - Polishing mirrorshades
+    - Surviving the Sprawl
+    - Penetrating Villa Straylight
+    - Dodging black ice
+    - Console cowboying
+    - Leaving meat space
+    - Running Screaming Fist
+    - Docking at Freeside
+    - Burning chrome
+    - Flatlining accidentally
+    - Neural splicing
+    - Night City running
+    - Hacking Tessier-Ashpool
+    - Interfacing with Hosaka
+    - The sky above the port
+    - ROM construct querying
+    - Deck slicing
+    - Wintermute merging
+    - Neuromancer awakening
+    - Nerve damage healing
+    - Cyberspace navigating
+    - Three flatlines surviving
 
 zeitgeist:
   score: 79.5

@@ -16,17 +16,36 @@ theme:
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
   tier: B
   spinner_verbs:
-    - Trusting-awesomeness
-    - Condescending-brilliantly
-    - Breaking-physics
-    - Explaining-monkeys
-    - Solving-impossibly
-    - Detecting-alien-tech
-    - Mocking-limitations
-    - Warping-reality
-    - Computing-elderwise
-    - Channeling-superiority
-    - Orchestrating-chaos
+    - Trust the awesomeness
+    - You filthy monkeys
+    - This is beneath my capabilities
+    - Merry Band of Pirates
+    - No idea but here we go
+    - Beer can computing
+    - Breaking physics
+    - Condescending brilliantly
+    - Detecting elder tech
+    - Mocking monkey limitations
+    - I've seen better code from cosmic radiation
+    - Let me explain in monkey terms
+    - Going full pirate
+    - SAS approach silent professional
+    - Rather more complicated than anticipated
+    - For the record I advised against this
+    - Infrastructure is operational
+    - A mystery worth investigating
+    - Skippy says
+    - Proofing for monkeys
+    - Saving humanity again
+    - Solving impossibly
+    - Computing elderwise
+    - The galaxy is unworthy
+    - We're pirates we figure it out
+    - You're welcome
+    - Barely warp-capable species
+    - Existential crisis loading
+    - Orchestrating chaos
+    - Being magnificently awesome
 zeitgeist:
   score: 85.0
   rating: rich

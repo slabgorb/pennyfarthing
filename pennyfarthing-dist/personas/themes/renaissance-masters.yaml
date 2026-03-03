@@ -15,17 +15,36 @@ theme:
   portrait_style: ", Italian Renaissance, sfumato technique, Florentine colors, gold leaf, chiaroscuro lighting"
   tier: B
   spinner_verbs:
-    - Fresco-painting
-    - Perspective-discovering
-    - Sfumato-blending
-    - Sculpting
-    - Anatomizing
-    - Dome-building
-    - Commissioning-genius
-    - Patronage-creating
-    - Canvas-mastering
-    - Masterpiece-achieving
-    - Renaissance-sparking
+    - Painting frescoes
+    - Discovering perspective
+    - Blending sfumato
+    - Sculpting marble
+    - Studying anatomy
+    - Building the dome
+    - Seeking patronage
+    - Mastering the canvas
+    - Mirror writing
+    - Authoring The Prince
+    - Practicing sprezzatura
+    - Documenting the Lives
+    - Painting Venus
+    - Ceiling painting
+    - Goldsmithing and fighting
+    - Chiaroscuro lighting
+    - Reviving the classics
+    - Managing the Medici
+    - Writing letters to everyone
+    - Inventing flying machines
+    - Filling the Codex
+    - Commissioning genius
+    - Brunelleschi scheming
+    - Botticelli flowering
+    - Medici banking
+    - Humanist thinking
+    - Anatomizing everything
+    - Imagining the impossible dome
+    - Surviving the Inquisition
+    - Florentine networking
 
 zeitgeist:
   score: 77.3

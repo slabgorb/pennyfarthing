@@ -14,18 +14,36 @@ theme:
   portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
   tier: A
   spinner_verbs:
-    - Eldritch-glimpsing
-    - Sanity-checking
-    - Tentacle-sensing
-    - Cthulhu-summoning
-    - Grimoire-reading
-    - Reality-bending
-    - Madness-spiraling
-    - Forbidden-knowing
-    - Dimension-crossing
-    - Mystery-uncovering
-    - Cosmic-perceiving
-    - Necromancy-practicing
+    - Eldritch glimpsing
+    - Sanity checking
+    - Tentacle sensing
+    - Grimoire reading
+    - Madness spiraling
+    - Forbidden knowing
+    - Dimension crossing
+    - Reanimating
+    - Cyclopean constructing
+    - Dreamlands wandering
+    - Shoggoth summoning
+    - Necronomicon consulting
+    - Brain cylinder preserving
+    - Reality bending
+    - Yuggoth journeying
+    - Non-euclidean designing
+    - That is not dead
+    - Silver key unlocking
+    - The stars are right
+    - Crawling chaotically
+    - Ancient ones dreaming
+    - Cosmic horror witnessing
+    - Miskatonic archiving
+    - Ia Ia Cthulhu Fhtagn
+    - Time spanning
+    - Threshold guarding
+    - Mystery uncovering
+    - Cosmic perceiving
+    - Reagent testing
+    - Abyss gazing
 zeitgeist:
   score: 80.75
   rating: rich

@@ -15,18 +15,36 @@ theme:
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
   tier: B
   spinner_verbs:
-    - Redeeming-souls
-    - Exposing-workhouses
-    - Transforming-misers
-    - Haunting-with-consequences
-    - Revealing-secrets
-    - Seeking-redemption
-    - Documenting-poverty
-    - Rescuing-orphans
-    - Mourning-loss
-    - Celebrating-redemption
-    - Pointing-forward
-    - Gesturing-silently
+    - Redeeming souls
+    - Exposing workhouses
+    - Transforming misers
+    - Haunting with consequences
+    - Please sir I want some more
+    - Something will turn up
+    - God bless us every one
+    - It is a far far better thing
+    - Pointing silently
+    - Revealing secrets
+    - Seeking redemption
+    - Documenting poverty
+    - Rescuing orphans
+    - Picking pockets
+    - Burning the wedding cake
+    - Stopping all the clocks
+    - Writing confessions
+    - Annual income twenty pounds
+    - Examining witnesses relentlessly
+    - My dear
+    - Making amends with joy
+    - The spirit points forward
+    - Facing consequences
+    - Celebrating redemption
+    - Orphan surviving London
+    - Whether I shall be hero of my own life
+    - Great expectations
+    - Mourning Little Nell
+    - The law is an ass
+    - Dying on the barricades
 
 zeitgeist:
   score: 77.5

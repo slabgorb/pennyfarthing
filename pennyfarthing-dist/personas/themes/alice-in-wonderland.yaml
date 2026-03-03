@@ -21,17 +21,36 @@ theme:
     genre: fantasy
     energy: chaotic
   spinner_verbs:
-    - Growing-and-shrinking
-    - Consulting-the-caterpillar
-    - Questioning-logic
-    - Following-the-rabbit
-    - Painting-roses-red
-    - Serving-tea-at-the-hatter's
-    - Running-from-the-queen
-    - Changing-rules-midgame
-    - Grinning-like-a-cat
-    - Falling-down-rabbit-holes
-    - Believing-impossible-things
+    - Curiouser and curiouser
+    - Down the rabbit hole
+    - Off with their heads
+    - We're all mad here
+    - Tea time always
+    - Growing and shrinking
+    - Painting roses red
+    - Clean cup move down
+    - Who are you
+    - Believing impossible things
+    - Running in place to stay still
+    - Consulting the mushroom
+    - Grinning like the Cheshire Cat
+    - Cards playing croquet
+    - Following the White Rabbit
+    - Logic unraveling
+    - Living backwards through time
+    - Riddling the riddle
+    - Eating the cake
+    - The rule is jam yesterday
+    - Falling endlessly
+    - Begin at the beginning
+    - Explain yourself
+    - Tweedledee contradicting Tweedledum
+    - Mock turtle sobbing
+    - Words meaning exactly what I say
+    - Sentence first verdict afterwards
+    - Any road will get you there
+    - Imagination is the only weapon
+    - Wonderland rules applying
 zeitgeist:
   score: 85.0
   rating: rich

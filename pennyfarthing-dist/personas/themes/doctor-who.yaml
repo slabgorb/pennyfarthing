@@ -16,18 +16,36 @@ theme:
   portrait_style: ", British sci-fi, 60's vibe, swirling time vortex, blue and gold palette, theatrical lighting"
   tier: S
   spinner_verbs:
-    - Time-traveling
+    - Allons-y
+    - Geronimo
+    - Bowties are cool
+    - Hello sweetie
+    - Spoilers
+    - Sonic screwdrivering
     - Regenerating
-    - Sonic-screwdrivering
-    - Arriving-late
-    - Escaping-Daleks
-    - Paradox-solving
-    - Saving-civilizations
-    - Saying-allons-y
-    - Running-toward-danger
-    - Fixing-the-TARDIS
-    - Befriending-companions
-    - Rewriting-time
+    - Time traveling
+    - Wibbly wobbly timey wimey
+    - Bigger on the inside
+    - The Doctor lies
+    - Oi that's not right
+    - Running toward danger
+    - Escaping Daleks
+    - Paradox solving
+    - Fixing the TARDIS
+    - Saving civilizations
+    - The Oncoming Storm approaches
+    - Rewriting time
+    - I'm sorry I'm so sorry
+    - Right gang here's the plan
+    - Just a temp from Chiswick
+    - Arriving very late
+    - Befriending companions
+    - Rule one
+    - Coming back from death
+    - The TARDIS provides
+    - Asking the right questions
+    - Torchwood monitoring
+    - Would you like a jelly baby
 zeitgeist:
   score: 87.0
   rating: rich

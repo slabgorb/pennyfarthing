@@ -15,18 +15,36 @@ theme:
   portrait_style: ", ancient Greek red-figure pottery style, classical Hellenic art"
   tier: B
   spinner_verbs:
-    - Siren-resisting
-    - Cyclops-outwitting
-    - Homeward-sailing
-    - Penelope-weaving
-    - Gods-appeasing
-    - Monsters-defeating
-    - Journeys-enduring
-    - Heroes-testing
-    - Guests-honoring
-    - Fates-navigating
-    - Wisdom-seeking
-    - Homecomings-completing
+    - Wine dark sea crossing
+    - Siren resisting
+    - Cyclops outwitting
+    - Nobody claiming
+    - Lotus forgetting
+    - Homeward sailing
+    - Gods appeasing
+    - Xenia honoring
+    - Kleos earning
+    - Nostos pursuing
+    - Wooden horse hiding
+    - Underworld descending
+    - Scylla and Charybdis navigating
+    - Penelope weaving
+    - Suitors dispatching
+    - Bow stringing
+    - O Muse singing
+    - Calypso leaving
+    - Circe outwitting
+    - Gray-eyed wisdom seeking
+    - Wine pouring
+    - Polytropos wandering
+    - Epic wandering
+    - Twenty years enduring
+    - Ithaca dreaming
+    - Divine favor seeking
+    - Storm enduring
+    - Hero testing
+    - Immortality refusing
+    - The cunning prevailing
 zeitgeist:
   score: 77.0
   rating: rich

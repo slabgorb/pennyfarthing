@@ -18,16 +18,34 @@ theme:
   spinner_verbs:
     - Assembling
     - Snapping
-    - Vibranium-forging
-    - Multiverse-hopping
-    - Stark-quipping
     - Avenging
-    - Power-wielding
-    - Portal-opening
-    - Shield-raising
-    - Quantum-phasing
-    - Time-bending
-    - Heroes-uniting
+    - Vibranium forging
+    - Multiverse hopping
+    - I am Iron Man
+    - Portal opening
+    - Shield throwing
+    - Language!
+    - Gamma stress testing
+    - On your left
+    - JARVIS consulting
+    - Infinity Stone wielding
+    - Mind Stone glowing
+    - Wakanda Forever
+    - Web slinging
+    - Arc reactor powering
+    - There was an idea
+    - Endgame planning
+    - I can do this all day
+    - We have a Hulk
+    - Part of the journey is the end
+    - Suit upgrading
+    - Eye of Agamotto consulting
+    - Quantum phasing
+    - Time bending
+    - Heroes uniting
+    - Runbook following
+    - Delete this entire UI
+    - Friendly neighborhood helping
 zeitgeist:
   score: 72.0
   rating: rich

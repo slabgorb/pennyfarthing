@@ -27,18 +27,36 @@ theme:
     genre: fantasy
     energy: contemplative
   spinner_verbs:
-    - Ring-bearing
-    - Fellowship-forming
-    - Mordor-walking
-    - Mithril-forging
-    - Shire-longing
-    - Dragon-slaying
-    - Darkness-resisting
-    - Quest-continuing
-    - Hope-holding
-    - Kindness-showing
-    - Corruption-resisting
-    - Light-keeping
+    - Ring bearing
+    - Fellowship forming
+    - You shall not pass
+    - One does not simply
+    - Precious hoarding
+    - Mordor walking
+    - Pipe smoking
+    - Mithril wearing
+    - Taters boiling
+    - Elvish singing
+    - Axe throwing
+    - Council convening
+    - Second breakfast considering
+    - Shire longing
+    - Darkness resisting
+    - Arrow counting
+    - Fireworks launching
+    - Secret paths finding
+    - Hope kindling
+    - Fool of a Took
+    - AND MY AXE
+    - My Precious
+    - Cast it into the fire
+    - That still only counts as one
+    - Reforging
+    - Riddles in the dark
+    - The road goes ever on
+    - Returning
+    - Lembas sharing
+    - Shadowfax summoning
 zeitgeist:
   score: 80.0
   rating: rich

@@ -5,18 +5,36 @@ theme:
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
   spinner_verbs:
-    - Redrum-typing
-    - Overlook-haunting
-    - Derry-floating
-    - Dark-Tower-seeking
-    - Shining-channeling
-    - Curse-unraveling
-    - Horror-weaving
-    - Supernatural-encountering
-    - Dead-zones-sensing
-    - Carrie-raging
-    - IT-summoning
-    - Apocalypse-surviving
+    - Redrum typing
+    - Overlook haunting
+    - Derry floating
+    - Dark Tower seeking
+    - Shining channeling
+    - Apocalypse surviving
+    - We all float down here
+    - The Walkin' Dude walking
+    - Get busy building
+    - I aim with my eye
+    - All work and no play
+    - Here's Johnny
+    - The wheel of ka turning
+    - Number one fan visiting
+    - Needful things providing
+    - Pennywise ballooning
+    - Roland gunslingering
+    - 19 years tunnel digging
+    - Dead requirements seeing
+    - Self repairing
+    - Rock and roll deploying
+    - Ancient evil waking
+    - Ka-tet assembling
+    - Dead zone touching
+    - Horror weaving
+    - Curse unraveling
+    - Carrie raging
+    - IT summoning
+    - Prophetically planning
+    - Glowing red narrowing
 
 agents:
   orchestrator:

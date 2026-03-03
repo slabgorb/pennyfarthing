@@ -15,18 +15,36 @@ theme:
   portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, etching style"
   tier: C
   spinner_verbs:
-    - Brooding-darkly
-    - Haunting-corridors
-    - Crypt-crawling
-    - Raven-quoting
-    - Lightning-harnessing
-    - Castle-descending
-    - Tragedy-unfolding
-    - Secrets-unveiling
-    - Cursed-suffering
-    - Supernatural-communing
-    - Dread-spreading
-    - Gothic-chronicling
+    - Brooding darkly
+    - Haunting corridors
+    - Lightning harnessing
+    - Crypt descending
+    - Quoth the raven
+    - Nevermore
+    - It's alive
+    - Undead rising
+    - Fog shrouded wandering
+    - Castle exploring
+    - Darkness spreading
+    - Forbidden creating
+    - Garlic hanging
+    - Jekyll transforming
+    - Hyde unleashing
+    - Moors wandering
+    - Gothic chronicling
+    - Supernatural communing
+    - Dread building
+    - Welcome to my codebase
+    - The creation escaped
+    - Enter freely
+    - Midnight tolling
+    - Villagers torching
+    - Memory palace touring
+    - Madwoman attic keeping
+    - Dorian aging
+    - I never drink bad code
+    - What have we done
+    - The lightning rods await
 
 zeitgeist:
   score: 75.0

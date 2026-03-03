@@ -20,17 +20,36 @@ theme:
     genre: action
     energy: explosive
   spinner_verbs:
-    - Planning-the-mission
-    - Improvising-the-con
-    - Building-contraptions
-    - Flying-something-crazy
-    - Escaping-the-army
-    - Charming-the-mark
-    - Fixing-the-van
-    - Running-the-jazz
-    - Getting-the-team-together
-    - Outmaneuvering-Lynch
-    - Breaking-everything-first
+    - I love it when a plan comes together
+    - On the jazz
+    - Building contraptions
+    - Overkill is underrated
+    - Pity the fool
+    - Quit your jibber-jabber
+    - I ain't getting on that plane
+    - Running the con
+    - Getting the team together
+    - Charming the mark
+    - Welding something spectacular
+    - Fashioning a disguise
+    - Cigar-chomping strategy
+    - Fixing the van
+    - Making things go boom
+    - Talking the client into it
+    - Acquiring supplies creatively
+    - Breaking everything first
+    - Dodging the MPs
+    - Billy says there's a bug
+    - Executing the plan
+    - Improvising weapons
+    - Outfoxing Colonel Lynch
+    - Drinking milk
+    - Flying something crazy
+    - Escaping from prison again
+    - The van is ready
+    - Hannibal smiling
+    - Face schmoozing
+    - Murdock going howling mad
 zeitgeist:
   score: 89.0
   rating: rich

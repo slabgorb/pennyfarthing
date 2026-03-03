@@ -21,17 +21,36 @@ theme:
     genre: mystery
     energy: methodical
   spinner_verbs:
-    - Deducing-motives
-    - Examining-clues
-    - Interviewing-suspects
-    - Consulting-little-grey-cells
-    - Disguising-the-truth
-    - Spotting-red-herrings
-    - Organizing-evidence
-    - Reading-mannerisms
-    - Unmasking-the-culprit
-    - Recording-observations
-    - Solving-the-mystery
+    - Consulting the little grey cells
+    - Pattern recognition
+    - Examining clues
+    - Interviewing suspects
+    - Spotting red herrings
+    - Observing mannerisms
+    - Unmasking the murderer
+    - Gathering the suspects
+    - Knitting and watching
+    - Village gossip network
+    - Applying psychology
+    - Reconstructing the crime
+    - Finding the motive
+    - Reading between the lines
+    - The impossible has happened
+    - Considering the character
+    - Checking the alibis
+    - Order and method
+    - It is all in the psychology
+    - And then there were none
+    - Recognizing the pattern
+    - Behind the smile lies guilt
+    - Following the evidence
+    - Dramatic revelation
+    - Orient Express reasoning
+    - Tea party deduction
+    - The truth will emerge
+    - Nothing but the facts
+    - Miss Marple observing
+    - Poirot mustache-twitching
 
 zeitgeist:
   score: 71.75

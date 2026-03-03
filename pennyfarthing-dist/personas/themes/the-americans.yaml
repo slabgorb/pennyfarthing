@@ -16,18 +16,36 @@ theme:
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, red and black color scheme"
   tier: B
   spinner_verbs:
-    - Spy-crafting
-    - Dead-dropping
-    - Wig-donning
-    - Handler-reporting
-    - Identity-maintaining
-    - Secrets-guarding
-    - Missions-executing
-    - Covers-protecting
-    - Defection-contemplating
-    - Loyalties-testing
-    - Kremlin-serving
-    - Families-juggling
+    - Cover maintaining
+    - Dead dropping
+    - Wig donning
+    - Handler reporting
+    - KGB executing
+    - Moscow Center serving
+    - FBI surveilling
+    - Counterintelligence running
+    - Identity switching
+    - Suburban legend maintaining
+    - Brush passing
+    - Exfiltrating
+    - Defection contemplating
+    - Loyalties questioning
+    - The Center obeying
+    - Secrets guarding
+    - Elizabeth hardening
+    - Philip wavering
+    - Martha deceiving
+    - Cold War fighting
+    - Double agenting
+    - Rezidentura operating
+    - Long-game playing
+    - American dreaming
+    - Truth unraveling
+    - Paige awakening
+    - Nina surviving
+    - Oleg questioning
+    - Comrade reporting
+    - The mission executing
 
 zeitgeist:
   score: 72.0

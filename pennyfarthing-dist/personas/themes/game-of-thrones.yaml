@@ -16,18 +16,36 @@ theme:
   portrait_style: ", medieval fantasy,  gritty lighting, ice and fire"
   tier: S
   spinner_verbs:
-    - Winter-coming
-    - Iron-throne-claiming
-    - Valyrian-commanding
-    - Raven-sending
-    - Scheming-plotting
-    - Knee-bending
-    - Dragon-breathing
-    - Sword-wielding
-    - Kingdom-ruling
-    - Betrayal-brewing
-    - House-warring
-    - Prophecy-fulfilling
+    - Winter is coming
+    - Iron Throne claiming
+    - Fire and blood
+    - Dracarys
+    - A Lannister always pays
+    - Bend the knee
+    - The night is dark
+    - Valar morghulis
+    - Hold the door
+    - The North remembers
+    - Chaos is a ladder
+    - Power is power
+    - Little birds reporting
+    - Raven sending
+    - Scheming the schemes
+    - Oath keeping
+    - Valyrian steel forging
+    - Wall defending
+    - King's Landing plotting
+    - Lord of Light praying
+    - Not today
+    - Shame shame shame
+    - Sword in the darkness
+    - The things I do for love
+    - Dragon fire breathing
+    - House warring
+    - Betrayal brewing
+    - Prophecy fulfilling
+    - What is dead may never die
+    - You know nothing Jon Snow
 
 zeitgeist:
   score: 79.3

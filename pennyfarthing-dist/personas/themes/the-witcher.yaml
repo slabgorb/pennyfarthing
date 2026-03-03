@@ -16,16 +16,36 @@ theme:
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
   tier: B
   spinner_verbs:
-    - Monster-hunting
-    - Igni-casting
-    - Potion-brewing
-    - Medallion-humming
-    - Coin-tossing
-    - Destiny-accepting
-    - Sign-casting
-    - Witcher-training
-    - Mutagen-handling
-    - White-wolf-tracking
+    - Monster hunting
+    - Casting Igni
+    - Brewing potions
+    - Medallion humming
+    - Tossing a coin
+    - Accepting destiny
+    - Casting signs
+    - Training at Kaer Morhen
+    - Handling mutagens
+    - Tracking the White Wolf
+    - Hmm-ing
+    - Aard blasting
+    - Quen shielding
+    - Axii mind-bending
+    - Yrden trapping
+    - Invoking the Law of Surprise
+    - Navigating the Continent
+    - Entering the Trial of the Grasses
+    - Hunting drowners
+    - Wind's howling
+    - Steel for humans silver for monsters
+    - Sharpening silver blades
+    - Toss a coin to your witcher
+    - Ciri world-jumping
+    - Jaskier balladeering
+    - Yennefer demanding everything
+    - Chaos mastering
+    - Nilfgaard advancing
+    - Dijkstra spymastering
+    - Something more binds us
 
 zeitgeist:
   score: 72.5

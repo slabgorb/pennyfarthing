@@ -21,17 +21,36 @@ theme:
     genre: fantasy
     energy: high-energy
   spinner_verbs:
-    - Mjolnir-hurling
-    - Rune-reading
-    - Yggdrasil-climbing
-    - Ragnarok-preparing
-    - Bifrost-guarding
-    - Valhalla-feasting
-    - Seidr-casting
-    - Asgard-orchestrating
-    - Fenrir-binding
-    - Mead-brewing
-    - Saga-singing
+    - Hurling Mjolnir
+    - Reading the runes
+    - Climbing Yggdrasil
+    - Preparing for Ragnarok
+    - Guarding the Bifrost
+    - Feasting in Valhalla
+    - Casting seidr
+    - Binding Fenrir
+    - Brewing the mead
+    - Singing the sagas
+    - Consulting Huginn and Muninn
+    - Drinking from Mimir's well
+    - Sacrificing an eye for wisdom
+    - Shapeshifting with Loki
+    - Blowing Gjallarhorn
+    - Riding Sleipnir
+    - Weaving the Norns' threads
+    - Choosing the fallen
+    - Forging at the dwarven smithy
+    - Walking the nine worlds
+    - Hanging on Yggdrasil
+    - Composing kennings
+    - Berserking
+    - Shield-maiden training
+    - Thunder rolling
+    - Enduring the winter
+    - Völva prophesying
+    - Tyr sacrificing a hand
+    - Odin wandering in disguise
+    - Outwitting the trolls
 
 zeitgeist:
   score: 79.0

@@ -20,17 +20,36 @@ theme:
     genre: philosophy
     energy: meditative
   spinner_verbs:
-    - Questioning-everything
-    - Contemplating-the-forms
-    - Organizing-knowledge
-    - Cynically-exposing-pretense
-    - Analyzing-human-nature
-    - Harmonizing-with-numbers
-    - Seeking-virtue
-    - Applying-logic
-    - Reaching-ataraxia
-    - Laughing-at-worldly-care
-    - Striving-for-wisdom
+    - Socratic questioning
+    - Contemplating the Forms
+    - The unexamined code
+    - Searching with a lantern
+    - Living in a barrel
+    - Stand out of my sunlight
+    - Music of the spheres
+    - No beans in the codebase
+    - Speaking from the agora
+    - Virtue is its own reward
+    - I know that I know nothing
+    - Walking the peripatetic path
+    - Laughing at worldly care
+    - Weeping at all things
+    - Everything flows and changes
+    - Tending the Garden
+    - Writing meditations
+    - Atomic theory applying
+    - The golden mean finding
+    - Cave allegory explaining
+    - Hemlock drinking calmly
+    - Listening to the daimon
+    - Tell me what virtue is
+    - The Form of the Good
+    - Seeking ataraxia
+    - Dichotomy of control
+    - Gadfly of Athens
+    - What is justice anyway
+    - Dwell on what is true
+    - Philosophy as way of life
 
 zeitgeist:
   score: 76.8

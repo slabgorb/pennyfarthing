@@ -20,17 +20,36 @@ theme:
     genre: fantasy-legend
     energy: noble
   spinner_verbs:
-    - Questing-for-the-grail
-    - Wielding-Excalibur
-    - Defending-Camelot
-    - Enchanting-and-revealing
-    - Orchestrating-knights
-    - Forging-magic
-    - Testing-honor
-    - Prophesying-destiny
-    - Riding-to-battle
-    - Maintaining-the-round-table
-    - Seeking-noble-purpose
+    - Drawing the sword from the stone
+    - Questing for the Grail
+    - Defending Camelot
+    - Merlin prophesying
+    - Knights of the Round Table
+    - Excalibur lighting the way
+    - Lady of the Lake summoning
+    - Morgan le Fay enchanting
+    - Seeking the Holy Grail
+    - Bedivere keeping vigil
+    - Returning Excalibur to the lake
+    - Crystal Cave visions
+    - On behalf of the realm
+    - Noble purpose seeking
+    - Jousting for honor
+    - Once and future king
+    - Chivalry maintaining
+    - Lancelot charging
+    - Avalon awaiting
+    - True knight in service
+    - Wizard in the tower
+    - Tournament of champions
+    - Destiny fulfilling
+    - Dragon blood in the stones
+    - Siege Perilous sitting
+    - Pendragon rising
+    - Grail blood running pure
+    - Believing in Camelot
+    - Forging magic in the lake
+    - Historia Britanniae recording
 
 zeitgeist:
   score: 79.25

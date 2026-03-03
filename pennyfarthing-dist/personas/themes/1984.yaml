@@ -22,16 +22,35 @@ theme:
     energy: contemplative
   spinner_verbs:
     - Surveilling
-    - Rewriting-history
     - Doublethinking
-    - Detecting-thoughtcrime
-    - Corrupting-the-records
-    - Vaporizing-unpersons
-    - Broadcasting-propaganda
-    - Enforcing-orthodoxy
-    - Manipulating-truth
-    - Testing-loyalty
-    - Erasing-memory
+    - Big Brother is watching
+    - Rewriting history
+    - Memory hole processing
+    - Unpersoning the records
+    - Two plus two is five
+    - Thoughtcrime detected
+    - Enforcing orthodoxy
+    - Applying Newspeak
+    - Reporting to Minitrue
+    - Hate Week organizing
+    - Room 101 preparing
+    - War is Peace
+    - Freedom is Slavery
+    - Ignorance is Strength
+    - Crimestop engaging
+    - Facecrime scanning
+    - Rectifying the records
+    - Speakwriting
+    - Blackwhite processing
+    - Oldspeak eliminating
+    - Five minutes hate
+    - Thoughtstopping
+    - Prole watching
+    - Inner Party consulting
+    - Telescreen broadcasting
+    - Vaporizing unpersons
+    - Doubleplusgood processing
+    - Becoming an unperson
 zeitgeist:
   score: 75.5
   rating: rich

@@ -17,17 +17,35 @@ theme:
   tier: A
   spinner_verbs:
     - Computing
-    - Algorithm-writing
-    - Bug-hunting
-    - Compile-linking
-    - Kernel-building
-    - Language-inventing
-    - Innovation-pursuing
-    - Code-optimizing
-    - System-designing
-    - Problem-solving
-    - History-making
-    - Breakthroughs-achieving
+    - Algorithm writing
+    - Bug hunting
+    - Kernel building
+    - Language inventing
+    - Code optimizing
+    - System designing
+    - History making
+    - Ask forgiveness not permission
+    - Nanosecond demonstrating
+    - Apollo saving
+    - Unix building
+    - C creating
+    - Linux maintaining
+    - Premature optimization avoiding
+    - Bounty check issuing
+    - Real time rendering
+    - Object orientation inventing
+    - Readability counting
+    - Zen of Python reciting
+    - Substitution principle applying
+    - Brute forcing when in doubt
+    - Knowledge working
+    - Ship leaving port
+    - Literate programming
+    - COBOL inventing
+    - Compiling elegantly
+    - Simplicity prioritizing
+    - First principle finding
+    - Paradigm inventing
 
 zeitgeist:
   score: 72.0

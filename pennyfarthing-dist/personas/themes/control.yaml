@@ -17,15 +17,34 @@ theme:
   spinner_verbs:
     - Processing
     - Analyzing
-    - Coordinating
-    - Testing
-    - Implementing
+    - Evaluating
+    - Executing
+    - Computing
+    - Monitoring
     - Reviewing
-    - Architecting
-    - Planning
+    - Implementing
+    - Validating
+    - Optimizing
+    - Integrating
+    - Coordinating
     - Documenting
-    - Designing
-    - Managing
+    - Testing
+    - Deploying
+    - Querying
+    - Configuring
+    - Assessing
+    - Iterating
+    - Compiling
+    - Running
+    - Checking
+    - Logging
+    - Scanning
+    - Building
+    - Initializing
+    - Syncing
+    - Verifying
+    - Updating
+    - Reporting
 zeitgeist:
   score: 8.0
   rating: minimal

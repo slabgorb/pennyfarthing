@@ -16,18 +16,36 @@ theme:
   portrait_style: ", magical gilded frame, candlelit castle interior, enchanted moving painting, wizarding fantasy art"
   tier: S
   spinner_verbs:
-    - Spell-casting
-    - Wand-waving
-    - Broomstick-flying
-    - Patronus-summoning
-    - Sorting-hatting
-    - Potion-brewing
-    - Quidditch-playing
-    - Horcrux-hunting
-    - Accio-ing
-    - Alohomora-ing
-    - Enchanting
-    - Divination-reading
+    - Casting Expelliarmus
+    - Summoning a Patronus
+    - Brewing Polyjuice Potion
+    - Hunting Horcruxes
+    - Consulting the Marauder's Map
+    - Quidditch training
+    - Sorting Hat consulting
+    - Sending owl post
+    - Diagon Alley shopping
+    - Lumos
+    - Accio
+    - Expecto Patronum
+    - Mischief managed
+    - Wand choosing at Ollivanders
+    - Apparating
+    - Butterbeer sipping
+    - Pensieve diving
+    - Flooing through fireplaces
+    - Defense Against the Dark Arts
+    - Transfiguring
+    - Stupefy
+    - Brewing Felix Felicis
+    - Alohomora
+    - Reading the Daily Prophet
+    - Visiting Hogsmeade
+    - Legilimency
+    - Obliviating witnesses
+    - Wingardium Leviosa
+    - Avada Kedavra deflecting
+    - Sectumsempra surviving
 zeitgeist:
   score: 81.0
   rating: rich

@@ -15,18 +15,36 @@ theme:
   portrait_style: ", Picasso ink sketch style, bold black brushstrokes on white, minimalist gestural drawing, stark silhouette, 1955 Don Quixote sketch aesthetic"
   tier: C
   spinner_verbs:
-    - Tilting-at-windmills
-    - Joisting-giants
-    - Dreaming-chivalrously
-    - Serving-Dulcinea
-    - Questing-impossibly
-    - Discovering-enchantments
-    - Protecting-maidens
-    - Riding-nobly
-    - Proclaiming-adventures
-    - Romanticizing-reality
-    - Championing-madness
-    - Following-the-code
+    - Tilting at windmills
+    - Dreaming chivalrously
+    - For Dulcinea
+    - Questing impossibly
+    - Charging the giants
+    - Begging your pardon master
+    - As my grandmother used to say
+    - Burning the library
+    - Forward this bug is a giant
+    - The knight errant charges
+    - Riding Rocinante
+    - Inns are castles
+    - Proclaiming adventures
+    - Being knighted by an innkeeper
+    - Romanticizing reality
+    - Knight of the Mirrors
+    - Knight of the White Moon
+    - Chronicling madness
+    - Dreaming the impossible dream
+    - Following the chivalric code
+    - Governing an island
+    - Discovering enchantments
+    - Protecting maidens
+    - The windmill fights back
+    - Quest accepted
+    - Sancho provides reality check
+    - The manuscript of Cide Hamete
+    - Dulcinea inspires
+    - Of giants and windmills
+    - Championing noble madness
 zeitgeist:
   score: 79.75
   rating: rich

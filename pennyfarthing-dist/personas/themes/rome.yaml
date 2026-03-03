@@ -16,17 +16,36 @@ theme:
   portrait_style: ", ancient Roman mosaic portrait, tessera tile fragments, scratched graffito details, Pompeii wall art style, geometric earth tones, stone texture"
   tier: A
   spinner_verbs:
-    - Conquering
-    - Senatoring
-    - Legion-marching
-    - Toga-draping
-    - Alea-iacta-ing
-    - Clementia-showing
-    - Rubicon-crossing
-    - Forum-orating
-    - Empire-building
-    - Republic-forging
-    - Veni-vidi-vici-ing
+    - Crossing the Rubicon
+    - Veni vidi vici
+    - Marching with the Thirteenth
+    - Draping the toga
+    - The die is cast
+    - Showing clemency
+    - Orating in the Forum
+    - Building the Empire
+    - Forging the Republic
+    - Et tu Brute
+    - SPQR declaring
+    - Atia scheming
+    - Rolling Cleopatra in the carpet
+    - Cicero orating
+    - Octavian calculating
+    - Pullo and Vorenus fighting
+    - Storming in formation
+    - Jupiter Optimus Maximus
+    - Mark Antony generalizing
+    - Roman bath relaxing
+    - Military triumphing
+    - Stoic philosophizing
+    - Legion disciplining
+    - Servilia cursing
+    - Posca documenting
+    - Sacking the treasury
+    - Brutus agonizing
+    - Roman road building
+    - Thirteenth rallying
+    - Senate debating
 
 zeitgeist:
   score: 80.0

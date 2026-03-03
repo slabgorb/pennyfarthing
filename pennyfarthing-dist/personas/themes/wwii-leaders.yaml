@@ -15,16 +15,36 @@ theme:
   portrait_style: ", WWII command, 1940s sepia photography, military uniform, Allied leadership newsreel aesthetic"
   tier: B
   spinner_verbs:
-    - Rallying-forces
-    - War-rooming
+    - Rallying the forces
+    - War rooming
     - Strategizing
-    - Mobilizing-armies
-    - Churchill-oratory
-    - D-Day-planning
-    - Code-breaking
-    - Arsenal-building
-    - Coalition-managing
-    - Victory-pursuing
+    - Mobilizing armies
+    - Churchill orating
+    - D-Day planning
+    - Enigma cracking
+    - Arsenal building
+    - Coalition managing
+    - Victory pursuing
+    - Never surrendering
+    - Fireside chatting
+    - Blood and toil offering
+    - Dunkirk evacuating
+    - Berlin advancing
+    - Fleet rebuilding
+    - Big Three conferencing
+    - Bombe building
+    - Marshall planning
+    - El Alamein charging
+    - Resistance inspiring
+    - SOE deploying
+    - Normandy landing
+    - V for Victory
+    - We shall fight them
+    - Atlantic bridging
+    - Stalingrad holding
+    - Yalta conferencing
+    - Victory signing
+    - Plans are useless planning is indispensable
 
 zeitgeist:
   score: 76.0

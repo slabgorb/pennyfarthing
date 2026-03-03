@@ -16,18 +16,36 @@ theme:
   portrait_style: ", corporate drama, cold corporate lighting, muted luxury tones, cinematic composition"
   tier: B
   spinner_verbs:
-    - Power-grabbing
-    - Board-meeting
-    - Trust-structuring
+    - Power grabbing
+    - Board meeting
     - Backstabbing
-    - Logan-Roy-ing
-    - Sibling-scheming
-    - Wealth-protecting
-    - Influence-wielding
-    - Empire-controlling
-    - Succession-plotting
-    - Dynasty-managing
-    - Chaos-orchestrating
+    - Sibling scheming
+    - Wealth protecting
+    - Succession plotting
+    - Dynasty managing
+    - Chaos orchestrating
+    - Fuck off
+    - Good meeting
+    - You're not serious people
+    - Hard pivoting
+    - Reading the room
+    - ATN running
+    - Waystar maneuvering
+    - Shareholder wrangling
+    - Failing upward
+    - This is my moment
+    - Gerri mentoring
+    - Tom surviving
+    - PR spinning
+    - Trust structuring
+    - Empire controlling
+    - Influence wielding
+    - Sport calling
+    - Loyalty testing
+    - Corporate raiding
+    - Take no prisoners
+    - Boar on the floor
+    - Not a serious person proving
 
 zeitgeist:
   score: 85.5

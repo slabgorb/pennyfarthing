@@ -15,18 +15,36 @@ theme:
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
   tier: B
   spinner_verbs:
-    - Reasoning-brilliantly
-    - Satirizing-tyranny
-    - Enlightening-humanity
-    - Philosophizing-freely
-    - Liberalizing-thought
-    - Critiquing-authority
-    - Publishing-dangerously
-    - Debating-reason
-    - Emancipating-minds
-    - Cataloging-knowledge
-    - Balancing-powers
-    - Questioning-everything
+    - Cultivate your garden
+    - Candide
+    - The social contract
+    - Tabula rasa
+    - Natural rights
+    - The invisible hand
+    - Common Sense
+    - The categorical imperative
+    - Flying kites in storms
+    - Poor Richard advises
+    - Separation of powers
+    - Encyclopedizing knowledge
+    - Empirical observation
+    - Publishing dangerously
+    - Satirizing tyranny
+    - Debating in the salon
+    - Could this be universal law
+    - Early to bed early to rise
+    - We must all ship together
+    - Knowledge is power
+    - Reasoning freely
+    - The general will speaks
+    - Rights of Man
+    - Enlightenment dawns
+    - Observe before assuming
+    - Divide the powers
+    - Questioning everything
+    - The Encyclopédie grows
+    - Hume's fork applied
+    - Écrasez l'infâme
 zeitgeist:
   score: 74.5
   rating: rich

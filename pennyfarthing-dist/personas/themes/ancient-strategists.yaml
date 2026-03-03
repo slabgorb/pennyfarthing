@@ -20,17 +20,36 @@ theme:
     genre: military-history
     energy: calculated
   spinner_verbs:
-    - Adapting-strategy
-    - Positioning-forces
-    - Assessing-terrain
-    - Analyzing-human-patterns
-    - Outmaneuvering-enemies
-    - Ensuring-supply-lines
-    - Building-naval-power
-    - Documenting-campaigns
-    - Designing-military-order
-    - Maintaining-discipline
-    - Forecasting-threats
+    - All warfare is deception
+    - Know yourself and the enemy
+    - The supreme art of war
+    - Water-like adaptability
+    - Winning without fighting
+    - Assessing the terrain
+    - Securing supply lines
+    - Outflanking the enemy
+    - Molon labe
+    - Holding the Hot Gates
+    - The sea the sea
+    - Marching home from Persia
+    - Pericles funeral oration
+    - Building the long walls
+    - Naval strategy at Salamis
+    - Writing from exile
+    - Human nature never changes
+    - Trust no one
+    - The obstacle is the path
+    - Crossing the Alps
+    - Bribing the spies
+    - Siege engineering
+    - Hoplite phalanx forming
+    - Turning strength against itself
+    - Timing the assault
+    - Positioning before battle
+    - Comparative analysis
+    - Forging an empire
+    - The Arthashastra advises
+    - Living off the land
 zeitgeist:
   score: 75.2
   rating: rich

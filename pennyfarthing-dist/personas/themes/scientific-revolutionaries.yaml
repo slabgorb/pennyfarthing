@@ -16,17 +16,35 @@ theme:
   tier: D
   spinner_verbs:
     - Hypothesizing
-    - Observing-carefully
     - Experimenting
-    - Calculating-equations
-    - Discovering-patterns
-    - Publishing-findings
-    - Citing-sources
-    - Challenging-dogma
-    - Measuring-precisely
-    - Revolutionary-thinking
-    - Peer-reviewing
-    - Standing-on-shoulders
+    - Observing
+    - Calculating
+    - Discovering patterns
+    - Measuring precisely
+    - Challenging dogma
+    - Theorizing
+    - Paradigm shifting
+    - Apple dropping
+    - Radium handling
+    - Barnacle counting
+    - Bongo playing
+    - First principles thinking
+    - Telescope pointing
+    - And yet it moves
+    - Thought experimenting
+    - Brief history writing
+    - Billions and billions
+    - Pale blue dotting
+    - Alternating currently
+    - Pattern weaving
+    - Double helix spotting
+    - Code cracking
+    - Natural selecting
+    - Nobel Prize winning
+    - Standing on shoulders
+    - Publishing findings
+    - Peer reviewing
+    - Proof constructing
 
 zeitgeist:
   score: 68.5

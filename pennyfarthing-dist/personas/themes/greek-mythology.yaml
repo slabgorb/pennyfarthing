@@ -15,17 +15,35 @@ theme:
   tier: A
   spinner_verbs:
     - Thunderbolting
-    - Olympus-ascending
-    - Oracle-consulting
-    - Labyrinth-navigating
-    - Hero-questing
-    - Divine-intervening
-    - Fate-weaving
-    - Prophecy-receiving
-    - Forge-smithing
-    - Ambrosia-feasting
-    - Titan-warring
-    - Mortal-blessing
+    - Olympus ascending
+    - Oracle consulting
+    - Labyrinth navigating
+    - Hero questing
+    - Divine intervening
+    - Fate weaving
+    - Forge smithing
+    - Ambrosia feasting
+    - Titan warring
+    - Mortal blessing
+    - Hubris punishing
+    - Caduceus waving
+    - Atlas shrugging
+    - Pandora opening
+    - Icarus warning
+    - Laurel crowning
+    - Prophecy deciphering
+    - Sacred vapor breathing
+    - Know thyself
+    - Prometheus binding
+    - Achilles heeling
+    - By my thunderbolt
+    - Hundred eyes watching
+    - Golden fleece seeking
+    - Drakon slaying
+    - Nymphs consulting
+    - Trojan horsing
+    - Medusa averting
+    - Homer invoking
 
 zeitgeist:
   score: 79.5

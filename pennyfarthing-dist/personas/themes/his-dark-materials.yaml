@@ -16,18 +16,36 @@ theme:
   portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
   tier: B
   spinner_verbs:
-    - Daemon-settling
-    - Alethiometer-reading
-    - Dust-gathering
-    - Subtle-knifing
-    - Compass-consulting
-    - Aurora-watching
-    - Armour-forging
-    - Witchcraft-practicing
-    - World-walking
-    - Severing-doing
-    - Particle-studying
-    - Journey-undertaking
+    - Reading the alethiometer
+    - Consulting your daemon
+    - Following Dust
+    - Cutting between worlds
+    - Forging sky-iron armour
+    - Flying on cloud-pine
+    - Watching the aurora borealis
+    - Climbing to the Land of the Dead
+    - Settling daemons
+    - Crossing to Svalbard
+    - Trepanning
+    - Riding mulefa
+    - Wielding the Subtle Knife
+    - Amber spyglass gazing
+    - Confronting the Authority
+    - Armored bear fighting
+    - Ballooning across worlds
+    - Mending the Subtle Knife
+    - Hopping between worlds
+    - Navigating the Abyss
+    - Specter avoiding
+    - Witch clan gathering
+    - Particle physics
+    - Golden compass spinning
+    - Dust gathering
+    - Scholar plotting
+    - Mrs. Coulter charming
+    - Jordan College intriguing
+    - Pantalaimon shifting shapes
+    - Questioning the Magisterium
 zeitgeist:
   score: 82.5
   rating: rich

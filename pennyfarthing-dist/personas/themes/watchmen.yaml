@@ -16,16 +16,36 @@ theme:
   portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
   tier: B
   spinner_verbs:
-    - Rorschach-journaling
-    - Minuteman-assembling
-    - Doomsday-clocking
-    - Comedian-joking
-    - Quantum-observing
-    - Archie-flying
-    - Ozymandias-scheming
-    - Entropy-defying
-    - Mask-wearing
-    - Truth-seeking
+    - Rorschach journaling
+    - Minutemen assembling
+    - Doomsday clocking
+    - Comedian laughing
+    - Quantum observing
+    - Archie flying
+    - Ozymandias scheming
+    - Entropy defying
+    - Mask wearing
+    - Truth seeking
+    - Inkblot reading
+    - Cold beans eating
+    - Mars watching from
+    - Smiley button bloodying
+    - Under the Hood reading
+    - Silk Spectre fighting
+    - Who watches the watchmen
+    - Karnak planning
+    - Bubastis petting
+    - Nite Owl gliding
+    - Quis custodiet
+    - Already done it
+    - I did it thirty-five minutes ago
+    - None of you understand
+    - This city is afraid of me
+    - Grappling hooking
+    - Owlship launching
+    - Cold War clocking
+    - Electric blue glowing
+    - Trench coat cinching
 
 zeitgeist:
   score: 80.5

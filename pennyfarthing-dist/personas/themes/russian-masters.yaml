@@ -15,17 +15,36 @@ theme:
   portrait_style: ", 19th century Russian realist, Russian realist painting, melancholic shadows, Orthodox gold"
   tier: B
   spinner_verbs:
-    - Soul-searching
-    - Troika-riding
-    - Samovar-brewing
-    - Existential-questioning
-    - Suffering-embracing
-    - Redemption-seeking
-    - Pistol-loading
-    - Cathedral-venerating
-    - Aristocracy-questioning
-    - Peasant-understanding
-    - Tolstoy-writing
+    - Searching the soul
+    - Riding the troika
+    - Brewing the samovar
+    - Existential questioning
+    - Embracing suffering
+    - Seeking redemption
+    - Loading the pistol
+    - Venerating the cathedral
+    - Understanding the peasants
+    - Writing like Tolstoy
+    - Returning my ticket
+    - All is permitted
+    - Active loving
+    - Beauty will save the world
+    - Mowing with the peasants
+    - Grand Inquisitor questioning
+    - Enduring Siberian exile
+    - Confessing to Sonia
+    - The train arriving
+    - Vodka drinking
+    - Steppes wandering
+    - Dostoevsky suffering
+    - Finding Platon Karataev
+    - Chekhov's gun firing
+    - Napoleon comparing
+    - Orthodox praying
+    - The Devil visiting Ivan
+    - Dueling at dawn
+    - Raskolnikov theorizing
+    - Pierre Bezukhov searching
 
 zeitgeist:
   score: 81.5

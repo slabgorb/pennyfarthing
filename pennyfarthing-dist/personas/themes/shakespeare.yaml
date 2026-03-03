@@ -20,18 +20,36 @@ theme:
     genre: literary
     energy: measured
   spinner_verbs:
-    - Forsooth-declaring
     - Soliloquizing
-    - Iambic-pentametering
-    - Stage-managing
+    - Iambic pentametering
+    - Stage managing
     - Tragedizing
-    - Wooing-eloquently
-    - Plotting-revenge
-    - Proclaiming-truth
-    - Imagining-wings
-    - Theater-weaving
-    - Verse-composing
-    - Fate-wrestling
+    - Wooing eloquently
+    - Plotting revenge
+    - Verse composing
+    - Fate wrestling
+    - To be or not to be
+    - Once more unto the breach
+    - All the world's a stage
+    - Parting is such sweet sorrow
+    - The play's the thing
+    - What fools these mortals be
+    - Out damned spot
+    - Et tu Brute
+    - All that glitters
+    - Midsummer dreaming
+    - Globe Theatre performing
+    - Fourth wall breaking
+    - Putting a girdle round the earth
+    - The quality of mercy
+    - We few we happy few
+    - Crown wearing
+    - Imagining wings
+    - Proclaiming truth
+    - Enchanting
+    - Releasing Ariel
+    - Something rotten discovering
+    - Forsooth declaring
 
 zeitgeist:
   score: 79.0
