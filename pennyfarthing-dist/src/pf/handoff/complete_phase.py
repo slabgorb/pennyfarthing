@@ -44,6 +44,11 @@ def complete_phase(
     if project_root is None:
         project_root = _find_project_root()
 
+    # Validate phase names against workflow YAML to catch agent-name confusion
+    from_phase, to_phase = _validate_phase_names(
+        project_root, workflow, from_phase, to_phase
+    )
+
     session_path = project_root / ".session" / f"{story_id}-session.md"
     if not session_path.exists():
         return {
@@ -185,6 +190,68 @@ def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
             except Exception:
                 pass
     return phase
+
+
+def _validate_phase_names(
+    project_root: Path, workflow: str, from_phase: str, to_phase: str
+) -> tuple[str, str]:
+    """Validate and auto-correct phase names against workflow YAML.
+
+    If an agent name is passed instead of a phase name, resolves it to the
+    correct phase name. This prevents the '**Phase:** sm' bug where agent
+    names get written to the session file instead of phase names.
+    """
+    phases = _load_workflow_phases(project_root, workflow)
+    if not phases:
+        return from_phase, to_phase
+
+    phase_names = {p["name"] for p in phases}
+    agent_to_phases: dict[str, list[str]] = {}
+    for p in phases:
+        agent = p.get("agent", p["name"])
+        agent_to_phases.setdefault(agent, []).append(p["name"])
+
+    resolved_from = _resolve_one(from_phase, phase_names, agent_to_phases)
+    resolved_to = _resolve_one(to_phase, phase_names, agent_to_phases)
+
+    # If to_phase resolved from an agent name and is ambiguous, pick the phase
+    # that comes after from_phase in the workflow order
+    if resolved_to != to_phase or to_phase not in phase_names:
+        phase_order = [p["name"] for p in phases]
+        if resolved_from in phase_order:
+            idx = phase_order.index(resolved_from)
+            if idx + 1 < len(phase_order):
+                resolved_to = phase_order[idx + 1]
+
+    return resolved_from, resolved_to
+
+
+def _resolve_one(
+    value: str, phase_names: set[str], agent_to_phases: dict[str, list[str]]
+) -> str:
+    """Resolve a single value: return as-is if phase name, else try agent→phase."""
+    if value in phase_names:
+        return value
+    if value in agent_to_phases:
+        candidates = agent_to_phases[value]
+        if len(candidates) == 1:
+            return candidates[0]
+        # Ambiguous — return first match, caller may refine
+        return candidates[0]
+    return value
+
+
+def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
+    """Load phases list from workflow YAML."""
+    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
+        path = project_root / ".pennyfarthing" / "workflows" / name
+        if path.exists():
+            try:
+                data = yaml.safe_load(path.read_text())
+                return data.get("workflow", {}).get("phases", [])
+            except Exception:
+                pass
+    return []
 
 
 def _find_project_root() -> Path:
