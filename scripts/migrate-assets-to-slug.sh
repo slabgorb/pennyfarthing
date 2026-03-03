@@ -3,7 +3,7 @@
 # Usage: ./scripts/migrate-assets-to-slug.sh [--dry-run]
 #
 # Derives slug from shortName (or first word of character name)
-# Renames: portraits, faces, spiders
+# Renames: portraits, faces
 
 set -e
 
@@ -19,8 +19,6 @@ fi
 THEMES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/themes"
 PORTRAITS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/portraits"
 FACES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/faces/by-theme"
-SPIDERS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/spiders/by-theme"
-
 ROLES="orchestrator sm tea dev reviewer architect pm tech-writer ux-designer devops ba"
 
 # Generate base slug from name (matches loader.ts toSlug function)
@@ -111,11 +109,6 @@ for theme_file in "$THEMES_DIR"/*.yaml; do
             ((total_renames++)) || true
         fi
 
-        # Rename spiders
-        if [[ -d "$SPIDERS_DIR/$theme" ]]; then
-            rename_file "$SPIDERS_DIR/$theme/$role.svg" "$SPIDERS_DIR/$theme/$slug.svg"
-            ((total_renames++)) || true
-        fi
     done
     echo ""
 done

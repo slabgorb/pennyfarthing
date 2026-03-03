@@ -21,7 +21,7 @@ prune packages
 prune tests
 prune docs
 
-# Large binary exclusions (spiders, portraits) handled by setup.py build_py override
+# Large binary exclusions (portraits) handled by setup.py build_py override
 
 # Exclude test files from package
 prune src/pf/tests

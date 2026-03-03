@@ -95,7 +95,7 @@ export function selectCatchphrase(
 
 /**
  * Convert a name to a URL-safe slug (lowercase kebab-case)
- * Matches pennyfarthing showcase loader.ts logic
+ * Matches slug naming convention
  */
 function toSlug(name: string): string {
   return name
@@ -106,7 +106,7 @@ function toSlug(name: string): string {
 
 /**
  * Generate OCEAN suffix from scores (e.g., "54432" for O=5,C=4,E=4,A=3,N=2)
- * Matches pennyfarthing showcase loader.ts logic
+ * Matches slug naming convention
  */
 function oceanSuffix(ocean: { O: number; C: number; E: number; A: number; N: number }): string {
   return `${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
