@@ -65,7 +65,7 @@ class ValidationResult:
 # =============================================================================
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
-VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "done", "canceled", "planning"}
+VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "in_review", "done", "canceled", "planning"}
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -165,7 +165,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
 
     Validates:
     - Required fields present (id, title, status, points)
-    - status is valid value (backlog, ready, in_progress, done, canceled)
+    - status is valid value (backlog, ready, in_progress, in_review, done, canceled)
     - points is numeric
     - jira key follows PROJECT-NUMBER pattern if present
     - branch follows convention if present

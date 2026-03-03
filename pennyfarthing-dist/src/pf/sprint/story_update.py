@@ -175,7 +175,7 @@ def update_story(
 
 @click.command("update")
 @click.argument("story_id")
-@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "done", "canceled"]))
+@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "in_review", "done", "canceled"]))
 @click.option("--completed", "completed_date", default=None)
 @click.option("--assigned-to", default=None)
 @click.option("--points", type=int, default=None)

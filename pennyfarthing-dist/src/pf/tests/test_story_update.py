@@ -762,3 +762,71 @@ class TestCLIIntegration:
         data = read_sprint(sprint_file)
         story = data["epics"][0]["stories"][2]
         assert story["started"] == "2026-02-01"
+
+    def test_cli_in_review_status(self, runner: CliRunner, sprint_file: Path) -> None:
+        """--status in_review should be accepted by CLI."""
+        from pf.sprint.story_update import story_update_command
+
+        result = runner.invoke(story_update_command, [
+            "--sprint-file", str(sprint_file),
+            "76-2",
+            "--status", "in_review",
+        ])
+
+        assert result.exit_code == 0
+
+        data = read_sprint(sprint_file)
+        story = data["epics"][0]["stories"][1]
+        assert story["status"] == "in_review"
+
+
+# =============================================================================
+# In Review Status Support (Story 136-18)
+# =============================================================================
+
+
+class TestInReviewStatus:
+    """in_review must be a valid story status across validator and update."""
+
+    def test_in_review_in_valid_story_statuses(self) -> None:
+        """in_review must be in VALID_STORY_STATUSES constant."""
+        from pf.sprint.validator import VALID_STORY_STATUSES
+
+        assert "in_review" in VALID_STORY_STATUSES
+
+    def test_update_story_accepts_in_review(self, sprint_file: Path) -> None:
+        """update_story() should accept in_review as a valid status."""
+        result = update_story(
+            sprint_path=sprint_file,
+            story_id="76-2",
+            status="in_review",
+        )
+
+        assert result["success"] is True
+
+        data = read_sprint(sprint_file)
+        story = data["epics"][0]["stories"][1]
+        assert story["status"] == "in_review"
+
+    def test_validator_accepts_in_review_story(self) -> None:
+        """validate_story() should accept a story with status=in_review."""
+        from pf.sprint.validator import validate_story
+
+        story = {
+            "id": "99-1",
+            "title": "Test story",
+            "points": 2,
+            "status": "in_review",
+        }
+        result = validate_story(story, "99", 0)
+        assert result.valid
+
+    def test_validate_full_sprint_with_in_review(self, sprint_file: Path) -> None:
+        """Full sprint validation should pass with in_review stories."""
+        from pf.sprint.validator import validate_full_sprint
+
+        data = read_sprint(sprint_file)
+        data["epics"][0]["stories"][1]["status"] = "in_review"
+
+        result = validate_full_sprint(data)
+        assert result.valid
