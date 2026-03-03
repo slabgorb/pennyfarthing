@@ -23,7 +23,7 @@ from textual.command import Hit, Hits, Provider
 from textual.containers import Horizontal, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import Header, Static, Tab, Tabs
+from textual.widgets import Header, Rule, Static, Tab, Tabs
 
 from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack import layout_order as _layout_order
@@ -483,11 +483,17 @@ class BikeRackApp(App):
     TITLE = "BikeRack"
 
     CSS = """
+    #profile-separator {
+        height: 1;
+        color: #444444;
+        margin: 0;
+        padding: 0;
+    }
     #agent-header {
         height: auto;
         max-height: 12;
         padding: 0 1;
-        border-bottom: solid $accent;
+        border-bottom: solid #444444;
     }
     #portrait-row {
         height: 5;
@@ -580,6 +586,13 @@ class BikeRackApp(App):
         self._active_split_pane: str = "left"
         self._split_left_key: str = "sprint"
         self._split_right_key: str = "diffs"
+        # Track portrait dock for change detection (avoid spurious recompose)
+        try:
+            from pf.common.config import load_pennyfarthing_config
+            _cfg = load_pennyfarthing_config()
+            self._portrait_dock: str = _cfg.get("portrait_dock", "top")
+        except Exception:
+            self._portrait_dock: str = "top"
         try:
             from pf.settings.settings import get_setting
             self._toasts_enabled: bool = bool(get_setting("tui.toasts"))
@@ -612,6 +625,7 @@ class BikeRackApp(App):
             if region == "menu":
                 yield Header()
             elif region == "profile":
+                yield Rule(id="profile-separator")
                 yield AgentHeader(id="agent-header")
                 yield Tabs(*_build_panel_tabs(), id="tab-bar")
                 yield ConnectionStatus(
@@ -633,6 +647,31 @@ class BikeRackApp(App):
             elif region == "status":
                 yield self._status_footer
 
+    async def _recompose_layout(self) -> None:
+        """Recompose the app and restore panel state."""
+        await self.recompose()
+        self._restore_panel_state()
+
+    def _restore_panel_state(self) -> None:
+        """Show the active panel and hide others, update tab bar."""
+        active = self._focused_panel
+        if active not in _PANEL_KEYS:
+            active = "sprint"
+            self._focused_panel = active
+
+        for panel_key in _PANEL_KEYS:
+            try:
+                widget = self.query_one(f"#panel-{panel_key}")
+                widget.display = (panel_key == active)
+            except Exception:
+                pass
+
+        self._update_tab_bar(active)
+        try:
+            self.query_one(f"#panel-{active}").focus()
+        except Exception:
+            pass
+
     async def on_mount(self) -> None:
         # Restore last panel or default to sprint
         result = get_last_panel()
@@ -643,23 +682,7 @@ class BikeRackApp(App):
                 initial = last
 
         self._focused_panel = initial
-
-        # Hide all panels except the active one
-        for panel_key in _PANEL_KEYS:
-            widget_id = f"panel-{panel_key}"
-            try:
-                widget = self.query_one(f"#{widget_id}")
-                widget.display = (panel_key == initial)
-            except Exception:
-                pass
-
-        # Set tab bar active state and focus initial panel
-        self._update_tab_bar(initial)
-        try:
-            initial_widget = self.query_one(f"#panel-{initial}")
-            initial_widget.focus()
-        except Exception:
-            pass
+        self._restore_panel_state()
 
         if self._client is not None:
             self._client.on_state_change(self._on_ws_state_change)
@@ -941,6 +964,11 @@ class BikeRackApp(App):
                 footer.display = bool(value)
             except Exception:
                 pass
+        elif key == "portrait_dock":
+            new_dock = str(value)
+            if new_dock != self._portrait_dock:
+                self._portrait_dock = new_dock
+                self.run_worker(self._recompose_layout(), exclusive=True, name="recompose")
 
     # ------------------------------------------------------------------
     # Split-pane layout (Story 110-4)

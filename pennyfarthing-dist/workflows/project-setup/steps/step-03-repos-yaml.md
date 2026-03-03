@@ -93,12 +93,7 @@ Present the generated repos.yaml and ask:
 
 {yaml_content}
 
-Options:
-[A] Accept and write to {output_repos}
-[E] Edit a specific repo entry
-[N] Add a new repo entry
-[D] Delete a repo entry
-[P] Preview in different format
+(switch prompt presents options)
 ```
 
 ### Edit Flow

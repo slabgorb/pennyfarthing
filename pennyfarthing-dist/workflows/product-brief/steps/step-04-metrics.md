@@ -22,7 +22,7 @@ Define comprehensive success metrics that include user success, business objecti
 4. Develop specific, measurable KPIs with targets and timeframes
 5. Ensure metrics align with product vision and drive decisions
 6. Generate Success Metrics content with user, business, and KPI sections
-7. Present A/P/C menu for optional advanced elicitation or party mode
+7. Present the switch prompt for optional advanced elicitation or party mode
 8. Save content to document when user selects C
 </instructions>
 
@@ -186,30 +186,6 @@ Prepare the following structure for document append:
 [Key performance indicators content based on conversation, or N/A if not discussed]
 ```
 
-### 7. Present MENU OPTIONS
-
-**Content Presentation:**
-"I've defined success metrics that will help us track whether {{project_name}} is creating real value for users and achieving business objectives.
-
-**Here's what I'll add to the document:**
-[Show the complete markdown content from step 6]
-
-**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask} with current metrics content to dive deeper into success metric insights
-- IF P: Execute {partyModeWorkflow} to bring different perspectives to validate comprehensive metrics
-- IF C: Save content to {outputFile}, update frontmatter with stepsCompleted: [1, 2, 3, 4], then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu with updated content
-- User can chat or ask questions - always respond and then end with display again of the menu options
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [success metrics finalized and saved to document with frontmatter updated], will you then load and read fully `{nextStepFile}` to execute and begin MVP scope definition.
@@ -224,8 +200,8 @@ ONLY WHEN [C continue option] is selected and [success metrics finalized and sav
 - Clear business objectives aligned with product strategy
 - Specific, measurable KPIs with defined targets and timeframes
 - Metrics that connect user value to business success
-- A/P/C menu presented and handled correctly with proper task execution
-- Content properly appended to document when C selected
+- switch prompt presented and handled correctly with proper task execution
+- Content properly appended to document when user confirms via the switch prompt
 - Frontmatter updated with stepsCompleted: [1, 2, 3, 4]
 
 ### ❌ SYSTEM FAILURE:
@@ -234,8 +210,8 @@ ONLY WHEN [C continue option] is selected and [success metrics finalized and sav
 - Business objectives disconnected from user success
 - Too many metrics or missing critical success indicators
 - Metrics that don't drive actionable decisions
-- Not presenting standard A/P/C menu after content generation
-- Appending content without user selecting 'C'
+- Not presenting standard switch prompt after content generation
+- Appending content without user confirming via the switch prompt
 - Not updating frontmatter properly
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

@@ -39,10 +39,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating project-type content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after generating project-type content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -163,35 +163,6 @@ When saving to document, append these Level 2 and Level 3 sections:
 [Implementation specific requirements based on conversation]
 ```
 
-### 6. Present MENU OPTIONS
-
-Present the project-type content for review, then display menu:
-
-"Based on our conversation and best practices for this product type, I've documented the {project_type}-specific requirements for {{project_name}}.
-
-**Here's what I'll add to the document:**
-
-[Show the complete markdown content from section 5]
-
-**What would you like to do?**"
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Scoping (Step 8 of 11)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current project-type content, process the enhanced technical insights that come back, ask user "Accept these improvements to the technical requirements? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the current project-type requirements, process the collaborative technical expertise and validation, ask user "Accept these changes to the technical requirements? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from previous steps.
-
 ## SUCCESS METRICS:
 
 ✅ Project-type configuration loaded and used effectively
@@ -199,8 +170,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Required sections generated per CSV configuration
 ✅ Skip sections properly avoided to save time
 ✅ Technical requirements connected to product value
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -209,8 +180,8 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Not generating required sections per CSV configuration
 ❌ Documenting sections that should be skipped per CSV
 ❌ Creating generic content without project-type specificity
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -235,12 +206,6 @@ When user selects 'C', append the content directly to the document using the str
 - Focus on multi-tenancy, permissions, integrations
 - Skip mobile-first considerations unless relevant
 - Generate enterprise-specific requirements
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `{nextStepFile}` to define project scope.
-
-Remember: Do NOT proceed to step-08 (Scoping) until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

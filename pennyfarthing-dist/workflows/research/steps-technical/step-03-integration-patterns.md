@@ -10,7 +10,7 @@ Conduct integration patterns analysis identifying API design patterns, communica
 3. Generate integration patterns analysis content with seven subsections (API Design Patterns, Communication Protocols, Data Formats, System Interoperability, Microservices Integration, Event-Driven Integration, Integration Security)
 4. Include source citations for all integration data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
 </instructions>
 
@@ -42,11 +42,11 @@ Integration patterns analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after integration patterns content generation
+- ⚠️ Present switch prompt after integration patterns content generation
 - 📝 WRITE INTEGRATION PATTERNS ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -207,7 +207,6 @@ _Source: [URL]_
 - Event-driven integration strategies identified
 
 **Ready to proceed to architectural patterns analysis?**
-[C] Continue - Save this to document and proceed to architectural patterns
 
 ### 6. Handle Continue Selection
 
@@ -217,10 +216,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2, 3]`
 - Load: `./step-04-architectural-patterns.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ API design patterns and protocols thoroughly analyzed
@@ -229,7 +224,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Microservices integration patterns mapped
 ✅ Event-driven integration strategies identified
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (architectural patterns)
 ✅ Research goals alignment maintained
 
@@ -241,7 +236,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Incomplete communication protocols analysis
 ❌ Not identifying system interoperability approaches
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to architectural patterns step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -266,9 +261,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable integration insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-04-architectural-patterns.md` to analyze architectural patterns, design decisions, and system structures for {{research_topic}}.
-
-Remember: Always write research content to document immediately and emphasize current integration data with rigorous source verification!

@@ -2,7 +2,7 @@
 
 <purpose>Choose appropriate design system approach (custom, established, or themeable) based on project requirements, constraints, and team considerations through collaborative decision-making.</purpose>
 
-<instructions>Present design system options (custom, established, themeable). Analyze project requirements (platform, timeline, team size, brand, technical constraints). Explore specific design system options recommended for the platform. Facilitate decision process through framework questions. Finalize choice with clear rationale. Generate design system content with choice, rationale, implementation approach, and customization strategy sections. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Present design system options (custom, established, themeable). Analyze project requirements (platform, timeline, team size, brand, technical constraints). Explore specific design system options recommended for the platform. Facilitate decision process through framework questions. Finalize choice with clear rationale. Generate design system content with choice, rationale, implementation approach, and customization strategy sections. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>Design system choice content appended to specification including rationale and implementation approach, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating design system decision content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after generating design system decision content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper design system insights
-- **P (Party Mode)**: Bring multiple perspectives to evaluate design system options
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -195,9 +187,6 @@ Show the generated design system content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our design system decision
-[P] Party Mode - Bring technical perspectives on design systems
-[C] Continue - Save this to the document and move to defining experience
 
 ### 8. Handle Menu Selection
 
@@ -206,26 +195,22 @@ Show the generated design system content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current design system content
 - Process the enhanced design system insights that come back
 - Ask user: "Accept these improvements to the design system decision? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current design system choice
 - Process the collaborative design system insights that come back
 - Ask user: "Accept these changes to the design system decision? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
 - Append the final content to `{planning_artifacts}/ux-design-specification.md`
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-07-defining-experience.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
 
 ## SUCCESS METRICS:
 
@@ -234,8 +219,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Specific design system chosen with clear rationale
 ✅ Implementation approach planned
 ✅ Customization strategy defined
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -244,18 +229,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Not considering technical constraints or team capabilities
 ❌ Choosing design system without clear rationale
 ❌ Not planning implementation approach
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-07-defining-experience.md` to define the core user interaction.
-
-Remember: Do NOT proceed to step-07 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

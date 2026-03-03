@@ -40,7 +40,7 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 - ✂️ Reduce duplication while preserving essential info
 - 📖 Ensure proper ## Level 2 headers throughout
 - 💾 Save optimized document
-- ⚠️ Present A/P/C menu after polish
+- ⚠️ Present the switch prompt after polish
 - 🚫 DO NOT skip review steps
 
 ## CONTEXT BOUNDARIES:
@@ -164,31 +164,6 @@ Create the polished version:
 4. Verify improvements enhance readability
 5. Prepare optimized version for review
 
-### 6. Present MENU OPTIONS
-
-Present the polished document for review, then display menu:
-- Show what changed in the polish
-- Highlight improvements made (flow, duplication, headers)
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of conversation
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Complete PRD (Step 12 of 12)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the polished document, process the enhanced refinements that come back, ask user "Accept these polish improvements? (y/n)", if yes update content with improvements then redisplay menu, if no keep original polish then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the polished document, process the collaborative refinements to flow and coherence, ask user "Accept these polish changes? (y/n)", if yes update content with improvements then redisplay menu, if no keep original polish then redisplay menu
-- IF C: Save the polished document to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', replace the entire document content with the polished version.
-
 ## SUCCESS METRICS:
 
 ✅ Complete document loaded and reviewed
@@ -198,8 +173,8 @@ When user selects 'C', replace the entire document content with the polished ver
 ✅ Transitions between sections are smooth
 ✅ User's voice and intent preserved
 ✅ Document is more readable and professional
-✅ A/P/C menu presented and handled correctly
-✅ Polished document saved when C selected
+✅ switch prompt presented and handled correctly
+✅ Polished document saved when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -209,18 +184,12 @@ When user selects 'C', replace the entire document content with the polished ver
 ❌ Changing content instead of improving presentation
 ❌ Not ensuring ## Level 2 headers for main sections
 ❌ Making arbitrary style changes instead of coherence improvements
-❌ Not presenting A/P/C menu for user approval
-❌ Saving polished document without user selecting 'C'
+❌ Not presenting switch prompt for user approval
+❌ Saving polished document without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making changes without complete understanding of document requirements
-
-## NEXT STEP:
-
-After user selects 'C' and polished document is saved, load `./step-12-complete.md` to complete the workflow.
-
-Remember: Do NOT proceed to step-12 until user explicitly selects 'C' from the A/P/C menu and polished document is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

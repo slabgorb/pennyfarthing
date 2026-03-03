@@ -70,7 +70,7 @@ JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 # Required fields for sprint section
-REQUIRED_SPRINT_FIELDS = {"goal", "start_date", "end_date", "status"}
+REQUIRED_SPRINT_FIELDS = {"number", "goal", "start_date", "end_date", "status"}
 
 # Required fields for story
 REQUIRED_STORY_FIELDS = {"id", "title", "status", "points"}
@@ -128,6 +128,14 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
             result.add_error(
                 f"Missing required field: {field_name}",
                 f"sprint.{field_name}",
+            )
+
+    # Validate number is an integer (required for archive filtering)
+    if "number" in sprint:
+        if not isinstance(sprint["number"], int):
+            result.add_error(
+                f"Sprint number must be an integer, got {type(sprint['number']).__name__}",
+                "sprint.number",
             )
 
     # Validate status if present
@@ -407,8 +415,9 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
 def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
     """Validate an archived sprint file.
 
-    Archived sprints have the same structure as current sprints
-    but allow done/canceled status for all stories.
+    Archived sprints must have a sprint.number field so that
+    get_archived_stories(only_current=True) can filter correctly.
+    Without it, all archives are included in status counts.
 
     Args:
         data: Archived sprint YAML data
@@ -416,10 +425,22 @@ def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
     Returns:
         ValidationResult with any errors found
     """
-    # For archived sprints, use the same validation as full sprint
-    # The key difference is that all story statuses are valid
-    # (done/canceled are expected in archived sprints)
-    return validate_full_sprint(data)
+    result = ValidationResult(valid=True)
+
+    # Require sprint.number — without it, archive filtering breaks
+    sprint = data.get("sprint", {})
+    if "number" not in sprint:
+        result.add_error(
+            "Missing required field: number (required for archive filtering)",
+            "sprint.number",
+        )
+    elif not isinstance(sprint["number"], int):
+        result.add_error(
+            f"Sprint number must be an integer, got {type(sprint['number']).__name__}",
+            "sprint.number",
+        )
+
+    return result
 
 
 def validate_future(data: dict[str, Any]) -> ValidationResult:

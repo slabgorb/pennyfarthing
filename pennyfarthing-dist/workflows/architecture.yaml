@@ -1,12 +1,12 @@
 # Architecture Workflow - Stepped Workflow for Architectural Decisions
-# BMAD-enhanced stepped workflow with A/P/C collaboration menus
+# BMAD-enhanced stepped workflow with switch prompts
 #
 # Flow: Initialize → [Continue?] → Context → Patterns → Components → Interfaces → Risks → Document
 # Use for architectural decisions, system design, and technical planning
 #
 # BMAD Enhancements (v2.0.0):
 # - Continuation handler (step-01b) for resuming workflows
-# - A/P/C menus: Advanced Elicitation, Party Mode, Continue
+# - switch prompts: Advanced Elicitation, Party Mode, Continue
 # - Mandatory execution rules and protocols in each step
 # - Web search integration for current technology versions
 # - AI agent consistency focus in component and risk steps
@@ -14,7 +14,7 @@
 
 workflow:
   name: architecture
-  description: Collaborative architectural decision-making with BMAD-style progressive disclosure and A/P/C collaboration menus
+  description: Collaborative architectural decision-making with BMAD-style progressive disclosure and switch prompts
   version: "2.0.0"
   type: stepped
 
@@ -32,7 +32,7 @@ workflow:
       - prd
 
   # User approval gates - pause for confirmation at key decision points
-  # Steps with A/P/C menus naturally pause; these are the formal gates
+  # Steps with switch prompts naturally pause; these are the formal gates
   gates:
     after_steps: [2, 4, 6]
     gate_marker: "<!-- GATE -->"

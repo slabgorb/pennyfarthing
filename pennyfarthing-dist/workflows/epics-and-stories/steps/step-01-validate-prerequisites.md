@@ -78,7 +78,7 @@ To validate that all required input documents exist and extract all requirements
 - 🎯 Extract requirements systematically from all documents
 - 💾 Populate {outputFile} with extracted requirements
 - 📖 Update frontmatter with extraction progress
-- 🚫 FORBIDDEN to load next step until user selects 'C' and requirements are extracted
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt and requirements are extracted
 
 ## REQUIREMENTS EXTRACTION PROCESS:
 
@@ -238,21 +238,6 @@ After extraction and confirmation, update {outputFile} with:
 - Complete FR list in {{fr_list}} section
 - Complete NFR list in {{nfr_list}} section
 - All additional requirements in {{additional_requirements}} section
-
-### 10. Present MENU OPTIONS
-
-Display: `**Confirm the Requirements are complete and correct to [C] continue:**`
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- User can chat or ask questions - always respond and then end with display again of the menu option
-
-#### Menu Handling Logic:
-
-- IF C: Save all to {outputFile}, update frontmatter, only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#10-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 

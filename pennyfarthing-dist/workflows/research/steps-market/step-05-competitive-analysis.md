@@ -10,7 +10,7 @@ Conduct competitive landscape analysis identifying key market players, market sh
 3. Generate competitive analysis content with seven subsections (Key Players, Market Share, Competitive Positioning, Strengths/Weaknesses, Market Differentiation, Competitive Threats, Opportunities)
 4. Include source citations for all competitive data
 5. Write content immediately to document
-6. Present [C] complete option after content generation (final step)
+6. Present the switch prompt after content generation (final step)
 7. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before completing workflow
 </instructions>
 
@@ -41,8 +41,8 @@ Competitive analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] complete option after competitive analysis content generation
-- 💾 ONLY save when user chooses C (Complete)
+- ⚠️ Present switch prompt after competitive analysis content generation
+- 💾 ONLY save when user confirms via the switch prompt(Complete)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]` before completing workflow
 - 🚫 FORBIDDEN to complete workflow until C is selected
 
@@ -135,7 +135,6 @@ Show the generated competitive analysis and present complete option:
 - Competitive threats and challenges documented
 
 **Ready to complete the market research?**
-[C] Complete Research - Save final document and conclude
 
 ### 4. Handle Complete Selection
 
@@ -145,10 +144,6 @@ Show the generated competitive analysis and present complete option:
 - Update frontmatter: `stepsCompleted: [1, 2, 3]`
 - Complete the market research workflow
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the research document using the structure from step 2.
-
 ## SUCCESS METRICS:
 
 ✅ Key market players identified
@@ -156,8 +151,8 @@ When user selects 'C', append the content directly to the research document usin
 ✅ Competitive positioning strategies clearly mapped
 ✅ Strengths and weaknesses thoroughly analyzed
 ✅ Market differentiation opportunities identified
-✅ [C] complete option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 ✅ Market research workflow completed successfully
 
 ## FAILURE MODES:
@@ -168,7 +163,7 @@ When user selects 'C', append the content directly to the research document usin
 ❌ Incomplete competitive positioning analysis
 ❌ Not identifying market differentiation opportunities
 ❌ Not presenting completion option for research workflow
-❌ Appending content without user selecting 'C'
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file

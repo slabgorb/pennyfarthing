@@ -10,7 +10,7 @@ Conduct customer pain points and needs analysis identifying customer challenges,
 3. Generate pain points analysis content with seven subsections (Challenges and Frustrations, Unmet Needs, Adoption Barriers, Service Pain Points, Satisfaction Gaps, Emotional Impact, Pain Point Prioritization)
 4. Include source citations for all pain point data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
 </instructions>
 
@@ -42,11 +42,11 @@ Customer pain points analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after pain points content generation
+- ⚠️ Present switch prompt after pain points content generation
 - 📝 WRITE CUSTOMER PAIN POINTS ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -208,7 +208,6 @@ _Source: [URL]_
 - Pain points prioritized by impact and opportunity
 
 **Ready to proceed to customer decision processes?**
-[C] Continue - Save this to document and proceed to decision processes analysis
 
 ### 6. Handle Continue Selection
 
@@ -218,10 +217,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2, 3]`
 - Load: `./step-04-customer-decisions.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Customer challenges and frustrations clearly documented
@@ -230,7 +225,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Customer satisfaction gaps assessed
 ✅ Pain points prioritized by impact and opportunity
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (customer decisions)
 ✅ Research goals alignment maintained
 
@@ -242,7 +237,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Not identifying unmet needs or solution gaps
 ❌ Incomplete adoption barriers analysis
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to customer decisions analysis step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -267,9 +262,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable pain point insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-04-customer-decisions.md` to analyze customer decision processes, journey mapping, and decision factors for {{research_topic}}.
-
-Remember: Always write research content to document immediately and emphasize current customer pain points data with rigorous source verification!

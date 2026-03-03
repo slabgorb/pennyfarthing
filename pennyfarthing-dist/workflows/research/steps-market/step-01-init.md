@@ -9,7 +9,7 @@ Initialize market research by confirming understanding of the research topic and
 2. Present market research areas to be covered (market size, customer insights, competitive landscape, strategic recommendations)
 3. Explain research methodology with web verification and source validation
 4. Write initial scope document immediately to research file
-5. Present [C] continue option for user confirmation
+5. Present the switch prompt for user confirmation
 6. Update frontmatter stepsCompleted to [1] before loading next step
 7. Load step-02-customer-behavior.md or step-02-customer-insights.md based on variant
 </instructions>
@@ -37,10 +37,10 @@ Initial scope document containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Confirm research understanding before proceeding
-- ⚠️ Present [C] continue option after scope clarification
+- ⚠️ Present switch prompt after scope clarification
 - 💾 Write initial scope document immediately
 - 📖 Update frontmatter `stepsCompleted: [1]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -152,7 +152,6 @@ Show initial scope document and present continue option:
 **Document Status:** Initial scope written to research file for your review
 
 **Ready to begin detailed market research?**
-[C] Continue - Confirm scope and proceed to customer insights analysis
 [Modify] Suggest changes to research scope before proceeding
 
 ### 5. Handle User Response
@@ -175,7 +174,7 @@ Show initial scope document and present continue option:
 ✅ Market research scope clearly defined
 ✅ Initial scope document written immediately
 ✅ User opportunity to review and modify scope
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Document properly updated with scope confirmation
 
 ## FAILURE MODES:

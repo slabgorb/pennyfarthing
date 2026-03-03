@@ -9,7 +9,7 @@ Identify primary components from selected patterns with clear responsibilities a
 </instructions>
 
 <output>
-Component Design section with ASCII/Mermaid component diagram, Component Responsibilities table, Boundary Decisions, and Implementation Consistency Rules. Update frontmatter stepsCompleted array after user confirms [C].
+Component Design section with ASCII/Mermaid component diagram, Component Responsibilities table, Boundary Decisions, and Implementation Consistency Rules. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
 </output>
 
 <step-meta>
@@ -28,10 +28,10 @@ gate: true
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present A/P/C menu after generating component design
-- ONLY save when user chooses [C] Continue
+- Present the switch prompt after generating component design
+- ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before loading next step
-- FORBIDDEN to load next step until [C] is selected
+- FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## Purpose
 
@@ -106,33 +106,6 @@ Add to session file:
 ```
 
 <!-- GATE -->
-
-## Collaboration Menu (A/P/C)
-
-After generating component design, present choices:
-
-- **[A] Advanced Elicitation** - Use discovery protocols to explore alternative component structures or hidden dependencies
-- **[P] Party Mode** - Bring multiple perspectives to evaluate component boundaries from different angles
-- **[C] Continue** - Save the content and proceed to interface definition
-- **[R] Revise** - Need to reconsider component structure or boundaries
-
-## Advanced Elicitation Mode
-
-When user selects [A]:
-1. Challenge component boundaries with edge cases
-2. Explore alternative decomposition strategies
-3. Identify hidden coupling between components
-4. Question data ownership decisions
-
-## Party Mode
-
-When user selects [P]:
-1. Present component design from multiple viewpoints:
-   - **Domain expert**: Do boundaries align with business concepts?
-   - **Data architect**: Is data ownership clear and consistent?
-   - **DevOps engineer**: How will this deploy and scale?
-   - **New team member**: Can someone understand this quickly?
-2. Synthesize perspectives into refined design
 
 ## Success Metrics
 

@@ -84,8 +84,6 @@ Everything is local. The next step pushes to the remote — that's the point of 
 
 ---
 
-**[C]** Continue to push
-**[A]** Abort (delete tag{if stable: , reset main})
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-push" next="step-09-push">

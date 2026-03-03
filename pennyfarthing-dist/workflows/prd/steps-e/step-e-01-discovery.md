@@ -111,7 +111,6 @@ This report contains findings from previous validation checks and can help guide
 
 **Would you like to:**
 - **[U] Use validation report** - Load it to guide and prioritize edits
-- **[S] Skip** - Proceed with manual edit discovery"
 
 **Wait for user input.**
 
@@ -208,27 +207,6 @@ This PRD does not follow BMAD standard structure (only {count}/6 core sections p
 **How would you like to proceed?**"
 
 Present MENU OPTIONS below for user selection
-
-### 9. Present MENU OPTIONS (Legacy PRDs Only)
-
-**[C] Convert to BMAD Format** - Convert PRD to BMAD standard structure, then apply your edits
-**[E] Edit As-Is** - Apply your edits without converting the format
-**[X] Exit** - Exit and review conversion options
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- IF C (Convert): Load, read entire file, then execute {altStepFile} (step-e-01b-legacy-conversion.md)
-- IF E (Edit As-Is): Display "Proceeding with edits..." then load next step
-- IF X (Exit): Display summary and exit
-- IF Any other: help user, then redisplay menu
-
----
-
 
 <switch tool="AskUserQuestion">
   <case value="use-validation-report" next="LOOP">

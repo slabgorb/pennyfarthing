@@ -10,7 +10,7 @@ Conduct architectural patterns analysis identifying system architecture patterns
 3. Generate architectural patterns analysis content with seven subsections (System Architecture Patterns, Design Principles, Scalability Patterns, Integration Patterns, Security Architecture, Data Architecture, Deployment Architecture)
 4. Include source citations for all architectural data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
 </instructions>
 
@@ -42,11 +42,11 @@ Architectural patterns analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after architectural patterns content generation
+- ⚠️ Present switch prompt after architectural patterns content generation
 - 📝 WRITE ARCHITECTURAL PATTERNS ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -174,7 +174,6 @@ Show the generated architectural patterns and present continue option:
 - Security and data architecture considerations captured
 
 **Ready to proceed to implementation research?**
-[C] Continue - Save this to the document and move to implementation research
 
 ### 7. Handle Continue Selection
 
@@ -184,10 +183,6 @@ Show the generated architectural patterns and present continue option:
 - Update frontmatter: `stepsCompleted: [1, 2, 3]`
 - Load: `./step-05-implementation-research.md`
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the research document using the structure from step 5.
-
 ## SUCCESS METRICS:
 
 ✅ System architecture patterns identified with current citations
@@ -195,8 +190,8 @@ When user selects 'C', append the content directly to the research document usin
 ✅ Scalability and performance patterns thoroughly mapped
 ✅ Integration and communication patterns captured
 ✅ Security and data architecture considerations analyzed
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 ✅ Proper routing to implementation research step
 
 ## FAILURE MODES:
@@ -206,8 +201,8 @@ When user selects 'C', append the content directly to the research document usin
 ❌ Missing critical system architecture patterns
 ❌ Not analyzing design trade-offs and considerations
 ❌ Incomplete scalability or performance patterns analysis
-❌ Not presenting [C] continue option after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -220,9 +215,3 @@ When user selects 'C', append the content directly to the research document usin
 - Research successful system architectures and their evolution
 - Note architectural decision records (ADRs) and rationales
 - Research architecture assessment and evaluation frameworks
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-05-implementation-research.md` to focus on implementation approaches and technology adoption.
-
-Remember: Always emphasize current architectural data and rigorous source verification!

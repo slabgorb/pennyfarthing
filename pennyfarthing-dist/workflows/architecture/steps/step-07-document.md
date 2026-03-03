@@ -137,8 +137,6 @@ After generating document, present completion options:
 
 - **[V] Validate** - Run comprehensive validation checks on the complete architecture
 - **[E] Edit** - Make revisions to specific sections
-- **[C] Complete** - Finalize document and end workflow
-- **[R] Restart Section** - Go back to a specific step
 
 ## Validation Checks
 

@@ -213,12 +213,7 @@ Generated recipes:
   ✓ Orchestrator: dev, status, clone-repos
   ✓ Sprint: sprint, backlog, gui
 
-Options:
-[A] Accept and write justfile
-[E] Edit recipes
-[M] Generate Makefile instead
-[P] Preview full file
-[S] Skip - I'll create my own
+(switch prompt presents options)
 ```
 
 ### Edit Flow

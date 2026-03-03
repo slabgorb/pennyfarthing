@@ -9,7 +9,7 @@ Survey applicable patterns (microservices, event-driven, CQRS, circuit breakers,
 </instructions>
 
 <output>
-Pattern Analysis section with Technology Versions table, Candidate Patterns comparison, Selected Pattern(s) with justification, and Rejected Alternatives. Update frontmatter stepsCompleted array after user confirms [C].
+Pattern Analysis section with Technology Versions table, Candidate Patterns comparison, Selected Pattern(s) with justification, and Rejected Alternatives. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
 </output>
 
 <step-meta>
@@ -29,10 +29,10 @@ gate: false
 
 - Show your analysis before taking any action
 - Search the web to verify current versions and options
-- Present A/P/C menu after generating pattern analysis
-- ONLY save when user chooses [C] Continue
+- Present the switch prompt after generating pattern analysis
+- ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
-- FORBIDDEN to load next step until [C] is selected
+- FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## Purpose
 
@@ -99,33 +99,6 @@ Add to session file:
 - [Pattern]: [Why not suitable]
 ```
 
-## Collaboration Menu (A/P/C)
-
-After generating pattern analysis, present choices:
-
-- **[A] Advanced Elicitation** - Use discovery protocols to explore unconventional patterns or custom approaches
-- **[P] Party Mode** - Bring multiple perspectives to evaluate pattern trade-offs for different use cases
-- **[C] Continue** - Save the content and proceed to component design
-- **[R] Revise** - Need to reconsider patterns or gather more information
-
-## Advanced Elicitation Mode
-
-When user selects [A]:
-1. Explore hybrid patterns combining multiple approaches
-2. Investigate emerging patterns not yet mainstream
-3. Consider domain-specific architectural patterns
-4. Question assumptions about pattern applicability
-
-## Party Mode
-
-When user selects [P]:
-1. Present pattern evaluation from multiple viewpoints:
-   - **Pragmatist**: What's the simplest thing that works?
-   - **Futurist**: What if requirements change significantly?
-   - **Skeptic**: What could go wrong with this pattern?
-   - **Operator**: How will this pattern affect day-to-day operations?
-2. Synthesize perspectives into pattern recommendation
-
 ## Success Metrics
 
 - Patterns evaluated against context constraints
@@ -155,7 +128,3 @@ When user selects [P]:
     Revise — Need to reconsider patterns or gather more information
   </case>
 </switch>
-
-## Next Step
-
-After user selects [C], proceed to Component Design to define the system structure.

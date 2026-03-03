@@ -22,7 +22,7 @@ Proposed change groups with:
 - Files listed by repo with their status
 - Rationale for grouping
 - Summary of total groups (quick commits, tracked stories, skipped)
-- User choices: [E] edit, [T] track, [S] skip, [C] continue
+- User choices presented via switch prompt
 </output>
 
 ## Objective
@@ -140,8 +140,6 @@ Ready to proceed?
 
 **[E]** Edit groupings (modify a group)
 **[T]** Track a group in Jira (promote to standalone story)
-**[S]** Skip a group (leave those files uncommitted)
-**[C]** Continue to execution
 
 <!-- GATE -->
 

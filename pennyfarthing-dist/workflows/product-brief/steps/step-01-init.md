@@ -64,7 +64,7 @@ Initialize the product brief workflow by detecting continuation state and settin
 - 🎯 Show your analysis of current state before taking any action
 - 💾 Initialize document structure and update frontmatter appropriately
 - 📖 Set up frontmatter `stepsCompleted: [1]` before loading next step
-- 🚫 FORBIDDEN to load next step until user selects 'C' (Continue)
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt (Continue)
 
 ## CONTEXT BOUNDARIES:
 
@@ -153,19 +153,6 @@ Try to discover the following:
 
 Do you have any other documents you'd like me to include, or shall we continue to the next step?"
 
-### 4. Present MENU OPTIONS
-
-Display: "**Proceeding to product vision discovery...**"
-
-#### Menu Handling Logic:
-
-- After setup report is presented, immediately load, read entire file, then execute {nextStepFile}
-
-#### EXECUTION RULES:
-
-- This is an initialization step with auto-proceed after setup completion
-- Proceed directly to next step after document setup and reporting
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [setup completion is achieved and frontmatter properly updated], will you then load and read fully `{nextStepFile}` to execute and begin product vision discovery.
@@ -190,6 +177,6 @@ ONLY WHEN [setup completion is achieved and frontmatter properly updated], will 
 - Creating document without proper template structure
 - Not checking sharded folders first before whole files
 - Not reporting discovered documents to user clearly
-- Proceeding without user selecting 'C' (Continue)
+- Proceeding without user confirming via the switch prompt (Continue)
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

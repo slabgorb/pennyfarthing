@@ -74,8 +74,6 @@ For standard web servers (React, Vue, Next.js, Express, etc.):
 Present to user:
 
 > I detected a web server running on port {dev_port}.
->
-> - **[C] Connect** - Use the existing server at {dev_url}
 > - **[N] New** - Kill it and start fresh with `{dev_command}`
 > - **[U] URL** - Specify a different URL to connect to
 
@@ -84,8 +82,6 @@ Present to user:
 Present to user:
 
 > No web server detected on port {dev_port}.
->
-> - **[S] Start** - Launch with `{dev_command}`
 > - **[U] URL** - Specify a different URL (server running elsewhere)
 > - **[M] Manual** - I'll start the server myself, then continue
 
@@ -158,8 +154,6 @@ Present to user:
 > ```json
 > "dev:cdp": "electron --remote-debugging-port=9222 dist/main.js"
 > ```
->
-> - **[R] Retry** - Check again after restarting
 > - **[W] Web Mode** - Switch to web mode instead (if available)
 > - **[M] Manual** - I'll configure CDP myself, then continue
 
@@ -245,13 +239,6 @@ Snapshot: [display snapshot or screenshot]
 
 Ready to explore the UI.
 ```
-
-## Collaboration Menu
-
-- **[C] Continue** - Proceed to UI exploration
-- **[R] Reconnect** - Try a different URL or restart app
-- **[T] Toggle Mode** - Switch between Electron/Web if both available
-
 
 <switch tool="AskUserQuestion">
   <case value="connect" next="step-02-explore">

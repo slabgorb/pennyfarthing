@@ -10,7 +10,7 @@ Conduct focused regulatory and compliance analysis identifying applicable regula
 3. Generate regulatory analysis content with seven subsections (Applicable Regulations, Industry Standards, Compliance Frameworks, Data Protection, Licensing, Implementation Considerations, Risk Assessment)
 4. Include source citations for all regulatory information
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
 </instructions>
 
@@ -42,11 +42,11 @@ Regulatory analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after regulatory content generation
+- ⚠️ Present switch prompt after regulatory content generation
 - 📝 WRITE REGULATORY ANALYSIS TO DOCUMENT IMMEDIATELY
-- 💾 ONLY save when user chooses C (Continue)
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -173,7 +173,6 @@ Show the generated regulatory analysis and present continue option:
 - Risk assessment completed
 
 **Ready to proceed to technical trends?**
-[C] Continue - Save this to the document and move to technical trends
 
 ### 7. Handle Continue Selection
 
@@ -183,10 +182,6 @@ Show the generated regulatory analysis and present continue option:
 - Update frontmatter: `stepsCompleted: [1, 2, 3, 4]`
 - Load: `./step-05-technical-trends.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 5. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Applicable regulations identified with current citations
@@ -194,8 +189,8 @@ Content is already written to document when generated in step 5. No additional a
 ✅ Compliance frameworks clearly mapped
 ✅ Data protection requirements analyzed
 ✅ Implementation considerations provided
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -203,8 +198,8 @@ Content is already written to document when generated in step 5. No additional a
 ❌ Missing critical regulatory requirements for the domain
 ❌ Not providing implementation considerations for compliance
 ❌ Not completing risk assessment for regulatory compliance
-❌ Not presenting [C] continue option after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -224,9 +219,3 @@ Content is already written to document when generated in step 5. No additional a
 - Use official government and industry association sources
 - Note effective dates and implementation timelines
 - Present compliance requirement levels and obligations
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-05-technical-trends.md` to analyze technical trends and innovations in the domain.
-
-Remember: Search the web to verify regulatory facts and provide practical implementation considerations!

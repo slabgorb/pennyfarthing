@@ -54,10 +54,10 @@ For complex domains only that have a mapping in {domainComplexityCSV}, explore d
 
 - 🎯 Check domain complexity from step-02 classification first
 - ⚠️ If complexity is "low", offer to skip this step
-- ⚠️ Present A/P/C menu after domain requirements defined (or skipped)
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after domain requirements defined (or skipped)
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -87,7 +87,6 @@ For complex domains, explore what makes this domain special:
 
 Offer to skip:
 "The domain complexity from our discovery is low. We may not need deep domain-specific requirements. Would you like to:
-- [C] Skip this step and move to Innovation
 - [D] Do domain exploration anyway"
 
 **If complexity is MEDIUM or HIGH:**
@@ -157,24 +156,6 @@ Acknowledge the domain and explore what makes it complex:
 
 ### N. Present MENU OPTIONS
 
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue - Save and Proceed to Innovation (Step 6 of 13)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask}, and when finished redisplay the menu
-- IF P: Execute {partyModeWorkflow}, and when finished redisplay the menu
-- IF C: Save content to {outputFile}, update frontmatter, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#n-present-menu-options)
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT
-
-When user selects 'C', append to `{outputFile}`:
-
-```markdown
 ## Domain-Specific Requirements
 
 {{discovered domain requirements}}
@@ -211,7 +192,7 @@ ONLY WHEN [C continue option] is selected and [content saved or skipped], will y
 - Compliance, technical, and integration requirements identified
 - Domain-specific risks documented with mitigations
 - User validated completeness
-- Content properly saved (or step skipped) when C selected
+- Content properly saved (or step skipped) when user confirms via the switch prompt
 
 ### ❌ SYSTEM FAILURE:
 

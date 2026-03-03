@@ -10,7 +10,7 @@ Conduct comprehensive industry analysis focusing on market size, growth dynamics
 3. Generate industry analysis content with five subsections (Market Size, Market Dynamics, Market Structure, Industry Trends, Competitive Dynamics)
 4. Include source citations for all data points
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2] before loading next step
 </instructions>
 
@@ -40,11 +40,11 @@ Industry analysis document sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after industry analysis content generation
+- ⚠️ Present switch prompt after industry analysis content generation
 - 📝 WRITE INDUSTRY ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -187,7 +187,6 @@ _Source: [URL]_
 - Multiple sources verified for critical insights
 
 **Ready to proceed to competitive landscape analysis?**
-[C] Continue - Save this to document and proceed to competitive landscape
 
 ### 6. Handle Continue Selection
 
@@ -197,10 +196,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2]`
 - Load: `./step-03-competitive-landscape.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Market size and valuation thoroughly analyzed
@@ -209,7 +204,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Competitive dynamics clearly mapped
 ✅ Multiple sources verified for critical insights
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (competitive landscape)
 ✅ Research goals alignment maintained
 
@@ -220,7 +215,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Incomplete market structure analysis
 ❌ Not identifying key industry trends
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to competitive landscape step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -245,9 +240,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable industry insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-03-competitive-landscape.md` to analyze competitive landscape, key players, and ecosystem analysis for {{research_topic}}.
-
-Remember: Always write research content to document immediately and search the web to verify facts!

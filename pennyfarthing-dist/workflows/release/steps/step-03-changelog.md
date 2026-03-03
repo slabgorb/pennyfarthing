@@ -119,9 +119,6 @@ head -60 CHANGELOG.md
 
 <!-- GATE -->
 
-**[C]** Continue to README update
-**[R]** Revise changelog entries
-**[A]** Abort release
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-readme-update" next="step-04-readme">

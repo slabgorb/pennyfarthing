@@ -105,53 +105,6 @@ Display:
 
 **What would you like to do next?**"
 
-### 3. Present MENU OPTIONS
-
-Display:
-
-**[V] Run Full Validation** - Execute complete validation workflow (steps-v) to verify PRD quality
-**[E] Edit More** - Make additional edits to the PRD
-**[S] Summary** - End with detailed summary of changes
-**[X] Exit** - Exit edit workflow
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- **IF V (Run Full Validation):**
-  - Display: "**Starting Validation Workflow**"
-  - Display: "This will run all 13 validation checks on the updated PRD."
-  - Display: "Preparing to validate: {prd_file_path}"
-  - Display: "**Proceeding to validation...**"
-  - Load, read entire file, then execute {validationWorkflow} (steps-v/step-v-01-discovery.md)
-  - Note: This hands off to the validation workflow which will run its complete 13-step process
-
-- **IF E (Edit More):**
-  - Display: "**Additional Edits**"
-  - Ask: "What additional edits would you like to make?"
-  - Accept input, then display: "**Returning to edit step...**"
-  - Load and execute step-e-03-edit.md again
-
-- **IF S (Summary):**
-  - Display detailed summary including:
-    - Complete list of all changes made
-    - Before/after comparison (key improvements)
-    - Recommendations for next steps
-  - Display: "**Edit Workflow Complete**"
-  - Exit
-
-- **IF X (Exit):**
-  - Display summary
-  - Display: "**Edit Workflow Complete**"
-  - Exit
-
-- **IF Any other:** Help user, then redisplay menu
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

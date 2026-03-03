@@ -5,11 +5,11 @@ Analyze project context and requirements to identify technical constraints, curr
 </purpose>
 
 <instructions>
-Extract technical constraints from PRD (performance, security, integration requirements). Map existing systems and patterns. Identify scalability, reliability, maintainability, and cost concerns. Generate analysis and present A/P/C collaboration menu for refinement.
+Extract technical constraints from PRD (performance, security, integration requirements). Map existing systems and patterns. Identify scalability, reliability, maintainability, and cost concerns. Generate analysis and Present the switch prompt.
 </instructions>
 
 <output>
-Architecture Context section in session file with Technical Constraints, Current Landscape overview, and Key Concerns documented. Update frontmatter stepsCompleted array after user confirms [C].
+Architecture Context section in session file with Technical Constraints, Current Landscape overview, and Key Concerns documented. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
 </output>
 
 <step-meta>
@@ -28,10 +28,10 @@ gate: true
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present A/P/C menu after generating context analysis
-- ONLY save when user chooses [C] Continue
+- Present the switch prompt after generating context analysis
+- ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2]` before loading next step
-- FORBIDDEN to load next step until [C] is selected
+- FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## Purpose
 
@@ -85,33 +85,6 @@ Add to session file:
 ```
 
 <!-- GATE -->
-
-## Collaboration Menu (A/P/C)
-
-After generating context analysis, present choices:
-
-- **[A] Advanced Elicitation** - Use discovery protocols to develop deeper insights about project context and architectural implications
-- **[P] Party Mode** - Bring multiple perspectives to analyze project requirements from different architectural angles
-- **[C] Continue** - Save the content to the document and proceed to pattern selection
-- **[R] Revise** - Need to gather more information or clarify constraints
-
-## Advanced Elicitation Mode
-
-When user selects [A]:
-1. Ask probing questions about non-obvious constraints
-2. Explore edge cases and failure scenarios
-3. Identify implicit assumptions in requirements
-4. Dig deeper into integration complexity
-
-## Party Mode
-
-When user selects [P]:
-1. Present analysis from multiple viewpoints:
-   - **Security architect**: What could go wrong?
-   - **Performance engineer**: Where are the bottlenecks?
-   - **Operations**: How will this run in production?
-   - **Developer experience**: How maintainable is this?
-2. Synthesize perspectives into unified understanding
 
 ## Success Metrics
 

@@ -73,19 +73,17 @@ Present to user:
 
 ### Continuation Options
 
-- **[C] Continue** - Resume from step {next_step}
-- **[R] Restart** - Start fresh (will archive existing document)
 - **[V] View** - Show complete document before deciding
 ```
 
 ## Continuation Flow
 
-After user selects [C]:
+After user confirms via the switch prompt:
 1. Load the next incomplete step file
 2. Resume workflow from that point
 3. Continue normal step progression
 
-After user selects [R]:
+After user selects Revise:
 1. Archive existing document to `{output_file}.backup-{timestamp}`
 2. Return to step 1 for fresh initialization
 3. Proceed with new workflow

@@ -135,24 +135,6 @@ Would you like me to:
 
 What would be most helpful?"
 
-### 6. Present MENU OPTIONS
-
-**If workflow not complete:**
-Display: "Ready to continue with Step {nextStepNumber}: {nextStepTitle}?
-
-**Select an Option:** [C] Continue to Step {nextStepNumber}"
-
-#### Menu Handling Logic:
-
-- IF C: Load, read entire file, then execute the appropriate next step file based on `lastStep`
-- IF Any other comments or queries: respond and redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- User can chat or ask questions about current progress
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [current state confirmed], will you then load and read fully the appropriate next step file to resume the workflow.

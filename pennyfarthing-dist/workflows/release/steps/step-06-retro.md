@@ -53,8 +53,6 @@ Continue to the commit step. Any retro notes are captured separately — they do
 
 ---
 
-**[C]** Continue to commit (skip retro)
-**[R]** Run `/retro` first
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-commit" next="step-07-commit">

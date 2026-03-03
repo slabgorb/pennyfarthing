@@ -12,7 +12,7 @@ Collaboratively generate specific, critical rules that AI agents must follow whe
 5. Generate code quality and style rules
 6. Generate development workflow rules
 7. Identify critical don't-miss rules and anti-patterns
-8. Present A/P/C menu after each category for user validation
+8. Present the switch prompt after each category for user validation
 9. Append validated rules to project context file
 10. Update frontmatter with completed sections
 </instructions>
@@ -25,7 +25,7 @@ Collaboratively generate specific, critical rules that AI agents must follow whe
 - Code quality and style rules
 - Development workflow rules
 - Critical anti-pattern rules documented
-- A/P/C menu selections processed
+- switch prompt selections processed
 - Rules appended to project context file
 - Frontmatter updated with sections_completed
 - Ready to proceed to step-03
@@ -45,24 +45,16 @@ Collaboratively generate specific, critical rules that AI agents must follow whe
 
 - 🎯 Show your analysis before taking any action
 - 📝 Focus on specific, actionable rules rather than general advice
-- ⚠️ Present A/P/C menu after each major rule category
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after each major rule category
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update frontmatter with completed sections
 - 🚫 FORBIDDEN to load next step until all sections are complete
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices for each rule category:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to explore nuanced implementation rules
-- **P (Party Mode)**: Bring multiple perspectives to identify critical edge cases
-- **C (Continue)**: Save the current rules and proceed to next category
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode
-- PROTOCOLS always return to display this step's A/P/C menu after the A or P have completed
+- PROTOCOLS always return to display this step's switch prompt after the A or P have completed
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -290,9 +282,6 @@ After each category, show the generated rules and present choices:
 [Show the complete markdown content for this category]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Explore nuanced rules for this category
-[P] Party Mode - Review from different implementation perspectives
-[C] Continue - Save these rules and move to next category"
 
 ### 10. Handle Menu Selection
 
@@ -301,16 +290,16 @@ After each category, show the generated rules and present choices:
 - Execute advanced-elicitation.xml with current category rules
 - Process enhanced rules that come back
 - Ask user: "Accept these enhanced rules for {{category}}? (y/n)"
-- If yes: Update content, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute party-mode workflow with category rules context
 - Process collaborative insights on implementation patterns
 - Ask user: "Accept these changes to {{category}} rules? (y/n)"
-- If yes: Update content, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
@@ -320,7 +309,7 @@ After each category, show the generated rules and present choices:
 
 ## APPEND TO PROJECT CONTEXT:
 
-When user selects 'C' for a category, append the content directly to `{output_folder}/project-context.md` using the structure from step 8.
+When user confirms via the switch prompt for a category, append the content directly to `{output_folder}/project-context.md` using the structure from step 8.
 
 ## SUCCESS METRICS:
 
@@ -331,7 +320,7 @@ When user selects 'C' for a category, append the content directly to `{output_fo
 ✅ Code quality rules maintain project standards
 ✅ Workflow rules prevent implementation conflicts
 ✅ Content is lean and optimized for LLM context
-✅ A/P/C menu presented and handled correctly for each category
+✅ switch prompt presented and handled correctly for each category
 
 ## FAILURE MODES:
 
@@ -340,13 +329,7 @@ When user selects 'C' for a category, append the content directly to `{output_fo
 ❌ Missing critical anti-patterns or edge cases
 ❌ Not getting user validation for each rule category
 ❌ Not documenting exact versions and configurations
-❌ Not presenting A/P/C menu after content generation
-
-## NEXT STEP:
-
-After completing all rule categories and user selects 'C' for the final category, load `./step-03-complete.md` to finalize the project context file.
-
-Remember: Do NOT proceed to step-03 until all categories are complete and user explicitly selects 'C' for each!
+❌ Not presenting switch prompt after content generation
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

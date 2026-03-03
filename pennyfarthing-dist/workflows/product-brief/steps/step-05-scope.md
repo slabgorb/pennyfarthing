@@ -22,7 +22,7 @@ Define MVP scope with clear boundaries and outline future vision through collabo
 4. Define MVP success criteria and validation gates
 5. Explore future vision and long-term capabilities
 6. Generate MVP Scope content with core features and future vision
-7. Present A/P/C menu for optional advanced elicitation or party mode
+7. Present the switch prompt for optional advanced elicitation or party mode
 8. Save content to document when user selects C
 </instructions>
 
@@ -188,30 +188,6 @@ Prepare the following structure for document append:
 [Future vision content based on conversation, or N/A if not discussed]
 ```
 
-### 7. Present MENU OPTIONS
-
-**Content Presentation:**
-"I've defined the MVP scope for {{project_name}} that balances delivering real value with realistic boundaries. This gives us a clear path forward while keeping our options open for future growth.
-
-**Here's what I'll add to the document:**
-[Show the complete markdown content from step 6]
-
-**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask} with current scope content to optimize scope definition
-- IF P: Execute {partyModeWorkflow} to bring different perspectives to validate MVP scope
-- IF C: Save content to {outputFile}, update frontmatter with stepsCompleted: [1, 2, 3, 4, 5], then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu with updated content
-- User can chat or ask questions - always respond and then end with display again of the menu options
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [MVP scope finalized and saved to document with frontmatter updated], will you then load and read fully `{nextStepFile}` to execute and complete the product brief workflow.
@@ -239,8 +215,8 @@ ONLY WHEN [C continue option] is selected and [MVP scope finalized and saved to 
 - Clear out-of-scope boundaries that prevent scope creep
 - Success criteria that validate MVP approach and inform go/no-go decisions
 - Future vision that inspires while maintaining focus on MVP
-- A/P/C menu presented and handled correctly with proper task execution
-- Content properly appended to document when C selected
+- switch prompt presented and handled correctly with proper task execution
+- Content properly appended to document when user confirms via the switch prompt
 - Frontmatter updated with stepsCompleted: [1, 2, 3, 4, 5]
 
 ### ❌ SYSTEM FAILURE:
@@ -249,8 +225,8 @@ ONLY WHEN [C continue option] is selected and [MVP scope finalized and saved to 
 - Missing clear boundaries leading to scope creep
 - No success criteria to validate MVP approach
 - Future vision disconnected from MVP foundation
-- Not presenting standard A/P/C menu after content generation
-- Appending content without user selecting 'C'
+- Not presenting standard switch prompt after content generation
+- Appending content without user confirming via the switch prompt
 - Not updating frontmatter properly
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

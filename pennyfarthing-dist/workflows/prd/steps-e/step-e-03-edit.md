@@ -214,27 +214,6 @@ Display:
 
 **What would you like to do next?**"
 
-### 8. Present MENU OPTIONS
-
-**[V] Run Validation** - Execute full validation workflow (steps-v/step-v-01-discovery.md)
-**[S] Summary Only** - End with summary of changes (no validation)
-**[A] Adjust** - Make additional edits
-**[X] Exit** - Exit edit workflow
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- IF V (Validate): Display "Starting validation workflow..." then load and execute steps-v/step-v-01-discovery.md
-- IF S (Summary): Present edit summary and exit
-- IF A (Adjust): Accept additional requirements, loop back to editing
-- IF X (Exit): Display summary and exit
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

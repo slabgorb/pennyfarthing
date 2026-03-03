@@ -124,8 +124,6 @@ git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION alrea
 
 ---
 
-**[C]** Continue to version bump
-**[A]** Abort release
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-version-bump" next="step-02-bump">

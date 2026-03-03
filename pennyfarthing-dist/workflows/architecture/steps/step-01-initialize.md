@@ -86,14 +86,6 @@ Add to session file:
 - Reviewers: [list]
 ```
 
-## Collaboration Menu
-
-After completing initialization, present options:
-
-- **[C] Continue** - Inputs gathered, proceed to Context Analysis
-- **[A] Advanced Elicitation** - Use discovery protocols to find additional context
-- **[R] Revise** - Need to locate missing inputs before proceeding
-
 ## Success Metrics
 
 - Existing workflow detected and handed off to step-01b correctly
@@ -120,7 +112,3 @@ After completing initialization, present options:
     Revise — Need to locate missing inputs before proceeding
   </case>
 </switch>
-
-## Next Step
-
-After user selects [C], proceed to Context Analysis to understand the technical landscape.

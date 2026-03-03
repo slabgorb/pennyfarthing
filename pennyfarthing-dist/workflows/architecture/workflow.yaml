@@ -6,14 +6,14 @@
 #
 # BMAD Enhancements:
 # - Continuation handler (step-01b) for resuming workflows
-# - A/P/C menus: Advanced Elicitation, Party Mode, Continue
+# - switch prompts: Advanced Elicitation, Party Mode, Continue
 # - Web search integration for current technology versions
 # - AI agent consistency focus in component and risk steps
 # - Pre-documentation validation checks
 
 workflow:
   name: architecture
-  description: Collaborative architectural decision facilitation for AI-agent consistency. Produces a decision-focused architecture document optimized for preventing agent conflicts through step-by-step discovery with A/P/C collaboration menus.
+  description: Collaborative architectural decision facilitation for AI-agent consistency. Produces a decision-focused architecture document optimized for preventing agent conflicts through step-by-step discovery with switch prompts.
   version: "2.0.0"
   type: stepped
 
@@ -32,7 +32,7 @@ workflow:
       - prd
 
   # User approval gates - pause for confirmation at key decision points
-  # Steps with A/P/C menus naturally pause; these are the formal gates
+  # Steps with switch prompts naturally pause; these are the formal gates
   gates:
     after_steps: [2, 4, 6]
     gate_marker: "<!-- GATE -->"

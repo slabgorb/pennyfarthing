@@ -36,10 +36,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating NFR content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after generating NFR content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 
 ## CONTEXT BOUNDARIES:
@@ -162,32 +162,6 @@ When saving to document, append these Level 2 and Level 3 sections (only include
 [Integration requirements based on conversation - only include if relevant]
 ```
 
-### 6. Present MENU OPTIONS
-
-Present the non-functional requirements for review, then display menu:
-- Show defined NFRs (using structure from step 5)
-- Note that only relevant categories were included
-- Emphasize NFRs specify how well the system needs to perform
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of conversation
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Polish Document (Step 11 of 12)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current NFR content, process the enhanced quality attribute insights that come back, ask user if they accept the improvements, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the current NFR list, process the collaborative technical validation and additions, ask user if they accept the changes, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 5.
-
 ## SUCCESS METRICS:
 
 ✅ Only relevant NFR categories documented (no requirement bloat)
@@ -195,8 +169,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ NFRs connected to actual user needs and business context
 ✅ Vague requirements converted to testable criteria
 ✅ Domain-specific compliance requirements included if relevant
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -205,8 +179,8 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Not connecting NFRs to actual user or business needs
 ❌ Missing domain-specific compliance requirements
 ❌ Creating overly prescriptive technical requirements
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -240,12 +214,6 @@ When user selects 'C', append the content directly to the document using the str
 - Subject to accessibility regulations
 - Targeting users with disabilities
 - B2B customers with accessibility requirements
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load {nextStepFile} to finalize the PRD and complete the workflow.
-
-Remember: Do NOT proceed to step-11 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

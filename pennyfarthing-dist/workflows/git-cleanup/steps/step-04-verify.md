@@ -19,7 +19,7 @@ Git cleanup summary report including:
 - Commits created table by repo with commit hashes and messages
 - Final state for each repo (clean or files remaining)
 - List of any remaining work or skipped files
-- User choices: [P] push all to remote, [L] keep local, [R] review again
+- User choices presented via switch prompt
 </output>
 
 ## Objective
@@ -90,9 +90,7 @@ git -C {repo_path} push origin develop
 
 ---
 
-**[P]** Push all repos to remote
 **[L]** Keep local (don't push yet)
-**[R]** Review commits again
 
 <switch tool="AskUserQuestion">
   <case value="push-all-repos-to-remote" next="LOOP">

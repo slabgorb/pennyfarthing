@@ -21,7 +21,7 @@ Define target users with rich personas and map their key interactions with the p
 3. Explore secondary user segments and their roles
 4. Map user journeys through discovery, onboarding, core usage, and success moments
 5. Generate Target Users content with personas and journey maps
-6. Present A/P/C menu for optional advanced elicitation or party mode
+6. Present the switch prompt for optional advanced elicitation or party mode
 7. Save content to document when user selects C
 </instructions>
 
@@ -169,30 +169,6 @@ Prepare the following structure for document append:
 [User journey content based on conversation, or N/A if not discussed]
 ```
 
-### 6. Present MENU OPTIONS
-
-**Content Presentation:**
-"I've mapped out who {{project_name}} serves and how they'll interact with it. This helps us ensure we're building something that real people will love to use.
-
-**Here's what I'll add to the document:**
-[Show the complete markdown content from step 5]
-
-**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask} with current user content to dive deeper into personas and journeys
-- IF P: Execute {partyModeWorkflow} to bring different perspectives to validate user understanding
-- IF C: Save content to {outputFile}, update frontmatter with stepsCompleted: [1, 2, 3], then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#6-present-menu-options)
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu with updated content
-- User can chat or ask questions - always respond and then end with display again of the menu options
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [user personas finalized and saved to document with frontmatter updated], will you then load and read fully `{nextStepFile}` to execute and begin success metrics definition.
@@ -220,8 +196,8 @@ ONLY WHEN [C continue option] is selected and [user personas finalized and saved
 - Clear distinction between primary and secondary users
 - User journeys that show key interaction points and value creation
 - User segments that align with product vision and problem statement
-- A/P/C menu presented and handled correctly with proper task execution
-- Content properly appended to document when C selected
+- switch prompt presented and handled correctly with proper task execution
+- Content properly appended to document when user confirms via the switch prompt
 - Frontmatter updated with stepsCompleted: [1, 2, 3]
 
 ### ❌ SYSTEM FAILURE:
@@ -230,8 +206,8 @@ ONLY WHEN [C continue option] is selected and [user personas finalized and saved
 - Missing key user segments that are important to success
 - User journeys that don't show how the product creates value
 - Not connecting user needs back to the problem statement
-- Not presenting standard A/P/C menu after content generation
-- Appending content without user selecting 'C'
+- Not presenting standard switch prompt after content generation
+- Appending content without user confirming via the switch prompt
 - Not updating frontmatter properly
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

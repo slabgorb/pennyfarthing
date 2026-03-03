@@ -36,10 +36,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating success criteria content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch prompt after generating success criteria content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -170,39 +170,14 @@ When saving to document, append these Level 2 and Level 3 sections:
 [Content about future vision based on conversation]
 ```
 
-### 8. Present MENU OPTIONS
-
-Present the success criteria content for user review, then display menu:
-
-- Show the drafted success criteria and scope definition (using structure from section 7)
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of the conversation
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to User Journey Mapping (Step 4 of 11)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current success criteria content, process the enhanced success metrics that come back, ask user "Accept these improvements to the success criteria? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the current success criteria, process the collaborative improvements to metrics and scope, ask user "Accept these changes to the success criteria? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 7.
-
 ## SUCCESS METRICS:
 
 ✅ User success criteria clearly identified and made measurable
 ✅ Business success metrics defined with specific targets
 ✅ Success criteria connected to product differentiator
 ✅ Scope properly negotiated (MVP, Growth, Vision)
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -210,8 +185,8 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Not connecting success criteria back to product differentiator
 ❌ Missing scope negotiation and leaving it undefined
 ❌ Generating content without real user input on what success looks like
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -224,12 +199,6 @@ If working in regulated domains (healthcare, fintech, govtech):
 - Include compliance milestones in success criteria
 - Add regulatory approval timelines to MVP scope
 - Consider audit requirements as technical success metrics
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-04-journeys.md` to map user journeys.
-
-Remember: Do NOT proceed to step-04 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">
