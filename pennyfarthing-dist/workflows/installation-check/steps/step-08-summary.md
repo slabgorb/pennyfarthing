@@ -34,7 +34,7 @@ Aggregate results from all previous steps into a final health report with an ove
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json`
+- Run: `pf validate --json`
 - Write: `{output_file}` with full health report
 </actions>
 
@@ -82,7 +82,7 @@ Present the final report:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix` to auto-repair all fixable issues
+    Fix — Run `pf validate --fix` to auto-repair all fixable issues
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on any remaining issue

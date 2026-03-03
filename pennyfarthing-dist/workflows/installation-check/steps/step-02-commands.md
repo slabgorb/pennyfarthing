@@ -32,7 +32,7 @@ Verify that slash commands, skills, user project files, and configuration are pr
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category commands`
+- Run: `pf validate --json --category commands`
 - Check: `.claude/commands/` contains `pf-*` files (copies, not symlinks)
 - Check: `.claude/skills/` contains `pf-*` directories (copies, not symlinks)
 - Check: `.pennyfarthing/config.local.yaml` exists
@@ -60,7 +60,7 @@ Present results in a clear table format:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category commands` to auto-repair
+    Fix — Run `pf validate --fix --category commands` to auto-repair
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on a specific check result

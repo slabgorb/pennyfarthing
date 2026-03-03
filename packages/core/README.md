@@ -104,7 +104,7 @@ The `pennyfarthing` binary (registered in `pennyfarthing-dist/`) provides:
 | Command | Description |
 |---------|-------------|
 | `pennyfarthing update` | Update framework files to latest version |
-| `pennyfarthing doctor` | Health check with `--fix` auto-repair |
+| `pf validate` | Health check with `--fix` auto-repair |
 | `pennyfarthing uninstall` | Remove Pennyfarthing from a project |
 | `pennyfarthing version` | Show installed version |
 | `pennyfarthing cyclist` | Launch Cyclist web UI |

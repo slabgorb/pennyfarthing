@@ -26,7 +26,7 @@ Check the pf Python CLI (required — all hooks depend on it).
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category tools`
+- Run: `pf validate --json --category tools`
 - Check: `pf` CLI is available and reports a version
 </actions>
 
@@ -48,7 +48,7 @@ Present results:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category tools` to install pf CLI
+    Fix — Run `pf validate --fix --category tools` to install pf CLI
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on the pf CLI's purpose

@@ -2376,7 +2376,7 @@ export function checkPfCli(nodeModulesPath: string | null): CheckResult {
     detail: 'pf CLI not found — agent commands will not work',
     fix: () => {
       if (!installPfCli(nodeModulesPath)) {
-        throw new Error('Neither uv nor pipx available. Install manually: uv tool install pennyfarthing-scripts');
+        throw new Error('Neither pipx nor uv available. Install manually: pipx install pennyfarthing-scripts');
       }
     }
   };

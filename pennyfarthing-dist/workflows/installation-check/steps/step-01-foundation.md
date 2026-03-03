@@ -31,7 +31,7 @@ Verify the core Pennyfarthing installation exists and is intact. This checks the
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category installation`
+- Run: `pf validate --json --category installation`
 - Check: manifest.json exists at `.pennyfarthing/manifest.json`
 - Check: Core directories exist under `.claude/pennyfarthing/` or via symlinks
 </actions>
@@ -55,7 +55,7 @@ Present results in a clear table format:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category installation` to auto-repair
+    Fix — Run `pf validate --fix --category installation` to auto-repair
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on a specific check result

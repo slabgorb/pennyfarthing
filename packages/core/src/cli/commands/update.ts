@@ -310,7 +310,7 @@ async function installPythonScripts(
   }
 
   if (!installPfCli(nodeModulesPath)) {
-    logger.warning('Could not install pf CLI — install manually: uv tool install pennyfarthing-scripts');
+    logger.warning('Could not install pf CLI — install manually: pipx install pennyfarthing-scripts');
   }
 }
 

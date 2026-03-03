@@ -1,151 +1,78 @@
-# Step 8: Install Additional Theme Packs (Optional)
+# Step 8: Browse Additional Themes (Optional)
 
 <purpose>
-Offer the user additional theme packs beyond the 26 base themes that ship with Pennyfarthing. Theme packs are optional npm packages that add themed personas with portraits.
+Show the user the full catalog of available themes beyond the base set. All themes ship with the pf CLI — no additional installation needed.
 </purpose>
 
 <instructions>
-1. Explain the theme pack system
-2. Show available packs with descriptions
-3. Let user select which packs to install
-4. Install selected packs
-5. Verify themes are discovered
+1. Explain that all themes are included with pf
+2. Show theme categories and counts
+3. Let user browse and preview themes
+4. Confirm or change the selected theme from step 7
 </instructions>
 
 <output>
-- User informed about available theme packs
-- Selected packs installed (if any)
-- New themes discoverable via `/theme list`
+- User informed about full theme catalog
+- Theme confirmed (or changed after browsing)
+- User knows how to switch themes later
 </output>
 
-## THEME PACK SYSTEM
+## THEME CATALOG
 
-```
-🎭 Additional Theme Packs
-══════════════════════════
-
-Pennyfarthing ships with 26 base themes. Additional themes are available
-as optional packages - install the ones that interest you.
-
-Theme packs are discovered automatically once installed. No configuration
-needed beyond `npm install`.
-```
-
-## AVAILABLE PACKS
-
-Present the packs with descriptions and theme counts:
-
-```
-Available theme packs:
-
-[1] @pennyfarthing/themes-literary (15 themes)
-    Classic literature: Dickens, Shakespeare, Austen, Moby Dick,
-    Sherlock Holmes, Les Miserables, Great Gatsby, and more.
-    Pre-1950 books and author collections.
-
-[2] @pennyfarthing/themes-prestige-tv (17 themes)
-    Golden age television: Breaking Bad, The Sopranos, The Wire,
-    Mad Men, Deadwood, Succession, Twin Peaks, and more.
-
-[3] @pennyfarthing/themes-comedy (9 themes)
-    Comedy TV and film: The Office, Parks & Rec, Futurama,
-    The Simpsons, Monty Python, Ted Lasso, and more.
-
-[4] @pennyfarthing/themes-scifi (8 themes)
-    Sci-fi and cyberpunk deep cuts: Foundation, Babylon 5,
-    Neuromancer, Snow Crash, Star Trek TOS, and more.
-
-[5] @pennyfarthing/themes-realistic (14 themes)
-    Historical figures: Renaissance masters, jazz legends,
-    scientific revolutionaries, classical composers, and more.
-    Realistic portrait style.
-
-[6] @pennyfarthing/themes-superheroes (4 themes)
-    Superheroes and animated action: Marvel MCU, Legion of Doom,
-    Superfriends, Avatar: The Last Airbender.
-
-[7] @pennyfarthing/themes-mythology-fantasy (4 themes)
-    Mythology and fantasy: Greek mythology, Norse mythology,
-    His Dark Materials, The Witcher.
-
-[A] Install ALL packs (71 additional themes)
-[S] Skip - base themes are enough for now
-```
-
-## INSTALLATION
-
-Based on user selection, install the chosen packs:
+All themes ship with the `pf` CLI and are available immediately — no extra packages or install steps needed.
 
 ```bash
-# Install selected packs (example: literary + prestige-tv)
-npm install @pennyfarthing/themes-literary @pennyfarthing/themes-prestige-tv
+# List all available themes
+pf theme list
 ```
 
-### Install All
+### Theme Categories
+
+| Category | Themes | Examples |
+|----------|--------|----------|
+| Sci-Fi | ~8 | Dune, Star Trek, Firefly, Fifth Element |
+| Literary | ~15 | Dickens, Shakespeare, Austen, Sherlock Holmes |
+| Prestige TV | ~17 | Breaking Bad, The Wire, Mad Men, Succession |
+| Comedy | ~9 | The Office, Parks & Rec, Futurama, Ted Lasso |
+| Realistic | ~14 | Renaissance masters, jazz legends, composers |
+| Mythology & Fantasy | ~4 | Greek, Norse, His Dark Materials |
+| Superheroes | ~4 | Marvel MCU, Avatar: The Last Airbender |
+
+## BROWSING
 
 ```bash
-npm install \
-  @pennyfarthing/themes-literary \
-  @pennyfarthing/themes-prestige-tv \
-  @pennyfarthing/themes-comedy \
-  @pennyfarthing/themes-scifi \
-  @pennyfarthing/themes-realistic \
-  @pennyfarthing/themes-superheroes \
-  @pennyfarthing/themes-mythology-fantasy
+# Preview a specific theme
+pf theme show dune
+
+# Set a different theme
+pf theme set breaking-bad
 ```
 
-## VERIFICATION
-
-After installation, verify themes are discovered:
-
-```bash
-# List all themes - should show base + installed packs
-pennyfarthing theme list
-```
+## CHANGING LATER
 
 ```
-✓ Theme packs installed
+You can switch themes anytime:
 
-Themes available:
-  Base themes:              26
-  {pack_name}:              {count}
-  ...
-  ─────────────────────────────
-  Total:                    {total}
-
-New themes are ready to use. Switch anytime with:
-  /theme set {theme-name}
-```
-
-## INSTALLING LATER
-
-```
-You can install theme packs anytime:
-
-  npm install @pennyfarthing/themes-literary
-  npm install @pennyfarthing/themes-prestige-tv
-  # etc.
-
-They're automatically discovered - no config changes needed.
-To see what's available: /theme list
+  pf theme list            - See all available themes
+  pf theme show <name>     - Preview a theme's characters
+  pf theme set <name>      - Switch to a different theme
 ```
 
 ## SUCCESS CRITERIA
 
-- User shown available theme packs
-- Selected packs installed (if any)
-- New themes verified as discoverable
-- User knows how to install more later
+- User has browsed available themes
+- Theme selection confirmed
+- User knows how to switch later
 
 ## NEXT STEP
 
-After theme packs, proceed to `step-09-jira.md` to configure the Jira project key.
+After theme browsing, proceed to `step-09-jira.md` to configure the Jira project key.
 
 <switch tool="AskUserQuestion">
-  <case value="install-all-packs" next="LOOP">
-    Install ALL packs (71 additional themes)
+  <case value="browse-themes" next="LOOP">
+    Browse more themes
   </case>
-  <case value="skip" next="step-09-jira">
-    Skip — base themes are enough for now
+  <case value="continue" next="step-09-jira">
+    Continue with current theme
   </case>
 </switch>

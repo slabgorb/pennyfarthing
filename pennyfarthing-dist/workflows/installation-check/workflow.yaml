@@ -2,7 +2,7 @@
 # Interactive health check with AI-guided explanation and remediation
 #
 # Flow: Foundation → Commands → Hooks (gate) → Scripts → Layout → Legacy (gate) → Tools → Summary
-# Wraps `pennyfarthing doctor --category` for step-by-step guided verification
+# Wraps `pf validate` for step-by-step guided verification
 #
 # Use for: onboarding, post-update verification, troubleshooting broken installs
 
@@ -18,7 +18,7 @@ workflow:
 
   variables:
     project_root: .
-    doctor_command: pennyfarthing doctor --json
+    doctor_command: pf validate --strict
     output_file: .session/doctor-results.md
 
   gates:

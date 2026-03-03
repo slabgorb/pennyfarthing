@@ -48,7 +48,7 @@ Verify all 9 hook configurations in settings.local.json. Hooks are the runtime i
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category hooks`
+- Run: `pf validate --json --category hooks`
 - Read: `.claude/settings.local.json` to show current hook configuration
 </actions>
 
@@ -99,7 +99,7 @@ Present results grouped by hook type:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category hooks` to add missing hooks
+    Fix — Run `pf validate --fix --category hooks` to add missing hooks
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on a specific hook's behavior

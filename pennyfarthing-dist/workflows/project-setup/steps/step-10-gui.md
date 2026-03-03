@@ -87,8 +87,8 @@ How would you like to view BikeRack panels?
 After configuration:
 
 ```bash
-# Check WheelHub server
-curl -s http://localhost:3457/api/health | head -1
+# Check WheelHub server (reads port from .bikerack-port, default 2898)
+pf bikerack status
 
 # TUI mode test
 pf bikerack start --dry-run

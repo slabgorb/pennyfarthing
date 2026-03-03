@@ -34,7 +34,7 @@ pf sprint story finish MSSCI-12345
 
 ## Distributed Scripts
 
-**These scripts ship to users via npm.** They become available at `.pennyfarthing/scripts/` in consumer projects.
+**These scripts ship to users via `pf init`.** They become available at `.pennyfarthing/scripts/` in consumer projects.
 
 ### What Goes Here
 
@@ -64,8 +64,8 @@ When developing Pennyfarthing (in orchestrator pattern):
 3. Changes available via `.pennyfarthing/scripts/` symlinks
 4. Commit changes to `pennyfarthing/` repo
 
-For installed projects (via npm):
-1. `npm install @pennyfarthing/core` creates `.pennyfarthing/`
+For installed projects (via pf init):
+1. `pf init` copies content dirs into `.pennyfarthing/`
 2. Scripts are accessed via `.pennyfarthing/scripts/`
 3. Users don't modify scripts directly
 

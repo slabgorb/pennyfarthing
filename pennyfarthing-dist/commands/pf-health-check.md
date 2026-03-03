@@ -16,7 +16,7 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 </purpose>
 
 <when-to-use>
-- After updating Pennyfarthing (`pennyfarthing update`)
+- After updating Pennyfarthing (`pipx upgrade pennyfarthing-scripts`)
 - When something seems broken
 - Periodic health verification
 - Before starting new sprint
@@ -29,26 +29,21 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 ### Quick Mode (CLI — for automation/CI)
 
 ```bash
-# Full health check
-pennyfarthing doctor
+# Run all validators
+pf validate
 
-# Check a specific category
-pennyfarthing doctor --category hooks
-
-# List available categories
-pennyfarthing doctor --list-categories
+# Check a specific validator
+pf validate sprint
+pf validate hooks
 
 # Auto-fix issues
-pennyfarthing doctor --fix
+pf validate --fix
 
-# Auto-fix a specific category
-pennyfarthing doctor --fix --category legacy
-
-# JSON output for scripting
-pennyfarthing doctor --json --category installation
+# Strict mode (warnings as errors)
+pf validate --strict
 ```
 
-Categories: `installation`, `commands`, `hooks`, `scripts`, `layout`, `legacy`, `tools`
+Validators: `sprint`, `schema`, `agent`, `workflow`, `skill-command`, `tandem-awareness`
 
 ### Interactive Mode (Workflow — for onboarding/troubleshooting)
 
@@ -56,24 +51,19 @@ Categories: `installation`, `commands`, `hooks`, `scripts`, `layout`, `legacy`, 
 /pf-workflow start installation-check
 ```
 
-Walks through 8 steps with AI-guided explanation and remediation:
-1. **Foundation** — manifest, core files, symlinks
-2. **Commands & Skills** — slash commands, skills, user files
-3. **Hook Configuration** — all 9 settings.local.json hooks (gated)
-4. **Hook Scripts** — script files exist and are executable
-5. **Directory Layout** — files at correct locations
-6. **Legacy Cleanup** — old artifacts from previous versions (gated)
-7. **Optional Tools** — Cyclist, pf CLI
-8. **Summary** — health score and prioritized recommendations
+Walks through guided verification with AI-assisted explanation and remediation.
 
 ## Check for Updates
 
 ```bash
-# Check if update available
-pennyfarthing update --check
+# Check installed version
+pf --version
 
-# Apply update
-pennyfarthing update
+# Upgrade via pipx
+pipx upgrade pennyfarthing-scripts
+
+# Re-init project after upgrade
+pf init
 ```
 
 </health-checks>
@@ -83,18 +73,16 @@ pennyfarthing update
 ```markdown
 # Pennyfarthing Health Check
 
-## Installation: npm v2.2.x
+## Installation: pf v{version}
 ## Status: [HEALTHY | NEEDS_UPDATE | NEEDS_FIX]
 
 ### Checks
 | Check | Status | Detail |
 |-------|--------|--------|
-| Installation | OK | npm v2.2.0 |
-| Core Files | OK | All present |
-| Symlinks | OK | All valid |
-| User Files | OK | 10 sidecars |
-| Directories | OK | sprint/, .session/ |
-| Hooks | WARN | Not executable |
+| Sprint YAML | OK | Valid structure |
+| Agent defs | OK | All present |
+| Workflows | OK | All valid |
+| Hooks | WARN | Missing hook |
 
 ### Recommended Actions
 1. [Action with command to run]
@@ -106,14 +94,12 @@ pennyfarthing update
 <auto-fixes>
 
 ```bash
-pennyfarthing doctor --fix
+pf validate --fix
 ```
 
 The CLI can auto-fix:
-- Broken symlinks
-- Missing directories
-- Outdated settings format
-- Non-executable hooks
+- Sprint YAML format issues
+- Schema validation warnings
 
 **Always ask before applying fixes.**
 
@@ -152,9 +138,9 @@ The script analyzes archived session files for:
 </drift-detection>
 
 <reference>
-- **CLI:** `pennyfarthing doctor`, `pennyfarthing update`
-- **Manifest:** `.claude/manifest.json` (tracks version and file hashes)
-- **Source:** `.claude/pennyfarthing/` (managed files)
+- **CLI:** `pf validate`, `pf --version`
+- **Manifest:** `.pennyfarthing/init-manifest.json` (tracks version and file hashes)
+- **Config:** `.pennyfarthing/config.local.yaml` (theme, settings)
 - **Symlinks:** `.pennyfarthing/agents/`, `.claude/commands/`, etc.
 - **Drift Detection:** `.pennyfarthing/scripts/health/drift-detection.sh`
 </reference>

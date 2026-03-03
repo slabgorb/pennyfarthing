@@ -32,7 +32,7 @@ The shared-context.md has these key sections to populate:
 - **Name:** {from repos.yaml or detection}
 - **Sprint Status:** `sprint/current-sprint.yaml`
 - **Active Work:** `.session/{story-id}-session.md`
-- **Agent Framework:** Pennyfarthing (npm)
+- **Agent Framework:** Pennyfarthing (pf CLI)
 ```
 
 ### 2. Tech Stack Table

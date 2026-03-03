@@ -76,9 +76,9 @@ export function findCyclist(options?: FindCyclistOptions): string {
   }
 
   throw new Error(
-    'Cyclist not found. Set CYCLIST_PATH or install @pennyfarthing/cyclist.\n\n' +
-    'To use the visual terminal, install the optional Cyclist package:\n\n' +
-    '  npm install @pennyfarthing/cyclist\n\n' +
+    'Cyclist not found. Set CYCLIST_PATH or check that @pennyfarthing/cyclist is installed.\n\n' +
+    'Cyclist is included with the pf CLI framework distribution.\n' +
+    'Ensure your project is properly initialized with pf.\n\n' +
     'Or set CYCLIST_PATH to the cyclist directory.'
   );
 }

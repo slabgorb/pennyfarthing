@@ -29,7 +29,7 @@ Verify that hook script files exist on disk and are executable. Step 3 checked t
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category scripts`
+- Run: `pf validate --json --category scripts`
 - Check: Hook scripts at `.pennyfarthing/scripts/hooks/` are executable
 - Check: Git hooks at `.git/hooks/` are up-to-date
 </actions>
@@ -62,7 +62,7 @@ Present results in two sections:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category scripts` to fix permissions and stale hooks
+    Fix — Run `pf validate --fix --category scripts` to fix permissions and stale hooks
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on a specific script's behavior

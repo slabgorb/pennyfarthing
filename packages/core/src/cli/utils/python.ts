@@ -84,7 +84,7 @@ export function getPfVersion(): string | null {
  * Install the pf CLI tool using the best available method.
  *
  * Strategy 1: Local editable install (dogfooding — pennyfarthing/ repo exists)
- * Strategy 2: Install from PyPI (end users)
+ * Strategy 2: Install from PyPI (end users) — pipx preferred, uv as fallback
  *
  * Returns true if installation succeeded.
  */

@@ -170,11 +170,11 @@ build-api:
 
 # Show current sprint status
 sprint:
-    @.pennyfarthing/scripts/sprint/sprint-cli.sh status
+    pf sprint status
 
 # List available stories
 backlog:
-    @.pennyfarthing/scripts/sprint/sprint-cli.sh backlog
+    pf sprint backlog
 
 # Start BikeRack GUI
 gui:
