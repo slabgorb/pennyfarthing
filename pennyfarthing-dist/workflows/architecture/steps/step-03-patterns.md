@@ -1,44 +1,26 @@
 # Step 3: Pattern Selection
 
+<step-meta>
+step: 3
+name: pattern-selection
+workflow: architecture
+agent: architect
+gate: true
+next: step-04-components
+</step-meta>
+
 <purpose>
 Identify and evaluate architectural patterns that address identified concerns with verification of current technology versions, trade-off analysis, and selection of patterns that best fit the project requirements.
 </purpose>
 
+<prerequisites>
+- Context analysis complete (step 2)
+- Key concerns documented in `{output_file}`
+- Constraints understood
+</prerequisites>
+
 <instructions>
 Survey applicable patterns (microservices, event-driven, CQRS, circuit breakers, etc.) based on context concerns. Search web for current stable versions and best practices. Evaluate trade-offs (complexity, team familiarity, overhead, system fit). Select 1-3 primary patterns with rationale.
-</instructions>
-
-<output>
-Pattern Analysis section with Technology Versions table, Candidate Patterns comparison, Selected Pattern(s) with justification, and Rejected Alternatives. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
-</output>
-
-<step-meta>
-number: 3
-name: pattern-selection
-gate: false
-</step-meta>
-
-## Mandatory Execution Rules
-
-- READ the complete step file before taking any action
-- SEARCH the web to verify current technology versions - NEVER trust hardcoded versions
-- ALWAYS treat this as collaborative discovery between architectural peers
-- FOCUS on evaluating patterns with up-to-date information
-
-## Execution Protocols
-
-- Show your analysis before taking any action
-- Search the web to verify current versions and options
-- Present the switch prompt after generating pattern analysis
-- ONLY save when user confirms via the switch prompt
-- Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
-- FORBIDDEN to load next step until user confirms via the switch prompt
-
-## Purpose
-
-Identify and evaluate architectural patterns that could address the identified concerns, with current technology verification.
-
-## Instructions
 
 1. **Survey Applicable Patterns**:
    Based on the context analysis, identify patterns that address the key concerns:
@@ -62,17 +44,17 @@ Identify and evaluate architectural patterns that could address the identified c
 
 4. **Select Primary Pattern(s)**:
    Choose 1-3 patterns that best address the requirements.
+</instructions>
 
-## Actions
-
-- Review: Architecture pattern references
+<actions>
+- Read: `{output_file}` for context analysis from step 2
+- Read: `docs/patterns/*.md` for pattern library (if exists)
 - Search: Web for current framework versions and best practices
-- Compare: Pattern fit against constraints from Step 2
-- Document: Trade-off analysis
+- Write: Pattern evaluation matrix to `{output_file}`
+</actions>
 
-## Output
-
-Add to session file:
+<output format="markdown" target="{output_file}">
+Add Pattern Analysis section to architecture document.
 
 ```markdown
 ## Pattern Analysis
@@ -84,7 +66,6 @@ Add to session file:
 | [Tech 2] | [version] | [stability, LTS status] |
 
 ### Candidate Patterns
-
 | Pattern | Addresses | Trade-offs | Fit Score |
 |---------|-----------|------------|-----------|
 | [Pattern 1] | [concerns] | [pros/cons] | [1-5] |
@@ -98,13 +79,49 @@ Add to session file:
 ### Rejected Alternatives
 - [Pattern]: [Why not suitable]
 ```
+</output>
 
-## Success Metrics
+<gate>
+## Completion Criteria
+- [ ] At least 3 patterns evaluated against context constraints
+- [ ] Current technology versions verified via web search
+- [ ] Trade-offs clearly documented for each candidate
+- [ ] Recommendation includes rationale tied to concerns
+- [ ] User confirmed pattern selection
+</gate>
 
-- Patterns evaluated against context constraints
-- Current technology versions verified via web search
-- Trade-offs clearly documented
-- User confirmed pattern selection before proceeding
+<switch tool="AskUserQuestion">
+  <case value="continue" next="step-04-components">
+    Continue — Save the content and proceed to Component Design
+  </case>
+  <case value="revise" next="LOOP">
+    Revise — Reconsider patterns or gather more information
+  </case>
+  <case value="advanced" next="LOOP">
+    Advanced Elicitation — Explore unconventional or hybrid patterns
+  </case>
+  <case value="party" next="LOOP">
+    Party Mode — Bring multiple perspectives to evaluate trade-offs
+  </case>
+</switch>
+
+## Advanced Elicitation Mode
+
+When user selects Advanced:
+1. Explore hybrid patterns combining multiple approaches
+2. Investigate emerging patterns not yet mainstream
+3. Consider domain-specific architectural patterns
+4. Question assumptions about pattern applicability
+
+## Party Mode
+
+When user selects Party:
+1. Present pattern evaluation from multiple viewpoints:
+   - **Pragmatist**: What's the simplest thing that works?
+   - **Futurist**: What if requirements change significantly?
+   - **Skeptic**: What could go wrong with this pattern?
+   - **Operator**: How will this pattern affect day-to-day operations?
+2. Synthesize perspectives into pattern recommendation
 
 ## Failure Modes
 
@@ -113,18 +130,9 @@ Add to session file:
 - Selecting overly complex patterns for simple problems
 - Proceeding without user confirmation
 
+## Success Metrics
 
-<switch tool="AskUserQuestion">
-  <case value="advanced-elicitation" next="LOOP">
-    Advanced Elicitation — Use discovery protocols to explore unconventional patterns or custom approaches
-  </case>
-  <case value="party-mode" next="LOOP">
-    Party Mode — Bring multiple perspectives to evaluate pattern trade-offs for different use cases
-  </case>
-  <case value="continue" next="step-04-components">
-    Continue — Save the content and proceed to component design
-  </case>
-  <case value="revise" next="LOOP">
-    Revise — Need to reconsider patterns or gather more information
-  </case>
-</switch>
+- Patterns evaluated against context constraints
+- Current technology versions verified via web search
+- Trade-offs clearly documented
+- User confirmed pattern selection before proceeding
