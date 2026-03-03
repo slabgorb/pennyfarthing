@@ -323,7 +323,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url) && import.meta.url.endsWi
 const PORT_FILE_NAME = '.bikerack-port';
 const PID_FILE_NAME = 'bikerack-pid';
 
-export async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
+export async function findAvailablePort(startPort: number, maxAttempts = 16): Promise<number> {
   const net = await import('net');
 
   for (let port = startPort; port < startPort + maxAttempts; port++) {
