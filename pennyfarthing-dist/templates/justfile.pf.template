@@ -82,4 +82,4 @@ tmux-dev layout="bottom" split="":
 
 # Launch tmux dev layout for a specific directory
 tmux layout="bottom" split="" dir=invocation_directory():
-    "{{root}}/tmux-dev" "{{layout}}" {{split}} "{{dir}}"
+    exec "{{root}}/tmux-dev" "{{layout}}" {{split}} "{{dir}}"
