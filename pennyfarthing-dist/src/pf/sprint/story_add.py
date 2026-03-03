@@ -68,6 +68,7 @@ def add_story(
     priority: str = "P1",
     workflow: str = "tdd",
     jira: str | None = None,
+    repos: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -110,6 +111,8 @@ def add_story(
     }
     if jira is not None:
         fields["jira"] = jira
+    if repos is not None:
+        fields["repos"] = repos
     if story_type is not None:
         fields["type"] = story_type
 
@@ -364,6 +367,7 @@ def story_add_command(
             priority=priority,
             workflow=workflow,
             jira=jira_id,
+            repos=repos,
         )
 
         if result["success"]:
