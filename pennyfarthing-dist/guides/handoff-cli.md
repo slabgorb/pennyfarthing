@@ -76,12 +76,10 @@ pf handoff marker --error "Tests failing"
 **Options:**
 - `--error MSG` — Generate an error marker instead of a handoff
 
-The marker generator detects the current environment and produces the appropriate marker type:
+The marker generator checks relay mode and produces the appropriate output:
 
-> **Note:** The legacy marker protocol is deprecated. New integrations should use the CLI `AGENT_COMMAND` block format.
-
-- **BikeRack GUI (legacy):** `<!-- PF:HANDOFF:/agent -->` or `<!-- PF:CONTEXT_CLEAR:/agent -->`
-- **CLI mode:** Plain text `AGENT_COMMAND` block
+- **Relay OFF:** `AGENT_COMMAND` block with `relay_mode: false` and a fallback message for the user to invoke manually.
+- **Relay ON:** `AGENT_COMMAND` block with `relay: true` and an `invoke` field. The agent uses the Skill tool to invoke the next agent automatically.
 
 ## Agent Exit Protocol
 
@@ -96,7 +94,9 @@ The handoff CLI is used in sequence during agent exit:
        ├── fail → fix issues, retry (max 3)
        └── pass → continue
 3. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
-4. pf handoff marker {next-agent} → emit marker → EXIT
+4. pf handoff marker {next-agent}
+   ├── relay: true → invoke the `invoke` skill via Skill tool (next agent starts)
+   └── relay: false → output fallback text → EXIT
 ```
 
 See `guides/gates.md` for gate file format and evaluation details.

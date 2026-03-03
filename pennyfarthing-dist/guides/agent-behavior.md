@@ -3,7 +3,7 @@
 
 **Tests:** Use `testing-runner` subagent, never run directly.
 
-**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `pf handoff marker` → EXIT.
+**Handoff:** Run `pf handoff resolve-gate` → gate check → `pf handoff complete-phase` → `pf handoff marker` → if output contains `relay: true`, use the Skill tool to invoke the `invoke` value (e.g., `/pf-dev`). Otherwise output the fallback and EXIT.
 
 **Sidecars:** Write learnings BEFORE starting exit protocol.
 
