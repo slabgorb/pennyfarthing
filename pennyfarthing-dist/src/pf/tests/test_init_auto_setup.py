@@ -101,8 +101,8 @@ def mock_dist(tmp_path: Path) -> Path:
 @pytest.fixture
 def initialized_project(target_dir: Path, mock_dist: Path) -> Path:
     """A project that has already run init_project (directories exist)."""
-    from unittest.mock import patch
     from pf.init.core import init_project
+    from unittest.mock import patch
 
     with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "test"}):
         init_project(target_dir=target_dir, dist_root=mock_dist)

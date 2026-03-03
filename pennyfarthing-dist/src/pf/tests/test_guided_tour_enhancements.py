@@ -261,7 +261,6 @@ class TestDigInOption:
         """
         for f in step_files:
             content = f.read_text()
-            content_lower = content.lower()
             # Check collaboration-menu first, then fall back to switch block
             menu_match = re.search(
                 r"<collaboration-menu>(.*?)</collaboration-menu>",

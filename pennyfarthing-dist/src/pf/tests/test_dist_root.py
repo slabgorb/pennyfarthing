@@ -747,8 +747,6 @@ class TestRemainingCallSitesNpmResolution:
         """
         import yaml
 
-        from pf.common.config import get_dist_root
-
         npm_dist = (
             npm_layout
             / "node_modules"
