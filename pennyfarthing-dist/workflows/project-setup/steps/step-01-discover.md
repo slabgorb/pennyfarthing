@@ -22,48 +22,13 @@ Discover the project structure, detect repositories, identify tech stack, and ga
 
 ## PRE-FLIGHT: Environment Check
 
-Before discovery, verify the environment is clean.
-
-### Check for Global `pf` Installation
-
-A globally installed `pf` CLI causes version drift between projects. All `pf`
-invocations should go through `uv run` via the shell shims in `.pennyfarthing/scripts/`.
+Before discovery, verify `pf` is installed:
 
 ```bash
-# Check for global pf binary
-which pf 2>/dev/null
+pf --version
 ```
 
-**If `which pf` returns a path**, the user has a stale global install. Guide them through removal:
-
-1. **Check the source** of the global install:
-   ```bash
-   which pf
-   head -3 "$(which pf)" 2>/dev/null
-   pip3 show pennyfarthing-scripts 2>/dev/null | grep -E "^(Version|Location|Editable)"
-   uv tool list 2>/dev/null | grep pennyfarthing
-   ```
-
-2. **Remove based on source:**
-
-   | Source | Command |
-   |--------|---------|
-   | `uv tool` | `uv tool uninstall pennyfarthing-scripts` |
-   | `pip` (Homebrew Python) | `pip3 uninstall pennyfarthing-scripts --break-system-packages -y` |
-   | `pip` (venv/system) | `pip3 uninstall pennyfarthing-scripts -y` |
-   | `pipx` | `pipx uninstall pennyfarthing-scripts` |
-
-3. **Verify removal:**
-   ```bash
-   hash -r  # Clear shell cache
-   which pf 2>/dev/null && echo "STILL INSTALLED — check for multiple installs" || echo "Clean"
-   ```
-
-4. **Explain to user:** Pennyfarthing hooks use `uv run` to resolve `pf` from the
-   local project's `pyproject.toml`. This ensures each project runs its own version
-   of the CLI without cross-project contamination. No global install is needed.
-
-**If `which pf` returns nothing**, the environment is clean — continue to discovery.
+**If not found**, install via pipx: `pipx install pennyfarthing-scripts` (or from local source for dev).
 
 ---
 

@@ -5,7 +5,7 @@ Finalize the project setup, run validation checks, and provide the user with a s
 </purpose>
 
 <instructions>
-1. Run pennyfarthing doctor to validate installation
+1. Run pf validate to validate installation
 2. Summarize all configurations created
 3. Provide quick-start guide
 4. Offer next steps and resources
@@ -23,7 +23,7 @@ Finalize the project setup, run validation checks, and provide the user with a s
 ### Run Doctor
 
 ```bash
-pennyfarthing doctor
+pf validate
 ```
 
 Expected output:
@@ -53,7 +53,7 @@ Configuration files:
   {✓|✗} CLAUDE.md           - Project instructions
   {✓|✗} shared-context.md   - Agent shared context
   {✓|✗} justfile            - Task runner
-  {✓|✗} persona-config.yaml - Theme configuration
+  {✓|✗} config.local.yaml - Theme configuration
 
 Directories:
   {✓|✗} .pennyfarthing/     - Framework installation
@@ -90,7 +90,7 @@ Files Created:
   • CLAUDE.md            - Project instructions for Claude
   • shared-context.md    - Shared agent context (updated)
   • justfile             - Task runner with recipes
-  • persona-config.yaml  - Theme: {theme}
+  • config.local.yaml  - Theme: {theme}
 
 Commands Available:
   just test-all          - Run all tests
@@ -130,7 +130,7 @@ Commands Available:
 
 6. GET HELP
    /help                 # Context-aware help
-   pennyfarthing doctor  # Check installation
+   pf validate  # Check installation
 ```
 
 ## NEXT STEPS

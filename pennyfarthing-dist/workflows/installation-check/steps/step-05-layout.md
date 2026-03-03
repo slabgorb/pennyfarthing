@@ -33,7 +33,7 @@ Verify that files and directories are at their correct locations. Pennyfarthing 
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category layout`
+- Run: `pf validate --json --category layout`
 - Check: `sprint/` and `.session/` directories exist
 - Check: Files at canonical `.pennyfarthing/` locations
 </actions>
@@ -61,7 +61,7 @@ Present results:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category layout` to migrate files
+    Fix — Run `pf validate --fix --category layout` to migrate files
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on the file layout evolution

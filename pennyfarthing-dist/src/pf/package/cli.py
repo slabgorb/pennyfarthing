@@ -84,12 +84,12 @@ def install(name: str, skip_portraits: bool, all_sizes: bool, dry_run: bool):
     from pf.package.discovery import is_package_installed, npm_install
     from pf.package.portraits import download_portraits
 
-    # Step 1: npm install
+    # Step 1: theme package is already shipped with pf CLI
     if is_package_installed(name) and not dry_run:
-        click.echo(f"@pennyfarthing/themes-{name} already installed, skipping npm install")
+        click.echo(f"@pennyfarthing/themes-{name} already installed")
     else:
         if dry_run:
-            click.echo(f"[DRY-RUN] Would run: npm install @pennyfarthing/themes-{name}")
+            click.echo(f"[DRY-RUN] Would install theme package: @pennyfarthing/themes-{name}")
         else:
             click.echo(f"Installing @pennyfarthing/themes-{name}...")
 

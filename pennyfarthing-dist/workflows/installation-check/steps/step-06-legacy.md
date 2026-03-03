@@ -35,7 +35,7 @@ Detect and clean up legacy artifacts from previous Pennyfarthing versions. These
 </instructions>
 
 <actions>
-- Run: `pennyfarthing doctor --json --category legacy`
+- Run: `pf validate --json --category legacy`
 - Check: No legacy artifacts at `.claude/scripts/`, `.claude/persona-config.yaml`
 - Check: No legacy sidecar directories
 - Check: Hook commands use `pf hooks` not `.sh` scripts
@@ -72,7 +72,7 @@ Present results:
 
 <switch tool="AskUserQuestion">
   <case value="fix" next="LOOP">
-    Fix — Run `pennyfarthing doctor --fix --category legacy` to clean up (requires gate approval)
+    Fix — Run `pf validate --fix --category legacy` to clean up (requires gate approval)
   </case>
   <case value="explain" next="LOOP">
     Explain — Deep dive on a specific legacy artifact's history

@@ -9,12 +9,12 @@ Select and configure a persona theme for the project's AI agents. Themes provide
 2. Suggest themes based on project type
 3. Allow user to browse/preview themes
 4. Configure selected theme
-5. Update persona-config.yaml
+5. Update config.local.yaml
 </instructions>
 
 <output>
 - Theme selected and configured
-- persona-config.yaml updated
+- config.local.yaml updated
 - Theme previewed with sample agent
 - User satisfied with selection
 </output>
@@ -107,23 +107,13 @@ Sample interaction:
 
 ## CONFIGURATION
 
-### Update persona-config.yaml
+### Update config.local.yaml
 
-```yaml
-# .claude/persona-config.yaml
-# Selected theme: dune
-
-theme: dune
-
-# Optional overrides
-overrides:
-  # Use different character for specific agent
-  # dev: custom-character
-
-# Disable personas for specific agents
-# disabled:
-#   - tea
+```bash
+pf theme set dune
 ```
+
+This updates `.pennyfarthing/config.local.yaml` with the selected theme.
 
 ### Theme Activation
 
@@ -133,7 +123,7 @@ After selection:
 ✓ Theme 'dune' selected
 
 Updated files:
-  - .claude/persona-config.yaml
+  - .pennyfarthing/config.local.yaml
 
 To see your new personas in action:
   - Run any agent command (e.g., /sm, /dev)
@@ -186,7 +176,7 @@ Recommended for {project_type}:
 ## SUCCESS CRITERIA
 
 ✅ Theme selected (or explicitly chose default)
-✅ persona-config.yaml updated
+✅ config.local.yaml updated
 ✅ User previewed theme and is satisfied
 ✅ Theme ready for agent use
 
