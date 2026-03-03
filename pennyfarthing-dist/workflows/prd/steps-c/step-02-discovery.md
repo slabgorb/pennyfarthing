@@ -56,7 +56,7 @@ Discover and classify the project - understand what type of product this is, wha
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present the switch promptafter classification complete
+- ⚠️ Present the switch prompt after classification complete
 - 💾 ONLY save classification to frontmatter when user chooses C (Continue)
 - 📖 Update frontmatter, adding this step to the end of the list of stepsCompleted
 - 🚫 FORBIDDEN to load next step until user confirms via the switch prompt

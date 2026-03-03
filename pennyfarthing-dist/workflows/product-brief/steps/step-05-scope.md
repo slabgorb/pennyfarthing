@@ -22,7 +22,7 @@ Define MVP scope with clear boundaries and outline future vision through collabo
 4. Define MVP success criteria and validation gates
 5. Explore future vision and long-term capabilities
 6. Generate MVP Scope content with core features and future vision
-7. Present the switch promptfor optional advanced elicitation or party mode
+7. Present the switch prompt for optional advanced elicitation or party mode
 8. Save content to document when user selects C
 </instructions>
 

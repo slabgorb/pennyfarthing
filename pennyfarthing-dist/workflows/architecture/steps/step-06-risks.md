@@ -28,7 +28,7 @@ gate: true
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present the switch promptafter generating risk assessment
+- Present the switch prompt after generating risk assessment
 - ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]` before loading next step
 - FORBIDDEN to load next step until user confirms via the switch prompt

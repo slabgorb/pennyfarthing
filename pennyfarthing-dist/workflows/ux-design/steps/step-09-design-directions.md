@@ -21,7 +21,7 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present the switch promptafter generating design direction content
+- ⚠️ Present the switch prompt after generating design direction content
 - 💾 Generate HTML visualizer for design directions
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
 - 🚫 FORBIDDEN to load next step until user confirms via the switch prompt

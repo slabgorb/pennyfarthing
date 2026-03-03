@@ -54,7 +54,7 @@ For complex domains only that have a mapping in {domainComplexityCSV}, explore d
 
 - 🎯 Check domain complexity from step-02 classification first
 - ⚠️ If complexity is "low", offer to skip this step
-- ⚠️ Present the switch promptafter domain requirements defined (or skipped)
+- ⚠️ Present the switch prompt after domain requirements defined (or skipped)
 - 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
 - 🚫 FORBIDDEN to load next step until user confirms via the switch prompt

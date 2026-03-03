@@ -21,7 +21,7 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present the switch promptafter generating visual foundation content
+- ⚠️ Present the switch prompt after generating visual foundation content
 - 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
 - 🚫 FORBIDDEN to load next step until user confirms via the switch prompt

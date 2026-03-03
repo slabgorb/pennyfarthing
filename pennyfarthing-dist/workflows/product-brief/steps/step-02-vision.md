@@ -21,7 +21,7 @@ Conduct comprehensive product vision discovery to define the core problem, solut
 3. Analyze existing solutions and gaps
 4. Collaborate on solution vision and differentiators
 5. Generate Executive Summary and Core Vision content
-6. Present the switch promptfor optional advanced elicitation or party mode
+6. Present the switch prompt for optional advanced elicitation or party mode
 7. Save content to document when user selects C
 </instructions>
 

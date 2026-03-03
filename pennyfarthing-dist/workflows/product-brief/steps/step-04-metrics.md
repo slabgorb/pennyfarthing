@@ -22,7 +22,7 @@ Define comprehensive success metrics that include user success, business objecti
 4. Develop specific, measurable KPIs with targets and timeframes
 5. Ensure metrics align with product vision and drive decisions
 6. Generate Success Metrics content with user, business, and KPI sections
-7. Present the switch promptfor optional advanced elicitation or party mode
+7. Present the switch prompt for optional advanced elicitation or party mode
 8. Save content to document when user selects C
 </instructions>
 

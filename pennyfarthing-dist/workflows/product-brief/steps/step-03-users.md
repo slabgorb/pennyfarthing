@@ -21,7 +21,7 @@ Define target users with rich personas and map their key interactions with the p
 3. Explore secondary user segments and their roles
 4. Map user journeys through discovery, onboarding, core usage, and success moments
 5. Generate Target Users content with personas and journey maps
-6. Present the switch promptfor optional advanced elicitation or party mode
+6. Present the switch prompt for optional advanced elicitation or party mode
 7. Save content to document when user selects C
 </instructions>
 

@@ -37,7 +37,7 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 - 🎯 Show your analysis before taking any action
 - 📚 Review the complete PRD document built so far
-- ⚠️ Present the switch promptafter generating scoping decisions
+- ⚠️ Present the switch prompt after generating scoping decisions
 - 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
 - 🚫 FORBIDDEN to load next step until user confirms via the switch prompt

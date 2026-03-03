@@ -28,7 +28,7 @@ gate: true
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present the switch promptafter generating component design
+- Present the switch prompt after generating component design
 - ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before loading next step
 - FORBIDDEN to load next step until user confirms via the switch prompt

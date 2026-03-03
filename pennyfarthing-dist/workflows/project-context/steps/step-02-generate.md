@@ -12,7 +12,7 @@ Collaboratively generate specific, critical rules that AI agents must follow whe
 5. Generate code quality and style rules
 6. Generate development workflow rules
 7. Identify critical don't-miss rules and anti-patterns
-8. Present the switch promptafter each category for user validation
+8. Present the switch prompt after each category for user validation
 9. Append validated rules to project context file
 10. Update frontmatter with completed sections
 </instructions>
@@ -45,7 +45,7 @@ Collaboratively generate specific, critical rules that AI agents must follow whe
 
 - 🎯 Show your analysis before taking any action
 - 📝 Focus on specific, actionable rules rather than general advice
-- ⚠️ Present the switch promptafter each major rule category
+- ⚠️ Present the switch prompt after each major rule category
 - 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update frontmatter with completed sections
 - 🚫 FORBIDDEN to load next step until all sections are complete

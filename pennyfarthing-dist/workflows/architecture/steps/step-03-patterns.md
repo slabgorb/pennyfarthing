@@ -29,7 +29,7 @@ gate: false
 
 - Show your analysis before taking any action
 - Search the web to verify current versions and options
-- Present the switch promptafter generating pattern analysis
+- Present the switch prompt after generating pattern analysis
 - ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
 - FORBIDDEN to load next step until user confirms via the switch prompt

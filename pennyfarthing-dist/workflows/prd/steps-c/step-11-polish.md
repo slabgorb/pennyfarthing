@@ -40,7 +40,7 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 - ✂️ Reduce duplication while preserving essential info
 - 📖 Ensure proper ## Level 2 headers throughout
 - 💾 Save optimized document
-- ⚠️ Present the switch promptafter polish
+- ⚠️ Present the switch prompt after polish
 - 🚫 DO NOT skip review steps
 
 ## CONTEXT BOUNDARIES:
