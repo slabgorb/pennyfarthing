@@ -76,6 +76,11 @@ def update_framework_justfile(
     # Read template content
     template_content = template_path.read_text()
 
+    # Check staleness before overwriting
+    was_stale = False
+    if pf_dest.is_file():
+        was_stale = pf_dest.read_text() != template_content
+
     # Analyze current state
     justfile_exists = justfile_path.is_file()
     has_import = False
@@ -106,6 +111,7 @@ def update_framework_justfile(
                 "import_added": not has_import,
                 "justfile_created": not justfile_exists,
                 "recipes_migrated": legacy_recipes,
+                "was_stale": was_stale,
             },
         }
 
@@ -143,6 +149,7 @@ def update_framework_justfile(
             "import_added": import_added,
             "justfile_created": justfile_created,
             "recipes_migrated": legacy_recipes,
+            "was_stale": was_stale,
         },
     }
 
@@ -216,6 +223,33 @@ def _add_import_and_migrate(content: str, legacy_recipes: list[str]) -> tuple[st
         return result, migrated
 
     return "".join(lines), migrated
+
+
+def check_justfile_pf_staleness(
+    target_dir: Path,
+    dist_root: Path,
+) -> dict:
+    """Check if deployed justfile.pf matches the template.
+
+    Returns:
+        Result dict: {success, stale, deployed}
+    """
+    template_path = dist_root / "templates" / "justfile.pf.template"
+    if not template_path.is_file():
+        return {"success": False, "error": f"Template not found: {template_path}"}
+
+    pf_dest = target_dir / ".pennyfarthing" / "justfile.pf"
+    if not pf_dest.is_file():
+        return {"success": True, "stale": True, "deployed": False}
+
+    template_content = template_path.read_text()
+    deployed_content = pf_dest.read_text()
+
+    return {
+        "success": True,
+        "stale": template_content != deployed_content,
+        "deployed": True,
+    }
 
 
 def _comment_out_recipes(content: str, recipe_names: list[str]) -> tuple[str, list[str]]:
