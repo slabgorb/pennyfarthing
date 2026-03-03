@@ -97,20 +97,29 @@ class WheelHubClient:
         self._set_state(aggregate)
 
     def discover_port(self) -> int:
-        """Read port from .bikerack-port file, fallback to DEFAULT_PORT.
+        """Read port from .bikerack-port file. Raises if no port source available.
 
-        Priority: explicit port > port file > DEFAULT_PORT.
+        Priority: explicit port > port file. No default fallback.
         """
         if self._port is not None:
             return self._port
         if self._project_dir is not None:
             port_file = self._project_dir / ".bikerack-port"
             if port_file.exists():
+                text = port_file.read_text().strip()
                 try:
-                    return int(port_file.read_text().strip())
-                except (ValueError, OSError):
-                    pass
-        return DEFAULT_PORT
+                    return int(text)
+                except ValueError:
+                    raise RuntimeError(
+                        f"Invalid port in {port_file}: {text!r}"
+                    )
+            raise FileNotFoundError(
+                f"No .bikerack-port file in {self._project_dir}. "
+                "Is WheelHub running? Start it with: pf bikerack start"
+            )
+        raise RuntimeError(
+            "No port source available: no explicit port and no project_dir set"
+        )
 
     def subscribe(self, channel: str, handler: MessageHandler) -> None:
         """Register a handler for messages on a channel."""

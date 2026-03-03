@@ -290,20 +290,12 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
         cleanup_files(project_dir)
         return (False, None, None)
 
-    # PID file only (no port) — check PID, scan default range
+    # PID file only (no port) — stale state, clean up
     if pid is not None and port is None:
-        if is_process_alive(pid):
-            for p in range(2898, 2909):
-                if _probe_wheelhub(p):
-                    return (True, pid, p)
         cleanup_files(project_dir)
         return (False, None, None)
 
-    # No files — scan default range as last resort
-    for p in range(2898, 2909):
-        if _probe_wheelhub(p):
-            return (True, None, p)
-
+    # No files — not running
     return (False, None, None)
 
 
