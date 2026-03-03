@@ -35,11 +35,19 @@ async def create_team(
     phase: dict[str, Any],
     story_id: str,
     adapter: Any | None = None,
+    *,
+    scope: str = "phase",
 ) -> dict[str, Any]:
-    """Create a phase-scoped team.
+    """Create a phase-scoped or step-scoped team.
 
-    If phase has no team config, returns success with no handle (no-op).
-    If phase has team config, creates team and returns handle.
+    If phase/step has no team config, returns success with no handle (no-op).
+    If it has team config, creates team and returns handle.
+
+    Args:
+        phase: Phase or step config dict with 'name' and optional 'team' keys.
+        story_id: Story identifier.
+        adapter: Optional team adapter for external calls.
+        scope: 'phase' (default) or 'step' for step-scoped teams.
     """
     if not phase.get("team"):
         return {"success": True}
@@ -59,6 +67,7 @@ async def create_team(
         "teamName": team_name,
         "storyId": story_id,
         "phase": phase["name"],
+        "scope": scope,
         "teammates": [],
         "createdAt": datetime.now(UTC).isoformat(),
     }
@@ -189,6 +198,7 @@ def generate_team_summary(handle: dict[str, Any]) -> dict[str, Any]:
         "teamName": handle["teamName"],
         "storyId": handle["storyId"],
         "phase": handle["phase"],
+        "scope": handle.get("scope", "phase"),
         "members": [
             {"agent": t["agent"], "status": t["status"], "task": t["task"]}
             for t in handle["teammates"]
