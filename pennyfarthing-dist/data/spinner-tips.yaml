@@ -4,18 +4,50 @@
 # Keep tips short (< 80 chars), actionable, and focused on feature discovery.
 
 tips:
+  # Getting started
   - "Try /pf-sprint to check your backlog"
   - "Use /pf-work to resume where you left off"
-  - "Run /pf-theme to browse and set persona themes"
-  - "Use /pf-workflow to see available workflow types"
   - "/pf-help gives context-aware help for any command"
+  - "Run /pf-settings to view and manage your config"
+  - "Type /pf-tour for a guided walkthrough of Pennyfarthing"
+
+  # Themes and personas
+  - "Run /pf-theme to browse and set persona themes"
   - "Run pf theme list to see all available themes"
-  - "Use /pf-git for multi-repo status and cleanup"
+  - "Each theme assigns unique characters to every agent role"
+  - "Try pf theme show to see your current theme details"
+
+  # Agents and workflows
+  - "Use /pf-workflow to see available workflow types"
+  - "/pf-dev activates the Developer agent for coding tasks"
   - "Try /pf-architect for system design sessions"
   - "/pf-reviewer runs adversarial code review"
+  - "/pf-tea starts a TDD session with the Test Engineer"
+  - "/pf-sm coordinates stories and sprint management"
+  - "/pf-ba discovers requirements and stakeholder needs"
+  - "/pf-tech-writer creates and maintains documentation"
+  - "Agents hand off to each other through workflow gates"
+
+  # Sprint and stories
+  - "Use /pf-epic to start or close epics"
+  - "Run pf sprint backlog to see available stories"
+  - "Try /pf-standalone to wrap changes into a quick PR"
+  - "/pf-chore commits quick changes without full ceremony"
+  - "Use pf sprint story add to create new stories"
+
+  # Tools and utilities
+  - "Use /pf-git for multi-repo status and cleanup"
   - "Use /pf-check to run quality gates before handoff"
   - "Run /pf-bc to manage BikeRack panel focus"
-  - "Try /pf-standalone to wrap changes into a quick PR"
-  - "/pf-tea starts a TDD session with the Test Engineer"
   - "Use pf bikerack start for a panel dashboard alongside CLI"
-  - "Run /pf-settings to view and manage your config"
+  - "/pf-ci detects and runs CI checks locally"
+  - "Try /pf-brainstorming for structured problem solving"
+  - "/pf-retro runs a sprint retrospective"
+
+  # Power features
+  - "Use /pf-party-mode for creative multi-agent discussions"
+  - "Run /pf-job-fair to find which characters excel at each role"
+  - "Try /pf-context for deep epic and story context docs"
+  - "/pf-patch fixes blocking bugs without leaving your story"
+  - "Sidecars in .pennyfarthing/sidecars/ track agent learning"
+  - "Use /pf-docs for domain documentation management"
