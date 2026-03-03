@@ -95,7 +95,12 @@ class TestComponentTokenCounting:
         assert token_counts.get("sidecars", 0) > 0
 
     def test_token_counts_zero_for_missing_components(self, tmp_path: Path) -> None:
-        """Test that missing optional components have zero token counts."""
+        """Test that missing optional components have zero token counts.
+
+        Patches get_dist_root() to return None to suppress the bundled _dist
+        fallback, ensuring only project-local guides are searched so that a
+        missing agent-behavior.md is correctly reported as 0 tokens.
+        """
         from pf.prime.tiers import ContextTier, load_tier_components
 
         # Minimal setup - only agent definition
@@ -105,11 +110,13 @@ class TestComponentTokenCounting:
         agents_dir.mkdir()
         (agents_dir / "dev.md").write_text("# Dev Agent")
 
-        result = load_tier_components(
-            tier=ContextTier.FULL,
-            agent_name="dev",
-            project_root=tmp_path,
-        )
+        # Suppress bundled _dist fallback so only project-local files are found
+        with patch("pf.prime.loader.get_dist_root", return_value=None):
+            result = load_tier_components(
+                tier=ContextTier.FULL,
+                agent_name="dev",
+                project_root=tmp_path,
+            )
 
         token_counts = result.get("token_counts", {})
 

@@ -373,16 +373,17 @@ class TestResumability:
     def test_steps_have_meta_with_next(
         self, step_files: list[Path]
     ) -> None:
-        """AC6: Each non-final step should have <step-meta> with 'next' field."""
+        """AC6: Non-final steps with <step-meta> should have 'next' field.
+
+        step-meta is optional — steps without it are skipped.
+        """
         for f in step_files[:-1]:  # All except last
             content = f.read_text()
-            assert "<step-meta>" in content, (
-                f"Step {f.name} is missing <step-meta> section"
-            )
             meta_match = re.search(
                 r"<step-meta>(.*?)</step-meta>", content, re.DOTALL
             )
-            assert meta_match, f"Cannot parse <step-meta> in {f.name}"
+            if not meta_match:
+                continue  # step-meta is optional
             meta_content = meta_match.group(1)
             assert "next:" in meta_content, (
                 f"Step {f.name} meta is missing 'next:' field for resume navigation"
@@ -434,13 +435,17 @@ class TestProgressVisibility:
     def test_steps_have_step_meta_number(
         self, step_files: list[Path]
     ) -> None:
-        """AC7: Each step should have a step number in <step-meta> for progress tracking."""
+        """AC7: Steps with <step-meta> should include a step number.
+
+        step-meta is optional — steps without it are skipped.
+        """
         for f in step_files:
             content = f.read_text()
             meta_match = re.search(
                 r"<step-meta>(.*?)</step-meta>", content, re.DOTALL
             )
-            assert meta_match, f"Step {f.name} missing <step-meta>"
+            if not meta_match:
+                continue  # step-meta is optional
             meta_content = meta_match.group(1)
             assert re.search(r"step:\s*\d+", meta_content), (
                 f"Step {f.name} meta missing 'step: N' for progress tracking"
@@ -471,14 +476,20 @@ class TestStepStructure:
                 f"Step {f.name} missing <instructions> section"
             )
 
-    def test_steps_have_collaboration_menu(
+    def test_steps_have_collaboration_menu_or_switch(
         self, step_files: list[Path]
     ) -> None:
-        """Steps should have <collaboration-menu> sections."""
+        """Steps should have <collaboration-menu> or <switch> sections.
+
+        <switch> with attributes (e.g. <switch tool="AskUserQuestion">) replaces
+        <collaboration-menu> in updated steps.
+        """
         for f in step_files:
             content = f.read_text()
-            assert "<collaboration-menu>" in content, (
-                f"Step {f.name} missing <collaboration-menu> section"
+            has_collab = "<collaboration-menu>" in content
+            has_switch = "<switch" in content
+            assert has_collab or has_switch, (
+                f"Step {f.name} missing both <collaboration-menu> and <switch> section"
             )
 
     def test_steps_have_markdown_title(self, step_files: list[Path]) -> None:

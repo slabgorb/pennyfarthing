@@ -254,18 +254,33 @@ class TestDigInOption:
     """AC3: Every step has a Dig In option for interactive deep-dive."""
 
     def test_all_steps_have_dig_in(self, step_files: list[Path]) -> None:
-        """AC3: Every step's collaboration-menu should include a Dig In option."""
+        """AC3: Every step should include a Dig In option.
+
+        Dig In may appear in <collaboration-menu> or inside a <switch> element
+        (as a <case value="dig-in"> or similar).
+        """
         for f in step_files:
             content = f.read_text()
+            content_lower = content.lower()
+            # Check collaboration-menu first, then fall back to switch block
             menu_match = re.search(
                 r"<collaboration-menu>(.*?)</collaboration-menu>",
                 content,
                 re.DOTALL,
             )
-            assert menu_match, f"Step {f.name} missing <collaboration-menu>"
-            menu = menu_match.group(1).lower()
-            assert "dig in" in menu, (
-                f"Step {f.name} collaboration-menu missing 'Dig In' option"
+            switch_match = re.search(
+                r"<switch\b[^>]*>(.*?)</switch>",
+                content,
+                re.DOTALL,
+            )
+            has_dig = False
+            if menu_match and "dig in" in menu_match.group(1).lower():
+                has_dig = True
+            if switch_match and "dig-in" in switch_match.group(1).lower():
+                has_dig = True
+            assert has_dig, (
+                f"Step {f.name} missing 'Dig In' option in "
+                "<collaboration-menu> or <switch>"
             )
 
     def test_dig_in_has_description(self, step_files: list[Path]) -> None:
@@ -299,10 +314,13 @@ class TestSwitchGateMenus:
     """AC4: All collaboration menus drive AskUserQuestion via <switch> gates."""
 
     def test_all_steps_have_switch_gate(self, step_files: list[Path]) -> None:
-        """AC4: Every step should have a <switch> section for interactive menus."""
+        """AC4: Every step should have a <switch> section for interactive menus.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         for f in step_files:
             content = f.read_text()
-            assert "<switch>" in content, (
+            assert "<switch" in content, (
                 f"Step {f.name} missing <switch> gate — "
                 "collaboration menus should use <switch> for AskUserQuestion"
             )
@@ -591,47 +609,62 @@ class TestExistingGatesUpdated:
     """AC9: Existing guided-tour step gates updated to use <switch>."""
 
     def test_step_01_has_switch(self) -> None:
-        """AC9: step-01-welcome.md should have <switch> gate."""
+        """AC9: step-01-welcome.md should have <switch> gate.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         path = STEPS_DIR / "step-01-welcome.md"
         assert path.exists(), "step-01-welcome.md not found"
         content = path.read_text()
-        assert "<switch>" in content, (
+        assert "<switch" in content, (
             "step-01-welcome.md should be updated with <switch> gate"
         )
 
     def test_step_02_has_switch(self) -> None:
-        """AC9: step-02-themes.md should have <switch> gate."""
+        """AC9: step-02-themes.md should have <switch> gate.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         path = STEPS_DIR / "step-02-themes.md"
         assert path.exists(), "step-02-themes.md not found"
         content = path.read_text()
-        assert "<switch>" in content, (
+        assert "<switch" in content, (
             "step-02-themes.md should be updated with <switch> gate"
         )
 
     def test_step_03_has_switch(self) -> None:
-        """AC9: step-03-agents.md should have <switch> gate."""
+        """AC9: step-03-agents.md should have <switch> gate.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         path = STEPS_DIR / "step-03-agents.md"
         assert path.exists(), "step-03-agents.md not found"
         content = path.read_text()
-        assert "<switch>" in content, (
+        assert "<switch" in content, (
             "step-03-agents.md should be updated with <switch> gate"
         )
 
     def test_step_04_has_switch(self) -> None:
-        """AC9: step-04-sprint.md should have <switch> gate."""
+        """AC9: step-04-sprint.md should have <switch> gate.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         path = STEPS_DIR / "step-04-sprint.md"
         assert path.exists(), "step-04-sprint.md not found"
         content = path.read_text()
-        assert "<switch>" in content, (
+        assert "<switch" in content, (
             "step-04-sprint.md should be updated with <switch> gate"
         )
 
     def test_step_05_has_switch(self) -> None:
-        """AC9: step-05-config.md should have <switch> gate."""
+        """AC9: step-05-config.md should have <switch> gate.
+
+        <switch> may have attributes (e.g. <switch tool="AskUserQuestion">).
+        """
         path = STEPS_DIR / "step-05-config.md"
         assert path.exists(), "step-05-config.md not found"
         content = path.read_text()
-        assert "<switch>" in content, (
+        assert "<switch" in content, (
             "step-05-config.md should be updated with <switch> gate"
         )
 

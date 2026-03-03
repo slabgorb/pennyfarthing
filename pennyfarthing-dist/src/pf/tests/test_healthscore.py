@@ -474,10 +474,10 @@ class TestMainCLIRegistration:
     """AC8: healthscore command registered in pf/cli.py."""
 
     def test_healthscore_registered_in_main_cli(self):
-        """Main CLI must have a 'healthscore' command group."""
+        """Main CLI must expose healthscore via the 'debug' command group."""
         from pf.cli import cli
         command_names = list(cli.commands)
-        assert "healthscore" in command_names
+        assert "debug" in command_names
 
 
 # ---------------------------------------------------------------------------

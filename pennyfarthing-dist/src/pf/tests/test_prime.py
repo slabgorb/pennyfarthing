@@ -72,13 +72,19 @@ class TestLoadBehaviorGuide:
         assert "# Agent Behavior Guide" in result
 
     def test_load_nonexistent_guide(self, tmp_path: Path) -> None:
-        """Test loading a non-existent guide returns None."""
+        """Test loading a non-existent guide returns None.
+
+        Patches get_dist_root() to return None to suppress the bundled
+        _dist fallback, so only project-local guides are searched.
+        """
         # Setup
         guides_dir = tmp_path / ".pennyfarthing" / "guides"
         guides_dir.mkdir(parents=True)
+        # No agent-behavior.md file created
 
-        # Test
-        result = load_behavior_guide(tmp_path)
+        # Patch the bundled _dist fallback out so only project-local paths are searched
+        with patch("pf.prime.loader.get_dist_root", return_value=None):
+            result = load_behavior_guide(tmp_path)
 
         # Verify
         assert result is None

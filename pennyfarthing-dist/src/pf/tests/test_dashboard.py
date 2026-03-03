@@ -425,7 +425,7 @@ class TestHealthCollector:
 
     def test_health_calls_doctor(self, healthy_project):
         """collect_health should delegate to run_doctor."""
-        with patch("pf.dashboard.collector.run_doctor") as mock_doctor:
+        with patch("pf.dashboard.collector.run_doctor", create=True) as mock_doctor:
             from pf.doctor.models import CheckResult, DoctorReport
 
             mock_doctor.return_value = DoctorReport(
@@ -442,7 +442,7 @@ class TestHealthCollector:
 
     def test_health_summarizes_all_green(self, healthy_project):
         """When all checks pass, health should display 'all green'."""
-        with patch("pf.dashboard.collector.run_doctor") as mock_doctor:
+        with patch("pf.dashboard.collector.run_doctor", create=True) as mock_doctor:
             from pf.doctor.models import CheckResult, DoctorReport
 
             mock_doctor.return_value = DoctorReport(
@@ -458,7 +458,7 @@ class TestHealthCollector:
 
     def test_health_summarizes_issues(self, healthy_project):
         """When checks fail, health should show issue count."""
-        with patch("pf.dashboard.collector.run_doctor") as mock_doctor:
+        with patch("pf.dashboard.collector.run_doctor", create=True) as mock_doctor:
             from pf.doctor.models import CheckResult, DoctorReport
 
             mock_doctor.return_value = DoctorReport(

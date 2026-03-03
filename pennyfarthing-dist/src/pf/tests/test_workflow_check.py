@@ -13,6 +13,7 @@ Tests should fail until the implementation is complete.
 """
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,6 +27,19 @@ from pf.workflow import get_workflow_state
 
 # Mock path: workflow.cli imports from workflow.state, so mock at the source module
 MOCK_PATH = "pf.workflow.state.get_workflow_state"
+
+
+def _subprocess_env() -> dict:
+    """Build env for subprocess calls that need the pf package on sys.path.
+
+    The test process adds pennyfarthing-dist/src to sys.path via conftest.py,
+    but subprocess calls inherit the system environment without that addition.
+    """
+    src_dir = str(Path(__file__).resolve().parents[3] / "src")
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{src_dir}:{existing}" if existing else src_dir
+    return env
 
 
 class TestWorkflowCheckCLI:
@@ -295,6 +309,7 @@ class TestSubprocessExecution:
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
         # Should not crash - exit 0 for any valid state
         assert result.returncode == 0
@@ -313,6 +328,7 @@ class TestSubprocessExecution:
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
         assert result.returncode == 0
         # Output should be valid JSON
@@ -333,6 +349,7 @@ class TestSubprocessExecution:
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
         assert result.returncode == 0
         assert "workflow state" in result.stdout.lower()

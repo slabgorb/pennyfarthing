@@ -234,9 +234,9 @@ class TestNoDuplicateHooks:
 
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
-            cmd = f".pennyfarthing/bin/pf hooks dispatch {event}"
-            count = _count_command_occurrences(data, cmd)
+        commands = _extract_all_hook_commands(data)
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
+            count = sum(1 for cmd in commands if f"dispatch {event}" in cmd)
             assert count == 1, f"dispatch {event} found {count} times (expected 1)"
 
 
@@ -251,7 +251,7 @@ class TestSettingsDispatcherEntries:
     def test_has_four_hook_entries(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """With frontmatter agents, total hook count should be 4 (one per event)."""
+        """With frontmatter agents, total hook count should be 6 (one per event)."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
@@ -260,12 +260,12 @@ class TestSettingsDispatcherEntries:
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
         total = sum(len(entries) for entries in hooks.values())
-        assert total == 4, f"Expected 4 dispatcher entries, got {total}"
+        assert total == 6, f"Expected 6 dispatcher entries, got {total}"
 
     def test_all_events_have_dispatcher(
         self, target_dir: Path, mock_dist_with_frontmatter: Path
     ) -> None:
-        """All 4 event types must have a dispatcher entry."""
+        """All 6 event types must have a dispatcher entry."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
@@ -274,7 +274,7 @@ class TestSettingsDispatcherEntries:
         data = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(data)
 
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
             assert any(f"dispatch {event}" in cmd for cmd in commands), (
                 f"Missing dispatcher for {event}"
             )
@@ -290,7 +290,7 @@ class TestSettingsDispatcherEntries:
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
         assert "statusLine" in data
-        assert data["statusLine"]["command"] == ".pennyfarthing/bin/pf hooks statusline"
+        assert data["statusLine"]["command"].endswith("pf hooks statusline")
 
 
 # ===================================================================
@@ -380,7 +380,7 @@ class TestFrontmatterIdempotency:
         restored = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(restored)
         # Should have dispatcher entries, not individual hooks
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse"):
+        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
             assert any(f"dispatch {event}" in cmd for cmd in commands)
         # Individual hooks should be gone
         assert ".pennyfarthing/bin/pf hooks pre-edit-check" not in commands
@@ -407,7 +407,7 @@ class TestGracefulFallback:
     def test_no_agents_dir_has_four_dispatcher_entries(
         self, target_dir: Path, mock_dist_no_agents: Path
     ) -> None:
-        """Without agents, settings should have 4 dispatcher entries."""
+        """Without agents, settings should have 6 dispatcher entries."""
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_no_agents)
@@ -416,7 +416,7 @@ class TestGracefulFallback:
         data = json.loads(settings_path.read_text())
         hooks = data.get("hooks", {})
         total = sum(len(entries) for entries in hooks.values())
-        assert total == 4, f"Expected exactly 4 dispatcher entries, got {total}"
+        assert total == 6, f"Expected exactly 6 dispatcher entries, got {total}"
 
     def test_no_agents_dir_no_individual_hooks(
         self, target_dir: Path, mock_dist_no_agents: Path

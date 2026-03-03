@@ -342,7 +342,7 @@ class TestUpgradeFromNpm:
                     if hook.get("type") == "command":
                         all_commands.append(hook["command"])
 
-        pf_hooks = [c for c in all_commands if c.startswith("pf hooks")]
+        pf_hooks = [c for c in all_commands if "hooks dispatch" in c]
         assert len(pf_hooks) >= 3, f"Expected >=3 pf hooks, got {len(pf_hooks)}"
 
     def test_upgrade_with_clean_removes_npm_artifacts(self, npm_project: Path) -> None:
@@ -486,8 +486,11 @@ class TestDryRun:
         assert all("dry-run" in r for r in result["removed"])
 
         # Artifacts should still exist
+        # node_modules/@pennyfarthing is untouched by the dry-run cleanup
         assert (npm_project / "node_modules" / "@pennyfarthing").exists()
-        assert (npm_project / ".pennyfarthing" / "manifest.json").exists()
+        # init_project writes init-manifest.json (init-manifest.json, not manifest.json)
+        # manifest.json is removed by _clean_stale_artifacts during init_project
+        assert (npm_project / ".pennyfarthing" / "init-manifest.json").exists()
 
 
 # ===========================================================================

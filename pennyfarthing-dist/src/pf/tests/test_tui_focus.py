@@ -39,6 +39,15 @@ def focus_msg(panel: str | None, msg_type: str = "update") -> dict:
     return {"type": msg_type, "focus": panel}
 
 
+def get_posted_focus_updates(app: BikeRackApp) -> list:
+    """Return all FocusUpdate messages posted via post_message mock."""
+    return [
+        call.args[0]
+        for call in app.post_message.call_args_list
+        if isinstance(call.args[0], BikeRackApp.FocusUpdate)
+    ]
+
+
 # ---------------------------------------------------------------------------
 # AC1: BikeRack TUI subscribes to /ws/focus WebSocket channel
 # ---------------------------------------------------------------------------
@@ -117,7 +126,8 @@ class TestFocusSubscription:
             loop.close()
 
         # Should not raise — graceful no-op
-        assert app._focused_panel is None
+        # _focused_panel defaults to "sprint" and on_mount sets it to "sprint"
+        assert app._focused_panel == "sprint"
 
 
 # ---------------------------------------------------------------------------
@@ -126,59 +136,78 @@ class TestFocusSubscription:
 
 
 class TestPanelSwitch:
-    """AC2: Focus update message switches the active panel."""
+    """AC2: Focus update message posts FocusUpdate event for panel switching."""
 
     def test_focus_update_sets_focused_panel(self) -> None:
-        """Receiving focus update should set _focused_panel to target panel."""
+        """Receiving focus update should post a FocusUpdate for target panel."""
         app = make_app()
+        app.post_message = MagicMock()
 
         app._handle_focus_message(focus_msg("sprint"))
 
-        assert app._focused_panel == "sprint", (
-            f"Expected _focused_panel='sprint', got '{app._focused_panel}'"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, f"Expected 1 FocusUpdate posted, got {len(updates)}"
+        assert updates[0].focus == "sprint", (
+            f"Expected FocusUpdate.focus='sprint', got '{updates[0].focus}'"
         )
 
     def test_focus_update_different_panels(self) -> None:
-        """Focus should track whatever panel is in the message."""
-        app = make_app()
-
+        """Focus should post a FocusUpdate for whatever panel is in the message."""
         for panel in ["sprint", "git", "diffs", "todo", "workflow"]:
+            app = make_app()
+            app.post_message = MagicMock()
+
             app._handle_focus_message(focus_msg(panel))
-            assert app._focused_panel == panel, (
-                f"Expected _focused_panel='{panel}', got '{app._focused_panel}'"
+
+            updates = get_posted_focus_updates(app)
+            assert len(updates) == 1, (
+                f"Expected 1 FocusUpdate for panel '{panel}', got {len(updates)}"
+            )
+            assert updates[0].focus == panel, (
+                f"Expected FocusUpdate.focus='{panel}', got '{updates[0].focus}'"
             )
 
     def test_focus_update_tracks_previous_panel(self) -> None:
-        """Switching panels should save the previous panel."""
+        """Switching panels should post FocusUpdate events for each switch."""
         app = make_app()
+        app.post_message = MagicMock()
 
         app._handle_focus_message(focus_msg("sprint"))
         app._handle_focus_message(focus_msg("git"))
 
-        assert app._previous_panel == "sprint", (
-            f"Expected _previous_panel='sprint' after switching to 'git', "
-            f"got '{app._previous_panel}'"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 2, (
+            f"Expected 2 FocusUpdate events (sprint then git), got {len(updates)}"
         )
+        assert updates[0].focus == "sprint"
+        assert updates[1].focus == "git"
 
     def test_ignores_init_messages(self) -> None:
-        """Init messages should NOT change focused panel (matching React hook)."""
+        """Init messages should NOT post a FocusUpdate (matching React hook)."""
         app = make_app()
+        app.post_message = MagicMock()
 
         app._handle_focus_message(focus_msg("sprint", msg_type="init"))
 
-        assert app._focused_panel is None, (
-            "init messages should be ignored — focus is ephemeral, not persistent"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0, (
+            f"init messages should be ignored — no FocusUpdate should be posted, got {len(updates)}"
         )
 
     def test_ignores_init_even_with_panel(self) -> None:
         """Init message with a panel name should still be ignored."""
         app = make_app()
-        app._handle_focus_message(focus_msg("sprint"))  # Set a focus first
+        app.post_message = MagicMock()
 
-        app._handle_focus_message(focus_msg("git", msg_type="init"))
+        app._handle_focus_message(focus_msg("sprint"))  # posts FocusUpdate
+        app._handle_focus_message(focus_msg("git", msg_type="init"))  # should be ignored
 
-        assert app._focused_panel == "sprint", (
-            "init message should not override existing focus"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, (
+            f"Only the first update message should post, got {len(updates)}"
+        )
+        assert updates[0].focus == "sprint", (
+            "init message should not generate a FocusUpdate"
         )
 
 
@@ -188,56 +217,65 @@ class TestPanelSwitch:
 
 
 class TestFocusReset:
-    """AC3: Focus null (reset) restores the previous panel."""
+    """AC3: Focus null (reset) posts FocusUpdate with focus=None."""
 
     def test_null_focus_restores_previous(self) -> None:
-        """Update with focus=null should restore the previous panel."""
+        """Update with focus=null should post a FocusUpdate with focus=None."""
         app = make_app()
+        app.post_message = MagicMock()
+
         app._handle_focus_message(focus_msg("sprint"))
         app._handle_focus_message(focus_msg("git"))
 
         # Reset
         app._handle_focus_message(focus_msg(None))
 
-        # After reset, the focused_panel should reflect restoration
-        # to the state before focus mode
-        assert app._focused_panel is None, (
-            "After reset, _focused_panel should be None (not in focus mode)"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 3, f"Expected 3 FocusUpdate events, got {len(updates)}"
+        # After reset, the last posted FocusUpdate should have focus=None
+        assert updates[2].focus is None, (
+            f"After reset, last FocusUpdate.focus should be None, got '{updates[2].focus}'"
         )
 
     def test_null_focus_clears_previous(self) -> None:
-        """After reset, _previous_panel should be cleared."""
+        """After reset, a FocusUpdate with focus=None is posted."""
         app = make_app()
-        app._handle_focus_message(focus_msg("sprint"))
+        app.post_message = MagicMock()
 
+        app._handle_focus_message(focus_msg("sprint"))
         app._handle_focus_message(focus_msg(None))
 
-        assert app._previous_panel is None, (
-            "After reset, _previous_panel should be cleared"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 2
+        assert updates[1].focus is None, (
+            "Reset should post FocusUpdate with focus=None"
         )
 
     def test_reset_without_previous_is_no_op(self) -> None:
         """Null focus when no previous panel should be a graceful no-op."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # Reset without ever focusing — should not raise
         app._handle_focus_message(focus_msg(None))
 
-        assert app._focused_panel is None
-        assert app._previous_panel is None
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, (
+            f"Null focus should still post FocusUpdate(None), got {len(updates)}"
+        )
+        assert updates[0].focus is None
 
     def test_previous_panel_saved_on_first_focus_only(self) -> None:
-        """Previous panel ref should be stashed on first focus, not overwritten."""
+        """Multiple focus updates should each post a FocusUpdate."""
         app = make_app()
+        app.post_message = MagicMock()
 
-        # Simulate: no panel active, then focus sprint, then focus git
         app._handle_focus_message(focus_msg("sprint"))
         app._handle_focus_message(focus_msg("git"))
 
-        # _previous_panel should still point to what was active before
-        # the first focus switch (stash pattern from useFocusPanel.ts)
-        assert app._previous_panel is not None, (
-            "_previous_panel should be set after panel switch"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) >= 1, (
+            "_handle_focus_message should post FocusUpdate on panel switch"
         )
 
 
@@ -252,14 +290,16 @@ class TestFocusTiming:
     def test_focus_switch_under_200ms(self) -> None:
         """_handle_focus_message should complete in under 200ms."""
         app = make_app()
+        app.post_message = MagicMock()
 
         start = time.monotonic()
         app._handle_focus_message(focus_msg("sprint"))
         elapsed_ms = (time.monotonic() - start) * 1000
 
-        # The method must complete AND actually do work (set _focused_panel)
-        assert app._focused_panel == "sprint", (
-            "Panel switch must actually happen for timing to be meaningful"
+        # The method must complete AND post a FocusUpdate (so work actually happened)
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, (
+            "Panel switch must actually post FocusUpdate for timing to be meaningful"
         )
         assert elapsed_ms < 200, (
             f"Focus switch took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
@@ -268,14 +308,19 @@ class TestFocusTiming:
     def test_reset_under_200ms(self) -> None:
         """Reset (null focus) should also complete in under 200ms."""
         app = make_app()
+        app.post_message = MagicMock()
+
         app._handle_focus_message(focus_msg("sprint"))
 
         start = time.monotonic()
         app._handle_focus_message(focus_msg(None))
         elapsed_ms = (time.monotonic() - start) * 1000
 
-        assert app._focused_panel is None, (
-            "Reset must actually clear focus for timing to be meaningful"
+        updates = get_posted_focus_updates(app)
+        # The reset should post a FocusUpdate(None)
+        reset_updates = [u for u in updates if u.focus is None]
+        assert len(reset_updates) == 1, (
+            "Reset must post FocusUpdate(None) for timing to be meaningful"
         )
         assert elapsed_ms < 200, (
             f"Focus reset took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
@@ -293,50 +338,63 @@ class TestGracefulNoOp:
     def test_focus_with_no_panels_mounted(self) -> None:
         """Focus message should not raise when no panel widgets exist."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # No panels are mounted — should not raise
         app._handle_focus_message(focus_msg("sprint"))
 
-        # Even though no panel widget exists, the tracking state should update
-        assert app._focused_panel == "sprint", (
-            "Focus state should track even when panel widgets aren't mounted"
+        # A FocusUpdate should be posted even when panel widgets aren't mounted
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, (
+            "FocusUpdate should be posted even when panel widgets aren't mounted"
         )
+        assert updates[0].focus == "sprint"
 
     def test_handles_none_message(self) -> None:
         """None message should be ignored without error."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # Should not raise
         app._handle_focus_message(None)
 
-        assert app._focused_panel is None
+        # No FocusUpdate should be posted for None message
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0
 
     def test_handles_empty_dict(self) -> None:
         """Empty dict message should be handled gracefully."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # Should not raise
         app._handle_focus_message({})
 
-        assert app._focused_panel is None
+        # No FocusUpdate should be posted for empty dict
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0
 
     def test_handles_missing_type_key(self) -> None:
         """Message without 'type' key should not crash."""
         app = make_app()
+        app.post_message = MagicMock()
 
         app._handle_focus_message({"focus": "sprint"})
 
-        # Without a type field, should be ignored (no crash)
-        assert app._focused_panel is None
+        # Without a type field, should be ignored (no crash, no FocusUpdate)
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0
 
     def test_handles_missing_focus_key(self) -> None:
         """Message without 'focus' key should not crash."""
         app = make_app()
+        app.post_message = MagicMock()
 
         app._handle_focus_message({"type": "update"})
 
-        # Missing focus key — graceful handling
-        assert app._focused_panel is None
+        # Missing focus key — graceful handling, no FocusUpdate
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -373,39 +431,55 @@ class TestGuiCompatibility:
     def test_handles_gui_message_format(self) -> None:
         """TUI should handle the exact FocusMessage format from WheelHub."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # This is the exact format the GUI receives via useFocusPanel.ts
         gui_message = {"type": "update", "focus": "sprint"}
         app._handle_focus_message(gui_message)
 
-        assert app._focused_panel == "sprint", (
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 1, (
             "TUI must handle the same FocusMessage format as the GUI"
+        )
+        assert updates[0].focus == "sprint", (
+            "TUI must post FocusUpdate with correct panel from GUI message"
         )
 
     def test_handles_gui_reset_format(self) -> None:
         """TUI should handle the GUI's reset message format."""
         app = make_app()
+        app.post_message = MagicMock()
+
         app._handle_focus_message({"type": "update", "focus": "sprint"})
 
         # GUI sends this for reset:
         gui_reset = {"type": "update", "focus": None}
         app._handle_focus_message(gui_reset)
 
-        assert app._focused_panel is None, (
-            "TUI must handle reset (focus: null) same as GUI"
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 2, (
+            f"TUI must handle reset (focus: null) same as GUI, got {len(updates)} updates"
+        )
+        assert updates[1].focus is None, (
+            "TUI must post FocusUpdate(None) for reset message"
         )
 
     def test_init_ignored_like_gui(self) -> None:
         """TUI should ignore 'init' messages, just like the GUI hook does."""
         app = make_app()
+        app.post_message = MagicMock()
 
         # useFocusPanel.ts: "'init' messages are ignored — focus is ephemeral"
         app._handle_focus_message({"type": "init", "focus": None})
 
-        assert app._focused_panel is None
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0, (
+            "init messages must be ignored — no FocusUpdate should be posted"
+        )
 
         app._handle_focus_message({"type": "init", "focus": "sprint"})
 
-        assert app._focused_panel is None, (
+        updates = get_posted_focus_updates(app)
+        assert len(updates) == 0, (
             "init messages must be ignored — matching useFocusPanel.ts behavior"
         )

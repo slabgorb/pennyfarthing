@@ -66,7 +66,7 @@ class TestStartWheelHub:
             mock_popen.assert_called_once()
 
     def test_sets_is_bikerack_env(self, tmp_path: Path) -> None:
-        """start_wheelhub should set IS_BIKERACK=1 in subprocess env."""
+        """start_wheelhub should set WHEELHUB_PROJECT_DIR in subprocess env."""
         with patch("pf.bikerack.launcher.subprocess.Popen") as mock_popen:
             mock_popen.return_value = MagicMock(pid=12345)
 
@@ -76,7 +76,7 @@ class TestStartWheelHub:
             popen_kwargs = mock_popen.call_args
             env = popen_kwargs.kwargs.get("env") or popen_kwargs[1].get("env")
             assert env is not None, "Popen should be called with env parameter"
-            assert env.get("IS_BIKERACK") == "1"
+            assert env.get("WHEELHUB_PROJECT_DIR") == str(tmp_path)
 
     def test_sets_project_dir_env(self, tmp_path: Path) -> None:
         """start_wheelhub should set WHEELHUB_PROJECT_DIR in subprocess env."""
@@ -145,18 +145,18 @@ class TestPortFilePolling:
             assert result == 2898
 
     def test_default_timeout_is_5_seconds(self, tmp_path: Path) -> None:
-        """poll_for_port_file default timeout should be 5 seconds."""
+        """poll_for_port_file default timeout should be 10 seconds."""
         import inspect
 
         sig = inspect.signature(poll_for_port_file)
-        assert sig.parameters["timeout"].default == 5.0
+        assert sig.parameters["timeout"].default == 10.0
 
     def test_default_interval_is_100ms(self, tmp_path: Path) -> None:
-        """poll_for_port_file default interval should be 0.1 seconds (100ms)."""
+        """poll_for_port_file default interval should be 0.2 seconds (200ms)."""
         import inspect
 
         sig = inspect.signature(poll_for_port_file)
-        assert sig.parameters["interval"].default == 0.1
+        assert sig.parameters["interval"].default == 0.2
 
     def test_reads_integer_port(self, tmp_path: Path) -> None:
         """poll_for_port_file should parse port as integer."""

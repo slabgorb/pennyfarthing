@@ -108,6 +108,23 @@ def healthy_project(tmp_path: Path) -> Path:
     (root / "node_modules").mkdir()
     (root / "node_modules" / ".package-lock.json").write_text("{}")
 
+    # Bootstrap hook (required by check_bootstrap)
+    hooks_dir = claude_dir / "hooks"
+    hooks_dir.mkdir(parents=True)
+    bootstrap_sh = hooks_dir / "bootstrap.sh"
+    bootstrap_sh.write_text("#!/bin/bash\n# bootstrap hook\n")
+    bootstrap_sh.chmod(0o755)
+
+    # settings.json with bootstrap SessionStart hook (required by check_bootstrap)
+    settings_json_data = {
+        "hooks": {
+            "SessionStart": [
+                {"hooks": [{"type": "command", "command": ".claude/hooks/bootstrap.sh"}]}
+            ]
+        }
+    }
+    (claude_dir / "settings.json").write_text(json.dumps(settings_json_data))
+
     return root
 
 

@@ -368,7 +368,7 @@ class TestHandoffMarkerOutput:
             capture_output=True,
             text=True,
         )
-        assert "/reviewer" in result.stdout
+        assert "/pf-reviewer" in result.stdout
 
     def test_marker_for_dev_agent(self) -> None:
         """Marker works for dev agent too."""
@@ -378,7 +378,7 @@ class TestHandoffMarkerOutput:
             text=True,
         )
         assert result.returncode == 0
-        assert "/dev" in result.stdout
+        assert "/pf-dev" in result.stdout
 
     def test_marker_error_mode(self) -> None:
         """Error flag produces error block."""

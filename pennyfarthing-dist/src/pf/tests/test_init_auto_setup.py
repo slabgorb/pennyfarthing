@@ -101,9 +101,11 @@ def mock_dist(tmp_path: Path) -> Path:
 @pytest.fixture
 def initialized_project(target_dir: Path, mock_dist: Path) -> Path:
     """A project that has already run init_project (directories exist)."""
+    from unittest.mock import patch
     from pf.init.core import init_project
 
-    init_project(target_dir=target_dir, dist_root=mock_dist)
+    with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "test"}):
+        init_project(target_dir=target_dir, dist_root=mock_dist)
     return target_dir
 
 
@@ -648,12 +650,12 @@ class TestPartialCompletionReentry:
     """AC: Handles partial completion and re-entry gracefully."""
 
     def test_get_setup_state_all_false_initially(
-        self, initialized_project: Path
+        self, target_dir: Path
     ) -> None:
-        """Fresh project should report no setup steps completed."""
+        """Fresh project (before init) should report no setup steps completed."""
         from pf.init.setup import get_setup_state
 
-        state = get_setup_state(initialized_project)
+        state = get_setup_state(target_dir)
 
         assert state["repos"] is False
         assert state["theme"] is False
@@ -801,21 +803,25 @@ class TestSetupDryRun:
     """Verify dry-run mode for the full setup workflow."""
 
     def test_dry_run_creates_no_config_files(
-        self, initialized_project: Path, mock_dist: Path
+        self, target_dir: Path, mock_dist: Path
     ) -> None:
-        """Dry run should not write repos.yaml or config.local.yaml."""
+        """Dry run should not write repos.yaml or config.local.yaml.
+
+        Uses target_dir (pre-init) so no repos.yaml or config exist yet.
+        initialized_project has already run init which creates repos.yaml.
+        """
         from pf.init.setup import run_setup
 
         run_setup(
-            target_dir=initialized_project,
+            target_dir=target_dir,
             dist_root=mock_dist,
             skip_prompts=True,
             theme="lord-of-the-rings",
             dry_run=True,
         )
 
-        assert not (initialized_project / ".pennyfarthing" / "repos.yaml").exists()
-        assert not (initialized_project / ".pennyfarthing" / "config.local.yaml").exists()
+        assert not (target_dir / ".pennyfarthing" / "repos.yaml").exists()
+        assert not (target_dir / ".pennyfarthing" / "config.local.yaml").exists()
 
     def test_dry_run_returns_plan(
         self, initialized_project: Path, mock_dist: Path

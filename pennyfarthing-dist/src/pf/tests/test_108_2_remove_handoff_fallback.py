@@ -144,12 +144,12 @@ class TestGateTypeFallbackRemoved:
     def test_no_gate_at_all_still_returns_skip(
         self, project: Path
     ) -> None:
-        """AC3: Phase with no gate (setup/finish) should still return 'skip'."""
+        """AC3: Phase with no gate (finish) should still return 'skip'."""
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITH_ASSESSMENT)
 
         result = resolve_gate(
-            "108-2", "tdd", "setup", project_root=project
+            "108-2", "tdd", "finish", project_root=project
         )
         assert result["status"] == "skip", (
             f"No-gate phase should skip, got: {result['status']}"
@@ -174,13 +174,13 @@ class TestGateTypeFallbackRemoved:
             f"'{result['status']}' — gate.type fallback still active?"
         )
 
-    def test_gate_file_only_returns_blocked_without_assessment(
+    def test_gate_file_only_returns_ready_without_assessment(
         self, project: Path
     ) -> None:
-        """AC3: gate with file but no type + NO assessment → 'blocked'.
+        """AC3: gate with file but no type + NO assessment → 'ready'.
 
-        Before 108-2: gate_type is None → skip (ignores missing assessment).
-        After 108-2: gate.file present → check assessment → blocked.
+        Assessment checking is not done by resolve_gate (moved to complete_phase).
+        resolve_gate returns 'ready' for any phase with a gate present.
         """
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITHOUT_ASSESSMENT)
@@ -188,9 +188,9 @@ class TestGateTypeFallbackRemoved:
         result = resolve_gate(
             "108-2", "file-only-test", "green", project_root=project
         )
-        assert result["status"] == "blocked", (
-            f"File-only gate without assessment should be 'blocked', got: "
-            f"'{result['status']}' — gate.type fallback still active?"
+        assert result["status"] == "ready", (
+            f"File-only gate should be 'ready' (assessment checked in complete_phase), got: "
+            f"'{result['status']}'"
         )
 
     def test_gate_file_only_populates_gate_file_field(
@@ -218,8 +218,8 @@ class TestGateTypeFallbackRemoved:
             "108-2", "tdd", "green", project_root=project
         )
         assert result["status"] == "ready"
-        assert result["gate_file"] == "gates/tests-pass"
-        assert result["gate_type"] == "tests_pass"
+        assert result["gate_file"] == "gates/dev-exit"
+        assert result["gate_type"] == "dev_exit"
 
 
 # ===========================================================================

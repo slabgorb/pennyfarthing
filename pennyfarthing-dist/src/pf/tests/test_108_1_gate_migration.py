@@ -267,8 +267,8 @@ class TestTddWorkflowGateFiles:
         assert _get_gate_type(tdd, "review") == "approval"
 
     def test_green_phase_unchanged(self, tdd: dict) -> None:
-        """AC2: tdd green phase gate.file should still be gates/tests-pass (from 106)."""
-        assert _get_gate_file(tdd, "green") == "gates/tests-pass"
+        """AC2: tdd green phase gate.file should be gates/dev-exit."""
+        assert _get_gate_file(tdd, "green") == "gates/dev-exit"
 
 
 class TestTrivialWorkflowGateFiles:

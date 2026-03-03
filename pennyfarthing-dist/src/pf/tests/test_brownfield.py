@@ -12,6 +12,7 @@ Tests verify:
 7. CLI integration
 """
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -658,16 +659,30 @@ class TestDiscover:
 # =============================================================================
 
 
+def _subprocess_env() -> dict:
+    """Build env for subprocess calls that need the pf package on sys.path.
+
+    The test process adds pennyfarthing-dist/src to sys.path via conftest.py,
+    but subprocess calls inherit the system environment without that addition.
+    """
+    src_dir = str(Path(__file__).resolve().parents[3] / "src")
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{src_dir}:{existing}" if existing else src_dir
+    return env
+
+
 class TestBrownfieldCLI:
     """Tests for CLI entry point."""
 
     def test_cli_help(self) -> None:
         """CLI should show help with --help."""
         result = subprocess.run(
-            [sys.executable, "-m", "pf.brownfield", "--help"],
+            [sys.executable, "-m", "pf.brownfield.cli", "--help"],
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
 
         assert result.returncode == 0
@@ -676,10 +691,11 @@ class TestBrownfieldCLI:
     def test_cli_scan_subcommand_help(self) -> None:
         """CLI should have scan subcommand."""
         result = subprocess.run(
-            [sys.executable, "-m", "pf.brownfield", "scan", "--help"],
+            [sys.executable, "-m", "pf.brownfield.cli", "scan", "--help"],
             capture_output=True,
             text=True,
             timeout=30,
+            env=_subprocess_env(),
         )
 
         assert result.returncode in (0, 1, 2)
@@ -688,12 +704,13 @@ class TestBrownfieldCLI:
         """CLI scan should accept path argument."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "pf.brownfield",
+                sys.executable, "-m", "pf.brownfield.cli",
                 "scan", str(node_project), "--depth", "quick"
             ],
             capture_output=True,
             text=True,
             timeout=60,
+            env=_subprocess_env(),
         )
 
         # Should complete (success or expected failure from stub)
@@ -706,7 +723,7 @@ class TestBrownfieldCLI:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "pf.brownfield",
+                sys.executable, "-m", "pf.brownfield.cli",
                 "scan", str(node_project),
                 "--output", str(output_dir),
                 "--depth", "quick"
@@ -714,6 +731,7 @@ class TestBrownfieldCLI:
             capture_output=True,
             text=True,
             timeout=60,
+            env=_subprocess_env(),
         )
 
         assert result.returncode in (0, 1, 2)

@@ -166,9 +166,9 @@ class TestPyprojectToml:
         )
 
     def test_entry_point(self, pyproject: dict) -> None:
-        """pf entry point must map to pf.cli:main."""
+        """pf entry point must map to pf_launcher:main."""
         scripts = pyproject.get("project", {}).get("scripts", {})
-        assert scripts.get("pf") == "pf.cli:main"
+        assert scripts.get("pf") == "pf_launcher:main"
 
     def test_package_name(self, pyproject: dict) -> None:
         """Package name must be pennyfarthing-scripts."""
@@ -259,10 +259,10 @@ class TestWheelBuild:
 
     @pytest.mark.slow
     def test_wheel_contains_entry_point_module(self, built_wheel: Path) -> None:
-        """Wheel must contain pf/cli.py (entry point target)."""
+        """Wheel must contain pf_launcher.py (entry point target for pf_launcher:main)."""
         with zipfile.ZipFile(built_wheel) as zf:
             names = zf.namelist()
-            assert any("pf/cli.py" in n for n in names), "Wheel missing pf/cli.py"
+            assert any("pf_launcher.py" in n for n in names), "Wheel missing pf_launcher.py"
 
     @pytest.mark.slow
     def test_wheel_excludes_non_package_dirs(self, built_wheel: Path) -> None:

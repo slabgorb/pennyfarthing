@@ -316,10 +316,15 @@ class TestStoryValidation:
 
         assert result.valid is True
 
-    def test_sprint_without_number_and_jira_sprint_id_passes(self) -> None:
-        """Sprint without number and jira_sprint_id should pass (BMAD-imported sprints)."""
+    def test_sprint_with_number_passes(self) -> None:
+        """Sprint with required number field should pass validation.
+
+        number is now required by validate_sprint (archived sprint
+        filtering depends on it). jira_sprint_id remains optional.
+        """
         data = {
             "sprint": {
+                "number": 2610,
                 "goal": "BMAD imported sprint",
                 "start_date": "2026-01-20",
                 "end_date": "2026-02-02",
@@ -589,11 +594,24 @@ class TestArchivedSprintValidation:
         assert result.valid is True
 
     def test_archived_sprint_validates_structure(self) -> None:
-        """Archived sprints should still validate structure (missing fields)."""
+        """Archived sprints only require sprint.number; other fields are optional."""
         data = {
             "sprint": {
                 "number": 11,
-                # Missing required fields
+                # Other fields are not required for archived sprints
+            },
+            "epics": [],
+        }
+
+        result = validate_archived_sprint(data)
+
+        assert result.valid is True
+
+    def test_archived_sprint_fails_without_number(self) -> None:
+        """Archived sprint missing sprint.number should fail (archive filtering breaks)."""
+        data = {
+            "sprint": {
+                # Missing number — archive filtering cannot work
             },
             "epics": [],
         }

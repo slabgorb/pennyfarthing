@@ -261,8 +261,9 @@ class TestResolveGateFileNotFound:
     ) -> None:
         """AC3: No gates/ directories at all → not_found (no crash)."""
         # Project with .pennyfarthing but no gates subdirectory
+        # Use a name that doesn't exist in the bundled fallback either
         (tmp_path / ".pennyfarthing").mkdir()
-        result = resolve_gate_file("tests-pass", project_root=tmp_path)
+        result = resolve_gate_file("nonexistent-gate-xyz-abc", project_root=tmp_path)
         assert result["status"] == "not_found"
 
 

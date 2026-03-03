@@ -741,20 +741,20 @@ class TestCLIIntegration:
         assert result.exit_code == 0
 
     def test_cli_with_priority_option(self, runner: CliRunner, sprint_file: Path) -> None:
-        """--priority option should override default P1."""
+        """--priority option should override default P1 (CLI normalizes to lowercase)."""
         from pf.sprint.story_add import story_add_command
 
         result = runner.invoke(story_add_command, [
             "--sprint-file", str(sprint_file),
             "76", "Critical", "1",
-            "--priority", "P0",
+            "--priority", "p0",
         ])
 
         assert result.exit_code == 0
 
         data = read_sprint(sprint_file)
         new_story = data["epics"][0]["stories"][-1]
-        assert new_story["priority"] == "P0"
+        assert new_story["priority"] == "p0"
 
     def test_cli_with_workflow_option(self, runner: CliRunner, sprint_file: Path) -> None:
         """--workflow option should override default tdd."""

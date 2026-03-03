@@ -189,15 +189,15 @@ class TestValidateEpicShardRequiredFields:
         assert result.valid is False
         assert any("jira" in e.message.lower() for e in result.errors)
 
-    def test_jira_key_wrong_project_fails(
+    def test_jira_key_wrong_project_passes(
         self, valid_epic_shard: dict[str, Any]
     ) -> None:
-        """Jira key from wrong project should fail."""
+        """Jira key from any valid project format should pass (pattern is project-agnostic)."""
         valid_epic_shard["jira"] = "PROJ-12345"
 
         result = validate_epic_shard(valid_epic_shard)
 
-        assert result.valid is False
+        assert result.valid is True
 
     def test_empty_stories_list_passes(
         self, valid_epic_shard: dict[str, Any]

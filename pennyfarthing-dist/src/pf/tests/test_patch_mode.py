@@ -212,7 +212,7 @@ class TestDevOnlyWorkflow:
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         # Read patch.yaml workflow definition
-        workflow_path = Path("pennyfarthing-dist/workflows/patch.yaml")
+        workflow_path = Path(__file__).resolve().parents[3] / "workflows" / "patch.yaml"
         if not workflow_path.exists():
             pytest.fail("patch.yaml workflow file does not exist")
 

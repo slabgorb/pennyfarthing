@@ -476,7 +476,7 @@ class TestValidPanels:
         """VALID_PANELS should contain all BikeRack + Cyclist panels."""
         expected = {
             "sprint", "git", "diffs", "todo", "workflow",
-            "background", "audit-log", "changed", "ac",
+            "progress", "audit-log", "ac",
             "debug", "settings", "tty",
         }
         assert set(VALID_PANELS) == expected
@@ -486,5 +486,5 @@ class TestValidPanels:
         assert "message" not in VALID_PANELS
 
     def test_panel_count(self) -> None:
-        """VALID_PANELS should have exactly 12 entries."""
-        assert len(VALID_PANELS) == 12
+        """VALID_PANELS should have exactly 11 entries."""
+        assert len(VALID_PANELS) == 11

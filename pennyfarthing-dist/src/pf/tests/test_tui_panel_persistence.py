@@ -253,10 +253,10 @@ class TestTuiRestore:
         )
 
     def test_defaults_to_none_when_no_saved_state(self, tmp_path: Path) -> None:
-        """on_mount should leave _focused_panel as None when no last_panel saved.
+        """on_mount should set _focused_panel to 'sprint' when no last_panel saved.
 
-        Sprint is the default panel by compose() — _focused_panel=None means
-        no override, so SprintPanel shows by default.
+        Sprint is the default panel — when no saved state exists, on_mount
+        initialises _focused_panel to 'sprint' as the compose default.
         """
         import asyncio
 
@@ -277,9 +277,9 @@ class TestTuiRestore:
         finally:
             loop.close()
 
-        # _focused_panel should remain None (Sprint is default via compose)
-        assert app._focused_panel is None, (
-            "No saved state → _focused_panel should be None (Sprint is compose default)"
+        # _focused_panel defaults to "sprint" when no saved state exists
+        assert app._focused_panel == "sprint", (
+            "No saved state → _focused_panel should be 'sprint' (compose default)"
         )
 
     def test_handles_config_error_gracefully(self, tmp_path: Path) -> None:
@@ -300,8 +300,8 @@ class TestTuiRestore:
         finally:
             loop.close()
 
-        # Should not raise — graceful fallback
-        assert app._focused_panel is None
+        # Should not raise — graceful fallback to "sprint" default
+        assert app._focused_panel == "sprint"
 
 
 # ---------------------------------------------------------------------------
@@ -313,7 +313,11 @@ class TestTuiPersist:
     """AC4: BikeRackApp saves last_panel when focus changes."""
 
     def test_persists_panel_on_focus_update(self, tmp_path: Path) -> None:
-        """_handle_focus_message should save panel to config when focus changes."""
+        """on_bike_rack_app_focus_update should save panel to config when focus changes.
+
+        Persistence happens in the FocusUpdate event handler, not in
+        _handle_focus_message. Tests invoke the handler directly.
+        """
         project_dir = _make_config_dir(tmp_path)
         _write_config(project_dir, "theme: fifth-element\n")
 
@@ -323,44 +327,56 @@ class TestTuiPersist:
             "pf.bikerack.tui.save_last_panel"
         ) as mock_save:
             mock_save.return_value = {"success": True, "data": "git"}
-            app._handle_focus_message(focus_msg("git"))
+            event = BikeRackApp.FocusUpdate("git")
+            app.on_bike_rack_app_focus_update(event)
 
         mock_save.assert_called_once_with("git", project_dir=None)
 
     def test_does_not_persist_null_focus(self) -> None:
         """Reset (null focus) should NOT overwrite saved last_panel."""
         app = make_app()
-        app._handle_focus_message(focus_msg("sprint"))
 
         with patch(
             "pf.bikerack.tui.save_last_panel"
         ) as mock_save:
-            app._handle_focus_message(focus_msg(None))
+            event = BikeRackApp.FocusUpdate(None)
+            app.on_bike_rack_app_focus_update(event)
 
         mock_save.assert_not_called(), (
             "Null focus (reset) should not overwrite the saved last_panel"
         )
 
     def test_sequential_changes_update_last_panel(self) -> None:
-        """Multiple panel switches should each persist the new panel."""
+        """Multiple panel switches should each persist the new panel.
+
+        The app starts with _focused_panel='sprint'. Switching to 'sprint'
+        is a no-op (already active), so 3 events produce 2 saves.
+        """
         app = make_app()
 
         with patch(
             "pf.bikerack.tui.save_last_panel"
         ) as mock_save:
             mock_save.return_value = {"success": True}
-            app._handle_focus_message(focus_msg("sprint"))
-            app._handle_focus_message(focus_msg("git"))
-            app._handle_focus_message(focus_msg("diffs"))
+            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("sprint"))
+            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("git"))
+            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("diffs"))
 
-        # Should have saved each panel switch
-        assert mock_save.call_count == 3, (
-            f"Expected 3 save calls for 3 switches, got {mock_save.call_count}"
+        # Sprint is the initial _focused_panel so switching to it is a no-op.
+        # "git" and "diffs" each trigger a save → 2 calls total.
+        assert mock_save.call_count == 2, (
+            f"Expected 2 save calls (git, diffs — sprint is already active), "
+            f"got {mock_save.call_count}"
         )
 
     def test_does_not_persist_init_messages(self) -> None:
-        """Init messages should not trigger persistence."""
+        """Init messages should not trigger persistence.
+
+        _handle_focus_message ignores 'init' type messages — no FocusUpdate
+        is posted, so no persistence occurs.
+        """
         app = make_app()
+        app.post_message = MagicMock()
 
         with patch(
             "pf.bikerack.tui.save_last_panel"
