@@ -2,7 +2,7 @@
 
 <purpose>Define component library strategy and design custom components not covered by the chosen design system through collaborative analysis of component needs and implementation planning.</purpose>
 
-<instructions>Analyze design system coverage (available vs needed). Design each custom component with purpose, content, actions, states, variants, and accessibility. Document component specifications. Define overall component strategy (foundation components, custom components, implementation approach). Plan implementation roadmap (phase 1 core, phase 2 supporting, phase 3 enhancement). Generate component strategy content with design system analysis, custom component specifications, implementation strategy, and roadmap sections. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Analyze design system coverage (available vs needed). Design each custom component with purpose, content, actions, states, variants, and accessibility. Document component specifications. Define overall component strategy (foundation components, custom components, implementation approach). Plan implementation roadmap (phase 1 core, phase 2 supporting, phase 3 enhancement). Generate component strategy content with design system analysis, custom component specifications, implementation strategy, and roadmap sections. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>Component strategy content appended to specification including custom component specifications with accessibility considerations, implementation roadmap prioritized by criticality, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating component strategy content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating component strategy content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper component insights
-- **P (Party Mode)**: Bring multiple perspectives to define component strategy
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -191,9 +183,6 @@ Show the generated component strategy content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our component strategy
-[P] Party Mode - Bring technical perspectives on component design
-[C] Continue - Save this to the document and move to UX patterns
 
 ### 8. Handle Menu Selection
 
@@ -202,26 +191,22 @@ Show the generated component strategy content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current component strategy content
 - Process the enhanced component insights that come back
 - Ask user: "Accept these improvements to the component strategy? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current component strategy
 - Process the collaborative component insights that come back
 - Ask user: "Accept these changes to the component strategy? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
 - Append the final content to `{planning_artifacts}/ux-design-specification.md`
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-12-ux-patterns.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
 
 ## SUCCESS METRICS:
 
@@ -230,8 +215,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Component strategy clearly defined
 ✅ Implementation roadmap prioritized by user need
 ✅ Accessibility considered for all components
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -240,18 +225,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Missing accessibility considerations
 ❌ Component strategy not aligned with user journeys
 ❌ Implementation roadmap not prioritized effectively
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-12-ux-patterns.md` to define UX consistency patterns.
-
-Remember: Do NOT proceed to step-12 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

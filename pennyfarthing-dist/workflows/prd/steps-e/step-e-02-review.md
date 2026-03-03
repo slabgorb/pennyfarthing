@@ -212,26 +212,6 @@ Display: "**Change Plan Approved**
 
 Load and execute {nextStepFile} (step-e-03-edit.md)
 
-### 7. Present MENU OPTIONS (If User Wants Discussion)
-
-**[A] Advanced Elicitation** - Get additional perspectives on change plan
-**[P] Party Mode** - Discuss with team for more ideas
-**[C] Continue to Edit** - Proceed with approved plan
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed to edit when user selects 'C'
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask}, then return to discussion
-- IF P: Execute {partyModeWorkflow}, then return to discussion
-- IF C: Document approval, then load {nextStepFile}
-- IF Any other: discuss, then redisplay menu
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

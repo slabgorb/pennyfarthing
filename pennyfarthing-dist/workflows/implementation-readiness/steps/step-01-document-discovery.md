@@ -168,27 +168,11 @@ Display findings and ask:
 - If duplicates exist: Please remove/rename one version
 - Confirm which documents to use for assessment
 
-**Ready to proceed?** [C] Continue after resolving issues"
-
-### 7. Present MENU OPTIONS
-
-Display: **Select an Option:** [C] Continue to File Validation
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed with 'C' selection
-- If duplicates identified, insist on resolution first
-- User can clarify file locations or request additional searches
-
-#### Menu Handling Logic:
-
-- IF C: Save document inventory to {outputFile}, update frontmatter with completed step and files being included, and only then load read fully and execute {nextStepFile}
-- IF Any other comments or queries: help user respond then redisplay menu
+**Ready to proceed?** Present the switch prompt to continue."
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and document inventory is saved will you load {nextStepFile} to begin file validation.
+ONLY WHEN user confirms via the switch prompt and document inventory is saved will you load {nextStepFile} to begin file validation.
 
 ---
 

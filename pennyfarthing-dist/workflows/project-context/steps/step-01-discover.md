@@ -180,7 +180,7 @@ Report findings to user:
 
 Ready to create/update your project context. This will help AI agents implement code consistently with your project's standards.
 
-[C] Continue to context generation"
+Present the switch prompt to continue."
 
 ## SUCCESS METRICS:
 
@@ -198,9 +198,3 @@ Ready to create/update your project context. This will help AI agents implement 
 ❌ Overlooking important coding patterns or conventions
 ❌ Not initializing frontmatter properly
 ❌ Not presenting clear discovery summary to user
-
-## NEXT STEP:
-
-After user selects [C] to continue, load `./step-02-generate.md` to collaboratively generate the specific project context rules.
-
-Remember: Do NOT proceed to step-02 until user explicitly selects [C] from the menu and discovery is confirmed and the initial file has been written as directed in this discovery step!

@@ -57,23 +57,8 @@ A specification is considered "Ready for Development" ONLY if it meets the follo
 
 **Present review menu:**
 
-Display: "**Select:** [C] Continue [E] Edit [Q] Questions [P] Party Mode"
 
 **HALT and wait for user selection.**
-
-#### Menu Handling Logic:
-
-- IF C: Proceed to Section 3 (Finalize the Spec)
-- IF E: Proceed to Section 2 (Handle Review Feedback), then return here and redisplay menu
-- IF Q: Answer questions, then redisplay this menu
-- IF P: Execute party mode with current spec content, process collaborative insights, ask user "Accept changes? (y/n)", if yes update spec then redisplay menu, if no keep original then redisplay menu
-- IF Any other comments or queries: respond helpfully then redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to finalize when user selects 'C'
-- After other menu items execution, return to this menu
 
 ### 2. Handle Review Feedback
 
@@ -128,10 +113,8 @@ Saved to: {finalFile}
 
 **Next Steps:**
 
-[R] Adversarial Review - critique of the spec (recommended)
 [B] Begin Development - start implementing now (not recommended)
 [D] Done - exit workflow
-[P] Party Mode - get expert feedback before dev
 
 ---
 
@@ -146,19 +129,6 @@ This ensures the dev agent has clean context focused solely on implementation.
 ```
 
 b) **HALT and wait for user selection.**
-
-#### Menu Handling Logic:
-
-- IF R: Execute adversarial review — review the spec critically, looking for gaps, ambiguities, missing edge cases, untestable requirements, and implementation risks. Present findings numbered (F1, F2, ...) ordered by severity with columns: ID, Severity, Validity, Description. Return to this menu.
-- IF B: Read the entire workflow file at `{quick_dev_workflow}` and follow the instructions with the final spec file (warn: fresh context is better)
-- IF D: Exit workflow - display final confirmation and path to spec
-- IF P: Execute party mode with current spec content, process collaborative insights, ask user "Accept changes? (y/n)", if yes update spec then redisplay menu, if no keep original then redisplay menu
-- IF Any other comments or queries: respond helpfully then redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- After P or R execution, return to this menu
 
 ### 5. Exit Workflow
 

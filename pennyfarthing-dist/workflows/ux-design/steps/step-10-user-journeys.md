@@ -2,7 +2,7 @@
 
 <purpose>Design detailed user journey flows for critical user interactions through collaborative definition of flows with Mermaid diagrams and optimization for efficiency and delight.</purpose>
 
-<instructions>Load PRD user journeys as foundation. For each critical journey, design detailed flow (entry points, information needs, decisions, feedback, success definition). Create flow diagrams using Mermaid showing entry points, decision branches, success/failure paths, and error recovery. Optimize flows for efficiency and delight. Document journey patterns extracted across flows. Generate user journey content with journey descriptions, flow diagrams, journey patterns, and flow optimization principles sections. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Load PRD user journeys as foundation. For each critical journey, design detailed flow (entry points, information needs, decisions, feedback, success definition). Create flow diagrams using Mermaid showing entry points, decision branches, success/failure paths, and error recovery. Optimize flows for efficiency and delight. Document journey patterns extracted across flows. Generate user journey content with journey descriptions, flow diagrams, journey patterns, and flow optimization principles sections. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>User journey flows content appended to specification including detailed Mermaid flow diagrams for all critical journeys, journey patterns, and optimization principles, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating user journey content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating user journey content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper journey insights
-- **P (Party Mode)**: Bring multiple perspectives to design user flows
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -185,9 +177,6 @@ Show the generated user journey content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our user journey designs
-[P] Party Mode - Bring different perspectives on user flows
-[C] Continue - Save this to the document and move to component strategy
 
 ### 8. Handle Menu Selection
 
@@ -196,16 +185,16 @@ Show the generated user journey content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current user journey content
 - Process the enhanced journey insights that come back
 - Ask user: "Accept these improvements to the user journeys? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current user journeys
 - Process the collaborative journey insights that come back
 - Ask user: "Accept these changes to the user journeys? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
@@ -213,18 +202,14 @@ Show the generated user journey content and present choices:
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-11-component-strategy.md`
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
-
 ## SUCCESS METRICS:
 
 ✅ Critical user journeys identified and designed
 ✅ Detailed flow diagrams created for each journey
 ✅ Flows optimized for efficiency and user delight
 ✅ Common journey patterns extracted and documented
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -233,18 +218,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Missing error recovery paths
 ❌ Not extracting reusable patterns across journeys
 ❌ Flow diagrams unclear or incomplete
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-11-component-strategy.md` to define component library strategy.
-
-Remember: Do NOT proceed to step-11 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

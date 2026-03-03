@@ -173,26 +173,6 @@ Your PRD is missing {count} of 6 core BMAD PRD sections. The overall effort to r
 
 **How would you like to proceed?**"
 
-### 5. Present MENU OPTIONS
-
-**[C] Continue Validation** - Proceed with validation using current structure
-**[E] Exit & Review** - Exit validation and review parity report
-**[S] Save & Exit** - Save parity report and exit
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- IF C (Continue): Display "Proceeding with validation..." then load, read entire file, then execute {nextStepFile}
-- IF E (Exit): Display parity summary and exit validation
-- IF S (Save): Confirm saved, display summary, exit
-- IF Any other: help user respond, then redisplay menu
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

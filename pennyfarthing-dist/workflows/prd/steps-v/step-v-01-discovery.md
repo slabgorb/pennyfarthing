@@ -181,27 +181,6 @@ validationStatus: IN_PROGRESS
 
 **Ready to begin validation.**"
 
-### 9. Present MENU OPTIONS
-
-Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Format Detection
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- User can ask questions or add more documents - always respond and redisplay menu
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask}, and when finished redisplay the menu
-- IF P: Execute {partyModeWorkflow}, and when finished redisplay the menu
-- IF C: Load, read entire file, then execute {nextStepFile} to begin format detection
-- IF user provides additional document: Load it, update report, redisplay summary
-- IF Any other: help user, then redisplay menu
-
----
-
-
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">
     Advanced Elicitation

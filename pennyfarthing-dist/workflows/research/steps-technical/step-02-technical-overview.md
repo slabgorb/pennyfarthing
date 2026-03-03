@@ -10,7 +10,7 @@ Conduct technology stack analysis identifying programming languages, development
 3. Generate technology stack analysis content with six subsections (Programming Languages, Development Frameworks, Database and Storage, Development Tools, Cloud Infrastructure, Technology Adoption Trends)
 4. Include source citations for all technology data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2] before loading next step
 </instructions>
 
@@ -41,11 +41,11 @@ Technology stack analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after technology stack content generation
+- ⚠️ Present switch prompt after technology stack content generation
 - 📝 WRITE TECHNOLOGY STACK ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -197,7 +197,6 @@ _Source: [URL]_
 - Technology adoption trends identified
 
 **Ready to proceed to integration patterns analysis?**
-[C] Continue - Save this to document and proceed to integration patterns
 
 ### 6. Handle Continue Selection
 
@@ -207,10 +206,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2]`
 - Load: `./step-03-integration-patterns.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Programming languages and frameworks thoroughly analyzed
@@ -219,7 +214,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Cloud infrastructure and deployment options mapped
 ✅ Technology adoption trends identified
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (integration patterns)
 ✅ Research goals alignment maintained
 
@@ -231,7 +226,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Incomplete database and storage technology analysis
 ❌ Not identifying development tools and platforms
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to integration patterns step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -256,9 +251,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable technology insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-03-integration-patterns.md` to analyze APIs, communication protocols, and system interoperability for {{research_topic}}.
-
-Remember: Always write research content to document immediately and emphasize current technology data with rigorous source verification!

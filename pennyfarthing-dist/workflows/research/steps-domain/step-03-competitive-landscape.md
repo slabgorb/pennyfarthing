@@ -10,7 +10,7 @@ Conduct competitive landscape analysis identifying key players, market share dis
 3. Generate competitive analysis content with six subsections (Key Players, Market Share, Competitive Strategies, Business Models, Competitive Dynamics, Ecosystem Analysis)
 4. Include source citations for all findings
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3] before loading next step
 </instructions>
 
@@ -41,11 +41,11 @@ Competitive landscape analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after competitive analysis content generation
+- ⚠️ Present switch prompt after competitive analysis content generation
 - 📝 WRITE COMPETITIVE ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -197,7 +197,6 @@ _Source: [URL]_
 - Competitive dynamics and entry barriers evaluated
 
 **Ready to proceed to regulatory focus analysis?**
-[C] Continue - Save this to document and proceed to regulatory focus
 
 ### 6. Handle Continue Selection
 
@@ -207,10 +206,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2, 3]`
 - Load: `./step-04-regulatory-focus.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Key players and market leaders thoroughly identified
@@ -219,7 +214,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Business models and value propositions documented
 ✅ Competitive dynamics and entry barriers evaluated
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (regulatory focus)
 ✅ Research goals alignment maintained
 
@@ -230,7 +225,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Incomplete market share or positioning analysis
 ❌ Not identifying competitive strategies
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to regulatory focus step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -255,9 +250,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable competitive insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-04-regulatory-focus.md` to analyze regulatory requirements, compliance frameworks, and legal considerations for {{research_topic}}.
-
-Remember: Always write research content to document immediately and search the web to verify facts!

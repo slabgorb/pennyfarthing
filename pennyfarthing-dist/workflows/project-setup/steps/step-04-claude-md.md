@@ -222,12 +222,7 @@ Based on tech stack:
 
 {preview of generated content}
 
-Options:
-[A] Accept and write to CLAUDE.md
-[E] Edit a section
-[S] Add a new section
-[R] Regenerate with different focus
-[P] Preview full content
+(switch prompt presents options)
 ```
 
 ## SUCCESS CRITERIA

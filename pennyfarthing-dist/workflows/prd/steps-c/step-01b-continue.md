@@ -120,20 +120,6 @@ What would be most helpful?"
 
 Does this look right, or do you want to make any adjustments before we proceed?"
 
-### 6. Present MENU OPTIONS
-
-Display: "**Select an Option:** [C] Continue to {next step name}"
-
-#### Menu Handling Logic:
-
-- IF C: Load, read entire file, then execute the {nextStepFile} determined in step 3
-- IF Any other comments or queries: respond and redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [current state confirmed], will you then load and read fully the {nextStepFile} to resume the workflow.

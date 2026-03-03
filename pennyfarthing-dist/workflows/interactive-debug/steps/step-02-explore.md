@@ -95,14 +95,6 @@ For each area the user wants to explore:
 **No Issues:** [if clean]
 ```
 
-## Collaboration Menu
-
-- **[E] Explore more** - Look at another section
-- **[I] Investigate issue** - Dig deeper into a specific problem
-- **[F] Fix issues** - Ready to start fixing what we found
-- **[D] Done** - No issues found, exit workflow
-
-
 <switch tool="AskUserQuestion">
   <case value="explore-more" next="LOOP">
     Explore more — Look at another section

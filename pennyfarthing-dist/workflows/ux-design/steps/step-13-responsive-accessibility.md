@@ -2,7 +2,7 @@
 
 <purpose>Define responsive design strategy and accessibility requirements ensuring the product works beautifully across all devices and is accessible to all users.</purpose>
 
-<instructions>Define responsive strategy for desktop (layout, features), tablet (gestures, density), and mobile (navigation, collapse, priority). Establish breakpoint strategy (standard vs custom, mobile-first vs desktop-first). Design accessibility strategy (WCAG level A/AA/AAA, color contrast, keyboard navigation, screen reader, touch targets). Define testing strategy (responsive testing, accessibility testing, user testing). Document implementation guidelines (responsive development, accessibility development). Generate responsive and accessibility content with strategy, breakpoint strategy, accessibility strategy, testing strategy, and implementation guidelines sections. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Define responsive strategy for desktop (layout, features), tablet (gestures, density), and mobile (navigation, collapse, priority). Establish breakpoint strategy (standard vs custom, mobile-first vs desktop-first). Design accessibility strategy (WCAG level A/AA/AAA, color contrast, keyboard navigation, screen reader, touch targets). Define testing strategy (responsive testing, accessibility testing, user testing). Document implementation guidelines (responsive development, accessibility development). Generate responsive and accessibility content with strategy, breakpoint strategy, accessibility strategy, testing strategy, and implementation guidelines sections. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>Responsive and accessibility content appended to specification including comprehensive testing strategy and implementation guidelines for responsive design and accessibility compliance, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating responsive/accessibility content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating responsive/accessibility content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper responsive/accessibility insights
-- **P (Party Mode)**: Bring multiple perspectives to define responsive/accessibility strategy
-- **C (Continue)**: Save the content to the document and proceed to final step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -207,9 +199,6 @@ Show the generated responsive and accessibility content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our responsive/accessibility strategy
-[P] Party Mode - Bring different perspectives on inclusive design
-[C] Continue - Save this to the document and complete the workflow
 
 ### 8. Handle Menu Selection
 
@@ -218,26 +207,22 @@ Show the generated responsive and accessibility content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current responsive/accessibility content
 - Process the enhanced insights that come back
 - Ask user: "Accept these improvements to the responsive/accessibility strategy? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current responsive/accessibility strategy
 - Process the collaborative insights that come back
 - Ask user: "Accept these changes to the responsive/accessibility strategy? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
 - Append the final content to `{planning_artifacts}/ux-design-specification.md`
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-14-complete.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
 
 ## SUCCESS METRICS:
 
@@ -246,8 +231,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Accessibility requirements determined and documented
 ✅ Comprehensive testing strategy planned
 ✅ Implementation guidelines provided for development team
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -256,18 +241,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Testing strategy not comprehensive enough
 ❌ Implementation guidelines too generic or unclear
 ❌ Not addressing specific accessibility challenges for your product
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-14-complete.md` to finalize the UX design workflow.
-
-Remember: Do NOT proceed to step-14 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

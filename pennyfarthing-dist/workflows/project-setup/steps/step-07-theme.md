@@ -102,10 +102,7 @@ Sample interaction:
   Stilgar: "The water of your code flows strong today, Cousin. Let us see what
            the sietch requires of us in this sprint."
 
-[S] Select this theme
-[P] Preview another theme
-[B] Browse all themes
-[D] Use default (no theme)
+(switch prompt presents theme selection options)
 ```
 
 ## CONFIGURATION
@@ -183,9 +180,7 @@ Recommended for {project_type}:
 
 {preview dune theme}
 
-[S] Select 'dune'
-[P] Preview another
-[B] Back to options
+(switch prompt presents selection options)
 ```
 
 ## SUCCESS CRITERIA

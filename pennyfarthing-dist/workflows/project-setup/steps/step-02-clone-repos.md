@@ -48,21 +48,14 @@ Found:
 
 This appears to be an orchestrator project. Would you like to:
 
-[C] Clone missing subrepos
+(switch prompt presents cloning options)
     - conductor-api from git@github.com:org/conductor-api.git
     - conductor-ui from git@github.com:org/conductor-ui.git
-
-[A] Add a new subrepo
-    - Enter repo URL to clone
-
-[S] Skip - configure repos.yaml with placeholders
-
-[N] Not an orchestrator - this is a standalone project
 ```
 
 ### Clone Workflow
 
-If user selects [C] or [A]:
+Based on user selection:
 
 #### 1. Gather Repository Information
 
@@ -143,8 +136,7 @@ Subrepos to include:
   [ ] Add UI repo
   [ ] Add other repo
 
-[P] Proceed with orchestrator setup
-[S] Skip - keep as single repo
+(switch prompt presents options)
 ```
 
 ### Common Orchestrator Patterns
@@ -199,9 +191,7 @@ Repositories:
 │ conductor-ui/  │ ui       │ ✓ cloned   │
 └────────────────┴──────────┴────────────┘
 
-[C] Continue to repos.yaml generation
-[A] Add another repo
-[R] Remove a repo from tracking
+(switch prompt presents options)
 ```
 
 ## SUCCESS CRITERIA

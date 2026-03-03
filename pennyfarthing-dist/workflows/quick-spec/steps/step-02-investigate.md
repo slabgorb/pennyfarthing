@@ -119,23 +119,8 @@ Fill in:
 
 ### 4. Present Checkpoint Menu
 
-Display: "**Select:** [P] Party Mode [C] Continue to Generate Spec (Step 3 of 4)"
 
 **HALT and wait for user selection.**
-
-#### Menu Handling Logic:
-
-- IF P: Execute party mode with current tech-spec content, process collaborative insights, ask user "Accept changes? (y/n)", if yes update WIP file then redisplay menu, if no keep original then redisplay menu
-- IF C: Verify frontmatter updated with `stepsCompleted: [1, 2]`, then read fully and follow: `{nextStepFile}`
-- IF Any other comments or queries: respond helpfully then redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After P execution, return to this menu
-
----
 
 ## REQUIRED OUTPUTS:
 

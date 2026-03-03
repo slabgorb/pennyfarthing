@@ -37,10 +37,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 
 - 🎯 Show your analysis before taking any action
 - 📚 Review the complete PRD document built so far
-- ⚠️ Present A/P/C menu after generating scoping decisions
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating scoping decisions
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 
 ## CONTEXT BOUNDARIES:
@@ -178,31 +178,6 @@ Prepare comprehensive scoping section:
 **Resource Risks:** {{contingency_approach}}
 ```
 
-### 7. Present MENU OPTIONS
-
-Present the scoping decisions for review, then display menu:
-- Show strategic scoping plan (using structure from step 6)
-- Highlight MVP boundaries and phased roadmap
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of conversation
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Functional Requirements (Step 9 of 11)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current scoping analysis, process the enhanced insights that come back, ask user if they accept the improvements, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the scoping context, process the collaborative insights on MVP and roadmap decisions, ask user if they accept the changes, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
-
 ## SUCCESS METRICS:
 
 ✅ Complete PRD document analyzed for scope implications
@@ -211,8 +186,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Phased development roadmap created
 ✅ Key risks identified and mitigation strategies defined
 ✅ User explicitly agrees to scope decisions
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -221,17 +196,11 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Not getting explicit user agreement on MVP boundaries
 ❌ Missing critical risk analysis
 ❌ Not creating clear phased development approach
-❌ Not presenting A/P/C menu after content generation
+❌ Not presenting switch prompt after content generation
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load {nextStepFile}.
-
-Remember: Do NOT proceed to step-09 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

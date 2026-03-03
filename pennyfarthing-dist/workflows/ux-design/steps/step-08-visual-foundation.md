@@ -2,7 +2,7 @@
 
 <purpose>Establish visual design foundation including color themes, typography systems, and spacing/layout foundations through collaborative exploration of brand guidelines and design principles.</purpose>
 
-<instructions>Assess brand guidelines. If no brand exists, generate color theme options and HTML visualizer. Define typography system (tone, readability, hierarchy). Establish spacing and layout foundation (density, grid system). Create visual foundation strategy with color system, typography, spacing, and accessibility sections. Generate visual foundation content. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Assess brand guidelines. If no brand exists, generate color theme options and HTML visualizer. Define typography system (tone, readability, hierarchy). Establish spacing and layout foundation (density, grid system). Create visual foundation strategy with color system, typography, spacing, and accessibility sections. Generate visual foundation content. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>Visual design foundation content appended to specification including color system, typography system, spacing/layout foundation, and accessibility considerations, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating visual foundation content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating visual foundation content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper visual insights
-- **P (Party Mode)**: Bring multiple perspectives to define visual foundation
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -167,9 +159,6 @@ Show the generated visual foundation content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our visual foundation
-[P] Party Mode - Bring design perspectives on visual choices
-[C] Continue - Save this to the document and move to design directions
 
 ### 8. Handle Menu Selection
 
@@ -178,26 +167,22 @@ Show the generated visual foundation content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current visual foundation content
 - Process the enhanced visual insights that come back
 - Ask user: "Accept these improvements to the visual foundation? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current visual foundation
 - Process the collaborative visual insights that come back
 - Ask user: "Accept these changes to the visual foundation? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
 - Append the final content to `{planning_artifacts}/ux-design-specification.md`
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-09-design-directions.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
 
 ## SUCCESS METRICS:
 
@@ -206,8 +191,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Typography system defined with appropriate hierarchy
 ✅ Spacing and layout foundation created
 ✅ Visual foundation strategy documented
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -216,18 +201,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Typography not suitable for content type or readability needs
 ❌ Spacing system not appropriate for content density
 ❌ Missing accessibility considerations
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-09-design-directions.md` to generate design direction mockups.
-
-Remember: Do NOT proceed to step-09 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

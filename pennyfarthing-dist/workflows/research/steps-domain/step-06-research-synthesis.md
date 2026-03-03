@@ -12,8 +12,8 @@ Produce a comprehensive, authoritative domain research document with compelling 
 5. Include Executive Summary with key findings and strategic recommendations
 6. Add comprehensive source documentation and quality assurance section
 7. Complete Research Methodology section with source verification details
-8. Present [C] complete option for final document
-9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when C selected
+8. Present the switch prompt for final document
+9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when user confirms via the switch prompt
 </instructions>
 
 <output>
@@ -50,8 +50,8 @@ Complete domain research document containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] complete option after synthesis content generation
-- 💾 ONLY save when user chooses C (Complete)
+- ⚠️ Present switch prompt after synthesis content generation
+- 💾 ONLY save when user confirms via the switch prompt(Complete)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]` before completing workflow
 - 🚫 FORBIDDEN to complete workflow until C is selected
 - 📚 GENERATE COMPLETE DOCUMENT STRUCTURE with intro, TOC, and summary
@@ -401,7 +401,6 @@ _This comprehensive research document serves as an authoritative reference on {{
 - Proper citations throughout
 
 **Ready to complete this comprehensive research document?**
-[C] Complete Research - Save final comprehensive document
 
 ### 6. Handle Final Completion
 
@@ -412,10 +411,6 @@ _This comprehensive research document serves as an authoritative reference on {{
 - Complete the domain research workflow
 - Provide final document delivery confirmation
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the complete comprehensive research document using the full structure above.
-
 ## SUCCESS METRICS:
 
 ✅ Compelling narrative introduction with research significance
@@ -425,7 +420,7 @@ When user selects 'C', append the complete comprehensive research document using
 ✅ Strategic recommendations grounded in comprehensive research
 ✅ Complete source verification with citations
 ✅ Professional document structure and compelling narrative
-✅ [C] complete option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Domain research workflow completed with comprehensive document
 
 ## FAILURE MODES:

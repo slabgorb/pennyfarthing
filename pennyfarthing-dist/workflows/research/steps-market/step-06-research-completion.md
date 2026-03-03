@@ -12,8 +12,8 @@ Produce a comprehensive, authoritative market research document with compelling 
 5. Include Executive Summary with key market findings and strategic recommendations
 6. Add comprehensive source documentation and quality assurance section
 7. Complete Market Research Methodology section with source verification details
-8. Present [C] complete option for final document
-9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when C selected
+8. Present the switch prompt for final document
+9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when user confirms via the switch prompt
 </instructions>
 
 <output>
@@ -50,8 +50,8 @@ Complete market research document containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] complete option after completion content generation
-- 💾 ONLY save when user chooses C (Complete)
+- ⚠️ Present switch prompt after completion content generation
+- 💾 ONLY save when user confirms via the switch prompt(Complete)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]` before completing workflow
 - 🚫 FORBIDDEN to complete workflow until C is selected
 - 📚 GENERATE COMPLETE DOCUMENT STRUCTURE with intro, TOC, and summary
@@ -418,7 +418,6 @@ _This comprehensive market research document serves as an authoritative market r
 - current market data throughout with proper citations
 
 **Ready to complete this comprehensive market research document?**
-[C] Complete Research - Save final comprehensive market research document
 
 ### 6. Handle Complete Selection
 
@@ -427,10 +426,6 @@ _This comprehensive market research document serves as an authoritative market r
 - Append the final content to the research document
 - Update frontmatter: `stepsCompleted: [1, 2, 3, 4]`
 - Complete the market research workflow
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the research document using the structure from step 4.
 
 ## SUCCESS METRICS:
 
@@ -441,7 +436,7 @@ When user selects 'C', append the content directly to the research document usin
 ✅ Strategic market recommendations grounded in comprehensive research
 ✅ Complete market source verification with current citations
 ✅ Professional market document structure and compelling narrative
-✅ [C] complete option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Market research workflow completed with comprehensive document
 
 ## FAILURE MODES:

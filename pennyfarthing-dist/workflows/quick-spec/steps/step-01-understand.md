@@ -164,23 +164,8 @@ b) **Report to user:**
 
 a) **Display menu:**
 
-Display: "**Select:** [P] Party Mode [C] Continue to Deep Investigation (Step 2 of 4)"
 
 b) **HALT and wait for user selection.**
-
-#### Menu Handling Logic:
-
-- IF P: Execute party mode with current tech-spec content, process collaborative insights, ask user "Accept changes? (y/n)", if yes update WIP file then redisplay menu, if no keep original then redisplay menu
-- IF C: Verify `{wipFile}` has `stepsCompleted: [1]`, then read fully and follow: `{nextStepFile}`
-- IF Any other comments or queries: respond helpfully then redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After P execution, return to this menu
-
----
 
 ## REQUIRED OUTPUTS:
 
@@ -190,7 +175,7 @@ b) **HALT and wait for user selection.**
 
 - [ ] WIP check performed FIRST before any greeting.
 - [ ] `{wipFile}` created with correct frontmatter, Overview, Context for Development, and `stepsCompleted: [1]`.
-- [ ] User selected [C] to continue.
+- [ ] User confirmed via the switch prompt to continue.
 
 <switch tool="AskUserQuestion">
   <case value="continue-existing" next="step-02-investigate">

@@ -18,7 +18,7 @@ Analysis results grouped by repo including:
 - Count of unpushed commits
 - List of uncommitted changes with status (M/A/D/??)
 - Any warnings or issues found
-- Ready for user choice: [A] to analyze specific repo, or [C] to continue
+- Ready for user choice via switch prompt
 </output>
 
 ## Objective
@@ -97,8 +97,6 @@ Unpushed: {count} commits
 
 ---
 
-**[A]** Analyze a specific repo in more detail
-**[C]** Continue to categorization
 
 <switch tool="AskUserQuestion">
   <case value="analyze-a-specific-repo-in-more-detail" next="LOOP">

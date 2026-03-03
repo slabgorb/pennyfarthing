@@ -100,7 +100,6 @@ For visual/UX issues, apply UX Designer thinking:
 Does this look right?
 - **[Y] Yes** - Mark fixed, next issue
 - **[N] No** - Needs adjustment
-- **[R] Revert** - Undo this change
 ```
 
 ### 5. Track
@@ -114,14 +113,6 @@ Maintain a running list:
 - [ ] `src/components/Button.tsx` - Added missing click handler
 ...
 ```
-
-## Collaboration Menu
-
-- **[N] Next issue** - Move to the next issue
-- **[A] Add issue** - Found another issue while fixing
-- **[V] Verify all** - Re-check all fixes together
-- **[C] Commit** - All issues fixed, ready to commit
-
 
 <switch tool="AskUserQuestion">
   <case value="yes" next="LOOP">

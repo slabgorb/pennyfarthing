@@ -32,30 +32,6 @@ Conclude the party mode session with in-character farewells, session highlights,
 ## Structured Summary
 
 ```markdown
-## Party Mode Results: [Topic]
-
-### Ideas Generated
-1. [Idea] - contributed by [Character Name]
-2. [Idea] - built on #1 by [Character Name]
-...
-
-### Most Promising
-- [Top 3 ideas worth exploring further, with brief rationale]
-
-### Wild Cards
-- [Unconventional ideas that surfaced during discussion]
-
-### Key Disagreements
-- [Points where agents diverged — both sides noted]
-
-### Next Steps
-- [ ] Explore [idea] with /architect
-- [ ] Prototype [idea] with /dev
-- [ ] Get user feedback on [idea]
-```
-
-Party Mode session complete.
-</output>
 
 ## Farewell Guidelines
 

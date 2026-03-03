@@ -154,25 +154,6 @@ Display:
 
 **How would you like to proceed?**"
 
-### 4. Present MENU OPTIONS
-
-**[R] Restructure to BMAD** - Full conversion to BMAD format, then apply your edits
-**[I] Targeted Improvements** - Apply your edits to existing structure without restructuring
-**[E] Edit & Restructure** - Do both: convert format AND apply your edits
-**[X] Exit** - Review assessment and decide
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- IF R (Restructure): Note conversion mode, then load next step
-- IF I (Targeted): Note targeted mode, then load next step
-- IF E (Edit & Restructure): Note both mode, then load next step
-- IF X (Exit): Display summary, exit
-
 ### 5. Document Conversion Strategy
 
 Store conversion decision for next step:

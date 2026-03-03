@@ -2,7 +2,7 @@
 
 <purpose>Understand project context, target users, and unique UX value proposition through collaborative discovery of project vision, target users, and key design challenges and opportunities.</purpose>
 
-<instructions>Review loaded context documents. Fill gaps by asking about product description, target users, and unique value proposition. Explore user context and identify UX design challenges. Generate project understanding content with Executive Summary sections. Present A/P/C menu. Only save when user selects C and append step to stepsCompleted.</instructions>
+<instructions>Review loaded context documents. Fill gaps by asking about product description, target users, and unique value proposition. Explore user context and identify UX design challenges. Generate project understanding content with Executive Summary sections. Present the switch prompt. Only save when user selects C and append step to stepsCompleted.</instructions>
 
 <output>Project understanding content appended to specification including executive summary, target users, key design challenges, and design opportunities, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating project understanding content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating project understanding content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper project insights
-- **P (Party Mode)**: Bring multiple perspectives to understand project context
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -153,7 +145,6 @@ Show the generated project understanding content and present choices:
 [Show the complete markdown content from step 5]
 
 **What would you like to do?**
-[C] Continue - Save this to the document and move to core experience definition"
 
 ### 7. Handle Menu Selection
 
@@ -163,10 +154,6 @@ Show the generated project understanding content and present choices:
 - Update frontmatter: `stepsCompleted: [1, 2]`
 - Load `./step-03-core-experience.md`
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document. Only after the content is saved to document, load `./step-03-core-experience.md` and execute the instructions.
-
 ## SUCCESS METRICS:
 
 ✅ All available context documents reviewed and synthesized
@@ -174,8 +161,8 @@ When user selects 'C', append the content directly to the document. Only after t
 ✅ Target users well understood
 ✅ Key UX challenges identified
 ✅ Design opportunities surfaced
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -184,13 +171,9 @@ When user selects 'C', append the content directly to the document. Only after t
 ❌ Missing key UX challenges that will impact design
 ❌ Not identifying design opportunities
 ❌ Generating generic content without real project insight
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-Remember: Do NOT proceed to step-03 until user explicitly selects 'C' from the menu and content is saved!

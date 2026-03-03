@@ -11,7 +11,7 @@ Conduct comprehensive technical trends analysis identifying emerging technologie
 4. Add Recommendations section with three subsections (Technology Adoption, Innovation Roadmap, Risk Mitigation)
 5. Include source citations for all technology information
 6. Write content immediately to document
-7. Present [C] continue option after content generation
+7. Present the switch prompt after content generation
 8. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before loading next step
 </instructions>
 
@@ -42,11 +42,11 @@ Technical trends analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after technical trends content generation
+- ⚠️ Present switch prompt after technical trends content generation
 - 📝 WRITE TECHNICAL TRENDS ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -192,7 +192,6 @@ Show the generated technical analysis and present complete option:
 - Implementation opportunities and challenges documented
 
 **Ready to proceed to research synthesis and recommendations?**
-[C] Continue - Save this to document and proceed to synthesis
 
 ### 7. Handle Continue Selection
 
@@ -202,10 +201,6 @@ Show the generated technical analysis and present complete option:
 - Update frontmatter: `stepsCompleted: [1, 2, 3, 4, 5]`
 - Load: `./step-06-research-synthesis.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 5. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Emerging technologies identified with current data
@@ -214,7 +209,7 @@ Content is already written to document when generated in step 5. No additional a
 ✅ Implementation opportunities and challenges mapped
 ✅ Strategic recommendations provided
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (research synthesis)
 ✅ Research goals alignment maintained
 
@@ -225,7 +220,7 @@ Content is already written to document when generated in step 5. No additional a
 ❌ Not providing practical implementation recommendations
 ❌ Not completing strategic recommendations
 ❌ Not presenting completion option for research workflow
-❌ Appending content without user selecting 'C'
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file

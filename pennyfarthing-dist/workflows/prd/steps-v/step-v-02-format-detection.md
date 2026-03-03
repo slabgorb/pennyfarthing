@@ -154,26 +154,6 @@ You have options:"
 
 Present MENU OPTIONS below for user selection
 
-### 6. Present MENU OPTIONS (Non-Standard PRDs Only)
-
-**[A] Parity Check** - Analyze gaps and estimate effort to reach BMAD PRD parity
-**[B] Validate As-Is** - Proceed with validation using current structure
-**[C] Exit** - Exit validation and review format findings
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- IF A (Parity Check): Load, read entire file, then execute {altStepFile} (step-v-02b-parity-check.md)
-- IF B (Validate As-Is): Display "Proceeding with validation..." then load, read entire file, then execute {nextStepFile}
-- IF C (Exit): Display format findings summary and exit validation
-- IF Any other: help user respond, then redisplay menu
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

@@ -165,11 +165,7 @@ Sections updated:
 Preview of changes:
 {diff or summary}
 
-Options:
-[A] Accept and write changes
-[E] Edit a specific section
-[V] View full file
-[D] Show diff from original
+(switch prompt presents options)
 ```
 
 ## SUCCESS CRITERIA

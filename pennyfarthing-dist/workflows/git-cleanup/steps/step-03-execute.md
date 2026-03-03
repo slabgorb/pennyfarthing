@@ -22,7 +22,7 @@ Execution progress report showing:
 - Branches merged count
 - List of repos updated
 - Confirmation ready to verify and push
-- User choices: [A] abort current group, [C] continue to verification
+- User choices presented via switch prompt
 </output>
 
 ## Objective
@@ -208,8 +208,6 @@ Ready to verify and push?
 
 ---
 
-**[A]** Abort current group (leave those changes uncommitted)
-**[C]** Continue to verification
 
 <!-- GATE -->
 

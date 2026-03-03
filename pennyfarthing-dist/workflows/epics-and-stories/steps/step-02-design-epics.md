@@ -211,24 +211,6 @@ After approval, update {outputFile}:
 2. Replace {{requirements_coverage_map}} with the coverage map
 3. Ensure all FRs are mapped to epics
 
-### 8. Present MENU OPTIONS
-
-Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask}
-- IF P: Execute {partyModeWorkflow}
-- IF C: Save approved epics_list to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#8-present-menu-options)
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution completes, redisplay the menu
-- User can chat or ask questions - always respond when conversation ends, redisplay the menu options
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN C is selected and the approved epics_list is saved to document, will you then load, read entire file, then execute {nextStepFile} to execute and begin story creation step.

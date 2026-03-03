@@ -98,9 +98,6 @@ git diff --stat
 
 <!-- GATE -->
 
-**[C]** Continue to commit
-**[R]** Revise a file before committing
-**[A]** Abort release (revert all changes with `git checkout .`)
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-commit" next="step-03-changelog">

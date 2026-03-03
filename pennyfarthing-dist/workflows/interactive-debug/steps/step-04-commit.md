@@ -67,11 +67,6 @@ Present summary of all changes:
 Ask user to confirm:
 
 > Ready to commit these changes as a chore fix?
->
-> - **[C] Commit** - Bundle into chore commit
-> - **[R] Review** - Show me the diffs first
-> - **[S] Split** - These should be separate commits
-> - **[X] Cancel** - Don't commit yet
 
 ## Commit Execution
 
@@ -110,12 +105,6 @@ The fixes have been committed. You can:
 - Continue with another debug session
 - Exit the workflow
 ```
-
-## Collaboration Menu
-
-- **[P] Push** - Push to remote branch
-- **[D] Debug more** - Start another debug session (back to step 1)
-- **[X] Exit** - End workflow
 
 ## Workflow Complete
 

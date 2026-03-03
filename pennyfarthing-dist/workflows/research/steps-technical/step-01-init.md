@@ -8,8 +8,8 @@ Confirm technical research scope and approach establishing clear boundaries for 
 1. Confirm understanding of user's technical research goals and topic
 2. Present the five key technical research focus areas (architecture analysis, implementation approaches, technology stack, integration patterns, performance considerations)
 3. Explain research approach with web search verification and source validation
-4. Present [C] continue option for user confirmation
-5. Document scope confirmation in research file only after user selects [C]
+4. Present the switch prompt for user confirmation
+5. Document scope confirmation in research file only after user confirms via the switch prompt
 6. Update frontmatter stepsCompleted to [1] before loading next step
 </instructions>
 
@@ -37,10 +37,10 @@ Document scope confirmation containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present [C] continue option after scope confirmation
+- ⚠️ Present switch prompt after scope confirmation
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -92,7 +92,6 @@ For **{{research_topic}}**, I will research:
 **All claims verified against current public sources.**
 
 **Does this technical research scope and approach align with your goals?**
-[C] Continue - Begin technical research with this scope
 
 ### 3. Handle Continue Selection
 
@@ -102,11 +101,6 @@ For **{{research_topic}}**, I will research:
 - Update frontmatter: `stepsCompleted: [1]`
 - Load: `./step-02-technical-overview.md`
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append scope confirmation:
-
-```markdown
 ## Technical Research Scope Confirmation
 
 **Research Topic:** {{research_topic}}
@@ -135,7 +129,7 @@ When user selects 'C', append scope confirmation:
 ✅ Technical research scope clearly confirmed with user
 ✅ All technical analysis areas identified and explained
 ✅ Research methodology emphasized
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Scope confirmation documented when user proceeds
 ✅ Proper routing to next technical research step
 
@@ -144,16 +138,10 @@ When user selects 'C', append scope confirmation:
 ❌ Not clearly confirming technical research scope with user
 ❌ Missing critical technical analysis areas
 ❌ Not explaining that web search is required for current facts
-❌ Not presenting [C] continue option
+❌ Not presenting switch prompt
 ❌ Proceeding without user scope confirmation
 ❌ Not routing to next technical research step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-02-technical-overview.md` to begin technology stack analysis.
-
-Remember: This is SCOPE CONFIRMATION ONLY - no actual technical research yet, just confirming the research approach and scope!

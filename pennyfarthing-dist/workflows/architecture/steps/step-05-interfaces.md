@@ -9,7 +9,7 @@ Define external APIs with authentication and request/response formats. Specify i
 </instructions>
 
 <output>
-Interface Definitions section with External APIs table, Internal Communication protocols, Conventions documented, and Contract Enforcement rules. Update frontmatter stepsCompleted array after user confirms [C].
+Interface Definitions section with External APIs table, Internal Communication protocols, Conventions documented, and Contract Enforcement rules. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
 </output>
 
 <step-meta>
@@ -28,10 +28,10 @@ gate: false
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present A/P/C menu after generating interface definitions
-- ONLY save when user chooses [C] Continue
+- Present the switch promptafter generating interface definitions
+- ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]` before loading next step
-- FORBIDDEN to load next step until [C] is selected
+- FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## Purpose
 
@@ -98,33 +98,6 @@ Add to session file:
 - [Contract 2]: [Exact specification]
 ```
 
-## Collaboration Menu (A/P/C)
-
-After generating interface definitions, present choices:
-
-- **[A] Advanced Elicitation** - Use discovery protocols to identify missing contracts or edge cases
-- **[P] Party Mode** - Bring multiple perspectives to evaluate API design from different consumer viewpoints
-- **[C] Continue** - Save the content and proceed to risk assessment
-- **[R] Revise** - Need to reconsider interface design or add missing contracts
-
-## Advanced Elicitation Mode
-
-When user selects [A]:
-1. Identify edge cases in API contracts
-2. Explore error scenarios and handling
-3. Question versioning and backward compatibility
-4. Consider rate limiting and quotas
-
-## Party Mode
-
-When user selects [P]:
-1. Present interface design from multiple viewpoints:
-   - **API consumer**: Is this intuitive to use?
-   - **Security engineer**: Are there auth/authz gaps?
-   - **Mobile developer**: Will this work on constrained networks?
-   - **Integration team**: How will this connect to existing systems?
-2. Synthesize perspectives into refined contracts
-
 ## Success Metrics
 
 - External APIs clearly documented
@@ -155,7 +128,3 @@ When user selects [P]:
     Revise — Need to reconsider interface design or add missing contracts
   </case>
 </switch>
-
-## Next Step
-
-After user selects [C], proceed to Risk Assessment to identify potential issues.

@@ -21,7 +21,7 @@ Conduct comprehensive product vision discovery to define the core problem, solut
 3. Analyze existing solutions and gaps
 4. Collaborate on solution vision and differentiators
 5. Generate Executive Summary and Core Vision content
-6. Present A/P/C menu for optional advanced elicitation or party mode
+6. Present the switch promptfor optional advanced elicitation or party mode
 7. Save content to document when user selects C
 </instructions>
 
@@ -166,30 +166,6 @@ Prepare the following structure for document append:
 [Key differentiators based on conversation]
 ```
 
-### 7. Present MENU OPTIONS
-
-**Content Presentation:**
-"I've drafted the executive summary and core vision based on our conversation. This captures the essence of {{project_name}} and what makes it special.
-
-**Here's what I'll add to the document:**
-[Show the complete markdown content from step 6]
-
-**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue"
-
-#### Menu Handling Logic:
-
-- IF A: Execute {advancedElicitationTask} with current vision content to dive deeper and refine
-- IF P: Execute {partyModeWorkflow} to bring different perspectives to positioning and differentiation
-- IF C: Save content to {outputFile}, update frontmatter with stepsCompleted: [1, 2], then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu with updated content
-- User can chat or ask questions - always respond and then end with display again of the menu options
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [vision content finalized and saved to document with frontmatter updated], will you then load and read fully `{nextStepFile}` to execute and begin target user discovery.
@@ -217,8 +193,8 @@ ONLY WHEN [C continue option] is selected and [vision content finalized and save
 - Compelling solution vision that addresses the core problem
 - Unique differentiators that provide competitive advantage
 - Executive summary that captures the product essence
-- A/P/C menu presented and handled correctly with proper task execution
-- Content properly appended to document when C selected
+- switch prompt presented and handled correctly with proper task execution
+- Content properly appended to document when user confirms via the switch prompt
 - Frontmatter updated with stepsCompleted: [1, 2]
 
 ### ❌ SYSTEM FAILURE:
@@ -227,8 +203,8 @@ ONLY WHEN [C continue option] is selected and [vision content finalized and save
 - Creating solution vision without fully understanding the problem
 - Missing unique differentiators or competitive insights
 - Generating vision without real user input and collaboration
-- Not presenting standard A/P/C menu after content generation
-- Appending content without user selecting 'C'
+- Not presenting standard switch prompt after content generation
+- Appending content without user confirming via the switch prompt
 - Not updating frontmatter properly
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

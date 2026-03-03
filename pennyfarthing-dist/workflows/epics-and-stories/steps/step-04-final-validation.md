@@ -164,14 +164,8 @@ If all validations pass:
 - Ensure proper formatting
 - Save the final epics.md
 
-**Present Menu:**
-**All validations complete!** [C] Continue to import to future.yaml
-
-#### Menu Handling Logic:
-
-- IF C: Save final document, update frontmatter, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then redisplay menu
+**All validations complete!** Present the switch prompt to continue.
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and validations are complete, will you then load, read entire file, then execute {nextStepFile} to import epics to future.yaml.
+ONLY WHEN user confirms via the switch prompt and validations are complete, will you then load, read entire file, then execute {nextStepFile} to import epics to future.yaml.

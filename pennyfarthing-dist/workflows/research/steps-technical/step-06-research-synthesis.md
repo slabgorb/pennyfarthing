@@ -12,8 +12,8 @@ Produce a comprehensive, authoritative technical research document with compelli
 5. Include Executive Summary with key technical findings and strategic recommendations
 6. Add comprehensive source documentation and quality assurance section
 7. Complete Technical Research Methodology section with source verification details
-8. Present [C] complete option for final document
-9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when C selected
+8. Present the switch prompt for final document
+9. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5, 6] when user confirms via the switch prompt
 </instructions>
 
 <output>
@@ -52,8 +52,8 @@ Complete technical research document containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] complete option after synthesis content generation
-- 💾 ONLY save when user chooses C (Complete)
+- ⚠️ Present switch prompt after synthesis content generation
+- 💾 ONLY save when user confirms via the switch prompt(Complete)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]` before completing workflow
 - 🚫 FORBIDDEN to complete workflow until C is selected
 - 📚 GENERATE COMPLETE DOCUMENT STRUCTURE with intro, TOC, and summary
@@ -446,7 +446,6 @@ _This comprehensive technical research document serves as an authoritative techn
 - current technical data throughout with proper citations
 
 **Ready to complete this comprehensive technical research document?**
-[C] Complete Research - Save final comprehensive technical document
 
 ### 6. Handle Final Technical Completion
 
@@ -457,10 +456,6 @@ _This comprehensive technical research document serves as an authoritative techn
 - Complete the technical research workflow
 - Provide final technical document delivery confirmation
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the complete comprehensive technical research document using the full structure above.
-
 ## SUCCESS METRICS:
 
 ✅ Compelling technical introduction with research significance
@@ -470,7 +465,7 @@ When user selects 'C', append the complete comprehensive technical research docu
 ✅ Strategic technical recommendations grounded in comprehensive research
 ✅ Complete technical source verification with current citations
 ✅ Professional technical document structure and compelling narrative
-✅ [C] complete option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Technical research workflow completed with comprehensive document
 
 ## FAILURE MODES:

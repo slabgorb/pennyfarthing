@@ -112,13 +112,7 @@ Report what was found:
 
 Do you have any other documents you'd like me to include, or shall we continue to the next step?
 
-[C] Continue to UX discovery"
-
-## NEXT STEP:
-
-After user selects [C] to continue, ensure the file `{planning_artifacts}/ux-design-specification.md` has been created and saved, and then load `./step-02-discovery.md` to begin the UX discovery phase.
-
-Remember: Do NOT proceed to step-02 until output file has been updated and user explicitly selects [C] to continue!
+Present the switch prompt for user to continue."
 
 ## SUCCESS METRICS:
 

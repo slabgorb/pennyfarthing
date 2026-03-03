@@ -242,7 +242,6 @@ You can:
 **Session Plan:** This combination will take approximately [total_time] and focus on [expected outcomes].
 
 **Confirm these choices?**
-[C] Continue - Begin technique execution
 [Back] - Modify technique selection"
 </output>
 
@@ -305,7 +304,6 @@ Based on your session context, I recommend this customized technique sequence:
 **Does this approach sound perfect for your session?**
 
 **Options:**
-[C] Continue - Begin with these recommended techniques
 [Modify] - I'd like to adjust the technique selection
 [Details] - Tell me more about any specific technique
 [Back] - Return to approach selection"
@@ -370,7 +368,6 @@ Based on your session context, I recommend this customized technique sequence:
 **Ready for this creative adventure?**
 
 **Options:**
-[C] Continue - Begin with these serendipitous techniques
 [Shuffle] - Randomize another combination for different adventure
 [Details] - Tell me more about any specific technique
 [Back] - Return to approach selection"
@@ -466,7 +463,6 @@ Based on your session context, I recommend this customized technique sequence:
 **Ready to embark on this systematic creative journey?**
 
 **Options:**
-[C] Continue - Begin the progressive technique flow
 [Customize] - I'd like to modify any phase techniques
 [Details] - Tell me more about any specific phase or technique
 [Back] - Return to approach selection"
@@ -581,9 +577,7 @@ This technique will help us [what this technique adds]. I'm particularly excited
 
 [K] **Keep exploring this technique** - We're just getting warmed up!
 [T] **Try a different technique** - Fresh perspective on the same topic
-[A] **Go deeper on a specific idea** - Develop a promising concept further
 [B] **Take a quick break** - Pause and return with fresh energy
-[C] **Move to organization** - Only when you feel we've thoroughly explored
 
 **Default recommendation:** Unless you feel we've generated at least 100+ ideas, I suggest we keep exploring! The best insights often come after the obvious ideas are exhausted."
 </output>
@@ -713,7 +707,6 @@ Review your organized ideas and identify:
 4. **Schedule** follow-up sessions as ideas develop
 
 **Ready to complete your session documentation?**
-[C] Complete - Generate final brainstorming session document"
 </output>
 
 <action>WAIT for user to select C</action>

@@ -111,9 +111,6 @@ All should read `{new_version}`. If any don't match, **abort before pushing.**
 
 <!-- GATE -->
 
-**[C]** Continue to merge to main
-**[R]** Revise (amend commit or fix an issue)
-**[A]** Abort release (reset develop to before the merge)
 
 <switch tool="AskUserQuestion">
   <case value="continue-to-merge-to-main" next="step-08-merge">

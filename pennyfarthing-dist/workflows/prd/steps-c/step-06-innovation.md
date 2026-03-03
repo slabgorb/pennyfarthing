@@ -39,10 +39,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating innovation content
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating innovation content
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -150,27 +150,6 @@ When saving to document, append these Level 2 and Level 3 sections:
 [Innovation risks and fallbacks based on conversation]
 ```
 
-### 6. Present MENU OPTIONS (Only if Innovation Detected)
-
-Present the innovation content for review, then display menu:
-- Show identified innovative aspects (using structure from section 5)
-- Highlight differentiation from existing solutions
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of conversation
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Project Type Analysis (Step 7 of 11)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current innovation content, process the enhanced innovation insights that come back, ask user "Accept these improvements to the innovation analysis? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the current innovation content, process the collaborative innovation exploration and ideation, ask user "Accept these changes to the innovation analysis? (y/n)", if yes update content with improvements then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
 ## NO INNOVATION DETECTED:
 
 If no genuine innovation signals are found after exploration:
@@ -178,19 +157,12 @@ If no genuine innovation signals are found after exploration:
 - Note this is fine - many successful products are excellent executions of existing concepts
 - Ask if they'd like to try finding innovative angles or proceed
 
-Display: "**Select:** [A] Advanced Elicitation - Let's try to find innovative angles [C] Continue - Skip innovation section and move to Project Type Analysis (Step 7 of 11)"
 
 ### Menu Handling Logic:
-- IF A: Proceed with content generation anyway, then return to menu
-- IF C: Skip this step, then load, read entire file, then execute {nextStepFile}
 
 ### EXECUTION RULES:
 - ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 5.
+- ONLY proceed to next step when user confirms via the switch prompt
 
 ## SUCCESS METRICS:
 
@@ -199,8 +171,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Genuine innovation explored (not forced creativity)
 ✅ Validation approach clearly defined for innovative aspects
 ✅ Risk mitigation strategies identified
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -209,8 +181,8 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Missing market context research for novel concepts
 ❌ Not addressing validation approach for innovative features
 ❌ Creating innovation theater without real innovative aspects
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -224,12 +196,6 @@ Skip this step and load `{nextStepFile}` if:
 - Product is incremental improvement rather than breakthrough
 - User confirms innovation exploration is not needed
 - Project-type CSV has no innovation signals for this type
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document (or step is skipped), load `{nextStepFile}`.
-
-Remember: Do NOT proceed to step-07 until user explicitly selects 'C' from the A/P/C menu (or confirms step skip)!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

@@ -162,54 +162,6 @@ Display:
 
 **What would you like to do next?**"
 
-### 5. Present MENU OPTIONS
-
-Display:
-
-**[R] Review Detailed Findings** - Walk through validation report section by section
-**[E] Use Edit Workflow** - Use validation report with Edit workflow for systematic improvements
-**[F] Fix Simpler Items** - Immediate fixes for simple issues (anti-patterns, leakage, missing headers)
-**[X] Exit** - Exit and review validation report
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- Only proceed based on user selection
-
-#### Menu Handling Logic:
-
-- **IF R (Review Detailed Findings):**
-  - Walk through validation report section by section
-  - Present findings from each validation step
-  - Allow user to ask questions
-  - After review, return to menu
-
-- **IF E (Use Edit Workflow):**
-  - Explain: "The Edit workflow (steps-e/) can use this validation report to systematically address issues. Edit mode will guide you through discovering what to edit, reviewing the PRD, and applying targeted improvements."
-  - Offer: "Would you like to launch Edit mode now? It will help you fix validation findings systematically."
-  - If yes: Load and execute steps-e/step-e-01-discovery.md
-  - If no: Return to menu
-
-- **IF F (Fix Simpler Items):**
-  - Offer immediate fixes for:
-    - Template variables (fill in with appropriate content)
-    - Conversational filler (remove wordy phrases)
-    - Implementation leakage (remove technology names from FRs/NFRs)
-    - Missing section headers (add ## headers)
-  - Ask: "Which simple fixes would you like me to make?"
-  - If user specifies fixes, make them and update validation report
-  - Return to menu
-
-- **IF X (Exit):**
-  - Display: "**Validation Report Saved:** {validationReportPath}"
-  - Display: "**Summary:** {overall status} - {recommendation}"
-  - Display: "**Next Steps:** Review the validation report and address findings. For systematic improvements, consider using Edit workflow when available, or manually fix issues identified in this report."
-  - Exit validation
-
-- **IF Any other:** Help user, then redisplay menu
-
----
-
 ## 🚨 SYSTEM SUCCESS/FAILURE METRICS
 
 ### ✅ SUCCESS:

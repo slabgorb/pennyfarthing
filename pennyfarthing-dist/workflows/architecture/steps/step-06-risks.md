@@ -9,7 +9,7 @@ Identify technical risks (bottlenecks, single points of failure, security, data 
 </instructions>
 
 <output>
-Risk Assessment section with Technical Risks table, Failure Modes with recovery procedures, Security Considerations, AI Implementation Risks, and Operational Readiness plan. Update frontmatter stepsCompleted array after user confirms [C].
+Risk Assessment section with Technical Risks table, Failure Modes with recovery procedures, Security Considerations, AI Implementation Risks, and Operational Readiness plan. Update frontmatter stepsCompleted array after user confirms via the switch prompt.
 </output>
 
 <step-meta>
@@ -28,10 +28,10 @@ gate: true
 ## Execution Protocols
 
 - Show your analysis before taking any action
-- Present A/P/C menu after generating risk assessment
-- ONLY save when user chooses [C] Continue
+- Present the switch promptafter generating risk assessment
+- ONLY save when user confirms via the switch prompt
 - Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]` before loading next step
-- FORBIDDEN to load next step until [C] is selected
+- FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## Purpose
 
@@ -109,33 +109,6 @@ Add to session file:
 ```
 
 <!-- GATE -->
-
-## Collaboration Menu (A/P/C)
-
-After generating risk assessment, present choices:
-
-- **[A] Advanced Elicitation** - Use discovery protocols to explore hidden risks or unconsidered failure modes
-- **[P] Party Mode** - Bring multiple perspectives to identify risks from different operational angles
-- **[C] Continue** - Save the content and proceed to documentation
-- **[R] Revise** - Need to address unacceptable risks before proceeding
-
-## Advanced Elicitation Mode
-
-When user selects [A]:
-1. Explore cascading failure scenarios
-2. Question security assumptions
-3. Investigate edge cases in error handling
-4. Challenge operational readiness
-
-## Party Mode
-
-When user selects [P]:
-1. Present risk assessment from multiple viewpoints:
-   - **Security auditor**: What attack vectors exist?
-   - **Site reliability engineer**: What will page us at 3am?
-   - **Compliance officer**: What regulatory risks exist?
-   - **Incident responder**: How will we debug failures?
-2. Synthesize perspectives into comprehensive risk register
 
 ## Success Metrics
 

@@ -10,7 +10,7 @@ Conduct customer behavior analysis identifying behavior patterns, demographic se
 3. Generate customer behavior analysis content with six subsections (Behavior Patterns, Demographic Segmentation, Psychographic Profiles, Customer Segments, Behavior Drivers, Customer Interaction)
 4. Include source citations for all behavioral data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2] before loading next step
 </instructions>
 
@@ -40,11 +40,11 @@ Customer behavior analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after customer behavior content generation
+- ⚠️ Present switch prompt after customer behavior content generation
 - 📝 WRITE CUSTOMER BEHAVIOR ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -196,7 +196,6 @@ _Source: [URL]_
 - Multiple sources verified for critical insights
 
 **Ready to proceed to customer pain points?**
-[C] Continue - Save this to document and proceed to pain points analysis
 
 ### 6. Handle Continue Selection
 
@@ -206,10 +205,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2]`
 - Load: `./step-03-customer-pain-points.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Customer behavior patterns identified with current citations
@@ -218,7 +213,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Customer interaction patterns captured
 ✅ Multiple sources verified for critical insights
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (customer pain points)
 ✅ Research goals alignment maintained
 
@@ -230,7 +225,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Incomplete demographic segmentation analysis
 ❌ Missing psychographic profile documentation
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to customer pain points analysis step
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor research decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -254,9 +249,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable customer insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-03-customer-pain-points.md` to analyze customer pain points, challenges, and unmet needs for {{research_topic}}.
-
-Remember: Always write research content to document immediately and emphasize current customer data with rigorous source verification!

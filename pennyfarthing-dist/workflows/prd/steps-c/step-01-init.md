@@ -54,7 +54,7 @@ Initialize the PRD workflow by detecting continuation state, discovering input d
 - 🎯 Show your analysis of current state before taking any action
 - 💾 Initialize document structure and update frontmatter appropriately
 - Update frontmatter: add this step name to the end of the steps completed array (it should be the first entry in the steps array since this is step 1)
-- 🚫 FORBIDDEN to load next step until user selects 'C' (Continue)
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt (Continue)
 
 ## CONTEXT BOUNDARIES:
 
@@ -149,23 +149,6 @@ Try to discover the following:
 
 Do you have any other documents you'd like me to include, or shall we continue to the next step?"
 
-### 4. Present MENU OPTIONS
-
-Display menu after setup report:
-
-"[C] Continue - Save this and move to Project Discovery (Step 2 of 11)"
-
-#### Menu Handling Logic:
-
-- IF C: Update output file frontmatter, adding this step name to the end of the list of stepsCompleted, then load, read entire {nextStepFile}, then execute {nextStepFile}
-- IF user provides additional files: Load them, update inputDocuments and documentCounts, redisplay report
-- IF user asks questions: Answer and redisplay menu
-
-#### EXECUTION RULES:
-
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-
 ## CRITICAL STEP COMPLETION NOTE
 
 ONLY WHEN [C continue option] is selected and [frontmatter properly updated with this step added to stepsCompleted and documentCounts], will you then load and read fully `{nextStepFile}` to execute and begin project discovery.
@@ -192,6 +175,6 @@ ONLY WHEN [C continue option] is selected and [frontmatter properly updated with
 - Creating document without proper template structure
 - Not checking sharded folders first before whole files
 - Not reporting discovered documents to user clearly
-- Proceeding without user selecting 'C' (Continue)
+- Proceeding without user confirming via the switch prompt (Continue)
 
 **Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.

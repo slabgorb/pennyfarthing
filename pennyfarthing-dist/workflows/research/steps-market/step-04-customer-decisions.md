@@ -10,7 +10,7 @@ Conduct customer decision processes analysis identifying decision-making process
 3. Generate decision processes analysis content with eight subsections (Decision Processes, Decision Factors, Customer Journey, Touchpoint Analysis, Information Gathering, Decision Influencers, Purchase Factors, Decision Optimizations)
 4. Include source citations for all decision data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2, 3, 4] before loading next step
 </instructions>
 
@@ -43,11 +43,11 @@ Customer decision processes analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after decision processes content generation
+- ⚠️ Present switch prompt after decision processes content generation
 - 📝 WRITE CUSTOMER DECISIONS ANALYSIS TO DOCUMENT IMMEDIATELY
 - 💾 ONLY proceed when user chooses C (Continue)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -219,7 +219,6 @@ _Source: [URL]_
 - Information gathering patterns documented
 
 **Ready to proceed to competitive analysis?**
-[C] Continue - Save this to document and proceed to competitive analysis
 
 ### 6. Handle Continue Selection
 
@@ -229,10 +228,6 @@ _Source: [URL]_
 - Update frontmatter: `stepsCompleted: [1, 2, 3, 4]`
 - Load: `./step-05-competitive-analysis.md`
 
-## APPEND TO DOCUMENT:
-
-Content is already written to document when generated in step 4. No additional append needed.
-
 ## SUCCESS METRICS:
 
 ✅ Customer decision-making processes clearly mapped
@@ -241,7 +236,7 @@ Content is already written to document when generated in step 4. No additional a
 ✅ Decision influencers and touchpoints identified
 ✅ Information gathering patterns documented
 ✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
+✅ Switch prompt presented and handled correctly
 ✅ Proper routing to next step (competitive analysis)
 ✅ Research goals alignment maintained
 
@@ -253,7 +248,7 @@ Content is already written to document when generated in step 4. No additional a
 ❌ Not identifying key decision factors
 ❌ Incomplete customer journey mapping
 ❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
+❌ Not presenting switch prompt after content generation
 ❌ Not routing to competitive analysis step
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
@@ -278,9 +273,3 @@ Content is already written to document when generated in step 4. No additional a
 - Present multiple perspectives when sources conflict
 - Apply confidence levels to uncertain data
 - Focus on actionable decision insights
-
-## NEXT STEP:
-
-After user selects 'C', load `./step-05-competitive-analysis.md` to analyze competitive landscape, market positioning, and competitive strategies for {{research_topic}}.
-
-Remember: Always write research content to document immediately and emphasize current customer decision data with rigorous source verification!

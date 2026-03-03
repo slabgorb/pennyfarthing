@@ -186,9 +186,7 @@ Detected Commands:
   build: {build_command}
   lint:  {lint_command}
 
-[C] Confirm and continue to repos.yaml generation
-[E] Edit - let me provide corrections
-[R] Rescan with different parameters
+(switch prompt presents options)
 ```
 
 ## SUCCESS CRITERIA
@@ -198,10 +196,6 @@ Detected Commands:
 ✅ Commands extracted from package files
 ✅ Project type classified
 ✅ User confirms discovery is accurate
-
-## NEXT STEP
-
-After user confirms with [C], proceed to `step-02-clone-repos.md` to optionally clone subrepos and set up the orchestrator pattern.
 
 <switch tool="AskUserQuestion">
   <case value="confirm-and-continue-to-reposyaml-generation" next="step-02-clone-repos">

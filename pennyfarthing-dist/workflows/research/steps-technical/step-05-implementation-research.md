@@ -11,7 +11,7 @@ Conduct comprehensive implementation research identifying technology adoption st
 4. Add Technical Research Recommendations section with three subsections (Implementation Roadmap, Technology Stack Recommendations, Success Metrics)
 5. Include source citations for all implementation data
 6. Write content immediately to document
-7. Present [C] complete option after content generation (final step for technical workflow)
+7. Present the switch prompt after content generation (final step for technical workflow)
 8. Update frontmatter stepsCompleted to [1, 2, 3, 4, 5] before completing workflow
 </instructions>
 
@@ -43,8 +43,8 @@ Implementation research analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] complete option after implementation research content generation
-- 💾 ONLY save when user chooses C (Complete)
+- ⚠️ Present switch prompt after implementation research content generation
+- 💾 ONLY save when user confirms via the switch prompt(Complete)
 - 📖 Update frontmatter `stepsCompleted: [1, 2, 3, 4]` before completing workflow
 - 🚫 FORBIDDEN to complete workflow until C is selected
 
@@ -198,7 +198,6 @@ Show the generated implementation research and present complete option:
 - Practical recommendations and implementation roadmap
 
 **Ready to complete the technical research report?**
-[C] Complete Research - Save final document and conclude
 
 ### 7. Handle Complete Selection
 
@@ -208,10 +207,6 @@ Show the generated implementation research and present complete option:
 - Update frontmatter: `stepsCompleted: [1, 2, 3, 4]`
 - Complete the technical research workflow
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the research document using the structure from step 5.
-
 ## SUCCESS METRICS:
 
 ✅ Technology adoption strategies identified with current citations
@@ -219,8 +214,8 @@ When user selects 'C', append the content directly to the research document usin
 ✅ Testing and deployment practices clearly documented
 ✅ Team organization and skill requirements mapped
 ✅ Cost optimization and risk mitigation strategies provided
-✅ [C] complete option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 ✅ Technical research workflow completed successfully
 
 ## FAILURE MODES:
@@ -231,7 +226,7 @@ When user selects 'C', append the content directly to the research document usin
 ❌ Not providing practical implementation guidance
 ❌ Incomplete development workflows or operational practices analysis
 ❌ Not presenting completion option for research workflow
-❌ Appending content without user selecting 'C'
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file

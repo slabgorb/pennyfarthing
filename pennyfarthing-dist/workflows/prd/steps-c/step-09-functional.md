@@ -36,10 +36,10 @@ partyModeWorkflow: '{project_root}/_bmad/core/workflows/party-mode/workflow.md'
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating functional requirements
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present the switch promptafter generating functional requirements
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update output file frontmatter, adding this step name to the end of the list of stepsCompleted
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 
 ## CONTEXT BOUNDARIES:
@@ -173,34 +173,6 @@ When saving to document, append these Level 2 and Level 3 sections:
 [Continue for all capability areas discovered in conversation]
 ```
 
-### 7. Present MENU OPTIONS
-
-Present the functional requirements for review, then display menu:
-- Show synthesized functional requirements (using structure from step 6)
-- Emphasize this is the capability contract for all downstream work
-- Highlight that every feature must trace back to these requirements
-- Ask if they'd like to refine further, get other perspectives, or proceed
-- Present menu options naturally as part of conversation
-
-**What would you like to do?**"
-
-Display: "**Select:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Non-Functional Requirements (Step 10 of 11)"
-
-#### Menu Handling Logic:
-- IF A: Execute {advancedElicitationTask} with the current FR list, process the enhanced capability coverage that comes back, ask user if they accept the additions, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF P: Execute {partyModeWorkflow} with the current FR list, process the collaborative capability validation and additions, ask user if they accept the changes, if yes update content then redisplay menu, if no keep original content then redisplay menu
-- IF C: Append the final content to {outputFile}, update frontmatter by adding this step name to the end of the stepsCompleted array, then load, read entire file, then execute {nextStepFile}
-- IF Any other: help user respond, then redisplay menu
-
-#### EXECUTION RULES:
-- ALWAYS halt and wait for user input after presenting menu
-- ONLY proceed to next step when user selects 'C'
-- After other menu items execution, return to this menu
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
-
 ## SUCCESS METRICS:
 
 ✅ All previous discovery content synthesized into FRs
@@ -209,8 +181,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Comprehensive coverage with 20-50 FRs typical
 ✅ Altitude validation ensures implementation-agnostic requirements
 ✅ Completeness check validates coverage of all discussed capabilities
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -219,8 +191,8 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Including implementation details or UI specifics in FRs
 ❌ Not achieving comprehensive coverage of discussed capabilities
 ❌ Using vague terms instead of testable capabilities
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -229,12 +201,6 @@ When user selects 'C', append the content directly to the document using the str
 ## CAPABILITY CONTRACT REMINDER:
 
 Emphasize to user: "This FR list is now binding. Any feature not listed here will not exist in the final product unless we explicitly add it. This is why it's critical to ensure completeness now."
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load {nextStepFile} to define non-functional requirements.
-
-Remember: Do NOT proceed to step-10 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">

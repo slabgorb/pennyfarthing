@@ -68,8 +68,7 @@ Available theme packs:
     Mythology and fantasy: Greek mythology, Norse mythology,
     His Dark Materials, The Witcher.
 
-[A] Install ALL packs (71 additional themes)
-[S] Skip - base themes are enough for now
+(switch prompt presents installation options)
 ```
 
 ## INSTALLATION

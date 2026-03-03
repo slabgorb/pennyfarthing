@@ -89,7 +89,7 @@ Based on `lastStep` value, determine which step to load next:
 After presenting current progress, ask:
 "Ready to continue with Step {nextStepNumber}: {nextStepTitle}?
 
-[C] Continue to Step {nextStepNumber}"
+Present the switch prompt to continue."
 
 ## SUCCESS METRICS:
 
@@ -125,9 +125,3 @@ Would you like me to:
 - Start a new UX design revision
 
 What would be most helpful?"
-
-## NEXT STEP:
-
-After user confirms they're ready to continue, load the appropriate next step file based on the `lastStep` value from frontmatter.
-
-Remember: Do NOT load the next step until user explicitly selects [C] to continue!

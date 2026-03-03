@@ -10,7 +10,7 @@ Conduct comprehensive customer insights analysis identifying behavior patterns, 
 3. Generate customer insights content with seven subsections (Behavior Patterns, Pain Points, Decision-Making, Customer Journey, Satisfaction Drivers, Demographic Profiles, Psychographic Profiles)
 4. Include source citations for all customer data
 5. Write content immediately to document
-6. Present [C] continue option after content generation
+6. Present the switch prompt after content generation
 7. Update frontmatter stepsCompleted to [1, 2] before loading next step
 8. Load step-05-competitive-analysis.md as next step
 </instructions>
@@ -42,10 +42,10 @@ Customer insights analysis sections containing:
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show web search analysis before presenting findings
-- ⚠️ Present [C] continue option after customer insights content generation
-- 💾 ONLY save when user chooses C (Continue)
+- ⚠️ Present switch prompt after customer insights content generation
+- 💾 ONLY save when user confirms via the switch prompt
 - 📖 Update frontmatter `stepsCompleted: [1, 2]` before loading next step
-- 🚫 FORBIDDEN to load next step until C is selected
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## CONTEXT BOUNDARIES:
 
@@ -174,7 +174,6 @@ Show the generated customer insights and present continue option:
 - Satisfaction and profile data analyzed
 
 **Ready to proceed to competitive analysis?**
-[C] Continue - Save this to the document and proceed to competitive analysis
 
 ### 6. Handle Continue Selection
 
@@ -184,10 +183,6 @@ Show the generated customer insights and present continue option:
 - Update frontmatter: `stepsCompleted: [1, 2]`
 - Load: `./step-05-competitive-analysis.md`
 
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the research document using the structure from step 4.
-
 ## SUCCESS METRICS:
 
 ✅ Customer behavior patterns identified with current citations
@@ -195,8 +190,8 @@ When user selects 'C', append the content directly to the research document usin
 ✅ Decision-making processes thoroughly analyzed
 ✅ Customer journey insights captured and mapped
 ✅ Customer satisfaction drivers identified
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -205,8 +200,8 @@ When user selects 'C', append the content directly to the research document usin
 ❌ Missing critical customer behavior patterns
 ❌ Not identifying key pain points and challenges
 ❌ Incomplete customer journey mapping
-❌ Not presenting [C] continue option after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
@@ -219,9 +214,3 @@ When user selects 'C', append the content directly to the research document usin
 - Research customer experience and interaction patterns
 - Note generational and cultural customer variations
 - Research customer satisfaction methodologies
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-05-competitive-analysis.md` to focus on competitive landscape analysis.
-
-Remember: Always emphasize current customer data and rigorous source verification!

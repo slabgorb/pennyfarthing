@@ -2,7 +2,7 @@
 
 <purpose>Generate comprehensive design direction mockups showing different visual approaches for the product through collaborative exploration and selection of visual directions.</purpose>
 
-<instructions>Generate 6-8 design direction variations exploring layout, interactions, colors, density, and navigation. Create HTML design direction showcase at {planning_artifacts}/ux-design-directions.html with interactive elements. Present design exploration framework with evaluation criteria. Facilitate selection (pick favorite, combine elements, request modifications). Document design direction decision with rationale. Generate design direction content with directions explored, chosen direction, design rationale, and implementation approach sections. Present A/P/C menu. Save when C selected.</instructions>
+<instructions>Generate 6-8 design direction variations exploring layout, interactions, colors, density, and navigation. Create HTML design direction showcase at {planning_artifacts}/ux-design-directions.html with interactive elements. Present design exploration framework with evaluation criteria. Facilitate selection (pick favorite, combine elements, request modifications). Document design direction decision with rationale. Generate design direction content with directions explored, chosen direction, design rationale, and implementation approach sections. Present the switch prompt. Save when user confirms via the switch prompt.</instructions>
 
 <output>Design direction content appended to specification including chosen visual direction with clear rationale and implementation approach. HTML mockup showcase created with interactive design direction visualizer, with user confirmation and frontmatter updated.</output>
 
@@ -21,24 +21,16 @@
 ## EXECUTION PROTOCOLS:
 
 - 🎯 Show your analysis before taking any action
-- ⚠️ Present A/P/C menu after generating design direction content
+- ⚠️ Present the switch promptafter generating design direction content
 - 💾 Generate HTML visualizer for design directions
 - 📖 Update output file frontmatter, adding this step to the end of the list of stepsCompleted.
-- 🚫 FORBIDDEN to load next step until C is selected
-
-## COLLABORATION MENUS (A/P/C):
-
-This step will generate content and present choices:
-
-- **A (Advanced Elicitation)**: Use discovery protocols to develop deeper design insights
-- **P (Party Mode)**: Bring multiple perspectives to evaluate design directions
-- **C (Continue)**: Save the content to the document and proceed to next step
+- 🚫 FORBIDDEN to load next step until user confirms via the switch prompt
 
 ## PROTOCOL INTEGRATION:
 
 - When 'A' selected: Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml
 - When 'P' selected: Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md
-- PROTOCOLS always return to this step's A/P/C menu
+- PROTOCOLS always return to this step's switch prompt
 - User accepts/rejects protocol changes before proceeding
 
 ## CONTEXT BOUNDARIES:
@@ -167,9 +159,6 @@ Show the generated design direction content and present choices:
 [Show the complete markdown content from step 6]
 
 **What would you like to do?**
-[A] Advanced Elicitation - Let's refine our design direction
-[P] Party Mode - Bring different perspectives on visual choices
-[C] Continue - Save this to the document and move to user journey flows
 
 ### 8. Handle Menu Selection
 
@@ -178,26 +167,22 @@ Show the generated design direction content and present choices:
 - Execute {project_root}/_bmad/core/workflows/advanced-elicitation/workflow.xml with the current design direction content
 - Process the enhanced design insights that come back
 - Ask user: "Accept these improvements to the design direction? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'P' (Party Mode):
 
 - Execute {project_root}/_bmad/core/workflows/party-mode/workflow.md with the current design direction
 - Process the collaborative design insights that come back
 - Ask user: "Accept these changes to the design direction? (y/n)"
-- If yes: Update content with improvements, then return to A/P/C menu
-- If no: Keep original content, then return to A/P/C menu
+- If yes: Update content with improvements, then return to switch prompt
+- If no: Keep original content, then return to switch prompt
 
 #### If 'C' (Continue):
 
 - Append the final content to `{planning_artifacts}/ux-design-specification.md`
 - Update frontmatter: append step to end of stepsCompleted array
 - Load `./step-10-user-journeys.md`
-
-## APPEND TO DOCUMENT:
-
-When user selects 'C', append the content directly to the document using the structure from step 6.
 
 ## SUCCESS METRICS:
 
@@ -206,8 +191,8 @@ When user selects 'C', append the content directly to the document using the str
 ✅ Design evaluation criteria clearly established
 ✅ User able to explore and compare directions effectively
 ✅ Design direction decision made with clear rationale
-✅ A/P/C menu presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ switch prompt presented and handled correctly
+✅ Content properly appended to document when user confirms via the switch prompt
 
 ## FAILURE MODES:
 
@@ -216,18 +201,12 @@ When user selects 'C', append the content directly to the document using the str
 ❌ Missing interactive elements in HTML showcase
 ❌ Not providing clear evaluation criteria
 ❌ Rushing decision without thorough exploration
-❌ Not presenting A/P/C menu after content generation
-❌ Appending content without user selecting 'C'
+❌ Not presenting switch prompt after content generation
+❌ Appending content without user confirming via the switch prompt
 
 ❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
 ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
 ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
-
-## NEXT STEP:
-
-After user selects 'C' and content is saved to document, load `./step-10-user-journeys.md` to design user journey flows.
-
-Remember: Do NOT proceed to step-10 until user explicitly selects 'C' from the A/P/C menu and content is saved!
 
 <switch tool="AskUserQuestion">
   <case value="advanced-elicitation" next="LOOP">
