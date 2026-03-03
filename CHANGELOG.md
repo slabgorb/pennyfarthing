@@ -11,6 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [12.3.0] - 2026-03-03
+
+### Added
+
+- **Agent coordination guide** — cross-agent guidance for TEA, Dev, Reviewer, Architect, Tech Writer (136-19)
+- **Stepped workflow state detection** — prime now detects and reports stepped workflow state (137-4)
+- **Legacy text menu removal** — migrated remaining workflow step files to AskUserQuestion menus (137-6)
+- **`pf setup` command** — primary CLI entry point, replaces `pf init` as user-facing command (136-12)
+- **`pf launch wheelhub` command** — dedicated WheelHub launcher command
+- **Justfile staleness detection** — `pf init` detects and updates stale `justfile.pf` (136-25)
+- **TUI color threshold extraction** — shared color thresholds in `colors.py` for consistent status indicators (136-4)
+
+### Changed
+
+- **WheelHub project isolation** — enforce project-scoped discovery, remove port-scanning fallback (136-23)
+- **BikeRack naming** — renamed Cyclist → BikeRack GUI across codebase
+- **BikeRack TUI settings** — updated layout order, settings meta, and TUI rendering
+- **WheelHub pre-start** — tmux-dev now starts WheelHub before launching panes
+- **Test cleanup** — removed 183 stale test failures, reduced mock complexity across 14 test files
+
+### Fixed
+
+- **Relay mode handoff** — removed `is_gui` gating from relay mode handoff (MSSCI-16066)
+- **TUI SGR escape leak** — flush SGR mouse/focus escapes before Textual startup
+- **TUI color thresholds** — aligned TUI thresholds with statusline (70/85) (103-23)
+- **tmux recipe** — added `exec` to preserve terminal attachment
+- **Duplicate GUI recipe** — removed duplicate gui recipe from justfile.pf template
+- **Sprint archive filtering** — require number field in sprint YAML for archive filtering
+- **Prompt replacement spacing** — fixed missing spaces after "prompt" in stepped workflow migrations (137-6)
+
+---
+
 ## [12.2.0] - 2026-03-02
 
 ### Added
@@ -2882,7 +2914,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...HEAD
+[12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
 [12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
 [12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3
 [12.1.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.1...v12.1.2
