@@ -19,6 +19,7 @@ from pf.sprint.validator import (
     REQUIRED_INITIATIVE_FIELDS,
     VALID_INITIATIVE_STATUSES,
     ValidationResult,
+    validate_archived_sprint,
     validate_epic,
     validate_full_sprint,
     validate_future,
@@ -236,6 +237,7 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     # internal structure only — the index files handle cross-references.
     is_epic_shard = path.name.startswith("epic-") and path.name.endswith(".yaml")
     is_initiative_shard = path.name.startswith("initiative-") and path.name.endswith(".yaml")
+    is_archive = path.name.startswith("sprint-") and path.name.endswith("-completed.yaml")
     is_future = path.name == "future.yaml" or "future" in data
 
     if is_epic_shard:
@@ -244,6 +246,9 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     elif is_initiative_shard:
         # Initiative shard: validate as a single initiative (has name, status)
         schema_result = _validate_initiative_shard(data)
+    elif is_archive:
+        # Archive file: must have sprint.number for filtering
+        schema_result = validate_archived_sprint(data)
     elif is_future:
         schema_result = validate_future(data)
     else:

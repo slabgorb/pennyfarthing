@@ -2103,6 +2103,7 @@ def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, g
     sprint_data = {
         "sprint": {
             "name": f"TO Sprint {sprint_yyww}",
+            "number": int(sprint_yyww),
             "jira_sprint_id": jira_id,
             "jira_sprint_name": f"TO Sprint {sprint_yyww}",
             "goal": goal,
@@ -2124,6 +2125,7 @@ def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, g
 
 sprint:
   name: "TO Sprint {sprint_yyww}"
+  number: {sprint_yyww}
   jira_sprint_id: {jira_id}
   jira_sprint_name: "TO Sprint {sprint_yyww}"
   goal: {goal}
