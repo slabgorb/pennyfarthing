@@ -418,6 +418,46 @@ def get_phase_team_config(
         return None
 
 
+def get_step_tandem_config(
+    workflow_name: str, step_number: int, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract tandem configuration for a specific stepped workflow step.
+
+    Reads the workflow YAML and returns the tandem block for the given step
+    number, or None if the step has no tandem configuration.
+
+    Args:
+        workflow_name: Workflow name (architecture, research, etc.)
+        step_number: Step number (1-based)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with tandem config (partner, scope, model, token_budget)
+        or None if no tandem config on this step.
+    """
+    return None  # TODO: implement in GREEN phase
+
+
+def get_step_team_config(
+    workflow_name: str, step_number: int, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract team configuration for a specific stepped workflow step.
+
+    Reads the workflow YAML and returns the team block for the given step
+    number, or None if the step has no team configuration.
+
+    Args:
+        workflow_name: Workflow name (architecture, research, etc.)
+        step_number: Step number (1-based)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with team config (teammates list, model, etc.)
+        or None if no team config on this step.
+    """
+    return None  # TODO: implement in GREEN phase
+
+
 def get_phase_gate_recovery(
     workflow_name: str, phase_name: str, project_root: Path | None = None
 ) -> bool:
