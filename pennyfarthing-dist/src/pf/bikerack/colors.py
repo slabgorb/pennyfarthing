@@ -7,10 +7,10 @@ context_meter_footer.py to eliminate threshold duplication.
 from __future__ import annotations
 
 # Percent below which style is "green"
-WARN_THRESHOLD_LOW: int = 50
+WARN_THRESHOLD_LOW: int = 70
 
 # Percent at or below which style is "yellow"; above is "red"
-WARN_THRESHOLD_HIGH: int = 80
+WARN_THRESHOLD_HIGH: int = 85
 
 # Tier name to Rich style mapping (used by debug_panel context badge)
 TIER_STYLES: dict[str, str] = {
@@ -25,7 +25,7 @@ def warn_style(percent: int | float) -> str:
     """Return a Rich color name based on percent thresholds.
 
     Returns:
-        ``"green"`` if percent < 50, ``"yellow"`` if percent <= 80,
+        ``"green"`` if percent <= 70, ``"yellow"`` if percent <= 85,
         ``"red"`` otherwise.
     """
     if percent < WARN_THRESHOLD_LOW:
