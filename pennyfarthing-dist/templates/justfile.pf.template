@@ -37,6 +37,10 @@ wheelhub:
 
     just pf launch gui --no-open
 
+# Open BikeRack dashboard in browser (starts WheelHub if needed)
+bikerack:
+    just pf launch gui
+
 # Launch TUI panel viewer (starts WheelHub if needed)
 tui:
     just pf launch tui --foreground
