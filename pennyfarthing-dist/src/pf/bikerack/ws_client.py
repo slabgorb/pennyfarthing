@@ -26,9 +26,6 @@ class ConnectionState(Enum):
     RECONNECTING = "reconnecting"
 
 
-# Default port for BikeRack mode
-DEFAULT_PORT = 2898
-
 # Reconnect delay in seconds (matches React hook pattern)
 RECONNECT_DELAY = 2.0
 

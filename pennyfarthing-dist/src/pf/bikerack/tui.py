@@ -1176,9 +1176,6 @@ class BikeRackApp(App):
             pass
 
 
-DEFAULT_PORT = 2898
-
-
 def get_watch_paths() -> list[Path]:
     """Return directories to watch for Python file changes in dev mode."""
     base = Path(__file__).resolve().parent.parent  # pf/
@@ -1309,25 +1306,15 @@ def main(
     # Story 103-22: drain stale terminal responses before Textual takes over
     _flush_terminal_input()
 
-    if port is None:
-        if project_dir is not None:
-            port_file = project_dir / ".bikerack-port"
-            if port_file.exists():
-                try:
-                    port = int(port_file.read_text().strip())
-                except (ValueError, OSError):
-                    port = DEFAULT_PORT
-            else:
-                port = DEFAULT_PORT
-        else:
-            port = DEFAULT_PORT
-
     # Flush any queued SGR mouse/focus escape sequences that tmux delivers
     # before Textual enters alt-screen mode (startup race condition, see #1220).
     if os.environ.get("TMUX") and sys.stdout.isatty():
         os.write(sys.stdout.fileno(), b"\033[?1003l\033[?1006l\033[?1004l")
 
-    client = WheelHubClient(port=port)
+    if port is not None:
+        client = WheelHubClient(port=port)
+    else:
+        client = WheelHubClient(project_dir=project_dir or Path.cwd())
     app = BikeRackApp(client=client)
     app.run()
 
@@ -1352,24 +1339,14 @@ def dev_main(
     # Story 103-22: drain stale terminal responses before Textual takes over
     _flush_terminal_input()
 
-    if port is None:
-        if project_dir is not None:
-            port_file = project_dir / ".bikerack-port"
-            if port_file.exists():
-                try:
-                    port = int(port_file.read_text().strip())
-                except (ValueError, OSError):
-                    port = DEFAULT_PORT
-            else:
-                port = DEFAULT_PORT
-        else:
-            port = DEFAULT_PORT
-
     # Flush any queued SGR mouse/focus escape sequences (see #1220).
     if os.environ.get("TMUX") and sys.stdout.isatty():
         os.write(sys.stdout.fileno(), b"\033[?1003l\033[?1006l\033[?1004l")
 
-    client = WheelHubClient(port=port)
+    if port is not None:
+        client = WheelHubClient(port=port)
+    else:
+        client = WheelHubClient(project_dir=project_dir or Path.cwd())
     app = BikeRackApp(client=client)
 
     watch_paths = get_watch_paths()
