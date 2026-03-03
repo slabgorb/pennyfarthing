@@ -105,14 +105,7 @@ describe('Story 11-2: pnpm Workspace Structure', () => {
       );
     });
 
-    it('should have packages/shared/dist after build', () => {
-      // packages/shared already exists from Story 11-1
-      const distDir = join(PROJECT_ROOT, 'packages', 'shared', 'dist');
-      assert.ok(
-        existsSync(distDir),
-        'packages/shared/dist/ must exist (run pnpm build first)'
-      );
-    });
+    // packages/shared was absorbed into core (Story 98-16) — no separate package
   });
 
   describe('AC5: pennyfarthing CLI module exists', () => {

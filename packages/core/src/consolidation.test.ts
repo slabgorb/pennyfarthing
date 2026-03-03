@@ -124,7 +124,7 @@ describe('Story 98-16: Absorb shared and benchmark into core', () => {
       assert.ok(existsSync(commandsDir), 'pennyfarthing-dist/commands/ must exist');
 
       // These were previously in packages/benchmark/commands/
-      const expectedCommands = ['benchmark.md', 'benchmark-control.md', 'job-fair.md', 'solo.md'];
+      const expectedCommands = ['pf-benchmark.md', 'pf-benchmark-control.md', 'pf-job-fair.md', 'pf-solo.md'];
       for (const cmd of expectedCommands) {
         assert.ok(existsSync(join(commandsDir, cmd)),
           `benchmark command ${cmd} must exist in pennyfarthing-dist/commands/`);

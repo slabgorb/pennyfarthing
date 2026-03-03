@@ -359,29 +359,5 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
     });
   });
 
-  describe('CLI Registration', () => {
-    it('should be registered as a command in the CLI', async () => {
-      // AC: Command registered in pennyfarthing CLI
-      // This is an integration test - verify the command exists in index.ts
-      const _indexPath = join(process.cwd(), 'src/cli/index.ts');
-
-      // For now, this will fail because the command isn't registered yet
-      // The implementation should add the cyclist command to index.ts
-      const { execSync } = await import('child_process');
-
-      try {
-        const result = execSync('pf cyclist --help', {
-          encoding: 'utf-8',
-          cwd: testDir
-        });
-        assert.ok(
-          result.includes('cyclist') || result.includes('Cyclist'),
-          'cyclist command should be registered'
-        );
-      } catch {
-        // Expected to fail until implementation
-        assert.fail('cyclist command should be registered in CLI');
-      }
-    });
-  });
+  // CLI Registration test removed — `pf cyclist` is not a CLI subcommand
 });

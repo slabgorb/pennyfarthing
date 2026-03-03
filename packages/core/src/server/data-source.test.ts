@@ -1,12 +1,10 @@
 /**
- * Tests for Story 124-3: WebSocketDataSource in BikeRack
+ * Tests for WebSocketDataSource in packages/core/src/server/
  *
- * RED phase: These tests define the WebSocketDataSource<T> contract.
- * They should ALL FAIL until the implementation is written.
+ * Originally Story 124-3 (BikeRack). Code absorbed into core (Story 98-16).
+ * WebSocketDataSource<T> implements DataSource<T> for live WebSocket data.
  *
- * AC4: WebSocketDataSource is implemented in packages/bikerack/ for live local data
- *
- * Run with: cd packages/bikerack && node --test dist/data-source.test.js
+ * Run with: cd packages/core && node --test dist/server/data-source.test.js
  */
 
 import { describe, it } from 'node:test';
@@ -18,188 +16,114 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Resolve paths relative to compiled test location (dist/) back to source
-const BIKERACK_ROOT = join(__dirname, '..');
-const BIKERACK_SRC = join(BIKERACK_ROOT, 'src');
-const CORE_SRC = join(BIKERACK_ROOT, '..', 'core', 'src');
+// At runtime __dirname = dist/server/, so go up to packages/core/
+const CORE_ROOT = join(__dirname, '..', '..');
+const CORE_SRC = join(CORE_ROOT, 'src');
+const SERVER_SRC = join(CORE_SRC, 'server');
 
-// =============================================================================
-// AC4: WebSocketDataSource is implemented in packages/bikerack/
-// =============================================================================
+describe('WebSocketDataSource in packages/core/src/server/', () => {
 
-describe('AC4: WebSocketDataSource in packages/bikerack/', () => {
-
-  it('should have a WebSocketDataSource module', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const exists = candidates.some(p => existsSync(p));
+  it('should have websocket-data-source.ts module', () => {
     assert.ok(
-      exists,
-      `WebSocketDataSource module should exist in bikerack/src/ (checked: ${candidates.map(p => p.split('/').pop()).join(', ')})`
+      existsSync(join(SERVER_SRC, 'websocket-data-source.ts')),
+      'websocket-data-source.ts should exist in core/src/server/'
     );
   });
 
   it('should export WebSocketDataSource class', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
       /export\s+class\s+WebSocketDataSource/.test(content),
       'WebSocketDataSource class should be exported'
     );
   });
 
-  it('should implement DataSource<T> from core', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+  it('should implement DataSource<T>', () => {
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
       /implements\s+DataSource\s*</.test(content),
-      'WebSocketDataSource should implement DataSource<T> from core'
+      'WebSocketDataSource should implement DataSource<T>'
     );
   });
 
-  it('should import DataSource from @pennyfarthing/core', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+  it('should import DataSource from relative path (not old package)', () => {
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
-      /@pennyfarthing\/core/.test(content),
-      'WebSocketDataSource should import from @pennyfarthing/core'
+      !/@pennyfarthing\/core/.test(content),
+      'Should use relative import, not @pennyfarthing/core (absorbed into core)'
+    );
+    assert.ok(
+      /import.*DataSource/.test(content),
+      'Should import DataSource interface'
     );
   });
 
   it('should handle WebSocket URL construction', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
       /url|endpoint|path|WebSocket/.test(content),
-      'WebSocketDataSource should handle URL/endpoint configuration'
+      'Should handle URL/endpoint configuration'
     );
   });
 
   it('should implement reconnection logic', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
       /reconnect|retry|timeout|setTimeout/.test(content),
-      'WebSocketDataSource should implement reconnection logic'
+      'Should implement reconnection logic'
     );
   });
 
   it('should handle message parsing with generic type T', () => {
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    const file = candidates.find(p => existsSync(p));
-    assert.ok(file, 'WebSocketDataSource file should exist');
-
-    const content = readFileSync(file!, 'utf-8');
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
     assert.ok(
       /JSON\.parse|transform|parse|deserialize/.test(content),
-      'WebSocketDataSource should handle message parsing'
+      'Should handle message parsing'
     );
   });
 
-  it('should be listed in bikerack package.json exports or barrel', () => {
-    const indexPath = join(BIKERACK_SRC, 'index.ts');
+  it('should be re-exported from server barrel', () => {
+    const indexPath = join(SERVER_SRC, 'index.ts');
     if (existsSync(indexPath)) {
       const content = readFileSync(indexPath, 'utf-8');
       assert.ok(
-        /WebSocketDataSource|websocket-data-source|data-source/.test(content),
-        'BikeRack barrel should export WebSocketDataSource'
-      );
-    } else {
-      // Check package.json exports field
-      const pkgPath = join(BIKERACK_ROOT, 'package.json');
-      assert.ok(existsSync(pkgPath), 'BikeRack package.json should exist');
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-      const exports = JSON.stringify(pkg.exports || {});
-      assert.ok(
-        /data-source/.test(exports),
-        'BikeRack package.json exports should include data-source'
+        /WebSocketDataSource|websocket-data-source/.test(content),
+        'Server barrel should re-export WebSocketDataSource'
       );
     }
   });
 });
 
-// =============================================================================
-// AC4 + AC1: Integration — BikeRack depends on Core's DataSource<T>
-// =============================================================================
+describe('DataSource<T> interface in core', () => {
 
-describe('AC4+AC1: BikeRack depends on Core DataSource interface', () => {
+  it('DataSource<T> interface exists in core', () => {
+    const candidates = [
+      join(CORE_SRC, 'data-source.ts'),
+      join(CORE_SRC, 'public', 'data-source.ts'),
+    ];
+    const found = candidates.find(p => existsSync(p));
+    assert.ok(found, 'DataSource<T> interface should exist in core/src/');
 
-  it('bikerack package.json should depend on @pennyfarthing/core', () => {
-    const pkgPath = join(BIKERACK_ROOT, 'package.json');
-    assert.ok(existsSync(pkgPath), 'BikeRack package.json should exist');
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    const deps = { ...pkg.dependencies, ...pkg.peerDependencies };
+    const content = readFileSync(found!, 'utf-8');
     assert.ok(
-      '@pennyfarthing/core' in deps,
-      'BikeRack should depend on @pennyfarthing/core'
+      /export\s+interface\s+DataSource\s*</.test(content),
+      'Should export DataSource<T> interface'
     );
   });
 
-  it('DataSource<T> in core should be the single interface definition', () => {
-    // Verify core has the interface
-    const coreDataSource = join(CORE_SRC, 'public', 'data-source.ts');
+  it('WebSocketDataSource should not redefine DataSource interface', () => {
+    const file = join(SERVER_SRC, 'websocket-data-source.ts');
+    const content = readFileSync(file, 'utf-8');
+    const definesInterface = /export\s+interface\s+DataSource\s*</.test(content);
     assert.ok(
-      existsSync(coreDataSource),
-      'Core should define DataSource<T> at src/public/data-source.ts'
+      !definesInterface,
+      'websocket-data-source.ts should NOT redefine DataSource<T> — it should import it'
     );
-
-    // Verify bikerack does NOT redefine the interface
-    const candidates = [
-      join(BIKERACK_SRC, 'websocket-data-source.ts'),
-      join(BIKERACK_SRC, 'data-source.ts'),
-      join(BIKERACK_SRC, 'ws-data-source.ts'),
-    ];
-    for (const file of candidates) {
-      if (!existsSync(file)) continue;
-      const content = readFileSync(file, 'utf-8');
-      // It should implement, not redefine
-      const definesInterface = /export\s+interface\s+DataSource\s*</.test(content);
-      assert.ok(
-        !definesInterface,
-        `BikeRack should NOT redefine DataSource<T> — it should import from core`
-      );
-    }
   });
 });
