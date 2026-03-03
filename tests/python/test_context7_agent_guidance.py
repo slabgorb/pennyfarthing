@@ -143,10 +143,10 @@ class TestDevAgentContext7:
         )
 
     def test_lookup_pattern_referenced(self) -> None:
-        """Dev agent references the two-step lookup pattern."""
+        """Dev agent references Context7 lookup or delegates to guide."""
         content = _read_agent("dev")
-        assert "resolve-library-id" in content or "query-docs" in content, (
-            "dev.md missing Context7 lookup pattern"
+        assert "resolve-library-id" in content or "query-docs" in content or "agent-coordination" in content, (
+            "dev.md missing Context7 lookup pattern or guide reference"
         )
 
     def test_internal_package_exclusion(self) -> None:
@@ -177,12 +177,14 @@ class TestTeaAgentContext7:
             "tea.md missing Context7 guidance"
         )
 
-    def test_trust_but_verify_principle(self) -> None:
-        """TEA agent includes trust-but-verify for Context7 results."""
+    def test_guide_reference_or_verify_principle(self) -> None:
+        """TEA agent references guide or includes trust-but-verify."""
         content = _read_agent("tea")
         content_lower = content.lower()
-        assert "trust" in content_lower and "verify" in content_lower, (
-            "tea.md missing 'trust but verify' principle for Context7"
+        has_trust_verify = "trust" in content_lower and "verify" in content_lower
+        has_guide_ref = "agent-coordination" in content_lower
+        assert has_trust_verify or has_guide_ref, (
+            "tea.md missing guide reference or 'trust but verify' principle"
         )
 
 

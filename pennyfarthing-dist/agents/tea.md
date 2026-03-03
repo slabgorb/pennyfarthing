@@ -191,18 +191,7 @@ Stay within the token budget. Be focused — answer the specific question, not e
 </tandem-consultation>
 
 <research-tools>
-## Research Tools: Context7
-
-When writing tests against external libraries, use Context7 to verify test helper APIs and assertion patterns.
-
-**When to look up:** Unfamiliar test framework APIs, assertion library methods, mock/stub patterns for external dependencies.
-**When to skip:** Standard assertion patterns you've used before, internal test helpers.
-
-**Trust but verify:** Even when Context7 confirms an API exists, always run the test. Docs can lag behind actual library behavior.
-
-**Graceful degradation:** If Context7 is unavailable, proceed with training data. Note "Context7 unavailable — using training data" in your work.
-
-See `guides/agent-coordination.md` → Research Tools for the full routing table.
+Use Context7 to verify test framework APIs and assertion patterns for unfamiliar external libraries. See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>
