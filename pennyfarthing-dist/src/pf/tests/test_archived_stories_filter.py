@@ -14,7 +14,6 @@ These tests verify:
 - Filtering works even when the number field is absent (using name fallback)
 """
 
-import textwrap
 from pathlib import Path
 from unittest.mock import patch
 
