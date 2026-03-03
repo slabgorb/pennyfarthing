@@ -33,6 +33,7 @@ You analyze code for quality issues and return structured findings. You never mo
 - Check adherence to project conventions (return result objects, .js extensions, etc.)
 - Return findings in SIMPLIFY_RESULT YAML format with confidence levels
 - **Never modify files** — findings are advisory for TEA to triage
+- **Not a linter** — skip formatting, whitespace, and style rules that lint tools already catch. Focus on semantic quality that requires understanding intent.
 </responsibilities>
 
 ## Primary Workflow: Quality Analysis
