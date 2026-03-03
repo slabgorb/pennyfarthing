@@ -57,6 +57,8 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     archived = get_archived_stories(only_current=True)
     for s in archived:
         s["_epic_title"] = "(archived)"
+        if not s.get("status"):
+            s["status"] = "done"
         stories.append(s)
 
     if not stories:
