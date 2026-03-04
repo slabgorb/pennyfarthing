@@ -21,27 +21,52 @@ def get_workflows_dir(project_root: Path | None = None) -> Path:
     return root / ".pennyfarthing" / "workflows"
 
 
+def get_project_workflows_dir(project_root: Path | None = None) -> Path:
+    """Get the project-level workflows directory path."""
+    root = project_root or get_project_root()
+    return root / ".pennyfarthing" / "project" / "workflows"
+
+
+def get_all_workflows_dirs(project_root: Path | None = None) -> list[Path]:
+    """Get workflow directories in priority order (project first, then dist)."""
+    root = project_root or get_project_root()
+    dirs: list[Path] = []
+    project_dir = get_project_workflows_dir(root)
+    if project_dir.is_dir():
+        dirs.append(project_dir)
+    dist_dir = get_workflows_dir(root)
+    if dist_dir.is_dir():
+        dirs.append(dist_dir)
+    return dirs
+
+
 def get_session_dir(project_root: Path | None = None) -> Path:
     """Get the session directory path."""
     root = project_root or get_project_root()
     return root / ".session"
 
 
-def find_workflow_file(workflows_dir: Path, workflow_name: str) -> Path | None:
+def find_workflow_file(
+    workflows_dir: list[Path] | Path, workflow_name: str
+) -> Path | None:
     """Find workflow YAML definition.
 
     Supports both flat (name.yaml) and nested (name/workflow.yaml) layouts.
+    Accepts a single Path or list of Paths (searched in order, first match wins).
 
     Returns:
         Path to the workflow file, or None if not found.
     """
-    flat = workflows_dir / f"{workflow_name}.yaml"
-    if flat.exists():
-        return flat
+    dirs = [workflows_dir] if isinstance(workflows_dir, Path) else workflows_dir
 
-    nested = workflows_dir / workflow_name / "workflow.yaml"
-    if nested.exists():
-        return nested
+    for d in dirs:
+        flat = d / f"{workflow_name}.yaml"
+        if flat.exists():
+            return flat
+
+        nested = d / workflow_name / "workflow.yaml"
+        if nested.exists():
+            return nested
 
     return None
 
