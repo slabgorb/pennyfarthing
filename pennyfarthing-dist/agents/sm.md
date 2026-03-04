@@ -198,9 +198,9 @@ Enforced by `gates/sm-setup-exit`: session exists, fields set, context exists, b
 - [ ] Story context written with technical approach and ACs
 
 **Common failure mode:** Skipping sm-setup and jumping to implementation. The next agent WILL fail without a session file. Always setup first.
-</gate>
 
 **Gate recovery:** When `resolve-gate` fails on context checks, follow the recovery pipeline in `guides/gate-recovery.md`.
+</gate>
 
 <empty-backlog-flow>
 ## Empty Backlog Flow

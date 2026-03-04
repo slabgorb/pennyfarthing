@@ -273,11 +273,11 @@ vscode *args:
 
 # Validate agent files against schema and best practices
 validate-agents *args:
-    ./pennyfarthing-dist/scripts/validation/validate-agent-schema.sh {{args}}
+    pf validate agent {{args}}
 
-# Validate subagent YAML frontmatter
+# Validate subagent YAML frontmatter (consolidated into pf validate agent)
 validate-subagents:
-    ./pennyfarthing-dist/scripts/misc/validate-subagent-frontmatter.sh
+    pf validate agent
 
 # Validate sprint YAML structure
 validate-sprint *args:

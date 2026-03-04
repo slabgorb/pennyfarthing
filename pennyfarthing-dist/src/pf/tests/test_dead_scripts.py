@@ -38,6 +38,7 @@ class TestDeadScriptsDeleted:
         _SCRIPTS / "workflow" / "get-workflow-type.py",
         _SCRIPTS / "core" / "check-context.sh",
         _SCRIPTS / "misc" / "validate-subagent-frontmatter.sh",
+        _SCRIPTS / "validation" / "validate-agent-schema.sh",
     ]
 
     def test_dead_scripts_deleted(self) -> None:
@@ -69,13 +70,14 @@ class TestOutputPersonaRemoved:
 
 
 _DEAD_SCRIPT_RE = re.compile(
-    r"backlog\.sh|get-workflow-type\.py|check-context\.sh|validate-subagent-frontmatter\.sh"
+    r"backlog\.sh|get-workflow-type\.py|check-context\.sh|validate-subagent-frontmatter\.sh|validate-agent-schema\.sh"
 )
 
 # Files that are allowed to reference the dead scripts (test files, sprint context)
 _ALLOWED_REFERRERS = {
     "src/pf/tests/test_dead_scripts.py",
     "src/pf/tests/test_wrapper_removal.py",
+    "src/pf/tests/test_141_20_agent_validator.py",
 }
 
 
