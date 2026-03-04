@@ -57,6 +57,14 @@ workflow:
         file: gates/quality-pass
         type: quality_pass
         condition: Lint, typecheck, and all tests passing
+      team:
+        teammates:
+          - agent: simplify-reuse
+            task: "Review changed files for code duplication and extraction opportunities. Report findings only."
+          - agent: simplify-quality
+            task: "Review changed files for naming, readability, and structural quality. Report findings only."
+          - agent: simplify-efficiency
+            task: "Review changed files for unnecessary complexity and over-engineering. Report findings only."
 
     - name: review
       agent: reviewer
