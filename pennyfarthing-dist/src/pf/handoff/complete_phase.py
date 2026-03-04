@@ -151,6 +151,11 @@ def complete_phase(
 def _calc_duration(started_str: str, ended_str: str) -> str:
     started = datetime.fromisoformat(started_str.replace("Z", "+00:00"))
     ended = datetime.fromisoformat(ended_str.replace("Z", "+00:00"))
+    # Normalize: if one is naive and the other aware, treat naive as UTC
+    if started.tzinfo is None and ended.tzinfo is not None:
+        started = started.replace(tzinfo=ended.tzinfo)
+    elif ended.tzinfo is None and started.tzinfo is not None:
+        ended = ended.replace(tzinfo=started.tzinfo)
     total_seconds = int((ended - started).total_seconds())
     if total_seconds < 60:
         return f"{total_seconds}s"
