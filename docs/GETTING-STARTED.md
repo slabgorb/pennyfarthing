@@ -1,72 +1,111 @@
 # Getting Started with Pennyfarthing
 
-Pennyfarthing is an agent orchestration framework for Claude Code. It gives you a team of specialized AI agents — each with a defined role, workflow, and personality — that collaborate through structured handoffs to build software.
+Pennyfarthing is an agent orchestration framework for Claude Code. It gives you a team of 11 specialized AI agents that collaborate through structured BikeLane workflows to build software — each with a defined role, quality gates, and automatic handoffs.
 
-This guide walks you through installation, core concepts, and your first complete work session.
+Pick the path that matches your situation:
 
-> **Already installed?** Jump to [Your First Work Session](#your-first-work-session).
+| You are... | Path |
+|------------|------|
+| Joining a project that already uses Pennyfarthing | [Path A: Join an existing project](#path-a-join-an-existing-project) |
+| Adding Pennyfarthing to your own project | [Path B: Set up a new project](#path-b-set-up-a-new-project) |
+| Contributing to the Pennyfarthing framework itself | [Path C: Framework development](#path-c-framework-development-dogfooding) |
+
+> **Already set up?** Jump to [Your First Work Session](#your-first-work-session).
 >
-> **Want the 2-minute version?** See the [What Is Pennyfarthing?](../pennyfarthing-dist/guides/what-is-pennyfarthing.md) reference card.
+> **Want the 2-minute version?** See the [What Is Pennyfarthing?](../pennyfarthing-dist/guides/what-is-pennyfarthing.md) quick reference.
 
 ---
 
 ## Prerequisites
 
-Before installing, make sure you have:
+| Requirement | Why |
+|-------------|-----|
+| **Python 3.11+** | Primary runtime for the `pf` CLI |
+| **Git** | Branch management (Pennyfarthing creates feature branches for you) |
+| **Claude Code CLI** | The AI coding assistant Pennyfarthing orchestrates |
+| **GitHub CLI (`gh`)** | Authentication for the private repo (`brew install gh && gh auth login`) |
 
-- **Python 3.11+** — primary runtime for the `pf` CLI
-- **Git** — version control (Pennyfarthing manages branches for you)
-- **Claude Code CLI** — the AI coding assistant Pennyfarthing orchestrates
-- **yq** — YAML processor (`brew install yq`)
-- **jq** — JSON processor (`brew install jq`)
-- **Node.js 18+* *(optional)* — installed automatically by `pf init` if needed for BikeRack visual panels
+**Optional:**
+
+| Tool | Why |
+|------|-----|
+| **yq** | YAML processing (`brew install yq`) |
+| **jq** | JSON processing (`brew install jq`) |
+| **Node.js 18+** | Only needed for BikeRack visual dashboards — `pf init` installs this if needed |
 
 ---
 
-## Installation
+## Path A: Join an existing project
 
-### Step 1: Install the CLI
+Someone on your team already ran `/pf-setup`. You just need the CLI.
 
-```bash
-pip install pf
-```
-
-This installs the `pf` command globally. Verify with:
+### 1. Install
 
 ```bash
-pf --version
+brew install 1898andco/pf/pennyfarthing
 ```
 
-> **Alternative:** `pipx install pennyfarthing-scripts` if you prefer isolated Python tool installs.
+> Don't have brew? See [Alternative installs](#alternative-installs) below.
 
-### Step 2: Initialize Your Project
+### 2. Clone and go
+
+```bash
+git clone git@github.com:your-org/your-project.git
+cd your-project
+claude
+```
+
+On your first Claude Code session, the project's committed `bootstrap.sh` hook fires automatically. It detects that `.pennyfarthing/` needs initialization, runs `pf init`, and sets everything up. You'll see agents, themes, and workflows immediately.
+
+If `pf` isn't installed when the bootstrap runs, it will attempt to install it via brew, uv, or pipx automatically.
+
+### 3. Verify
+
+```bash
+pf doctor
+```
+
+That's it. Jump to [Your First Work Session](#your-first-work-session).
+
+---
+
+## Path B: Set up a new project
+
+You're bringing Pennyfarthing into a repo for the first time.
+
+### 1. Authenticate and install
+
+```bash
+# Authenticate with GitHub (required — private repo)
+gh auth login
+
+# Install the CLI
+brew install 1898andco/pf/pennyfarthing
+```
+
+> Don't have brew? See [Alternative installs](#alternative-installs) below.
+
+### 2. Initialize your project
 
 ```bash
 cd your-project
 pf init
 ```
 
-This creates the Pennyfarthing directory structure and configures your project:
+This is idempotent (safe to run multiple times) and creates:
 
 | Created | Purpose |
 |---------|---------|
-| `.pennyfarthing/` | Runtime framework — agents, guides, personas, scripts |
-| `.claude/commands/` | Slash commands (e.g., `/pf-work`, `/pf-sm`) |
+| `.pennyfarthing/` | Runtime framework — agents, guides, personas, scripts, workflows |
+| `.pennyfarthing/sidecars/` | Agent learning files (local, writable) |
+| `.pennyfarthing/config.local.yaml` | Theme, display modes, permissions |
+| `.claude/commands/` | Slash commands for Claude Code (e.g., `/pf-work`) |
 | `.claude/skills/` | Multi-step skills for agents |
 | `.claude/settings.local.json` | Claude Code hooks for agent workflows |
-| `sprint/` | Sprint tracking files |
+| `sprint/` | Sprint tracking YAML |
 | `.session/` | Active work session files |
 
-`pf init` also auto-detects your package manager (pnpm/yarn/npm) and installs any required Node dependencies. You don't need to run `npm install` yourself.
-
-> **Want more themes?** After init, install additional theme packs:
-> ```bash
-> pf package install comedy    # 70+ additional themes across genres
-> pf package install scifi
-> pf package list              # See all available packs
-> ```
-
-### Step 3: Interactive Setup
+### 3. Interactive setup
 
 Start Claude Code in your project directory, then run:
 
@@ -74,15 +113,23 @@ Start Claude Code in your project directory, then run:
 /pf-setup
 ```
 
-This walks you through:
-1. **Repository discovery** — detects your git structure
-2. **CLAUDE.md generation** — project context for agents
-3. **Theme selection** — pick a persona theme (you can change this anytime)
-4. **Jira integration** — optional sprint tracking connection
+This walks you through 11 interactive steps:
 
-> `pf init` prepares the project structure; `/pf-setup` configures it interactively inside Claude Code.
+1. **Project discovery** — detects git repos, tech stack, build/test commands
+2. **Clone subrepos** — optionally clone related repositories
+3. **repos.yaml** — generates multi-repo topology config
+4. **CLAUDE.md** — creates project-specific agent instructions
+5. **shared-context.md** — populates project context for all agents
+6. **Task runner** — creates justfile for cross-repo commands
+7. **Theme selection** — pick a persona theme (100 themes bundled)
+8. **Theme packs** — optionally install additional theme plugins
+9. **Jira integration** — optional bidirectional sprint tracking
+10. **GUI setup** — optionally install BikeRack visual dashboard
+11. **Validation** — confirms everything is configured correctly
 
-### Step 4: Verify
+> `pf init` creates the directory structure. `/pf-setup` configures it interactively inside Claude Code.
+
+### 4. Verify
 
 ```bash
 pf doctor
@@ -95,26 +142,112 @@ You should see all checks passing:
 [OK] pennyfarthing_dir: .pennyfarthing/ exists
 [OK] config_file: config.local.yaml valid
 [OK] settings_hooks: Settings hooks present
-[OK] commands: 36 pf-* commands found
-[OK] skills: 21 pf-* skills found
+[OK] bootstrap: Bootstrap hook configured
+[OK] content_dirs: All content directories present
+[OK] commands: 37 pf-* commands found
+[OK] skills: 22 pf-* skills found
 [OK] theme: Theme: discworld
 ```
 
 If anything fails, run `pf doctor --fix` to auto-repair.
 
+### 5. Commit the setup
+
+After `/pf-setup` completes, commit the generated files so teammates can use [Path A](#path-a-join-an-existing-project):
+
+```bash
+git add .pennyfarthing/ .claude/ sprint/ .session/
+git commit -m "feat: add Pennyfarthing agent orchestration"
+```
+
+Now jump to [Your First Work Session](#your-first-work-session).
+
+---
+
+## Path C: Framework development (dogfooding)
+
+You're contributing to Pennyfarthing itself using the orchestrator repo.
+
+### 1. Clone the orchestrator
+
+```bash
+git clone git@github.com:1898andCo/orc-penny.git && cd orc-penny
+```
+
+This repo contains `pennyfarthing/` as an inlined subrepo with its own git history.
+
+### 2. Setup
+
+```bash
+just setup
+```
+
+This clones `pennyfarthing/` if missing, installs all dependencies (pnpm + Python), builds packages, and installs the `pf` CLI in editable mode from the local source.
+
+**Prerequisites:** Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `1898andCo`.
+
+### 3. Launch
+
+```bash
+just claude       # starts Claude Code with OTEL telemetry pre-configured
+/guided-tour      # optional interactive walkthrough
+```
+
+### Key differences from consumer projects
+
+| | Consumer project | Orchestrator (dogfooding) |
+|---|---|---|
+| **`.pennyfarthing/`** | Standalone files from `pf init` | Symlinks to `pennyfarthing/pennyfarthing-dist/` |
+| **Edits to agents/guides/workflows** | Not recommended | Edit in `pennyfarthing/pennyfarthing-dist/`, changes are live |
+| **Git repos** | One repo | Two repos — orchestrator (`main`) and framework (`develop`) |
+| **Install method** | `brew install` | `just setup` (editable install) |
+| **Framework changes** | Receive via `brew upgrade` | Commit directly to `pennyfarthing/` |
+
+> See the [orchestrator README](https://github.com/1898andCo/orc-penny) for the full two-repo workflow.
+
+---
+
+## Alternative installs
+
+If Homebrew isn't available, use one of these to install the `pf` CLI:
+
+```bash
+# Shell script — auto-detects best package manager (brew → uv → pipx → pip)
+curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+
+# With uv (fastest)
+uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+
+# With pipx
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+
+# With pip
+pip install "git+https://github.com/1898andCo/pennyfarthing.git"
+```
+
+> **Note:** The Python package name is `pennyfarthing-scripts`. The installed CLI command is `pf`.
+
+If the installer puts `pf` in `~/.local/bin` and it's not on your PATH:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add that line to your `~/.zshrc` or `~/.bashrc` to make it permanent.
+
+Verify with `pf --version` — you should see `pf, version 12.3.0` (or later).
+
 ---
 
 ## Core Concepts
 
-Understanding these five concepts will make everything else click.
-
 ### Agents
 
-Pennyfarthing ships with 11 specialized agents, each responsible for one part of the development process:
+11 specialized agents, each responsible for one part of the development process:
 
-| Agent | Command | What They Do |
-|-------|---------|--------------|
-| **SM** (Scrum Master) | `/pf-sm` | Picks stories, sets up sessions, finishes work |
+| Agent | Command | Role |
+|-------|---------|------|
+| **SM** (Scrum Master) | `/pf-sm` | Story setup, session management, completion |
 | **TEA** (Test Engineer) | `/pf-tea` | Writes failing tests first (TDD red phase) |
 | **Dev** (Developer) | `/pf-dev` | Makes tests pass, implements features |
 | **Reviewer** | `/pf-reviewer` | Adversarial code review, merges PRs |
@@ -126,32 +259,36 @@ Pennyfarthing ships with 11 specialized agents, each responsible for one part of
 | **BA** (Business Analyst) | `/pf-ba` | Requirements, stakeholder analysis |
 | **Orchestrator** | `/pf-orchestrator` | Meta-operations, process improvement |
 
-Each agent stays in their lane — the SM never writes code, the Dev never does reviews. This separation means each agent can be deeply specialized.
+Each agent stays in its lane — the SM never writes code, the Dev never does reviews. This separation makes each agent deeply specialized.
 
 ### Workflows
 
-A **workflow** defines which agents participate and in what order. Pennyfarthing includes several:
+A **workflow** defines which agents participate and in what order.
 
-**Phased workflows** (agents hand off to each other automatically):
+**Phased workflows** (agents hand off automatically):
 
 | Workflow | Flow | Best For |
 |----------|------|----------|
 | `tdd` | SM → TEA → Dev → Reviewer → SM | Features with tests |
-| `trivial` | SM → Dev → Reviewer → SM | Small fixes, chores |
 | `bdd` | SM → UX → TEA → Dev → Reviewer → SM | User-facing features |
+| `trivial` | SM → Dev → Reviewer → SM | Small fixes, chores |
+| `agent-docs` | SM → Orchestrator → Tech Writer → SM | Documentation updates |
+| `patch` | Dev → Reviewer → SM | Interrupt-driven bug fixes |
 
 **Stepped workflows** (you advance through steps manually):
 
-| Workflow | Steps | Best For |
-|----------|-------|----------|
-| `architecture` | 8 steps | Design decisions |
-| `release` | 11 steps | Version releases |
+| Workflow | Best For |
+|----------|----------|
+| `architecture` | System design documents |
+| `release` | Version releases |
+| `research` | Technical or domain research |
+| `prd` | Product requirements |
 
-View all workflows: `pf workflow list`
+View all: `pf workflow list`
 
-### Phases and Gates
+### Gates
 
-A workflow is a sequence of **phases**. Between phases, **gates** check quality before allowing the handoff:
+Between workflow phases, **gates** check quality before allowing the handoff:
 
 ```
 SM (setup) ──gate──→ TEA (red) ──gate──→ Dev (green) ──gate──→ Reviewer ──gate──→ SM (finish)
@@ -161,78 +298,31 @@ Gates enforce standards automatically — tests must be written before implement
 
 ### Sessions
 
-When you start working on a story, Pennyfarthing creates a **session file** at `.session/{story-id}-session.md`. This file tracks:
+When you start working on a story, Pennyfarthing creates a **session file** at `.session/{story-id}-session.md`. This tracks:
 
-- Which phase you're in
-- Which agent is active
+- Current phase and active agent
 - Assessments from each completed phase
 - Branch names and Jira keys
 
-Session files are the source of truth for work state. If you restart Claude Code mid-story, the session file lets agents pick up where they left off.
+If you restart Claude Code mid-story, the session file lets agents pick up where they left off.
 
 ### Personas and Themes
 
-Each agent has a **persona** — a fictional character that shapes their communication style. Personas are grouped into **themes**:
+Each agent takes on a **persona** — a fictional character that shapes their communication style. Personas are grouped into **themes**:
 
 ```bash
-pf theme list          # See all available themes
-pf theme set discworld # Switch to Discworld theme
+pf theme list          # See all 100 bundled themes
+pf theme set discworld # Switch themes
 pf theme show          # Preview current theme's characters
 ```
 
-The default theme is `discworld`, where the SM is Captain Carrot, the Reviewer is Granny Weatherwax, and the Dev is Ponder Stibbons. Themes are cosmetic — they change personality, not capability.
-
----
-
-## Configuration
-
-### Project Context
-
-After setup, tell your agents about your project by editing `.claude/project/docs/shared-context.md`:
-
-```markdown
-# Shared Agent Context - my-project
-
-## Project Overview
-- **Name:** my-project
-- **Type:** Web application
-
-## Tech Stack
-| Repo | Language | Framework |
-|------|----------|-----------|
-| api  | Go       | Chi       |
-| ui   | TypeScript | React   |
-
-## Commands
-| Command | Purpose |
-|---------|---------|
-| `just dev` | Start dev servers |
-| `just test` | Run all tests |
-```
-
-This context is loaded into every agent's prompt, so they understand your project without re-discovering it each time.
-
-### Theme Selection
-
-Browse and set themes interactively:
-
-```bash
-pf theme list                    # Browse all themes
-pf theme show hitchhikers-guide  # Preview a specific theme
-pf theme set hitchhikers-guide   # Switch themes
-```
-
-Or set directly in `.pennyfarthing/config.local.yaml`:
-
-```yaml
-theme: discworld
-```
+Themes are cosmetic — they change personality, not capability. Switch anytime.
 
 ---
 
 ## Your First Work Session
 
-The simplest way to start is:
+The simplest way to start:
 
 ```
 /pf-work
@@ -240,52 +330,45 @@ The simplest way to start is:
 
 This activates the SM agent, who checks for in-progress work or presents the backlog. Here's what a typical TDD session looks like:
 
-### 1. SM Sets Up the Story
+### 1. SM sets up the story
 
 The SM reads the sprint backlog, helps you pick a story, claims it in Jira, creates a feature branch, and writes the session file. Then it hands off.
 
-```
-SM: "Right then, Citizen. Story 42-3 is a 3-point feature — 'Add user
-    preferences API'. TDD workflow. I've created the branch and session.
-    Handing off to Igor (TEA) for the red phase."
-```
+### 2. TEA writes failing tests
 
-### 2. TEA Writes Failing Tests
+The TEA agent reads the session for context and writes test cases that define expected behavior — before any implementation exists. All tests fail (red phase).
 
-The TEA agent activates, reads the session for context, and writes test cases that define the expected behavior — before any implementation exists.
+### 3. Dev makes tests pass
 
-```
-TEA: "Yeth, marthter. I've written 4 test cases covering the preferences
-     CRUD operations. All failing, as expected. The Dev can proceed."
-```
+The Dev reads the failing tests and implements the minimum code to make them pass (green phase).
 
-### 3. Dev Makes Tests Pass
-
-The Dev agent reads the failing tests and implements the minimum code to make them pass.
-
-```
-Dev: "I've implemented the preferences service and API routes. All 4
-     tests passing. Pushing to the feature branch for review."
-```
-
-### 4. Reviewer Checks the Work
+### 4. Reviewer checks the work
 
 The Reviewer reads the PR, verifies test coverage, checks for issues, and either approves or requests changes.
 
-```
-Reviewer: "APPROVED. Tests cover the happy path and error cases.
-          Clean implementation. Merging."
-```
-
-### 5. SM Finishes
+### 5. SM finishes
 
 The SM archives the session, updates Jira, and the story is done.
 
-### Resuming Work
+### Resuming work
 
-If you close Claude Code mid-story, just run `/pf-work` again. The SM reads the session file and routes you to whichever agent should be active.
+If you close Claude Code mid-story, run `/pf-work` again. The SM reads the session file and routes you to whichever agent should be active.
 
 You can also activate a specific agent directly: `/pf-dev`, `/pf-tea`, `/pf-reviewer`, etc.
+
+---
+
+## Display Modes
+
+Pennyfarthing works in any terminal. Optional dashboards add real-time visibility into what agents are doing.
+
+| Mode | How to Start | What You Get |
+|------|-------------|--------------|
+| **CLI only** | `claude` | Agents in your terminal, no dashboard |
+| **BikeRack TUI** | `pf bikerack start` | Terminal dashboard alongside Claude Code |
+| **BikeRack GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
+
+**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack adds visual panels (sprint boards, workflow state, git diffs, agent portraits) but is optional.
 
 ---
 
@@ -303,31 +386,20 @@ Stories have types (feature, fix, chore), point estimates, and workflow assignme
 
 ---
 
-## Display Modes
-
-Pennyfarthing works in three display modes:
-
-| Mode | How to Start | Best For |
-|------|-------------|----------|
-| **CLI** | Just use Claude Code normally | Simplest setup, terminal-only |
-| **BikeRack** (TUI) | `pf bikerack start` | Split-pane terminal dashboard |
-| **BikeRack** (GUI) | `pf bikerack start` | Full browser UI with panels |
-
-**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack adds visual dashboards (sprint boards, session viewers, agent portraits) but are optional.
-
----
-
 ## Quick Command Reference
 
-### Getting Started
+### Getting started
+
 | Command | Purpose |
 |---------|---------|
 | `/pf-work` | Smart entry — resume or start work |
 | `/pf-help` | Context-aware help |
 | `/pf-sprint status` | Sprint overview |
 | `/pf-sprint backlog` | Available stories |
+| `/pf-guided-tour` | Interactive walkthrough of all features |
 
 ### Agents
+
 | Command | Purpose |
 |---------|---------|
 | `/pf-sm` | Scrum Master — story setup and finish |
@@ -337,71 +409,94 @@ Pennyfarthing works in three display modes:
 | `/pf-architect` | Architect — design guidance |
 | `/pf-pm` | Product Manager — planning |
 
-### Management
-| Command | Purpose |
-|---------|---------|
-| `/pf-workflow list` | All available workflows |
-| `/pf-theme set` | Change persona theme |
-| `/pf-health-check` | Verify installation |
-
 ### CLI
+
 | Command | Purpose |
 |---------|---------|
 | `pf doctor` | Health check |
 | `pf doctor --fix` | Auto-repair issues |
 | `pf theme list` | Browse themes |
+| `pf theme set <name>` | Change active theme |
 | `pf sprint status` | Sprint overview |
+| `pf validate` | Run all validators |
+| `pf workflow list` | Show all workflows |
+| `pf bikerack start` | Launch BikeRack dashboard |
+| `pf package list` | Show installable theme plugins (if any) |
 
 ---
 
 ## Updating
 
+### Homebrew
+
 ```bash
-pip install --upgrade pf
+brew upgrade pennyfarthing
 pf doctor
+```
+
+### uv / pipx / pip
+
+```bash
+# uv
+uv tool upgrade pennyfarthing-scripts
+
+# pipx
+pipx upgrade pennyfarthing-scripts
+
+# pip
+pip install --upgrade "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
 ```
 
 ---
 
 ## Troubleshooting
 
-### "No such file or directory" errors
+### `pf` command not found
 
-Files may be missing or corrupted. Auto-repair:
+If you installed with uv or pipx, `~/.local/bin` may not be on your PATH:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add to your shell profile (`~/.zshrc` or `~/.bashrc`) to make permanent.
+
+### Health check failures
 
 ```bash
 pf doctor --fix
 ```
 
+This auto-repairs missing directories, broken symlinks, and stale config.
+
 ### Agent doesn't recognize my project
 
-Make sure `.claude/project/docs/shared-context.md` exists and describes your tech stack. Run `/pf-setup` to regenerate it interactively.
+Run `/pf-setup` inside Claude Code to regenerate project context interactively.
 
 ### Wrong agent is active
 
-If a handoff went wrong, activate the correct agent directly:
+Activate the correct agent directly:
 
-```bash
+```
 /pf-sm        # Go back to Scrum Master
 /pf-dev       # Jump to Developer
 ```
 
-The agent will read the session file and determine what phase it should be in.
+The agent reads the session file and determines what phase it should be in.
 
 ### Fresh reinstall
 
 ```bash
-pf uninstall
-pip install pf
-pf init
+pf uninstall              # Remove Pennyfarthing files from project
+brew reinstall pennyfarthing  # Reinstall CLI (or your original install method)
+pf init                   # Re-initialize project
 ```
 
 ---
 
 ## Next Steps
 
-- **[What Is Pennyfarthing?](../pennyfarthing-dist/guides/what-is-pennyfarthing.md)** — Concept reference card
-- **[BikeLane Workflows](BIKELANE.md)** — All workflow types and customization
-- **[User Guide](USER-GUIDE.md)** — Complete documentation
-- **[Commands](COMMANDS.md)** — Full command reference
-- **[Benchmarking](../packages/benchmark/docs/BENCHMARKING.md)** — Scientific persona evaluation
+- **[What Is Pennyfarthing?](../pennyfarthing-dist/guides/what-is-pennyfarthing.md)** — Concept quick reference
+- **[BikeLane Workflows](../pennyfarthing-dist/guides/bikelane.md)** — All workflow types and customization
+- **[BikeRack Guide](../pennyfarthing-dist/guides/bikerack.md)** — Dashboard setup and panels
+- **[CHANGELOG](../CHANGELOG.md)** — Release history
