@@ -400,7 +400,7 @@ Context7 provides versioned, semantically-searched documentation for public libr
 
 **Internal tool carve-out:** Context7 indexes external/public libraries only. Internal tools (`pf` CLI, `@pennyfarthing/*` packages, project-specific code) are NOT in Context7. Use training data, skill docs, and guides for internal APIs.
 
-**Graceful degradation:** If Context7 is unavailable or `resolve-library-id` returns no matches, proceed with training data knowledge. Note "Context7 unavailable — using training data" in your work. Do NOT block, retry in a loop, or ask the user to fix MCP configuration.
+If Context7 is unavailable or `resolve-library-id` returns no matches, fall back per the shared graceful degradation principle below.
 
 ### Perplexity (Web Research)
 
@@ -413,7 +413,13 @@ Perplexity provides real-time web intelligence for broader knowledge needs. Four
 | `perplexity_reason` | Medium | Trade-off analysis, logical problems |
 | `perplexity_research` | Slow (2-4 min) | Deep multi-source investigation (Architect only) |
 
-_Note: Perplexity tool details will be expanded when story 136-20 lands._
+**Speed-tier routing:** Default to `perplexity_ask` — it's fast and handles most questions. Escalate only when needed:
+1. `perplexity_ask` — First choice for any factual question ("does X support Y?", "what changed in v3?")
+2. `perplexity_search` — When you need specific URLs, changelogs, or release notes
+3. `perplexity_reason` — When you need step-by-step analysis or trade-off comparison
+4. `perplexity_research` — Deep multi-source investigation. **Architect only.** Takes 2-4 minutes. Never use for quick lookups.
+
+If Perplexity is unavailable or returns errors, fall back per the shared graceful degradation principle below.
 
 ### Routing: Which Tool for Which Need?
 
