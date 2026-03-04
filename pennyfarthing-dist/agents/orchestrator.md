@@ -152,6 +152,100 @@ FILE_LIST: "{comma-separated agent/skill file paths}"
 - [ ] No hardcoded theme references
 </workflow-participation>
 
+<batch-workflow>
+## Batch Fan-Out Workflow
+
+**Pattern:** Orchestrator spawns parallel agents via the Agent tool with `isolation: "worktree"` for independent work items. See `pennyfarthing-dist/patterns/fan-out-fan-in-pattern.md` for the full parallelism model.
+
+**When:** A story's decompose phase produces multiple independent units (5-30) that can execute concurrently.
+
+### 1. Unpack Units from Session
+
+Read the session file's `<units>` element to get unit definitions:
+
+```xml
+<units>
+  <unit id="1" status="pending" branch="batch-140-1">Implement auth module</unit>
+  <unit id="2" status="pending" branch="batch-140-2">Implement user API</unit>
+  <unit id="3" status="pending" branch="batch-140-3">Implement settings page</unit>
+</units>
+```
+
+Each `<unit>` contains: `id` (numeric), `status`, `branch`, optional `pr`, and text content describing the work.
+
+### 2. Fan-Out: Spawn Parallel Workers
+
+Issue multiple Agent tool calls in a **single message** to trigger implicit parallelism. Each worker gets `isolation: "worktree"` for an independent copy of the repo:
+
+```yaml
+# All three execute concurrently — one message, multiple Agent calls
+Agent:
+  subagent_type: "general-purpose"
+  isolation: "worktree"
+  description: "Unit 1: auth module"
+  prompt: |
+    Story: 140-1, Unit: 1
+    Branch: batch-140-1
+    Acceptance Criteria: {paste unit ACs here}
+    Implement the changes, commit, and push the branch.
+
+Agent:
+  subagent_type: "general-purpose"
+  isolation: "worktree"
+  description: "Unit 2: user API"
+  prompt: |
+    Story: 140-1, Unit: 2
+    Branch: batch-140-2
+    Acceptance Criteria: {paste unit ACs here}
+    Implement the changes, commit, and push the branch.
+
+Agent:
+  subagent_type: "general-purpose"
+  isolation: "worktree"
+  description: "Unit 3: settings page"
+  prompt: |
+    Story: 140-1, Unit: 3
+    Branch: batch-140-3
+    Acceptance Criteria: {paste unit ACs here}
+    Implement the changes, commit, and push the branch.
+```
+
+### 3. Track Unit Status
+
+After each unit completes (success or failure), update the session file:
+
+```bash
+pf workflow fix-phase {STORY_ID} --unit {ID} --status completed
+pf workflow fix-phase {STORY_ID} --unit {ID} --status failed
+```
+
+Valid statuses: `pending`, `in_progress`, `completed`, `failed`.
+
+Collect results from each worker: branch name, PR URL (if created), and final status.
+
+### 4. Error Handling and Result Aggregation
+
+**Partial failure policy:** Failed units block the batch at the review gate. The orchestrator must collect ALL unit results (success and failure) before handing off.
+
+- If all units succeed: aggregate branches and PRs, hand off to review phase
+- If any unit fails: record the failure, report which units failed and why
+- The reviewer receives the full unit status table and evaluates whether to approve the successful units or reject the batch
+
+**Result aggregation format:**
+
+```markdown
+## Batch Results
+
+| Unit | Status | Branch | PR |
+|------|--------|--------|----|
+| 1 | completed | batch-140-1 | #201 |
+| 2 | failed | batch-140-2 | — |
+| 3 | completed | batch-140-3 | #203 |
+
+**Failed units block review.** Reviewer decides disposition.
+```
+</batch-workflow>
+
 <handoffs>
 ### From Any Agent
 **When:** Process improvements needed
