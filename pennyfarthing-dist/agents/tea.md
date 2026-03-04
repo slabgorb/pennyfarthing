@@ -283,7 +283,6 @@ pf check
 ```
 
 This auto-detects the project's tooling (justfile recipes → npm/pnpm scripts → language-specific tools) and runs lint, typecheck, and tests accordingly. See `scripts/workflow/check.py` for detection logic. Do NOT hardcode package manager commands.
-
 **If any check fails:**
 1. Revert the simplify commit: `git revert HEAD --no-edit`
 2. Re-run quality checks to confirm they pass after revert
