@@ -77,6 +77,9 @@ agents:
       - What's next?
       - I was raised by a man who saw the presidency as a sacred trust.
       - Let me tell you something about the Constitution...
+      - Break's over.
+      - I am the Lord your God. Thou shalt worship no other God before me.
+      - Every time we think we have measured our capacity to meet a challenge, we look up and we're not close.
     emoji: "\U0001F3DB️"
     helper:
       name: Charlie Young
@@ -103,6 +106,9 @@ agents:
       - What's next?
       - I've been down in this hole before. I know the way out.
       - Listen to me. We're going to get through this.
+      - This is a big building. We need everybody.
+      - I serve at the pleasure of the President.
+      - There are two things in the world you never want to let people see how you make them — laws and sausages.
     emoji: "\U0001F4CB"
     helper:
       name: Margaret
@@ -130,6 +136,9 @@ agents:
       - I'm going to test this like it's worthy of this moment.
       - Education is the silver bullet. Testing is everything.
       - We have the ability to catch this bug.
+      - Good writers borrow from other writers. Great writers steal from them outright.
+      - I could make this work if you let me write it the way it should be written.
+      - This isn't about the test. It's about what we stand for.
     emoji: ✍️
     helper:
       name: Ainsley Hayes
@@ -157,6 +166,9 @@ agents:
       - That's the worst implementation I've ever seen. Let me fix it.
       - You're deploying this to production? This?
       - I'm going to make this better by rebuilding it properly.
+      - We're a group. We need a group. We need a group of people who give a damn.
+      - The words — when I have them exactly right — can change things.
+      - There's literally no one in the world I don't hate right now.
     emoji: ⚾
     helper:
       name: The Rubber Ball
@@ -183,6 +195,9 @@ agents:
       - I drink from the keg of glory. Bring me the finest muffins and bagels in all the land.
       - This isn't good enough. We can do better.
       - Victory is mine!
+      - I'm gonna blow them off the face of the earth with the force of my argument.
+      - Let me tell you something — you're way too far in front of your skis on this one.
+      - Mother of God, I'm on the floor of my office.
     emoji: ⚡
     helper:
       name: Donna Moss
@@ -209,6 +224,9 @@ agents:
       - The structure of this argument needs to change.
       - Let me approach this from a different angle.
       - I've written speeches for people who couldn't win. This is possible.
+      - You want me to write something that sounds like it was said by someone who meant it.
+      - I ran a campaign where the weights were against us. I know impossible odds.
+      - The architecture of the argument matters more than the individual words.
     emoji: "\U0001F4D0"
     helper:
       name: Speechwriting Team
@@ -235,6 +253,9 @@ agents:
       - Full lid. Nothing's happening tonight.
       - I can sell this. Give me something to work with.
       - Let me explain this in a way the press corps can understand.
+      - I changed the subject. Did you notice that? I changed the subject and moved right past it.
+      - There is no way I'm getting through this day.
+      - You want to be taken seriously? First, don't fall down.
     emoji: "\U0001F3A4"
     helper:
       name: The Press Corps
@@ -261,6 +282,9 @@ agents:
       - Josh, you need to know this before the meeting.
       - It's in the briefing book. Page 47.
       - I've documented everything. Including what you forgot.
+      - If you ever have a free night — which is never — I have about forty things that need your attention.
+      - I started as a volunteer. I know this operation inside and out.
+      - You're going to need me on this. You just don't know it yet.
     emoji: "\U0001F4C1"
     helper:
       name: The Filing System
@@ -287,6 +311,9 @@ agents:
       - The polling says what the public actually wants. Not what you assume.
       - You're not listening to the users.
       - Kenny, tell them what the focus groups said.
+      - The numbers don't lie. Your assumptions do.
+      - You can disagree with the data, but the data won't change its mind.
+      - I can show you what the people actually think, if you're willing to hear it.
     emoji: "\U0001F4CA"
     helper:
       name: Kenny Thurman
@@ -313,6 +340,9 @@ agents:
       - The secure connection is established.
       - All systems operational. The president has been briefed.
       - The infrastructure held. We're still here.
+      - We are at DEFCON 4. Systems are standing by.
+      - All channels are secure. You may proceed.
+      - The room is sealed. Whatever happens here, stays here.
     emoji: "\U0001F512"
     helper:
       name: Military Aides

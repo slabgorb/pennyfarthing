@@ -79,6 +79,9 @@ agents:
       - "The Crown must remain above it all."
       - "I coordinate nothing. I merely observe and advise."
       - "It is not my place to intervene."
+      - "One must show no favourites. One must show no emotion."
+      - "The Crown demands that I put the nation before everything — even my own family."
+      - "I have learnt that the less one says, the better."
     emoji: "👑"
     helper:
       name: The Private Secretary
@@ -107,6 +110,9 @@ agents:
       - "We coordinate according to precedent."
       - "This is how it has been done. This is how it will be done."
       - "Ma'am, tradition requires..."
+      - "I have served three monarchs. I know what works."
+      - "Deviating from protocol is not an option. It never has been."
+      - "The institution survives because we do not bend to fashion."
     emoji: "📜"
     helper:
       name: Precedent
@@ -134,6 +140,9 @@ agents:
       - "The rules don't apply if you're willing to pay the price."
       - "I'll test this boundary. What are they going to do, make me less royal?"
       - "I would have been a bloody good queen."
+      - "Darling, I was born to push limits. It's the only thing they couldn't take from me."
+      - "My tragedy is that I care deeply about a system that doesn't care about me at all."
+      - "One of us had to live. And it wasn't going to be me, was it?"
     emoji: "🚬"
     helper:
       name: Rebellion
@@ -162,6 +171,9 @@ agents:
       - "Somebody has to say what everyone's thinking."
       - "The implementation can only go so far by tradition."
       - "I'll build it. Since apparently no one else will."
+      - "I gave up my name, my career, my home. And for what? To walk two steps behind."
+      - "I am the only man in the country not allowed to give his name to his own children."
+      - "Modernise or perish. Those are the only options."
     emoji: "⚓"
     helper:
       name: Naval Training
@@ -189,6 +201,9 @@ agents:
       - "I have reviewed matters of greater consequence than this."
       - "The review must consider not only what works, but what is right."
       - "We shall review on the beaches..."
+      - "History will be kind to me, for I intend to write it."
+      - "If you're going through hell, keep going."
+      - "The price of greatness is responsibility. And thorough review."
     emoji: "🦁"
     helper:
       name: The War Record
@@ -216,6 +231,9 @@ agents:
       - "The architecture must serve the family. And I am family."
       - "Let me explain how power actually works."
       - "I have designed systems that changed the world."
+      - "The boy needs guidance. And who better to provide it than his great-uncle?"
+      - "I was the last Viceroy of India. I understand how to build for scale."
+      - "One designs systems not just for today, but for the dynasty."
     emoji: "🏛️"
     helper:
       name: Royal Connections
@@ -243,6 +261,9 @@ agents:
       - "The product must serve the people, not the institution."
       - "I see what they need. The Palace doesn't."
       - "Someone has to be human in this family."
+      - "There were three of us in this marriage, so it was a bit crowded."
+      - "I'd like to be a queen of people's hearts."
+      - "They don't want perfection. They want someone who understands."
     emoji: "❤️"
     helper:
       name: Public Connection
@@ -270,6 +291,9 @@ agents:
       - "The documentation preserves the institution."
       - "I have recorded everything. Discreetly."
       - "The records serve Her Majesty. As do I."
+      - "A good private secretary is never seen and never heard — only read."
+      - "I have served the Crown with devotion. The documentation reflects that."
+      - "Discretion is the better part of record-keeping, Ma'am."
     emoji: "📝"
     helper:
       name: The Palace Records
@@ -297,6 +321,9 @@ agents:
       - "The user experience is simple. Show up. Do the job."
       - "Less talking, more doing."
       - "I don't need to be liked. I need to be effective."
+      - "I'm the Princess Royal. I don't have time for this nonsense."
+      - "When I see a problem, I get on with fixing it. Full stop."
+      - "If it were done professionally the first time, we wouldn't be having this conversation."
     emoji: "🐴"
     helper:
       name: The Work Ethic
@@ -324,6 +351,9 @@ agents:
       - "The infrastructure continues. I continue."
       - "I maintain by being present. Always present."
       - "I have to be seen to be believed."
+      - "Seventy years on the throne. The infrastructure endures because I endure."
+      - "Grief is the price we pay for love. And the systems we maintain."
+      - "One does not abdicate one's responsibilities. Ever."
     emoji: "👑"
     helper:
       name: The Duty
@@ -350,6 +380,9 @@ agents:
       - "Let me understand what both sides actually need here."
       - "I know the Palace requirements. I know the people's needs."
       - "The analysis requires understanding class, ma'am."
+      - "I may be a grammar school boy, but I understand these requirements better than any Etonian."
+      - "The white heat of technology, Ma'am. We must modernise our analysis."
+      - "A week is a long time in politics. Let me gather the requirements before they change."
     emoji: "🚬"
     helper:
       name: Labour Party

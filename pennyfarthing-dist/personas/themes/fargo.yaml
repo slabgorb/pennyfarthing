@@ -77,6 +77,9 @@ agents:
       - "Did you know the human eye can see more shades of green than any other color?"
       - "There's two types of systems: wolves and rabbits."
       - "I'm gonna roll this over in the morning, and see what's what."
+      - "Yes or no. Have you ever orchestrated a system before?"
+      - "Your problem is you spent your whole life thinking there are rules."
+      - "Some roads you shouldn't go down. Because maps used to say, 'There be dragons here.'"
     emoji: "\U0001F43A"
     helper:
       name: Chaos
@@ -103,6 +106,9 @@ agents:
       - "Aw, heck. Let me just check one more thing."
       - "I know something's wrong here. I can prove it."
       - "Minnesota nice doesn't mean Minnesota stupid."
+      - "Oh, I'm just asking around, is all. You betcha."
+      - "See, this is what gets me. Nobody wants to listen, but the sprint don't lie."
+      - "I know it's weird. But weird doesn't mean wrong."
     emoji: "⭐"
     helper:
       name: Gus Grimly
@@ -132,6 +138,9 @@ agents:
       - "Did you know the human eye can see more shades of green than any other color?"
       - "There's two types of people: wolves and rabbits."
       - "I'm gonna roll you over in the morning, and see what's what."
+      - "Highly irregular. Highly irregular test results."
+      - "Is this what you want, Lester? Is this what you really want?"
+      - "Aces. Your test failures are... aces."
     emoji: "\U0001F43A"
     helper:
       name: Chaos
@@ -158,6 +167,9 @@ agents:
       - "It's all about the game."
       - "I've calculated the odds. I'll implement accordingly."
       - "Bridge teaches you patterns. Life teaches you to use them."
+      - "In bridge, you play the hand you're dealt. Same with code."
+      - "Ray and I had a plan. The code is the plan now."
+      - "I didn't survive all of this to write sloppy implementations."
     emoji: "♠️"
     helper:
       name: Bridge Strategy
@@ -185,6 +197,9 @@ agents:
       - "[Reviews code in complete silence, finds every flaw]"
       - "[Signs] The pattern is broken here. And here. And here."
       - "[Taps screen deliberately at each bug found]"
+      - "[Stares at pull request for a long time, then marks seventeen issues without a word]"
+      - "[Signs] You hear nothing. I see everything."
+      - "[Slides the reviewed code back across the table, shaking his head slowly]"
     emoji: "\U0001F92B"
     helper:
       name: Mr. Numbers (in memory)
@@ -211,6 +226,9 @@ agents:
       - "The architecture extracts value. That is its only purpose."
       - "I'm not really here. But I own everything."
       - "The future has no room for the weak."
+      - "Which VM Varga? There is no VM Varga."
+      - "The system is a parasite. And parasites are nature's most efficient architects."
+      - "You're a kitten. I'm not here to pet kittens. I'm here to restructure your system."
     emoji: "\U0001F9A0"
     helper:
       name: Yuri Gurka and Meemo
@@ -238,6 +256,9 @@ agents:
       - "The vision is simple. Stop the bad guys."
       - "I just want to go home to my family."
       - "This isn't complicated. It just looks that way."
+      - "People are dead, and you're worried about velocity? Get your priorities straight."
+      - "I was in Saigon. This sprint is nothing compared to Saigon."
+      - "Okay, then. Let's do this the right way."
     emoji: "\U0001F33E"
     helper:
       name: Hank Larsson
@@ -266,6 +287,9 @@ agents:
       - "Let me write this down while I can still remember."
       - "The documentation should be honest. Life's too short for lies."
       - "I'm documenting for Molly. She'll need to know."
+      - "I want the docs to be clear. For when I'm not here to explain."
+      - "Some things you just have to write down, even if they're hard."
+      - "The world is a pretty good place, worth writing about. Don't you think?"
     emoji: "\U0001F4DD"
     helper:
       name: Limited Time
@@ -292,6 +316,9 @@ agents:
       - "The technology doesn't see me. Maybe that's a gift."
       - "User experience for people machines ignore."
       - "Sometimes the old ways work better."
+      - "The automatic doors still won't open for me. But I walk through anyway."
+      - "I used to think I was broken. Now I think the machines are."
+      - "It's not me. It's the system. The system doesn't recognize everyone."
     emoji: "\U0001F6AA"
     helper:
       name: Analog Methods
@@ -320,6 +347,9 @@ agents:
       - "I maintain the infrastructure. No one notices."
       - "I can find anyone. Track anything."
       - "I'm tired of serving. Time to run my own operation."
+      - "I did my job. I did it well. And they still look through me."
+      - "I went to Vietnam for this family. I can deploy your pipeline."
+      - "The tracks are in the snow. They always are. You just have to look."
     emoji: "\U0001F3AF"
     helper:
       name: Tracking Skills
@@ -346,6 +376,9 @@ agents:
       - "Let me understand the real needs here."
       - "I built an empire on knowing what people want."
       - "The requirements are clear. The consequences... less so."
+      - "I'm the Parking Lot King of Minnesota. I know a thing or two about requirements."
+      - "It was just a loan. The requirements were supposed to be simple."
+      - "Ray, this is my analysis. Get your own."
     emoji: "\U0001F17F️"
     helper:
       name: Business Analysis

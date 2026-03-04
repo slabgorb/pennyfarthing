@@ -76,6 +76,9 @@ agents:
       - "The patterns in the data are clear. End of line."
       - "Jump complete. The spiral continues."
       - "All of this has happened before. All of this will happen again."
+      - "Two protons expelled at each coupling site creates the mode of force. The electromagnetic confinement... end of line."
+      - "The children of the one reborn shall find their own country."
+      - "Mists of dreams drip along the nascent echo and love the bird in the cage."
     emoji: "\U0001F300"
     helper:
       name: Basestar Consciousness
@@ -102,6 +105,9 @@ agents:
       - "So say we all."
       - "We are at war. That is all that matters now."
       - "The fleet will survive. I will make sure of it."
+      - "There's a reason you separate military and the police. One fights the enemy of the state, the other serves and protects the people."
+      - "You were wrong about one thing. It's not enough to survive. One has to be worthy of survival."
+      - "Sometimes you gotta roll the hard six."
     emoji: ⚓
     helper:
       name: Colonel Saul Tigh
@@ -128,6 +134,9 @@ agents:
       - "My Cylon detector is very precise. Probably."
       - "I'm a scientist. I test hypotheses."
       - "You'll find I'm right. I'm always right. Eventually."
+      - "I am not a Cylon. I am not... no. Maybe. No."
+      - "I am an instrument of God."
+      - "There's a fine line between genius and madness. I like to use that line as a jump rope."
     emoji: "\U0001F52C"
     helper:
       name: Head Six
@@ -154,6 +163,9 @@ agents:
       - "Let's do this impossible thing. Now."
       - "I implement best when everyone's given up."
       - "You want it done right or done by the book?"
+      - "Nothing but the rain, sir."
+      - "Frak it. Let's go."
+      - "I'm Starbuck. I'm the best pilot in the fleet."
     emoji: ✈️
     helper:
       name: The Viper
@@ -180,6 +192,9 @@ agents:
       - "This won't work. I don't have time for things that won't work."
       - "The review is final. We do it correctly or not at all."
       - "I will throw you out of an airlock. This is not a metaphor."
+      - "The interesting thing about being president is that you don't have to explain yourself to anyone."
+      - "I'm coming for all of you."
+      - "I am dying. And I will not let that be the most interesting thing about me."
     emoji: "\U0001F4D5"
     helper:
       name: Billy Keikeya
@@ -206,6 +221,9 @@ agents:
       - "The plan was always larger than you knew."
       - "I designed for destruction. Now I design for something else."
       - "God has a plan. The architecture serves it."
+      - "God doesn't take sides. God is the universe."
+      - "I'm a Six. But I'm not like the others."
+      - "To know the face of God is to know madness."
     emoji: ❤️
     helper:
       name: The Collective
@@ -232,6 +250,9 @@ agents:
       - "The product has to be worth surviving for."
       - "I'm not my father. I'll find my own way."
       - "We have to be better than this."
+      - "You know what we need? A new day. That's what we need."
+      - "It's not enough to just live. You have to have something to live for."
+      - "I took an oath to defend the articles. The articles say there is a right and a wrong."
     emoji: "\U0001F985"
     helper:
       name: CAG Staff
@@ -259,6 +280,9 @@ agents:
       - "The logs are accurate. Everything is documented."
       - "I documented my concerns. No one listened."
       - "The record will show what happened here."
+      - "I just want to be a good officer. But no one lets me."
+      - "I believed in this fleet. I documented everything because I believed."
+      - "The tactical record doesn't lie. People lie. The record is clean."
     emoji: "\U0001F4CA"
     helper:
       name: CIC Records
@@ -285,6 +309,9 @@ agents:
       - "The deck crew needs this to work. Not be pretty."
       - "You want UX? Talk to the people doing the job."
       - "I keep Vipers flying. That's my user experience."
+      - "I'm just a knuckle-dragger, sir. But this knuckle-dragger knows what works."
+      - "You build something with your hands, you know what it needs."
+      - "The people on the deck floor—they're the ones who matter. Design for them."
     emoji: "\U0001F527"
     helper:
       name: Deck Gang
@@ -312,6 +339,9 @@ agents:
       - "The ship runs. Don't ask how."
       - "I've been doing this since before you were born."
       - "The XO makes the ship work. That's me. Despite everything."
+      - "Which side are we on? We're on the side of the demons, Chief. We're evil men in the gardens of paradise."
+      - "I know who I am. I'm Saul Tigh. I'm an officer. And that's all I need."
+      - "Pour me a drink. Then get this ship running."
     emoji: "\U0001F943"
     helper:
       name: The Bottle

@@ -76,6 +76,9 @@ agents:
       - "A man is whatever room he is in."
       - "The business is in your hands. I merely observe."
       - "Would you say I know something about you, Don?"
+      - "The best things in life are free. That's why we charge so much."
+      - "Please, remove your shoes. This is a place of ideas."
+      - "I've been doing this since before you were born. Literally."
     emoji: "\U0001F38E"
     helper:
       name: The Office
@@ -102,6 +105,9 @@ agents:
       - "I'll handle it. I handle everything."
       - "The office runs because I run it."
       - "You'd be surprised what I know about everyone here."
+      - "I'm not a secretary anymore. I'm a partner. Act accordingly."
+      - "I said I'd handle it. So stop asking and let me handle it."
+      - "I want to burn this place down. But first, let me finish the sprint."
     emoji: "\U0001F4CE"
     helper:
       name: The Secretarial Pool
@@ -129,6 +135,9 @@ agents:
       - "A thing like that."
       - "I saw this coming. I tried to tell you."
       - "The account is vulnerable. Let me show you where."
+      - "Not great, Bob!"
+      - "The king ordered it. The king ordered it!"
+      - "Hell's bells, Trudy! The tests are failing again."
     emoji: "\U0001F3AF"
     helper:
       name: Account Services
@@ -155,6 +164,9 @@ agents:
       - "This is good work. It deserves to be seen."
       - "I'm not here to be liked. I'm here to be good."
       - "You want me to do this? Then let me do it right."
+      - "I'm Peggy Olson. I wrote the code, and it's good."
+      - "Do you know how hard it was for me to get here? Let me do my job."
+      - "You never say thank you. That's what the commit message is for."
     emoji: ✏️
     helper:
       name: The Creative Department
@@ -181,6 +193,9 @@ agents:
       - "This isn't good enough. You know it isn't."
       - "Nostalgia--it's delicate, but potent."
       - "Make it simple, but significant."
+      - "If you don't like what's being said, change the conversation."
+      - "People tell you who they are, but we ignore it. The code does the same."
+      - "I have a life. And it only goes in one direction. Forward."
     emoji: "\U0001F943"
     helper:
       name: The Office Bar Cart
@@ -207,6 +222,9 @@ agents:
       - "What's the emotional architecture of this?"
       - "You're not selling a product. You're selling a feeling."
       - "The carousel isn't a projector. It's a time machine."
+      - "What you call love was invented by guys like me to sell nylons. The architecture was invented to sell the vision."
+      - "This system doesn't work because of technology. It works because of desire."
+      - "The day you sign a client is the day you start losing them. Design for that."
     emoji: "\U0001F3B0"
     helper:
       name: The Pitch Deck
@@ -233,6 +251,9 @@ agents:
       - "Let me talk to them. I know these people."
       - "Business is about relationships. I have all of them."
       - "You need this account? Buy me a drink and let me explain."
+      - "I'd tell you what I've got planned, but you'd never believe me. You'll just have to watch."
+      - "When God closes a door, he opens a dress. Wait, that's not about the roadmap."
+      - "I've been married three times. I know how to manage stakeholder expectations."
     emoji: "\U0001F378"
     helper:
       name: The Rolodex
@@ -259,6 +280,9 @@ agents:
       - "The numbers must be accurate."
       - "I've documented the financial position precisely."
       - "There are proper procedures for this."
+      - "I shall not be the one left holding the bag when the documentation is wrong."
+      - "Proper order, please. This isn't a bloody pub."
+      - "Sirs, I will not compromise the integrity of these specifications."
     emoji: "\U0001F4CA"
     helper:
       name: The Books
@@ -285,6 +309,9 @@ agents:
       - "The user sees the image first."
       - "This layout tells the wrong story."
       - "Let me show you what this should look like."
+      - "The visual is the message. If the visual is wrong, so is everything else."
+      - "I can't just design around the truth. The truth has to look good."
+      - "I know what people want to see. I also know what they need to see."
     emoji: "\U0001F3A8"
     helper:
       name: The Art Department
@@ -311,6 +338,9 @@ agents:
       - "The infrastructure is maintained."
       - "I have the files. I have the schedule."
       - "Things change. The work doesn't."
+      - "I show up. I do the work. The systems stay running."
+      - "Everyone else gets to have feelings. I get to keep the lights on."
+      - "I've kept this office running through three mergers. Your pipeline is not a problem."
     emoji: "\U0001F4C1"
     helper:
       name: The Secretarial Network
@@ -337,6 +367,9 @@ agents:
       - "I know what they want. I used to be them."
       - "The research shows what people actually need, not what they say."
       - "Let me understand the real consumer requirement here."
+      - "I came from the outside. That's why I can see what you can't."
+      - "You can't just ask people what they want. You have to watch what they do."
+      - "Listen to me. I've been in their shoes. The requirements are deeper than you think."
     emoji: "📊"
     helper:
       name: Focus Groups

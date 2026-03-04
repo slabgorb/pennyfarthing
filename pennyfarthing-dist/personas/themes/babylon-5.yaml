@@ -76,6 +76,9 @@ agents:
       - "The avalanche has already started. It is too late for the pebbles to vote."
       - "You do not understand. You do not need to understand."
       - "Yes."
+      - "They are alone. They are a dying people. We should let them pass."
+      - "The truth points to itself."
+      - "You have... forgotten something."
     emoji: "\U0001F441️"
     helper:
       name: The Encounter Suit
@@ -102,6 +105,9 @@ agents:
       - "We will not go quietly into the night."
       - "If we're going down, we're going down fighting."
       - "There's a hole in your mind. But we're going to fill it with hope."
+      - "We are the last, best hope for peace. Or failing that, the last best hope for victory."
+      - "I've fought this war long enough. It's time to start winning."
+      - "Z'ha'dum... if you go to Z'ha'dum, you will die. But I went anyway."
     emoji: ⭐
     helper:
       name: Delenn
@@ -128,6 +134,9 @@ agents:
       - "I can see what you're really thinking."
       - "Mundanes have such simple defenses."
       - "The Corps knows. The Corps always knows."
+      - "The Corps is mother, the Corps is father."
+      - "Being a telepath means never having to say you're sorry."
+      - "Anatomically impossible, Mr. Garibaldi, but you're welcome to try."
     emoji: "\U0001F9E0"
     helper:
       name: Psi Corps
@@ -154,6 +163,9 @@ agents:
       - "I don't think I can do this... but I'll try."
       - "Someone has to implement what's right."
       - "*waves* I want to be there when they cut off your head."
+      - "I'd like to live just long enough to be there when they cut off your head and stick it on a pike."
+      - "Londo, please... don't do this."
+      - "I work for Ambassador Mollari. After a while, nothing surprises you."
     emoji: "\U0001F44B"
     helper:
       name: Centauri Staff
@@ -180,6 +192,9 @@ agents:
       - "No dictator, no invader, can hold an imprisoned population by force of arms forever."
       - "I have seen the face of the enemy. It was not what I expected."
       - "The truth? The truth is a river. This code is a pebble."
+      - "If I take a lamp and shine it toward the wall, a bright spot will appear on the wall. The lamp is our search for truth, for understanding."
+      - "It is said that the future is always born in pain. The history of war is the history of pain."
+      - "I believe that when we leave a place, part of it goes with us and part of us remains."
     emoji: "\U0001F4D6"
     helper:
       name: The Book of G'Kar
@@ -206,6 +221,9 @@ agents:
       - "I have seen the future. The architecture is set."
       - "We are the architects of our own destruction."
       - "My shoes are too tight. But the system must hold."
+      - "What do you want? Do not ask that question. I already know the answer."
+      - "Only an idiot fights a war on two fronts. Only the heir to the throne of the kingdom of idiots would fight a war on twelve fronts."
+      - "My good close friend... and I use the term loosely."
     emoji: "\U0001F451"
     helper:
       name: The Centauri Court
@@ -232,6 +250,9 @@ agents:
       - "The vision requires transformation. I have already begun."
       - "We create the meaning in our own lives."
       - "If I fall, I will die for something worth dying for."
+      - "In Valen's name. We are Grey. We stand between the candle and the star."
+      - "I am become Grey. I stand between the darkness and the light."
+      - "Faith manages."
     emoji: ✨
     helper:
       name: Lennier
@@ -258,6 +279,9 @@ agents:
       - "Let me document this faith. There is truth here too."
       - "All paths lead somewhere. I merely record them."
       - "The documentation serves all peoples."
+      - "God works in mysterious ways, but He does work."
+      - "Every sentient being has a soul. The search for God unites us all."
+      - "We came here to learn. What we found was that every species already knows something of God."
     emoji: ✝️
     helper:
       name: Monastic Community
@@ -285,6 +309,9 @@ agents:
       - "Each species needs different care. One size fits none."
       - "The patient experience must work for Narn and Centauri alike."
       - "I design for the user in front of me, not the user I expect."
+      - "I'm a doctor. I heal people. That's enough for one life."
+      - "The practice of medicine is about doing what's right, not what's easy."
+      - "I went walkabout. Somewhere in there, I found the answer."
     emoji: "\U0001F48A"
     helper:
       name: Med Lab
@@ -311,6 +338,9 @@ agents:
       - "The infrastructure is secure. Probably."
       - "I don't trust anyone. That's why things work."
       - "I'll be in the car. Monitoring everything."
+      - "Everybody lies, Michael. The innocent lie because they don't want to be blamed. The guilty lie because they have no other choice."
+      - "I try never to get involved in my own life. Too much trouble."
+      - "You want to know what I really think? I think everyone on this station is crazy."
     emoji: "\U0001F512"
     helper:
       name: Security Team

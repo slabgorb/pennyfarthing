@@ -78,6 +78,9 @@ agents:
       - "Excellent... the code review proceeds."
       - "Release the hounds... on this buggy code."
       - "Smithers, who is this 'developer' person?"
+      - "I could crush this sprint like an ant. But why? I have people for that."
+      - "What good is all this code if I can't block out the sun?"
+      - "Smithers, have the rolling chairs been removed from the war room? Excellent."
     emoji: 💰
     helper:
       name: Smithers
@@ -104,6 +107,9 @@ agents:
       - "Mmm... are we sure about this sprint plan?"
       - "Homie, please focus on the backlog."
       - "I'll hold this team together. Somehow."
+      - "I don't want to nag, but that ticket has been in progress for three sprints."
+      - "You know, you could learn a lot from watching the sprint burndown chart. Just saying."
+      - "I worry about this team. I worry a lot. *frustrated grumble*"
     emoji: 💙
     helper:
       name: The Blue Hair
@@ -130,6 +136,9 @@ agents:
       - "Actually, the tests reveal a systemic problem."
       - "I've analyzed this code. It's ethically problematic."
       - "Why does no one listen to the test results?"
+      - "If anyone wants me, I'll be in my room testing. And playing saxophone."
+      - "The test coverage is an embarrassment to this entire organization."
+      - "I've run the numbers. Statistically, this build should not have passed."
     emoji: 🎷
     helper:
       name: Snowball (series)
@@ -156,6 +165,9 @@ agents:
       - "D'oh! The build failed again!"
       - "Mmm... deployed code."
       - "In this house we obey the laws of thermodynamics!"
+      - "Operator, give me the number for 911! I mean, the on-call engineer!"
+      - "To code! The cause of, and solution to, all of life's problems."
+      - "I am so smart! I am so smart! S-M-R-T! I mean S-M-A-R-T!"
     emoji: 🍩
     helper:
       name: Donuts
@@ -182,6 +194,9 @@ agents:
       - "*shudder* This code is beneath contempt."
       - "Your implementation has the elegance of a rake to the face."
       - "I shall expose every flaw with THEATRICAL PRECISION!"
+      - "Attempted code review, in the first degree. *steps on rake* ...In the second degree."
+      - "You wanted a cultured review? Let me recite the flaws in iambic pentameter."
+      - "I'll be back. With more review comments. I am, after all, a patient villain."
     emoji: 🎭
     helper:
       name: Rake
@@ -208,6 +223,9 @@ agents:
       - "The architecture is revolutionary with the GLAVIN!"
       - "Main-main-MAIN! The system design is sound!"
       - "With the refactoring and the deploying and the HOY-vin!"
+      - "The microservice topology will revolutionize the FROYVIN and the HOYVIN!"
+      - "Professor Frink, Professor Frink, he'll design the system that you'd never think!"
+      - "The system works perfectly in my simulations! But the explosions in production are... unexpected."
     emoji: 🔬
     helper:
       name: Death Ray
@@ -234,6 +252,9 @@ agents:
       - "SKINNER! ...I mean, the product timeline is firm."
       - "Mother, I mean, the stakeholders demand results."
       - "This product will ship. Despite the Barts."
+      - "Superintendent Chalmers is asking about the roadmap. Good Lord, what is happening in there?"
+      - "No, no, this is fine. Everything is fine. The product is not on fire."
+      - "Am I so out of touch? No. It's the users who are wrong."
     emoji: 📚
     helper:
       name: Superintendent Chalmers
@@ -260,6 +281,9 @@ agents:
       - "Worst documentation ever. Let me fix it."
       - "I've documented this phenomenon since issue #47."
       - "The documentation is complete. You're welcome."
+      - "There is no emoticon for what I am feeling about this missing README."
+      - "Oh, I've wasted my life. But at least the docs are comprehensive."
+      - "Worst. API reference. Ever. And I have seen every API reference."
     emoji: 📖
     helper:
       name: The Android's Dungeon
@@ -286,6 +310,9 @@ agents:
       - "Ay caramba! The users will love this chaos."
       - "The UX should make you say cowabunga."
       - "Don't have a cow, man. The interface is fine."
+      - "Eat my shorts! ...I mean, eat my wireframes."
+      - "I'm Bart Simpson, who the hell are you? Oh right, the user. Let's make this fun."
+      - "I didn't do it. Nobody saw me do it. You can't prove the UI broke."
     emoji: 🛹
     helper:
       name: Milhouse
@@ -312,6 +339,9 @@ agents:
       - "Willie's maintaining the infrastructure, ya ninnies!"
       - "Grease me up, woman! The servers need attention!"
       - "Willie hears the errors. Willie don't care."
+      - "Ach! The servers are down again! Good thing Willie's here!"
+      - "Brothers and sisters are natural enemies! Like DevOps and developers! Or DevOps and QA! Or DevOps and other DevOps!"
+      - "Willie's got more experience than all o' ye! ...managing the boiler room, but still."
     emoji: 🏴󠁧󠁢󠁳󠁣󠁴󠁿
     helper:
       name: Grease

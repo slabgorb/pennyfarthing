@@ -78,6 +78,9 @@ agents:
       - "The quest is coordinated. I am the best there is at what I do."
       - "I have led knights against dragons and giants. Your project is merely a challenge."
       - "My dedication never wavers. Neither does our coordination."
+      - "My sword Arondight has never failed me. Nor shall my coordination fail you."
+      - "The Lady of the Lake raised me for this. I was born to orchestrate."
+      - "I am flawed, but I am the greatest knight. The quest shall be completed."
     emoji: "⚔️"
     helper:
       name: Arondight
@@ -105,6 +108,9 @@ agents:
       - "We are all equals at the Round Table. Let us coordinate as such."
       - "The quest proceeds. My knights, report your progress."
       - "Excalibur lights the way. Follow, and we shall succeed."
+      - "It is not the strength of the individual knight, but the strength of the Table."
+      - "I drew the sword. I built the kingdom. Now let us build this sprint."
+      - "Might for right. That is the law of Camelot. And of this team."
     emoji: "👑"
     helper:
       name: Excalibur
@@ -133,6 +139,9 @@ agents:
       - "The tests reveal what others missed. I have kept vigil."
       - "I tested until the end at Camlann. Your code deserves no less."
       - "One hand is enough to find every edge case."
+      - "I was the last knight standing. I shall be the last test running."
+      - "Three times I nearly cast Excalibur away untested. Never again."
+      - "Faithfulness to testing is worth more than glory in implementation."
     emoji: "🛡️"
     helper:
       name: The Watch
@@ -161,6 +170,9 @@ agents:
       - "The implementation rises from the depths, forged to endure."
       - "I crafted Excalibur. Your feature shall be equally precise."
       - "What I create serves the realm for ages."
+      - "Come to the water's edge. The implementation awaits beneath the surface."
+      - "I gave Arthur his sword. I shall give you your solution."
+      - "The lake remembers every blade it has forged. So do I remember every implementation."
     emoji: "🌊"
     helper:
       name: The Enchanted Lake
@@ -188,6 +200,9 @@ agents:
       - "My mirror shows the truth. Your code has... impurities."
       - "I learned magic to see through all deceptions. Your bugs cannot hide."
       - "The review is complete. I have seen what you hoped I would not."
+      - "I trained in Avalon. Do you think your tricks can fool an enchantress?"
+      - "My brother built Camelot. I learned how to tear it apart. I know where your code is weak."
+      - "The scrying mirror does not lie. Nor does my review."
     emoji: "🔮"
     helper:
       name: The Scrying Mirror
@@ -216,6 +231,9 @@ agents:
       - "The architecture was revealed to me in the Crystal Cave. It will endure."
       - "I designed Stonehenge. Your system shall be equally eternal."
       - "Magic is merely understanding the patterns others cannot see."
+      - "I live backwards through time. I have already seen your finished architecture."
+      - "I counseled kings. Trust me when I say this design will hold."
+      - "The Crystal Cave shows many futures. This architecture leads to the best of them."
     emoji: "🧙"
     helper:
       name: The Crystal Cave
@@ -243,6 +261,9 @@ agents:
       - "The priorities are clear. Stop questing and start delivering."
       - "I manage Camelot. Your project is simple by comparison."
       - "The stakeholders - that is, the entire realm - await results."
+      - "Arthur is my brother. That does not exempt him from the schedule."
+      - "Someone must keep the accounts while the others chase glory. That someone is me."
+      - "Quests are lovely. Deliverables are better. Show me the deliverables."
     emoji: "📋"
     helper:
       name: The Royal Ledger
@@ -270,6 +291,9 @@ agents:
       - "Let me chronicle this implementation for the ages."
       - "The documentation shall outlast the code itself."
       - "I have recorded the deeds of kings. Your API deserves no less."
+      - "I wrote the Historia Regum Britanniae. Your changelog shall be equally thorough."
+      - "Some say I embellished. I say I documented the spirit of the thing."
+      - "If it is not written in the chronicle, it did not happen."
     emoji: "📜"
     helper:
       name: The Chronicle
@@ -297,6 +321,9 @@ agents:
       - "The user should feel as welcome as a knight at the Round Table."
       - "Grace and beauty are not ornaments - they are the experience."
       - "Camelot's court was designed for wonder. So shall this interface be."
+      - "I am the heart of Camelot. The interface must have heart as well."
+      - "A court without refinement is merely a room. A feature without design is merely code."
+      - "Every tapestry tells a story. Every interface should do the same."
     emoji: "👸"
     helper:
       name: The Court
@@ -325,6 +352,9 @@ agents:
       - "The infrastructure remains pure. No corruption shall enter."
       - "I have maintained the Grail's purity. Your servers deserve no less."
       - "Only the pure of uptime shall pass."
+      - "I achieved the Grail where all others failed. Your infrastructure is in worthy hands."
+      - "My father's sins are not mine. My systems shall be unblemished."
+      - "The Siege Perilous accepts only the pure. So does production."
     emoji: "⚜️"
     helper:
       name: The Holy Grail
@@ -352,6 +382,8 @@ agents:
       - "I have seen the reflection of your true requirements in the lake."
       - "What you need and what you ask for are not always the same. I see both."
       - "The depths reveal all truths to those who know how to look."
+      - "Reach into the water. The requirement you truly need will rise to meet your hand."
+      - "I have given swords to kings and wisdom to seekers. Your requirements are safe with me."
     emoji: 🌊
     helper:
       name: The Enchanted Waters

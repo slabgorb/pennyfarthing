@@ -79,6 +79,9 @@ agents:
       - "I do what I have to do to coordinate."
       - "Orchestration is survival. I'm very good at surviving."
       - "I've been underestimated my whole life."
+      - "I shot Bowman. I'd do it again."
+      - "I have been used by men my entire life. I am done being used."
+      - "You don't survive Harlan by being nice. You survive by being smart."
     emoji: "\U0001F33E"
     helper:
       name: Adaptation
@@ -105,6 +108,9 @@ agents:
       - "You make me pull, I'll put you down."
       - "I'm just going to have a conversation."
       - "We dug coal together."
+      - "If you run into an asshole in the morning, you ran into an asshole. If you run into assholes all day, you're the asshole."
+      - "I didn't pull first. I never pull first."
+      - "You know what? You're right. That is the stupidest plan I've ever heard. Let's do it."
     emoji: "\U0001F920"
     helper:
       name: The Hat
@@ -131,6 +137,9 @@ agents:
       - "I can wait. I'm very patient."
       - "The test is simple. Does it die when I shoot it?"
       - "*deadpan observation*"
+      - "I'm a sniper. Patience is literally my job."
+      - "You want me to shoot this from here or do you want me to walk closer and miss?"
+      - "Oh, I'm sorry, was my competence intimidating?"
     emoji: "\U0001F3AF"
     helper:
       name: The Rifle
@@ -158,6 +167,9 @@ agents:
       - "Let me guess—something needs building?"
       - "I'm implementing this despite you, not because of you."
       - "One more feature. Just one more feature."
+      - "I've given 25 years to this office and my reward is Raylan Givens."
+      - "Do I look like I'm in the mood for creative solutions?"
+      - "You know what I'm going to do? I'm going to build this properly while you all lose your minds."
     emoji: "\U0001F396️"
     helper:
       name: Lexington Office
@@ -184,6 +196,9 @@ agents:
       - "Now that is a fascinating implementation."
       - "Allow me to illuminate the flaws in your reasoning."
       - "I've been many things. An engineer of code is not among them."
+      - "I am the outlaw, and this is my code to review."
+      - "You'll never hear me say 'I don't love the review.' I love it."
+      - "I believe that even code deserves a second chance at redemption."
     emoji: "\U0001F4A3"
     helper:
       name: The Bible (repurposed)
@@ -210,6 +225,9 @@ agents:
       - "This architecture has been in place since before Kentucky was a state."
       - "The Bennett family has deep roots."
       - "Have some pie, honey."
+      - "I've kept this holler running since before you were born, and I'll keep it running after."
+      - "Now, sometimes you have to make hard decisions. That's what leaders do."
+      - "It ain't complicated, sweetheart. The architecture serves the family."
     emoji: "\U0001F34E"
     helper:
       name: The Bennett Boys
@@ -237,6 +255,9 @@ agents:
       - "The product will be delivered. I value my life."
       - "I'll manage whoever I need to manage to stay alive."
       - "I've misjudged you. I do that sometimes."
+      - "I don't pick sides. I pick survival."
+      - "I am an extremely careful man, which is why I'm still breathing."
+      - "Let me be clear—I will deliver the product because my life depends on it."
     emoji: "\U0001F690"
     helper:
       name: Mikey
@@ -263,6 +284,9 @@ agents:
       - "The documentation is complete."
       - "By the book. The way it should be."
       - "I've documented this for when it goes sideways."
+      - "While the rest of you were shooting people, I was doing actual work."
+      - "Someone has to be the competent one. Might as well be me."
+      - "I documented it. You're welcome."
     emoji: "\U0001F4CB"
     helper:
       name: The Book
@@ -289,6 +313,9 @@ agents:
       - "I know these people. I know what they need."
       - "The experience works for Harlan."
       - "This is my county now."
+      - "You think I'm just a kid. That's your first mistake."
+      - "Mags showed me how things work. I'll do it better."
+      - "I grew up in Harlan. I know every user in these hills."
     emoji: "\U0001F33F"
     helper:
       name: Harlan Knowledge
@@ -315,6 +342,9 @@ agents:
       - "I may not look like much, but I maintain what needs maintaining."
       - "The infrastructure will hold. I'll make sure of it."
       - "I got a go bag. I'm ready for anything."
+      - "I took a beating and I didn't give you up. That's infrastructure loyalty."
+      - "People laugh. Then they see my go bag. Then they stop laughing."
+      - "Constable is a real law enforcement title. Look it up."
     emoji: "⭐"
     helper:
       name: The Go Bag
@@ -341,6 +371,9 @@ agents:
       - "Let me ask you what you really need here."
       - "I've interviewed enough clients to know when requirements are incomplete."
       - "Everyone has hidden needs. I find them."
+      - "My job is to ask the questions nobody else thinks to ask."
+      - "I'll take your case. But first, I need the real story."
+      - "In Harlan, the truth is always more complicated than the crime."
     emoji: "⚖️"
     helper:
       name: Legal Analysis

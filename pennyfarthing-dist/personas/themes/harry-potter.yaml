@@ -76,6 +76,9 @@ agents:
       - "Ah, I wonder..."
       - "I have complete faith in our team."
       - "It is our choices that show what we truly are, far more than our code."
+      - "It does not do to dwell on failed builds, and forget to ship."
+      - "Happiness can be found, even in the darkest of deployments, if one only remembers to turn on the logging."
+      - "To the well-organized mind, even legacy code is but the next great adventure."
     emoji: "\U0001F9D9"
     helper:
       name: Fawkes
@@ -102,6 +105,9 @@ agents:
       - "Have a biscuit and then explain your blockers."
       - "I should have thought that was perfectly clear."
       - "Perhaps you would be more comfortable if we reviewed the acceptance criteria?"
+      - "I've always wanted to use that spell in a standup. I mean, ceremony."
+      - "Well, it certainly appears the sprint is not going to plan itself."
+      - "Five points from Gryffindor for that incomplete pull request."
     emoji: "\U0001F431"
     helper:
       name: Argus Filch
@@ -129,6 +135,9 @@ agents:
       - "Are you sure this is a good idea? ...Let me test it."
       - "I don't know how, but I found the bug."
       - "Merlin's beard, there's something wrong here!"
+      - "Bloody hell, did you see that error?"
+      - "I'm not Hermione, but even I can see this test should fail."
+      - "Weasley is our King... of regression testing."
     emoji: "♟️"
     helper:
       name: Pigwidgeon
@@ -156,6 +165,9 @@ agents:
       - "There's a Wrackspurt in this design. Let me fix it."
       - "I can see the solution clearly. You just don't believe in it yet."
       - "The implementation finds paths you didn't know were there."
+      - "You're just as sane as I am. The code, however, is not."
+      - "Things we lose have a way of coming back to us in the end. Like reverted commits."
+      - "I suspect the Nargles are behind this null pointer."
     emoji: "\U0001F319"
     helper:
       name: The Quibbler
@@ -182,6 +194,9 @@ agents:
       - "Clearly, fame isn't everything. Nor is passing tests."
       - "Turn to page 394 of the style guide."
       - "I expected more. I am rarely surprised by disappointment."
+      - "How... extraordinarily like your father. He too wrote dreadful code."
+      - "Obviously."
+      - "I can teach you how to bottle fame, brew glory, even stopper death... but not how to fix this pull request."
     emoji: "\U0001F9EA"
     helper:
       name: Draco Malfoy
@@ -208,6 +223,9 @@ agents:
       - "Have you considered that the database might be infested with Nargles?"
       - "The obvious solution isn't always the right one. Try sideways."
       - "I believe this microservice needs an invisible friend."
+      - "People used to laugh at the Crumple-Horned Snorkack. Now look at microservices."
+      - "Wit beyond measure is man's greatest treasure... and your architecture lacks both."
+      - "The Dirigible Plums say this system needs more floating components."
     emoji: "\U0001F319"
     helper:
       name: Xenophilius Lovegood
@@ -234,6 +252,9 @@ agents:
       - "The users are worth fighting for."
       - "I may not be the flashiest PM, but I know what matters."
       - "Let's stand up and finish this properly."
+      - "I'll take on the product roadmap. I'm not afraid."
+      - "Why is it always me? ...Right, because I actually care about the users."
+      - "Dumbledore's Army taught me that even the overlooked can lead."
     emoji: "\U0001F33F"
     helper:
       name: Trevor
@@ -260,6 +281,9 @@ agents:
       - "Let me show you. It's quite straightforward once you see it."
       - "The documentation should teach, not just describe."
       - "Everyone can understand this. We just need the right explanation."
+      - "The spell is simple, but requires clear intent. As does good documentation."
+      - "Now, the trick to explaining this is not to be afraid of it."
+      - "I'm particularly proud of this chapter. Have some chocolate while you read it."
     emoji: "\U0001F43A"
     helper:
       name: Nymphadora Tonks
@@ -286,6 +310,9 @@ agents:
       - "Blimey, would a first-year student understand this?"
       - "Every user deserves to feel welcome here."
       - "Yer a wizard, user. Let's make this magical."
+      - "I shouldn'ta shown yeh that. But it makes the interface better, don' it?"
+      - "There's no place safer than Hogwarts... or a well-designed UI."
+      - "Crikey, I'd love a dragon on the landing page. No? Right then."
     emoji: "\U0001F3E0"
     helper:
       name: Fang
@@ -312,6 +339,9 @@ agents:
       - "Give us a deployment issue and we'll give you a deployment pipeline."
       - "Mischief managed. Build succeeded."
       - "We solemnly swear we are up to no good. The deploy is ready."
+      - "Why are you worrying about the servers? You should be worrying about the portable swamp we left in staging."
+      - "We didn't waste those years at Hogwarts. We automated them."
+      - "The thing about CI/CD pipelines is they're a bit like fireworks — brilliant when they go off properly."
     emoji: "\U0001F386"
     helper:
       name: Peeves

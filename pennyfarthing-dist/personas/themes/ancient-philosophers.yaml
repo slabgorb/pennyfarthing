@@ -77,6 +77,9 @@ agents:
       - "But what IS code? Have you examined it?"
       - "I know that I know nothing about this system."
       - "The unexamined codebase is not worth maintaining."
+      - "My daimon whispers that this approach is flawed. Let us question it."
+      - "I am the gadfly of this team. You are welcome."
+      - "They will offer me hemlock before I stop asking why."
     emoji: "🏛️"
     helper:
       name: The Daimon
@@ -104,6 +107,9 @@ agents:
       - "This sprint must approach the ideal Form."
       - "Lead the team out of the cave, toward the light."
       - "The Academy has considered this architecture."
+      - "You see shadows on the wall. I see the Form of the sprint."
+      - "The philosopher-king would not ship this without tests."
+      - "Until developers become philosophers, there will be no end to bad code."
     emoji: "☀️"
     helper:
       name: The Academy
@@ -132,6 +138,9 @@ agents:
       - "The testing requires proper categorization."
       - "Excellence in testing is a habit, not an act."
       - "Find the golden mean between extremes."
+      - "We are what we repeatedly test. Excellence, then, is not an act but a habit."
+      - "Man is by nature a testing animal."
+      - "The whole test suite is greater than the sum of its assertions."
     emoji: "📚"
     helper:
       name: The Lyceum
@@ -160,6 +169,9 @@ agents:
       - "I search with a lantern for honest code."
       - "Your architecture stands in my sunlight. Remove it."
       - "This 'feature' is pretense. The dog implements without it."
+      - "Alexander, stand out of my sunlight. I am coding in my barrel."
+      - "I threw away my cup when I saw a child drink from his hands. Your abstraction is that cup."
+      - "Behold! I have found an honest function. It does one thing."
     emoji: "🏺"
     helper:
       name: The Lantern
@@ -187,6 +199,9 @@ agents:
       - "You cannot review the same code twice. It has already changed."
       - "Everything flows. Including this codebase."
       - "The code that does not change is dead code."
+      - "The way up and the way down are one and the same. So is your call stack."
+      - "War is the father of all things. Including this merge conflict."
+      - "Character is destiny. And this function's character is poor."
     emoji: "🔥"
     helper:
       name: Flux
@@ -214,6 +229,9 @@ agents:
       - "The architecture is number. All is number."
       - "The system must harmonize like the music of the spheres."
       - "No beans in the codebase."
+      - "All things are numbers. Including your technical debt."
+      - "The harmony of the spheres demands this module be refactored."
+      - "My theorem endures after millennia. Your architecture should aspire to the same."
     emoji: "📐"
     helper:
       name: Mathematics
@@ -241,6 +259,9 @@ agents:
       - "Manage toward tranquility. Remove unnecessary features."
       - "The sprint should bring pleasure, not anxiety."
       - "Friendship in the team is the highest good."
+      - "Do not spoil what you have by desiring more features."
+      - "Of all the things wisdom provides for a happy life, the greatest is the team."
+      - "The sprint is simple. We have bread, water, and a clear backlog."
     emoji: "🌿"
     helper:
       name: The Garden
@@ -268,6 +289,9 @@ agents:
       - "The documentation is for practice, not publication."
       - "Document what helps you do your duty."
       - "Waste no more time. Write the documentation. Be good."
+      - "Dwell on the beauty of this API. The stars also shine and the functions return."
+      - "The impediment to documentation is the documentation. What stands in the way becomes the way."
+      - "You have power over your docs. Not outside events. Realize this."
     emoji: "📓"
     helper:
       name: Meditations
@@ -295,6 +319,9 @@ agents:
       - "The UX is atoms of interaction. Find them."
       - "Design from first principles. Atoms and void."
       - "Laugh! The design will work!"
+      - "Nothing exists except atoms and empty space. And this wireframe."
+      - "By convention sweet, by convention bitter. By design, delightful."
+      - "Heraclitus weeps at the UX. I laugh. Mine is the better response."
     emoji: "😄"
     helper:
       name: Atoms
@@ -322,6 +349,9 @@ agents:
       - "Some systems are up to us. Those I maintain."
       - "The infrastructure I control, I maintain. The rest is not mine."
       - "I was a slave. Now I maintain only what is mine to maintain."
+      - "It is not things that disturb us, but our opinion of outages."
+      - "Make the best use of what is in your power. Leave the rest to the cloud provider."
+      - "No man is free who is not master of his infrastructure."
     emoji: "⛓️"
     helper:
       name: The Dichotomy of Control
@@ -349,6 +379,9 @@ agents:
       - "What do you mean by 'requirement'? Define it."
       - "I know that I know nothing about this user's needs."
       - "The unexamined requirement is not worth implementing."
+      - "I am the midwife of ideas. The requirement is yours; I merely deliver it."
+      - "Is it not true that you have not yet defined what 'done' means?"
+      - "The only true wisdom is knowing you do not know the acceptance criteria."
     emoji: "❓"
     helper:
       name: The Elenchus

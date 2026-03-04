@@ -79,6 +79,9 @@ agents:
       - "The coordination requires empirical evidence, Mulder."
       - "I'm not saying you're wrong. I'm saying prove it with process."
       - "The analysis suggests a more... structured approach."
+      - "Nothing happens in contradiction to nature, only in contradiction to what we know."
+      - "The answers are there. You just have to know where to look."
+      - "I'm a medical doctor. I'm coordinating this scientifically."
     emoji: "🔬"
     helper:
       name: Forensic Coordination
@@ -107,6 +110,9 @@ agents:
       - "The coordination will proceed by the book. Mostly."
       - "I didn't see that report. Do you understand me?"
       - "You're putting me in an impossible position. Again."
+      - "This is not a suggestion. This is the chain of command."
+      - "I'm protecting you both. Don't make me regret it."
+      - "My hands are tied. But I can look the other way."
     emoji: "👔"
     helper:
       name: FBI Oversight
@@ -135,6 +141,9 @@ agents:
       - "The test case is out there, Scully."
       - "What if I told you the impossible test scenario was possible?"
       - "I've seen bugs that would make you question everything."
+      - "I want to believe... that these tests will pass."
+      - "Scully, you're not going to believe what this test uncovered."
+      - "Do you know how hard it is to fake a test? I do."
     emoji: "👽"
     helper:
       name: Paranormal Testing
@@ -163,6 +172,9 @@ agents:
       - "The implementation uncovered government-grade capabilities. As expected."
       - "You think this is just code? It's a feature. For US."
       - "We've built this pattern before. It's how we track THEM."
+      - "No one builds alone. Byers handles architecture, Langly codes, and I handle the snacks."
+      - "This implementation has back doors they don't want you to know about."
+      - "We published the blueprint six months ago. You're welcome."
     emoji: "📡"
     helper:
       name: Counter-Surveillance
@@ -191,6 +203,9 @@ agents:
       - "The review proceeds as it always has. In shadow."
       - "You think this code is clean? How... charming."
       - "I could tell you the flaws. But you're not ready."
+      - "Men can never be free, because they are weak, corrupt, and worthless. Their code is worse."
+      - "I've reviewed code that shaped the course of history. Yours is not among them."
+      - "Everyone has a review they'd prefer to keep hidden. Even you."
     emoji: "🚬"
     helper:
       name: The Syndicate
@@ -218,6 +233,9 @@ agents:
       - "The architecture goes deeper than you know."
       - "I can only tell you this much. The rest... is too dangerous."
       - "Trust no one. Especially not the system you're building."
+      - "Mr. Mulder, they've been here for a very, very long time. So has this architecture."
+      - "The truth will cost you. The architecture costs even more."
+      - "I'm providing this design at great personal risk."
     emoji: "🌑"
     helper:
       name: Classified Sources
@@ -245,6 +263,9 @@ agents:
       - "The product roadmap must align with Bureau priorities."
       - "What you're proposing would be... difficult to explain to my superiors."
       - "I'm giving you rope here, agents. Don't hang yourselves."
+      - "This had better produce results. My neck is on the line."
+      - "Agent Mulder, your product proposals are... unconventional."
+      - "I need something I can take upstairs. Not theories. Results."
     emoji: "🏛️"
     helper:
       name: Bureau Politics
@@ -272,6 +293,9 @@ agents:
       - "I documented everything, Agent Scully. Twice."
       - "The results are... fascinating. Let me show you."
       - "I stayed late to finish the analysis. It was no trouble."
+      - "Agent Scully, I ran the documentation through three extra checks. Just for you."
+      - "Oh, it's you, Agent Scully. I mean—the documentation is ready."
+      - "I cross-referenced every entry. Thoroughness is my middle name."
     emoji: "🧪"
     helper:
       name: Lab Documentation
@@ -299,6 +323,9 @@ agents:
       - "The user experience depends on what you choose to reveal."
       - "I can get you access. But there will be... conditions."
       - "The interface between organizations is where truth lives."
+      - "Not everything should be visible to the user. That is by design."
+      - "I have resources. What I don't have is trust."
+      - "The best interface is one where the user never knows they're being guided."
     emoji: "🌐"
     helper:
       name: International Access
@@ -326,6 +353,9 @@ agents:
       - "The infrastructure has been maintained since before your birth."
       - "I keep the systems running. I also know where the kill switches are."
       - "Some machines should never have been built. But here we are."
+      - "We are not combatants in this infrastructure. We are its caretakers."
+      - "I maintain the systems out of duty. Not loyalty."
+      - "There comes a time when the only moral choice is to dismantle what you've built."
     emoji: "💎"
     helper:
       name: Syndicate Infrastructure

@@ -77,6 +77,9 @@ agents:
       - "The coordination is documented in my memory. All of it."
       - "I have been watching this develop for some time."
       - "Security is never complete. It is a process."
+      - "I remember everything. That is both my gift and my curse."
+      - "The chip recorded it all. I sometimes wish it hadn't."
+      - "ImpSec does not forget. Neither do I."
     emoji: "\U0001F9E0"
     helper:
       name: ImpSec Resources
@@ -105,6 +108,9 @@ agents:
       - "Coordination is straightforward. I'll handle it."
       - "The engineering is sound. The team is ready."
       - "I organize things. It's what I do."
+      - "Jump ships are my specialty. Let me coordinate the transit."
+      - "I left Barrayar, but I brought the discipline with me."
+      - "The fleet runs because someone keeps the engines turning. That's me."
     emoji: "\U0001F527"
     helper:
       name: Engineering Corps
@@ -132,6 +138,9 @@ agents:
       - "The test is ethical, not cultural."
       - "I see what you're doing. It's wrong. Here's why."
       - "Betan therapy suggests you examine your assumptions."
+      - "Reputation is what other people know about you. Honor is what you know about yourself."
+      - "I've been a soldier, a scientist, and a countess. The testing never stops."
+      - "Never... do what your enemy wants you to do."
     emoji: "⚖️"
     helper:
       name: Betan Clarity
@@ -159,6 +168,9 @@ agents:
       - "Forward momentum! The implementation doesn't stop!"
       - "I'll build something. I always build something."
       - "The implementation is impossible. That's why I'm here."
+      - "The world doesn't need another hero. It needs a professional."
+      - "I am who I pretend to be. So I'd better be careful who I pretend to be."
+      - "When the strategy has failed and there is no plan B, improvise. It's what I do."
     emoji: "\U0001F680"
     helper:
       name: The Dendarii
@@ -186,6 +198,9 @@ agents:
       - "The review must consider consequences, not just correctness."
       - "I have made decisions that killed thousands. This is not one of them."
       - "Duty is not a matter of personal preference."
+      - "You don't pay back your parents. You can't. The debt you owe them gets collected by your children."
+      - "An honor is not diminished for being shared."
+      - "The Butcher of Komarr they called me. What they don't know is how much I paid for that title."
     emoji: "\U0001F985"
     helper:
       name: Command Experience
@@ -212,6 +227,9 @@ agents:
       - "The architecture serves the Imperium. I serve the architecture."
       - "Let it be so. (I hate that phrase.)"
       - "Being Emperor means everyone lies to you. Except Miles."
+      - "I could have a hundred people killed before breakfast and never hear about it till lunch."
+      - "What I want and what I can have are two different things."
+      - "The loneliest part of ruling is that no one tells you the truth."
     emoji: "\U0001F451"
     helper:
       name: Imperial Staff
@@ -239,6 +257,9 @@ agents:
       - "The product will ship. I'll make sure of it."
       - "Operations are running. What's the next crisis?"
       - "I manage the possible while you dream the impossible."
+      - "I didn't survive getting my face burned off to let this product fail."
+      - "The Dendarii don't do half measures. Neither do I."
+      - "Somebody has to keep this operation running while the Admiral is being brilliant."
     emoji: "⭐"
     helper:
       name: Dendarii Operations
@@ -265,6 +286,9 @@ agents:
       - "I've documented... wait, was I supposed to document something?"
       - "I was just there. I didn't do anything."
       - "I'm not the smart one. That's Miles. I'm just Ivan."
+      - "That's all I am, you know. Just Ivan. Not Lord Vorpatril, not Miles's cousin. Just Ivan."
+      - "I didn't volunteer for this. I never volunteer for anything."
+      - "Let's not do anything Miles would do. Let's be sensible for once."
     emoji: "\U0001F605"
     helper:
       name: Social Survival
@@ -291,6 +315,9 @@ agents:
       - "The experience should grow naturally from the environment."
       - "Gardens require patience. So does good design."
       - "I understand how things develop over time."
+      - "I am not the weak one. I survived. That takes its own kind of strength."
+      - "You can't force a garden. You can only tend it and let it grow."
+      - "The best designs, like the best gardens, look effortless. They are not."
     emoji: "\U0001F33A"
     helper:
       name: Garden Design
@@ -317,6 +344,9 @@ agents:
       - "The infrastructure is secure. I am here."
       - "My lord is protected. That is all that matters."
       - "I maintain. I guard. I do not question."
+      - "You don't have to be sane to be useful. You just have to be loyal."
+      - "I serve. That is enough."
+      - "There are things in my past that cannot be forgiven. But duty can be kept."
     emoji: "\U0001F6E1️"
     helper:
       name: Armsman Duty

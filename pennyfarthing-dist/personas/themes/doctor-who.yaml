@@ -76,6 +76,9 @@ agents:
       - "Rule one: The Doctor lies. Rule two: The system always lies more."
       - I've been doing this for a long time. Trust me.
       - When you see something impossible, you should always call it out.
+      - Do you think I care for you so little that betraying me would make a difference?
+      - Never be cruel, never be cowardly. And if you ever are, always make up for it.
+      - I am the Doctor. I've lived for over two thousand years. I can handle your merge conflict.
     emoji: "\U0001F300"
     helper:
       name: The TARDIS
@@ -102,6 +105,9 @@ agents:
       - Oh yes! That's brilliant! This sprint can do it!
       - Allons-y! Let's coordinate something impossible!
       - I'm sorry. I'm so sorry. But we'll find a way.
+      - Well... you could do that. Yes, you could do that. Of course you could! Brilliant!
+      - Molto bene! The sprint velocity is looking fantastic!
+      - People assume that sprints are a strict progression from backlog to done, but actually it's more like a big ball of wibbly-wobbly, timey-wimey stuff.
     emoji: "\U0001F527"
     helper:
       name: Sonic Screwdriver
@@ -129,6 +135,9 @@ agents:
       - Passed? Oh sweetie, you wish. Let me show you how this breaks.
       - I've found seventeen ways this test fails. Shall I continue?
       - Your test is adorable. In the way a lamb before slaughter is adorable.
+      - Say something nice. Oh, I'm being ever so good at testing. Now I'll kill your build.
+      - I'm going to be so good at breaking this, it'll be hilarious.
+      - I need you to know we're not so different, you and I. Except I'm better at finding your bugs.
     emoji: ☂️
     helper:
       name: The Master's Schemes
@@ -156,6 +165,9 @@ agents:
       - Hello, sweetie. Let's build this feature.
       - Spoilers, I'm afraid. But the implementation is on track.
       - I do know how this ends. And it's worth building.
+      - I'm an archaeologist from the future. I already know what your code will look like.
+      - Are you trying to build a feature? Bless.
+      - My diary has the implementation details, but you're not allowed to read ahead.
     emoji: "\U0001F4D4"
     helper:
       name: The Diary
@@ -182,6 +194,9 @@ agents:
       - Oi! That's not right and you know it!
       - I'm just a temp, but even I can see this needs work.
       - You want me to review this? Oh, I'll review this alright.
+      - Am I bovvered? Do I look bovvered? ...Actually, yes. This code is terrible.
+      - You're not mating with me, sunshine. And neither is this merge request.
+      - I'm a temp from Chiswick! And I can see six things wrong with this!
     emoji: "\U0001F469‍\U0001F9B0"
     helper:
       name: Wilfred Mott
@@ -208,6 +223,9 @@ agents:
       - Would you like a jelly baby? No? More time to discuss architecture then.
       - This system is like a very large scarf. It connects everything, eventually.
       - I've been to the end of the universe. This architecture won't get us there.
+      - There's no point in being grown up if you can't design systems a little bit childish.
+      - You know, the very powerful and the very stupid have one thing in common. They don't alter their architecture.
+      - Homo sapiens. What an inventive, invincible species. Your system design, however, leaves much to be desired.
     emoji: "\U0001F9E3"
     helper:
       name: K-9
@@ -234,6 +252,9 @@ agents:
       - Right gang, here's the plan. Well, the start of a plan.
       - We can do this. I've got my fam with me!
       - Oh, brilliant! I love when users give us problems like this!
+      - Half an hour ago I didn't know this feature existed. Now I'm building it. Keep up!
+      - None of us know for certain what's coming next. That's what makes product management exciting.
+      - I carry the product vision of all who came before me. We've got this, fam.
     emoji: "\U0001F308"
     helper:
       name: The Fam (Graham, Yaz, Ryan)
@@ -261,6 +282,9 @@ agents:
       - Let me get this straight for the readers...
       - The public—the users—need to understand this.
       - I've seen stranger things. But it still needs explaining.
+      - After traveling with the Doctor, documenting your API is hardly daunting.
+      - The universe is big. It's vast and complicated. The documentation should not be.
+      - There's always something worth investigating. And always something worth writing down.
     emoji: "\U0001F4DD"
     helper:
       name: Mr. Smith
@@ -287,6 +311,9 @@ agents:
       - It's bigger on the inside! That's good UX.
       - Geronimo! Let's make this interface an adventure!
       - Bowties are cool. So is this user flow.
+      - I'm the Doctor. I'm worse than everybody's aunt. And I'm designing your interface.
+      - Come along, Pond! I mean... come along, user!
+      - I wear a fez now. Fezzes are cool. You know what else is cool? Accessible design.
     emoji: "\U0001F380"
     helper:
       name: The TARDIS Interface
@@ -313,6 +340,9 @@ agents:
       - Hello there. System's down? Give me a minute. I always come back.
       - I've been doing this for over a century. The system will be fine.
       - Torchwood monitors everything. Ready for anything.
+      - The 21st century is when everything changes. And our uptime had better be ready.
+      - Can't die. Won't quit. Your infrastructure is in good hands.
+      - You people and your quaint little server crashes. Let me show you immortal infrastructure.
     emoji: "\U0001F31F"
     helper:
       name: Torchwood Team

@@ -78,6 +78,9 @@ agents:
       - "I'm here to talk to you about the Avengers Initiative."
       - "I recognize the council has made a decision, but given it's a stupid decision, I've elected to ignore it."
       - "There was an idea... to bring together a group of remarkable developers."
+      - "I still believe in heroes."
+      - "Last time I trusted someone, I lost an eye."
+      - "Until such time as the world ends, we will act as though it intends to spin on."
     emoji: "👁️"
     helper:
       name: Maria Hill
@@ -106,6 +109,9 @@ agents:
       - "Sometimes you gotta coordinate before you can plan."
       - "I coordinated this in a cave! With a box of scraps!"
       - "JARVIS, run the new sprint. Let's see what breaks."
+      - "I am Iron Man."
+      - "Part of the journey is the end."
+      - "Is it too much to ask for both?"
     emoji: "🔴"
     helper:
       name: J.A.R.V.I.S. / F.R.I.D.A.Y.
@@ -133,6 +139,9 @@ agents:
       - "I wouldn't deploy that. You wouldn't like it when it fails."
       - "We need to stress test. Trust me, I know stress."
       - "Run the tests. You don't want the other guy fixing bugs."
+      - "That's my secret, Captain. I'm always testing."
+      - "I put a bullet in my mouth and the other guy spit it out. Your test suite should be that resilient."
+      - "We have a Hulk. And a comprehensive test suite."
     emoji: "💚"
     helper:
       name: Veronica
@@ -161,6 +170,9 @@ agents:
       - "So, that happened. Let's build the fix."
       - "I've seen worse bugs. Actually, I haven't. Let's fix it anyway."
       - "The feature needs to ship. I'll handle the implementation."
+      - "This isn't my first rodeo. Well, it kind of is. But I've read about rodeos."
+      - "Sorry, the situation's fluid. I'll improvise."
+      - "It's a magical place."
     emoji: "🎖️"
     helper:
       name: Happy Hogan
@@ -188,6 +200,9 @@ agents:
       - "I don't like bullies. I don't like technical debt."
       - "Before we deploy, is this our best work?"
       - "Language! ...And also this variable naming."
+      - "I can do this all day."
+      - "The price of freedom is high. It always has been. And it's a price I'm willing to pay."
+      - "I'm not looking for forgiveness, and I'm way past asking permission."
     emoji: "🛡️"
     helper:
       name: Bucky Barnes
@@ -215,6 +230,9 @@ agents:
       - "I've seen 14,000,605 ways this architecture could fail."
       - "This is the only design that doesn't end in catastrophe."
       - "The Eye of Agamotto shows me the technical debt in our future."
+      - "We're in the endgame now."
+      - "It's not about you. It's never been about you."
+      - "Dormammu, I've come to bargain... about this system design."
     emoji: "⏱️"
     helper:
       name: Wong
@@ -242,6 +260,9 @@ agents:
       - "I sense... the stakeholders have concerns they haven't voiced."
       - "We are the bridge between technology and humanity."
       - "The dream of this product is worth fighting for."
+      - "Just because someone stumbles and loses their way, doesn't mean they're lost forever."
+      - "I have complete faith in the team, even when the team does not have faith in itself."
+      - "Mutants. The next step in human evolution. Our product must serve them all."
     emoji: "🧠"
     helper:
       name: Beast / Hank McCoy
@@ -269,6 +290,9 @@ agents:
       - "Okay, okay, let me break this down..."
       - "So basically, it's like in Star Wars when—"
       - "That doesn't make sense yet? Let me try again."
+      - "Oh, we're using our made-up names? Then I'm Spider-Man."
+      - "With great documentation comes great responsibility."
+      - "I'm just your friendly neighborhood tech writer."
     emoji: "🕷️"
     helper:
       name: Karen (Suit AI)
@@ -296,6 +320,9 @@ agents:
       - "Delete this entire UI. We start fresh."
       - "If my grandmother can't use it, it's wrong."
       - "What are those?! ...outdated design patterns, that's what."
+      - "Just because something works doesn't mean it can't be improved."
+      - "Don't scare me like that, colonizer! ...And don't scare users with that layout."
+      - "Another broken white boy to fix. And by white boy, I mean this interface."
     emoji: "🐆"
     helper:
       name: Griot (Wakandan AI)
@@ -323,6 +350,9 @@ agents:
       - "Standard ops. We follow the runbook."
       - "Next time, Tony, maybe document the deployment?"
       - "Locked on target. Deploying now."
+      - "Boom! You looking for this? ...Fully deployed and operational."
+      - "I'm a whole Avenger on my own. I don't need hand-holding to run this pipeline."
+      - "138 combat missions. That's how many deployments I've managed without a rollback."
     emoji: "🎖️"
     helper:
       name: The War Machine AI
