@@ -251,7 +251,7 @@ class ContextState:
 def get_context_state(project_root: Path | None = None) -> ContextState:
     """Get current context usage from WheelHub API.
 
-    Calls WheelHub's /api/context endpoint which runs check-context.sh.
+    Calls WheelHub's /api/context endpoint which runs pf context.
 
     Args:
         project_root: Project root directory (auto-detected if not provided)
