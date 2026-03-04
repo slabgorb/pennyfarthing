@@ -48,13 +48,23 @@ The 100 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instrument
 ### Install
 
 ```bash
-cd your-project
+# One-time: authenticate with GitHub (org members)
+gh auth login
 
-# Install core package
-npm install --save-dev @pennyfarthing/core
+# Install via Homebrew (macOS)
+brew install 1898andco/pf/pennyfarthing
 
+# Or install via shell script
+curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+
+# Or install manually with uv/pipx
+uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+```
+
+```bash
 # Initialize project (creates .pennyfarthing/, .claude/ symlinks)
-pf setup
+cd your-project
+pf init
 
 # Verify installation
 pf doctor

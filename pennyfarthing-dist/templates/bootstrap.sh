@@ -12,12 +12,14 @@ fi
 echo "Setting up Pennyfarthing..." >&2
 
 if ! command -v pf &>/dev/null; then
-    if command -v uv &>/dev/null; then
+    if command -v brew &>/dev/null && brew tap 2>/dev/null | grep -q 1898andco/pf; then
+        brew install pennyfarthing >&2 2>&1 || true
+    elif command -v uv &>/dev/null; then
         uv tool install pennyfarthing-scripts >&2 2>&1 || true
     elif command -v pipx &>/dev/null; then
         pipx install pennyfarthing-scripts >&2 2>&1 || true
     else
-        echo "Cannot install pf: need uv or pipx (https://docs.astral.sh/uv/)" >&2
+        echo "Cannot install pf: need brew, uv, or pipx (https://docs.astral.sh/uv/)" >&2
         exit 0
     fi
 
