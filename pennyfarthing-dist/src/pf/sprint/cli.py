@@ -556,7 +556,9 @@ def epic_show(epic_id: str, output_json: bool):
                 stitle = s.get("title", "?")
                 spts = s.get("points", "?")
                 sstat = s.get("status", "?")
-                click.echo(f"  {sid}: {stitle} [{spts}pts] ({sstat})")
+                sjira = s.get("jira", "")
+                jira_tag = f" [{sjira}]" if sjira else " [no jira]"
+                click.echo(f"  {sid}{jira_tag}: {stitle} [{spts}pts] ({sstat})")
 
 
 def _epic_shard_path(sprint_dir, ref: str):
