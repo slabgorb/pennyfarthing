@@ -32,6 +32,12 @@ export interface SkillResult {
   related_skills?: string[];
 }
 
+export interface SearchResult {
+  success: boolean;
+  data?: SkillResult[];
+  error?: string;
+}
+
 /** Valid categories from the registry */
 const VALID_CATEGORIES = [
   'ai-llm',
@@ -216,74 +222,78 @@ function parseInlineArray(value: string): string[] {
  * @returns Promise resolving to array of matching skills
  * @throws Error if registry file not found or invalid category
  */
-export async function searchSkills(options: SearchOptions): Promise<SkillResult[]> {
-  // Resolve registry path
-  let registryPath = options.registryPath;
-  if (!registryPath) {
-    const distPath = resolvePennyfarthingDist();
-    if (!distPath) {
-      throw new Error('Registry not found: Cannot resolve pennyfarthing-dist directory');
+export async function searchSkills(options: SearchOptions): Promise<SearchResult> {
+  try {
+    // Resolve registry path
+    let registryPath = options.registryPath;
+    if (!registryPath) {
+      const distPath = resolvePennyfarthingDist();
+      if (!distPath) {
+        return { success: false, error: 'Registry not found: Cannot resolve pennyfarthing-dist directory' };
+      }
+      registryPath = join(distPath, 'skills', 'skill-registry.yaml');
     }
-    registryPath = join(distPath, 'skills', 'skill-registry.yaml');
+
+    // Validate registry exists
+    if (!existsSync(registryPath)) {
+      return { success: false, error: `Registry not found: ${registryPath}` };
+    }
+
+    // Validate category if provided
+    if (options.category && !VALID_CATEGORIES.includes(options.category)) {
+      return { success: false, error: `Invalid category: ${options.category}. Valid categories: ${VALID_CATEGORIES.join(', ')}` };
+    }
+
+    // Parse registry
+    const content = readFileSync(registryPath, 'utf-8');
+    const registry = parseRegistryYaml(content);
+
+    // Convert to SkillResult array
+    let results: SkillResult[] = Object.values(registry.skills).map(skill => ({
+      name: skill.name,
+      description: skill.description,
+      category: skill.category,
+      tags: skill.tags,
+      keywords: skill.keywords.length > 0 ? skill.keywords : undefined,
+      version: skill.version || undefined,
+      related_skills: skill.related_skills.length > 0 ? skill.related_skills : undefined
+    }));
+
+    // Apply filters (AND logic - all filters must match)
+
+    // Filter by category
+    if (options.category) {
+      results = results.filter(s => s.category === options.category);
+    }
+
+    // Filter by tag (case-insensitive)
+    if (options.tag) {
+      const searchTag = options.tag.toLowerCase();
+      results = results.filter(s =>
+        s.tags.some(t => t.toLowerCase() === searchTag)
+      );
+    }
+
+    // Filter by keyword (case-insensitive)
+    if (options.keyword) {
+      const searchKeyword = options.keyword.toLowerCase();
+      results = results.filter(s =>
+        s.keywords?.some(k => k.toLowerCase() === searchKeyword)
+      );
+    }
+
+    // Filter by query (searches description, case-insensitive)
+    if (options.query) {
+      const searchQuery = options.query.toLowerCase();
+      results = results.filter(s =>
+        s.description.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    return { success: true, data: results };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
   }
-
-  // Validate registry exists
-  if (!existsSync(registryPath)) {
-    throw new Error(`Registry not found: ${registryPath}`);
-  }
-
-  // Validate category if provided
-  if (options.category && !VALID_CATEGORIES.includes(options.category)) {
-    throw new Error(`Invalid category: ${options.category}. Valid categories: ${VALID_CATEGORIES.join(', ')}`);
-  }
-
-  // Parse registry
-  const content = readFileSync(registryPath, 'utf-8');
-  const registry = parseRegistryYaml(content);
-
-  // Convert to SkillResult array
-  let results: SkillResult[] = Object.values(registry.skills).map(skill => ({
-    name: skill.name,
-    description: skill.description,
-    category: skill.category,
-    tags: skill.tags,
-    keywords: skill.keywords.length > 0 ? skill.keywords : undefined,
-    version: skill.version || undefined,
-    related_skills: skill.related_skills.length > 0 ? skill.related_skills : undefined
-  }));
-
-  // Apply filters (AND logic - all filters must match)
-
-  // Filter by category
-  if (options.category) {
-    results = results.filter(s => s.category === options.category);
-  }
-
-  // Filter by tag (case-insensitive)
-  if (options.tag) {
-    const searchTag = options.tag.toLowerCase();
-    results = results.filter(s =>
-      s.tags.some(t => t.toLowerCase() === searchTag)
-    );
-  }
-
-  // Filter by keyword (case-insensitive)
-  if (options.keyword) {
-    const searchKeyword = options.keyword.toLowerCase();
-    results = results.filter(s =>
-      s.keywords?.some(k => k.toLowerCase() === searchKeyword)
-    );
-  }
-
-  // Filter by query (searches description, case-insensitive)
-  if (options.query) {
-    const searchQuery = options.query.toLowerCase();
-    results = results.filter(s =>
-      s.description.toLowerCase().includes(searchQuery)
-    );
-  }
-
-  return results;
 }
 
 // CLI entry point when run directly
@@ -326,11 +336,15 @@ Examples:
   }
 
   searchSkills(options)
-    .then(results => {
+    .then(result => {
+      if (!result.success) {
+        console.error(`Error: ${result.error}`);
+        process.exit(1);
+      }
+      const results = result.data!;
       if (jsonOutput) {
         console.log(JSON.stringify(results, null, 2));
       } else {
-        // Table output
         if (results.length === 0) {
           console.log('No skills found matching criteria.');
         } else {

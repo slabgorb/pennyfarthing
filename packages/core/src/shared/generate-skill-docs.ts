@@ -31,6 +31,8 @@ export interface GeneratorResult {
   skillCount: number;
   /** Path where file was written (if writeFile=true) */
   writtenTo?: string;
+  /** Error message if generation failed */
+  error?: string;
 }
 
 interface SkillExample {
@@ -391,19 +393,21 @@ function generateMarkdown(registry: Registry): string {
  * @throws Error if registry not found or invalid
  */
 export async function generateSkillDocs(options: GeneratorOptions = {}): Promise<GeneratorResult> {
+  const fail = (error: string): GeneratorResult => ({ success: false, content: '', skillCount: 0, error });
+
   // Resolve registry path
   let registryPath = options.registryPath;
   if (!registryPath) {
     const distPath = resolvePennyfarthingDist();
     if (!distPath) {
-      throw new Error('Registry not found: Cannot resolve pennyfarthing-dist directory');
+      return fail('Registry not found: Cannot resolve pennyfarthing-dist directory');
     }
     registryPath = join(distPath, 'skills', 'skill-registry.yaml');
   }
 
   // Validate registry exists
   if (!existsSync(registryPath)) {
-    throw new Error(`Registry not found: ${registryPath}`);
+    return fail(`Registry not found: ${registryPath}`);
   }
 
   // Parse registry
@@ -411,21 +415,21 @@ export async function generateSkillDocs(options: GeneratorOptions = {}): Promise
   try {
     content = readFileSync(registryPath, 'utf-8');
   } catch {
-    throw new Error(`Cannot read registry: ${registryPath}`);
+    return fail(`Cannot read registry: ${registryPath}`);
   }
 
   let registry: Registry;
   try {
     registry = parseRegistryYaml(content);
   } catch (err) {
-    throw new Error(`Invalid YAML in registry: ${(err as Error).message}`);
+    return fail(`Invalid YAML in registry: ${(err as Error).message}`);
   }
 
   // Strict mode validation
   if (options.strict) {
     for (const [key, skill] of Object.entries(registry.skills)) {
       if (!skill.description) {
-        throw new Error(`Missing required field 'description' for skill: ${key}`);
+        return fail(`Missing required field 'description' for skill: ${key}`);
       }
     }
   }
@@ -502,6 +506,10 @@ Examples:
     writeFile: !dryRun && !!outputPath
   })
     .then(result => {
+      if (!result.success) {
+        console.error(`Error: ${result.error}`);
+        process.exit(1);
+      }
       if (dryRun) {
         console.log(result.content);
       } else {
@@ -510,9 +518,5 @@ Examples:
           console.log(`Written to: ${result.writtenTo}`);
         }
       }
-    })
-    .catch(err => {
-      console.error(`Error: ${err.message}`);
-      process.exit(1);
     });
 }
