@@ -166,7 +166,7 @@ This format is produced and consumed by the following agent definitions:
 
 ## Related
 
-- [Epic Context](../../sprint/context/context-epic-138.md) — Simplify Integration overview and architecture
+- Epic 138 — Simplify Integration overview and architecture
 - [Fan-out/Fan-in Pattern](../patterns/fan-out-fan-in-pattern.md) — Parallel agent result aggregation
 - [Gate Schema](gate-schema.md) — GATE_RESULT contract (analogous structured output)
 - Story 138-4: TEA verify phase integration (consumes this schema)
