@@ -81,6 +81,7 @@ export interface TeamConfig {
 export const VALID_AGENT_NAMES = [
   'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm',
   'tech-writer', 'ux-designer', 'devops', 'ba', 'orchestrator',
+  'simplify-reuse', 'simplify-quality', 'simplify-efficiency',
 ] as const;
 
 /**
