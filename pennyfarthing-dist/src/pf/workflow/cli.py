@@ -111,6 +111,132 @@ def workflow_handoff(next_agent: str):
 # ---------------------------------------------------------------------------
 
 
+@workflow.command("phases")
+@click.argument("story_id", required=False, default=None)
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def workflow_phases(story_id: str | None, output_json: bool):
+    """Show workflow phases with status annotation.
+
+    Enumerates phases from the workflow YAML, annotating each with
+    done/current/pending status by comparing against the session file.
+
+    \b
+    Arguments:
+      STORY_ID  - Story ID to look up session phase (optional)
+
+    \b
+    JSON Output (--json):
+      {
+        "workflow": string,
+        "story_id": string | null,
+        "phases": [{"name": str, "agent": str, "label": str, "status": "done"|"current"|"pending"}]
+      }
+    """
+    import re
+
+    from pf.common.config import get_project_root
+    from pf.workflow.helpers import (
+        find_workflow_file,
+        get_workflows_dir,
+        load_workflow_data,
+    )
+
+    root = get_project_root()
+    workflows_dir = get_workflows_dir(root)
+
+    # Determine workflow name from story session or default
+    workflow_name = None
+    current_phase = None
+    session_dir = root / ".session"
+
+    if story_id and session_dir.is_dir():
+        for sf in session_dir.glob("*-session.md"):
+            content = sf.read_text()
+            if story_id in sf.name or story_id in content:
+                wf_match = re.search(r"\*\*Workflow:\*\*\s*(\S+)", content)
+                ph_match = re.search(r"\*\*Phase:\*\*\s*(\S+)", content)
+                if wf_match:
+                    workflow_name = wf_match.group(1)
+                if ph_match:
+                    current_phase = ph_match.group(1)
+                break
+
+    if not workflow_name:
+        # Try active session
+        if session_dir.is_dir():
+            for sf in session_dir.glob("*-session.md"):
+                content = sf.read_text()
+                wf_match = re.search(r"\*\*Workflow:\*\*\s*(\S+)", content)
+                ph_match = re.search(r"\*\*Phase:\*\*\s*(\S+)", content)
+                if wf_match:
+                    workflow_name = wf_match.group(1)
+                if ph_match:
+                    current_phase = ph_match.group(1)
+                break
+
+    if not workflow_name:
+        workflow_name = "tdd"
+
+    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    if not wf_file:
+        if output_json:
+            import json
+
+            click.echo(json.dumps({
+                "error": f"Workflow not found: {workflow_name}",
+                "code": "WORKFLOW_NOT_FOUND",
+                "detail": None,
+            }, indent=2))
+            raise SystemExit(1)
+        click.echo(f"Error: Workflow '{workflow_name}' not found", err=True)
+        raise SystemExit(1)
+
+    data = load_workflow_data(wf_file)
+    wf = data.get("workflow", {})
+    raw_phases = wf.get("phases", [])
+
+    # Annotate phases with status
+    phases = []
+    found_current = False
+    for p in raw_phases:
+        name = p.get("name", "")
+        if not current_phase:
+            status = "pending"
+        elif name == current_phase:
+            status = "current"
+            found_current = True
+        elif not found_current:
+            status = "done"
+        else:
+            status = "pending"
+        phases.append({
+            "name": name,
+            "agent": p.get("agent", ""),
+            "label": p.get("label", name),
+            "status": status,
+        })
+
+    result = {
+        "workflow": workflow_name,
+        "story_id": story_id,
+        "phases": phases,
+    }
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(result, indent=2))
+    else:
+        click.echo(f"Workflow: {workflow_name}")
+        if story_id:
+            click.echo(f"Story: {story_id}")
+        click.echo("")
+        click.echo("| Phase | Agent | Status |")
+        click.echo("|-------|-------|--------|")
+        for p in phases:
+            click.echo(f"| {p['name']} | {p['agent']} | {p['status']} |")
+
+
 @workflow.command("type")
 @click.argument("workflow_name")
 def workflow_type_cmd(workflow_name: str):

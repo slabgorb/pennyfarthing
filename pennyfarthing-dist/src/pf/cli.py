@@ -73,6 +73,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "launch":       ("pf.launch.cli", "launch"),
     "bc":           ("pf.bc.cli", "bc"),
     "handoff":      ("pf.handoff.cli", "handoff"),
+    "persona":      ("pf.persona.cli", "persona"),
     "git":          ("pf.git_group.cli", "git"),
     "session":      ("pf.session.cli", "session"),
     "epic":         ("pf.epic.cli", "epic"),
