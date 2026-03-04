@@ -3,12 +3,10 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 
 from pf.preflight.independence import (
-    IndependenceResult,
     UnitDefinition,
     check_independence,
     parse_units_from_json,

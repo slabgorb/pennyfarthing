@@ -59,11 +59,6 @@ describe('AC2: Cyclist uses core bikerack export paths', () => {
     expect(envTs).toMatch(/@pennyfarthing\/core\/bikerack\/server/);
   });
 
-  it('should import from @pennyfarthing/core/bikerack/entry in bikerack.ts', () => {
-    const bikerackTs = readFileSync(join(CYCLIST_SRC, 'bikerack.ts'), 'utf-8');
-    expect(bikerackTs).toMatch(/@pennyfarthing\/core\/bikerack\/entry/);
-  });
-
   it('should NOT import directly from @pennyfarthing/bikerack', () => {
     const srcFiles = getAllTsFiles(CYCLIST_SRC);
     const violations: string[] = [];

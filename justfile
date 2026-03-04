@@ -360,7 +360,7 @@ bikerack *args:
     export PF_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
     echo "BikeRack — hot reload mode"
     echo "  Project dir: $PF_PROJECT_DIR"
-    echo "  Server: tsx watch src/bikerack.ts"
+    echo "  Server: tsx watch ../core/src/server/entry.ts"
     echo "  Frontend: vite build --watch"
     echo ""
     logfile="$PF_PROJECT_DIR/.session/bikerack_debug.log"
@@ -371,7 +371,7 @@ bikerack *args:
     npx concurrently -k \
         -n server,vite \
         -c green,magenta \
-        "tsx watch src/bikerack.ts" \
+        "tsx watch ../core/src/server/entry.ts" \
         "vite build --watch" \
         >> "$logfile" 2>&1 &
     bg_pid=$!

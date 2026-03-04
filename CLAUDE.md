@@ -50,7 +50,6 @@ pnpm run lint      # ESLint
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
 | `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
 | `packages/cyclist/` | BikeRack GUI (React 19, Tailwind v4, dockview) — browser UI over core |
-| `packages/shared/` | Shared types and utilities |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 

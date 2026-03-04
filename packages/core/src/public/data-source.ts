@@ -3,7 +3,7 @@
  *
  * Story 124-3: Decouples panel hooks from transport (WebSocket, REST, mock).
  * Implementations live in their respective packages:
- * - WebSocketDataSource: packages/bikerack/
+ * - WebSocketDataSource: packages/cyclist/ (formerly packages/bikerack/)
  * - MockDataSource: here (for testing)
  */
 

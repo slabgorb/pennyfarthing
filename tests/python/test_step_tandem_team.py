@@ -17,14 +17,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.prime.workflow import get_step_tandem_config, get_step_team_config
-from pf.workflow.team_lifecycle import (
+from pf.prime.workflow import get_step_tandem_config, get_step_team_config  # noqa: E402
+from pf.workflow.team_lifecycle import (  # noqa: E402
     _reset_for_testing,
     create_team,
     generate_team_summary,
-    spawn_teammates,
 )
-
 
 # =============================================================================
 # Fixtures

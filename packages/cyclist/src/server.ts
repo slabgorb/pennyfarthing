@@ -130,7 +130,7 @@ export function createTerminalServer(): Server {
 }
 
 // Re-export everything from BikeRack's server module that cyclist consumers need.
-// bikerack.ts needs: createTerminalServer (overridden above), findAvailablePort
+// core/bikerack/entry needs: createTerminalServer (overridden above), findAvailablePort
 // main.ts needs: getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile,
 //                writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig
 // websocket.ts needs: getOtelConfig

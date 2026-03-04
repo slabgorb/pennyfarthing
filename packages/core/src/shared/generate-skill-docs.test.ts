@@ -7,7 +7,7 @@
  * - AC3: Skills organized by category with table of contents
  * - AC4: Build process triggers doc generation
  *
- * Run with: npm test -- packages/shared/src/generate-skill-docs.test.ts
+ * Run with: npm test -- packages/core/src/shared/generate-skill-docs.test.ts
  */
 
 import { describe, it } from 'node:test';

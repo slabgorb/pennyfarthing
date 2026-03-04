@@ -131,7 +131,7 @@ pf bc list                 # List saved layouts
 
 | File | Purpose |
 |------|---------|
-| `packages/cyclist/src/bikerack.ts` | BikeRack WheelHub entry point |
+| `packages/core/src/server/entry.ts` | BikeRack standalone entry point |
 | `packages/core/src/server/BikeRackWorkspace.tsx` | Dockview layout for BikeRack |
 | `packages/core/src/server/BikeRackIndex.tsx` | Panel listing index page |
 | `packages/core/src/server/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |

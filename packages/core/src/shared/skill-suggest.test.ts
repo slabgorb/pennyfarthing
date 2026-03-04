@@ -6,7 +6,7 @@
  * - AC2: Keyword-triggered suggestions with scoring
  * - AC3: Non-intrusive presentation (confidence threshold, limits)
  *
- * Run with: npm test -- packages/shared/src/skill-suggest.test.ts
+ * Run with: npm test -- packages/core/src/shared/skill-suggest.test.ts
  */
 
 import { describe, it } from 'node:test';
