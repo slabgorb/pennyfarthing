@@ -223,7 +223,7 @@ workflow:
       max: 2
 `);
 
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     expect(workflows).not.toBeNull();
@@ -259,7 +259,7 @@ workflow:
     writeFileSync(join(stepsDir, 'step-01-gather.md'), '# Step 1');
     writeFileSync(join(stepsDir, 'step-02-analyze.md'), '# Step 2');
 
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const research = workflows!.find(w => w.name === 'my-research');
@@ -269,7 +269,7 @@ workflow:
   });
 
   it('should include trigger metadata in workflow entries', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const tdd = workflows!.find(w => w.name === 'tdd');
@@ -293,7 +293,7 @@ workflow:
       agent: sm
 `);
 
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     // Should deduplicate by name — first found wins
@@ -304,7 +304,7 @@ workflow:
   it('should return empty array when no workflow directories exist', async () => {
     const emptyDir = mkdtempSync(join(tmpdir(), 'pf-test-empty-'));
     try {
-      const { getAvailableWorkflows } = await import('../src/story-parser');
+      const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
       const workflows = getAvailableWorkflows(emptyDir);
 
       expect(workflows).toEqual([]);
@@ -316,7 +316,7 @@ workflow:
   it('should discover all real workflows from the project', async () => {
     // Test against actual workflow directory
     const realProjectDir = join(__dirname, '..', '..', '..');
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(realProjectDir);
 
     expect(workflows).not.toBeNull();
@@ -580,7 +580,7 @@ workflow:
   });
 
   it('should return an array of AvailableWorkflow objects', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     expect(Array.isArray(workflows)).toBe(true);
@@ -588,7 +588,7 @@ workflow:
   });
 
   it('should include name, type, and description for each workflow', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     for (const wf of workflows!) {
@@ -602,7 +602,7 @@ workflow:
   });
 
   it('should correctly identify phased vs stepped workflows', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const tdd = workflows!.find(w => w.name === 'tdd');
@@ -613,7 +613,7 @@ workflow:
   });
 
   it('should include trigger metadata when available', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const tdd = workflows!.find(w => w.name === 'tdd');
@@ -624,7 +624,7 @@ workflow:
   });
 
   it('should handle workflows without description gracefully', async () => {
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const minimal = workflows!.find(w => w.name === 'minimal');
@@ -650,7 +650,7 @@ this is not valid yaml: [[[
 `);
 
     try {
-      const { getAvailableWorkflows } = await import('../src/story-parser');
+      const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
       const workflows = getAvailableWorkflows(badDir);
 
       // Should still return the good workflow, skipping the bad one
@@ -688,7 +688,7 @@ workflow:
       agent: dev
 `);
 
-    const { getAvailableWorkflows } = await import('../src/story-parser');
+    const { getAvailableWorkflows } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const workflows = getAvailableWorkflows(tempDir);
 
     const names = workflows!.map(w => w.name);
@@ -703,7 +703,7 @@ workflow:
 
 describe('StoryInfo includes availableWorkflows field', () => {
   it('should have availableWorkflows in StoryInfo type', async () => {
-    const { getStoryInfo } = await import('../src/story-parser');
+    const { getStoryInfo } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const realProjectDir = join(__dirname, '..', '..', '..');
     const info = getStoryInfo(realProjectDir);
 
@@ -713,7 +713,7 @@ describe('StoryInfo includes availableWorkflows field', () => {
   });
 
   it('should populate availableWorkflows with real workflow data', async () => {
-    const { getStoryInfo } = await import('../src/story-parser');
+    const { getStoryInfo } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const realProjectDir = join(__dirname, '..', '..', '..');
     const info = getStoryInfo(realProjectDir);
 

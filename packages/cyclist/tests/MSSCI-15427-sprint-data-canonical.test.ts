@@ -33,7 +33,7 @@ vi.mock('child_process', async () => {
 });
 
 // Mock story-parser to isolate sprint-data tests
-vi.mock('../src/story-parser.js', () => ({
+vi.mock('@pennyfarthing/core/dist/server/story-parser.js', () => ({
   getStoryInfo: vi.fn(() => ({ id: null, title: null, phase: null })),
 }));
 

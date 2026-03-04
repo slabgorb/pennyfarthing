@@ -119,7 +119,7 @@ workflow:
     writeFileSync(join(stepsDir, 'step-02-second-step.md'), '# Step 2');
     writeFileSync(join(stepsDir, 'step-03-third-step.md'), '# Step 3');
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('my-stepped-workflow', tempDir);
 
     expect(phases).not.toBeNull();
@@ -157,7 +157,7 @@ workflow:
 `);
     writeFileSync(join(stepsDir, 'step-01-only.md'), '# Step 1');
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('dual-workflow', tempDir);
 
     // Flat file should win — it's checked first in search order
@@ -167,7 +167,7 @@ workflow:
   });
 
   it('should return null for non-existent workflow', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('totally-fake-workflow', tempDir);
 
     expect(phases).toBeNull();
@@ -188,7 +188,7 @@ workflow:
 `);
     writeFileSync(join(stepsDir, 'step-01-check.md'), '# Step 1');
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('agent-test', tempDir);
 
     expect(phases).not.toBeNull();
@@ -206,7 +206,7 @@ workflow:
   agent: architect
 `);
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('no-steps', tempDir);
 
     expect(phases).toBeNull();
@@ -373,7 +373,7 @@ workflow:
       label: Finish
 `);
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('tdd', tempDir);
 
     expect(phases).not.toBeNull();
@@ -398,7 +398,7 @@ workflow:
       agent: reviewer
 `);
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('trivial', tempDir);
 
     expect(phases).not.toBeNull();
@@ -418,7 +418,7 @@ workflow:
       agent: dev
 `);
 
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = getWorkflowPhases('dist-only', tempDir);
 
     expect(phases).not.toBeNull();
@@ -477,7 +477,7 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   const ALL_SUBDIRECTORY_WORKFLOWS = [...WORKFLOWS_WITH_STEPS, ...WORKFLOWS_WITHOUT_STEPS];
 
   it('should discover all subdirectory workflows that have step files', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
 
     const discovered: string[] = [];
     const failed: string[] = [];
@@ -496,7 +496,7 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   });
 
   it('should return at least 1 step for each workflow with step files', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
 
     for (const name of WORKFLOWS_WITH_STEPS) {
       const phases = getWorkflowPhases(name, realProjectDir);
@@ -506,7 +506,7 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   });
 
   it('should return null for subdirectory workflows without step files', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
 
     for (const name of WORKFLOWS_WITHOUT_STEPS) {
       const phases = getWorkflowPhases(name, realProjectDir);
@@ -516,7 +516,7 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   });
 
   it('should return phases with valid name/agent/label for each stepped workflow', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
 
     for (const name of WORKFLOWS_WITH_STEPS) {
       const phases = getWorkflowPhases(name, realProjectDir);
@@ -533,7 +533,7 @@ describe('AC4: All subdirectory workflows discoverable by panel', () => {
   });
 
   it('should also discover flat-file workflows (tdd, trivial, bdd, patch)', async () => {
-    const { getWorkflowPhases } = await import('../src/story-parser');
+    const { getWorkflowPhases } = await import('@pennyfarthing/core/dist/server/story-parser.js');
 
     const flatWorkflows = ['tdd', 'trivial', 'bdd', 'patch'];
     for (const name of flatWorkflows) {
@@ -590,7 +590,7 @@ workflow:
 - **Status:** in_progress
 `;
 
-    const { parseWorkflowProgress } = await import('../src/story-parser');
+    const { parseWorkflowProgress } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = parseWorkflowProgress(sessionContent, tempDir);
 
     expect(phases).not.toBeNull();
@@ -614,7 +614,7 @@ workflow:
 - **Status:** completed
 `;
 
-    const { parseWorkflowProgress } = await import('../src/story-parser');
+    const { parseWorkflowProgress } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = parseWorkflowProgress(sessionContent, tempDir);
 
     expect(phases).not.toBeNull();
@@ -637,7 +637,7 @@ workflow:
 - **Status:** in_progress
 `;
 
-    const { parseWorkflowProgress } = await import('../src/story-parser');
+    const { parseWorkflowProgress } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = parseWorkflowProgress(sessionContent, tempDir);
 
     expect(phases).not.toBeNull();
@@ -660,7 +660,7 @@ workflow:
 - **Status:** in_progress
 `;
 
-    const { parseWorkflowProgress } = await import('../src/story-parser');
+    const { parseWorkflowProgress } = await import('@pennyfarthing/core/dist/server/story-parser.js');
     const phases = parseWorkflowProgress(sessionContent, tempDir);
 
     expect(phases).not.toBeNull();

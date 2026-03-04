@@ -11,15 +11,11 @@ import { getProjectDirectory } from './paths.js';
 import {
   listThemes as sharedListThemes,
   loadAllThemeMetadata as sharedLoadAllThemeMetadata,
-  deriveCategory,
   type ThemeMetadata,
 } from '@pennyfarthing/core';
 
 // Re-export ThemeMetadata so existing consumers don't break
 export type { ThemeMetadata };
-
-// Re-export deriveCategory for any direct consumers
-export { deriveCategory, CATEGORY_MAP } from '@pennyfarthing/core';
 
 /**
  * Agent data within a theme (24-6)
@@ -139,7 +135,7 @@ export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
               description: parsed.theme.description || '',
               source: parsed.theme.source || '',
               tier: (parsed.theme.tier as string) || null,
-              category: deriveCategory(themeId, parsed.theme.source || ''),
+              category: (parsed.category as string) || 'Other',
               agentCount,
             });
             seenIds.add(themeId);
@@ -244,7 +240,7 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
               description: theme.description || '',
               source: theme.source || '',
               tier: (theme.tier as string) || null,
-              category: deriveCategory(themeId, theme.source || ''),
+              category: (parsed.category as string) || 'Other',
               agentCount,
               agents,
             });

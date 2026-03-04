@@ -15,8 +15,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getSprintStories, getEpicContext } from '../src/story-parser.js';
-import type { StoryInfo, SprintStory, EpicContext } from '../src/story-parser.js';
+import { getSprintStories, getEpicContext } from '@pennyfarthing/core/dist/server/story-parser.js';
+import type { StoryInfo, SprintStory, EpicContext } from '@pennyfarthing/core/dist/server/story-parser.js';
 
 describe('MSSCI-12475: Expandable Story Section', () => {
 

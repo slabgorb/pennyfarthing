@@ -22,7 +22,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 
 // Import types from story-parser for test data
-import type { CriteriaItem, WorkflowPhase } from '../src/story-parser.js';
+import type { CriteriaItem, WorkflowPhase } from '@pennyfarthing/core/dist/server/story-parser.js';
 
 // Mock React DOM for testing
 const mockRender = vi.fn();

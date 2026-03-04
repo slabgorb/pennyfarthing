@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseSprintYaml } from '../src/story-parser.js';
+import { parseSprintYaml } from '@pennyfarthing/core/dist/server/story-parser.js';
 
 // =============================================================================
 // Test Fixtures

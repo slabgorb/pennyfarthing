@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseSessionFile, getStoryInfo, StoryInfo } from '../src/story-parser.js';
+import { parseSessionFile, getStoryInfo, StoryInfo } from '@pennyfarthing/core/dist/server/story-parser.js';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

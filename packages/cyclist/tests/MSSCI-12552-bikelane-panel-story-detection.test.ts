@@ -36,7 +36,7 @@ vi.mock('fs', async (importOriginal) => {
 });
 
 // Import after mocking
-import { parseSessionFile, getStoryInfo, type StoryInfo } from '../src/story-parser.js';
+import { parseSessionFile, getStoryInfo, type StoryInfo } from '@pennyfarthing/core/dist/server/story-parser.js';
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 
 // Test fixtures - real session file formats from production
