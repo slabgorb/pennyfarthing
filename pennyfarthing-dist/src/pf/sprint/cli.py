@@ -333,6 +333,15 @@ def story_show(story_id: str, output_json: bool):
     story_data = get_story_by_id(story_id)
 
     if not story_data:
+        if output_json:
+            import json
+
+            click.echo(json.dumps({
+                "error": f"Story not found: {story_id}",
+                "code": "STORY_NOT_FOUND",
+                "detail": None,
+            }, indent=2))
+            raise SystemExit(1)
         raise click.ClickException(f"Story not found: {story_id}")
 
     if output_json:

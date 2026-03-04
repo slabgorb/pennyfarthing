@@ -292,13 +292,18 @@ class TestWorkflowPhasesJson:
                 ],
             }
         }
-        # Mock the session showing current phase as "red"
+        # Create mock session with phase "red" for this story
+        session_dir = tmp_path / ".session"
+        session_dir.mkdir()
+        (session_dir / "141-16-session.md").write_text(
+            "# Story 141-16\n\n**Workflow:** tdd\n**Phase:** red\n"
+        )
         with (
-            patch("pf.workflow.helpers.get_workflows_dir") as mock_dir,
+            patch("pf.common.config.get_project_root") as mock_root,
             patch("pf.workflow.helpers.find_workflow_file") as mock_find,
             patch("pf.workflow.helpers.load_workflow_data") as mock_load,
         ):
-            mock_dir.return_value = tmp_path
+            mock_root.return_value = tmp_path
             mock_find.return_value = tmp_path / "tdd.yaml"
             mock_load.return_value = wf_data
             # Pass story ID to trigger session lookup
@@ -325,14 +330,13 @@ class TestWorkflowPhasesJson:
             }
         }
         with (
-            patch("pf.workflow.helpers.get_workflows_dir") as mock_dir,
+            patch("pf.common.config.get_project_root") as mock_root,
             patch("pf.workflow.helpers.find_workflow_file") as mock_find,
             patch("pf.workflow.helpers.load_workflow_data") as mock_load,
         ):
-            mock_dir.return_value = tmp_path
+            mock_root.return_value = tmp_path  # No .session/ dir here
             mock_find.return_value = tmp_path / "tdd.yaml"
             mock_load.return_value = wf_data
-            # No story ID → no session → all pending
             result = runner.invoke(cli, ["workflow", "phases", "--json"])
             parsed = json.loads(result.output)
             for phase in parsed["phases"]:
