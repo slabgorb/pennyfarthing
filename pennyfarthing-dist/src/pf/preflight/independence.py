@@ -126,9 +126,13 @@ def check_independence(units: list[UnitDefinition]) -> IndependenceResult:
     if independent:
         message = f"All {len(units)} units are independent. {len(all_files)} files, zero overlaps."
     else:
+        overlap_details = "; ".join(
+            f"`{o.file}` in [{', '.join(o.units)}]" for o in overlaps[:5]
+        )
         message = (
             f"{len(overlaps)} file(s) shared across units. "
-            f"Re-decompose or confirm override before fan-out."
+            f"To fix: Assign each overlapping file to exactly one unit, or extract shared code "
+            f"into a separate module. Overlaps: {overlap_details}"
         )
 
     return IndependenceResult(

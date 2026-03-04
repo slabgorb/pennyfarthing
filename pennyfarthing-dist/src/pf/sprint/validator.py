@@ -117,16 +117,29 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
 
     # Check for sprint section
     if "sprint" not in data:
-        result.add_error("Missing required 'sprint' section", "sprint")
+        result.add_error(
+            "Missing required 'sprint' section. "
+            "To fix: Add a `sprint:` key with `number`, `goal`, `start_date`, `end_date`, and `status` fields",
+            "sprint",
+        )
         return result
 
     sprint = data["sprint"]
 
     # Check required fields
+    _SPRINT_FIELD_HINTS = {
+        "number": "e.g. `number: 12`",
+        "goal": "e.g. `goal: Complete the sprint`",
+        "start_date": "e.g. `start_date: 2026-01-20`",
+        "end_date": "e.g. `end_date: 2026-02-02`",
+        "status": "e.g. `status: active`",
+    }
     for field_name in REQUIRED_SPRINT_FIELDS:
         if field_name not in sprint:
+            hint = _SPRINT_FIELD_HINTS.get(field_name, "")
+            fix = f" To fix: Add `{field_name}:` to the sprint section, {hint}" if hint else ""
             result.add_error(
-                f"Missing required field: {field_name}",
+                f"Missing required field: {field_name}.{fix}",
                 f"sprint.{field_name}",
             )
 
@@ -134,7 +147,8 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
     if "number" in sprint:
         if not isinstance(sprint["number"], int):
             result.add_error(
-                f"Sprint number must be an integer, got {type(sprint['number']).__name__}",
+                f"Sprint number must be an integer, got {type(sprint['number']).__name__}. "
+                "To fix: Use an unquoted integer, e.g. `number: 12`",
                 "sprint.number",
             )
 
@@ -143,7 +157,8 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
         status = sprint["status"]
         if status not in VALID_SPRINT_STATUSES:
             result.add_error(
-                f"Invalid status '{status}'. Must be one of: {', '.join(sorted(VALID_SPRINT_STATUSES))}",
+                f"Invalid status '{status}'. "
+                f"To fix: Use one of: {', '.join(sorted(VALID_SPRINT_STATUSES))}",
                 "sprint.status",
             )
 
@@ -153,7 +168,8 @@ def validate_sprint(data: dict[str, Any]) -> ValidationResult:
             date_val = str(sprint[date_field])
             if not ISO_DATE_PATTERN.match(date_val):
                 result.add_error(
-                    f"Invalid date format for {date_field}: '{date_val}'. Expected YYYY-MM-DD",
+                    f"Invalid date format for {date_field}: '{date_val}'. "
+                    f"To fix: Use YYYY-MM-DD format, e.g. `{date_field}: 2026-01-20`",
                     f"sprint.{date_field}",
                 )
 
@@ -182,10 +198,17 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
     base_path = f"{epic_id}.stories[{story_index}]"
 
     # Check required fields
+    _STORY_FIELD_HINTS = {
+        "id": "e.g. `id: 141-1`",
+        "title": "e.g. `title: My story title`",
+        "status": f"e.g. `status: backlog` (valid: {', '.join(sorted(VALID_STORY_STATUSES))})",
+        "points": "e.g. `points: 3`",
+    }
     for field_name in REQUIRED_STORY_FIELDS:
         if field_name not in story:
+            hint = _STORY_FIELD_HINTS.get(field_name, "")
             result.add_error(
-                f"Missing required field: {field_name}",
+                f"Missing required field: {field_name}. To fix: Add `{field_name}:` to the story, {hint}",
                 f"{base_path}.{field_name}",
             )
 
@@ -194,7 +217,8 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         status = story["status"]
         if status not in VALID_STORY_STATUSES:
             result.add_error(
-                f"Invalid status '{status}'. Must be one of: {', '.join(sorted(VALID_STORY_STATUSES))}",
+                f"Invalid status '{status}'. "
+                f"To fix: Use one of: {', '.join(sorted(VALID_STORY_STATUSES))}",
                 f"{base_path}.status",
             )
 
@@ -203,7 +227,8 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         points = story["points"]
         if not isinstance(points, (int, float)):
             result.add_error(
-                f"Invalid points value '{points}'. Must be numeric",
+                f"Invalid points value '{points}'. "
+                "To fix: Use a number, e.g. `points: 3`",
                 f"{base_path}.points",
             )
 
@@ -212,7 +237,8 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         jira_key = str(story["jira"])
         if not JIRA_KEY_PATTERN.match(jira_key):
             result.add_error(
-                f"Invalid Jira key format '{jira_key}'. Expected PROJECT-NUMBER format (e.g., DPGD-17, MSSCI-12345)",
+                f"Invalid Jira key format '{jira_key}'. "
+                "To fix: Use PROJECT-NUMBER format, e.g. `jira: MSSCI-12345`",
                 f"{base_path}.jira",
             )
 
@@ -240,10 +266,12 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
     epic_id = epic.get("id", f"epics[{epic_index}]")
 
     # Check required fields
+    _EPIC_FIELD_HINTS = {"id": "e.g. `id: \"141\"`", "title": "e.g. `title: My Epic`"}
     for field_name in REQUIRED_EPIC_FIELDS:
         if field_name not in epic:
+            hint = _EPIC_FIELD_HINTS.get(field_name, "")
             result.add_error(
-                f"Missing required field: {field_name}",
+                f"Missing required field: {field_name}. To fix: Add `{field_name}:` to the epic, {hint}",
                 f"{base_path}.{field_name}",
             )
 
@@ -305,10 +333,17 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
     result = ValidationResult(valid=True)
 
     # Check required shard fields
+    _SHARD_FIELD_HINTS = {
+        "id": "e.g. `id: \"141\"`",
+        "title": "e.g. `title: My Epic`",
+        "status": "e.g. `status: active`",
+        "stories": "e.g. `stories: []`",
+    }
     for field_name in REQUIRED_EPIC_SHARD_FIELDS:
         if field_name not in epic:
+            hint = _SHARD_FIELD_HINTS.get(field_name, "")
             result.add_error(
-                f"Missing required field: {field_name}",
+                f"Missing required field: {field_name}. To fix: Add `{field_name}:` to the epic shard, {hint}",
                 f"epic.{field_name}",
             )
 

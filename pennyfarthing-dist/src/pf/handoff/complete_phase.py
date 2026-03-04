@@ -54,7 +54,10 @@ def complete_phase(
         return {
             "status": "error",
             "session_file": None,
-            "error": "Session file not found",
+            "error": (
+                f"Session file not found at `.session/{story_id}-session.md`. "
+                "To fix: Run `/pf-sm` to set up the story, which creates the session file."
+            ),
         }
 
     content = session_path.read_text()
@@ -67,7 +70,11 @@ def complete_phase(
         return {
             "status": "error",
             "session_file": str(session_path),
-            "error": "No assessment found in session file. Write your assessment before completing the phase.",
+            "error": (
+                "No assessment found in session file. "
+                "To fix: Add a `## {Agent} Assessment` heading (e.g. `## TEA Assessment` or `## Dev Assessment`) "
+                "to the session file before completing the phase."
+            ),
         }
 
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -28,6 +28,18 @@ PROTECTED_PATTERNS = [
 ]
 
 
+_PATTERN_FIX_HINTS = {
+    "*.env": "To fix: Use environment-specific config files (e.g. `.env.example`) or set values via `pf settings`.",
+    "*.pem": "To fix: Reference certificates from a secure store; do not edit key files directly.",
+    "*.key": "To fix: Reference keys from a secure store; do not edit key files directly.",
+    "*credentials*": "To fix: Store credentials in a vault or environment variables, not in files.",
+    "*secrets*": "To fix: Store secrets in a vault or environment variables, not in files.",
+    ".git/*": "To fix: Use `git` CLI commands instead of editing `.git/` internals directly.",
+    "node_modules/*": "To fix: Edit the source package and run `pnpm install` to update `node_modules/`.",
+    "vendor/*": "To fix: Edit the upstream dependency and re-vendor.",
+}
+
+
 def main() -> None:
     """Main entry point for pre-edit check hook."""
     try:
@@ -63,6 +75,8 @@ def main() -> None:
             if fnmatch.fnmatch(file_path, pattern):
                 print(f"BLOCKED: Cannot edit protected file matching pattern: {pattern}", file=sys.stderr)
                 print(f"File: {file_path}", file=sys.stderr)
+                fix = _PATTERN_FIX_HINTS.get(pattern, "To fix: Use an alternative file path outside the protected pattern.")
+                print(f"\n{fix}", file=sys.stderr)
                 sys.exit(2)
 
     except SystemExit:
