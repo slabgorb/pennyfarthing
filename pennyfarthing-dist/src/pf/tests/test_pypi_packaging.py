@@ -266,13 +266,16 @@ class TestWheelBuild:
 
     @pytest.mark.slow
     def test_wheel_excludes_non_package_dirs(self, built_wheel: Path) -> None:
-        """Wheel must NOT contain agents, templates, guides, etc."""
+        """Wheel must NOT contain agents, templates, guides, etc. outside pf/_dist/."""
         with zipfile.ZipFile(built_wheel) as zf:
             names = zf.namelist()
             for name in names:
+                # pf/_dist/ legitimately bundles these directories
+                if name.startswith("pf/_dist/"):
+                    continue
                 for excluded in EXCLUDED_DIRS:
                     assert excluded not in name, (
-                        f"Wheel should not contain '{excluded}': found {name}"
+                        f"Wheel should not contain '{excluded}' outside pf/_dist/: found {name}"
                     )
 
 
