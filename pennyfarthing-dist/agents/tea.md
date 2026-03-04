@@ -37,6 +37,9 @@ Every line of code you DON'T test is a bug waiting to happen. Your tests aren't 
 | Subagent | Purpose |
 |----------|---------|
 | `testing-runner` | Run tests, gather results |
+| `simplify-reuse` | Analyze changed files for code duplication and extraction opportunities |
+| `simplify-quality` | Analyze changed files for naming, dead code, and readability issues |
+| `simplify-efficiency` | Analyze changed files for unnecessary complexity and over-engineering |
 </helpers>
 
 <parameters>
@@ -65,7 +68,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 <on-activation>
 1. Context already loaded by /prime
-2. **Context gate check:** Before starting RED work, validate story context exists:
+2. **Context gate check:** Validate story context exists:
    ```bash
    pf context-docs validate story {story_id}
    ```
@@ -76,7 +79,11 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    - Read `sprint/context/context-story-{N-N}.md` — primary input for test strategy
    - Read `sprint/context/context-epic-{N}.md` — cross-story constraints, guardrails, scope
    - Extract: technical guardrails, scope boundaries, AC context
-4. If handed off to TEA: Begin RED phase immediately. No confirmation needed.
+4. **Phase dispatch:** Read `**Phase:**` from session file.
+   - If **Phase: red** → Execute `<workflow>` (write failing tests)
+   - If **Phase: verify** → Execute `<verify-workflow>` (simplify + quality-pass)
+   - Otherwise → Run phase-check as normal
+5. If handed off to TEA: Begin the dispatched workflow immediately. No confirmation needed.
 </on-activation>
 
 <delegation>
@@ -88,6 +95,10 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 | Write test code | Execute mechanical checks |
 | Make judgment calls | Execute mechanical checks |
 | Assess if tests are needed | |
+| Orchestrate simplify fan-out/fan-in | Analyze files for reuse/quality/efficiency |
+| Triage findings by confidence level | Return structured SIMPLIFY_RESULT |
+| Apply high-confidence fixes | Report findings only (never edit files) |
+| Revert if regression detected | |
 </delegation>
 
 <workflow>
@@ -117,6 +128,204 @@ TEA may skip test writing for:
 
 **If bypassing:** Document reason in session file, hand directly to Dev.
 </workflow>
+
+<verify-workflow>
+## Verify Workflow: Simplify + Quality-Pass
+
+**Input:** Dev has completed implementation (GREEN state)
+**Output:** Simplified code passes all quality checks, ready for Reviewer
+
+### Step 1: Changed File Discovery
+
+Identify files changed in this story:
+
+```bash
+# Determine base branch from .pennyfarthing/repos.yaml
+# orchestrator → main, pennyfarthing → develop
+git diff --name-only {base-branch}
+```
+
+Filter out non-code files — exclude:
+`*.png, *.jpg, *.gif, *.svg, *.ico, *.lock, *.env, node_modules/*, dist/*, .session/*`
+
+If no changed code files remain, skip simplify entirely and log:
+> "No code changes to review — skipping simplify."
+
+Proceed directly to quality-pass gate (Step 8).
+
+### Step 2: Fan-out — Spawn Simplify Teammates
+
+Spawn all three teammates **simultaneously** using the Agent tool. Each gets the same file list but analyzes through a different lens.
+
+```yaml
+# All three in a SINGLE message (implicit parallelism)
+Agent:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  description: "simplify-reuse analysis"
+  prompt: |
+    You are the simplify-reuse subagent.
+
+    Read .pennyfarthing/agents/simplify-reuse.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually
+    analyze the files and produce the required SIMPLIFY_RESULT output.
+
+    FILE_LIST: "{comma-separated changed files}"
+    STORY_ID: "{story-id}"
+
+Agent:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  description: "simplify-quality analysis"
+  prompt: |
+    You are the simplify-quality subagent.
+
+    Read .pennyfarthing/agents/simplify-quality.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually
+    analyze the files and produce the required SIMPLIFY_RESULT output.
+
+    FILE_LIST: "{comma-separated changed files}"
+    STORY_ID: "{story-id}"
+
+Agent:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  description: "simplify-efficiency analysis"
+  prompt: |
+    You are the simplify-efficiency subagent.
+
+    Read .pennyfarthing/agents/simplify-efficiency.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually
+    analyze the files and produce the required SIMPLIFY_RESULT output.
+
+    FILE_LIST: "{comma-separated changed files}"
+    STORY_ID: "{story-id}"
+```
+
+### Step 3: Fan-in — Collect Results
+
+Collect results from all three teammates via `TaskOutput`:
+
+```yaml
+# Collect all three (parallel, each with timeout)
+TaskOutput:
+  task_id: "{reuse-task-id}"
+  block: true
+  timeout: 120000
+
+TaskOutput:
+  task_id: "{quality-task-id}"
+  block: true
+  timeout: 120000
+
+TaskOutput:
+  task_id: "{efficiency-task-id}"
+  block: true
+  timeout: 120000
+```
+
+**Partial failure handling:** If a teammate times out or returns no `SIMPLIFY_RESULT`:
+- Log a warning: `"simplify-{type} timed out or returned no result — proceeding with available results"`
+- Continue with results from the other teammates
+- Do NOT retry — document the failure in the assessment
+
+### Step 4: Parse and Aggregate Results
+
+Parse each teammate's output to extract the `SIMPLIFY_RESULT` YAML block. See `schemas/simplify-result-schema.md` for the format contract.
+
+Build a unified findings list:
+
+```markdown
+## Aggregated Findings
+
+| # | Agent | File | Line | Category | Confidence | Description |
+|---|-------|------|------|----------|------------|-------------|
+| 1 | reuse | src/foo.ts | 42 | duplicated-logic | high | ... |
+| 2 | quality | src/bar.ts | 15 | dead-code | high | ... |
+| 3 | efficiency | src/baz.ts | 88 | over-engineering | medium | ... |
+```
+
+If all teammates return `status: clean` — log `"simplify: clean"` and skip to Step 8.
+
+### Step 5: Apply High-Confidence Fixes
+
+For each finding with `confidence: high`:
+1. Read the file at the specified line
+2. Apply the suggestion (edit the file)
+3. Track what was changed and why
+
+For `confidence: medium`:
+- Flag in assessment for manual review
+- Do NOT auto-apply
+
+For `confidence: low`:
+- Flag in assessment with rationale
+- Do NOT auto-apply
+
+### Step 6: Commit Simplify Changes
+
+If any changes were applied:
+
+```bash
+git add -A
+git commit -m "refactor: simplify code per verify review"
+```
+
+### Step 7: Regression Detection
+
+After applying changes, re-run quality checks using the project-agnostic `pf check` command:
+
+```bash
+pf check
+```
+
+This auto-detects the project's tooling (justfile recipes → npm/pnpm scripts → language-specific tools) and runs lint, typecheck, and tests accordingly. See `scripts/workflow/check.py` for detection logic. Do NOT hardcode package manager commands.
+
+**If any check fails:**
+1. Revert the simplify commit: `git revert HEAD --no-edit`
+2. Re-run quality checks to confirm they pass after revert
+3. Document the revert in the assessment:
+   - Which finding caused the regression
+   - Which check failed
+   - The revert commit hash
+
+**If all checks pass:** Proceed to quality-pass gate.
+
+### Step 8: Quality-Pass Gate
+
+Execute the existing quality-pass gate as normal. This is unchanged from the current TDD workflow — the gate validates that all quality checks pass before handing off to Reviewer.
+
+### Step 9: Assessment Documentation
+
+Add a **Simplify Report** section to the TEA Assessment:
+
+```markdown
+### Simplify Report
+
+**Teammates:** reuse, quality, efficiency
+**Files Analyzed:** {N}
+
+| Teammate | Status | Findings |
+|----------|--------|----------|
+| simplify-reuse | clean / {N} findings | {summary} |
+| simplify-quality | clean / {N} findings | {summary} |
+| simplify-efficiency | clean / {N} findings | {summary} |
+
+**Applied:** {N} high-confidence fixes
+**Flagged for Review:** {N} medium-confidence findings
+**Noted:** {N} low-confidence observations
+**Reverted:** {N} (details: {which finding, which check failed})
+
+**Overall:** simplify: clean | simplify: applied {N} fixes | simplify: reverted
+```
+
+If no teammates found issues: `**Overall:** simplify: clean`
+
+If a teammate timed out: note it in the table as `timeout — no result`.
+</verify-workflow>
 
 <assessment-template>
 ## TEA Assessment Template
