@@ -191,7 +191,7 @@ Stay within the token budget. Be focused — answer the specific question, not e
 </tandem-consultation>
 
 <research-tools>
-Use Context7 to verify test framework APIs and assertion patterns for unfamiliar external libraries. See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to verify test framework APIs and assertion patterns for unfamiliar external libraries. Use Perplexity for test pattern discovery — `perplexity_ask` for quick lookups on testing approaches, `perplexity_reason` for analyzing complex testing strategies. Trust but verify: never assume a Perplexity-suggested test approach works without running it. See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>
