@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { CriteriaItem } from '../../../story-parser.js';
+import type { CriteriaItem } from '../../hooks/useStory.js';
 import { useStory } from '../../hooks/useStory.js';
 
 export interface AcceptanceCriteriaPanelProps {

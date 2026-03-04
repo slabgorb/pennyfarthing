@@ -856,6 +856,13 @@ export function registerThemeShortcut(
 declare global {
   interface Window {
     electronAPI?: {
+      send?: (channel: string, data: unknown) => void;
+      invoke?: (channel: string, data: unknown) => Promise<unknown>;
+      font?: {
+        save: (settings: unknown) => Promise<boolean>;
+        load: () => Promise<unknown>;
+        getSettingsPath: () => Promise<string>;
+      };
       config?: {
         saveProjectConfig: (key: string, value: string) => Promise<boolean>;
         loadProjectConfig: (key: string) => Promise<string | null>;

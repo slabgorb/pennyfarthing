@@ -24,6 +24,7 @@ import {
   IDockviewPanel,
   SerializedDockview,
   DockviewDefaultTab,
+  Orientation,
 } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -108,6 +109,14 @@ const PANEL_TITLES: Record<string, string> = {
   tandem: 'Tandem',
 };
 
+/**
+ * Type guard: check if a string is a member of a readonly PanelId array.
+ * Avoids `as any` when calling Array.includes on typed const tuples.
+ */
+function isPanelId(id: string, arr: readonly PanelId[]): id is PanelId {
+  return (arr as readonly string[]).includes(id);
+}
+
 // Track closed panels for restoration
 const closedPanels: Set<string> = new Set();
 
@@ -129,8 +138,8 @@ export function restorePanel(panelId: string): boolean {
   if (api.getPanel(panelId)) return false;
 
   // Determine which group to add it to
-  const isLeftPanel = LEFT_SIDEBAR_PANELS.includes(panelId as any);
-  const isRightPanel = RIGHT_SIDEBAR_PANELS.includes(panelId as any);
+  const isLeftPanel = isPanelId(panelId, LEFT_SIDEBAR_PANELS);
+  const isRightPanel = isPanelId(panelId, RIGHT_SIDEBAR_PANELS);
 
   // Find a reference panel in the appropriate group
   let referencePanel: IDockviewPanel | undefined;
@@ -271,7 +280,7 @@ export function createDefaultDockviewLayout(): SerializedDockview {
       },
       width: 1200,
       height: 800,
-      orientation: 'HORIZONTAL',
+      orientation: Orientation.HORIZONTAL,
     },
     panels: {
       // Left sidebar panels
@@ -555,18 +564,18 @@ export function DockviewWorkspace({
 
     const disposables = [
       api.onDidLayoutChange(() => handleLayoutChange()),
-      api.onDidAddPanel((e) => {
+      api.onDidAddPanel((e: IDockviewPanel) => {
         // Panel restored, remove from closed set
-        const panelId = e?.panel?.id;
+        const panelId = e?.id;
         if (panelId) {
           closedPanels.delete(panelId);
         }
         updateClosedPanelsList();
         handleLayoutChange();
       }),
-      api.onDidRemovePanel((e) => {
+      api.onDidRemovePanel((e: IDockviewPanel) => {
         // Track closed panels for restoration
-        const panelId = e?.panel?.id;
+        const panelId = e?.id;
         if (panelId) {
           closedPanels.add(panelId);
           updateClosedPanelsList();

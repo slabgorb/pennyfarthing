@@ -136,7 +136,7 @@ function processMarkers(
         };
       }
       // Check for accompanying CHOICES marker
-      const choicesMarker = markers.find(m => m.type === MARKER_TYPES.CHOICES);
+      const choicesMarker = markers.find((m: { type: string; value: string }) => m.type === MARKER_TYPES.CHOICES);
       if (choicesMarker) {
         return processChoicesMarker(choicesMarker.value, fullText);
       }

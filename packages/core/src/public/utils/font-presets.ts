@@ -272,19 +272,7 @@ export function applyFontSettings(settings: FontSettings): void {
 // IPC Integration
 // =============================================================================
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      send?: (channel: string, data: unknown) => void;
-      invoke?: (channel: string, data: unknown) => Promise<unknown>;
-      font?: {
-        save: (settings: FontSettings) => Promise<boolean>;
-        load: () => Promise<FontSettings | null>;
-        getSettingsPath: () => Promise<string>;
-      };
-    };
-  }
-}
+// electronAPI Window declaration is in color-presets.ts (single declaration)
 
 export function notifyFontChange(type: 'ui' | 'code', presetId: string): void {
   // Font change is broadcast via settings WebSocket
@@ -337,8 +325,9 @@ export async function loadFontSettings(): Promise<FontSettings> {
 
 export function getFontSettingsPath(): string {
   // Global settings path (in user's home directory)
-  const home = typeof process !== 'undefined' ? process.env.HOME : '~';
-  return `${home}/.config/cyclist/font-settings.yaml`;
+  const home = typeof globalThis !== 'undefined' && 'process' in globalThis ? (globalThis as Record<string, unknown>).process as { env: Record<string, string | undefined> } : null;
+  const homePath = home?.env?.HOME ?? '~';
+  return `${homePath}/.config/cyclist/font-settings.yaml`;
 }
 
 // =============================================================================

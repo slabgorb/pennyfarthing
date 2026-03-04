@@ -42,7 +42,7 @@ export function useDataSource<R = unknown, T = R>(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMountedRef = useRef(true);
 
   const send = useCallback((message: unknown) => {
@@ -206,7 +206,7 @@ export function useRawDataSource(options: UseRawDataSourceOptions): {
 } {
   const { endpoint, onMessage, onClose, onError, reconnectMs = 2000 } = options;
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMountedRef = useRef(true);
   const onMessageRef = useRef(onMessage);
   const onCloseRef = useRef(onClose);

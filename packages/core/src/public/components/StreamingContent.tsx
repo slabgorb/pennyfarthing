@@ -18,7 +18,7 @@ export default function StreamingContent({ content, isStreaming }: StreamingCont
   const html = parseMarkdown(content);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const lastAnnouncedLength = useRef(0);
-  const announceThrottleRef = useRef<NodeJS.Timeout | null>(null);
+  const announceThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Announce streaming state changes
   useEffect(() => {

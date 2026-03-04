@@ -33,7 +33,7 @@ export function useMessageStream(): UseMessageStreamResult {
   const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleWebSocketMessage = useCallback((data: WebSocketMessage) => {
     if (data.type === 'message' && data.message) {

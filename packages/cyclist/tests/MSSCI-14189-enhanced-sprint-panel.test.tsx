@@ -197,26 +197,19 @@ class MockWebSocket {
   }
 }
 
-// Mock electron API for IPC actions
-const mockElectronAPI = {
-  sprint: {
-    archiveEpic: vi.fn(() => Promise.resolve({ success: true })),
-    promoteEpic: vi.fn(() => Promise.resolve({ success: true })),
-    getStatus: vi.fn(() => Promise.resolve(createMockSprintData())),
-    getFuture: vi.fn(() => Promise.resolve(createMockSprintData().futureEpics)),
-  },
-};
+// Mock fetch for REST API actions (Electron API removed in Story 141-12)
+const mockFetch = vi.fn(() => Promise.resolve({ ok: true } as Response));
 
 beforeEach(() => {
   vi.clearAllMocks();
   MockWebSocket.instances = [];
   mockSprintDataOverride = null; // Reset data override
-  (window as any).electronAPI = mockElectronAPI;
+  global.fetch = mockFetch;
   (global as any).WebSocket = MockWebSocket;
 });
 
 afterEach(() => {
-  delete (window as any).electronAPI;
+  vi.restoreAllMocks();
   delete (global as any).WebSocket;
   mockSprintDataOverride = null;
 });
@@ -503,7 +496,7 @@ describe('AC5: Archive action', () => {
     fireEvent.click(screen.getByTestId('confirm-archive-yes'));
 
     await waitFor(() => {
-      expect(mockElectronAPI.sprint.archiveEpic).toHaveBeenCalledWith('epic-75');
+      expect(mockFetch).toHaveBeenCalledWith('/api/sprint/archive-epic/epic-75', { method: 'POST' });
     });
   });
 
@@ -526,7 +519,7 @@ describe('AC5: Archive action', () => {
 
     // Wait for archive to complete
     await waitFor(() => {
-      expect(mockElectronAPI.sprint.archiveEpic).toHaveBeenCalledWith('epic-75');
+      expect(mockFetch).toHaveBeenCalledWith('/api/sprint/archive-epic/epic-75', { method: 'POST' });
     });
 
     // Simulate WebSocket update with epic-75 removed
@@ -632,7 +625,7 @@ describe('AC7: Promote action', () => {
     fireEvent.click(promoteButton);
 
     await waitFor(() => {
-      expect(mockElectronAPI.sprint.promoteEpic).toHaveBeenCalledWith('epic-77');
+      expect(mockFetch).toHaveBeenCalledWith('/api/sprint/promote-epic/epic-77', { method: 'POST' });
     });
   });
 
@@ -649,7 +642,7 @@ describe('AC7: Promote action', () => {
 
     // Wait for promote to complete
     await waitFor(() => {
-      expect(mockElectronAPI.sprint.promoteEpic).toHaveBeenCalledWith('epic-77');
+      expect(mockFetch).toHaveBeenCalledWith('/api/sprint/promote-epic/epic-77', { method: 'POST' });
     });
 
     // Simulate WebSocket update with promoted epic in sprint and removed from future
@@ -701,9 +694,7 @@ describe('AC7: Promote action', () => {
 describe('AC8: Loading states and error handling', () => {
   it('should show loading state on initial load', async () => {
     // Delay the response to see loading state
-    mockElectronAPI.sprint.getStatus.mockImplementationOnce(
-      () => new Promise((resolve) => setTimeout(() => resolve(createMockSprintData()), 100))
-    );
+    // Loading state is driven by WebSocket, not fetch — this test just checks initial render
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);
@@ -716,8 +707,8 @@ describe('AC8: Loading states and error handling', () => {
   });
 
   it('should show loading indicator on archive button during action', async () => {
-    mockElectronAPI.sprint.archiveEpic.mockImplementationOnce(
-      () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
+    mockFetch.mockImplementationOnce(
+      () => new Promise((resolve) => setTimeout(() => resolve({ ok: true } as Response), 100))
     );
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
@@ -746,7 +737,7 @@ describe('AC8: Loading states and error handling', () => {
   });
 
   it('should show error message when archive fails', async () => {
-    mockElectronAPI.sprint.archiveEpic.mockRejectedValueOnce(new Error('Archive failed'));
+    mockFetch.mockRejectedValueOnce(new Error('Archive failed'));
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);
@@ -770,7 +761,7 @@ describe('AC8: Loading states and error handling', () => {
   });
 
   it('should show error message when promote fails', async () => {
-    mockElectronAPI.sprint.promoteEpic.mockRejectedValueOnce(new Error('Promote failed'));
+    mockFetch.mockRejectedValueOnce(new Error('Promote failed'));
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);
@@ -789,9 +780,9 @@ describe('AC8: Loading states and error handling', () => {
   });
 
   it('should clear error message on retry', async () => {
-    mockElectronAPI.sprint.promoteEpic
+    mockFetch
       .mockRejectedValueOnce(new Error('Promote failed'))
-      .mockResolvedValueOnce({ success: true });
+      .mockResolvedValueOnce({ ok: true } as Response);
 
     const { EnhancedSprintPanel } = await import('../src/public/components/panels/SprintPanel');
     render(<EnhancedSprintPanel />);

@@ -18,6 +18,9 @@
       "@/*": ["src/public/*"]
     }
   },
-  "include": ["src/public/**/*.tsx", "src/public/**/*.ts"],
+  "include": [
+    "src/public/**/*.tsx",
+    "src/public/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

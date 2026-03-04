@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { useStory } from '../../hooks/useStory';
+import { useStory } from '../../hooks/useStory.js';
 import { useSprint, type SprintStory, type SprintEpic, type SprintRegistry, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
 
 // =============================================================================
@@ -198,15 +198,6 @@ function JiraLink({ jiraKey, storyId }: { jiraKey: string; storyId: string }): R
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     const url = getJiraUrl(jiraKey);
-    try {
-      const api = (window as any).electronAPI;
-      if (api?.shell?.openExternal) {
-        api.shell.openExternal(url);
-        return;
-      }
-    } catch {
-      // electronAPI not available or call failed
-    }
     window.open(url, '_blank');
   };
 
@@ -464,13 +455,8 @@ export function EnhancedSprintPanel(): React.ReactElement {
       setActionError(null); // Clear any previous errors
 
       try {
-        // Use electronAPI if available (Electron mode), otherwise REST endpoint (web mode)
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.sprint?.archiveEpic) {
-          await (window as any).electronAPI.sprint.archiveEpic(epicId);
-        } else {
-          const response = await fetch(`/api/sprint/archive-epic/${epicId}`, { method: 'POST' });
-          if (!response.ok) throw new Error('Archive failed');
-        }
+        const response = await fetch(`/api/sprint/archive-epic/${epicId}`, { method: 'POST' });
+        if (!response.ok) throw new Error('Archive failed');
         // Success - error already cleared at start
       } catch (err) {
         setActionError(err instanceof Error ? err : new Error('Archive failed'));
@@ -492,13 +478,8 @@ export function EnhancedSprintPanel(): React.ReactElement {
       setActionError(null); // Clear any previous errors
 
       try {
-        // Use electronAPI if available (Electron mode), otherwise REST endpoint (web mode)
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.sprint?.promoteEpic) {
-          await (window as any).electronAPI.sprint.promoteEpic(epicId);
-        } else {
-          const response = await fetch(`/api/sprint/promote-epic/${epicId}`, { method: 'POST' });
-          if (!response.ok) throw new Error('Promote failed');
-        }
+        const response = await fetch(`/api/sprint/promote-epic/${epicId}`, { method: 'POST' });
+        if (!response.ok) throw new Error('Promote failed');
         // Success - error already cleared at start
       } catch (err) {
         setActionError(err instanceof Error ? err : new Error('Promote failed'));

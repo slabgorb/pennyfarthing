@@ -12,8 +12,22 @@
 import { useState } from 'react';
 import { useDataSource } from './useDataSource.js';
 
-// Import types from story-parser for criteria and workflow
-import type { CriteriaItem, WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
+// Types mirrored from story-parser (Node.js module, not importable in browser tsconfig)
+export interface WorkflowPhase {
+  name: string;
+  agent: string;
+  label: string;
+  status: 'done' | 'current' | 'pending';
+}
+export interface CriteriaItem {
+  text: string;
+  completed: boolean;
+}
+export interface AvailableWorkflow {
+  name: string;
+  type: 'phased' | 'stepped' | 'procedural';
+  description?: string;
+}
 
 export interface StoryData {
   id: string;
@@ -30,8 +44,7 @@ export interface StoryData {
   workflowType?: string;
 }
 
-// Re-export types for panel components
-export type { CriteriaItem, WorkflowPhase, AvailableWorkflow };
+// Types are exported directly from their definitions above
 
 interface UseStoryResult {
   story: StoryData | null;

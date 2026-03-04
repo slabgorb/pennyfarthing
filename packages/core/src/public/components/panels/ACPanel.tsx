@@ -10,8 +10,8 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useStory } from '../../hooks/useStory';
-import type { CriteriaItem } from '../../../story-parser.js';
+import { useStory } from '../../hooks/useStory.js';
+import type { CriteriaItem } from '../../hooks/useStory.js';
 
 // =============================================================================
 // Criteria Item Component

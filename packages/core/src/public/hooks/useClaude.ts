@@ -71,7 +71,7 @@ export function useClaude(callbacks?: UseClaudeCallbacks): UseClaudeResult {
   const [isConnected, setIsConnected] = useState(false);
   const [mode, setModeState] = useState<PermissionMode>('default');
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const callbacksRef = useRef(callbacks);
 
   // Keep callbacks ref updated

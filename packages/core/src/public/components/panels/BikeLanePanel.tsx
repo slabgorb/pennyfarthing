@@ -10,7 +10,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { WorkflowPhase } from '../../../story-parser.js';
+import type { WorkflowPhase } from '../../hooks/useStory.js';
 import { useStory } from '../../hooks/useStory.js';
 
 export interface PhaseHistoryEntry {

@@ -15,8 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClaudeContext } from '../../contexts/ClaudeContext';
-import { useStory } from '../../hooks/useStory';
-import type { WorkflowPhase, AvailableWorkflow } from '../../../story-parser.js';
+import { useStory } from '../../hooks/useStory.js';
+import type { WorkflowPhase, AvailableWorkflow } from '../../hooks/useStory.js';
 
 // =============================================================================
 // Helper Functions

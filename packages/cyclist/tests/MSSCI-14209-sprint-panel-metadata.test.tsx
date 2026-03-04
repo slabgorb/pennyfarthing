@@ -224,26 +224,19 @@ class MockWebSocket {
   }
 }
 
-const mockElectronAPI = {
-  sprint: {
-    archiveEpic: vi.fn(() => Promise.resolve({ success: true })),
-    promoteEpic: vi.fn(() => Promise.resolve({ success: true })),
-  },
-  shell: {
-    openExternal: vi.fn(() => Promise.resolve()),
-  },
-};
+// Mock window.open for Jira links (Electron API removed in Story 141-12)
+const mockWindowOpen = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
   MockWebSocket.instances = [];
   mockSprintDataOverride = null;
-  (window as any).electronAPI = mockElectronAPI;
+  window.open = mockWindowOpen;
   (global as any).WebSocket = MockWebSocket;
 });
 
 afterEach(() => {
-  delete (window as any).electronAPI;
+  vi.restoreAllMocks();
   delete (global as any).WebSocket;
   mockSprintDataOverride = null;
 });
@@ -378,8 +371,9 @@ describe('AC2: Story Jira ticket clickable link', () => {
     fireEvent.click(jiraLink);
 
     await waitFor(() => {
-      expect(mockElectronAPI.shell.openExternal).toHaveBeenCalledWith(
-        expect.stringContaining('MSSCI-14187')
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        expect.stringContaining('MSSCI-14187'),
+        '_blank'
       );
     });
   });

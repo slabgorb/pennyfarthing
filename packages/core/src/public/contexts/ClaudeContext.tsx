@@ -79,7 +79,7 @@ export function ClaudeProvider({ children }: ClaudeProviderProps): React.ReactEl
   const [isConnected, setIsConnected] = useState(false);
   const [mode, setModeState] = useState<PermissionMode>('default');
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Subscriber lists
   const messageCallbacksRef = useRef<Set<MessageCallback>>(new Set());

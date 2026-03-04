@@ -73,7 +73,7 @@ export function AgentPopup({ isOpen, onClose, currentRole, currentTheme }: Agent
   const [previewedAgent, setPreviewedAgent] = useState<EnhancedThemeAgent | null>(null);
   const [loading, setLoading] = useState(false);
   const [portraitError, setPortraitError] = useState(false);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { send } = useClaudeContext();
 
   // Fetch theme data when popup opens

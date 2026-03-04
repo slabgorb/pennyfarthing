@@ -263,7 +263,7 @@ export function MessagePanel(): React.ReactElement {
   const { handleTurnComplete, pauseQueue, onBellConsumed, injectMessage } = useMessageQueueContext();
 
   // Ref to track the submit function for turn complete
-  const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>();
+  const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>(undefined);
 
   // Subscribe to bell-consumed events to display injected messages
   useEffect(() => {

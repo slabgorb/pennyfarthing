@@ -9,9 +9,11 @@
  */
 
 import React from 'react';
-import { useStory } from '../../hooks/useStory';
+import { useStory } from '../../hooks/useStory.js';
+import type { CriteriaItem, WorkflowPhase } from '../../hooks/useStory.js';
 import { useSprint } from '../../hooks/useSprint';
 import { useTodos } from '../../hooks/useTodos';
+import type { TodoItem } from '../../hooks/useTodos';
 import { useGitStatus } from '../../hooks/useGitStatus';
 import { useStatsStrip } from '../../hooks/useStatsStrip';
 
@@ -59,7 +61,7 @@ export function ProgressPanel(): React.ReactElement {
   const storyPoints = story?.points ?? currentStory?.points ?? 0;
   const jiraKey = currentStory?.jiraKey ?? '';
   const storyStatus = story?.status ?? currentStory?.status ?? '';
-  const epic = story?.epic ?? currentStory?.epic ?? '';
+  const epic = story?.epic ?? '';
   const displayStatus = storyStatus.replace(/_/g, ' ');
 
   // Workflow
@@ -70,15 +72,15 @@ export function ProgressPanel(): React.ReactElement {
   // AC
   const criteria = story?.criteria ?? null;
   const hasCriteria = criteria != null && criteria.length > 0;
-  const completedAC = hasCriteria ? criteria.filter((c: any) => c.completed).length : 0;
+  const completedAC = hasCriteria ? criteria.filter((c: CriteriaItem) => c.completed).length : 0;
   const totalAC = hasCriteria ? criteria.length : 0;
   const acPercent = totalAC > 0 ? Math.round((completedAC / totalAC) * 100) : 0;
 
   // Todos
   const hasTodos = todos && todos.length > 0;
-  const completedTodos = hasTodos ? todos.filter((t: any) => t.status === 'completed').length : 0;
+  const completedTodos = hasTodos ? todos.filter((t: TodoItem) => t.status === 'completed').length : 0;
   const totalTodos = hasTodos ? todos.length : 0;
-  const activeTodo = hasTodos ? todos.find((t: any) => t.status === 'in_progress') : null;
+  const activeTodo = hasTodos ? todos.find((t: TodoItem) => t.status === 'in_progress') : null;
 
   // Git
   const branch = gitStatus?.branch ?? '';
@@ -118,7 +120,7 @@ export function ProgressPanel(): React.ReactElement {
           )}
           {phases && phases.length > 0 && (
             <div className="phase-progress">
-              {phases.map((phase: any) => (
+              {phases.map((phase: WorkflowPhase) => (
                 <div key={phase.name} className={`phase-step ${phase.status}`}>
                   <span className="phase-label">{phase.label}</span>
                 </div>

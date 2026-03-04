@@ -38,7 +38,7 @@ export function useFocusPanel(api: DockviewApi | null): UseFocusPanelResult {
   const [isInFocusMode, setIsInFocusMode] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isMountedRef = useRef(true);
 
   // Refs to access latest values inside WebSocket callbacks without re-creating the effect

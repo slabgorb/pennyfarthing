@@ -29,7 +29,7 @@ import { groupToolsIntoStacks, ToolStackData } from '../utils/toolStackGrouper';
 import { usePersona } from '../hooks/usePersona';
 import { useColorScheme } from '../hooks/useColorScheme';
 import { useStatsStrip } from '../hooks/useStatsStrip';
-import type { MessageData } from '../types/message';
+import type { MessageData, SubagentMessage } from '../types/message';
 
 // Agent colors matching CLI statusbar (from PersonaHeader)
 const AGENT_COLORS: Record<string, string> = {
@@ -53,7 +53,7 @@ interface SubagentGroup {
   parent_id: string;
   type: string;
   name: string;
-  messages: MessageData[];
+  messages: SubagentMessage[];
 }
 
 interface ToolStackGroup {
@@ -148,7 +148,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
           group = { parent_id: msg.parent_id, type: msg.subagent_type || 'unknown', name: msg.subagent_name || 'unnamed', messages: [] };
           subagentGroups.set(msg.parent_id, group);
         }
-        group.messages.push(msg);
+        group.messages.push(msg as SubagentMessage);
         continue;
       }
       filtered.push(msg);
@@ -235,7 +235,7 @@ export default function MessageView({ messages }: MessageViewProps): React.React
           key={`subagent-${group.parent_id}`}
           type={group.type}
           name={group.name}
-          messages={group.messages as any}
+          messages={group.messages}
           defaultCollapsed={collapsed}
           onCollapseChange={(c) => subagentCollapsedRef.current.set(group.parent_id, c)}
         />
