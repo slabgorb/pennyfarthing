@@ -14,7 +14,7 @@
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { getStoryInfo } from './story-parser.js';
+import { getStoryInfo } from '@pennyfarthing/core/dist/server/story-parser.js';
 
 // =============================================================================
 // Types matching EnhancedSprintPanel expectations

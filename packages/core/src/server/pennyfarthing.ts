@@ -1,13 +1,13 @@
 /**
  * Pennyfarthing detection and persona resolution for server module.
- * Extracted from packages/cyclist/src/pennyfarthing.ts (Story 98-17).
+ * Story 141-17: Refactored to use child_process subprocess delegation via pf CLI.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync, watch, type FSWatcher } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, readFileSync, watch, type FSWatcher } from 'fs';
+import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
-import { parse as parseYaml } from 'yaml';
 import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
+import { callPf, PfCache, toSlug, oceanSuffix, generateSlug } from '../shared/pf-cli.js';
 
 // Electron adds resourcesPath to process; not in Node.js types
 const electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
@@ -15,6 +15,16 @@ const electronResourcesPath = (process as unknown as { resourcesPath?: string })
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PACKAGE_ROOT = join(__dirname, '..', '..', '..'); // packages/core/src/server -> pennyfarthing root
+
+// Cache for CLI results with 30_000ms TTL fallback
+const cache = new PfCache(30_000);
+
+// Re-export slug utilities for consumers
+export { toSlug, oceanSuffix, generateSlug };
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface Helper {
   name: string;
@@ -44,20 +54,21 @@ interface ThemeConfig {
   theme: string;
 }
 
-function toSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+// ---------------------------------------------------------------------------
+// Result helpers: { success: true, data } / { success: false, error }
+// ---------------------------------------------------------------------------
+
+function personaSuccess(data: Persona): { success: true; data: Persona } {
+  return { success: true, data };
 }
 
-function oceanSuffix(ocean: { O: number; C: number; E: number; A: number; N: number }): string {
-  return `${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
+function personaFailure(error: string): { success: false; error: string } {
+  return { success: false, error };
 }
 
-function generateSlug(shortName: string, ocean: { O: number; C: number; E: number; A: number; N: number }): string {
-  return `${toSlug(shortName)}-${oceanSuffix(ocean)}`;
-}
+// ---------------------------------------------------------------------------
+// Project detection (existsSync-based — no file parsing needed)
+// ---------------------------------------------------------------------------
 
 /**
  * Detects if a directory is a Pennyfarthing-enabled project
@@ -91,60 +102,52 @@ export function detectPennyfarthingProject(projectDir: string): boolean {
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Theme config loading — simple regex extraction (no YAML parser)
+// ---------------------------------------------------------------------------
+
 /**
  * Loads theme configuration from .pennyfarthing/config.local.yaml
  */
 export function loadThemeConfig(projectDir: string): ThemeConfig | null {
+  const cached = cache.get<ThemeConfig>('themeConfig');
+  if (cached) return cached;
+
   const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-
-  if (!existsSync(configPath)) {
-    return null;
-  }
-
   try {
     const content = readFileSync(configPath, 'utf-8');
-    const config = parseYaml(content) as { theme?: string | number };
-    if (!config || config.theme === undefined || config.theme === null) {
-      return null;
-    }
-    return { theme: String(config.theme) };
+    const match = content.match(/^theme:\s*(.+)$/m);
+    if (!match) return null;
+    const theme = match[1].trim().replace(/^['"]|['"]$/g, '');
+    const config: ThemeConfig = { theme };
+    cache.set('themeConfig', config);
+    return config;
   } catch {
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Theme YAML loading via pf CLI
+// ---------------------------------------------------------------------------
 
 /**
- * Loads and parses a theme YAML file
+ * Loads and parses a theme YAML file via pf CLI subprocess
  */
 export function loadThemeYaml(themePath: string): Record<string, Persona> | null {
-  if (!existsSync(themePath)) {
-    return null;
-  }
-
-  try {
-    const content = readFileSync(themePath, 'utf-8');
-    const theme = parseYaml(content) as { agents?: Record<string, Persona> };
-    if (!theme || !theme.agents) {
-      return null;
-    }
-    return theme.agents;
-  } catch {
-    return null;
-  }
+  const themeName = basename(themePath, '.yaml');
+  const r = callPf<{ agents?: Record<string, Persona> }>(['theme', 'show', themeName, '--json']);
+  if (!r.success || !r.data?.agents) return null;
+  return r.data.agents;
 }
 
+// ---------------------------------------------------------------------------
+// Agent resolution
+// ---------------------------------------------------------------------------
+
 function getCurrentAgent(projectDir: string, sessionId?: string): string | null {
-  const agentsDir = join(projectDir, '.session', 'agents');
-
-  if (!existsSync(agentsDir)) {
-    return null;
-  }
-
   if (sessionId) {
-    const sessionFile = join(agentsDir, sessionId);
-    if (!existsSync(sessionFile)) {
-      return null;
-    }
+    const sessionFile = join(projectDir, '.session', 'agents', sessionId);
     try {
       return readFileSync(sessionFile, 'utf-8').trim();
     } catch {
@@ -152,25 +155,17 @@ function getCurrentAgent(projectDir: string, sessionId?: string): string | null 
     }
   }
 
-  try {
-    const files = readdirSync(agentsDir);
-    if (files.length === 0) return null;
-
-    let mostRecent: { file: string; mtime: number } | null = null;
-    for (const file of files) {
-      const filePath = join(agentsDir, file);
-      const stat = statSync(filePath);
-      if (!mostRecent || stat.mtimeMs > mostRecent.mtime) {
-        mostRecent = { file, mtime: stat.mtimeMs };
-      }
-    }
-
-    if (!mostRecent) return null;
-    return readFileSync(join(agentsDir, mostRecent.file), 'utf-8').trim();
-  } catch {
-    return null;
+  // Delegate to pf CLI for agent discovery
+  const r = callPf<{ phase_owner?: string }>(['workflow', 'check', '--json'], projectDir);
+  if (r.success && r.data?.phase_owner) {
+    return r.data.phase_owner;
   }
+  return null;
 }
+
+// ---------------------------------------------------------------------------
+// Display name computation (pure function)
+// ---------------------------------------------------------------------------
 
 function computeDisplayNames(agents: Record<string, { character: string }>): Map<string, string> {
   const displayNames = new Map<string, string>();
@@ -218,6 +213,10 @@ function computeDisplayNames(agents: Record<string, { character: string }>): Map
   return displayNames;
 }
 
+// ---------------------------------------------------------------------------
+// Catchphrase selection (pure function)
+// ---------------------------------------------------------------------------
+
 export function selectCatchphrase(
   catchphrases: string[] | undefined | null,
   fallbackQuote: string | undefined | null
@@ -226,6 +225,10 @@ export function selectCatchphrase(
   if (catchphrases.length === 1) return catchphrases[0];
   return catchphrases[Math.floor(Math.random() * catchphrases.length)];
 }
+
+// ---------------------------------------------------------------------------
+// Persona resolution — delegates theme loading to pf CLI
+// ---------------------------------------------------------------------------
 
 /**
  * Gets the current persona data for the active agent
@@ -236,29 +239,17 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   const config = loadThemeConfig(projectDir);
   if (!config) return null;
 
-  const themeFile = `${config.theme}.yaml`;
-  let themePath: string | null = null;
-
-  if (electronResourcesPath) {
-    const bundledPath = join(electronResourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
-    if (existsSync(bundledPath)) themePath = bundledPath;
+  // Get theme data from CLI
+  const cacheKey = `theme:${config.theme}`;
+  let themeData = cache.get<{ agents: Record<string, Record<string, unknown>> }>(cacheKey);
+  if (!themeData) {
+    const r = callPf<{ agents: Record<string, Record<string, unknown>> }>(['theme', 'show', config.theme, '--json']);
+    if (!r.success || !r.data?.agents) return null;
+    themeData = r.data;
+    cache.set(cacheKey, themeData);
   }
 
-  if (!themePath) {
-    const consumerPath = join(projectDir, '.pennyfarthing', 'personas', 'themes', themeFile);
-    if (existsSync(consumerPath)) themePath = consumerPath;
-  }
-
-  if (!themePath) {
-    const devPath = join(PACKAGE_ROOT, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
-    if (existsSync(devPath)) themePath = devPath;
-  }
-
-  if (!themePath) return null;
-
-  const agents = loadThemeYaml(themePath);
-  if (!agents) return null;
-
+  const agents = themeData.agents;
   let agentRole = getCurrentAgent(projectDir, sessionId);
   if (!agentRole) {
     if (agents['orchestrator']) {
@@ -273,29 +264,31 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   const persona = agents[agentRole];
   if (!persona) return null;
 
-  let displayName = (persona as { shortName?: string }).shortName;
-  const shortName = displayName || persona.character.split(' ')[0];
+  const character = (persona.character as string) || '';
+  let displayName = persona.shortName as string | undefined;
+  const shortName = displayName || character.split(' ')[0];
   if (!displayName) {
-    const displayNames = computeDisplayNames(agents);
-    displayName = displayNames.get(persona.character) || persona.character;
+    const displayNames = computeDisplayNames(agents as unknown as Record<string, { character: string }>);
+    displayName = displayNames.get(character) || character;
   }
 
-  const slug = persona.ocean ? generateSlug(shortName, persona.ocean) : agentRole;
-  const helper = (persona as { helper?: Helper }).helper;
-  const catchphrases = (persona as { catchphrases?: string[] }).catchphrases;
-  const selectedQuote = selectCatchphrase(catchphrases, persona.quote);
+  const ocean = persona.ocean as { O: number; C: number; E: number; A: number; N: number } | undefined;
+  const slug = ocean ? generateSlug(shortName, ocean) : agentRole;
+  const helper = persona.helper as Helper | undefined;
+  const catchphrases = persona.catchphrases as string[] | undefined;
+  const selectedQuote = selectCatchphrase(catchphrases, persona.quote as string);
 
   return {
-    character: persona.character,
+    character,
     displayName,
     role: agentRole,
-    roleDescription: persona.role,
-    style: persona.style,
+    roleDescription: (persona.role as string) || '',
+    style: (persona.style as string) || '',
     theme: config.theme,
     slug,
     quote: selectedQuote,
     helper: helper || undefined,
-    ocean: persona.ocean,
+    ocean,
   };
 }
 
@@ -304,67 +297,35 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
  */
 export function getFullPersonaDetails(projectDir: string, sessionId?: string): unknown {
   if (!detectPennyfarthingProject(projectDir)) return null;
-  const config = loadThemeConfig(projectDir);
-  if (!config) return null;
-
-  const themeFile = `${config.theme}.yaml`;
-  let themePath: string | null = null;
-
-  if (electronResourcesPath) {
-    const bundledPath = join(electronResourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
-    if (existsSync(bundledPath)) themePath = bundledPath;
-  }
-  if (!themePath) {
-    const consumerPath = join(projectDir, '.pennyfarthing', 'personas', 'themes', themeFile);
-    if (existsSync(consumerPath)) themePath = consumerPath;
-  }
-  if (!themePath) {
-    const devPath = join(PACKAGE_ROOT, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
-    if (existsSync(devPath)) themePath = devPath;
-  }
-  if (!themePath) return null;
-
-  let themeData: Record<string, unknown>;
-  try {
-    const content = readFileSync(themePath, 'utf-8');
-    themeData = parseYaml(content) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-
-  const agents = themeData.agents as Record<string, Record<string, unknown>> | undefined;
-  if (!agents) return null;
-
-  let agentRole = getCurrentAgent(projectDir, sessionId);
-  if (!agentRole) {
-    if (agents['orchestrator']) agentRole = 'orchestrator';
-    else {
-      const availableRoles = Object.keys(agents);
-      if (availableRoles.length === 0) return null;
-      agentRole = availableRoles[0];
-    }
-  }
-
-  const rawPersona = agents[agentRole];
-  if (!rawPersona) return null;
 
   const basicPersona = getCurrentPersona(projectDir, sessionId);
   if (!basicPersona) return null;
+
+  const r = callPf<{ agents: Record<string, Record<string, unknown>> }>(['theme', 'show', basicPersona.theme, '--json']);
+  if (!r.success || !r.data?.agents) return basicPersona;
+
+  const rawPersona = r.data.agents[basicPersona.role];
+  if (!rawPersona) return basicPersona;
 
   return {
     ...basicPersona,
     voice: rawPersona.voice as string | undefined,
     quirks: rawPersona.quirks as string[] | undefined,
     background: rawPersona.role as string | undefined,
-    roleMapping: `${agentRole.toUpperCase()} → ${basicPersona.character}`,
+    roleMapping: `${basicPersona.role.toUpperCase()} → ${basicPersona.character}`,
     expertise: rawPersona.expertise as string | undefined,
     catchphrases: rawPersona.catchphrases as string[] | undefined,
     visual: rawPersona.visual as string | undefined,
   };
 }
 
+// ---------------------------------------------------------------------------
+// File watching — retained for cache invalidation
+// ---------------------------------------------------------------------------
+
 /**
- * Watches for agent changes and invokes callback when agent changes
+ * Watches for agent changes and invokes callback when agent changes.
+ * Cache is invalidated on file changes to ensure fresh CLI results.
  */
 export function watchAgentChanges(
   projectDir: string,
@@ -382,6 +343,7 @@ export function watchAgentChanges(
   if (sessionId) {
     const sessionFile = join(agentsDir, sessionId);
     watcher = watch(sessionFile, () => {
+      cache.invalidate();
       try {
         const agentRole = readFileSync(sessionFile, 'utf-8').trim();
         callback(agentRole);
@@ -391,6 +353,7 @@ export function watchAgentChanges(
     });
   } else {
     watcher = watch(agentsDir, { recursive: true }, () => {
+      cache.invalidate();
       const agentRole = getCurrentAgent(projectDir);
       if (agentRole) {
         callback(agentRole);
@@ -405,16 +368,11 @@ export function watchAgentChanges(
 
 /**
  * Resolve the framework package root using multi-strategy discovery.
- * Story 136-2 AC5: Replace hardcoded `join(__dirname, '..', '..', '..')`
- * with `resolvePennyfarthingDist()` from portrait-resolver.
- *
- * Falls back to __dirname traversal only when resolution returns null.
  */
 export function resolvePackageRoot(): string {
   const distPath = resolvePennyfarthingDist();
   if (distPath) {
     return dirname(distPath);
   }
-  // Fallback to __dirname traversal when resolution returns null
   return PACKAGE_ROOT;
 }

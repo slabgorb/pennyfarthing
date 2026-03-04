@@ -14,7 +14,7 @@ import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
-import { getStoryInfo } from './story-parser.js';
+import { getStoryInfo } from '@pennyfarthing/core/dist/server/story-parser.js';
 import { getSprintData } from './sprint-data.js';
 import { getReposFromConfig, type RepoGitInfo, setForceRefreshCallback } from './api/git.js';
 import {

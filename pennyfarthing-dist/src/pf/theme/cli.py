@@ -31,11 +31,17 @@ def theme():
 
 
 @theme.command("list")
-def list_cmd():
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def list_cmd(output_json: bool):
     """Show all available themes with current theme highlighted."""
-    from pf.common.themes import format_theme_list
-
-    click.echo(format_theme_list())
+    if output_json:
+        import json
+        from pf.common.themes import load_theme_metadata
+        data = load_theme_metadata()
+        click.echo(json.dumps(data, indent=2))
+    else:
+        from pf.common.themes import format_theme_list
+        click.echo(format_theme_list())
 
 
 @theme.command("show")

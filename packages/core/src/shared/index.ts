@@ -18,8 +18,6 @@ export {
   discoverAllThemeDirs,
   discoverThemePackages,
   loadAllThemeMetadata,
-  deriveCategory,
-  CATEGORY_MAP,
   type Theme,
   type ThemeAgent,
   type ThemePackageInfo,
