@@ -46,6 +46,11 @@ theme:
     - Evidence board updating
     - The scheme unravels
     - Follow the money
+  dimensions:
+    tone: dark-comedic
+    era: contemporary
+    genre: crime-drama
+    energy: measured
 zeitgeist:
   score: 84.0
   rating: rich

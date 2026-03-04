@@ -46,6 +46,11 @@ theme:
     - Scully writing the rational explanation
     - Cigarette lighting in shadows
     - War of the Coprophages
+  dimensions:
+    tone: mysterious
+    era: contemporary
+    genre: sci-fi-thriller
+    energy: paranoid
 
 zeitgeist:
   score: 82.0

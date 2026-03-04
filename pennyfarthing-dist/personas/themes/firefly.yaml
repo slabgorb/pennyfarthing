@@ -46,6 +46,11 @@ theme:
     - Dong le ma
     - Just keep flying
     - Bad guys being
+  dimensions:
+    tone: wry
+    era: futuristic
+    genre: space-western
+    energy: scrappy
 
 zeitgeist:
   score: 82.3

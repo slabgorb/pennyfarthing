@@ -45,6 +45,11 @@ theme:
     - We must try to ship
     - Mise en scene
     - The frame is perfect
+  dimensions:
+    tone: dramatic
+    era: contemporary
+    genre: cinema
+    energy: contemplative
 
 zeitgeist:
   score: 76.5

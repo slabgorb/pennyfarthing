@@ -46,6 +46,11 @@ theme:
     - Take no prisoners
     - Boar on the floor
     - Not a serious person proving
+  dimensions:
+    tone: acerbic
+    era: contemporary
+    genre: drama
+    energy: cutthroat
 
 zeitgeist:
   score: 85.5

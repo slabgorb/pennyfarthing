@@ -45,6 +45,11 @@ theme:
     - I believe in believe
     - Ted Lasso-ing
     - Rubbish rejecting
+  dimensions:
+    tone: warm
+    era: contemporary
+    genre: comedy-drama
+    energy: uplifting
 zeitgeist:
   score: 88.0
   rating: rich

@@ -4,6 +4,9 @@ theme:
   source: "Stephen King literary universe"
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
+  user_title: Constant Reader
+  portrait_style: ", horror gothic, oil painting, dark atmospheric, New England small town"
+  tier: A
   spinner_verbs:
     - Redrum typing
     - Overlook haunting
@@ -35,6 +38,11 @@ theme:
     - IT summoning
     - Prophetically planning
     - Glowing red narrowing
+  dimensions:
+    tone: dark
+    era: contemporary
+    genre: horror
+    energy: creeping
 
 agents:
   orchestrator:

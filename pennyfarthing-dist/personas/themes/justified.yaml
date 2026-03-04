@@ -46,6 +46,11 @@ theme:
     - Mountain law
     - Constable Bob trying
     - Raylan outmaneuvering
+  dimensions:
+    tone: drawling
+    era: contemporary
+    genre: crime-drama
+    energy: simmering
 
 zeitgeist:
   score: 78.0

@@ -46,6 +46,11 @@ theme:
     - Jersey representing
     - Waste management managing
     - Tony on the couch
+  dimensions:
+    tone: dramatic
+    era: contemporary
+    genre: crime-drama
+    energy: simmering
 
 zeitgeist:
   score: 78.8

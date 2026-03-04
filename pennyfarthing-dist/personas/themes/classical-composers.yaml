@@ -45,6 +45,11 @@ theme:
     - Piano sonata singing
     - Harmony resolving
     - Hats off gentlemen
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: arts
+    energy: passionate
 zeitgeist:
   score: 73.8
   rating: rich

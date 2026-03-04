@@ -46,6 +46,11 @@ theme:
     - Prize fighting
     - Defying the crown
     - Ten pieces of eight
+  dimensions:
+    tone: gritty
+    era: historical
+    genre: adventure
+    energy: fierce
 zeitgeist:
   score: 76.0
   rating: rich

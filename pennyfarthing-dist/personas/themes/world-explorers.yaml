@@ -45,6 +45,11 @@ theme:
     - Sled dog driving
     - Adventure is worthwhile in itself
     - Men wanted to go again
+  dimensions:
+    tone: adventurous
+    era: historical
+    genre: adventure
+    energy: bold
 
 zeitgeist:
   score: 75.8

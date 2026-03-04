@@ -46,6 +46,11 @@ theme:
     - Wingardium Leviosa
     - Avada Kedavra deflecting
     - Sectumsempra surviving
+  dimensions:
+    tone: whimsical
+    era: contemporary
+    genre: fantasy
+    energy: adventurous
 zeitgeist:
   score: 81.0
   rating: rich

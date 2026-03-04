@@ -45,6 +45,11 @@ theme:
     - Dueling at dawn
     - Raskolnikov theorizing
     - Pierre Bezukhov searching
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: literary
+    energy: brooding
 
 zeitgeist:
   score: 81.5

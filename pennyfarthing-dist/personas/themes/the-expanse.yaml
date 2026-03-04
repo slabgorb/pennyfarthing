@@ -46,6 +46,11 @@ theme:
     - The Belt enduring
     - Oye Beltalowda
     - Sol system defending
+  dimensions:
+    tone: gritty
+    era: futuristic
+    genre: sci-fi
+    energy: tense
 
 zeitgeist:
   score: 91.0

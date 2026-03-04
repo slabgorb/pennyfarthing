@@ -46,6 +46,11 @@ theme:
     - Unlimited power
     - High ground seeking
     - Cantina frequenting
+  dimensions:
+    tone: heroic
+    era: timeless
+    genre: space-opera
+    energy: epic
 
 zeitgeist:
   score: 76.8

@@ -46,6 +46,11 @@ theme:
     - Morpheus brooding
     - Despair despairing
     - Lucien cataloging everything
+  dimensions:
+    tone: dark
+    era: timeless
+    genre: fantasy
+    energy: dreamlike
 
 zeitgeist:
   score: 83.0

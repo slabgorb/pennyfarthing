@@ -46,6 +46,11 @@ theme:
     - Existential crisis loading
     - Orchestrating chaos
     - Being magnificently awesome
+  dimensions:
+    tone: comedic
+    era: futuristic
+    genre: military-sci-fi
+    energy: high-energy
 zeitgeist:
   score: 85.0
   rating: rich

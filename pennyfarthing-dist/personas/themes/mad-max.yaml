@@ -56,6 +56,11 @@ theme:
     - We are not things
     - Redemption earning
     - Return and test again
+  dimensions:
+    tone: gritty
+    era: futuristic
+    genre: post-apocalyptic
+    energy: explosive
 zeitgeist:
   score: 79.7
   rating: rich

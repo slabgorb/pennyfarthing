@@ -46,6 +46,11 @@ theme:
     - Cold War clocking
     - Electric blue glowing
     - Trench coat cinching
+  dimensions:
+    tone: dark
+    era: retro
+    genre: superhero
+    energy: brooding
 
 zeitgeist:
   score: 80.5

@@ -46,6 +46,11 @@ theme:
     - Democracy advancing
     - Sam Seaborn drafting
     - Noble cause serving
+  dimensions:
+    tone: idealistic
+    era: contemporary
+    genre: political-drama
+    energy: rapid
 
 zeitgeist:
   score: 84.5

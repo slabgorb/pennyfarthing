@@ -45,6 +45,11 @@ theme:
     - Dulcinea inspires
     - Of giants and windmills
     - Championing noble madness
+  dimensions:
+    tone: satirical
+    era: historical
+    genre: literary
+    energy: quixotic
 zeitgeist:
   score: 79.75
   rating: rich

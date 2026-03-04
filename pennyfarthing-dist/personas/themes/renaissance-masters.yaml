@@ -45,6 +45,11 @@ theme:
     - Imagining the impossible dome
     - Surviving the Inquisition
     - Florentine networking
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: arts
+    energy: passionate
 
 zeitgeist:
   score: 77.3

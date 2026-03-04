@@ -45,6 +45,11 @@ theme:
     - Case solving
     - You've been in Afghanistan
     - Hound tracking
+  dimensions:
+    tone: analytical
+    era: historical
+    genre: mystery
+    energy: methodical
 
 zeitgeist:
   score: 85.0

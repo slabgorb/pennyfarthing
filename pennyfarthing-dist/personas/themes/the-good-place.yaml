@@ -46,6 +46,11 @@ theme:
     - Wind chimes jangling
     - Hi there
     - Oh dip
+  dimensions:
+    tone: comedic
+    era: timeless
+    genre: fantasy-comedy
+    energy: effervescent
 
 zeitgeist:
   score: 84.0

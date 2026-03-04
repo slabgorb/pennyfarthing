@@ -46,6 +46,11 @@ theme:
     - Nerve damage healing
     - Cyberspace navigating
     - Three flatlines surviving
+  dimensions:
+    tone: noir
+    era: futuristic
+    genre: cyberpunk
+    energy: wired
 
 zeitgeist:
   score: 79.5

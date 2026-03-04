@@ -45,6 +45,11 @@ theme:
     - Hero testing
     - Immortality refusing
     - The cunning prevailing
+  dimensions:
+    tone: heroic
+    era: ancient
+    genre: mythology
+    energy: epic
 zeitgeist:
   score: 77.0
   rating: rich

@@ -46,6 +46,11 @@ theme:
     - Guardian consulting
     - Yeoman assisting
     - 47 logical inconsistencies finding
+  dimensions:
+    tone: dramatic
+    era: futuristic
+    genre: sci-fi
+    energy: bold
 zeitgeist:
   score: 84.75
   rating: rich

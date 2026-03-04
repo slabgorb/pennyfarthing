@@ -46,6 +46,11 @@ theme:
     - Idea pitching
     - Time machining
     - Would you say I know something
+  dimensions:
+    tone: sophisticated
+    era: retro
+    genre: drama
+    energy: measured
 zeitgeist:
   score: 82.0
   rating: rich

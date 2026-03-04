@@ -197,6 +197,27 @@ jobs:
       - name: Validate cross-file references
         run: node scripts/validate-refs.js --strict
 
+  validate-framework:
+    runs-on: [self-hosted, Ubuntu, Common]
+    name: Validate Framework (pf validate)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Validate framework definitions
+        run: pf validate agent workflow skill-command tandem-awareness context theme
+
   python-benchmark:
     runs-on: [self-hosted, Ubuntu, Common]
     name: Python CLI Startup Benchmark

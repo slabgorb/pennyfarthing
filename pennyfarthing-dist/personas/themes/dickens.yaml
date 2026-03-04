@@ -45,6 +45,11 @@ theme:
     - Mourning Little Nell
     - The law is an ass
     - Dying on the barricades
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: literary
+    energy: measured
 
 zeitgeist:
   score: 77.5

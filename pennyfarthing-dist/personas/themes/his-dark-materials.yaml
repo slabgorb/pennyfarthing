@@ -46,6 +46,11 @@ theme:
     - Jordan College intriguing
     - Pantalaimon shifting shapes
     - Questioning the Magisterium
+  dimensions:
+    tone: serious
+    era: timeless
+    genre: fantasy
+    energy: rebellious
 zeitgeist:
   score: 82.5
   rating: rich

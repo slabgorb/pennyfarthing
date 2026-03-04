@@ -46,6 +46,11 @@ theme:
     - Nilfgaard advancing
     - Dijkstra spymastering
     - Something more binds us
+  dimensions:
+    tone: dark
+    era: medieval
+    genre: dark-fantasy
+    energy: brutal
 
 zeitgeist:
   score: 72.5

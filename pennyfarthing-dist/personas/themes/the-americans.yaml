@@ -46,6 +46,11 @@ theme:
     - Oleg questioning
     - Comrade reporting
     - The mission executing
+  dimensions:
+    tone: tense
+    era: retro
+    genre: spy-thriller
+    energy: simmering
 
 zeitgeist:
   score: 72.0

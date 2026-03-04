@@ -48,6 +48,11 @@ theme:
     - Rescue foiling
     - When we get off this island
     - Coconut radio broadcasting
+  dimensions:
+    tone: comedic
+    era: retro
+    genre: comedy
+    energy: slapstick
 
 zeitgeist:
   score: 71.8

@@ -46,6 +46,11 @@ theme:
     - Longing yearning
     - We shall repeat the past
     - Born anew
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: literary
+    energy: decadent
 
 zeitgeist:
   score: 77.25

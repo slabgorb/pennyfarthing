@@ -46,6 +46,11 @@ theme:
     - Asking the right questions
     - Torchwood monitoring
     - Would you like a jelly baby
+  dimensions:
+    tone: whimsical
+    era: timeless
+    genre: sci-fi
+    energy: adventurous
 zeitgeist:
   score: 87.0
   rating: rich

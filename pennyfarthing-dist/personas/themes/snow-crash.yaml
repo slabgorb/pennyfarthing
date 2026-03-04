@@ -46,6 +46,11 @@ theme:
     - Metaverse building
     - Pizza guarantee honoring
     - Sovereign franchising
+  dimensions:
+    tone: satirical
+    era: futuristic
+    genre: cyberpunk
+    energy: frenetic
 
 zeitgeist:
   score: 81.5

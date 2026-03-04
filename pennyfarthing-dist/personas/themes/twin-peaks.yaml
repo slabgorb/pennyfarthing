@@ -46,6 +46,11 @@ theme:
     - Major Briggs receiving messages
     - Hawk tracking
     - Black Lodge escaping
+  dimensions:
+    tone: eerie
+    era: contemporary
+    genre: mystery-surreal
+    energy: unsettling
 
 zeitgeist:
   score: 88.0

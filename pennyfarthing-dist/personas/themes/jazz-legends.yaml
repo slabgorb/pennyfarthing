@@ -45,6 +45,11 @@ theme:
     - Midnight session
     - Blues feeling
     - One note Basie
+  dimensions:
+    tone: soulful
+    era: historical
+    genre: arts
+    energy: improvisational
 
 zeitgeist:
   score: 68.2

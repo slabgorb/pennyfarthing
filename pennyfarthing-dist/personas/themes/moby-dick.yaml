@@ -45,6 +45,11 @@ theme:
     - The deep sounding
     - Into the white
     - Ahab's doubloon
+  dimensions:
+    tone: obsessive
+    era: historical
+    genre: literary
+    energy: relentless
 zeitgeist:
   score: 76.75
   rating: rich

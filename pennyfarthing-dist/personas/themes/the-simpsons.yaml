@@ -46,6 +46,11 @@ theme:
     - Steamed hams serving
     - Spider-Pig singing
     - Embiggenning
+  dimensions:
+    tone: satirical
+    era: contemporary
+    genre: comedy
+    energy: zany
 
 zeitgeist:
   score: 85.5

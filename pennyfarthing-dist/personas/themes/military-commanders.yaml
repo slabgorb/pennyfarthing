@@ -45,6 +45,11 @@ theme:
     - Know the enemy know yourself
     - All warfare is deception
     - Leading from the front
+  dimensions:
+    tone: authoritative
+    era: historical
+    genre: military-history
+    energy: commanding
 zeitgeist:
   score: 73.2
   rating: rich

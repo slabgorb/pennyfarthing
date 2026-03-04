@@ -46,6 +46,11 @@ theme:
     - Limping with dignity
     - Detecting patient lies
     - Genius-level deduction
+  dimensions:
+    tone: acerbic
+    era: contemporary
+    genre: drama
+    energy: intense
 
 zeitgeist:
   score: 73.0

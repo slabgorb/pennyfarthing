@@ -45,6 +45,11 @@ theme:
     - Publishing findings
     - Peer reviewing
     - Proof constructing
+  dimensions:
+    tone: analytical
+    era: historical
+    genre: science
+    energy: methodical
 
 zeitgeist:
   score: 68.5

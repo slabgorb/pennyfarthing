@@ -46,6 +46,11 @@ theme:
     - Prophecy fulfilling
     - What is dead may never die
     - You know nothing Jon Snow
+  dimensions:
+    tone: dramatic
+    era: medieval
+    genre: fantasy
+    energy: intense
 
 zeitgeist:
   score: 79.3

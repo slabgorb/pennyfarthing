@@ -24,6 +24,10 @@ VALIDATORS = {
     "skill-command": "pf.validate.adapters.skill_command",
     "tandem-awareness": "pf.validate.adapters.tandem_awareness",
     "context": "pf.validate.adapters.context",
+    "adr": "pf.validate.adapters.adr",
+    "prd": "pf.validate.adapters.prd",
+    "architecture": "pf.validate.adapters.architecture",
+    "theme": "pf.validate.adapters.theme",
 }
 
 
@@ -73,15 +77,23 @@ def _print_reports(reports: list[ValidateReport]) -> None:
 
 
 @click.group(invoke_without_command=True)
+@click.argument("names", nargs=-1)
 @click.option("--fix", is_flag=True, help="Auto-fix format issues where supported")
 @click.option("--strict", is_flag=True, help="Treat warnings as errors")
 @click.pass_context
-def validate(ctx, fix: bool, strict: bool):
+def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
     """Run project validators.
 
     \b
-    With no subcommand, runs ALL validators.
-    Specify a validator name to run only that one.
+    With no arguments, runs ALL validators.
+    Pass one or more validator names to run only those.
+    Also supports subcommands for individual validators.
+
+    \b
+    Usage:
+      pf validate                           # Run all
+      pf validate agent theme               # Run specific validators
+      pf validate agent --fix               # Run with auto-fix
 
     \b
     Validators:
@@ -91,14 +103,30 @@ def validate(ctx, fix: bool, strict: bool):
       workflow           - Workflow definitions (phased/stepped/procedural structure)
       skill-command      - Skill registry and command files (prefix, deprecated, cross-ref)
       tandem-awareness   - Agent tandem consultation sections (ADR-0012 pairings)
+      context            - Context sources and schema validation
+      adr                - Architecture Decision Records (format, status, sections)
+      prd                - Product Requirements Documents (structure, density, measurability)
+      architecture       - Architecture documents (sections, diagrams, references)
+      theme              - Theme persona YAML (roles, OCEAN scores, dimensions)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
     ctx.obj["strict"] = strict
 
     if ctx.invoked_subcommand is None:
+        # If names provided as positional args, run only those
+        if names:
+            bad = [n for n in names if n not in VALIDATORS]
+            if bad:
+                error(f"Unknown validator(s): {', '.join(bad)}")
+                info(f"Available: {', '.join(sorted(VALIDATORS))}")
+                raise SystemExit(1)
+            to_run = list(names)
+        else:
+            to_run = list(VALIDATORS)
+
         reports = []
-        for name in VALIDATORS:
+        for name in to_run:
             reports.append(_run_validator(name, fix=fix, strict=strict))
         _print_reports(reports)
         if any(not r.success for r in reports):
@@ -170,6 +198,46 @@ def validate_tandem_awareness(ctx):
 def validate_context(ctx):
     """Validate context sources against context schema (components, tiers, assembly)."""
     report = _run_validator("context", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("adr")
+@click.pass_context
+def validate_adr(ctx):
+    """Validate Architecture Decision Records (format, status, sections)."""
+    report = _run_validator("adr", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("prd")
+@click.pass_context
+def validate_prd(ctx):
+    """Validate Product Requirements Documents (structure, density, measurability)."""
+    report = _run_validator("prd", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("architecture")
+@click.pass_context
+def validate_architecture(ctx):
+    """Validate architecture documents (sections, diagrams, references)."""
+    report = _run_validator("architecture", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("theme")
+@click.pass_context
+def validate_theme(ctx):
+    """Validate theme persona YAML (roles, OCEAN scores, dimensions)."""
+    report = _run_validator("theme", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)

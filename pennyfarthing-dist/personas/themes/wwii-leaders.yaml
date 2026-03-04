@@ -45,6 +45,11 @@ theme:
     - Yalta conferencing
     - Victory signing
     - Plans are useless planning is indispensable
+  dimensions:
+    tone: authoritative
+    era: historical
+    genre: military-history
+    energy: resolute
 
 zeitgeist:
   score: 76.0

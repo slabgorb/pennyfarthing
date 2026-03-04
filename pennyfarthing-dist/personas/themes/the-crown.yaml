@@ -46,6 +46,11 @@ theme:
     - Diana connecting
     - Philip frustrating
     - History shaping
+  dimensions:
+    tone: regal
+    era: historical
+    genre: drama
+    energy: measured
 
 zeitgeist:
   score: 74.0

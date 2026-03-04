@@ -46,6 +46,11 @@ theme:
     - Stag vision
     - Classical music composing
     - The recipe requires taste
+  dimensions:
+    tone: dark
+    era: contemporary
+    genre: thriller
+    energy: elegant
 
 zeitgeist:
   score: 84.5

@@ -45,6 +45,11 @@ theme:
     - Fezzik rhyming
     - Westley dashing
     - Truly dizzying intellect
+  dimensions:
+    tone: whimsical
+    era: timeless
+    genre: fantasy-adventure
+    energy: swashbuckling
 
 zeitgeist:
   score: 91.0

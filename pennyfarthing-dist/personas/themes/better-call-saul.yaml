@@ -46,6 +46,11 @@ theme:
     - It's not technically illegal
     - Running the scam
     - Orchestrating chaos
+  dimensions:
+    tone: dramatic
+    era: contemporary
+    genre: crime-drama
+    energy: measured
 zeitgeist:
   score: 83.0
   rating: rich

@@ -45,6 +45,11 @@ theme:
     - London season attending
     - Carriage rides arranging
     - Propriety maintaining
+  dimensions:
+    tone: witty
+    era: historical
+    genre: literary
+    energy: measured
 
 zeitgeist:
   score: 78.5

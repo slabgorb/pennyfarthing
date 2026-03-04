@@ -46,6 +46,11 @@ theme:
     - Johnny riding the horses
     - Three-piece suiting
     - Blinders blinding
+  dimensions:
+    tone: gritty
+    era: historical
+    genre: crime-drama
+    energy: menacing
 
 zeitgeist:
   score: 81.0

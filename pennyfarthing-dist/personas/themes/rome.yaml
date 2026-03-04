@@ -46,6 +46,11 @@ theme:
     - Roman road building
     - Thirteenth rallying
     - Senate debating
+  dimensions:
+    tone: serious
+    era: ancient
+    genre: historical-drama
+    energy: commanding
 
 zeitgeist:
   score: 80.0

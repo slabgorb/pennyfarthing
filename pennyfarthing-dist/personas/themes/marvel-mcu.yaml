@@ -46,6 +46,11 @@ theme:
     - Runbook following
     - Delete this entire UI
     - Friendly neighborhood helping
+  dimensions:
+    tone: heroic
+    era: contemporary
+    genre: superhero
+    energy: high-energy
 zeitgeist:
   score: 72.0
   rating: rich

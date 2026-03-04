@@ -45,6 +45,11 @@ theme:
     - Verifying
     - Updating
     - Reporting
+  dimensions:
+    tone: eerie
+    era: contemporary
+    genre: sci-fi-thriller
+    energy: unsettling
 zeitgeist:
   score: 8.0
   rating: minimal

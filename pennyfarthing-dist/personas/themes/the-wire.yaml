@@ -46,6 +46,11 @@ theme:
     - String pulling
     - Witness protecting
     - A man got to have a code
+  dimensions:
+    tone: gritty
+    era: contemporary
+    genre: crime-drama
+    energy: relentless
 
 zeitgeist:
   score: 81.3

@@ -4,6 +4,9 @@ theme:
   source: "Hogan's Heroes (1965-1971)"
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
+  user_title: Colonel
+  portrait_style: ", WWII military sitcom, barracks illustration, cartoon realism"
+  tier: B
   spinner_verbs:
     - Tunneling
     - Scheming
@@ -35,6 +38,11 @@ theme:
     - Special equipment deploying
     - Marya charming
     - Nobody escapes Stalag 13
+  dimensions:
+    tone: comedic
+    era: historical
+    genre: comedy
+    energy: mischievous
 
 agents:
   orchestrator:

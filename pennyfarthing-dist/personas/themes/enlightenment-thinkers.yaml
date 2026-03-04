@@ -45,6 +45,11 @@ theme:
     - The Encyclopédie grows
     - Hume's fork applied
     - Écrasez l'infâme
+  dimensions:
+    tone: contemplative
+    era: historical
+    genre: philosophy
+    energy: measured
 zeitgeist:
   score: 74.5
   rating: rich

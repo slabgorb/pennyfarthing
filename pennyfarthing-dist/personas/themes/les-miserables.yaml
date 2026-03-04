@@ -45,6 +45,11 @@ theme:
     - Thenardier scheming
     - Cosette protecting
     - The bishop forgiving
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: literary
+    energy: passionate
 zeitgeist:
   score: 67.75
   rating: moderate

@@ -46,6 +46,11 @@ theme:
     - Escaping ImpSec detention
     - Dendarii deploying
     - Making the impossible merely difficult
+  dimensions:
+    tone: witty
+    era: futuristic
+    genre: space-opera
+    energy: manic
 
 zeitgeist:
   score: 76.0

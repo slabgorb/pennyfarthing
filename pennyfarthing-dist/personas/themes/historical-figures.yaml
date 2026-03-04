@@ -45,6 +45,11 @@ theme:
     - Designing for the people
     - Following the data
     - Observing carefully
+  dimensions:
+    tone: authoritative
+    era: historical
+    genre: history
+    energy: commanding
 zeitgeist:
   score: 66.8
   rating: moderate

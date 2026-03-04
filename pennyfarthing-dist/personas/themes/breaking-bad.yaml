@@ -46,6 +46,11 @@ theme:
     - Winning the game
     - Gale humming
     - Kaylee's college fund
+  dimensions:
+    tone: dramatic
+    era: contemporary
+    genre: crime-drama
+    energy: intense
 zeitgeist:
   score: 79.8
   rating: rich

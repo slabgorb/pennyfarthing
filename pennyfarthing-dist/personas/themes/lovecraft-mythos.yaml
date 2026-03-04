@@ -44,6 +44,11 @@ theme:
     - Cosmic perceiving
     - Reagent testing
     - Abyss gazing
+  dimensions:
+    tone: dread
+    era: historical
+    genre: cosmic-horror
+    energy: unsettling
 zeitgeist:
   score: 80.75
   rating: rich

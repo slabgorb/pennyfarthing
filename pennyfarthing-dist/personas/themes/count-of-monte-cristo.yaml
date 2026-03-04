@@ -45,6 +45,11 @@ theme:
     - Final reckoning
     - Monte Cristo revealed
     - God will give me justice
+  dimensions:
+    tone: dramatic
+    era: historical
+    genre: literary
+    energy: calculating
 zeitgeist:
   score: 73.5
   rating: rich

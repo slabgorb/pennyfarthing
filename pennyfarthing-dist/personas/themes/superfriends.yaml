@@ -45,6 +45,11 @@ theme:
     - Ring charging
     - Shapeshifting perspectives
     - Cosmic coordinating
+  dimensions:
+    tone: heroic
+    era: retro
+    genre: superhero
+    energy: earnest
 zeitgeist:
   score: 82.75
   rating: rich

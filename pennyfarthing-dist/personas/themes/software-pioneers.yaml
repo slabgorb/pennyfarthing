@@ -46,6 +46,11 @@ theme:
     - Simplicity prioritizing
     - First principle finding
     - Paradigm inventing
+  dimensions:
+    tone: analytical
+    era: contemporary
+    genre: technology
+    energy: methodical
 
 zeitgeist:
   score: 72.0

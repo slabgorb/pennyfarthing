@@ -46,6 +46,11 @@ theme:
     - Human action predicting
     - Time Vault opening
     - Galaxy stabilizing
+  dimensions:
+    tone: serious
+    era: futuristic
+    genre: sci-fi
+    energy: contemplative
 
 zeitgeist:
   score: 78.0

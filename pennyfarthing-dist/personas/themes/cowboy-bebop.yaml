@@ -46,6 +46,11 @@ theme:
     - Cigarette lighting
     - Two moons rising
     - Spike sailing
+  dimensions:
+    tone: stylish
+    era: futuristic
+    genre: sci-fi
+    energy: cool
 zeitgeist:
   score: 74.5
   rating: rich

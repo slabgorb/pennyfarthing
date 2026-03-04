@@ -46,6 +46,11 @@ theme:
     - Mom scheming
     - Woop woop woop
     - In the year 3000
+  dimensions:
+    tone: comedic
+    era: futuristic
+    genre: sci-fi-comedy
+    energy: zany
 
 zeitgeist:
   score: 86.5

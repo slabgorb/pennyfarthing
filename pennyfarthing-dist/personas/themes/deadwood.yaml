@@ -46,6 +46,11 @@ theme:
     - Point yourself toward decent
     - Pain or damage don't end the world
     - I'm the goddamn law now
+  dimensions:
+    tone: gritty
+    era: historical
+    genre: western
+    energy: raw
 zeitgeist:
   score: 86.0
   rating: rich

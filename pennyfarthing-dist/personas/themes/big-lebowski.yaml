@@ -46,6 +46,11 @@ theme:
     - Following the lead
     - Keeping it together man
     - New information has come to light
+  dimensions:
+    tone: comedic
+    era: contemporary
+    genre: comedy
+    energy: laid-back
 zeitgeist:
   score: 84.1
   rating: rich

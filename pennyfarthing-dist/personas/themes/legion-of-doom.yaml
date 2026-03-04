@@ -45,6 +45,11 @@ theme:
     - Aerodynamically optimizing
     - Skull cataloguing
     - Anti-life equating
+  dimensions:
+    tone: dramatic
+    era: retro
+    genre: supervillain
+    energy: diabolical
 zeitgeist:
   score: 78.5
   rating: rich

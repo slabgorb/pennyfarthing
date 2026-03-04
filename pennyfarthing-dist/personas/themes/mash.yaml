@@ -46,6 +46,11 @@ theme:
     - Klinger dressing
     - Poker playing
     - Potter painting
+  dimensions:
+    tone: satirical
+    era: historical
+    genre: comedy-drama
+    energy: bittersweet
 zeitgeist:
   score: 74.25
   rating: rich

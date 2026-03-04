@@ -46,6 +46,11 @@ theme:
     - Ancillary coordinating
     - Radch expanding
     - Pronoun considering
+  dimensions:
+    tone: contemplative
+    era: futuristic
+    genre: sci-fi
+    energy: measured
 zeitgeist:
   score: 70.0
   rating: rich

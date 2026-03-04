@@ -45,6 +45,11 @@ theme:
     - Leslie Knoping
     - Serving the citizens
     - Ann you beautiful tropical fish
+  dimensions:
+    tone: comedic
+    era: contemporary
+    genre: comedy
+    energy: enthusiastic
 
 zeitgeist:
   score: 86.0

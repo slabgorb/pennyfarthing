@@ -44,6 +44,11 @@ theme:
     - Trojan horsing
     - Medusa averting
     - Homer invoking
+  dimensions:
+    tone: heroic
+    era: ancient
+    genre: mythology
+    energy: epic
 
 zeitgeist:
   score: 79.5

@@ -45,6 +45,11 @@ theme:
     - I never drink bad code
     - What have we done
     - The lightning rods await
+  dimensions:
+    tone: dark
+    era: historical
+    genre: gothic-horror
+    energy: brooding
 
 zeitgeist:
   score: 75.0
