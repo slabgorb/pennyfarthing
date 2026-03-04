@@ -24,15 +24,6 @@ from pf.jira.client import (
 )
 
 
-def __getattr__(name: str) -> object:
-    """Lazy module attribute for transition_story (avoids circular import)."""
-    if name == "transition_story":
-        from pf.sprint.story_transition import transition_story
-
-        globals()["transition_story"] = transition_story
-        return transition_story
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments.
@@ -128,31 +119,57 @@ def claim_story(issue_key: str) -> dict[str, Any]:
         errors.append(f"Failed to assign: {assign_result.get('error', 'unknown')}")
 
     # Move to In Progress via state machine
-    try:
-        from pf.common.config import get_project_root
-        from pf.sprint.story_transition import transition_story
-        from pf.sprint.yaml_io import read_sprint
+    from pf.common.config import get_project_root
+    from pf.sprint.story_transition import transition_story
+    from pf.sprint.yaml_io import read_sprint, write_sprint
 
-        root = get_project_root()
-        sprint_path = root / "sprint" / "current-sprint.yaml"
-        if sprint_path.exists():
-            data = read_sprint(sprint_path)
-            story_id = None
-            for epic in data.get("epics", []):
-                if not isinstance(epic, dict):
-                    continue
-                for story in epic.get("stories", []):
-                    if story.get("jira") == issue_key:
-                        story_id = story.get("id")
-                        break
-                if story_id:
+    root = get_project_root()
+    sprint_path = root / "sprint" / "current-sprint.yaml"
+
+    story_id = None
+    if sprint_path.exists():
+        data = read_sprint(sprint_path)
+        for epic in data.get("epics", []):
+            if not isinstance(epic, dict):
+                continue
+            for story in epic.get("stories", []):
+                if story.get("jira") == issue_key:
+                    story_id = story.get("id")
                     break
             if story_id:
-                t_result = transition_story(root, story_id, "in_progress")
-                if t_result.get("success"):
-                    actions.append("Moved to In Progress")
-    except Exception:
-        pass  # Best-effort — Jira claim already succeeded
+                break
+
+    if not story_id:
+        errors.append(
+            f"Could not find story with jira={issue_key} in sprint YAML — "
+            f"status transition skipped"
+        )
+        return {
+            "success": False,
+            "actions": actions,
+            "errors": errors,
+            "drift": True,
+            "remediation": f'Run `pf jira move {issue_key} "In Progress"` to manually sync Jira',
+            "exit_code": 3,
+        }
+
+    t_result = transition_story(root, story_id, "in_progress")
+    if t_result.get("success"):
+        actions.append("Moved to In Progress")
+    else:
+        t_error = t_result.get("error", "Transition failed")
+        errors.append(f"Status transition failed: {t_error}")
+        return {
+            "success": False,
+            "actions": actions,
+            "errors": errors,
+            "drift": t_result.get("drift", True),
+            "remediation": t_result.get(
+                "remediation",
+                f'Run `pf jira move {issue_key} "In Progress"` to manually sync Jira',
+            ),
+            "exit_code": 3,
+        }
 
     if errors:
         return {
@@ -163,25 +180,16 @@ def claim_story(issue_key: str) -> dict[str, Any]:
         }
 
     # Update sprint YAML assigned_to field
-    try:
-        from pf.common.config import get_project_root
-        from pf.sprint.yaml_io import read_sprint, write_sprint
-
-        root = get_project_root()
-        sprint_path = root / "sprint" / "current-sprint.yaml"
-        if sprint_path.exists():
-            data = read_sprint(sprint_path)
-            for epic in data.get("epics", []):
-                if not isinstance(epic, dict):
-                    continue
-                for story in epic.get("stories", []):
-                    if story.get("jira") == issue_key:
-                        story["assigned_to"] = current_user
-                        write_sprint(sprint_path, data)
-                        actions.append("Sprint YAML assigned_to set")
-                        break
-    except Exception:
-        pass  # Best-effort — Jira claim already succeeded
+    data = read_sprint(sprint_path)
+    for epic in data.get("epics", []):
+        if not isinstance(epic, dict):
+            continue
+        for story in epic.get("stories", []):
+            if story.get("jira") == issue_key:
+                story["assigned_to"] = current_user
+                write_sprint(sprint_path, data)
+                actions.append("Sprint YAML assigned_to set")
+                break
 
     return {
         "success": True,
@@ -282,6 +290,18 @@ def _resolve_jira_key(identifier: str) -> str:
     except Exception:
         pass
     return identifier
+
+
+def __getattr__(name: str) -> Any:
+    """Support lazy loading of transition_story to avoid circular imports.
+
+    This allows hasattr(claim_module, 'transition_story') to work
+    even though it's imported inside functions.
+    """
+    if name == "transition_story":
+        from pf.sprint.story_transition import transition_story
+        return transition_story
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 if __name__ == "__main__":
