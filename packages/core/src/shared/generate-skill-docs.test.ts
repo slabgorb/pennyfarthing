@@ -135,17 +135,13 @@ describe('Story 9-4: Skill Documentation Generator', () => {
       }
     });
 
-    it('should throw helpful error when registry file is missing', async () => {
+    it('should return error result when registry file is missing', async () => {
       // AC1: Error handling for missing registry
-      await assert.rejects(
-        async () => generateSkillDocs({
-          registryPath: '/nonexistent/path/registry.yaml',
-        }),
-        {
-          message: /registry.*not found|cannot find|no such file/i,
-        },
-        'Should throw error with helpful message for missing registry'
-      );
+      const result = await generateSkillDocs({
+        registryPath: '/nonexistent/path/registry.yaml',
+      });
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.match(/registry.*not found|cannot find|no such file/i));
     });
 
     it('should handle malformed YAML gracefully', async () => {
@@ -156,15 +152,9 @@ describe('Story 9-4: Skill Documentation Generator', () => {
       writeFileSync(badRegistry, 'this is not valid: yaml: content: [broken');
 
       try {
-        await assert.rejects(
-          async () => generateSkillDocs({
-            registryPath: badRegistry,
-          }),
-          {
-            message: /invalid|parse|yaml/i,
-          },
-          'Should throw error for malformed YAML'
-        );
+        const result = await generateSkillDocs({ registryPath: badRegistry });
+        assert.strictEqual(result.success, false);
+        assert.ok(result.error?.match(/invalid|parse|yaml/i));
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }
@@ -278,16 +268,12 @@ skills:
 `);
 
       try {
-        await assert.rejects(
-          async () => generateSkillDocs({
-            registryPath: incompleteRegistry,
-            strict: true,
-          }),
-          {
-            message: /missing.*description|required.*field/i,
-          },
-          'Should error when required fields are missing'
-        );
+        const result = await generateSkillDocs({
+          registryPath: incompleteRegistry,
+          strict: true,
+        });
+        assert.strictEqual(result.success, false);
+        assert.ok(result.error?.match(/missing.*description|required.*field/i));
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }

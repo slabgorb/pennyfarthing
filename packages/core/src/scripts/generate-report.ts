@@ -62,6 +62,12 @@ export interface ComparisonResult {
   markdown: string;
 }
 
+export interface Result<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -228,9 +234,9 @@ function getFacePath(theme: string, agent: string): string {
 // ============================================================================
 
 /**
- * Parse an OCEAN filter expression like "O>=4" or "A<=2"
+ * Internal parse - throws on error (used by other internal functions)
  */
-export function parseOceanFilter(expr: string): OceanFilter {
+function parseOceanFilterInternal(expr: string): OceanFilter {
   // Match pattern: dimension (O|C|E|A|N), operator (>=|<=|=|>|<), value (number)
   const match = expr.match(/^([OCEAN])(>=|<=|=|>|<)(\d+)$/);
 
@@ -271,34 +277,48 @@ export function parseOceanFilter(expr: string): OceanFilter {
 }
 
 /**
+ * Parse an OCEAN filter expression like "O>=4" or "A<=2"
+ */
+export function parseOceanFilter(expr: string): Result<OceanFilter> {
+  try {
+    return { success: true, data: parseOceanFilterInternal(expr) };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+
+/**
  * Filter characters by OCEAN dimension expression
  */
-export function filterByOcean(expression: string): CharacterInfo[] {
-  const filter = parseOceanFilter(expression);
-  const allChars = loadAllCharacters();
-
-  return allChars.filter((char) => matchesOceanFilter(char, filter));
+export function filterByOcean(expression: string): Result<CharacterInfo[]> {
+  try {
+    const filter = parseOceanFilterInternal(expression);
+    const allChars = loadAllCharacters();
+    return { success: true, data: allChars.filter((char) => matchesOceanFilter(char, filter)) };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
 }
 
 /**
  * Filter characters by agent role
  */
-export function filterByRole(role: string): CharacterInfo[] {
+export function filterByRole(role: string): Result<CharacterInfo[]> {
   if (!VALID_AGENTS.includes(role)) {
-    throw new Error(`Invalid role: ${role}. Valid roles are: ${VALID_AGENTS.join(', ')}`);
+    return { success: false, error: `Invalid role: ${role}. Valid roles are: ${VALID_AGENTS.join(', ')}` };
   }
 
   const allChars = loadAllCharacters();
-  return allChars.filter((char) => char.agent === role);
+  return { success: true, data: allChars.filter((char) => char.agent === role) };
 }
 
 /**
  * Filter characters by theme (returns all 10 agents for that theme)
  */
-export function filterByTheme(theme: string): CharacterInfo[] {
+export function filterByTheme(theme: string): Result<CharacterInfo[]> {
   const themes = getAllThemes();
   if (!themes.includes(theme)) {
-    throw new Error(`Theme not found: ${theme}`);
+    return { success: false, error: `Theme not found: ${theme}` };
   }
 
   const characters: CharacterInfo[] = [];
@@ -310,46 +330,48 @@ export function filterByTheme(theme: string): CharacterInfo[] {
     }
   }
 
-  return characters;
+  return { success: true, data: characters };
 }
 
 /**
  * Compare 2-4 characters side-by-side
  */
-export function compareCharacters(specs: string[]): ComparisonResult {
-  if (specs.length < 2) {
-    throw new Error('Comparison requires at least 2 characters');
-  }
-
-  if (specs.length > 4) {
-    throw new Error('Comparison allows at most 4 characters');
-  }
-
-  const characters: CharacterInfo[] = [];
-
-  for (const spec of specs) {
-    if (!spec.includes(':')) {
-      throw new Error(`Invalid format: "${spec}". Expected "theme:agent" format`);
+export function compareCharacters(specs: string[]): Result<ComparisonResult> {
+  try {
+    if (specs.length < 2) {
+      return { success: false, error: 'Comparison requires at least 2 characters' };
     }
 
-    const [theme, agent] = spec.split(':');
-
-    const themes = getAllThemes();
-    if (!themes.includes(theme)) {
-      throw new Error(`Theme not found: ${theme}`);
+    if (specs.length > 4) {
+      return { success: false, error: 'Comparison allows at most 4 characters' };
     }
 
-    if (!VALID_AGENTS.includes(agent)) {
-      throw new Error(`Agent not found: ${agent}. Valid agents are: ${VALID_AGENTS.join(', ')}`);
+    const characters: CharacterInfo[] = [];
+
+    for (const spec of specs) {
+      if (!spec.includes(':')) {
+        return { success: false, error: `Invalid format: "${spec}". Expected "theme:agent" format` };
+      }
+
+      const [theme, agent] = spec.split(':');
+
+      const themes = getAllThemes();
+      if (!themes.includes(theme)) {
+        return { success: false, error: `Theme not found: ${theme}` };
+      }
+
+      if (!VALID_AGENTS.includes(agent)) {
+        return { success: false, error: `Agent not found: ${agent}. Valid agents are: ${VALID_AGENTS.join(', ')}` };
+      }
+
+      characters.push(loadCharacter(theme, agent));
     }
 
-    characters.push(loadCharacter(theme, agent));
+    const markdown = generateComparisonMarkdown(characters);
+    return { success: true, data: { characters, markdown } };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
   }
-
-  // Generate comparison markdown
-  const markdown = generateComparisonMarkdown(characters);
-
-  return { characters, markdown };
 }
 
 /**
@@ -409,38 +431,40 @@ function generateComparisonMarkdown(characters: CharacterInfo[]): string {
 /**
  * Generate a filtered report with markdown output
  */
-export function generateReport(options: ReportOptions): ReportResult {
-  let characters = loadAllCharacters();
+export function generateReport(options: ReportOptions): Result<ReportResult> {
+  try {
+    let characters = loadAllCharacters();
 
-  // Apply filters
-  if (options.theme) {
-    const themes = getAllThemes();
-    if (!themes.includes(options.theme)) {
-      throw new Error(`Theme not found: ${options.theme}`);
+    // Apply filters
+    if (options.theme) {
+      const themes = getAllThemes();
+      if (!themes.includes(options.theme)) {
+        return { success: false, error: `Theme not found: ${options.theme}` };
+      }
+      characters = characters.filter((c) => c.theme === options.theme);
     }
-    characters = characters.filter((c) => c.theme === options.theme);
-  }
 
-  if (options.role) {
-    if (!VALID_AGENTS.includes(options.role)) {
-      throw new Error(`Invalid role: ${options.role}`);
+    if (options.role) {
+      if (!VALID_AGENTS.includes(options.role)) {
+        return { success: false, error: `Invalid role: ${options.role}` };
+      }
+      characters = characters.filter((c) => c.agent === options.role);
     }
-    characters = characters.filter((c) => c.agent === options.role);
+
+    if (options.ocean) {
+      const filter = parseOceanFilterInternal(options.ocean);
+      characters = characters.filter((c) => matchesOceanFilter(c, filter));
+    }
+
+    const markdown = generateReportMarkdown(characters, options);
+
+    return {
+      success: true,
+      data: { characters, markdown, filter: options },
+    };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
   }
-
-  if (options.ocean) {
-    const filter = parseOceanFilter(options.ocean);
-    characters = characters.filter((c) => matchesOceanFilter(c, filter));
-  }
-
-  // Generate markdown
-  const markdown = generateReportMarkdown(characters, options);
-
-  return {
-    characters,
-    markdown,
-    filter: options,
-  };
 }
 
 /**

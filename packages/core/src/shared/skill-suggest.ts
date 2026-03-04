@@ -269,11 +269,8 @@ export async function suggestSkills(
 
   // Handle missing registry gracefully
   if (registryPath) {
-    try {
-      await searchSkills({ registryPath });
-    } catch {
-      return [];
-    }
+    const check = await searchSkills({ registryPath });
+    if (!check.success) return [];
   }
 
   // Get keyword suggestions
@@ -334,13 +331,10 @@ export async function suggestSkills(
  * Get skill description from registry or use fallback
  */
 async function getSkillDescription(skillName: string): Promise<string> {
-  try {
-    const results = await searchSkills({});
-    const skill = results.find(
-      s => s.name.toLowerCase() === skillName.toLowerCase()
-    );
-    return skill?.description || `${skillName} skill`;
-  } catch {
-    return `${skillName} skill`;
-  }
+  const result = await searchSkills({});
+  if (!result.success || !result.data) return `${skillName} skill`;
+  const skill = result.data.find(
+    s => s.name.toLowerCase() === skillName.toLowerCase()
+  );
+  return skill?.description || `${skillName} skill`;
 }
