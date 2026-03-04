@@ -236,11 +236,62 @@ export function storePendingToolInput(toolId: string, toolName: string, input: R
 // Real implementations — standalone OTLP processing
 // =============================================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// OTLP Metrics payload interfaces (mirrors packages/cyclist/src/otlp-receiver.ts)
+interface OTLPAttribute {
+  key: string;
+  value: { stringValue?: string; intValue?: number };
+}
+
+interface OTLPDataPoint {
+  asInt?: number;
+  asDouble?: number;
+  attributes?: OTLPAttribute[];
+}
+
+interface OTLPMetric {
+  name: string;
+  sum?: { dataPoints?: OTLPDataPoint[] };
+}
+
+interface OTLPScopeMetrics {
+  metrics?: OTLPMetric[];
+}
+
+interface OTLPResourceMetrics {
+  scopeMetrics?: OTLPScopeMetrics[];
+}
+
+interface OTLPMetricsPayload {
+  resourceMetrics?: OTLPResourceMetrics[];
+}
+
+// OTLP Logs payload interfaces (mirrors packages/cyclist/src/otlp-receiver.ts)
+interface OTLPLogAttribute {
+  key: string;
+  value: { stringValue?: string; intValue?: number; boolValue?: boolean };
+}
+
+interface OTLPLogRecord {
+  timeUnixNano?: string;
+  body?: { stringValue?: string };
+  attributes?: OTLPLogAttribute[];
+}
+
+interface OTLPScopeLogs {
+  logRecords?: OTLPLogRecord[];
+}
+
+interface OTLPResourceLogs {
+  scopeLogs?: OTLPScopeLogs[];
+}
+
+interface OTLPLogsPayload {
+  resourceLogs?: OTLPResourceLogs[];
+}
 
 export function parseOTLPMetrics(body: unknown): Record<string, number> {
   const result: Record<string, number> = {};
-  const payload = body as any;
+  const payload = body as OTLPMetricsPayload;
   if (!payload?.resourceMetrics) return result;
 
   for (const rm of payload.resourceMetrics) {
@@ -248,7 +299,7 @@ export function parseOTLPMetrics(body: unknown): Record<string, number> {
       for (const metric of sm.metrics ?? []) {
         if (metric.name !== 'claude_code.token.usage') continue;
         for (const dp of metric.sum?.dataPoints ?? []) {
-          const typeAttr = dp.attributes?.find((a: any) => a.key === 'type');
+          const typeAttr = dp.attributes?.find((a) => a.key === 'type');
           if (!typeAttr) continue;
           const type = typeAttr.value?.stringValue as string;
           const value = dp.asInt as number;
@@ -276,7 +327,7 @@ export function aggregateTokenStats(data: unknown): TokenStats {
 }
 
 export function parseOTLPLogs(body: unknown): Array<{ name: string; timestamp: number; attributes: Record<string, unknown> }> {
-  const payload = body as any;
+  const payload = body as OTLPLogsPayload;
   const events: Array<{ name: string; timestamp: number; attributes: Record<string, unknown> }> = [];
   if (!payload?.resourceLogs) return events;
 
@@ -445,8 +496,6 @@ async function enrichEntryAsync(
     entry.gitStatus = gitStatus;
   }
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export function trackBackgroundTask(task: Partial<BackgroundTask>): void {
   const fullTask: BackgroundTask = {
