@@ -66,7 +66,7 @@ describe('Story 136-2 AC3: context.py pip resolution', () => {
     if (result && result.paths) {
       // At least one path should reference a pip/site-packages pattern
       const hasPipPath = result.paths.some(
-        (p: string) => p.includes('site-packages') || p.includes('_dist') || p.includes('pf/context.py')
+        (p: string) => p.includes('site-packages') || p.includes('_dist') || p.includes('pf/context_window.py')
       );
       assert.ok(hasPipPath, `resolveContextScript must include pip path candidates, got: ${result.paths.join(', ')}`);
     }

@@ -37,11 +37,14 @@ export interface ContextInfo {
  * @returns Context usage info
  */
 export function getContextUsage(projectDir: string, sessionId?: string): ContextInfo {
-  // Find context.py (preferred) or legacy check-context.sh
+  // Find context_window.py (preferred) or legacy check-context.sh
   const pythonPaths = [
-    join(projectDir, 'pennyfarthing-dist', 'pf', 'context.py'),
-    join(projectDir, '.pennyfarthing', 'pf', 'context.py'),
-    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context.py'),
+    join(projectDir, 'pennyfarthing-dist', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing-dist', 'src', 'pf', 'context_window.py'),
+    join(projectDir, '.pennyfarthing', 'pf', 'context_window.py'),
+    join(projectDir, '.pennyfarthing', 'src', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'src', 'pf', 'context_window.py'),
   ];
   const shellPaths = [
     join(projectDir, 'pennyfarthing-dist', 'scripts', 'core', 'check-context.sh'),
@@ -51,8 +54,8 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
   // Resolve via npm-installed dist path as fallback
   const distRoot = resolvePennyfarthingDist();
   if (distRoot) {
-    pythonPaths.push(join(distRoot, 'pf', 'context.py'));
-    pythonPaths.push(join(distRoot, 'src', 'pf', 'context.py'));
+    pythonPaths.push(join(distRoot, 'pf', 'context_window.py'));
+    pythonPaths.push(join(distRoot, 'src', 'pf', 'context_window.py'));
     shellPaths.push(join(distRoot, 'scripts', 'core', 'check-context.sh'));
   }
 
@@ -75,7 +78,7 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
   }
 
   if (!scriptPath) {
-    return { percent: null, tokens: null, status: null, error: 'context.py not found', baseline: null, usableTokens: null, usablePercent: null, available: null };
+    return { percent: null, tokens: null, status: null, error: 'context_window.py not found', baseline: null, usableTokens: null, usablePercent: null, available: null };
   }
 
   try {
@@ -213,20 +216,23 @@ export function resolveContextScript(projectDir: string): { path: string | null;
 
   // Python candidates (preferred)
   const pythonCandidates = [
-    join(projectDir, 'pennyfarthing-dist', 'pf', 'context.py'),
-    join(projectDir, '.pennyfarthing', 'pf', 'context.py'),
-    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context.py'),
+    join(projectDir, 'pennyfarthing-dist', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing-dist', 'src', 'pf', 'context_window.py'),
+    join(projectDir, '.pennyfarthing', 'pf', 'context_window.py'),
+    join(projectDir, '.pennyfarthing', 'src', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'pf', 'context_window.py'),
+    join(projectDir, 'pennyfarthing', 'pennyfarthing-dist', 'src', 'pf', 'context_window.py'),
   ];
 
   // Pip-installed / site-packages candidates
   const distRoot = resolvePennyfarthingDist();
   if (distRoot) {
-    pythonCandidates.push(join(distRoot, 'pf', 'context.py'));
-    pythonCandidates.push(join(distRoot, 'src', 'pf', 'context.py'));
+    pythonCandidates.push(join(distRoot, 'pf', 'context_window.py'));
+    pythonCandidates.push(join(distRoot, 'src', 'pf', 'context_window.py'));
   }
 
   // Always include pip site-packages pattern for diagnostics
-  pythonCandidates.push(join('site-packages', 'pf', 'context.py'));
+  pythonCandidates.push(join('site-packages', 'pf', 'context_window.py'));
 
   for (const p of pythonCandidates) {
     paths.push(p);

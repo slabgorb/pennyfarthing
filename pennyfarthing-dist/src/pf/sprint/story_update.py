@@ -175,7 +175,7 @@ def update_story(
 
 @click.command("update")
 @click.argument("story_id")
-@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "in_review", "done", "canceled"]))
+@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "in-progress", "in_review", "in-review", "done", "canceled"]))
 @click.option("--completed", "completed_date", default=None)
 @click.option("--assigned-to", default=None)
 @click.option("--points", type=int, default=None)
@@ -207,6 +207,8 @@ def story_update_command(
     sprint_file: str | None,
 ) -> None:
     """Update a story's fields by ID."""
+    if status:
+        status = status.replace("-", "_")
     if sprint_file is None:
         from pf.common.config import get_project_root
         path = get_project_root() / "sprint" / "current-sprint.yaml"

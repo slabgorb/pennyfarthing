@@ -35673,9 +35673,12 @@ import { existsSync as existsSync7 } from "fs";
 import { join as join7 } from "path";
 function getContextUsage(projectDir, sessionId) {
   const pythonPaths = [
-    join7(projectDir, "pennyfarthing-dist", "pf", "context.py"),
-    join7(projectDir, ".pennyfarthing", "pf", "context.py"),
-    join7(projectDir, "pennyfarthing", "pennyfarthing-dist", "pf", "context.py")
+    join7(projectDir, "pennyfarthing-dist", "pf", "context_window.py"),
+    join7(projectDir, "pennyfarthing-dist", "src", "pf", "context_window.py"),
+    join7(projectDir, ".pennyfarthing", "pf", "context_window.py"),
+    join7(projectDir, ".pennyfarthing", "src", "pf", "context_window.py"),
+    join7(projectDir, "pennyfarthing", "pennyfarthing-dist", "pf", "context_window.py"),
+    join7(projectDir, "pennyfarthing", "pennyfarthing-dist", "src", "pf", "context_window.py")
   ];
   const shellPaths = [
     join7(projectDir, "pennyfarthing-dist", "scripts", "core", "check-context.sh"),
@@ -35683,8 +35686,8 @@ function getContextUsage(projectDir, sessionId) {
   ];
   const distRoot = resolvePennyfarthingDist2();
   if (distRoot) {
-    pythonPaths.push(join7(distRoot, "pf", "context.py"));
-    pythonPaths.push(join7(distRoot, "src", "pf", "context.py"));
+    pythonPaths.push(join7(distRoot, "pf", "context_window.py"));
+    pythonPaths.push(join7(distRoot, "src", "pf", "context_window.py"));
     shellPaths.push(join7(distRoot, "scripts", "core", "check-context.sh"));
   }
   let scriptPath = null;
@@ -35705,7 +35708,7 @@ function getContextUsage(projectDir, sessionId) {
     }
   }
   if (!scriptPath) {
-    return { percent: null, tokens: null, status: null, error: "context.py not found", baseline: null, usableTokens: null, usablePercent: null, available: null };
+    return { percent: null, tokens: null, status: null, error: "context_window.py not found", baseline: null, usableTokens: null, usablePercent: null, available: null };
   }
   try {
     const env = {
