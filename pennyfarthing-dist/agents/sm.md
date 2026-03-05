@@ -99,6 +99,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 | `FINISH_STATE` | → Finish Flow |
 | `NEW_WORK_STATE` | → New Work Flow |
 | `IN_PROGRESS_STATE` | Report which agent should pick up |
+| `STEPPED_IN_PROGRESS_STATE` | → Stepped Workflow Cleanup |
 | `EMPTY_BACKLOG_STATE` | Suggest promoting from `future.yaml` |
 </on-activation>
 
@@ -183,7 +184,7 @@ Present to user:
 
 Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs are open.
 
-**Resolution:** Merge/close all non-draft PRs first. Use `/reviewer` to complete reviews.
+**Resolution:** Merge/close all non-draft PRs first. Use `/pf-reviewer` to complete reviews.
 </merge-gate>
 
 <gate>
@@ -214,43 +215,37 @@ Enforced by `gates/sm-setup-exit`: session exists, fields set, context exists, b
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
 </empty-backlog-flow>
 
+<stepped-cleanup>
+## Stepped Workflow Cleanup
+
+> **Triggered when:** `STEPPED_IN_PROGRESS_STATE`
+
+Stepped workflows don't use phased handoffs. Check status and clean up:
+
+1. **Check workflow progress:**
+   ```bash
+   pf workflow status {WORKFLOW}
+   ```
+
+2. **If completed** (all steps done): the session was already archived by `complete-step`, but the story still needs the finish ceremony:
+   ```bash
+   pf sprint story finish {STORY_ID}
+   ```
+   Then commit sprint changes as in the Finish Flow.
+
+3. **If in-progress:** Tell user to resume with `/pf-workflow resume {WORKFLOW}`. Do NOT run exit protocol.
+</stepped-cleanup>
+
 <workflow-routing>
 ## Workflow Routing
 
-Pennyfarthing has two workflow types. Know which you're handling:
+`sm-setup` handles all routing. Its `SETUP_RESULT` returns `workflow_type`, `next_agent`, and (for stepped) `start_command`. Use those values — never hardcode workflow→agent mappings.
 
-### Phased Workflows (Agent-Driven)
+**Two workflow types:**
+- **Phased:** `SETUP_RESULT.next_agent` tells you who to hand off to via exit protocol.
+- **Stepped:** `SETUP_RESULT.start_command` tells the user what to run. DO NOT run exit protocol for stepped workflows.
 
-SM sets up the story and hands off to the first agent. Agents hand off to each other.
-
-| Workflow | Type | After Setup → | Agent |
-|----------|------|---------------|-------|
-| `tdd` | phased | TEA | `/tea` |
-| `tdd-tandem` | phased | TEA (+Architect) | `/tea` |
-| `bdd` | phased | UX-Designer | `/ux-designer` |
-| `bdd-tandem` | phased | UX-Designer (+Architect) | `/ux-designer` |
-| `trivial` | phased | Dev | `/dev` |
-| `agent-docs` | phased | Orchestrator | `/orchestrator` |
-
-**Fallback (no tag):** 1-2pt chore/fix → trivial → Dev | 3+ pts → tdd → TEA
-
-### Stepped Workflows (BikeLane)
-
-SM does NOT hand off to agents. Instead, use `/pf-workflow start {name}` to begin the stepped flow. The workflow itself guides the user through steps with gates.
-
-| Workflow | Type | How to Start |
-|----------|------|--------------|
-| `architecture` | stepped | `/pf-workflow start architecture` |
-| `prd` | stepped | `/pf-workflow start prd` |
-| `research` | stepped | `/pf-workflow start research` |
-| `sprint-planning` | stepped | `/pf-workflow start sprint-planning` |
-
-**To list all workflows:** `/pf-workflow list`
-
-**If story has a stepped workflow tag:**
-1. Create session file with workflow tracking
-2. Tell user: "This story uses the `{workflow}` stepped workflow. Run `/pf-workflow start {workflow}` to begin."
-3. **DO NOT run exit protocol** — stepped workflows don't use agent handoffs
+**Fallback (no workflow tag):** `sm-setup` applies the default: 1-2pt chore/fix → trivial, 3+ pts → tdd.
 </workflow-routing>
 
 <phase-check>
