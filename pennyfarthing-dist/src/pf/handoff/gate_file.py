@@ -100,6 +100,51 @@ def _result(
     }
 
 
+def resolve_gate_extensions(
+    gate_name: str,
+    project_root: Path | None = None,
+) -> dict:
+    """Resolve extension gates for a given gate name from config.
+
+    Reads config.local.yaml gates.extensions.{gate_name} and resolves
+    each extension gate file via resolve_gate_file().
+
+    Returns:
+        dict with keys:
+            success: bool
+            data: list[str] — resolved gate refs (e.g., ["gates/rustfmt-check"])
+            error: str | None
+    """
+    from pf.common.config import load_pennyfarthing_config
+
+    if project_root is None:
+        project_root = _find_project_root()
+
+    config = load_pennyfarthing_config(project_root)
+    extensions = (
+        config.get("gates", {}).get("extensions", {}).get(gate_name, [])
+    )
+
+    if not extensions:
+        return {"success": True, "data": [], "error": None}
+
+    resolved: list[str] = []
+    for ext_name in extensions:
+        result = resolve_gate_file(ext_name, project_root=project_root)
+        if result["status"] != "found":
+            return {
+                "success": False,
+                "data": [],
+                "error": (
+                    f"Extension gate '{ext_name}' for '{gate_name}' "
+                    f"not found: {result['error']}"
+                ),
+            }
+        resolved.append(f"gates/{_sanitize_gate_name(ext_name)}")
+
+    return {"success": True, "data": resolved, "error": None}
+
+
 def _find_project_root() -> Path:
     """Walk up from cwd looking for .pennyfarthing/ directory."""
     cwd = Path.cwd()

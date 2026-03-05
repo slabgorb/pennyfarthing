@@ -151,6 +151,30 @@ GATE_RESULT:
 </gate>
 ```
 
+## RESOLVE_RESULT Extensions
+
+When consumer gate extensions are configured in `config.local.yaml`, `resolve-gate` includes a `gate_extensions` field in the result:
+
+```yaml
+RESOLVE_RESULT:
+  status: ready
+  gate_type: dev_exit
+  gate_file: gates/dev-exit
+  gate_extensions:          # Present only when extensions are configured
+    - gates/rustfmt-check
+    - gates/license-check
+  next_agent: reviewer
+  next_phase: review
+  assessment_found: true
+  error: null
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `gate_extensions` | `list[str] \| null` | Extension gate refs to run after the primary gate passes. Null when no extensions configured. |
+
+See [Gates Guide — Consumer Gate Extensions](../guides/gates.md#consumer-gate-extensions) for setup and behavior.
+
 ## Workflow Integration
 
 Gates are referenced in workflow YAML files via the `gate.file` field:
