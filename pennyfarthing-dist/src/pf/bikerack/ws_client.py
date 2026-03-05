@@ -136,6 +136,7 @@ class WheelHubClient:
         """
         self._stopped = False
         port = self.discover_port()
+        self._port = port
 
         if not self._handlers:
             self._set_state(ConnectionState.CONNECTED)

@@ -475,6 +475,15 @@ def main() -> None:
         else:
             agent_section = " " * 20
 
+        # OTEL port indicator
+        otel_suffix = ""
+        otel_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+        if otel_endpoint:
+            # Extract port from http://localhost:PORT
+            otel_match = re.search(r':(\d+)$', otel_endpoint.rstrip('/'))
+            if otel_match:
+                otel_suffix = f" {DIM}│{RESET} {FG_TEAL}otel:{otel_match.group(1)}{RESET}"
+
         # Build output
         output = (
             f"{agent_section}"
@@ -486,6 +495,7 @@ def main() -> None:
             f"{FG_GRAY}{model_fmt}{RESET}"
             f"{progress_bar} "
             f"{pct_display}"
+            f"{otel_suffix}"
         )
 
         print(output, end="")

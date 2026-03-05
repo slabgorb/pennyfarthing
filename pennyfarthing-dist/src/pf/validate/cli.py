@@ -113,6 +113,14 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
     ctx.obj["fix"] = fix
     ctx.obj["strict"] = strict
 
+    # Click's nargs=-1 consumes subcommand names into `names`.
+    # Detect when a subcommand was captured and re-invoke it.
+    if names and names[0] in validate.commands:
+        sub_cmd = validate.commands[names[0]]
+        sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
+        with sub_ctx:
+            return sub_cmd.parse_args(sub_ctx, list(names[1:]))  or sub_cmd.invoke(sub_ctx)
+
     if ctx.invoked_subcommand is None:
         # If names provided as positional args, run only those
         if names:
@@ -196,11 +204,72 @@ def validate_tandem_awareness(ctx):
 @validate.command("context")
 @click.pass_context
 def validate_context(ctx):
-    """Validate context sources against context schema (components, tiers, assembly)."""
+    """Validate context sources against context schema (components, tiers, assembly).
+
+    \b
+    Usage:
+      pf validate context                 # Validate all context sources
+      pf validate context --story 6-1     # Validate story context file (see note)
+      pf validate context --epic 6        # Validate epic context file (see note)
+
+    \b
+    Note: Due to Click argument parsing, --story/--epic options must be
+    placed BEFORE 'context': pf validate --story 6-1 context
+    Or use the group-level options: pf validate context-story 6-1
+    """
     report = _run_validator("context", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)
+
+
+@validate.command("context-story")
+@click.argument("story_id")
+def validate_context_story(story_id: str):
+    """Validate a specific story context file.
+
+    \b
+    Usage:
+      pf validate context-story 6-1
+    """
+    _validate_single_context("story", story_id)
+
+
+@validate.command("context-epic")
+@click.argument("epic_id")
+def validate_context_epic(epic_id: str):
+    """Validate a specific epic context file.
+
+    \b
+    Usage:
+      pf validate context-epic 6
+    """
+    _validate_single_context("epic", epic_id)
+
+
+def _validate_single_context(context_type: str, context_id: str) -> None:
+    """Validate a single epic or story context file."""
+    from pf.context.validator import validate_context_file
+
+    root = get_project_root()
+    path = root / "sprint" / "context" / f"context-{context_type}-{context_id}.md"
+
+    if not path.exists():
+        error(f"Context file not found: {path.relative_to(root)}")
+        raise SystemExit(2)
+
+    result = validate_context_file(path)
+
+    if result.errors:
+        for err in result.errors:
+            error(f"[ERROR] {err.component}: {err.message}")
+        raise SystemExit(1)
+
+    for w in result.warnings:
+        warn(f"[WARN] {w.component}: {w.message}")
+
+    success(f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)")
+    raise SystemExit(0)
 
 
 @validate.command("adr")

@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.3.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -35,8 +35,7 @@ The 100 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instrument
 
 ### 3. Integration & Tooling
 
-- **Cyclist Visual Terminal** - Electron-based IDE with 15 draggable Dockview panels, agent portraits, tool visualization, and workflow controls
-- **BikeRack** - Standalone panel viewer for CLI-first developers — dashboard panels in your browser, Claude in your terminal
+- **BikeRack** - Dashboard panel viewer for CLI-first developers — browser GUI or terminal TUI alongside Claude Code
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
 - **Codebase Analysis** - Hotspots, complexity, dead code, dependencies, code markers, and health score via `pf debug`
@@ -45,37 +44,93 @@ The 100 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instrument
 
 ## Quick Start
 
-### Install
+Three paths depending on who you are:
+
+### Path A: Join a project that already uses Pennyfarthing
+
+Someone on your team already ran `/pf-setup`. You just need the CLI and to clone.
 
 ```bash
-# One-time: authenticate with GitHub (org members)
-gh auth login
-
-# Install via Homebrew (macOS)
+# 1. Install the CLI
 brew install 1898andco/pf/pennyfarthing
 
-# Or install via shell script
-curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+# 2. Clone the project
+git clone git@github.com:your-org/your-project.git && cd your-project
 
-# Or install manually with uv/pipx
-uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+# 3. Start Claude Code — bootstrap runs automatically on first session
+claude
 ```
 
+That's it. The project's committed `bootstrap.sh` hook detects the first session, runs `pf init`, and sets everything up. You'll see agents, themes, and workflows immediately.
+
+If `pf` isn't installed when you start Claude Code, the bootstrap will attempt to install it via brew, uv, or pipx automatically.
+
+### Path B: Add Pennyfarthing to your own project
+
+You're bringing Pennyfarthing into a repo for the first time.
+
 ```bash
-# Initialize project (creates .pennyfarthing/, .claude/ symlinks)
+# 1. Authenticate with GitHub (required — private repo)
+gh auth login
+
+# 2. Install the CLI
+brew install 1898andco/pf/pennyfarthing
+
+# 3. Initialize your project
 cd your-project
 pf init
 
-# Verify installation
+# 4. Verify
 pf doctor
 
-# Start working (inside Claude Code)
+# 5. Start Claude Code and run interactive setup
+claude
+/pf-setup    # walks through repo discovery, CLAUDE.md, theme selection, Jira, etc.
+
+# 6. Start working
 /pf-work
 ```
 
-### Choose How to Work
+`pf init` creates the `.pennyfarthing/` and `.claude/` directories. `/pf-setup` configures them interactively — repo topology, project context, theme, and optional integrations. After setup, teammates can follow Path A.
 
-Pennyfarthing works in any terminal, but optional dashboards give you real-time visibility into what agents are doing. Pick the mode that fits your workflow:
+**Alternative installs** (if brew isn't available):
+
+```bash
+# Shell script — auto-detects best package manager (brew → uv → pipx → pip)
+curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+
+# Manual with uv or pipx
+uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+```
+
+### Path C: Develop Pennyfarthing itself (dogfooding)
+
+You're contributing to the framework using the orchestrator repo.
+
+```bash
+# 1. Clone the orchestrator (includes pennyfarthing/ as inlined subrepo)
+git clone git@github.com:1898andCo/orc-penny.git && cd orc-penny
+
+# 2. Setup — clones pennyfarthing/, installs deps, builds, installs pf CLI
+just setup
+
+# 3. Launch Claude Code with OTEL telemetry
+just claude
+
+# 4. Optional: interactive walkthrough
+/guided-tour
+```
+
+Prerequisites: Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `1898andCo`.
+
+The orchestrator has two git repos — `orc-penny/` (sprint files, sessions, docs, trunk-based on `main`) and `pennyfarthing/` (framework source, gitflow on `develop`). The `.pennyfarthing/` runtime directory symlinks to `pennyfarthing/pennyfarthing-dist/` so changes are live immediately.
+
+> **Full walkthrough:** See [Getting Started](docs/GETTING-STARTED.md) for detailed installation, setup, and first work session guide.
+
+### Display Modes
+
+Pennyfarthing works in any terminal. Optional dashboards add real-time visibility into agent activity.
 
 | I want to... | Mode | Command |
 |--------------|------|---------|
@@ -83,33 +138,12 @@ Pennyfarthing works in any terminal, but optional dashboards give you real-time 
 | See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
 | One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
-| Full desktop app with embedded terminal | **Cyclist** | `pf cyclist` |
 
-```mermaid
-graph LR
-    subgraph "CLI Only"
-        A["claude"] --> B["Agents work in your terminal<br/>No dashboard"]
-    end
-
-    subgraph "BikeRack (dashboard + your terminal)"
-        C["just gui / just tui"] --> D["WheelHub Server"]
-        E["just claude"] --> D
-        D --> F["Dashboard panels<br/>(browser or TUI)"]
-    end
-
-    subgraph "Cyclist (all-in-one desktop app)"
-        G["pennyfarthing cyclist"] --> H["Electron app<br/>Embedded terminal + panels"]
-    end
-```
-
-> **See the full [BikeRack Guide](pennyfarthing-dist/guides/bikerack.md)** for detailed quickstart paths, OTEL telemetry setup, and command reference.
+> **See the full [BikeRack Guide](pennyfarthing-dist/guides/bikerack.md)** for setup, panels, and OTEL telemetry.
 
 ## Visual Dashboards
 
-Whether you use Cyclist or BikeRack, you get the same 15 dashboard panels showing real-time agent activity:
-
-<!-- TODO: Screenshot of Cyclist with multiple panels visible -->
-<!-- ![Cyclist Dashboard](docs/images/cyclist-dashboard.png) -->
+BikeRack provides 15 dashboard panels showing real-time agent activity:
 
 ### Panels
 
@@ -117,7 +151,6 @@ All panels are draggable, floatable, and splittable:
 
 | Panel | Purpose |
 |-------|---------|
-| **Message** | Conversation stream (Cyclist only) |
 | **Sprint** | Current sprint stories and progress |
 | **Progress** | At-a-glance story dashboard |
 | **BikeLane** | Workflow phase state and navigation |
@@ -133,37 +166,18 @@ All panels are draggable, floatable, and splittable:
 | **Debug** | Prime context inspection with token counts |
 | **Background** | Background job monitoring |
 
-<!-- TODO: Screenshot of BikeRack TUI -->
-<!-- ![BikeRack TUI](docs/images/bikerack-tui.png) -->
-
-### Cyclist vs BikeRack
-
-| | Cyclist | BikeRack |
-|---|---------|----------|
-| **Runtime** | Electron desktop app | Node.js server + browser/TUI |
-| **Terminal** | Embedded (node-pty) | Your own terminal |
-| **Conversation UI** | Built-in MessagePanel | Not included (by design) |
-| **Dashboard panels** | 15 Dockview panels | Same 15 panels |
-| **OTEL telemetry** | Automatic | Via `just claude` or `pf bikerack start` |
-| **Install** | `npm i @pennyfarthing/cyclist` | Included in `@pennyfarthing/core` |
-
 ### Architecture
 
-Both Cyclist and BikeRack are wrappers around **WheelHub**, the shared Express/WebSocket server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
+BikeRack is powered by **WheelHub**, a local Express/WebSocket server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
 
 ```mermaid
 graph TB
-    subgraph "Cyclist (Electron)"
-        C["Electron + React UI"]
-    end
-    subgraph "BikeRack (CLI)"
+    subgraph "BikeRack"
         BR["Node.js server"]
     end
 
-    C --> WH["WheelHub<br/>(shared server)"]
-    BR --> WH
+    BR --> WH["WheelHub<br/>(shared server)"]
 
-    C -- "writes" --> CP[".cyclist-port"]
     BR -- "writes" --> BP[".bikerack-port"]
 
     WH --> API["/api/* endpoints"]
@@ -171,19 +185,11 @@ graph TB
     WH --> OTLP["/v1/* OTLP receiver"]
 ```
 
-> **See [Cyclist Architecture](docs/CYCLIST-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
-
 ### Tool Visualization
 
-<!-- TODO: Screenshot of tool call rendering -->
-<!-- ![Tool Visualization](docs/images/tool-visualization.png) -->
-
-Cyclist and BikeRack render tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
+BikeRack renders tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
 
 ### Agent Portraits
-
-<!-- TODO: Screenshot of agent portrait in conversation -->
-<!-- ![Agent Portrait](docs/images/agent-portrait.png) -->
 
 Each of the 1101 persona characters across 100 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
@@ -197,7 +203,7 @@ Each of the 1101 persona characters across 100 themes has a unique portrait disp
 
 ## Prime Context System
 
-Prime assembles the full agent context at activation: agent definition, persona character, behavior guide, sprint state, active session, and sidecar memory. This is injected via `--append-system-prompt` so agents behave identically whether launched from Cyclist or the CLI.
+Prime assembles the full agent context at activation: agent definition, persona character, behavior guide, sprint state, active session, and sidecar memory. This is injected via `--append-system-prompt` so agents behave identically regardless of display mode.
 
 Prime uses **tiered injection** to manage token overhead:
 
@@ -287,21 +293,21 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 | Command | Description |
 |---------|-------------|
-| `pf setup` | Initialize in a project |
-| `pf setup` | Update to latest version |
+| `pf init` | Initialize Pennyfarthing in a project |
 | `pf doctor` | Check installation health |
 | `pf doctor --fix` | Auto-fix common issues |
+| `pf validate` | Run all validators |
 | `pf uninstall` | Remove for clean reinstall |
-| `pennyfarthing theme list` | Show available themes |
-| `pennyfarthing theme set <name>` | Change active theme |
-| `pennyfarthing cyclist` | Launch Cyclist visual terminal |
+| `pf theme list` | Show available themes |
+| `pf theme set <name>` | Change active theme |
+| `pf package list` | Show installable theme plugins |
 | `pf bikerack start` | Launch BikeRack dashboard |
+| `pf sprint status` | Current sprint overview |
+| `pf workflow list` | Show all workflows |
 | `pf debug hotspots analyze` | Git change frequency analysis |
-| `pf debug complexity analyze` | Code complexity metrics |
 | `pf debug deadcode stale` | Find files with no recent commits |
 | `pf debug healthscore analyze` | Composite codebase health score |
 | `pf handoff marker <agent>` | Generate handoff marker |
-| `pf validate` | Run all validators |
 
 ## Documentation
 
@@ -350,20 +356,20 @@ After initialization:
 ```
 your-project/
 ├── .pennyfarthing/
-│   ├── agents/               # → symlink to @pennyfarthing/core
-│   ├── guides/               # → symlink to @pennyfarthing/core
-│   ├── gates/                # → symlink to @pennyfarthing/core
-│   ├── output-styles/        # → symlink to @pennyfarthing/core
-│   ├── personas/             # → symlink to @pennyfarthing/core
-│   ├── scripts/              # → symlink to @pennyfarthing/core
-│   ├── templates/            # → symlink to @pennyfarthing/core
-│   ├── workflows/            # → symlink to @pennyfarthing/core
+│   ├── agents/               # Agent behavior definitions
+│   ├── guides/               # Component documentation
+│   ├── gates/                # Workflow transition gates
+│   ├── output-styles/        # Response format definitions
+│   ├── personas/             # Character and theme files
+│   ├── scripts/              # Runtime scripts
+│   ├── templates/            # Project templates
+│   ├── workflows/            # BikeLane workflow definitions
 │   ├── sidecars/             # Agent learning files (local, writable)
 │   ├── config.local.yaml     # Theme, output style, modes
 │   └── repos.yaml            # Multi-repo topology
 ├── .claude/
-│   ├── commands/             # → symlinks for Claude Code discovery
-│   └── skills/               # → symlinks for Claude Code discovery
+│   ├── commands/             # Slash commands for Claude Code discovery
+│   └── skills/               # Skills for Claude Code discovery
 ├── sprint/
 │   ├── current-sprint.yaml   # Active sprint
 │   └── archive/              # Completed sessions
@@ -371,7 +377,7 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.1.0
+## What's New in v12.4.0
 
 - **Context Engineering System** — Schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context`)
 - **Context Gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing

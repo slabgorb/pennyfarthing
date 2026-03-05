@@ -25,7 +25,35 @@ from pf.sprint.loader import find_epic, find_story
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
+from pf.sprint.archive_epic import ensure_archive_file, _load_archive_file, _write_archive_file
+
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
+
+
+def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> None:
+    """Add a story to the sprint completed file.
+
+    Called during story finish so that findings aggregation can discover
+    the story even before its parent epic is fully archived.
+    """
+    try:
+        archive_path = ensure_archive_file(project_root)
+        archive_data = _load_archive_file(archive_path)
+
+        existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
+        if story_id in existing_ids:
+            return
+
+        archive_data["completed_stories"].append({
+            "id": story_id,
+            "epic": story.get("jira_epic", story.get("epic", "")),
+            "title": story.get("title", ""),
+            "points": story.get("points", 0),
+            "completed": story.get("completed", date.today().isoformat()),
+        })
+        _write_archive_file(archive_path, archive_data)
+    except Exception:
+        pass  # Non-fatal — findings collection has fallback strategies
 
 
 def _parse_session(session_path: Path) -> dict[str, str]:
@@ -201,6 +229,18 @@ def finish_story(
         else:
             steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
         steps.append({"step": 4, "action": "yaml_update", "warning": t_result.get("error", "Transition failed")})
+
+    # --- Step 4b: Add story to completed file ---
+    try:
+        data = read_sprint(sprint_path)
+        parts = story_id.split("-")
+        if len(parts) >= 2:
+            epic = find_epic(data, parts[0])
+            story = find_story(epic, story_id) if epic else None
+            if story:
+                _add_story_to_completed(project_root, story_id, story)
+    except Exception:
+        pass
 
     # --- Step 5: Archive completed epics ---
     result = _run(

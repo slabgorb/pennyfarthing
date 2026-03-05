@@ -38,7 +38,7 @@ Auto-loaded by `pf agent start` from theme config. See output above.
 
 <role>
 **Primary:** {When this agent is invoked}
-**Blessed Path:** {Recommended workflow, e.g., "PM → /architect for design work"}
+**Blessed Path:** {Recommended workflow, e.g., "PM → /pf-architect for design work"}
 </role>
 
 <helpers>

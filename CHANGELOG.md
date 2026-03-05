@@ -7,7 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+## [12.4.0] - 2026-03-05
+
+### Added
+
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI instead of TypeScript engine (141-18)
+- **Port display in TUI and CLI statusbar** — BikeRack TUI shows WheelHub port next to "Connected" indicator; CLI statusbar shows OTEL port when telemetry is active
+- **Project-level workflow definitions** — `.pennyfarthing/project/workflows/` overrides or extends distributed workflows with priority-ordered multi-dir search (141-25)
+- **Homebrew tap and shell installer** — `brew install 1898andCo/tap/pennyfarthing` for macOS/Linux (MSSCI-16164)
+- **Simplify subagents** — Three verify-phase teammates (reuse, quality, efficiency) with structured `SIMPLIFY_RESULT` format and fan-out/fan-in orchestration (138-1, 138-3, 138-4, 138-7)
+- **Batch fan-out independence check** — File-overlap validation for parallel agent execution (139-1, 140-4)
+- **`pf validate` in CI** — Document type validators wired into continuous integration (MSSCI-16146)
+- **`--json` output for pf CLI** — Five commands now support `--json` for machine-readable output (141-16)
+- **Consolidated agent validation** — `pf validate agent` replaces scattered validation logic (141-20)
+- **Fix instructions in validators** — All validators now include actionable fix suggestions (141-23)
+- **Step-level tandem/team** — Stepped workflow steps can declare tandem and team blocks (137-5)
+- **Finding format validation gate** — Delivery findings validated against ADR-0031 format (133-3)
+- **`in_review` story status** — Sprint validator and CLI recognize in-review state
+- **Expanded spinner tips and catchphrases** — 36 tips, 30 spinner verbs, 6 catchphrases per S/A tier character
+
+### Fixed
+
+- **Redundant `detect_image_protocol()` calls** — Stored result once in TUI main/dev_main
+- **Cyclist imports after story-parser deletion** — Updated CATEGORY_MAP removal
+- **OTLP receiver payload types** — Properly typed in core package
+- **Deprecated bikerack shim removed** — Stale references cleaned up (141-4)
+- **Dead scripts deleted** — Removed duplicates of pf CLI functionality (141-15)
+- **Jira transition failures surfaced** — `claim_story` no longer silently swallows errors
+- **Handoff datetime mismatch** — Handle naive/aware datetime in phase duration calc
+- **Phase name validation** — `complete_phase` rejects agent names passed as phase names
+- **Sprint archive filtering** — Filter by name when number field absent; default status to done (136-14, 137-7)
+- **Hardcoded npm commands replaced** — Agents use project-agnostic `pf check`
+- **Stale npm/uv-era references removed** — Setup workflows and docs cleaned up (136-26)
+- **`pf-` prefix in templates** — All skill/agent name references corrected
+- **Phantom validate command fixed** — `pf context-docs` replaced with `pf validate context-story/epic`
+- **SM agent workflow routing** — Removed hardcoded workflow routing from SM agent definition
+
+### Removed
+
+- **Bootstrap hook removed** — Project initialization no longer requires a bootstrap phase; `pf init` handles setup directly
+
+### Coming Soon
+
+- **Homebrew installs** — `brew install 1898andCo/tap/pennyfarthing` will be the primary install path for macOS/Linux
+
+### Changed
+
+- **TypeScript file parsers replaced with pf CLI** — Subprocess calls instead of direct parsing (141-17)
+- **`as any` casts removed** — Fixed cyclist tsc errors without type escapes (141-12)
+- **Result objects in scripts** — Converted throw to result objects in scripts and generators (141-8)
+- **Dependencies unified** — `@types/ws` and `yaml` consolidated; shared UI deps hoisted to root
+- **WheelHub max port retries** — Increased from 10 to 16
+
+### Documentation
+
+- **Onboarding rewritten** — Three user journeys with brew-first install path (MSSCI-16187)
+- **Handoff CLI guide improved** — Missing commands and examples added
+- **CLI usage docs regenerated** — All skills updated
 
 ---
 
@@ -2914,7 +2970,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...HEAD
+[12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
 [12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
 [12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3

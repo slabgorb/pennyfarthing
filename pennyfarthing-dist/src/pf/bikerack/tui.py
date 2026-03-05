@@ -431,10 +431,14 @@ class ConnectionStatus(Static):
     connection_state: reactive[ConnectionState] = reactive(
         ConnectionState.DISCONNECTED
     )
+    port: int | None = None
 
     def watch_connection_state(self, state: ConnectionState) -> None:
         """Update display when connection state changes."""
-        self.update(STATE_DISPLAY.get(state, "● Unknown"))
+        base = STATE_DISPLAY.get(state, "● Unknown")
+        if state == ConnectionState.CONNECTED and self.port is not None:
+            base = f"[green]● Connected[/green] [dim]:{self.port}[/dim]"
+        self.update(base)
 
 
 class PanelCommands(Provider):
@@ -1199,6 +1203,8 @@ class BikeRackApp(App):
         """Apply connection state in Textual message context."""
         try:
             widget = self.query_one("#connection-status", ConnectionStatus)
+            if self._client is not None:
+                widget.port = self._client.port
             widget.connection_state = event.state
         except Exception:
             pass
@@ -1322,13 +1328,13 @@ def main(
     # Detect terminal image protocol BEFORE App.run() claims the terminal
     from pf.bikerack import portrait_resolver
 
-    portrait_resolver.detect_image_protocol()
+    protocol = portrait_resolver.detect_image_protocol()
 
     # Patch textual-image to wrap Kitty graphics escapes in tmux passthrough.
     # tmux doesn't natively forward Kitty's APC graphics escapes — they must
     # be wrapped in DCS passthrough sequences (\x1bPtmux;...\x1b\\).
     # See: https://github.com/tmux/tmux/wiki/FAQ
-    if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
+    if os.environ.get("TMUX") and protocol == "kitty":
         _patch_tgp_for_tmux()
 
     # Story 103-22: drain stale terminal responses before Textual takes over
@@ -1359,9 +1365,9 @@ def dev_main(
 
     from pf.bikerack import portrait_resolver
 
-    portrait_resolver.detect_image_protocol()
+    protocol = portrait_resolver.detect_image_protocol()
 
-    if os.environ.get("TMUX") and portrait_resolver.detect_image_protocol() == "kitty":
+    if os.environ.get("TMUX") and protocol == "kitty":
         _patch_tgp_for_tmux()
 
     # Story 103-22: drain stale terminal responses before Textual takes over
