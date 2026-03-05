@@ -38,6 +38,7 @@ def estimate_tokens(text: str) -> int:
 from pf.prime.loader import (  # noqa: E402
     load_agent_definition,
     load_behavior_guide,
+    load_output_style,
     load_repos_topology,
     load_soul,
     load_session_context,
@@ -195,6 +196,11 @@ def load_tier_components(
     soul_content = load_soul(project_root)
     if soul_content:
         add_component("soul", soul_content)
+
+    style_result = load_output_style(project_root)
+    if style_result:
+        _, style_content = style_result
+        add_component("output_style", style_content)
 
     if is_character_voice_enabled(project_root):
         persona, theme = load_persona(agent_name, project_root)
