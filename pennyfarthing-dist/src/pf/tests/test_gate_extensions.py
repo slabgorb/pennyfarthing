@@ -40,7 +40,7 @@ def _write_gate(path: Path, name: str) -> None:
 
 
 def _write_config(project: Path, config: dict) -> None:
-    config_path = project / ".pennyfarthing" / "config.local.yaml"
+    config_path = project / ".pennyfarthing" / "repos.yaml"
     config_path.write_text(yaml.dump(config))
 
 

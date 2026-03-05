@@ -162,6 +162,27 @@ def get_repo_config(
     return repos.get(repo_name)
 
 
+def load_repos_yaml_raw(project_root: Path | None = None) -> dict[str, Any]:
+    """Load raw repos.yaml as a dict (not parsed into RepoConfig).
+
+    Useful for reading top-level config like pr_title_format or gates.
+
+    Returns:
+        Raw config dict, or empty dict if not found.
+    """
+    if project_root is None:
+        project_root = get_project_root()
+
+    repos_path = project_root / ".pennyfarthing" / "repos.yaml"
+    if not repos_path.exists():
+        return {}
+
+    with open(repos_path) as f:
+        config = yaml.safe_load(f)
+
+    return config or {}
+
+
 _DEFAULT_PR_TITLE_FORMAT = "{jira_key} - {type}({scope}): {title}"
 
 

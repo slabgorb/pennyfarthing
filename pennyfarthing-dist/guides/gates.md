@@ -121,7 +121,7 @@ GATE_RESULT:
 </gate>
 ```
 
-2. **Declare extensions** in `.pennyfarthing/config.local.yaml`:
+2. **Declare extensions** in `.pennyfarthing/repos.yaml`:
 
 ```yaml
 gates:

@@ -117,7 +117,7 @@ def resolve_gate(
             assessment_found=True,
         )
 
-    # Resolve consumer gate extensions from config.local.yaml
+    # Resolve consumer gate extensions from repos.yaml
     gate_extensions: list[str] | None = None
     if gate_file:
         from pf.handoff.gate_file import resolve_gate_extensions

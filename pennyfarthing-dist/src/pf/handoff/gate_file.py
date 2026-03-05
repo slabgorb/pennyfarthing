@@ -106,7 +106,7 @@ def resolve_gate_extensions(
 ) -> dict:
     """Resolve extension gates for a given gate name from config.
 
-    Reads config.local.yaml gates.extensions.{gate_name} and resolves
+    Reads repos.yaml gates.extensions.{gate_name} and resolves
     each extension gate file via resolve_gate_file().
 
     Returns:
@@ -115,12 +115,12 @@ def resolve_gate_extensions(
             data: list[str] — resolved gate refs (e.g., ["gates/rustfmt-check"])
             error: str | None
     """
-    from pf.common.config import load_pennyfarthing_config
+    from pf.git.repos import load_repos_yaml_raw
 
     if project_root is None:
         project_root = _find_project_root()
 
-    config = load_pennyfarthing_config(project_root)
+    config = load_repos_yaml_raw(project_root)
     extensions = (
         config.get("gates", {}).get("extensions", {}).get(gate_name, [])
     )

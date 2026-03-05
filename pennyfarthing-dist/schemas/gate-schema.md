@@ -153,7 +153,7 @@ GATE_RESULT:
 
 ## RESOLVE_RESULT Extensions
 
-When consumer gate extensions are configured in `config.local.yaml`, `resolve-gate` includes a `gate_extensions` field in the result:
+When consumer gate extensions are configured in `repos.yaml`, `resolve-gate` includes a `gate_extensions` field in the result:
 
 ```yaml
 RESOLVE_RESULT:
