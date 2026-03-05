@@ -17,7 +17,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Find monorepo root by walking up from current directory
-const projectRoot = findMonorepoRoot(__dirname);
+const rootResult = findMonorepoRoot(__dirname);
+if (!rootResult.success) { console.error(rootResult.error); process.exit(1); }
+const projectRoot = rootResult.data!;
 const _facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 
 // ============================================================================

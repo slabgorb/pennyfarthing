@@ -173,6 +173,10 @@ workflow:
       agent: reviewer
       input: [verification_report, implementation, passing_tests]
       output: [review_findings]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
       instructions: |
         Adversarial code review. Write ALL findings to the story in
         sprint/current-sprint.yaml under review_findings field.
@@ -399,6 +403,10 @@ workflow:
       agent: sm
       input: [pr_status]
       output: [archived_session, story_summary]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
       instructions: |
         PR is merged or closed. Finalize the story:
         1. Update story status (done if merged, blocked/cancelled if closed)

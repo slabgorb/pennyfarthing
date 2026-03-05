@@ -56,6 +56,16 @@ def check_story(story_id: str) -> dict[str, Any]:
             "assigned_to": assigned,
         }
 
+    # Check if in review
+    if status == "in_review":
+        return {
+            "available": False,
+            "type": "story",
+            "story": story,
+            "reason": "Story is in review",
+            "assigned_to": assigned,
+        }
+
     # Check if done
     if status in ("done", "completed"):
         return {

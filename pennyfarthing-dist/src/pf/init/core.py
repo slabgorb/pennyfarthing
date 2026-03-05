@@ -349,8 +349,6 @@ def init_project(
             if dest.is_symlink():
                 dest.unlink()
             _copy_tree(dist_root / dir_name, dest)
-            # Clean files that no longer exist in source (renamed/moved)
-            _clean_stale_content(dist_root / dir_name, dest)
             content_dirs_copied += 1
 
         # --- Centralize portraits to shared XDG location ---
@@ -498,23 +496,6 @@ def _copy_tree(src: Path, dst: Path) -> None:
         else:
             shutil.copy2(item, dest_item)
 
-
-def _clean_stale_content(src: Path, dst: Path) -> None:
-    """Remove files in dst that no longer exist in src.
-
-    Removes any file type (.md, .py, .sh, .mjs, etc.) since content dirs
-    are fully pf-managed. Sidecars are NOT in _CONTENT_DIRS so they are
-    never touched. Recurses into subdirectories.
-    """
-    if not dst.is_dir() or not src.is_dir():
-        return
-    for item in dst.iterdir():
-        if item.is_dir():
-            src_item = src / item.name
-            if src_item.is_dir():
-                _clean_stale_content(src_item, item)
-        elif item.is_file() and not (src / item.name).exists():
-            item.unlink()
 
 
 def _install_wheelhub(target_dir: Path, dist_root: Path) -> None:

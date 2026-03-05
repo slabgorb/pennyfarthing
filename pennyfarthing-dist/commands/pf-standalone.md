@@ -145,11 +145,19 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 ### Step 5: Push and Create PR
 
+Format the PR title using the project's `pr_title_format` setting:
+```bash
+PR_TITLE=$(source .venv/bin/activate && python -c "
+from pf.git.repos import format_pr_title
+print(format_pr_title(jira_key='${JIRA_KEY}', title='${TITLE}'))
+")
+```
+
 ```bash
 git push -u origin "$BRANCH"
 
 gh pr create \
-  --title "feat: ${TITLE} (${JIRA_KEY})" \
+  --title "$PR_TITLE" \
   --body "## Summary
 ${DESCRIPTION}
 

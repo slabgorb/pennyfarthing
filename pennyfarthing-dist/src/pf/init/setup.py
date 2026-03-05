@@ -284,7 +284,11 @@ def write_repos_yaml(target_dir: Path, repos: dict[str, Any]) -> dict[str, Any]:
     """Write discovered repos to .pennyfarthing/repos.yaml."""
     repos_path = target_dir / ".pennyfarthing" / "repos.yaml"
     repos_path.parent.mkdir(parents=True, exist_ok=True)
-    repos_path.write_text(yaml.dump({"repos": repos}, default_flow_style=False))
+    data = {
+        "pr_title_format": "{jira_key} - {type}({scope}): {title}",
+        "repos": repos,
+    }
+    repos_path.write_text(yaml.dump(data, default_flow_style=False))
     return {"success": True}
 
 

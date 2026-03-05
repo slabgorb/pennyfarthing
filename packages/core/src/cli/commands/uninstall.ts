@@ -56,7 +56,8 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   const dryRun = options.dryRun;
 
   // Check for manifest
-  const manifest = readManifest(projectRoot);
+  const manifestResult = readManifest(projectRoot);
+  const manifest = manifestResult.success ? manifestResult.data : null;
   if (!manifest) {
     logger.error('No Pennyfarthing installation found in this directory.');
     logger.info('(missing .pennyfarthing/manifest.json)');

@@ -39,7 +39,7 @@ export function manifestExists(projectRoot: string): boolean {
 /**
  * Read the manifest file (.pennyfarthing/ takes precedence over legacy .claude/)
  */
-export function readManifest(projectRoot: string): Manifest | null {
+export function readManifest(projectRoot: string): { success: boolean; data?: Manifest | null; error?: string } {
   const newPath = join(projectRoot, MANIFEST_PATH);
   const legacyPath = join(projectRoot, LEGACY_MANIFEST_PATH);
 
@@ -49,14 +49,14 @@ export function readManifest(projectRoot: string): Manifest | null {
     : null;
 
   if (!manifestPath) {
-    return null;
+    return { success: true, data: null };
   }
 
   try {
     const content = readFileSync(manifestPath, 'utf8');
-    return JSON.parse(content) as Manifest;
+    return { success: true, data: JSON.parse(content) as Manifest };
   } catch (error) {
-    throw new Error(`Failed to read manifest: ${error}`);
+    return { success: false, error: `Failed to read manifest: ${error}` };
   }
 }
 
@@ -142,6 +142,7 @@ export function updateManifestForUpdate(
  * Get the installed version from manifest
  */
 export function getInstalledVersion(projectRoot: string): string | null {
-  const manifest = readManifest(projectRoot);
-  return manifest?.version || null;
+  const result = readManifest(projectRoot);
+  if (!result.success || !result.data) return null;
+  return result.data.version || null;
 }

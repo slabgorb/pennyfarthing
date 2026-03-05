@@ -90,27 +90,25 @@ export async function setCommand(themeName: string): Promise<void> {
     return;
   }
 
-  try {
-    const theme = setTheme(themeName, projectRoot);
+  const result = setTheme(themeName, projectRoot);
 
-    console.log(`Theme changed to '${theme.id}'.`);
-    console.log();
-    console.log(`  ${theme.name}`);
-
-    const samples = getAgentSamples(theme);
-    if (samples) {
-      console.log(`  ${samples}`);
-    }
-
-    console.log();
-    console.log('Start a new agent session to use the new theme.');
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error('Error setting theme:', error);
-    }
+  if (!result.success) {
+    console.error(result.error);
+    return;
   }
+
+  const theme = result.data!;
+  console.log(`Theme changed to '${theme.id}'.`);
+  console.log();
+  console.log(`  ${theme.name}`);
+
+  const samples = getAgentSamples(theme);
+  if (samples) {
+    console.log(`  ${samples}`);
+  }
+
+  console.log();
+  console.log('Start a new agent session to use the new theme.');
 }
 
 /**
@@ -214,24 +212,22 @@ export async function createCommand(
     return;
   }
 
-  try {
-    const themePath = createTheme(themeName, projectRoot || process.cwd(), {
-      baseTheme: options.base,
-      userLevel: options.user
-    });
+  const result = createTheme(themeName, projectRoot || process.cwd(), {
+    baseTheme: options.base,
+    userLevel: options.user
+  });
 
-    console.log(`Created theme '${themeName}'.`);
-    console.log();
-    console.log(`  File: ${themePath}`);
-    console.log();
-    console.log('Next steps:');
-    console.log(`  1. Edit the theme file to customize your agents`);
-    console.log(`  2. Run 'pennyfarthing theme set ${themeName}' to activate`);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error('Error creating theme:', error);
-    }
+  if (!result.success) {
+    console.error(result.error);
+    return;
   }
+
+  const themePath = result.data!;
+  console.log(`Created theme '${themeName}'.`);
+  console.log();
+  console.log(`  File: ${themePath}`);
+  console.log();
+  console.log('Next steps:');
+  console.log(`  1. Edit the theme file to customize your agents`);
+  console.log(`  2. Run 'pennyfarthing theme set ${themeName}' to activate`);
 }

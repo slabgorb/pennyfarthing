@@ -148,6 +148,14 @@ def complete_phase(
         temp_path.unlink(missing_ok=True)
         raise
 
+    # Transition story to in_review when entering review phase
+    if to_phase == "review":
+        try:
+            from pf.sprint.story_transition import transition_story
+            transition_story(project_root, story_id, "in_review")
+        except Exception:
+            pass  # Non-fatal — status-sync gate will catch mismatches
+
     return {
         "status": "success",
         "session_file": f".session/{story_id}-session.md",

@@ -17,7 +17,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Use shared utility to find monorepo root
-const PROJECT_ROOT = findMonorepoRoot(__dirname);
+const rootResult = findMonorepoRoot(__dirname);
+if (!rootResult.success) { throw new Error(rootResult.error); }
+const PROJECT_ROOT = rootResult.data!;
 
 describe('Story 11-2: pnpm Workspace Structure', () => {
 

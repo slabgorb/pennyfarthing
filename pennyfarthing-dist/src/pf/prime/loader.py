@@ -44,6 +44,28 @@ def load_agent_definition(agent_name: str, project_root: Path | None = None) -> 
     return None
 
 
+def load_soul(project_root: Path | None = None) -> str | None:
+    """Load SOUL.md project principles (optional).
+
+    Consumer repos may define a SOUL.md at their project root with
+    guiding principles that agents should follow. This is loaded
+    after the agent definition so principles inform agent behavior.
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        SOUL.md content, or None if not found
+    """
+    root = project_root or get_project_root()
+    soul_file = root / "SOUL.md"
+
+    if soul_file.exists():
+        return soul_file.read_text()
+
+    return None
+
+
 def load_behavior_guide(project_root: Path | None = None) -> str | None:
     """Load shared agent behavior guide.
 
