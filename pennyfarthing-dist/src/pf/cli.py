@@ -111,7 +111,7 @@ _SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
 
 # Hidden backward-compat aliases — these resolve via _LAZY_COMMANDS
 # but are excluded from help output
-_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore", "init"}
+_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore", "init", "hooks"}
 
 
 class PennyfarthingCLI(LazyGroup):
