@@ -24,24 +24,24 @@ from the story ID in the session file.
 
 3. **epic-context-validated:** Validate epic context document.
    ```bash
-   pf context-docs validate epic {N}
+   pf validate context-epic {N}
    ```
    - Exit 0: PASS — epic context exists and is valid
    - Exit 2 (not found): FAIL — file `sprint/context/context-epic-{N}.md` missing
    - Exit 1 (invalid): FAIL — report validation errors from stdout
 
-   **Fallback** (if `pf context-docs` is not available): check that
+   **Fallback** (if `pf validate context` is not available): check that
    `sprint/context/context-epic-{N}.md` exists and is non-empty.
 
 4. **story-context-validated:** Validate story context document.
    ```bash
-   pf context-docs validate story {N-N}
+   pf validate context-story {N-N}
    ```
    - Exit 0: PASS — story context exists and is valid
    - Exit 2 (not found): FAIL — file `sprint/context/context-story-{N-N}.md` missing
    - Exit 1 (invalid): FAIL — report validation errors from stdout
 
-   **Fallback** (if `pf context-docs` is not available): check that
+   **Fallback** (if `pf validate context` is not available): check that
    `sprint/context/context-story-{N-N}.md` exists. If no story context file
    exists, check that the session file contains an SM Assessment section
    with technical approach — this is acceptable for stories without

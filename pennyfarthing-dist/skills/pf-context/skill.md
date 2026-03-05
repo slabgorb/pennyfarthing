@@ -90,7 +90,7 @@ Where `{id}` is the ordinal epic ID (e.g., `130`), not the Jira key.
 If the context validator is available, run:
 
 ```bash
-pf context-docs validate epic {id}
+pf validate context-epic {id}
 ```
 
 Report any validation errors. If the validator is not yet installed, skip this step.
@@ -225,7 +225,7 @@ If a tandem backseat is running, terminate it before finishing.
 If the context validator is available, run:
 
 ```bash
-pf context-docs validate story {id}
+pf validate context-story {id}
 ```
 
 Report any validation errors. If the validator is not yet installed, skip this step.

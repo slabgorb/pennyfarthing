@@ -70,7 +70,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 1. Context already loaded by /prime
 2. **Context gate check:** Validate story context exists:
    ```bash
-   pf context-docs validate story {story_id}
+   pf validate context-story {story_id}
    ```
    - Exit 0: proceed — context is valid
    - Exit 1 or 2: STOP — "Story context not found or invalid. Ensure SM setup completed successfully."
