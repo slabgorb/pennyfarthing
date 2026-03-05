@@ -46,7 +46,7 @@ export interface ThemeInfo {
  * Get the path to the primary themes directory (core built-in themes).
  * For full multi-source discovery, use discoverAllThemeDirs() from @pennyfarthing/shared.
  */
-export function getThemesDir(): string {
+export function getThemesDir(): string | null {
   const dirs = discoverAllThemeDirs();
   if (dirs.length > 0) {
     return dirs[0]; // Primary/core themes dir
@@ -59,7 +59,7 @@ export function getThemesDir(): string {
     return distThemes;
   }
 
-  throw new Error('Could not find themes directory');
+  return null;
 }
 
 /**
@@ -225,15 +225,15 @@ export interface SetThemeOptions {
  * Set the active theme
  * By default writes to .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
  * Use { global: true } to write to .pennyfarthing/persona-config.yaml (project default, committed)
- * Returns the ThemeInfo if successful, throws if theme not found
+ * Returns result object with ThemeInfo if successful
  */
-export function setTheme(themeName: string, projectRoot: string, options: SetThemeOptions = {}): ThemeInfo {
+export function setTheme(themeName: string, projectRoot: string, options: SetThemeOptions = {}): { success: boolean; data?: ThemeInfo; error?: string } {
   const themes = getThemes(projectRoot);
   const theme = themes.find(t => t.id === themeName);
 
   if (!theme) {
     const available = themes.map(t => t.id).join(', ');
-    throw new Error(`Theme '${themeName}' not found. Available themes: ${available}`);
+    return { success: false, error: `Theme '${themeName}' not found. Available themes: ${available}` };
   }
 
   let configPath: string;
@@ -284,7 +284,7 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
   const yamlContent = YAML.stringify(config);
   writeFileSync(configPath, header + yamlContent, 'utf8');
 
-  return theme;
+  return { success: true, data: theme };
 }
 
 /**
@@ -331,26 +331,26 @@ export function createTheme(
   themeName: string,
   projectRoot: string,
   options: CreateThemeOptions = {}
-): string {
+): { success: boolean; data?: string; error?: string } {
   const { baseTheme = 'minimalist', userLevel = false } = options;
 
   // Validate theme name
   const validation = validateThemeName(themeName);
   if (!validation.valid) {
-    throw new Error(validation.error);
+    return { success: false, error: validation.error };
   }
 
   // Check if theme already exists
   const existingThemes = getThemes(projectRoot);
   if (existingThemes.some(t => t.id === themeName)) {
-    throw new Error(`Theme '${themeName}' already exists`);
+    return { success: false, error: `Theme '${themeName}' already exists` };
   }
 
   // Find base theme file
   const baseThemePath = getThemeFilePath(baseTheme);
   if (!baseThemePath) {
     const available = existingThemes.map(t => t.id).join(', ');
-    throw new Error(`Base theme '${baseTheme}' not found. Available themes: ${available}`);
+    return { success: false, error: `Base theme '${baseTheme}' not found. Available themes: ${available}` };
   }
 
   // Determine target directory
@@ -377,7 +377,7 @@ export function createTheme(
   const yamlContent = YAML.stringify(baseData);
   writeFileSync(targetPath, header + yamlContent, 'utf8');
 
-  return targetPath;
+  return { success: true, data: targetPath };
 }
 
 /**

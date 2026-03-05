@@ -9,7 +9,8 @@ export async function versionCommand(): Promise<void> {
 
   // Check if installed in current project
   if (manifestExists(projectRoot)) {
-    const manifest = readManifest(projectRoot);
+    const manifestResult = readManifest(projectRoot);
+    const manifest = manifestResult.success ? manifestResult.data : null;
     if (manifest) {
       console.log();
       console.log(`Installed: v${manifest.version} (${manifest.updatedAt.split('T')[0]})`);

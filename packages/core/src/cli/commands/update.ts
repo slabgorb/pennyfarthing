@@ -8,7 +8,8 @@ import {
   manifestExists,
   readManifest,
   writeManifest,
-  createManifest
+  createManifest,
+  type Manifest
 } from '../utils/manifest.js';
 import {
   pathExists,
@@ -58,7 +59,12 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     process.exit(1);
   }
 
-  const manifest = readManifest(projectRoot);
+  const manifestResult = readManifest(projectRoot);
+  if (!manifestResult.success) {
+    logger.error(manifestResult.error || 'Failed to read manifest');
+    process.exit(1);
+  }
+  const manifest = manifestResult.data;
   if (!manifest) {
     logger.error('Failed to read manifest');
     process.exit(1);
@@ -87,7 +93,12 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   const currentInstallType = manifest.installationType || 'copy'; // Default to copy for old manifests
 
   // Always check and update settings (idempotent - only makes changes if needed)
-  const assetsPath = getAssetsPath();
+  const assetsResult = getAssetsPath();
+  if (!assetsResult.success) {
+    logger.error(assetsResult.error || 'Package directory not found');
+    process.exit(1);
+  }
+  const assetsPath = assetsResult.data!;
 
   // Copy mode is no longer supported - require fresh install
   if (currentInstallType === 'copy') {
@@ -163,7 +174,7 @@ async function updateInstalledContent(
   projectRoot: string,
   nodeModulesPath: string | null,
   localTargets: Map<string, string> | null,
-  manifest: ReturnType<typeof readManifest>,
+  manifest: Manifest | null,
   version: string,
   options: { dryRun?: boolean }
 ): Promise<void> {
@@ -219,7 +230,12 @@ async function updateInstalledContent(
   }
 
   // Re-copy commands and skills (use assetsPath for correct pf-* prefix resolution)
-  const assetsPath = getAssetsPath();
+  const assetsResult2 = getAssetsPath();
+  if (!assetsResult2.success) {
+    logger.error(assetsResult2.error || 'Package directory not found');
+    return;
+  }
+  const assetsPath = assetsResult2.data!;
   const builtInCommandsPath = join(assetsPath, 'commands');
   createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
 
@@ -321,7 +337,7 @@ async function installPythonScripts(
 async function executePendingMigrations(
   nodeModulesPath: string,
   projectRoot: string,
-  manifest: ReturnType<typeof readManifest>,
+  manifest: Manifest | null,
   options: { dryRun?: boolean }
 ): Promise<void> {
   const dryRun = options.dryRun;
@@ -361,13 +377,13 @@ async function executePendingMigrations(
 
       if (result.applied.length > 0 && !dryRun) {
         // Update manifest with newly applied migration IDs
-        const currentManifest = readManifest(projectRoot);
-        if (currentManifest) {
-          currentManifest.migrationsRun = [
-            ...(currentManifest.migrationsRun ?? []),
+        const currentManifestResult = readManifest(projectRoot);
+        if (currentManifestResult.success && currentManifestResult.data) {
+          currentManifestResult.data.migrationsRun = [
+            ...(currentManifestResult.data.migrationsRun ?? []),
             ...result.applied,
           ];
-          writeManifest(projectRoot, currentManifest);
+          writeManifest(projectRoot, currentManifestResult.data);
         }
       }
 
@@ -528,10 +544,11 @@ export function migrateTemplateFiles(
 
 async function checkForUpdates(
   projectRoot: string,
-  manifest: ReturnType<typeof readManifest>
+  manifest: Manifest | null
 ): Promise<UpdateInfo> {
   const packageVersion = getPackageVersion();
-  const assetsPath = getAssetsPath();
+  const assetsResult3 = getAssetsPath();
+  const assetsPath = assetsResult3.success ? assetsResult3.data! : null;
 
   const changedFiles: string[] = [];
   const userModifiedFiles: string[] = [];
@@ -568,6 +585,7 @@ async function checkForUpdates(
       .replace('.claude/pennyfarthing/', '')
       .replace('scripts/', 'scripts/');
 
+    if (!assetsPath) continue;
     const assetsFilePath = join(assetsPath, assetsFile);
 
     if (pathExists(assetsFilePath)) {

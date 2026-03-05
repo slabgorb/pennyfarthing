@@ -215,17 +215,17 @@ export function resolveThemeFile(projectRoot: string, themeName: string): string
   return null;
 }
 
-export function findMonorepoRoot(startDir: string): string {
+export function findMonorepoRoot(startDir: string): { success: boolean; data?: string; error?: string } {
   let dir = startDir;
 
   for (let i = 0; i < 10; i++) {
     // Primary marker: pennyfarthing-dist/ + packages/ together (framework source repo only)
     if (existsSync(join(dir, 'pennyfarthing-dist')) && existsSync(join(dir, 'packages'))) {
-      return dir;
+      return { success: true, data: dir };
     }
     // Secondary marker: .pennyfarthing/ directory (consumer project)
     if (existsSync(join(dir, '.pennyfarthing'))) {
-      return dir;
+      return { success: true, data: dir };
     }
 
     const parent = dirname(dir);
@@ -236,5 +236,5 @@ export function findMonorepoRoot(startDir: string): string {
     dir = parent;
   }
 
-  throw new Error(`Could not find project root (pennyfarthing-dist/+packages/ or .pennyfarthing/) starting from ${startDir}`);
+  return { success: false, error: `Could not find project root (pennyfarthing-dist/+packages/ or .pennyfarthing/) starting from ${startDir}` };
 }

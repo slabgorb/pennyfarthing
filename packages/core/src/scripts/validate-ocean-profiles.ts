@@ -16,7 +16,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Find monorepo root by walking up from current directory
-const projectRoot = findMonorepoRoot(__dirname);
+const rootResult = findMonorepoRoot(__dirname);
+if (!rootResult.success) { console.error(rootResult.error); process.exit(1); }
+const projectRoot = rootResult.data!;
 const THEMES_DIR = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 const AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops', 'ba'];
 const OCEAN_DIMS = ['O', 'C', 'E', 'A', 'N'];

@@ -7,7 +7,8 @@ import fsExtra from 'fs-extra';
 const { removeSync, ensureDirSync, copySync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import {
-  readManifest
+  readManifest,
+  type Manifest
 } from '../utils/manifest.js';
 import {
   pathExists,
@@ -100,7 +101,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
 
   // Get versions
   const packageVersion = getPackageVersion();
-  const manifest = readManifest(projectRoot);
+  const manifestResult = readManifest(projectRoot);
+  const manifest = (manifestResult.success ? manifestResult.data : null) ?? null;
   const installedVersion = manifest?.version || 'not installed';
   const installationType = manifest?.installationType || 'copy';
 
@@ -213,7 +215,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   }
 }
 
-export function checkInstallation(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
+export function checkInstallation(projectRoot: string, manifest: Manifest | null): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Check manifest exists
@@ -226,7 +228,7 @@ export function checkInstallation(projectRoot: string, manifest: ReturnType<type
   return results;
 }
 
-export function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
+export function checkCoreFiles(projectRoot: string, manifest: Manifest | null): CheckResult[] {
   const results: CheckResult[] = [];
 
   const installationType = manifest?.installationType || 'copy';
@@ -302,7 +304,8 @@ export function checkCommandsAndSkills(projectRoot: string, _nodeModulesPath: st
 
   // Use assetsPath for source resolution (correct pf-* prefix in dogfood)
   let assetsPath: string | null = null;
-  try { assetsPath = getAssetsPath(); } catch { /* no assets available */ }
+  const assetsResult = getAssetsPath();
+  if (assetsResult.success) { assetsPath = assetsResult.data!; }
 
   if (!assetsPath) {
     // Can't check freshness without assets, but check dirs exist
@@ -627,7 +630,8 @@ function checkSymlinks(projectRoot: string, nodeModulesPath: string | null): Che
 export function checkUserFilesBasic(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
-  const manifest = readManifest(projectRoot);
+  const manifestResult2 = readManifest(projectRoot);
+  const manifest = manifestResult2.success ? manifestResult2.data : null;
   const installationType = manifest?.installationType || 'copy';
 
   // Check project directory
@@ -691,7 +695,8 @@ export function checkUserFilesBasic(projectRoot: string): CheckResult[] {
 export function checkSettingsHooks(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
-  const manifest = readManifest(projectRoot);
+  const manifestResult3 = readManifest(projectRoot);
+  const manifest = manifestResult3.success ? manifestResult3.data : null;
   const installationType = manifest?.installationType || 'copy';
 
   const settingsLocal = join(projectRoot, '.claude/settings.local.json');
@@ -1930,7 +1935,8 @@ export function checkHooks(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Detect installation type from manifest
-  const manifest = readManifest(projectRoot);
+  const manifestResult4 = readManifest(projectRoot);
+  const manifest = manifestResult4.success ? manifestResult4.data : null;
   const _installationType = manifest?.installationType || 'copy';
   const scriptBase = '.pennyfarthing/scripts';
 

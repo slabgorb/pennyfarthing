@@ -120,10 +120,11 @@ describe('MSSCI-14370: Consolidated .pennyfarthing/ layout', () => {
         }, null, 2) + '\n'
       );
 
-      const manifest = readManifest(testDir);
-      assert.ok(manifest, 'readManifest() should return manifest from .pennyfarthing/');
-      assert.strictEqual(manifest!.projectName, 'new-project');
-      assert.strictEqual(manifest!.version, '9.5.0');
+      const result = readManifest(testDir);
+      assert.strictEqual(result.success, true);
+      assert.ok(result.data, 'readManifest() should return manifest from .pennyfarthing/');
+      assert.strictEqual(result.data!.projectName, 'new-project');
+      assert.strictEqual(result.data!.version, '9.5.0');
     });
   });
 
@@ -168,9 +169,10 @@ describe('MSSCI-14370: Consolidated .pennyfarthing/ layout', () => {
         }, null, 2) + '\n'
       );
 
-      const manifest = readManifest(testDir);
-      assert.ok(manifest, 'readManifest() should fall back to .claude/ location');
-      assert.strictEqual(manifest!.projectName, 'legacy-project');
+      const result2 = readManifest(testDir);
+      assert.strictEqual(result2.success, true);
+      assert.ok(result2.data, 'readManifest() should fall back to .claude/ location');
+      assert.strictEqual(result2.data!.projectName, 'legacy-project');
     });
 
     it('.pennyfarthing/ manifest should take precedence over .claude/ manifest', () => {
@@ -204,10 +206,11 @@ describe('MSSCI-14370: Consolidated .pennyfarthing/ layout', () => {
         }, null, 2) + '\n'
       );
 
-      const manifest = readManifest(testDir);
-      assert.ok(manifest);
+      const result3 = readManifest(testDir);
+      assert.strictEqual(result3.success, true);
+      assert.ok(result3.data);
       assert.strictEqual(
-        manifest!.projectName,
+        result3.data!.projectName,
         'new-location',
         '.pennyfarthing/ manifest should take precedence over .claude/'
       );
