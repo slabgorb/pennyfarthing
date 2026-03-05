@@ -32,7 +32,8 @@ def handoff():
 @click.argument("story_id")
 @click.argument("workflow")
 @click.argument("phase")
-def resolve_gate_cmd(story_id: str, workflow: str, phase: str):
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def resolve_gate_cmd(story_id: str, workflow: str, phase: str, output_json: bool):
     """Resolve the gate for the current workflow phase.
 
     Reads workflow YAML, checks assessment, returns RESOLVE_RESULT.
@@ -42,14 +43,31 @@ def resolve_gate_cmd(story_id: str, workflow: str, phase: str):
       STORY_ID  - Story identifier (e.g., 105-1)
       WORKFLOW  - Workflow name (e.g., tdd, trivial, patch)
       PHASE     - Current phase name (e.g., green, implement, fix)
+
+    \b
+    JSON Output (--json):
+      {
+        "status": "ready" | "blocked" | "skip" | "error",
+        "gate_type": string | null,
+        "gate_file": string | null,
+        "next_agent": string | null,
+        "next_phase": string | null,
+        "assessment_found": boolean,
+        "error": string | null
+      }
     """
     from pf.handoff.resolve_gate import resolve_gate
 
     result = resolve_gate(story_id, workflow, phase)
 
-    import yaml
+    if output_json:
+        import json
 
-    click.echo(yaml.dump({"RESOLVE_RESULT": result}, default_flow_style=False).rstrip())
+        click.echo(json.dumps(result, indent=2))
+    else:
+        import yaml
+
+        click.echo(yaml.dump({"RESOLVE_RESULT": result}, default_flow_style=False).rstrip())
 
     if result.get("status") == "blocked":
         raise SystemExit(1)
