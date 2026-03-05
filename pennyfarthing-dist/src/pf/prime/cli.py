@@ -35,6 +35,7 @@ from pf.prime.loader import (
     load_gate_recovery_guide,
     load_session_context,
     load_sidecars,
+    load_soul,
     load_sprint_context,
     load_team_mode_guide,
 )
@@ -113,6 +114,7 @@ def _component_header(name: str, agent_name: str | None) -> str:
         "agent_definition": f"Agent Definition: {agent_name}",
         "persona": f"Persona: {agent_name}",
         "persona_compressed": f"Persona: {agent_name} (compressed)",
+        "soul": "Project Principles (SOUL.md)",
         "behavior_guide": "Agent Behavior Guide",
         "team_mode_guide": "Team Mode Guide",
         "gate_recovery_guide": "Gate Recovery Guide",
@@ -132,6 +134,7 @@ def _component_source(name: str, agent_name: str | None, root: Path) -> str | No
         "agent_definition": f".pennyfarthing/agents/{agent_name}.md",
         "persona": None,
         "persona_compressed": None,
+        "soul": "SOUL.md",
         "behavior_guide": ".pennyfarthing/guides/agent-behavior.md",
         "team_mode_guide": ".pennyfarthing/guides/team-mode.md",
         "gate_recovery_guide": ".pennyfarthing/guides/gate-recovery.md",
@@ -462,6 +465,15 @@ def prime(
         if not json_output:
             _print_header(f"Agent Definition: {agent_name}", quiet)
             print(agent_content)
+
+    # ==========================================================================
+    # PRIORITY 2.5: SOUL.md project principles (optional)
+    # ==========================================================================
+    if not json_output:
+        soul_content = load_soul(root)
+        if soul_content:
+            _print_header("Project Principles (SOUL.md)", quiet)
+            print(soul_content)
 
     # ==========================================================================
     # PRIORITY 3: Persona (if enabled)
