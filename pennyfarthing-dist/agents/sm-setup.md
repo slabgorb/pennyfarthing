@@ -153,10 +153,17 @@ pf jira claim {JIRA_KEY}
 ## Step 4: Write Session File
 
 ```markdown
+---
+story_id: "{STORY_ID}"
+jira_key: "{JIRA_KEY}"
+epic: "{EPIC_JIRA_KEY}"
+workflow: "{WORKFLOW}"
+---
 # Story {STORY_ID}: {TITLE}
 
 ## Story Details
 - **ID:** {STORY_ID}
+- **Jira Key:** {JIRA_KEY}
 - **Workflow:** {WORKFLOW}
 
 ## Workflow Tracking

@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pf.common.discovery import resolve_pf_binary, write_shim
-from pf.common.hooks import BOOTSTRAP_HOOKS, INFRASTRUCTURE_HOOKS, resolve_hook_paths
+from pf.common.hooks import INFRASTRUCTURE_HOOKS, resolve_hook_paths
 from pf.hooks.frontmatter import collect_all_frontmatter_hooks, merge_with_infrastructure
 
 # Wrap the shared hooks in the settings envelope expected by settings.local.json.
@@ -403,9 +403,6 @@ def init_project(
     # --- Update .gitignore ---
     _update_gitignore(target_dir)
 
-    # --- Write committed bootstrap settings (not gitignored) ---
-    bootstrap_written = _write_bootstrap_settings(target_dir, dist_root)
-
     # --- Run auto-setup workflow ---
     from pf.init import setup
 
@@ -749,77 +746,6 @@ def _clean_parked_hooks(settings_path: Path, target_dir: Path) -> bool:
                 changed = True
         except Exception:
             pass
-
-    return changed
-
-
-def _write_bootstrap_settings(target_dir: Path, dist_root: Path) -> bool:
-    """Write committed bootstrap settings for zero-friction onboarding.
-
-    Copies bootstrap.sh to .claude/hooks/ and writes .claude/settings.json
-    with a SessionStart hook that auto-installs pf on first clone.
-
-    Both files are committed to the repo (not gitignored) so new developers
-    get a working setup immediately after clone + open Claude Code.
-
-    Returns:
-        True if any files were written or updated.
-    """
-    changed = False
-
-    # --- Copy bootstrap.sh ---
-    hooks_dir = target_dir / ".claude" / "hooks"
-    hooks_dir.mkdir(parents=True, exist_ok=True)
-    bootstrap_dest = hooks_dir / "bootstrap.sh"
-
-    # Find bootstrap.sh source
-    bootstrap_src = dist_root / "templates" / "bootstrap.sh"
-    if not bootstrap_src.is_file():
-        # Fall back to pip-installed _dist
-        try:
-            from pf._dist import get_root, is_populated
-
-            if is_populated():
-                bootstrap_src = get_root() / "templates" / "bootstrap.sh"
-        except (ImportError, ModuleNotFoundError):
-            pass
-
-    if bootstrap_src.is_file():
-        shutil.copy2(bootstrap_src, bootstrap_dest)
-        bootstrap_dest.chmod(bootstrap_dest.stat().st_mode | 0o755)
-        changed = True
-
-    # --- Write/update .claude/settings.json ---
-    settings_path = target_dir / ".claude" / "settings.json"
-    if settings_path.is_file():
-        try:
-            data = json.loads(settings_path.read_text())
-        except (json.JSONDecodeError, OSError):
-            data = {}
-    else:
-        data = {}
-
-    # Merge bootstrap hooks, preserving existing non-hook settings
-    existing_hooks = data.get("hooks", {})
-    needs_update = False
-
-    for event, entries in BOOTSTRAP_HOOKS.items():
-        existing_entries = existing_hooks.get(event, [])
-        # Check if bootstrap hook already present
-        has_bootstrap = any(
-            "bootstrap.sh" in h.get("command", "")
-            for entry in existing_entries
-            for h in entry.get("hooks", [])
-            if isinstance(h, dict)
-        )
-        if not has_bootstrap:
-            existing_hooks[event] = entries + existing_entries
-            needs_update = True
-
-    if needs_update:
-        data["hooks"] = existing_hooks
-        settings_path.write_text(json.dumps(data, indent=2) + "\n")
-        changed = True
 
     return changed
 
