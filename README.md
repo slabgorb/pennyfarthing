@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.3.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -377,7 +377,7 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.3.0
+## What's New in v12.4.0
 
 - **Context Engineering System** — Schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context`)
 - **Context Gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing

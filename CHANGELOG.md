@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.4.0] - 2026-03-05
+
 ### Added
 
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI instead of TypeScript engine (141-18)
 - **Port display in TUI and CLI statusbar** — BikeRack TUI shows WheelHub port next to "Connected" indicator; CLI statusbar shows OTEL port when telemetry is active
 - **Project-level workflow definitions** — `.pennyfarthing/project/workflows/` overrides or extends distributed workflows with priority-ordered multi-dir search (141-25)
 - **Homebrew tap and shell installer** — `brew install 1898andCo/tap/pennyfarthing` for macOS/Linux (MSSCI-16164)
@@ -37,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hardcoded npm commands replaced** — Agents use project-agnostic `pf check`
 - **Stale npm/uv-era references removed** — Setup workflows and docs cleaned up (136-26)
 - **`pf-` prefix in templates** — All skill/agent name references corrected
+- **Phantom validate command fixed** — `pf context-docs` replaced with `pf validate context-story/epic`
+- **SM agent workflow routing** — Removed hardcoded workflow routing from SM agent definition
+
+### Removed
+
+- **Bootstrap hook removed** — Project initialization no longer requires a bootstrap phase; `pf init` handles setup directly
+
+### Coming Soon
+
+- **Homebrew installs** — `brew install 1898andCo/tap/pennyfarthing` will be the primary install path for macOS/Linux
 
 ### Changed
 
@@ -2957,7 +2970,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...HEAD
+[12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
 [12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
 [12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3
