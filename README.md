@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.4.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.4.1** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -377,20 +377,18 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.4.0
+## What's New in v12.4.1
 
-- **Context Engineering System** — Schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context`)
-- **Context Gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing
-- **Session Artifacts Pipeline** — Finding capture during agent exit, Delivery Findings, Impact Summary compilation, and boss-readable PR body generation
-- **Guided Tour** — Interactive stepped onboarding workflow with switch gates, deep-dives, and practice stories
-- **`pf dashboard`** — Terminal dashboard command for project status overview
-- **Discovery UX** — Welcome banner nudges, theme-based spinner verbs, and feature discovery tips
-- **Frontmatter Hooks** — Agent and skill files declare their own hooks; stale hook detection on session start
-- **21 Reference Workflows** — PRD, Sprint Planning, UX Design, Research, Code Review, Retrospective, and more
-- **Portrait Bundling** — Portraits included in wheel distribution with auto-pull on session start
+- **`pf init` preserves custom content** — Init no longer removes user-created gates, workflows, agents, or other custom files from consumer repos
+- **SOUL.md in agent bootstrap** — Optional project-level personality file loaded during `pf agent start`
+- **PR title format config** — Configurable PR title format via `repos.yaml` with setup wizard step (MSSCI-16205)
+- **Consumer gate extensions** — Projects define custom gates in `repos.yaml` (MSSCI-16204)
+- **In-review story status** — Jira lifecycle alignment with `in_review` state (MSSCI-16200)
+- **Result object conversions** — CLI utils converted from throw-based to result object error handling (141-9)
 
 ### Previous Highlights
 
+- **v12.4** - Context engineering, session artifacts pipeline, guided tour, frontmatter hooks, 21 reference workflows, portrait bundling
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
 - **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
