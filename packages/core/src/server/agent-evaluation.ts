@@ -1,7 +1,16 @@
 /**
- * Agent evaluation stub for server module.
- * Provides functions used by evaluation API route without cyclist dependency.
+ * Agent evaluation — re-exports from benchmark module.
+ *
+ * Story 141-21: Relocated from packages/cyclist/src/agent-evaluation.ts
+ * to packages/core/src/benchmark/agent-evaluation.ts. This stub re-exports
+ * the real implementation plus route-specific helpers.
  */
+
+export {
+  getEvaluation,
+  detectTrend,
+  generateRecommendations,
+} from '../benchmark/agent-evaluation.js';
 
 export interface EvaluationResult {
   [key: string]: unknown;
@@ -20,7 +29,3 @@ export function getEvaluationSummary(): EvaluationSummary | null {
 }
 
 export function clearEvaluationResults(): void {}
-
-export function getEvaluation(): EvaluationResult | null { return null; }
-export function detectTrend(_results: EvaluationResult[]): unknown { return null; }
-export function generateRecommendations(_results: EvaluationResult[]): string[] { return []; }

@@ -26,15 +26,15 @@ export function createEvaluationRouter(): Router {
     res.json({ summary });
   });
 
-  router.get('/trend', (_req, res) => {
-    const results = getEvaluationResults();
-    const trend = detectTrend(results);
+  router.get('/trend', (req, res) => {
+    const agentRole = (req.query.agent as string) ?? 'dev';
+    const trend = detectTrend(agentRole);
     res.json({ trend });
   });
 
   router.get('/recommendations', (_req, res) => {
-    const results = getEvaluationResults();
-    const recommendations = generateRecommendations(results);
+    const evaluation = getEvaluation();
+    const recommendations = evaluation ? generateRecommendations(evaluation) : [];
     res.json({ recommendations });
   });
 

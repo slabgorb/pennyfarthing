@@ -16,13 +16,16 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Map dist/ back to src/ for .ts source file checks
+const srcDir = __dirname.replace('/dist/', '/src/');
+
 describe('agent-evaluation relocation (141-21 AC1)', () => {
   // -------------------------------------------------------------------------
   // Structural: file must exist in new location, not in cyclist
   // -------------------------------------------------------------------------
 
   it('should have agent-evaluation.ts in core/benchmark/', () => {
-    const newPath = resolve(__dirname, 'agent-evaluation.ts');
+    const newPath = resolve(srcDir, 'agent-evaluation.ts');
     assert.ok(
       existsSync(newPath),
       `Expected agent-evaluation.ts at ${newPath} but file does not exist`
@@ -31,7 +34,7 @@ describe('agent-evaluation relocation (141-21 AC1)', () => {
 
   it('should NOT have agent-evaluation.ts in cyclist/src/', () => {
     const oldPath = resolve(
-      __dirname,
+      srcDir,
       '../../../cyclist/src/agent-evaluation.ts'
     );
     assert.ok(
