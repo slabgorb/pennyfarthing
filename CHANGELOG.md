@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.4.1] - 2026-03-05
+
+### Added
+
+- **SOUL.md loading in agent bootstrap** — `pf agent start` optionally loads project-level SOUL.md for personality customization
+- **Result object conversions in CLI utils** — Converted throw-based error handling to result objects in CLI utility functions (141-9)
+- **PR title format configuration** — Configurable PR title format via `repos.yaml` with project-setup wizard step (MSSCI-16205)
+- **Consumer gate extensions** — Projects can add custom gates via `repos.yaml` configuration (MSSCI-16204)
+- **In-review story status** — Model story statuses on Jira lifecycle with `in_review` support (MSSCI-16200)
+
+### Fixed
+
+- **`pf init` no longer removes custom content** — Stopped `_clean_stale_content` from deleting user-created gates, workflows, and agents from consumer repos during init
+- **Stale bootstrap_written reference** — Removed dead reference from init result output
+
 ## [12.4.0] - 2026-03-05
 
 ### Added
@@ -2970,7 +2985,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...HEAD
+[12.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...v12.4.1
 [12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
 [12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
