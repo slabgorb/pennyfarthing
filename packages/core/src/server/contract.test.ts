@@ -88,11 +88,13 @@ describe('Story 141-17 AC9: CLI JSON contract - workflow phases', () => {
       return;
     }
 
-    const data = result.data as unknown[];
-    assert.ok(Array.isArray(data), 'Response must be an array of phases');
+    const data = result.data as Record<string, unknown>;
+    assert.ok(data !== null && typeof data === 'object', 'Response must be an object');
+    const phases = data.phases as unknown[];
+    assert.ok(Array.isArray(phases), 'Response must contain phases array');
 
-    if (data.length > 0) {
-      const phase = data[0] as Record<string, unknown>;
+    if (phases.length > 0) {
+      const phase = phases[0] as Record<string, unknown>;
       // WorkflowPhase required fields
       assert.ok('name' in phase, 'WorkflowPhase must include name');
       assert.ok('agent' in phase, 'WorkflowPhase must include agent');
@@ -122,22 +124,22 @@ describe('Story 141-17 AC9: CLI JSON contract - theme list', () => {
     assert.ok(data.length > 0, 'At least one theme should exist');
 
     const theme = data[0] as Record<string, unknown>;
-    // ThemeMetadata required fields
-    const requiredFields = ['id', 'name', 'description', 'category'];
+    // ThemeMetadata required fields (matches pf theme list --json output)
+    const requiredFields = ['id', 'name', 'tier'];
     for (const field of requiredFields) {
       assert.ok(field in theme, `ThemeMetadata must include '${field}' field`);
     }
   });
 
-  it('each theme has a non-empty category', () => {
+  it('each theme has a non-empty tier', () => {
     const result = callPf(['theme', 'list', '--json']);
     if (!result.success) return;
 
     const data = result.data as Array<Record<string, unknown>>;
     for (const theme of data) {
       assert.ok(
-        typeof theme.category === 'string' && theme.category.length > 0,
-        `Theme '${theme.id}' must have a non-empty category string`,
+        typeof theme.tier === 'string' && theme.tier.length > 0,
+        `Theme '${theme.id}' must have a non-empty tier string`,
       );
     }
   });
@@ -160,9 +162,12 @@ describe('Story 141-17 AC9: CLI JSON contract - theme show', () => {
     }
 
     const data = result.data as Record<string, unknown>;
-    assert.ok('name' in data, 'Theme must include name');
-    assert.ok('description' in data, 'Theme must include description');
-    assert.ok('agents' in data, 'Theme must include agents');
+    assert.ok('name' in data, 'Response must include name');
+    assert.ok('theme' in data, 'Response must include theme object');
+    assert.ok('agents' in data, 'Response must include agents');
+
+    const theme = data.theme as Record<string, unknown>;
+    assert.ok('description' in theme, 'Theme must include description');
 
     const agents = data.agents as Record<string, Record<string, unknown>>;
     assert.ok(typeof agents === 'object', 'agents must be an object');
