@@ -31,7 +31,7 @@ export interface SprintStory {
   id: string;
   title: string;
   points: number;
-  status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
+  status: 'backlog' | 'in_progress' | 'in_review' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
   hasContext: boolean;
   assignedTo?: string | null;
@@ -89,6 +89,7 @@ export interface SprintData {
     done: number;
     remaining: number;
     inProgress: number;
+    inReview: number;
     endDate: string;
   };
   metrics: SprintMetrics;
@@ -142,8 +143,8 @@ interface CanonicalData {
   epics: CanonicalEpic[];
   stories?: CanonicalStory[];
   standalone_stories?: CanonicalStory[];
-  points?: { total: number; completed: number; in_progress: number; backlog: number };
-  stories_count?: { total: number; done: number; in_progress: number; backlog: number };
+  points?: { total: number; completed: number; in_progress: number; in_review: number; backlog: number };
+  stories_count?: { total: number; done: number; in_progress: number; in_review: number; backlog: number };
   _orphans?: unknown[];
 }
 
@@ -156,6 +157,7 @@ function mapStoryStatus(status?: string): SprintStory['status'] {
   const normalized = status.toLowerCase();
   if (normalized === 'done' || normalized === 'completed') return 'done';
   if (normalized === 'in_progress' || normalized === 'in-progress') return 'in_progress';
+  if (normalized === 'in_review' || normalized === 'in-review') return 'in_review';
   if (normalized === 'cancelled' || normalized === 'canceled') return 'cancelled';
   if (normalized === 'blocked') return 'blocked';
   return 'backlog';
@@ -202,7 +204,7 @@ function getEmptySprintData(): SprintData {
     epics: [],
     completedEpics: [],
     futureEpics: [],
-    sprint: { number: 0, name: 'Unknown Sprint', done: 0, remaining: 0, inProgress: 0, endDate: '' },
+    sprint: { number: 0, name: 'Unknown Sprint', done: 0, remaining: 0, inProgress: 0, inReview: 0, endDate: '' },
     metrics: {
       completed: { points: 0, stories: 0, epics: 0 },
       current: { done: 0, inProgress: 0, remaining: 0, totalPoints: 0, storiesDone: 0, storiesInProgress: 0, storiesRemaining: 0 },
@@ -332,8 +334,8 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
   }
 
   // Use canonical points/counts for metrics
-  const pts = canonical.points ?? { completed: 0, in_progress: 0, backlog: 0, total: 0 };
-  const counts = canonical.stories_count ?? { done: 0, in_progress: 0, backlog: 0, total: 0 };
+  const pts = canonical.points ?? { completed: 0, in_progress: 0, in_review: 0, backlog: 0, total: 0 };
+  const counts = canonical.stories_count ?? { done: 0, in_progress: 0, in_review: 0, backlog: 0, total: 0 };
 
   return {
     currentStory,
@@ -347,6 +349,7 @@ export function getSprintData(projectDir: string, _userEmail?: string | null): S
       done: pts.completed,
       remaining: pts.backlog,
       inProgress: pts.in_progress,
+      inReview: pts.in_review,
       endDate: canonical.sprint.end_date ?? '',
     },
     metrics: {

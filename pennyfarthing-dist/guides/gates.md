@@ -19,6 +19,7 @@ Gates live in `pennyfarthing-dist/gates/` and are referenced by workflow YAML fi
 | **dev-exit** | `gates/dev-exit.md` | Composite: tests-pass + no debug code | Dev → Reviewer transitions |
 | **sm-setup-exit** | `gates/sm-setup-exit.md` | Session file, fields, context, branch created | SM → next agent transitions |
 | **merge-ready** | `gates/merge-ready.md` | No open non-draft PRs | SM new work gate |
+| **status-sync** | `gates/status-sync.md` | Verify YAML and Jira status match expected state for phase | Phase entry gates |
 | **release-ready** | `gates/release-ready.md` | Composite: tests-pass + build, version, changelog | DevOps pre-deploy |
 | **reviewer-preflight-check** | `gates/reviewer-preflight-check.md` | Composite: tests-pass + code smells, error boundaries | Reviewer preflight |
 | **context-ok** | `gates/context-ok.md` | Verify context usage is below threshold before phase transition | Any phase transition gate |

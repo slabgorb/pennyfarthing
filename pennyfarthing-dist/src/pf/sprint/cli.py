@@ -1596,6 +1596,9 @@ def data(output_json: bool):
     in_progress_pts = sum(
         s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_progress"
     )
+    in_review_pts = sum(
+        s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_review"
+    )
     backlog_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
@@ -1607,6 +1610,7 @@ def data(output_json: bool):
         current_sprint_archived
     )
     wip_count = sum(1 for s in all_stories if s.get("status") == "in_progress")
+    in_review_count = sum(1 for s in all_stories if s.get("status") == "in_review")
     backlog_count = sum(
         1
         for s in all_stories
@@ -1633,15 +1637,17 @@ def data(output_json: bool):
         "stories": stories,
         "standalone_stories": standalone_stories,
         "points": {
-            "total": completed_pts + in_progress_pts + backlog_pts,
+            "total": completed_pts + in_progress_pts + in_review_pts + backlog_pts,
             "completed": completed_pts,
             "in_progress": in_progress_pts,
+            "in_review": in_review_pts,
             "backlog": backlog_pts,
         },
         "stories_count": {
-            "total": done_count + wip_count + backlog_count,
+            "total": done_count + wip_count + in_review_count + backlog_count,
             "done": done_count,
             "in_progress": wip_count,
+            "in_review": in_review_count,
             "backlog": backlog_count,
         },
         "_orphans": orphans,

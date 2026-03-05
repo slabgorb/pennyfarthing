@@ -213,10 +213,25 @@ def finish_story(
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
-    # Two-step: in_progress → in_review → done (state machine requires review step)
-    t_result = transition_story(project_root, story_id, "in_review")
-    if t_result.get("success"):
+    # Story should already be in_review (transitioned at review phase entry).
+    # If still in_progress (legacy/edge case), do the two-step.
+    try:
+        data = read_sprint(sprint_path)
+        parts = story_id.split("-")
+        epic = find_epic(data, parts[0]) if len(parts) >= 2 else None
+        current_story = find_story(epic, story_id) if epic else None
+        current_status = current_story.get("status", "in_progress") if current_story else "in_progress"
+    except Exception:
+        current_status = "in_progress"
+
+    if current_status == "in_progress":
+        transition_story(project_root, story_id, "in_review")
+
+    if pr_merge_mode == "auto":
         t_result = transition_story(project_root, story_id, "done")
+    else:
+        # Human merge mode: leave in in_review until human merges
+        t_result = {"success": True, "to_status": "in_review"}
     if t_result.get("success"):
         if jira_key:
             steps.append({"step": 3, "action": "jira_done", "key": jira_key})

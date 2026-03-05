@@ -25,7 +25,7 @@ export interface SprintStory {
   id: string;
   title: string;
   points: number;
-  status: 'backlog' | 'in_progress' | 'done' | 'cancelled' | 'blocked';
+  status: 'backlog' | 'in_progress' | 'in_review' | 'done' | 'cancelled' | 'blocked';
   jiraKey: string | null;
   hasContext: boolean;
   assignedTo?: string | null;
@@ -84,6 +84,7 @@ export interface SprintData {
     done: number;
     remaining: number;
     inProgress: number;
+    inReview: number;
     endDate: string;
   };
   registry?: SprintRegistry;
