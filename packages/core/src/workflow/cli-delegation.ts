@@ -13,6 +13,8 @@
  * - gate-handler.ts (gate detection)
  */
 
+import childProcess from 'node:child_process';
+
 // Result object types (project standard: {success, data?, error?})
 
 export interface CliResult<T = unknown> {
@@ -74,16 +76,60 @@ export interface WorkflowValidationResult {
   errors?: Array<{ field: string; message: string }>;
 }
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+function callPfRaw(args: string[], projectDir: string): CliResult<Record<string, unknown>> {
+  try {
+    const output = childProcess.execFileSync('pf', args, {
+      cwd: projectDir,
+      encoding: 'utf8',
+      timeout: 15_000,
+    });
+    return { success: true, data: JSON.parse(output) as Record<string, unknown> };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
+function toHandoffStatus(raw: Record<string, unknown>): HandoffStatusResult {
+  return {
+    storyId: String(raw.story_id ?? raw.storyId ?? '').replace(/:$/, ''),
+    phase: String(raw.phase ?? ''),
+    workflow: String(raw.workflow ?? ''),
+    gateType: raw.gate_type != null ? String(raw.gate_type) : raw.gateType != null ? String(raw.gateType) : undefined,
+    nextPhase: raw.next_phase != null ? String(raw.next_phase) : raw.nextPhase != null ? String(raw.nextPhase) : undefined,
+    nextAgent: raw.next_agent != null ? String(raw.next_agent) : raw.nextAgent != null ? String(raw.nextAgent) : undefined,
+    status: String(raw.status ?? ''),
+  };
+}
+
+function toGateResult(raw: Record<string, unknown>): GateResult {
+  const passed = raw.passed != null
+    ? Boolean(raw.passed)
+    : raw.status === 'ready';
+  return {
+    passed,
+    gateType: raw.gate_type != null ? String(raw.gate_type) : raw.gateType != null ? String(raw.gateType) : undefined,
+    message: raw.message != null ? String(raw.message) : raw.error != null ? String(raw.error) : undefined,
+    nextPhase: raw.next_phase != null ? String(raw.next_phase) : raw.nextPhase != null ? String(raw.nextPhase) : undefined,
+    nextAgent: raw.next_agent != null ? String(raw.next_agent) : raw.nextAgent != null ? String(raw.nextAgent) : undefined,
+  };
+}
+
 /**
  * Route a story to the appropriate workflow via `pf workflow route --json`
  *
  * Replaces: workflow-router.ts routeStoryToWorkflow()
  */
 export function routeWorkflow(
-  _storyId: string,
-  _projectDir: string,
+  storyId: string,
+  projectDir: string,
 ): CliResult<RouteResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(['workflow', 'route', storyId, '--json'], projectDir);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: result.data as unknown as RouteResult };
 }
 
 /**
@@ -92,12 +138,17 @@ export function routeWorkflow(
  * Replaces: handoff.ts checkGate() + gate-handler.ts detectGate()
  */
 export function resolveGate(
-  _storyId: string,
-  _workflow: string,
-  _phase: string,
-  _projectDir: string,
+  storyId: string,
+  workflow: string,
+  phase: string,
+  projectDir: string,
 ): CliResult<GateResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(
+    ['handoff', 'resolve-gate', storyId, workflow, phase, '--json'],
+    projectDir,
+  );
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: toGateResult(result.data!) };
 }
 
 /**
@@ -106,9 +157,11 @@ export function resolveGate(
  * Replaces: session-state.ts parseSessionState() for handoff context
  */
 export function getHandoffStatus(
-  _projectDir: string,
+  projectDir: string,
 ): CliResult<HandoffStatusResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(['handoff', 'status', '--json'], projectDir);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: toHandoffStatus(result.data!) };
 }
 
 /**
@@ -117,14 +170,19 @@ export function getHandoffStatus(
  * Replaces: handoff.ts formatPhaseTransition() + session-state.ts updateSessionContent()
  */
 export function completePhase(
-  _storyId: string,
-  _workflow: string,
-  _fromPhase: string,
-  _toPhase: string,
-  _gateType: string,
-  _projectDir: string,
+  storyId: string,
+  workflow: string,
+  fromPhase: string,
+  toPhase: string,
+  gateType: string,
+  projectDir: string,
 ): CliResult<PhaseCompleteResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(
+    ['handoff', 'complete-phase', storyId, workflow, fromPhase, toPhase, gateType],
+    projectDir,
+  );
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: result.data as unknown as PhaseCompleteResult };
 }
 
 /**
@@ -133,10 +191,12 @@ export function completePhase(
  * Replaces: handoff.ts formatContextClearMarker()
  */
 export function emitMarker(
-  _agent: string,
-  _projectDir: string,
+  agent: string,
+  projectDir: string,
 ): CliResult<MarkerResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(['handoff', 'marker', agent], projectDir);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: result.data as unknown as MarkerResult };
 }
 
 /**
@@ -145,10 +205,12 @@ export function emitMarker(
  * Replaces: workflow-executor.ts getWorkflowStatus()
  */
 export function getWorkflowPhases(
-  _workflow: string,
-  _projectDir: string,
+  workflow: string,
+  projectDir: string,
 ): CliResult<WorkflowPhasesResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(['workflow', 'phases', workflow, '--json'], projectDir);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: result.data as unknown as WorkflowPhasesResult };
 }
 
 /**
@@ -157,8 +219,10 @@ export function getWorkflowPhases(
  * Replaces: workflow-schema.ts validateWorkflow()
  */
 export function validateWorkflowDef(
-  _workflowName: string,
-  _projectDir: string,
+  workflowName: string,
+  projectDir: string,
 ): CliResult<WorkflowValidationResult> {
-  return { success: false, error: 'not implemented' };
+  const result = callPfRaw(['workflow', 'show', workflowName, '--json'], projectDir);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true, data: result.data as unknown as WorkflowValidationResult };
 }

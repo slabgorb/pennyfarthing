@@ -16,7 +16,7 @@
  *   mock.restore();
  */
 
-import { execFileSync } from 'child_process';
+import childProcess from 'node:child_process';
 import { mock as nodeMock } from 'node:test';
 
 interface PfCall {
@@ -56,16 +56,16 @@ export interface PfMock {
 /**
  * Creates a mock for pf CLI subprocess calls.
  *
- * Intercepts `execFileSync` and returns controlled responses when the
- * command matches a registered `pf` subcommand. Non-pf calls pass through.
+ * Intercepts `execFileSync` via `mock.method()` on the child_process module
+ * and returns controlled responses when the command matches a registered
+ * `pf` subcommand. Non-pf calls pass through to the original.
  */
 export function createPfMock(): PfMock {
   const responses: PfMockResponse[] = [];
   const calls: PfCall[] = [];
-  let mockFn: ReturnType<typeof nodeMock.fn> | null = null;
 
-  // Store original
-  const originalExecFileSync = execFileSync;
+  // Store original for pass-through
+  const originalExecFileSync = childProcess.execFileSync;
 
   function matchArgs(registered: string[], actual: string[]): boolean {
     if (registered.length !== actual.length) return false;
@@ -76,40 +76,44 @@ export function createPfMock(): PfMock {
     return responses.find((r) => matchArgs(r.args, args));
   }
 
-  // Create the mock implementation
-  mockFn = nodeMock.fn(function mockedExecFileSync(
-    file: string,
-    args?: readonly string[],
-    options?: Record<string, unknown>,
-  ): string | Buffer {
-    const argArray = args ? [...args] : [];
+  // Patch execFileSync on the child_process module object
+  const mockCtx = nodeMock.method(
+    childProcess,
+    'execFileSync',
+    function mockedExecFileSync(
+      file: string,
+      args?: readonly string[],
+      _options?: Record<string, unknown>,
+    ): string | Buffer {
+      const argArray = args ? [...args] : [];
 
-    // Only intercept pf calls
-    if (file === 'pf' || file.endsWith('/pf')) {
-      calls.push({ args: argArray, timestamp: Date.now() });
+      // Only intercept pf calls
+      if (file === 'pf' || file.endsWith('/pf')) {
+        calls.push({ args: argArray, timestamp: Date.now() });
 
-      const resp = findResponse(argArray);
-      if (resp) {
-        if (resp.exitCode !== 0) {
-          const err = new Error(resp.response) as Error & { status: number; stderr: string };
-          err.status = resp.exitCode;
-          err.stderr = resp.response;
-          throw err;
+        const resp = findResponse(argArray);
+        if (resp) {
+          if (resp.exitCode !== 0) {
+            const err = new Error(resp.response) as Error & { status: number; stderr: string };
+            err.status = resp.exitCode;
+            err.stderr = resp.response;
+            throw err;
+          }
+          return resp.response;
         }
-        return resp.response;
+
+        // No registered response — throw like a real missing command would
+        const err = new Error(`pf-mock: no response registered for: pf ${argArray.join(' ')}`) as Error & {
+          status: number;
+        };
+        err.status = 1;
+        throw err;
       }
 
-      // No registered response — throw like a real missing command would
-      const err = new Error(`pf-mock: no response registered for: pf ${argArray.join(' ')}`) as Error & {
-        status: number;
-      };
-      err.status = 1;
-      throw err;
-    }
-
-    // Non-pf calls pass through to original
-    return originalExecFileSync(file, args, options) as string | Buffer;
-  });
+      // Non-pf calls pass through to original
+      return originalExecFileSync.call(childProcess, file, args, _options) as string | Buffer;
+    },
+  );
 
   return {
     register(args: string[], response: object | string): void {
@@ -152,10 +156,7 @@ export function createPfMock(): PfMock {
     },
 
     restore(): void {
-      if (mockFn) {
-        mockFn.mock.restore();
-        mockFn = null;
-      }
+      mockCtx.mock.restore();
       responses.length = 0;
       calls.length = 0;
     },
