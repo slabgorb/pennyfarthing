@@ -25,8 +25,15 @@ using the project's `pr_mode` config:
 PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
 ```
 
-- If `PR_MODE=draft`: `gh pr create --draft --title "feat({STORY_ID}): {title}" --body "..." --base develop`
-- If `PR_MODE=ready`: `gh pr create --title "feat({STORY_ID}): {title}" --body "..." --base develop`
+Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
+```bash
+PR_TITLE=$(source .venv/bin/activate && python -c "
+from pf.git.repos import format_pr_title
+print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
+")
+```
+- If `PR_MODE=draft`: `gh pr create --draft --title "$PR_TITLE" --body "..." --base develop`
+- If `PR_MODE=ready`: `gh pr create --title "$PR_TITLE" --body "..." --base develop`
 - If `PR_MODE=none`: Skip PR creation entirely.
 
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`

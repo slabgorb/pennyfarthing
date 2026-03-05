@@ -162,6 +162,63 @@ def get_repo_config(
     return repos.get(repo_name)
 
 
+_DEFAULT_PR_TITLE_FORMAT = "{jira_key} - {type}({scope}): {title}"
+
+
+def get_pr_title_format(project_root: Path | None = None) -> str:
+    """Get the PR title format template from repos.yaml.
+
+    Returns:
+        Format string with placeholders: {jira_key}, {type}, {scope}, {title}.
+    """
+    if project_root is None:
+        project_root = get_project_root()
+
+    repos_path = project_root / ".pennyfarthing" / "repos.yaml"
+    if not repos_path.exists():
+        return _DEFAULT_PR_TITLE_FORMAT
+
+    with open(repos_path) as f:
+        config = yaml.safe_load(f)
+
+    if not config:
+        return _DEFAULT_PR_TITLE_FORMAT
+
+    return config.get("pr_title_format", _DEFAULT_PR_TITLE_FORMAT)
+
+
+def format_pr_title(
+    *,
+    jira_key: str,
+    title: str,
+    pr_type: str = "feat",
+    scope: str = "",
+    project_root: Path | None = None,
+) -> str:
+    """Format a PR title using the project's configured template.
+
+    Args:
+        jira_key: Jira issue key (e.g., "MSSCI-16204") or story ID fallback.
+        title: Short summary of the change.
+        pr_type: Conventional commit type (feat, fix, chore, etc.).
+        scope: Optional scope (e.g., "gates", "ui").
+        project_root: Project root directory. Auto-detected if not provided.
+
+    Returns:
+        Formatted PR title string.
+    """
+    fmt = get_pr_title_format(project_root)
+    # If no scope provided, collapse "type(): title" to "type: title"
+    if not scope:
+        fmt = fmt.replace("({scope})", "")
+    return fmt.format(
+        jira_key=jira_key,
+        type=pr_type,
+        scope=scope,
+        title=title,
+    )
+
+
 def get_build_order(project_root: Path | None = None) -> list[str]:
     """Get repos in build/dependency order.
 
