@@ -20,7 +20,6 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -28,8 +27,6 @@ import {
   completePhase,
   getHandoffStatus,
   getWorkflowPhases,
-  type CliResult,
-  type HandoffStatusResult,
 } from './cli-delegation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

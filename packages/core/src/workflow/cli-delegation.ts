@@ -93,14 +93,20 @@ function callPfRaw(args: string[], projectDir: string): CliResult<Record<string,
   }
 }
 
+function optionalField(raw: Record<string, unknown>, snake: string, camel: string): string | undefined {
+  if (raw[snake] != null) return String(raw[snake]);
+  if (raw[camel] != null) return String(raw[camel]);
+  return undefined;
+}
+
 function toHandoffStatus(raw: Record<string, unknown>): HandoffStatusResult {
   return {
     storyId: String(raw.story_id ?? raw.storyId ?? '').replace(/:$/, ''),
     phase: String(raw.phase ?? ''),
     workflow: String(raw.workflow ?? ''),
-    gateType: raw.gate_type != null ? String(raw.gate_type) : raw.gateType != null ? String(raw.gateType) : undefined,
-    nextPhase: raw.next_phase != null ? String(raw.next_phase) : raw.nextPhase != null ? String(raw.nextPhase) : undefined,
-    nextAgent: raw.next_agent != null ? String(raw.next_agent) : raw.nextAgent != null ? String(raw.nextAgent) : undefined,
+    gateType: optionalField(raw, 'gate_type', 'gateType'),
+    nextPhase: optionalField(raw, 'next_phase', 'nextPhase'),
+    nextAgent: optionalField(raw, 'next_agent', 'nextAgent'),
     status: String(raw.status ?? ''),
   };
 }
@@ -111,10 +117,10 @@ function toGateResult(raw: Record<string, unknown>): GateResult {
     : raw.status === 'ready';
   return {
     passed,
-    gateType: raw.gate_type != null ? String(raw.gate_type) : raw.gateType != null ? String(raw.gateType) : undefined,
-    message: raw.message != null ? String(raw.message) : raw.error != null ? String(raw.error) : undefined,
-    nextPhase: raw.next_phase != null ? String(raw.next_phase) : raw.nextPhase != null ? String(raw.nextPhase) : undefined,
-    nextAgent: raw.next_agent != null ? String(raw.next_agent) : raw.nextAgent != null ? String(raw.nextAgent) : undefined,
+    gateType: optionalField(raw, 'gate_type', 'gateType'),
+    message: optionalField(raw, 'message', 'message') ?? optionalField(raw, 'error', 'error'),
+    nextPhase: optionalField(raw, 'next_phase', 'nextPhase'),
+    nextAgent: optionalField(raw, 'next_agent', 'nextAgent'),
   };
 }
 

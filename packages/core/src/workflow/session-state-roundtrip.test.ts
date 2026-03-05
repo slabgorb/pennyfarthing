@@ -17,17 +17,15 @@
  * Run with: pnpm test
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import {
   getHandoffStatus,
-  type CliResult,
-  type HandoffStatusResult,
 } from './cli-delegation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,16 +42,6 @@ function callPfJson(args: string[], cwd: string): unknown {
   return JSON.parse(output);
 }
 
-/**
- * Call pf CLI and return raw output (may not be JSON)
- */
-function callPfRaw(args: string[], cwd: string): string {
-  return execFileSync('pf', args, {
-    cwd,
-    encoding: 'utf-8',
-    timeout: 10000,
-  });
-}
 
 describe('Session State Round-Trip Byte Compatibility — AC6', () => {
   // These tests use the real orchestrator project dir with active session
@@ -171,9 +159,8 @@ describe('Session State Round-Trip Byte Compatibility — AC6', () => {
   it('field names should use consistent casing between Python and TypeScript', () => {
     const root = findOrchestratorRoot();
 
-    let pyOutput: Record<string, unknown>;
     try {
-      pyOutput = callPfJson(['handoff', 'status', '--json'], root) as Record<string, unknown>;
+      callPfJson(['handoff', 'status', '--json'], root);
     } catch {
       // No active session — skip
       return;
