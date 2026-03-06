@@ -180,6 +180,12 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     env = os.environ.copy()
     env["WHEELHUB_PROJECT_DIR"] = str(project_dir)
 
+    # Forward session ID so WheelHub resolves the correct agent persona
+    # (mirrors packages/core/src/cli/commands/cyclist.ts:190-191)
+    session_id = os.environ.get("SESSION_ID") or os.environ.get("CLAUDE_SESSION_ID")
+    if session_id:
+        env["CYCLIST_SESSION_ID"] = session_id
+
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
         ["node", str(entry)],
