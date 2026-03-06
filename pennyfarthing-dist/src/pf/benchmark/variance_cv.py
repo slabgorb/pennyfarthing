@@ -6,8 +6,9 @@ CV = std_dev / mean — lower CV means more consistent scoring.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
+
+from pf.benchmark.aggregator import calculate_std_dev
 
 SMALL_SAMPLE_THRESHOLD = 30
 
@@ -82,8 +83,7 @@ def calculate_cv(scores: list[float]) -> float:
     mean = sum(scores) / len(scores)
     if mean == 0.0:
         return 0.0
-    variance = sum((s - mean) ** 2 for s in scores) / len(scores)
-    std_dev = math.sqrt(variance)
+    std_dev = calculate_std_dev(scores, mean)
     return abs(std_dev / mean)
 
 
