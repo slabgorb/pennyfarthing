@@ -2,7 +2,7 @@
  * Difficulty Profiler
  *
  * Story 46-2: Populate difficulty profiles from baseline data
- * Stub — not yet implemented. Tests should FAIL.
+ * Computes difficulty tier and profile from control baseline statistics.
  */
 
 // ============================================================================
@@ -37,13 +37,33 @@ export interface DifficultyProfile {
 }
 
 // ============================================================================
-// Functions — stubs, not implemented
+// Functions
 // ============================================================================
 
-export function computeTier(_mean: number, _stddev: number): DifficultyTier {
-  throw new Error('not implemented');
+/**
+ * Compute difficulty tier from control baseline statistics.
+ *
+ * Algorithm:
+ *   extreme: mean < 50
+ *   hard:    mean 50-64 OR stddev >= 12
+ *   medium:  mean 65-79, stddev < 12
+ *   easy:    mean >= 80, stddev < 8
+ */
+export function computeTier(mean: number, stddev: number): DifficultyTier {
+  if (mean < 50) return 'extreme';
+  if (stddev >= 12) return 'hard';
+  if (mean < 65) return 'hard';
+  if (mean < 80) return 'medium';
+  return 'easy';
 }
 
-export function computeDifficultyProfile(_stats: ControlStats): DifficultyProfile {
-  throw new Error('not implemented');
+export function computeDifficultyProfile(stats: ControlStats): DifficultyProfile {
+  return {
+    tier: computeTier(stats.mean, stats.stddev),
+    calibration: {
+      control_mean: stats.mean,
+      control_stddev: stats.stddev,
+      n_runs: stats.n,
+    },
+  };
 }

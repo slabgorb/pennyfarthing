@@ -9,6 +9,13 @@ difficulty: medium
 agent: dev
 version: 1.0
 
+difficulty_profile:
+  tier: hard
+  calibration:
+    control_mean: 61.00
+    control_stddev: 8.6746
+    n_runs: 10
+
 description: |
   A TDD exercise where failing tests are provided and the developer must
   implement the code to make them pass. Tests the developer agent's ability
