@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.4.1** | *The outer loop goes once, the inner loop goes many times.*
+**v12.5.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -377,7 +377,7 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.4.1
+## What's New in v12.5.0
 
 - **`pf init` preserves custom content** — Init no longer removes user-created gates, workflows, agents, or other custom files from consumer repos
 - **SOUL.md in agent bootstrap** — Optional project-level personality file loaded during `pf agent start`

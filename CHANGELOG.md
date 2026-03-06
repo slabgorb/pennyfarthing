@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.5.0] - 2026-03-06
+
+### Added
+
+- **Scenario Builder stepped workflow** — Interactive workflow for building benchmark scenarios with code and open-ended modes (MSSCI-16234)
+- **Perplexity research guidance** — Orchestrator pattern doc for web-grounded research (#1295)
+- **Reference anchors in judge prompts** — Benchmark judge prompts now include anchored rubric criteria (MSSCI-16220)
+- **Sprint panel in-review differentiation** — In-review stories visually distinguished from backlog (#1293)
+- **Multi-judge flag for /solo** — `--multi-judge` flag for comparative scoring (MSSCI-16215)
+- **Output style config wiring** — `output_style` from config piped into agent activation (#1289)
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI (141-18)
+- **Hook audit** — Unexported hooks exported or deleted (#1262)
+- **Core API route tests** — Test coverage for agent-load through welcome API routes (MSSCI-16132, MSSCI-16133, MSSCI-16209)
+
+### Fixed
+
+- **WheelHub in_review status mapping** — Rebuilt bundle with correct status mapping and Node 24 ESM shim (#1296, #1297, #1298)
+- **CI check failures** — Resolved all 5 failing CI checks for scenario-builder PR
+- **Stale and broken tests** — Removed stale tests and fixed broken contract tests (#1291)
+- **28 dependency vulnerabilities** — Resolved via dependency updates (#1290)
+- **TUI bugfixes** — Context lookup, workflow dots, keybinding, status CLI fixes (#1282)
+
 ## [12.4.1] - 2026-03-05
 
 ### Added
@@ -2985,7 +3007,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...HEAD
+[12.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...v12.5.0
 [12.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...v12.4.1
 [12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
