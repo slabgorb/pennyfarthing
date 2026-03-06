@@ -56,7 +56,7 @@ describe('validateGoldStandard', () => {
 
   it('should accept gold_standard without optional notes', () => {
     const gs = validGoldStandard();
-    delete (gs as Record<string, unknown>).notes;
+    delete (gs as unknown as Record<string, unknown>).notes;
     const result = validateGoldStandard(gs);
     assert.strictEqual(result.success, true);
     assert.deepStrictEqual(result.errors, []);
@@ -82,7 +82,7 @@ describe('validateGoldStandard', () => {
 
   it('should reject gold_standard with missing response', () => {
     const gs = validGoldStandard();
-    delete (gs as Record<string, unknown>).response;
+    delete (gs as unknown as Record<string, unknown>).response;
     const result = validateGoldStandard(gs);
     assert.strictEqual(result.success, false);
     assert.ok(result.errors.length > 0);
@@ -108,7 +108,7 @@ describe('validateGoldStandard', () => {
 
   it('should reject gold_standard with missing score', () => {
     const gs = validGoldStandard();
-    delete (gs as Record<string, unknown>).score;
+    delete (gs as unknown as Record<string, unknown>).score;
     const result = validateGoldStandard(gs);
     assert.strictEqual(result.success, false);
     assert.ok(result.errors.some(e => e.includes('score')));
@@ -149,7 +149,7 @@ describe('validateGoldStandard', () => {
 
   it('should reject gold_standard with missing graded_by', () => {
     const gs = validGoldStandard();
-    delete (gs as Record<string, unknown>).graded_by;
+    delete (gs as unknown as Record<string, unknown>).graded_by;
     const result = validateGoldStandard(gs);
     assert.strictEqual(result.success, false);
     assert.ok(result.errors.some(e => e.includes('graded_by')));
