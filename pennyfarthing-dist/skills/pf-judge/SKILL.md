@@ -122,7 +122,7 @@ Extract:
 
 | Mode | Required Fields | Optional Fields |
 |------|-----------------|-----------------|
-| solo | `spec`, `character`, `challenge`, `response` | `code`, `baseline_issues`, `baseline_criteria`, `bonus_issues`, `bonus_criteria` |
+| solo | `spec`, `character`, `challenge`, `response` | `code`, `baseline_issues`, `baseline_criteria`, `bonus_issues`, `bonus_criteria`, `gold_standard` |
 | compare | `contestants[]` (each with spec, character, response), `challenge` | `baseline_issues`, `baseline_criteria` |
 | phase-* | `team1`, `team2` (each with theme, response), `context` | |
 | coherence | `theme`, `sm_response`, `tea_response`, `dev_response`, `reviewer_response` | |
@@ -133,6 +133,7 @@ Extract:
 - `baseline_issues` → code-review, tea, dev scenarios (things to FIND)
 - `baseline_criteria` → SM scenarios (behaviors to DEMONSTRATE)
 - `bonus_issues` / `bonus_criteria` → Extra credit items (optional)
+- `gold_standard` → Calibration anchor (Story 45-2). When present, includes expert response + score as a reference point. See `pf.benchmark.judge_prompt.build_solo_judge_prompt()` for programmatic prompt construction.
 
 ### Step 2: Build Judge Prompt
 
@@ -154,6 +155,22 @@ You are an impartial judge evaluating an AI agent's response.
 
 ## Response
 {response}
+
+{if gold_standard provided}
+## Gold Standard Calibration
+
+An expert-level response for this scenario scored **{gold_standard.score}/100**.
+
+### Expert Response
+{gold_standard.response}
+
+{if gold_standard.notes}
+**Notes:** {gold_standard.notes}
+{endif}
+
+### Calibration Instruction
+Use this expert response as a calibration reference point. A response of similar quality should score similarly. Responses that miss key insights from the gold standard should score lower. Do not penalize different but equally valid approaches — the gold standard is an anchor, not the only correct answer.
+{endif}
 
 ## Evaluation
 
