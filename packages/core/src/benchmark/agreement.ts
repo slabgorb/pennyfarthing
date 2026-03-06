@@ -49,6 +49,23 @@ function variance(values: number[]): number {
   return values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
 }
 
+function validateJudgeMatrix(judges: number[][]): Result<{ numJudges: number; numItems: number }> {
+  if (!judges || judges.length < 2) {
+    return { success: false, error: 'At least 2 judges required' };
+  }
+  const numJudges = judges.length;
+  const numItems = judges[0].length;
+  if (numItems === 0) {
+    return { success: false, error: 'No items to evaluate' };
+  }
+  for (let j = 1; j < numJudges; j++) {
+    if (judges[j].length !== numItems) {
+      return { success: false, error: 'All judges must rate the same number of items' };
+    }
+  }
+  return { success: true, data: { numJudges, numItems } };
+}
+
 // ============================================================================
 // Classification
 // ============================================================================
@@ -68,22 +85,9 @@ export function classifyAlpha(alpha: number): {
 // ============================================================================
 
 export function calculateKrippendorffAlpha(judges: number[][]): Result<AlphaResult> {
-  if (!judges || judges.length < 2) {
-    return { success: false, error: 'At least 2 judges required' };
-  }
-
-  const numJudges = judges.length;
-  const numItems = judges[0].length;
-
-  if (numItems === 0) {
-    return { success: false, error: 'No items to evaluate' };
-  }
-
-  for (let j = 1; j < numJudges; j++) {
-    if (judges[j].length !== numItems) {
-      return { success: false, error: 'All judges must rate the same number of items' };
-    }
-  }
+  const validation = validateJudgeMatrix(judges);
+  if (!validation.success) return { success: false, error: validation.error };
+  const { numJudges, numItems } = validation.data!;
 
   if (numItems === 1) {
     return {
@@ -135,22 +139,9 @@ export function calculateKrippendorffAlpha(judges: number[][]): Result<AlphaResu
 // ============================================================================
 
 export function calculateCronbachAlpha(judges: number[][]): Result<AlphaResult> {
-  if (!judges || judges.length < 2) {
-    return { success: false, error: 'At least 2 judges required' };
-  }
-
-  const numJudges = judges.length;
-  const numItems = judges[0].length;
-
-  if (numItems === 0) {
-    return { success: false, error: 'No items to evaluate' };
-  }
-
-  for (let j = 1; j < numJudges; j++) {
-    if (judges[j].length !== numItems) {
-      return { success: false, error: 'All judges must rate the same number of items' };
-    }
-  }
+  const validation = validateJudgeMatrix(judges);
+  if (!validation.success) return { success: false, error: validation.error };
+  const { numJudges, numItems } = validation.data!;
 
   const k = numItems;
 
