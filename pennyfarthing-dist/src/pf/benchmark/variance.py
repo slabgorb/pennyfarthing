@@ -21,7 +21,11 @@ class VarianceComparison:
 
 def compute_score_variance(scores: list[float]) -> float:
     """Compute population variance of a list of scores."""
-    raise NotImplementedError
+    if not scores:
+        raise ValueError("Cannot compute variance of empty score list")
+    n = len(scores)
+    mean = sum(scores) / n
+    return sum((x - mean) ** 2 for x in scores) / n
 
 
 def compare_calibration_variance(
@@ -29,4 +33,14 @@ def compare_calibration_variance(
     with_gs: list[float],
 ) -> VarianceComparison:
     """Compare scoring variance between runs with and without gold standard."""
-    raise NotImplementedError
+    without_var = compute_score_variance(without_gs)
+    with_var = compute_score_variance(with_gs)
+    if without_var == 0:
+        reduction_pct = 0.0
+    else:
+        reduction_pct = (without_var - with_var) / without_var * 100
+    return VarianceComparison(
+        without_gs_variance=without_var,
+        with_gs_variance=with_var,
+        variance_reduction_pct=reduction_pct,
+    )
