@@ -30,7 +30,7 @@ import { useClaudeContext } from '../contexts/ClaudeContext';
 function useFocusTracking() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
-  const handleFocus = useCallback((id: string) => (e: FocusEvent<HTMLButtonElement>) => {
+  const handleFocus = useCallback((id: string) => (_e: FocusEvent<HTMLButtonElement>) => {
     setFocusedId(id);
   }, []);
 

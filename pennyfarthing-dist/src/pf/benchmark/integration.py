@@ -18,7 +18,7 @@ import yaml
 
 @dataclass
 class OceanScores:
-    O: int
+    O: int  # noqa: E741 — OCEAN personality model standard abbreviation
     C: int
     E: int
     A: int
@@ -50,7 +50,7 @@ class CorrelationEffect:
 
 @dataclass
 class CorrelationResult:
-    O: CorrelationEffect
+    O: CorrelationEffect  # noqa: E741
     C: CorrelationEffect
     E: CorrelationEffect
     A: CorrelationEffect
@@ -413,9 +413,14 @@ def _matches_filter(ocean: OceanScores, f: dict[str, Any]) -> bool:
     score = getattr(ocean, f["dimension"])
     op = f["operator"]
     val = f["value"]
-    if op == ">=": return score >= val
-    if op == "<=": return score <= val
-    if op == "=": return score == val
-    if op == ">": return score > val
-    if op == "<": return score < val
+    if op == ">=":
+        return score >= val
+    if op == "<=":
+        return score <= val
+    if op == "=":
+        return score == val
+    if op == ">":
+        return score > val
+    if op == "<":
+        return score < val
     return False

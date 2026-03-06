@@ -36,6 +36,7 @@ def list_cmd(output_json: bool):
     """Show all available themes with current theme highlighted."""
     if output_json:
         import json
+
         from pf.common.themes import load_theme_metadata
         data = load_theme_metadata()
         click.echo(json.dumps(data, indent=2))

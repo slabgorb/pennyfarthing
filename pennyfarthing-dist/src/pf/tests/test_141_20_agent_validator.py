@@ -14,11 +14,9 @@ from pathlib import Path
 import pytest
 
 from pf.validate.adapters.agent import (
-    classify_agent_files,
     validate_main_agent,
     validate_subagent,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

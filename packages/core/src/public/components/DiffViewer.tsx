@@ -11,7 +11,7 @@
  * - Toggle partial/full file view
  */
 
-import React, { useState, useCallback, useMemo, useRef, useEffect, KeyboardEvent } from 'react';
+import React, { useState, useCallback, useRef, useEffect, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 
 // =============================================================================
@@ -380,7 +380,7 @@ interface SideBySideViewProps {
   focusedHunk: number;
 }
 
-function SideBySideView({ hunks, focusedHunk }: SideBySideViewProps): React.ReactElement {
+function SideBySideView({ hunks, focusedHunk: _focusedHunk }: SideBySideViewProps): React.ReactElement {
   // Separate lines into old (removed/unchanged) and new (added/unchanged)
   const oldLines: DiffLine[] = [];
   const newLines: DiffLine[] = [];

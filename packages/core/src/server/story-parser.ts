@@ -98,11 +98,11 @@ function emptyStoryInfo(): StoryInfo {
 }
 
 // Result wrapper: { success: true, data } or { success: false, error }
-function wrapResult<T>(data: T): { success: true; data: T } {
+function _wrapResult<T>(data: T): { success: true; data: T } {
   return { success: true, data };
 }
 
-function wrapError(error: string): { success: false; error: string } {
+function _wrapError(error: string): { success: false; error: string } {
   return { success: false, error };
 }
 

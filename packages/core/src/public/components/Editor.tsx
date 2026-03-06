@@ -28,7 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useCommandHistory } from '../hooks/useCommandHistory';
 import { useTabCompletion } from '../hooks/useTabCompletion';
 import { useMessageQueueContext, QueuedMessage } from '../contexts/MessageQueueContext';
-import { ModeSwitch, Mode, useModeSync, useModeSwitchShortcuts } from './ModeSwitch';
+import { ModeSwitch, useModeSync, useModeSwitchShortcuts } from './ModeSwitch';
 import { trackCommandUsage } from '../utils/slash-commands';
 
 // =============================================================================
@@ -269,7 +269,7 @@ export function Editor({ onSubmit, isProcessing = false, placeholder, onInject }
   } = useTabCompletion();
   const {
     queue,
-    queueCount,
+    queueCount: _queueCount,
     bellMode,
     queueMessage,
     removeFromQueue,

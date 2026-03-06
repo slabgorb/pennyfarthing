@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useStory } from '../../hooks/useStory.js';
-import { useSprint, type SprintStory, type SprintEpic, type SprintRegistry, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
+import { useSprint, type SprintStory, type SprintEpic, type FutureEpicChild } from '../../hooks/useSprint';
 
 // =============================================================================
 // Original SprintPanel (unchanged)

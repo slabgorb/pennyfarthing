@@ -15,7 +15,6 @@ from pf.handoff.gate_file import resolve_gate_extensions
 from pf.handoff.gate_runner import merge_gate_results
 from pf.handoff.resolve_gate import resolve_gate
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

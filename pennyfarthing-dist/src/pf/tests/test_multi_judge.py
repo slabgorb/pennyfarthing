@@ -16,8 +16,8 @@ from __future__ import annotations
 import pytest
 
 from pf.benchmark.multi_judge import (
-    JudgeVerdict,
     DimensionScore,
+    JudgeVerdict,
     MultiJudgeResult,
     SingleJudgeResult,
     aggregate_judge_scores,
@@ -27,7 +27,6 @@ from pf.benchmark.multi_judge import (
     randomize_presentation_order,
     validate_multi_judge_count,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

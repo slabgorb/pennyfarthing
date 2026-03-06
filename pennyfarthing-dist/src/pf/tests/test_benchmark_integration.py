@@ -11,27 +11,22 @@ import pytest
 from pf.benchmark.integration import (
     VALID_DIMENSIONS,
     VALID_ROLES,
-    BenchmarkResult,
     CorrelationResult,
-    ErrorTypeCell,
     OceanErrorCorrelation,
     OceanScores,
     OptimalProfile,
-    PerformerResult,
     RoleRecommendations,
     calculate_error_type_correlation,
     calculate_ocean_correlation,
     find_top_performers,
     generate_correlation_report,
     generate_ocean_error_heat_map,
-    get_benchmark_with_face,
     get_optimal_profile,
     get_role_recommendations,
     load_benchmark_data,
     parse_ocean_filter,
     query_benchmarks,
 )
-
 
 # ===========================================================================
 # parse_ocean_filter
