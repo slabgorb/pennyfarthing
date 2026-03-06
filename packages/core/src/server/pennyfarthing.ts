@@ -3,7 +3,7 @@
  * Story 141-17: Refactored to use child_process subprocess delegation via pf CLI.
  */
 
-import { existsSync, readFileSync, watch, type FSWatcher } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync, watch, type FSWatcher } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
@@ -152,6 +152,28 @@ function getCurrentAgent(projectDir: string, sessionId?: string): string | null 
       return readFileSync(sessionFile, 'utf-8').trim();
     } catch {
       return null;
+    }
+  }
+
+  // Fallback: find the most recently modified agent file in .session/agents/
+  const agentsDir = join(projectDir, '.session', 'agents');
+  if (existsSync(agentsDir)) {
+    try {
+      const files = readdirSync(agentsDir);
+      let newest: { name: string; mtime: number } | null = null;
+      for (const f of files) {
+        const fp = join(agentsDir, f);
+        const st = statSync(fp);
+        if (!newest || st.mtimeMs > newest.mtime) {
+          newest = { name: f, mtime: st.mtimeMs };
+        }
+      }
+      if (newest) {
+        const agent = readFileSync(join(agentsDir, newest.name), 'utf-8').trim();
+        if (agent) return agent;
+      }
+    } catch {
+      // fall through to pf CLI
     }
   }
 
