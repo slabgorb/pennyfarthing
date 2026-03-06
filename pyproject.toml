@@ -1,6 +1,6 @@
 [project]
 name = "pennyfarthing-scripts"
-version = "12.6.0"
+version = "12.6.1"
 description = "Python utilities for Pennyfarthing agent orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
