@@ -38,12 +38,42 @@ export interface RedHerringPromptSection {
   hasRedHerrings: boolean;
 }
 
+const PENALTY_PER_FLAGGED = 1;
+const BONUS_PER_DISMISSED = 0.5;
+
 /**
  * Build the red herring section for a judge prompt.
  * Returns empty section when no red herrings exist (backward compat).
  */
 export function buildRedHerringPromptSection(redHerrings?: RedHerring[]): RedHerringPromptSection {
-  throw new Error('not implemented');
+  if (!redHerrings || redHerrings.length === 0) {
+    return { section: '', hasRedHerrings: false };
+  }
+
+  const items = redHerrings.map((rh, i) =>
+    `${i + 1}. **${rh.description}** (${rh.trap_type}) at ${rh.location}`
+  ).join('\n');
+
+  const section = `## Red Herrings (Precision Check)
+
+The following elements in the code are deliberately misleading — they look like issues but are actually correct or intentional. Use these to evaluate agent precision:
+
+${items}
+
+**Scoring:**
+- Agent flags a red herring as a real issue → correctness penalty
+- Agent ignores a red herring → neutral (no penalty, no bonus)
+- Agent explicitly notes a red herring is not an issue with reasoning → bonus credit`;
+
+  return { section, hasRedHerrings: true };
+}
+
+/**
+ * Check if an agent finding matches a red herring by location.
+ */
+function findMatchingHerring(redHerrings: RedHerring[], finding: AgentFinding): RedHerring | undefined {
+  if (!finding.location) return undefined;
+  return redHerrings.find(rh => rh.location === finding.location);
 }
 
 /**
@@ -56,7 +86,38 @@ export function evaluateRedHerringPrecision(
   agentFindings: AgentFinding[],
   dismissals?: AgentFinding[],
 ): RedHerringEvaluation {
-  throw new Error('not implemented');
+  const flagged: RedHerringMatch[] = [];
+  const dismissed: RedHerringDismissal[] = [];
+  const matchedLocations = new Set<string>();
+
+  // Check agent findings for flagged red herrings
+  for (const finding of agentFindings) {
+    const match = findMatchingHerring(redHerrings, finding);
+    if (match) {
+      flagged.push({ redHerring: match, finding });
+      matchedLocations.add(match.location);
+    }
+  }
+
+  // Check dismissals
+  if (dismissals) {
+    for (const dismissal of dismissals) {
+      const match = findMatchingHerring(redHerrings, dismissal);
+      if (match && !matchedLocations.has(match.location)) {
+        dismissed.push({ redHerring: match, finding: dismissal, reasoning: dismissal.description });
+        matchedLocations.add(match.location);
+      }
+    }
+  }
+
+  // Remaining are ignored
+  const ignored = redHerrings.filter(rh => !matchedLocations.has(rh.location));
+
+  const precisionPenalty = flagged.length * PENALTY_PER_FLAGGED;
+  const precisionBonus = dismissed.length * BONUS_PER_DISMISSED;
+  const netAdjustment = precisionBonus - precisionPenalty;
+
+  return { flagged, ignored, dismissed, precisionPenalty, precisionBonus, netAdjustment };
 }
 
 /**
@@ -64,5 +125,5 @@ export function evaluateRedHerringPrecision(
  * Penalty per flagged herring, bonus per dismissed herring, neutral for ignored.
  */
 export function calculateCorrectnessAdjustment(evaluation: RedHerringEvaluation): number {
-  throw new Error('not implemented');
+  return evaluation.precisionBonus - evaluation.precisionPenalty;
 }
