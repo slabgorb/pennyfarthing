@@ -6,6 +6,8 @@
  * before storage. This is the guardrail — real data or no data.
  */
 
+import { classifyAlpha } from './agreement.js';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -29,7 +31,7 @@ export interface MultiJudgeSection {
   alpha_mean: number;
   alpha_min: number;
   alpha_max: number;
-  classification: string;
+  classification: 'reliable' | 'acceptable' | 'unreliable';
 }
 
 export interface FinalizeRunInput {
@@ -123,9 +125,6 @@ export function validateFinalizeRun(input: FinalizeRunInput): Result<ValidationR
 
   if (multi) {
     const judges = input.judges!;
-    if (judges.length === 0) {
-      return { success: false, error: 'Empty judges array' };
-    }
     const scores = input.scores as Record<string, number>[];
     if (!Array.isArray(scores) || scores.length !== judges.length) {
       return { success: false, error: 'Scores array length must match judges array length' };
@@ -141,6 +140,7 @@ export function validateFinalizeRun(input: FinalizeRunInput): Result<ValidationR
       );
     }
     const agg = aggregateMultiJudgeScores(scores);
+    if (!agg.success) return { success: false, error: agg.error };
     return {
       success: true,
       data: {
@@ -214,7 +214,7 @@ function computeAgreement(scores: Record<string, number>[]): MultiJudgeSection {
   }
 
   const alphaMean = Math.round((alphas.reduce((a, b) => a + b, 0) / alphas.length) * 10000) / 10000;
-  const classification = alphaMean >= 0.80 ? 'reliable' : alphaMean >= 0.67 ? 'acceptable' : 'unreliable';
+  const { classification } = classifyAlpha(alphaMean);
 
   return {
     alpha_mean: alphaMean,
