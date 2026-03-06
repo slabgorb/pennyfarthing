@@ -18,8 +18,6 @@ Tests should fail until the implementation is complete.
 
 import json
 import os
-import re
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -28,7 +26,6 @@ import yaml
 from click.testing import CliRunner
 
 from pf.cli import cli
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -719,7 +716,6 @@ class TestBinaryResolution:
         """PF_BIN environment variable should be checked first."""
         # This tests the resolution strategy that TypeScript will use.
         # The Python side documents the strategy; testing the documented contract.
-        from pf.common.config import get_project_root
 
         # Verify the strategy is documented in the CLI (implementation will add this)
         # For now, test that the resolution module exists and works

@@ -24,7 +24,6 @@ from pf.jira.client import (
 )
 
 
-
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments.
 

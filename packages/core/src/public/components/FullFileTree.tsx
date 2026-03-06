@@ -183,7 +183,7 @@ export function FullFileTree({ changedFiles, onFileClick }: FullFileTreeProps): 
   // Load root directory on mount
   useEffect(() => {
     fetchDirectory('');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const rootEntries = cache['__root__'];
   const changedCount = changedFiles.size;

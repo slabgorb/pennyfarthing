@@ -15,7 +15,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { PfMock } from './pf-subprocess-mock.js';
@@ -35,9 +35,7 @@ import {
   routeStoryViaCli,
 } from './workflow-router-delegate.js';
 
-import {
-  getSessionStateViaCli,
-} from './session-state-delegate.js';
+// session-state-delegate import available when needed
 
 
 // =============================================================================

@@ -102,7 +102,7 @@ class TestNoStaleReferences:
                 if matches:
                     violations.append(f"{rel}: {matches}")
         assert not violations, (
-            f"Stale references to deleted scripts found:\n"
+            "Stale references to deleted scripts found:\n"
             + "\n".join(f"  - {v}" for v in violations)
         )
 

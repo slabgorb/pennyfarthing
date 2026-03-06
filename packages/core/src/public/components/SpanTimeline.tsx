@@ -135,7 +135,7 @@ export function SpanTimeline({ height = 200, autoScroll = true }: SpanTimelinePr
   }, [spans, autoScroll]);
 
   // Calculate timeline bounds
-  const { minTime, maxTime, timeRange } = useMemo(() => {
+  const { minTime, maxTime: _maxTime, timeRange } = useMemo(() => {
     if (spans.length === 0) {
       const now = Date.now();
       return { minTime: now - 60000, maxTime: now, timeRange: 60000 };

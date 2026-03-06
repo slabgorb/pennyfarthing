@@ -12,7 +12,7 @@ import math
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -125,7 +125,7 @@ def _parse_summary_yaml(file_path: str, theme_name: str) -> dict[str, Any] | Non
         if not data:
             return None
         theme = (data.get("meta") or {}).get("theme") or data.get("theme") or theme_name
-        timestamp = (data.get("meta") or {}).get("timestamp") or data.get("timestamp") or datetime.now(timezone.utc).isoformat()
+        timestamp = (data.get("meta") or {}).get("timestamp") or data.get("timestamp") or datetime.now(UTC).isoformat()
         scores: list[dict[str, Any]] = []
         matrix = data.get("matrix")
         if matrix:
@@ -204,7 +204,7 @@ def aggregate_job_fair_results(results_dir: str) -> AggregateStats:
     historical_trend = _load_historical_trend(results_dir)
     return AggregateStats(
         themes_included=[r["theme"] for r in all_results],
-        last_updated=datetime.now(timezone.utc).isoformat(),
+        last_updated=datetime.now(UTC).isoformat(),
         by_role=by_role,
         overall_champions=overall_champions,
         historical_trend=historical_trend,
@@ -254,7 +254,7 @@ def save_historical_snapshot(results_dir: str) -> None:
     overall_mean = sum(role_means) / len(role_means) if role_means else 0
     overall_variance = sum((m - overall_mean) ** 2 for m in role_means) / len(role_means) if len(role_means) > 1 else 0
 
-    new_point = {"date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "mean": overall_mean, "variance": overall_variance}
+    new_point = {"date": datetime.now(UTC).strftime("%Y-%m-%d"), "mean": overall_mean, "variance": overall_variance}
 
     existing = _load_historical_trend(results_dir)
     snapshots = [{"date": t.date, "mean": t.mean, "variance": t.variance} for t in existing]
@@ -328,7 +328,7 @@ def aggregate_by_dimension(dimension: str, results_dir: str, themes_dir: str | N
                 delta=delta, significance="not_significant", by_role={},
             ))
 
-    return DimensionStats(dimension=dimension, last_updated=datetime.now(timezone.utc).isoformat(), values=values, comparisons=comparisons)
+    return DimensionStats(dimension=dimension, last_updated=datetime.now(UTC).isoformat(), values=values, comparisons=comparisons)
 
 
 def get_dimension_values(dimension: str, themes_dir: str | None = None) -> list[dict[str, Any]]:

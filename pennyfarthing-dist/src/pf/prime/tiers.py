@@ -40,9 +40,9 @@ from pf.prime.loader import (  # noqa: E402
     load_behavior_guide,
     load_output_style,
     load_repos_topology,
-    load_soul,
     load_session_context,
     load_sidecars,
+    load_soul,
     load_sprint_context,
     load_step_content,
 )

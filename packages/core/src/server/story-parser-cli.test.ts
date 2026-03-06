@@ -8,7 +8,7 @@
  * Covers: AC1, AC2, AC3
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync } from 'fs';
 

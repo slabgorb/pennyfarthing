@@ -327,6 +327,6 @@ class TestAC5AnchorSourceReference:
                     missing.append(f"{dimension} band {band}: '{snippet}'")
 
         assert not missing, (
-            f"Anchor text in SKILL.md drifted from rubric-anchors.md:\n"
+            "Anchor text in SKILL.md drifted from rubric-anchors.md:\n"
             + "\n".join(missing)
         )

@@ -6,8 +6,6 @@ Plus additional coverage for the full API surface.
 
 from __future__ import annotations
 
-import os
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -30,7 +28,6 @@ from pf.benchmark.aggregator import (
     get_top_performers,
     save_historical_snapshot,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures: Mock results directory

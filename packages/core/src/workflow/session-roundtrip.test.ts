@@ -19,7 +19,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { PfMock } from './pf-subprocess-mock.js';
@@ -306,7 +306,7 @@ describe('141-18 AC5: Session state round-trip byte compatibility', () => {
           encoding: 'utf8',
           timeout: 10000,
         });
-      } catch (err) {
+      } catch (_err) {
         // If --json flag isn't available yet (141-16 not merged), skip gracefully
         assert.ok(true, 'Skipping real roundtrip test — pf handoff status --json not available');
         return;

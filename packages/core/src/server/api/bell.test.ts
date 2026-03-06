@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for bell API (WebSocket broadcast utilities)
  * Story 141-5: Core API route tests (agent-load through dependencies)

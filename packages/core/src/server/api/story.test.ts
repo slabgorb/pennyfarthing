@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests for story API route
  * Story 141-7: Core API route tests (settings through welcome)

@@ -350,7 +350,7 @@ export function useApprovalModal(): UseApprovalModalResult {
     setRequest(null);
   }, []);
 
-  const approve = useCallback((grantScope: GrantScope) => {
+  const approve = useCallback((_grantScope: GrantScope) => {
     hide();
   }, [hide]);
 
@@ -497,7 +497,7 @@ export function sendPermissionResponse(response: ApprovalResponse): void {
 export default function ApprovalModal({
   isOpen,
   toolName,
-  toolId,
+  toolId: _toolId,
   input,
   onApprove,
   onReject,

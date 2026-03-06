@@ -5,7 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { createTelemetryRouter } from './telemetry.js';
-import { getRoutePaths, findRouteLayer, createMockJsonRes, createMockChainRes } from './__test-helpers.js';
+import { getRoutePaths, findRouteLayer, createMockJsonRes } from './__test-helpers.js';
 
 describe('telemetry API route', () => {
   it('createTelemetryRouter is a function', () => {

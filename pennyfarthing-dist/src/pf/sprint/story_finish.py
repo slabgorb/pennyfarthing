@@ -21,11 +21,10 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
 from pf.sprint.loader import find_epic, find_story
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
-
-from pf.sprint.archive_epic import ensure_archive_file, _load_archive_file, _write_archive_file
 
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
