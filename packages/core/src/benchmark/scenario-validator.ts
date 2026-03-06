@@ -37,8 +37,8 @@ export interface ValidationResult {
   errors: string[];
 }
 
-const VALID_TIERS: readonly string[] = ['easy', 'medium', 'hard', 'extreme'];
-const VALID_DIMENSION_KEYS: readonly string[] = [
+const VALID_TIERS: readonly DifficultyTier[] = ['easy', 'medium', 'hard', 'extreme'];
+const VALID_DIMENSION_KEYS: readonly (keyof DifficultyDimensions)[] = [
   'code_complexity',
   'domain_knowledge',
   'red_herring_count',
@@ -70,7 +70,7 @@ export function validateDifficultyProfile(profile: unknown): ValidationResult {
   const p = profile as Record<string, unknown>;
 
   // tier is required and must be a valid enum value
-  if (!p.tier || typeof p.tier !== 'string' || !VALID_TIERS.includes(p.tier)) {
+  if (!p.tier || typeof p.tier !== 'string' || !(VALID_TIERS as readonly string[]).includes(p.tier)) {
     errors.push(`Invalid tier: expected one of ${VALID_TIERS.join(', ')}, got ${String(p.tier)}`);
   }
 
@@ -81,7 +81,7 @@ export function validateDifficultyProfile(profile: unknown): ValidationResult {
     } else {
       const dims = p.dimensions as Record<string, unknown>;
       for (const [key, value] of Object.entries(dims)) {
-        if (!VALID_DIMENSION_KEYS.includes(key)) {
+        if (!(VALID_DIMENSION_KEYS as readonly string[]).includes(key)) {
           errors.push(`Unknown dimension key: ${key}`);
           continue;
         }
