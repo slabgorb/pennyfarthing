@@ -16096,9 +16096,9 @@ var require_side_channel = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/formats.js
+// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/formats.js
 var require_formats = __commonJS({
-  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/formats.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/formats.js"(exports, module) {
     "use strict";
     var replace = String.prototype.replace;
     var percentTwenties = /%20/g;
@@ -16122,9 +16122,9 @@ var require_formats = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/utils.js
+// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/utils.js
 var require_utils = __commonJS({
-  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/utils.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/utils.js"(exports, module) {
     "use strict";
     var formats = require_formats();
     var getSideChannel = require_side_channel();
@@ -16147,7 +16147,7 @@ var require_utils = __commonJS({
     var hexTable = (function() {
       var array = [];
       for (var i = 0; i < 256; ++i) {
-        array[array.length] = "%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase();
+        array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
       }
       return array;
     })();
@@ -16159,7 +16159,7 @@ var require_utils = __commonJS({
           var compacted = [];
           for (var j = 0; j < obj.length; ++j) {
             if (typeof obj[j] !== "undefined") {
-              compacted[compacted.length] = obj[j];
+              compacted.push(obj[j]);
             }
           }
           item.obj[item.prop] = compacted;
@@ -16181,18 +16181,12 @@ var require_utils = __commonJS({
       }
       if (typeof source !== "object" && typeof source !== "function") {
         if (isArray(target)) {
-          var nextIndex = target.length;
-          if (options && typeof options.arrayLimit === "number" && nextIndex > options.arrayLimit) {
-            return markOverflow(arrayToObject(target.concat(source), options), nextIndex);
-          }
-          target[nextIndex] = source;
+          target.push(source);
         } else if (target && typeof target === "object") {
           if (isOverflow(target)) {
             var newIndex = getMaxIndex(target) + 1;
             target[newIndex] = source;
             setMaxIndex(target, newIndex);
-          } else if (options && options.strictMerge) {
-            return [target, source];
           } else if (options && (options.plainObjects || options.allowPrototypes) || !has.call(Object.prototype, source)) {
             target[source] = true;
           }
@@ -16211,11 +16205,7 @@ var require_utils = __commonJS({
           }
           return markOverflow(result, getMaxIndex(source) + 1);
         }
-        var combined = [target].concat(source);
-        if (options && typeof options.arrayLimit === "number" && combined.length > options.arrayLimit) {
-          return markOverflow(arrayToObject(combined, options), combined.length - 1);
-        }
-        return combined;
+        return [target].concat(source);
       }
       var mergeTarget = target;
       if (isArray(target) && !isArray(source)) {
@@ -16228,7 +16218,7 @@ var require_utils = __commonJS({
             if (targetItem && typeof targetItem === "object" && item && typeof item === "object") {
               target[i] = merge2(targetItem, item, options);
             } else {
-              target[target.length] = item;
+              target.push(item);
             }
           } else {
             target[i] = item;
@@ -16242,15 +16232,6 @@ var require_utils = __commonJS({
           acc[key] = merge2(acc[key], value, options);
         } else {
           acc[key] = value;
-        }
-        if (isOverflow(source) && !isOverflow(acc)) {
-          markOverflow(acc, getMaxIndex(source));
-        }
-        if (isOverflow(acc)) {
-          var keyNum = parseInt(key, 10);
-          if (String(keyNum) === key && keyNum >= 0 && keyNum > getMaxIndex(acc)) {
-            setMaxIndex(acc, keyNum);
-          }
         }
         return acc;
       }, mergeTarget);
@@ -16329,8 +16310,8 @@ var require_utils = __commonJS({
           var key = keys[j];
           var val = obj[key];
           if (typeof val === "object" && val !== null && refs.indexOf(val) === -1) {
-            queue[queue.length] = { obj, prop: key };
-            refs[refs.length] = val;
+            queue.push({ obj, prop: key });
+            refs.push(val);
           }
         }
       }
@@ -16363,7 +16344,7 @@ var require_utils = __commonJS({
       if (isArray(val)) {
         var mapped = [];
         for (var i = 0; i < val.length; i += 1) {
-          mapped[mapped.length] = fn(val[i]);
+          mapped.push(fn(val[i]));
         }
         return mapped;
       }
@@ -16379,16 +16360,15 @@ var require_utils = __commonJS({
       isBuffer,
       isOverflow,
       isRegExp,
-      markOverflow,
       maybeMap,
       merge
     };
   }
 });
 
-// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/stringify.js
+// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/stringify.js
 var require_stringify = __commonJS({
-  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/stringify.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/stringify.js"(exports, module) {
     "use strict";
     var getSideChannel = require_side_channel();
     var utils = require_utils();
@@ -16669,9 +16649,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/parse.js
+// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/parse.js
 var require_parse = __commonJS({
-  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/parse.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/parse.js"(exports, module) {
     "use strict";
     var utils = require_utils();
     var has = Object.prototype.hasOwnProperty;
@@ -16696,7 +16676,6 @@ var require_parse = __commonJS({
       parseArrays: true,
       plainObjects: false,
       strictDepth: false,
-      strictMerge: true,
       strictNullHandling: false,
       throwOnLimitExceeded: false
     };
@@ -16777,15 +16756,9 @@ var require_parse = __commonJS({
         if (part.indexOf("[]=") > -1) {
           val = isArray(val) ? [val] : val;
         }
-        if (options.comma && isArray(val) && val.length > options.arrayLimit) {
-          if (options.throwOnLimitExceeded) {
-            throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
-          }
-          val = utils.combine([], val, options.arrayLimit, options.plainObjects);
-        }
         if (key !== null) {
           var existing = has.call(obj, key);
-          if (existing && (options.duplicates === "combine" || part.indexOf("[]=") > -1)) {
+          if (existing && options.duplicates === "combine") {
             obj[key] = utils.combine(
               obj[key],
               val,
@@ -16825,17 +16798,11 @@ var require_parse = __commonJS({
           var cleanRoot = root.charAt(0) === "[" && root.charAt(root.length - 1) === "]" ? root.slice(1, -1) : root;
           var decodedRoot = options.decodeDotInKeys ? cleanRoot.replace(/%2E/g, ".") : cleanRoot;
           var index = parseInt(decodedRoot, 10);
-          var isValidArrayIndex = !isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && options.parseArrays;
           if (!options.parseArrays && decodedRoot === "") {
             obj = { 0: leaf };
-          } else if (isValidArrayIndex && index < options.arrayLimit) {
+          } else if (!isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && (options.parseArrays && index <= options.arrayLimit)) {
             obj = [];
             obj[index] = leaf;
-          } else if (isValidArrayIndex && options.throwOnLimitExceeded) {
-            throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
-          } else if (isValidArrayIndex) {
-            obj[index] = leaf;
-            utils.markOverflow(obj, index);
           } else if (decodedRoot !== "__proto__") {
             obj[decodedRoot] = leaf;
           }
@@ -16865,7 +16832,7 @@ var require_parse = __commonJS({
             return;
           }
         }
-        keys[keys.length] = parent;
+        keys.push(parent);
       }
       var i = 0;
       while ((segment = child.exec(key)) !== null && i < options.depth) {
@@ -16876,13 +16843,13 @@ var require_parse = __commonJS({
             return;
           }
         }
-        keys[keys.length] = segment[1];
+        keys.push(segment[1]);
       }
       if (segment) {
         if (options.strictDepth === true) {
           throw new RangeError("Input depth exceeded depth option of " + options.depth + " and strictDepth is true");
         }
-        keys[keys.length] = "[" + key.slice(segment.index) + "]";
+        keys.push("[" + key.slice(segment.index) + "]");
       }
       return keys;
     };
@@ -16942,7 +16909,6 @@ var require_parse = __commonJS({
         parseArrays: opts.parseArrays !== false,
         plainObjects: typeof opts.plainObjects === "boolean" ? opts.plainObjects : defaults.plainObjects,
         strictDepth: typeof opts.strictDepth === "boolean" ? !!opts.strictDepth : defaults.strictDepth,
-        strictMerge: typeof opts.strictMerge === "boolean" ? !!opts.strictMerge : defaults.strictMerge,
         strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling,
         throwOnLimitExceeded: typeof opts.throwOnLimitExceeded === "boolean" ? opts.throwOnLimitExceeded : false
       };
@@ -16968,9 +16934,9 @@ var require_parse = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/index.js
+// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/index.js
 var require_lib2 = __commonJS({
-  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/index.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/index.js"(exports, module) {
     "use strict";
     var stringify3 = require_stringify();
     var parse3 = require_parse();
@@ -18402,10 +18368,10 @@ var require_view = __commonJS({
     var debug = require_src()("express:view");
     var path3 = __require("path");
     var fs3 = __require("fs");
-    var dirname6 = path3.dirname;
+    var dirname7 = path3.dirname;
     var basename3 = path3.basename;
     var extname2 = path3.extname;
-    var join22 = path3.join;
+    var join24 = path3.join;
     var resolve4 = path3.resolve;
     module.exports = View;
     function View(name, options) {
@@ -18441,7 +18407,7 @@ var require_view = __commonJS({
       for (var i = 0; i < roots.length && !path4; i++) {
         var root = roots[i];
         var loc = resolve4(root, name);
-        var dir = dirname6(loc);
+        var dir = dirname7(loc);
         var file = basename3(loc);
         path4 = this.resolve(dir, file);
       }
@@ -18453,12 +18419,12 @@ var require_view = __commonJS({
     };
     View.prototype.resolve = function resolve5(dir, file) {
       var ext = this.ext;
-      var path4 = join22(dir, file);
+      var path4 = join24(dir, file);
       var stat2 = tryStat(path4);
       if (stat2 && stat2.isFile()) {
         return path4;
       }
-      path4 = join22(dir, basename3(file, ext), "index" + ext);
+      path4 = join24(dir, basename3(file, ext), "index" + ext);
       stat2 = tryStat(path4);
       if (stat2 && stat2.isFile()) {
         return path4;
@@ -19091,7 +19057,7 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util = __require("util");
     var extname2 = path3.extname;
-    var join22 = path3.join;
+    var join24 = path3.join;
     var normalize = path3.normalize;
     var resolve4 = path3.resolve;
     var sep = path3.sep;
@@ -19310,7 +19276,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path4.split(sep);
-        path4 = normalize(join22(root, path4));
+        path4 = normalize(join24(root, path4));
       } else {
         if (UP_PATH_REGEXP.test(path4)) {
           debug('malicious path "%s"', path4);
@@ -19445,7 +19411,7 @@ var require_send = __commonJS({
           if (err) return self.onStatError(err);
           return self.error(404);
         }
-        var p = join22(path4, self._index[i]);
+        var p = join24(path4, self._index[i]);
         debug('stat "%s"', p);
         fs3.stat(p, function(err2, stat2) {
           if (err2) return next(err2);
@@ -20798,7 +20764,7 @@ var require_application = __commonJS({
     };
     app2.del = deprecate.function(app2.delete, "app.del: Use app.delete instead");
     app2.render = function render(name, options, callback) {
-      var cache2 = this.cache;
+      var cache = this.cache;
       var done = callback;
       var engines = this.engines;
       var opts = options;
@@ -20817,7 +20783,7 @@ var require_application = __commonJS({
         renderOptions.cache = this.enabled("view cache");
       }
       if (renderOptions.cache) {
-        view = cache2[name];
+        view = cache[name];
       }
       if (!view) {
         var View2 = this.get("view");
@@ -20833,7 +20799,7 @@ var require_application = __commonJS({
           return done(err);
         }
         if (renderOptions.cache) {
-          cache2[name] = view;
+          cache[name] = view;
         }
       }
       tryRender(view, renderOptions, done);
@@ -33490,8 +33456,8 @@ var require_dist = __commonJS({
 var import_express29 = __toESM(require_express2(), 1);
 import { fileURLToPath as fileURLToPath4 } from "url";
 import { createServer } from "http";
-import { join as join20 } from "path";
-import { existsSync as existsSync15, writeFileSync as writeFileSync3, unlinkSync, readFileSync as readFileSync9 } from "fs";
+import { join as join22 } from "path";
+import { existsSync as existsSync17, writeFileSync as writeFileSync3, unlinkSync, readFileSync as readFileSync11 } from "fs";
 
 // packages/core/dist/server/paths.js
 import { fileURLToPath } from "url";
@@ -33763,8 +33729,9 @@ function createPortraitRouter() {
 var import_express3 = __toESM(require_express2(), 1);
 
 // packages/core/dist/server/pennyfarthing.js
-import { existsSync as existsSync3, readFileSync as readFileSync2, watch } from "fs";
-import { join as join3, dirname as dirname3, basename } from "path";
+var import_yaml2 = __toESM(require_dist(), 1);
+import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync as readdirSync2, statSync as statSync2, watch } from "fs";
+import { join as join3, dirname as dirname3 } from "path";
 import { fileURLToPath as fileURLToPath3 } from "url";
 
 // packages/core/dist/shared/portrait-resolver.js
@@ -33810,59 +33777,20 @@ function resolvePennyfarthingDist2() {
   }
   return null;
 }
+function getPortraitPaths2(distPath) {
+  const normalizedPath = distPath.replace(/\/+$/, "");
+  return {
+    portraitsDir: join2(normalizedPath, "personas", "portraits"),
+    themesDir: join2(normalizedPath, "personas"),
+    agentsDir: join2(normalizedPath, "agents")
+  };
+}
 
-// packages/core/dist/shared/pf-cli.js
-import { execFileSync } from "child_process";
-function resolvePfBinary() {
-  if (process.env.PF_BIN)
-    return process.env.PF_BIN;
-  return "pf";
-}
-function callPf(args, projectDir) {
-  try {
-    const pfBin = resolvePfBinary();
-    const output = execFileSync(pfBin, args, {
-      cwd: projectDir || process.cwd(),
-      encoding: "utf8",
-      timeout: 15e3
-    });
-    return { success: true, data: JSON.parse(output) };
-  } catch (err) {
-    return { success: false, error: String(err) };
-  }
-}
-var DEFAULT_TTL = 3e4;
-var PfCache = class {
-  store = /* @__PURE__ */ new Map();
-  ttl;
-  constructor(ttl = DEFAULT_TTL) {
-    this.ttl = ttl;
-  }
-  get(key) {
-    const entry = this.store.get(key);
-    if (!entry)
-      return void 0;
-    if (Date.now() - entry.timestamp > this.ttl) {
-      this.store.delete(key);
-      return void 0;
-    }
-    return entry.data;
-  }
-  set(key, data) {
-    this.store.set(key, { data, timestamp: Date.now() });
-  }
-  invalidate(pattern) {
-    if (!pattern) {
-      this.store.clear();
-      return;
-    }
-    for (const key of this.store.keys()) {
-      if (key.startsWith(pattern)) {
-        this.store.delete(key);
-      }
-    }
-  }
-};
+// packages/core/dist/server/pennyfarthing.js
+var electronResourcesPath = process.resourcesPath;
+var __filename3 = fileURLToPath3(import.meta.url);
+var __dirname3 = dirname3(__filename3);
+var PACKAGE_ROOT = join3(__dirname3, "..", "..", "..");
 function toSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -33872,13 +33800,6 @@ function oceanSuffix(ocean) {
 function generateSlug(shortName, ocean) {
   return `${toSlug(shortName)}-${oceanSuffix(ocean)}`;
 }
-
-// packages/core/dist/server/pennyfarthing.js
-var electronResourcesPath = process.resourcesPath;
-var __filename3 = fileURLToPath3(import.meta.url);
-var __dirname3 = dirname3(__filename3);
-var PACKAGE_ROOT = join3(__dirname3, "..", "..", "..");
-var cache = new PfCache(3e4);
 function detectPennyfarthingProject(projectDir) {
   if (!projectDir)
     return false;
@@ -33907,44 +33828,70 @@ function detectPennyfarthingProject(projectDir) {
   return false;
 }
 function loadThemeConfig(projectDir) {
-  const cached = cache.get("themeConfig");
-  if (cached)
-    return cached;
   const configPath = join3(projectDir, ".pennyfarthing", "config.local.yaml");
+  if (!existsSync3(configPath)) {
+    return null;
+  }
   try {
     const content = readFileSync2(configPath, "utf-8");
-    const match = content.match(/^theme:\s*(.+)$/m);
-    if (!match)
+    const config = (0, import_yaml2.parse)(content);
+    if (!config || config.theme === void 0 || config.theme === null) {
       return null;
-    const theme = match[1].trim().replace(/^['"]|['"]$/g, "");
-    const config = { theme };
-    cache.set("themeConfig", config);
-    return config;
+    }
+    return { theme: String(config.theme) };
   } catch {
     return null;
   }
 }
 function loadThemeYaml(themePath) {
-  const themeName = basename(themePath, ".yaml");
-  const r = callPf(["theme", "show", themeName, "--json"]);
-  if (!r.success || !r.data?.agents)
+  if (!existsSync3(themePath)) {
     return null;
-  return r.data.agents;
+  }
+  try {
+    const content = readFileSync2(themePath, "utf-8");
+    const theme = (0, import_yaml2.parse)(content);
+    if (!theme || !theme.agents) {
+      return null;
+    }
+    return theme.agents;
+  } catch {
+    return null;
+  }
 }
 function getCurrentAgent(projectDir, sessionId) {
+  const agentsDir = join3(projectDir, ".session", "agents");
+  if (!existsSync3(agentsDir)) {
+    return null;
+  }
   if (sessionId) {
-    const sessionFile = join3(projectDir, ".session", "agents", sessionId);
+    const sessionFile = join3(agentsDir, sessionId);
+    if (!existsSync3(sessionFile)) {
+      return null;
+    }
     try {
       return readFileSync2(sessionFile, "utf-8").trim();
     } catch {
       return null;
     }
   }
-  const r = callPf(["workflow", "check", "--json"], projectDir);
-  if (r.success && r.data?.phase_owner) {
-    return r.data.phase_owner;
+  try {
+    const files = readdirSync2(agentsDir);
+    if (files.length === 0)
+      return null;
+    let mostRecent = null;
+    for (const file of files) {
+      const filePath = join3(agentsDir, file);
+      const stat2 = statSync2(filePath);
+      if (!mostRecent || stat2.mtimeMs > mostRecent.mtime) {
+        mostRecent = { file, mtime: stat2.mtimeMs };
+      }
+    }
+    if (!mostRecent)
+      return null;
+    return readFileSync2(join3(agentsDir, mostRecent.file), "utf-8").trim();
+  } catch {
+    return null;
   }
-  return null;
 }
 function computeDisplayNames(agents) {
   const displayNames = /* @__PURE__ */ new Map();
@@ -34028,16 +33975,28 @@ function getCurrentPersona(projectDir, sessionId) {
   const config = loadThemeConfig(projectDir);
   if (!config)
     return null;
-  const cacheKey = `theme:${config.theme}`;
-  let themeData = cache.get(cacheKey);
-  if (!themeData) {
-    const r = callPf(["theme", "show", config.theme, "--json"]);
-    if (!r.success || !r.data?.agents)
-      return null;
-    themeData = r.data;
-    cache.set(cacheKey, themeData);
+  const themeFile = `${config.theme}.yaml`;
+  let themePath = null;
+  if (electronResourcesPath) {
+    const bundledPath = join3(electronResourcesPath, "pennyfarthing-dist", "personas", "themes", themeFile);
+    if (existsSync3(bundledPath))
+      themePath = bundledPath;
   }
-  const agents = themeData.agents;
+  if (!themePath) {
+    const consumerPath = join3(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
+    if (existsSync3(consumerPath))
+      themePath = consumerPath;
+  }
+  if (!themePath) {
+    const devPath = join3(PACKAGE_ROOT, "pennyfarthing-dist", "personas", "themes", themeFile);
+    if (existsSync3(devPath))
+      themePath = devPath;
+  }
+  if (!themePath)
+    return null;
+  const agents = loadThemeYaml(themePath);
+  if (!agents)
+    return null;
   let agentRole = getCurrentAgent(projectDir, sessionId);
   if (!agentRole) {
     if (agents["orchestrator"]) {
@@ -34052,49 +34011,87 @@ function getCurrentPersona(projectDir, sessionId) {
   const persona = agents[agentRole];
   if (!persona)
     return null;
-  const character = persona.character || "";
   let displayName = persona.shortName;
-  const shortName = displayName || character.split(" ")[0];
+  const shortName = displayName || persona.character.split(" ")[0];
   if (!displayName) {
     const displayNames = computeDisplayNames(agents);
-    displayName = displayNames.get(character) || character;
+    displayName = displayNames.get(persona.character) || persona.character;
   }
-  const ocean = persona.ocean;
-  const slug = ocean ? generateSlug(shortName, ocean) : agentRole;
+  const slug = persona.ocean ? generateSlug(shortName, persona.ocean) : agentRole;
   const helper = persona.helper;
   const catchphrases = persona.catchphrases;
   const selectedQuote = selectCatchphrase(catchphrases, persona.quote);
   return {
-    character,
+    character: persona.character,
     displayName,
     role: agentRole,
-    roleDescription: persona.role || "",
-    style: persona.style || "",
+    roleDescription: persona.role,
+    style: persona.style,
     theme: config.theme,
     slug,
     quote: selectedQuote,
     helper: helper || void 0,
-    ocean
+    ocean: persona.ocean
   };
 }
 function getFullPersonaDetails(projectDir, sessionId) {
   if (!detectPennyfarthingProject(projectDir))
     return null;
+  const config = loadThemeConfig(projectDir);
+  if (!config)
+    return null;
+  const themeFile = `${config.theme}.yaml`;
+  let themePath = null;
+  if (electronResourcesPath) {
+    const bundledPath = join3(electronResourcesPath, "pennyfarthing-dist", "personas", "themes", themeFile);
+    if (existsSync3(bundledPath))
+      themePath = bundledPath;
+  }
+  if (!themePath) {
+    const consumerPath = join3(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
+    if (existsSync3(consumerPath))
+      themePath = consumerPath;
+  }
+  if (!themePath) {
+    const devPath = join3(PACKAGE_ROOT, "pennyfarthing-dist", "personas", "themes", themeFile);
+    if (existsSync3(devPath))
+      themePath = devPath;
+  }
+  if (!themePath)
+    return null;
+  let themeData;
+  try {
+    const content = readFileSync2(themePath, "utf-8");
+    themeData = (0, import_yaml2.parse)(content);
+  } catch {
+    return null;
+  }
+  const agents = themeData.agents;
+  if (!agents)
+    return null;
+  let agentRole = getCurrentAgent(projectDir, sessionId);
+  if (!agentRole) {
+    if (agents["orchestrator"])
+      agentRole = "orchestrator";
+    else {
+      const availableRoles = Object.keys(agents);
+      if (availableRoles.length === 0)
+        return null;
+      agentRole = availableRoles[0];
+    }
+  }
+  const rawPersona = agents[agentRole];
+  if (!rawPersona)
+    return null;
   const basicPersona = getCurrentPersona(projectDir, sessionId);
   if (!basicPersona)
     return null;
-  const r = callPf(["theme", "show", basicPersona.theme, "--json"]);
-  if (!r.success || !r.data?.agents)
-    return basicPersona;
-  const rawPersona = r.data.agents[basicPersona.role];
-  if (!rawPersona)
-    return basicPersona;
   return {
     ...basicPersona,
     voice: rawPersona.voice,
     quirks: rawPersona.quirks,
     background: rawPersona.role,
-    roleMapping: `${basicPersona.role.toUpperCase()} \u2192 ${basicPersona.character}`,
+    roleMapping: `${agentRole.toUpperCase()} \u2192 ${basicPersona.character}`,
     expertise: rawPersona.expertise,
     catchphrases: rawPersona.catchphrases,
     visual: rawPersona.visual
@@ -34110,7 +34107,6 @@ function watchAgentChanges(projectDir, sessionId, callback) {
   if (sessionId) {
     const sessionFile = join3(agentsDir, sessionId);
     watcher = watch(sessionFile, () => {
-      cache.invalidate();
       try {
         const agentRole = readFileSync2(sessionFile, "utf-8").trim();
         callback(agentRole);
@@ -34119,7 +34115,6 @@ function watchAgentChanges(projectDir, sessionId, callback) {
     });
   } else {
     watcher = watch(agentsDir, { recursive: true }, () => {
-      cache.invalidate();
       const agentRole = getCurrentAgent(projectDir);
       if (agentRole) {
         callback(agentRole);
@@ -34179,7 +34174,7 @@ function createPersonaRouter(getProjectDir3) {
 
 // packages/core/dist/server/api/git.js
 var import_express4 = __toESM(require_express2(), 1);
-var import_yaml2 = __toESM(require_dist(), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
 import { exec, execSync } from "child_process";
 import { promisify } from "util";
 import { existsSync as existsSync4, readFileSync as readFileSync3 } from "fs";
@@ -34197,7 +34192,7 @@ function getReposFromConfig(projectDir) {
   }
   try {
     const configContent = readFileSync3(configPath, "utf-8");
-    const config = (0, import_yaml2.parse)(configContent);
+    const config = (0, import_yaml3.parse)(configContent);
     if (!config?.repos || typeof config.repos !== "object") {
       const dirName = projectDir.split("/").pop() || "project";
       return [{ name: dirName, path: "." }];
@@ -34854,8 +34849,518 @@ function createOTLPRouter() {
 var import_express6 = __toESM(require_express2(), 1);
 
 // packages/core/dist/server/story-parser.js
-function emptyStoryInfo() {
-  return {
+var import_yaml4 = __toESM(require_dist(), 1);
+import { existsSync as existsSync5, readFileSync as readFileSync4, readdirSync as readdirSync3, statSync as statSync3 } from "fs";
+import { join as join5 } from "path";
+var JIRA_BASE_URL = "https://1898andco.atlassian.net/browse";
+function generateJiraUrl(jiraKey) {
+  if (!jiraKey || !jiraKey.startsWith("MSSCI-")) {
+    return null;
+  }
+  return `${JIRA_BASE_URL}/${jiraKey}`;
+}
+function parseSessionFile(content, projectDir) {
+  const result = {};
+  const listStoryMatch = content.match(/^-\s*Story:\s*(.+)$/m);
+  if (listStoryMatch) {
+    result.id = listStoryMatch[1].trim();
+  }
+  const listTitleMatch = content.match(/^-\s*Title:\s*(.+)$/m);
+  if (listTitleMatch) {
+    result.title = listTitleMatch[1].trim();
+  }
+  if (!result.id) {
+    const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) || content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m) || content.match(/^#\s+([\w-]+)\s+Session$/m);
+    if (headerMatch) {
+      result.id = headerMatch[1];
+      if (!result.title && headerMatch[2]) {
+        result.title = headerMatch[2].trim();
+      }
+    }
+  }
+  if (!result.id) {
+    const storyFieldMatch = content.match(/\*\*Story:\*\*\s*([\w-]+)/);
+    if (storyFieldMatch) {
+      result.id = storyFieldMatch[1].trim();
+    }
+  }
+  if (!result.title) {
+    const boldTitleMatch = content.match(/\*\*Title:\*\*\s*(.+)$/m);
+    if (boldTitleMatch) {
+      result.title = boldTitleMatch[1].trim();
+    }
+  }
+  if (!result.id) {
+    const tableStoryMatch = content.match(/\|\s*\*?\*?Story\*?\*?\s*\|\s*([^|]+)/i);
+    if (tableStoryMatch) {
+      result.id = tableStoryMatch[1].trim();
+    }
+  }
+  if (!result.title) {
+    const tableTitleMatch = content.match(/\|\s*\*?\*?Title\*?\*?\s*\|\s*([^|]+)/i);
+    if (tableTitleMatch) {
+      result.title = tableTitleMatch[1].trim();
+    }
+  }
+  const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i) || content.match(/\|\s*\*?\*?Phase\*?\*?\s*\|\s*(\w+)/i) || content.match(/^-\s*Phase:\s*(\w+)/m);
+  if (phaseMatch) {
+    result.phase = phaseMatch[1].toLowerCase();
+  }
+  const statusMatch = content.match(/##\s*Status:\s*(\S+)/i);
+  if (statusMatch) {
+    result.status = statusMatch[1].toLowerCase();
+  }
+  const pointsMatch = content.match(/\*\*Points:\*\*\s*(\d+)/);
+  if (pointsMatch) {
+    result.points = parseInt(pointsMatch[1], 10);
+  }
+  const currentAgentMatch = content.match(/\|\s*Current Agent\s*\|\s*([^|]+)/i);
+  if (currentAgentMatch) {
+    result.nextAgent = currentAgentMatch[1].trim();
+  } else {
+    const handoffMatches = content.match(/\*\*Handoff:\*\*\s*(.+)$/gm);
+    if (handoffMatches && handoffMatches.length > 0) {
+      const lastHandoff = handoffMatches[handoffMatches.length - 1];
+      const handoffText = lastHandoff.replace(/\*\*Handoff:\*\*\s*/, "").trim();
+      result.nextAgent = handoffText;
+    }
+  }
+  const branchMatch = content.match(/^##\s*Branch\s*\n`([^`]+)`/m) || content.match(/\*\*Feature Branch:\*\*\s*`?([^`\n]+)`?/) || content.match(/\*\*Branch:\*\*\s*`?([^`\n]+)`?/) || content.match(/^-\s*Branch:\s*(.+)$/m);
+  if (branchMatch) {
+    result.branch = branchMatch[1].trim();
+  }
+  const prMatch = content.match(/\*\*PR:\*\*\s*#?(\d+)/);
+  if (prMatch) {
+    result.pr = prMatch[1];
+  }
+  result.workflow = parseWorkflowProgress(content, projectDir);
+  if (result.workflow && result.workflow.length > 0) {
+    const allStepped = result.workflow.every((p) => p.name.startsWith("step-"));
+    result.workflowType = allStepped ? "stepped" : "phased";
+  }
+  result.criteria = parseAcceptanceCriteria(content);
+  return result;
+}
+function parseAcceptanceCriteria(content) {
+  const criteriaSection = content.match(/## Acceptance Criteria\n([\s\S]*?)(?=\n##|\n$|$)/);
+  if (!criteriaSection) {
+    return null;
+  }
+  const criteria = [];
+  const lines = criteriaSection[1].split("\n");
+  for (const line of lines) {
+    const match = line.match(/^- \[([ xX])\] (.+)$/);
+    if (match) {
+      const completed = match[1].toLowerCase() === "x";
+      const text = match[2].trim();
+      criteria.push({ text, completed });
+    }
+  }
+  return criteria.length > 0 ? criteria : null;
+}
+function parseWorkflowProgress(content, projectDir) {
+  const workflowMatch = content.match(/\*\*Workflow:\*\*\s*([\w-]+)/i) || content.match(/^-\s*Workflow:\s*([\w-]+)/m);
+  const workflowName = workflowMatch?.[1]?.toLowerCase();
+  const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i) || content.match(/^-\s*Phase:\s*(\w+)/m);
+  const currentPhase = phaseMatch?.[1]?.toLowerCase();
+  if (projectDir && workflowName) {
+    const phases = getWorkflowPhases(workflowName, projectDir);
+    if (phases) {
+      const currentStepMatch = content.match(/\*\*Current Step:\*\*\s*(\d+)/i) || content.match(/^-\s*Current Step:\s*(\d+)/m);
+      if (currentStepMatch) {
+        const currentStep = parseInt(currentStepMatch[1], 10);
+        const completedMatch = content.match(/\*\*Steps Completed:\*\*\s*\[([^\]]*)\]/i) || content.match(/^-\s*Steps Completed:\s*\[([^\]]*)\]/m);
+        const completedSteps = /* @__PURE__ */ new Set();
+        if (completedMatch && completedMatch[1].trim()) {
+          completedMatch[1].split(",").forEach((s) => {
+            const n = parseInt(s.trim(), 10);
+            if (!isNaN(n))
+              completedSteps.add(n);
+          });
+        }
+        return phases.map((phase, index) => {
+          const stepNum = index + 1;
+          let status;
+          if (completedSteps.has(stepNum)) {
+            status = "done";
+          } else if (stepNum === currentStep) {
+            status = "current";
+          } else if (stepNum < currentStep) {
+            status = "done";
+          } else {
+            status = "pending";
+          }
+          return { ...phase, status };
+        });
+      }
+      return buildWorkflowWithStatus(phases, content, currentPhase);
+    }
+  }
+  const workflowSection = content.match(/## Workflow Progress\n([\s\S]*?)(?=\n##|\n$|$)/);
+  if (!workflowSection) {
+    return null;
+  }
+  const checkboxLines = workflowSection[1].match(/- \[\s*[xX\s]\s*\]\s*\w+\s*[:\-]/gi);
+  if (!checkboxLines || checkboxLines.length === 0) {
+    return null;
+  }
+  const agentOrder = ["sm", "tea", "dev", "reviewer"];
+  const agentLabels = {
+    sm: "SM",
+    tea: "TEA",
+    dev: "Dev",
+    reviewer: "Reviewer"
+  };
+  const agentStatus = {};
+  const allLines = workflowSection[1].split("\n");
+  for (const line of allLines) {
+    const match = line.match(/- \[\s*([xX\s])\s*\]\s*(\w+)\s*[:\-]/i);
+    if (match) {
+      const isDone = match[1].toLowerCase() === "x";
+      const agent = match[2].toLowerCase();
+      if (isDone) {
+        agentStatus[agent] = "done";
+      } else if (!agentStatus[agent]) {
+        agentStatus[agent] = "pending";
+      }
+    }
+  }
+  const workflow = [];
+  let foundCurrent = false;
+  for (const agent of agentOrder) {
+    let status;
+    if (agentStatus[agent] === "done") {
+      status = "done";
+    } else if (!foundCurrent) {
+      status = "current";
+      foundCurrent = true;
+    } else {
+      status = "pending";
+    }
+    workflow.push({
+      name: agent,
+      // Use agent as name for backward compat
+      agent,
+      label: agentLabels[agent],
+      status
+    });
+  }
+  return workflow;
+}
+function buildWorkflowWithStatus(phases, content, currentPhase) {
+  const completedPhases = /* @__PURE__ */ new Set();
+  const historyMatch = content.match(/### Phase History\n[\s\S]*?\|[\s\S]*?\|[\s\S]*?\|([\s\S]*?)(?=\n##|\n$|$)/);
+  if (historyMatch) {
+    const rows = historyMatch[1].split("\n").filter((line) => line.includes("|"));
+    for (const row of rows) {
+      const cols = row.split("|").map((c) => c.trim());
+      if (cols.length >= 4) {
+        const phaseName = cols[1]?.toLowerCase();
+        const ended = cols[3];
+        if (phaseName && ended && ended !== "-" && ended !== "") {
+          completedPhases.add(phaseName);
+        }
+      }
+    }
+  }
+  let currentPhaseIndex = -1;
+  if (currentPhase) {
+    currentPhaseIndex = phases.findIndex((p) => p.name.toLowerCase() === currentPhase || p.agent.toLowerCase() === currentPhase);
+  }
+  return phases.map((phase, index) => {
+    let status;
+    if (completedPhases.has(phase.name.toLowerCase())) {
+      status = "done";
+    } else if (index === currentPhaseIndex) {
+      status = "current";
+    } else if (currentPhaseIndex >= 0 && index < currentPhaseIndex) {
+      status = "done";
+    } else {
+      status = "pending";
+    }
+    return {
+      ...phase,
+      status
+    };
+  });
+}
+function parseSprintYaml(content) {
+  try {
+    const data = (0, import_yaml4.parse)(content);
+    let sprintNumber = 0;
+    if (data?.sprint?.number) {
+      sprintNumber = data.sprint.number;
+    } else if (data?.sprint?.name) {
+      const nameMatch = data.sprint.name.match(/(\d+)/);
+      sprintNumber = nameMatch ? parseInt(nameMatch[1], 10) : 0;
+    }
+    if (!data?.sprint) {
+      return null;
+    }
+    let donePoints = 0;
+    let remainingPoints = 0;
+    let inProgressPoints = 0;
+    if (data?.epics && Array.isArray(data.epics)) {
+      for (const epic of data.epics) {
+        if (epic?.stories && Array.isArray(epic.stories)) {
+          for (const story of epic.stories) {
+            const points = story?.points && typeof story.points === "number" ? story.points : 0;
+            const status = story?.status || "backlog";
+            const isDone = status === "done" || status === "completed";
+            const isTodo = status === "backlog" || status === "ready" || status === null;
+            if (isDone) {
+              donePoints += points;
+            } else if (status === "in_progress") {
+              inProgressPoints += points;
+            } else if (isTodo) {
+              remainingPoints += points;
+            }
+          }
+        }
+      }
+    }
+    return {
+      number: sprintNumber,
+      done: donePoints,
+      remaining: remainingPoints,
+      inProgress: inProgressPoints,
+      endDate: data.sprint.end_date || null
+    };
+  } catch {
+  }
+  return null;
+}
+function getSprintStories(sprintContent) {
+  try {
+    const data = (0, import_yaml4.parse)(sprintContent);
+    if (!data?.epics || !Array.isArray(data.epics)) {
+      return [];
+    }
+    const stories = [];
+    for (const epic of data.epics) {
+      if (epic?.stories && Array.isArray(epic.stories)) {
+        for (const story of epic.stories) {
+          const storyId = story?.id || "";
+          const jiraKey = storyId.startsWith("MSSCI-") ? storyId : null;
+          stories.push({
+            id: storyId,
+            title: story?.title || "",
+            points: typeof story?.points === "number" ? story.points : 0,
+            status: normalizeStoryStatus(story?.status),
+            jiraKey,
+            jiraUrl: generateJiraUrl(jiraKey)
+          });
+        }
+      }
+    }
+    return stories;
+  } catch {
+    return null;
+  }
+}
+function getEpicContext(sprintContent, storyId) {
+  try {
+    const data = (0, import_yaml4.parse)(sprintContent);
+    if (!data?.epics || !Array.isArray(data.epics)) {
+      return null;
+    }
+    for (const epic of data.epics) {
+      if (!epic?.stories || !Array.isArray(epic.stories)) {
+        continue;
+      }
+      const storyInEpic = epic.stories.find((s) => s?.id === storyId);
+      if (storyInEpic) {
+        const epicJiraKey = epic?.jira || null;
+        const stories = epic.stories.map((s) => {
+          const sId = s?.id || "";
+          const sJiraKey = sId.startsWith("MSSCI-") ? sId : null;
+          return {
+            id: sId,
+            title: s?.title || "",
+            points: typeof s?.points === "number" ? s.points : 0,
+            status: normalizeStoryStatus(s?.status),
+            jiraKey: sJiraKey,
+            jiraUrl: generateJiraUrl(sJiraKey)
+          };
+        });
+        return {
+          id: epic?.id || "",
+          title: epic?.title || "",
+          jiraKey: epicJiraKey,
+          jiraUrl: generateJiraUrl(epicJiraKey),
+          stories
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+function normalizeStoryStatus(status) {
+  if (!status)
+    return "backlog";
+  const normalized = status.toLowerCase();
+  switch (normalized) {
+    case "done":
+    case "completed":
+      return "done";
+    case "in_progress":
+    case "in-progress":
+    case "active":
+      return "in_progress";
+    case "cancelled":
+    case "canceled":
+      return "cancelled";
+    default:
+      return "backlog";
+  }
+}
+function getWorkflowPhases(workflowName, projectDir) {
+  try {
+    const workflowDirs = [
+      // 1. Runtime via symlinks: .pennyfarthing/workflows/ (orchestrator pattern)
+      join5(projectDir, ".pennyfarthing", "workflows"),
+      // 2. Legacy: .claude/workflows/
+      join5(projectDir, ".claude", "workflows"),
+      // 3. Monorepo/dev: pennyfarthing-dist/workflows/
+      join5(projectDir, "pennyfarthing-dist", "workflows")
+    ];
+    const searchPaths = [];
+    for (const dir of workflowDirs) {
+      searchPaths.push(join5(dir, `${workflowName}.yaml`));
+      searchPaths.push(join5(dir, workflowName, "workflow.yaml"));
+    }
+    let workflowPath = null;
+    for (const path3 of searchPaths) {
+      if (existsSync5(path3)) {
+        workflowPath = path3;
+        break;
+      }
+    }
+    if (!workflowPath) {
+      return null;
+    }
+    const content = readFileSync4(workflowPath, "utf-8");
+    const data = (0, import_yaml4.parse)(content);
+    const phases = data?.workflow?.phases || data?.phases;
+    if (phases && Array.isArray(phases)) {
+      return phases.map((phase) => ({
+        name: phase.name,
+        agent: phase.agent,
+        label: phase.label || phase.name
+      }));
+    }
+    const workflowType = data?.workflow?.type || data?.type;
+    if (workflowType === "stepped") {
+      const stepsDir = join5(workflowPath, "..", "steps");
+      if (existsSync5(stepsDir)) {
+        const agent = data?.workflow?.agent || data?.agent || "unknown";
+        const stepFiles = readdirSync3(stepsDir).filter((f) => f.match(/^step-\d+.*\.md$/)).sort();
+        if (stepFiles.length > 0) {
+          return stepFiles.map((file) => {
+            const match = file.match(/^step-(\d+)-(.+)\.md$/);
+            const stepNum = match ? match[1] : "?";
+            const _stepName = match ? match[2].replace(/-/g, " ") : file;
+            return {
+              name: `step-${stepNum}`,
+              agent,
+              label: `Step ${parseInt(stepNum, 10)}`
+            };
+          });
+        }
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+function getAvailableWorkflows(projectDir) {
+  const workflows = [];
+  const seen = /* @__PURE__ */ new Set();
+  const workflowDirs = [
+    join5(projectDir, ".pennyfarthing", "workflows"),
+    join5(projectDir, ".claude", "workflows"),
+    join5(projectDir, "pennyfarthing-dist", "workflows")
+  ];
+  for (const dir of workflowDirs) {
+    if (!existsSync5(dir))
+      continue;
+    let entries;
+    try {
+      entries = readdirSync3(dir);
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const entryPath = join5(dir, entry);
+      try {
+        if (entry.endsWith(".yaml") || entry.endsWith(".yml")) {
+          const content = readFileSync4(entryPath, "utf-8");
+          const data = (0, import_yaml4.parse)(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name))
+            continue;
+          seen.add(wf.name);
+          const type = wf.type === "stepped" ? "stepped" : "phased";
+          const result = {
+            name: wf.name,
+            type,
+            description: wf.description ?? ""
+          };
+          if (wf.triggers) {
+            const triggers = {};
+            if (wf.triggers.types)
+              triggers.types = wf.triggers.types;
+            if (wf.triggers.tags)
+              triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points)
+              triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== void 0)
+              triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        } else if (statSync3(entryPath).isDirectory()) {
+          const subYaml = join5(entryPath, "workflow.yaml");
+          if (!existsSync5(subYaml))
+            continue;
+          const content = readFileSync4(subYaml, "utf-8");
+          const data = (0, import_yaml4.parse)(content);
+          const wf = data?.workflow;
+          if (!wf?.name || seen.has(wf.name))
+            continue;
+          seen.add(wf.name);
+          const type = wf.type === "stepped" ? "stepped" : "phased";
+          const result = {
+            name: wf.name,
+            type,
+            description: wf.description ?? ""
+          };
+          if (wf.triggers) {
+            const triggers = {};
+            if (wf.triggers.types)
+              triggers.types = wf.triggers.types;
+            if (wf.triggers.tags)
+              triggers.tags = wf.triggers.tags;
+            if (wf.triggers.points)
+              triggers.points = wf.triggers.points;
+            if (wf.triggers.default !== void 0)
+              triggers.default = wf.triggers.default;
+            result.triggers = triggers;
+          }
+          workflows.push(result);
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  return workflows;
+}
+function getStoryInfo(projectDir) {
+  const nullResult = {
     id: null,
     title: null,
     phase: null,
@@ -34868,48 +35373,87 @@ function emptyStoryInfo() {
     branch: null,
     criteria: null,
     workflowType: null,
+    // MSSCI-12475: Expandable story section
     sprintStories: null,
     epicContext: null,
     jiraUrl: null,
+    // MSSCI-14301: Available workflows
     availableWorkflows: null
   };
-}
-function getStoryInfo(projectDir) {
-  const result = emptyStoryInfo();
-  const storyResult = callPf(["sprint", "story", "show", "--json"], projectDir);
-  if (storyResult.success && storyResult.data) {
-    const d = storyResult.data;
-    result.id = d.id ?? null;
-    result.title = d.title ?? null;
-    result.phase = d.phase ?? null;
-    result.status = d.status ?? null;
-    result.points = d.points ?? null;
-    result.pr = d.pr ?? null;
-    result.branch = d.branch ?? null;
-    result.jiraUrl = d.jiraUrl ?? null;
-    result.criteria = d.criteria ?? null;
-    result.workflow = d.workflow ?? null;
-    result.workflowType = d.workflowType ?? null;
-    result.nextAgent = d.nextAgent ?? null;
-    result.sprintStories = d.sprintStories ?? null;
-    result.epicContext = d.epicContext ?? null;
-  }
-  const sprintResult = callPf(["sprint", "info"], projectDir);
-  if (sprintResult.success && sprintResult.data) {
-    const s = sprintResult.data;
-    result.sprint = {
-      number: s.number ?? 0,
-      done: s.done ?? 0,
-      remaining: s.remaining ?? 0,
-      inProgress: s.inProgress ?? s.in_progress ?? 0,
-      endDate: s.endDate ?? s.end_date ?? null
+  try {
+    const sessionDir = join5(projectDir, ".session");
+    if (!existsSync5(sessionDir)) {
+      const sprintPath2 = join5(projectDir, "sprint", "current-sprint.yaml");
+      if (existsSync5(sprintPath2)) {
+        const sprintContent2 = readFileSync4(sprintPath2, "utf-8");
+        nullResult.sprint = parseSprintYaml(sprintContent2);
+        nullResult.sprintStories = getSprintStories(sprintContent2);
+      }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
+      return nullResult;
+    }
+    const files = readdirSync3(sessionDir).filter((f) => f.endsWith("-session.md"));
+    if (files.length === 0) {
+      const sprintPath2 = join5(projectDir, "sprint", "current-sprint.yaml");
+      if (existsSync5(sprintPath2)) {
+        const sprintContent2 = readFileSync4(sprintPath2, "utf-8");
+        nullResult.sprint = parseSprintYaml(sprintContent2);
+        nullResult.sprintStories = getSprintStories(sprintContent2);
+      }
+      nullResult.availableWorkflows = getAvailableWorkflows(projectDir);
+      return nullResult;
+    }
+    let sessionFile = files[0];
+    let latestMtime = 0;
+    for (const file of files) {
+      const filePath = join5(sessionDir, file);
+      const stat2 = statSync3(filePath);
+      if (stat2.mtimeMs > latestMtime) {
+        latestMtime = stat2.mtimeMs;
+        sessionFile = file;
+      }
+    }
+    const sessionPath = join5(sessionDir, sessionFile);
+    const sessionContent = readFileSync4(sessionPath, "utf-8");
+    const storyInfo = parseSessionFile(sessionContent, projectDir);
+    const sprintPath = join5(projectDir, "sprint", "current-sprint.yaml");
+    let sprint = null;
+    let sprintStories = null;
+    let epicContext = null;
+    let sprintContent = "";
+    if (existsSync5(sprintPath)) {
+      sprintContent = readFileSync4(sprintPath, "utf-8");
+      sprint = parseSprintYaml(sprintContent);
+      sprintStories = getSprintStories(sprintContent);
+      if (storyInfo.id) {
+        epicContext = getEpicContext(sprintContent, storyInfo.id);
+      }
+    }
+    const storyId = storyInfo.id || null;
+    const jiraKey = storyId && storyId.startsWith("MSSCI-") ? storyId : null;
+    return {
+      id: storyInfo.id || null,
+      title: storyInfo.title || null,
+      phase: storyInfo.phase || null,
+      status: storyInfo.status || null,
+      points: storyInfo.points || null,
+      sprint,
+      nextAgent: storyInfo.nextAgent || null,
+      workflow: storyInfo.workflow || null,
+      workflowType: storyInfo.workflowType || null,
+      pr: storyInfo.pr || null,
+      branch: storyInfo.branch || null,
+      criteria: storyInfo.criteria || null,
+      // MSSCI-12475: Expandable story section
+      sprintStories,
+      epicContext,
+      jiraUrl: generateJiraUrl(jiraKey),
+      // MSSCI-14301: Available workflows
+      availableWorkflows: getAvailableWorkflows(projectDir)
     };
+  } catch {
+    return nullResult;
   }
-  const wfResult = callPf(["workflow", "list", "--json"], projectDir);
-  if (wfResult.success && wfResult.data) {
-    result.availableWorkflows = wfResult.data;
-  }
-  return result;
 }
 
 // packages/core/dist/server/api/story.js
@@ -34926,7 +35470,7 @@ function createStoryRouter(getProjectDir3) {
 // packages/core/dist/server/api/hotspots.js
 var import_express7 = __toESM(require_express2(), 1);
 import { execFile } from "child_process";
-import { join as join5 } from "path";
+import { join as join6 } from "path";
 function createHotspotsRouter(getProjectDir3) {
   const router = (0, import_express7.Router)();
   router.get("/", (req, res) => {
@@ -34954,7 +35498,7 @@ function createHotspotsRouter(getProjectDir3) {
         args.push("--skip-type", String(t));
       }
     }
-    const pythonPath = join5(projectDir, "pennyfarthing", "pennyfarthing-dist");
+    const pythonPath = join6(projectDir, "pennyfarthing", "pennyfarthing-dist");
     execFile("python3", args, {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
@@ -34986,7 +35530,7 @@ function createHotspotsRouter(getProjectDir3) {
 // packages/core/dist/server/api/file-browser.js
 var import_express8 = __toESM(require_express2(), 1);
 import { spawn } from "child_process";
-import { existsSync as existsSync5, realpathSync } from "fs";
+import { existsSync as existsSync6, realpathSync } from "fs";
 import { resolve as resolve2, isAbsolute } from "path";
 
 // packages/core/dist/server/file-browser.js
@@ -35050,7 +35594,7 @@ function createFileBrowserRouter(getProjectDir3) {
       if (!validation.allowed) {
         return res.status(403).json({ success: false, error: "Path outside project directory" });
       }
-      if (!existsSync5(absolutePath)) {
+      if (!existsSync6(absolutePath)) {
         return res.status(404).json({ success: false, error: "File not found" });
       }
       const editorCandidates = ["windsurf", "code", "notepad"];
@@ -35125,31 +35669,28 @@ function initTokenStatsBroadcast() {
 // packages/core/dist/server/api/context.js
 var import_express10 = __toESM(require_express2(), 1);
 import { execSync as execSync2 } from "child_process";
-import { existsSync as existsSync6 } from "fs";
-import { join as join6 } from "path";
+import { existsSync as existsSync7 } from "fs";
+import { join as join7 } from "path";
 function getContextUsage(projectDir, sessionId) {
   const pythonPaths = [
-    join6(projectDir, "pennyfarthing-dist", "pf", "context_window.py"),
-    join6(projectDir, "pennyfarthing-dist", "src", "pf", "context_window.py"),
-    join6(projectDir, ".pennyfarthing", "pf", "context_window.py"),
-    join6(projectDir, ".pennyfarthing", "src", "pf", "context_window.py"),
-    join6(projectDir, "pennyfarthing", "pennyfarthing-dist", "pf", "context_window.py"),
-    join6(projectDir, "pennyfarthing", "pennyfarthing-dist", "src", "pf", "context_window.py")
+    join7(projectDir, "pennyfarthing-dist", "pf", "context.py"),
+    join7(projectDir, ".pennyfarthing", "pf", "context.py"),
+    join7(projectDir, "pennyfarthing", "pennyfarthing-dist", "pf", "context.py")
   ];
   const shellPaths = [
-    join6(projectDir, "pennyfarthing-dist", "scripts", "core", "check-context.sh"),
-    join6(projectDir, ".pennyfarthing", "scripts", "core", "check-context.sh")
+    join7(projectDir, "pennyfarthing-dist", "scripts", "core", "check-context.sh"),
+    join7(projectDir, ".pennyfarthing", "scripts", "core", "check-context.sh")
   ];
   const distRoot = resolvePennyfarthingDist2();
   if (distRoot) {
-    pythonPaths.push(join6(distRoot, "pf", "context_window.py"));
-    pythonPaths.push(join6(distRoot, "src", "pf", "context_window.py"));
-    shellPaths.push(join6(distRoot, "scripts", "core", "check-context.sh"));
+    pythonPaths.push(join7(distRoot, "pf", "context.py"));
+    pythonPaths.push(join7(distRoot, "src", "pf", "context.py"));
+    shellPaths.push(join7(distRoot, "scripts", "core", "check-context.sh"));
   }
   let scriptPath = null;
   let isPython = false;
   for (const path3 of pythonPaths) {
-    if (existsSync6(path3)) {
+    if (existsSync7(path3)) {
       scriptPath = path3;
       isPython = true;
       break;
@@ -35157,14 +35698,14 @@ function getContextUsage(projectDir, sessionId) {
   }
   if (!scriptPath) {
     for (const path3 of shellPaths) {
-      if (existsSync6(path3)) {
+      if (existsSync7(path3)) {
         scriptPath = path3;
         break;
       }
     }
   }
   if (!scriptPath) {
-    return { percent: null, tokens: null, status: null, error: "context_window.py not found", baseline: null, usableTokens: null, usablePercent: null, available: null };
+    return { percent: null, tokens: null, status: null, error: "context.py not found", baseline: null, usableTokens: null, usablePercent: null, available: null };
   }
   try {
     const env = {
@@ -35260,9 +35801,9 @@ function createContextRouter(getProjectDir3) {
 
 // packages/core/dist/server/api/theme-agents.js
 var import_express11 = __toESM(require_express2(), 1);
-var import_yaml3 = __toESM(require_dist(), 1);
-import { join as join7 } from "path";
-import { existsSync as existsSync7, readFileSync as readFileSync4 } from "fs";
+var import_yaml5 = __toESM(require_dist(), 1);
+import { join as join8 } from "path";
+import { existsSync as existsSync8, readFileSync as readFileSync5 } from "fs";
 function getThemeAgents(projectDir) {
   if (!detectPennyfarthingProject(projectDir)) {
     return {};
@@ -35272,7 +35813,7 @@ function getThemeAgents(projectDir) {
   if (!themeName)
     return {};
   const themeFile = `${themeName}.yaml`;
-  const themePath = join7(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
+  const themePath = join8(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
   const themeData = loadThemeYaml(themePath);
   if (!themeData)
     return {};
@@ -35302,12 +35843,12 @@ function getFullThemeData(projectDir) {
   if (!themeSlug)
     return null;
   const themeFile = `${themeSlug}.yaml`;
-  const themePath = join7(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
-  if (!existsSync7(themePath))
+  const themePath = join8(projectDir, ".pennyfarthing", "personas", "themes", themeFile);
+  if (!existsSync8(themePath))
     return null;
   try {
-    const content = readFileSync4(themePath, "utf-8");
-    const raw = (0, import_yaml3.parse)(content);
+    const content = readFileSync5(themePath, "utf-8");
+    const raw = (0, import_yaml5.parse)(content);
     if (!raw?.agents)
       return null;
     const agents = Object.entries(raw.agents).map(([role, data]) => {
@@ -35507,12 +36048,12 @@ function createEvaluationRouter() {
 
 // packages/core/dist/server/api/settings.js
 var import_express15 = __toESM(require_express2(), 1);
-var import_yaml5 = __toESM(require_dist(), 1);
+var import_yaml8 = __toESM(require_dist(), 1);
 import fs2 from "fs";
 import path2 from "path";
 
 // packages/core/dist/server/settings.js
-var import_yaml4 = __toESM(require_dist(), 1);
+var import_yaml6 = __toESM(require_dist(), 1);
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -35538,7 +36079,7 @@ function ensureSettingsDir() {
 }
 function parseSettings(yamlContent) {
   try {
-    const parsed = (0, import_yaml4.parse)(yamlContent);
+    const parsed = (0, import_yaml6.parse)(yamlContent);
     if (typeof parsed !== "object" || parsed === null) {
       return {};
     }
@@ -35602,7 +36143,7 @@ function saveProjectSettings(settings, projectDir) {
     if (fs.existsSync(settingsPath)) {
       try {
         const content = fs.readFileSync(settingsPath, "utf-8");
-        const parsed = (0, import_yaml4.parse)(content);
+        const parsed = (0, import_yaml6.parse)(content);
         if (parsed && typeof parsed === "object") {
           existing = parsed;
         }
@@ -35613,7 +36154,7 @@ function saveProjectSettings(settings, projectDir) {
     const merged = deepMergeSettings(existing, settings);
     const { theme, ...rest } = merged;
     const output = theme ? { theme, ...rest } : rest;
-    fs.writeFileSync(settingsPath, (0, import_yaml4.stringify)(output), "utf-8");
+    fs.writeFileSync(settingsPath, (0, import_yaml6.stringify)(output), "utf-8");
     currentSettings = mergeSettings(getDefaultSettings(), merged);
     notifySettingsChange(currentSettings);
     return true;
@@ -35707,14 +36248,343 @@ function saveGrants(grants2) {
 }
 
 // packages/core/dist/shared/theme-loader.js
+var import_yaml7 = __toESM(require_dist(), 1);
+import { existsSync as existsSync9, readFileSync as readFileSync6, readdirSync as readdirSync4 } from "node:fs";
+import { join as join9, basename, dirname as dirname5 } from "node:path";
+import { homedir as homedir2 } from "node:os";
+var CATEGORY_MAP = {
+  // TV Series
+  "star-trek-tos": "TV Series",
+  "star-trek-tng": "TV Series",
+  "star-trek-ds9": "TV Series",
+  "star-trek-voyager": "TV Series",
+  "breaking-bad": "TV Series",
+  "the-office": "TV Series",
+  "the-wire": "TV Series",
+  "game-of-thrones": "TV Series",
+  "ted-lasso": "TV Series",
+  "parks-and-recreation": "TV Series",
+  "friends": "TV Series",
+  "seinfeld": "TV Series",
+  "mad-men": "TV Series",
+  "the-sopranos": "TV Series",
+  "arrested-development": "TV Series",
+  "schitts-creek": "TV Series",
+  "brooklyn-nine-nine": "TV Series",
+  "firefly": "TV Series",
+  "battlestar-galactica": "TV Series",
+  "doctor-who": "TV Series",
+  "stranger-things": "TV Series",
+  "the-good-place": "TV Series",
+  "its-always-sunny": "TV Series",
+  "downton-abbey": "TV Series",
+  "the-crown": "TV Series",
+  "succession": "TV Series",
+  "the-simpsons": "TV Series",
+  "futurama": "TV Series",
+  "arcane": "TV Series",
+  "avatar-the-last-airbender": "TV Series",
+  "severance": "TV Series",
+  "the-west-wing": "TV Series",
+  "lost": "TV Series",
+  "the-x-files": "TV Series",
+  "twin-peaks": "TV Series",
+  "the-twilight-zone": "TV Series",
+  "mash": "TV Series",
+  "a-team": "TV Series",
+  // Literature
+  "alice-in-wonderland": "Literature",
+  "lord-of-the-rings": "Literature",
+  "discworld": "Literature",
+  "hitchhikers-guide": "Literature",
+  "dune": "Literature",
+  "pride-and-prejudice": "Literature",
+  "sherlock-holmes": "Literature",
+  "harry-potter": "Literature",
+  "narnia": "Literature",
+  "foundation": "Literature",
+  "wheel-of-time": "Literature",
+  "stormlight-archive": "Literature",
+  "mistborn": "Literature",
+  "good-omens": "Literature",
+  "american-gods": "Literature",
+  "the-expanse": "Literature",
+  "enders-game": "Literature",
+  "three-body-problem": "Literature",
+  "hyperion": "Literature",
+  "1984": "Literature",
+  "brave-new-world": "Literature",
+  "frankenstein": "Literature",
+  "dracula": "Literature",
+  "moby-dick": "Literature",
+  "odyssey": "Literature",
+  "iliad": "Literature",
+  "don-quixote": "Literature",
+  "count-of-monte-cristo": "Literature",
+  "les-miserables": "Literature",
+  "great-gatsby": "Literature",
+  "winnie-the-pooh": "Literature",
+  "peter-pan": "Literature",
+  "wizard-of-oz": "Literature",
+  // Film
+  "star-wars": "Film",
+  "matrix": "Film",
+  "inception": "Film",
+  "pulp-fiction": "Film",
+  "godfather": "Film",
+  "shawshank-redemption": "Film",
+  "fight-club": "Film",
+  "blade-runner": "Film",
+  "back-to-the-future": "Film",
+  "jurassic-park": "Film",
+  "indiana-jones": "Film",
+  "marvel-avengers": "Film",
+  "guardians-of-the-galaxy": "Film",
+  "pirates-of-the-caribbean": "Film",
+  "princess-bride": "Film",
+  "monty-python": "Film",
+  "ghostbusters": "Film",
+  "men-in-black": "Film",
+  "ocean-eleven": "Film",
+  "big-lebowski": "Film",
+  "grand-budapest-hotel": "Film",
+  "kill-bill": "Film",
+  "john-wick": "Film",
+  "die-hard": "Film",
+  "terminator": "Film",
+  "alien": "Film",
+  "predator": "Film",
+  "mad-max": "Film",
+  "studio-ghibli": "Film",
+  "pixar": "Film",
+  "disney-classics": "Film",
+  "interstellar": "Film",
+  "arrival": "Film",
+  "her": "Film",
+  "ex-machina": "Film",
+  // Mythology
+  "greek-mythology": "Mythology",
+  "norse-mythology": "Mythology",
+  "egyptian-mythology": "Mythology",
+  "celtic-mythology": "Mythology",
+  "japanese-mythology": "Mythology",
+  "hindu-mythology": "Mythology",
+  "arthurian-legend": "Mythology",
+  // Games
+  "zelda": "Games",
+  "mario": "Games",
+  "final-fantasy": "Games",
+  "mass-effect": "Games",
+  "bioshock": "Games",
+  "portal": "Games",
+  "half-life": "Games",
+  "halo": "Games",
+  "overwatch": "Games",
+  "world-of-warcraft": "Games",
+  "elder-scrolls": "Games",
+  "fallout": "Games",
+  "cyberpunk": "Games",
+  "witcher": "Games",
+  "red-dead-redemption": "Games",
+  "last-of-us": "Games",
+  "god-of-war": "Games",
+  "dark-souls": "Games",
+  "elden-ring": "Games",
+  "pokemon": "Games",
+  "animal-crossing": "Games",
+  "minecraft": "Games",
+  // History
+  "ancient-rome": "History",
+  "ancient-greece": "History",
+  "ancient-egypt": "History",
+  "renaissance": "History",
+  "victorian-era": "History",
+  "wild-west": "History",
+  "world-war-2": "History",
+  "cold-war": "History",
+  "founding-fathers": "History",
+  // Music
+  "classical-composers": "Music",
+  "jazz-legends": "Music",
+  "rock-legends": "Music",
+  "beatles": "Music",
+  "queen": "Music",
+  // Science
+  "scientists": "Science",
+  "space-exploration": "Science"
+};
+function deriveCategory(themeId, source) {
+  if (CATEGORY_MAP[themeId]) {
+    return CATEGORY_MAP[themeId];
+  }
+  const s = source.toLowerCase();
+  if (s.includes("tv series") || s.includes("tv show") || s.includes("amc") || s.includes("hbo") || s.includes("netflix") || s.includes("bbc")) {
+    return "TV Series";
+  }
+  if (s.includes("film") || s.includes("movie") || s.includes("cinema") || s.includes("disney") || s.includes("pixar") || s.includes("studio ghibli")) {
+    return "Film";
+  }
+  if (s.includes("mythology") || s.includes("myth") || s.includes("legend") || s.includes("folklore")) {
+    return "Mythology";
+  }
+  if (s.includes("novel") || s.includes("book") || s.includes(" by ") || s.includes("author") || s.includes("literary") || s.includes("classic")) {
+    return "Literature";
+  }
+  if (s.includes("game") || s.includes("video game") || s.includes("nintendo") || s.includes("playstation") || s.includes("xbox")) {
+    return "Games";
+  }
+  if (s.includes("history") || s.includes("historical") || s.includes("century") || s.includes("ancient") || s.includes("era")) {
+    return "History";
+  }
+  if (s.includes("music") || s.includes("composer") || s.includes("band") || s.includes("musician")) {
+    return "Music";
+  }
+  return "Other";
+}
+function discoverThemePackages(projectRoot) {
+  const results = [];
+  const startDir = projectRoot || process.cwd();
+  let currentDir = startDir;
+  for (let i = 0; i < 10; i++) {
+    const nmPfDir = join9(currentDir, "node_modules", "@pennyfarthing");
+    if (existsSync9(nmPfDir)) {
+      try {
+        const entries = readdirSync4(nmPfDir);
+        for (const entry of entries) {
+          if (!entry.startsWith("themes-"))
+            continue;
+          const pkgDir = join9(nmPfDir, entry);
+          const pkgJsonPath = join9(pkgDir, "package.json");
+          if (!existsSync9(pkgJsonPath))
+            continue;
+          try {
+            const pkgJson = JSON.parse(readFileSync6(pkgJsonPath, "utf-8"));
+            if (pkgJson["pennyfarthing-theme-pack"] === true) {
+              results.push({
+                packageName: pkgJson.name || `@pennyfarthing/${entry}`,
+                themesDir: join9(pkgDir, "themes"),
+                portraitsDir: join9(pkgDir, "portraits")
+              });
+            }
+          } catch {
+          }
+        }
+      } catch {
+      }
+      break;
+    }
+    const parentDir = dirname5(currentDir);
+    if (parentDir === currentDir)
+      break;
+    currentDir = parentDir;
+  }
+  currentDir = startDir;
+  for (let i = 0; i < 10; i++) {
+    const packagesDir = join9(currentDir, "packages");
+    if (existsSync9(packagesDir)) {
+      try {
+        const entries = readdirSync4(packagesDir);
+        for (const entry of entries) {
+          if (!entry.startsWith("themes-"))
+            continue;
+          const pkgDir = join9(packagesDir, entry);
+          const pkgJsonPath = join9(pkgDir, "package.json");
+          if (!existsSync9(pkgJsonPath))
+            continue;
+          try {
+            const pkgJson = JSON.parse(readFileSync6(pkgJsonPath, "utf-8"));
+            if (pkgJson["pennyfarthing-theme-pack"] === true) {
+              const alreadyFound = results.some((r) => r.packageName === (pkgJson.name || `@pennyfarthing/${entry}`));
+              if (!alreadyFound) {
+                results.push({
+                  packageName: pkgJson.name || `@pennyfarthing/${entry}`,
+                  themesDir: join9(pkgDir, "themes"),
+                  portraitsDir: join9(pkgDir, "portraits")
+                });
+              }
+            }
+          } catch {
+          }
+        }
+      } catch {
+      }
+      break;
+    }
+    const parentDir = dirname5(currentDir);
+    if (parentDir === currentDir)
+      break;
+    currentDir = parentDir;
+  }
+  return results;
+}
+function discoverAllThemeDirs(projectRoot) {
+  const dirs = [];
+  const root = projectRoot || process.cwd();
+  const distPath = resolvePennyfarthingDist2();
+  if (distPath) {
+    const paths = getPortraitPaths2(distPath);
+    const coreThemesDir = join9(paths.themesDir, "themes");
+    if (existsSync9(coreThemesDir)) {
+      dirs.push(coreThemesDir);
+    }
+  }
+  const packages = discoverThemePackages(root);
+  for (const pkg of packages) {
+    if (existsSync9(pkg.themesDir)) {
+      dirs.push(pkg.themesDir);
+    }
+  }
+  const projectCustom = join9(root, ".claude", "pennyfarthing", "themes");
+  if (existsSync9(projectCustom)) {
+    dirs.push(projectCustom);
+  }
+  const userCustom = join9(homedir2(), ".claude", "pennyfarthing", "themes");
+  if (existsSync9(userCustom)) {
+    dirs.push(userCustom);
+  }
+  return dirs;
+}
 function loadAllThemeMetadata(projectRoot) {
-  const r = callPf(["theme", "list", "--json"], projectRoot);
-  return r.success && r.data ? r.data : [];
+  const dirs = discoverAllThemeDirs(projectRoot);
+  const seenIds = /* @__PURE__ */ new Set();
+  const metadata = [];
+  for (const dir of dirs) {
+    let files;
+    try {
+      files = readdirSync4(dir).filter((f) => f.endsWith(".yaml")).sort();
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      const themeId = basename(file, ".yaml");
+      if (seenIds.has(themeId))
+        continue;
+      seenIds.add(themeId);
+      try {
+        const content = readFileSync6(join9(dir, file), "utf-8");
+        const parsed = (0, import_yaml7.parse)(content);
+        if (!parsed?.theme)
+          continue;
+        const agentCount = parsed.agents ? Object.keys(parsed.agents).length : 0;
+        metadata.push({
+          id: themeId,
+          name: parsed.theme.name || themeId,
+          description: parsed.theme.description || "",
+          source: parsed.theme.source || "",
+          tier: parsed.theme.tier || null,
+          category: deriveCategory(themeId, parsed.theme.source || ""),
+          agentCount
+        });
+      } catch {
+      }
+    }
+  }
+  return metadata;
 }
 
 // packages/core/dist/shared/skill-search.js
-import { existsSync as existsSync8, readFileSync as readFileSync5 } from "node:fs";
-import { join as join8 } from "node:path";
+import { existsSync as existsSync10, readFileSync as readFileSync7 } from "node:fs";
+import { join as join10 } from "node:path";
 var VALID_CATEGORIES = [
   "ai-llm",
   "documentation",
@@ -35840,51 +36710,47 @@ function parseInlineArray(value) {
   return match[1].split(",").map((item) => item.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
 }
 async function searchSkills(options) {
-  try {
-    let registryPath = options.registryPath;
-    if (!registryPath) {
-      const distPath = resolvePennyfarthingDist2();
-      if (!distPath) {
-        return { success: false, error: "Registry not found: Cannot resolve pennyfarthing-dist directory" };
-      }
-      registryPath = join8(distPath, "skills", "skill-registry.yaml");
+  let registryPath = options.registryPath;
+  if (!registryPath) {
+    const distPath = resolvePennyfarthingDist2();
+    if (!distPath) {
+      throw new Error("Registry not found: Cannot resolve pennyfarthing-dist directory");
     }
-    if (!existsSync8(registryPath)) {
-      return { success: false, error: `Registry not found: ${registryPath}` };
-    }
-    if (options.category && !VALID_CATEGORIES.includes(options.category)) {
-      return { success: false, error: `Invalid category: ${options.category}. Valid categories: ${VALID_CATEGORIES.join(", ")}` };
-    }
-    const content = readFileSync5(registryPath, "utf-8");
-    const registry = parseRegistryYaml(content);
-    let results = Object.values(registry.skills).map((skill) => ({
-      name: skill.name,
-      description: skill.description,
-      category: skill.category,
-      tags: skill.tags,
-      keywords: skill.keywords.length > 0 ? skill.keywords : void 0,
-      version: skill.version || void 0,
-      related_skills: skill.related_skills.length > 0 ? skill.related_skills : void 0
-    }));
-    if (options.category) {
-      results = results.filter((s) => s.category === options.category);
-    }
-    if (options.tag) {
-      const searchTag = options.tag.toLowerCase();
-      results = results.filter((s) => s.tags.some((t) => t.toLowerCase() === searchTag));
-    }
-    if (options.keyword) {
-      const searchKeyword = options.keyword.toLowerCase();
-      results = results.filter((s) => s.keywords?.some((k) => k.toLowerCase() === searchKeyword));
-    }
-    if (options.query) {
-      const searchQuery = options.query.toLowerCase();
-      results = results.filter((s) => s.description.toLowerCase().includes(searchQuery));
-    }
-    return { success: true, data: results };
-  } catch (e) {
-    return { success: false, error: e.message };
+    registryPath = join10(distPath, "skills", "skill-registry.yaml");
   }
+  if (!existsSync10(registryPath)) {
+    throw new Error(`Registry not found: ${registryPath}`);
+  }
+  if (options.category && !VALID_CATEGORIES.includes(options.category)) {
+    throw new Error(`Invalid category: ${options.category}. Valid categories: ${VALID_CATEGORIES.join(", ")}`);
+  }
+  const content = readFileSync7(registryPath, "utf-8");
+  const registry = parseRegistryYaml(content);
+  let results = Object.values(registry.skills).map((skill) => ({
+    name: skill.name,
+    description: skill.description,
+    category: skill.category,
+    tags: skill.tags,
+    keywords: skill.keywords.length > 0 ? skill.keywords : void 0,
+    version: skill.version || void 0,
+    related_skills: skill.related_skills.length > 0 ? skill.related_skills : void 0
+  }));
+  if (options.category) {
+    results = results.filter((s) => s.category === options.category);
+  }
+  if (options.tag) {
+    const searchTag = options.tag.toLowerCase();
+    results = results.filter((s) => s.tags.some((t) => t.toLowerCase() === searchTag));
+  }
+  if (options.keyword) {
+    const searchKeyword = options.keyword.toLowerCase();
+    results = results.filter((s) => s.keywords?.some((k) => k.toLowerCase() === searchKeyword));
+  }
+  if (options.query) {
+    const searchQuery = options.query.toLowerCase();
+    results = results.filter((s) => s.description.toLowerCase().includes(searchQuery));
+  }
+  return results;
 }
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
@@ -35921,12 +36787,7 @@ Examples:
       options.category = args[++i];
     }
   }
-  searchSkills(options).then((result) => {
-    if (!result.success) {
-      console.error(`Error: ${result.error}`);
-      process.exit(1);
-    }
-    const results = result.data;
+  searchSkills(options).then((results) => {
     if (jsonOutput) {
       console.log(JSON.stringify(results, null, 2));
     } else {
@@ -35950,8 +36811,8 @@ Examples:
 }
 
 // packages/core/dist/shared/generate-skill-docs.js
-import { existsSync as existsSync9, readFileSync as readFileSync6, writeFileSync, mkdirSync } from "node:fs";
-import { join as join9, dirname as dirname5 } from "node:path";
+import { existsSync as existsSync11, readFileSync as readFileSync8, writeFileSync, mkdirSync } from "node:fs";
+import { join as join11, dirname as dirname6 } from "node:path";
 function parseInlineArray2(value) {
   const match = value.match(/^\[(.*)\]$/);
   if (!match)
@@ -36190,34 +37051,33 @@ function generateMarkdown(registry) {
   return lines.join("\n");
 }
 async function generateSkillDocs(options = {}) {
-  const fail = (error) => ({ success: false, content: "", skillCount: 0, error });
   let registryPath = options.registryPath;
   if (!registryPath) {
     const distPath = resolvePennyfarthingDist2();
     if (!distPath) {
-      return fail("Registry not found: Cannot resolve pennyfarthing-dist directory");
+      throw new Error("Registry not found: Cannot resolve pennyfarthing-dist directory");
     }
-    registryPath = join9(distPath, "skills", "skill-registry.yaml");
+    registryPath = join11(distPath, "skills", "skill-registry.yaml");
   }
-  if (!existsSync9(registryPath)) {
-    return fail(`Registry not found: ${registryPath}`);
+  if (!existsSync11(registryPath)) {
+    throw new Error(`Registry not found: ${registryPath}`);
   }
   let content;
   try {
-    content = readFileSync6(registryPath, "utf-8");
+    content = readFileSync8(registryPath, "utf-8");
   } catch {
-    return fail(`Cannot read registry: ${registryPath}`);
+    throw new Error(`Cannot read registry: ${registryPath}`);
   }
   let registry;
   try {
     registry = parseRegistryYaml2(content);
   } catch (err) {
-    return fail(`Invalid YAML in registry: ${err.message}`);
+    throw new Error(`Invalid YAML in registry: ${err.message}`);
   }
   if (options.strict) {
     for (const [key, skill] of Object.entries(registry.skills)) {
       if (!skill.description) {
-        return fail(`Missing required field 'description' for skill: ${key}`);
+        throw new Error(`Missing required field 'description' for skill: ${key}`);
       }
     }
   }
@@ -36225,8 +37085,8 @@ async function generateSkillDocs(options = {}) {
   const skillCount = Object.keys(registry.skills).length;
   let writtenTo;
   if (options.writeFile && options.outputPath) {
-    const dir = dirname5(options.outputPath);
-    if (!existsSync9(dir)) {
+    const dir = dirname6(options.outputPath);
+    if (!existsSync11(dir)) {
       mkdirSync(dir, { recursive: true });
     }
     writeFileSync(options.outputPath, markdown, "utf-8");
@@ -36272,7 +37132,7 @@ Examples:
   if (!outputPath && !dryRun) {
     const distPath = resolvePennyfarthingDist2();
     if (distPath) {
-      outputPath = join9(dirname5(dirname5(distPath)), "docs", "SKILLS.md");
+      outputPath = join11(dirname6(dirname6(distPath)), "docs", "SKILLS.md");
     }
   }
   generateSkillDocs({
@@ -36280,10 +37140,6 @@ Examples:
     outputPath,
     writeFile: !dryRun && !!outputPath
   }).then((result) => {
-    if (!result.success) {
-      console.error(`Error: ${result.error}`);
-      process.exit(1);
-    }
     if (dryRun) {
       console.log(result.content);
     } else {
@@ -36292,6 +37148,9 @@ Examples:
         console.log(`Written to: ${result.writtenTo}`);
       }
     }
+  }).catch((err) => {
+    console.error(`Error: ${err.message}`);
+    process.exit(1);
   });
 }
 
@@ -36303,7 +37162,7 @@ async function getSettingsForWebSocket(projectDir) {
     const configPath = path2.join(projectDir, ".pennyfarthing", "config.local.yaml");
     if (fs2.existsSync(configPath)) {
       const content = fs2.readFileSync(configPath, "utf-8");
-      const config = (0, import_yaml5.parse)(content);
+      const config = (0, import_yaml8.parse)(content);
       if (config?.theme) {
         response.theme = config.theme;
       }
@@ -36343,7 +37202,7 @@ function createSettingsRouter() {
       const projectDir = getProjectDirectory() || process.cwd();
       const configPath = path2.join(projectDir, ".pennyfarthing", "config.local.yaml");
       if (fs2.existsSync(configPath)) {
-        const config = (0, import_yaml5.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
+        const config = (0, import_yaml8.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
         return res.json({ layout: config.layout || null });
       }
       res.json({ layout: null });
@@ -36357,10 +37216,10 @@ function createSettingsRouter() {
       const configPath = path2.join(projectDir, ".pennyfarthing", "config.local.yaml");
       let config = {};
       if (fs2.existsSync(configPath)) {
-        config = (0, import_yaml5.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
+        config = (0, import_yaml8.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
       }
       config.layout = req.body;
-      fs2.writeFileSync(configPath, (0, import_yaml5.stringify)(config), "utf-8");
+      fs2.writeFileSync(configPath, (0, import_yaml8.stringify)(config), "utf-8");
       res.json({ success: true });
     } catch {
       res.status(500).json({ error: "Failed to save layout" });
@@ -36371,7 +37230,7 @@ function createSettingsRouter() {
       const projectDir = getProjectDirectory() || process.cwd();
       const configPath = path2.join(projectDir, ".pennyfarthing", "config.local.yaml");
       if (fs2.existsSync(configPath)) {
-        const config = (0, import_yaml5.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
+        const config = (0, import_yaml8.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
         return res.json({ layout: config.bikerack_layout || null });
       }
       res.json({ layout: null });
@@ -36385,10 +37244,10 @@ function createSettingsRouter() {
       const configPath = path2.join(projectDir, ".pennyfarthing", "config.local.yaml");
       let config = {};
       if (fs2.existsSync(configPath)) {
-        config = (0, import_yaml5.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
+        config = (0, import_yaml8.parse)(fs2.readFileSync(configPath, "utf-8")) || {};
       }
       config.bikerack_layout = req.body;
-      fs2.writeFileSync(configPath, (0, import_yaml5.stringify)(config), "utf-8");
+      fs2.writeFileSync(configPath, (0, import_yaml8.stringify)(config), "utf-8");
       res.json({ success: true });
     } catch {
       res.status(500).json({ error: "Failed to save layout" });
@@ -37150,7 +38009,7 @@ function createAgentLoadRouter(getProjectDir3) {
 // packages/core/dist/server/api/code-markers.js
 var import_express23 = __toESM(require_express2(), 1);
 import { execFile as execFile2 } from "child_process";
-import { join as join10 } from "path";
+import { join as join12 } from "path";
 function createCodeMarkersRouter(getProjectDir3) {
   const router = (0, import_express23.Router)();
   router.get("/", (req, res) => {
@@ -37175,7 +38034,7 @@ function createCodeMarkersRouter(getProjectDir3) {
     if (type) {
       args.push("--type", type);
     }
-    const pythonPath = join10(projectDir, "pennyfarthing", "pennyfarthing-dist");
+    const pythonPath = join12(projectDir, "pennyfarthing", "pennyfarthing-dist");
     execFile2("python3", args, {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
@@ -37208,7 +38067,7 @@ function createCodeMarkersRouter(getProjectDir3) {
 // packages/core/dist/server/api/dead-code.js
 var import_express24 = __toESM(require_express2(), 1);
 import { execFile as execFile3 } from "child_process";
-import { join as join11 } from "path";
+import { join as join13 } from "path";
 function runDeadCodeCommand(command, projectDir, days, repo) {
   return new Promise((resolve4, reject) => {
     const args = ["-m", "pf.deadcode", command, "--format", "json"];
@@ -37220,7 +38079,7 @@ function runDeadCodeCommand(command, projectDir, days, repo) {
     } else {
       args.push("--path", projectDir);
     }
-    const pythonPath = join11(projectDir, "pennyfarthing", "pennyfarthing-dist");
+    const pythonPath = join13(projectDir, "pennyfarthing", "pennyfarthing-dist");
     execFile3("python3", args, {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
@@ -37273,7 +38132,7 @@ function createDeadCodeRouter(getProjectDir3) {
 // packages/core/dist/server/api/complexity.js
 var import_express25 = __toESM(require_express2(), 1);
 import { execFile as execFile4 } from "child_process";
-import { join as join12 } from "path";
+import { join as join14 } from "path";
 function createComplexityRouter(getProjectDir3) {
   const router = (0, import_express25.Router)();
   router.get("/", (req, res) => {
@@ -37291,7 +38150,7 @@ function createComplexityRouter(getProjectDir3) {
     if (top) {
       args.push("--top", top);
     }
-    const pythonPath = join12(projectDir, "pennyfarthing", "pennyfarthing-dist");
+    const pythonPath = join14(projectDir, "pennyfarthing", "pennyfarthing-dist");
     execFile4("python3", args, {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
@@ -37323,7 +38182,7 @@ function createComplexityRouter(getProjectDir3) {
 // packages/core/dist/server/api/dependencies.js
 var import_express26 = __toESM(require_express2(), 1);
 import { execFile as execFile5 } from "child_process";
-import { join as join13 } from "path";
+import { join as join15 } from "path";
 function createDependenciesRouter(getProjectDir3) {
   const router = (0, import_express26.Router)();
   router.get("/", (req, res) => {
@@ -37337,7 +38196,7 @@ function createDependenciesRouter(getProjectDir3) {
       "--path",
       projectDir
     ];
-    const pythonPath = join13(projectDir, "pennyfarthing", "pennyfarthing-dist");
+    const pythonPath = join15(projectDir, "pennyfarthing", "pennyfarthing-dist");
     execFile5("python3", args, {
       cwd: pythonPath,
       env: { ...process.env, PYTHONPATH: pythonPath },
@@ -37369,14 +38228,14 @@ function createDependenciesRouter(getProjectDir3) {
 // packages/core/dist/server/api/health-score.js
 var import_express27 = __toESM(require_express2(), 1);
 import { execFile as execFile6 } from "child_process";
-import { join as join14 } from "path";
-import { existsSync as existsSync10 } from "fs";
+import { join as join16 } from "path";
+import { existsSync as existsSync12 } from "fs";
 function resolvePythonPath(projectDir) {
-  const orchestratorPath = join14(projectDir, "pennyfarthing", "pennyfarthing-dist");
-  if (existsSync10(join14(orchestratorPath, "pf"))) {
+  const orchestratorPath = join16(projectDir, "pennyfarthing", "pennyfarthing-dist");
+  if (existsSync12(join16(orchestratorPath, "pf"))) {
     return orchestratorPath;
   }
-  if (existsSync10(join14(projectDir, "pf"))) {
+  if (existsSync12(join16(projectDir, "pf"))) {
     return projectDir;
   }
   return null;
@@ -37447,13 +38306,13 @@ function createProjectInfoRouter(getProjectDir3) {
 }
 
 // packages/core/dist/server/websocket.js
-import { watch as watch2, existsSync as existsSync13, mkdirSync as mkdirSync3 } from "fs";
-import { join as join18 } from "path";
+import { watch as watch2, existsSync as existsSync15, mkdirSync as mkdirSync3 } from "fs";
+import { join as join20 } from "path";
 
 // packages/core/dist/server/sprint-data.js
 import { execSync as execSync4 } from "child_process";
-import { existsSync as existsSync11 } from "fs";
-import { join as join15 } from "path";
+import { existsSync as existsSync13 } from "fs";
+import { join as join17 } from "path";
 function mapStoryStatus(status) {
   if (!status)
     return "backlog";
@@ -37495,11 +38354,11 @@ function computeEpicCompleted(stories) {
   return stories.length > 0 && stories.every((s) => s.status === "done" || s.status === "cancelled");
 }
 function checkEpicContext(projectDir, epicId) {
-  return existsSync11(join15(projectDir, "sprint/context", `context-epic-${epicId}.md`));
+  return existsSync13(join17(projectDir, "sprint/context", `context-epic-${epicId}.md`));
 }
 function checkStoryContext(projectDir, storyId) {
-  const contextDir = join15(projectDir, "sprint/context");
-  return existsSync11(join15(contextDir, `context-story-${storyId}.md`)) || existsSync11(join15(contextDir, `context-${storyId}.md`));
+  const contextDir = join17(projectDir, "sprint/context");
+  return existsSync13(join17(contextDir, `context-story-${storyId}.md`)) || existsSync13(join17(contextDir, `context-${storyId}.md`));
 }
 function getEmptySprintData() {
   return {
@@ -37508,7 +38367,7 @@ function getEmptySprintData() {
     epics: [],
     completedEpics: [],
     futureEpics: [],
-    sprint: { number: 0, name: "Unknown Sprint", done: 0, remaining: 0, inProgress: 0, inReview: 0, endDate: "" },
+    sprint: { number: 0, name: "Unknown Sprint", done: 0, remaining: 0, inProgress: 0, endDate: "" },
     metrics: {
       completed: { points: 0, stories: 0, epics: 0 },
       current: { done: 0, inProgress: 0, remaining: 0, totalPoints: 0, storiesDone: 0, storiesInProgress: 0, storiesRemaining: 0 },
@@ -37607,8 +38466,8 @@ function getSprintData(projectDir, _userEmail2) {
       }
     }
   }
-  const pts = canonical.points ?? { completed: 0, in_progress: 0, in_review: 0, backlog: 0, total: 0 };
-  const counts = canonical.stories_count ?? { done: 0, in_progress: 0, in_review: 0, backlog: 0, total: 0 };
+  const pts = canonical.points ?? { completed: 0, in_progress: 0, backlog: 0, total: 0 };
+  const counts = canonical.stories_count ?? { done: 0, in_progress: 0, backlog: 0, total: 0 };
   return {
     currentStory,
     nextStory,
@@ -37621,7 +38480,6 @@ function getSprintData(projectDir, _userEmail2) {
       done: pts.completed,
       remaining: pts.backlog,
       inProgress: pts.in_progress,
-      inReview: pts.in_review,
       endDate: canonical.sprint.end_date ?? ""
     },
     metrics: {
@@ -37651,35 +38509,35 @@ var MAX_INVALIDATION_DELAY_MS = 3e3;
 var STALE_THRESHOLD_MS = 5e3;
 var POLL_INTERVAL_MS = 5e3;
 function getOrCreateCache(projectDir) {
-  let cache2 = caches.get(projectDir);
-  if (!cache2) {
-    cache2 = {
+  let cache = caches.get(projectDir);
+  if (!cache) {
+    cache = {
       repos: [],
       stale: true,
       lastFetch: 0,
       fetchPromise: null
     };
-    caches.set(projectDir, cache2);
+    caches.set(projectDir, cache);
   }
-  return cache2;
+  return cache;
 }
 async function getCachedGitStatus(projectDir) {
-  const cache2 = getOrCreateCache(projectDir);
+  const cache = getOrCreateCache(projectDir);
   const now = Date.now();
-  if (!cache2.stale && cache2.repos.length > 0 && now - cache2.lastFetch < STALE_THRESHOLD_MS) {
-    return cache2.repos;
+  if (!cache.stale && cache.repos.length > 0 && now - cache.lastFetch < STALE_THRESHOLD_MS) {
+    return cache.repos;
   }
-  if (cache2.fetchPromise) {
-    return cache2.fetchPromise;
+  if (cache.fetchPromise) {
+    return cache.fetchPromise;
   }
-  cache2.fetchPromise = (async () => {
+  cache.fetchPromise = (async () => {
     try {
       console.log("[GitCache] Fetching git status for", projectDir);
       const repos = await getAllReposGitInfoAsync(projectDir);
       console.log("[GitCache] Got", repos.length, "repos:", repos.map((r) => `${r.name}(clean=${r.clean})`).join(", "));
-      cache2.repos = repos;
-      cache2.stale = false;
-      cache2.lastFetch = Date.now();
+      cache.repos = repos;
+      cache.stale = false;
+      cache.lastFetch = Date.now();
       console.log("[GitCache] Notifying", refreshCallbacks.size, "callbacks");
       for (const callback of refreshCallbacks) {
         try {
@@ -37690,15 +38548,15 @@ async function getCachedGitStatus(projectDir) {
       }
       return repos;
     } finally {
-      cache2.fetchPromise = null;
+      cache.fetchPromise = null;
     }
   })();
-  return cache2.fetchPromise;
+  return cache.fetchPromise;
 }
 function invalidateGitCache(projectDir) {
   console.log("[GitCache] invalidateGitCache called for:", projectDir);
-  const cache2 = getOrCreateCache(projectDir);
-  cache2.stale = true;
+  const cache = getOrCreateCache(projectDir);
+  cache.stale = true;
   const now = Date.now();
   if (!invalidationStartTimes.has(projectDir)) {
     invalidationStartTimes.set(projectDir, now);
@@ -37746,8 +38604,8 @@ function invalidateGitCache(projectDir) {
   refreshTimers.set(projectDir, timer);
 }
 async function forceRefreshGitCache(projectDir) {
-  const cache2 = getOrCreateCache(projectDir);
-  cache2.stale = true;
+  const cache = getOrCreateCache(projectDir);
+  cache.stale = true;
   const existingTimer = refreshTimers.get(projectDir);
   if (existingTimer) {
     clearTimeout(existingTimer);
@@ -37761,15 +38619,15 @@ function onGitCacheRefresh(callback) {
   return () => refreshCallbacks.delete(callback);
 }
 function getCachedGitStatusSync(projectDir) {
-  const cache2 = caches.get(projectDir);
-  return cache2?.repos ?? [];
+  const cache = caches.get(projectDir);
+  return cache?.repos ?? [];
 }
 function hasFreshCache(projectDir) {
-  const cache2 = caches.get(projectDir);
-  if (!cache2 || cache2.stale || cache2.repos.length === 0) {
+  const cache = caches.get(projectDir);
+  if (!cache || cache.stale || cache.repos.length === 0) {
     return false;
   }
-  return Date.now() - cache2.lastFetch < STALE_THRESHOLD_MS;
+  return Date.now() - cache.lastFetch < STALE_THRESHOLD_MS;
 }
 var pollTimer = null;
 function startPeriodicPoll(getProjectDir3, hasClients) {
@@ -37791,16 +38649,16 @@ function startPeriodicPoll(getProjectDir3, hasClients) {
 }
 
 // packages/core/dist/server/focus.js
-var import_yaml6 = __toESM(require_dist(), 1);
-import { existsSync as existsSync12, readFileSync as readFileSync7, writeFileSync as writeFileSync2, mkdirSync as mkdirSync2 } from "node:fs";
-import { join as join16 } from "node:path";
+var import_yaml9 = __toESM(require_dist(), 1);
+import { existsSync as existsSync14, readFileSync as readFileSync9, writeFileSync as writeFileSync2, mkdirSync as mkdirSync2 } from "node:fs";
+import { join as join18 } from "node:path";
 function getConfigFocus(projectDir) {
   try {
-    const configPath = join16(projectDir, ".pennyfarthing", "config.local.yaml");
-    if (!existsSync12(configPath))
+    const configPath = join18(projectDir, ".pennyfarthing", "config.local.yaml");
+    if (!existsSync14(configPath))
       return null;
-    const raw = readFileSync7(configPath, "utf-8");
-    const config = (0, import_yaml6.parse)(raw);
+    const raw = readFileSync9(configPath, "utf-8");
+    const config = (0, import_yaml9.parse)(raw);
     if (!config || typeof config !== "object")
       return null;
     const focus = config.focus;
@@ -37821,7 +38679,7 @@ function createFocusMessage(type, focus) {
 // packages/core/dist/server/git-diff.js
 import { exec as exec3 } from "child_process";
 import { promisify as promisify3 } from "util";
-import { join as join17 } from "path";
+import { join as join19 } from "path";
 var execAsync3 = promisify3(exec3);
 var REFRESH_DELAY_MS2 = 1500;
 var MAX_INVALIDATION_DELAY_MS2 = 5e3;
@@ -37884,7 +38742,7 @@ async function getAllGitDiffs(projectDir) {
   const allDiffs = [];
   for (const repo of repos) {
     try {
-      const repoPath = join17(projectDir, repo.path);
+      const repoPath = join19(projectDir, repo.path);
       const { stdout } = await execAsync3("git diff HEAD", {
         cwd: repoPath,
         maxBuffer: 10 * 1024 * 1024
@@ -37904,35 +38762,35 @@ async function getAllGitDiffs(projectDir) {
   return allDiffs;
 }
 function getOrCreateCache2(projectDir) {
-  let cache2 = caches2.get(projectDir);
-  if (!cache2) {
-    cache2 = {
+  let cache = caches2.get(projectDir);
+  if (!cache) {
+    cache = {
       diffs: [],
       stale: true,
       lastFetch: 0,
       fetchPromise: null
     };
-    caches2.set(projectDir, cache2);
+    caches2.set(projectDir, cache);
   }
-  return cache2;
+  return cache;
 }
 async function getCachedDiffs(projectDir) {
-  const cache2 = getOrCreateCache2(projectDir);
+  const cache = getOrCreateCache2(projectDir);
   const now = Date.now();
-  if (!cache2.stale && cache2.diffs.length >= 0 && now - cache2.lastFetch < STALE_THRESHOLD_MS2) {
-    return cache2.diffs;
+  if (!cache.stale && cache.diffs.length >= 0 && now - cache.lastFetch < STALE_THRESHOLD_MS2) {
+    return cache.diffs;
   }
-  if (cache2.fetchPromise) {
-    return cache2.fetchPromise;
+  if (cache.fetchPromise) {
+    return cache.fetchPromise;
   }
-  cache2.fetchPromise = (async () => {
+  cache.fetchPromise = (async () => {
     try {
       console.log("[GitDiff] Fetching diffs for", projectDir);
       const diffs = await getAllGitDiffs(projectDir);
       console.log("[GitDiff] Got", diffs.length, "diffs");
-      cache2.diffs = diffs;
-      cache2.stale = false;
-      cache2.lastFetch = Date.now();
+      cache.diffs = diffs;
+      cache.stale = false;
+      cache.lastFetch = Date.now();
       for (const callback of refreshCallbacks2) {
         try {
           callback(diffs);
@@ -37942,15 +38800,15 @@ async function getCachedDiffs(projectDir) {
       }
       return diffs;
     } finally {
-      cache2.fetchPromise = null;
+      cache.fetchPromise = null;
     }
   })();
-  return cache2.fetchPromise;
+  return cache.fetchPromise;
 }
 function invalidateDiffCache(projectDir) {
   console.log("[GitDiff] invalidateDiffCache called for:", projectDir);
-  const cache2 = getOrCreateCache2(projectDir);
-  cache2.stale = true;
+  const cache = getOrCreateCache2(projectDir);
+  cache.stale = true;
   const now = Date.now();
   if (!invalidationStartTimes2.has(projectDir)) {
     invalidationStartTimes2.set(projectDir, now);
@@ -38049,13 +38907,13 @@ function setupGitFileWatchers(projectDir, getProjectDir3) {
   }
   const repos = getReposFromConfig(projectDir);
   for (const repo of repos) {
-    const repoPath = join18(projectDir, repo.path);
-    const gitDir = join18(repoPath, ".git");
-    if (!existsSync13(gitDir))
+    const repoPath = join20(projectDir, repo.path);
+    const gitDir = join20(repoPath, ".git");
+    if (!existsSync15(gitDir))
       continue;
     try {
-      const headPath = join18(gitDir, "HEAD");
-      if (existsSync13(headPath)) {
+      const headPath = join20(gitDir, "HEAD");
+      if (existsSync15(headPath)) {
         watch2(headPath, async (eventType) => {
           if (eventType !== "change")
             return;
@@ -38063,8 +38921,8 @@ function setupGitFileWatchers(projectDir, getProjectDir3) {
           await forceRefreshGitCache(getProjectDir3());
         });
       }
-      const indexPath = join18(gitDir, "index");
-      if (existsSync13(indexPath)) {
+      const indexPath = join20(gitDir, "index");
+      if (existsSync15(indexPath)) {
         watch2(indexPath, (eventType) => {
           if (eventType !== "change")
             return;
@@ -38072,8 +38930,8 @@ function setupGitFileWatchers(projectDir, getProjectDir3) {
           invalidateGitCache(getProjectDir3());
         });
       }
-      const fetchHeadPath = join18(gitDir, "FETCH_HEAD");
-      if (existsSync13(fetchHeadPath)) {
+      const fetchHeadPath = join20(gitDir, "FETCH_HEAD");
+      if (existsSync15(fetchHeadPath)) {
         watch2(fetchHeadPath, (eventType) => {
           if (eventType !== "change")
             return;
@@ -38081,8 +38939,8 @@ function setupGitFileWatchers(projectDir, getProjectDir3) {
           invalidateGitCache(getProjectDir3());
         });
       }
-      const refsHeadsDir = join18(gitDir, "refs", "heads");
-      if (existsSync13(refsHeadsDir)) {
+      const refsHeadsDir = join20(gitDir, "refs", "heads");
+      if (existsSync15(refsHeadsDir)) {
         watch2(refsHeadsDir, { recursive: true }, (eventType, filename) => {
           if (!filename)
             return;
@@ -38544,8 +39402,8 @@ function setupWebSocketServers(server, getProjectDir3) {
       }
     });
   }
-  const sprintDir = join18(projectDir, "sprint");
-  if (existsSync13(sprintDir)) {
+  const sprintDir = join20(projectDir, "sprint");
+  if (existsSync15(sprintDir)) {
     try {
       watch2(sprintDir, { recursive: false }, (eventType, filename) => {
         if (!filename || !filename.endsWith(".yaml"))
@@ -38564,8 +39422,8 @@ function setupWebSocketServers(server, getProjectDir3) {
       console.error("[WebSocket] Failed to set up story file watcher:", err);
     }
   }
-  const sessionDir = join18(projectDir, ".session");
-  if (!existsSync13(sessionDir)) {
+  const sessionDir = join20(projectDir, ".session");
+  if (!existsSync15(sessionDir)) {
     try {
       mkdirSync3(sessionDir, { recursive: true });
       console.log("[WebSocket] Created .session directory for session file watching");
@@ -38573,7 +39431,7 @@ function setupWebSocketServers(server, getProjectDir3) {
       console.error("[WebSocket] Failed to create .session directory:", err);
     }
   }
-  if (existsSync13(sessionDir)) {
+  if (existsSync15(sessionDir)) {
     try {
       watch2(sessionDir, { recursive: false }, (eventType, filename) => {
         if (!filename || !filename.endsWith("-session.md"))
@@ -38622,9 +39480,9 @@ function setupWebSocketServers(server, getProjectDir3) {
     console.log("[WebSocket] Force refresh got", repos.length, "repos, broadcasting");
     broadcastGitUpdate(repos);
   });
-  if (existsSync13(join18(projectDir, ".pennyfarthing"))) {
+  if (existsSync15(join20(projectDir, ".pennyfarthing"))) {
     try {
-      watch2(join18(projectDir, ".pennyfarthing"), { recursive: false }, (eventType, filename) => {
+      watch2(join20(projectDir, ".pennyfarthing"), { recursive: false }, (eventType, filename) => {
         if (!filename || filename !== "config.local.yaml")
           return;
         if (settingsDebounceTimer) {
@@ -38748,16 +39606,16 @@ function broadcastFocusUpdate(focus) {
 }
 
 // packages/core/dist/plugins/plugin-discovery.js
-import { readFileSync as readFileSync8, readdirSync as readdirSync2, existsSync as existsSync14, statSync as statSync2 } from "node:fs";
-import { join as join19, resolve as resolve3 } from "node:path";
+import { readFileSync as readFileSync10, readdirSync as readdirSync5, existsSync as existsSync16, statSync as statSync4 } from "node:fs";
+import { join as join21, resolve as resolve3 } from "node:path";
 var EXCLUDED_PACKAGES = ["core", "shared", "benchmark", "bikerack"];
 function parsePluginManifest(packageDir) {
-  const pkgJsonPath = join19(packageDir, "package.json");
-  if (!existsSync14(pkgJsonPath)) {
+  const pkgJsonPath = join21(packageDir, "package.json");
+  if (!existsSync16(pkgJsonPath)) {
     return null;
   }
   try {
-    const raw = readFileSync8(pkgJsonPath, "utf-8");
+    const raw = readFileSync10(pkgJsonPath, "utf-8");
     const pkg = JSON.parse(raw);
     if (!pkg.pennyfarthing || typeof pkg.pennyfarthing !== "object") {
       return null;
@@ -38768,13 +39626,13 @@ function parsePluginManifest(packageDir) {
   }
 }
 function discoverPlugins(projectRoot) {
-  const scopeDir = join19(projectRoot, "node_modules/@pennyfarthing");
-  if (!existsSync14(scopeDir)) {
+  const scopeDir = join21(projectRoot, "node_modules/@pennyfarthing");
+  if (!existsSync16(scopeDir)) {
     return [];
   }
   let entries;
   try {
-    entries = readdirSync2(scopeDir);
+    entries = readdirSync5(scopeDir);
   } catch {
     return [];
   }
@@ -38783,7 +39641,7 @@ function discoverPlugins(projectRoot) {
     if (EXCLUDED_PACKAGES.includes(entry)) {
       continue;
     }
-    const pkgDir = resolve3(join19(scopeDir, entry));
+    const pkgDir = resolve3(join21(scopeDir, entry));
     const manifest = parsePluginManifest(pkgDir);
     if (manifest) {
       plugins.push({
@@ -38804,7 +39662,7 @@ function getPluginRouters(plugins) {
     const api = plugin.manifest.api;
     routers.push({
       mountPath: api.path,
-      modulePath: join19(plugin.path, api.module),
+      modulePath: join21(plugin.path, api.module),
       exportName: api.export,
       plugin: plugin.name
     });
@@ -38876,8 +39734,8 @@ if (portraitsDir) {
   app.use("/portraits", import_express29.default.static(portraitsDir));
 }
 app.use(import_express29.default.static(publicDir, { index: false }));
-var distPublicDir = join20(getDistDir(), "public");
-if (existsSync15(distPublicDir)) {
+var distPublicDir = join22(getDistDir(), "public");
+if (existsSync17(distPublicDir)) {
   app.use(import_express29.default.static(distPublicDir));
 }
 app.use("/node_modules", import_express29.default.static(nodeModulesDir));
@@ -38885,9 +39743,9 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 var indexHtmlTemplate = null;
-var indexHtmlPath = join20(publicDir, "index.html");
-if (existsSync15(indexHtmlPath)) {
-  indexHtmlTemplate = readFileSync9(indexHtmlPath, "utf-8");
+var indexHtmlPath = join22(publicDir, "index.html");
+if (existsSync17(indexHtmlPath)) {
+  indexHtmlTemplate = readFileSync11(indexHtmlPath, "utf-8");
 }
 function serveIndexHtml(_req, res) {
   if (!indexHtmlTemplate) {
@@ -38895,7 +39753,7 @@ function serveIndexHtml(_req, res) {
     return;
   }
   const mode = getMode();
-  const injected = indexHtmlTemplate.replace("</head>", `<script>window.__PF_MODE__="${mode}";</script>
+  const injected = indexHtmlTemplate.replace("</head>", `<script>window.__CYCLIST_MODE__="${mode}";</script>
 </head>`);
   res.set("Cache-Control", "no-cache");
   res.type("html").send(injected);
@@ -38904,7 +39762,7 @@ app.get("/", serveIndexHtml);
 app.get("/bikerack", serveIndexHtml);
 app.get("/pennyfarthing-transparent.png", (_req, res) => {
   const projectDir = getProjectDirectory() || process.cwd();
-  const logoPath = join20(projectDir, "pennyfarthing-transparent.png");
+  const logoPath = join22(projectDir, "pennyfarthing-transparent.png");
   res.sendFile(logoPath, (err) => {
     if (err) {
       res.status(404).send("Logo not found");
@@ -38957,12 +39815,12 @@ app.post("/api/welcome", (req, res) => {
 });
 app.post("/api/bell-queue", (req, res) => {
   const projectDir = getProjectDir();
-  const queuePath = join20(projectDir, ".pennyfarthing", "bell-queue.json");
-  const configPath = join20(projectDir, ".pennyfarthing", "config.local.yaml");
+  const queuePath = join22(projectDir, ".pennyfarthing", "bell-queue.json");
+  const configPath = join22(projectDir, ".pennyfarthing", "config.local.yaml");
   try {
     let bellModeEnabled = false;
-    if (existsSync15(configPath)) {
-      const configContent = readFileSync9(configPath, "utf8");
+    if (existsSync17(configPath)) {
+      const configContent = readFileSync11(configPath, "utf8");
       bellModeEnabled = /^\s*bell_mode:\s*true/m.test(configContent);
     }
     if (bellModeEnabled) {
@@ -38970,7 +39828,7 @@ app.post("/api/bell-queue", (req, res) => {
       if (Array.isArray(queue)) {
         writeFileSync3(queuePath, JSON.stringify(queue, null, 2));
       }
-    } else if (existsSync15(queuePath)) {
+    } else if (existsSync17(queuePath)) {
       unlinkSync(queuePath);
     }
     res.json({ ok: true });
@@ -39007,7 +39865,7 @@ function createTerminalServer() {
   return server;
 }
 var DEFAULT_PORT = parseInt(process.env.PORT || "1898", 10);
-if (process.argv[1] === fileURLToPath4(import.meta.url) && import.meta.url.endsWith("/server.js")) {
+if (process.argv[1] === fileURLToPath4(import.meta.url)) {
   (async () => {
     const server = createTerminalServer();
     const projectDir = getProjectDir();
@@ -39036,7 +39894,7 @@ if (process.argv[1] === fileURLToPath4(import.meta.url) && import.meta.url.endsW
   })();
 }
 var PORT_FILE_NAME = ".bikerack-port";
-async function findAvailablePort(startPort, maxAttempts = 16) {
+async function findAvailablePort(startPort, maxAttempts = 10) {
   const net = await import("net");
   for (let port = startPort; port < startPort + maxAttempts; port++) {
     const available = await new Promise((resolve4) => {
@@ -39055,30 +39913,30 @@ async function findAvailablePort(startPort, maxAttempts = 16) {
   throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
 }
 function writePortFile(projectDir, port) {
-  const portFilePath = join20(projectDir, PORT_FILE_NAME);
+  const portFilePath = join22(projectDir, PORT_FILE_NAME);
   writeFileSync3(portFilePath, String(port));
 }
 function cleanupPortFile(projectDir) {
-  const portFilePath = join20(projectDir, PORT_FILE_NAME);
-  if (existsSync15(portFilePath)) {
+  const portFilePath = join22(projectDir, PORT_FILE_NAME);
+  if (existsSync17(portFilePath)) {
     unlinkSync(portFilePath);
   }
 }
 
 // packages/core/dist/server/entry.js
-import { writeFileSync as writeFileSync4, unlinkSync as unlinkSync2, existsSync as existsSync16 } from "fs";
-import { join as join21 } from "path";
+import { writeFileSync as writeFileSync4, unlinkSync as unlinkSync2, existsSync as existsSync18 } from "fs";
+import { join as join23 } from "path";
 var PORT_FILE = ".bikerack-port";
 var DEFAULT_PORT2 = parseInt(process.env.BIKERACK_PORT || "2898", 10);
 function getProjectDir2() {
   return process.env.WHEELHUB_PROJECT_DIR || process.env.CYCLIST_PROJECT_DIR || process.cwd();
 }
 function writePortFile2(projectDir, port) {
-  writeFileSync4(join21(projectDir, PORT_FILE), String(port));
+  writeFileSync4(join23(projectDir, PORT_FILE), String(port));
 }
 function cleanupPortFile2(projectDir) {
-  const portFilePath = join21(projectDir, PORT_FILE);
-  if (existsSync16(portFilePath)) {
+  const portFilePath = join23(projectDir, PORT_FILE);
+  if (existsSync18(portFilePath)) {
     unlinkSync2(portFilePath);
   }
 }
