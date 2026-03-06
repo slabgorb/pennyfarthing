@@ -59,3 +59,15 @@ export {
   type DimensionAgreement,
   type AgreementReport,
 } from './agreement.js';
+
+export {
+  validateJudgeVerdict,
+  validateFinalizeRun,
+  aggregateMultiJudgeScores,
+  isMultiJudge,
+  type AgentData,
+  type JudgeVerdict,
+  type MultiJudgeSection,
+  type FinalizeRunInput,
+  type ValidationResult,
+} from './finalize-run-validator.js';

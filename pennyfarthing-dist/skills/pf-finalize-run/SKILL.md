@@ -89,6 +89,11 @@ Extract:
     "input_tokens": 2345,
     "output_tokens": 890
   },
+  "judges": [
+    {"cli_timestamp": "ISO8601", "response_text": "verdict 0", "input_tokens": 2345, "output_tokens": 890},
+    {"cli_timestamp": "ISO8601", "response_text": "verdict 1", "input_tokens": 2345, "output_tokens": 890},
+    {"cli_timestamp": "ISO8601", "response_text": "verdict 2", "input_tokens": 2345, "output_tokens": 890}
+  ],
   "scores": {"spec": score},
   "output_path": "results/..."
 }
@@ -116,7 +121,13 @@ if [[ $input_tokens -le 0 ]] || [[ $output_tokens -le 0 ]]; then
 fi
 ```
 
-### Step 3: Validate Judge
+### Step 3: Detect Format and Validate Judge(s)
+
+**Format detection:** If `judges` array is present and non-empty, use multi-judge path. Otherwise use legacy single-judge path (`judge` field).
+
+If neither `judge` nor `judges` is present: REJECT.
+
+**For EACH judge verdict** (single or multi), validate independently:
 
 ```bash
 # Check for score marker
@@ -129,11 +140,15 @@ if [[ ${#judge_response} -lt 100 ]]; then
   REJECT "Judge response too short"
 fi
 
-# Check tokens
-if [[ $judge_input_tokens -le 0 ]] || [[ $judge_output_tokens -le 0 ]]; then
-  REJECT "Invalid judge tokens"
+# Check timestamp
+if ! [[ "$cli_timestamp" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T ]]; then
+  REJECT "Invalid judge timestamp"
 fi
 ```
+
+**Multi-judge:** If ANY single verdict fails validation, REJECT the entire run.
+
+**Multi-judge scores:** `scores` is an array (one entry per judge) instead of a single object. Array length must match `judges` length.
 
 ### Step 4: Validate Scores
 
@@ -194,6 +209,20 @@ fi
 - Expected: ≥{minimum}s
 - Status: ✓ PASS
 
+#### Multi-Judge Agreement (if multi-judge)
+| Metric | Value |
+|--------|-------|
+| Alpha Mean | {alpha_mean} |
+| Alpha Min | {alpha_min} |
+| Alpha Max | {alpha_max} |
+| Classification | {reliable/acceptable/unreliable} |
+| Statistics Mean | {aggregated mean across all judges} |
+
+**Low-agreement warning** (alpha < 0.67): Printed to console but does NOT block storage.
+```
+WARNING: Low inter-judge agreement (alpha={alpha_mean}). Consider revising rubric anchors.
+```
+
 ---
 **VALIDATION: PASSED**
 ```
@@ -223,12 +252,24 @@ Display:
   "path": "{output_path}",
   "validation": {
     "agents_validated": {count},
-    "judge_validated": true,
+    "judges_validated": {count},
     "scores_verified": true,
-    "timestamp_sane": true
+    "timestamp_sane": true,
+    "multi_judge": {
+      "alpha_mean": 0.85,
+      "alpha_min": 0.72,
+      "alpha_max": 0.94,
+      "classification": "reliable"
+    },
+    "warnings": [],
+    "statistics": {
+      "mean": 78.33
+    }
   }
 }
 ```
+
+**Note:** `multi_judge` section is only present for multi-judge runs. For single-judge runs, `judges_validated` is 1 and `statistics.mean` uses the single judge's score directly.
 
 ## On Validation Failure
 
