@@ -49,3 +49,9 @@ export {
   type JudgeScore,
   type BenchmarkResultWithOcean,
 } from './benchmark-integration.js';
+
+export {
+  validateScenario,
+  type Scenario,
+  type RedHerring,
+} from './scenario-schema.js';
