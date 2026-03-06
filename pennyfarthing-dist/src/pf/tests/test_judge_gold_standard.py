@@ -12,8 +12,6 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
-import pytest
-
 from pf.benchmark.judge_prompt import (
     BaselineIssue,
     GoldStandard,
