@@ -379,16 +379,15 @@ your-project/
 
 ## What's New in v12.5.0
 
-- **`pf init` preserves custom content** — Init no longer removes user-created gates, workflows, agents, or other custom files from consumer repos
-- **SOUL.md in agent bootstrap** — Optional project-level personality file loaded during `pf agent start`
-- **PR title format config** — Configurable PR title format via `repos.yaml` with setup wizard step (MSSCI-16205)
-- **Consumer gate extensions** — Projects define custom gates in `repos.yaml` (MSSCI-16204)
-- **In-review story status** — Jira lifecycle alignment with `in_review` state (MSSCI-16200)
-- **Result object conversions** — CLI utils converted from throw-based to result object error handling (141-9)
+- **Scenario Builder workflow** — Interactive stepped workflow for building benchmark scenarios (MSSCI-16234)
+- **Anchored judge rubrics** — Benchmark judge prompts include reference anchors for consistent scoring (MSSCI-16220)
+- **Multi-judge /solo** — `--multi-judge` flag for comparative persona scoring (MSSCI-16215)
+- **pf CLI workflow engine** — TypeScript BikeLane engine replaced with Python CLI delegation (141-18)
+- **Core API test coverage** — Tests for agent-load through welcome API routes
 
 ### Previous Highlights
 
-- **v12.4** - Context engineering, session artifacts pipeline, guided tour, frontmatter hooks, 21 reference workflows, portrait bundling
+- **v12.4** - SOUL.md bootstrap, PR title config, consumer gate extensions, in-review status, result objects
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
 - **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
