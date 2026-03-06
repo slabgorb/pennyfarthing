@@ -55,3 +55,14 @@ export {
   type Scenario,
   type RedHerring,
 } from './scenario-schema.js';
+
+export {
+  buildRedHerringPromptSection,
+  evaluateRedHerringPrecision,
+  calculateCorrectnessAdjustment,
+  type AgentFinding,
+  type RedHerringMatch,
+  type RedHerringDismissal,
+  type RedHerringEvaluation,
+  type RedHerringPromptSection,
+} from './judge-red-herrings.js';

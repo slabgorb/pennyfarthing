@@ -125,5 +125,5 @@ export function evaluateRedHerringPrecision(
  * Penalty per flagged herring, bonus per dismissed herring, neutral for ignored.
  */
 export function calculateCorrectnessAdjustment(evaluation: RedHerringEvaluation): number {
-  return evaluation.precisionBonus - evaluation.precisionPenalty;
+  return evaluation.netAdjustment;
 }
