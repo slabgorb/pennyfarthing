@@ -1,12 +1,13 @@
+<!-- markdownlint-disable MD052 — citation references [N][M] are not link refs -->
 # Persona Effectiveness: What the Research Says
 
 > A synthesis of academic research (2023-2026) on measuring the effect of role-playing and persona prompting in LLM agents. Informs Pennyfarthing's persona framework design.
 >
 > **Related Pennyfarthing docs:**
 > - [`measurement-framework.md`](measurement-framework.md) — Four-level Wallach evaluation framework (foundation for all measurement)
-> - [`personas/ZEITGEIST-ANALYSIS.md`](../../personas/ZEITGEIST-ANALYSIS.md) — Persona articulation depth scoring rubric
-> - [`personas/TRAIL-OCEAN-MAPPING.md`](../../personas/TRAIL-OCEAN-MAPPING.md) — OCEAN personality × error-detection hypotheses
-> - [`personas/attributes.yaml`](../../personas/attributes.yaml) — Personality attribute definitions (verbosity, formality, humor, emoji)
+> - [`personas/ZEITGEIST-ANALYSIS.md`](../personas/ZEITGEIST-ANALYSIS.md) — Persona articulation depth scoring rubric
+> - [`personas/TRAIL-OCEAN-MAPPING.md`](../personas/TRAIL-OCEAN-MAPPING.md) — OCEAN personality × error-detection hypotheses
+> - [`personas/attributes.yaml`](../personas/attributes.yaml) — Personality attribute definitions (verbosity, formality, humor, emoji)
 > - `/benchmark` command — Automated A/B comparison with Cohen's d effect sizes
 > - `/job-fair` command — Cross-role persona discovery across themes
 

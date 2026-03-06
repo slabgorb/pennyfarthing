@@ -66,6 +66,41 @@ def load_soul(project_root: Path | None = None) -> str | None:
     return None
 
 
+def load_output_style(project_root: Path | None = None) -> tuple[str, str] | None:
+    """Load output style content based on config.local.yaml setting.
+
+    Reads `output_style` from config and loads the corresponding
+    markdown file from output-styles/.
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Tuple of (style_name, content), or None if not configured or not found
+    """
+    from pf.common.config import load_pennyfarthing_config
+
+    root = project_root or get_project_root()
+    config = load_pennyfarthing_config(root)
+    style = config.get("output_style")
+    if not style or not isinstance(style, str):
+        return None
+
+    # Try .pennyfarthing/output-styles/{style}.md
+    style_file = root / ".pennyfarthing" / "output-styles" / f"{style}.md"
+    if style_file.exists():
+        return style, style_file.read_text()
+
+    # Fallback: pennyfarthing-dist via get_dist_root
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        style_file = dist_root / "output-styles" / f"{style}.md"
+        if style_file.exists():
+            return style, style_file.read_text()
+
+    return None
+
+
 def load_behavior_guide(project_root: Path | None = None) -> str | None:
     """Load shared agent behavior guide.
 

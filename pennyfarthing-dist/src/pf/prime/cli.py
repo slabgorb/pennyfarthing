@@ -33,6 +33,7 @@ from pf.prime.loader import (
     load_behavior_guide,
     load_domain_docs,
     load_gate_recovery_guide,
+    load_output_style,
     load_session_context,
     load_sidecars,
     load_soul,
@@ -115,6 +116,7 @@ def _component_header(name: str, agent_name: str | None) -> str:
         "persona": f"Persona: {agent_name}",
         "persona_compressed": f"Persona: {agent_name} (compressed)",
         "soul": "Project Principles (SOUL.md)",
+        "output_style": "Output Style",
         "behavior_guide": "Agent Behavior Guide",
         "team_mode_guide": "Team Mode Guide",
         "gate_recovery_guide": "Gate Recovery Guide",
@@ -135,6 +137,7 @@ def _component_source(name: str, agent_name: str | None, root: Path) -> str | No
         "persona": None,
         "persona_compressed": None,
         "soul": "SOUL.md",
+        "output_style": None,  # dynamic based on config
         "behavior_guide": ".pennyfarthing/guides/agent-behavior.md",
         "team_mode_guide": ".pennyfarthing/guides/team-mode.md",
         "gate_recovery_guide": ".pennyfarthing/guides/gate-recovery.md",
@@ -474,6 +477,16 @@ def prime(
         if soul_content:
             _print_header("Project Principles (SOUL.md)", quiet)
             print(soul_content)
+
+    # ==========================================================================
+    # PRIORITY 2.6: Output Style (optional)
+    # ==========================================================================
+    if not json_output:
+        style_result = load_output_style(root)
+        if style_result:
+            style_name, style_content = style_result
+            _print_header(f"Output Style: {style_name}", quiet)
+            print(style_content)
 
     # ==========================================================================
     # PRIORITY 3: Persona (if enabled)

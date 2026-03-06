@@ -15,6 +15,7 @@ from pf.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
     load_domain_docs,
+    load_output_style,
     load_session_context,
     load_sidecars,
     load_sprint_context,
@@ -87,6 +88,57 @@ class TestLoadBehaviorGuide:
             result = load_behavior_guide(tmp_path)
 
         # Verify
+        assert result is None
+
+
+class TestLoadOutputStyle:
+    """Tests for load_output_style function."""
+
+    def test_load_configured_style(self, tmp_path: Path) -> None:
+        """Test loading output style when configured."""
+        import yaml
+
+        # Setup config
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir(parents=True)
+        config_file = pf_dir / "config.local.yaml"
+        config_file.write_text(yaml.dump({"output_style": "terse"}))
+
+        # Setup style file
+        styles_dir = pf_dir / "output-styles"
+        styles_dir.mkdir()
+        style_file = styles_dir / "terse.md"
+        style_file.write_text("# Terse Output Style\n\nBe concise.")
+
+        result = load_output_style(tmp_path)
+
+        assert result is not None
+        style_name, content = result
+        assert style_name == "terse"
+        assert "Terse Output Style" in content
+
+    def test_no_config_returns_none(self, tmp_path: Path) -> None:
+        """Test returns None when no output_style configured."""
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir(parents=True)
+
+        with patch("pf.prime.loader.get_dist_root", return_value=None):
+            result = load_output_style(tmp_path)
+
+        assert result is None
+
+    def test_invalid_style_returns_none(self, tmp_path: Path) -> None:
+        """Test returns None when style file doesn't exist."""
+        import yaml
+
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir(parents=True)
+        config_file = pf_dir / "config.local.yaml"
+        config_file.write_text(yaml.dump({"output_style": "nonexistent"}))
+
+        with patch("pf.prime.loader.get_dist_root", return_value=None):
+            result = load_output_style(tmp_path)
+
         assert result is None
 
 

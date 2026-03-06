@@ -6,14 +6,14 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Copy, Loader, Circle, AlertTriangle } from 'lucide-react';
+import { Check, Copy, Loader, Circle, AlertTriangle, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useStory } from '../../hooks/useStory.js';
-import { useSprint, type SprintStory, type SprintEpic, type SprintRegistry, type FutureEpic, type FutureEpicChild } from '../../hooks/useSprint';
+import { useSprint, type SprintStory, type SprintEpic, type FutureEpicChild } from '../../hooks/useSprint';
 
 // =============================================================================
 // Original SprintPanel (unchanged)
@@ -111,6 +111,8 @@ function getStatusBadgeInfo(status: SprintStory['status']): { icon: React.ReactE
       return { icon: <Check size={size} />, className: 'status-done' };
     case 'in_progress':
       return { icon: <Loader size={size} />, className: 'status-in-progress' };
+    case 'in_review':
+      return { icon: <Eye size={size} />, className: 'status-in-review' };
     case 'blocked':
       return { icon: <AlertTriangle size={size} />, className: 'status-blocked' };
     case 'backlog':
@@ -180,7 +182,7 @@ function StatusBadge({ status, storyId }: { status: SprintStory['status']; story
   const { icon, className } = getStatusBadgeInfo(status);
   return (
     <Badge
-      variant={status === 'blocked' ? 'destructive' : status === 'done' ? 'default' : 'secondary'}
+      variant={status === 'blocked' ? 'destructive' : status === 'done' ? 'default' : status === 'in_review' ? 'outline' : 'secondary'}
       className={`story-status-badge ${className}`}
       data-testid={`story-status-badge-${storyId}`}
       data-status={status}
@@ -358,7 +360,7 @@ function EpicGroup({
                   <span className="story-meta">
                     {assigneeDisplay && (
                       <span
-                        className="story-assignee"
+                        className={`story-assignee ${story.status === 'in_review' ? 'assignee-in-review' : ''}`}
                         data-testid={`story-assignee-${story.id}`}
                       >
                         {assigneeDisplay}

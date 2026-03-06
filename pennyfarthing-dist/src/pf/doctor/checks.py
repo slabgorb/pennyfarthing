@@ -8,7 +8,6 @@ Each check function takes a project root Path and returns a CheckResult.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from pathlib import Path
 

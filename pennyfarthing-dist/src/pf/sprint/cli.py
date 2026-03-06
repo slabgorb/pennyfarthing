@@ -2193,49 +2193,6 @@ from pf.sprint.standalone_add import standalone_add_command  # noqa: E402
 standalone.add_command(standalone_add_command, "add")
 
 
-# --- Backwards compatibility aliases (hidden) ---
-
-# Hidden alias: sprint story-add -> sprint story add
-sprint.add_command(story_add_command, "story-add")
-sprint.commands["story-add"].hidden = True
-
-# Hidden alias: sprint story-update -> sprint story update
-sprint.add_command(story_update_command, "story-update")
-sprint.commands["story-update"].hidden = True
-
-# Hidden alias: sprint archive-epic -> sprint epic archive
-@sprint.command("archive-epic", hidden=True)
-@click.argument("epic_id", required=False)
-@click.option("--dry-run", is_flag=True)
-@click.option("--jira", is_flag=True)
-def archive_epic_compat(epic_id, dry_run, jira):
-    """(Deprecated) Use 'sprint epic archive' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_archive, epic_id=epic_id, dry_run=dry_run, jira=jira)
-
-# Hidden alias: sprint import-epic -> sprint epic import
-@sprint.command("import-epic", hidden=True)
-@click.argument("epics_file")
-@click.argument("initiative_name", required=False)
-@click.option("--marker", default="imported")
-@click.option("--dry-run", is_flag=True)
-def import_epic_compat(epics_file, initiative_name, marker, dry_run):
-    """(Deprecated) Use 'sprint epic import' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_import, epics_file=epics_file, initiative_name=initiative_name, marker=marker, dry_run=dry_run)
-
-# Hidden alias: sprint remove-epic -> sprint epic remove
-@sprint.command("remove-epic", hidden=True)
-@click.argument("epic_id")
-@click.option("--dry-run", is_flag=True)
-def remove_epic_compat(epic_id, dry_run):
-    """(Deprecated) Use 'sprint epic remove' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_remove, epic_id=epic_id, dry_run=dry_run)
-
-# Hidden alias: sprint epic-add -> sprint epic add
-sprint.add_command(epic_add_command, "epic-add")
-sprint.commands["epic-add"].hidden = True
 
 
 # Register validate command from validate_cmd module

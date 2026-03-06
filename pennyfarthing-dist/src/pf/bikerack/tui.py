@@ -553,6 +553,7 @@ class BikeRackApp(App):
         Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
+        Binding("7", "switch_panel('settings')", "Settings", show=False),
         Binding("bracketright", "next_panel", "Next panel", show=False),
         Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),

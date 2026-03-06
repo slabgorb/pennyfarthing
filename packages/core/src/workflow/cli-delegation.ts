@@ -38,8 +38,8 @@ export interface GateResult {
 
 export interface HandoffStatusResult {
   storyId: string;
-  phase: string;
-  workflow: string;
+  phase: string | null;
+  workflow: string | null;
   gateType?: string;
   nextPhase?: string;
   nextAgent?: string;
@@ -102,8 +102,8 @@ function optionalField(raw: Record<string, unknown>, snake: string, camel: strin
 function toHandoffStatus(raw: Record<string, unknown>): HandoffStatusResult {
   return {
     storyId: String(raw.story_id ?? raw.storyId ?? '').replace(/:$/, ''),
-    phase: String(raw.phase ?? ''),
-    workflow: String(raw.workflow ?? ''),
+    phase: raw.phase == null ? null : String(raw.phase),
+    workflow: raw.workflow == null ? null : String(raw.workflow),
     gateType: optionalField(raw, 'gate_type', 'gateType'),
     nextPhase: optionalField(raw, 'next_phase', 'nextPhase'),
     nextAgent: optionalField(raw, 'next_agent', 'nextAgent'),

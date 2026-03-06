@@ -10,7 +10,7 @@ import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
 import { callPf, PfCache, toSlug, oceanSuffix, generateSlug } from '../shared/pf-cli.js';
 
 // Electron adds resourcesPath to process; not in Node.js types
-const electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
+const _electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,11 +58,11 @@ interface ThemeConfig {
 // Result helpers: { success: true, data } / { success: false, error }
 // ---------------------------------------------------------------------------
 
-function personaSuccess(data: Persona): { success: true; data: Persona } {
+function _personaSuccess(data: Persona): { success: true; data: Persona } {
   return { success: true, data };
 }
 
-function personaFailure(error: string): { success: false; error: string } {
+function _personaFailure(error: string): { success: false; error: string } {
   return { success: false, error };
 }
 

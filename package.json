@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "12.4.1",
+  "version": "12.5.0",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "main": "./packages/core/dist/index.js",
@@ -96,16 +96,22 @@
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "lucide-react": "^0.563.0",
-    "markdownlint-cli2": "^0.20.0",
+    "markdownlint-cli2": "^0.21.0",
     "tailwind-merge": "^3.4.0",
     "typescript": "^5.3.3",
-    "typescript-eslint": "^8.53.0"
+    "typescript-eslint": "^8.56.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "packageManager": "pnpm@9.0.0",
   "pnpm": {
+    "overrides": {
+      "minimatch": ">=9.0.7",
+      "rollup@>=4.0.0 <5": ">=4.59.0",
+      "ajv@<7": "~6.14.0",
+      "qs@>=6.7.0 <7": ">=6.14.2"
+    },
     "packageExtensions": {
       "dockview": {
         "peerDependencies": {

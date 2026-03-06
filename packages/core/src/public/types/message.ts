@@ -3,7 +3,7 @@
  *
  * Consolidated MessageData and related types used across Cyclist components.
  * Previously duplicated in MessagePanel, MessageView, Message, QuickActions,
- * SubagentSpan, and useMessageStream.
+ * and SubagentSpan.
  */
 
 /**

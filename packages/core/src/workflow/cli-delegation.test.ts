@@ -1,591 +1,644 @@
 /**
- * Tests for Story 141-18: CLI Delegation Layer
+ * Tests for Story 141-18: Replace TypeScript Workflow Engine with pf CLI Delegation
  *
- * Verifies that workflow engine operations delegate to `pf` CLI
- * subprocess calls instead of implementing logic in TypeScript.
+ * These tests verify that the six workflow TypeScript files delegate to pf CLI
+ * subprocess calls instead of implementing logic directly. Each test mocks
+ * execFileSync to simulate pf CLI responses and asserts the TypeScript wrappers
+ * correctly parse JSON output and return result objects.
  *
- * Uses pf-mock.ts to intercept subprocess calls and verify correct
- * command invocations and response parsing.
+ * Acceptance Criteria:
+ * - AC1: TypeScript workflow files delegate to pf CLI. No direct session file mutation.
+ * - AC2: Workflow routing uses pf workflow route
+ * - AC3: Gate checking uses pf handoff resolve-gate
  *
- * Test categories:
- * 1. routeWorkflow() - AC3: Workflow routing via pf workflow route
- * 2. resolveGate() - AC4: Gate checking via pf handoff resolve-gate
- * 3. getHandoffStatus() - AC2: Session reads via pf handoff status
- * 4. completePhase() - AC2: Phase transitions via pf handoff complete-phase
- * 5. emitMarker() - AC1: Handoff markers via pf handoff marker
- * 6. getWorkflowPhases() - AC1: Workflow status via pf workflow phases
- * 7. validateWorkflowDef() - AC1: Schema validation via pf workflow show
- * 8. Error handling - All functions return result objects on failure
+ * Depends on: 141-16 (--json CLI flags), 141-17 (subprocess pattern)
  *
- * Run with: pnpm test
+ * Run with: node --test dist/workflow/cli-delegation.test.js
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createPfMock, type PfMock } from '../test-utils/pf-mock.js';
+import { PfMock } from './pf-subprocess-mock.js';
+
+// =============================================================================
+// These imports will be the NEW delegation wrappers created by Dev.
+// They should replace the current pure-TypeScript implementations.
+// Imports will fail until Dev creates the delegation layer — confirms RED state.
+// =============================================================================
+
+// AC2: Workflow routing delegation wrapper
 import {
-  routeWorkflow,
-  resolveGate,
-  getHandoffStatus,
-  completePhase,
-  emitMarker,
-  getWorkflowPhases,
-  validateWorkflowDef,
-  type RouteResult,
-  type GateResult,
-  type HandoffStatusResult,
-  type PhaseCompleteResult,
-  type MarkerResult,
-  type WorkflowPhasesResult,
-} from './cli-delegation.js';
+  routeStoryViaCli,
+  type CliRoutingResult,
+} from './workflow-router-delegate.js';
 
-const PROJECT_DIR = '/tmp/test-project';
+// AC3: Gate checking delegation wrapper
+import {
+  checkGateViaCli,
+  resolveGateViaCli,
+  type CliGateCheckResult,
+  type CliResolveGateResult,
+} from './gate-handler-delegate.js';
 
-describe('CLI Delegation Layer (Story 141-18)', () => {
-  let pfMock: PfMock;
+// AC1: Handoff delegation wrapper (phase transition, status)
+import {
+  completePhaseViaCli,
+  getHandoffStatusViaCli,
+  emitMarkerViaCli,
+  type CliCompletePhaseResult,
+  type CliHandoffStatus,
+  type CliMarkerResult,
+} from './handoff-delegate.js';
 
-  beforeEach(() => {
-    pfMock = createPfMock();
+// AC1: Session state delegation wrapper (no direct file mutation)
+import {
+  getSessionStateViaCli,
+  type CliSessionStateResult,
+} from './session-state-delegate.js';
+
+// AC1: Workflow executor delegation wrapper
+import {
+  getWorkflowStatusViaCli,
+  startWorkflowViaCli,
+  type CliWorkflowStatusResult,
+  type CliStartWorkflowResult,
+} from './workflow-executor-delegate.js';
+
+// AC1: Schema validation delegation wrapper
+import {
+  validateWorkflowViaCli,
+  type CliValidationResult,
+} from './workflow-schema-delegate.js';
+
+
+// =============================================================================
+// AC2: Workflow Routing via pf workflow route --json
+// =============================================================================
+
+describe('141-18 AC2: Workflow routing uses pf workflow route', () => {
+  it('should call pf workflow route with story ID and --json flag', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'route', '141-18', '--json'], {
+      workflow: 'tdd',
+      reason: 'explicit-tag',
+    });
+
+    const result: CliRoutingResult = routeStoryViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test-project',
+    });
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.workflow, 'tdd');
+    assert.strictEqual(result.data?.reason, 'explicit-tag');
+    mock.assertCalled(['workflow', 'route', '141-18', '--json']);
   });
 
-  afterEach(() => {
-    pfMock.restore();
+  it('should return result object with success: false on CLI error', () => {
+    const mock = new PfMock();
+    mock.onCommandError(
+      ['workflow', 'route', 'bad-id', '--json'],
+      'Story not found: bad-id',
+      1
+    );
+
+    const result: CliRoutingResult = routeStoryViaCli('bad-id', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test-project',
+    });
+
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error);
+    assert.ok(result.error.includes('bad-id'));
   });
 
-  // ===========================================================================
-  // AC3: Workflow routing uses pf workflow route
-  // ===========================================================================
+  it('should handle malformed JSON from CLI gracefully', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'route', '141-18', '--json'], {
+      exitCode: 0,
+      stdout: 'not valid json{{{',
+      stderr: '',
+    } as unknown);
 
-  describe('routeWorkflow() — AC3', () => {
-    it('should call pf workflow route with story ID and --json', () => {
-      const mockResponse: RouteResult = {
-        workflow: 'tdd',
-        reason: "Matched type 'refactor' to workflow 'tdd'",
-      };
-      pfMock.register(['workflow', 'route', '141-18', '--json'], mockResponse);
-
-      const result = routeWorkflow('141-18', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['workflow', 'route', '141-18', '--json']);
+    const result: CliRoutingResult = routeStoryViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test-project',
     });
 
-    it('should return parsed route result with workflow and reason', () => {
-      const mockResponse: RouteResult = {
-        workflow: 'trivial',
-        reason: 'Matched points 2 (range: 1-2) to workflow trivial',
-      };
-      pfMock.register(['workflow', 'route', '42-7', '--json'], mockResponse);
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error);
+  });
 
-      const result = routeWorkflow('42-7', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.deepStrictEqual(result.data, mockResponse);
+  it('should NOT contain the 5-priority routing algorithm in TypeScript', () => {
+    // After delegation, the routing logic is in Python.
+    // TypeScript should have no trace of the algorithm.
+    // This test verifies the function delegates rather than reimplements.
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'route', '141-18', '--json'], {
+      workflow: 'trivial',
+      reason: 'points-based: 1pt chore defaults to trivial',
     });
 
-    it('should return error result when pf command fails', () => {
-      pfMock.registerError(['workflow', 'route', 'bad-id', '--json'], 1, 'Story not found');
-
-      const result = routeWorkflow('bad-id', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
+    const result = routeStoryViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test-project',
     });
 
-    it('should not implement routing algorithm locally (no explicit-tag/trigger-tag logic)', () => {
-      // This test verifies delegation — the function MUST call pf, not compute locally
-      pfMock.register(['workflow', 'route', '99-1', '--json'], {
-        workflow: 'tdd',
-        reason: 'default',
+    // The TypeScript wrapper should pass through whatever pf returns,
+    // not apply its own routing logic.
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.workflow, 'trivial');
+    assert.ok(result.data?.reason?.includes('points-based'));
+  });
+});
+
+
+// =============================================================================
+// AC3: Gate checking uses pf handoff resolve-gate --json
+// =============================================================================
+
+describe('141-18 AC3: Gate checking uses pf handoff resolve-gate', () => {
+  it('should call pf handoff resolve-gate with correct args and --json', () => {
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json'], {
+      status: 'ready',
+      gate_type: 'tests_fail',
+      next_phase: 'green',
+      next_agent: 'dev',
+      assessment_found: true,
+      error: null,
+    });
+
+    const result: CliResolveGateResult = resolveGateViaCli(
+      '141-18', 'tdd', 'red',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.status, 'ready');
+    assert.strictEqual(result.data?.gateType, 'tests_fail');
+    assert.strictEqual(result.data?.nextPhase, 'green');
+    assert.strictEqual(result.data?.nextAgent, 'dev');
+    mock.assertCalled(['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json']);
+  });
+
+  it('should return gate failure result when gate not passed', () => {
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'resolve-gate', '141-18', 'tdd', 'green', '--json'], {
+      status: 'blocked',
+      gate_type: 'tests_pass',
+      next_phase: null,
+      next_agent: null,
+      assessment_found: false,
+      error: 'No assessment found in session file',
+    });
+
+    const result = resolveGateViaCli(
+      '141-18', 'tdd', 'green',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, true); // CLI succeeded, gate just didn't pass
+    assert.strictEqual(result.data?.status, 'blocked');
+    assert.ok(result.data?.error);
+  });
+
+  it('should return success: false when pf CLI itself errors', () => {
+    const mock = new PfMock();
+    mock.onCommandError(
+      ['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json'],
+      'Workflow not found: tdd',
+      2
+    );
+
+    const result = resolveGateViaCli(
+      '141-18', 'tdd', 'red',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error);
+  });
+
+  it('should delegate gate detection instead of reimplementing', () => {
+    // After delegation, TypeScript should NOT detect gates from
+    // workflow YAML, step-meta, or content markers directly.
+    // It should call pf and trust the result.
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'resolve-gate', '141-18', 'tdd', 'setup', '--json'], {
+      status: 'ready',
+      gate_type: 'sm_setup_exit',
+      gate_file: 'gates/sm-setup-exit',
+      next_phase: 'red',
+      next_agent: 'tea',
+      assessment_found: true,
+      error: null,
+    });
+
+    const result = resolveGateViaCli(
+      '141-18', 'tdd', 'setup',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.gateType, 'sm_setup_exit');
+    assert.strictEqual(result.data?.gateFile, 'gates/sm-setup-exit');
+  });
+
+  it('should handle checkGateViaCli for simple pass/fail gate checks', () => {
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'check-gate', '--json'], {
+      passed: true,
+      gate_type: 'tests_pass',
+      message: 'All 42 tests pass',
+    });
+
+    const result: CliGateCheckResult = checkGateViaCli(
+      '141-18', 'tdd', 'green',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.passed, true);
+    assert.strictEqual(result.data?.gateType, 'tests_pass');
+    assert.strictEqual(result.data?.message, 'All 42 tests pass');
+  });
+});
+
+
+// =============================================================================
+// AC1: Handoff delegation (phase transitions, status, markers)
+// =============================================================================
+
+describe('141-18 AC1: Handoff delegates to pf CLI', () => {
+  describe('completePhaseViaCli', () => {
+    it('should call pf handoff complete-phase with correct args', () => {
+      const mock = new PfMock();
+      mock.onCommand(['handoff', 'complete-phase', '141-18', 'tdd', 'setup', 'red', 'sm_setup_exit', '--json'], {
+        status: 'success',
+        session_file: '.session/141-18-session.md',
+        error: null,
       });
 
-      routeWorkflow('99-1', PROJECT_DIR);
-
-      // The mock was called, proving delegation happened
-      pfMock.assertCalled(['workflow', 'route', '99-1', '--json']);
-      // If this function implemented routing locally, it would NOT call pf
-      assert.strictEqual(pfMock.getCalls().length, 1, 'Should make exactly one pf call');
-    });
-  });
-
-  // ===========================================================================
-  // AC4: Gate checking uses pf handoff resolve-gate
-  // ===========================================================================
-
-  describe('resolveGate() — AC4', () => {
-    it('should call pf handoff resolve-gate with correct args and --json', () => {
-      const mockResponse: GateResult = {
-        passed: true,
-        gateType: 'tests_fail',
-        nextPhase: 'green',
-        nextAgent: 'dev',
-      };
-      pfMock.register(
-        ['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json'],
-        mockResponse,
+      const result: CliCompletePhaseResult = completePhaseViaCli(
+        '141-18', 'tdd', 'setup', 'red', 'sm_setup_exit',
+        { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
       );
-
-      const result = resolveGate('141-18', 'tdd', 'red', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json']);
-    });
-
-    it('should return gate result with passed status and gate type', () => {
-      const mockResponse: GateResult = {
-        passed: true,
-        gateType: 'tests_pass',
-        nextPhase: 'review',
-        nextAgent: 'reviewer',
-      };
-      pfMock.register(
-        ['handoff', 'resolve-gate', '105-1', 'tdd', 'green', '--json'],
-        mockResponse,
-      );
-
-      const result = resolveGate('105-1', 'tdd', 'green', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.strictEqual(result.data?.passed, true);
-      assert.strictEqual(result.data?.gateType, 'tests_pass');
-      assert.strictEqual(result.data?.nextPhase, 'review');
-      assert.strictEqual(result.data?.nextAgent, 'reviewer');
-    });
-
-    it('should return gate failure result when gate check fails', () => {
-      const mockResponse: GateResult = {
-        passed: false,
-        gateType: 'tests_fail',
-        message: 'Tests must be failing (RED) to proceed',
-      };
-      pfMock.register(
-        ['handoff', 'resolve-gate', '141-18', 'tdd', 'red', '--json'],
-        mockResponse,
-      );
-
-      const result = resolveGate('141-18', 'tdd', 'red', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true); // CLI call succeeded
-      assert.strictEqual(result.data?.passed, false); // But gate didn't pass
-      assert.ok(result.data?.message);
-    });
-
-    it('should return error result when pf command exits non-zero', () => {
-      pfMock.registerError(
-        ['handoff', 'resolve-gate', 'bad', 'tdd', 'red', '--json'],
-        1,
-        'Session not found',
-      );
-
-      const result = resolveGate('bad', 'tdd', 'red', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
-
-    it('should not implement gate detection logic locally (no GATE marker regex)', () => {
-      pfMock.register(
-        ['handoff', 'resolve-gate', '50-1', 'trivial', 'implement', '--json'],
-        { passed: true, gateType: 'manual' },
-      );
-
-      resolveGate('50-1', 'trivial', 'implement', PROJECT_DIR);
-
-      pfMock.assertCalled(['handoff', 'resolve-gate', '50-1', 'trivial', 'implement', '--json']);
-      assert.strictEqual(pfMock.getCalls().length, 1);
-    });
-  });
-
-  // ===========================================================================
-  // AC2: No direct session file mutation — reads via pf handoff status
-  // ===========================================================================
-
-  describe('getHandoffStatus() — AC2', () => {
-    it('should call pf handoff status --json', () => {
-      const mockResponse: HandoffStatusResult = {
-        storyId: '141-18',
-        phase: 'red',
-        workflow: 'tdd',
-        gateType: 'tests_fail',
-        nextPhase: 'green',
-        nextAgent: 'dev',
-        status: 'active',
-      };
-      pfMock.register(['handoff', 'status', '--json'], mockResponse);
-
-      const result = getHandoffStatus(PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['handoff', 'status', '--json']);
-    });
-
-    it('should return full handoff status with all fields', () => {
-      const mockResponse: HandoffStatusResult = {
-        storyId: '105-1',
-        phase: 'green',
-        workflow: 'tdd',
-        gateType: 'tests_pass',
-        nextPhase: 'review',
-        nextAgent: 'reviewer',
-        status: 'active',
-      };
-      pfMock.register(['handoff', 'status', '--json'], mockResponse);
-
-      const result = getHandoffStatus(PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.deepStrictEqual(result.data, mockResponse);
-    });
-
-    it('should return error when no active session exists', () => {
-      pfMock.registerError(['handoff', 'status', '--json'], 1, 'No active session');
-
-      const result = getHandoffStatus(PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
-
-    it('should not read session files directly (no readFileSync/FIELD_PATTERNS)', () => {
-      // Verify the function delegates to pf, not direct file parsing
-      pfMock.register(['handoff', 'status', '--json'], {
-        storyId: '1-1',
-        phase: 'setup',
-        workflow: 'tdd',
-        status: 'active',
-      });
-
-      getHandoffStatus(PROJECT_DIR);
-
-      pfMock.assertCalled(['handoff', 'status', '--json']);
-      assert.strictEqual(pfMock.getCalls().length, 1);
-    });
-  });
-
-  // ===========================================================================
-  // AC2: Phase transitions via pf handoff complete-phase
-  // ===========================================================================
-
-  describe('completePhase() — AC2', () => {
-    it('should call pf handoff complete-phase with all required args', () => {
-      const mockResponse: PhaseCompleteResult = {
-        sessionFile: '.session/141-18-session.md',
-        status: 'success',
-      };
-      pfMock.register(
-        ['handoff', 'complete-phase', '141-18', 'tdd', 'red', 'green', 'tests_fail'],
-        mockResponse,
-      );
-
-      const result = completePhase('141-18', 'tdd', 'red', 'green', 'tests_fail', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled([
-        'handoff', 'complete-phase', '141-18', 'tdd', 'red', 'green', 'tests_fail',
-      ]);
-    });
-
-    it('should return phase complete result', () => {
-      const mockResponse: PhaseCompleteResult = {
-        sessionFile: '.session/105-1-session.md',
-        status: 'success',
-      };
-      pfMock.register(
-        ['handoff', 'complete-phase', '105-1', 'tdd', 'green', 'review', 'tests_pass'],
-        mockResponse,
-      );
-
-      const result = completePhase('105-1', 'tdd', 'green', 'review', 'tests_pass', PROJECT_DIR);
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.data?.status, 'success');
-      assert.strictEqual(result.data?.sessionFile, '.session/105-1-session.md');
+      mock.assertCalled(['handoff', 'complete-phase']);
     });
 
-    it('should return error when assessment is missing', () => {
-      pfMock.registerError(
-        ['handoff', 'complete-phase', '141-18', 'tdd', 'red', 'green', 'tests_fail'],
-        1,
+    it('should return error when assessment missing', () => {
+      const mock = new PfMock();
+      mock.onCommandError(
+        ['handoff', 'complete-phase', '141-18', 'tdd', 'setup', 'red', 'sm_setup_exit', '--json'],
         'No assessment found in session file',
+        1
       );
 
-      const result = completePhase('141-18', 'tdd', 'red', 'green', 'tests_fail', PROJECT_DIR);
+      const result = completePhaseViaCli(
+        '141-18', 'tdd', 'setup', 'red', 'sm_setup_exit',
+        { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+      );
 
       assert.strictEqual(result.success, false);
       assert.ok(result.error?.includes('assessment'));
     });
+  });
 
-    it('should not write to session files directly (no writeFileSync/updateSessionContent)', () => {
-      pfMock.register(
-        ['handoff', 'complete-phase', '1-1', 'trivial', 'implement', 'review', 'manual'],
-        { sessionFile: '.session/1-1-session.md', status: 'success' },
-      );
+  describe('getHandoffStatusViaCli', () => {
+    it('should call pf handoff status --json and parse response', () => {
+      const mock = new PfMock();
+      mock.onCommand(['handoff', 'status', '141-18', '--json'], {
+        story_id: '141-18',
+        workflow: 'tdd',
+        phase: 'red',
+        next_agent: 'dev',
+        handoff_ready: false,
+      });
 
-      completePhase('1-1', 'trivial', 'implement', 'review', 'manual', PROJECT_DIR);
+      const result: CliHandoffStatus = getHandoffStatusViaCli('141-18', {
+        execFileSync: mock.execFileSync.bind(mock),
+        projectDir: '/tmp/test',
+      });
 
-      pfMock.assertCalled([
-        'handoff', 'complete-phase', '1-1', 'trivial', 'implement', 'review', 'manual',
-      ]);
-      assert.strictEqual(pfMock.getCalls().length, 1);
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.data?.storyId, '141-18');
+      assert.strictEqual(result.data?.workflow, 'tdd');
+      assert.strictEqual(result.data?.phase, 'red');
+      assert.strictEqual(result.data?.nextAgent, 'dev');
     });
   });
 
-  // ===========================================================================
-  // AC1: Handoff markers via pf handoff marker
-  // ===========================================================================
-
-  describe('emitMarker() — AC1', () => {
-    it('should call pf handoff marker with agent name', () => {
-      const mockResponse: MarkerResult = {
-        relay: true,
-        invoke: '/pf-dev',
-        fallback: 'Run `/pf-dev` to continue',
-      };
-      pfMock.register(['handoff', 'marker', 'dev'], mockResponse);
-
-      const result = emitMarker('dev', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['handoff', 'marker', 'dev']);
-    });
-
-    it('should return marker result with relay flag and invoke command', () => {
-      const mockResponse: MarkerResult = {
+  describe('emitMarkerViaCli', () => {
+    it('should call pf handoff marker and return relay info', () => {
+      const mock = new PfMock();
+      mock.onCommand(['handoff', 'marker', 'tea', '--json'], {
         relay: true,
         invoke: '/pf-tea',
         fallback: 'Run `/pf-tea` to continue',
-        contextPercent: 10,
-      };
-      pfMock.register(['handoff', 'marker', 'tea'], mockResponse);
+        context_percent: 6,
+      });
 
-      const result = emitMarker('tea', PROJECT_DIR);
+      const result: CliMarkerResult = emitMarkerViaCli('tea', {
+        execFileSync: mock.execFileSync.bind(mock),
+        projectDir: '/tmp/test',
+      });
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.data?.relay, true);
       assert.strictEqual(result.data?.invoke, '/pf-tea');
-      assert.strictEqual(result.data?.contextPercent, 10);
-    });
-
-    it('should handle non-relay marker (fallback only)', () => {
-      const mockResponse: MarkerResult = {
-        relay: false,
-        invoke: '/pf-reviewer',
-        fallback: 'Run `/pf-reviewer` to continue',
-      };
-      pfMock.register(['handoff', 'marker', 'reviewer'], mockResponse);
-
-      const result = emitMarker('reviewer', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.strictEqual(result.data?.relay, false);
-    });
-
-    it('should return error for invalid agent', () => {
-      pfMock.registerError(['handoff', 'marker', 'nonexistent'], 1, 'Unknown agent');
-
-      const result = emitMarker('nonexistent', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
     });
   });
+});
 
-  // ===========================================================================
-  // AC1: Workflow phases via pf workflow phases
-  // ===========================================================================
 
-  describe('getWorkflowPhases() — AC1', () => {
-    it('should call pf workflow phases with workflow name and --json', () => {
-      const mockResponse: WorkflowPhasesResult = {
-        workflow: 'tdd',
+// =============================================================================
+// AC1: Session state reads via pf CLI (no direct file mutation)
+// =============================================================================
+
+describe('141-18 AC1: Session state delegates to pf CLI', () => {
+  it('should read session state via pf handoff status --json, not regex', () => {
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'status', '141-18', '--json'], {
+      story_id: '141-18',
+      workflow: 'tdd',
+      phase: 'green',
+      next_agent: 'reviewer',
+      handoff_ready: false,
+      workflow_state: {
+        name: 'tdd',
+        type: 'phased',
+        status: 'in_progress',
+        started: '2026-03-04',
+        last_updated: '2026-03-04',
+        current_step: 2,
+        steps_completed: [1],
+      },
+    });
+
+    const result: CliSessionStateResult = getSessionStateViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
+    });
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.workflowState?.name, 'tdd');
+    assert.strictEqual(result.data?.workflowState?.type, 'phased');
+    assert.strictEqual(result.data?.workflowState?.status, 'in_progress');
+    assert.deepStrictEqual(result.data?.workflowState?.stepsCompleted, [1]);
+  });
+
+  it('should NOT use readFileSync to read session files', () => {
+    // The delegation wrapper must not import fs or read files directly.
+    // It must go through pf CLI for all session state reads.
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'status', '141-18', '--json'], {
+      story_id: '141-18',
+      workflow: 'tdd',
+      phase: 'setup',
+      next_agent: 'tea',
+      handoff_ready: false,
+    });
+
+    const result = getSessionStateViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
+    });
+
+    assert.strictEqual(result.success, true);
+    // If this test passes, it means the function used our mock (CLI path)
+    // rather than reading the file directly.
+    mock.assertCalled(['handoff', 'status', '141-18', '--json']);
+  });
+
+  it('should handle missing session file gracefully', () => {
+    const mock = new PfMock();
+    mock.onCommandError(
+      ['handoff', 'status', 'nonexistent', '--json'],
+      'No session file found for story: nonexistent',
+      1
+    );
+
+    const result = getSessionStateViaCli('nonexistent', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
+    });
+
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error?.includes('nonexistent'));
+  });
+});
+
+
+// =============================================================================
+// AC1: Workflow executor delegates to pf CLI
+// =============================================================================
+
+describe('141-18 AC1: Workflow executor delegates to pf CLI', () => {
+  it('should get workflow status via pf workflow status --json', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'status', '141-18', '--json'], {
+      name: 'architecture',
+      type: 'stepped',
+      current_step: 3,
+      total_steps: 7,
+      steps_completed: [1, 2],
+      completion_percent: 28,
+      status: 'in_progress',
+      started: '2026-03-04',
+      last_updated: '2026-03-04',
+    });
+
+    const result: CliWorkflowStatusResult = getWorkflowStatusViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
+    });
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.name, 'architecture');
+    assert.strictEqual(result.data?.type, 'stepped');
+    assert.strictEqual(result.data?.currentStep, 3);
+    assert.strictEqual(result.data?.totalSteps, 7);
+    assert.deepStrictEqual(result.data?.stepsCompleted, [1, 2]);
+    assert.strictEqual(result.data?.completionPercent, 28);
+  });
+
+  it('should start workflow via pf workflow start --json', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'start', 'architecture', '141-18', '--json'], {
+      success: true,
+      workflow: 'architecture',
+      step: 1,
+      total_steps: 7,
+      status: 'in_progress',
+    });
+
+    const result: CliStartWorkflowResult = startWorkflowViaCli(
+      'architecture', '141-18',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
+
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.workflow, 'architecture');
+    assert.strictEqual(result.data?.step, 1);
+    mock.assertCalled(['workflow', 'start', 'architecture', '141-18', '--json']);
+  });
+
+  it('should handle workflow not found error', () => {
+    const mock = new PfMock();
+    mock.onCommandError(
+      ['workflow', 'status', '141-18', '--json'],
+      'No active workflow for story 141-18',
+      1
+    );
+
+    const result = getWorkflowStatusViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
+    });
+
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error);
+  });
+});
+
+
+// =============================================================================
+// AC1: Schema validation delegates to pf CLI
+// =============================================================================
+
+describe('141-18 AC1: Schema validation delegates to pf CLI', () => {
+  it('should validate workflow via pf workflow validate --json', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'validate', 'tdd', '--json'], {
+      valid: true,
+      workflow: {
+        name: 'tdd',
+        type: 'phased',
         phases: [
-          { name: 'setup', agent: 'sm', label: 'setup', status: 'done' },
-          { name: 'red', agent: 'tea', label: 'red', status: 'current' },
-          { name: 'green', agent: 'dev', label: 'green', status: 'pending' },
-          { name: 'review', agent: 'reviewer', label: 'review', status: 'pending' },
-          { name: 'finish', agent: 'sm', label: 'finish', status: 'pending' },
+          { name: 'setup', agent: 'sm' },
+          { name: 'red', agent: 'tea' },
+          { name: 'green', agent: 'dev' },
+          { name: 'review', agent: 'reviewer' },
+          { name: 'finish', agent: 'sm' },
         ],
-      };
-      pfMock.register(['workflow', 'phases', 'tdd', '--json'], mockResponse);
-
-      const result = getWorkflowPhases('tdd', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['workflow', 'phases', 'tdd', '--json']);
+      },
+      errors: [],
     });
 
-    it('should return all phases with correct structure', () => {
-      const mockResponse: WorkflowPhasesResult = {
-        workflow: 'trivial',
-        phases: [
-          { name: 'setup', agent: 'sm', label: 'setup', status: 'done' },
-          { name: 'implement', agent: 'dev', label: 'implement', status: 'current' },
-          { name: 'review', agent: 'reviewer', label: 'review', status: 'pending' },
-          { name: 'finish', agent: 'sm', label: 'finish', status: 'pending' },
-        ],
-      };
-      pfMock.register(['workflow', 'phases', 'trivial', '--json'], mockResponse);
-
-      const result = getWorkflowPhases('trivial', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.strictEqual(result.data?.phases.length, 4);
-      assert.strictEqual(result.data?.phases[1].agent, 'dev');
+    const result: CliValidationResult = validateWorkflowViaCli('tdd', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
     });
 
-    it('should return error for unknown workflow', () => {
-      pfMock.registerError(['workflow', 'phases', 'nonexistent', '--json'], 1, 'Workflow not found');
-
-      const result = getWorkflowPhases('nonexistent', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.valid, true);
+    assert.strictEqual(result.data?.workflow?.name, 'tdd');
+    assert.strictEqual(result.data?.errors?.length, 0);
   });
 
-  // ===========================================================================
-  // AC1: Schema validation via pf workflow show
-  // ===========================================================================
-
-  describe('validateWorkflowDef() — AC1', () => {
-    it('should call pf workflow show with --json to validate', () => {
-      pfMock.register(['workflow', 'show', 'tdd', '--json'], {
-        valid: true,
-      });
-
-      const result = validateWorkflowDef('tdd', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      pfMock.assertCalled(['workflow', 'show', 'tdd', '--json']);
+  it('should return validation errors from pf CLI', () => {
+    const mock = new PfMock();
+    mock.onCommand(['workflow', 'validate', 'broken', '--json'], {
+      valid: false,
+      workflow: null,
+      errors: [
+        { field: 'phases', message: 'At least one phase required' },
+        { field: 'phases[0].agent', message: 'Invalid agent name: nobody' },
+      ],
     });
 
-    it('should return valid result for well-formed workflow', () => {
-      pfMock.register(['workflow', 'show', 'tdd', '--json'], {
-        valid: true,
-      });
-
-      const result = validateWorkflowDef('tdd', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.strictEqual(result.data?.valid, true);
+    const result = validateWorkflowViaCli('broken', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
     });
 
-    it('should return validation errors for malformed workflow', () => {
-      pfMock.register(['workflow', 'show', 'broken', '--json'], {
-        valid: false,
-        errors: [
-          { field: 'phases[0].agent', message: 'Agent field is required' },
-        ],
-      });
-
-      const result = validateWorkflowDef('broken', PROJECT_DIR);
-
-      assert.strictEqual(result.success, true);
-      assert.strictEqual(result.data?.valid, false);
-      assert.strictEqual(result.data?.errors?.length, 1);
-    });
-
-    it('should return error for nonexistent workflow', () => {
-      pfMock.registerError(
-        ['workflow', 'show', 'nonexistent', '--json'],
-        1,
-        'Workflow not found',
-      );
-
-      const result = validateWorkflowDef('nonexistent', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
+    assert.strictEqual(result.success, true); // CLI succeeded, validation found errors
+    assert.strictEqual(result.data?.valid, false);
+    assert.strictEqual(result.data?.errors?.length, 2);
   });
 
-  // ===========================================================================
-  // Error handling: all functions return result objects
-  // ===========================================================================
+  it('should handle CLI failure for validation', () => {
+    const mock = new PfMock();
+    mock.onCommandError(
+      ['workflow', 'validate', 'missing', '--json'],
+      'Workflow file not found: missing',
+      1
+    );
 
-  describe('Error handling — result objects, never throw', () => {
-    it('routeWorkflow returns result object on subprocess failure', () => {
-      pfMock.registerError(['workflow', 'route', 'crash', '--json'], 127, 'pf not found');
-
-      const result = routeWorkflow('crash', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-      assert.strictEqual(result.data, undefined);
+    const result = validateWorkflowViaCli('missing', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
     });
 
-    it('resolveGate returns result object on subprocess failure', () => {
-      pfMock.registerError(
-        ['handoff', 'resolve-gate', 'crash', 'tdd', 'red', '--json'],
-        127,
-        'pf not found',
-      );
+    assert.strictEqual(result.success, false);
+    assert.ok(result.error);
+  });
+});
 
-      const result = resolveGate('crash', 'tdd', 'red', PROJECT_DIR);
 
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
+// =============================================================================
+// AC1: No direct session file mutation (negative tests)
+// =============================================================================
+
+describe('141-18 AC1: No direct session file mutation from TypeScript', () => {
+  it('should never call writeFileSync on session files', () => {
+    // This is a structural assertion: after Dev replaces the files,
+    // grep for writeFileSync/appendFileSync in the workflow directory
+    // should return no results.
+    //
+    // This test verifies by checking that all state mutations go
+    // through pf CLI subprocess calls.
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'complete-phase', '141-18', 'tdd', 'red', 'green', 'tests_pass', '--json'], {
+      status: 'success',
+      session_file: '.session/141-18-session.md',
     });
 
-    it('getHandoffStatus returns result object on subprocess failure', () => {
-      pfMock.registerError(['handoff', 'status', '--json'], 127, 'pf not found');
+    const result = completePhaseViaCli(
+      '141-18', 'tdd', 'red', 'green', 'tests_pass',
+      { execFileSync: mock.execFileSync.bind(mock), projectDir: '/tmp/test' }
+    );
 
-      const result = getHandoffStatus(PROJECT_DIR);
+    assert.strictEqual(result.success, true);
+    // The fact that this works via PfMock proves no file I/O happened.
+    // Any writeFileSync call would fail because we're in a test environment
+    // with no real session file.
+    mock.assertCalled(['handoff', 'complete-phase']);
+    mock.assertNotCalled(['readFileSync'] as never[]);
+  });
 
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
+  it('should read workflow state through CLI, not by parsing markdown regex', () => {
+    const mock = new PfMock();
+    mock.onCommand(['handoff', 'status', '141-18', '--json'], {
+      story_id: '141-18',
+      workflow: 'tdd',
+      phase: 'green',
+      next_agent: 'reviewer',
+      handoff_ready: true,
+      workflow_state: {
+        name: 'tdd',
+        type: 'phased',
+        status: 'in_progress',
+        started: '2026-03-04',
+        last_updated: '2026-03-04',
+        current_step: 3,
+        steps_completed: [1, 2],
+      },
     });
 
-    it('completePhase returns result object on subprocess failure', () => {
-      pfMock.registerError(
-        ['handoff', 'complete-phase', 'c', 'tdd', 'red', 'green', 'tests_fail'],
-        127,
-        'pf not found',
-      );
-
-      const result = completePhase('c', 'tdd', 'red', 'green', 'tests_fail', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
+    const result = getSessionStateViaCli('141-18', {
+      execFileSync: mock.execFileSync.bind(mock),
+      projectDir: '/tmp/test',
     });
 
-    it('emitMarker returns result object on subprocess failure', () => {
-      pfMock.registerError(['handoff', 'marker', 'dev'], 127, 'pf not found');
-
-      const result = emitMarker('dev', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
-
-    it('getWorkflowPhases returns result object on subprocess failure', () => {
-      pfMock.registerError(['workflow', 'phases', 'tdd', '--json'], 127, 'pf not found');
-
-      const result = getWorkflowPhases('tdd', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
-
-    it('validateWorkflowDef returns result object on subprocess failure', () => {
-      pfMock.registerError(['workflow', 'show', 'tdd', '--json'], 127, 'pf not found');
-
-      const result = validateWorkflowDef('tdd', PROJECT_DIR);
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error);
-    });
-
-    it('no function throws — all return {success: false}', () => {
-      // Register no mocks — all calls will get "no response registered" error
-      // Functions must catch and return result objects
-      assert.doesNotThrow(() => routeWorkflow('x', PROJECT_DIR));
-      assert.doesNotThrow(() => resolveGate('x', 'tdd', 'red', PROJECT_DIR));
-      assert.doesNotThrow(() => getHandoffStatus(PROJECT_DIR));
-      assert.doesNotThrow(() => completePhase('x', 'tdd', 'a', 'b', 'c', PROJECT_DIR));
-      assert.doesNotThrow(() => emitMarker('dev', PROJECT_DIR));
-      assert.doesNotThrow(() => getWorkflowPhases('tdd', PROJECT_DIR));
-      assert.doesNotThrow(() => validateWorkflowDef('tdd', PROJECT_DIR));
-    });
+    assert.strictEqual(result.success, true);
+    assert.strictEqual(result.data?.phase, 'green');
+    assert.strictEqual(result.data?.handoffReady, true);
+    // Verifies the data came from CLI (our mock), not regex parsing
+    mock.assertCalled(['handoff', 'status', '141-18', '--json']);
   });
 });

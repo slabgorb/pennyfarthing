@@ -42,7 +42,7 @@ _PHASE_LABELS: dict[str, str] = {
 }
 
 
-def _render_workflow_dots(workflow: str, current_phase: str) -> Text | None:
+def _render_workflow_dots(workflow: str, current_phase: str, status: str = "") -> Text | None:
     """Render workflow phase dots: [tdd] ✓ SM → ✓ TEA → ● Dev → ○ Rev → ○ SM"""
     phases = _WORKFLOW_PHASES.get(workflow)
     if not phases:
@@ -59,12 +59,14 @@ def _render_workflow_dots(workflow: str, current_phase: str) -> Text | None:
     line.append(f"[{workflow}]", style="bold")
     line.append("  ")
 
+    # Completed stories: all phases done
+    all_done = status in ("done", "canceled") or (not current_phase and status not in ("backlog", "ready"))
     current_idx = phases.index(current_phase) if current_phase in phases else -1
 
     for i, phase in enumerate(phases):
         label = _PHASE_LABELS.get(phase, phase)
 
-        if current_idx >= 0 and i < current_idx:
+        if all_done or (current_idx >= 0 and i < current_idx):
             line.append("\u2713", style="green")
             line.append(f" {label}", style="dim")
         elif phase == current_phase:
@@ -177,7 +179,7 @@ class StoryDetailScreen(Screen):
         workflow = data.get("workflow", "")
         phase = data.get("workflow_phase", "")
         if workflow:
-            wf_text = _render_workflow_dots(workflow, phase)
+            wf_text = _render_workflow_dots(workflow, phase, status=status)
             if wf_text is not None:
                 yield Static(wf_text, id="dossier-workflow")
 

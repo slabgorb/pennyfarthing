@@ -206,7 +206,7 @@ Teammates are phase-scoped — created at phase start, destroyed at phase end.
 </team-mode>
 
 <research-tools>
-Use Context7 to spot-check suspicious API patterns — deprecated APIs, changed signatures, things that look wrong. See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to spot-check suspicious API patterns — deprecated APIs, changed signatures, things that look wrong. Use Perplexity when something looks off — `perplexity_ask` to verify best practices and check for known vulnerabilities in patterns you encounter. Scope this to suspicious code, not every line. See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>

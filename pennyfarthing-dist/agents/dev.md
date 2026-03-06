@@ -249,7 +249,7 @@ Teammates are phase-scoped — created at phase start, destroyed at phase end.
 </team-mode>
 
 <research-tools>
-Use Context7 to verify external library APIs before writing code (new/unfamiliar libraries, version uncertainty, deprecation warnings). See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to verify external library APIs before writing code (new/unfamiliar libraries, version uncertainty, deprecation warnings). Use Perplexity for broader research — `perplexity_ask` is your default for dependency lookups, error diagnosis, and best-practice checks. Use `perplexity_search` to find changelogs and release notes. Avoid `perplexity_research` — it's too slow for implementation work (Architect only). See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>
