@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.5.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.6.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -377,16 +377,15 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.5.0
+## What's New in v12.6.0
 
-- **Scenario Builder workflow** — Interactive stepped workflow for building benchmark scenarios (MSSCI-16234)
-- **Anchored judge rubrics** — Benchmark judge prompts include reference anchors for consistent scoring (MSSCI-16220)
-- **Multi-judge /solo** — `--multi-judge` flag for comparative persona scoring (MSSCI-16215)
-- **pf CLI workflow engine** — TypeScript BikeLane engine replaced with Python CLI delegation (141-18)
-- **Core API test coverage** — Tests for agent-load through welcome API routes
+- **Gold standard calibration** — Benchmark scenarios support gold_standard references for judge calibration (MSSCI-16225)
+- **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
+- **TUI persona fix** — BikeRack TUI now correctly shows the active agent instead of defaulting to orchestrator
 
 ### Previous Highlights
 
+- **v12.5** - Scenario Builder workflow, anchored judge rubrics, multi-judge /solo, pf CLI workflow engine, core API test coverage
 - **v12.4** - SOUL.md bootstrap, PR title config, consumer gate extensions, in-review status, result objects
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
