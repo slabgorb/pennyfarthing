@@ -1733,6 +1733,17 @@
   font-style: italic;
 }
 
+.enhanced-sprint-panel .story-item .story-assignee.assignee-in-review {
+  color: var(--accent, #818cf8);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.enhanced-sprint-panel .story-item .story-status-badge.status-in-review {
+  color: var(--accent, #818cf8);
+  border-color: var(--accent, #818cf8);
+}
+
 .enhanced-sprint-panel .story-item .story-workflow-badge {
   font-size: 0.5625rem;
   text-transform: uppercase;
