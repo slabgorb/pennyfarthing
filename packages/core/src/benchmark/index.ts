@@ -49,3 +49,11 @@ export {
   type JudgeScore,
   type BenchmarkResultWithOcean,
 } from './benchmark-integration.js';
+
+export {
+  validateGoldStandard,
+  validateScenario,
+  type GoldStandard,
+  type ScenarioData,
+  type ValidationResult,
+} from './scenario-validator.js';

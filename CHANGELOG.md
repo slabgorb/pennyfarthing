@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.6.0] - 2026-03-06
+
+### Added
+
+- **Gold standard schema for scenarios** — Benchmark scenarios support gold_standard calibration references (MSSCI-16225)
+- **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
+
+### Fixed
+
+- **TUI showing wrong agent persona** — BikeRack TUI launcher now forwards SESSION_ID to WheelHub for correct agent detection
+- **Scenario validator test casts** — Use double-cast in scenario-validator tests for type safety
+
 ## [12.5.0] - 2026-03-06
 
 ### Added
