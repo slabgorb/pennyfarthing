@@ -28,6 +28,12 @@ CHANGELOG.md comparison links are correct.
 Run `pennyfarthing-dist/scripts/git/changelog-links.sh --validate`. Exit code 0 = pass.
 </check>
 
+<check name="bundle-in-sync">
+wheelhub.mjs bundle matches TypeScript source.
+Run `scripts/check-bundle-drift.sh`. Exit code 0 = pass.
+If stale, run `just rebuild-wheelhub` before releasing.
+</check>
+
 <pass>
 Run all checks from `gates/tests-pass` (test-suite, working-tree, branch-status),
 then run build-succeeds, version-bumped, changelog-updated, and changelog-links-valid.
@@ -61,6 +67,9 @@ GATE_RESULT:
     - name: changelog-links-valid
       status: pass
       detail: "Comparison links correct ({count} versions)"
+    - name: bundle-in-sync
+      status: pass
+      detail: "wheelhub.mjs matches server/*.ts source"
 ```
 </pass>
 
@@ -101,6 +110,7 @@ GATE_RESULT:
     - "Run: npm version patch|minor|major"
     - "Add changelog entry for v{version}"
     - "Run: pennyfarthing-dist/scripts/git/changelog-links.sh --fix"
+    - "Run: just rebuild-wheelhub (if bundle-in-sync fails)"
 ```
 </fail>
 
