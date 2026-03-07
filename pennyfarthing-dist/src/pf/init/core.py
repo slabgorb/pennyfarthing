@@ -213,10 +213,125 @@ def verify_pf_cli() -> dict:
     }
 
 
+def preview_hook_changes(
+    target_dir: Path,
+    dist_root: Path,
+) -> dict:
+    """Preview what hook changes pf init would make to settings.local.json.
+
+    Returns:
+        {
+            "has_changes": bool,
+            "is_new": bool,          # True if settings.local.json doesn't exist yet
+            "added": list[str],      # Hook commands that would be added
+            "removed": list[str],    # Hook commands that would be removed
+            "upgraded": list[str],   # Hook commands that would be rewritten
+        }
+    """
+    settings_path = target_dir / ".claude" / "settings.local.json"
+
+    if not settings_path.exists():
+        frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
+        merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
+        all_commands = []
+        for _event, entries in merged.get("hooks", {}).items():
+            for entry in entries:
+                for h in entry.get("hooks", []):
+                    if isinstance(h, dict) and h.get("command"):
+                        all_commands.append(h["command"])
+        return {
+            "has_changes": True,
+            "is_new": True,
+            "added": all_commands,
+            "removed": [],
+            "upgraded": [],
+        }
+
+    try:
+        before = json.loads(settings_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {"has_changes": False, "is_new": False, "added": [], "removed": [], "upgraded": []}
+
+    # Simulate the upgrade + merge
+    import copy
+    after = copy.deepcopy(before)
+    frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
+
+    # Simulate _upgrade_hooks inline (without writing)
+    hooks = after.get("hooks", {})
+    for hook_type, canonical_entries in INFRASTRUCTURE_HOOKS.items():
+        existing = hooks.get(hook_type, [])
+        if not isinstance(existing, list):
+            existing = []
+        has_dispatcher = any(
+            "pf hooks dispatch" in h.get("command", "")
+            for entry in existing
+            for h in entry.get("hooks", [])
+            if isinstance(h, dict)
+        )
+        if not has_dispatcher:
+            project_hooks = []
+            for entry in existing:
+                hook_list = entry.get("hooks", [])
+                is_old_pf = any(
+                    _is_old_pf_hook_command(h.get("command", ""))
+                    for h in hook_list
+                    if isinstance(h, dict)
+                )
+                if not is_old_pf:
+                    project_hooks.append(entry)
+            hooks[hook_type] = canonical_entries + project_hooks
+    after["hooks"] = hooks
+
+    after = merge_with_infrastructure(after, frontmatter_hooks)
+    resolve_hook_paths(after, target_dir)
+
+    # Also resolve before for comparison
+    before_resolved = copy.deepcopy(before)
+    resolve_hook_paths(before_resolved, target_dir)
+
+    # Diff the hook commands
+    def _extract_commands(settings: dict) -> set[str]:
+        cmds: set[str] = set()
+        for _event, entries in settings.get("hooks", {}).items():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                for h in entry.get("hooks", []):
+                    if isinstance(h, dict) and h.get("command"):
+                        cmds.add(h["command"])
+        return cmds
+
+    before_cmds = _extract_commands(before_resolved)
+    after_cmds = _extract_commands(after)
+
+    added = sorted(after_cmds - before_cmds)
+    removed = sorted(before_cmds - after_cmds)
+
+    # Check for upgraded (rewritten) commands — same dispatch name, different path
+    upgraded: list[str] = []
+    before_raw = _extract_commands(before)
+    after_raw = _extract_commands(after)
+    for cmd in before_raw:
+        if cmd not in after_raw and cmd not in removed:
+            upgraded.append(cmd)
+
+    has_changes = bool(added or removed or upgraded) or (after != before_resolved)
+
+    return {
+        "has_changes": has_changes,
+        "is_new": False,
+        "added": added,
+        "removed": removed,
+        "upgraded": upgraded,
+    }
+
+
 def init_project(
     target_dir: Path,
     dist_root: Path,
     dry_run: bool = False,
+    skip_hooks: bool = False,
 ) -> dict:
     """Initialize a Pennyfarthing project.
 
@@ -373,12 +488,15 @@ def init_project(
     settings_path = target_dir / ".claude" / "settings.local.json"
     settings_written = False
     hooks_upgraded = False
+    hooks_skipped = False
     frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
     if not settings_path.exists():
         merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
         resolve_hook_paths(merged, target_dir)
         settings_path.write_text(json.dumps(merged, indent=2) + "\n")
         settings_written = True
+    elif skip_hooks:
+        hooks_skipped = True
     else:
         hooks_upgraded = _upgrade_hooks(settings_path)
         # Merge frontmatter hooks into existing settings
@@ -390,7 +508,8 @@ def init_project(
             hooks_upgraded = True
 
     # --- Clean parked Cyclist hooks from settings and config ---
-    _clean_parked_hooks(settings_path, target_dir)
+    if not hooks_skipped:
+        _clean_parked_hooks(settings_path, target_dir)
 
     # --- Write init manifest ---
     if is_dogfooding:

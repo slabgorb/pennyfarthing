@@ -115,7 +115,7 @@ def _build_summary(
     if not missing_infra and not missing_frontmatter and not deprecated:
         return ""
 
-    lines: list[str] = ["Hooks are outdated. Run `pf init` to upgrade.\n"]
+    lines: list[str] = ["Framework hooks have been updated since last `pf init`.\n"]
 
     if missing_infra:
         lines.append("Missing infrastructure hooks:")
