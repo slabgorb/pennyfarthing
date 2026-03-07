@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.6.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.6.1** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -377,7 +377,7 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.6.0
+## What's New in v12.6.1
 
 - **Gold standard calibration** — Benchmark scenarios support gold_standard references for judge calibration (MSSCI-16225)
 - **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
