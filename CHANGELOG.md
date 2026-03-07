@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TUI agent display stuck on ORC** — `getCurrentAgent()` now falls back to most recently modified agent file when `CYCLIST_SESSION_ID` is not set (standalone WheelHub via `just wheelhub`)
+- **Ghostty portrait support** — Detect Ghostty terminal as kitty graphics protocol for inline portraits
 - **Hook change confirmation in pf init** — Added confirmation prompt for hook changes and fixed WheelHub bundle handling during init
 
 ## [12.6.0] - 2026-03-06

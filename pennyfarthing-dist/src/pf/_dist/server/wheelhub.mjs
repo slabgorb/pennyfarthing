@@ -16096,9 +16096,9 @@ var require_side_channel = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/formats.js
+// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/formats.js
 var require_formats = __commonJS({
-  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/formats.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/formats.js"(exports, module) {
     "use strict";
     var replace = String.prototype.replace;
     var percentTwenties = /%20/g;
@@ -16122,9 +16122,9 @@ var require_formats = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/utils.js
+// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/utils.js
 var require_utils = __commonJS({
-  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/utils.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/utils.js"(exports, module) {
     "use strict";
     var formats = require_formats();
     var getSideChannel = require_side_channel();
@@ -16147,7 +16147,7 @@ var require_utils = __commonJS({
     var hexTable = (function() {
       var array = [];
       for (var i = 0; i < 256; ++i) {
-        array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
+        array[array.length] = "%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase();
       }
       return array;
     })();
@@ -16159,7 +16159,7 @@ var require_utils = __commonJS({
           var compacted = [];
           for (var j = 0; j < obj.length; ++j) {
             if (typeof obj[j] !== "undefined") {
-              compacted.push(obj[j]);
+              compacted[compacted.length] = obj[j];
             }
           }
           item.obj[item.prop] = compacted;
@@ -16181,12 +16181,18 @@ var require_utils = __commonJS({
       }
       if (typeof source !== "object" && typeof source !== "function") {
         if (isArray(target)) {
-          target.push(source);
+          var nextIndex = target.length;
+          if (options && typeof options.arrayLimit === "number" && nextIndex > options.arrayLimit) {
+            return markOverflow(arrayToObject(target.concat(source), options), nextIndex);
+          }
+          target[nextIndex] = source;
         } else if (target && typeof target === "object") {
           if (isOverflow(target)) {
             var newIndex = getMaxIndex(target) + 1;
             target[newIndex] = source;
             setMaxIndex(target, newIndex);
+          } else if (options && options.strictMerge) {
+            return [target, source];
           } else if (options && (options.plainObjects || options.allowPrototypes) || !has.call(Object.prototype, source)) {
             target[source] = true;
           }
@@ -16205,7 +16211,11 @@ var require_utils = __commonJS({
           }
           return markOverflow(result, getMaxIndex(source) + 1);
         }
-        return [target].concat(source);
+        var combined = [target].concat(source);
+        if (options && typeof options.arrayLimit === "number" && combined.length > options.arrayLimit) {
+          return markOverflow(arrayToObject(combined, options), combined.length - 1);
+        }
+        return combined;
       }
       var mergeTarget = target;
       if (isArray(target) && !isArray(source)) {
@@ -16218,7 +16228,7 @@ var require_utils = __commonJS({
             if (targetItem && typeof targetItem === "object" && item && typeof item === "object") {
               target[i] = merge2(targetItem, item, options);
             } else {
-              target.push(item);
+              target[target.length] = item;
             }
           } else {
             target[i] = item;
@@ -16232,6 +16242,15 @@ var require_utils = __commonJS({
           acc[key] = merge2(acc[key], value, options);
         } else {
           acc[key] = value;
+        }
+        if (isOverflow(source) && !isOverflow(acc)) {
+          markOverflow(acc, getMaxIndex(source));
+        }
+        if (isOverflow(acc)) {
+          var keyNum = parseInt(key, 10);
+          if (String(keyNum) === key && keyNum >= 0 && keyNum > getMaxIndex(acc)) {
+            setMaxIndex(acc, keyNum);
+          }
         }
         return acc;
       }, mergeTarget);
@@ -16310,8 +16329,8 @@ var require_utils = __commonJS({
           var key = keys[j];
           var val = obj[key];
           if (typeof val === "object" && val !== null && refs.indexOf(val) === -1) {
-            queue.push({ obj, prop: key });
-            refs.push(val);
+            queue[queue.length] = { obj, prop: key };
+            refs[refs.length] = val;
           }
         }
       }
@@ -16344,7 +16363,7 @@ var require_utils = __commonJS({
       if (isArray(val)) {
         var mapped = [];
         for (var i = 0; i < val.length; i += 1) {
-          mapped.push(fn(val[i]));
+          mapped[mapped.length] = fn(val[i]);
         }
         return mapped;
       }
@@ -16360,15 +16379,16 @@ var require_utils = __commonJS({
       isBuffer,
       isOverflow,
       isRegExp,
+      markOverflow,
       maybeMap,
       merge
     };
   }
 });
 
-// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/stringify.js
+// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/stringify.js
 var require_stringify = __commonJS({
-  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/stringify.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/stringify.js"(exports, module) {
     "use strict";
     var getSideChannel = require_side_channel();
     var utils = require_utils();
@@ -16649,9 +16669,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/parse.js
+// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/parse.js
 var require_parse = __commonJS({
-  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/parse.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/parse.js"(exports, module) {
     "use strict";
     var utils = require_utils();
     var has = Object.prototype.hasOwnProperty;
@@ -16676,6 +16696,7 @@ var require_parse = __commonJS({
       parseArrays: true,
       plainObjects: false,
       strictDepth: false,
+      strictMerge: true,
       strictNullHandling: false,
       throwOnLimitExceeded: false
     };
@@ -16756,9 +16777,15 @@ var require_parse = __commonJS({
         if (part.indexOf("[]=") > -1) {
           val = isArray(val) ? [val] : val;
         }
+        if (options.comma && isArray(val) && val.length > options.arrayLimit) {
+          if (options.throwOnLimitExceeded) {
+            throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
+          }
+          val = utils.combine([], val, options.arrayLimit, options.plainObjects);
+        }
         if (key !== null) {
           var existing = has.call(obj, key);
-          if (existing && options.duplicates === "combine") {
+          if (existing && (options.duplicates === "combine" || part.indexOf("[]=") > -1)) {
             obj[key] = utils.combine(
               obj[key],
               val,
@@ -16798,11 +16825,17 @@ var require_parse = __commonJS({
           var cleanRoot = root.charAt(0) === "[" && root.charAt(root.length - 1) === "]" ? root.slice(1, -1) : root;
           var decodedRoot = options.decodeDotInKeys ? cleanRoot.replace(/%2E/g, ".") : cleanRoot;
           var index = parseInt(decodedRoot, 10);
+          var isValidArrayIndex = !isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && options.parseArrays;
           if (!options.parseArrays && decodedRoot === "") {
             obj = { 0: leaf };
-          } else if (!isNaN(index) && root !== decodedRoot && String(index) === decodedRoot && index >= 0 && (options.parseArrays && index <= options.arrayLimit)) {
+          } else if (isValidArrayIndex && index < options.arrayLimit) {
             obj = [];
             obj[index] = leaf;
+          } else if (isValidArrayIndex && options.throwOnLimitExceeded) {
+            throw new RangeError("Array limit exceeded. Only " + options.arrayLimit + " element" + (options.arrayLimit === 1 ? "" : "s") + " allowed in an array.");
+          } else if (isValidArrayIndex) {
+            obj[index] = leaf;
+            utils.markOverflow(obj, index);
           } else if (decodedRoot !== "__proto__") {
             obj[decodedRoot] = leaf;
           }
@@ -16832,7 +16865,7 @@ var require_parse = __commonJS({
             return;
           }
         }
-        keys.push(parent);
+        keys[keys.length] = parent;
       }
       var i = 0;
       while ((segment = child.exec(key)) !== null && i < options.depth) {
@@ -16843,13 +16876,13 @@ var require_parse = __commonJS({
             return;
           }
         }
-        keys.push(segment[1]);
+        keys[keys.length] = segment[1];
       }
       if (segment) {
         if (options.strictDepth === true) {
           throw new RangeError("Input depth exceeded depth option of " + options.depth + " and strictDepth is true");
         }
-        keys.push("[" + key.slice(segment.index) + "]");
+        keys[keys.length] = "[" + key.slice(segment.index) + "]";
       }
       return keys;
     };
@@ -16909,6 +16942,7 @@ var require_parse = __commonJS({
         parseArrays: opts.parseArrays !== false,
         plainObjects: typeof opts.plainObjects === "boolean" ? opts.plainObjects : defaults.plainObjects,
         strictDepth: typeof opts.strictDepth === "boolean" ? !!opts.strictDepth : defaults.strictDepth,
+        strictMerge: typeof opts.strictMerge === "boolean" ? !!opts.strictMerge : defaults.strictMerge,
         strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling,
         throwOnLimitExceeded: typeof opts.throwOnLimitExceeded === "boolean" ? opts.throwOnLimitExceeded : false
       };
@@ -16934,9 +16968,9 @@ var require_parse = __commonJS({
   }
 });
 
-// node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/index.js
+// node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/index.js
 var require_lib2 = __commonJS({
-  "node_modules/.pnpm/qs@6.14.1/node_modules/qs/lib/index.js"(exports, module) {
+  "node_modules/.pnpm/qs@6.15.0/node_modules/qs/lib/index.js"(exports, module) {
     "use strict";
     var stringify3 = require_stringify();
     var parse3 = require_parse();
@@ -33729,7 +33763,7 @@ function createPortraitRouter() {
 var import_express3 = __toESM(require_express2(), 1);
 
 // packages/core/dist/server/pennyfarthing.js
-import { existsSync as existsSync3, readFileSync as readFileSync2, watch } from "fs";
+import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync as readdirSync2, statSync as statSync2, watch } from "fs";
 import { join as join3, dirname as dirname3, basename } from "path";
 import { fileURLToPath as fileURLToPath3 } from "url";
 
@@ -33904,6 +33938,26 @@ function getCurrentAgent(projectDir, sessionId) {
       return readFileSync2(sessionFile, "utf-8").trim();
     } catch {
       return null;
+    }
+  }
+  const agentsDir = join3(projectDir, ".session", "agents");
+  if (existsSync3(agentsDir)) {
+    try {
+      const files = readdirSync2(agentsDir);
+      let newest = null;
+      for (const f of files) {
+        const fp = join3(agentsDir, f);
+        const st = statSync2(fp);
+        if (!newest || st.mtimeMs > newest.mtime) {
+          newest = { name: f, mtime: st.mtimeMs };
+        }
+      }
+      if (newest) {
+        const agent = readFileSync2(join3(agentsDir, newest.name), "utf-8").trim();
+        if (agent)
+          return agent;
+      }
+    } catch {
     }
   }
   const r = callPf(["workflow", "check", "--json"], projectDir);
@@ -35852,7 +35906,68 @@ async function searchSkills(options) {
     return { success: false, error: e.message };
   }
 }
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const args = process.argv.slice(2);
+  const options = {};
+  let jsonOutput = false;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--help" || arg === "-h") {
+      console.log(`Usage: skill-search [options]
 
+Options:
+  --tag <tag>        Filter by tag (e.g., "tdd", "quality")
+  --keyword <kw>     Filter by keyword (e.g., "jest", "vitest")
+  --query <text>     Search description text
+  --category <cat>   Filter by category
+  --json             Output as JSON (default: table)
+  --help, -h         Show this help
+
+Examples:
+  skill-search --tag tdd
+  skill-search --category development --json
+  skill-search --query "TDD workflow"
+`);
+      process.exit(0);
+    } else if (arg === "--json") {
+      jsonOutput = true;
+    } else if (arg === "--tag" && args[i + 1]) {
+      options.tag = args[++i];
+    } else if (arg === "--keyword" && args[i + 1]) {
+      options.keyword = args[++i];
+    } else if (arg === "--query" && args[i + 1]) {
+      options.query = args[++i];
+    } else if (arg === "--category" && args[i + 1]) {
+      options.category = args[++i];
+    }
+  }
+  searchSkills(options).then((result) => {
+    if (!result.success) {
+      console.error(`Error: ${result.error}`);
+      process.exit(1);
+    }
+    const results = result.data;
+    if (jsonOutput) {
+      console.log(JSON.stringify(results, null, 2));
+    } else {
+      if (results.length === 0) {
+        console.log("No skills found matching criteria.");
+      } else {
+        const maxName = Math.max(...results.map((s) => s.name.length), 4);
+        const maxCat = Math.max(...results.map((s) => s.category.length), 8);
+        console.log(`${"NAME".padEnd(maxName)}  ${"CATEGORY".padEnd(maxCat)}  DESCRIPTION`);
+        console.log(`${"-".repeat(maxName)}  ${"-".repeat(maxCat)}  ${"-".repeat(40)}`);
+        for (const skill of results) {
+          const desc = skill.description.length > 50 ? skill.description.substring(0, 47) + "..." : skill.description;
+          console.log(`${skill.name.padEnd(maxName)}  ${skill.category.padEnd(maxCat)}  ${desc}`);
+        }
+      }
+    }
+  }).catch((err) => {
+    console.error(`Error: ${err.message}`);
+    process.exit(1);
+  });
+}
 
 // packages/core/dist/shared/generate-skill-docs.js
 import { existsSync as existsSync9, readFileSync as readFileSync6, writeFileSync, mkdirSync } from "node:fs";
@@ -36144,7 +36259,61 @@ async function generateSkillDocs(options = {}) {
     writtenTo
   };
 }
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const args = process.argv.slice(2);
+  let registryPath;
+  let outputPath;
+  let dryRun = false;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--help" || arg === "-h") {
+      console.log(`Usage: generate-skill-docs [options]
 
+Options:
+  --registry <path>   Path to skill-registry.yaml
+  --output <path>     Path to write output (default: docs/SKILLS.md)
+  --dry-run           Print output instead of writing file
+  --help, -h          Show this help
+
+Examples:
+  generate-skill-docs
+  generate-skill-docs --dry-run
+  generate-skill-docs --registry ./custom-registry.yaml --output ./SKILLS.md
+`);
+      process.exit(0);
+    } else if (arg === "--dry-run") {
+      dryRun = true;
+    } else if (arg === "--registry" && args[i + 1]) {
+      registryPath = args[++i];
+    } else if (arg === "--output" && args[i + 1]) {
+      outputPath = args[++i];
+    }
+  }
+  if (!outputPath && !dryRun) {
+    const distPath = resolvePennyfarthingDist2();
+    if (distPath) {
+      outputPath = join9(dirname5(dirname5(distPath)), "docs", "SKILLS.md");
+    }
+  }
+  generateSkillDocs({
+    registryPath,
+    outputPath,
+    writeFile: !dryRun && !!outputPath
+  }).then((result) => {
+    if (!result.success) {
+      console.error(`Error: ${result.error}`);
+      process.exit(1);
+    }
+    if (dryRun) {
+      console.log(result.content);
+    } else {
+      console.log(`Generated documentation for ${result.skillCount} skills`);
+      if (result.writtenTo) {
+        console.log(`Written to: ${result.writtenTo}`);
+      }
+    }
+  });
+}
 
 // packages/core/dist/server/api/settings.js
 async function getSettingsForWebSocket(projectDir) {
@@ -38599,7 +38768,7 @@ function broadcastFocusUpdate(focus) {
 }
 
 // packages/core/dist/plugins/plugin-discovery.js
-import { readFileSync as readFileSync8, readdirSync as readdirSync2, existsSync as existsSync14, statSync as statSync2 } from "node:fs";
+import { readFileSync as readFileSync8, readdirSync as readdirSync3, existsSync as existsSync14, statSync as statSync3 } from "node:fs";
 import { join as join19, resolve as resolve3 } from "node:path";
 var EXCLUDED_PACKAGES = ["core", "shared", "benchmark", "bikerack"];
 function parsePluginManifest(packageDir) {
@@ -38625,7 +38794,7 @@ function discoverPlugins(projectRoot) {
   }
   let entries;
   try {
-    entries = readdirSync2(scopeDir);
+    entries = readdirSync3(scopeDir);
   } catch {
     return [];
   }
