@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.6.2] - 2026-03-07
+
+### Added
+
+- **Consumer E2E test suite** — 6 scenarios covering fresh-init, re-init preservation, WheelHub Node 24, upgrade safety, orc-ax snapshot, and idempotency (MSSCI-16292)
+- **WheelHub CJS banner fix** — esbuild bundler auto-patches `createRequire` shim for Node 24 ESM compatibility (MSSCI-16292)
+- **Scenario discovery workflow** — New stepped workflow for benchmark scenario discovery
+
+### Fixed
+
+- **Hook change confirmation in pf init** — Added confirmation prompt before modifying hooks and fixed WheelHub bundle handling during init
+
 ## [12.6.1] - 2026-03-07
 
 ### Fixed
@@ -3027,7 +3039,10 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...HEAD
+[12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
+[12.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.0...v12.6.1
+[12.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...v12.6.0
 [12.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...v12.5.0
 [12.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...v12.4.1
 [12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
