@@ -2,10 +2,10 @@
 # Build WheelHub bundle from packages/core → pennyfarthing-dist/_dist/server/wheelhub.mjs
 #
 # This script:
-#   1. Runs esbuild to bundle the server entry point
-#   2. Patches the CJS require shim for Node 24+ ESM compatibility
-#   3. Copies the result to pennyfarthing-dist/src/pf/_dist/server/
-#   4. Validates the patch was applied correctly
+#   1. Runs esbuild to bundle the server entry point (with createRequire banner for Node 24+ ESM compat)
+#   2. Strips CLI main() blocks that would execute in the bundle
+#   3. Validates the bundle
+#   4. Copies the result to pennyfarthing-dist/src/pf/_dist/server/
 #
 # Usage: ./scripts/build-wheelhub.sh [--install]
 #   --install   Also run `pipx install --force` after building
@@ -38,6 +38,7 @@ npx esbuild "$ENTRY" \
     --bundle \
     --format=esm \
     --platform=node \
+    --banner:js='import { createRequire } from "node:module"; var require = createRequire(import.meta.url);' \
     --outfile="$TMP_OUT"
 
 echo "[build-wheelhub] Bundle size: $(wc -c < "$TMP_OUT" | tr -d ' ') bytes"
@@ -89,69 +90,12 @@ with open(filepath, 'w') as f:
 print(f'[build-wheelhub] Stripped {count} CLI main() block(s)')
 PYEOF
 
-# --- Step 3: Patch CJS shim for Node 24+ ---
-# esbuild generates a Proxy-based shim that throws "Dynamic require of X is not supported"
-# on Node 24+. Replace it with a createRequire-based shim that actually works.
-
-BROKEN_SHIM='var __require = /\* @__PURE__ \*/ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {'
-FIXED_SHIM='var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : __createRequire(import.meta.url))(0);'
-
-# Check if the broken shim is present
-if grep -q 'typeof Proxy !== "undefined" ? new Proxy' "$TMP_OUT"; then
-    echo "[build-wheelhub] Patching CJS require shim for Node 24+ ESM compat ..."
-
-    # The broken shim spans multiple lines. Replace the entire block.
-    # Strategy: find the line with the broken pattern, replace it and remove continuation lines.
-    python3 -c "
-import re, sys
-
-with open('$TMP_OUT', 'r') as f:
-    content = f.read()
-
-# Match the full broken shim pattern (multi-line)
-pattern = r'var __require = /\* @__PURE__ \*/ \(\(x\) => typeof require !== \"undefined\" \? require : typeof Proxy !== \"undefined\" \? new Proxy\(x, \{[^}]+\}\) : x\)\(function\(x\) \{[^}]+\}\);'
-replacement = 'var __require = /* @__PURE__ */ ((x) => typeof require !== \"undefined\" ? require : __createRequire(import.meta.url))(0);'
-
-new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
-if count == 0:
-    print('[build-wheelhub] WARNING: Could not find shim pattern to patch', file=sys.stderr)
-    sys.exit(1)
-
-# Ensure createRequire import exists at top
-if 'import { createRequire as __createRequire }' not in new_content:
-    new_content = 'import { createRequire as __createRequire } from \"node:module\";\n' + new_content
-
-with open('$TMP_OUT', 'w') as f:
-    f.write(new_content)
-
-print(f'[build-wheelhub] Patched {count} shim occurrence(s)')
-"
-elif grep -q '__createRequire(import.meta.url)' "$TMP_OUT"; then
-    echo "[build-wheelhub] Shim already patched (createRequire present)"
-else
-    echo "[build-wheelhub] WARNING: Unrecognized CJS shim pattern — manual review needed" >&2
-    head -20 "$TMP_OUT" >&2
-    exit 1
-fi
-
-# --- Step 4: Validate ---
+# --- Step 3: Validate ---
 echo "[build-wheelhub] Validating ..."
 
-# Must have createRequire import
-if ! grep -q 'import { createRequire as __createRequire } from "node:module"' "$TMP_OUT"; then
-    echo "[build-wheelhub] FAIL: Missing createRequire import" >&2
-    exit 1
-fi
-
-# Must have the fixed shim
-if ! grep -q '__createRequire(import.meta.url)' "$TMP_OUT"; then
-    echo "[build-wheelhub] FAIL: Shim not properly patched" >&2
-    exit 1
-fi
-
-# Must NOT have the broken Proxy pattern
-if grep -q 'typeof Proxy !== "undefined" ? new Proxy' "$TMP_OUT"; then
-    echo "[build-wheelhub] FAIL: Broken Proxy shim still present" >&2
+# Must have createRequire banner
+if ! grep -q 'import { createRequire } from "node:module"' "$TMP_OUT"; then
+    echo "[build-wheelhub] FAIL: Missing createRequire banner" >&2
     exit 1
 fi
 
@@ -163,13 +107,13 @@ fi
 
 echo "[build-wheelhub] Validation passed"
 
-# --- Step 5: Install ---
+# --- Step 4: Install ---
 mkdir -p "$DEST_DIR"
 cp "$TMP_OUT" "$DEST"
 rm -f "$TMP_OUT"
 echo "[build-wheelhub] Installed to $DEST"
 
-# --- Step 6: Optional pipx reinstall ---
+# --- Step 5: Optional pipx reinstall ---
 if [[ "${1:-}" == "--install" ]]; then
     echo "[build-wheelhub] Running pipx install --force ..."
     pipx install --force "$REPO_ROOT"

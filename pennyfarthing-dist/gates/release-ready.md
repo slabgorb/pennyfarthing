@@ -34,6 +34,12 @@ Run `scripts/check-bundle-drift.sh`. Exit code 0 = pass.
 If stale, run `just rebuild-wheelhub` before releasing.
 </check>
 
+<check name="e2e-consumer-tests">
+Consumer E2E test suite passes. Tests pf init, WheelHub startup,
+content preservation, and idempotency in isolated environments.
+Run `./tests/e2e/run.sh --local`. Exit code 0 = pass.
+</check>
+
 <pass>
 Run all checks from `gates/tests-pass` (test-suite, working-tree, branch-status),
 then run build-succeeds, version-bumped, changelog-updated, and changelog-links-valid.
@@ -70,6 +76,9 @@ GATE_RESULT:
     - name: bundle-in-sync
       status: pass
       detail: "wheelhub.mjs matches server/*.ts source"
+    - name: e2e-consumer-tests
+      status: pass
+      detail: "6/6 consumer E2E scenarios passed"
 ```
 </pass>
 
@@ -111,6 +120,7 @@ GATE_RESULT:
     - "Add changelog entry for v{version}"
     - "Run: pennyfarthing-dist/scripts/git/changelog-links.sh --fix"
     - "Run: just rebuild-wheelhub (if bundle-in-sync fails)"
+    - "Run: ./tests/e2e/run.sh --local (if e2e-consumer-tests fails)"
 ```
 </fail>
 
