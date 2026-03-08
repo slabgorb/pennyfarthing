@@ -166,6 +166,7 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 | Command | Description | Source |
 |---------|-------------|--------|
 | `pf git status [--brief]` | Check git status of all repos | `git/status_all.py` |
+| `pf git snapshot [--label TEXT]` | Safety-branch + commit all dirty repos | `git/snapshot.py` |
 | `pf git branches BRANCH [--repos all\|api\|ui]` | Create feature branches | `git/create_branches.py` |
 | `pf git cleanup` | Start git-cleanup workflow | `git_group/cli.py` |
 | `pf git worktree create NAME BRANCH` | Create worktree(s) | `git/worktree.py` |

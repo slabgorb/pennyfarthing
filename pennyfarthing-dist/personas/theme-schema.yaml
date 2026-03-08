@@ -1,0 +1,525 @@
+# Theme YAML Schema
+# Generated from census of 100 theme files (2026-03-08)
+# Canonical reference for theme structure and allowed values.
+#
+# Legend:
+#   required: true  — field must be present
+#   required: false — field is optional
+#   type: enum      — value must be one of the listed options
+#   type: string    — freeform string
+#   type: integer   — whole number
+#   type: float     — decimal number
+#   type: list      — ordered list of strings
+#   type: dict      — nested key-value structure
+
+schema_version: 1
+
+# ─── Top-Level Keys ──────────────────────────────────────────────────────────
+
+top_level:
+  category:
+    required: true
+    type: enum
+    values:
+      - Film
+      - Games
+      - History
+      - Literature
+      - Music
+      - Mythology
+      - Other
+      - Science
+      - TV Series
+    description: Media category of the source material
+
+  theme:
+    required: true
+    type: dict
+    description: Theme metadata and configuration
+
+  agents:
+    required: true
+    type: dict
+    description: Agent-to-character mappings (keyed by agent role name)
+
+  zeitgeist:
+    required: false
+    type: dict
+    description: Cultural recognition scoring (missing in 4/100 themes)
+
+  additional_characters:
+    required: false
+    type: dict
+    description: Extra characters not mapped to core agent roles
+
+# ─── Theme Section ───────────────────────────────────────────────────────────
+
+theme_section:
+  name:
+    required: true
+    type: string
+    description: Display name of the theme
+
+  description:
+    required: true
+    type: string
+    description: 1-2 sentence theme overview
+
+  source:
+    required: true
+    type: string
+    description: Original media source and attribution
+
+  user_title:
+    required: true
+    type: string
+    description: How to address the user (e.g., "Crew", "Patron", "Client")
+
+  portrait_style:
+    required: true
+    type: string
+    description: Prompt suffix for AI portrait generation
+
+  tier:
+    required: true
+    type: enum
+    values: [S, A, B, C, D, U]
+    description: >
+      Theme quality tier.
+      S=exceptional, A=strong, B=solid, C=adequate, D=minimal, U=unranked
+
+  dimensions:
+    required: true
+    type: dict
+    description: Classification dimensions for filtering and benchmark slicing
+
+  spinner_verbs:
+    required: true
+    type: list
+    item_type: string
+    min_length: 20
+    max_length: 30
+    description: Thematic action verbs shown during processing
+
+  default_emoji_use:
+    required: false
+    type: enum
+    values: [none, minimal, moderate, enabled]
+    default: minimal
+    description: Default emoji density in agent output
+
+  default_humor:
+    required: false
+    type: enum
+    values: [disabled, subtle, enabled, high]
+    default: enabled
+    description: Default humor level in agent output
+
+  character_immersion:
+    required: false
+    type: enum
+    values: [none, medium, high]
+    default: high
+    description: How deeply agents stay in character
+
+  # Rare fields (present in ≤3 themes)
+  portrait_prefix:
+    required: false
+    type: string
+    description: Prefix added to character portrait prompts
+
+  negative_prompt:
+    required: false
+    type: string
+    description: Negative prompt for AI portrait generation
+
+  pennyfarthing_version:
+    required: false
+    type: string
+    description: Framework version at theme creation time
+
+  created:
+    required: false
+    type: string
+    description: ISO timestamp of theme creation
+
+  optimized:
+    required: false
+    type: boolean
+    description: Whether theme has been optimized via job-fair
+
+  optimization_source:
+    required: false
+    type: string
+    description: Job-fair run that produced the optimization
+
+# ─── Dimensions ──────────────────────────────────────────────────────────────
+
+dimensions:
+  tone:
+    required: true
+    type: enum
+    values:
+      - acerbic
+      - adventurous
+      - analytical
+      - authoritative
+      - balanced
+      - comedic
+      - contemplative
+      - dark
+      - dark-comedic
+      - dramatic
+      - drawling
+      - dread
+      - eerie
+      - flamboyant
+      - gritty
+      - heroic
+      - idealistic
+      - mysterious
+      - noir
+      - obsessive
+      - prophetic
+      - regal
+      - satirical
+      - serious
+      - sophisticated
+      - soulful
+      - stylish
+      - tense
+      - warm
+      - whimsical
+      - witty
+      - wry
+    description: Overall tonal quality of the theme
+
+  era:
+    required: true
+    type: enum
+    values:
+      - ancient
+      - medieval
+      - interwar
+      - historical
+      - retro
+      - contemporary
+      - contemporary-future
+      - futuristic
+      - timeless
+    description: Temporal setting of the source material
+
+  genre:
+    required: true
+    type: enum
+    values:
+      - action
+      - adventure
+      - arts
+      - cinema
+      - comedy
+      - comedy-drama
+      - cosmic-horror
+      - crime-drama
+      - cyberpunk
+      - dark-fantasy
+      - drama
+      - fantasy
+      - fantasy-action
+      - fantasy-adventure
+      - fantasy-comedy
+      - fantasy-legend
+      - gothic-horror
+      - historical-drama
+      - history
+      - horror
+      - literary
+      - military-history
+      - military-sci-fi
+      - mystery
+      - mystery-surreal
+      - mythology
+      - philosophy
+      - political-drama
+      - post-apocalyptic
+      - sci-fi
+      - sci-fi-comedy
+      - sci-fi-thriller
+      - science
+      - space-opera
+      - space-western
+      - spy-thriller
+      - superhero
+      - supervillain
+      - technology
+      - thriller
+      - western
+    description: Primary genre classification
+
+  energy:
+    required: true
+    type: enum
+    values:
+      - adventurous
+      - bittersweet
+      - bold
+      - brooding
+      - brutal
+      - calculated
+      - calculating
+      - chaotic
+      - commanding
+      - contemplative
+      - cool
+      - creeping
+      - cutthroat
+      - decadent
+      - desperate
+      - diabolical
+      - dreamlike
+      - earnest
+      - effervescent
+      - elegant
+      - enthusiastic
+      - epic
+      - explosive
+      - fierce
+      - frenetic
+      - harmonious
+      - high-energy
+      - improvisational
+      - intense
+      - kinetic
+      - laid-back
+      - manic
+      - measured
+      - meditative
+      - menacing
+      - methodical
+      - mischievous
+      - noble
+      - paranoid
+      - passionate
+      - quixotic
+      - rapid
+      - raw
+      - rebellious
+      - relentless
+      - resolute
+      - scrappy
+      - simmering
+      - slapstick
+      - swashbuckling
+      - tense
+      - transformative
+      - unsettling
+      - uplifting
+      - wired
+      - zany
+    description: Kinetic quality and pacing feel
+
+# ─── Zeitgeist ───────────────────────────────────────────────────────────────
+
+zeitgeist_section:
+  score:
+    required: true
+    type: float
+    min: 0.0
+    max: 100.0
+    description: Cultural recognition score (0-100)
+
+  rating:
+    required: true
+    type: enum
+    values: [minimal, moderate, rich, exceptional]
+    description: Cultural recognition tier derived from score
+
+# ─── Agent Entry ─────────────────────────────────────────────────────────────
+
+required_agents:
+  - orchestrator
+  - sm
+  - tea
+  - dev
+  - reviewer
+  - architect
+  - pm
+  - tech-writer
+  - ux-designer
+  - devops
+  - ba
+
+agent_fields:
+  character:
+    required: true
+    type: string
+    description: Character name from source material
+
+  style:
+    required: true
+    type: string
+    description: Character personality and archetype description
+
+  visual:
+    required: true
+    type: string
+    description: Visual description for portrait generation
+
+  ocean:
+    required: true
+    type: dict
+    description: OCEAN Big Five personality profile
+    fields:
+      O:
+        type: integer
+        min: 1
+        max: 5
+        description: Openness to experience
+      C:
+        type: integer
+        min: 1
+        max: 5
+        description: Conscientiousness
+      E:
+        type: integer
+        min: 1
+        max: 5
+        description: Extraversion
+      A:
+        type: integer
+        min: 1
+        max: 5
+        description: Agreeableness
+      N:
+        type: integer
+        min: 1
+        max: 5
+        description: Neuroticism
+
+  role:
+    required: true
+    type: string
+    description: Character-specific role description (narrative)
+
+  trait:
+    required: true
+    type: string
+    description: Core defining characteristic
+
+  expertise:
+    required: true
+    type: list
+    item_type: string
+    description: Areas of domain expertise
+
+  emoji:
+    required: true
+    type: string
+    description: Single unicode emoji representing the character
+
+  helper:
+    required: true
+    type: dict
+    description: Helper entity for the agent
+    fields:
+      name:
+        required: true
+        type: string
+        description: Helper entity name
+      style:
+        required: true
+        type: string
+        description: How the helper functions or appears
+      plural:
+        required: false
+        type: boolean
+        description: Whether the helper is plural (e.g., "The Witches")
+      shortName:
+        required: false
+        type: string
+        description: Abbreviated helper reference
+
+  quirks:
+    required: false
+    type: list
+    item_type: string
+    description: Character behavioral quirks (present in 99% of agents)
+
+  catchphrases:
+    required: false
+    type: list
+    item_type: string
+    description: Characteristic verbal tics and quotes (present in 99% of agents)
+
+  shortName:
+    required: false
+    type: string
+    description: Abbreviated character name for compact display
+
+  # Rare fields — present in ≤21 agents
+  ocean_profile:
+    required: false
+    type: string
+    pattern: "^[1-5]-[1-5]-[1-5]-[1-5]-[1-5]$"
+    description: Explicit OCEAN profile override (O-C-E-A-N format)
+
+  gap_filled:
+    required: false
+    type: string
+    description: Gap-filling role for team composition
+
+  benchmark_score:
+    required: false
+    type: float
+    description: Job-fair benchmark score
+
+# ─── Additional Characters ───────────────────────────────────────────────────
+
+additional_character_fields:
+  character:
+    required: true
+    type: string
+
+  style:
+    required: true
+    type: string
+
+  expertise:
+    required: true
+    type: list
+    item_type: string
+
+  role:
+    required: true
+    type: string
+
+  ocean_profile:
+    required: false
+    type: string
+    pattern: "^[1-5]-[1-5]-[1-5]-[1-5]-[1-5]$"
+
+  best_role:
+    required: false
+    type: string
+    description: Suggested agent role for this character
+
+  gap_filled:
+    required: false
+    type: string
+
+  visual:
+    required: false
+    type: string
+
+  shortName:
+    required: false
+    type: string
+
+  warning:
+    required: false
+    type: string
+    description: Caution about using this character
+
+  note:
+    required: false
+    type: string

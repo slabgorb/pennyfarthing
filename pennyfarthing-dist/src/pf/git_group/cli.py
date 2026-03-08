@@ -191,6 +191,37 @@ def worktree_status():
     raise SystemExit(show_worktree_status())
 
 
+@git.command()
+@click.option("--label", "-l", default="", help="Label for the snapshot branch (e.g., 'benchmark-work')")
+def snapshot(label: str):
+    """Snapshot all repos: create safety branches and commit everything.
+
+    Creates timestamped snapshot branches in every dirty repo and commits
+    all changes (tracked and untracked). Use before risky operations like
+    rebases or branch switches to ensure nothing is lost.
+
+    \b
+    Examples:
+      pf git snapshot
+      pf git snapshot --label benchmark-work
+    """
+    from pf.git.snapshot import format_snapshot_results, snapshot_all_repos
+
+    click.echo("Creating snapshots...")
+    results = snapshot_all_repos(label=label)
+    click.echo(format_snapshot_results(results))
+
+    has_errors = any(r.error for r in results)
+    has_snapshots = any(not r.skipped and not r.error for r in results)
+
+    if has_errors:
+        raise SystemExit(1)
+    elif not has_snapshots:
+        click.echo("\nNothing to snapshot — all repos are clean.")
+    else:
+        click.echo("\nAll work preserved safely.")
+
+
 @git.command("install-hooks")
 def install_hooks():
     """Install git hooks with .d/ dispatcher pattern.
