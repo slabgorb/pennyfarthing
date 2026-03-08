@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Comrade
   portrait_style: ", Soviet propaganda poster, stark red and black, brutalist geometric shapes"
-  tier: U
+  tier: A
   dimensions:
     tone: dramatic
     era: futuristic
     genre: nonfiction
     energy: contemplative
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -62,7 +63,7 @@ theme:
     - Becoming an unperson
 zeitgeist:
   score: 75.5
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

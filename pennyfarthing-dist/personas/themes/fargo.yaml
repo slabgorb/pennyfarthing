@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", noir graphic novel, clean line art, limited color palette, falling snow, bleak Minnesota winter, stark illustration"
-  tier: U
+  tier: A
   spinner_verbs:
     - Aw heck let me check
     - Minnesota nice
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: drama
     energy: measured
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -62,7 +63,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 84.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Lorne Malvo (Season 1)

@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Bossmang
   portrait_style: ", russian constructivist style, bold geometric shapes, red and black color palette, propaganda poster aesthetic, angular compositions, industrial typography influence"
-  tier: U
+  tier: A
   spinner_verbs:
     - Doors and corners watching
     - Beltalowda rallying
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: tense
+    zeitgeist: high
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 91.0
-  rating: exceptional
+  rating: high
 
 agents:
   orchestrator:

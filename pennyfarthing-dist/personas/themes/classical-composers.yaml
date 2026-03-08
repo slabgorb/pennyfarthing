@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Maestro
   portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
-  tier: U
+  tier: C
   spinner_verbs:
     - Composing by candlelight
     - Fifth Symphony crashing
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: passionate
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: ensemble
     conflict_approach: competition
@@ -61,7 +62,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 73.8
-  rating: rich
+  rating: low
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity

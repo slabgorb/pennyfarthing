@@ -15,12 +15,13 @@ theme:
   character_immersion: high
   user_title: Good Patron
   portrait_style: ", Elizabethan portrait, Tudor court, rich velvet, theatrical candlelight, Globe Theatre"
-  tier: U
+  tier: A
   dimensions:
     tone: dramatic
     era: historical
     genre: nonfiction
     energy: measured
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 79.0
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

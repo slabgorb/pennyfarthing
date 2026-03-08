@@ -22,12 +22,13 @@ theme:
   portrait_prefix: "Watercolor painting on rough paper:"
   portrait_style: ", soft washes, visible paper texture, warm muted palette"
   negative_prompt: "photorealistic, glossy, 3d render, digital art, smooth skin, airbrushed, photograph, sharp focus"
-  tier: U
+  tier: S
   dimensions:
     tone: serious
     era: timeless
     genre: fantasy
     energy: contemplative
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: consensus
@@ -68,7 +69,7 @@ theme:
     - Shadowfax summoning
 zeitgeist:
   score: 80.0
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

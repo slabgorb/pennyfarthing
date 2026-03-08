@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: My Lord
   portrait_style: ", art noveau style, vintage illustration, Klimt-inspired"
-  tier: U
+  tier: C
   spinner_verbs:
     - Vor maneuvering
     - Galactic politicking
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: manic
+    zeitgeist: moderate
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: debate
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 76.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Simon Illyan

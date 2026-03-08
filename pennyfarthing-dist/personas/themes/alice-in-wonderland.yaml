@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: my Dear
   portrait_style: ", John Tenniel engraving, fine crosshatching, 1865 original edition style"
-  tier: U
+  tier: B
   dimensions:
     tone: whimsical
     era: timeless
     genre: fantasy
     energy: chaotic
+    zeitgeist: high
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
     - Wonderland rules applying
 zeitgeist:
   score: 85.0
-  rating: rich
+  rating: high
 
 agents:
   orchestrator:

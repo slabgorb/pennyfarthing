@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Ambassador
   portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, starfield backdrop"
-  tier: U
+  tier: C
   dimensions:
     tone: prophetic
     era: futuristic
     genre: sci-fi
     energy: transformative
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
     - End of line
 zeitgeist:
   score: 82.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Kosh Naranek

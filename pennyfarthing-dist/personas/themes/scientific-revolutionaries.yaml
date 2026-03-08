@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Colleague
   portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
-  tier: U
+  tier: D
   spinner_verbs:
     - Hypothesizing
     - Experimenting
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: methodical
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: ensemble
     conflict_approach: debate
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 68.5
-  rating: moderate
+  rating: low
 
 agents:
   orchestrator:

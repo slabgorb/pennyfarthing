@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Dreamer
   portrait_style: ", dark fantasy illustration, mixed media collage, dreamlike surrealism, cosmic darkness, stars"
-  tier: U
+  tier: B
   spinner_verbs:
     - Weaving dreams
     - Walking the realm
@@ -53,6 +53,7 @@ theme:
     era: timeless
     genre: fantasy
     energy: dreamlike
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 83.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Destiny of the Endless

@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Operator
   portrait_style: ", cyberpunk, green digital rain overlay, action illustration style"
-  tier: U
+  tier: B
   dimensions:
     tone: serious
     era: futuristic
     genre: sci-fi
     energy: high-energy
+    zeitgeist: high
     scrutiny: skeptical
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
     - Simulation escaping
 zeitgeist:
   score: 85.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: The Oracle

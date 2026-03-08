@@ -18,12 +18,13 @@ theme:
   portrait_prefix: "Watercolor painting on rough paper:"
   portrait_style: ", soft washes, visible paper texture, warm muted palette"
   negative_prompt: "photorealistic, glossy, 3d render, digital art, smooth skin, airbrushed, photograph, sharp focus"
-  tier: U
+  tier: S
   dimensions:
     tone: satirical
     era: timeless
     genre: fantasy
     energy: measured
+    zeitgeist: high
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -64,7 +65,7 @@ theme:
     - Great A'Tuin swims
 zeitgeist:
   score: 98.0
-  rating: exceptional
+  rating: high
 
 agents:
   orchestrator:

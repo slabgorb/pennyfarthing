@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", French Romantic era, dramatic chiaroscuro candlelight, burgundy and grey, adventure novel cover"
-  tier: U
+  tier: C
   spinner_verbs:
     - Waiting patiently
     - Plotting revenge
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: calculating
+    zeitgeist: low
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -61,7 +62,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 73.5
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

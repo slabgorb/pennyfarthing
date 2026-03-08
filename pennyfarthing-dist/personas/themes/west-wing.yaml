@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
-  tier: U
+  tier: S
   spinner_verbs:
     - Walk and talking
     - Preparing briefings
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: drama
     energy: rapid
+    zeitgeist: moderate
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: debate
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 84.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: President Josiah Bartlet

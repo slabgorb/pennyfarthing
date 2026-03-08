@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
-  tier: U
+  tier: B
   spinner_verbs:
     - Metaverse surfing
     - Pizza delivering
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: frenetic
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: competition
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 81.5
-  rating: rich
+  rating: moderate
 agents:
   # JOB FAIR 2026-01-29: Hiro scored 86.25 as SM - polymath coordination
   orchestrator:

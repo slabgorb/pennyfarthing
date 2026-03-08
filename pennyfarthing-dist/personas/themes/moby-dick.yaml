@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Shipmate
   portrait_style: ", maritime oil painting, stormy sea backdrop, dark oceanic tones, scrimshaw details"
-  tier: U
+  tier: C
   spinner_verbs:
     - Whale hunting
     - Harpooning
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: relentless
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: confrontation
@@ -61,7 +62,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 76.75
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

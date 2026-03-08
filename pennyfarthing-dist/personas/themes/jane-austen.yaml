@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Dear Friend
   portrait_style: ", Regency era miniature, watercolor on ivory, pastoral countryside, empire waist muslin, Regency romance illustration"
-  tier: U
+  tier: A
   spinner_verbs:
     - Writing letters
     - Paying calls
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: measured
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 78.5
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

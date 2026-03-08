@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Soldier
   portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, command console glow"
-  tier: U
+  tier: A
   dimensions:
     tone: gritty
     era: contemporary-future
     genre: sci-fi
     energy: desperate
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: unified
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
     - What does God want
 zeitgeist:
   score: 81.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Hybrid

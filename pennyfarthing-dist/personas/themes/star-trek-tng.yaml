@@ -15,12 +15,13 @@ theme:
   default_humor: subtle
   user_title: Captain
   portrait_style: ", Starfleet portrait, Enterprise-D bridge, starship computer accents, 24th century Federation, starfield"
-  tier: U
+  tier: S
   dimensions:
     tone: serious
     era: futuristic
     genre: sci-fi
     energy: measured
+    zeitgeist: high
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: consensus
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 86.0
-  rating: rich
+  rating: high
 
 agents:
   orchestrator:

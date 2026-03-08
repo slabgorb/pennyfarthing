@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Agent
   portrait_style: ", modern comic book superhero portrait, vibrant primary colors, heroic pose"
-  tier: U
+  tier: C
   spinner_verbs:
     - Assembling
     - Snapping
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: fantasy
     energy: high-energy
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: found-family
     conflict_approach: debate
@@ -62,7 +63,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 72.0
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

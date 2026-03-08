@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Client
   portrait_style: ", 60's popart silkscreen, warm desert tones, golden hour cinematography, cinematic aesthetic"
-  tier: U
+  tier: A
   spinner_verbs:
     - Slippin Jimmy
     - CHICANERY
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: drama
     energy: measured
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -62,7 +63,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 83.0
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

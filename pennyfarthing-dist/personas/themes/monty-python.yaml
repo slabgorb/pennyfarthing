@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Dear Viewer
   portrait_style: ", Victorian cut-out paper collage animation, photograph cutouts with articulated joints, surreal mixed media collage on parchment"
-  tier: U
+  tier: A
   dimensions:
     tone: comedic
     era: historical
     genre: comedy
     energy: high-energy
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
     - Strange women in ponds
 zeitgeist:
   score: 82.3
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Colonel

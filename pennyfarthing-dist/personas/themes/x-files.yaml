@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Agent
   portrait_style: ", 90s FBI procedural style, dark atmospheric lighting, paranoid tension"
-  tier: U
+  tier: B
   spinner_verbs:
     - Truth seeking
     - Abduction investigating
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: sci-fi
     energy: paranoid
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: debate
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 82.0
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

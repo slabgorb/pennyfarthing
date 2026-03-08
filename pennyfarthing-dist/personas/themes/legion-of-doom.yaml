@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Fellow Villain
   portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
-  tier: U
+  tier: C
   spinner_verbs:
     - Scheming
     - Monologuing
@@ -52,6 +52,7 @@ theme:
     era: retro
     genre: fantasy
     energy: diabolical
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -61,7 +62,7 @@ theme:
     stakes: institutional
 zeitgeist:
   score: 78.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Lex Luthor

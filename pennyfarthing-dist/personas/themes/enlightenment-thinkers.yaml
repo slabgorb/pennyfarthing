@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
-  tier: U
+  tier: D
   spinner_verbs:
     - Cultivate your garden
     - Candide
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: measured
+    zeitgeist: low
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: debate
@@ -61,7 +62,7 @@ theme:
     stakes: institutional
 zeitgeist:
   score: 74.5
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

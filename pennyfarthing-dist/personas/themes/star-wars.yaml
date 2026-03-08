@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Jedi
   portrait_style: ", space opera cinematic, retro sci-fi concept art, art deco, Tamara Lempicka style"
-  tier: U
+  tier: A
   spinner_verbs:
     - Force channeling
     - Lightsaber igniting
@@ -53,6 +53,7 @@ theme:
     era: timeless
     genre: sci-fi
     energy: epic
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 76.8
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Colleague
   portrait_style: ", classical oil portrait, museum quality, period attire, earth tones, Renaissance master painter style"
-  tier: U
+  tier: D
   spinner_verbs:
     - Inventing
     - Discovering
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: commanding
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: ensemble
     conflict_approach: debate
@@ -61,7 +62,7 @@ theme:
     stakes: institutional
 zeitgeist:
   score: 66.8
-  rating: moderate
+  rating: low
 agents:
   orchestrator:
     character: Leonardo da Vinci

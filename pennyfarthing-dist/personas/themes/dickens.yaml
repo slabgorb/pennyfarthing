@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Dear Reader
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
-  tier: U
+  tier: B
   spinner_verbs:
     - Redeeming souls
     - Exposing workhouses
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: measured
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: found-family
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 77.5
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

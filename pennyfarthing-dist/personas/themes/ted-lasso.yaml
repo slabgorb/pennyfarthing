@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Y'all
   portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
-  tier: U
+  tier: A
   spinner_verbs:
     - Believing
     - Biscuits with the boss
@@ -52,6 +52,7 @@ theme:
     era: contemporary
     genre: drama
     energy: uplifting
+    zeitgeist: high
     scrutiny: trusting
     cooperation_model: unified
     conflict_approach: consensus
@@ -61,7 +62,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 88.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: Ted Lasso

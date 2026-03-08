@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", 1960s Madison Avenue, mid-century modern, cigarette smoke atmosphere, ad executive silhouette, martini glass composition"
-  tier: U
+  tier: A
   spinner_verbs:
     - Pitch crafting
     - Old fashioned pouring
@@ -53,6 +53,7 @@ theme:
     era: retro
     genre: drama
     energy: measured
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -62,7 +63,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 82.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Bert Cooper

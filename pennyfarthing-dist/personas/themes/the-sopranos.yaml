@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", crime drama, suburban noir, neon glow, city backdrops"
-  tier: U
+  tier: A
   spinner_verbs:
     - Holding a sit-down
     - Ordering gabagool
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: drama
     energy: simmering
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 78.8
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Hooplehead
   portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
-  tier: U
+  tier: B
   spinner_verbs:
     - Swearing profusely
     - Prospecting for gold
@@ -53,6 +53,7 @@ theme:
     era: historical
     genre: drama
     energy: raw
+    zeitgeist: high
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
     stakes: communal
 zeitgeist:
   score: 86.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: Al Swearengen

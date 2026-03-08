@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", medical book, anatomy chart, medical illustrations"
-  tier: U
+  tier: B
   spinner_verbs:
     - Running the differential
     - It's never lupus
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: drama
     energy: intense
+    zeitgeist: low
     scrutiny: adversarial
     cooperation_model: ensemble
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 73.0
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
-  tier: U
+  tier: C
   spinner_verbs:
     - Barricade building
     - Redemption seeking
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: passionate
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -61,7 +62,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 67.75
-  rating: moderate
+  rating: low
 agents:
   orchestrator:
     character: Marius Pontmercy

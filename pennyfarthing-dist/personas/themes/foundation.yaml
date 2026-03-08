@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen of the Foundation
   portrait_style: ", classic sci-fi, galactic grandeur, psychohistory equations, 1950s retro-futurist"
-  tier: U
+  tier: A
   spinner_verbs:
     - Psychohistory calculating
     - The Plan proceeding
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: contemplative
+    zeitgeist: moderate
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: psychological
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 78.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Hari Seldon

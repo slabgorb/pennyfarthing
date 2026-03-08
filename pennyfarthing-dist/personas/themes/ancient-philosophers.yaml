@@ -15,12 +15,13 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", classical Greek marble bust, warm Mediterranean light, terracotta tones, laurel wreath"
-  tier: U
+  tier: C
   dimensions:
     tone: contemplative
     era: ancient
     genre: nonfiction
     energy: meditative
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: debate
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 76.8
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

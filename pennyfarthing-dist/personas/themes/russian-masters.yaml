@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Dear Soul
   portrait_style: ", 19th century Russian realist, Russian realist painting, melancholic shadows, Orthodox gold"
-  tier: U
+  tier: C
   spinner_verbs:
     - Searching the soul
     - Riding the troika
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: brooding
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 81.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Pierre Bezukhov

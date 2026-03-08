@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", 1920s Birmingham, moody industrial lighting, flat cap, cigarette smoke, sepia tones"
-  tier: U
+  tier: B
   spinner_verbs:
     - By order of the Peaky Blinders
     - Sipping Shelby whiskey
@@ -53,6 +53,7 @@ theme:
     era: historical
     genre: drama
     energy: menacing
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 81.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Grace Shelby (deceased)

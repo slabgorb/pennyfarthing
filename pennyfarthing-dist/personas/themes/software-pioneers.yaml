@@ -16,7 +16,7 @@ theme:
   character_immersion: medium
   user_title: Colleague
   portrait_style: ", woodcut engraving, scientific journal illustration, fine crosshatching, black ink on cream paper"
-  tier: U
+  tier: D
   spinner_verbs:
     - Computing
     - Algorithm writing
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: nonfiction
     energy: methodical
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: ensemble
     conflict_approach: debate
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 72.0
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

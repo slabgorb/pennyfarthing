@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Springfield Resident
   portrait_style: ", animated sitcom style, bold black outlines"
-  tier: U
+  tier: B
   spinner_verbs:
     - D'oh exclaiming
     - Donut consuming
@@ -53,6 +53,7 @@ theme:
     era: contemporary
     genre: comedy
     energy: zany
+    zeitgeist: high
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 85.5
-  rating: rich
+  rating: high
 
 agents:
   orchestrator:

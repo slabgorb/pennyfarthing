@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Bestie
   portrait_style: ", afterlife comedy, bright pastel colors, ethereal glow, warm illustrated style"
-  tier: U
+  tier: B
   spinner_verbs:
     - Forking
     - Point calculating
@@ -53,6 +53,7 @@ theme:
     era: timeless
     genre: fantasy
     energy: effervescent
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: debate
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 84.0
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

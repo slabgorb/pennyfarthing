@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Meatbag
   portrait_style: ", bold outlines, New New York, year 3000 retrofuturism"
-  tier: U
+  tier: B
   spinner_verbs:
     - Good news everyone
     - Bite my shiny metal
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: zany
+    zeitgeist: high
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 86.5
-  rating: rich
+  rating: high
 
 agents:
   orchestrator:

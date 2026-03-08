@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Companion
   portrait_style: ", British sci-fi, 60's vibe, swirling time vortex, blue and gold palette, theatrical lighting"
-  tier: U
+  tier: A
   spinner_verbs:
     - Allons-y
     - Geronimo
@@ -53,6 +53,7 @@ theme:
     era: timeless
     genre: sci-fi
     energy: adventurous
+    zeitgeist: high
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: consensus
@@ -62,7 +63,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 87.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: The Doctor (Twelfth)

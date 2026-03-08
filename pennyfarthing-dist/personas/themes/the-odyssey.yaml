@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Noble Guest
   portrait_style: ", ancient Greek red-figure pottery style, classical Hellenic art"
-  tier: U
+  tier: C
   spinner_verbs:
     - Wine dark sea crossing
     - Siren resisting
@@ -52,6 +52,7 @@ theme:
     era: ancient
     genre: fantasy
     energy: epic
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: unified
     conflict_approach: confrontation
@@ -61,7 +62,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 77.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Zeus

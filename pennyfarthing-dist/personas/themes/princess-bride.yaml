@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Dear Reader
   portrait_style: ", fairy tale storybook watercolor illustration, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
-  tier: U
+  tier: S
   spinner_verbs:
     - Inconceivable
     - As you wish
@@ -52,6 +52,7 @@ theme:
     era: timeless
     genre: fantasy
     energy: swashbuckling
+    zeitgeist: high
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: competition
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 91.0
-  rating: exceptional
+  rating: high
 agents:
   orchestrator:
     character: The Grandfather

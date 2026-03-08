@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Child
   portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
-  tier: U
+  tier: B
   spinner_verbs:
     - Reading the alethiometer
     - Consulting your daemon
@@ -53,6 +53,7 @@ theme:
     era: timeless
     genre: fantasy
     energy: rebellious
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
     stakes: cosmic
 zeitgeist:
   score: 82.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Master of Jordan College

@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Fellow Knight
   portrait_style: ", Picasso ink sketch style, bold black brushstrokes on white, minimalist gestural drawing, stark silhouette, 1955 Don Quixote sketch aesthetic"
-  tier: U
+  tier: B
   spinner_verbs:
     - Tilting at windmills
     - Dreaming chivalrously
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: quixotic
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -61,7 +62,7 @@ theme:
     stakes: personal
 zeitgeist:
   score: 79.75
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

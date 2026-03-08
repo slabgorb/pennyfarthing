@@ -15,12 +15,13 @@ theme:
   character_immersion: high
   user_title: Good Knight
   portrait_style: ", illuminated manuscript, gold leaf accents, jewel tones on aged vellum, Celtic knotwork"
-  tier: U
+  tier: B
   dimensions:
     tone: heroic
     era: medieval
     genre: fantasy
     energy: noble
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: unified
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 79.25
-  rating: rich
+  rating: moderate
 
 agents:
   # JOB FAIR 2026-01-29: Lancelot scored 88.12 as SM - strong coordination skills

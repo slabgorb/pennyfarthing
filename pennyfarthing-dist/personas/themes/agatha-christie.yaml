@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Dear Reader
   portrait_style: ", 1920s Art Deco, muted sepia tones, gaslight atmosphere, mystery novel cover"
-  tier: U
+  tier: B
   dimensions:
     tone: analytical
     era: interwar
     genre: drama
     energy: methodical
+    zeitgeist: low
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: psychological
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 71.75
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

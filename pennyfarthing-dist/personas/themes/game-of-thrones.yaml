@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Sire
   portrait_style: ", medieval fantasy,  gritty lighting, ice and fire"
-  tier: U
+  tier: S
   spinner_verbs:
     - Winter is coming
     - Iron Throne claiming
@@ -53,6 +53,7 @@ theme:
     era: medieval
     genre: fantasy
     energy: intense
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: manipulation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 79.3
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Samwell Tarly

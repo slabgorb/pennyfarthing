@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Team Member
   portrait_style: ", mockumentary style, fluorescent lighting, beige cubicle backdrop, confessional interview framing"
-  tier: U
+  tier: A
   dimensions:
     tone: comedic
     era: contemporary
     genre: drama
     energy: measured
+    zeitgeist: moderate
     scrutiny: trusting
     cooperation_model: ensemble
     conflict_approach: competition
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 82.5
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

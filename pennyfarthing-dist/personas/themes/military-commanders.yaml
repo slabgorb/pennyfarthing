@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Commander
   portrait_style: ", classical military oil painting, dramatic battlefield lighting, earth tones, gold accents"
-  tier: U
+  tier: D
   spinner_verbs:
     - Flanking
     - Strategizing
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: commanding
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: competition
@@ -61,7 +62,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 73.2
-  rating: rich
+  rating: low
 agents:
   orchestrator:
     character: Sun Tzu

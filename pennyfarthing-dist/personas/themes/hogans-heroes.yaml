@@ -1,14 +1,14 @@
 category: "TV Series"
 
 theme:
-  name: hogans-heroes
+  name: "Hogan's Heroes"
   description: "Characters from Hogan's Heroes — running covert ops from inside Stalag 13"
   source: "Hogan's Heroes (1965-1971)"
   pennyfarthing_version: "10.4.0"
   created: 2026-02-14
   user_title: Colonel
   portrait_style: ", WWII military sitcom, barracks illustration, cartoon realism"
-  tier: U
+  tier: C
   spinner_verbs:
     - Tunneling
     - Scheming

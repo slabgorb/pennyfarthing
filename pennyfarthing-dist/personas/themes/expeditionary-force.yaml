@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Monkey
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
-  tier: U
+  tier: C
   spinner_verbs:
     - Trust the awesomeness
     - You filthy monkeys
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: high-energy
+    zeitgeist: high
     scrutiny: skeptical
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -62,7 +63,7 @@ theme:
     stakes: existential
 zeitgeist:
   score: 85.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: Skippy the Magnificent

@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Patron
   portrait_style: ", Italian Renaissance, sfumato technique, Florentine colors, gold leaf, chiaroscuro lighting"
-  tier: U
+  tier: C
   spinner_verbs:
     - Painting frescoes
     - Discovering perspective
@@ -52,6 +52,7 @@ theme:
     era: historical
     genre: nonfiction
     energy: passionate
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: ensemble
     conflict_approach: competition
@@ -62,7 +63,7 @@ theme:
 
 zeitgeist:
   score: 77.3
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

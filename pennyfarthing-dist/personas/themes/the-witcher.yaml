@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Traveler
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
-  tier: U
+  tier: B
   spinner_verbs:
     - Monster hunting
     - Casting Igni
@@ -53,6 +53,7 @@ theme:
     era: medieval
     genre: fantasy
     energy: brutal
+    zeitgeist: low
     scrutiny: skeptical
     cooperation_model: transactional
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 72.5
-  rating: rich
+  rating: low
 agents:
   orchestrator:
     character: Destiny (Przeznaczenie)

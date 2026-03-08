@@ -15,12 +15,13 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", ancient military commander, bronze and crimson palette, battle map background, classical armor"
-  tier: U
+  tier: D
   dimensions:
     tone: authoritative
     era: ancient
     genre: nonfiction
     energy: calculated
+    zeitgeist: moderate
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: competition
@@ -61,7 +62,7 @@ theme:
     - Living off the land
 zeitgeist:
   score: 75.2
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Sun Tzu

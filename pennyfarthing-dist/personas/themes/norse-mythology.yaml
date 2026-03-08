@@ -16,12 +16,13 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", Viking Age runestone, weathered textures, northern lights, Celtic knotwork borders"
-  tier: U
+  tier: B
   dimensions:
     tone: serious
     era: historical
     genre: fantasy
     energy: high-energy
+    zeitgeist: moderate
     scrutiny: skeptical
     cooperation_model: found-family
     conflict_approach: confrontation
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 79.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Odin moved here - the All-Father orchestrates across nine worlds

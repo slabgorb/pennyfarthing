@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", cyberpunk comic art, , black lines, ink wash, and white only, industrial lighting, worn uniforms, ink and wash technique"
-  tier: U
+  tier: C
   spinner_verbs:
     - Drinking tea
     - Singing to oneself
@@ -53,6 +53,7 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: measured
+    zeitgeist: low
     scrutiny: professional
     cooperation_model: unified
     conflict_approach: psychological
@@ -62,7 +63,7 @@ theme:
     stakes: institutional
 zeitgeist:
   score: 70.0
-  rating: rich
+  rating: low
 agents:
   orchestrator:
     character: Anaander Mianaai

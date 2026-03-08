@@ -282,6 +282,15 @@ dimensions:
       - zany
     description: Kinetic quality and pacing feel
 
+  zeitgeist:
+    required: true
+    type: enum
+    values:
+      - low            # Zeitgeist score < 75
+      - moderate       # Zeitgeist score 75-84
+      - high           # Zeitgeist score ≥ 85
+    description: Cultural recognition level derived from zeitgeist score cutoffs
+
   # ── Benchmark Slicing Dimensions ────────────────────────────────────────────
   # These dimensions describe behavioral properties that may correlate with
   # pipeline detection performance. Derived from dpgd-116/117 peloton analysis:
@@ -395,8 +404,8 @@ zeitgeist_section:
   rating:
     required: true
     type: enum
-    values: [minimal, moderate, rich, exceptional]
-    description: Cultural recognition tier derived from score
+    values: [low, moderate, high]
+    description: Cultural recognition tier derived from score (low <75, moderate 75-84, high ≥85)
 
 # ─── Agent Entry ─────────────────────────────────────────────────────────────
 

@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Fellow Mask
   portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
-  tier: U
+  tier: B
   spinner_verbs:
     - Rorschach journaling
     - Minutemen assembling
@@ -53,6 +53,7 @@ theme:
     era: retro
     genre: fantasy
     energy: brooding
+    zeitgeist: moderate
     scrutiny: adversarial
     cooperation_model: transactional
     conflict_approach: psychological
@@ -63,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 80.5
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:
