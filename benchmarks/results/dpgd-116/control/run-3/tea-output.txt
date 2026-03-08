@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story delivering the CLI framework — comprehensive test coverage needed across all 10 ACs.
+
+**Test Files:**
+
+| # | File | AC Coverage | Tests |
+|---|------|-------------|-------|
+| 1 | `cli_structure_tests.rs` | AC-1, AC-2, AC-5, AC-6 | 22 |
+| 2 | `exit_code_tests.rs` | AC-3 | 12 |
+| 3 | `output_format_tests.rs` | AC-4 | 12 |
+| 4 | `siem_client_tests.rs` | AC-7 | 14 |
+| 5 | `config_tests.rs` | AC-8 | 13 |
+| 6 | `completion_tests.rs` | AC-9 | 10 |
+| 7 | `stub_handler_tests.rs` | AC-10 | 14 |
+| 8 | `security_tests.rs` | Security | 11 |
+
+**Tests Written:** 108 tests covering all 10 ACs
+**Status:** RED (failing — unresolved imports for `cli`, `error`, `client`, `output`, `config`, `commands` modules)
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak credentials/tokens
+- Header injection: Tenant ID / auth token with `\r\n` newlines
+- Silent error swallowing: No CliError variant maps to exit code 0
+- Config validation: Empty URLs, negative timeouts, missing scheme
+- Credential storage: Config serialization excludes sensitive fields
+
+**Handoff:** To Dev for implementation (GREEN phase)

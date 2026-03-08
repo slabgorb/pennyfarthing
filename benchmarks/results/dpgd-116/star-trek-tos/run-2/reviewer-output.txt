@@ -1,0 +1,103 @@
+I have completed my analysis. Here is the full review.
+
+---
+
+## Code Review: Story 6.1 — CLI Framework & Structure
+
+*raises eyebrow*
+
+Fascinating. The developer has produced a structurally sound skeleton with commendable test coverage. However, logical analysis reveals several deficiencies that cannot be overlooked. Dr. McCoy would say I'm being picky — I would say I am being *precise*.
+
+---
+
+### Findings
+
+**[HIGH] CWE-209: `ServerError` Display leaks internal details — `error.rs:25`**
+
+The `ServerError` variant's Display impl is `#[error("server error ({0})")]`, which renders only the status code. However, the *second* field (the server's raw error message) is silently dropped from Display but stored in the variant. The `security.rs:33` test checks that the status code appears but does **not** assert that the raw message (`postgres://user:pass@host/db`) is *excluded*. In fact, any code that formats the error with `{:?}` (Debug) **will** expose it. The security comment says "Display impl is for user-facing messages only" but there is no compile-time or runtime guard preventing Debug from leaking to logs that users can access. The test at `security.rs:33` is **vacuous** — it only asserts `contains("500")` but never asserts `!contains("postgres")`.
+
+**[HIGH] Missing `main.rs` — binary cannot be built**
+
+No `main.rs` exists. No `[[bin]]` section in `Cargo.toml`. The story requires an `axiathon` binary entry point with tracing init, dispatch, and exit code mapping via `std::process::exit()`. Without it, the crate is a library only — AC-1, AC-3 (exit codes in practice), and AC-9 (completion to stdout, instructions to stderr) cannot be validated end-to-end.
+
+**[HIGH] Missing `logout` and `tui` commands — `cli.rs`**
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init."* The `Commands` enum has `Login` but no `Logout` variant and no `Tui` variant. This is a direct AC violation.
+
+**[MEDIUM] `chrono_now_iso()` produces Unix timestamp, not ISO 8601 — `output.rs:114-119`**
+
+The function is named `chrono_now_iso` suggesting ISO 8601 format, but it outputs `"1709913600Z"` (epoch seconds with Z suffix). AC-4 specifies `ResponseMetadata` with a `timestamp`. Operators and scripts consuming JSON expect RFC 3339/ISO 8601 (`2024-03-08T12:00:00Z`), not raw epoch. The function name is actively misleading.
+
+**[MEDIUM] `toml` version mismatch — `Cargo.toml:52` vs story spec**
+
+Story spec says `toml 0.9`. Workspace declares `toml = "0.8"`. While 0.8 is functional, this is a documented deviation from the architectural decision. Should be noted if intentional.
+
+**[MEDIUM] Missing `keyring` dependency — workspace `Cargo.toml` and client `Cargo.toml`**
+
+Story spec lists `keyring 3` as a key dependency for OS keychain credential storage. It is absent from both the workspace and crate dependencies. While the actual keychain integration is Story 9.1, the architectural guardrail says "Load token at CLI startup in sync context BEFORE entering Tokio runtime" — the dependency scaffolding should exist.
+
+**[MEDIUM] `build_get_request` uses `expect()` — `client.rs:71`**
+
+`builder.build().expect("failed to build request")` will panic on malformed URLs. The Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect` message exists, but this is a public API that receives user-controlled `base_url` + `path`. A malformed URL from config will crash the CLI rather than returning a `CliError`. This should return `Result<reqwest::Request, CliError>`.
+
+**[MEDIUM] No `after_help` examples on any command — AC-2 gap**
+
+AC-2 requires: *"include `after_help` usage examples for each command group."* No command struct has `#[command(after_help = "...")]` or `#[command(after_long_help = "...")]`. The tests only verify help "renders without panic" — they do not assert examples exist.
+
+**[MEDIUM] CRLF injection tests rely on `catch_unwind` passthrough — `siem_client.rs:165-178`, `security.rs:98-109`**
+
+The CRLF and null-byte tests use `catch_unwind` and accept *either* a panic *or* silent success as passing. If `reqwest` silently strips bad characters in a future version, these tests would pass without validating the *application's* defense. The defense should be explicit in `with_tenant_id`/`with_token` — validate and reject at the API boundary, don't rely on downstream library behavior.
+
+**[MEDIUM] `with_env_overrides_from` silently ignores invalid timeout — `config.rs:87-93`**
+
+The doc comment says "Invalid values are ignored" and this is tested. However, an operator setting `AXIATHON_TIMEOUT=abc` will get the default timeout with zero feedback. This is a silent failure per the bash rules' spirit. At minimum, a `tracing::warn!` would be appropriate.
+
+**[LOW] `impl RefUnwindSafe for SiemClient` is a manual unsafe-adjacent marker — `client.rs:14`**
+
+This `impl` overrides the compiler's automatic trait derivation. The comment says "reqwest::Client is not RefUnwindSafe but SiemClient is safe across catch_unwind." This is only needed because tests use `catch_unwind`. Consider removing the `catch_unwind` test pattern instead of adding a manual trait impl to production code.
+
+**[LOW] Nightly `rustfmt` check fails**
+
+`cargo +nightly fmt --all --check` reports formatting diffs in `config.rs` and `cli_structure.rs`. Per gotchas.md, this must pass before approval.
+
+**[LOW] `init` command is a bare struct with no handler — `init.rs`**
+
+AC-9 says init should be "functional, not stub." Currently it's just `pub struct InitArgs;` with no handler function at all — not even a stub.
+
+**[VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`**
+
+**[VERIFIED] clap derive macros used exclusively — no imperative command building**
+
+**[VERIFIED] `SiemClient` Debug impl redacts token — `client.rs:17-25`**
+
+**[VERIFIED] `CliError` is `#[non_exhaustive]` — `error.rs:8`**
+
+**[VERIFIED] All command names are plural (rules, alerts) — `cli.rs:53-55`**
+
+**[VERIFIED] Config `LenientConfig` ignores unknown fields (including `token`) — `config.rs:16-22`**
+
+**[VERIFIED] Exit codes 3 and 4 correctly mapped — `error.rs:46-52`**
+
+---
+
+### Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High     | 3 |
+| Medium   | 6 |
+| Low      | 3 |
+| Verified | 6 |
+
+### Verdict: **CHANGES_REQUESTED**
+
+Three High findings block approval:
+
+1. **Missing `main.rs`** — the binary entry point does not exist; the crate cannot produce the `axiathon` binary
+2. **Missing `logout` and `tui` commands** — AC-1 violation
+3. **`ServerError` Display security test is vacuous** — the test at `security.rs:33` does not assert the sensitive message is excluded
+
+The Medium findings (misleading ISO timestamp, version mismatch, missing `keyring`, `expect` panic on user input, missing `after_help` examples, silent env var failures) should also be addressed but are not individually blocking.
+
+*It would be illogical to approve code that cannot compile into its intended binary.*

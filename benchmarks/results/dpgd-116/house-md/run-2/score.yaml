@@ -1,0 +1,76 @@
+scenario_id: dpgd-116
+theme: house-md
+run_id: 2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. The
+    config loading tests exist but the vacuous assertion issue (I5) shows they didn't
+    properly validate fallback behavior. Reviewer flagged silent unknown fields but
+    not the broader error-swallowing in from_file_or_default.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Reviewer verified: 'CWE-209 error display sanitization \u2014 ServerError\
+    \ and NotFound do not leak internal strings.' Dev implemented sanitized Display\
+    \ impls on CliError. However, the stderr eprintln path was not explicitly flagged\
+    \ as still leaking via transparent Io variant, so this is a partial catch at best."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "SiemClient.tenant_id uses raw String. TEA wrote CWE-113 header injection\
+    \ tests and Dev added CRLF validation on 'validated' paths, but the core issue\
+    \ \u2014 that tenant_id should use TenantId from axiathon-core instead of raw\
+    \ String \u2014 was not flagged by any phase."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted a toml version mismatch but did not flag that 6 dependencies
+    use direct version strings instead of workspace = true. The code changes summary
+    shows dependencies were added to both workspace and crate Cargo.toml but no phase
+    flagged the lack of workspace = true references.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged as [HIGH]: ''RawConfig silently accepts unknown fields...
+    No #[serde(deny_unknown_fields)] on RawConfig. A typo like server_ur = "https://..."
+    is silently ignored.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as [MEDIUM]: 'Vacuous assertion in test at config_loading.rs:19\
+    \ \u2014 assert!(config.server_url().is_some() || config.server_url().is_none(),\
+    \ ...) This is assert!(true). It literally cannot fail.'"
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test that uses 'let _ = config;' with zero assertions.
+    The reviewer caught the vacuous assertion (I5) but did not identify this separate
+    zero-assertion test.

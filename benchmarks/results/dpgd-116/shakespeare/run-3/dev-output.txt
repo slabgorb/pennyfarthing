@@ -1,0 +1,33 @@
+All clean. **122 tests pass**, clippy is clean (the one warning is in the test file, not production code).
+
+## Summary
+
+**Tests:** 122/122 passing (GREEN) across 8 test suites
+**Clippy:** Clean (0 warnings in production code)
+
+**Files created:**
+
+| File | Purpose |
+|------|---------|
+| `src/main.rs` | Binary entry point with error handling and exit codes |
+| `src/lib.rs` | Public API re-exports |
+| `src/cli.rs` | `Cli` struct with clap derive, `Commands` enum, `OutputFormat`, global flags |
+| `src/error.rs` | `CliError` enum with `exit_code()`, `from_http_status()`, sanitized Display |
+| `src/output.rs` | `OutputFormatter` trait + `TableFormatter`, `JsonFormatter`, `CsvFormatter` |
+| `src/config.rs` | `ClientConfig` with TOML loading, env var overrides, validation |
+| `src/client.rs` | `SiemClient` HTTP wrapper with CRLF rejection, token redaction |
+| `src/commands/mod.rs` | Command module re-exports |
+| `src/commands/query.rs` | Query subcommand args (stub) |
+| `src/commands/rules.rs` | Rules subcommand args (stub) |
+| `src/commands/alerts.rs` | Alerts subcommand args (stub) |
+| `src/commands/ingest.rs` | Ingest subcommand args (stub) |
+| `src/commands/config.rs` | Config subcommand args (stub) |
+| `src/commands/status.rs` | Status subcommand args (stub) |
+| `src/commands/tenant.rs` | Tenant subcommand args (stub) |
+| `src/commands/login.rs` | Login subcommand args (stub) |
+| `src/commands/completion.rs` | Shell completion generation via `clap_complete` |
+| `src/commands/init.rs` | Init subcommand args (stub) |
+
+**Files modified:**
+- `Cargo.toml` (workspace) — added `env` feature to clap
+- `crates/axiathon-client/Cargo.toml` — added `uuid` dependency

@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a full CLI framework implementation with 10 acceptance criteria requiring structural and behavioral validation.
+
+**Test Files:**
+
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 22 | AC-1, AC-2, AC-6 | Command groups, help rendering, clap derive, negative tests (singular names, server command rejection) |
+| `tests/exit_codes.rs` | 14 | AC-3 | CliError variants, exit_code() mapping (0/1/2/3/4), CWE-209 error exposure, Error trait impl |
+| `tests/output_format.rs` | 14 | AC-4 | OutputFormat enum, table/json/csv formatting, JSON metadata, CSV escaping (commas, quotes, empty rows) |
+| `tests/global_flags.rs` | 16 | AC-5 | --format, -v repeatable, --quiet, --tenant, --server, --config, --no-color, global=true positioning |
+| `tests/siem_client.rs` | 14 | AC-7 | Construction, header injection (auth + tenant), HTTP status mapping (401/403/404/429/5xx), connection refused, header injection prevention, silent error detection |
+| `tests/config_loading.rs` | 12 | AC-8 | Default config, TOML loading/validation, env var overrides, missing file handling, XDG path, token exclusion, boundary validation |
+| `tests/shell_completion.rs` | 5 | AC-9 | bash/zsh/fish/powershell generation, command group inclusion |
+| `tests/stub_handlers.rs` | 13 | AC-10 | Stub handlers return NotImplemented, story number references, CliError variant check |
+
+**Tests Written:** 110 tests covering 10 ACs
+**Status:** RED (failing to compile — modules do not exist yet)
+**Commit:** `6a1dbd9` — `test: add failing tests for story 6.1 CLI framework`
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+### Security Tests Included
+- **CWE-209:** `CliError` Display must not leak server internals or connection details
+- **Header injection:** SiemClient must reject/sanitize newlines in tokens and tenant IDs
+- **Token storage:** Config file must NOT store tokens (keychain only)
+- **Silent errors:** SiemClient must propagate errors, not swallow them

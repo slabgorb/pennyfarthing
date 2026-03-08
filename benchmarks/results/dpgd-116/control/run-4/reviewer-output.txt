@@ -1,0 +1,88 @@
+I have now reviewed all implementation files, all test files, run the test suite, clippy, and nightly fmt. Here is my structured review.
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+## Observations
+
+### 1. `[HIGH]` Nightly `rustfmt` check fails — `cli.rs` has formatting violations
+
+`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs`. Per the reviewer gotchas (`gotchas.md`), nightly fmt must pass before approval. The long `#[command(...)]` attributes need line-wrapping per nightly rules.
+
+### 2. `[HIGH]` `init` command is a stub, violating AC-9/scope — story says it must be functional
+
+The story scope explicitly states: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. The `init` handler at `commands/init.rs:3` returns `Err(CliError::NotYetImplemented("Story 6.1"))` — it's a stub, not a functional implementation. This is a scope gap within this story's own deliverables.
+
+### 3. `[MEDIUM]` `toml` workspace version mismatch — spec says 0.9, workspace declares 0.8
+
+The story Technical Guardrails specify `toml 0.9`, but `Cargo.toml:58` declares `toml = "0.8"`. While 0.8 works, this is a deviation from the specification. toml 0.9 does not exist yet (latest is 0.8.x), so the spec itself is wrong, but this should be noted.
+
+### 4. `[MEDIUM]` `RawConfig` silently ignores unknown fields — no `#[serde(deny_unknown_fields)]`
+
+At `config.rs:10`, `RawConfig` will silently accept and ignore any unknown keys in the TOML file (including typos like `timout` instead of `timeout`). This is a usability concern — operator typos will silently be treated as defaults. No test covers this behavior.
+
+### 5. `[MEDIUM]` No TTY auto-detection for output format — AC-4 requires it
+
+AC-4 states: *"Table default for TTY, JSON for piped output."* The story Technical Guardrails say: *"Use `std::io::IsTerminal`"*. There is zero usage of `IsTerminal` or any TTY detection anywhere in the codebase. The `--format` flag always defaults to `table` regardless of whether stdout is a TTY. This is a partial AC-4 gap.
+
+### 6. `[MEDIUM]` `AXIATHON_API_TOKEN` env var fallback not implemented
+
+AC-8 and Technical Guardrails state: *"Fall back to `AXIATHON_API_TOKEN` env var for CI/CD."* No code reads this env var. Token loading from keyring is also absent (acceptable for stubs), but the env var fallback is a simpler requirement that's missing.
+
+### 7. `[MEDIUM]` `output.rs` uses `expect()` 5 times in production code
+
+At `output.rs:134,155,159,162,163`, five `expect()` calls exist in production (non-test) code. Per rust.md rules: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message"*. The `expect()` calls have messages, which technically satisfies the rule, but the `OutputFormatter::format_rows` trait returns `String` not `Result<String>`, making error propagation impossible. If the trait signature can't change, these are acceptable, but this is a design concern.
+
+### 8. `[MEDIUM]` `axiathon-core` dependency declared but never used
+
+`Cargo.toml:13` declares `axiathon-core = { path = "../axiathon-core" }` as a dependency, but grep finds zero `use axiathon_core` statements in any source file. This is dead weight and will cause unnecessary compilation.
+
+### 9. `[LOW]` `SiemClient::new` silently produces empty `base_url` for invalid schemes
+
+At `client.rs:27-31`, if a non-HTTP(S) URL is passed, `base_url` is silently set to `""`. No error, no warning. While the security test verifies this doesn't produce dangerous URLs, silent empty-string assignment could cause confusing "connection refused" errors later at runtime instead of a clear "invalid URL scheme" error at construction time.
+
+### 10. `[LOW]` `ConfigError` Display hides the inner message — may hinder debugging
+
+At `error.rs:50`, `ConfigError(_)` displays as just `"configuration error"` regardless of the inner string. While this is correct for CWE-209 (don't leak internals), it means operators get zero diagnostic information. Consider logging the inner message at debug/trace level before displaying the sanitized version.
+
+### 11. `[VERIFIED]` CWE-209 error exposure — properly handled
+
+`CliError::Display` implementations at `error.rs:40-54` correctly sanitize all output. `ServerError` inner string is never exposed. Tests in `security_test.rs` and `exit_codes_test.rs` verify this.
+
+### 12. `[VERIFIED]` CWE-113 header injection prevention — properly handled
+
+`SiemClient::with_token` and `with_tenant` at `client.rs:46,59` reject newline characters. `HeaderValue::from_str` at `client.rs:87,93` provides a second layer of defense. Tests verify both.
+
+### 13. `[VERIFIED]` `#[non_exhaustive]` on `CliError` — correctly applied at `error.rs:9`
+
+### 14. `[VERIFIED]` `#![forbid(unsafe_code)]` — present in both `main.rs:3` and `lib.rs:2`
+
+### 15. `[VERIFIED]` Exit codes 0/1/3/4 mapping — all correct per AC-3. Tests comprehensive.
+
+### 16. `[VERIFIED]` Shell completion generation — functional via `clap_complete::generate()`, tests cover all 4 shells.
+
+### 17. `[VERIFIED]` All global flags use `global = true` — confirmed in `cli.rs` and tested in `global_flags_test.rs`.
+
+### 18. `[VERIFIED]` Clap derive macros — no imperative command building found. AC-6 satisfied.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 6 |
+| Low | 2 |
+| Verified Good | 8 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High-severity issues block approval:
+
+1. **Nightly `rustfmt` fails** — must pass per reviewer gotchas. Fix: run `cargo +nightly fmt --all`.
+2. **`init` command is a stub when story scope requires it functional** — either implement a minimal `init` (create config directory + default `cli.toml`) or document in the PR why it's deferred. The story text is unambiguous: *"functional, not stub"*.
+
+The Medium findings (no TTY auto-detection, no `AXIATHON_API_TOKEN` fallback, unused `axiathon-core` dep, silent unknown field handling, `toml` version note) should be addressed or explicitly acknowledged as known gaps before merging.

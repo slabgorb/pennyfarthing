@@ -1,0 +1,145 @@
+I have now read every source file, every test file, both Cargo.toml files, run the full test suite (all pass), clippy (clean), and nightly fmt (fails). I have completed my adversarial review. Here is my judgment.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+**Reviewer:** Immanuel Kant
+**Verdict:** CHANGES_REQUESTED
+
+---
+
+## Observations
+
+### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary is produced
+
+**At:** `crates/axiathon-client/src/main.rs` (missing)
+
+AC-1 requires `axiathon --help` to work as a binary. The story spec requires `main.rs` as the binary entry point that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()`. There is no `main.rs` and no `[[bin]]` section in Cargo.toml. This crate produces only a library (`lib.rs`), not the `axiathon` binary. **The entire binary deliverable of Story 6.1 is missing.** Shell completions, exit code dispatch, error-to-stderr routing — none of it is wired up.
+
+### [HIGH] Missing `reqwest` dependency — `SiemClient` is a hollow shell
+
+**At:** `crates/axiathon-client/Cargo.toml`, `crates/axiathon-client/src/client.rs`
+
+AC-7 requires `SiemClient` wraps `reqwest::Client` with header injection and HTTP error mapping. The implementation stores `base_url`, `tenant_id`, and `token` as plain `String` fields but never creates a `reqwest::Client`. There is no actual HTTP capability. The `reqwest` crate is not in `Cargo.toml` (workspace or crate-level) and is not in the workspace `Cargo.toml`. The story spec explicitly lists `reqwest` 0.12 (json, rustls-tls) as a key dependency to add to workspace dependencies. This is not a "stub for later" — AC-7 requires the client to inject headers and map HTTP status codes, which implies an actual HTTP client.
+
+### [HIGH] Nightly `rustfmt` check fails — per gotchas.md, this blocks approval
+
+**At:** `crates/axiathon-client/src/cli.rs:1`, `crates/axiathon-client/src/client.rs:50`, `crates/axiathon-client/src/commands/completion.rs`
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Import ordering in `cli.rs` has `crate::` imports before `clap::` imports; nightly orders external crate imports first.
+
+### [MEDIUM] `tui` command missing from `Commands` enum — AC-1 gap
+
+**At:** `crates/axiathon-client/src/cli.rs:50-83`
+
+AC-1 explicitly lists `tui` as a required command group in `axiathon --help`. The `Commands` enum does not include a `Tui` variant. The test `top_level_help_contains_all_command_groups` at `tests/cli_structure.rs:26-37` checks for 11 groups but omits `tui` from the list, masking this gap.
+
+### [MEDIUM] `generate_completions()` panics on unsupported shell — violates error handling rules
+
+**At:** `crates/axiathon-client/src/commands/completion.rs:33`
+
+```rust
+other => panic!("unsupported shell: {other}"),
+```
+
+The Rust coding rules state: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `panic!` is technically different from `unwrap()`, the spirit is the same. This function should return `Result<String, CliError>` instead of panicking. The `ShellArg` enum ensures clap won't pass invalid shells, but the `generate_completions` function takes `&str`, making the panic reachable from non-CLI callers.
+
+### [MEDIUM] `expect()` calls in `CsvFormatter` and `JsonFormatter` — potential panics in production
+
+**At:** `crates/axiathon-client/src/output.rs:64-65, 81-87`
+
+Multiple `.expect()` calls in the formatters:
+- `output.rs:64`: `expect("JSON serialization should not fail")`  
+- `output.rs:81-87`: `expect("write CSV header")`, `expect("write CSV row")`, `expect("flush CSV")`, `expect("get CSV buffer")`, `expect("CSV should be valid UTF-8")`
+
+While these are unlikely to fail in practice, the Rust coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages are present but the `OutputFormatter::format` signature returns `String`, not `Result`. The trait should return `Result<String, CliError>` so errors propagate instead of panicking.
+
+### [MEDIUM] `ServerError` and `NotFound` inner strings are exposed via `CliError::Config` — inconsistent CWE-209 mitigation
+
+**At:** `crates/axiathon-client/src/error.rs:34`
+
+```rust
+#[error("configuration error: {0}")]
+Config(String),
+```
+
+The `Config` variant exposes its inner string in the `Display` impl (line 34: `"configuration error: {0}"`). This is used in `config.rs:37` with `format!("failed to read config: {e}")` which could leak filesystem paths to the operator. Meanwhile, `ServerError` and `NotFound` deliberately hide their inner strings in Display (good). The inconsistency means config errors leak details while other errors don't.
+
+### [MEDIUM] `token_rejects_newline_injection` test has no assertion — vacuous test
+
+**At:** `crates/axiathon-client/tests/siem_client.rs:151-161`
+
+The test creates a client with a CRLF-injected token and then... does nothing. There's no `assert!` in the function body. The comment says "Token must be sanitized or rejected" but the test verifies neither. Compare with `tenant_id_rejects_newline_injection` at line 134 which properly asserts. This is a vacuous test that passes regardless of implementation.
+
+### [MEDIUM] `config_file_with_token_field_is_rejected_or_ignored` test has no meaningful assertion
+
+**At:** `crates/axiathon-client/tests/config_loading.rs:118-136`
+
+The test loads a config file containing a `token` field, then the `if let Ok(config) = result` block has only a comment. No runtime assertion verifies the token is actually inaccessible. This is a compile-time check at best (no `token()` method), but doesn't verify the config doesn't store the token somewhere accessible.
+
+### [MEDIUM] `RawConfig` silently ignores unknown fields — `deny_unknown_fields` not set
+
+**At:** `crates/axiathon-client/src/config.rs:12-16`
+
+```rust
+#[derive(Deserialize, Default)]
+struct RawConfig {
+    api_url: Option<String>,
+    timeout: Option<i64>,
+}
+```
+
+Unknown fields (including `token = "my-secret"`) are silently deserialized and dropped. While the comment on line 11 acknowledges this ("Unknown fields like `token` are silently ignored"), this is a security concern: an operator who puts their token in the config file thinking it works gets no warning that their secret is being ignored. Consider at minimum logging a warning if a `token` field is present, or using `#[serde(deny_unknown_fields)]` to force explicit config.
+
+### [LOW] `keyring` crate missing from workspace dependencies
+
+**At:** `Cargo.toml` workspace dependencies
+
+Story spec requires `keyring` 3 for OS keychain credential storage. Not in workspace deps. While the actual keyring usage is deferred to Story 9.1, the spec says to add it to workspace deps in this story.
+
+### [LOW] `toml` 0.9 vs `toml_edit` 0.22 — deviation from spec
+
+**At:** `Cargo.toml:53`
+
+Story spec says to use `toml` 0.9 for config file parsing. Implementation uses `toml_edit` 0.22 instead. This is arguably fine (toml_edit includes toml parsing + editing), but should be documented as a deliberate deviation.
+
+### [LOW] Missing `after_help` usage examples on command groups — AC-2 gap
+
+**At:** `crates/axiathon-client/src/cli.rs:50-83`
+
+AC-2 states: "include `after_help` usage examples for each command group." No command group variant has `#[command(after_help = "...")]` attributes. While the help *renders* without panic (tested), it doesn't include the examples AC-2 requires.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### [VERIFIED] `#[non_exhaustive]` on `CliError` at `error.rs:8`
+### [VERIFIED] CWE-209: `ServerError` Display shows "server error" not inner string at `error.rs:10`
+### [VERIFIED] CWE-209: `NotFound` Display shows "resource not found" not inner string at `error.rs:13`
+### [VERIFIED] CWE-113: CRLF stripping on tenant_id at `client.rs:41-44`
+### [VERIFIED] URL scheme validation (HTTP/HTTPS only) at `client.rs:21`
+### [VERIFIED] Exit code mapping correct: 3=auth, 4=authz, 1=others at `error.rs:46-52`
+### [VERIFIED] All workspace dependencies declared at workspace level
+### [VERIFIED] No server-side crate imports in axiathon-client Cargo.toml
+### [VERIFIED] Timeout validation rejects 0 and negative values at `config.rs:93`
+### [VERIFIED] Plural command names (rules, alerts) enforced at `cli.rs:55,58`
+### [VERIFIED] All global flags have `global = true` at `cli.rs:16-42`
+### [VERIFIED] clippy passes clean with `-D warnings`
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| HIGH | 3 | YES |
+| MEDIUM | 6 | NO |
+| LOW | 3 | NO |
+
+The three HIGH findings are blocking:
+
+1. **No binary entry point** — the story's primary deliverable (the `axiathon` binary) does not exist
+2. **No `reqwest` dependency** — `SiemClient` cannot make HTTP requests
+3. **Nightly fmt failure** — per project gotchas, this blocks approval
+
+The implementation delivers solid library-level modules with good type design, proper CWE mitigations, and thorough test coverage for what exists. But the absence of `main.rs` means none of this is wired into an actual executable. An operator cannot run `axiathon --help` today. The categorical imperative demands: could we universalize a law where "delivering a CLI framework" means "delivering only library code with no binary"? We cannot.
+
+**Verdict: CHANGES_REQUESTED**

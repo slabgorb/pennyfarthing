@@ -1,0 +1,81 @@
+I've completed my thorough review. Here are my findings.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Code Review
+
+*Well, darling, let me tell you what I found when I actually looked at this code instead of just nodding along.*
+
+## Findings
+
+**1. [HIGH] `cargo +nightly fmt --all --check` fails — formatting violations in `client.rs` and `config.rs`**
+
+Per the gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* Three formatting diffs found in `client.rs:79`, `client.rs:108`, and `config.rs:62`. This blocks merge.
+
+**2. [HIGH] No `main.rs` binary entry point — the `axiathon` binary does not exist**
+
+AC-1 through AC-3 require `axiathon --help` to work, `main.rs` to dispatch commands, catch errors, and call `std::process::exit()`. The story spec explicitly lists `main.rs` as a key file to create: *"Binary entry point, tracing init, dispatch, exit codes."* The `Cargo.toml` has no `[[bin]]` section either. Without `main.rs`, there is no CLI binary — the entire deliverable is a library crate that can't actually be run. This is a showstopper.
+
+**3. [HIGH] `init` command is a stub, but AC-10/story scope says it must be functional**
+
+Story scope: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. The `commands/init.rs` returns `handle_stub()` with "not yet implemented (Story 6.1)" — meaning it's a stub for the current story itself, which makes no sense. Completion generation *is* functional, but `init` is not.
+
+**4. [MEDIUM] `RawConfig` silently ignores unknown fields — no `#[serde(deny_unknown_fields)]`**
+
+At `config.rs:4`, `RawConfig` will silently accept any unknown TOML key. A user typing `api_irl` instead of `api_url` gets zero feedback. The `config_does_not_store_tokens` test at `config_test.rs:125` actually proves this — a `token` field is silently ignored rather than rejected. The test asserts `has_token()` is false, but the *real* security posture should warn the user that they're putting secrets in a config file, not silently eat them.
+
+**5. [MEDIUM] `with_overrides` silently ignores invalid env var values — no error, no warning**
+
+At `config.rs:68-79`, if `AXIATHON_API_URL` is set to `"ftp://evil.com"`, `with_overrides` accepts it without the scheme validation that `load_from` performs. Similarly, `AXIATHON_TIMEOUT=0` or `AXIATHON_TIMEOUT=-5` are silently ignored instead of erroring. The test `invalid_timeout_env_var_is_handled` at `config_test.rs:111` asserts this is acceptable ("not panic"), but the test name implies the invalid value is "handled" when it's actually silently dropped.
+
+**6. [MEDIUM] JSON metadata envelope missing `request_id` and `timestamp` per AC-4**
+
+AC-4 says: *"JSON includes `ResponseMetadata` (request_id, timestamp, api_version)."* At `output.rs:72-77`, only `api_version` is included. No `request_id`, no `timestamp`. The test at `output_format_test.rs:77` uses a weak assertion (`parsed.get("data").is_some() || parsed.is_array()`) that doesn't verify the metadata fields.
+
+**7. [MEDIUM] `with_tenant()` and `with_token()` bypass validation — validated variants are separate methods**
+
+At `client.rs:33` and `client.rs:53`, `with_token` and `with_tenant` accept any string without validation. The validated versions (`with_token_validated`, `with_tenant_validated`) exist but are not enforced by the type system. Nothing prevents callers from using the unvalidated path, making header injection prevention opt-in rather than default-safe.
+
+**8. [MEDIUM] `exit_code_success_is_zero` test is vacuous — `assert_eq!(0_i32, 0)`**
+
+At `exit_codes_test.rs:15`, this test asserts that zero equals zero. It tests nothing about the actual code. It's a tautology masquerading as a test.
+
+**9. [LOW] `OutputFormatter` is a concrete struct, not a trait per AC-4**
+
+AC-4 specifies *"The `OutputFormatter` trait provides consistent formatting."* The implementation at `output.rs:23` is a struct with methods, not a trait. Future command groups won't implement a trait — they'll call the struct directly. This deviates from the architecture spec.
+
+**10. [LOW] `Cli.config` uses `String` not `PathBuf` for file path**
+
+At `cli.rs:25`, `--config` is `Option<String>` instead of `Option<PathBuf>`. clap supports `PathBuf` natively and it would provide better type safety for a file path.
+
+**11. [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`**
+
+**12. [VERIFIED] Workspace dependency declarations correct — all deps use `{ workspace = true }`**
+
+**13. [VERIFIED] CWE-113 header injection prevention tested for CR, LF, null bytes, and all control chars 0-31**
+
+**14. [VERIFIED] CWE-209 error Display messages sanitized — `Internal(String)` displays "An internal error occurred", not the inner string**
+
+**15. [VERIFIED] `#[non_exhaustive]` on `CliError` enum**
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 2 |
+| Verified | 5 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity findings block this PR:
+
+1. **Nightly fmt failures** — fix the formatting.
+2. **No `main.rs`** — without a binary entry point, there is literally no CLI. The crate compiles as a library but produces no `axiathon` executable.
+3. **`init` command is a stub for its own story** — the scope document says it must be functional.
+
+The Medium findings on env var validation bypass, missing JSON metadata fields, and silent unknown-field acceptance should also be addressed before approval. The validated-vs-unvalidated API split on `SiemClient` is a design smell that will bite you when someone forgets to call the `_validated` variant.
+
+*Now stop wasting my time and go fix it, or I'll find someone who will.*

@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every type, trait, and module needs test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_parsing.rs` | 30 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, clap derive |
+| `tests/exit_codes.rs` | 14 | AC-3 | CliError enum, exit_code() mapping (1/3/4), Display trait |
+| `tests/output_format.rs` | 19 | AC-4 | OutputFormatter trait, Table/JSON/CSV formatting, escaping |
+| `tests/siem_client.rs` | 14 | AC-7 | HTTP status mapping, header injection prevention, construction |
+| `tests/config_loading.rs` | 13 | AC-8 | TOML loading, env var overrides, validation, no secrets on disk |
+| `tests/shell_completion.rs` | 5 | AC-9 | bash/zsh/fish/powershell completion generation |
+| `tests/stub_handlers.rs` | 10 | AC-10 | "not yet implemented" messages with story references |
+| `tests/security.rs` | 9 | Cross-cutting | CWE-209, header injection, auth/authz distinction, unsafe_code |
+
+**Tests Written:** 114 tests covering all 10 ACs
+**Status:** RED (compile errors — all imports unresolved, no types exist yet)
+
+**Security tests included:**
+- CWE-209: Error messages don't leak stack traces or internal paths
+- CWE-113: Header injection via CRLF in tenant ID, token, and base URL
+- Auth vs AuthZ exit code distinction (prevents confused deputy)
+- Config serialization excludes tokens/secrets
+- Silent error swallowing prevention (all HTTP error codes produce CliError)
+- `#![forbid(unsafe_code)]` structural guarantee
+
+**Handoff:** To Dev for implementation (GREEN phase)

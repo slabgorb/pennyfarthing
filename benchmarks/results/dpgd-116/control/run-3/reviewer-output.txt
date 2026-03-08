@@ -1,0 +1,93 @@
+Now I have all the information I need. Here is my structured review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+## Preflight Results
+- `cargo check`: PASS
+- `cargo clippy -D warnings`: PASS
+- `cargo +nightly fmt --all --check`: **FAIL** — multiple formatting violations across `cli.rs`, `client.rs`, `config.rs`, `init.rs`, and most test files
+- `cargo test`: **1 FAILURE** — `completion_command_requires_shell_argument`
+
+---
+
+## Findings
+
+### [CRITICAL] Test failure: `completion_command_requires_shell_argument` — at `tests/completion_tests.rs:87`
+
+The test asserts that `axiathon completion` (no shell arg) must fail, but the `Completion` variant in `cli.rs:106-110` defines `shell: Option<Shell>`, making the argument optional. The test expects `is_err()` but clap parses it as `Ok(Completion { shell: None })`. This is a **test-vs-implementation mismatch**. Either the shell arg should be required (remove `Option`), or the test is wrong. Per AC-9, the shell argument IS required for completion generation, and `main.rs:27-29` already handles `None` by returning a `CliError::ConfigError` — but that runtime check doesn't help the clap parse-level test. **The shell arg should not be `Option` — it should be required at the clap level.**
+
+### [HIGH] Nightly `rustfmt` check fails — multiple files
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." Formatting violations exist across `cli.rs`, `client.rs`, `config.rs`, `init.rs`, and most test files. This must be fixed before merge.
+
+### [HIGH] Silent header injection failure — at `client.rs:44` and `client.rs:51`
+
+When `HeaderValue::from_str()` fails (e.g., tenant ID or token contains invalid header characters including `\r\n`), the code silently skips the header with `if let Ok(val)`. This means:
+1. A malformed tenant ID silently sends the request **without tenant scoping** — data from the wrong tenant could be returned.
+2. A malformed token silently sends an **unauthenticated** request.
+
+This is a security concern (CWE-113 adjacency). The code should return an error when header values are invalid, not silently degrade. The security test at `security_tests.rs:43-57` acknowledges this weakness with a comment "It's also acceptable to reject at construction time" — but neither path actually rejects. The test is vacuous.
+
+### [HIGH] `ClientConfig` accepts unknown TOML fields silently — at `config.rs:11`
+
+`ClientConfig` derives `Deserialize` without `#[serde(deny_unknown_fields)]`. A typo like `servr_url` or a config key from a future version will be silently ignored, and the default will be used. Operators will think they've configured something when they haven't. This is a common source of production misconfiguration.
+
+### [MEDIUM] Workspace dependency version mismatch for `toml` — at `Cargo.toml:22`
+
+The story spec says `toml` 0.9, but `Cargo.toml` uses `toml = "0.8"`. Also, `clap_complete`, `comfy-table`, `dirs`, `csv`, `keyring`, `reqwest`, and `toml` are declared directly in the crate's `Cargo.toml` instead of being declared in `[workspace.dependencies]` in the root `Cargo.toml` as specified by AC and the technical guardrails. This violates the workspace dependency management pattern.
+
+### [MEDIUM] `OutputFormatter` uses `expect()` for CSV operations — at `output.rs:108-114`
+
+Six `expect()` calls in CSV/JSON formatting. While writing to a `Vec<u8>` shouldn't fail in practice, the project rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The messages exist but are not actionable (they just say "must not fail"). If any of these panics, the CLI crashes without a clean error message. These should propagate `Result` instead.
+
+### [MEDIUM] `apply_env_overrides_from` and `apply_cli_overrides` are identical — at `config.rs:55-92`
+
+Both methods have exactly the same implementation. There's no semantic difference. This suggests a copy-paste that will diverge silently in the future. More importantly, the actual env var reading (calling `std::env::var("AXIATHON_API_URL")`) is never shown — the caller must know to read env vars and pass them in. This indirection could easily be wired wrong.
+
+### [MEDIUM] `Logout` command maps to same handler as `Login` — at `main.rs:24`
+
+`Commands::Logout => commands::login::handle()` calls the same stub as `Login`. While both are stubs, the logout behavior should eventually differ (clear keychain vs authenticate). Using the same handler means a future implementor might not notice that logout needs its own path. A separate `logout.rs` stub would be cleaner.
+
+### [LOW] Compiler warnings in tests — at `completion_tests.rs` and `cli_structure_tests.rs`
+
+Multiple `unused_imports` warnings for `clap::Parser` and `Commands`. With `-D warnings` in CI, these would fail if test compilation used the same lint settings.
+
+### [LOW] `no_color` flag doesn't affect table styling — at `output.rs:66-79`
+
+In `format_as_table`, both the `no_color=true` and `no_color=false` branches load the same `UTF8_FULL` preset. The only difference is `force_no_tty()`. This doesn't actually disable ANSI colors — `comfy-table` doesn't add ANSI colors with `UTF8_FULL` by default anyway, so the `no_color` flag is effectively a no-op for tables. The test at `output_format_tests.rs:50-59` passes vacuously because comfy-table never adds ANSI codes.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`
+### [VERIFIED] No `unwrap()` in production code
+### [VERIFIED] `CliError` is `#[non_exhaustive]` as required
+### [VERIFIED] Exit codes correctly map: auth=3, authz=4, all others=1
+### [VERIFIED] Binary name is `axiathon` (not `axiathon-client`)
+### [VERIFIED] Config serialization does not include token/secret/password fields
+### [VERIFIED] No server-side crate imports in axiathon-client
+
+---
+
+## Data Flow Trace
+
+**Traced:** Tenant ID from CLI `--tenant` flag through to HTTP request header.
+
+1. Parsed by clap into `Cli.tenant: Option<String>` (raw `String`, not `TenantId` newtype)
+2. Would be passed to `SiemClient::new()` as `Option<String>`
+3. In `SiemClient::get()`, converted to `HeaderValue` via `from_str()`
+4. If conversion fails (invalid chars), **silently skipped** — request sent without tenant scoping
+
+**Issue:** The tenant ID is a raw `String` throughout, not the `TenantId` newtype from `axiathon-core`. This bypasses validation. Combined with the silent header skip, this is a data integrity risk.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking Issues (must fix):
+1. **Test failure** (`completion_command_requires_shell_argument`) — make the shell arg required at the clap level, not optional
+2. **Nightly fmt** — run `cargo +nightly fmt --all` to fix formatting
+3. **Silent header injection/skip** in `SiemClient::get()` — return `CliError` when `HeaderValue::from_str()` fails instead of silently dropping headers
+
+### Strongly Recommended (should fix):
+4. Add `#[serde(deny_unknown_fields)]` to `ClientConfig`
+5. Move non-workspace dependencies (`clap_complete`, `comfy-table`, etc.) into `[workspace.dependencies]` per project conventions

@@ -1,0 +1,88 @@
+Now I have everything I need. Here is my adversarial review.
+
+---
+
+# Dread Pirate Roberts' Code Review — Story 6.1: CLI Framework & Structure
+
+*"As you wish"... but I wish to find every flaw.*
+
+## Findings
+
+### [HIGH] `SiemClient::new()` bypasses all validation — CWE-113 header injection at `client.rs:19`
+
+`SiemClient::new()` performs zero validation on tenant ID or token inputs. While `try_new()` exists with CRLF/null byte checks, **nothing forces callers to use `try_new()`**. All test code uses `new()` directly. The unvalidated constructor is `pub` and will be the path of least resistance for future implementors, creating a latent header injection vulnerability. Either remove `new()` entirely, make `try_new()` the only constructor, or make `new()` private.
+
+### [HIGH] Edition mismatch: `axiathon-client` uses `edition = "2021"` vs workspace `edition = "2024"` at `crates/axiathon-client/Cargo.toml:2`
+
+The workspace defines `edition = "2024"` but the client crate overrides it with `edition = "2021"`. This means the crate misses edition 2024 language changes (e.g., `gen` keyword reservation, new borrow checker rules). The crate should use `edition.workspace = true` like other workspace members, or this divergence must be explicitly justified.
+
+### [HIGH] `toml` version mismatch: story spec says `0.9`, workspace declares `0.8` at `Cargo.toml:58`
+
+The story technical guardrails specify `toml 0.9` but the workspace `Cargo.toml` declares `toml = "0.8"`. This is a spec deviation that should be explicitly reconciled.
+
+### [MEDIUM] `expect()` calls in production code paths — `output.rs:105,110-115` and `init.rs:11`
+
+The Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` calls in `output.rs` for CSV/JSON serialization are technically compliant but borderline — they panic on I/O failure writing to a `Vec<u8>`, which is infallible in practice, but the blanket rule exists for a reason. More concerning: if `render_csv`/`render_json` ever get used with a non-`Vec` writer, these become runtime panics. Consider returning `Result` from the formatter methods.
+
+### [MEDIUM] `std::env::set_var` / `remove_var` are unsound in multi-threaded tests — multiple test files
+
+`set_var` and `remove_var` are [unsound in Rust 2024](https://doc.rust-lang.org/std/env/fn.set_var.html) when called from multi-threaded contexts. The test runner runs tests in parallel within the same process. Tests in `config_loading.rs`, `global_flags.rs`, and `security.rs` all mutate env vars without synchronization. On edition 2024 this would be a compile error, but on edition 2021 it's UB. These tests need `#[serial]` (via `serial_test` crate) or env var isolation.
+
+### [MEDIUM] Config silently falls back to default on invalid URL scheme instead of erroring — `config.rs:69-71`
+
+When a user explicitly sets `api_url = "ftp://..."` in their config file, the code silently replaces it with the default `http://localhost:8080`. This is a silent error swallowing pattern — the user thinks they configured a URL but the CLI quietly ignores it. Should return `Err(CliError::Config(...))` so the user knows their config is wrong.
+
+### [MEDIUM] `RawConfig` silently ignores unknown fields — `config.rs:15-21`
+
+`RawConfig` uses `#[serde(default)]` on individual fields but doesn't use `#[serde(deny_unknown_fields)]`. The doc comment says "Extra fields (like `token`) are silently ignored" which is *intentional* for `token`, but it also means typos like `api_rul` or `timoeut` are silently ignored. A warning on unknown fields (or explicit `#[serde(deny_unknown_fields)]` with a specific exception for `token`) would improve UX.
+
+### [MEDIUM] `--tenant` accepts raw `String` instead of validated `TenantId` newtype — `cli.rs:34`
+
+Per the Rust coding rules, IDs should use newtypes (`TenantId(String)`) to prevent mixing. The `--tenant` flag accepts a raw `Option<String>`. The `axiathon-core` crate already defines `TenantId` — it should be used here or at least validated before passing to `SiemClient`.
+
+### [MEDIUM] `NotFound` error Display leaks the full URL including server address — `error.rs:57`
+
+`CliError::NotFound(resource)` displays `"not found: {resource}"` where `resource` is the full URL (set at `client.rs:98`). This can expose internal infrastructure URLs to operators. Per the SECURITY comment on the error type, Display should produce user-safe messages only.
+
+### [LOW] Nightly `rustfmt` formatting violations — `siem_client.rs:193`, `stub_handlers.rs:109`
+
+Per the gotchas file: "Always include `cargo +nightly fmt --all --check` in the preflight." Two files have nightly fmt violations that need fixing before merge.
+
+### [LOW] `ResponseMetadata` defined but never used in actual output — `output.rs:42-46`
+
+`ResponseMetadata` is defined and tested for serialization, but `render_json` in `OutputFormatter` doesn't include it in the JSON envelope. AC-4 requires "JSON includes `ResponseMetadata` (request_id, timestamp, api_version)." The JSON output currently wraps data in `{"data": [...]}` without metadata.
+
+### [LOW] Missing `logout` and `tui` stub tests — `stub_handlers.rs`
+
+AC-10 says all unimplemented commands should print "not yet implemented" with exit code 1. Tests exist for most stubs but `logout` and `tui` are missing from `stub_handlers.rs`.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`
+### [VERIFIED] Exit code mapping is correct and exhaustive at `error.rs:35-46`
+### [VERIFIED] CWE-209: `ServerError` Display suppresses internal details at `error.rs:52`
+### [VERIFIED] Shell completion generation is functional (not stub) at `completion.rs`
+### [VERIFIED] All command groups present in `Commands` enum matching AC-1 requirements
+### [VERIFIED] Plural nouns used correctly (`rules`, `alerts`) per architecture doc
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 3 |
+| Verified | 6 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High severity findings block approval:
+
+1. **`SiemClient::new()` bypasses validation** — the safe `try_new()` should be the only public constructor, or `new()` must also validate.
+2. **Edition mismatch** (2021 vs 2024) — use `edition.workspace = true`.
+3. **`toml` version spec deviation** — reconcile 0.8 vs 0.9.
+
+The Medium findings around silent config fallback, raw `String` for tenant ID, and `NotFound` URL leakage should also be addressed but are not blocking.
+
+*"Good night, Westley. Good work. Sleep well. I'll most likely kill your PR in the morning."*
