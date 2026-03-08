@@ -34,6 +34,7 @@ class RepoConfig:
     branch_strategy: str  # "trunk-based" or "gitflow"
     description: str = ""
     language: str = "unknown"
+    languages: list[str] = field(default_factory=list)
     test_command: str = ""
     build_command: str = ""
     lint_command: str = ""
@@ -65,6 +66,7 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         branch_strategy=data.get("branch_strategy", "trunk-based"),
         description=data.get("description", ""),
         language=data.get("language", "unknown"),
+        languages=data.get("languages", []) or [],
         test_command=data.get("test_command", ""),
         build_command=data.get("build_command", ""),
         lint_command=data.get("lint_command", ""),

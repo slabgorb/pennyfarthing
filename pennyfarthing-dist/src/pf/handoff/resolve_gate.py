@@ -121,6 +121,7 @@ def resolve_gate(
     gate_extensions: list[str] | None = None
     if gate_file:
         from pf.handoff.gate_file import resolve_gate_extensions
+        from pf.handoff.gate_file import resolve_lang_review_extensions
 
         gate_name_for_ext = gate_file
         if gate_name_for_ext.startswith("gates/"):
@@ -133,8 +134,31 @@ def resolve_gate(
                 status="error",
                 error=ext_result["error"],
             )
-        if ext_result["data"]:
-            gate_extensions = ext_result["data"]
+        all_extensions = list(ext_result["data"]) if ext_result["data"] else []
+
+        # Auto-discover language-based review gates for dev-exit
+        if gate_name_for_ext == "dev-exit":
+            from pf.handoff.gate_file import resolve_gate_file
+
+            lang_result = resolve_lang_review_extensions(
+                project_root=project_root
+            )
+            if lang_result["success"] and lang_result["data"]:
+                for lang_ext in lang_result["data"]:
+                    if lang_ext not in all_extensions:
+                        all_extensions.append(lang_ext)
+
+            # Always include review-correlation on dev-exit —
+            # the gate itself checks whether review findings exist
+            corr_ref = "gates/review-correlation"
+            corr_result = resolve_gate_file(
+                "review-correlation", project_root=project_root
+            )
+            if corr_result["status"] == "found" and corr_ref not in all_extensions:
+                all_extensions.append(corr_ref)
+
+        if all_extensions:
+            gate_extensions = all_extensions
 
     return _result(
         status="ready",
