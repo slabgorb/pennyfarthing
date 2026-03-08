@@ -33734,7 +33734,7 @@ function createPortraitRouter() {
 var import_express3 = __toESM(require_express2(), 1);
 
 // packages/core/dist/server/pennyfarthing.js
-import { existsSync as existsSync3, readFileSync as readFileSync2, watch } from "fs";
+import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync as readdirSync2, statSync as statSync2, watch } from "fs";
 import { join as join3, dirname as dirname3, basename } from "path";
 import { fileURLToPath as fileURLToPath3 } from "url";
 
@@ -33911,6 +33911,30 @@ function getCurrentAgent(projectDir, sessionId) {
       return null;
     }
   }
+  const agentsDir = join3(projectDir, ".session", "agents");
+  const ONE_HOUR_MS = 36e5;
+  if (existsSync3(agentsDir)) {
+    try {
+      const files = readdirSync2(agentsDir);
+      const now = Date.now();
+      let newest = null;
+      for (const f of files) {
+        const fp = join3(agentsDir, f);
+        const st = statSync2(fp);
+        if (now - st.mtimeMs > ONE_HOUR_MS)
+          continue;
+        if (!newest || st.mtimeMs > newest.mtime) {
+          newest = { name: f, mtime: st.mtimeMs };
+        }
+      }
+      if (newest) {
+        const agent = readFileSync2(join3(agentsDir, newest.name), "utf-8").trim();
+        if (agent)
+          return agent;
+      }
+    } catch {
+    }
+  }
   const r = callPf(["workflow", "check", "--json"], projectDir);
   if (r.success && r.data?.phase_owner) {
     return r.data.phase_owner;
@@ -34009,17 +34033,9 @@ function getCurrentPersona(projectDir, sessionId) {
     cache.set(cacheKey, themeData);
   }
   const agents = themeData.agents;
-  let agentRole = getCurrentAgent(projectDir, sessionId);
-  if (!agentRole) {
-    if (agents["orchestrator"]) {
-      agentRole = "orchestrator";
-    } else {
-      const availableRoles = Object.keys(agents);
-      if (availableRoles.length === 0)
-        return null;
-      agentRole = availableRoles[0];
-    }
-  }
+  const agentRole = getCurrentAgent(projectDir, sessionId);
+  if (!agentRole)
+    return null;
   const persona = agents[agentRole];
   if (!persona)
     return null;
@@ -34123,7 +34139,7 @@ function createPersonaRouter(getProjectDir3) {
   const router = (0, import_express3.Router)();
   router.get("/", (_req, res) => {
     const projectDir = getProjectDir3();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.SESSION_ID;
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: "Not a Pennyfarthing project" });
     }
@@ -34135,7 +34151,7 @@ function createPersonaRouter(getProjectDir3) {
   });
   router.get("/full", (_req, res) => {
     const projectDir = getProjectDir3();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.SESSION_ID;
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: "Not a Pennyfarthing project" });
     }
@@ -38070,8 +38086,8 @@ function setupWebSocketServers(server, getProjectDir3) {
   personaWss.on("connection", (ws) => {
     personaClients2.add(ws);
     const projectDir2 = getProjectDir3();
-    const sessionId2 = process.env.CYCLIST_SESSION_ID;
-    const persona = getCurrentPersona(projectDir2, sessionId2);
+    const sessionId = process.env.SESSION_ID;
+    const persona = getCurrentPersona(projectDir2, sessionId);
     if (persona && ws.readyState === import_websocket.default.OPEN) {
       ws.send(JSON.stringify({ ...persona, isStreaming: getStreamingState() }));
     }
@@ -38391,10 +38407,9 @@ function setupWebSocketServers(server, getProjectDir3) {
     }
   });
   const projectDir = getProjectDir3();
-  const sessionId = process.env.CYCLIST_SESSION_ID;
   if (detectPennyfarthingProject(projectDir)) {
-    watchAgentChanges(projectDir, sessionId, (_agentRole) => {
-      const persona = getCurrentPersona(projectDir, sessionId);
+    watchAgentChanges(projectDir, process.env.SESSION_ID, (_agentRole) => {
+      const persona = getCurrentPersona(projectDir, process.env.SESSION_ID);
       if (persona) {
         broadcastPersona(persona);
       }
@@ -38604,7 +38619,7 @@ function broadcastFocusUpdate(focus) {
 }
 
 // packages/core/dist/plugins/plugin-discovery.js
-import { readFileSync as readFileSync8, readdirSync as readdirSync2, existsSync as existsSync14, statSync as statSync2 } from "node:fs";
+import { readFileSync as readFileSync8, readdirSync as readdirSync3, existsSync as existsSync14, statSync as statSync3 } from "node:fs";
 import { join as join19, resolve as resolve3 } from "node:path";
 var EXCLUDED_PACKAGES = ["core", "shared", "benchmark", "bikerack"];
 function parsePluginManifest(packageDir) {
@@ -38630,7 +38645,7 @@ function discoverPlugins(projectRoot) {
   }
   let entries;
   try {
-    entries = readdirSync2(scopeDir);
+    entries = readdirSync3(scopeDir);
   } catch {
     return [];
   }

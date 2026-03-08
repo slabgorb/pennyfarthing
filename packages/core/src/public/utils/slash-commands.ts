@@ -138,7 +138,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     "name": "/pf-git",
-    "description": "Repository operations - status, cleanup, branches, and release management"
+    "description": "Repository operations - status, cleanup, branches, snapshot, and release management"
   },
   {
     "name": "/pf-health-check",

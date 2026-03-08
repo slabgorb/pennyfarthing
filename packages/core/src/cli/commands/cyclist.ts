@@ -188,7 +188,7 @@ export async function cyclistCommand(
 
   // Pass session ID if available (for session-specific agent detection)
   if (process.env.SESSION_ID) {
-    env.CYCLIST_SESSION_ID = process.env.SESSION_ID;
+    env.SESSION_ID = process.env.SESSION_ID;
   }
 
   // Get spawn function (use provided mock or real spawn)

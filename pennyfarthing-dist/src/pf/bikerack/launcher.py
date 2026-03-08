@@ -184,7 +184,7 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     # (mirrors packages/core/src/cli/commands/cyclist.ts:190-191)
     session_id = os.environ.get("SESSION_ID") or os.environ.get("CLAUDE_SESSION_ID")
     if session_id:
-        env["CYCLIST_SESSION_ID"] = session_id
+        env["SESSION_ID"] = session_id
 
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(

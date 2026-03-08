@@ -47,7 +47,7 @@ export function createPersonaRouter(getProjectDir: () => string): Router {
   // Persona API - GET current persona
   router.get('/', (_req, res) => {
     const projectDir = getProjectDir();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.SESSION_ID;
 
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: 'Not a Pennyfarthing project' });
@@ -64,7 +64,7 @@ export function createPersonaRouter(getProjectDir: () => string): Router {
   // Full persona API - GET complete persona details for popup
   router.get('/full', (_req, res) => {
     const projectDir = getProjectDir();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.SESSION_ID;
 
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: 'Not a Pennyfarthing project' });

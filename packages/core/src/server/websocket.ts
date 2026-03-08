@@ -482,7 +482,7 @@ export function setupWebSocketServers(
 
     // Send initial persona on connection (includes isStreaming state per Story 94-1)
     const projectDir = getProjectDir();
-    const sessionId = process.env.CYCLIST_SESSION_ID;
+    const sessionId = process.env.SESSION_ID;
     const persona = getCurrentPersona(projectDir, sessionId);
     if (persona && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ ...persona, isStreaming: getStreamingState() }));
@@ -944,12 +944,13 @@ export function setupWebSocketServers(
   });
 
   // Set up agent file watcher for persona broadcasts
+  // Re-read SESSION_ID dynamically so a long-running WheelHub picks up new sessions
   const projectDir = getProjectDir();
-  const sessionId = process.env.CYCLIST_SESSION_ID;
   if (detectPennyfarthingProject(projectDir)) {
-    watchAgentChanges(projectDir, sessionId, (_agentRole: string) => {
+    watchAgentChanges(projectDir, process.env.SESSION_ID, (_agentRole: string) => {
       // When agent changes, get the new persona and broadcast
-      const persona = getCurrentPersona(projectDir, sessionId);
+      // Read SESSION_ID fresh — it may have changed since WheelHub started
+      const persona = getCurrentPersona(projectDir, process.env.SESSION_ID);
       if (persona) {
         broadcastPersona(persona);
       }

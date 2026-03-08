@@ -213,8 +213,11 @@ def _resolve_agent(project_root: str, session_id: str) -> str:
     agents_dir = Path(project_root) / ".session" / "agents"
     if agents_dir.is_dir():
         try:
+            now = __import__("time").time()
+            one_hour = 3600
             files = sorted(
-                (f for f in agents_dir.iterdir() if f.is_file()),
+                (f for f in agents_dir.iterdir()
+                 if f.is_file() and now - f.stat().st_mtime < one_hour),
                 key=lambda f: f.stat().st_mtime,
                 reverse=True,
             )

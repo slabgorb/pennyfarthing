@@ -156,14 +156,18 @@ function getCurrentAgent(projectDir: string, sessionId?: string): string | null 
   }
 
   // Fallback: find the most recently modified agent file in .session/agents/
+  // Only consider files modified in the last hour to avoid stale session pollution
   const agentsDir = join(projectDir, '.session', 'agents');
+  const ONE_HOUR_MS = 3_600_000;
   if (existsSync(agentsDir)) {
     try {
       const files = readdirSync(agentsDir);
+      const now = Date.now();
       let newest: { name: string; mtime: number } | null = null;
       for (const f of files) {
         const fp = join(agentsDir, f);
         const st = statSync(fp);
+        if (now - st.mtimeMs > ONE_HOUR_MS) continue;
         if (!newest || st.mtimeMs > newest.mtime) {
           newest = { name: f, mtime: st.mtimeMs };
         }
@@ -272,16 +276,8 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   }
 
   const agents = themeData.agents;
-  let agentRole = getCurrentAgent(projectDir, sessionId);
-  if (!agentRole) {
-    if (agents['orchestrator']) {
-      agentRole = 'orchestrator';
-    } else {
-      const availableRoles = Object.keys(agents);
-      if (availableRoles.length === 0) return null;
-      agentRole = availableRoles[0];
-    }
-  }
+  const agentRole = getCurrentAgent(projectDir, sessionId);
+  if (!agentRole) return null;
 
   const persona = agents[agentRole];
   if (!persona) return null;

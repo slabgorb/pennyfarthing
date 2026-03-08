@@ -27,6 +27,27 @@ def get_agents_dir(project_root: Path) -> Path:
     return project_root / ".session" / "agents"
 
 
+def _purge_stale_agents(agents_dir: Path, max_age_seconds: int = 3600) -> int:
+    """Remove agent files older than max_age_seconds.
+
+    Called on every register_session to keep the directory clean and prevent
+    stale files from polluting mtime-based agent resolution.
+    """
+    if not agents_dir.is_dir():
+        return 0
+    cutoff = time.time() - max_age_seconds
+    removed = 0
+    for f in agents_dir.iterdir():
+        if f.is_file():
+            try:
+                if f.stat().st_mtime < cutoff:
+                    f.unlink()
+                    removed += 1
+            except OSError:
+                pass
+    return removed
+
+
 def register_session(
     agent_name: str,
     session_id: str | None = None,
@@ -50,6 +71,9 @@ def register_session(
 
     # Create agents directory if needed
     agents_dir.mkdir(parents=True, exist_ok=True)
+
+    # Purge stale agent files (older than 1 hour) to prevent mtime pollution
+    _purge_stale_agents(agents_dir, max_age_seconds=3600)
 
     # Generate session ID if not provided
     if not session_id:

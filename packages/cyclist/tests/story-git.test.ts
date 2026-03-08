@@ -143,8 +143,8 @@ summary:
       expect(response.body.id).toBeNull();
     });
 
-    it('should use session ID when CYCLIST_SESSION_ID is set', async () => {
-      process.env.CYCLIST_SESSION_ID = 'abc123';
+    it('should use session ID when SESSION_ID is set', async () => {
+      process.env.SESSION_ID = 'abc123';
       vi.mocked(existsSync).mockReturnValue(true);
       vi.mocked(readFileSync).mockImplementation((path) => {
         const p = String(path);
@@ -157,7 +157,7 @@ summary:
 
       // Should look for session file, using session ID for agent lookup
       expect(response.status).toBe(200);
-      delete process.env.CYCLIST_SESSION_ID;
+      delete process.env.SESSION_ID;
     });
 
   });
