@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.6.2** | *The outer loop goes once, the inner loop goes many times.*
+**v12.7.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -368,15 +368,16 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.6.2
+## What's New in v12.7.0
 
-- **Gold standard calibration** — Benchmark scenarios support gold_standard references for judge calibration (MSSCI-16225)
-- **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
-- **TUI persona fix** — BikeRack TUI now correctly shows the active agent instead of defaulting to orchestrator
+- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring
+- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing
+- **Theme YAML schema and git snapshot** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures
+- **Kitchen-sink workflow** — Extended gate coverage with language-specific review checklists
 
 ### Previous Highlights
 
-- **v12.5** - Scenario Builder workflow, anchored judge rubrics, multi-judge /solo, pf CLI workflow engine, core API test coverage
+- **v12.6** - Consumer E2E test suite, WheelHub Node 24 CJS fix, gold standard calibration, difficulty profiles
 - **v12.4** - SOUL.md bootstrap, PR title config, consumer gate extensions, in-review status, result objects
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent

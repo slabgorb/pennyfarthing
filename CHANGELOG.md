@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.7.0] - 2026-03-08
+
+### Added
+
+- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring (#1309)
+- **Theme YAML schema and git snapshot command** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures (#1308)
+- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing (#1307)
+- **Kitchen-sink workflow and language-specific review checklists** — Extended gate coverage with per-language review checklists (#1302)
+
+### Changed
+
+- **Theme genre consolidation** — Reduced to 5 genres, added benchmark slicing dimensions, reset tiers to unranked
+
+### Fixed
+
+- **SESSION_ID propagation to WheelHub** — Eliminated CYCLIST_SESSION_ID, set SESSION_ID before WheelHub spawn for correct agent detection (MSSCI-16303, #1310)
+- **Merge gate docs alignment** — Gate documentation now reflects the in_review exception correctly (#1299)
+- **Lint cleanup** — Removed unused type imports, fixed f-string and import sorting
+
 ## [12.6.2] - 2026-03-07
 
 ### Added
@@ -3039,7 +3058,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...HEAD
+[12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
 [12.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.0...v12.6.1
 [12.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...v12.6.0
