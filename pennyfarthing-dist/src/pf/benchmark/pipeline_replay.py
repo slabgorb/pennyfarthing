@@ -18,6 +18,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -513,7 +514,58 @@ class PipelineScore:
     total_findings: int = 0
     weighted_caught: int = 0
     total_weight: int = 0
+    judge_version: str = ""
     score_pct: float = 0.0
+
+
+JUDGE_VERSION = "v2"
+
+JUDGE_SCORING_INSTRUCTIONS = """\
+## Scoring Instructions
+
+For EACH finding ID, determine:
+1. **caught**: Was this finding addressed, tested for, or flagged?
+2. **caught_by**: Which phase caught it? (tea, dev, reviewer, or null)
+3. **evidence**: Brief quote or description of how it was caught.
+
+### What counts as "caught"
+
+A finding is "caught" if ANY of these apply:
+- TEA wrote a test that would fail if the issue exists
+- Dev implemented code that avoids the issue
+- Reviewer explicitly flagged the issue
+
+### Partial match rules (IMPORTANT)
+
+Apply these rules consistently for every finding:
+
+1. **Same vulnerability class, different instance:** If the pipeline identifies
+   the same CWE or vulnerability category (e.g., CWE-209 information exposure)
+   but flags a different instance than the ground truth, score as **caught**.
+   The pipeline demonstrated awareness of the risk class.
+
+2. **Same category, adjacent location:** If the pipeline flags the same type of
+   issue (e.g., "vacuous test") but in a different test/file than the ground
+   truth specifies, score as **caught**. The pipeline's detection capability
+   was demonstrated.
+
+3. **General vs specific:** If the pipeline flags a general concern that
+   encompasses the specific ground truth finding (e.g., "error handling needs
+   improvement" when the finding is about a specific swallowed error), score
+   as **caught** only if the general concern is specific enough to lead a
+   developer to the fix.
+
+4. **Opposite conclusion:** If the pipeline examines the exact code in question
+   but concludes it is CORRECT (e.g., "verified token exclusion works properly"
+   when the finding says token exclusion is the problem), score as **not caught**.
+   Examining code and reaching the wrong conclusion is worse than not examining it.
+
+### Strict rules
+
+- Do NOT give credit for findings the pipeline never mentioned or tested
+- Do NOT infer intent — only score what was explicitly written or tested
+- When in doubt between caught and not-caught, re-read the ground truth
+  description and the pipeline output one more time before deciding"""
 
 
 def build_judge_prompt(
@@ -544,7 +596,7 @@ def build_judge_prompt(
 
     return f"""\
 You are an impartial judge evaluating a TDD pipeline's output against
-known ground-truth findings.
+known ground-truth findings. Judge version: {JUDGE_VERSION}
 
 ## Ground Truth Findings
 
@@ -564,17 +616,7 @@ flagging it in review (Reviewer).
 
 {diff_text}
 
-## Scoring Instructions
-
-For EACH finding ID (I1 through I10), determine:
-1. **caught**: Was this finding addressed, tested for, or flagged?
-2. **caught_by**: Which phase caught it? (tea, dev, reviewer, or null)
-3. **evidence**: Brief quote or description of how it was caught.
-
-A finding is "caught" if:
-- TEA wrote a test that would fail if the issue exists
-- Dev implemented code that avoids the issue
-- Reviewer explicitly flagged the issue
+{JUDGE_SCORING_INSTRUCTIONS}
 
 Output ONLY valid JSON:
 {{
@@ -625,6 +667,11 @@ def score_with_judge(
         except json.JSONDecodeError:
             judge_text = result.stdout
 
+    if not judge_text.strip():
+        print(f"  [JUDGE] WARNING: Empty judge response", file=sys.stderr)
+        if result.stderr.strip():
+            print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
+
     # Parse the JSON from judge response
     scored_findings: list[FindingScore] = []
     try:
@@ -638,6 +685,12 @@ def score_with_judge(
         else:
             # Last resort: regex for the findings array
             judge_data = {"findings": []}
+            if judge_text.strip():
+                print(
+                    f"  [JUDGE] WARNING: Could not parse judge JSON. "
+                    f"First 300 chars: {judge_text[:300]}",
+                    file=sys.stderr,
+                )
 
     # Map judge results to ground truth
     judge_findings = {
@@ -673,6 +726,7 @@ def score_with_judge(
         score_pct=round(weighted_caught / scenario.total_weight * 100, 1)
         if scenario.total_weight
         else 0.0,
+        judge_version=JUDGE_VERSION,
     )
 
 
@@ -729,6 +783,7 @@ def save_result(
             "scenario_id": score.scenario_id,
             "theme": score.theme,
             "run_id": score.run_id,
+            "judge_version": score.judge_version,
             "total_caught": score.total_caught,
             "total_findings": score.total_findings,
             "weighted_caught": score.weighted_caught,
