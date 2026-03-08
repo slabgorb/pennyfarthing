@@ -32,9 +32,13 @@ def theme():
 
 @theme.command("list")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def list_cmd(output_json: bool):
+@click.option("--agent", default=None, help="Show character for this agent type across all themes (e.g. tea, dev, reviewer)")
+def list_cmd(output_json: bool, agent: str | None):
     """Show all available themes with current theme highlighted."""
-    if output_json:
+    if agent:
+        from pf.common.themes import format_theme_agent_list
+        click.echo(format_theme_agent_list(agent, as_json=output_json))
+    elif output_json:
         import json
 
         from pf.common.themes import load_theme_metadata

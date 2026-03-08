@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is a feature story establishing REST API foundation with 5 acceptance criteria
+
+**Test Files:**
+- `crates/axiathon-server/tests/rest_api_foundation.rs` — full integration test suite
+
+**Tests Written:** 45 tests covering 5 ACs across 9 modules:
+
+| Module | Tests | AC Coverage |
+|--------|-------|-------------|
+| `endpoints` | 8 | AC1: All 5 route groups registered, unknown routes 404 |
+| `envelope` | 8 | AC2: data/errors/meta structure, RFC 9457, content-type |
+| `authentication` | 12 | AC3: JWT valid/expired/malformed/empty, API keys valid/revoked/scoped, tenant extraction |
+| `rate_limiting` | 4 | AC4: 429 response, Retry-After header, envelope on 429, tenant independence |
+| `versioning` | 4 | AC5: /api/v1/ prefix, /api/v2/ 404, deprecation header mechanism |
+| `security` | 6 | CWE-209 info exposure, auth error uniformity, no stack/path leaks, no tech headers, long input, null bytes |
+| `health` | 2 | Health endpoint data (uptime, version, status) |
+| `stubs` | 2 | Stub endpoints return well-formed envelope |
+| `jwks` | 2 | JWKS endpoint exists with valid key set |
+| `app_state` | 2 | FromRef substates compile, forbid(unsafe_code) |
+
+**Status:** RED (failing — 24 compile errors, all `unresolved import` for `axiathon_server::app`, `test_support`, `AppState`, etc.)
+
+**Handoff:** To Dev for implementation

@@ -1,0 +1,71 @@
+I have all the data I need. Here is my review.
+
+---
+
+# Story 8.1: REST API Foundation — Adversarial Code Review
+
+## Observations
+
+### [CRITICAL] Nightly `cargo fmt` check fails — `lib.rs` and `response.rs` have import ordering issues
+`cargo +nightly fmt --all --check` shows diffs in `crates/axiathon-server/src/lib.rs:8` and `crates/axiathon-server/src/response.rs:1`. Per project gotchas, nightly fmt must pass before approval. This blocks merge.
+
+### [HIGH] `POST /events` always requires `events:read` scope — should require `events:write` at `auth.rs:92-104`
+`required_scope_for_path` matches any path containing `/events` and returns `"events:read"`. A POST to `/events` (ingestion) should require `events:write`, not `events:read`. The function doesn't differentiate by HTTP method, only by path substring. This is a broken authorization model — write operations protected by a read scope violates least privilege (CWE-653, OWASP API5:2023).
+
+### [HIGH] `app()` hardcodes `test_support::test_app_state()` — production server unusable at `lib.rs:17`
+The public `app()` function calls `test_support::test_app_state().await` unconditionally. This means the production binary would start with test credentials (hardcoded tokens, 100 req/min rate limit). There's no way to construct an `AppState` from real configuration. The `app()` function should accept an `AppState` parameter, with `test_app_state()` used only in tests.
+
+### [HIGH] No structured logging or tracing anywhere — `tracing` dependency unused
+The crate declares `tracing` and `tracing-subscriber` as dependencies in `Cargo.toml` but neither is imported or used anywhere in the source. The story requires observability (trace correlation in `meta.trace_id`). Currently `trace_id` is a random UUID unrelated to any actual distributed trace. The `tracing` dependency is dead weight, and the `trace_id` field is misleading — it looks like it correlates with a span but doesn't.
+
+### [MEDIUM] `required_scope_for_path` uses substring matching — path traversal risk at `auth.rs:93`
+`path.contains("/events")` would match `/api/v1/not-events` or any path with "events" as a substring. While currently not exploitable because routes are fixed, this is a fragile pattern that will break as more routes are added. Should match against route prefixes or use router-level metadata.
+
+### [MEDIUM] Rate limiter uses `Mutex` (blocking) in async context at `rate_limit.rs:21`
+`state.rate_limit.counts.lock()` holds a `std::sync::Mutex` inside an async middleware. If the lock is held across an `.await` point (it's not currently, but the code is fragile), this would block the Tokio runtime. Should use `tokio::sync::Mutex` or ensure the critical section stays synchronous with a scoped block (the scoped block is present, but `std::sync::Mutex` with `.expect("lock poisoned")` will panic on poison — consider handling gracefully).
+
+### [MEDIUM] `meta_present_on_429_responses` test is a no-op placeholder at `rest_api_foundation.rs:284-289`
+The test body is `assert!(true, "placeholder")`. This gives false coverage confidence. The 429 envelope is tested elsewhere (`rate_limit_429_has_envelope_format`), but this test should either be implemented or removed — a passing placeholder is worse than no test.
+
+### [MEDIUM] Missing `PluginServices` and `CredentialServices` substates — story scope requires them at `state.rs`
+The story's Technical Guardrails specify four substates: `DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`. Only the first two exist. While handlers are stubs, the `FromRef` pattern is a compile-time contract. Missing substates means future stories can't use them without restructuring `AppState`.
+
+### [MEDIUM] `#[non_exhaustive]` not applied to any public enums/structs
+The Rust coding rules require `#[non_exhaustive]` on enums that will grow. `DetectionServices` and `StorageServices` are public types exported from the crate. While they're currently unit structs, if they grow fields, downstream crates would break without `#[non_exhaustive]`.
+
+### [LOW] JWKS endpoint returns a hardcoded test key at `routes.rs:70-79`
+The `jwks()` handler returns a static test key with `"x": "dGVzdC1wdWJsaWMta2V5LWRhdGE"` (base64 for "test-public-key-data"). Acceptable for a stub, but there's no TODO or comment indicating this needs real key material. Combined with the `app()` hardcoding issue, this could ship as-is.
+
+### [LOW] No `/// **SECURITY:**` comments on error-facing code
+The Rust rules require `/// **SECURITY:** ...` comments on every error type's Display and on error-to-response boundaries. `error_response()` at `response.rs:24` is the sanitization boundary but lacks this annotation.
+
+### [LOW] `root_path_returns_404_or_redirect` test at `rest_api_foundation.rs:151` — request to `/` has no auth header, so it gets 401 not 404
+The test sends `get("/")` without auth. The JWKS route is at `/.well-known/jwks.json`, and everything else goes through the nested `/api/v1` with auth middleware. A request to `/` actually returns 404 from Axum's default (no route matched outside the nest), so this works by accident. But the test name suggests it's testing routing, not auth behavior.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` is set in `lib.rs:2`
+### [VERIFIED] All 52 tests pass, clippy clean with `-D warnings`
+### [VERIFIED] Error responses use identical message "Authentication required" for missing/invalid/expired tokens (CWE-209 compliant)
+### [VERIFIED] `ApiResponse` envelope has correct three-field structure (`data`, `errors`, `meta`)
+### [VERIFIED] Rate limiting is per-tenant with independent counters, 429 includes `Retry-After` header
+### [VERIFIED] JWKS endpoint is outside the auth middleware layer (publicly accessible)
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 1     | YES     |
+| High     | 3     | YES     |
+| Medium   | 4     | No      |
+| Low      | 3     | No      |
+| Verified | 5     | —       |
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Blocking issues that must be fixed before approval:**
+
+1. **Run `cargo +nightly fmt --all`** to fix import ordering
+2. **`app()` must accept `AppState` as a parameter** — hardcoding test state in the public API makes this untestable for production config and ships test credentials
+3. **`required_scope_for_path` must differentiate read vs write by HTTP method** — POST to `/events` needs `events:write`, not `events:read`
+4. **Either use `tracing` or remove it from dependencies** — dead dependencies and fake `trace_id` values are misleading

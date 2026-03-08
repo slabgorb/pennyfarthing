@@ -1,0 +1,32 @@
+## Summary
+
+All **70 tests pass** across 6 test files, and **clippy is clean** (`-D warnings`).
+
+### Files Changed
+
+**New files (production code):**
+- `crates/axiathon-server/src/config.rs` — `ServerConfig` with `rate_limit_per_second()`
+- `crates/axiathon-server/src/response.rs` — `Envelope<T>` with `data`/`errors`/`meta` fields, `ErrorDetail` (RFC 9457), `Meta` with `request_id`/`timestamp`/`trace_id`
+- `crates/axiathon-server/src/middleware/mod.rs` — module declarations
+- `crates/axiathon-server/src/middleware/auth.rs` — Bearer token + API key auth middleware with tenant extraction and scope checking
+- `crates/axiathon-server/src/middleware/rate_limit.rs` — Per-tenant sliding window rate limiter (returns 429 + `Retry-After`)
+- `crates/axiathon-server/src/routes/mod.rs` — module declarations
+- `crates/axiathon-server/src/routes/health.rs` — `/api/v1/health` (no auth, returns status/version/uptime)
+- `crates/axiathon-server/src/routes/events.rs` — `/api/v1/events` GET/POST with scope checking, content-type validation, body size limit, JSON validation
+- `crates/axiathon-server/src/routes/alerts.rs` — `/api/v1/alerts` stub
+- `crates/axiathon-server/src/routes/rules.rs` — `/api/v1/rules` stub
+- `crates/axiathon-server/src/routes/queries.rs` — `/api/v1/queries` stub
+- `crates/axiathon-server/src/routes/jwks.rs` — `/.well-known/jwks.json` endpoint
+
+**Modified files:**
+- `crates/axiathon-server/src/lib.rs` — `build_router()` with CORS, auth middleware, rate limiting, fallback handler
+- `crates/axiathon-server/Cargo.toml` — added `tower-http`, `bytes` dependencies
+- `crates/axiathon-server/tests/api_rate_limiting.rs` — added missing `use tower::Service` import (test compilation fix)
+
+### Test Results
+- `api_endpoints` — 14 passed
+- `api_authentication` — 16 passed  
+- `api_response_envelope` — 12 passed
+- `api_rate_limiting` — 6 passed
+- `api_versioning` — 8 passed
+- `api_security` — 14 passed

@@ -15,6 +15,7 @@ Discovery order (deduped by theme ID, first source wins):
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -152,6 +153,12 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
     Returns:
         Theme name, or None if not configured
     """
+    # Environment override — allows concurrent benchmark runs without
+    # mutating the shared config.local.yaml
+    env_theme = os.environ.get("PF_THEME")
+    if env_theme:
+        return env_theme
+
     root = project_root or get_project_root()
 
     config_path = root / ".pennyfarthing" / "config.local.yaml"
@@ -245,6 +252,78 @@ def format_theme_list(
             row = []
     if row:
         lines.append("".join(row))
+
+    return "\n".join(lines)
+
+
+def format_theme_agent_list(
+    agent_type: str,
+    project_root: Path | None = None,
+    *,
+    as_json: bool = False,
+) -> str:
+    """List all themes showing the character assigned to a specific agent type.
+
+    Args:
+        agent_type: Agent role to filter on (e.g. 'tea', 'dev', 'reviewer')
+        project_root: Project root (auto-detected if not provided)
+        as_json: Return JSON instead of formatted text
+
+    Returns:
+        Formatted string for terminal display
+    """
+    seen: set[str] = set()
+    entries: list[dict[str, str]] = []
+
+    for theme_dir in discover_all_theme_dirs(project_root):
+        try:
+            for f in sorted(theme_dir.iterdir()):
+                if f.suffix != ".yaml" or not f.is_file():
+                    continue
+                theme_id = f.stem
+                if theme_id in seen:
+                    continue
+                seen.add(theme_id)
+
+                try:
+                    data = yaml.safe_load(f.read_text())
+                    if not data or "agents" not in data:
+                        continue
+                    agent = data["agents"].get(agent_type, {})
+                    if not agent or not agent.get("character"):
+                        continue
+                    entries.append({
+                        "theme": theme_id,
+                        "tier": data.get("theme", {}).get("tier", "U"),
+                        "character": agent["character"],
+                        "style": agent.get("style", ""),
+                    })
+                except Exception:
+                    continue
+        except OSError:
+            continue
+
+    entries.sort(key=lambda e: e["theme"])
+
+    if as_json:
+        import json as json_mod
+
+        return json_mod.dumps(entries, indent=2)
+
+    if not entries:
+        return f"No themes found with agent type '{agent_type}'."
+
+    lines: list[str] = []
+    lines.append(f"{len(entries)} themes with {agent_type.upper()} agent:\n")
+
+    theme_w = max(len(e["theme"]) for e in entries) + 5
+    char_w = max(len(e["character"]) for e in entries) + 2
+
+    for e in entries:
+        tier = f"[{e['tier']}]"
+        theme_col = f"{e['theme']} {tier}".ljust(theme_w)
+        char_col = e["character"].ljust(char_w)
+        lines.append(f"  {theme_col} {char_col} {e['style']}")
 
     return "\n".join(lines)
 

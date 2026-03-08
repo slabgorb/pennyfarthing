@@ -15,6 +15,7 @@ Python Click CLI for Pennyfarthing. Entry point: `pf/cli.py`. Invoked as `pf`.
 | `pf workflow` | Workflow state and phase management | `workflow/cli.py` |
 | `pf bikerack` | BikeRack dashboard launcher | `bikerack/cli.py` |
 | `pf git` | Repository operations (status, branches, worktree, hooks) | `git_group/cli.py` |
+| `pf benchmark` | Pipeline replay, scoring, comparison | `benchmark/cli.py` |
 | `pf debug` | Analysis tools (hotspots, deadcode, healthscore) | `cli.py` (inline group) |
 
 ### Sugar Shortcuts
@@ -172,6 +173,16 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 | `pf git worktree list` | List active worktrees | `git/worktree.py` |
 | `pf git worktree status` | Show worktree status | `git/worktree.py` |
 | `pf git install-hooks` | Install git hooks with .d/ dispatcher | `git/hooks_installer.py` |
+
+## pf benchmark
+
+| Command | Description | Source |
+|---------|-------------|--------|
+| `pf benchmark replay run SCENARIO` | Run TDD pipeline against a scenario | `benchmark/cli.py` |
+| `pf benchmark replay score DIR SCENARIO` | Re-score an existing pipeline run | `benchmark/cli.py` |
+| `pf benchmark replay compare SCENARIO` | Compare results across themes | `benchmark/cli.py` |
+
+Options for `replay run`: `--theme`, `--n`, `--worktree-base`, `--project-dir`, `--model`, `--judge-model`, `--timeout`, `--skip-score`, `--keep-worktree`
 
 ## pf debug
 

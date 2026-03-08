@@ -1,0 +1,19 @@
+All 52 tests pass and clippy is clean.
+
+## Summary
+
+**Files created** (7 new files in `crates/axiathon-server/src/`):
+
+| File | Purpose |
+|------|---------|
+| `lib.rs` | Module declarations, `pub async fn app()` router builder, re-exports |
+| `state.rs` | `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`), auth config, rate limit state |
+| `auth.rs` | Auth middleware — validates Bearer tokens and API keys, extracts tenant context, enforces route-level scopes |
+| `rate_limit.rs` | Per-tenant rate limiting middleware with fixed-window counter, `Retry-After` header on 429 |
+| `response.rs` | Response envelope helpers — `success_response`, `error_response`, `rate_limit_response` with RFC 9457 error format and `meta` (request_id, timestamp, trace_id) |
+| `routes.rs` | Route handlers — health (with uptime/version), stub endpoints (events/alerts/rules/queries), JWKS, deprecated test route, 404 fallback |
+| `test_support.rs` | Test token generators, `test_app_state()` with pre-configured auth tokens and rate limit config |
+
+**Tests:** 52/52 passing (GREEN)
+**Clippy:** Clean (`-D warnings`)
+**Architecture:** Axum 0.8 with `FromRef<AppState>` substates, `#![forbid(unsafe_code)]`, CWE-209 compliant error sanitization, per-tenant rate limiting, API versioning under `/api/v1/`

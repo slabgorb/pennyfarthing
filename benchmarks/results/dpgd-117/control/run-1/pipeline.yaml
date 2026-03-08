@@ -1,0 +1,24 @@
+scenario_id: dpgd-117
+theme: null
+run_id: 1
+timestamp: '2026-03-07T19:29:31.133628+00:00'
+worktree_path: /tmp/pf-replay/dpgd-117-control-run-1
+phases:
+  tea:
+    token_usage:
+      input: 23
+      output: 13857
+    duration_s: 286.42
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 27
+      output: 33732
+    duration_s: 636.71
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 12
+      output: 3875
+    duration_s: 87.71
+    exit_code: 0
