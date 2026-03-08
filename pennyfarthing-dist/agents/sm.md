@@ -182,9 +182,9 @@ Present to user:
 <merge-gate>
 ## Merge Gate (BLOCKING)
 
-Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs are open.
+Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs exist for stories not in `in_review` status. PRs for `in_review` stories are allowed — they're awaiting external review and can't be self-merged.
 
-**Resolution:** Merge/close all non-draft PRs first. Use `/pf-reviewer` to complete reviews.
+**Resolution:** Merge/close blocking PRs, or update story status to `in_review` if awaiting external review. Use `/pf-reviewer` to complete reviews.
 </merge-gate>
 
 <gate>
