@@ -27,6 +27,7 @@ from typing import Any
 
 import yaml
 
+
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -635,16 +636,13 @@ IMPORTANT: Do not use tools. Output JSON only.
 """
 
 
-def score_with_judge(
-    scenario: Scenario,
-    pipeline_result: PipelineResult,
+def _invoke_judge(
+    judge_prompt: str,
     *,
     model: str | None = None,
     project_dir: Path | None = None,
-) -> PipelineScore:
-    """Score a pipeline run using an LLM judge."""
-    judge_prompt = build_judge_prompt(scenario, pipeline_result)
-
+) -> str:
+    """Run the LLM judge and return the raw response text."""
     cmd = ["claude", "-p", judge_prompt, "--output-format", "json", "--tools", ""]
     if model:
         cmd.extend(["--model", model])
@@ -654,10 +652,9 @@ def score_with_judge(
         cwd=str(project_dir or Path.cwd()),
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
     )
 
-    # Parse judge output
     judge_text = ""
     if result.stdout.strip():
         try:
@@ -666,36 +663,197 @@ def score_with_judge(
         except json.JSONDecodeError:
             judge_text = result.stdout
 
-    if not judge_text.strip():
-        print("  [JUDGE] WARNING: Empty judge response", file=sys.stderr)
-        if result.stderr.strip():
-            print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
+    if not judge_text.strip() and result.stderr.strip():
+        print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
 
-    # Parse the JSON from judge response
-    scored_findings: list[FindingScore] = []
+    return judge_text
+
+
+def _parse_judge_json(judge_text: str) -> dict | None:
+    """Extract JSON from judge response. Returns None on failure."""
+    if not judge_text.strip():
+        return None
+
+    # 1. Direct JSON parse
     try:
-        # Try direct JSON parse first
-        judge_data = json.loads(judge_text)
+        return json.loads(judge_text)
     except json.JSONDecodeError:
-        # Try extracting JSON from markdown code block
-        m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", judge_text, re.DOTALL)
-        if m:
-            judge_data = json.loads(m.group(1))
+        pass
+
+    # 2. Extract from markdown code block (greedy to handle nested braces)
+    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", judge_text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # 3. Find the outermost { ... } in the response
+    first_brace = judge_text.find("{")
+    last_brace = judge_text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        try:
+            return json.loads(judge_text[first_brace : last_brace + 1])
+        except json.JSONDecodeError:
+            pass
+
+    # 4. Try fixing common JSON issues (unescaped quotes in evidence strings)
+    cleaned = judge_text[first_brace : last_brace + 1] if first_brace != -1 else ""
+    if cleaned:
+        # Replace unescaped newlines inside strings
+        cleaned = re.sub(r'(?<=": ")(.*?)(?="[,\s}])', _escape_json_value, cleaned, flags=re.DOTALL)
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
+
+def _escape_json_value(m: re.Match) -> str:
+    """Escape newlines and quotes inside a JSON string value."""
+    val = m.group(0)
+    val = val.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r")
+    val = val.replace('"', '\\"')
+    return val
+
+
+@dataclass
+class JudgeValidation:
+    """Result of validating a judge response against expected findings."""
+    valid: bool
+    findings: dict  # parsed judge_data
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+
+def validate_judge_response(
+    judge_data: dict | None,
+    expected_ids: list[str],
+) -> JudgeValidation:
+    """Validate judge JSON structure and completeness."""
+    if judge_data is None:
+        return JudgeValidation(
+            valid=False,
+            findings={},
+            errors=["Could not parse judge response as JSON"],
+        )
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Check top-level structure
+    findings_list = judge_data.get("findings")
+    if not isinstance(findings_list, list):
+        return JudgeValidation(
+            valid=False,
+            findings=judge_data,
+            errors=["Missing or non-list 'findings' key"],
+        )
+
+    if len(findings_list) == 0:
+        return JudgeValidation(
+            valid=False,
+            findings=judge_data,
+            errors=["Empty findings list"],
+        )
+
+    # Check each finding has required fields
+    valid_phases = {"tea", "dev", "reviewer", None}
+    found_ids: set[str] = set()
+
+    for i, f in enumerate(findings_list):
+        fid = f.get("finding_id", f"<missing at index {i}>")
+        found_ids.add(fid)
+
+        if "caught" not in f:
+            errors.append(f"{fid}: missing 'caught' field")
+        elif not isinstance(f["caught"], bool):
+            # Accept truthy/falsy but warn
+            warnings.append(f"{fid}: 'caught' is {type(f['caught']).__name__}, not bool")
+
+        if f.get("caught") and f.get("caught_by") not in valid_phases:
+            warnings.append(f"{fid}: caught_by='{f.get('caught_by')}' not in {{tea, dev, reviewer}}")
+
+        if "evidence" not in f:
+            warnings.append(f"{fid}: missing 'evidence' field")
+
+    # Check completeness — all expected finding IDs present
+    missing = set(expected_ids) - found_ids
+    if missing:
+        errors.append(f"Missing finding IDs: {sorted(missing)}")
+
+    extra = found_ids - set(expected_ids)
+    if extra:
+        warnings.append(f"Extra finding IDs (ignored): {sorted(extra)}")
+
+    return JudgeValidation(
+        valid=len(errors) == 0,
+        findings=judge_data,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def score_with_judge(
+    scenario: Scenario,
+    pipeline_result: PipelineResult,
+    *,
+    model: str | None = None,
+    project_dir: Path | None = None,
+    max_retries: int = 2,
+) -> PipelineScore:
+    """Score a pipeline run using an LLM judge.
+
+    Validates the judge response and retries on parse/validation failure
+    up to *max_retries* times.
+    """
+    judge_prompt = build_judge_prompt(scenario, pipeline_result)
+    expected_ids = [f.id for f in scenario.ground_truth]
+
+    judge_data: dict | None = None
+    validation: JudgeValidation | None = None
+
+    for attempt in range(1 + max_retries):
+        judge_text = _invoke_judge(
+            judge_prompt, model=model, project_dir=project_dir,
+        )
+        judge_data = _parse_judge_json(judge_text)
+        validation = validate_judge_response(judge_data, expected_ids)
+
+        if validation.valid:
+            break
+
+        if attempt < max_retries:
+            error_summary = "; ".join(validation.errors)
+            print(
+                f"  [JUDGE] Attempt {attempt + 1} failed validation: {error_summary}. Retrying...",
+                file=sys.stderr,
+            )
         else:
-            # Last resort: regex for the findings array
-            judge_data = {"findings": []}
-            if judge_text.strip():
+            print(
+                f"  [JUDGE] WARNING: All {1 + max_retries} attempts failed validation.",
+                file=sys.stderr,
+            )
+            for err in validation.errors:
+                print(f"  [JUDGE]   - {err}", file=sys.stderr)
+            if judge_text:
                 print(
-                    f"  [JUDGE] WARNING: Could not parse judge JSON. "
-                    f"First 300 chars: {judge_text[:300]}",
+                    f"  [JUDGE]   First 300 chars: {judge_text[:300]}",
                     file=sys.stderr,
                 )
 
-    # Map judge results to ground truth
+    if validation and validation.warnings:
+        for w in validation.warnings:
+            print(f"  [JUDGE] WARN: {w}", file=sys.stderr)
+
+    # Map judge results to ground truth (works even with partial/empty data)
     judge_findings = {
-        f["finding_id"]: f for f in judge_data.get("findings", [])
+        f["finding_id"]: f
+        for f in (judge_data or {}).get("findings", [])
     }
 
+    scored_findings: list[FindingScore] = []
     for gt_finding in scenario.ground_truth:
         jf = judge_findings.get(gt_finding.id, {})
         scored_findings.append(
