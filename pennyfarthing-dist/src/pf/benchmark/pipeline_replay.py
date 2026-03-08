@@ -663,8 +663,10 @@ def _invoke_judge(
         except json.JSONDecodeError:
             judge_text = result.stdout
 
-    if not judge_text.strip() and result.stderr.strip():
-        print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
+    if not judge_text.strip():
+        print("  [JUDGE] WARNING: Empty judge response", file=sys.stderr)
+        if result.stderr.strip():
+            print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
 
     return judge_text
 
