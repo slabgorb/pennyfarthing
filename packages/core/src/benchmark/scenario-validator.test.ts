@@ -12,7 +12,6 @@ import {
   validateScenario,
   type GoldStandard,
   type ScenarioData,
-  type ValidationResult,
 } from './scenario-validator.js';
 
 // ============================================================================

@@ -10,7 +10,6 @@ import assert from 'node:assert';
 import {
   computeTier,
   computeDifficultyProfile,
-  type DifficultyTier,
   type ControlStats,
   type DifficultyProfile,
 } from './difficulty-profiler.js';

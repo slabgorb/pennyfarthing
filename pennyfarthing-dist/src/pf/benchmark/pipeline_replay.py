@@ -27,7 +27,6 @@ from typing import Any
 
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -668,7 +667,7 @@ def score_with_judge(
             judge_text = result.stdout
 
     if not judge_text.strip():
-        print(f"  [JUDGE] WARNING: Empty judge response", file=sys.stderr)
+        print("  [JUDGE] WARNING: Empty judge response", file=sys.stderr)
         if result.stderr.strip():
             print(f"  [JUDGE] stderr: {result.stderr[:500]}", file=sys.stderr)
 
