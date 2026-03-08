@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Citizen of Pawnee
   portrait_style: ", bright cheerful illustrated portrait, warm office lighting, small town aesthetic"
-  tier: B
+  tier: U
   spinner_verbs:
     - Making waffles
     - Organizing binders
@@ -52,6 +52,13 @@ theme:
     era: contemporary
     genre: comedy
     energy: enthusiastic
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: consensus
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 
 zeitgeist:
   score: 86.0

@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", Viking Age runestone, weathered textures, northern lights, Celtic knotwork borders"
-  tier: B
+  tier: U
   dimensions:
     tone: serious
     era: historical
     genre: fantasy
     energy: high-energy
+    scrutiny: skeptical
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
   spinner_verbs:
     - Hurling Mjolnir
     - Reading the runes

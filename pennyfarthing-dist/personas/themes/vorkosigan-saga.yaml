@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: My Lord
   portrait_style: ", art noveau style, vintage illustration, Klimt-inspired"
-  tier: A
+  tier: U
   spinner_verbs:
     - Vor maneuvering
     - Galactic politicking
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: witty
     era: futuristic
-    genre: space-opera
+    genre: sci-fi
     energy: manic
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: debate
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: strategic
+    stakes: institutional
 
 zeitgeist:
   score: 76.0

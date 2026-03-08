@@ -15,12 +15,19 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", classical Greek marble bust, warm Mediterranean light, terracotta tones, laurel wreath"
-  tier: A
+  tier: U
   dimensions:
     tone: contemplative
     era: ancient
-    genre: philosophy
+    genre: nonfiction
     energy: meditative
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: debate
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: philosophical
+    stakes: personal
   spinner_verbs:
     - Socratic questioning
     - Contemplating the Forms

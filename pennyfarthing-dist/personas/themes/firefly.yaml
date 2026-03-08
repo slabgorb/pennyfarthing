@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Crew
   portrait_style: ", Rider-Waite tarot card illustration by Pamela Colman Smith, square composition, bold black ink outlines, flat hand-colored areas, limited palette of gold yellow red and muted blue on cream background, thin black ruled border with decorative corners, card name text at bottom in ALL CAPS serif font, roman numeral at top center, woodblock print with hand-coloring aesthetic"
-  tier: A
+  tier: U
   spinner_verbs:
     - Shiny
     - Aim to misbehave
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: wry
     era: futuristic
-    genre: space-western
+    genre: sci-fi
     energy: scrappy
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: improvisational
+    stakes: communal
 
 zeitgeist:
   score: 82.3

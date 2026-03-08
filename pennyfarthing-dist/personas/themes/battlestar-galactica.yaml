@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Soldier
   portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, command console glow"
-  tier: A
+  tier: U
   dimensions:
     tone: gritty
     era: contemporary-future
-    genre: military-sci-fi
+    genre: sci-fi
     energy: desperate
+    scrutiny: adversarial
+    cooperation_model: unified
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: pragmatic
+    stakes: existential
   spinner_verbs:
     - So say we all
     - All of this has happened before

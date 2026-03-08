@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Cousin
   portrait_style: ", ink and watercolor wash, sepia tones, detailed linework"
-  tier: A
+  tier: U
   dimensions:
     tone: serious
     era: futuristic
     genre: sci-fi
     energy: contemplative
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
   spinner_verbs:
     - Harvesting spice
     - Riding sandworms

@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", dark psychological thriller, chiaroscuro lighting, baroque aesthetic, burgundy tones, unsettling elegance"
-  tier: S
+  tier: U
   spinner_verbs:
     - Fine dining
     - Memory palacing
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: dark
     era: contemporary
-    genre: thriller
+    genre: drama
     energy: elegant
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: analytical
+    stakes: existential
 
 zeitgeist:
   score: 84.5

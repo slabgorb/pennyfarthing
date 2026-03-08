@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Fellow Villain
   portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
-  tier: A
+  tier: U
   spinner_verbs:
     - Scheming
     - Monologuing
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: dramatic
     era: retro
-    genre: supervillain
+    genre: fantasy
     energy: diabolical
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: conversational
+    intellectual_style: strategic
+    stakes: institutional
 zeitgeist:
   score: 78.5
   rating: rich

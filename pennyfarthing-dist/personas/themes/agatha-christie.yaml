@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Dear Reader
   portrait_style: ", 1920s Art Deco, muted sepia tones, gaslight atmosphere, mystery novel cover"
-  tier: B
+  tier: U
   dimensions:
     tone: analytical
     era: interwar
-    genre: mystery
+    genre: drama
     energy: methodical
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: analytical
+    stakes: personal
   spinner_verbs:
     - Consulting the little grey cells
     - Pattern recognition

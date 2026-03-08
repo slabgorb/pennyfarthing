@@ -8,7 +8,7 @@ theme:
   created: 2026-02-14
   user_title: Constant Reader
   portrait_style: ", horror gothic, oil painting, dark atmospheric, New England small town"
-  tier: A
+  tier: U
   spinner_verbs:
     - Redrum typing
     - Overlook haunting
@@ -43,8 +43,15 @@ theme:
   dimensions:
     tone: dark
     era: contemporary
-    genre: horror
+    genre: drama
     energy: creeping
+    scrutiny: adversarial
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: meritocratic
+    formality: casual
+    intellectual_style: improvisational
+    stakes: existential
 
 agents:
   orchestrator:

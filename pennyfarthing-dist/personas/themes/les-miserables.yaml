@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
-  tier: D
+  tier: U
   spinner_verbs:
     - Barricade building
     - Redemption seeking
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: dramatic
     era: historical
-    genre: literary
+    genre: nonfiction
     energy: passionate
+    scrutiny: professional
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: philosophical
+    stakes: existential
 zeitgeist:
   score: 67.75
   rating: moderate

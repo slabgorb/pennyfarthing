@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", 1960s Madison Avenue, mid-century modern, cigarette smoke atmosphere, ad executive silhouette, martini glass composition"
-  tier: A
+  tier: U
   spinner_verbs:
     - Pitch crafting
     - Old fashioned pouring
@@ -53,6 +53,13 @@ theme:
     era: retro
     genre: drama
     energy: measured
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: strategic
+    stakes: personal
 zeitgeist:
   score: 82.0
   rating: rich

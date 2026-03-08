@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Monkey
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
-  tier: B
+  tier: U
   spinner_verbs:
     - Trust the awesomeness
     - You filthy monkeys
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: comedic
     era: futuristic
-    genre: military-sci-fi
+    genre: sci-fi
     energy: high-energy
+    scrutiny: skeptical
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: casual
+    intellectual_style: improvisational
+    stakes: existential
 zeitgeist:
   score: 85.0
   rating: rich

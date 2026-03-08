@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Doctor
   portrait_style: ", Norman Rockwell Saturday Evening Post illustration, warm nostalgic Americana, soft lighting, idealized realism, painterly brushstrokes, 1950s illustration style"
-  tier: A
+  tier: U
   spinner_verbs:
     - Triage sorting
     - Martini mixing
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: satirical
     era: historical
-    genre: comedy-drama
+    genre: drama
     energy: bittersweet
+    scrutiny: professional
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 zeitgeist:
   score: 74.25
   rating: rich

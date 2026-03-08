@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
-  tier: S
+  tier: U
   spinner_verbs:
     - Walk and talking
     - Preparing briefings
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: idealistic
     era: contemporary
-    genre: political-drama
+    genre: drama
     energy: rapid
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: debate
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 84.5

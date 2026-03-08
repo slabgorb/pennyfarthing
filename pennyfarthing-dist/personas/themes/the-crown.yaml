@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Your Majesty
   portrait_style: ", royal formal, Renaissance composition, velvet and gold tones"
-  tier: A
+  tier: U
   spinner_verbs:
     - Reigning
     - Duty fulfilling
@@ -53,6 +53,13 @@ theme:
     era: historical
     genre: drama
     energy: measured
+    scrutiny: professional
+    cooperation_model: hierarchical
+    conflict_approach: debate
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: institutional
 
 zeitgeist:
   score: 74.0

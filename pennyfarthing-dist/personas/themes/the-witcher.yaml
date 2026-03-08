@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Traveler
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
-  tier: B
+  tier: U
   spinner_verbs:
     - Monster hunting
     - Casting Igni
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: dark
     era: medieval
-    genre: dark-fantasy
+    genre: fantasy
     energy: brutal
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: confrontation
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: pragmatic
+    stakes: existential
 
 zeitgeist:
   score: 72.5

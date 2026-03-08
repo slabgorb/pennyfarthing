@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", hand-rubbed etching style, harsh New Mexico desert sunlight, chemical yellow-green hazmat tint"
-  tier: A
+  tier: U
   spinner_verbs:
     - Cooking
     - Say my name
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: dramatic
     era: contemporary
-    genre: crime-drama
+    genre: drama
     energy: intense
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: conversational
+    intellectual_style: strategic
+    stakes: existential
 zeitgeist:
   score: 79.8
   rating: rich

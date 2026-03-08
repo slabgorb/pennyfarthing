@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Old Sport
   portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Art Deco illustration"
-  tier: B
+  tier: U
   spinner_verbs:
     - Old sport greeting
     - Green light reaching
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: dramatic
     era: historical
-    genre: literary
+    genre: nonfiction
     energy: decadent
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: philosophical
+    stakes: personal
 
 zeitgeist:
   score: 77.25

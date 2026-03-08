@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Team Member
   portrait_style: ", mockumentary style, fluorescent lighting, beige cubicle backdrop, confessional interview framing"
-  tier: B
+  tier: U
   dimensions:
     tone: comedic
     era: contemporary
     genre: drama
     energy: measured
+    scrutiny: trusting
+    cooperation_model: ensemble
+    conflict_approach: competition
+    authority_model: hierarchical
+    formality: casual
+    intellectual_style: improvisational
+    stakes: personal
   spinner_verbs:
     - That's what she said
     - Dundie awarding

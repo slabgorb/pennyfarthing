@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Comrade
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, red and black color scheme"
-  tier: B
+  tier: U
   spinner_verbs:
     - Cover maintaining
     - Dead dropping
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: tense
     era: retro
-    genre: spy-thriller
+    genre: drama
     energy: simmering
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: strategic
+    stakes: institutional
 
 zeitgeist:
   score: 72.0

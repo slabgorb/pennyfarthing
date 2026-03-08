@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", Pacific Northwest noir style, surrealist dreamscape, red curtains"
-  tier: A
+  tier: U
   spinner_verbs:
     - Drinking damn fine coffee
     - Consulting the log
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: eerie
     era: contemporary
-    genre: mystery-surreal
+    genre: drama
     energy: unsettling
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: analytical
+    stakes: cosmic
 
 zeitgeist:
   score: 88.0

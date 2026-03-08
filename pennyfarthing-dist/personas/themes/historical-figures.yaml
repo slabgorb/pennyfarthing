@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Colleague
   portrait_style: ", classical oil portrait, museum quality, period attire, earth tones, Renaissance master painter style"
-  tier: D
+  tier: U
   spinner_verbs:
     - Inventing
     - Discovering
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: authoritative
     era: historical
-    genre: history
+    genre: nonfiction
     energy: commanding
+    scrutiny: professional
+    cooperation_model: ensemble
+    conflict_approach: debate
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 zeitgeist:
   score: 66.8
   rating: moderate

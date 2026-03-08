@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", noir graphic novel, clean line art, limited color palette, falling snow, bleak Minnesota winter, stark illustration"
-  tier: A
+  tier: U
   spinner_verbs:
     - Aw heck let me check
     - Minnesota nice
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: dark-comedic
     era: contemporary
-    genre: crime-drama
+    genre: drama
     energy: measured
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: strategic
+    stakes: existential
 zeitgeist:
   score: 84.0
   rating: rich

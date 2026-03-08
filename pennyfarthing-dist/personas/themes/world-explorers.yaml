@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Expedition Member
   portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, expedition documentary style"
-  tier: B
+  tier: U
   spinner_verbs:
     - Cartographing
     - Mounting expeditions
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: adventurous
     era: historical
-    genre: adventure
+    genre: nonfiction
     energy: bold
+    scrutiny: professional
+    cooperation_model: ensemble
+    conflict_approach: competition
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: pragmatic
+    stakes: personal
 
 zeitgeist:
   score: 75.8

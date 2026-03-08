@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Ambassador
   portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, starfield backdrop"
-  tier: A
+  tier: U
   dimensions:
     tone: prophetic
     era: futuristic
-    genre: space-opera
+    genre: sci-fi
     energy: transformative
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: strategic
+    stakes: existential
   spinner_verbs:
     - Speaking in riddles
     - The avalanche has already started

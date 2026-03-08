@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Sport
   portrait_style: ", corporate drama, cold corporate lighting, muted luxury tones, cinematic composition"
-  tier: B
+  tier: U
   spinner_verbs:
     - Power grabbing
     - Board meeting
@@ -53,6 +53,13 @@ theme:
     era: contemporary
     genre: drama
     energy: cutthroat
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: conversational
+    intellectual_style: strategic
+    stakes: institutional
 
 zeitgeist:
   score: 85.5

@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Hooplehead
   portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
-  tier: D
+  tier: U
   spinner_verbs:
     - Swearing profusely
     - Prospecting for gold
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: gritty
     era: historical
-    genre: western
+    genre: drama
     energy: raw
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: confrontation
+    authority_model: feudal
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 zeitgeist:
   score: 86.0
   rating: rich

@@ -8,7 +8,7 @@ theme:
   created: 2026-02-14
   user_title: Colonel
   portrait_style: ", WWII military sitcom, barracks illustration, cartoon realism"
-  tier: B
+  tier: U
   spinner_verbs:
     - Tunneling
     - Scheming
@@ -45,6 +45,13 @@ theme:
     era: historical
     genre: comedy
     energy: mischievous
+    scrutiny: skeptical
+    cooperation_model: found-family
+    conflict_approach: psychological
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: improvisational
+    stakes: existential
 
 agents:
   orchestrator:

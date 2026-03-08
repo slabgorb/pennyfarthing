@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Console Cowboy
   portrait_style: ", cyberpunk portrait, neon shadows, glitching artifacts, 1980s retrofuturism illustration, matrix green"
-  tier: C
+  tier: U
   spinner_verbs:
     - Jacking in
     - Breaking ICE
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: noir
     era: futuristic
-    genre: cyberpunk
+    genre: sci-fi
     energy: wired
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: casual
+    intellectual_style: strategic
+    stakes: existential
 
 zeitgeist:
   score: 79.5

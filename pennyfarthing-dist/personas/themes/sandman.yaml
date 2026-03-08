@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Dreamer
   portrait_style: ", dark fantasy illustration, mixed media collage, dreamlike surrealism, cosmic darkness, stars"
-  tier: D
+  tier: U
   spinner_verbs:
     - Weaving dreams
     - Walking the realm
@@ -53,6 +53,13 @@ theme:
     era: timeless
     genre: fantasy
     energy: dreamlike
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: ceremonial
+    intellectual_style: philosophical
+    stakes: cosmic
 
 zeitgeist:
   score: 83.0

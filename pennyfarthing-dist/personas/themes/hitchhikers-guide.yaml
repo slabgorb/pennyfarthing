@@ -17,12 +17,19 @@ theme:
   character_immersion: high
   user_title: Hoopy Frood
   portrait_style: ", 1970s sci-fi book cover, bold geometric shapes, cosmic absurdist, friendly retro lettering, British vintage"
-  tier: C
+  tier: U
   dimensions:
     tone: satirical
     era: futuristic
     genre: sci-fi
     energy: high-energy
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: irreverent
+    intellectual_style: philosophical
+    stakes: cosmic
   spinner_verbs:
     - Don't Panic
     - Towel locating

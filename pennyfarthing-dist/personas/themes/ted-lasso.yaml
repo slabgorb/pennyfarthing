@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   user_title: Y'all
   portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
-  tier: B
+  tier: U
   spinner_verbs:
     - Believing
     - Biscuits with the boss
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: warm
     era: contemporary
-    genre: comedy-drama
+    genre: drama
     energy: uplifting
+    scrutiny: trusting
+    cooperation_model: unified
+    conflict_approach: consensus
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: philosophical
+    stakes: personal
 zeitgeist:
   score: 88.0
   rating: rich

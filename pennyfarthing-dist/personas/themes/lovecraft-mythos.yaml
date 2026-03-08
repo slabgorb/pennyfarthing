@@ -14,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Seeker
   portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
-  tier: A
+  tier: U
   spinner_verbs:
     - Eldritch glimpsing
     - Sanity checking
@@ -49,8 +49,15 @@ theme:
   dimensions:
     tone: dread
     era: historical
-    genre: cosmic-horror
+    genre: fantasy
     energy: unsettling
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: feudal
+    formality: formal
+    intellectual_style: analytical
+    stakes: cosmic
 zeitgeist:
   score: 80.75
   rating: rich

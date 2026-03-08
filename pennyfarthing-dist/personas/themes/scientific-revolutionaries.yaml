@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Colleague
   portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
-  tier: D
+  tier: U
   spinner_verbs:
     - Hypothesizing
     - Experimenting
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: analytical
     era: historical
-    genre: science
+    genre: nonfiction
     energy: methodical
+    scrutiny: professional
+    cooperation_model: ensemble
+    conflict_approach: debate
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 68.5

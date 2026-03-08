@@ -15,12 +15,19 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", ancient military commander, bronze and crimson palette, battle map background, classical armor"
-  tier: B
+  tier: U
   dimensions:
     tone: authoritative
     era: ancient
-    genre: military-history
+    genre: nonfiction
     energy: calculated
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: competition
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: strategic
+    stakes: institutional
   spinner_verbs:
     - All warfare is deception
     - Know yourself and the enemy

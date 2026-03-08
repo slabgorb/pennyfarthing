@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Gentle Reader
   portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, etching style"
-  tier: C
+  tier: U
   spinner_verbs:
     - Brooding darkly
     - Haunting corridors
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: dark
     era: historical
-    genre: gothic-horror
+    genre: fantasy
     energy: brooding
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: philosophical
+    stakes: existential
 
 zeitgeist:
   score: 75.0

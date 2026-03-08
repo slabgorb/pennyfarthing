@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", modern Western, Harlan County Kentucky, amber and sepia tones, coal country, cowboy hat silhouette"
-  tier: S
+  tier: U
   spinner_verbs:
     - Quick draw
     - Cowboy hat adjusting
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: drawling
     era: contemporary
-    genre: crime-drama
+    genre: drama
     energy: simmering
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: confrontation
+    authority_model: feudal
+    formality: conversational
+    intellectual_style: pragmatic
+    stakes: existential
 
 zeitgeist:
   score: 78.0

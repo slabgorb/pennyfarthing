@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Dear Viewer
   portrait_style: ", Victorian cut-out paper collage animation, photograph cutouts with articulated joints, surreal mixed media collage on parchment"
-  tier: D
+  tier: U
   dimensions:
     tone: comedic
     era: historical
     genre: comedy
     energy: high-energy
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: irreverent
+    intellectual_style: philosophical
+    stakes: personal
   spinner_verbs:
     - Saying Ni
     - Repeating spam

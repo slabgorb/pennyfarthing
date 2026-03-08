@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: my Dear
   portrait_style: ", John Tenniel engraving, fine crosshatching, 1865 original edition style"
-  tier: B
+  tier: U
   dimensions:
     tone: whimsical
     era: timeless
     genre: fantasy
     energy: chaotic
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: irreverent
+    intellectual_style: philosophical
+    stakes: personal
   spinner_verbs:
     - Curiouser and curiouser
     - Down the rabbit hole

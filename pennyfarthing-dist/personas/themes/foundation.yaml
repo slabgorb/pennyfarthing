@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen of the Foundation
   portrait_style: ", classic sci-fi, galactic grandeur, psychohistory equations, 1950s retro-futurist"
-  tier: B
+  tier: U
   spinner_verbs:
     - Psychohistory calculating
     - The Plan proceeding
@@ -53,6 +53,13 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: contemplative
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 78.0

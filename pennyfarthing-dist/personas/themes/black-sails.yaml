@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Captain
   portrait_style: ", Golden Age of Piracy, weathered parchment candlelight, Caribbean turquoise and blood red, cinematic drama"
-  tier: B
+  tier: U
   spinner_verbs:
     - Hoisting the Jolly Roger
     - Plundering the seas
@@ -51,8 +51,15 @@ theme:
   dimensions:
     tone: gritty
     era: historical
-    genre: adventure
+    genre: nonfiction
     energy: fierce
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: conversational
+    intellectual_style: strategic
+    stakes: existential
 zeitgeist:
   score: 76.0
   rating: rich

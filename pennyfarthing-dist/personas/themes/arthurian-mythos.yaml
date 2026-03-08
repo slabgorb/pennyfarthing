@@ -15,12 +15,19 @@ theme:
   character_immersion: high
   user_title: Good Knight
   portrait_style: ", illuminated manuscript, gold leaf accents, jewel tones on aged vellum, Celtic knotwork"
-  tier: A
+  tier: U
   dimensions:
     tone: heroic
     era: medieval
-    genre: fantasy-legend
+    genre: fantasy
     energy: noble
+    scrutiny: trusting
+    cooperation_model: unified
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: philosophical
+    stakes: communal
   spinner_verbs:
     - Drawing the sword from the stone
     - Questing for the Grail
