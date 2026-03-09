@@ -134,6 +134,15 @@ def show(name: str | None, full: bool, output_json: bool):
         click.echo(f"Description: {theme_meta['description']}")
     if theme_meta.get("tier"):
         click.echo(f"Tier: {theme_meta['tier']}")
+
+    # Dimensions
+    dims = theme_meta.get("dimensions")
+    if dims and isinstance(dims, dict):
+        click.echo()
+        click.echo("Dimensions:")
+        for k, v in dims.items():
+            click.echo(f"  {k}: {v}")
+
     click.echo()
 
     # Agents
