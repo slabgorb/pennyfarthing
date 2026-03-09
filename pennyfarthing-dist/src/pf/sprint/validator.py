@@ -65,7 +65,15 @@ class ValidationResult:
 # =============================================================================
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
-VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "in_review", "done", "canceled", "planning"}
+VALID_STORY_STATUSES = {
+    "backlog",
+    "ready",
+    "in_progress",
+    "in_review",
+    "done",
+    "canceled",
+    "planning",
+}
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -91,7 +99,15 @@ REQUIRED_FUTURE_EPIC_FIELDS = {"id", "title", "points"}
 # Required fields for future.yaml story (what promote-epic.sh transforms)
 REQUIRED_FUTURE_STORY_FIELDS = {"id", "title", "points"}
 
-VALID_INITIATIVE_STATUSES = {"ready", "planning", "blocked", "research_complete", "backlog", "complete", "canceled"}
+VALID_INITIATIVE_STATUSES = {
+    "ready",
+    "planning",
+    "blocked",
+    "research_complete",
+    "backlog",
+    "complete",
+    "canceled",
+}
 
 
 # =============================================================================
@@ -227,8 +243,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         points = story["points"]
         if not isinstance(points, (int, float)):
             result.add_error(
-                f"Invalid points value '{points}'. "
-                "To fix: Use a number, e.g. `points: 3`",
+                f"Invalid points value '{points}'. To fix: Use a number, e.g. `points: 3`",
                 f"{base_path}.points",
             )
 
@@ -245,7 +260,9 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
     return result
 
 
-def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int = 0) -> ValidationResult:
+def validate_epic(
+    epic: dict[str, Any], all_story_ids: set[str], epic_index: int = 0
+) -> ValidationResult:
     """Validate an epic's structure and story references.
 
     Validates:
@@ -266,7 +283,7 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
     epic_id = epic.get("id", f"epics[{epic_index}]")
 
     # Check required fields
-    _EPIC_FIELD_HINTS = {"id": "e.g. `id: \"141\"`", "title": "e.g. `title: My Epic`"}
+    _EPIC_FIELD_HINTS = {"id": 'e.g. `id: "141"`', "title": "e.g. `title: My Epic`"}
     for field_name in REQUIRED_EPIC_FIELDS:
         if field_name not in epic:
             hint = _EPIC_FIELD_HINTS.get(field_name, "")
@@ -280,7 +297,7 @@ def validate_epic(epic: dict[str, Any], all_story_ids: set[str], epic_index: int
     if "id" in epic and not isinstance(epic["id"], str):
         result.add_error(
             f"Epic ID must be a string, got {type(epic['id']).__name__} ({epic['id']!r}). "
-            "Quote it in YAML (e.g., id: \"87\" not id: 87)",
+            'Quote it in YAML (e.g., id: "87" not id: 87)',
             f"{base_path}.id",
         )
 
@@ -334,7 +351,7 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
 
     # Check required shard fields
     _SHARD_FIELD_HINTS = {
-        "id": "e.g. `id: \"141\"`",
+        "id": 'e.g. `id: "141"`',
         "title": "e.g. `title: My Epic`",
         "status": "e.g. `status: active`",
         "stories": "e.g. `stories: []`",
@@ -352,7 +369,7 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
     if "id" in epic and not isinstance(epic["id"], str):
         result.add_error(
             f"Epic ID must be a string, got {type(epic['id']).__name__} ({epic['id']!r}). "
-            "Quote it in YAML (e.g., id: \"87\" not id: 87)",
+            'Quote it in YAML (e.g., id: "87" not id: 87)',
             "epic.id",
         )
 
@@ -633,7 +650,7 @@ def validate_sprint_file(file_path: Path, *, strict: bool = False) -> Validation
                 continue
             colon_match = re.search(r":\s+'", line)
             if colon_match:
-                after = line[colon_match.end() - 1:]  # from the opening quote
+                after = line[colon_match.end() - 1 :]  # from the opening quote
                 # Count unescaped quotes ('' is escape for ' in YAML)
                 clean = after.replace("''", "")
                 if clean.count("'") == 1:
@@ -671,8 +688,10 @@ def validate_sprint_file(file_path: Path, *, strict: bool = False) -> Validation
 
     # Merge sharded epic files if present, capturing warnings in strict mode
     from pf.sprint.loader import _merge_epic_shards
+
     if strict:
         import warnings as _warnings
+
         with _warnings.catch_warnings(record=True) as caught:
             _warnings.simplefilter("always")
             data = _merge_epic_shards(data, file_path.parent)
@@ -747,4 +766,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

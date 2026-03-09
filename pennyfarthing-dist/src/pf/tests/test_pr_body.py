@@ -338,17 +338,13 @@ class TestSectionContent:
         # Title is "Add widget caching"
         assert "widget caching" in md.lower() or "Add widget caching" in md
 
-    def test_impact_section_includes_findings_from_session(
-        self, session_with_findings: Path
-    ):
+    def test_impact_section_includes_findings_from_session(self, session_with_findings: Path):
         result = generate_pr_body(session_with_findings)
         md = result["data"]["pr_body_markdown"]
         # Should include content from Impact Summary
         assert "BLOCKING" in md or "blocking" in md.lower()
 
-    def test_impact_section_fallback_when_no_summary(
-        self, session_without_impact: Path
-    ):
+    def test_impact_section_fallback_when_no_summary(self, session_without_impact: Path):
         result = generate_pr_body(session_without_impact)
         md = result["data"]["pr_body_markdown"]
         # Should have a graceful fallback message
@@ -456,15 +452,11 @@ class TestJargonTranslation:
 class TestBackwardCompat:
     """AC4: Handles sessions from before Impact Summary (pre-134-1)."""
 
-    def test_session_without_impact_summary_succeeds(
-        self, session_without_impact: Path
-    ):
+    def test_session_without_impact_summary_succeeds(self, session_without_impact: Path):
         result = generate_pr_body(session_without_impact)
         assert result["success"] is True
 
-    def test_session_without_impact_summary_has_all_sections(
-        self, session_without_impact: Path
-    ):
+    def test_session_without_impact_summary_has_all_sections(self, session_without_impact: Path):
         result = generate_pr_body(session_without_impact)
         md = result["data"]["pr_body_markdown"]
         assert "## Summary" in md
@@ -627,42 +619,39 @@ class TestFullPRBody:
         md = result["data"]["pr_body_markdown"]
 
         # Valid markdown: all ## headers present
-        h2_headers = [
-            line for line in md.split("\n") if line.startswith("## ")
-        ]
+        h2_headers = [line for line in md.split("\n") if line.startswith("## ")]
         assert len(h2_headers) >= 5
 
-    def test_full_session_includes_story_id_context(
-        self, session_with_findings: Path
-    ):
+    def test_full_session_includes_story_id_context(self, session_with_findings: Path):
         result = generate_pr_body(session_with_findings)
         md = result["data"]["pr_body_markdown"]
         # Should reference the story in some way (title, not internal ID)
         assert "event broadcast" in md.lower()
 
-    def test_findings_preserved_in_impact_section(
-        self, session_with_findings: Path
-    ):
+    def test_findings_preserved_in_impact_section(self, session_with_findings: Path):
         result = generate_pr_body(session_with_findings)
         md = result["data"]["pr_body_markdown"]
         # The blocking improvement about rAF should appear
         assert "requestAnimationFrame" in md or "rAF" in md
 
-    def test_docs_section_extracted_from_findings(
-        self, session_with_findings: Path
-    ):
+    def test_docs_section_extracted_from_findings(self, session_with_findings: Path):
         result = generate_pr_body(session_with_findings)
         md = result["data"]["pr_body_markdown"]
         docs_start = md.index("## Docs That May Need Updating")
         details_start = md.index("## Details")
         docs_section = md[docs_start:details_start]
         # Should mention affected files from findings
-        assert "batcher" in docs_section.lower() or "reconnect" in docs_section.lower() or "transport" in docs_section.lower() or "None" in docs_section
+        assert (
+            "batcher" in docs_section.lower()
+            or "reconnect" in docs_section.lower()
+            or "transport" in docs_section.lower()
+            or "None" in docs_section
+        )
 
     def test_no_session_frontmatter_leaks(self, session_with_findings: Path):
         result = generate_pr_body(session_with_findings)
         md = result["data"]["pr_body_markdown"]
         # YAML frontmatter should not appear in PR body
         assert "---\nstory_id:" not in md
-        assert "workflow: \"tdd\"" not in md
+        assert 'workflow: "tdd"' not in md
         assert "phase: review" not in md

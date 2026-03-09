@@ -68,18 +68,14 @@ class PatchStack:
         """Load stack from file."""
         content = yaml.safe_load(self.stack_file.read_text())
         if content and "stack" in content:
-            self._stack = [
-                PatchState(**item) for item in content["stack"]
-            ]
+            self._stack = [PatchState(**item) for item in content["stack"]]
 
     def _save(self) -> None:
         """Save stack to file."""
         # Ensure parent directory exists
         self.stack_file.parent.mkdir(parents=True, exist_ok=True)
 
-        content = {
-            "stack": [asdict(state) for state in self._stack]
-        }
+        content = {"stack": [asdict(state) for state in self._stack]}
         self.stack_file.write_text(yaml.dump(content, default_flow_style=False))
 
     def push(self, state: PatchState) -> None:
@@ -126,13 +122,13 @@ def _sanitize_branch_name(description: str) -> str:
         Sanitized string safe for git branch names
     """
     # Replace special characters with dashes
-    sanitized = re.sub(r'[^a-zA-Z0-9\s-]', '', description)
+    sanitized = re.sub(r"[^a-zA-Z0-9\s-]", "", description)
     # Replace spaces with dashes
-    sanitized = re.sub(r'\s+', '-', sanitized)
+    sanitized = re.sub(r"\s+", "-", sanitized)
     # Remove multiple consecutive dashes
-    sanitized = re.sub(r'-+', '-', sanitized)
+    sanitized = re.sub(r"-+", "-", sanitized)
     # Lowercase and strip
-    sanitized = sanitized.lower().strip('-')
+    sanitized = sanitized.lower().strip("-")
     # Truncate if too long
     return sanitized[:50]
 
@@ -397,13 +393,13 @@ def log_patch_to_session(
     if "<!-- Patches applied during this story will be logged here -->" in content:
         content = content.replace(
             "<!-- Patches applied during this story will be logged here -->",
-            f"<!-- Patches applied during this story will be logged here -->\n{patch_entry}"
+            f"<!-- Patches applied during this story will be logged here -->\n{patch_entry}",
         )
     elif "## Patches" in content:
         # Insert after the Patches header
         idx = content.find("## Patches")
         next_newline = content.find("\n", idx)
-        content = content[:next_newline + 1] + "\n" + patch_entry + content[next_newline + 1:]
+        content = content[: next_newline + 1] + "\n" + patch_entry + content[next_newline + 1 :]
     else:
         # Append at end
         content += f"\n## Patches\n\n{patch_entry}"

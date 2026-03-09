@@ -120,15 +120,12 @@ def resolve_gate(
     # Resolve consumer gate extensions from repos.yaml
     gate_extensions: list[str] | None = None
     if gate_file:
-        from pf.handoff.gate_file import resolve_gate_extensions
-        from pf.handoff.gate_file import resolve_lang_review_extensions
+        from pf.handoff.gate_file import resolve_gate_extensions, resolve_lang_review_extensions
 
         gate_name_for_ext = gate_file
         if gate_name_for_ext.startswith("gates/"):
-            gate_name_for_ext = gate_name_for_ext[len("gates/"):]
-        ext_result = resolve_gate_extensions(
-            gate_name_for_ext, project_root=project_root
-        )
+            gate_name_for_ext = gate_name_for_ext[len("gates/") :]
+        ext_result = resolve_gate_extensions(gate_name_for_ext, project_root=project_root)
         if not ext_result["success"]:
             return _result(
                 status="error",
@@ -140,9 +137,7 @@ def resolve_gate(
         if gate_name_for_ext == "dev-exit":
             from pf.handoff.gate_file import resolve_gate_file
 
-            lang_result = resolve_lang_review_extensions(
-                project_root=project_root
-            )
+            lang_result = resolve_lang_review_extensions(project_root=project_root)
             if lang_result["success"] and lang_result["data"]:
                 for lang_ext in lang_result["data"]:
                     if lang_ext not in all_extensions:
@@ -151,9 +146,7 @@ def resolve_gate(
             # Always include review-correlation on dev-exit —
             # the gate itself checks whether review findings exist
             corr_ref = "gates/review-correlation"
-            corr_result = resolve_gate_file(
-                "review-correlation", project_root=project_root
-            )
+            corr_result = resolve_gate_file("review-correlation", project_root=project_root)
             if corr_result["status"] == "found" and corr_ref not in all_extensions:
                 all_extensions.append(corr_ref)
 

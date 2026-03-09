@@ -133,9 +133,7 @@ def project(tmp_path: Path) -> Path:
         ("file-only", WORKFLOW_WITH_FILE_ONLY),
         ("legacy", WORKFLOW_WITH_TYPE_ONLY),
     ]:
-        (workflows_dir / f"{name}.yaml").write_text(
-            yaml.dump(data, default_flow_style=False)
-        )
+        (workflows_dir / f"{name}.yaml").write_text(yaml.dump(data, default_flow_style=False))
 
     (tmp_path / ".session").mkdir()
     session_file = tmp_path / ".session" / "106-3-session.md"
@@ -151,31 +149,23 @@ def project(tmp_path: Path) -> Path:
 class TestResolveGateFilePresent:
     """AC1: resolve_gate returns gate_file when gate.file is in workflow YAML."""
 
-    def test_gate_file_populated_when_file_in_yaml(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_populated_when_file_in_yaml(self, project: Path) -> None:
         """AC1: gate_file should be 'gates/tests-pass' when file field exists."""
         result = resolve_gate("106-3", "tdd", "green", project_root=project)
         assert result["gate_file"] == "gates/tests-pass"
 
-    def test_gate_type_still_populated_with_file(
-        self, project: Path
-    ) -> None:
+    def test_gate_type_still_populated_with_file(self, project: Path) -> None:
         """AC1: gate_type should still be 'tests_pass' when both file and type exist."""
         result = resolve_gate("106-3", "tdd", "green", project_root=project)
         assert result["gate_type"] == "tests_pass"
 
-    def test_both_fields_present_in_result(
-        self, project: Path
-    ) -> None:
+    def test_both_fields_present_in_result(self, project: Path) -> None:
         """AC1: Both gate_file and gate_type should be non-None when both are in YAML."""
         result = resolve_gate("106-3", "tdd", "green", project_root=project)
         assert result["gate_file"] is not None
         assert result["gate_type"] is not None
 
-    def test_status_still_ready_with_file(
-        self, project: Path
-    ) -> None:
+    def test_status_still_ready_with_file(self, project: Path) -> None:
         """AC1: Status should still be 'ready' when assessment exists and gate.file is present."""
         result = resolve_gate("106-3", "tdd", "green", project_root=project)
         assert result["status"] == "ready"
@@ -184,36 +174,24 @@ class TestResolveGateFilePresent:
 class TestResolveGateFileOnly:
     """AC1: resolve_gate handles gate with file but no type."""
 
-    def test_gate_file_populated_without_type(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_populated_without_type(self, project: Path) -> None:
         """AC1: gate_file should be populated when only file exists (no type)."""
-        result = resolve_gate(
-            "106-3", "file-only", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "file-only", "green", project_root=project)
         assert result["gate_file"] == "gates/tests-pass"
 
-    def test_gate_type_null_when_only_file(
-        self, project: Path
-    ) -> None:
+    def test_gate_type_null_when_only_file(self, project: Path) -> None:
         """AC1: gate_type should be None when only file is in gate."""
-        result = resolve_gate(
-            "106-3", "file-only", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "file-only", "green", project_root=project)
         assert result["gate_type"] is None
 
-    def test_status_ready_when_no_type_and_file_only(
-        self, project: Path
-    ) -> None:
+    def test_status_ready_when_no_type_and_file_only(self, project: Path) -> None:
         """AC1: gate with file-only and no type → status is 'ready'.
 
         File-only gates (no type) are resolvable — the gate runner uses
         gate_file to locate and execute the gate. Status is 'ready' when
         an assessment exists.
         """
-        result = resolve_gate(
-            "106-3", "file-only", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "file-only", "green", project_root=project)
         assert result["status"] == "ready"
 
 
@@ -225,22 +203,14 @@ class TestResolveGateFileOnly:
 class TestResolveGateTypeOnlyReturnsNullFile:
     """AC1: gate_file is None when workflow only has gate.type."""
 
-    def test_gate_file_null_for_type_only(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_null_for_type_only(self, project: Path) -> None:
         """AC1: gate_file should be None when only gate.type exists."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         assert result["gate_file"] is None
 
-    def test_gate_type_populated_for_type_only(
-        self, project: Path
-    ) -> None:
+    def test_gate_type_populated_for_type_only(self, project: Path) -> None:
         """AC1: gate_type should be 'tests_pass' for type-only gate."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         assert result["gate_type"] == "tests_pass"
 
 
@@ -252,40 +222,24 @@ class TestResolveGateTypeOnlyReturnsNullFile:
 class TestResolveGateBackwardCompat:
     """AC2: Workflows with only gate.type continue to work unchanged."""
 
-    def test_legacy_workflow_status_ready(
-        self, project: Path
-    ) -> None:
+    def test_legacy_workflow_status_ready(self, project: Path) -> None:
         """AC2: Legacy type-only workflow should return 'ready' with assessment."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         assert result["status"] == "ready"
 
-    def test_legacy_workflow_next_agent(
-        self, project: Path
-    ) -> None:
+    def test_legacy_workflow_next_agent(self, project: Path) -> None:
         """AC2: Legacy workflow should still resolve next_agent correctly."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         assert result["next_agent"] == "sm"
 
-    def test_legacy_workflow_next_phase(
-        self, project: Path
-    ) -> None:
+    def test_legacy_workflow_next_phase(self, project: Path) -> None:
         """AC2: Legacy workflow should still resolve next_phase correctly."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         assert result["next_phase"] == "finish"
 
-    def test_resolve_result_contract_unchanged(
-        self, project: Path
-    ) -> None:
+    def test_resolve_result_contract_unchanged(self, project: Path) -> None:
         """AC2: RESOLVE_RESULT still has all 7 required fields."""
-        result = resolve_gate(
-            "106-3", "legacy", "green", project_root=project
-        )
+        result = resolve_gate("106-3", "legacy", "green", project_root=project)
         required_fields = [
             "status",
             "gate_type",
@@ -298,9 +252,7 @@ class TestResolveGateBackwardCompat:
         for field in required_fields:
             assert field in result, f"Missing field: {field}"
 
-    def test_red_phase_type_only_unaffected(
-        self, project: Path
-    ) -> None:
+    def test_red_phase_type_only_unaffected(self, project: Path) -> None:
         """AC2: TDD red phase (type-only, no file) still works correctly."""
         result = resolve_gate("106-3", "tdd", "red", project_root=project)
         assert result["gate_type"] == "tests_fail"
@@ -322,11 +274,7 @@ class TestTddWorkflowMigration:
     @pytest.fixture
     def tdd_yaml(self) -> dict:
         """Load the actual tdd.yaml from pennyfarthing-dist."""
-        tdd_path = (
-            Path(__file__).resolve().parents[3]
-            / "workflows"
-            / "tdd.yaml"
-        )
+        tdd_path = Path(__file__).resolve().parents[3] / "workflows" / "tdd.yaml"
         assert tdd_path.exists(), f"tdd.yaml not found at {tdd_path}"
         return yaml.safe_load(tdd_path.read_text())
 
@@ -349,21 +297,15 @@ class TestTddWorkflowMigration:
         """AC3: Green phase should have gate.type = 'dev_exit'."""
         green = self._get_phase(tdd_yaml, "green")
         gate = green.get("gate", {})
-        assert gate.get("type") == "dev_exit", (
-            f"Expected gate.type='dev_exit', got gate={gate}"
-        )
+        assert gate.get("type") == "dev_exit", f"Expected gate.type='dev_exit', got gate={gate}"
 
     def test_green_phase_file_is_relative(self, tdd_yaml: dict) -> None:
         """AC3: File path should be relative (gates/dev-exit), not absolute."""
         green = self._get_phase(tdd_yaml, "green")
         gate = green.get("gate", {})
         file_path = gate.get("file", "")
-        assert not file_path.startswith("/"), (
-            f"gate.file should be relative, got: {file_path}"
-        )
-        assert file_path == "gates/dev-exit", (
-            f"Expected 'gates/dev-exit', got: {file_path}"
-        )
+        assert not file_path.startswith("/"), f"gate.file should be relative, got: {file_path}"
+        assert file_path == "gates/dev-exit", f"Expected 'gates/dev-exit', got: {file_path}"
 
     def test_red_phase_has_gate_file(self, tdd_yaml: dict) -> None:
         """AC3: Red phase should have gate.file = 'gates/tests-fail'."""
@@ -392,9 +334,7 @@ class TestTddWorkflowMigration:
     def test_finish_phase_unchanged(self, tdd_yaml: dict) -> None:
         """AC3: Finish phase should remain gateless."""
         finish = self._get_phase(tdd_yaml, "finish")
-        assert "gate" not in finish, (
-            f"Finish phase should not have a gate, got: {finish}"
-        )
+        assert "gate" not in finish, f"Finish phase should not have a gate, got: {finish}"
 
 
 # ===========================================================================
@@ -412,11 +352,7 @@ class TestResolveGateWithRealTddYaml:
     @pytest.fixture
     def real_project(self, tmp_path: Path) -> Path:
         """Create a project that uses the actual tdd.yaml from pennyfarthing-dist."""
-        tdd_source = (
-            Path(__file__).resolve().parents[3]
-            / "workflows"
-            / "tdd.yaml"
-        )
+        tdd_source = Path(__file__).resolve().parents[3] / "workflows" / "tdd.yaml"
         assert tdd_source.exists(), f"tdd.yaml not found at {tdd_source}"
 
         workflows_dir = tmp_path / ".pennyfarthing" / "workflows"
@@ -428,33 +364,19 @@ class TestResolveGateWithRealTddYaml:
         session_file.write_text(SESSION_WITH_ASSESSMENT)
         return tmp_path
 
-    def test_green_phase_returns_gate_file(
-        self, real_project: Path
-    ) -> None:
+    def test_green_phase_returns_gate_file(self, real_project: Path) -> None:
         """AC3: resolve_gate for tdd/green should return gate_file='gates/dev-exit'."""
-        result = resolve_gate(
-            "106-3", "tdd", "green", project_root=real_project
-        )
+        result = resolve_gate("106-3", "tdd", "green", project_root=real_project)
         assert result["gate_file"] == "gates/dev-exit", (
             f"Expected gate_file='gates/dev-exit', got: {result}"
         )
 
-    def test_green_phase_returns_dev_exit_type(
-        self, real_project: Path
-    ) -> None:
+    def test_green_phase_returns_dev_exit_type(self, real_project: Path) -> None:
         """AC3: resolve_gate for tdd/green should return gate_type='dev_exit'."""
-        result = resolve_gate(
-            "106-3", "tdd", "green", project_root=real_project
-        )
-        assert result["gate_type"] == "dev_exit", (
-            f"Expected gate_type='dev_exit', got: {result}"
-        )
+        result = resolve_gate("106-3", "tdd", "green", project_root=real_project)
+        assert result["gate_type"] == "dev_exit", f"Expected gate_type='dev_exit', got: {result}"
 
-    def test_red_phase_gate_file_is_tests_fail(
-        self, real_project: Path
-    ) -> None:
+    def test_red_phase_gate_file_is_tests_fail(self, real_project: Path) -> None:
         """AC3: resolve_gate for tdd/red should have gate_file='gates/tests-fail'."""
-        result = resolve_gate(
-            "106-3", "tdd", "red", project_root=real_project
-        )
+        result = resolve_gate("106-3", "tdd", "red", project_root=real_project)
         assert result["gate_file"] == "gates/tests-fail"

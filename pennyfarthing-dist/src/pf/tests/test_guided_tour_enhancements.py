@@ -127,27 +127,21 @@ class TestCommandPrefix:
             # Match `/sm` that is NOT preceded by /pf-
             # Use word boundary: `/sm` followed by space, backtick, pipe, or end
             matches = re.findall(r"(?<!/pf-)`?/sm`?(?=[\s|`\)])", content)
-            assert len(matches) == 0, (
-                f"Step {f.name} uses unprefixed '/sm' — should be '/pf-sm'"
-            )
+            assert len(matches) == 0, f"Step {f.name} uses unprefixed '/sm' — should be '/pf-sm'"
 
     def test_no_unprefixed_slash_dev(self, step_files: list[Path]) -> None:
         """AC1: No step should use `/dev` instead of `/pf-dev`."""
         for f in step_files:
             content = f.read_text()
             matches = re.findall(r"(?<!/pf-)`?/dev`?(?=[\s|`\)])", content)
-            assert len(matches) == 0, (
-                f"Step {f.name} uses unprefixed '/dev' — should be '/pf-dev'"
-            )
+            assert len(matches) == 0, f"Step {f.name} uses unprefixed '/dev' — should be '/pf-dev'"
 
     def test_no_unprefixed_slash_tea(self, step_files: list[Path]) -> None:
         """AC1: No step should use `/tea` instead of `/pf-tea`."""
         for f in step_files:
             content = f.read_text()
             matches = re.findall(r"(?<!/pf-)`?/tea`?(?=[\s|`\)])", content)
-            assert len(matches) == 0, (
-                f"Step {f.name} uses unprefixed '/tea' — should be '/pf-tea'"
-            )
+            assert len(matches) == 0, f"Step {f.name} uses unprefixed '/tea' — should be '/pf-tea'"
 
     def test_no_unprefixed_slash_reviewer(self, step_files: list[Path]) -> None:
         """AC1: No step should use `/reviewer` instead of `/pf-reviewer`."""
@@ -169,9 +163,7 @@ class TestCommandPrefix:
 
     def test_step_03_actions_use_prefix(self, step_03_content: str) -> None:
         """AC1: Step 03 actions section should use /pf- prefixed commands."""
-        actions_match = re.search(
-            r"<actions>(.*?)</actions>", step_03_content, re.DOTALL
-        )
+        actions_match = re.search(r"<actions>(.*?)</actions>", step_03_content, re.DOTALL)
         assert actions_match, "Step 03 missing <actions> section"
         actions = actions_match.group(1)
         # Should NOT have unprefixed agent commands in actions
@@ -196,9 +188,7 @@ class TestFullAgentRoster:
         """AC2: Step 03 agent table should list all 11 agents."""
         # Count rows in the agent table (lines with | that contain /pf-)
         agent_rows = re.findall(r"\|.*?/pf-\w+.*?\|", step_03_content)
-        assert len(agent_rows) >= 11, (
-            f"Step 03 lists {len(agent_rows)} agents — should list all 11"
-        )
+        assert len(agent_rows) >= 11, f"Step 03 lists {len(agent_rows)} agents — should list all 11"
 
     def test_step_03_has_sm(self, step_03_content: str) -> None:
         """AC2: Step 03 should list /pf-sm."""
@@ -278,8 +268,7 @@ class TestDigInOption:
             if switch_match and "dig-in" in switch_match.group(1).lower():
                 has_dig = True
             assert has_dig, (
-                f"Step {f.name} missing 'Dig In' option in "
-                "<collaboration-menu> or <switch>"
+                f"Step {f.name} missing 'Dig In' option in <collaboration-menu> or <switch>"
             )
 
     def test_dig_in_has_description(self, step_files: list[Path]) -> None:
@@ -294,10 +283,7 @@ class TestDigInOption:
             if menu_match:
                 menu = menu_match.group(1)
                 # Find the Dig In line and check it has description after —
-                dig_line = [
-                    line for line in menu.splitlines()
-                    if "dig in" in line.lower()
-                ]
+                dig_line = [line for line in menu.splitlines() if "dig in" in line.lower()]
                 assert len(dig_line) > 0, f"Step {f.name} missing Dig In menu entry"
                 assert "—" in dig_line[0] or "-" in dig_line[0], (
                     f"Step {f.name} Dig In option missing description"
@@ -323,55 +309,40 @@ class TestSwitchGateMenus:
                 f"Step {f.name} missing <switch> gate — "
                 "collaboration menus should use <switch> for AskUserQuestion"
             )
-            assert "</switch>" in content, (
-                f"Step {f.name} has unclosed <switch> tag"
-            )
+            assert "</switch>" in content, f"Step {f.name} has unclosed <switch> tag"
 
     def test_switch_has_options(self, step_files: list[Path]) -> None:
         """AC4: <switch> sections should define selectable options."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
                 switch_content = switch_match.group(1)
                 # Should have option entries
                 options = re.findall(r"<option\b", switch_content)
                 assert len(options) >= 2, (
-                    f"Step {f.name} <switch> should have at least 2 options, "
-                    f"found {len(options)}"
+                    f"Step {f.name} <switch> should have at least 2 options, found {len(options)}"
                 )
 
     def test_switch_options_have_labels(self, step_files: list[Path]) -> None:
         """AC4: Each <option> in <switch> should have a label attribute."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
                 switch_content = switch_match.group(1)
-                options = re.findall(
-                    r"<option\b([^>]*)>", switch_content
-                )
+                options = re.findall(r"<option\b([^>]*)>", switch_content)
                 for opt_attrs in options:
-                    assert "label=" in opt_attrs, (
-                        f"Step {f.name} <option> missing label attribute"
-                    )
+                    assert "label=" in opt_attrs, f"Step {f.name} <option> missing label attribute"
 
     def test_switch_options_have_descriptions(self, step_files: list[Path]) -> None:
         """AC4: Each <option> should have a description attribute."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
                 switch_content = switch_match.group(1)
-                options = re.findall(
-                    r"<option\b([^>]*)>", switch_content
-                )
+                options = re.findall(r"<option\b([^>]*)>", switch_content)
                 for opt_attrs in options:
                     assert "description=" in opt_attrs, (
                         f"Step {f.name} <option> missing description attribute"
@@ -406,9 +377,7 @@ class TestSprintDeepDive:
     def test_step_04_mentions_yaml_shards(self, step_04_content: str) -> None:
         """AC5: Step 04 should explain YAML shard structure."""
         content_lower = step_04_content.lower()
-        assert "shard" in content_lower, (
-            "Step 04 missing explanation of YAML shard structure"
-        )
+        assert "shard" in content_lower, "Step 04 missing explanation of YAML shard structure"
 
     def test_step_04_mentions_epic_files(self, step_04_content: str) -> None:
         """AC5: Step 04 should reference epic shard files (epic-*.yaml)."""
@@ -463,15 +432,11 @@ class TestConfigDeepDive:
 
     def test_step_05_mentions_relay_mode(self, step_05_content: str) -> None:
         """AC6: Step 05 should explain relay_mode for auto-handoff."""
-        assert "relay_mode" in step_05_content, (
-            "Step 05 missing explanation of relay_mode"
-        )
+        assert "relay_mode" in step_05_content, "Step 05 missing explanation of relay_mode"
 
     def test_step_05_mentions_bell_mode(self, step_05_content: str) -> None:
         """AC6: Step 05 should explain bell_mode for message injection."""
-        assert "bell_mode" in step_05_content, (
-            "Step 05 missing explanation of bell_mode"
-        )
+        assert "bell_mode" in step_05_content, "Step 05 missing explanation of bell_mode"
 
     def test_step_05_explains_session_start_hook(self, step_05_content: str) -> None:
         """AC6: Step 05 should explain the session-start hook in detail."""
@@ -480,9 +445,9 @@ class TestConfigDeepDive:
             "Step 05 missing detailed explanation of session-start hook"
         )
         # Should explain what it does, not just list it
-        assert "welcome" in content_lower or "banner" in content_lower or "setup" in content_lower, (
-            "Step 05 should explain what session-start hook does (setup, welcome)"
-        )
+        assert (
+            "welcome" in content_lower or "banner" in content_lower or "setup" in content_lower
+        ), "Step 05 should explain what session-start hook does (setup, welcome)"
 
     def test_step_05_explains_pre_edit_check(self, step_05_content: str) -> None:
         """AC6: Step 05 should explain the pre-edit-check hook."""
@@ -540,9 +505,7 @@ class TestSwitchGateSchema:
         collab = workflow_config.get("collaboration", {})
         menus = collab.get("menus", [])
         menu_names = [m.get("name", "").lower() for m in menus]
-        assert "dig in" in menu_names, (
-            f"Collaboration menus {menu_names} should include 'Dig In'"
-        )
+        assert "dig in" in menu_names, f"Collaboration menus {menu_names} should include 'Dig In'"
 
 
 # ============================================================================
@@ -557,43 +520,36 @@ class TestSwitchGateEngine:
         """AC8: <option> elements should have action= attribute for engine routing."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
-                options = re.findall(
-                    r"<option\b([^>]*)>", switch_match.group(1)
-                )
+                options = re.findall(r"<option\b([^>]*)>", switch_match.group(1))
                 for opt_attrs in options:
                     assert "action=" in opt_attrs, (
-                        f"Step {f.name} <option> missing action= attribute "
-                        "for engine routing"
+                        f"Step {f.name} <option> missing action= attribute for engine routing"
                     )
 
     def test_switch_has_continue_action(self, step_files: list[Path]) -> None:
         """AC8: Every <switch> should have a continue action option."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
                 switch_content = switch_match.group(1).lower()
-                assert 'action="continue"' in switch_content or "action='continue'" in switch_content, (
-                    f"Step {f.name} <switch> missing action=\"continue\" option"
-                )
+                assert (
+                    'action="continue"' in switch_content or "action='continue'" in switch_content
+                ), f'Step {f.name} <switch> missing action="continue" option'
 
     def test_switch_has_deep_dive_action(self, step_files: list[Path]) -> None:
         """AC8: Every <switch> should have a deep-dive action option."""
         for f in step_files:
             content = f.read_text()
-            switch_match = re.search(
-                r"<switch>(.*?)</switch>", content, re.DOTALL
-            )
+            switch_match = re.search(r"<switch>(.*?)</switch>", content, re.DOTALL)
             if switch_match:
                 switch_content = switch_match.group(1).lower()
                 has_dig = 'action="dig-in"' in switch_content or "action='dig-in'" in switch_content
-                has_deep = 'action="deep-dive"' in switch_content or "action='deep-dive'" in switch_content
+                has_deep = (
+                    'action="deep-dive"' in switch_content or "action='deep-dive'" in switch_content
+                )
                 assert has_dig or has_deep, (
                     f"Step {f.name} <switch> missing dig-in/deep-dive action"
                 )
@@ -615,9 +571,7 @@ class TestExistingGatesUpdated:
         path = STEPS_DIR / "step-01-welcome.md"
         assert path.exists(), "step-01-welcome.md not found"
         content = path.read_text()
-        assert "<switch" in content, (
-            "step-01-welcome.md should be updated with <switch> gate"
-        )
+        assert "<switch" in content, "step-01-welcome.md should be updated with <switch> gate"
 
     def test_step_02_has_switch(self) -> None:
         """AC9: step-02-themes.md should have <switch> gate.
@@ -627,9 +581,7 @@ class TestExistingGatesUpdated:
         path = STEPS_DIR / "step-02-themes.md"
         assert path.exists(), "step-02-themes.md not found"
         content = path.read_text()
-        assert "<switch" in content, (
-            "step-02-themes.md should be updated with <switch> gate"
-        )
+        assert "<switch" in content, "step-02-themes.md should be updated with <switch> gate"
 
     def test_step_03_has_switch(self) -> None:
         """AC9: step-03-agents.md should have <switch> gate.
@@ -639,9 +591,7 @@ class TestExistingGatesUpdated:
         path = STEPS_DIR / "step-03-agents.md"
         assert path.exists(), "step-03-agents.md not found"
         content = path.read_text()
-        assert "<switch" in content, (
-            "step-03-agents.md should be updated with <switch> gate"
-        )
+        assert "<switch" in content, "step-03-agents.md should be updated with <switch> gate"
 
     def test_step_04_has_switch(self) -> None:
         """AC9: step-04-sprint.md should have <switch> gate.
@@ -651,9 +601,7 @@ class TestExistingGatesUpdated:
         path = STEPS_DIR / "step-04-sprint.md"
         assert path.exists(), "step-04-sprint.md not found"
         content = path.read_text()
-        assert "<switch" in content, (
-            "step-04-sprint.md should be updated with <switch> gate"
-        )
+        assert "<switch" in content, "step-04-sprint.md should be updated with <switch> gate"
 
     def test_step_05_has_switch(self) -> None:
         """AC9: step-05-config.md should have <switch> gate.
@@ -663,9 +611,7 @@ class TestExistingGatesUpdated:
         path = STEPS_DIR / "step-05-config.md"
         assert path.exists(), "step-05-config.md not found"
         content = path.read_text()
-        assert "<switch" in content, (
-            "step-05-config.md should be updated with <switch> gate"
-        )
+        assert "<switch" in content, "step-05-config.md should be updated with <switch> gate"
 
     def test_switch_replaces_text_menus(self, step_files: list[Path]) -> None:
         """AC9: Steps with <switch> should not also have text-based [X] menus."""

@@ -9,9 +9,6 @@ import { fileURLToPath } from 'url';
 import { resolvePennyfarthingDist } from '../shared/portrait-resolver.js';
 import { callPf, PfCache, toSlug, oceanSuffix, generateSlug } from '../shared/pf-cli.js';
 
-// Electron adds resourcesPath to process; not in Node.js types
-const _electronResourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PACKAGE_ROOT = join(__dirname, '..', '..', '..'); // packages/core/src/server -> pennyfarthing root
@@ -57,14 +54,6 @@ interface ThemeConfig {
 // ---------------------------------------------------------------------------
 // Result helpers: { success: true, data } / { success: false, error }
 // ---------------------------------------------------------------------------
-
-function _personaSuccess(data: Persona): { success: true; data: Persona } {
-  return { success: true, data };
-}
-
-function _personaFailure(error: string): { success: false; error: string } {
-  return { success: false, error };
-}
 
 // ---------------------------------------------------------------------------
 // Project detection (existsSync-based — no file parsing needed)

@@ -64,12 +64,15 @@ def _output_result(result, fmt: str, output_file: str | None):
 
 
 @dependencies.command()
-@click.option("--path", "target_path", type=click.Path(exists=True),
-              help="Directory to analyze")
-@click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]),
-              default="table", show_default=True)
-@click.option("--output", "output_file", type=click.Path(),
-              help="Write output to file")
+@click.option("--path", "target_path", type=click.Path(exists=True), help="Directory to analyze")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["table", "json", "csv"]),
+    default="table",
+    show_default=True,
+)
+@click.option("--output", "output_file", type=click.Path(), help="Write output to file")
 def analyze(target_path, fmt, output_file):
     """Analyze dependency health."""
     result = _run_analysis(target_path)

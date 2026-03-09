@@ -168,9 +168,7 @@ def dispatch(event: str) -> None:
 
     # Emit merged response
     if decision or contexts:
-        output: dict[str, Any] = {
-            "hookSpecificOutput": {"hookEventName": event}
-        }
+        output: dict[str, Any] = {"hookSpecificOutput": {"hookEventName": event}}
         if decision:
             output["hookSpecificOutput"]["permissionDecision"] = decision
         if reason:

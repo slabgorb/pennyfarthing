@@ -35,9 +35,7 @@ def parse_epics_markdown(content: str) -> dict[str, Any]:
         result["title"] = title_match.group(1).replace(" - Epics and Stories", "")
 
     # Extract description from Overview section
-    overview_match = re.search(
-        r"## Overview\s*\n\s*\n(.+?)(?=\n\n##|\n##)", content, re.DOTALL
-    )
+    overview_match = re.search(r"## Overview\s*\n\s*\n(.+?)(?=\n\n##|\n##)", content, re.DOTALL)
     if overview_match:
         result["description"] = overview_match.group(1).strip()
 
@@ -46,9 +44,7 @@ def parse_epics_markdown(content: str) -> dict[str, Any]:
     if points_match:
         result["total_points"] = int(points_match.group(1))
     else:
-        effort_match = re.search(
-            r"Total Effort.*?(\d+)\s*story points", content, re.IGNORECASE
-        )
+        effort_match = re.search(r"Total Effort.*?(\d+)\s*story points", content, re.IGNORECASE)
         if effort_match:
             result["total_points"] = int(effort_match.group(1))
 
@@ -67,9 +63,7 @@ def parse_epics_markdown(content: str) -> dict[str, Any]:
     # Process each epic
     for i, epic_pos in enumerate(epic_positions):
         start_index = epic_pos["index"]
-        end_index = (
-            epic_positions[i + 1]["index"] if i < len(epic_positions) - 1 else len(content)
-        )
+        end_index = epic_positions[i + 1]["index"] if i < len(epic_positions) - 1 else len(content)
         epic_content = content[start_index:end_index]
 
         epic: dict[str, Any] = {
@@ -91,9 +85,7 @@ def parse_epics_markdown(content: str) -> dict[str, Any]:
             epic["points"] = int(epic_points_match.group(1))
 
         # Parse stories within this epic
-        story_pattern = re.compile(
-            rf"^### Story {epic_pos['num']}\.(\d+):\s*(.+)$", re.MULTILINE
-        )
+        story_pattern = re.compile(rf"^### Story {epic_pos['num']}\.(\d+):\s*(.+)$", re.MULTILINE)
         story_positions = []
         for match in story_pattern.finditer(epic_content):
             story_positions.append(
@@ -329,7 +321,9 @@ def import_epic(
         epic_num += 1
 
     # Generate YAML
-    relative_path = str(epics_path.relative_to(root)) if epics_path.is_relative_to(root) else str(epics_path)
+    relative_path = (
+        str(epics_path.relative_to(root)) if epics_path.is_relative_to(root) else str(epics_path)
+    )
     new_yaml, next_epic_num = generate_initiative_yaml(
         parsed, start_epic_num, name, relative_path, marker
     )
@@ -361,7 +355,9 @@ def import_epic(
     )
 
     # Find insertion point (before SUMMARY section)
-    summary_marker = "# =============================================================================\n# SUMMARY"
+    summary_marker = (
+        "# =============================================================================\n# SUMMARY"
+    )
     summary_index = future_content.find(summary_marker)
 
     if summary_index == -1:
@@ -435,7 +431,9 @@ def main(args: list[str] | None = None) -> int:
             print(f"  Epics: {result.get('epics_count')}")
             print(f"  Stories: {result.get('stories_count')}")
             print(f"  Points: {result.get('total_points')}")
-            print(f"  Epic numbers: epic-{result.get('start_epic_num')} to epic-{result.get('next_epic_num') - 1}")
+            print(
+                f"  Epic numbers: epic-{result.get('start_epic_num')} to epic-{result.get('next_epic_num') - 1}"
+            )
             print("\nYAML Preview:")
             print("-" * 60)
             print(result.get("yaml_preview"))

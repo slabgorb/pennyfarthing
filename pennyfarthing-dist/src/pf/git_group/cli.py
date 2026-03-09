@@ -192,7 +192,9 @@ def worktree_status():
 
 
 @git.command()
-@click.option("--label", "-l", default="", help="Label for the snapshot branch (e.g., 'benchmark-work')")
+@click.option(
+    "--label", "-l", default="", help="Label for the snapshot branch (e.g., 'benchmark-work')"
+)
 def snapshot(label: str):
     """Snapshot all repos: create safety branches and commit everything.
 

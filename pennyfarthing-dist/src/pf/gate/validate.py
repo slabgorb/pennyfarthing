@@ -87,9 +87,7 @@ def validate_gate_file(path: str | Path) -> ValidationResult:
                 root_model = model
 
             if not name:
-                errors.append(
-                    f"Gate element at depth {depth} missing required 'name' attribute"
-                )
+                errors.append(f"Gate element at depth {depth} missing required 'name' attribute")
             else:
                 # Check for duplicate names (cycle indicator)
                 if name in gate_names:
@@ -142,11 +140,16 @@ def _tokenize(content: str) -> list[dict]:
         attrs = m.group(1)
         name_match = re.search(r'name="([^"]*)"', attrs)
         model_match = re.search(r'model="([^"]*)"', attrs)
-        events.append((m.start(), {
-            "type": "gate_open",
-            "name": name_match.group(1) if name_match else None,
-            "model": model_match.group(1) if model_match else "haiku",
-        }))
+        events.append(
+            (
+                m.start(),
+                {
+                    "type": "gate_open",
+                    "name": name_match.group(1) if name_match else None,
+                    "model": model_match.group(1) if model_match else "haiku",
+                },
+            )
+        )
 
     for m in close_pattern.finditer(content):
         events.append((m.start(), {"type": "gate_close"}))

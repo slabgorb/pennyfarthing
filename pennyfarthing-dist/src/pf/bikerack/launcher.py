@@ -233,9 +233,7 @@ def poll_for_port_file(
                 if log_tail:
                     lines = log_tail.splitlines()
                     log_tail = "\n\nWheelHub log (last 20 lines):\n" + "\n".join(lines[-20:])
-            raise TimeoutError(
-                f"Timed out waiting for {port_file} after {timeout}s{log_tail}"
-            )
+            raise TimeoutError(f"Timed out waiting for {port_file} after {timeout}s{log_tail}")
         time.sleep(interval)
 
 

@@ -82,9 +82,7 @@ class TestFocusSubscription:
             loop.close()
 
         # Assert: client.subscribe was called with channel="focus"
-        focus_calls = [
-            c for c in client.subscribe.call_args_list if c[0][0] == "focus"
-        ]
+        focus_calls = [c for c in client.subscribe.call_args_list if c[0][0] == "focus"]
         assert len(focus_calls) == 1, (
             f"Expected 1 subscribe('focus', ...) call, got {len(focus_calls)}. "
             f"All calls: {client.subscribe.call_args_list}"
@@ -104,9 +102,7 @@ class TestFocusSubscription:
         finally:
             loop.close()
 
-        focus_calls = [
-            c for c in client.subscribe.call_args_list if c[0][0] == "focus"
-        ]
+        focus_calls = [c for c in client.subscribe.call_args_list if c[0][0] == "focus"]
         assert len(focus_calls) == 1
         handler = focus_calls[0][0][1]
         assert handler == app._handle_focus_message, (
@@ -203,12 +199,8 @@ class TestPanelSwitch:
         app._handle_focus_message(focus_msg("git", msg_type="init"))  # should be ignored
 
         updates = get_posted_focus_updates(app)
-        assert len(updates) == 1, (
-            f"Only the first update message should post, got {len(updates)}"
-        )
-        assert updates[0].focus == "sprint", (
-            "init message should not generate a FocusUpdate"
-        )
+        assert len(updates) == 1, f"Only the first update message should post, got {len(updates)}"
+        assert updates[0].focus == "sprint", "init message should not generate a FocusUpdate"
 
 
 # ---------------------------------------------------------------------------
@@ -247,9 +239,7 @@ class TestFocusReset:
 
         updates = get_posted_focus_updates(app)
         assert len(updates) == 2
-        assert updates[1].focus is None, (
-            "Reset should post FocusUpdate with focus=None"
-        )
+        assert updates[1].focus is None, "Reset should post FocusUpdate with focus=None"
 
     def test_reset_without_previous_is_no_op(self) -> None:
         """Null focus when no previous panel should be a graceful no-op."""
@@ -274,9 +264,7 @@ class TestFocusReset:
         app._handle_focus_message(focus_msg("git"))
 
         updates = get_posted_focus_updates(app)
-        assert len(updates) >= 1, (
-            "_handle_focus_message should post FocusUpdate on panel switch"
-        )
+        assert len(updates) >= 1, "_handle_focus_message should post FocusUpdate on panel switch"
 
 
 # ---------------------------------------------------------------------------
@@ -301,9 +289,7 @@ class TestFocusTiming:
         assert len(updates) == 1, (
             "Panel switch must actually post FocusUpdate for timing to be meaningful"
         )
-        assert elapsed_ms < 200, (
-            f"Focus switch took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
-        )
+        assert elapsed_ms < 200, f"Focus switch took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
 
     def test_reset_under_200ms(self) -> None:
         """Reset (null focus) should also complete in under 200ms."""
@@ -322,9 +308,7 @@ class TestFocusTiming:
         assert len(reset_updates) == 1, (
             "Reset must post FocusUpdate(None) for timing to be meaningful"
         )
-        assert elapsed_ms < 200, (
-            f"Focus reset took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
-        )
+        assert elapsed_ms < 200, f"Focus reset took {elapsed_ms:.1f}ms, exceeds 200ms requirement"
 
 
 # ---------------------------------------------------------------------------
@@ -421,9 +405,7 @@ class TestGuiCompatibility:
         finally:
             loop.close()
 
-        focus_calls = [
-            c for c in client.subscribe.call_args_list if c[0][0] == "focus"
-        ]
+        focus_calls = [c for c in client.subscribe.call_args_list if c[0][0] == "focus"]
         assert len(focus_calls) == 1, (
             "TUI must subscribe to 'focus' channel — same as GUI's useFocusPanel hook"
         )
@@ -438,9 +420,7 @@ class TestGuiCompatibility:
         app._handle_focus_message(gui_message)
 
         updates = get_posted_focus_updates(app)
-        assert len(updates) == 1, (
-            "TUI must handle the same FocusMessage format as the GUI"
-        )
+        assert len(updates) == 1, "TUI must handle the same FocusMessage format as the GUI"
         assert updates[0].focus == "sprint", (
             "TUI must post FocusUpdate with correct panel from GUI message"
         )
@@ -460,9 +440,7 @@ class TestGuiCompatibility:
         assert len(updates) == 2, (
             f"TUI must handle reset (focus: null) same as GUI, got {len(updates)} updates"
         )
-        assert updates[1].focus is None, (
-            "TUI must post FocusUpdate(None) for reset message"
-        )
+        assert updates[1].focus is None, "TUI must post FocusUpdate(None) for reset message"
 
     def test_init_ignored_like_gui(self) -> None:
         """TUI should ignore 'init' messages, just like the GUI hook does."""
@@ -473,9 +451,7 @@ class TestGuiCompatibility:
         app._handle_focus_message({"type": "init", "focus": None})
 
         updates = get_posted_focus_updates(app)
-        assert len(updates) == 0, (
-            "init messages must be ignored — no FocusUpdate should be posted"
-        )
+        assert len(updates) == 0, "init messages must be ignored — no FocusUpdate should be posted"
 
         app._handle_focus_message({"type": "init", "focus": "sprint"})
 

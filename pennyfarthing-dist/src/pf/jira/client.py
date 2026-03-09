@@ -15,10 +15,12 @@ from typing import Any
 
 # Configuration
 
+
 def _resolve_jira_config():
     """Resolve Jira project and URL from config file, env, or defaults."""
     try:
         from pf.common.config import load_pennyfarthing_config
+
         config = load_pennyfarthing_config()
         jira_cfg = config.get("jira", {})
     except Exception:
@@ -26,6 +28,7 @@ def _resolve_jira_config():
     project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or "MSSCI"
     url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or "https://1898andco.atlassian.net"
     return project, url
+
 
 JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
 
@@ -122,7 +125,6 @@ def is_jira_cli_available() -> bool:
     return shutil.which("jira") is not None
 
 
-
 def get_jira_field(issue_json: dict[str, Any], field_path: str, default: Any = None) -> Any:
     """Extract field from Jira issue JSON using dot notation.
 
@@ -202,8 +204,11 @@ def check_dependencies(quiet: bool = False) -> dict[str, list[str]]:
         missing.append("JIRA_API_TOKEN")
         if not quiet:
             print("[ERROR] JIRA_API_TOKEN not set", file=sys.stderr)
-            print("  Create token at: https://id.atlassian.com/manage-profile/security/api-tokens", file=sys.stderr)
-            print("  Then: export JIRA_API_TOKEN=\"your-token\"", file=sys.stderr)
+            print(
+                "  Create token at: https://id.atlassian.com/manage-profile/security/api-tokens",
+                file=sys.stderr,
+            )
+            print('  Then: export JIRA_API_TOKEN="your-token"', file=sys.stderr)
 
     # Check jira config
     config_path = Path.home() / ".config" / ".jira" / ".config.yml"
@@ -261,7 +266,9 @@ def get_current_user_email() -> str:
     try:
         result = subprocess.run(
             ["git", "config", "user.email"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
@@ -363,10 +370,14 @@ class JiraClient:
         curl_args = [
             "curl",
             "-s",
-            "-X", method,
-            "-H", "Accept: application/json",
-            "-H", "Content-Type: application/json",
-            "-u", f"{self.user}:{self.token}",
+            "-X",
+            method,
+            "-H",
+            "Accept: application/json",
+            "-H",
+            "Content-Type: application/json",
+            "-u",
+            f"{self.user}:{self.token}",
         ]
 
         if data:
@@ -406,9 +417,7 @@ class JiraClient:
         """
         return self._call_api_sync("POST", "/rest/api/3/issue", payload)
 
-    def update_issue_sync(
-        self, issue_key: str, fields: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def update_issue_sync(self, issue_key: str, fields: dict[str, Any]) -> dict[str, Any] | None:
         """Update issue fields synchronously.
 
         Args:
@@ -418,9 +427,7 @@ class JiraClient:
         Returns:
             Response JSON or None on failure
         """
-        return self._call_api_sync(
-            "PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields}
-        )
+        return self._call_api_sync("PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields})
 
     def transition_sync(self, issue_key: str, target_status: str) -> dict[str, Any]:
         """Transition issue to target status synchronously.
@@ -434,9 +441,7 @@ class JiraClient:
         Returns:
             Result dict with success status and optional reason
         """
-        transitions_data = self._call_api_sync(
-            "GET", f"/rest/api/3/issue/{issue_key}/transitions"
-        )
+        transitions_data = self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}/transitions")
         if not transitions_data:
             return {"success": False, "error": "Could not get transitions"}
 
@@ -451,8 +456,7 @@ class JiraClient:
             available = [t.get("name") for t in transitions]
             return {
                 "success": False,
-                "error": f"No transition to '{target_status}' available. "
-                f"Available: {available}",
+                "error": f"No transition to '{target_status}' available. Available: {available}",
             }
 
         self._call_api_sync(
@@ -464,9 +468,7 @@ class JiraClient:
         # _call_api_sync returns None on empty response, which is OK here
         return {"success": True}
 
-    def assign_issue_sync(
-        self, issue_key: str, assignee_email: str | None
-    ) -> dict[str, Any]:
+    def assign_issue_sync(self, issue_key: str, assignee_email: str | None) -> dict[str, Any]:
         """Assign issue to a user synchronously via REST API.
 
         Args:
@@ -493,9 +495,7 @@ class JiraClient:
             account_id = None
 
         payload = {"accountId": account_id}
-        self._call_api_sync(
-            "PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload
-        )
+        self._call_api_sync("PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload)
         # Assign PUT returns empty body on success (204)
         return {"success": True}
 
@@ -634,9 +634,7 @@ class JiraClient:
             except httpx.HTTPError:
                 return None
 
-    async def transition_async(
-        self, issue_key: str, target_status: str
-    ) -> dict[str, Any]:
+    async def transition_async(self, issue_key: str, target_status: str) -> dict[str, Any]:
         """Transition issue to target status asynchronously.
 
         Args:
@@ -692,9 +690,7 @@ class JiraClient:
             except httpx.HTTPError as e:
                 return {"success": False, "error": str(e)}
 
-    async def update_fields_async(
-        self, issue_key: str, fields: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def update_fields_async(self, issue_key: str, fields: dict[str, Any]) -> dict[str, Any]:
         """Update issue fields asynchronously.
 
         Args:
@@ -745,9 +741,7 @@ class JiraClient:
             return {"success": True, "already_synced": True}
 
         # customfield_10031 is Story Points for 1898andco Jira
-        return await self.update_fields_async(
-            issue_key, {"customfield_10031": points}
-        )
+        return await self.update_fields_async(issue_key, {"customfield_10031": points})
 
 
 # Module-level client instance for convenience

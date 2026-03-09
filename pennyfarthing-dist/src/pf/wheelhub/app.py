@@ -58,10 +58,10 @@ def create_app() -> FastAPI:
         return JSONResponse({"partialSuccess": {}})
 
     # --- Story 48-2: Mount all API route groups ---
-    from .routes.data_proxy import all_data_proxy_routers
-    from .routes.state import all_state_routers, set_receiver
     from .routes.analysis import all_analysis_routers
+    from .routes.data_proxy import all_data_proxy_routers
     from .routes.inline import all_inline_routers
+    from .routes.state import all_state_routers, set_receiver
 
     # Share the OTLP receiver with token-stats route
     set_receiver(_receiver)

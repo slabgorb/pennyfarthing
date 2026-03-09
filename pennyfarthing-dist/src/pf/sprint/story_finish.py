@@ -43,13 +43,15 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> N
         if story_id in existing_ids:
             return
 
-        archive_data["completed_stories"].append({
-            "id": story_id,
-            "epic": story.get("jira_epic", story.get("epic", "")),
-            "title": story.get("title", ""),
-            "points": story.get("points", 0),
-            "completed": story.get("completed", date.today().isoformat()),
-        })
+        archive_data["completed_stories"].append(
+            {
+                "id": story_id,
+                "epic": story.get("jira_epic", story.get("epic", "")),
+                "title": story.get("title", ""),
+                "points": story.get("points", 0),
+                "completed": story.get("completed", date.today().isoformat()),
+            }
+        )
         _write_archive_file(archive_path, archive_data)
     except Exception:
         pass  # Non-fatal — findings collection has fallback strategies
@@ -146,7 +148,9 @@ def finish_story(
 
     # Fallback: resolve PR from GitHub if not in session
     if not pr_number and branch:
-        result = _run(["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"])
+        result = _run(
+            ["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"]
+        )
         if result.returncode == 0 and result.stdout.strip():
             pr_number = result.stdout.strip()
 
@@ -156,18 +160,23 @@ def finish_story(
 
     # Check for dialogue file
     dialogue_path = project_root / ".session" / f"{story_id}-dialogue.md"
-    dialogue_archive_name = (
-        f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
-    )
+    dialogue_archive_name = f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
 
     if dry_run:
         from pf.common.pr_config import get_pr_merge_mode
 
         steps.append({"step": 1, "action": f"Archive session → {archive_dir / archive_name}"})
         if dialogue_path.exists():
-            steps.append({"step": "1b", "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}"})
+            steps.append(
+                {
+                    "step": "1b",
+                    "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}",
+                }
+            )
         if pr_number and get_pr_merge_mode() == "human":
-            steps.append({"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"})
+            steps.append(
+                {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
+            )
         elif pr_number:
             steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
         else:
@@ -176,7 +185,9 @@ def finish_story(
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
             steps.append({"step": 3, "action": "Skip Jira transition (no key)"})
-        steps.append({"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"})
+        steps.append(
+            {"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"}
+        )
         steps.append({"step": 5, "action": "Archive completed epics"})
         steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
         steps.append({"step": 7, "action": "Remove session file"})
@@ -198,16 +209,28 @@ def finish_story(
 
     pr_merge_mode = get_pr_merge_mode()
     if pr_number and pr_merge_mode == "human":
-        steps.append({
-            "step": 2, "action": "merge_pr", "pr": pr_number,
-            "mode": "human", "message": f"PR #{pr_number} ready for human review and merge",
-        })
+        steps.append(
+            {
+                "step": 2,
+                "action": "merge_pr",
+                "pr": pr_number,
+                "mode": "human",
+                "message": f"PR #{pr_number} ready for human review and merge",
+            }
+        )
     elif pr_number:
         result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
         if result.returncode == 0:
             steps.append({"step": 2, "action": "merge_pr", "pr": pr_number})
         else:
-            steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "warning": "Already merged or failed"})
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "pr": pr_number,
+                    "warning": "Already merged or failed",
+                }
+            )
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
@@ -219,7 +242,9 @@ def finish_story(
         parts = story_id.split("-")
         epic = find_epic(data, parts[0]) if len(parts) >= 2 else None
         current_story = find_story(epic, story_id) if epic else None
-        current_status = current_story.get("status", "in_progress") if current_story else "in_progress"
+        current_status = (
+            current_story.get("status", "in_progress") if current_story else "in_progress"
+        )
     except Exception:
         current_status = "in_progress"
 
@@ -239,10 +264,30 @@ def finish_story(
         steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
     else:
         if jira_key:
-            steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": t_result.get("error", "Transition failed")})
+            steps.append(
+                {
+                    "step": 3,
+                    "action": "jira_done",
+                    "key": jira_key,
+                    "warning": t_result.get("error", "Transition failed"),
+                }
+            )
         else:
-            steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
-        steps.append({"step": 4, "action": "yaml_update", "warning": t_result.get("error", "Transition failed")})
+            steps.append(
+                {
+                    "step": 3,
+                    "action": "jira_done",
+                    "skipped": True,
+                    "warning": "No Jira key available",
+                }
+            )
+        steps.append(
+            {
+                "step": 4,
+                "action": "yaml_update",
+                "warning": t_result.get("error", "Transition failed"),
+            }
+        )
 
     # --- Step 4b: Add story to completed file ---
     try:

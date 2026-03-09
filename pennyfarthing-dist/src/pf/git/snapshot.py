@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from pf.git.repos import get_repo_paths, load_repos_config
+from pf.git.repos import get_repo_paths
 
 
 @dataclass

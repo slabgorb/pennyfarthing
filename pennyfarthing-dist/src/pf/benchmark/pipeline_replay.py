@@ -28,7 +28,6 @@ from typing import Any
 
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -139,9 +138,7 @@ def load_scenario(path: str | Path, project_dir: str | Path | None = None) -> Sc
         context_epic_path=str(project / ctx["epic"]),
         context_story_path=str(project / ctx["story"]),
         session_archive_path=(
-            str(project / ctx["session_archive"])
-            if ctx.get("session_archive")
-            else None
+            str(project / ctx["session_archive"]) if ctx.get("session_archive") else None
         ),
         phases=raw.get("phases", ["tea", "dev", "reviewer"]),
         ground_truth=findings,
@@ -273,9 +270,7 @@ def _extract_benchmark_prompt(raw: str) -> str:
     result = "\n".join(parts).strip()
 
     # Strip hooks frontmatter block
-    result = re.sub(
-        r"^---\nhooks:.*?^---\n", "", result, flags=re.MULTILINE | re.DOTALL
-    )
+    result = re.sub(r"^---\nhooks:.*?^---\n", "", result, flags=re.MULTILINE | re.DOTALL)
 
     # Strip workflow-specific XML tags
     for tag in _STRIP_TAGS:
@@ -318,9 +313,7 @@ def extract_agent_prompt(
         env=env,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"pf agent start {role} failed: {result.stderr[:500]}"
-        )
+        raise RuntimeError(f"pf agent start {role} failed: {result.stderr[:500]}")
     return _extract_benchmark_prompt(result.stdout)
 
 
@@ -818,6 +811,7 @@ def _escape_json_value(m: re.Match) -> str:
 @dataclass
 class JudgeValidation:
     """Result of validating a judge response against expected findings."""
+
     valid: bool
     findings: dict  # parsed judge_data
     errors: list[str] = field(default_factory=list)
@@ -870,7 +864,9 @@ def validate_judge_response(
             warnings.append(f"{fid}: 'caught' is {type(f['caught']).__name__}, not bool")
 
         if f.get("caught") and f.get("caught_by") not in valid_phases:
-            warnings.append(f"{fid}: caught_by='{f.get('caught_by')}' not in {{tea, dev, reviewer}}")
+            warnings.append(
+                f"{fid}: caught_by='{f.get('caught_by')}' not in {{tea, dev, reviewer}}"
+            )
 
         if "evidence" not in f:
             warnings.append(f"{fid}: missing 'evidence' field")
@@ -913,7 +909,9 @@ def score_with_judge(
 
     for attempt in range(1 + max_retries):
         judge_text = _invoke_judge(
-            judge_prompt, model=model, project_dir=project_dir,
+            judge_prompt,
+            model=model,
+            project_dir=project_dir,
         )
         judge_data = _parse_judge_json(judge_text)
         validation = validate_judge_response(judge_data, expected_ids)
@@ -945,10 +943,7 @@ def score_with_judge(
             print(f"  [JUDGE] WARN: {w}", file=sys.stderr)
 
     # Map judge results to ground truth (works even with partial/empty data)
-    judge_findings = {
-        f["finding_id"]: f
-        for f in (judge_data or {}).get("findings", [])
-    }
+    judge_findings = {f["finding_id"]: f for f in (judge_data or {}).get("findings", [])}
 
     scored_findings: list[FindingScore] = []
     for gt_finding in scenario.ground_truth:
@@ -1020,8 +1015,7 @@ def save_result(
             models_used.update(pr.model_usage.keys())
 
     total_cost = sum(
-        pr.cost_usd for pr in pipeline_result.phases.values()
-        if not pr.role.startswith("_")
+        pr.cost_usd for pr in pipeline_result.phases.values() if not pr.role.startswith("_")
     )
 
     meta = {
@@ -1091,13 +1085,15 @@ def build_comparison_summary(
         tag = sc.theme or "control"
         if tag not in themes:
             themes[tag] = []
-        themes[tag].append({
-            "run_id": sc.run_id,
-            "total_caught": sc.total_caught,
-            "weighted_caught": sc.weighted_caught,
-            "score_pct": sc.score_pct,
-            "caught_by_phase": _phase_attribution(sc),
-        })
+        themes[tag].append(
+            {
+                "run_id": sc.run_id,
+                "total_caught": sc.total_caught,
+                "weighted_caught": sc.weighted_caught,
+                "score_pct": sc.score_pct,
+                "caught_by_phase": _phase_attribution(sc),
+            }
+        )
 
     # Detection heatmap across themes
     heatmap: dict[str, dict[str, str | None]] = {}
@@ -1105,9 +1101,7 @@ def build_comparison_summary(
         heatmap[gt.id] = {}
         for sc in scores:
             tag = sc.theme or "control"
-            finding = next(
-                (f for f in sc.findings if f.finding_id == gt.id), None
-            )
+            finding = next((f for f in sc.findings if f.finding_id == gt.id), None)
             heatmap[gt.id][tag] = finding.caught_by if finding and finding.caught else None
 
     data = {
@@ -1141,9 +1135,7 @@ def _phase_attribution(score: PipelineScore) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 
 
-def reconstruct_pipeline_result(
-    run_dir: Path, scenario: Scenario
-) -> PipelineResult | None:
+def reconstruct_pipeline_result(run_dir: Path, scenario: Scenario) -> PipelineResult | None:
     """Reconstruct a PipelineResult from saved files in a run directory."""
     meta_file = run_dir / "pipeline.yaml"
     if not meta_file.exists():
@@ -1165,9 +1157,7 @@ def reconstruct_pipeline_result(
 
     diff_file = run_dir / "diff-stat.txt"
     if diff_file.exists():
-        phases["_diff_stat"] = PhaseResult(
-            role="_diff", output_text=diff_file.read_text()
-        )
+        phases["_diff_stat"] = PhaseResult(role="_diff", output_text=diff_file.read_text())
 
     return PipelineResult(
         scenario_id=meta["scenario_id"],
@@ -1227,9 +1217,7 @@ def run_judge_pass(
     }
 
     out_file = run_dir / f"judge_{pass_num}.yaml"
-    out_file.write_text(
-        yaml.dump(score_data, default_flow_style=False, sort_keys=False)
-    )
+    out_file.write_text(yaml.dump(score_data, default_flow_style=False, sort_keys=False))
     return score_data
 
 
@@ -1266,9 +1254,7 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
         evidences = []
 
         for sc in all_scores:
-            finding = next(
-                (f for f in sc.get("findings", []) if f["finding_id"] == fid), None
-            )
+            finding = next((f for f in sc.get("findings", []) if f["finding_id"] == fid), None)
             if finding and finding.get("caught"):
                 caught_votes += 1
                 by = finding.get("caught_by", "unknown")
@@ -1278,21 +1264,21 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
 
         caught = caught_votes >= majority
         caught_by = (
-            max(caught_by_votes, key=caught_by_votes.get)
-            if caught and caught_by_votes
-            else None
+            max(caught_by_votes, key=caught_by_votes.get) if caught and caught_by_votes else None
         )
 
-        majority_findings.append({
-            "finding_id": fid,
-            "title": gt_map[fid].title,
-            "weight": gt_map[fid].weight,
-            "phase_ideal": gt_map[fid].phase_ideal,
-            "caught": caught,
-            "caught_by": caught_by,
-            "evidence": evidences[0] if evidences else "",
-            "votes": f"{caught_votes}/{n_judges}",
-        })
+        majority_findings.append(
+            {
+                "finding_id": fid,
+                "title": gt_map[fid].title,
+                "weight": gt_map[fid].weight,
+                "phase_ideal": gt_map[fid].phase_ideal,
+                "caught": caught,
+                "caught_by": caught_by,
+                "evidence": evidences[0] if evidences else "",
+                "votes": f"{caught_votes}/{n_judges}",
+            }
+        )
 
     total_caught = sum(1 for f in majority_findings if f["caught"])
     weighted_caught = sum(f["weight"] for f in majority_findings if f["caught"])
@@ -1308,15 +1294,11 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
         "total_findings": len(majority_findings),
         "weighted_caught": weighted_caught,
         "total_weight": total_weight,
-        "score_pct": (
-            round(weighted_caught / total_weight * 100, 1) if total_weight else 0.0
-        ),
+        "score_pct": (round(weighted_caught / total_weight * 100, 1) if total_weight else 0.0),
         "findings": majority_findings,
         "individual_scores": [s.get("score_pct", 0) for s in all_scores],
     }
 
     out_file = run_dir / "majority_vote.yaml"
-    out_file.write_text(
-        yaml.dump(result, default_flow_style=False, sort_keys=False)
-    )
+    out_file.write_text(yaml.dump(result, default_flow_style=False, sort_keys=False))
     return result

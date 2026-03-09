@@ -208,9 +208,7 @@ def _get_project_name(project_root: Path) -> str:
     return project_root.name
 
 
-def _display_cli_welcome(
-    project_name: str, theme: str | None, show_nudge: bool = False
-) -> None:
+def _display_cli_welcome(project_name: str, theme: str | None, show_nudge: bool = False) -> None:
     """Display welcome info for CLI mode."""
     if project_name:
         print(f"    Project: {project_name}")
@@ -411,10 +409,12 @@ def main() -> None:
         if setup_context:
             from pf.hooks import HookResponse, output_hook_response
 
-            output_hook_response(HookResponse(
-                event_name="SessionStart",
-                additional_context=setup_context,
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="SessionStart",
+                    additional_context=setup_context,
+                )
+            )
 
         otel_port = _ensure_wheelhub(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
@@ -425,17 +425,18 @@ def main() -> None:
         if nudge_shown:
             from pf.hooks import HookResponse, output_hook_response
 
-            output_hook_response(HookResponse(
-                event_name="SessionStart",
-                additional_context=(
-                    "This appears to be a new user session. "
-                    "The welcome banner included a discovery nudge. "
-                    "If the user asks for help getting started, suggest `/pf-help` "
-                    "for commands and workflows, or mention the "
-                    "`what-is-pennyfarthing` guide for a framework overview."
-                ),
-            ))
-
+            output_hook_response(
+                HookResponse(
+                    event_name="SessionStart",
+                    additional_context=(
+                        "This appears to be a new user session. "
+                        "The welcome banner included a discovery nudge. "
+                        "If the user asks for help getting started, suggest `/pf-help` "
+                        "for commands and workflows, or mention the "
+                        "`what-is-pennyfarthing` guide for a framework overview."
+                    ),
+                )
+            )
 
     except Exception:
         pass

@@ -402,7 +402,9 @@ def format_sync_plan(plan: BmadSyncPlan) -> str:
     """
     lines: list[str] = []
 
-    lines.append(f"Matched: {len(plan.both)}  |  PF-only: {len(plan.pf_only)}  |  BMAD-only: {len(plan.bmad_only)}")
+    lines.append(
+        f"Matched: {len(plan.both)}  |  PF-only: {len(plan.pf_only)}  |  BMAD-only: {len(plan.bmad_only)}"
+    )
     lines.append("")
 
     if plan.changes:

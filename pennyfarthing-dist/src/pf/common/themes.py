@@ -199,11 +199,13 @@ def load_theme_metadata(project_root: Path | None = None) -> list[dict[str, Any]
                     if not data or "theme" not in data:
                         continue
                     theme_info = data["theme"]
-                    metadata.append({
-                        "id": theme_id,
-                        "name": theme_info.get("name", theme_id),
-                        "tier": theme_info.get("tier", "U"),
-                    })
+                    metadata.append(
+                        {
+                            "id": theme_id,
+                            "name": theme_info.get("name", theme_id),
+                            "tier": theme_info.get("tier", "U"),
+                        }
+                    )
                 except Exception:
                     continue
         except OSError:
@@ -235,9 +237,7 @@ def format_theme_list(
     current = current_theme or get_current_theme(project_root) or ""
 
     lines: list[str] = []
-    lines.append(
-        f"**{len(themes)} themes available.** Current: **{current or 'none'}**"
-    )
+    lines.append(f"**{len(themes)} themes available.** Current: **{current or 'none'}**")
     lines.append("")
 
     col_width = 28
@@ -292,12 +292,14 @@ def format_theme_agent_list(
                     agent = data["agents"].get(agent_type, {})
                     if not agent or not agent.get("character"):
                         continue
-                    entries.append({
-                        "theme": theme_id,
-                        "tier": data.get("theme", {}).get("tier", "U"),
-                        "character": agent["character"],
-                        "style": agent.get("style", ""),
-                    })
+                    entries.append(
+                        {
+                            "theme": theme_id,
+                            "tier": data.get("theme", {}).get("tier", "U"),
+                            "character": agent["character"],
+                            "style": agent.get("style", ""),
+                        }
+                    )
                 except Exception:
                     continue
         except OSError:
@@ -412,9 +414,7 @@ def ensure_portrait_lfs(
             if not quiet:
                 import click
 
-                click.echo(
-                    f"Pulled {len(lfs_files)} portrait images for {theme_name}."
-                )
+                click.echo(f"Pulled {len(lfs_files)} portrait images for {theme_name}.")
             return {"success": True, "pulled": len(lfs_files)}
         return {
             "success": False,

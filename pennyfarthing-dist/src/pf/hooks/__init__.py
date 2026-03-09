@@ -231,7 +231,6 @@ def is_relay_mode_enabled(project_root: Path | None = None) -> bool:
     return load_settings(project_root).relay_mode
 
 
-
 # =============================================================================
 # Context State
 # =============================================================================

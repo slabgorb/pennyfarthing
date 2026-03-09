@@ -97,15 +97,6 @@ function emptyStoryInfo(): StoryInfo {
   };
 }
 
-// Result wrapper: { success: true, data } or { success: false, error }
-function _wrapResult<T>(data: T): { success: true; data: T } {
-  return { success: true, data };
-}
-
-function _wrapError(error: string): { success: false; error: string } {
-  return { success: false, error };
-}
-
 // ---------------------------------------------------------------------------
 // CLI-delegated functions
 // ---------------------------------------------------------------------------

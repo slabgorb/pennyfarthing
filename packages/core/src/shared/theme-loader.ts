@@ -41,18 +41,6 @@ export interface ThemeMetadata {
 }
 
 // ---------------------------------------------------------------------------
-// Internal result helpers: { success: true, data } / { success: false, error }
-// ---------------------------------------------------------------------------
-
-function _wrapResult<T>(data: T): { success: true; data: T } {
-  return { success: true, data };
-}
-
-function _wrapError(error: string): { success: false; error: string } {
-  return { success: false, error };
-}
-
-// ---------------------------------------------------------------------------
 // CLI-delegated functions
 // ---------------------------------------------------------------------------
 

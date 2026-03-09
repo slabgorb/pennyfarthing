@@ -247,11 +247,7 @@ components:
 @pytest.fixture
 def schema_path() -> Path:
     """Return path to the real context schema file."""
-    return (
-        Path(__file__).resolve().parents[3]
-        / "schemas"
-        / "context-schema.yaml"
-    )
+    return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
 
 
 @pytest.fixture
@@ -356,9 +352,7 @@ class TestWorkflowStateValidation:
     def test_invalid_state_enum(self, schema: dict) -> None:
         """Invalid state enum value should produce an error."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules)
 
         assert len(errors) > 0
         assert any("state" in e.field_path or "state" in e.message.lower() for e in errors)
@@ -376,14 +370,11 @@ class TestWorkflowStateValidation:
     def test_invalid_phase_owner_enum(self, schema: dict) -> None:
         """Invalid phase_owner value should produce an error."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_OWNER, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_OWNER, rules)
 
         assert len(errors) > 0
         assert any(
-            "phase_owner" in e.field_path or "phase_owner" in e.message.lower()
-            for e in errors
+            "phase_owner" in e.field_path or "phase_owner" in e.message.lower() for e in errors
         )
 
     def test_all_valid_state_enums_accepted(self, schema: dict) -> None:
@@ -399,7 +390,9 @@ class TestWorkflowStateValidation:
         for state in valid_states:
             data = {"state": state}
             errors = validate_component("workflow_state", data, rules)
-            enum_errors = [e for e in errors if "state" in e.field_path and "enum" in e.message.lower()]
+            enum_errors = [
+                e for e in errors if "state" in e.field_path and "enum" in e.message.lower()
+            ]
             assert len(enum_errors) == 0, f"Valid state '{state}' was rejected"
 
 
@@ -424,9 +417,7 @@ class TestAgentDefinitionValidation:
     def test_missing_role_section(self, schema: dict) -> None:
         """Agent definition missing <role> section should produce an error."""
         rules = schema["components"]["agent_definition"]
-        errors = validate_component(
-            "agent_definition", AGENT_DEFINITION_MISSING_ROLE, rules
-        )
+        errors = validate_component("agent_definition", AGENT_DEFINITION_MISSING_ROLE, rules)
 
         assert len(errors) > 0
         assert any("role" in e.message.lower() for e in errors)
@@ -537,7 +528,9 @@ class TestSessionAssessmentValidation:
         errors = validate_component("session_assessment", INVALID_SESSION_ASSESSMENT, rules)
 
         assert len(errors) > 0
-        assert any("pattern" in e.message.lower() or "assessment" in e.message.lower() for e in errors)
+        assert any(
+            "pattern" in e.message.lower() or "assessment" in e.message.lower() for e in errors
+        )
 
 
 class TestSidecarValidation:
@@ -735,9 +728,7 @@ class TestErrorMessages:
     def test_error_includes_component_name(self, schema: dict) -> None:
         """Error should identify which component failed."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules)
 
         assert len(errors) > 0
         assert all(e.component == "workflow_state" for e in errors)
@@ -745,9 +736,7 @@ class TestErrorMessages:
     def test_error_includes_field_path(self, schema: dict) -> None:
         """Error should include the field path for targeted fixes."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules)
 
         assert len(errors) > 0
         # At least one error should have a field_path
@@ -756,9 +745,7 @@ class TestErrorMessages:
     def test_error_message_is_descriptive(self, schema: dict) -> None:
         """Error messages should describe what's wrong, not just 'invalid'."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules)
 
         assert len(errors) > 0
         for error in errors:
@@ -773,9 +760,7 @@ class TestErrorMessages:
     def test_error_is_validation_error_type(self, schema: dict) -> None:
         """Errors should be ValidationError instances."""
         rules = schema["components"]["workflow_state"]
-        errors = validate_component(
-            "workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules
-        )
+        errors = validate_component("workflow_state", INVALID_WORKFLOW_STATE_BAD_ENUM, rules)
 
         assert len(errors) > 0
         assert all(isinstance(e, ValidationError) for e in errors)
@@ -815,9 +800,7 @@ class TestCLICommand:
         cmd = context.get_command(click.Context(context), "validate")
         assert cmd is not None
 
-    def test_validate_with_valid_file(
-        self, runner: CliRunner, valid_context_file: Path
-    ) -> None:
+    def test_validate_with_valid_file(self, runner: CliRunner, valid_context_file: Path) -> None:
         """Validating a valid file should exit 0."""
         result = runner.invoke(context, ["validate", str(valid_context_file)])
 
@@ -847,17 +830,13 @@ class TestCLICommand:
 
     def test_tier_option_accepted(self, runner: CliRunner, valid_context_file: Path) -> None:
         """--tier option should be accepted."""
-        result = runner.invoke(
-            context, ["validate", str(valid_context_file), "--tier", "FULL"]
-        )
+        result = runner.invoke(context, ["validate", str(valid_context_file), "--tier", "FULL"])
 
         assert "no such option" not in (result.output or "").lower()
 
     def test_strict_option_accepted(self, runner: CliRunner, valid_context_file: Path) -> None:
         """--strict option should be accepted."""
-        result = runner.invoke(
-            context, ["validate", str(valid_context_file), "--strict"]
-        )
+        result = runner.invoke(context, ["validate", str(valid_context_file), "--strict"])
 
         assert "no such option" not in (result.output or "").lower()
 
@@ -870,8 +849,7 @@ class TestCLICommand:
         # Output should mention which components failed
         output = result.output.lower()
         assert any(
-            word in output
-            for word in ["component", "error", "missing", "required", "invalid"]
+            word in output for word in ["component", "error", "missing", "required", "invalid"]
         )
 
 

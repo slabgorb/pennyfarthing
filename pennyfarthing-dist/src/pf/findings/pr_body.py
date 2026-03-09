@@ -161,9 +161,7 @@ def _build_details_section(sections: dict) -> str:
     # Code Review (from Reviewer Assessment)
     lines += ["", "### Code Review", ""]
     reviewer = sections.get("Reviewer Assessment", "")
-    lines.append(
-        _sanitize(reviewer) if reviewer else "No code review information available."
-    )
+    lines.append(_sanitize(reviewer) if reviewer else "No code review information available.")
 
     # Full Findings (only when real findings exist)
     findings = sections.get("Delivery Findings", "")
@@ -189,12 +187,8 @@ def _sanitize(text: str) -> str:
     # Clean ### agent subheadings in findings
     text = re.sub(r"^### TEA\b.*$", "**Test Design:**", text, flags=re.MULTILINE)
     text = re.sub(r"^### Dev\b.*$", "**Implementation:**", text, flags=re.MULTILINE)
-    text = re.sub(
-        r"^### Reviewer\b.*$", "**Code Review:**", text, flags=re.MULTILINE
-    )
-    text = re.sub(
-        r"^### SM\b.*$", "**Story Completion:**", text, flags=re.MULTILINE
-    )
+    text = re.sub(r"^### Reviewer\b.*$", "**Code Review:**", text, flags=re.MULTILINE)
+    text = re.sub(r"^### SM\b.*$", "**Story Completion:**", text, flags=re.MULTILINE)
     return text
 
 
