@@ -110,10 +110,10 @@ describe('Story 11-2: pnpm Workspace Structure', () => {
     // packages/shared was absorbed into core (Story 98-16) — no separate package
   });
 
-  describe('AC5: pennyfarthing CLI module exists', () => {
-    it('should have CLI index in packages/core/src/cli/', () => {
-      const cliIndex = join(PROJECT_ROOT, 'packages', 'core', 'src', 'cli', 'index.ts');
-      assert.ok(existsSync(cliIndex), 'packages/core/src/cli/index.ts must exist');
+  describe('AC5: CLI utilities exist (CLI entry point removed per ADR-0034)', () => {
+    it('should have CLI utils in packages/core/src/cli/utils/', () => {
+      const cliUtils = join(PROJECT_ROOT, 'packages', 'core', 'src', 'cli', 'utils');
+      assert.ok(existsSync(cliUtils), 'packages/core/src/cli/utils/ directory must exist');
     });
   });
 
