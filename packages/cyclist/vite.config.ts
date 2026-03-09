@@ -12,7 +12,7 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, '../core/src/public'),
       // Cross-package aliases for monorepo vite builds (Story 124-6)
-      '@pennyfarthing/bikerack': resolve(__dirname, '../core/src/server/_vite-index.ts'),
+      '@pennyfarthing/bikerack': resolve(__dirname, '../core/src/public/_vite-index.ts'),
       '@pennyfarthing/core/components': resolve(__dirname, '../core/src/public/components'),
       '@pennyfarthing/core/hooks': resolve(__dirname, '../core/src/public/hooks'),
       '@pennyfarthing/core/styles': resolve(__dirname, '../core/src/public/styles'),
