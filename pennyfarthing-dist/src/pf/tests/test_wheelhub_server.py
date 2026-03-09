@@ -22,13 +22,19 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
-import json
-import signal
-import textwrap
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
+from starlette.testclient import TestClient
+
+from pf.wheelhub.app import cleanup_port_file, create_app, get_server_command, write_port_file
+from pf.wheelhub.otlp import OTLPReceiver, parse_otlp_logs, parse_otlp_metrics
+
+
+@pytest.fixture()
+def client() -> TestClient:
+    """Create a TestClient for the WheelHub app."""
+    return TestClient(create_app())
 
 
 # ---------------------------------------------------------------------------
@@ -39,28 +45,14 @@ import pytest
 class TestHealthEndpoint:
     """GET /health returns {"status": "ok"}."""
 
-    def test_health_returns_ok(self):
+    def test_health_returns_ok(self, client: TestClient):
         """AC1: Health check endpoint responds with status ok."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
         response = client.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
-    def test_health_is_json_content_type(self):
+    def test_health_is_json_content_type(self, client: TestClient):
         """AC1: Health endpoint returns application/json."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
         response = client.get("/health")
         assert "application/json" in response.headers["content-type"]
 
@@ -73,15 +65,8 @@ class TestHealthEndpoint:
 class TestOTLPEndpoints:
     """POST /v1/logs, /v1/metrics, /v1/traces accept OTLP JSON."""
 
-    def test_post_logs_returns_200(self):
+    def test_post_logs_returns_200(self, client: TestClient):
         """AC2: POST /v1/logs accepts OTLP log payload and returns 200."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
         payload = {
             "resourceLogs": [
                 {
@@ -112,15 +97,8 @@ class TestOTLPEndpoints:
         assert response.status_code == 200
         assert response.json() == {"partialSuccess": {}}
 
-    def test_post_metrics_returns_200(self):
+    def test_post_metrics_returns_200(self, client: TestClient):
         """AC2: POST /v1/metrics accepts OTLP metrics payload and returns 200."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
         payload = {
             "resourceMetrics": [
                 {
@@ -155,54 +133,17 @@ class TestOTLPEndpoints:
         assert response.status_code == 200
         assert response.json() == {"partialSuccess": {}}
 
-    def test_post_traces_returns_200(self):
+    def test_post_traces_returns_200(self, client: TestClient):
         """AC2: POST /v1/traces accepts OTLP trace payload and returns 200."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
         payload = {"resourceSpans": []}
         response = client.post("/v1/traces", json=payload)
         assert response.status_code == 200
         assert response.json() == {"partialSuccess": {}}
 
-    def test_post_logs_empty_payload(self):
-        """AC2: Empty/malformed payloads don't crash the server."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
-        response = client.post("/v1/logs", json={})
-        assert response.status_code == 200
-
-    def test_post_metrics_empty_payload(self):
-        """AC2: Empty metrics payload returns 200 gracefully."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
-        response = client.post("/v1/metrics", json={})
-        assert response.status_code == 200
-
-    def test_post_traces_empty_payload(self):
-        """AC2: Empty traces payload returns 200 gracefully."""
-        from pf.wheelhub.app import create_app
-
-        app = create_app()
-
-        from starlette.testclient import TestClient
-
-        client = TestClient(app)
-        response = client.post("/v1/traces", json={})
+    @pytest.mark.parametrize("endpoint", ["/v1/logs", "/v1/metrics", "/v1/traces"])
+    def test_empty_payload_returns_200(self, client: TestClient, endpoint: str):
+        """AC2: Empty payloads don't crash the server."""
+        response = client.post(endpoint, json={})
         assert response.status_code == 200
 
 
@@ -216,8 +157,6 @@ class TestPortFileLifecycle:
 
     def test_write_port_file(self, tmp_path: Path):
         """AC4: write_port_file creates .bikerack-port with correct content."""
-        from pf.wheelhub.app import write_port_file
-
         write_port_file(tmp_path, 1898)
         port_file = tmp_path / ".bikerack-port"
         assert port_file.exists()
@@ -225,8 +164,6 @@ class TestPortFileLifecycle:
 
     def test_cleanup_port_file(self, tmp_path: Path):
         """AC4: cleanup_port_file removes .bikerack-port."""
-        from pf.wheelhub.app import cleanup_port_file
-
         port_file = tmp_path / ".bikerack-port"
         port_file.write_text("1898")
         cleanup_port_file(tmp_path)
@@ -234,15 +171,11 @@ class TestPortFileLifecycle:
 
     def test_cleanup_missing_port_file_no_error(self, tmp_path: Path):
         """AC4: cleanup_port_file doesn't raise if file missing."""
-        from pf.wheelhub.app import cleanup_port_file
-
         # Should not raise
         cleanup_port_file(tmp_path)
 
     def test_write_port_file_overwrites(self, tmp_path: Path):
         """AC4: Writing port file overwrites existing one."""
-        from pf.wheelhub.app import write_port_file
-
         write_port_file(tmp_path, 1898)
         write_port_file(tmp_path, 2898)
         port_file = tmp_path / ".bikerack-port"
@@ -259,8 +192,6 @@ class TestTokenStatsAggregation:
 
     def test_parse_metrics_extracts_token_counts(self):
         """AC5: parseOTLPMetrics extracts input/output/cache token counts."""
-        from pf.wheelhub.otlp import parse_otlp_metrics
-
         payload = {
             "resourceMetrics": [
                 {
@@ -332,8 +263,6 @@ class TestTokenStatsAggregation:
 
     def test_parse_metrics_ignores_non_token_metrics(self):
         """AC5: Only claude_code.token.usage metrics are extracted."""
-        from pf.wheelhub.otlp import parse_otlp_metrics
-
         payload = {
             "resourceMetrics": [
                 {
@@ -369,15 +298,11 @@ class TestTokenStatsAggregation:
 
     def test_parse_metrics_empty_payload(self):
         """AC5: Empty payload returns empty dict."""
-        from pf.wheelhub.otlp import parse_otlp_metrics
-
         result = parse_otlp_metrics({})
         assert result == {}
 
     def test_aggregate_token_stats(self):
         """AC5: Token stats accumulate across multiple metric batches."""
-        from pf.wheelhub.otlp import OTLPReceiver
-
         receiver = OTLPReceiver()
         receiver.aggregate_token_stats({"inputTokens": 100, "outputTokens": 50})
         receiver.aggregate_token_stats({"inputTokens": 200, "outputTokens": 75})
@@ -388,8 +313,6 @@ class TestTokenStatsAggregation:
 
     def test_token_stats_initial_zeros(self):
         """AC5: Fresh receiver has all-zero token stats."""
-        from pf.wheelhub.otlp import OTLPReceiver
-
         receiver = OTLPReceiver()
         stats = receiver.get_token_stats()
         assert stats["inputTokens"] == 0
@@ -409,8 +332,6 @@ class TestOTLPLogParsing:
 
     def test_parse_logs_extracts_tool_events(self):
         """AC5: Log records with tool_result name are parsed with attributes."""
-        from pf.wheelhub.otlp import parse_otlp_logs
-
         payload = {
             "resourceLogs": [
                 {
@@ -452,8 +373,6 @@ class TestOTLPLogParsing:
 
     def test_parse_logs_converts_timestamp(self):
         """AC5: Nanosecond timestamps are converted to milliseconds."""
-        from pf.wheelhub.otlp import parse_otlp_logs
-
         payload = {
             "resourceLogs": [
                 {
@@ -476,15 +395,11 @@ class TestOTLPLogParsing:
 
     def test_parse_logs_empty_payload(self):
         """AC5: Empty payload returns empty list."""
-        from pf.wheelhub.otlp import parse_otlp_logs
-
         result = parse_otlp_logs({})
         assert result == []
 
     def test_parse_logs_handles_bool_attributes(self):
         """AC5: Boolean attribute values are preserved."""
-        from pf.wheelhub.otlp import parse_otlp_logs
-
         payload = {
             "resourceLogs": [
                 {
@@ -521,8 +436,6 @@ class TestLauncherSwitch:
 
     def test_start_wheelhub_uses_python(self):
         """AC3: start_wheelhub launches uvicorn, not node."""
-        from pf.wheelhub.app import get_server_command
-
         cmd = get_server_command()
         # Must not contain 'node' — Python-based launch
         assert "node" not in cmd[0].lower()
@@ -532,8 +445,6 @@ class TestLauncherSwitch:
 
     def test_server_command_includes_host_and_port(self):
         """AC3: Server command binds to 127.0.0.1 with configurable port."""
-        from pf.wheelhub.app import get_server_command
-
         cmd = get_server_command(port=1898)
         cmd_str = " ".join(cmd)
         assert "1898" in cmd_str
@@ -561,9 +472,9 @@ class TestDependencies:
 
     def test_wheelhub_package_exists(self):
         """AC6: pf.wheelhub package is importable."""
-        from pf import wheelhub
+        import pf.wheelhub
 
-        assert hasattr(wheelhub, "__name__")
+        assert hasattr(pf.wheelhub, "__name__")
 
 
 # ---------------------------------------------------------------------------
@@ -576,8 +487,6 @@ class TestEdgeCases:
 
     def test_metrics_missing_type_attribute_skipped(self):
         """Data points without type attribute are silently skipped."""
-        from pf.wheelhub.otlp import parse_otlp_metrics
-
         payload = {
             "resourceMetrics": [
                 {
@@ -606,8 +515,6 @@ class TestEdgeCases:
 
     def test_metrics_missing_sum_field(self):
         """Metrics without sum field don't crash."""
-        from pf.wheelhub.otlp import parse_otlp_metrics
-
         payload = {
             "resourceMetrics": [
                 {
@@ -622,8 +529,6 @@ class TestEdgeCases:
 
     def test_logs_missing_body(self):
         """Log records without body field produce empty name."""
-        from pf.wheelhub.otlp import parse_otlp_logs
-
         payload = {
             "resourceLogs": [
                 {
@@ -646,8 +551,6 @@ class TestEdgeCases:
 
     def test_aggregate_stats_with_partial_data(self):
         """Aggregation handles missing fields gracefully."""
-        from pf.wheelhub.otlp import OTLPReceiver
-
         receiver = OTLPReceiver()
         # Only inputTokens, no outputTokens
         receiver.aggregate_token_stats({"inputTokens": 100})
