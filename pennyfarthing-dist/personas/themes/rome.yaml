@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", ancient Roman mosaic portrait, tessera tile fragments, scratched graffito details, Pompeii wall art style, geometric earth tones, stone texture"
-  tier: A
+  tier: D
+  optimized: true
   spinner_verbs:
     - Crossing the Rubicon
     - Veni vidi vici

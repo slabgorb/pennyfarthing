@@ -14,7 +14,8 @@ theme:
   character_immersion: high
   user_title: Seeker
   portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Eldritch glimpsing
     - Sanity checking

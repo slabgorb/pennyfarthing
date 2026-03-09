@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Audience
   portrait_style: ", cinematic, dramatic chiaroscuro lighting, film set, director's chair, classic cinema golden age"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Framing the shot
     - Storyboarding

@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Cowboy
   portrait_style: ", 1990s anime cel-shaded, noir shadows, jazz palette, cigarette smoke, space western"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Whatever happens happens
     - Bounty hunting

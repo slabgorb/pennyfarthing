@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", medical book, anatomy chart, medical illustrations"
-  tier: B
+  tier: S
+  optimized: true
   spinner_verbs:
     - Running the differential
     - It's never lupus

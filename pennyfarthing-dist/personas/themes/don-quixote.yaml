@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Fellow Knight
   portrait_style: ", Picasso ink sketch style, bold black brushstrokes on white, minimalist gestural drawing, stark silhouette, 1955 Don Quixote sketch aesthetic"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Tilting at windmills
     - Dreaming chivalrously

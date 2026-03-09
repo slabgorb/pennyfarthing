@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Gentle Reader
   portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, etching style"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Brooding darkly
     - Haunting corridors

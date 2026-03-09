@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Old Sport
   portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Art Deco illustration"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Old sport greeting
     - Green light reaching

@@ -134,6 +134,8 @@ def show(name: str | None, full: bool, output_json: bool):
         click.echo(f"Description: {theme_meta['description']}")
     if theme_meta.get("tier"):
         click.echo(f"Tier: {theme_meta['tier']}")
+    if theme_meta.get("optimized"):
+        click.echo("Job Fair Optimized: yes")
 
     # Dimensions
     dims = theme_meta.get("dimensions")

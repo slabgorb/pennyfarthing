@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Noble Guest
   portrait_style: ", ancient Greek red-figure pottery style, classical Hellenic art"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Wine dark sea crossing
     - Siren resisting

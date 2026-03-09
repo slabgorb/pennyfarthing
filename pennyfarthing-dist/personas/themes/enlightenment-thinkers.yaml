@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
-  tier: D
+  tier: B
+  optimized: true
   spinner_verbs:
     - Cultivate your garden
     - Candide

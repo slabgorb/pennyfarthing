@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Maestro
   portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Composing by candlelight
     - Fifth Symphony crashing

@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Your Majesty
   portrait_style: ", royal formal, Renaissance composition, velvet and gold tones"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Reigning
     - Duty fulfilling

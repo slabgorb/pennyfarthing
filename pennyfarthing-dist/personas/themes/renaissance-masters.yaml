@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Patron
   portrait_style: ", Italian Renaissance, sfumato technique, Florentine colors, gold leaf, chiaroscuro lighting"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Painting frescoes
     - Discovering perspective

@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Meatbag
   portrait_style: ", bold outlines, New New York, year 3000 retrofuturism"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Good news everyone
     - Bite my shiny metal

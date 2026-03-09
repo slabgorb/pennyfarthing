@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Fellow Mask
   portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Rorschach journaling
     - Minutemen assembling

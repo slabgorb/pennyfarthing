@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Child
   portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Reading the alethiometer
     - Consulting your daemon

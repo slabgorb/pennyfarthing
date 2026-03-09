@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Expedition Member
   portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, expedition documentary style"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Cartographing
     - Mounting expeditions

@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Dear Reader
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Redeeming souls
     - Exposing workhouses

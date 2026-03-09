@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", modern Western, Harlan County Kentucky, amber and sepia tones, coal country, cowboy hat silhouette"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Quick draw
     - Cowboy hat adjusting

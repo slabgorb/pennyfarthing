@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", Pacific Northwest noir style, surrealist dreamscape, red curtains"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Drinking damn fine coffee
     - Consulting the log

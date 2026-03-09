@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Barricade building
     - Redemption seeking

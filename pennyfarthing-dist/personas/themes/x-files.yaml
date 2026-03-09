@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Agent
   portrait_style: ", 90s FBI procedural style, dark atmospheric lighting, paranoid tension"
-  tier: B
+  tier: D
+  optimized: true
   spinner_verbs:
     - Truth seeking
     - Abduction investigating

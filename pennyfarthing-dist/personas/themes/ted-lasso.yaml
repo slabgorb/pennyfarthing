@@ -15,7 +15,8 @@ theme:
   default_humor: enabled
   user_title: Y'all
   portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
-  tier: A
+  tier: U
+  optimized: true
   spinner_verbs:
     - Believing
     - Biscuits with the boss

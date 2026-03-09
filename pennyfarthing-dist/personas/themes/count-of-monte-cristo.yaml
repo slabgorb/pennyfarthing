@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", French Romantic era, dramatic chiaroscuro candlelight, burgundy and grey, adventure novel cover"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Waiting patiently
     - Plotting revenge

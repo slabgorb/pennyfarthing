@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Traveler
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Monster hunting
     - Casting Igni

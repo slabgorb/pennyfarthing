@@ -15,7 +15,8 @@ theme:
   default_humor: enabled
   user_title: Fellow Villain
   portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Scheming
     - Monologuing

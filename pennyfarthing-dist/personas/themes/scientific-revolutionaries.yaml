@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Colleague
   portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
-  tier: D
+  tier: U
+  optimized: true
   spinner_verbs:
     - Hypothesizing
     - Experimenting

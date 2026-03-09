@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", crime drama, suburban noir, neon glow, city backdrops"
-  tier: A
+  tier: U
+  optimized: true
   spinner_verbs:
     - Holding a sit-down
     - Ordering gabagool

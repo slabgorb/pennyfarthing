@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Citizen of the Foundation
   portrait_style: ", classic sci-fi, galactic grandeur, psychohistory equations, 1950s retro-futurist"
-  tier: A
+  tier: C
+  optimized: true
   spinner_verbs:
     - Psychohistory calculating
     - The Plan proceeding
