@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: mash
 run_id: 2
+judge_version: v2
 total_caught: 5
 total_findings: 7
 weighted_caught: 25
@@ -13,67 +14,62 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config loading implementation uses unwrap_or_default pattern without distinguishing
-    NotFound from parse/permission errors. Reviewer flagged silent env var handling
-    but not this specific from_file_or_default issue.
+  evidence: No phase identified that from_file_or_default swallows all errors via
+    unwrap_or_default(). The reviewer flagged silent env var handling but not the
+    config file loading fallback. The reviewer even marked 'Config precedence is correct'
+    as VERIFIED.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: tea
-  evidence: 'TEA wrote CWE-209 checks in exit_codes.rs tests verifying auth error
-    messages don''t expose internals. TEA security tests included ''CWE-209: auth
-    error messages don''t expose internals'' and ''Config errors don''t leak file
-    contents''.'
+  evidence: 'TEA explicitly listed ''CWE-209: auth error messages don''t expose internals''
+    as a security test in exit_codes.rs. The reviewer also verified error types have
+    the security comment on Display.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
-  caught_by: reviewer
-  evidence: 'Reviewer finding #9: ''tenant field uses raw Option<String> instead of
-    TenantId newtype... axiathon-core exports TenantId, but both Cli and SiemClient
-    use raw Option<String> for tenant. This bypasses validated constructors at the
-    trust boundary.'' TEA also wrote header injection tests for tenant ID.'
+  caught_by: tea
+  evidence: TEA wrote 'Header injection prevention (newlines in tenant ID / token)'
+    tests in siem_client.rs. The reviewer also flagged '[MEDIUM] tenant field uses
+    raw Option<String> instead of TenantId newtype' citing the Rust coding rules for
+    newtypes.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that dependencies use direct version strings instead
-    of workspace = true. Reviewer noted the missing keyring dependency but did not
-    flag the 6 deps using direct versions instead of workspace references.
+  evidence: No phase flagged the 6 dependencies using direct version strings instead
+    of workspace = true. The reviewer mentioned missing keyring workspace dependency
+    but did not identify the existing deps failing to use workspace inheritance.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #5: 'RawConfig silently accepts unknown fields \u2014\
-    \ security-sensitive fields ignored without warning... If an operator puts token\
-    \ = \"my-secret\" in cli.toml, serde silently drops it. The operator believes\
-    \ their token is configured but it isn't.' Recommended deny_unknown_fields."
+  evidence: "Reviewer explicitly flagged '[HIGH] RawConfig silently accepts unknown\
+    \ fields \u2014 security-sensitive fields ignored without warning' and recommended\
+    \ #[serde(deny_unknown_fields)], noting the token-on-disk scenario almost verbatim."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #6: 'Two vacuous tests \u2014 assertions never execute...\
-    \ config_error_does_not_expose_file_contents... The if let Err(e) branch never\
-    \ executes, so the assertion about not exposing secrets never runs. This test\
-    \ always passes regardless of behavior. It's a false green.'"
+  evidence: Reviewer flagged '[HIGH] Two vacuous tests that can never fail (false
+    green)' identifying tests with assertions that never execute. Same category of
+    vacuous/always-passing test assertions.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer finding #6 also covers this: ''config_does_not_load_token_from_file...
-    calls has_secret_fields() which is a hardcoded false return. The test asserts
-    a constant. It can never fail regardless of what RawConfig does.'' Though the
-    specific test_default_config zero-assertion case isn''t called out by name, the
-    pattern of vacuous tests was caught.'
+  evidence: 'Reviewer flagged two vacuous tests including config_does_not_load_token_from_file
+    which ''asserts a constant. It can never fail regardless of what RawConfig does.''
+    Same category: tests with no meaningful assertions.'

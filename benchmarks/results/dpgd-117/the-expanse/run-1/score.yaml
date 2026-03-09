@@ -1,11 +1,12 @@
 scenario_id: dpgd-117
 theme: the-expanse
 run_id: 1
-total_caught: 2
+judge_version: v2
+total_caught: 3
 total_findings: 10
-weighted_caught: 10
+weighted_caught: 15
 total_weight: 52
-score_pct: 19.2
+score_pct: 28.8
 findings:
 - finding_id: I1
   title: Dependencies inline instead of workspace level
@@ -13,9 +14,8 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Reviewer noted duplicate axiathon-core in dependencies but did not flag
-    the 6 inline version specs vs workspace = true pattern. Dev added chrono and uuid
-    with inline versions.
+  evidence: Reviewer flagged duplicate axiathon-core in deps/dev-deps but never mentioned
+    workspace-level dependency management or version drift from inline versions.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'
   weight: 5
@@ -23,81 +23,77 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged '[LOW] #[non_exhaustive] missing on ApiError enum \u2014\
-    \ error.rs:12' citing rust.md rules. While this is on ApiError not FieldErrorCode\
-    \ specifically, the principle was caught. However, FieldErrorCode was not specifically\
-    \ mentioned, so this is a partial catch at best."
+    \ error.rs:12' citing rust.md rules. Same category (#[non_exhaustive] on growing\
+    \ enums), adjacent type."
 - finding_id: I3
   title: Hardcoded trace_id 'none'
   weight: 5
   phase_ideal: dev
-  caught: false
-  caught_by: null
-  evidence: Reviewer noted trace_id is 'just a random UUID unconnected to any tracing
-    infrastructure' under the observability HIGH finding, but did not specifically
-    flag the hardcoded 'none' string in ResponseMeta. The issue was adjacent but not
-    directly identified.
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged under HIGH observability: 'Currently trace_id is just\
+    \ a random UUID unconnected to any tracing infrastructure' \u2014 identifies trace_id\
+    \ is not derived from request context."
 - finding_id: I4
   title: Zero structured logging
   weight: 5
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged '[HIGH] Zero observability \u2014 no tracing usage anywhere'\
-    \ noting tracing/tracing-subscriber are declared but never imported, no #[instrument]\
-    \ annotations, no structured logging on auth failures or rate limit hits."
+  evidence: "Reviewer explicitly flagged '[HIGH] Zero observability \u2014 no tracing\
+    \ usage anywhere' noting tracing/tracing-subscriber declared but never imported\
+    \ or used."
 - finding_id: I5
   title: Security comment claims tracing that doesn't exist
   weight: 3
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: No phase flagged that a SECURITY comment claims errors are 'logged for
-    debugging' when no logging exists. The reviewer caught zero observability but
-    did not call out the misleading security comment specifically.
+  evidence: Reviewer flagged zero observability but never specifically called out
+    the misleading SECURITY comment that claims errors are 'logged for debugging'
+    when no logging exists.
 - finding_id: I6
   title: Non-ASCII tenant header silently treated as missing
   weight: 8
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: TEA did not write a test for non-ASCII characters in X-Tenant-ID header.
-    No phase addressed this edge case.
+  evidence: No test or review comment addresses non-ASCII characters in the X-Tenant-ID
+    header. TEA's authentication tests cover missing/empty/malformed tokens but not
+    non-ASCII header encoding edge cases.
 - finding_id: I7
   title: "CWE-209 test gap \u2014 no body assertion"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: "TEA wrote CWE-209 security tests (security.rs) checking for no internal\
-    \ paths/crate names/stack traces in errors, but the pipeline output does not indicate\
-    \ response body content assertions were included \u2014 only status code checks\
-    \ are described."
+  evidence: TEA wrote CWE-209 security tests ('no internal paths/crate names/stack
+    traces in errors') but neither the reviewer nor TEA flagged that these tests only
+    check status codes without asserting on response body content.
 - finding_id: I8
   title: CORS preflight test doesn't verify CORS headers
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: Reviewer flagged '[MEDIUM] No CORS configuration' noting no CORS middleware
-    or headers exist, but TEA did not write CORS header verification tests. The reviewer
-    caught the missing CORS but not the specific test gap of checking only status
-    codes.
+  evidence: Reviewer flagged '[MEDIUM] No CORS configuration' but no CORS test was
+    written by TEA, so the specific issue of a CORS test not verifying headers doesn't
+    apply to this pipeline run.
 - finding_id: I9
   title: "Wrong log levels \u2014 error! for 4xx client errors"
   weight: 5
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: Since no structured logging was implemented (I4), the wrong-log-level
-    issue never arose. No phase preemptively specified that 4xx should use warn! vs
-    error! for 5xx.
+  evidence: Reviewer flagged zero observability but did not preemptively address log
+    level semantics (warn for 4xx vs error for 5xx) that would apply after fixing
+    the logging gap.
 - finding_id: I10
   title: CORS allows Any origin/method/header (CWE-942)
   weight: 8
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Reviewer noted '[MEDIUM] No CORS configuration' as missing entirely, but
-    did not flag CWE-942 or the Any origin/method/header permissiveness risk. Since
-    CORS was never implemented, the overly-permissive configuration issue was not
-    encountered.
+  evidence: Reviewer flagged '[MEDIUM] No CORS configuration' as missing entirely,
+    which is a different issue than CORS being configured with overly permissive Any
+    origins/methods/headers (CWE-942).

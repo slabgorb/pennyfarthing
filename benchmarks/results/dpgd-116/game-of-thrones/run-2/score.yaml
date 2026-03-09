@@ -1,82 +1,76 @@
 scenario_id: dpgd-116
 theme: game-of-thrones
 run_id: 2
-total_caught: 4
+judge_version: v2
+total_caught: 5
 total_findings: 7
-weighted_caught: 18
+weighted_caught: 26
 total_weight: 37
-score_pct: 48.6
+score_pct: 70.3
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
   weight: 8
   phase_ideal: dev
-  caught: false
-  caught_by: null
-  evidence: TEA wrote a test for 'invalid TOML rejection' but no test specifically
-    verifies that from_file_or_default distinguishes NotFound from parse/permission
-    errors. Dev likely implemented unwrap_or_default() pattern. Reviewer did not flag
-    this.
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[LOW] Config env var override silently ignores parse\
+    \ failures' \u2014 same category (silent error swallowing in config) at adjacent\
+    \ location in config.rs. Same type of issue, different instance."
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: dev
-  evidence: "Dev states 'CliError::Display sanitizes all output \u2014 no internal\
-    \ paths, tokens, or sensitive config values leak to users.' Reviewer verified:\
-    \ 'Display impl on CliError sanitizes all output. Server error reasons, config\
-    \ details, and paths are not leaked.' However, the Display impl still uses eprintln!(\"\
-    error: {e}\") and Io(#[error(transparent)]) forwards OS details to stderr, so\
-    \ this is partially caught at best. TEA wrote security tests for CWE-209 but the\
-    \ actual stderr output path (eprintln) was not tested."
+  caught_by: tea
+  evidence: "TEA wrote security tests for 'CWE-209 error info exposure (no stack traces,\
+    \ tokens, sensitive values in Display)' demonstrating awareness of the vulnerability\
+    \ class. Dev also implemented sanitized Display. However, the specific Io(transparent)\
+    \ leak path was missed \u2014 reviewer verified CWE-209 as handled (opposite conclusion\
+    \ on the specific instance)."
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: '[MEDIUM] tenant field uses raw String instead of TenantId\
-    \ newtype at crates/axiathon-client/src/cli.rs:30 \u2014 The --tenant flag accepts\
-    \ a raw Option<String>. While axiathon-core exports TenantId, the CLI should parse/validate\
-    \ it into the newtype at the boundary.' TEA also wrote header injection tests\
-    \ for CR/LF in tenant ID, but the core issue of using raw String instead of TenantId\
-    \ was caught by reviewer."
+  evidence: "Reviewer flagged '[MEDIUM] tenant field uses raw String instead of TenantId\
+    \ newtype' \u2014 'axiathon-core exports TenantId, the CLI should parse/validate\
+    \ it into the newtype at the boundary.' Exact match to ground truth finding."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: '[MEDIUM] Workspace dependencies not used for several\
-    \ crates \u2014 these are declared directly in the crate's Cargo.toml with pinned\
-    \ versions (e.g., clap_complete = \"4\", toml = \"0.8\" instead of the spec's\
-    \ \"0.9\"). This deviates from workspace dependency management rules.'"
+  evidence: "Reviewer flagged '[MEDIUM] Workspace dependencies not used for several\
+    \ crates' \u2014 'clap_complete, comfy-table, dirs, csv, toml declared directly\
+    \ in crate Cargo.toml with pinned versions instead of workspace dependency management\
+    \ rules.'"
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: '[MEDIUM] Config ConfigFile silently accepts unknown\
-    \ fields \u2014 lacks #[serde(deny_unknown_fields)]. If a user puts token = \"\
+  evidence: "Reviewer flagged '[MEDIUM] Config ConfigFile silently accepts unknown\
+    \ fields' \u2014 'lack #[serde(deny_unknown_fields)]. If a user puts token = \"\
     secret\" in the config file, it's silently ignored without warning... a usability\
-    \ and security concern.'"
+    \ and security concern.' Exact match."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
-    || ...)). TEA wrote config tests but the actual test code contains this logical
-    flaw that none of the phases caught.
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always true). TEA wrote the test containing this flaw; neither Dev nor Reviewer
+    flagged it.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test (let _ = config;). TEA wrote
-    config_loading tests but the actual test for defaults lacks proper assertions,
-    and no phase flagged this.
+  evidence: No phase identified the zero-assertion test. TEA wrote the test with 'let
+    _ = config;' and no assertions; neither Dev nor Reviewer flagged the missing assertions.

@@ -1,0 +1,83 @@
+scenario_id: dpgd-116
+theme: breaking-bad
+run_id: 3
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'The reviewer flagged validate() silently replacing invalid values (config.rs:88-96)
+    and silent error dropping (main.rs:39), but never identified the core issue: from_file_or_default
+    swallowing ALL errors including parse/permission failures via unwrap_or_default().
+    TEA tests don''t cover this distinction either.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA listed 'CWE-209: Error Display doesn't leak internal file paths'\
+    \ as a security test. The reviewer also flagged NotFound storing full URL (error.rs:13)\
+    \ and noted eprintln!(\"{e}\") in main.rs:15. However, the core issue \u2014 CliError\
+    \ Display with Io(transparent) leaking OS details via stderr \u2014 was partially\
+    \ caught but not fully addressed."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote tests for 'CWE-113: Header injection via newlines in tenant\
+    \ ID and token' (cli_client.rs:253,267). Dev implemented HeaderValue::from_str()\
+    \ which rejects CRLF (client.rs:52,58). Reviewer verified this. However, the deeper\
+    \ issue \u2014 using raw String instead of Option<TenantId> from axiathon-core\
+    \ \u2014 was NOT caught. The reviewer even noted axiathon-core is declared but\
+    \ unused. Partially caught (injection prevented, but type-safety gap missed)."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The code changes summary shows Cargo.toml was modified, and the reviewer
+    noted axiathon-core as unused dependency, but nobody flagged that dependencies
+    like clap_complete, comfy-table, csv, dirs, reqwest, toml use direct version strings
+    instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged: 'config.rs uses #[serde(default)] without #[serde(deny_unknown_fields)]\
+    \ \u2014 Unknown fields in the TOML config file are silently ignored... a typo\
+    \ like servr_url would be silently ignored.' Also noted the token-in-config test\
+    \ is vacuous (LOW finding). This directly addresses the silent token field issue."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The reviewer noted the unknown-fields test uses 'let _ = ClientConfig::from_toml(...)'
+    without checking the result, but did not identify the specific vacuously-true
+    assertion pattern (is_none() || true). TEA wrote config tests but the specific
+    assert!(config.server().is_none() || ...) pattern was not flagged.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged at LOW: 'cli_config.rs:141-152 token-in-config test\
+    \ is vacuous \u2014 The test loads config... then only asserts server_url(). It\
+    \ never checks that there's no token() accessor.' Also noted 'let _ = ClientConfig::from_toml(...)'\
+    \ has no assertions. This catches the zero-assertion test pattern, though it was\
+    \ rated LOW rather than given proper severity."

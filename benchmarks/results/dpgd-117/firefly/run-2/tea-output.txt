@@ -1,0 +1,35 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the REST API foundation — all 5 ACs require functional HTTP tests.
+
+**Test Files:**
+- `crates/axiathon-server/tests/common/mod.rs` — shared test helpers (app builder, request helpers, envelope assertions)
+- `crates/axiathon-server/tests/api_endpoints.rs` — 11 tests: 5 route groups exist, health returns data with uptime/version/status, content-type is JSON, health is unauthenticated
+- `crates/axiathon-server/tests/api_envelope.rs` — 10 tests: success/error envelope structure, meta always present with request_id (UUID)/timestamp (ISO 8601)/trace_id, data+errors mutual exclusivity, unique request_ids, 404 and 405 use envelope
+- `crates/axiathon-server/tests/api_auth.rs` — 14 tests: valid Bearer (200), missing (401), expired (401), malformed (401), wrong scheme (401), empty (401), wrong scope (403), valid API key (200), revoked key (401), key wrong scope (403), tenant context extraction, no token leakage, duplicate headers rejected, no-scheme header rejected
+- `crates/axiathon-server/tests/api_rate_limiting.rs` — 6 tests: exceeding limit returns 429, 429 includes Retry-After header, independent per-tenant limits, envelope on 429, configurable limits, health not aggressively limited
+- `crates/axiathon-server/tests/api_versioning.rs` — 6 tests: all routes under /api/v1/, /api/v2/ returns 404, no-version paths return 404, deprecated endpoint Deprecation header, case-sensitive version prefix, trailing slash consistency
+- `crates/axiathon-server/tests/api_security.rs` — 12 tests: no stack traces leaked (CWE-209), no internal resource names, generic error messages, auth errors don't distinguish expired vs invalid, long path handling, path traversal rejection, missing Content-Type, unsupported Content-Type (415), header injection prevention, no framework version in Server header, invalid JSON body (400 with envelope), empty POST body
+
+**Tests Written:** 59 tests covering 5 ACs
+**Status:** RED (failing — all tests fail to compile because `axiathon_server::app()`, `app_with_config()`, and `ServerConfig` are not yet implemented)
+
+**Handoff:** To Dev for implementation
+
+### Expected Public API Surface
+
+The tests expect the dev to implement:
+1. `axiathon_server::app() -> Router` — builds the app with default config
+2. `axiathon_server::app_with_config(ServerConfig) -> Router` — builds with custom config
+3. `axiathon_server::ServerConfig` — with `test_config_with_rate_limit(limit: u32)` constructor and `Clone`
+
+### Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiMeta` in axiathon-core has pagination fields (total/limit/offset) but AC requires meta with `request_id`, `timestamp`, `trace_id`. The server layer needs either a new `ResponseMeta` type or the existing `ApiMeta` needs to be extended.
+  Affects `crates/axiathon-core/src/types.rs` (ApiMeta struct needs request_id/timestamp/trace_id fields).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): Current `ApiResponse.error` is a singular `Option<ApiError>` but AC requires `errors` as an always-present array. The serialization shape needs adjustment for the HTTP layer.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse envelope shape).
+  *Found by TEA during test design.*

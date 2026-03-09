@@ -1,0 +1,80 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 1
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. TEA
+    tests cover config loading but no test specifically verifies that parse/permission
+    errors are distinguished from NotFound. Dev likely implemented the unwrap_or_default
+    pattern. Reviewer did not flag this.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer F3 flags CWE-209 issue: 'The Debug impl (auto-derived) includes\
+    \ the full inner string... If any code path logs or prints via {:?}, the detail\
+    \ leaks.' TEA also wrote a security test at security.rs:13 checking Display, but\
+    \ reviewer noted it only checks to_string() not Debug. Partial catch \u2014 the\
+    \ stderr eprintln leak specifically is not called out, but the CWE-209 error exposure\
+    \ class is flagged."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote header injection tests in siem_client.rs:132-148 for CRLF in
+    tokens, but SiemClient.tenant_id still uses raw String instead of TenantId from
+    axiathon-core. Reviewer F5 flagged the tests as vacuous but did not flag the type
+    safety issue of using String instead of TenantId. The core finding about bypassing
+    type-safe tenant isolation was missed.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer F10 mentions a toml version mismatch but does not flag that 6
+    dependencies use direct version strings instead of workspace = true. The workspace
+    dependency consistency issue was not caught.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F7 explicitly flags: ''config.rs uses serde::Deserialize on
+    RawConfig without #[serde(deny_unknown_fields)]. If an operator puts tokken =
+    "secret" (typo) in their config, it''s silently ignored.'' Also notes the security
+    test demonstrates a token field being silently accepted and ignored.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: Reviewer F4 identifies a different vacuous test (URL scheme validation)
+    but does not flag the specific is_none() || true vacuous assertion pattern. The
+    TEA phase wrote the test with this pattern and neither Dev nor Reviewer caught
+    it.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test that uses 'let _ = config;' with zero assertions.
+    Reviewer F11 notes stub handler tests are tautological but does not identify this
+    specific zero-assertion config test.

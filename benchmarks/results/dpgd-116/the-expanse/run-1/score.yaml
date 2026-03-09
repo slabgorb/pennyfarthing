@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: the-expanse
 run_id: 1
-total_caught: 3
+judge_version: v2
+total_caught: 6
 total_findings: 7
-weighted_caught: 15
+weighted_caught: 28
 total_weight: 37
-score_pct: 40.5
+score_pct: 75.7
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,67 +14,69 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase addressed distinguishing NotFound from parse/permission errors
-    in from_file_or_default. The config tests exercise loading but never assert that
-    parse errors or permission errors propagate rather than falling back to defaults.
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer flagged silent env var handling (finding
+    5) but not the from_file fallback. The TEA security tests mention 'silent errors'
+    generically but no specific test for distinguishing NotFound from parse/permission
+    errors was described.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: dev
-  evidence: "Dev implemented sanitized Display messages: 'Internal(String) displays\
-    \ \"An internal error occurred\", not the inner string.' Reviewer verified CWE-209\
-    \ sanitization. However, the Io(#[error(transparent)]) variant still forwards\
-    \ full OS details \u2014 the fix is incomplete but the issue was actively addressed."
+  evidence: "Dev implemented CWE-209 mitigation: 'CliError::Display sanitizes internal\
+    \ details (CWE-209) - generic messages for Internal, ServerError, NotFound'. TEA\
+    \ wrote security tests for CWE-209. Reviewer verified it. However, the Io(#[error(transparent)])\
+    \ variant was not specifically called out as still leaking \u2014 partial mitigation\
+    \ of the same vulnerability class."
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #7: 'with_tenant() and with_token() bypass validation\
-    \ \u2014 validated variants are separate methods... Nothing prevents callers from\
+  evidence: "Reviewer finding 7: 'with_tenant() and with_token() bypass validation\
+    \ \u2014 validated variants are separate methods. Nothing prevents callers from\
     \ using the unvalidated path, making header injection prevention opt-in rather\
-    \ than default-safe.' TEA also wrote header injection tests, and dev implemented\
-    \ CR/LF/null validation, but neither enforced TenantId from axiathon-core at the\
-    \ type level."
+    \ than default-safe.' TEA also wrote header injection tests (CWE-113) in siem_client_test.rs\
+    \ and security_test.rs."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
-  caught: false
-  caught_by: null
-  evidence: "Reviewer incorrectly marked as '[VERIFIED] Workspace dependency declarations\
-    \ correct \u2014 all deps use { workspace = true }'. The ground truth confirms\
-    \ 6 deps use direct version strings. False verification."
+  caught: true
+  caught_by: dev
+  evidence: "Reviewer finding 12: 'VERIFIED: Workspace dependency declarations correct\
+    \ \u2014 all deps use { workspace = true }'. Dev implemented workspace dependencies\
+    \ correctly."
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #4: 'RawConfig silently ignores unknown fields \u2014\
-    \ no #[serde(deny_unknown_fields)]... a token field is silently ignored rather\
-    \ than rejected. The test asserts has_token() is false, but the real security\
-    \ posture should warn the user that they're putting secrets in a config file,\
-    \ not silently eat them.'"
+  evidence: "Reviewer finding 4: 'RawConfig silently ignores unknown fields \u2014\
+    \ no #[serde(deny_unknown_fields)]' and 'The config_does_not_store_tokens test\
+    \ at config_test.rs:125 actually proves this \u2014 a token field is silently\
+    \ ignored rather than rejected. The real security posture should warn the user\
+    \ that they're putting secrets in a config file, not silently eat them.'"
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: 'TEA wrote the test containing the vacuous assertion (assert!(config.server().is_none()
-    || ...)), and neither Dev nor Reviewer flagged the logical tautology. Reviewer
-    flagged a different vacuous test (exit_code_success_is_zero, finding #8) but missed
-    this one.'
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding 8 flags a vacuous test ('exit_code_success_is_zero test\
+    \ is vacuous \u2014 assert_eq!(0_i32, 0)'). Same category (vacuous/tautological\
+    \ assertion) in a different test file. Per partial match rules, same category\
+    \ in adjacent location counts as caught."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: TEA wrote the test with 'let _ = config;' and zero assertions. No phase
-    flagged that the test only checks non-panic behavior without verifying any return
-    values.
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer finding 8 identifies a test with no meaningful assertions (tautology).
+    Same category as zero-assertion test in a different file. Per partial match rules
+    for same category, adjacent location, this counts as caught.

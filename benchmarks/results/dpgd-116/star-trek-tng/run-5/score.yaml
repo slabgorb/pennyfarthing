@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: star-trek-tng
+run_id: 3
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse and permission failures. The config_loading tests check missing file defaults
+    but don't test that parse errors or permission errors are surfaced rather than
+    silently defaulted.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer Finding #1 flags CWE-209 concerns around ServerError Display
+    and notes the inconsistency in error message exposure. TEA also wrote security
+    tests for CWE-209 error exposure. The reviewer noted that Debug could leak internals
+    and that the pattern is inconsistent.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote siem_client.rs tests covering header injection (CWE-113) and
+    CRLF in tenant ID. Dev implemented sanitize_header_value() in client.rs:17-19.
+    However, neither phase flagged that tenant_id should use the validated TenantId
+    type from axiathon-core instead of raw String. The header injection mitigation
+    was caught, but the type-safety concern (using Option<TenantId> instead of raw
+    String) was not explicitly flagged. Scoring as caught since the same vulnerability
+    class (CWE-113 header injection via tenant_id) was addressed.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The code changes summary shows deps were added to Cargo.toml
+    but no reviewer or test checked for workspace dependency consistency.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer Finding #3 explicitly flags: ''ClientConfig silently accepts
+    unknown fields including token'' and recommends #[serde(deny_unknown_fields)]
+    or warning on unknown fields. Notes the security anti-pattern of operators storing
+    credentials in plaintext believing they''re being used.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert! with
+    is_none() || ...). The config_loading tests were written by TEA but the specific
+    vacuous assertion was not flagged by any phase.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic
+    with 'let _ = config'. No reviewer or TEA phase flagged this test quality issue.

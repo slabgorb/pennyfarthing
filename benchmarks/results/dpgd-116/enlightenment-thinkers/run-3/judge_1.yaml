@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that from_file_or_default swallows all error types. TEA
+    mentions 'malformed/empty files' in config tests but the tests apparently pass
+    with the swallow-all implementation, indicating they don't distinguish NotFound
+    from parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote 7 security tests including 'CWE-209 no stack traces, no token
+    leaks, no raw HTML' in cli_error_integration.rs. Per partial match rule 1, this
+    demonstrates awareness of the CWE-209 vulnerability class. However, the reviewer
+    examined Display and concluded VERIFIED (opposite conclusion for the specific
+    Io transparent case).
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #9: 'SiemClient stores raw String for tenant_id \u2014\
+    \ client.rs:13. The axiathon-core crate provides TenantId as a validated newtype...\
+    \ SiemClient uses Option<String> instead of Option<TenantId>. This bypasses the\
+    \ validation boundary that newtypes exist to enforce.'"
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer finding #15 states 'VERIFIED - Workspace dependency declarations\
+    \ are correct. All dependencies declared in workspace Cargo.toml and consumed\
+    \ via { workspace = true }.' This is an opposite conclusion \u2014 the reviewer\
+    \ examined the area and concluded it was correct."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #8: 'Config silently accepts unknown TOML fields \u2014\
+    \ config.rs:10-15. Missing #[serde(deny_unknown_fields)]. If a user writes server_ur1\
+    \ = \"...\" (typo), the field is silently ignored.' This directly encompasses\
+    \ the token field being silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (None || true).
+    TEA created the tests and no subsequent phase flagged the vacuous assertion.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. TEA created the tests and
+    no subsequent phase flagged the 'let _ = config' pattern with no assert statements.

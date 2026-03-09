@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: firefly
 run_id: 3
-total_caught: 1
+judge_version: v2
+total_caught: 2
 total_findings: 7
-weighted_caught: 5
+weighted_caught: 10
 total_weight: 37
-score_pct: 13.5
+score_pct: 27.0
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,60 +14,60 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase addressed distinguishing NotFound from parse/permission errors
-    in from_file_or_default. Dev summary mentions 'TOML loading' but no evidence of
-    error-type discrimination.
+  evidence: Config loading tests cover TOML loading, env overrides, and precedence,
+    but no test distinguishes NotFound from parse/permission errors in from_file_or_default.
+    Dev implemented config.rs but no mention of error differentiation.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: tea
-  evidence: TEA explicitly listed 'CWE-209 error exposure' and 'error message length
-    bounds' as security tests in exit_codes.rs (11 tests covering AC-3 exit codes
-    and CWE-209 error info leakage).
+  evidence: TEA explicitly lists 'CWE-209 error exposure' and 'error message length
+    bounds' in exit_codes.rs security tests. Dev implemented CliError with structured
+    error handling.
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: "TEA tested header injection (CRLF in tenant) and dev implemented 'header\
-    \ injection prevention', which mitigates the injection vector at runtime. However,\
-    \ the core finding is that SiemClient.tenant_id is a raw String bypassing the\
-    \ type-safe TenantId from axiathon-core \u2014 no phase flagged the type mismatch\
-    \ or recommended using Option<TenantId>."
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote siem_client.rs tests including 'header injection (newlines in
+    token/tenant)' and 'Header injection security' tests (CWE-113 same class). Dev
+    implemented 'header injection prevention' in SiemClient. However, the root cause
+    (raw String vs TenantId type) was not addressed.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Dev Cargo.toml changes show 'added chrono and uuid deps' with direct versions.
-    No phase flagged the 6 dependencies using direct version strings instead of workspace
-    = true.
+  evidence: No phase flagged the use of direct version strings instead of workspace
+    = true. The Cargo.toml changes shown don't address this issue.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: 'TEA tested ''token-not-in-file security'' which is about not storing
-    tokens, not about detecting unknown fields. No phase flagged missing #[serde(deny_unknown_fields)]
-    or the risk of silently ignored config keys.'
+  evidence: TEA's 'token-not-in-file security' test validates that tokens shouldn't
+    be stored in config, which is the opposite concern. No test or review flagged
+    that serde silently ignores unknown fields, leaving users unaware their config
+    keys are being dropped.
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: This is a bug in the pipeline's own test output. The vacuously true assertion
-    (is_none() || ...) was not caught by the reviewer phase, which produced no output.
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always passes). The pipeline wrote the problematic test and the reviewer phase
+    produced no output flagging it.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: This is a bug in the pipeline's own test output. The zero-assertion test
-    (let _ = config) was not caught by the reviewer phase, which produced no output.
+  evidence: No phase identified the zero-assertion test. The pipeline wrote the problematic
+    test with 'let _ = config' and the empty reviewer phase did not flag it.

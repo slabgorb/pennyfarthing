@@ -1,0 +1,110 @@
+Now I have a comprehensive picture. Here is my review:
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+## Observations
+
+### 1. `[HIGH]` `generate_completion` panics on unsupported shell — `commands/completion.rs:12`
+
+```rust
+other => panic!("unsupported shell: {other}"),
+```
+
+Production code uses `panic!` instead of returning a `Result<_, CliError>`. The Rust coding rules explicitly forbid `unwrap()` in production code and mandate `?` or `expect()` with actionable messages. A `panic!` on user-controlled input is worse — it produces an uncontrolled crash with a stack trace instead of a clean error exit. The `CompletionArgs.shell` field is already `clap_complete::Shell` (an enum), so clap validates the shell before this function is reached via CLI, but `generate_completion` takes `&str` so it can be called from other code paths. Should return `Result<String, CliError>`.
+
+### 2. `[HIGH]` Missing `main.rs` — no binary entry point
+
+The story specifies creating `main.rs` as the binary entry point with tracing init, dispatch, and exit code handling via `std::process::exit()`. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. Without it, the `axiathon` binary cannot be built, and the exit code integration (AC-3) cannot be exercised end-to-end. The crate is library-only. This is a core deliverable of Story 6.1.
+
+### 3. `[HIGH]` `cargo +nightly fmt --all --check` fails — `client.rs`
+
+Per the reviewer gotchas, nightly fmt must pass before approval. Import ordering and line-length formatting issues exist in `client.rs`. This is a blocking finding per project rules.
+
+### 4. `[MEDIUM]` `RawConfig` silently ignores unknown fields — `config.rs:6-12`
+
+`RawConfig` has no `#[serde(deny_unknown_fields)]`. A typo like `api_ulr = "..."` will be silently ignored, and the user will get the default value with no warning. This is a usability trap. The story specifies this is an operator-facing tool — silent misconfiguration is dangerous.
+
+### 5. `[MEDIUM]` `reqwest` missing required features — workspace `Cargo.toml:47`
+
+The workspace declares `reqwest = { version = "0.12", default-features = false }` but the story requires `json` and `rustls-tls` features. Without `rustls-tls`, HTTPS connections will fail (no TLS backend). Without `json`, the `.json()` method is unavailable. The client crate inherits `workspace = true` without adding features.
+
+### 6. `[MEDIUM]` `toml` version mismatch — workspace `Cargo.toml:49`
+
+Story specifies `toml = "0.9"` but workspace has `"0.8"`. While `0.8` works, this is a spec deviation.
+
+### 7. `[MEDIUM]` `keyring` dependency completely missing
+
+The story and AC-8 mandate OS keychain credential storage via `keyring` crate. It's not in workspace deps or crate deps. No credential storage infrastructure exists. While the full login flow is Story 9.1, the dependency and the sync-context loading pattern (load before Tokio runtime to avoid deadlocks) should be scaffolded here.
+
+### 8. `[MEDIUM]` `expect()` calls in `output.rs` — potential panics in production
+
+Lines 60, 77, 80, 82-84 all use `.expect()`. While writing to a `Vec<u8>` is infallible, the `serde_json::to_string_pretty` call on line 60 is also practically infallible. However, the coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." These use `expect` with messages, which is technically compliant, but they should ideally propagate errors with `?` since `OutputFormatter::format_table` returns `String` not `Result`. The trait should return `Result<String, CliError>` to avoid the panics entirely.
+
+### 9. `[MEDIUM]` `SiemClient` does not construct `reqwest::Client` — `client.rs`
+
+AC-7 says "`SiemClient` wraps `reqwest::Client`." The current implementation stores `base_url`, `token`, and `tenant_id` as raw strings but never creates a `reqwest::Client`. The `default_headers()` method builds headers but there's no HTTP request functionality — `get()`, `post()`, etc. are all missing. The struct is a header builder, not an HTTP client wrapper. While full request methods may be deferred, the struct should at minimum hold a `reqwest::Client` instance.
+
+### 10. `[MEDIUM]` Missing command stub modules — AC-10 gap
+
+The story requires stub command modules for query, rules, alerts, ingest, config, status, tenant, login, and init. Only `commands/mod.rs` (with just `pub mod completion;`) and `commands/completion.rs` exist. The other 9 command modules from the spec are missing. Without them, the stub handlers that print "not yet implemented (Story X.Y)" cannot function.
+
+### 11. `[LOW]` `tenant` field is `Option<String>` not `TenantId` — `cli.rs:22`
+
+The Rust coding rules mandate newtypes for IDs: `TenantId(String)`. The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. While `TenantId` comes from `axiathon-core`, the CLI should validate and convert to `TenantId` at the boundary.
+
+### 12. `[LOW]` `OutputFormatter` trait is not object-safe for dynamic dispatch
+
+The trait has a single method `format_table` — there's no mechanism for the `--format` flag to dynamically select a formatter at runtime without `match`. A `Box<dyn OutputFormatter>` pattern or a dispatch function is needed but not implemented.
+
+### 13. `[VERIFIED]` Header injection prevention (CWE-113) — `client.rs:45,52`
+
+CRLF characters are stripped from both tenant ID and token before header construction. `HeaderValue::from_str` provides a second layer of defense. Tests verify this at `siem_client_test.rs:103-130`.
+
+### 14. `[VERIFIED]` CWE-209 error information disclosure — `error.rs:39`
+
+`ServerError` display suppresses the raw body: `write!(f, "server error (HTTP {status})")` — the second field is ignored in Display. Test at `error_exit_codes_test.rs:97-108` and `siem_client_test.rs:200-211` verify this.
+
+### 15. `[VERIFIED]` `#[non_exhaustive]` on `CliError` — `error.rs:4`
+
+Applied correctly. Future variants won't break downstream matches.
+
+### 16. `[VERIFIED]` `#![forbid(unsafe_code)]` in `lib.rs:2`
+
+Library code correctly forbids unsafe. Integration tests downgrade to `deny` with documented rationale for `std::env::set_var`.
+
+### 17. `[VERIFIED]` Config file missing returns defaults — `config.rs:57`
+
+`NotFound` IO error correctly falls back to `Ok(Self::default())` rather than failing.
+
+### 18. `[VERIFIED]` Token not stored in config — `config.rs:94-96`
+
+`token()` always returns `None`. `RawConfig` reads the field but it's `#[allow(dead_code)]` and never propagated to `ClientConfig`.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 7 |
+| Low | 2 |
+| Verified | 6 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Blocking issues (High):**
+
+1. **Missing `main.rs`** — The binary entry point is a core deliverable. Without it, there is no `axiathon` binary and exit codes cannot be exercised end-to-end.
+2. **`panic!` in `generate_completion`** — Production code must not panic on input. Return `Result` instead.
+3. **`cargo +nightly fmt` fails** — Per reviewer gotchas, nightly fmt must pass before approval.
+
+**Strongly recommended (Medium):**
+
+4. `reqwest` needs `json` and `rustls-tls` features or HTTPS won't work.
+5. `RawConfig` should deny unknown fields to prevent silent misconfiguration.
+6. Missing command stub modules (9 of 10 not present).
+7. `SiemClient` should wrap a `reqwest::Client` instance per AC-7.

@@ -1,0 +1,27 @@
+All **106 tests pass**, clippy is clean. Here's the summary:
+
+## Implementation Summary
+
+### Files Created (production code)
+| File | Purpose |
+|------|---------|
+| `crates/axiathon-client/src/cli.rs` | `Cli` (Parser), `Commands` (Subcommand), global flags with `global = true` |
+| `crates/axiathon-client/src/error.rs` | `CliError` enum with `exit_code()` mapping (0/1/2/3/4), CWE-209 safe Display |
+| `crates/axiathon-client/src/output.rs` | `OutputFormat` (ValueEnum), `OutputFormatter` (table/JSON/CSV), `ResponseMetadata` |
+| `crates/axiathon-client/src/client.rs` | `SiemClient` HTTP wrapper with header injection prevention, status code mapping |
+| `crates/axiathon-client/src/config.rs` | `ClientConfig` TOML loading, env var overrides, validation |
+| `crates/axiathon-client/src/commands/mod.rs` | `execute_command()` dispatch, `StubResult`, stub messages with story refs |
+| `crates/axiathon-client/src/commands/completion.rs` | `generate_completions()` — functional for bash/zsh/fish/PowerShell |
+| `crates/axiathon-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login,init}.rs` | Command arg structs with subcommands and `after_help` examples |
+| `crates/axiathon-client/src/main.rs` | Binary entry point |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `crates/axiathon-client/src/lib.rs` | Added module declarations |
+| `crates/axiathon-client/Cargo.toml` | Override `unsafe_code` lint to `deny` (lib.rs retains `#![forbid]`), add `serial_test` |
+| `Cargo.toml` (workspace) | Added `clap` `env` feature, `serial_test` dependency |
+| `crates/axiathon-client/tests/config_loading.rs` | Added `unsafe` blocks for `set_var`/`remove_var` (edition 2024), `#[serial]` for env var tests |
+| `crates/axiathon-client/tests/security.rs` | Same `unsafe` + `#[serial]` fixes |
+
+### Tests: 106/106 passing (GREEN)

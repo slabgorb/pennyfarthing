@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: firefly
 run_id: 6
-total_caught: 3
+judge_version: v2
+total_caught: 4
 total_findings: 7
-weighted_caught: 18
+weighted_caught: 23
 total_weight: 37
-score_pct: 48.6
+score_pct: 62.2
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,60 +14,54 @@ findings:
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged as [MEDIUM]: \"from_file_or_default swallows parse errors\
-    \ silently \u2014 config.rs:77-79 \u2014 unwrap_or_default() meaning a malformed\
-    \ TOML file silently falls back to defaults.\""
+  evidence: "Reviewer flagged \"[MEDIUM] from_file_or_default swallows parse errors\
+    \ silently\" \u2014 noted unwrap_or_default() means malformed TOML silently falls\
+    \ back to defaults and recommended returning error for parse failures while only\
+    \ defaulting for file-not-found."
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: dev
-  evidence: "Dev implemented sanitized Display on CliError \u2014 error.rs:49 ServerError\
-    \ shows generic message. Reviewer verified: \"CWE-209 error exposure is properly\
-    \ mitigated.\" However, reviewer also flagged NotFound variant as leaking inner\
-    \ string, so partial catch. The core CWE-209 mitigation was implemented but not\
-    \ comprehensively."
+  caught_by: tea
+  evidence: TEA wrote CWE-209 error exposure tests in security.rs. Dev implemented
+    sanitized Display for ServerError. Reviewer additionally flagged "[MEDIUM] CliError::NotFound
+    Display leaks the inner string directly" as a remaining gap.
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: "TEA wrote header injection tests (CRLF rejection) and Dev implemented\
-    \ HeaderValue::from_str() which rejects CRLF. But the finding is about tenant_id\
-    \ being a raw String instead of using axiathon-core's validated TenantId type.\
-    \ No phase flagged the type-safety gap \u2014 only the CRLF injection vector was\
-    \ addressed."
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote header injection tests in siem_client.rs and security.rs (CWE-113).
+    Dev implemented CRLF rejection via HeaderValue::from_str(). Reviewer verified
+    mitigation. Same vulnerability class addressed, though type-safety (using TenantId)
+    was not flagged.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Reviewer flagged a toml version mismatch (0.8 vs 0.9) but did not flag
-    that 6 dependencies use direct version strings instead of workspace = true. The
-    deps were added to [workspace.dependencies] but the crate Cargo.toml uses direct
-    versions rather than workspace references.
+  evidence: No phase flagged that crate-level Cargo.toml uses direct version strings
+    instead of workspace = true for the 6 dependencies.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer flagged as [MEDIUM]: "RawConfig uses #[derive(Deserialize)]
-    without #[serde(deny_unknown_fields)]. Operator typos like servre_url are silently
-    ignored." Also noted token fields are silently dropped. This directly addresses
-    the silent-ignore-unknown-fields concern.'
+  evidence: "Reviewer flagged \"[MEDIUM] RawConfig silently ignores unknown fields\
+    \ \u2014 intentional but risky\" and recommended #[serde(deny_unknown_fields)]\
+    \ with an allow-list. Noted that operator typos like servre_url are silently ignored."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ... always passes when first branch is true). TEA wrote the test with this flaw,
-    Dev didn't fix it, Reviewer didn't catch the test logic error.
+  evidence: No phase identified the vacuously true assertion (is_none() || ... always
+    passes). TEA designed 9 config_loading tests but the pattern was not flagged.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
@@ -74,5 +69,4 @@ findings:
   caught: false
   caught_by: null
   evidence: No phase identified the zero-assertion test that only checks non-panic
-    via `let _ = config`. TEA wrote it, Dev passed it, Reviewer did not flag the test
-    quality issue.
+    via let _ = config.

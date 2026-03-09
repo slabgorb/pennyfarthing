@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: star-trek-tos
 run_id: 4
+judge_version: v2
 total_caught: 3
 total_findings: 7
 weighted_caught: 15
@@ -13,28 +14,28 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config implementation uses unwrap_or_default without distinguishing NotFound from
+  evidence: No phase identified the from_file_or_default unwrap_or_default() swallowing
+    all error types. Config tests exist but none test distinguishing NotFound from
     parse/permission errors.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: dev
-  evidence: "Dev implemented CWE-209-safe Display on CliError. Reviewer verified:\
-    \ 'ServerError Display omits response body \u2014 #[error(\"server returned HTTP\
-    \ {0}\")] only formats the status code, not the second String field.' Security\
-    \ tests confirm at cli_security.rs:12."
+  caught_by: tea
+  evidence: 'TEA wrote security tests for CWE-209: ''Server error display must not
+    leak stack traces, connection strings, or credentials.'' Dev implemented ''CWE-209-safe
+    Display.'' Same vulnerability class addressed.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: 'TEA wrote header injection tests for tenant_id with CRLF sequences. However,
-    the reviewer noted with_tenant() bypass is public (Finding #2), so partially caught.
-    TEA tested the validated path but the unvalidated public path remained.'
+  evidence: "TEA wrote header injection tests covering CWE-113: 'tokens/tenant IDs\
+    \ with \\r\\n, \\r, \\0 must be rejected.' Reviewer flagged finding #2 that with_token()/with_tenant()\
+    \ bypass validation. However, the specific issue of using raw String instead of\
+    \ TenantId type was not flagged \u2014 only the injection vector was caught."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
@@ -42,32 +43,31 @@ findings:
   caught: false
   caught_by: null
   evidence: No phase flagged that 6 dependencies use direct version strings instead
-    of workspace = true. The reviewer noted a toml version mismatch but not the workspace
-    inheritance issue.
+    of workspace = true. Reviewer noted a toml version mismatch but not the workspace
+    inheritance pattern issue.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer Finding #7: 'RawConfig silently ignores unknown fields \u2014\
-    \ typos go undetected. Consider #[serde(deny_unknown_fields)] to catch operator\
-    \ typos early.' Directly flags the config token/unknown field silent ignore issue."
+  evidence: "Reviewer finding #7: 'RawConfig silently ignores unknown fields \u2014\
+    \ typos go undetected... Consider #[serde(deny_unknown_fields)] to catch operator\
+    \ typos early.' This is the same mechanism \u2014 serde silently ignoring a token\
+    \ field a user might add."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ...). The test was written by TEA and passed through dev and review without the
-    logical tautology being flagged.
+  evidence: No phase identified a vacuously true assertion using is_none() || ...
+    pattern. No mention of vacuous assertions in any phase output.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test that only checks non-panic
-    with let _ = config. TEA wrote 12 config tests but this specific pattern was not
-    flagged.
+  evidence: No phase identified a test with zero assertions that only checks non-panic.
+    No mention of assertion-free tests in any phase output.

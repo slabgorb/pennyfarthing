@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: monty-python
+run_id: 4
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. TEA mentions
+    'malformed TOML rejected' but no test specifically distinguishes NotFound from
+    parse/permission errors. Reviewer did not flag this pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Reviewer verified: 'CWE-209 protection: CliError::ServerError Display\
+    \ does not expose the inner String \u2014 error.rs:6-7'. TEA also wrote CWE-209\
+    \ tests. Dev implemented safe Display impls. However, the stderr eprintln leaking\
+    \ was not flagged \u2014 the Display impl is safe but the printing path was not\
+    \ scrutinized. Partial catch at best."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote header injection tests for CRLF in tenant_id, and Dev implemented
+    CRLF stripping in with_tenant(). However, the actual finding is that tenant_id
+    is a raw String instead of using axiathon-core's validated TenantId type. Reviewer
+    even flagged the inconsistent sanitization but did not flag the missing TenantId
+    newtype usage. The type-safety gap was not caught.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as HIGH: 'Workspace dependency hygiene violation \u2014\
+    \ None of these were added to workspace dependencies. The crate uses direct version\
+    \ specs (clap_complete = \"4\", comfy-table = \"7\", etc.). This violates the\
+    \ workspace-level dependency declaration rule.'"
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as MEDIUM: 'ClientConfig silently ignores unknown TOML\
+    \ fields (no deny_unknown_fields) \u2014 An operator who adds token = \"secret\"\
+    \ to their config file gets no error, no warning. Should use #[serde(deny_unknown_fields)]\
+    \ to fail loudly.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as LOW: 'siem_client_rejects_newlines_in_token test\
+    \ is vacuous \u2014 The assertion !client.has_auth_token() || { true } always\
+    \ passes when has_auth_token() is true, because || { true } short-circuits to\
+    \ true.'"
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test that only checks non-panic with
+    'let _ = config'. The reviewer found a different vacuous test (I5) but did not
+    identify this separate zero-assertion issue.

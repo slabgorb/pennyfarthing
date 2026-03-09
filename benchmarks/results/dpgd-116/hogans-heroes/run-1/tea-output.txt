@@ -1,0 +1,31 @@
+*Slams dossier on desk* 
+
+I KNOW something is going on at Stalag 13, and now I have the EVIDENCE to prove it — or rather, the traps to CATCH them when they try to sneak implementation through!
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational CLI framework — all subsequent CLI stories depend on it.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 17 | AC-1 (command groups), AC-2 (subcommand help), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit codes 0/1/2/3/4, CliError trait bounds) |
+| `tests/output_format.rs` | 13 | AC-4 (table/json/csv formatting, ResponseMetadata, CSV escaping) |
+| `tests/siem_client.rs` | 14 | AC-7 (HTTP headers, status code mapping, timeout, connection refused, header injection) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env var overrides, precedence, validation, missing file handling) |
+| `tests/shell_completion.rs` | 10 | AC-9 (bash/zsh/fish/PowerShell generation, subcommand coverage) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (not-yet-implemented messages, story references, exit code 1) |
+| `tests/security.rs` | 13 | CWE-209 error exposure, header injection (CRLF/CR/LF/null), credential handling |
+
+**Tests Written:** 102 tests covering all 10 ACs
+**Status:** RED (failing to compile — all modules unresolved)
+
+**Key security tests:**
+- Header injection prevention (CRLF, bare CR, bare LF, null bytes in tenant ID and token)
+- CWE-209: Auth errors don't leak token values, server errors don't expose stack traces
+- Config security: tokens not stored in config file, only keychain/env var
+- URL validation: rejects `ftp://`, `javascript:`, empty strings
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: house-md
 run_id: 4
+judge_version: v2
 total_caught: 6
 total_findings: 7
 weighted_caught: 28
@@ -13,70 +14,65 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: 'No phase identified that from_file_or_default swallows all errors. The
-    config_loading tests don''t distinguish NotFound from parse/permission errors,
-    and the reviewer''s finding #9 about silent unknown fields is related but doesn''t
-    cover the from_file_or_default error swallowing.'
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer flagged silent unknown field ignoring
+    (deny_unknown_fields) but that's a different issue. No test distinguishes NotFound
+    from parse errors.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #7 flags CWE-209: 'cli_error_display_does_not_leak_server_internals\
-    \ only asserts !display.is_empty(). That assertion is vacuous \u2014 it proves\
-    \ nothing about information leakage.' However, the reviewer notes the Display\
-    \ impl itself hides inner strings ('server error' not the inner String), so the\
-    \ dev partially mitigated it but the test is vacuous."
+  evidence: 'Reviewer finding #7 explicitly flags CWE-209 and notes the test checking
+    for leaks is vacuous (''!display.is_empty()'' proves nothing about information
+    leakage). TEA also wrote security.rs tests targeting CWE-209 error exposure. Same
+    vulnerability class identified.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #2 (CRITICAL): 'validate_header_value() exists but is\
+  evidence: "Reviewer CRITICAL finding #2: 'validate_header_value() exists but is\
     \ never called in get() \u2014 CWE-113 defense is theater. A tenant ID of evil\\\
-    r\\nX-Injected: yes would be injected directly into the HTTP request.' TEA wrote\
-    \ header injection tests but they only test the validator function in isolation,\
-    \ not that it's wired into the client. The reviewer caught the wiring gap."
+    r\\nX-Injected: yes would be injected directly into the HTTP request.' TEA also\
+    \ wrote header injection tests in siem_client.rs and security.rs."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #4: 'toml = \"0.8\" not workspace-managed, spec requires\
-    \ 0.9' \u2014 identifies at least one dep not using workspace = true. However,\
-    \ the reviewer only flagged toml specifically, not all 6 deps mentioned in the\
-    \ ground truth."
+  evidence: "Reviewer HIGH finding #4: 'toml = 0.8 not workspace-managed, spec requires\
+    \ 0.9' \u2014 flags the same pattern of direct version strings instead of workspace\
+    \ = true. Same category, identifies the workspace dependency management convention\
+    \ violation."
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #9: 'RawConfig silently ignores unknown fields \u2014\
-    \ no #[serde(deny_unknown_fields)]. A config file with passwrd = \"secret\" (typo)\
-    \ will silently use defaults instead of warning the operator.'"
+  evidence: "Reviewer MEDIUM finding #9: 'RawConfig silently ignores unknown fields\
+    \ \u2014 no #[serde(deny_unknown_fields)]. A config file with passwrd = secret\
+    \ (typo) will silently use defaults.' Exactly matches the ground truth about tokens/unknown\
+    \ fields being silently ignored."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer finding #10: ''exit_code_success_is_zero asserts 0 == 0. This
-    literally asserts zero equals zero. It doesn''t test any code.'' While the ground
-    truth refers to a different vacuously true test (None || true pattern), the reviewer
-    also caught finding #7 about the vacuous CWE-209 assertion. However, the specific
-    I5 finding about assert!(config.server().is_none() || ...) was not explicitly
-    called out.'
+  evidence: 'Reviewer flagged multiple vacuous test patterns: finding #7 (CWE-209
+    test asserts only !display.is_empty() which proves nothing), finding #10 (assert_eq!(0u8,
+    0) tautology). Same category of vacuously true tests detected across the suite.'
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer finding #11: 'header_value_handles_tabs test has no assertion\
-    \ \u2014 let _ = result. The comment says either accept or reject, but must not\
-    \ panic \u2014 but there's no assertion. This is not a test; it's a comment with\
-    \ extra steps.'"
+  evidence: "Reviewer LOW finding #11: 'header_value_handles_tabs test has no assertion\
+    \ \u2014 let _ = result. This is not a test; it's a comment with extra steps.'\
+    \ Same category: test with zero meaningful assertions, only checking non-panic."

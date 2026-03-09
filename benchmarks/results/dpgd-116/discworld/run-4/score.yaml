@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: discworld
 run_id: 4
-total_caught: 3
+judge_version: v2
+total_caught: 5
 total_findings: 7
-weighted_caught: 15
+weighted_caught: 25
 total_weight: 37
-score_pct: 40.5
+score_pct: 67.6
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,65 +14,67 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config.rs uses from_file which may error, but no test or review finding distinguishes
-    NotFound from parse/permission errors.
+  evidence: No phase flagged from_file_or_default swallowing all errors. TEA wrote
+    config loading tests but focused on precedence/env overrides, not error discrimination
+    between NotFound and parse/permission failures.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: reviewer
-  evidence: "Reviewer F13 flags that SiemClient::get() leaks full URL in NotFound\
-    \ error and notes contradiction with security comments about sanitization. TEA\
-    \ also wrote CWE-209 security tests for error display not leaking file paths.\
-    \ However, the specific CliError Display leaking via eprintln was not directly\
-    \ flagged \u2014 partial catch at best."
+  caught_by: tea
+  evidence: "TEA wrote security tests: 'Error display does not leak file paths or\
+    \ stack traces \u2014 CWE-209'. Same vulnerability class (CWE-209) identified\
+    \ and tested for. However, reviewer V2 concluded 'Display messages are sanitized'\
+    \ \u2014 reaching the opposite conclusion on the transparent Io forwarding."
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: "TEA wrote header injection prevention tests for tenant ID (CWE-113).\
-    \ Dev implemented HeaderValue::from_str() which rejects CRLF. Reviewer verified\
-    \ in V3. However, the deeper issue \u2014 using raw String instead of TenantId\
-    \ from axiathon-core \u2014 was not flagged."
+  evidence: "TEA wrote 'Header injection prevention (newlines in tenant ID and token)\
+    \ \u2014 CWE-113' tests. Reviewer V3 confirmed 'SiemClient header injection prevention\
+    \ works \u2014 Tests explicitly verify CWE-113 prevention.' Same vulnerability\
+    \ class caught, though raw String vs TenantId type safety not flagged."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that dependencies like clap_complete, comfy-table, csv,
-    dirs, reqwest, toml use direct version strings instead of workspace = true. The
-    code changes summary shows Cargo.toml was modified but the workspace dependency
-    pattern was not enforced.
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. TEA added workspace dependencies but the dev phase apparently
+    used direct versions. Reviewer mentioned toml version mismatch (F6) but not the
+    workspace = true pattern.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer F7 explicitly flags: ''No #[serde(deny_unknown_fields)]. A config
-    file with a typo like [sever] is silently ignored.'' Reviewer F11 also flags the
-    token field with #[allow(dead_code)] being deserialized but unused. Reviewer requests
-    adding deny_unknown_fields before merge.'
+  evidence: 'Reviewer F7: ''No #[serde(deny_unknown_fields)]. A config file with a
+    typo like [sever] is silently ignored.'' Reviewer F11: ''token field is deserialized
+    from TOML but intentionally not used... should emit a warning telling the user
+    to move their token to the keychain.'' Together these cover the silent token ignore
+    finding.'
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: No phase identified vacuously true assertions using is_none() || true
-    pattern. The reviewer flagged weak security test assertions (F8) but not this
-    specific config test pattern.
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F8 flagged the same category: ''if let Ok(config) = result...
+    if the function returns Err, the test silently passes. This is the correct behavior
+    today but the assertion is a no-op.'' Same pattern of vacuously true test assertions,
+    different instance.'
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: No phase flagged the test with zero assertions that only checks non-panic
-    via 'let _ = config'. Reviewer F3 flagged vacuous stub handler tests but not this
-    specific config test issue.
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F3 flagged same category: ''stub handler tests construct the
+    error themselves and verify their own construction. This is a tautology. It would
+    pass even if the status command segfaulted, because the test never invokes the
+    command.'' Demonstrates detection of tests without meaningful assertions.'

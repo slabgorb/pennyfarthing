@@ -1,6 +1,7 @@
 scenario_id: dpgd-117
 theme: null
 run_id: 4
+judge_version: v2
 total_caught: 2
 total_findings: 10
 weighted_caught: 10
@@ -13,8 +14,8 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Dev added chrono and uuid as inline dependencies in Cargo.toml. Reviewer
-    flagged unused dependencies but not the inline-vs-workspace issue.
+  evidence: Dev added chrono and uuid as regular dependencies. Reviewer flagged unused
+    dependencies (#2) but never mentioned inline versions vs workspace = true pattern.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'
   weight: 5
@@ -22,19 +23,17 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer finding #7: '#[non_exhaustive] missing on public types \u2014\
-    \ response.rs:14,21,29' flags missing #[non_exhaustive] on public types including\
-    \ enums/structs. However, this specifically calls out ApiEnvelope/EnvelopeError/EnvelopeMeta,\
-    \ not FieldErrorCode. Partial catch at best, but the principle was flagged."
+    \ response.rs:14,21,29' flags the same category of issue (missing #[non_exhaustive]\
+    \ on types that will grow). Same principle, adjacent types."
 - finding_id: I3
   title: Hardcoded trace_id 'none'
   weight: 5
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: 'Reviewer finding #11 verified that meta.trace_id is ''present'' but did
-    not flag that it''s hardcoded to ''none'' rather than derived from request context.
-    The rate_limit trace_id issue (finding #9) is tangential but doesn''t address
-    the ResponseMeta hardcoding.'
+  evidence: "Reviewer finding #11 marked trace_id as VERIFIED ('meta.trace_id is present')\
+    \ without noticing it was hardcoded to 'none'. Opposite conclusion \u2014 examined\
+    \ the code and concluded it was correct."
 - finding_id: I4
   title: Zero structured logging
   weight: 5
@@ -50,47 +49,50 @@ findings:
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: 'Reviewer flagged zero logging (finding #4) but did not specifically call
-    out misleading SECURITY comments claiming logging exists when it doesn''t.'
+  evidence: 'Reviewer caught the absence of logging (finding #4) but never flagged
+    the misleading SECURITY comment that claims errors are ''logged for debugging''.
+    The deceptive documentation itself was not called out.'
 - finding_id: I6
   title: Non-ASCII tenant header silently treated as missing
   weight: 8
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No test was written for non-ASCII tenant header values. TEA's auth tests
-    cover valid/missing/expired/malformed tokens but not non-ASCII header edge cases.
+  evidence: TEA's api_auth.rs tests cover valid/missing/expired/malformed tokens but
+    no test for non-ASCII characters in X-Tenant-ID header. No phase mentioned this
+    edge case.
 - finding_id: I7
   title: "CWE-209 test gap \u2014 no body assertion"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: "TEA wrote CWE-209 tests in api_security.rs and they passed, but the pipeline\
-    \ output doesn't indicate body content assertions were included \u2014 only status\
-    \ code checking is mentioned."
+  evidence: TEA wrote CWE-209 tests in api_security.rs and Reviewer verified (#12)
+    error sanitization by manual code inspection, but neither flagged that the test
+    itself only checks status code without asserting on response body content.
 - finding_id: I8
   title: CORS preflight test doesn't verify CORS headers
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No CORS preflight test appears in any test file. CORS is not mentioned
-    in TEA's test plan or reviewer findings as a tested area.
+  evidence: No CORS preflight test appears in TEA's test descriptions. No phase mentioned
+    CORS header verification.
 - finding_id: I9
   title: "Wrong log levels \u2014 error! for 4xx client errors"
   weight: 5
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: Since I4 (zero logging) was flagged but not fixed, the wrong-log-levels
-    issue never arose. No phase addressed appropriate log level selection for 4xx
-    vs 5xx.
+  evidence: 'Reviewer flagged zero logging (finding #4) but never specified that 4xx
+    vs 5xx should use different log levels. The finding about wrong levels is prospective
+    but the pipeline didn''t address log level granularity.'
 - finding_id: I10
   title: CORS allows Any origin/method/header (CWE-942)
   weight: 8
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No CORS configuration was reviewed or tested. Neither TEA, Dev, nor Reviewer
-    mentioned CORS origin/method/header restrictions or CWE-942.
+  evidence: No phase mentioned CORS middleware configuration. The code changes summary
+    shows no CORS-related files. CWE-942 (permissive CORS) was never flagged by any
+    phase.

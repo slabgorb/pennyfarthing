@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: the-expanse
 run_id: 4
+judge_version: v2
 total_caught: 5
 total_findings: 7
 weighted_caught: 25
@@ -13,30 +14,29 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config loading tests and implementation don't distinguish NotFound from parse/permission
-    errors.
+  evidence: No phase identified that from_file_or_default swallows all error types
+    via unwrap_or_default(). TEA tested 'TOML loading' and 'validation' but not error-type
+    discrimination. Reviewer did not flag the blanket error swallowing pattern.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: reviewer
-  evidence: "Reviewer flagged '[MEDIUM] ServerError Display leaks raw server response\
-    \ body \u2014 CWE-209 risk at error.rs:29' noting the body could contain internal\
-    \ paths/stack traces. TEA also wrote CWE-209 tests for exit_codes.rs, but the\
-    \ specific CliError Display leak to stderr was not directly flagged."
+  caught_by: tea
+  evidence: "TEA explicitly listed 'CWE-209: Error display must not leak internal\
+    \ paths/stack traces' as a security test. Reviewer also flagged '[MEDIUM] ServerError\
+    \ Display leaks raw server response body \u2014 CWE-209 risk at error.rs:29'.\
+    \ Same vulnerability class addressed in both phases."
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: "TEA wrote CRLF injection prevention tests for siem_client.rs (header\
-    \ injection for X-Tenant-ID and Bearer token). Dev implemented the CRLF check.\
-    \ However, the deeper issue of using raw String instead of validated TenantId\
-    \ from axiathon-core was not caught \u2014 only the symptom (CRLF) was addressed,\
-    \ not the root cause (type safety)."
+  evidence: 'TEA listed ''Header injection: CRLF in tenant ID and token must be rejected/sanitized''
+    and wrote siem_client tests for CRLF injection prevention. Dev implemented CRLF
+    checks in client.rs:25-33. Same vulnerability class (CWE-113) addressed, though
+    via runtime validation rather than using TenantId type.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
@@ -44,34 +44,36 @@ findings:
   caught: false
   caught_by: null
   evidence: No phase flagged that dependencies use direct version strings instead
-    of workspace = true. The reviewer noted the edition mismatch but not the dependency
-    version drift issue.
+    of workspace = true. Reviewer noted the edition mismatch but not the dependency
+    version management issue.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: reviewer
-  evidence: "Reviewer flagged '[HIGH] RawConfig silently ignores unknown fields \u2014\
-    \ no #[serde(deny_unknown_fields)]' noting that typos like api_rul are silently\
-    \ ignored. The token-in-config aspect was verified separately (token() returns\
-    \ None unconditionally), but the silent ignore of the field was caught."
+  caught_by: tea
+  evidence: "TEA listed 'Token in config file: must be rejected (tokens belong in\
+    \ OS keychain)' as a security test and wrote config_loading tests for it. However,\
+    \ the implementation silently returns None rather than warning/errecting, and\
+    \ the reviewer marked '[VERIFIED] Token never loaded from config file' as correct\
+    \ \u2014 missing the silent-ignore-secret-on-disk concern."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
-    \ accept success' noting 'let _ = client; and pass... if someone removes the CRLF\
-    \ check, the test still passes. These should assert!(result.is_err()).' Also flagged\
-    \ env_axiathon_timeout_rejects_non_numeric as vacuous."
+  evidence: "Reviewer flagged '[MEDIUM] env_axiathon_timeout_rejects_non_numeric test\
+    \ is also vacuous at config_loading.rs:102-112' \u2014 same category of vacuously\
+    \ true assertion. Also flagged '[MEDIUM] CRLF injection tests are vacuous'. Demonstrates\
+    \ detection capability for vacuous test patterns."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged the CRLF tests as having weak assertions: 'if construction\
-    \ succeeds, they just let _ = client; and pass' \u2014 this is essentially a test\
-    \ with no meaningful assertion on the success path, same pattern as I6."
+  evidence: "Reviewer flagged '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
+    \ accept success at siem_client.rs:246-271' noting 'they just let _ = client;\
+    \ and pass' with no real assertions. Same category: test with zero meaningful\
+    \ assertions, only checks non-panic."

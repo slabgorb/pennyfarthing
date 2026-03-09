@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: firefly
 run_id: 1
+judge_version: v2
 total_caught: 2
 total_findings: 7
 weighted_caught: 10
@@ -13,9 +14,8 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No tests or implementation distinguish NotFound from parse/permission
-    errors in from_file_or_default. Config loading tests cover TOML loading and env
-    overrides but no evidence of error-type discrimination.
+  evidence: No mention of distinguishing NotFound from parse/permission errors in
+    from_file_or_default. Config tests cover TOML loading but not error-type discrimination.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
@@ -23,50 +23,50 @@ findings:
   caught: true
   caught_by: tea
   evidence: 'TEA explicitly lists ''CWE-209: Error Display doesn''t leak internal
-    paths/stack traces'' as a security test in cli_error_exit_codes.rs. Dev passed
-    all 134 tests, so implementation must satisfy these constraints.'
+    paths/stack traces'' as a security test in cli_error_exit_codes.rs.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: 'TEA lists ''Header injection: CRLF in tenant ID and auth token rejected/sanitized''
-    in siem_client.rs tests and Dev mentions ''header injection prevention''. However,
-    the deeper type-safety issue (using raw String instead of TenantId from axiathon-core)
-    is not addressed.'
+  evidence: 'TEA wrote tests for ''Header injection: CRLF in tenant ID and auth token
+    rejected/sanitized'' in siem_client.rs, and Dev implemented ''header injection
+    prevention''. Same vulnerability class (CWE-113) addressed, though type-safety
+    fix (using TenantId) not specifically mentioned.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Cargo.toml changes show +2 additions for uuid and chrono as direct dependencies.
-    No mention of workspace = true convention enforcement anywhere in the pipeline.
+  evidence: Dev added uuid and chrono as direct dependencies in Cargo.toml. No mention
+    of workspace = true convention. Reviewer output is empty and did not flag this.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: "TEA says 'Token field in TOML file is ignored (OS keychain only)' \u2014\
-    \ this encodes silent ignoring as correct behavior, which IS the vulnerability.\
-    \ No test for deny_unknown_fields or warning on unrecognized fields. Dev says\
-    \ 'token rejection' but the broader unknown-field issue is unaddressed."
+  evidence: "TEA tests 'Token field in TOML file is ignored (OS keychain only)' as\
+    \ desired behavior. Dev implements 'token rejection'. Pipeline treats silent ignoring\
+    \ of token as correct security behavior rather than identifying it as a problem\
+    \ \u2014 opposite conclusion from ground truth which says users are misled by\
+    \ silent ignore without warning."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ...). This is a bug in TEA's own test output that passed through dev and review
-    uncaught.
+  evidence: No mention of vacuously true assertions or the is_none() || pattern in
+    any phase output. TEA wrote config_loading tests but did not flag or avoid this
+    pattern.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test (let _ = config). This is
-    a bug in TEA's own test output that passed through dev and review uncaught.
+  evidence: No mention of zero-assertion tests or the 'let _ = config' pattern. No
+    phase flagged tests lacking assertions on default config values.

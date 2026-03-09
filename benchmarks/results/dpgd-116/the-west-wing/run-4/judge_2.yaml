@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: the-west-wing
+run_id: 4
+judge_version: v2
+judge_pass: 2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The security.rs tests mention 'silent error swallowing' but the Dev implemented
+    from_file_or_default using unwrap_or_default() pattern. The Reviewer did not flag
+    this specific issue. No test distinguishes NotFound from parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented sanitized Display for ServerError and NotFound showing
+    generic messages (''server error'', ''resource not found'') without leaking internal
+    details. Reviewer verified: ''ServerError and NotFound Display messages are generic...
+    internal details stored in the tuple field are not exposed via Display.'''
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote header injection tests in siem_client.rs and security.rs covering
+    CRLF sanitization. Dev implemented sanitize_header_value rejecting \r and \n.
+    However, SiemClient.tenant_id still uses raw String rather than TenantId from
+    axiathon-core - the CRLF mitigation was implemented but the type-safety aspect
+    (using Option<TenantId>) was not addressed. The pipeline caught the injection
+    risk but not the type-safety gap.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The Dev actually introduced direct version strings (chrono, uuid added
+    directly). The Reviewer noted toml version mismatch but did not flag the workspace
+    = true pattern violation for the 6 dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged: 'ConfigFile does not use #[serde(deny_unknown_fields)]\
+    \ \u2014 unknown fields silently accepted... if someone adds token = \"secret\"\
+    \ to the config file, it's silently parsed and ignored rather than rejected with\
+    \ a security warning.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in any test. The pipeline did not flag this specific test logic issue.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic
+    with 'let _ = config'. The pipeline did not flag this test quality issue.

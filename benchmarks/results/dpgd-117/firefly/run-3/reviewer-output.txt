@@ -1,0 +1,143 @@
+Now I have everything I need. Let me compile my findings.
+
+---
+
+# Story 8.1 Review — River Tam Sees the Code's Soul
+
+*The numbers don't lie. The patterns are wrong. I can see the fractures in the envelope...*
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] ApiResponse envelope schema contradicts story AC and test expectations** — `crates/axiathon-core/src/types.rs:220-228`
+
+The `ApiResponse<T>` struct has `error: Option<ApiError>` (singular) and uses `skip_serializing_if = "Option::is_none"` on ALL three fields (`data`, `error`, `meta`). The story AC and tests demand:
+- `meta` **always present** with `request_id`, `timestamp`, `trace_id`
+- `errors` as an **always-present array** (empty on success)
+- `data` as null on error (not absent)
+
+The current type:
+1. Uses `error` (singular) not `errors` (array) — tests at lines 152, 177, 694, 729, 918, 994, 1025, 1037 all assert `json["errors"].is_array()`
+2. Skips serializing `meta` when None — tests at lines 137, 173, 919, 1024 assert `meta` is always present
+3. Skips serializing `data` when None — tests at line 170 assert `data` is null (present but null), not absent
+4. `ApiMeta` has `total/limit/offset` fields but is missing `request_id`, `timestamp`, `trace_id` which every test asserts
+
+This is a **schema mismatch between core types and the API contract**. The implementation will fail every envelope test.
+
+---
+
+**[CRITICAL] ApiMeta missing required fields** — `crates/axiathon-core/src/types.rs:296-304`
+
+`ApiMeta` has `total`, `limit`, `offset` (pagination fields). The AC requires `request_id` (UUID), `timestamp` (ISO 8601), and `trace_id` (String). These three fields are entirely absent from the struct. Every meta-related test will fail.
+
+---
+
+### HIGH
+
+**[HIGH] Nightly rustfmt check fails** — `crates/axiathon-server/tests/rest_api_foundation.rs:48-49,66-67`
+
+`cargo +nightly fmt --all --check` reports formatting diffs in `rest_api_foundation.rs`. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Two line-wrapping diffs in the `send_request` and `send_request_with_headers` helpers.
+
+---
+
+**[HIGH] ApiError struct does not match RFC 9457 Problem Details** — `crates/axiathon-core/src/types.rs:280-287`
+
+The `ApiError` has fields `code`, `message`, `trace_id`, `details`. RFC 9457 requires `type` (URI), `title`, `status` (integer). Tests at lines 251-262 assert `error["type"]`, `error["title"]`, `error["status"]` — none of which exist on the current `ApiError` struct. The error shape is fundamentally wrong for the AC.
+
+---
+
+**[HIGH] Client-supplied X-Request-Id accepted without validation** — test at line 614-633
+
+The test `client_provided_request_id_is_honored` passes `"client-supplied-request-id-12345"` and expects it echoed verbatim. This is a **log injection / header injection vector** (CWE-117). The implementation must validate/sanitize client-supplied request IDs (length limit, character whitelist) before using them in tracing spans and log output. No test enforces sanitization of malicious request IDs (e.g., containing newlines, very long strings, or control characters).
+
+---
+
+**[HIGH] No test for `#![forbid(unsafe_code)]` enforcement** — `crates/axiathon-server/src/lib.rs:2`
+
+The `forbid(unsafe_code)` attribute is present but there is no CI or structural test asserting it remains. Other crates in the workspace could remove it silently. Given the security criticality, a compile-time or CI check is warranted.
+
+---
+
+### MEDIUM
+
+**[MEDIUM] Rate limiting tests may be flaky** — `crates/axiathon-server/tests/rest_api_foundation.rs:640-699`
+
+Three rate limit tests send up to 200 sequential requests using `app().oneshot()`. Each call creates a fresh `Router` via `app()` — if the rate limiter state lives inside `AppState` and `app()` creates a new state each time, the rate limiter resets on every call and 429 is never triggered. The test helpers call `app()` per-request (line 40). This design makes rate limit tests structurally unfalsifiable unless `app()` returns a shared-state router. The test should build one router and call `.clone()` on it.
+
+---
+
+**[MEDIUM] Missing test: oversized request body handling** — No test exists for payloads exceeding reasonable limits. The AC mentions rate limiting is configurable but there's no test for body size limits. Without Axum's `DefaultBodyLimit`, an attacker could send multi-GB payloads.
+
+---
+
+**[MEDIUM] Missing test: concurrent auth with different tenants** — The concurrent test at line 1114 only tests health (unauthenticated). No test verifies that concurrent authenticated requests with different tenant tokens maintain correct tenant isolation.
+
+---
+
+**[MEDIUM] `http-body-util` and `tower` dev-dependencies not workspace-managed** — `crates/axiathon-server/Cargo.toml:25,29`
+
+`http-body-util = "0.1"` and `tower = { version = "0.5" ... }` are declared inline rather than in `[workspace.dependencies]`. This violates the "workspace-level dependency declarations" rule from `rust.md`. `hyper = "1"` at line 26 is also not workspace-managed.
+
+---
+
+**[MEDIUM] `send_request` fallback silently swallows non-JSON responses** — `crates/axiathon-server/tests/rest_api_foundation.rs:48-49`
+
+When `serde_json::from_slice` fails, the helper wraps the body in `Value::String(...)`. This means a test could pass on a non-JSON response that happens to contain the string `"errors"` as a substring. The helper should `panic!` on non-JSON for tests that require JSON, or at minimum the envelope tests should assert the raw content-type first.
+
+---
+
+**[MEDIUM] `deprecated_endpoint_includes_deprecation_header` is a negative-only test** — line 1075-1090
+
+This test only verifies that a non-deprecated endpoint lacks the header. It never tests that a deprecated endpoint DOES include it. The AC says "test the mechanism" but only the absence case is covered. The positive case — where the Deprecation header appears — is untestable without a deprecated route being registered, and no such route exists even as a test fixture.
+
+---
+
+### LOW
+
+**[LOW] Unnecessary `serde_json` in both `[dependencies]` and `[dev-dependencies]`** — `crates/axiathon-server/Cargo.toml:17,27`
+
+`serde_json` appears in both dependency sections. The dev-dependency entry is redundant since the main dependency already makes it available to tests.
+
+---
+
+**[LOW] Test file comment claims AC10 (Graceful shutdown) but only tests router construction** — line 1093-1107
+
+The "AC10: Graceful shutdown" section comment at line 1093 is misleading. The actual test (`app_function_returns_router`) only verifies that `app()` returns a working `Router`. No shutdown signal handling is tested. The comment should be corrected.
+
+---
+
+**[LOW] Test token strings are magic constants** — lines 73-84
+
+`"Bearer test-valid-token"`, `"Bearer test-expired-token"`, `"Bearer test-api-key-events-write"` etc. are scattered as magic strings. These create a tight coupling between test expectations and implementation — the implementor must reverse-engineer which exact strings to recognize. A shared constants module or test fixtures file would be cleaner.
+
+---
+
+### VERIFIED
+
+- **[VERIFIED]** `#![forbid(unsafe_code)]` present in both `axiathon-server/src/lib.rs:2` and `axiathon-core/src/lib.rs:2`
+- **[VERIFIED]** `AxiathonError` is `#[non_exhaustive]` at `axiathon-core/src/error.rs:14`
+- **[VERIFIED]** Security `Display` doc-comment present on `AxiathonError` at `axiathon-core/src/error.rs:6-12`
+- **[VERIFIED]** `TenantContext` fields are private with getters at `axiathon-core/src/types.rs:113-149`
+- **[VERIFIED]** `TenantId::new()` validates at trust boundary (UUID format, length) at `axiathon-core/src/types.rs:17-31`
+- **[VERIFIED]** UUID v7 used for `EventId` and `AlertId` at `axiathon-core/src/types.rs:62,87`
+- **[VERIFIED]** Workspace lints configured at root `Cargo.toml:58-65`, inherited by crates
+- **[VERIFIED]** Tests cover auth edge cases: missing header, expired, malformed, empty bearer, wrong scope, revoked key
+- **[VERIFIED]** CWE-209 information exposure tests present at lines 926-973
+- **[VERIFIED]** CORS preflight test includes both origin and methods headers
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*Simon, write this down. The envelope is broken. The shape of ApiResponse doesn't match what the tests expect — it's a singular `error` field where the contract demands an `errors` array. The meta has pagination fields where it should have `request_id` and `timestamp`. The RFC 9457 fields (`type`, `title`, `status`) don't exist on `ApiError`. These aren't cosmetic — these are structural mismatches between the type system and the API contract.*
+
+*Also: the nightly fmt check fails. Fix before approval.*
+
+### Blocking issues (must fix):
+1. **CRITICAL**: `ApiResponse` envelope shape — `error` (singular/Option) must become `errors` (always-present array); `data` must serialize as `null` not be absent; `meta` must always be present
+2. **CRITICAL**: `ApiMeta` must have `request_id`, `timestamp`, `trace_id` — not pagination fields
+3. **HIGH**: `ApiError` must use RFC 9457 field names (`type`, `title`, `status`) not (`code`, `message`)
+4. **HIGH**: Fix nightly rustfmt formatting diffs

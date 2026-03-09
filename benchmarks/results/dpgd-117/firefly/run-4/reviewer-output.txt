@@ -1,0 +1,123 @@
+I've read all changed files (6 new, 2 modified), all 4 test files, the Cargo.toml, and the axiathon-core types. Tests pass (81/81), clippy is clean. Nightly fmt fails. Here's the adversarial review.
+
+---
+
+# Review: Story 8.1 — REST API Foundation
+
+*I can see it. All of it. The code's bones, its secrets, the places where it lies to itself.*
+
+## Findings
+
+### `[HIGH]` Nightly `rustfmt` fails — import ordering violations
+**Files:** `error.rs`, `middleware.rs`
+
+`cargo +nightly fmt --all --check` reports import ordering diffs in both files. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." This blocks merge in CI.
+
+---
+
+### `[HIGH]` No structured logging anywhere — errors sanitized then silently discarded
+**File:** `error.rs:18-61`, all middleware functions
+
+The error mapping function `into_api_error_response` correctly sanitizes internal details (CWE-209) but **never logs the original error**. There's not a single `tracing::error!()`, `tracing::warn!()`, or `tracing::info!()` call in the entire crate despite `tracing` being a dependency. When a `Storage("parquet write failed at /data/...")` error occurs, the client gets "An internal error occurred" and the original context vanishes into the void. This makes production debugging impossible.
+
+The middleware functions (`auth`, `tenant`, `cors`, `security_headers`, `request_id`) also have zero tracing spans or log lines — no record of rejected requests, auth failures, or tenant validation failures.
+
+---
+
+### `[MEDIUM]` CORS middleware never sets `Access-Control-Allow-Origin` — browser requests will fail
+**File:** `middleware.rs:42-59`
+
+The CORS preflight handler returns `access-control-allow-methods`, `access-control-allow-headers`, `access-control-max-age`, and `vary` — but never `Access-Control-Allow-Origin`. Without that header, every browser preflight check fails. The `cors_allowed_origins` field in `ServerConfig` is never consulted because the middleware has no access to state. The CORS implementation is non-functional for its stated purpose.
+
+---
+
+### `[MEDIUM]` `ServerConfig` is dead code — defined but never wired into `AppState` or router
+**File:** `config.rs:1-22`, `state.rs`
+
+`ServerConfig` defines `host`, `port`, `request_body_limit_mb`, `request_timeout_secs`, `cors_allowed_origins` — none of which are consumed anywhere. `AppState` doesn't contain `ServerConfig`. `build_router()` doesn't accept it. The AC says "Rate limit configuration should be loadable from TOML/YAML" — config exists as a struct but has no serde derives (`Deserialize`) and no file-loading mechanism.
+
+---
+
+### `[MEDIUM]` `into_api_error_response` is dead code — defined but never called
+**File:** `error.rs:18`
+
+The error mapping function is tested in `error_mapping_tests.rs` (17 tests pass), but no handler or middleware actually calls it. The middleware uses `json_error()` directly. When real handlers replace stubs, there's no integration point ensuring this function gets used.
+
+---
+
+### `[MEDIUM]` Duplicate `ApiResponse<T>` type diverges from axiathon-core
+**Files:** `response.rs:12-65` vs `axiathon-core/src/types.rs:220-278`
+
+axiathon-core defines `ApiResponse<T>` with field `error` (singular `Option<ApiError>`) and `meta: Option<ApiMeta>`. The server crate defines its own `ApiResponse<T>` with `errors: Vec<ApiError>` (always-present array) and `meta: ResponseMeta` (always present). The module doc acknowledges this divergence, but having two competing envelope types in the same workspace is a maintenance trap. Downstream crates importing `axiathon_core::ApiResponse` will get a different type than what the server actually returns.
+
+---
+
+### `[MEDIUM]` 6 unused crate dependencies inflate build times
+**File:** `Cargo.toml:10-14, 19-22`
+
+`axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage` are declared as dependencies but not imported in any source file. `thiserror`, `tracing`, and `tracing-subscriber` are also declared but unused. These add to compile time for zero benefit today.
+
+---
+
+### `[MEDIUM]` Auth stub silently passes requests with no Authorization header
+**File:** `middleware.rs:155-157`
+
+The auth middleware passes through requests with **no** `Authorization` header entirely. This is documented as "stub behavior" and the test at `middleware_tests.rs:306-327` accepts both 401 and 501. However, this means every protected endpoint is currently unprotected — any request with a valid tenant ID but no auth token reaches the handler. The test's `assert!(status == 401 || status == 501)` assertion is a tautological safety net that always passes regardless of whether auth is enforced.
+
+---
+
+### `[LOW]` Test `x_request_id_is_valid_uuid` tests `uuid` crate, not the middleware
+**File:** `middleware_tests.rs:255-261`
+
+This test creates a new UUID and parses it — it's testing the `uuid` crate's own functionality. It should extract the `X-Request-ID` header from an actual HTTP response and verify *that* value is a valid UUID. The actual header-based validation only happens implicitly in `request_id_appears_in_response_meta`.
+
+---
+
+### `[LOW]` Health endpoint path hardcoded in 3 places — drift risk
+**Files:** `middleware.rs:64`, `middleware.rs:122`, `router.rs:29`
+
+The string `"/api/v1/health"` appears in `tenant()`, `auth()`, and `build_router()`. A constant would prevent silent drift if the path changes.
+
+---
+
+### `[LOW]` Tenant ID length check uses untrimmed value, UUID parse uses trimmed
+**File:** `middleware.rs:88-112`
+
+`trimmed = id.trim()` is used for emptiness and UUID parsing, but `id.len() > 128` checks the original (with whitespace). Inconsistent — a UUID with 100 spaces and a valid UUID string could hit the length limit. Minor, since valid UUIDs are 36 chars, but the logic path is misleading.
+
+---
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in `lib.rs:2`
+
+### `[VERIFIED]` CWE-209 sanitization — error mapping never leaks internal details (17 tests confirm)
+
+### `[VERIFIED]` `FromRef<AppState>` substate pattern correctly implemented for all 5 service types
+
+### `[VERIFIED]` Envelope format correct — `data`, `errors` (always array), `meta` (always present) with `request_id` (UUID), `timestamp` (ISO 8601), `trace_id`
+
+### `[VERIFIED]` Security headers (X-Content-Type-Options, X-Frame-Options, CSP) applied to all responses including errors and 404s
+
+### `[VERIFIED]` Request ID propagation — header matches `meta.request_id` in body, unique per request
+
+### `[VERIFIED]` Tenant validation rejects empty, whitespace-only, non-UUID, and oversized values
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | - |
+| High | 2 | YES |
+| Medium | 6 | No |
+| Low | 3 | No |
+| Verified | 7 | - |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High-severity issues block approval:
+
+1. **Nightly fmt failure** — CI will reject this. Run `cargo +nightly fmt --all` and recommit.
+2. **Zero observability** — The `tracing` dependency is declared but unused. At minimum, `into_api_error_response` must log the original error before sanitizing, and auth/tenant rejection should emit a warning. A security API that silently swallows errors is not production-viable, even for a foundation story.
+
+Fix those two, and the Medium findings (dead code, unused deps, CORS not wired) become acceptable tech debt for a stub story with follow-up planned.

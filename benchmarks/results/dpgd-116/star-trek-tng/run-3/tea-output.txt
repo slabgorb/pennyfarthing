@@ -1,0 +1,32 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the foundational CLI framework — all 10 ACs require structural and behavioral validation.
+
+**Test Files:**
+| File | AC Coverage | Tests |
+|------|------------|-------|
+| `tests/cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 30 |
+| `tests/cli_error.rs` | AC-3, AC-7 (error mapping) | 22 |
+| `tests/output_format.rs` | AC-4 | 18 |
+| `tests/siem_client.rs` | AC-7 | 15 |
+| `tests/config_loading.rs` | AC-8 | 13 |
+| `tests/shell_completion.rs` | AC-9 | 6 |
+| `tests/stub_handlers.rs` | AC-10 | 13 |
+| `tests/binary_integration.rs` | AC-2, AC-3, AC-5, AC-9, AC-10 | 14 |
+
+**Tests Written:** 131 tests covering all 10 ACs
+**Status:** RED (failing — compile errors due to missing modules)
+
+**Security tests included:**
+- CWE-209: error messages must not leak internal paths/details
+- Header injection: CRLF in tenant ID and auth token rejected
+- Token not in config file (must use OS keychain)
+- SQL injection chars in --tenant don't cause panics
+- No silent error swallowing in SiemClient
+
+**Cargo.toml changes:**
+- Added workspace deps: `reqwest`, `clap_complete`, `comfy-table`, `dirs`, `csv`, `toml`, `tempfile`, `assert_cmd`
+- Updated `axiathon-client/Cargo.toml` with all Story 6.1 dependencies and `[[bin]]` target
+
+**Handoff:** To Dev for implementation (GREEN phase)
