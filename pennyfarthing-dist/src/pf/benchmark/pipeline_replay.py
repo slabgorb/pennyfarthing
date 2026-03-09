@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -72,6 +73,9 @@ class PhaseResult:
     token_usage: dict[str, int] = field(default_factory=dict)
     duration_s: float = 0.0
     exit_code: int = 0
+    model_usage: dict[str, Any] = field(default_factory=dict)
+    cost_usd: float = 0.0
+    session_id: str | None = None
 
 
 @dataclass
@@ -82,6 +86,7 @@ class PipelineResult:
     worktree_path: str
     phases: dict[str, PhaseResult] = field(default_factory=dict)
     timestamp: str = ""
+    model: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +161,30 @@ def create_worktree(
     commit: str,
     worktree_path: Path,
 ) -> Path:
-    """Create a detached git worktree at *commit*."""
+    """Create a detached git worktree at *commit*.
+
+    Handles stale worktrees from killed runs by force-removing them first.
+    """
+    if worktree_path.exists():
+        # Try to remove stale worktree via git
+        subprocess.run(
+            ["git", "worktree", "remove", "--force", str(worktree_path)],
+            cwd=str(repo_path),
+            capture_output=True,
+            text=True,
+        )
+        # If dir still exists (orphaned), remove manually
+        if worktree_path.exists():
+            shutil.rmtree(worktree_path)
+
+    # Prune dead worktree refs
+    subprocess.run(
+        ["git", "worktree", "prune"],
+        cwd=str(repo_path),
+        capture_output=True,
+        text=True,
+    )
+
     worktree_path.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         ["git", "worktree", "add", "--detach", str(worktree_path), commit],
@@ -351,20 +379,54 @@ def build_phase_claude_md(
 # ---------------------------------------------------------------------------
 
 
+def _build_otel_env(otel_endpoint: str) -> dict[str, str]:
+    """Build the 5 OTEL env vars for a claude subprocess.
+
+    Replicates the pattern from bikerack/launcher.py:build_otel_env()
+    without importing it (avoids cross-package dependency).
+    """
+    return {
+        "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+        "OTEL_LOGS_EXPORTER": "otlp",
+        "OTEL_METRICS_EXPORTER": "otlp",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": otel_endpoint,
+    }
+
+
+def _detect_otel_endpoint(project_dir: Path) -> str | None:
+    """Auto-detect OTEL endpoint from running WheelHub (.bikerack-port file)."""
+    port_file = project_dir / ".bikerack-port"
+    if not port_file.exists():
+        return None
+    try:
+        port = int(port_file.read_text().strip())
+        return f"http://localhost:{port}"
+    except (ValueError, OSError):
+        return None
+
+
 def run_phase(
     worktree_path: Path,
     role: str,
     task_prompt: str,
     *,
     model: str | None = None,
+    otel_endpoint: str | None = None,
 ) -> PhaseResult:
     """Run a single pipeline phase via ``claude -p`` in the worktree.
 
     CLAUDE.md must already be in place before calling this.
+    When *otel_endpoint* is set, injects OTEL env vars so traces flow
+    to the specified collector.
     """
     cmd = ["claude", "-p", task_prompt, "--output-format", "json"]
     if model:
         cmd.extend(["--model", model])
+
+    env = None
+    if otel_endpoint:
+        env = {**os.environ, **_build_otel_env(otel_endpoint)}
 
     start = time.monotonic()
     result = subprocess.run(
@@ -372,11 +434,15 @@ def run_phase(
         cwd=str(worktree_path),
         capture_output=True,
         text=True,
+        env=env,
     )
     elapsed = time.monotonic() - start
 
     output_text = ""
     token_usage: dict[str, int] = {}
+    model_usage: dict[str, Any] = {}
+    cost_usd: float = 0.0
+    session_id: str | None = None
 
     if result.stdout.strip():
         try:
@@ -385,8 +451,13 @@ def run_phase(
             usage = data.get("usage", {})
             token_usage = {
                 "input": usage.get("input_tokens", 0),
+                "cache_creation": usage.get("cache_creation_input_tokens", 0),
+                "cache_read": usage.get("cache_read_input_tokens", 0),
                 "output": usage.get("output_tokens", 0),
             }
+            model_usage = data.get("modelUsage", {})
+            cost_usd = data.get("total_cost_usd", 0.0)
+            session_id = data.get("session_id")
         except json.JSONDecodeError:
             output_text = result.stdout
 
@@ -396,6 +467,9 @@ def run_phase(
         token_usage=token_usage,
         duration_s=round(elapsed, 2),
         exit_code=result.returncode,
+        model_usage=model_usage,
+        cost_usd=cost_usd,
+        session_id=session_id,
     )
 
 
@@ -412,6 +486,7 @@ def run_pipeline(
     project_dir: Path,
     worktree_base: Path,
     model: str | None = None,
+    otel_endpoint: str | None = None,
 ) -> PipelineResult:
     """Run the full TEA -> Dev -> Reviewer pipeline.
 
@@ -419,7 +494,20 @@ def run_pipeline(
     2. For each phase, writes CLAUDE.md with the agent prompt + context,
        then runs ``claude -p`` with the phase task prompt.
     3. Returns the collected results.
+
+    If *otel_endpoint* is not given, auto-detects from a running WheelHub
+    instance via ``.bikerack-port``.
     """
+    # OTEL auto-detection
+    if otel_endpoint is None:
+        otel_endpoint = _detect_otel_endpoint(project_dir)
+        if otel_endpoint:
+            print(f"  [OTEL] Auto-detected WheelHub at {otel_endpoint}")
+        else:
+            print("  [OTEL] No endpoint configured (WheelHub not running)")
+    else:
+        print(f"  [OTEL] Using endpoint: {otel_endpoint}")
+
     tag = theme or "control"
     wt_name = f"{scenario.id}-{tag}-run-{run_id}"
     wt_path = worktree_base / wt_name
@@ -431,6 +519,7 @@ def run_pipeline(
         run_id=run_id,
         worktree_path=str(wt_path),
         timestamp=datetime.now(UTC).isoformat(),
+        model=model or "opus",
     )
 
     # Create worktree
@@ -456,13 +545,19 @@ def run_pipeline(
                 role,
                 task_prompt,
                 model=model,
+                otel_endpoint=otel_endpoint,
             )
             result.phases[role] = phase_result
 
             tokens = phase_result.token_usage
+            actual_models = list(phase_result.model_usage.keys())
+            model_str = actual_models[0] if actual_models else model or "?"
+            cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
+            otel_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
             print(
                 f"  [{role.upper()}] Done in {phase_result.duration_s}s "
-                f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens)"
+                f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
+                f"model={model_str}{cost_str}{otel_str})"
             )
 
             if phase_result.exit_code != 0:
@@ -901,12 +996,14 @@ def save_result(
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
-    run_dir = (
-        output_dir
-        / pipeline_result.scenario_id
-        / tag
-        / f"run-{pipeline_result.run_id}"
-    )
+    expected_suffix = Path(pipeline_result.scenario_id) / tag
+    # Avoid double-nesting when output_dir already ends with scenario/theme
+    if output_dir.parts[-2:] == expected_suffix.parts:
+        run_dir = output_dir / f"run-{pipeline_result.run_id}"
+    elif output_dir.parts[-1:] == (pipeline_result.scenario_id,):
+        run_dir = output_dir / tag / f"run-{pipeline_result.run_id}"
+    else:
+        run_dir = output_dir / pipeline_result.scenario_id / tag / f"run-{pipeline_result.run_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Save phase outputs
@@ -916,17 +1013,34 @@ def save_result(
         (run_dir / f"{role}-output.txt").write_text(pr.output_text)
 
     # Save pipeline metadata
+    # Collect actual models used across phases
+    models_used = set()
+    for pr in pipeline_result.phases.values():
+        if not pr.role.startswith("_"):
+            models_used.update(pr.model_usage.keys())
+
+    total_cost = sum(
+        pr.cost_usd for pr in pipeline_result.phases.values()
+        if not pr.role.startswith("_")
+    )
+
     meta = {
         "scenario_id": pipeline_result.scenario_id,
         "theme": pipeline_result.theme,
         "run_id": pipeline_result.run_id,
         "timestamp": pipeline_result.timestamp,
+        "model_requested": pipeline_result.model,
+        "models_used": sorted(models_used) if models_used else [pipeline_result.model or "unknown"],
+        "total_cost_usd": round(total_cost, 4) if total_cost else None,
         "worktree_path": pipeline_result.worktree_path,
         "phases": {
             role: {
                 "token_usage": pr.token_usage,
+                "model_usage": pr.model_usage or None,
+                "cost_usd": round(pr.cost_usd, 4) if pr.cost_usd else None,
                 "duration_s": pr.duration_s,
                 "exit_code": pr.exit_code,
+                "session_id": pr.session_id,
             }
             for role, pr in pipeline_result.phases.items()
             if not role.startswith("_")
@@ -942,6 +1056,7 @@ def save_result(
             "scenario_id": score.scenario_id,
             "theme": score.theme,
             "run_id": score.run_id,
+            "model": pipeline_result.model,
             "judge_version": score.judge_version,
             "total_caught": score.total_caught,
             "total_findings": score.total_findings,
@@ -1061,6 +1176,7 @@ def reconstruct_pipeline_result(
         worktree_path=meta.get("worktree_path", ""),
         phases=phases,
         timestamp=meta.get("timestamp", ""),
+        model=meta.get("model"),
     )
 
 
@@ -1099,6 +1215,7 @@ def run_judge_pass(
         "scenario_id": score.scenario_id,
         "theme": score.theme,
         "run_id": score.run_id,
+        "model": pipeline_result.model,
         "judge_version": JUDGE_VERSION,
         "judge_pass": pass_num,
         "total_caught": score.total_caught,
@@ -1185,6 +1302,7 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
         "judge_method": "majority_vote",
         "n_judges": n_judges,
         "majority_threshold": majority,
+        "model": all_scores[0].get("model"),
         "judge_version": JUDGE_VERSION,
         "total_caught": total_caught,
         "total_findings": len(majority_findings),

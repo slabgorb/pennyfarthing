@@ -319,7 +319,8 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Tandem Protocol](pennyfarthing-dist/guides/tandem-protocol.md) | Background observer pairing |
 | [Output Styles](pennyfarthing-dist/guides/output-styles.md) | Configurable response modes |
 | [Brownfield Tools](pennyfarthing-dist/guides/brownfield-tools.md) | Codebase analysis CLI tools |
-| [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system |
+| [Peloton Testing](pennyfarthing-dist/guides/peloton.md) | Pipeline replay benchmarks from real PR reviews |
+| [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system (JobFair) |
 
 ## Available Themes (100)
 

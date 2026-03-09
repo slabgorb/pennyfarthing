@@ -6,6 +6,11 @@ Usage:
     pf benchmark replay compare <scenario.yaml>
 
 Must be run from a regular terminal (not inside Claude Code).
+
+Extension discovery:
+    Projects can register additional benchmark commands by placing Python files
+    in `.pennyfarthing/extensions/benchmark/`. Each file must define a
+    `register(parent)` function that adds Click commands to the parent group.
 """
 
 from __future__ import annotations
@@ -15,11 +20,17 @@ from pathlib import Path
 import click
 import yaml
 
+from pf.extensions import load_extensions
+
 
 @click.group()
 def benchmark():
     """Benchmark tools — pipeline replay, scoring, comparison."""
     pass
+
+
+# Load project-local extensions (lazy — only runs when benchmark group is invoked)
+load_extensions(benchmark, "benchmark")
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +70,11 @@ def replay():
 @click.option("--judge-model", default=None, help="Claude model for scoring judge")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option(
+    "--otel-endpoint",
+    default=None,
+    help="OTEL collector endpoint (auto-detects WheelHub if omitted)",
+)
 def replay_run(
     scenario_path,
     theme,
@@ -70,6 +86,7 @@ def replay_run(
     judge_model,
     skip_score,
     keep_worktree,
+    otel_endpoint,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
@@ -120,6 +137,7 @@ def replay_run(
             project_dir=project,
             worktree_base=wt_base,
             model=model,
+            otel_endpoint=otel_endpoint,
         )
 
         # Score
@@ -361,13 +379,18 @@ def replay_compare(scenario_path, results_dir):
     # Collect all scored runs
     all_scores: list[PipelineScore] = []
     for theme_dir in sorted(scenario_dir.iterdir()):
-        if not theme_dir.is_dir() or theme_dir.name == "comparison.yaml":
+        if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
             continue
         for run_dir in sorted(theme_dir.iterdir()):
-            score_file = run_dir / "score.yaml"
-            if not score_file.exists():
+            if not run_dir.is_dir() or not run_dir.name.startswith("run-"):
                 continue
-            score_data = yaml.safe_load(score_file.read_text())
+            # Prefer majority_vote.yaml over score.yaml
+            mv_file = run_dir / "majority_vote.yaml"
+            score_file = run_dir / "score.yaml"
+            chosen = mv_file if mv_file.exists() else score_file
+            if not chosen.exists():
+                continue
+            score_data = yaml.safe_load(chosen.read_text())
             all_scores.append(
                 PipelineScore(
                     scenario_id=score_data["scenario_id"],
