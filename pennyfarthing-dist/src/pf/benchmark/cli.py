@@ -278,7 +278,7 @@ def _print_finding_rates(theme_stats, finding_ids, scenario):
 
 def _print_dimension_correlation(theme_stats, scenario):
     """Cross-reference theme dimensions with benchmark scores."""
-    from pf.benchmark.aggregator import _load_theme_dimensions, _default_themes_dir
+    from pf.benchmark.aggregator import _default_themes_dir, _load_theme_dimensions
 
     themes_dir = _default_themes_dir()
     overall_avg = sum(s["avg"] for s in theme_stats.values()) / len(theme_stats)
@@ -384,7 +384,7 @@ def _finding_rate_data(theme_stats, finding_ids, scenario):
 
 
 def _dimension_data(theme_stats):
-    from pf.benchmark.aggregator import _load_theme_dimensions, _default_themes_dir
+    from pf.benchmark.aggregator import _default_themes_dir, _load_theme_dimensions
 
     themes_dir = _default_themes_dir()
     overall_avg = sum(s["avg"] for s in theme_stats.values()) / len(theme_stats)
