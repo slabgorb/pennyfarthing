@@ -43,14 +43,8 @@ class TestDeadScriptsDeleted:
 
     def test_dead_scripts_deleted(self) -> None:
         """All four dead scripts should be deleted."""
-        survivors = [
-            str(p.relative_to(_DIST))
-            for p in self.DEAD_SCRIPTS
-            if p.exists()
-        ]
-        assert not survivors, (
-            f"Dead scripts should be deleted: {survivors}"
-        )
+        survivors = [str(p.relative_to(_DIST)) for p in self.DEAD_SCRIPTS if p.exists()]
+        assert not survivors, f"Dead scripts should be deleted: {survivors}"
 
 
 class TestOutputPersonaRemoved:
@@ -95,15 +89,19 @@ class TestNoStaleReferences:
                 if rel in _ALLOWED_REFERRERS:
                     continue
                 # Skip build artifacts and bundled server
-                if "build/" in rel or "node_modules/" in rel or "__pycache__" in rel or "_dist/" in rel:
+                if (
+                    "build/" in rel
+                    or "node_modules/" in rel
+                    or "__pycache__" in rel
+                    or "_dist/" in rel
+                ):
                     continue
                 content = _read_text(path)
                 matches = _DEAD_SCRIPT_RE.findall(content)
                 if matches:
                     violations.append(f"{rel}: {matches}")
-        assert not violations, (
-            "Stale references to deleted scripts found:\n"
-            + "\n".join(f"  - {v}" for v in violations)
+        assert not violations, "Stale references to deleted scripts found:\n" + "\n".join(
+            f"  - {v}" for v in violations
         )
 
 
@@ -119,39 +117,39 @@ class TestPfCliEquivalentsWork:
         """pf sprint backlog should exit 0."""
         result = subprocess.run(
             ["pf", "sprint", "backlog"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        assert result.returncode == 0, (
-            f"pf sprint backlog failed: {result.stderr}"
-        )
+        assert result.returncode == 0, f"pf sprint backlog failed: {result.stderr}"
 
     def test_pf_backlog_alias(self) -> None:
         """pf backlog (sugar alias) should exit 0."""
         result = subprocess.run(
             ["pf", "backlog"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        assert result.returncode == 0, (
-            f"pf backlog failed: {result.stderr}"
-        )
+        assert result.returncode == 0, f"pf backlog failed: {result.stderr}"
 
     def test_pf_workflow_type(self) -> None:
         """pf workflow type tdd should return non-empty output."""
         result = subprocess.run(
             ["pf", "workflow", "type", "tdd"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        assert result.returncode == 0, (
-            f"pf workflow type tdd failed: {result.stderr}"
-        )
+        assert result.returncode == 0, f"pf workflow type tdd failed: {result.stderr}"
         assert result.stdout.strip(), "pf workflow type tdd returned empty output"
 
     def test_pf_validate_agent(self) -> None:
         """pf validate agent should exit 0."""
         result = subprocess.run(
             ["pf", "validate", "agent"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        assert result.returncode == 0, (
-            f"pf validate agent failed: {result.stderr}"
-        )
+        assert result.returncode == 0, f"pf validate agent failed: {result.stderr}"

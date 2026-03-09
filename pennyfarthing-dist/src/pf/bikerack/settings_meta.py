@@ -170,9 +170,7 @@ for _spec in _SPECS:
 HIDDEN_KEYS: set[str] = {"last_panel", "layout", "split", "display.colorPreset"}
 
 
-def _flatten_defaults(
-    data: dict[str, Any], prefix: str = ""
-) -> list[tuple[str, Any]]:
+def _flatten_defaults(data: dict[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
     """Walk a nested dict yielding (dot_path, value) pairs."""
     items: list[tuple[str, Any]] = []
     for key, value in data.items():

@@ -100,7 +100,9 @@ def replay_run(
 
     project = Path(project_dir) if project_dir else Path.cwd()
     wt_base = Path(worktree_base)
-    out_dir = Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    out_dir = (
+        Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    )
 
     scenario = load_scenario(scenario_path, project_dir=project)
 
@@ -144,9 +146,7 @@ def replay_run(
         score = None
         if not skip_score:
             click.echo("  [JUDGE] Scoring against ground truth...")
-            score = score_with_judge(
-                scenario, result, model=judge_model, project_dir=project
-            )
+            score = score_with_judge(scenario, result, model=judge_model, project_dir=project)
             click.echo(
                 f"  [JUDGE] Score: {score.weighted_caught}/{score.total_weight} "
                 f"({score.score_pct}%) — {score.total_caught}/{score.total_findings} findings"
@@ -259,9 +259,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
     scenario = load_scenario(scenario_path, project_dir=project)
 
     base = (
-        Path(results_dir)
-        if results_dir
-        else project / "internal" / "results" / "pipeline-replay"
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
     )
     scenario_dir = base / scenario.id
 
@@ -326,9 +324,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
                 break
             start = time.time()
             try:
-                result = run_judge_pass(
-                    run_dir, scenario, p, model=model, project_dir=project
-                )
+                result = run_judge_pass(run_dir, scenario, p, model=model, project_dir=project)
                 elapsed = time.time() - start
                 if result:
                     click.echo(f"    Pass {p}: {result['score_pct']}% ({elapsed:.0f}s)")
@@ -341,9 +337,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
         if not shutdown:
             mv = compute_majority_vote(run_dir, scenario)
             if mv:
-                click.echo(
-                    f"    Majority vote ({mv['n_judges']}j): {mv['score_pct']}%"
-                )
+                click.echo(f"    Majority vote ({mv['n_judges']}j): {mv['score_pct']}%")
 
     click.echo()
     click.echo(f"=== Done: {judged} judge passes added, {skipped} runs already at target ===")
@@ -369,7 +363,9 @@ def replay_compare(scenario_path, results_dir):
     project = Path.cwd()
     scenario = load_scenario(scenario_path, project_dir=project)
 
-    base = Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    base = (
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    )
     scenario_dir = base / scenario.id
 
     if not scenario_dir.exists():
@@ -396,9 +392,7 @@ def replay_compare(scenario_path, results_dir):
                     scenario_id=score_data["scenario_id"],
                     theme=score_data.get("theme"),
                     run_id=score_data["run_id"],
-                    findings=[
-                        FindingScore(**f) for f in score_data.get("findings", [])
-                    ],
+                    findings=[FindingScore(**f) for f in score_data.get("findings", [])],
                     total_caught=score_data["total_caught"],
                     total_findings=score_data["total_findings"],
                     weighted_caught=score_data["weighted_caught"],
@@ -438,10 +432,7 @@ def _print_run_summary(scenario, scores):
     click.echo("\n  Finding detection rates:")
     for gt in scenario.ground_truth:
         caught_count = sum(
-            1
-            for s in scores
-            for f in s.findings
-            if f.finding_id == gt.id and f.caught
+            1 for s in scores for f in s.findings if f.finding_id == gt.id and f.caught
         )
         rate = caught_count / len(scores) * 100
         click.echo(f"    {gt.id}: {caught_count}/{len(scores)} ({rate:.0f}%) — {gt.title}")
@@ -462,10 +453,7 @@ def _print_run_summary(scenario, scores):
     for phase in scenario.phases:
         findings = phase_catches.get(phase, {})
         total = sum(findings.values())
-        detail = ", ".join(
-            f"{fid}({c}/{len(scores)})"
-            for fid, c in sorted(findings.items())
-        )
+        detail = ", ".join(f"{fid}({c}/{len(scores)})" for fid, c in sorted(findings.items()))
         click.echo(f"    {phase:10s}: {total:2d} catches — {detail if detail else 'none'}")
 
 

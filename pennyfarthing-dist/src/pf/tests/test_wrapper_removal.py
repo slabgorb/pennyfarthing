@@ -94,9 +94,7 @@ class TestHookShimsClean:
             content = _read_text(self.HOOK_DIR / name)
             if _WRAPPER_SOURCE_RE.search(content):
                 violations.append(name)
-        assert not violations, (
-            f"Hook shims still source run-pf.sh: {violations}"
-        )
+        assert not violations, f"Hook shims still source run-pf.sh: {violations}"
 
     def test_hook_shims_no_exec_pf(self) -> None:
         """No hook shim should call exec_pf."""
@@ -105,9 +103,7 @@ class TestHookShimsClean:
             content = _read_text(self.HOOK_DIR / name)
             if _EXEC_PF_RE.search(content):
                 violations.append(name)
-        assert not violations, (
-            f"Hook shims still call exec_pf: {violations}"
-        )
+        assert not violations, f"Hook shims still call exec_pf: {violations}"
 
     def test_hook_shims_no_uv_run(self) -> None:
         """No hook shim should reference uv run."""
@@ -116,9 +112,7 @@ class TestHookShimsClean:
             content = _read_text(self.HOOK_DIR / name)
             if _UV_RUN_RE.search(content):
                 violations.append(name)
-        assert not violations, (
-            f"Hook shims still reference uv run: {violations}"
-        )
+        assert not violations, f"Hook shims still reference uv run: {violations}"
 
 
 # ---------------------------------------------------------------------------
@@ -145,9 +139,7 @@ class TestNoUvReferencesInRuntime:
             content = _read_text(path)
             if _WRAPPER_SOURCE_RE.search(content):
                 violations.append(str(path.relative_to(_DIST)))
-        assert not violations, (
-            f"Runtime scripts still source run-pf.sh: {violations}"
-        )
+        assert not violations, f"Runtime scripts still source run-pf.sh: {violations}"
 
     def test_no_exec_pf_in_scripts(self) -> None:
         """No runtime script should call exec_pf."""
@@ -156,9 +148,7 @@ class TestNoUvReferencesInRuntime:
             content = _read_text(path)
             if _EXEC_PF_RE.search(content):
                 violations.append(str(path.relative_to(_DIST)))
-        assert not violations, (
-            f"Runtime scripts still call exec_pf: {violations}"
-        )
+        assert not violations, f"Runtime scripts still call exec_pf: {violations}"
 
     def test_no_run_pf_func_in_scripts(self) -> None:
         """No runtime script should call run_pf function."""
@@ -167,9 +157,7 @@ class TestNoUvReferencesInRuntime:
             content = _read_text(path)
             if _RUN_PF_FUNC_RE.search(content):
                 violations.append(str(path.relative_to(_DIST)))
-        assert not violations, (
-            f"Runtime scripts still call run_pf: {violations}"
-        )
+        assert not violations, f"Runtime scripts still call run_pf: {violations}"
 
     def test_no_uv_run_in_any_script(self) -> None:
         """No shell script under scripts/ should contain uv run."""
@@ -178,9 +166,7 @@ class TestNoUvReferencesInRuntime:
             content = _read_text(sh_file)
             if _UV_RUN_RE.search(content):
                 violations.append(str(sh_file.relative_to(_DIST)))
-        assert not violations, (
-            f"Shell scripts still reference uv run: {violations}"
-        )
+        assert not violations, f"Shell scripts still reference uv run: {violations}"
 
 
 # ---------------------------------------------------------------------------
@@ -206,9 +192,7 @@ class TestAgentDefinitionsClean:
             content = _read_text(_AGENTS / name)
             if _PF_SH_PATH_RE.search(content):
                 violations.append(name)
-        assert not violations, (
-            f"Agent definitions still reference pf.sh wrapper: {violations}"
-        )
+        assert not violations, f"Agent definitions still reference pf.sh wrapper: {violations}"
 
     def test_agent_behavior_guide_no_pf_sh_path(self) -> None:
         """agent-behavior.md should not reference scripts/core/pf.sh."""
@@ -248,9 +232,7 @@ class TestDeprecatedWrappersClean:
             content = _read_text(path)
             if _WRAPPER_SOURCE_RE.search(content):
                 violations.append(str(path.relative_to(_DIST)))
-        assert not violations, (
-            f"Deprecated wrappers still source run-pf.sh: {violations}"
-        )
+        assert not violations, f"Deprecated wrappers still source run-pf.sh: {violations}"
 
 
 # ---------------------------------------------------------------------------
@@ -317,7 +299,11 @@ class TestPfCliVerification:
         (dist / "skills").mkdir()
 
         with patch("pf.init.core.verify_pf_cli") as mock_verify:
-            mock_verify.return_value = {"success": True, "version": "11.5.0", "install_method": "pipx"}
+            mock_verify.return_value = {
+                "success": True,
+                "version": "11.5.0",
+                "install_method": "pipx",
+            }
             init_project(target_dir=target, dist_root=dist)
             mock_verify.assert_called_once()
 

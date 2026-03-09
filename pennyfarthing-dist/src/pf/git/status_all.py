@@ -116,9 +116,7 @@ async def get_repo_status(
 
     try:
         # Get current branch
-        branch_out, _, branch_rc = await _run_git_command(
-            ["branch", "--show-current"], path
-        )
+        branch_out, _, branch_rc = await _run_git_command(["branch", "--show-current"], path)
         if branch_rc != 0 or not branch_out:
             # Might be in detached HEAD state
             branch_out = "detached"
@@ -132,9 +130,7 @@ async def get_repo_status(
             ["log", f"{upstream_ref}..HEAD", "--oneline"], path
         )
         if unpushed_rc == 0 and unpushed_out:
-            unpushed_commits = [
-                line for line in unpushed_out.split("\n") if line.strip()
-            ]
+            unpushed_commits = [line for line in unpushed_out.split("\n") if line.strip()]
         else:
             unpushed_commits = []
 

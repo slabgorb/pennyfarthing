@@ -99,9 +99,7 @@ def _parse_session_file(session_path: str) -> dict[str, Any]:
             result["review_findings"] = value
 
     # Parse ACs from ## Acceptance Criteria section
-    ac_match = re.search(
-        r"## Acceptance Criteria\n(.*?)(?=\n##|\Z)", content, re.DOTALL
-    )
+    ac_match = re.search(r"## Acceptance Criteria\n(.*?)(?=\n##|\Z)", content, re.DOTALL)
     if ac_match:
         ac_text = ac_match.group(1)
         acs: list[dict[str, Any]] = []
@@ -118,9 +116,7 @@ def _parse_session_file(session_path: str) -> dict[str, Any]:
             result["acceptance_criteria"] = acs
 
     # Parse session notes from ## Session Log section
-    log_match = re.search(
-        r"## Session Log\n(.*?)(?=\n##|\Z)", content, re.DOTALL
-    )
+    log_match = re.search(r"## Session Log\n(.*?)(?=\n##|\Z)", content, re.DOTALL)
     if log_match:
         result["session_notes"] = log_match.group(1).strip()
 
@@ -133,8 +129,7 @@ def _get_sprint_story_status(story_id: str) -> str | None:
 
     try:
         out = subprocess.run(
-            [sys.executable, "-m", "pf.cli",
-             "sprint", "story", "field", story_id, "status"],
+            [sys.executable, "-m", "pf.cli", "sprint", "story", "field", story_id, "status"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -206,6 +201,7 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
         else:
             # Try MSSCI-keyed context file by reading epic Jira key from shard
             import glob as _glob
+
             sprint_dir = os.path.join(project_root, "sprint")
             for shard in _glob.glob(os.path.join(sprint_dir, "epic-*.yaml")):
                 try:
@@ -221,7 +217,9 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
                         for line in f:
                             if line.startswith("jira:"):
                                 jira_key = line.split(":", 1)[1].strip().strip("'\"")
-                                keyed_path = os.path.join(context_dir, f"context-epic-{jira_key}.md")
+                                keyed_path = os.path.join(
+                                    context_dir, f"context-epic-{jira_key}.md"
+                                )
                                 if os.path.isfile(keyed_path):
                                     result["has_epic_context"] = True
                                     result["epic_context_path"] = keyed_path
@@ -263,9 +261,7 @@ def fetch_story_detail(
     result: dict[str, Any] = {"id": story_id, "archived": False}
 
     # Parse session file if available
-    session_path, is_archived = _find_session_file(
-        story_id, root, jira_key=jira_key
-    )
+    session_path, is_archived = _find_session_file(story_id, root, jira_key=jira_key)
     if session_path:
         result["archived"] = is_archived
         session_data = _parse_session_file(session_path)

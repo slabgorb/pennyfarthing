@@ -29,7 +29,15 @@ REQUIRED_ROLES = {
 }
 
 # Required fields in the theme: top-level block
-REQUIRED_THEME_FIELDS = {"name", "description", "source", "tier", "user_title", "portrait_style", "dimensions"}
+REQUIRED_THEME_FIELDS = {
+    "name",
+    "description",
+    "source",
+    "tier",
+    "user_title",
+    "portrait_style",
+    "dimensions",
+}
 
 # Required dimension keys
 REQUIRED_DIMENSIONS = {"tone", "era", "genre", "energy"}
@@ -129,9 +137,7 @@ def _validate_theme(path: Path) -> tuple[list[str], list[str]]:
             for key in OCEAN_KEYS & set(ocean.keys()):
                 val = ocean[key]
                 if not isinstance(val, int) or val < 1 or val > 5:
-                    errors.append(
-                        f"Agent '{role}': OCEAN '{key}' must be integer 1-5, got {val!r}"
-                    )
+                    errors.append(f"Agent '{role}': OCEAN '{key}' must be integer 1-5, got {val!r}")
         else:
             errors.append(f"Agent '{role}': 'ocean' must be a mapping")
 

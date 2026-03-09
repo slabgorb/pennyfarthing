@@ -15,9 +15,7 @@ from pf.common.config import get_dist_root
 from pf.validate import ValidateReport
 
 # Regex to extract <tandem-consultation> section content
-_TANDEM_RE = re.compile(
-    r"<tandem-consultation>(.*?)</tandem-consultation>", re.DOTALL
-)
+_TANDEM_RE = re.compile(r"<tandem-consultation>(.*?)</tandem-consultation>", re.DOTALL)
 
 # Regex to extract role from heading: ## Tandem Consultation (Leader + Partner)
 _HEADING_RE = re.compile(r"##\s+Tandem Consultation\s*\(([^)]+)\)")
@@ -104,9 +102,7 @@ def validate_leader_tandem(path: Path) -> tuple[list[str], list[str]]:
 
     # Workflow phase check — must reference tandem.mode
     if "tandem.mode" not in section:
-        errors.append(
-            "Leader section must reference workflow phase availability (tandem.mode)"
-        )
+        errors.append("Leader section must reference workflow phase availability (tandem.mode)")
 
     # Request format template (recommended)
     if "request format" not in section.lower():
@@ -115,9 +111,7 @@ def validate_leader_tandem(path: Path) -> tuple[list[str], list[str]]:
     # Graceful degradation guidance (recommended)
     section_lower = section.lower()
     if not any(term in section_lower for term in ("fail", "degrad", "solo")):
-        warnings.append(
-            "Missing graceful degradation guidance (what to do if consultation fails)"
-        )
+        warnings.append("Missing graceful degradation guidance (what to do if consultation fails)")
 
     return errors, warnings
 
@@ -138,13 +132,9 @@ def validate_partner_tandem(path: Path) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     # Check for required response format fields
-    missing = [
-        name for name, marker in _PARTNER_FIELDS.items() if marker not in section
-    ]
+    missing = [name for name, marker in _PARTNER_FIELDS.items() if marker not in section]
     if missing:
-        errors.append(
-            f"Partner response format missing required fields: {', '.join(missing)}"
-        )
+        errors.append(f"Partner response format missing required fields: {', '.join(missing)}")
 
     return errors, warnings
 
@@ -174,9 +164,7 @@ def validate_pairings_documented(
     return covered, missing
 
 
-def run(
-    root: Path, *, fix: bool = False, strict: bool = False
-) -> ValidateReport:
+def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate agent tandem awareness sections."""
     report = ValidateReport(validator="tandem-awareness")
     dist_root = get_dist_root(project_root=root)

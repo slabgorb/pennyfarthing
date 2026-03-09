@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import csv
 import io
-import json
 import os
-import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +43,7 @@ def _load_settings(project_dir: str) -> dict[str, Any]:
     if config_path.is_file():
         try:
             import yaml
+
             config = yaml.safe_load(config_path.read_text()) or {}
             if config.get("theme"):
                 result["theme"] = config["theme"]
@@ -76,6 +75,7 @@ async def get_layout() -> JSONResponse:
     if config_path.is_file():
         try:
             import yaml
+
             config = yaml.safe_load(config_path.read_text()) or {}
             return JSONResponse({"layout": config.get("layout")})
         except Exception:
@@ -90,6 +90,7 @@ async def patch_layout(request: Request) -> JSONResponse:
     config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
     try:
         import yaml
+
         config: dict[str, Any] = {}
         if config_path.is_file():
             config = yaml.safe_load(config_path.read_text()) or {}
@@ -107,6 +108,7 @@ async def get_bikerack_layout() -> JSONResponse:
     if config_path.is_file():
         try:
             import yaml
+
             config = yaml.safe_load(config_path.read_text()) or {}
             return JSONResponse({"layout": config.get("bikerack_layout")})
         except Exception:
@@ -121,6 +123,7 @@ async def patch_bikerack_layout(request: Request) -> JSONResponse:
     config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
     try:
         import yaml
+
         config: dict[str, Any] = {}
         if config_path.is_file():
             config = yaml.safe_load(config_path.read_text()) or {}
@@ -136,6 +139,7 @@ async def get_themes() -> JSONResponse:
     project_dir = _get_project_dir()
     try:
         from pf.theme.discovery import list_themes
+
         themes = list_themes(project_dir)
         return JSONResponse({"themes": themes if isinstance(themes, list) else []})
     except Exception:
@@ -170,7 +174,9 @@ async def post_grant(request: Request) -> JSONResponse:
         return JSONResponse({"error": "Missing required field: scope"}, status_code=400)
     if grant_type not in _VALID_GRANT_TYPES:
         return JSONResponse(
-            {"error": f"Invalid grant_type: {grant_type}. Must be one of: {', '.join(_VALID_GRANT_TYPES)}"},
+            {
+                "error": f"Invalid grant_type: {grant_type}. Must be one of: {', '.join(_VALID_GRANT_TYPES)}"
+            },
             status_code=400,
         )
 
@@ -178,7 +184,7 @@ async def post_grant(request: Request) -> JSONResponse:
         "tool": tool,
         "scope": scope,
         "grant_type": grant_type,
-        "granted_at": datetime.now(timezone.utc).isoformat(),
+        "granted_at": datetime.now(UTC).isoformat(),
     }
     _grants.append(grant)
     return JSONResponse({"grant": grant}, status_code=201)
@@ -188,8 +194,7 @@ async def post_grant(request: Request) -> JSONResponse:
 async def revoke_grants(tool: str, request: Request) -> JSONResponse:
     scope_filter = request.query_params.get("scope")
     to_remove = [
-        g for g in _grants
-        if g["tool"] == tool and (not scope_filter or g["scope"] == scope_filter)
+        g for g in _grants if g["tool"] == tool and (not scope_filter or g["scope"] == scope_filter)
     ]
     for g in to_remove:
         _grants.remove(g)
@@ -225,16 +230,18 @@ async def get_audit_events(request: Request) -> JSONResponse:
 
 @audit_log_router.get("/types")
 async def get_audit_types() -> JSONResponse:
-    types = sorted(set(e.get("type", "") for e in _tool_events))
+    types = sorted({e.get("type", "") for e in _tool_events})
     return JSONResponse({"types": types})
 
 
 @audit_log_router.get("/stats")
 async def get_audit_stats() -> JSONResponse:
-    return JSONResponse({
-        "totalEntries": len(_audit_entries),
-        "totalEvents": len(_tool_events),
-    })
+    return JSONResponse(
+        {
+            "totalEntries": len(_audit_entries),
+            "totalEvents": len(_tool_events),
+        }
+    )
 
 
 @audit_log_router.get("/export/json")
@@ -248,12 +255,14 @@ async def export_audit_csv() -> PlainTextResponse:
     writer = csv.writer(output)
     writer.writerow(["timestamp", "type", "tool", "message"])
     for entry in _audit_entries:
-        writer.writerow([
-            entry.get("timestamp", ""),
-            entry.get("type", ""),
-            entry.get("tool", ""),
-            entry.get("message", ""),
-        ])
+        writer.writerow(
+            [
+                entry.get("timestamp", ""),
+                entry.get("type", ""),
+                entry.get("tool", ""),
+                entry.get("message", ""),
+            ]
+        )
     return PlainTextResponse(output.getvalue(), media_type="text/csv")
 
 
@@ -297,13 +306,15 @@ def set_receiver(receiver: OTLPReceiver) -> None:
 async def get_token_stats() -> JSONResponse:
     if _receiver:
         return JSONResponse(_receiver.get_token_stats())
-    return JSONResponse({
-        "inputTokens": 0,
-        "outputTokens": 0,
-        "cacheCreationTokens": 0,
-        "cacheReadTokens": 0,
-        "totalCost": 0,
-    })
+    return JSONResponse(
+        {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cacheCreationTokens": 0,
+            "cacheReadTokens": 0,
+            "totalCost": 0,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

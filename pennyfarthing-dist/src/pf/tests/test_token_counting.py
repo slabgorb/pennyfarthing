@@ -72,8 +72,12 @@ class TestComponentTokenCounting:
 
         for component in expected_components:
             assert component in token_counts, f"Missing token count for {component}"
-            assert isinstance(token_counts[component], int), f"Token count for {component} should be int"
-            assert token_counts[component] >= 0, f"Token count for {component} should be non-negative"
+            assert isinstance(token_counts[component], int), (
+                f"Token count for {component} should be int"
+            )
+            assert token_counts[component] >= 0, (
+                f"Token count for {component} should be non-negative"
+            )
 
     def test_token_counts_are_positive_for_loaded_components(self, tmp_path: Path) -> None:
         """Test that loaded components have positive token counts."""
@@ -218,42 +222,51 @@ class TestComponentTokenCounting:
         # Agent definition
         agents_dir = pf_dir / "agents"
         agents_dir.mkdir()
-        (agents_dir / "dev.md").write_text("# Dev Agent\n\nDeveloper agent with implementation focus.")
+        (agents_dir / "dev.md").write_text(
+            "# Dev Agent\n\nDeveloper agent with implementation focus."
+        )
 
         # Behavior guide
         guides_dir = pf_dir / "guides"
         guides_dir.mkdir()
-        (guides_dir / "agent-behavior.md").write_text("# Agent Behavior Guide\n\nShared protocols for all agents.")
+        (guides_dir / "agent-behavior.md").write_text(
+            "# Agent Behavior Guide\n\nShared protocols for all agents."
+        )
 
         # Sidecars
         sidecar_dir = pf_dir / "sidecars" / "dev"
         sidecar_dir.mkdir(parents=True)
-        (sidecar_dir / "patterns.md").write_text("# Dev Patterns\n\nDevelopment patterns documentation.")
+        (sidecar_dir / "patterns.md").write_text(
+            "# Dev Patterns\n\nDevelopment patterns documentation."
+        )
         (sidecar_dir / "gotchas.md").write_text("# Dev Gotchas\n\nCommon pitfalls to avoid.")
 
         # Theme
         (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test-theme.yaml").write_text(yaml.dump({
-            "theme": {"name": "Test Theme", "user_title": "Developer"},
-            "agents": {
-                "dev": {
-                    "character": "Test Developer",
-                    "style": "Practical and efficient",
-                    "role": "Implementation specialist",
-                    "quote": "Ship it!",
+        (themes_dir / "test-theme.yaml").write_text(
+            yaml.dump(
+                {
+                    "theme": {"name": "Test Theme", "user_title": "Developer"},
+                    "agents": {
+                        "dev": {
+                            "character": "Test Developer",
+                            "style": "Practical and efficient",
+                            "role": "Implementation specialist",
+                            "quote": "Ship it!",
+                        }
+                    },
                 }
-            }
-        }))
+            )
+        )
 
         # Sprint
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12, "goal": "Test sprint"},
-            "epics": []
-        }))
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump({"sprint": {"number": 12, "goal": "Test sprint"}, "epics": []})
+        )
 
         # Session
         session_dir = tmp_path / ".session"
@@ -390,9 +403,9 @@ class TestTokenBreakdownOutput:
         (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test.yaml").write_text(yaml.dump({
-            "agents": {"dev": {"character": "Dev", "style": "s", "role": "r"}}
-        }))
+        (themes_dir / "test.yaml").write_text(
+            yaml.dump({"agents": {"dev": {"character": "Dev", "style": "s", "role": "r"}}})
+        )
 
 
 # =============================================================================
@@ -500,8 +513,9 @@ def hello():
 
         # Should be within 10%
         tolerance = actual_count * 0.1
-        assert abs(reported_count - actual_count) <= tolerance, \
+        assert abs(reported_count - actual_count) <= tolerance, (
             f"Reported {reported_count} vs actual {actual_count}, tolerance {tolerance}"
+        )
 
     def test_total_tokens_within_10_percent_of_sum(self, tmp_path: Path) -> None:
         """Test total_tokens is within 10% of manually summed content."""
@@ -545,6 +559,7 @@ class TestEstimateTokensFunction:
     def test_estimate_tokens_exists(self) -> None:
         """Test estimate_tokens function is exported from tiers module."""
         from pf.prime.tiers import estimate_tokens
+
         assert callable(estimate_tokens)
 
     def test_estimate_tokens_returns_int(self) -> None:

@@ -33,9 +33,7 @@ def parse_otlp_metrics(body: dict[str, Any]) -> dict[str, int]:
                     continue
                 for dp in sum_field.get("dataPoints") or []:
                     attrs = dp.get("attributes") or []
-                    type_attr = next(
-                        (a for a in attrs if a.get("key") == "type"), None
-                    )
+                    type_attr = next((a for a in attrs if a.get("key") == "type"), None)
                     if not type_attr:
                         continue
                     token_type = (type_attr.get("value") or {}).get("stringValue")
@@ -81,9 +79,7 @@ def parse_otlp_logs(
                     elif "boolValue" in val:
                         attributes[attr["key"]] = val["boolValue"]
 
-                events.append(
-                    {"name": name, "timestamp": timestamp, "attributes": attributes}
-                )
+                events.append({"name": name, "timestamp": timestamp, "attributes": attributes})
     return events
 
 

@@ -23,6 +23,7 @@ import yaml
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def project_tree(tmp_path: Path) -> Path:
     """Create a minimal project tree with .pennyfarthing/ directory."""
@@ -43,11 +44,13 @@ def preferences_yaml(project_tree: Path) -> Path:
     prefs_dir = project_tree / ".claude" / "pennyfarthing"
     prefs_dir.mkdir(parents=True)
     prefs_file = prefs_dir / "preferences.yaml"
-    prefs_file.write_text(textwrap.dedent("""\
+    prefs_file.write_text(
+        textwrap.dedent("""\
         character_voice: true
         explain_decisions: true
         auto_commit: false
-    """))
+    """)
+    )
     return prefs_file
 
 
@@ -57,9 +60,11 @@ def preferences_local_yaml(project_tree: Path) -> Path:
     prefs_dir = project_tree / ".claude" / "pennyfarthing"
     prefs_dir.mkdir(parents=True, exist_ok=True)
     prefs_file = prefs_dir / "preferences.local.yaml"
-    prefs_file.write_text(textwrap.dedent("""\
+    prefs_file.write_text(
+        textwrap.dedent("""\
         character_voice: false
-    """))
+    """)
+    )
     return prefs_file
 
 
@@ -68,7 +73,8 @@ def persona_config_yaml(project_tree: Path) -> Path:
     """Create a legacy persona-config.yaml."""
     pf_dir = project_tree / ".pennyfarthing"
     persona_file = pf_dir / "persona-config.yaml"
-    persona_file.write_text(textwrap.dedent("""\
+    persona_file.write_text(
+        textwrap.dedent("""\
         theme: discworld
         attributes:
           verbosity: medium
@@ -76,13 +82,15 @@ def persona_config_yaml(project_tree: Path) -> Path:
           humor: enabled
           emoji_use: minimal
         overrides: {}
-    """))
+    """)
+    )
     return persona_file
 
 
 # ===========================================================================
 # AC 1: Migration moves preferences.yaml content to config.local.yaml
 # ===========================================================================
+
 
 class TestMigrationMovesPreferences:
     """Migration should copy preferences.yaml settings into config.local.yaml."""
@@ -102,8 +110,11 @@ class TestMigrationMovesPreferences:
         assert config["preferences"]["auto_commit"] is False
 
     def test_migrate_preferences_handles_local_override(
-        self, project_tree: Path, preferences_yaml: Path,
-        preferences_local_yaml: Path, config_local: Path
+        self,
+        project_tree: Path,
+        preferences_yaml: Path,
+        preferences_local_yaml: Path,
+        config_local: Path,
     ) -> None:
         """Migration should merge .local override on top of base preferences."""
         from pf.config_migration import migrate_config
@@ -144,12 +155,15 @@ class TestMigrationMovesPreferences:
 
         migrate_config(project_root=project_tree)
 
-        assert not persona_config_yaml.exists(), "persona-config.yaml should be removed after migration"
+        assert not persona_config_yaml.exists(), (
+            "persona-config.yaml should be removed after migration"
+        )
 
 
 # ===========================================================================
 # AC 2: All config readers use config.local.yaml
 # ===========================================================================
+
 
 class TestConfigReadersUseConfigLocal:
     """All config readers should read from config.local.yaml only."""
@@ -158,11 +172,13 @@ class TestConfigReadersUseConfigLocal:
         self, project_tree: Path, config_local: Path
     ) -> None:
         """is_character_voice_enabled() should read from config.local.yaml preferences section."""
-        config_local.write_text(textwrap.dedent("""\
+        config_local.write_text(
+            textwrap.dedent("""\
             theme: discworld
             preferences:
               character_voice: false
-        """))
+        """)
+        )
 
         from pf.prime.persona import is_character_voice_enabled
 
@@ -217,6 +233,7 @@ class TestConfigReadersUseConfigLocal:
 # AC 3: preferences.yaml template removed
 # ===========================================================================
 
+
 class TestPreferencesTemplateRemoved:
     """The preferences.yaml.template file location is tracked here.
 
@@ -247,6 +264,7 @@ class TestPreferencesTemplateRemoved:
 # AC 4: persona-config.yaml references removed
 # ===========================================================================
 
+
 class TestPersonaConfigReferencesRemoved:
     """No code should reference persona-config.yaml as a config source."""
 
@@ -268,9 +286,7 @@ class TestPersonaConfigReferencesRemoved:
         from pf.hooks import statusline
 
         source = inspect.getsource(statusline)
-        assert "persona-config" not in source, (
-            "statusline.py still references persona-config.yaml"
-        )
+        assert "persona-config" not in source, "statusline.py still references persona-config.yaml"
 
     def test_persona_config_template_does_not_exist(self) -> None:
         """pennyfarthing-dist/templates/persona-config.yaml.template should be removed."""
@@ -289,6 +305,7 @@ class TestPersonaConfigReferencesRemoved:
 # AC 5: Existing user settings preserved during migration
 # ===========================================================================
 
+
 class TestExistingSettingsPreserved:
     """Migration must not clobber existing config.local.yaml settings."""
 
@@ -296,11 +313,13 @@ class TestExistingSettingsPreserved:
         self, project_tree: Path, preferences_yaml: Path, config_local: Path
     ) -> None:
         """Migration should not overwrite existing theme in config.local.yaml."""
-        config_local.write_text(textwrap.dedent("""\
+        config_local.write_text(
+            textwrap.dedent("""\
             theme: the-expanse
             workflow:
               bell_mode: true
-        """))
+        """)
+        )
 
         from pf.config_migration import migrate_config
 
@@ -314,12 +333,14 @@ class TestExistingSettingsPreserved:
         self, project_tree: Path, preferences_yaml: Path, config_local: Path
     ) -> None:
         """Migration should not touch existing layout configuration."""
-        config_local.write_text(textwrap.dedent("""\
+        config_local.write_text(
+            textwrap.dedent("""\
             theme: discworld
             layout:
               grid:
                 width: 100
-        """))
+        """)
+        )
 
         from pf.config_migration import migrate_config
 
@@ -375,6 +396,7 @@ class TestExistingSettingsPreserved:
 # Reviewer Finding: Crash safety — write before delete
 # ===========================================================================
 
+
 class TestMigrationCrashSafety:
     """Legacy files must survive if config.local.yaml write fails.
 
@@ -384,7 +406,10 @@ class TestMigrationCrashSafety:
     """
 
     def test_legacy_prefs_survive_write_failure(
-        self, project_tree: Path, preferences_yaml: Path, config_local: Path,
+        self,
+        project_tree: Path,
+        preferences_yaml: Path,
+        config_local: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """If config.local.yaml write fails, preferences.yaml must still exist."""
@@ -408,7 +433,10 @@ class TestMigrationCrashSafety:
         )
 
     def test_legacy_persona_config_survives_write_failure(
-        self, project_tree: Path, persona_config_yaml: Path, config_local: Path,
+        self,
+        project_tree: Path,
+        persona_config_yaml: Path,
+        config_local: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """If config.local.yaml write fails, persona-config.yaml must still exist."""
@@ -435,6 +463,7 @@ class TestMigrationCrashSafety:
 # ===========================================================================
 # Reviewer Finding: Error handling — return result dict, don't throw
 # ===========================================================================
+
 
 class TestMigrationErrorHandling:
     """migrate_config() must return {success: False, error: ...} on bad input.
@@ -481,6 +510,7 @@ class TestMigrationErrorHandling:
 # Reviewer Finding: Migration wired into upgrade path
 # ===========================================================================
 
+
 class TestMigrationWiredIntoPrime:
     """migrate_config() must be called during agent activation (prime flow).
 
@@ -504,6 +534,7 @@ class TestMigrationWiredIntoPrime:
 # ===========================================================================
 # Reviewer Finding: pf prime as first-class CLI command
 # ===========================================================================
+
 
 class TestPrimeCLIRegistration:
     """pf prime should be a registered top-level CLI command.

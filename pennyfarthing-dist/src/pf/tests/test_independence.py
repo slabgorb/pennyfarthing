@@ -120,22 +120,26 @@ class TestParseUnitsFromJson:
     """JSON parsing for unit definitions."""
 
     def test_parse_with_units_key(self):
-        json_str = json.dumps({
-            "units": [
-                {"id": "1", "files": ["a.ts"], "description": "Unit 1"},
-                {"id": "2", "files": ["b.ts"], "description": "Unit 2"},
-            ]
-        })
+        json_str = json.dumps(
+            {
+                "units": [
+                    {"id": "1", "files": ["a.ts"], "description": "Unit 1"},
+                    {"id": "2", "files": ["b.ts"], "description": "Unit 2"},
+                ]
+            }
+        )
         units = parse_units_from_json(json_str)
         assert len(units) == 2
         assert units[0].id == "1"
         assert units[0].files == ["a.ts"]
 
     def test_parse_bare_array(self):
-        json_str = json.dumps([
-            {"id": "1", "files": ["a.ts"]},
-            {"id": "2", "files": ["b.ts"]},
-        ])
+        json_str = json.dumps(
+            [
+                {"id": "1", "files": ["a.ts"]},
+                {"id": "2", "files": ["b.ts"]},
+            ]
+        )
         units = parse_units_from_json(json_str)
         assert len(units) == 2
 
@@ -162,12 +166,14 @@ class TestCli:
     """CLI integration smoke test."""
 
     def test_cli_with_independent_units(self):
-        units_json = json.dumps({
-            "units": [
-                {"id": "1", "files": ["a.ts"]},
-                {"id": "2", "files": ["b.ts"]},
-            ]
-        })
+        units_json = json.dumps(
+            {
+                "units": [
+                    {"id": "1", "files": ["a.ts"]},
+                    {"id": "2", "files": ["b.ts"]},
+                ]
+            }
+        )
         result = subprocess.run(
             [sys.executable, "-m", "pf.preflight", "independence", "--units", units_json],
             capture_output=True,
@@ -178,12 +184,14 @@ class TestCli:
         assert output["independent"] is True
 
     def test_cli_with_overlapping_units(self):
-        units_json = json.dumps({
-            "units": [
-                {"id": "1", "files": ["a.ts"]},
-                {"id": "2", "files": ["a.ts"]},
-            ]
-        })
+        units_json = json.dumps(
+            {
+                "units": [
+                    {"id": "1", "files": ["a.ts"]},
+                    {"id": "2", "files": ["a.ts"]},
+                ]
+            }
+        )
         result = subprocess.run(
             [sys.executable, "-m", "pf.preflight", "independence", "--units", units_json],
             capture_output=True,

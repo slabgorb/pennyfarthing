@@ -74,9 +74,7 @@ def init(dry_run: bool, yes: bool, target: str) -> None:
                 click.echo("Skipping hook changes (other files will still be updated)")
                 skip_hooks = True
 
-    result = init_project(
-        target_dir=target_dir, dist_root=dist_root, skip_hooks=skip_hooks
-    )
+    result = init_project(target_dir=target_dir, dist_root=dist_root, skip_hooks=skip_hooks)
 
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)

@@ -60,7 +60,12 @@ def _get_theme_tier(project_root: Path, theme_name: str) -> str | None:
     locations = [
         project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme_name}.yaml",
         project_root / "pennyfarthing-dist" / "personas" / "themes" / f"{theme_name}.yaml",
-        project_root / "pennyfarthing" / "pennyfarthing-dist" / "personas" / "themes" / f"{theme_name}.yaml",
+        project_root
+        / "pennyfarthing"
+        / "pennyfarthing-dist"
+        / "personas"
+        / "themes"
+        / f"{theme_name}.yaml",
     ]
     for path in locations:
         if path.exists():
@@ -252,7 +257,7 @@ def _get_git_branch(repo_path: Path) -> str:
     try:
         content = head_file.read_text().strip()
         if content.startswith("ref: refs/heads/"):
-            return content[len("ref: refs/heads/"):]
+            return content[len("ref: refs/heads/") :]
         return content[:8]
     except Exception:
         return "unknown"

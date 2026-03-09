@@ -33,25 +33,30 @@ def finish(args: list[str]) -> int:
         help="Story identifier (e.g., 31-10)",
     )
     parser.add_argument(
-        "--branch", "-b",
+        "--branch",
+        "-b",
         required=True,
         help="Feature branch name",
     )
     parser.add_argument(
-        "--jira", "-j",
+        "--jira",
+        "-j",
         help="Jira issue key (optional, skips Jira checks if absent)",
     )
     parser.add_argument(
-        "--repo", "-r",
+        "--repo",
+        "-r",
         help="Repository name for PR lookup (optional)",
     )
     parser.add_argument(
-        "--project-root", "-p",
+        "--project-root",
+        "-p",
         type=Path,
         help="Project root path (defaults to cwd)",
     )
     parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         choices=["json", "yaml"],
         default="json",
         help="Output format (default: json)",
@@ -60,13 +65,15 @@ def finish(args: list[str]) -> int:
     parsed = parser.parse_args(args)
 
     # Run async preflight
-    result = asyncio.run(run_finish_preflight(
-        story_id=parsed.story_id,
-        branch=parsed.branch,
-        jira_key=parsed.jira,
-        repo=parsed.repo,
-        project_root=parsed.project_root,
-    ))
+    result = asyncio.run(
+        run_finish_preflight(
+            story_id=parsed.story_id,
+            branch=parsed.branch,
+            jira_key=parsed.jira,
+            repo=parsed.repo,
+            project_root=parsed.project_root,
+        )
+    )
 
     # Output result
     result_dict = result.to_dict()
@@ -74,6 +81,7 @@ def finish(args: list[str]) -> int:
     if parsed.format == "yaml":
         try:
             import yaml
+
             print(yaml.dump(result_dict, default_flow_style=False, sort_keys=False))
         except ImportError:
             print("YAML output requires PyYAML. Falling back to JSON.", file=sys.stderr)
@@ -92,11 +100,13 @@ def independence(args: list[str]) -> int:
         description="Check that batch units have no shared files",
     )
     parser.add_argument(
-        "--units", "-u",
+        "--units",
+        "-u",
         help='JSON string with unit definitions: {"units": [{"id": "1", "files": [...]}]}',
     )
     parser.add_argument(
-        "--file", "-f",
+        "--file",
+        "-f",
         type=Path,
         help="Path to JSON file with unit definitions",
     )
@@ -132,6 +142,7 @@ def independence(args: list[str]) -> int:
     if parsed.format == "yaml":
         try:
             import yaml
+
             print(yaml.dump(result_dict, default_flow_style=False, sort_keys=False))
         except ImportError:
             print("YAML output requires PyYAML. Falling back to JSON.", file=sys.stderr)

@@ -17,18 +17,21 @@ import sys
 def size(args: list[str]) -> int:
     """Show sizing guidelines."""
     from pf.story.size import main as size_main
+
     return size_main(args)
 
 
 def template(args: list[str]) -> int:
     """Show story templates."""
     from pf.story.template import main as template_main
+
     return template_main(args)
 
 
 def create(args: list[str]) -> int:
     """Create a new story."""
     from pf.story.create import main as create_main
+
     return create_main(args)
 
 

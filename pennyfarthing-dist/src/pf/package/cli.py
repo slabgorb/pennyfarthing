@@ -66,7 +66,9 @@ def list_cmd(output_json: bool):
 @package.command()
 @click.argument("name")
 @click.option("--skip-portraits", is_flag=True, help="Skip portrait download after install.")
-@click.option("--all-sizes", is_flag=True, help="Download all portrait sizes (default: large only).")
+@click.option(
+    "--all-sizes", is_flag=True, help="Download all portrait sizes (default: large only)."
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def install(name: str, skip_portraits: bool, all_sizes: bool, dry_run: bool):
     """Install a theme package and download its portraits.
@@ -110,7 +112,9 @@ def install(name: str, skip_portraits: bool, all_sizes: bool, dry_run: bool):
         return
 
     if dry_run:
-        click.echo(f"[DRY-RUN] Would download portraits (sizes: {'all' if all_sizes else 'large only'})")
+        click.echo(
+            f"[DRY-RUN] Would download portraits (sizes: {'all' if all_sizes else 'large only'})"
+        )
     else:
         click.echo(f"Downloading portraits ({'all sizes' if all_sizes else 'large only'})...")
 
@@ -129,15 +133,21 @@ def install(name: str, skip_portraits: bool, all_sizes: bool, dry_run: bool):
             if data.get("truncated"):
                 click.echo("    ...")
     else:
-        click.echo(f"  Downloaded: {data['downloaded']}, Skipped: {data['skipped']}, Total: {data['total']}")
+        click.echo(
+            f"  Downloaded: {data['downloaded']}, Skipped: {data['skipped']}, Total: {data['total']}"
+        )
         if data.get("error_count"):
             click.echo(f"  Errors: {data['error_count']}")
 
 
 @package.command("install-portraits")
 @click.argument("name", required=False)
-@click.option("--all", "install_all", is_flag=True, help="Download portraits for all installed packages.")
-@click.option("--all-sizes", is_flag=True, help="Download all portrait sizes (default: large only).")
+@click.option(
+    "--all", "install_all", is_flag=True, help="Download portraits for all installed packages."
+)
+@click.option(
+    "--all-sizes", is_flag=True, help="Download all portrait sizes (default: large only)."
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def install_portraits(name: str | None, install_all: bool, all_sizes: bool, dry_run: bool):
     """Download portraits for already-installed theme packages.
@@ -170,7 +180,9 @@ def install_portraits(name: str | None, install_all: bool, all_sizes: bool, dry_
             )
             sys.exit(1)
 
-        click.echo(f"Downloading portraits for {pkg_name} ({'all sizes' if all_sizes else 'large only'})...")
+        click.echo(
+            f"Downloading portraits for {pkg_name} ({'all sizes' if all_sizes else 'large only'})..."
+        )
 
         result = download_portraits(pkg_name, all_sizes=all_sizes, dry_run=dry_run)
         if not result["success"]:
@@ -183,4 +195,6 @@ def install_portraits(name: str | None, install_all: bool, all_sizes: bool, dry_
         if dry_run:
             click.echo(f"  [DRY-RUN] {data['total_files']} files would be downloaded")
         else:
-            click.echo(f"  Downloaded: {data['downloaded']}, Skipped: {data['skipped']}, Total: {data['total']}")
+            click.echo(
+                f"  Downloaded: {data['downloaded']}, Skipped: {data['skipped']}, Total: {data['total']}"
+            )

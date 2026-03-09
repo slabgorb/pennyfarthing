@@ -129,9 +129,7 @@ def get_repo_paths(project_root: Path | None = None) -> list[tuple[str, Path]]:
     return result
 
 
-def get_default_branch(
-    repo_name: str, project_root: Path | None = None
-) -> str:
+def get_default_branch(repo_name: str, project_root: Path | None = None) -> str:
     """Get the default branch for a specific repo.
 
     Args:
@@ -148,9 +146,7 @@ def get_default_branch(
     return "main"
 
 
-def get_repo_config(
-    repo_name: str, project_root: Path | None = None
-) -> RepoConfig | None:
+def get_repo_config(repo_name: str, project_root: Path | None = None) -> RepoConfig | None:
     """Get the full config for a specific repo.
 
     Args:

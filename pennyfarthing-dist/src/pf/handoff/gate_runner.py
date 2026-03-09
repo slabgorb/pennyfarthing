@@ -139,11 +139,13 @@ def extract_gate_result(
         re.MULTILINE,
     )
     for m in check_pattern.finditer(block):
-        checks.append({
-            "name": m.group(1) or m.group(2) or m.group(3),
-            "status": m.group(4),
-            "detail": m.group(5) or m.group(6) or m.group(7) or "",
-        })
+        checks.append(
+            {
+                "name": m.group(1) or m.group(2) or m.group(3),
+                "status": m.group(4),
+                "detail": m.group(5) or m.group(6) or m.group(7) or "",
+            }
+        )
 
     return {
         "status": status,

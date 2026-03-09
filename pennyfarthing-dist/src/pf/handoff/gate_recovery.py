@@ -66,12 +66,14 @@ def get_recovery_actions(
         context_type = cfg["type"]
         target_id = epic_id if context_type == "epic" else story_id
 
-        actions.append({
-            "check_name": name,
-            "context_type": context_type,
-            "target_id": target_id,
-            "max_attempts": cfg.get("max_attempts", 1),
-        })
+        actions.append(
+            {
+                "check_name": name,
+                "context_type": context_type,
+                "target_id": target_id,
+                "max_attempts": cfg.get("max_attempts", 1),
+            }
+        )
 
     return actions
 
@@ -115,10 +117,7 @@ def format_recovery_outcome(
         return {"message": None, "severity": "info"}
 
     return {
-        "message": (
-            f"Context created but has validation errors. "
-            f"Manual fix needed at {path}"
-        ),
+        "message": (f"Context created but has validation errors. Manual fix needed at {path}"),
         "severity": "warning",
     }
 

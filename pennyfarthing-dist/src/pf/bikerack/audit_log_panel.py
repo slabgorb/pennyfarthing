@@ -41,7 +41,7 @@ def _shorten_path(fp: str) -> str:
     for marker in ("/pennyfarthing-dist/", "/packages/", "/.pennyfarthing/", "/.session/"):
         idx = fp.find(marker)
         if idx >= 0:
-            return fp[idx + 1:]
+            return fp[idx + 1 :]
     parts = fp.rstrip("/").split("/")
     return "/".join(parts[-3:]) if len(parts) > 3 else fp
 
@@ -412,7 +412,9 @@ class AuditLogPanel(BasePanel):
             # Adjust selection and expanded indices after trim
             if self._selected_index is not None:
                 self._selected_index = max(0, self._selected_index - overflow)
-            self._expanded_rows = {max(0, i - overflow) for i in self._expanded_rows if i >= overflow}
+            self._expanded_rows = {
+                max(0, i - overflow) for i in self._expanded_rows if i >= overflow
+            }
 
     def render_panel(self, payload: dict[str, Any]) -> Any:
         """Render tool events as a Tufte-style Rich Table.
@@ -456,7 +458,9 @@ class AuditLogPanel(BasePanel):
 
             tool_name = span.get("toolName", "")
             # Use cached enrichment from _add_row; fallback for spans loaded before caching
-            input_text = span.get("_enriched_input") or _enrich_input(tool_name, span.get("input", ""), span)
+            input_text = span.get("_enriched_input") or _enrich_input(
+                tool_name, span.get("input", ""), span
+            )
             success = span.get("success")
             duration_ms = span.get("durationMs") or span.get("duration_ms")
 
@@ -501,7 +505,9 @@ class AuditLogPanel(BasePanel):
                 dur_text,
                 bar_text,
                 Text(tool_name, style=f"bold {tool_style} {row_style}".strip()),
-                Text(input_text, style=f"dim {row_style}".strip(), no_wrap=True, overflow="ellipsis")
+                Text(
+                    input_text, style=f"dim {row_style}".strip(), no_wrap=True, overflow="ellipsis"
+                )
                 if input_text
                 else Text(""),
                 style=row_style,

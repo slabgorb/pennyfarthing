@@ -31,18 +31,44 @@ def hotspots():
 def _common_options(fn):
     """Shared options for all hotspot commands."""
     fn = click.option("--repo", help="Analyze a single named repo from repos.yaml")(fn)
-    fn = click.option("--path", "repo_path", type=click.Path(exists=True), help="Analyze a standalone repo path")(fn)
+    fn = click.option(
+        "--path", "repo_path", type=click.Path(exists=True), help="Analyze a standalone repo path"
+    )(fn)
     fn = click.option("--days", default=90, show_default=True, help="Time window in days")(fn)
-    fn = click.option("--top", default=20, show_default=True, help="Number of top results to show")(fn)
-    fn = click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table", show_default=True)(fn)
+    fn = click.option("--top", default=20, show_default=True, help="Number of top results to show")(
+        fn
+    )
+    fn = click.option(
+        "--format",
+        "fmt",
+        type=click.Choice(["table", "json", "csv"]),
+        default="table",
+        show_default=True,
+    )(fn)
     fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
-    fn = click.option("--exclude", multiple=True, help="Additional exclude patterns (repeatable)")(fn)
-    fn = click.option("--branch", default="--all", show_default=True, help="Branch spec for git log")(fn)
-    fn = click.option("--skip-type", "skip_type", multiple=True, help="Skip repos by type (repeatable, e.g. --skip-type orchestrator)")(fn)
+    fn = click.option("--exclude", multiple=True, help="Additional exclude patterns (repeatable)")(
+        fn
+    )
+    fn = click.option(
+        "--branch", default="--all", show_default=True, help="Branch spec for git log"
+    )(fn)
+    fn = click.option(
+        "--skip-type",
+        "skip_type",
+        multiple=True,
+        help="Skip repos by type (repeatable, e.g. --skip-type orchestrator)",
+    )(fn)
     return fn
 
 
-def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: tuple, branch: str, skip_type: tuple = ()):
+def _run_analysis(
+    repo: str | None,
+    repo_path: str | None,
+    days: int,
+    exclude: tuple,
+    branch: str,
+    skip_type: tuple = (),
+):
     """Run analysis and return result."""
     from pf.common.config import get_project_root
     from pf.hotspots.analyze import analyze_all_repos, analyze_repo
@@ -58,27 +84,22 @@ def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: t
         # Single named repo from project
         project_root = get_project_root()
         from pf.common.config import load_yaml_config
+
         repos_yaml = load_yaml_config(project_root / ".pennyfarthing" / "repos.yaml")
         if repos_yaml and repo in repos_yaml:
             cfg = repos_yaml[repo]
             rpath = cfg.get("path", repo) if isinstance(cfg, dict) else str(cfg)
-            return asyncio.run(
-                analyze_repo(repo, project_root / rpath, days, excludes, branch)
-            )
+            return asyncio.run(analyze_repo(repo, project_root / rpath, days, excludes, branch))
         else:
             # Try as a subdirectory name
             candidate = project_root / repo
             if candidate.exists():
-                return asyncio.run(
-                    analyze_repo(repo, candidate, days, excludes, branch)
-                )
+                return asyncio.run(analyze_repo(repo, candidate, days, excludes, branch))
             raise click.ClickException(f"Repo not found: {repo}")
     else:
         # All repos
         project_root = get_project_root()
-        return asyncio.run(
-            analyze_all_repos(project_root, days, excludes, branch, skip_types)
-        )
+        return asyncio.run(analyze_all_repos(project_root, days, excludes, branch, skip_types))
 
 
 def _output_result(result, fmt: str, output_file: str | None, top: int, mode: str):

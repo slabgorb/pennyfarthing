@@ -17,13 +17,14 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-# Direct imports — no shelling out
-from pf.hotspots.analyze import analyze_repo as analyze_hotspots
-from pf.deadcode.analyze import find_stale_files
+from pf.codemarkers import analyze_repo as analyze_code_markers
 from pf.complexity import analyze_complexity
+from pf.deadcode.analyze import find_stale_files
 from pf.dependencies import analyze_dependencies
 from pf.healthscore.analyze import analyze_healthscore
-from pf.codemarkers import analyze_repo as analyze_code_markers
+
+# Direct imports — no shelling out
+from pf.hotspots.analyze import analyze_repo as analyze_hotspots
 
 # ---------------------------------------------------------------------------
 # Helpers

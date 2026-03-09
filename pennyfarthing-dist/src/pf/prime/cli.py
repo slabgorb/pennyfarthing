@@ -188,11 +188,13 @@ def _build_json_result(
             continue
         header = _component_header(key, agent_name)
         context_parts.append(f"# {header}\n{text}")
-        component_list.append(PrimeComponent(
-            name=key,
-            tokens=token_counts.get(key, 0),
-            source=_component_source(key, agent_name, root),
-        ))
+        component_list.append(
+            PrimeComponent(
+                name=key,
+                tokens=token_counts.get(key, 0),
+                source=_component_source(key, agent_name, root),
+            )
+        )
 
     result.context = "\n\n".join(context_parts) if context_parts else None
     result.tier = tier.value
@@ -396,6 +398,7 @@ def prime(
 
     # Run config migration (upgrade path — consolidate legacy config files)
     from pf.config_migration import migrate_config
+
     migrate_config(root)
 
     # Build result for JSON output

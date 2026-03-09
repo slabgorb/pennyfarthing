@@ -16,13 +16,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from pf.context_window import ContextConfig, check_context
+
 # Direct imports — no shelling out
-from pf.prime.persona import load_persona, get_current_theme, get_crew_manifest
-from pf.context_window import check_context, ContextConfig
-from pf.sprint.status import get_sprint_status
+from pf.prime.persona import get_crew_manifest, load_persona
 
 _start_time = time.time()
 
@@ -207,7 +207,10 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                 config = yaml.safe_load(p.read_text())
                 if config and isinstance(config.get("repos"), dict):
                     return [
-                        {"name": name, "path": (rc or {}).get("path", name) if isinstance(rc, dict) else name}
+                        {
+                            "name": name,
+                            "path": (rc or {}).get("path", name) if isinstance(rc, dict) else name,
+                        }
                         for name, rc in config["repos"].items()
                     ]
             except Exception:
@@ -240,16 +243,18 @@ async def get_git_all() -> JSONResponse:
     for repo in repos:
         repo_path = str(Path(project_dir, repo["path"]))
         info = _get_git_info(repo_path)
-        results.append({
-            "name": repo["name"],
-            "path": repo["path"],
-            "branch": info["branch"] if info else "unknown",
-            "clean": info["clean"] if info else True,
-            "ahead": info.get("ahead") if info else None,
-            "behind": info.get("behind") if info else None,
-            "developBehind": info.get("developBehind") if info else None,
-            "dirtyFiles": info.get("dirtyFiles", []) if info else [],
-        })
+        results.append(
+            {
+                "name": repo["name"],
+                "path": repo["path"],
+                "branch": info["branch"] if info else "unknown",
+                "clean": info["clean"] if info else True,
+                "ahead": info.get("ahead") if info else None,
+                "behind": info.get("behind") if info else None,
+                "developBehind": info.get("developBehind") if info else None,
+                "dirtyFiles": info.get("dirtyFiles", []) if info else [],
+            }
+        )
     return JSONResponse(results)
 
 
@@ -271,27 +276,31 @@ async def get_context() -> JSONResponse:
     try:
         config = ContextConfig(project_dir=project_dir)
         result = check_context(config)
-        return JSONResponse({
-            "percent": result.percent,
-            "tokens": result.tokens,
-            "status": result.status,
-            "error": result.error,
-            "baseline": getattr(result, "baseline", None),
-            "usableTokens": getattr(result, "usable_tokens", None),
-            "usablePercent": getattr(result, "usable_percent", None),
-            "available": getattr(result, "available", None),
-        })
+        return JSONResponse(
+            {
+                "percent": result.percent,
+                "tokens": result.tokens,
+                "status": result.status,
+                "error": result.error,
+                "baseline": getattr(result, "baseline", None),
+                "usableTokens": getattr(result, "usable_tokens", None),
+                "usablePercent": getattr(result, "usable_percent", None),
+                "available": getattr(result, "available", None),
+            }
+        )
     except Exception as e:
-        return JSONResponse({
-            "percent": None,
-            "tokens": None,
-            "status": None,
-            "error": str(e),
-            "baseline": None,
-            "usableTokens": None,
-            "usablePercent": None,
-            "available": None,
-        })
+        return JSONResponse(
+            {
+                "percent": None,
+                "tokens": None,
+                "status": None,
+                "error": str(e),
+                "baseline": None,
+                "usableTokens": None,
+                "usablePercent": None,
+                "available": None,
+            }
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -320,17 +329,19 @@ mode_router = APIRouter(prefix="/api/mode", tags=["mode"])
 
 @mode_router.get("/")
 async def get_mode() -> JSONResponse:
-    return JSONResponse({
-        "mode": "web",
-        "isBikeRack": os.environ.get("BIKERACK_MODE") == "1",
-        "version": "N/A",
-        "nodeVersion": "N/A",
-        "platform": sys.platform,
-        "arch": platform.machine(),
-        "pid": os.getpid(),
-        "uptime": time.time() - _start_time,
-        "startTime": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_start_time)),
-    })
+    return JSONResponse(
+        {
+            "mode": "web",
+            "isBikeRack": os.environ.get("BIKERACK_MODE") == "1",
+            "version": "N/A",
+            "nodeVersion": "N/A",
+            "platform": sys.platform,
+            "arch": platform.machine(),
+            "pid": os.getpid(),
+            "uptime": time.time() - _start_time,
+            "startTime": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_start_time)),
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -352,12 +363,14 @@ def _get_identity() -> dict[str, Any]:
         return _identity_cache
 
     import shutil
+
     jira_email: str | None = None
     github_username: str | None = None
 
     if shutil.which("jira"):
         try:
             import json as _json
+
             result = os.popen("jira me --raw 2>/dev/null").read()
             data = _json.loads(result)
             jira_email = data.get("emailAddress")
@@ -367,6 +380,7 @@ def _get_identity() -> dict[str, Any]:
     if shutil.which("gh"):
         try:
             import json as _json
+
             result = os.popen("gh api user 2>/dev/null").read()
             data = _json.loads(result)
             github_username = data.get("login")
@@ -376,7 +390,9 @@ def _get_identity() -> dict[str, Any]:
     _identity_cache = {
         "jiraEmail": jira_email,
         "githubUsername": github_username,
-        "avatarUrl": f"https://avatars.githubusercontent.com/{github_username}" if github_username else None,
+        "avatarUrl": f"https://avatars.githubusercontent.com/{github_username}"
+        if github_username
+        else None,
     }
     _identity_cache_time = now
     return _identity_cache
@@ -397,10 +413,12 @@ project_info_router = APIRouter(prefix="/api/project-info", tags=["project-info"
 @project_info_router.get("/")
 async def get_project_info() -> JSONResponse:
     project_dir = _get_project_dir()
-    return JSONResponse({
-        "name": Path(project_dir).name,
-        "path": project_dir,
-    })
+    return JSONResponse(
+        {
+            "name": Path(project_dir).name,
+            "path": project_dir,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -63,9 +63,7 @@ _HEADER_PATTERNS: dict[str, re.Pattern[str]] = {
 _TITLE_RE = re.compile(r"^#\s+Story\s+\d+\.\d+(?:\.\d+)?:\s*(.+)$", re.MULTILINE)
 
 # AC block: everything between ## Acceptance Criteria and the next ## heading
-_AC_RE = re.compile(
-    r"## Acceptance Criteria\s*\n(.*?)(?=\n## |\Z)", re.DOTALL
-)
+_AC_RE = re.compile(r"## Acceptance Criteria\s*\n(.*?)(?=\n## |\Z)", re.DOTALL)
 
 
 def parse_bmad_story(path: Path) -> dict[str, Any]:

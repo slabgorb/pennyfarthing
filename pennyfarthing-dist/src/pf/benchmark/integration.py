@@ -95,8 +95,17 @@ class OceanErrorCorrelation:
 
 
 VALID_ROLES = [
-    "orchestrator", "sm", "tea", "dev", "reviewer",
-    "architect", "pm", "tech-writer", "ux-designer", "devops", "ba",
+    "orchestrator",
+    "sm",
+    "tea",
+    "dev",
+    "reviewer",
+    "architect",
+    "pm",
+    "tech-writer",
+    "ux-designer",
+    "devops",
+    "ba",
 ]
 
 VALID_DIMENSIONS = ["O", "C", "E", "A", "N"]
@@ -107,7 +116,9 @@ _ERROR_TYPES = ["reasoning", "planning", "execution"]
 def _project_root() -> str:
     d = os.path.dirname(__file__)
     for _ in range(10):
-        if os.path.exists(os.path.join(d, "pennyfarthing-dist")) or os.path.exists(os.path.join(d, ".pennyfarthing")):
+        if os.path.exists(os.path.join(d, "pennyfarthing-dist")) or os.path.exists(
+            os.path.join(d, ".pennyfarthing")
+        ):
             return d
         parent = os.path.dirname(d)
         if parent == d:
@@ -143,7 +154,9 @@ def _get_character_info(theme: str, role: str) -> dict[str, Any] | None:
             return None
         return {
             "character": agent.get("character", role),
-            "ocean": OceanScores(O=ocean["O"], C=ocean["C"], E=ocean["E"], A=ocean["A"], N=ocean["N"]),
+            "ocean": OceanScores(
+                O=ocean["O"], C=ocean["C"], E=ocean["E"], A=ocean["A"], N=ocean["N"]
+            ),
         }
     except Exception:
         return None
@@ -173,7 +186,9 @@ def _get_available_scenarios() -> list[str]:
     bd = _benchmarks_dir()
     if not os.path.exists(bd):
         return []
-    return [f for f in os.listdir(bd) if not f.startswith(".") and os.path.isdir(os.path.join(bd, f))]
+    return [
+        f for f in os.listdir(bd) if not f.startswith(".") and os.path.isdir(os.path.join(bd, f))
+    ]
 
 
 def _get_benchmarked_themes(scenario: str, role: str) -> list[str]:
@@ -194,7 +209,9 @@ def _calc_dimension_effect(results: list[BenchmarkResult], dim: str) -> Correlat
     low_mean = sum(r.mean for r in low) / len(low)
     high_mean = sum(r.mean for r in high) / len(high)
     effect = round(abs(high_mean - low_mean), 2)
-    direction = "positive" if high_mean > low_mean else "negative" if high_mean < low_mean else "none"
+    direction = (
+        "positive" if high_mean > low_mean else "negative" if high_mean < low_mean else "none"
+    )
     return CorrelationEffect(effect=effect, direction=direction)
 
 
@@ -205,12 +222,21 @@ def load_benchmark_data(scenario: str, role: str) -> list[BenchmarkResult]:
         bm = _load_benchmark_summary(scenario, theme, role)
         ci = _get_character_info(theme, role)
         if bm and ci:
-            results.append(BenchmarkResult(
-                theme=theme, role=role, character=ci["character"], scenario=scenario,
-                mean=bm["mean"], std_dev=bm["std_dev"], delta=bm["delta"],
-                n=bm["n"], scores=bm["scores"], ocean=ci["ocean"],
-                face=f"by-theme/{theme}/{role}.svg",
-            ))
+            results.append(
+                BenchmarkResult(
+                    theme=theme,
+                    role=role,
+                    character=ci["character"],
+                    scenario=scenario,
+                    mean=bm["mean"],
+                    std_dev=bm["std_dev"],
+                    delta=bm["delta"],
+                    n=bm["n"],
+                    scores=bm["scores"],
+                    ocean=ci["ocean"],
+                    face=f"by-theme/{theme}/{role}.svg",
+                )
+            )
     return sorted(results, key=lambda r: r.mean, reverse=True)
 
 
@@ -219,16 +245,32 @@ def get_benchmark_with_face(theme: str, role: str, scenario: str) -> BenchmarkRe
     ci = _get_character_info(theme, role)
     if not bm and ci:
         return BenchmarkResult(
-            theme=theme, role=role, character=ci["character"], scenario=scenario,
-            mean=0, std_dev=0, delta=0, n=0, scores=[], ocean=ci["ocean"],
-            face=f"by-theme/{theme}/{role}.svg", benchmark_missing=True,
+            theme=theme,
+            role=role,
+            character=ci["character"],
+            scenario=scenario,
+            mean=0,
+            std_dev=0,
+            delta=0,
+            n=0,
+            scores=[],
+            ocean=ci["ocean"],
+            face=f"by-theme/{theme}/{role}.svg",
+            benchmark_missing=True,
         )
     if not bm or not ci:
         return None
     return BenchmarkResult(
-        theme=theme, role=role, character=ci["character"], scenario=scenario,
-        mean=bm["mean"], std_dev=bm["std_dev"], delta=bm["delta"],
-        n=bm["n"], scores=bm["scores"], ocean=ci["ocean"],
+        theme=theme,
+        role=role,
+        character=ci["character"],
+        scenario=scenario,
+        mean=bm["mean"],
+        std_dev=bm["std_dev"],
+        delta=bm["delta"],
+        n=bm["n"],
+        scores=bm["scores"],
+        ocean=ci["ocean"],
         face=f"by-theme/{theme}/{role}.svg",
     )
 
@@ -238,7 +280,11 @@ def calculate_ocean_correlation(scenario: str, role: str) -> CorrelationResult:
     effects = {d: _calc_dimension_effect(results, d) for d in VALID_DIMENSIONS}
     max_dim = max(VALID_DIMENSIONS, key=lambda d: effects[d].effect)
     return CorrelationResult(
-        O=effects["O"], C=effects["C"], E=effects["E"], A=effects["A"], N=effects["N"],
+        O=effects["O"],
+        C=effects["C"],
+        E=effects["E"],
+        A=effects["A"],
+        N=effects["N"],
         strongest={"dimension": max_dim, "effect": effects[max_dim].effect},
     )
 
@@ -267,7 +313,10 @@ def get_optimal_profile(role: str) -> OptimalProfile:
     for s in scenarios:
         all_results.extend(load_benchmark_data(s, role))
     if not all_results:
-        return OptimalProfile(ocean=OceanScores(O=3, C=3, E=3, A=3, N=3), reasoning=f"No benchmark data available for {role} role. Returning balanced profile.")
+        return OptimalProfile(
+            ocean=OceanScores(O=3, C=3, E=3, A=3, N=3),
+            reasoning=f"No benchmark data available for {role} role. Returning balanced profile.",
+        )
     all_results.sort(key=lambda r: r.mean, reverse=True)
     top_count = max(1, len(all_results) // 4)
     top = all_results[:top_count]
@@ -290,19 +339,34 @@ def get_role_recommendations(role: str) -> RoleRecommendations:
     for s in scenarios:
         all_results.extend(load_benchmark_data(s, role))
     if not all_results:
-        return RoleRecommendations(role=role, top_themes=[], avoid_themes=[], insight=f"No benchmark data available for {role} role.")
+        return RoleRecommendations(
+            role=role,
+            top_themes=[],
+            avoid_themes=[],
+            insight=f"No benchmark data available for {role} role.",
+        )
     all_results.sort(key=lambda r: r.mean, reverse=True)
-    top = [{"theme": r.theme, "character": r.character, "score": r.mean, "ocean": r.ocean} for r in all_results[:3]]
-    avoid = [{"theme": r.theme, "character": r.character, "score": r.mean} for r in all_results[-3:]]
+    top = [
+        {"theme": r.theme, "character": r.character, "score": r.mean, "ocean": r.ocean}
+        for r in all_results[:3]
+    ]
+    avoid = [
+        {"theme": r.theme, "character": r.character, "score": r.mean} for r in all_results[-3:]
+    ]
     insight = f"For {role} role: "
     if top:
-        insight += f"Top performer: {top[0]['character']} ({top[0]['theme']}) at {top[0]['score']} pts."
+        insight += (
+            f"Top performer: {top[0]['character']} ({top[0]['theme']}) at {top[0]['score']} pts."
+        )
     return RoleRecommendations(role=role, top_themes=top, avoid_themes=avoid, insight=insight)
 
 
 def find_top_performers(
-    scenario: str | None = None, role: str | None = None,
-    ocean_filter: str | None = None, limit: int | None = None, min_score: float | None = None,
+    scenario: str | None = None,
+    role: str | None = None,
+    ocean_filter: str | None = None,
+    limit: int | None = None,
+    min_score: float | None = None,
 ) -> list[PerformerResult]:
     if not scenario or not role:
         return []
@@ -312,15 +376,28 @@ def find_top_performers(
         results = [r for r in results if _matches_filter(r.ocean, f)]
     if min_score is not None:
         results = [r for r in results if r.mean >= min_score]
-    performers = [PerformerResult(theme=r.theme, character=r.character, score=r.mean, delta=r.delta, ocean=r.ocean, face=r.face) for r in results]
+    performers = [
+        PerformerResult(
+            theme=r.theme,
+            character=r.character,
+            score=r.mean,
+            delta=r.delta,
+            ocean=r.ocean,
+            face=r.face,
+        )
+        for r in results
+    ]
     if limit and limit > 0:
         performers = performers[:limit]
     return performers
 
 
 def query_benchmarks(
-    scenario: str | None = None, role: str | None = None,
-    ocean_filter: str | None = None, limit: int | None = None, sort_by: str = "score",
+    scenario: str | None = None,
+    role: str | None = None,
+    ocean_filter: str | None = None,
+    limit: int | None = None,
+    sort_by: str = "score",
 ) -> list[PerformerResult]:
     if not scenario or not role:
         return []
@@ -328,7 +405,17 @@ def query_benchmarks(
     if ocean_filter:
         f = parse_ocean_filter(ocean_filter)
         results = [r for r in results if _matches_filter(r.ocean, f)]
-    performers = [PerformerResult(theme=r.theme, character=r.character, score=r.mean, delta=r.delta, ocean=r.ocean, face=r.face) for r in results]
+    performers = [
+        PerformerResult(
+            theme=r.theme,
+            character=r.character,
+            score=r.mean,
+            delta=r.delta,
+            ocean=r.ocean,
+            face=r.face,
+        )
+        for r in results
+    ]
     if sort_by == "delta":
         performers.sort(key=lambda p: p.delta, reverse=True)
     elif sort_by == "name":
@@ -347,7 +434,8 @@ def _get_arrow(correlation: float) -> str:
 
 
 def calculate_error_type_correlation(
-    results: list[dict[str, Any]], judge_scores: list[dict[str, Any]],
+    results: list[dict[str, Any]],
+    judge_scores: list[dict[str, Any]],
 ) -> OceanErrorCorrelation:
     matrix: dict[str, dict[str, ErrorTypeCell]] = {}
     for dim in VALID_DIMENSIONS:
@@ -367,7 +455,9 @@ def calculate_error_type_correlation(
                     ocean = r.get("ocean")
                     det = j.get("detection_by_type")
                     if ocean and det:
-                        val = ocean.get(dim, 3) if isinstance(ocean, dict) else getattr(ocean, dim, 3)
+                        val = (
+                            ocean.get(dim, 3) if isinstance(ocean, dict) else getattr(ocean, dim, 3)
+                        )
                         if val <= 2:
                             pairs_low.append(det.get(err, 0))
                         elif val >= 4:
@@ -382,12 +472,22 @@ def calculate_error_type_correlation(
     for dim in VALID_DIMENSIONS:
         for err in _ERROR_TYPES:
             if abs(matrix[dim][err].correlation) > abs(strongest["correlation"]):
-                strongest = {"dimension": dim, "errorType": err, "correlation": matrix[dim][err].correlation}
+                strongest = {
+                    "dimension": dim,
+                    "errorType": err,
+                    "correlation": matrix[dim][err].correlation,
+                }
     return OceanErrorCorrelation(matrix=matrix, strongest=strongest)
 
 
 def generate_ocean_error_heat_map(correlation: OceanErrorCorrelation) -> str:
-    labels = {"O": "O (Open)", "C": "C (Consc)", "E": "E (Extra)", "A": "A (Agree)", "N": "N (Neuro)"}
+    labels = {
+        "O": "O (Open)",
+        "C": "C (Consc)",
+        "E": "E (Extra)",
+        "A": "A (Agree)",
+        "N": "N (Neuro)",
+    }
     md = "## OCEAN × Error-Type Correlation\n\n"
     md += "|           | Reasoning | Planning | Execution |\n|-----------|-----------|----------|----------|\n"
     for dim in VALID_DIMENSIONS:
@@ -400,9 +500,9 @@ def generate_ocean_error_heat_map(correlation: OceanErrorCorrelation) -> str:
 
 
 def parse_ocean_filter(expr: str) -> dict[str, Any]:
-    match = re.match(r'^([OCEAN])(>=|<=|=|>|<)(\d+)$', expr)
+    match = re.match(r"^([OCEAN])(>=|<=|=|>|<)(\d+)$", expr)
     if not match:
-        dim_match = re.match(r'^([A-Z])', expr)
+        dim_match = re.match(r"^([A-Z])", expr)
         if dim_match and dim_match.group(1) not in VALID_DIMENSIONS:
             raise ValueError(f"Invalid OCEAN dimension: {dim_match.group(1)}")
         raise ValueError(f"Invalid OCEAN filter format: {expr}")
