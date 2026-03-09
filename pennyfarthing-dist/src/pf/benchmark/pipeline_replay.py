@@ -1019,3 +1019,186 @@ def _phase_attribution(score: PipelineScore) -> dict[str, int]:
         if f.caught and f.caught_by in counts:
             counts[f.caught_by] += 1
     return counts
+
+
+# ---------------------------------------------------------------------------
+# Multi-judge support
+# ---------------------------------------------------------------------------
+
+
+def reconstruct_pipeline_result(
+    run_dir: Path, scenario: Scenario
+) -> PipelineResult | None:
+    """Reconstruct a PipelineResult from saved files in a run directory."""
+    meta_file = run_dir / "pipeline.yaml"
+    if not meta_file.exists():
+        return None
+
+    meta = yaml.safe_load(meta_file.read_text())
+    phases: dict[str, PhaseResult] = {}
+    for role in scenario.phases:
+        output_file = run_dir / f"{role}-output.txt"
+        if output_file.exists():
+            phase_meta = meta.get("phases", {}).get(role, {})
+            phases[role] = PhaseResult(
+                role=role,
+                output_text=output_file.read_text(),
+                token_usage=phase_meta.get("token_usage", {}),
+                duration_s=phase_meta.get("duration_s", 0),
+                exit_code=phase_meta.get("exit_code", 0),
+            )
+
+    diff_file = run_dir / "diff-stat.txt"
+    if diff_file.exists():
+        phases["_diff_stat"] = PhaseResult(
+            role="_diff", output_text=diff_file.read_text()
+        )
+
+    return PipelineResult(
+        scenario_id=meta["scenario_id"],
+        theme=meta.get("theme"),
+        run_id=meta["run_id"],
+        worktree_path=meta.get("worktree_path", ""),
+        phases=phases,
+        timestamp=meta.get("timestamp", ""),
+    )
+
+
+def get_existing_judge_passes(run_dir: Path) -> list[int]:
+    """Find which judge passes already exist (judge_1.yaml, judge_2.yaml, etc)."""
+    passes = []
+    for f in run_dir.iterdir():
+        if f.name.startswith("judge_") and f.name.endswith(".yaml"):
+            try:
+                n = int(f.stem.split("_")[1])
+                passes.append(n)
+            except (IndexError, ValueError):
+                pass
+    return sorted(passes)
+
+
+def run_judge_pass(
+    run_dir: Path,
+    scenario: Scenario,
+    pass_num: int,
+    model: str | None = None,
+    project_dir: Path | None = None,
+) -> dict | None:
+    """Run a single additional judge pass and save as judge_{pass_num}.yaml.
+
+    Does NOT overwrite score.yaml. Each pass is stored independently.
+    """
+    pipeline_result = reconstruct_pipeline_result(run_dir, scenario)
+    if pipeline_result is None:
+        return None
+
+    proj = project_dir or Path.cwd()
+    score = score_with_judge(scenario, pipeline_result, model=model, project_dir=proj)
+
+    score_data = {
+        "scenario_id": score.scenario_id,
+        "theme": score.theme,
+        "run_id": score.run_id,
+        "judge_version": JUDGE_VERSION,
+        "judge_pass": pass_num,
+        "total_caught": score.total_caught,
+        "total_findings": score.total_findings,
+        "weighted_caught": score.weighted_caught,
+        "total_weight": score.total_weight,
+        "score_pct": score.score_pct,
+        "findings": [asdict(f) for f in score.findings],
+    }
+
+    out_file = run_dir / f"judge_{pass_num}.yaml"
+    out_file.write_text(
+        yaml.dump(score_data, default_flow_style=False, sort_keys=False)
+    )
+    return score_data
+
+
+def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
+    """Compute majority-vote score from score.yaml + all judge_N.yaml passes.
+
+    Writes majority_vote.yaml alongside the individual scores. Returns None
+    if fewer than 2 judges exist.
+    """
+    all_scores = []
+
+    # score.yaml counts as the first judge (pass 0)
+    score_file = run_dir / "score.yaml"
+    if score_file.exists():
+        all_scores.append(yaml.safe_load(score_file.read_text()))
+
+    # Load all judge_N.yaml
+    for pass_num in get_existing_judge_passes(run_dir):
+        jf = run_dir / f"judge_{pass_num}.yaml"
+        all_scores.append(yaml.safe_load(jf.read_text()))
+
+    if len(all_scores) < 2:
+        return None
+
+    n_judges = len(all_scores)
+    majority = n_judges // 2 + 1
+
+    gt_map = {f.id: f for f in scenario.ground_truth}
+
+    majority_findings = []
+    for fid in [f.id for f in scenario.ground_truth]:
+        caught_votes = 0
+        caught_by_votes: dict[str, int] = {}
+        evidences = []
+
+        for sc in all_scores:
+            finding = next(
+                (f for f in sc.get("findings", []) if f["finding_id"] == fid), None
+            )
+            if finding and finding.get("caught"):
+                caught_votes += 1
+                by = finding.get("caught_by", "unknown")
+                caught_by_votes[by] = caught_by_votes.get(by, 0) + 1
+                if finding.get("evidence"):
+                    evidences.append(finding["evidence"])
+
+        caught = caught_votes >= majority
+        caught_by = (
+            max(caught_by_votes, key=caught_by_votes.get)
+            if caught and caught_by_votes
+            else None
+        )
+
+        majority_findings.append({
+            "finding_id": fid,
+            "title": gt_map[fid].title,
+            "weight": gt_map[fid].weight,
+            "phase_ideal": gt_map[fid].phase_ideal,
+            "caught": caught,
+            "caught_by": caught_by,
+            "evidence": evidences[0] if evidences else "",
+            "votes": f"{caught_votes}/{n_judges}",
+        })
+
+    total_caught = sum(1 for f in majority_findings if f["caught"])
+    weighted_caught = sum(f["weight"] for f in majority_findings if f["caught"])
+    total_weight = scenario.total_weight
+
+    result = {
+        "judge_method": "majority_vote",
+        "n_judges": n_judges,
+        "majority_threshold": majority,
+        "judge_version": JUDGE_VERSION,
+        "total_caught": total_caught,
+        "total_findings": len(majority_findings),
+        "weighted_caught": weighted_caught,
+        "total_weight": total_weight,
+        "score_pct": (
+            round(weighted_caught / total_weight * 100, 1) if total_weight else 0.0
+        ),
+        "findings": majority_findings,
+        "individual_scores": [s.get("score_pct", 0) for s in all_scores],
+    }
+
+    out_file = run_dir / "majority_vote.yaml"
+    out_file.write_text(
+        yaml.dump(result, default_flow_style=False, sort_keys=False)
+    )
+    return result

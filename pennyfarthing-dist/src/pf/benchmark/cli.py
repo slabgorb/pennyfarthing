@@ -163,9 +163,8 @@ def replay_run(
 def replay_score(result_dir, scenario_path, model, project_dir):
     """Re-score an existing pipeline run."""
     from pf.benchmark.pipeline_replay import (
-        PhaseResult,
-        PipelineResult,
         load_scenario,
+        reconstruct_pipeline_result,
         save_result,
         score_with_judge,
     )
@@ -175,34 +174,10 @@ def replay_score(result_dir, scenario_path, model, project_dir):
 
     scenario = load_scenario(scenario_path, project_dir=project)
 
-    # Reconstruct PipelineResult from saved files
-    meta_file = result_path / "pipeline.yaml"
-    if not meta_file.exists():
-        click.echo(f"Error: {meta_file} not found", err=True)
+    pipeline_result = reconstruct_pipeline_result(result_path, scenario)
+    if pipeline_result is None:
+        click.echo(f"Error: pipeline.yaml not found in {result_path}", err=True)
         raise SystemExit(1)
-
-    meta = yaml.safe_load(meta_file.read_text())
-    phases: dict[str, PhaseResult] = {}
-    for role in scenario.phases:
-        output_file = result_path / f"{role}-output.txt"
-        if output_file.exists():
-            phase_meta = meta.get("phases", {}).get(role, {})
-            phases[role] = PhaseResult(
-                role=role,
-                output_text=output_file.read_text(),
-                token_usage=phase_meta.get("token_usage", {}),
-                duration_s=phase_meta.get("duration_s", 0),
-                exit_code=phase_meta.get("exit_code", 0),
-            )
-
-    pipeline_result = PipelineResult(
-        scenario_id=meta["scenario_id"],
-        theme=meta.get("theme"),
-        run_id=meta["run_id"],
-        worktree_path=meta.get("worktree_path", ""),
-        phases=phases,
-        timestamp=meta.get("timestamp", ""),
-    )
 
     click.echo("Scoring against ground truth...")
     score = score_with_judge(scenario, pipeline_result, model=model, project_dir=project)
@@ -220,6 +195,140 @@ def replay_score(result_dir, scenario_path, model, project_dir):
 
     # Save updated score
     save_result(pipeline_result, score, result_path.parent.parent.parent)
+
+
+@replay.command("judge")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option(
+    "--results-dir",
+    default=None,
+    type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option("--theme", default=None, help="Only judge this theme (default: all)")
+@click.option(
+    "--target-judges",
+    default=3,
+    type=int,
+    help="Target total judges per run (including initial score.yaml)",
+)
+@click.option("--model", default=None, help="Claude model for judge")
+@click.option("--project-dir", default=None, type=click.Path(exists=True))
+def replay_judge(scenario_path, results_dir, theme, target_judges, model, project_dir):
+    """Run additional judge passes and compute majority vote.
+
+    Adds judge_1.yaml, judge_2.yaml, etc. alongside the existing score.yaml,
+    then computes a majority_vote.yaml for each run. Does NOT overwrite
+    score.yaml.
+
+    \b
+    Examples:
+        pf benchmark replay judge scenarios/dpgd-116.yaml
+        pf benchmark replay judge scenarios/dpgd-116.yaml --theme firefly
+        pf benchmark replay judge scenarios/dpgd-116.yaml --target-judges 5
+    """
+    import signal
+    import time
+
+    from pf.benchmark.pipeline_replay import (
+        compute_majority_vote,
+        get_existing_judge_passes,
+        load_scenario,
+        run_judge_pass,
+    )
+
+    project = Path(project_dir) if project_dir else Path.cwd()
+    scenario = load_scenario(scenario_path, project_dir=project)
+
+    base = (
+        Path(results_dir)
+        if results_dir
+        else project / "internal" / "results" / "pipeline-replay"
+    )
+    scenario_dir = base / scenario.id
+
+    if not scenario_dir.exists():
+        click.echo(f"No results found at {scenario_dir}", err=True)
+        raise SystemExit(1)
+
+    # Graceful shutdown on Ctrl-C
+    shutdown = False
+
+    def _handle_signal(sig, frame):
+        nonlocal shutdown
+        click.echo("\nShutdown requested, finishing current judge call...")
+        shutdown = True
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    # Collect all run dirs
+    run_items: list[tuple[str, Path]] = []
+    for theme_dir in sorted(scenario_dir.iterdir()):
+        if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
+            continue
+        if theme and theme_dir.name != theme:
+            continue
+        for run_dir in sorted(theme_dir.iterdir()):
+            if run_dir.is_dir() and run_dir.name.startswith("run-"):
+                run_items.append((theme_dir.name, run_dir))
+
+    # Sort: control first, then alphabetical
+    run_items.sort(key=lambda x: ("" if x[0] == "control" else x[0], x[1].name))
+
+    click.echo(f"=== Multi-Judge: {scenario.id} ===")
+    click.echo(f"  Runs:    {len(run_items)}")
+    click.echo(f"  Target:  {target_judges} judges per run")
+    click.echo()
+
+    judged = 0
+    skipped = 0
+
+    for i, (tag, run_dir) in enumerate(run_items):
+        if shutdown:
+            break
+
+        existing = get_existing_judge_passes(run_dir)
+        has_score = (run_dir / "score.yaml").exists()
+        current_total = (1 if has_score else 0) + len(existing)
+        needed = target_judges - current_total
+
+        if needed <= 0:
+            skipped += 1
+            continue
+
+        next_pass = max(existing) + 1 if existing else 1
+        click.echo(
+            f"  [{i + 1}/{len(run_items)}] {tag}/{run_dir.name} "
+            f"— {current_total} judges, adding {needed}"
+        )
+
+        for p in range(next_pass, next_pass + needed):
+            if shutdown:
+                break
+            start = time.time()
+            try:
+                result = run_judge_pass(
+                    run_dir, scenario, p, model=model, project_dir=project
+                )
+                elapsed = time.time() - start
+                if result:
+                    click.echo(f"    Pass {p}: {result['score_pct']}% ({elapsed:.0f}s)")
+                    judged += 1
+                else:
+                    click.echo(f"    Pass {p}: FAILED ({elapsed:.0f}s)")
+            except Exception as e:
+                click.echo(f"    Pass {p}: ERROR: {e} ({time.time() - start:.0f}s)")
+
+        if not shutdown:
+            mv = compute_majority_vote(run_dir, scenario)
+            if mv:
+                click.echo(
+                    f"    Majority vote ({mv['n_judges']}j): {mv['score_pct']}%"
+                )
+
+    click.echo()
+    click.echo(f"=== Done: {judged} judge passes added, {skipped} runs already at target ===")
 
 
 @replay.command("compare")
