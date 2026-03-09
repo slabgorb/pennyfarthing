@@ -15,7 +15,7 @@
  * - Value is optional (CONTINUE marker has no value)
  *
  * Groups:
- * - [1] = TYPE (e.g., HANDOFF, CONTEXT_CLEAR, CONTINUE)
+ * - [1] = TYPE (e.g., HANDOFF, CONTINUE)
  * - [2] = value (e.g., /dev, yesno, 1,2,3) - undefined for CONTINUE
  *
  * IMPORTANT: Reset lastIndex before each use since this is a global regex.
@@ -28,7 +28,6 @@ export const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+)(?::([^>]+?))?\s*-->/gi;
  */
 export const MARKER_TYPES = {
   HANDOFF: 'handoff',
-  CONTEXT_CLEAR: 'context_clear',
   INVOKE: 'invoke',
   QUESTION: 'question',
   CHOICES: 'choices',
@@ -40,7 +39,6 @@ export const MARKER_TYPES = {
  */
 export const VALID_MARKER_TYPES = new Set([
   'handoff',
-  'context_clear',
   'invoke',
   'question',
   'choices',

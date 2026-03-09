@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.7.0. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.7.0. Python runtime + React GUI. Python (≥3.11) for CLI, server, and hooks. Node (≥18) for GUI build only. pnpm monorepo.
 
 <critical>
 ## Implementation Rules
@@ -44,13 +44,16 @@ pnpm run lint      # ESLint
 <info>
 ## Directory Structure
 
+**Architecture:** Python runtime + React GUI. See ADR-0034.
+
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
-| `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
-| `packages/cyclist/` | BikeRack GUI (React 19, Tailwind v4, dockview) — browser UI over core |
-| `tests/` | Framework tests |
+| `pennyfarthing-dist/src/pf/` | Python package — CLI, WheelHub server (FastAPI), hooks, jira, sprint, workflow, prime |
+| `pennyfarthing-dist/src/pf/wheelhub/` | Python FastAPI server — OTLP receiver, WebSocket channels, API routes |
+| `packages/core/` | `@pennyfarthing/core` — React GUI components, workflow engine, shared utilities |
+| `packages/cyclist/` | React entry points (minimal — 3 files) |
+| `tests/` | Framework tests (Python + TypeScript) |
 | `scripts/` | Framework dev only (NOT distributed) |
 
 **Display modes:** BikeRack panels render in three contexts:
@@ -58,7 +61,7 @@ pnpm run lint      # ESLint
 - **GUI** — BikeRack browser UI with full dockview panel layout
 - **IDE** — VS Code / Cursor sidebar panels via WheelHub API
 
-**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash/JS) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
+**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
 </info>
 
 <info>
@@ -78,7 +81,7 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
-**Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (panel viewer), Peloton (pipeline replay benchmarks)
+**Codenames:** WheelHub (Python FastAPI server), JobFair (benchmarking), BikeRack (panel viewer), Peloton (pipeline replay benchmarks)
 
 **Glossary:**
 
@@ -105,7 +108,6 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |
 | Bell Mode | `guides/bell-mode.md` | Message queue injection via PostToolUse |
 | Relay Mode | `guides/relay-mode.md` | Auto-handoff execution |
-| TirePump | `guides/tirepump.md` | Context clearing and session reload |
 | Prime | `guides/prime.md` | Agent activation with tiered context |
 | Reflector | `guides/reflector.md` | Agent-to-UI markers for QuickActions |
 | Tandem | `guides/tandem-protocol.md` | Background observer pairing |

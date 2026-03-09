@@ -146,12 +146,6 @@ function processMarkers(
     case MARKER_TYPES.CHOICES:
       return processChoicesMarker(primaryMarker.value, fullText);
 
-    case MARKER_TYPES.CONTEXT_CLEAR:
-      return {
-        type: 'context_clear',
-        value: primaryMarker.value,
-      };
-
     case MARKER_TYPES.CONTINUE:
       return {
         type: 'continue',

@@ -24,7 +24,6 @@ class ContextConfig:
     warning_threshold: int = 60
     critical_threshold: int = 85
     max_tokens: int = 200000
-    tirepump_threshold: int = 60
     permission_mode: str = "manual"
     relay_mode: bool = False
 
@@ -51,7 +50,6 @@ class ContextResult:
     permission_mode: str = "manual"
     relay_mode: bool = False
     handoff_mode: str = "ask"  # ask, auto
-    use_tirepump: bool = False
     is_gui: bool = False
 
     # Error state
@@ -73,7 +71,6 @@ class ContextResult:
             f"PERMISSION_MODE={self.permission_mode}",
             f"RELAY_MODE={str(self.relay_mode).lower()}",
             f"HANDOFF_MODE={self.handoff_mode}",
-            f"USE_TIREPUMP={str(self.use_tirepump).lower()}",
             f"IS_GUI={str(self.is_gui).lower()}",
         ]
 
@@ -89,9 +86,7 @@ class ContextResult:
         if self.error:
             return f"⚠️  Context: unknown ({self.error})"
 
-        if self.use_tirepump:
-            status_line = f"🔄 Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available) - TIREPUMP (clear + next agent)"
-        elif self.status == "HIGH":
+        if self.status == "HIGH":
             status_line = f"⚠️  Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available) - AUTO-HANDOFF"
         else:
             status_line = f"✅ Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available)"
@@ -157,8 +152,6 @@ def _apply_config(config: ContextConfig, data: dict) -> None:
         config.warning_threshold = cb.get("warning_threshold", config.warning_threshold)
         config.critical_threshold = cb.get("critical_threshold", config.critical_threshold)
         config.max_tokens = cb.get("max_tokens", config.max_tokens)
-        config.tirepump_threshold = cb.get("tirepump_threshold", config.tirepump_threshold)
-
     if "workflow" in data:
         wf = data["workflow"]
         config.permission_mode = wf.get("permission_mode", config.permission_mode)
@@ -360,12 +353,6 @@ def check_context(
 
     # Handoff mode
     result.handoff_mode = "auto" if config.relay_mode else "ask"
-
-    # TirePump
-    result.use_tirepump = (
-        (config.relay_mode or config.permission_mode == "turbo") and
-        usable_pct > config.tirepump_threshold
-    )
 
     # GUI detection
     result.is_gui = detect_gui(project_dir)

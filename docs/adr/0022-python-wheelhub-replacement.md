@@ -1,7 +1,8 @@
 # ADR-0022: Replace Node.js WheelHub with Python Server
 
-**Status:** Proposed
+**Status:** Accepted (Implemented)
 **Date:** 2026-03-09
+**Implemented:** 2026-03-09 (Epic 48, Stories 48-1 through 48-4)
 **Author:** Architect Agent (Leonard of Quirm)
 
 ## Context
@@ -230,12 +231,35 @@ Compile to a standalone binary with no runtime dependency.
 
 **Rejected:** Introduces a third language. Can't import `pf` Python modules directly — would recreate the subprocess delegation problem in a different language.
 
+## Implementation Outcome (2026-03-09)
+
+All four phases completed in a single sprint as Epic 48 (MSSCI-16312):
+
+| Story | Points | Scope | Result |
+|-------|--------|-------|--------|
+| 48-1 | 3 | FastAPI skeleton + OTLP receiver + launcher switch | FastAPI app at `pf/wheelhub/app.py`, OTLP at `pf/wheelhub/otlp.py`, launcher updated |
+| 48-2 | 3 | Port core API routes to FastAPI | Data proxy, state, analysis routes — direct Python imports, no subprocess |
+| 48-3 | 5 | Port all 16 WebSocket channels | Channel manager at `pf/wheelhub/websocket.py` |
+| 48-4 | 2 | Cleanup — remove Node.js server | `packages/core/src/server/` deleted (~90 files), `build-wheelhub.sh` deleted, express/ws removed |
+
+**Final Python WheelHub:** 1,726 lines across 9 files in `pennyfarthing-dist/src/pf/wheelhub/`.
+
+**What was eliminated:**
+- `packages/core/src/server/` (entire directory, ~90 files)
+- `scripts/build-wheelhub.sh` (esbuild pipeline)
+- `pennyfarthing-dist/src/pf/_dist/server/wheelhub.mjs` (1.7MB bundle)
+- `_install_wheelhub()` from init
+- `express` and `ws` npm dependencies
+- Node.js as a runtime requirement for the server
+
+**What remains in TypeScript:** React GUI components only (`packages/core/src/public/`, 131 files). The workflow engine, benchmark tooling, and shared utilities in `packages/core/src/` still exist in TypeScript but are consumed only by the GUI build, not by the server.
+
+**Impact on ADR-0030 (BikeRack Extraction):** The extraction plan's premise — moving code from `packages/core/src/server/` to `packages/bikerack/` — is now moot. The server directory no longer exists. ADR-0030 needs revision to reflect the Python-first architecture. See ADR-0034.
+
 ## References
 
-- ADR-0004: WheelHub Background Agent Coordination (current Node.js architecture)
-- `pennyfarthing/packages/core/src/server/server.ts` — Current Express app (430 lines)
-- `pennyfarthing/packages/core/src/server/otlp-receiver.ts` — OTLP processing (571 lines)
-- `pennyfarthing/packages/core/src/server/websocket.ts` — WebSocket channels (~800 lines)
-- `pennyfarthing/scripts/build-wheelhub.sh` — Current build pipeline
-- `pennyfarthing/pennyfarthing-dist/src/pf/bikerack/launcher.py` — Current launcher
+- ADR-0004: WheelHub Background Agent Coordination (superseded architecture)
+- ADR-0034: Post-Migration Architecture — Python Runtime with React GUI
+- `pennyfarthing-dist/src/pf/wheelhub/` — Python WheelHub server (FastAPI + uvicorn)
+- `pennyfarthing-dist/src/pf/bikerack/launcher.py` — Python launcher (starts uvicorn)
 - `pennyfarthing/pennyfarthing-dist/guides/bikerack.md` — BikeRack architecture guide
