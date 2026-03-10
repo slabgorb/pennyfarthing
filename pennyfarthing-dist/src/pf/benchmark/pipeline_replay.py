@@ -318,10 +318,7 @@ def setup_worktree_pf_context(worktree_path: Path, project_dir: Path) -> None:
 
 # XML tags stripped from agent output for benchmark prompts
 _STRIP_TAGS = [
-    "parameters",
     "phase-check",
-    "on-activation",
-    "assessment-templates",
     "finding-capture",
     "exit",
     "tandem-consultation",
