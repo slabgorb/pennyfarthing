@@ -143,6 +143,7 @@ class PennySettings:
     statusbar: bool = True
     theme: str | None = None
     discovery_nudge: bool = True
+    startup_agent: str = "sm"
 
 
 def load_settings(project_root: Path | None = None) -> PennySettings:
@@ -215,6 +216,10 @@ def load_settings(project_root: Path | None = None) -> PennySettings:
     # Handle discovery_nudge
     if "discovery_nudge" in workflow and isinstance(workflow["discovery_nudge"], bool):
         settings.discovery_nudge = workflow["discovery_nudge"]
+
+    # Handle startup_agent
+    if "startup_agent" in workflow and isinstance(workflow["startup_agent"], str):
+        settings.startup_agent = workflow["startup_agent"]
 
     return settings
 
