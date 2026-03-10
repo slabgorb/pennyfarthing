@@ -264,12 +264,60 @@ def remove_worktree(repo_path: Path, worktree_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Worktree PF context setup
+# ---------------------------------------------------------------------------
+
+
+def setup_worktree_pf_context(worktree_path: Path, project_dir: Path) -> None:
+    """Set up `.pennyfarthing/` symlink and `.claude/settings.json` in a worktree.
+
+    This gives the worktree access to agents, gates, workflows, guides, and
+    sidecars — everything ``pf`` needs to resolve subagent definitions and
+    fire hooks during ``claude -p`` execution.
+
+    The `.claude/settings.json` includes only the PreToolUse hook (pre-edit-check
+    and schema-validation). UI hooks (statusline, bell-mode) and session-start
+    (which contacts WheelHub) are excluded.
+    """
+    # Symlink .pennyfarthing/ from the project root
+    pf_source = project_dir / ".pennyfarthing"
+    pf_link = worktree_path / ".pennyfarthing"
+    if pf_source.exists() and not pf_link.exists():
+        os.symlink(pf_source, pf_link)
+
+    # Create .claude/settings.json with minimal hook set
+    claude_dir = worktree_path / ".claude"
+    claude_dir.mkdir(exist_ok=True)
+    settings = {
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "matcher": "",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": "pf hooks pre-edit-check",
+                        },
+                        {
+                            "type": "command",
+                            "command": "pf hooks schema-validation",
+                        },
+                    ],
+                }
+            ]
+        }
+    }
+    settings_path = claude_dir / "settings.json"
+    if not settings_path.exists():
+        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+
+
+# ---------------------------------------------------------------------------
 # Prompt extraction
 # ---------------------------------------------------------------------------
 
 # XML tags stripped from agent output for benchmark prompts
 _STRIP_TAGS = [
-    "helpers",
     "parameters",
     "phase-check",
     "on-activation",
@@ -280,7 +328,6 @@ _STRIP_TAGS = [
     "tandem-backseat",
     "team-mode",
     "research-tools",
-    "skills",
     "user-title",
     "crew",
 ]
@@ -636,21 +683,31 @@ def run_phase(
     *,
     model: str | None = None,
     otel_collector: OTELFileCollector | None = None,
+    project_dir: Path | None = None,
 ) -> PhaseResult:
     """Run a single pipeline phase via ``claude -p`` in the worktree.
 
     CLAUDE.md must already be in place before calling this.
     When *otel_collector* is set, injects OTEL env vars so telemetry
     flows to the file-based collector.
+    When *project_dir* is set, ``CLAUDE_PROJECT_DIR`` is set so hooks
+    and ``pf`` resolve the worktree as the project root.
     """
     cmd = ["claude", "-p", task_prompt, "--output-format", "json"]
     if model:
         cmd.extend(["--model", model])
 
-    env = None
+    # Always construct env — ensure pf is on PATH and project dir is set
+    env = {**os.environ}
+    pf_bin = Path.home() / ".local" / "bin"
+    current_path = env.get("PATH", "")
+    if str(pf_bin) not in current_path.split(os.pathsep):
+        env["PATH"] = f"{pf_bin}{os.pathsep}{current_path}"
+    if project_dir:
+        env["CLAUDE_PROJECT_DIR"] = str(worktree_path)
     if otel_collector:
         otel_collector.phase = role
-        env = {**os.environ, **otel_collector.env()}
+        env.update(otel_collector.env())
 
     start = time.monotonic()
     result = subprocess.run(
@@ -714,6 +771,56 @@ def _compute_run_dir(
     return output_dir / scenario_id / tag / f"run-{run_id}"
 
 
+_REVIEWER_REJECT_RE = re.compile(r"VERDICT:\s*REJECT", re.IGNORECASE)
+_REVIEWER_APPROVE_RE = re.compile(r"VERDICT:\s*APPROVE", re.IGNORECASE)
+
+_REVIEWER_FALLBACK_REJECT_PHRASES = [
+    "changes requested",
+    "must be fixed before",
+    "sending back to dev",
+    "returning to developer",
+]
+
+_REVIEWER_VERDICT_INSTRUCTION = """
+
+## Required Verdict
+
+You MUST end your review with exactly one of these lines:
+- `VERDICT: APPROVE` — if the code is acceptable
+- `VERDICT: REJECT` — if changes are required
+
+This verdict is mandatory and must appear on its own line at the end of your output.
+"""
+
+_REWORK_PROMPT_TEMPLATE = """\
+The reviewer has requested changes. Review the feedback below and implement the required fixes.
+
+## Reviewer Feedback
+
+{feedback}
+"""
+
+
+def _detect_reviewer_rejection(output_text: str) -> bool:
+    """Detect whether reviewer output indicates a rejection.
+
+    Returns ``True`` only on clear rejection signal. Ambiguous output
+    returns ``False`` to prevent infinite loops.
+    """
+    if _REVIEWER_REJECT_RE.search(output_text):
+        return True
+    if _REVIEWER_APPROVE_RE.search(output_text):
+        return False
+    # Fallback: check for strong rejection phrases (conservative)
+    lower = output_text.lower()
+    return any(phrase in lower for phrase in _REVIEWER_FALLBACK_REJECT_PHRASES)
+
+
+def _build_reviewer_task_prompt(base_prompt: str) -> str:
+    """Append verdict instruction to the reviewer's task prompt."""
+    return base_prompt + _REVIEWER_VERDICT_INSTRUCTION
+
+
 def run_pipeline(
     scenario: Scenario,
     *,
@@ -724,13 +831,17 @@ def run_pipeline(
     output_dir: Path | None = None,
     model: str | None = None,
     otel_endpoint: str | None = None,
+    max_rework_cycles: int = 0,
 ) -> PipelineResult:
     """Run the full TEA -> Dev -> Reviewer pipeline.
 
     1. Creates a worktree at the scenario's base commit.
-    2. For each phase, writes CLAUDE.md with the agent prompt + context,
+    2. Sets up ``.pennyfarthing/`` symlink and ``.claude/settings.json``.
+    3. For each phase, writes CLAUDE.md with the agent prompt + context,
        then runs ``claude -p`` with the phase task prompt.
-    3. Returns the collected results.
+    4. If *max_rework_cycles* > 0 and the reviewer rejects, re-runs the
+       dev and reviewer phases with feedback injected.
+    5. Returns the collected results.
 
     OTEL telemetry is always captured to disk as JSONL files alongside
     the phase outputs (``{phase}-otel.jsonl``).  The *otel_endpoint*
@@ -753,6 +864,9 @@ def run_pipeline(
     # Create worktree
     create_worktree(repo, scenario.base_commit, wt_path)
 
+    # Set up .pennyfarthing/ and .claude/ in the worktree
+    setup_worktree_pf_context(wt_path, project_dir)
+
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
     run_dir = _compute_run_dir(output_dir=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
@@ -762,43 +876,86 @@ def run_pipeline(
     collector.start()
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
 
+    def _run_single_phase(role: str, task_prompt: str, phase_key: str | None = None) -> PhaseResult:
+        """Run one phase and record it in result.phases."""
+        key = phase_key or role
+
+        # Extract production-faithful agent prompt
+        agent_prompt = extract_agent_prompt(
+            role, project_dir, persona=(theme is not None), theme=theme
+        )
+
+        # Write CLAUDE.md into worktree
+        claude_md = build_phase_claude_md(role, agent_prompt, scenario)
+        (wt_path / "CLAUDE.md").write_text(claude_md)
+
+        print(f"  [{key.upper()}] Running phase...")
+        phase_result = run_phase(
+            wt_path,
+            role,
+            task_prompt,
+            model=model,
+            otel_collector=collector,
+            project_dir=project_dir,
+        )
+        result.phases[key] = phase_result
+
+        tokens = phase_result.token_usage
+        actual_models = list(phase_result.model_usage.keys())
+        model_str = actual_models[0] if actual_models else model or "?"
+        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
+        otel_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
+        print(
+            f"  [{key.upper()}] Done in {phase_result.duration_s}s "
+            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
+            f"model={model_str}{cost_str}{otel_str})"
+        )
+
+        if phase_result.exit_code != 0:
+            print(f"  [{key.upper()}] WARNING: non-zero exit ({phase_result.exit_code})")
+
+        return phase_result
+
     try:
+        # Run initial phases linearly
         for role in scenario.phases:
-            # Extract production-faithful agent prompt
-            agent_prompt = extract_agent_prompt(
-                role, project_dir, persona=(theme is not None), theme=theme
-            )
-
-            # Write CLAUDE.md into worktree
-            claude_md = build_phase_claude_md(role, agent_prompt, scenario)
-            (wt_path / "CLAUDE.md").write_text(claude_md)
-
-            # Get the task prompt for this phase
             task_prompt = scenario.phase_prompts.get(role, f"Begin {role} phase.")
 
-            print(f"  [{role.upper()}] Running phase...")
-            phase_result = run_phase(
-                wt_path,
-                role,
-                task_prompt,
-                model=model,
-                otel_collector=collector,
-            )
-            result.phases[role] = phase_result
+            # Append verdict instruction to reviewer prompts
+            if role == "reviewer":
+                task_prompt = _build_reviewer_task_prompt(task_prompt)
 
-            tokens = phase_result.token_usage
-            actual_models = list(phase_result.model_usage.keys())
-            model_str = actual_models[0] if actual_models else model or "?"
-            cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
-            otel_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
-            print(
-                f"  [{role.upper()}] Done in {phase_result.duration_s}s "
-                f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
-                f"model={model_str}{cost_str}{otel_str})"
-            )
+            _run_single_phase(role, task_prompt)
 
-            if phase_result.exit_code != 0:
-                print(f"  [{role.upper()}] WARNING: non-zero exit ({phase_result.exit_code})")
+        # Kick-back loop: if reviewer rejected and rework cycles are enabled
+        if max_rework_cycles > 0 and "reviewer" in result.phases:
+            rework_cycle = 0
+            while rework_cycle < max_rework_cycles:
+                reviewer_output = result.phases.get(
+                    f"reviewer_rework_{rework_cycle}" if rework_cycle > 0 else "reviewer",
+                    result.phases.get("reviewer"),
+                )
+                if reviewer_output is None:
+                    break
+
+                if not _detect_reviewer_rejection(reviewer_output.output_text):
+                    break
+
+                rework_cycle += 1
+                print(f"  [REWORK {rework_cycle}] Reviewer rejected — re-running dev with feedback")
+
+                # Build rework prompt from reviewer feedback
+                rework_prompt = scenario.phase_prompts.get(
+                    "dev_rework",
+                    _REWORK_PROMPT_TEMPLATE,
+                ).format(feedback=reviewer_output.output_text)
+
+                _run_single_phase("dev", rework_prompt, phase_key=f"dev_rework_{rework_cycle}")
+
+                # Re-run reviewer
+                reviewer_task = scenario.phase_prompts.get("reviewer", "Begin reviewer phase.")
+                reviewer_task = _build_reviewer_task_prompt(reviewer_task)
+                _run_single_phase("reviewer", reviewer_task, phase_key=f"reviewer_rework_{rework_cycle}")
 
     except Exception as exc:
         print(f"  ERROR: Pipeline failed at phase: {exc}")
