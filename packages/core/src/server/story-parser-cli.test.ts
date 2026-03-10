@@ -91,11 +91,10 @@ describe('Story 141-17 AC1: story-parser subprocess delegation', () => {
         'utf8',
       );
 
-      // After refactor, subprocess wrapper should use try/catch + result objects
+      // After refactor, subprocess wrapper should use callPf which returns result objects
       assert.ok(
-        storyParserSource.includes('success') &&
-          (storyParserSource.includes('{ success: true') || storyParserSource.includes('{ success: false')),
-        'story-parser.ts should return result objects with success field',
+        storyParserSource.includes('success') && storyParserSource.includes('callPf'),
+        'story-parser.ts should return result objects with success field via callPf',
       );
     });
   });

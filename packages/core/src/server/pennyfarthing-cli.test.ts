@@ -63,9 +63,13 @@ describe('Story 141-17 AC6: pennyfarthing.ts CLI delegation', () => {
         'utf8',
       );
 
+      // readdirSync is acceptable for agent session file discovery (.session/agents/),
+      // but not for persona/theme directory scanning (which should delegate to pf CLI)
+      const hasThemeDiscovery =
+        pfSource.includes('readdirSync') && (pfSource.includes('personas/themes') || pfSource.includes('themesDir'));
       assert.ok(
-        !pfSource.includes('readdirSync'),
-        'pennyfarthing.ts must not use readdirSync (delegate to pf CLI for persona discovery)',
+        !hasThemeDiscovery,
+        'pennyfarthing.ts must not use readdirSync for persona/theme discovery (delegate to pf CLI)',
       );
     });
   });
