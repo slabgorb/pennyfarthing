@@ -160,15 +160,15 @@ All panels are draggable, floatable, and splittable:
 
 ### Architecture
 
-BikeRack is powered by **WheelHub**, a local Express/WebSocket server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
+BikeRack is powered by **WheelHub**, a Python FastAPI/uvicorn server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
 
 ```mermaid
 graph TB
     subgraph "BikeRack"
-        BR["Node.js server"]
+        BR["Python FastAPI server"]
     end
 
-    BR --> WH["WheelHub<br/>(shared server)"]
+    BR --> WH["WheelHub<br/>(uvicorn)"]
 
     BR -- "writes" --> BP[".bikerack-port"]
 

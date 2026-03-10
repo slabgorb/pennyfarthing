@@ -76,15 +76,6 @@ assert_contains .pennyfarthing/init-manifest.json "pf_version" "version in manif
 assert_contains .pennyfarthing/init-manifest.json "initialized_at" "timestamp in manifest"
 
 echo ""
-echo "Checking WheelHub bundle ..."
-if [[ -f .pennyfarthing/server/wheelhub.mjs ]]; then
-    pass "WheelHub bundle installed"
-    assert_contains .pennyfarthing/server/wheelhub.mjs 'createRequire' "createRequire in bundle"
-else
-    warn "WheelHub bundle not installed (may require Node packages)"
-fi
-
-echo ""
 echo "Checking pf shim ..."
 assert_file .pennyfarthing/bin/pf
 if [[ -x .pennyfarthing/bin/pf ]]; then

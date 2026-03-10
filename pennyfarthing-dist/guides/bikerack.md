@@ -1,7 +1,7 @@
 # BikeRack
 
 <info>
-Unified dashboard brand with two modes: **GUI** (browser-based panel layout) and **TUI** (terminal-based panels). BikeRack runs WheelHub (the Express/WebSocket server), serving dashboard panels while Claude Code runs in your own terminal.
+Unified dashboard brand with two modes: **GUI** (browser-based panel layout) and **TUI** (terminal-based panels). BikeRack runs WheelHub (the Python FastAPI server), serving dashboard panels while Claude Code runs in your own terminal.
 </info>
 
 ## Overview

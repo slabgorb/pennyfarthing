@@ -87,7 +87,7 @@ All OTEL spans are captured to `/tmp/otel-capture.jsonl` when `OTEL_DEBUG=true`.
 
 ```bash
 # Enable OTEL debug capture
-OTEL_DEBUG=true npm run dev:web
+OTEL_DEBUG=true pnpm run dev:vite
 
 # Watch the capture file
 tail -f /tmp/otel-capture.jsonl | jq .

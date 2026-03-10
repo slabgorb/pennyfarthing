@@ -48,7 +48,7 @@ where = ["pennyfarthing-dist/src"]
 include = ["pf*"]
 
 [tool.setuptools.package-data]
-"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.js", "**/*.mjs", "**/*.txt", "**/*.toml"]
+"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.txt", "**/*.toml"]
 
 [tool.ruff]
 line-length = 100
