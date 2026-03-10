@@ -690,7 +690,16 @@ def run_phase(
     When *project_dir* is set, ``CLAUDE_PROJECT_DIR`` is set so hooks
     and ``pf`` resolve the worktree as the project root.
     """
-    cmd = ["claude", "-p", task_prompt, "--output-format", "json"]
+    # Wrap the task prompt so the model defers to CLAUDE.md for agent
+    # workflow (especially <on-activation> which drives subagent fan-out)
+    # rather than treating the task prompt as a self-contained instruction.
+    wrapped_prompt = (
+        "Your agent definition, workflow, and activation instructions are in "
+        "this project's CLAUDE.md. Follow the workflow described there — "
+        "including any subagent spawning in <on-activation>.\n\n"
+        f"Your task:\n{task_prompt}"
+    )
+    cmd = ["claude", "-p", wrapped_prompt, "--output-format", "json"]
     if model:
         cmd.extend(["--model", model])
 
