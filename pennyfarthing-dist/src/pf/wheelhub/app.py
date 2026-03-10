@@ -1,8 +1,10 @@
-"""FastAPI WheelHub application — replaces Node.js Express server.
+"""FastAPI WheelHub application — headless API + WebSocket server.
 
 Creates the FastAPI app with health check, OTLP endpoints, WebSocket
-channels, static file serving, CORS, port file management, and all
-API routes. Entry point for uvicorn.
+channels, CORS, port file management, and all API routes.
+TUI panels connect via WebSocket; no browser GUI.
+
+Entry point for uvicorn.
 
 Story 48-1: FastAPI skeleton + OTLP receiver.
 Story 48-2: Port core API routes (data proxy, state, analysis, inline).
@@ -16,15 +18,14 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from .otlp import OTLPReceiver
 
 # Module-level receiver instance (shared across routes)
 _receiver = OTLPReceiver()
 
-# WebSocket channel names the React GUI connects to
+# WebSocket channel names for TUI panel data
 WS_CHANNELS = [
     "sprint", "team", "tasks", "messages", "context", "stats",
     "claude", "git", "focus", "tandem", "settings", "persona",
@@ -62,23 +63,6 @@ async def broadcast(channel: str, data: dict) -> None:
             dead.append(ws)
     for ws in dead:
         _ws_clients[channel].discard(ws)
-
-
-def _find_static_dir() -> Path | None:
-    """Find the Vite-built React GUI assets directory."""
-    # In monorepo: packages/cyclist/dist/public/ or packages/core/dist/public/
-    # Walk up from this file to find the repo root
-    current = Path(__file__).parent
-    for _ in range(10):
-        for pkg in ("cyclist", "core"):
-            candidate = current / "packages" / pkg / "dist" / "public"
-            if candidate.is_dir():
-                return candidate
-        parent = current.parent
-        if parent == current:
-            break
-        current = parent
-    return None
 
 
 def create_app() -> FastAPI:
@@ -153,27 +137,6 @@ def create_app() -> FastAPI:
             async def ws_endpoint(websocket: WebSocket) -> None:
                 await _ws_handler(websocket, ch)
         make_ws_route(channel)
-
-    # --- Static file serving for React GUI ---
-    static_dir = _find_static_dir()
-    if static_dir:
-        # Serve static assets (JS, CSS, images)
-        app.mount("/js", StaticFiles(directory=str(static_dir / "js")), name="js")
-        app.mount("/css", StaticFiles(directory=str(static_dir / "css")), name="css")
-        if (static_dir / "assets").is_dir():
-            app.mount("/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets")
-
-        # SPA catch-all: serve index.html for non-API paths
-        index_html = static_dir / "index.html"
-        if index_html.is_file():
-            @app.get("/bikerack")
-            @app.get("/bikerack/{path:path}")
-            async def spa_bikerack(path: str = "") -> FileResponse:
-                return FileResponse(str(index_html))
-
-            @app.get("/")
-            async def spa_root() -> FileResponse:
-                return FileResponse(str(index_html))
 
     return app
 
