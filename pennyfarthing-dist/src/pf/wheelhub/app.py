@@ -13,7 +13,11 @@ ADR-0022, ADR-0034.
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -21,6 +25,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .otlp import OTLPReceiver
+
+logger = logging.getLogger(__name__)
+
+# Parent PID at import time — if this changes, parent died
+_ORIGINAL_PPID = os.getppid()
+
+
+async def _parent_pid_watchdog(interval: float = 5.0) -> None:
+    """Exit if parent process dies (reparented to init/launchd).
+
+    Fixes #1305: orphaned wheelhub processes exhausting port range.
+    """
+    while True:
+        await asyncio.sleep(interval)
+        if os.getppid() != _ORIGINAL_PPID:
+            logger.warning(
+                "Parent process died (ppid changed %d -> %d), shutting down",
+                _ORIGINAL_PPID,
+                os.getppid(),
+            )
+            os._exit(0)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Lifespan handler — start watchdog on startup, clean up on shutdown."""
+    watchdog = asyncio.create_task(_parent_pid_watchdog())
+    yield
+    watchdog.cancel()
 
 # Module-level receiver instance (shared across routes)
 _receiver = OTLPReceiver()
@@ -67,7 +100,7 @@ async def broadcast(channel: str, data: dict) -> None:
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="WheelHub", docs_url=None, redoc_url=None)
+    app = FastAPI(title="WheelHub", docs_url=None, redoc_url=None, lifespan=_lifespan)
 
     # --- CORS middleware ---
     app.add_middleware(

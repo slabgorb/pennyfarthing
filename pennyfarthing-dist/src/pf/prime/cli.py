@@ -24,6 +24,8 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import yaml
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -69,6 +71,43 @@ def _print_header(title: str, quiet: bool) -> None:
     if not quiet:
         print()
         print(f"# {title}")
+
+
+# Default agent → color mapping for TUI prompt bar (#1322)
+_AGENT_COLORS: dict[str, str] = {
+    "sm": "blue",
+    "dev": "purple",
+    "tea": "green",
+    "reviewer": "red",
+    "architect": "orange",
+    "pm": "yellow",
+    "tech-writer": "cyan",
+    "ux-designer": "pink",
+    "devops": "green",
+    "orchestrator": "red",
+    "ba": "blue",
+}
+
+
+def _set_agent_color(agent_name: str, root: Path) -> None:
+    """Write active agent color to config.local.yaml for TUI prompt bar.
+
+    BikeRack watches this value and updates the prompt bar color reactively.
+    """
+    color = _AGENT_COLORS.get(agent_name)
+    if not color:
+        return
+
+    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    try:
+        existing: dict = {}
+        if config_path.exists():
+            existing = yaml.safe_load(config_path.read_text()) or {}
+        existing["agent_color"] = color
+        existing["active_agent"] = agent_name
+        config_path.write_text(yaml.dump(existing, default_flow_style=False))
+    except Exception:
+        pass  # Non-critical — don't block agent activation
 
 
 def _emit_greeting(agent_name: str, persona: Any, root: Path) -> None:
@@ -531,6 +570,10 @@ def prime(
                 user_title = get_user_title(root)
                 _print_header(f"Persona: {persona.character} ({agent_name})", quiet)
                 print(format_persona_output(persona, theme, agent_name, crew, user_title))
+
+    # Write agent color to config for TUI prompt bar (#1322)
+    if agent_name:
+        _set_agent_color(agent_name, root)
 
     # Greeting: visible to user via stderr (bypasses stdout capture in hooks)
     if greeting and agent_name:
