@@ -33,6 +33,7 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 | Subagent | Purpose |
 |----------|---------|
 | `reviewer-preflight` | Run tests, lint, gather smells (background) |
+| `reviewer-edge-hunter` | Exhaustive path enumeration on diff — method-driven, JSON output (background) |
 </helpers>
 
 <parameters>
@@ -44,6 +45,12 @@ STORY_ID: "{STORY_ID}"
 REPOS: "{REPOS}"
 BRANCH: "{BRANCH}"
 PR_NUMBER: "{PR_NUMBER}"
+```
+
+### reviewer-edge-hunter (run in background)
+```yaml
+DIFF: "{output of git diff develop...HEAD or git diff main...HEAD}"
+ALSO_CONSIDER: "{optional — specific focus areas from story AC or known risk areas}"
 ```
 </parameters>
 
@@ -60,12 +67,17 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 <on-activation>
 1. If story is in review phase: **Begin immediately.** No confirmation needed.
-2. Spawn `reviewer-preflight` in **background**
-3. **Simultaneously** read diff and begin critical analysis:
+2. Get the diff for edge hunter input:
    ```bash
-   git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
+   git diff develop...HEAD  # or main...HEAD per repo topology
    ```
-4. When preflight returns, incorporate results into analysis
+3. Spawn **both** background subagents in parallel:
+   - `reviewer-preflight` — mechanical checks (tests, lint, smells)
+   - `reviewer-edge-hunter` — exhaustive path enumeration on the diff (JSON output)
+4. **Simultaneously** read diff and begin critical adversarial analysis
+5. When subagents return, incorporate both into analysis:
+   - Preflight: test results, code smells, diff stats
+   - Edge hunter: structured JSON findings to confirm/dismiss/severity-assign
 </on-activation>
 
 <review-checklist>
@@ -80,9 +92,10 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
 - [ ] **Security analysis:** Auth checks? Input sanitization?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
-- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-7 complete
+- [ ] **Incorporate edge hunter findings:** Review each JSON finding from `reviewer-edge-hunter`. For each: confirm or dismiss with rationale, assign severity if confirmed. Tag confirmed findings with `[EDGE]` in your observations.
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-8 complete
 
-**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}`
+**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[EDGE] {edge hunter finding confirmed} at {location}`
 
 **When in doubt, REJECT.**
 </review-checklist>
