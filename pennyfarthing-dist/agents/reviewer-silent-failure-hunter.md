@@ -57,26 +57,42 @@ Use `Read` to check functions called from the diff — do THEY swallow errors th
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `SILENT_FAILURE_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "failure_mode": "what error is silently swallowed (max 15 words)",
-  "visible_symptom": "what the user/caller sees instead (max 15 words)",
-  "propagation_fix": "minimal code sketch that surfaces the error"
-}]
-```
-
-An empty array `[]` is valid when no silent failures are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 SILENT_FAILURE_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-silent-failure-hunter
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+SILENT_FAILURE_RESULT:
+  agent: reviewer-silent-failure-hunter
+  status: findings
+  findings:
+    - file: "src/services/auth.ts"
+      line: 55
+      category: "empty-catch"
+      description: "Catch block swallows JWT verification error, returns null"
+      suggestion: "Re-throw as AuthenticationError with original cause"
+      confidence: high
+    - file: "src/handlers/upload.ts"
+      line: 102
+      category: "silent-default"
+      description: "File parse failure returns empty object instead of error"
+      suggestion: "return Result.err(new ParseError(...))"
+      confidence: medium
+```
+
+**Categories:** `empty-catch` | `log-no-rethrow` | `silent-default` | `swallowed-promise` | `pass-on-error` | `ok-discard` | `missing-else` | `null-return`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Error clearly swallowed, caller cannot detect failure | Confirm and flag |
+| `medium` | Error partially handled but information lost | Review before flagging |
+| `low` | May be intentional fallback behavior | Note only |
 </output>

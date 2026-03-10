@@ -57,26 +57,42 @@ If `ALSO_CONSIDER` was provided, check those specific patterns.
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `TYPE_DESIGN_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "type_issue": "what type design flaw exists (max 15 words)",
-  "invariant_risk": "what invalid state could reach this code (max 15 words)",
-  "type_fix": "minimal type definition or constraint that closes the gap"
-}]
-```
-
-An empty array `[]` is valid when no type design issues are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 TYPE_DESIGN_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-type-design
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+TYPE_DESIGN_RESULT:
+  agent: reviewer-type-design
+  status: findings
+  findings:
+    - file: "src/services/user.ts"
+      line: 23
+      category: "stringly-typed"
+      description: "User ID passed as raw string — no type distinction from other strings"
+      suggestion: "type UserId = string & { readonly __brand: 'UserId' }"
+      confidence: medium
+    - file: "src/api/routes.ts"
+      line: 67
+      category: "missing-validation"
+      description: "Raw request body cast to CreateUserInput without validation"
+      suggestion: "Parse with zod schema: CreateUserInputSchema.parse(req.body)"
+      confidence: high
+```
+
+**Categories:** `stringly-typed` | `primitive-obsession` | `missing-union` | `optional-abuse` | `broken-invariant` | `unsafe-cast` | `inconsistent-nullability` | `generic-overuse` | `missing-validation`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Invalid data can reach this path — provably unsafe | Confirm and flag |
+| `medium` | Type weakness exists but exploitation requires specific inputs | Review before flagging |
+| `low` | Type could be stronger but current usage is safe | Note only |
 </output>

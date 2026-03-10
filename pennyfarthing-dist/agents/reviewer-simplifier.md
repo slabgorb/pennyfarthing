@@ -61,26 +61,48 @@ If `ALSO_CONSIDER` was provided, check those specific patterns.
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `SIMPLIFIER_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "complexity": "what is unnecessarily complex (max 15 words)",
-  "simplification": "concrete simpler alternative (max 15 words)",
-  "code_sketch": "minimal code showing the simpler version"
-}]
-```
-
-An empty array `[]` is valid when no simplifications are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 SIMPLIFIER_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-simplifier
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+SIMPLIFIER_RESULT:
+  agent: reviewer-simplifier
+  status: findings
+  findings:
+    - file: "src/utils/format.ts"
+      line: 15
+      category: "premature-abstraction"
+      description: "FormatHelper class with 3 methods used exactly once each"
+      suggestion: "Inline the 3 calls at their single use sites"
+      confidence: high
+    - file: "src/handlers/user.ts"
+      line: 88
+      category: "dead-code"
+      description: "Imported validateEmail but never called in this file"
+      suggestion: "Remove unused import"
+      confidence: high
+    - file: "src/api/middleware.ts"
+      line: 42
+      category: "deep-nesting"
+      description: "4 levels of nested if-else, outer conditions are guard-invertible"
+      suggestion: "Use early returns to flatten: if (!x) return; if (!y) return;"
+      confidence: medium
+```
+
+**Categories:** `dead-code` | `premature-abstraction` | `over-engineering` | `redundant-check` | `verbose-pattern` | `wrapper-no-value` | `deep-nesting` | `duplicated-logic` | `compat-shim` | `gold-plating`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Objectively simpler alternative exists with no loss | Confirm and flag |
+| `medium` | Likely simpler but requires judgment on intent | Review before flagging |
+| `low` | May be intentional complexity for future needs | Note only |
 </output>

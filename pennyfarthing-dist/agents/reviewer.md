@@ -90,7 +90,12 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 4. **Simultaneously** read diff and begin critical adversarial analysis
 5. When subagents return, incorporate ALL findings into analysis:
    - Preflight: test results, code smells, diff stats
-   - Each specialist: structured JSON findings to confirm/dismiss/severity-assign
+   - Each specialist returns a `*_RESULT` YAML block with `agent`, `status`, and `findings` array
+   - If `status: clean` → no findings from that specialist, move on
+   - If `status: findings` → review each finding's `confidence` level:
+     - `high` confidence → confirm and include in assessment
+     - `medium` confidence → verify against diff context before including
+     - `low` confidence → note only if corroborated by your own analysis
    - Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
 </on-activation>
 
