@@ -6,7 +6,7 @@ replay harness via `--pipeline bmad`.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
@@ -82,7 +82,7 @@ def get_pipeline_config(
 def build_bmad_phase_claude_md(
     *,
     role: str,
-    bmad_config: Any,
+    bmad_config: BmadConfig,
     epic_context_path: Path,
     story_context_path: Path,
     worktree_path: Path,
@@ -128,7 +128,7 @@ def build_bmad_phase_claude_md(
 
 def setup_bmad_worktree(
     *,
-    bmad_config: Any,
+    bmad_config: BmadConfig,
     worktree_path: Path,
     story_key: str,
     story_title: str,
