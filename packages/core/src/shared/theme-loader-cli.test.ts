@@ -82,10 +82,10 @@ describe('Story 141-17 AC4: Theme discovery via pf CLI', () => {
         'utf8',
       );
 
+      // After refactor, theme-loader delegates to callPf which returns result objects
       assert.ok(
-        themeLoaderSource.includes('success') &&
-          (themeLoaderSource.includes('{ success: true') || themeLoaderSource.includes('{ success: false')),
-        'theme-loader.ts should return result objects with success field',
+        themeLoaderSource.includes('success') && themeLoaderSource.includes('callPf'),
+        'theme-loader.ts should return result objects with success field via callPf',
       );
     });
   });
