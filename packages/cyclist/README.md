@@ -76,7 +76,7 @@ just cyclist-web /path/to/project
 Or with environment variable:
 
 ```bash
-CYCLIST_PROJECT_DIR=/path/to/project pnpm run dev:web
+WHEELHUB_PROJECT_DIR=/path/to/project pf bikerack start
 ```
 
 Access at http://localhost:1898 (auto-increments if port in use).
@@ -210,11 +210,9 @@ Cyclist automatically finds the next available port (1899, 1900, etc.). Check co
 | Command | Description |
 |---------|-------------|
 | `pnpm run dev` | Electron with hot reload |
-| `pnpm run dev:web` | Web mode with hot reload |
-| `pnpm run build` | Compile TypeScript |
-| `pnpm run build:electron` | Package for distribution |
-| `pnpm test` | Run tests |
-| `pnpm start` | Production server |
+| `pnpm run dev:vite` | Vite dev mode with hot reload |
+| `pnpm run build` | Build React GUI via Vite |
+| `pnpm test` | Run tests (vitest) |
 
 ## Environment Variables
 

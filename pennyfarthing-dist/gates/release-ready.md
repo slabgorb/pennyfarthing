@@ -28,12 +28,6 @@ CHANGELOG.md comparison links are correct.
 Run `pennyfarthing-dist/scripts/git/changelog-links.sh --validate`. Exit code 0 = pass.
 </check>
 
-<check name="bundle-in-sync">
-wheelhub.mjs bundle matches TypeScript source.
-Run `scripts/check-bundle-drift.sh`. Exit code 0 = pass.
-If stale, run `just rebuild-wheelhub` before releasing.
-</check>
-
 <check name="e2e-consumer-tests">
 Consumer E2E test suite passes. Tests pf init, WheelHub startup,
 content preservation, and idempotency in isolated environments.
@@ -73,9 +67,6 @@ GATE_RESULT:
     - name: changelog-links-valid
       status: pass
       detail: "Comparison links correct ({count} versions)"
-    - name: bundle-in-sync
-      status: pass
-      detail: "wheelhub.mjs matches server/*.ts source"
     - name: e2e-consumer-tests
       status: pass
       detail: "6/6 consumer E2E scenarios passed"
@@ -119,7 +110,6 @@ GATE_RESULT:
     - "Run: npm version patch|minor|major"
     - "Add changelog entry for v{version}"
     - "Run: pennyfarthing-dist/scripts/git/changelog-links.sh --fix"
-    - "Run: just rebuild-wheelhub (if bundle-in-sync fails)"
     - "Run: ./tests/e2e/run.sh --local (if e2e-consumer-tests fails)"
 ```
 </fail>

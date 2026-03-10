@@ -219,7 +219,7 @@ cd packages/cyclist
 npm run build                           # instead of just cyclist-build
 npx electron-rebuild                    # instead of just cyclist-rebuild
 npm run dev                             # instead of just cyclist-electron
-CYCLIST_PROJECT_DIR=/path npm run dev:web  # instead of just cyclist-web
+WHEELHUB_PROJECT_DIR=/path pf bikerack start  # instead of just cyclist-web
 ./scripts/cyclist-doctor.sh             # instead of just cyclist-doctor
 ```
 

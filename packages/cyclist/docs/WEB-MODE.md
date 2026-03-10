@@ -9,8 +9,8 @@ Web mode runs Cyclist as a standalone browser application, without the Electron 
 ## Quick Start
 
 ```bash
-cd packages/cyclist
-pnpm run dev:server    # Starts Express server on port 1898
+# Start WheelHub (Python FastAPI server)
+pf bikerack start
 ```
 
 Open `http://localhost:1898` in your browser.
@@ -19,14 +19,14 @@ Open `http://localhost:1898` in your browser.
 
 ### Required: Project Directory
 
-Unlike Electron mode (which has a folder picker), web mode requires you to specify the project directory:
+Web mode requires you to specify the project directory:
 
 ```bash
 # Option 1: Environment variable (recommended)
-CYCLIST_PROJECT_DIR=/path/to/your/project pnpm run dev:server
+WHEELHUB_PROJECT_DIR=/path/to/your/project pf bikerack start
 
-# Option 2: CLI argument
-pnpm run dev:server -- --project-dir=/path/to/your/project
+# Option 2: Run from the project directory
+cd /path/to/your/project && pf bikerack start
 ```
 
 ### OTEL Token Stats
@@ -99,7 +99,7 @@ Instead of a folder picker dialog:
 export CYCLIST_PROJECT_DIR=/path/to/default/project
 
 # Or per-session
-CYCLIST_PROJECT_DIR=/other/project pnpm run dev:server
+WHEELHUB_PROJECT_DIR=/other/project pf bikerack start
 ```
 
 ## Architecture Differences
@@ -123,20 +123,20 @@ CYCLIST_PROJECT_DIR=/other/project pnpm run dev:server
 ### Web Mode
 ```
 ┌─────────────────────────────────────┐
-│          Express Server             │
+│      WheelHub (Python FastAPI)      │
 │  ┌─────────┐ ┌─────────┐ ┌───────┐ │
-│  │ Claude  │ │ REST    │ │ WS    │ │
-│  │ Service │ │ API     │ │ Server│ │
+│  │ OTLP    │ │ REST    │ │ WS    │ │
+│  │ Receiver│ │ API     │ │ Server│ │
 │  └─────────┘ └─────────┘ └───────┘ │
 └──────────────────┬──────────────────┘
                    │ HTTP/WebSocket
 ┌──────────────────┴──────────────────┐
 │            Browser                  │
-│  (web-adapter.js shims electronAPI) │
+│     (React GUI via Vite build)      │
 └─────────────────────────────────────┘
 ```
 
-The `web-adapter.js` creates a `window.electronAPI` compatible interface using REST and WebSocket calls, allowing the same UI code to work in both modes.
+The React GUI connects to WheelHub's REST and WebSocket endpoints via the `WebSocketDataSource` class.
 
 ## Known Limitations
 
@@ -195,7 +195,7 @@ Clicking files in Electron opens them in `$EDITOR`.
 ### WebSocket connection failed
 
 1. Check browser console for errors
-2. Verify Express server is running
+2. Verify WheelHub server is running (`pf bikerack status`)
 3. Try refreshing the page
 
 ### Permission mode not syncing

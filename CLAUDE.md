@@ -20,7 +20,7 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 
 This repo is inlined at `pennyfarthing/` inside `pennyfarthing-orchestrator`. The `.pennyfarthing/` directory lives at the **orchestrator root**, not here.
 
-GUI debugging: `PF_PROJECT_DIR=/path/to/pennyfarthing-orchestrator npm run dev:web`
+GUI debugging: `PF_PROJECT_DIR=/path/to/pennyfarthing-orchestrator pf bikerack start`
 (must point to orchestrator root where `.pennyfarthing/` exists)
 </critical>
 
@@ -48,7 +48,7 @@ pnpm run lint      # ESLint
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
-| `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
+| `packages/core/` | `@pennyfarthing/core` — React GUI components, hooks, BikeRack panels |
 | `packages/cyclist/` | BikeRack GUI (React 19, Tailwind v4, dockview) — browser UI over core |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
