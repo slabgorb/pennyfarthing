@@ -67,14 +67,10 @@ def replay():
     help="Where to store results (default: internal/results/pipeline-replay/)",
 )
 @click.option("--model", default=None, help="Claude model for pipeline agents")
-@click.option("--judge-model", default=None, help="Claude model for scoring judge")
+@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
-@click.option(
-    "--otel-endpoint",
-    default=None,
-    help="OTEL collector endpoint (auto-detects WheelHub if omitted)",
-)
 def replay_run(
     scenario_path,
     theme,
@@ -84,15 +80,17 @@ def replay_run(
     output_dir,
     model,
     judge_model,
+    judge_count,
     skip_score,
     keep_worktree,
-    otel_endpoint,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
         PipelineScore,
+        compute_majority_vote,
         load_scenario,
         remove_worktree,
+        run_judge_pass,
         run_pipeline,
         save_result,
         score_with_judge,
@@ -112,6 +110,7 @@ def replay_run(
     click.echo(f"  Runs:     {runs}")
     click.echo(f"  Commit:   {scenario.base_commit[:12]}")
     click.echo(f"  Phases:   {' → '.join(scenario.phases)}")
+    click.echo(f"  Judge:    {judge_model or 'default'} × {judge_count}")
     click.echo(f"  Output:   {out_dir}")
     click.echo()
 
@@ -138,24 +137,53 @@ def replay_run(
             run_id=run_id,
             project_dir=project,
             worktree_base=wt_base,
+            output_dir=out_dir,
             model=model,
-            otel_endpoint=otel_endpoint,
         )
 
-        # Score
+        # Score — first judge pass (saved as score.yaml)
         score = None
         if not skip_score:
-            click.echo("  [JUDGE] Scoring against ground truth...")
-            score = score_with_judge(scenario, result, model=judge_model, project_dir=project)
+            click.echo(f"  [JUDGE 1/{judge_count}] Scoring against ground truth ({judge_model or 'default'})...")
+            score = score_with_judge(
+                scenario, result, model=judge_model, project_dir=project
+            )
             click.echo(
-                f"  [JUDGE] Score: {score.weighted_caught}/{score.total_weight} "
+                f"  [JUDGE 1/{judge_count}] Score: {score.weighted_caught}/{score.total_weight} "
                 f"({score.score_pct}%) — {score.total_caught}/{score.total_findings} findings"
             )
             all_scores.append(score)
 
-        # Save
+        # Save pipeline result + score.yaml
         run_dir = save_result(result, score, out_dir)
         click.echo(f"  Saved to {run_dir}")
+
+        # Additional judge passes (judge_1.yaml, judge_2.yaml, ...)
+        if not skip_score and judge_count > 1:
+            for pass_num in range(1, judge_count):
+                click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] Additional judge pass...")
+                try:
+                    jresult = run_judge_pass(
+                        run_dir, scenario, pass_num,
+                        model=judge_model, project_dir=project,
+                    )
+                    if jresult:
+                        click.echo(
+                            f"  [JUDGE {pass_num + 1}/{judge_count}] Score: "
+                            f"{jresult['weighted_caught']}/{jresult['total_weight']} "
+                            f"({jresult['score_pct']}%)"
+                        )
+                    else:
+                        click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] Failed to score")
+                except Exception as e:
+                    click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] ERROR: {e}")
+
+            # Compute majority vote
+            mv = compute_majority_vote(run_dir, scenario)
+            if mv:
+                click.echo(
+                    f"  [MAJORITY] {mv['n_judges']}j vote: {mv['score_pct']}%"
+                )
 
         # Cleanup worktree
         if not keep_worktree:

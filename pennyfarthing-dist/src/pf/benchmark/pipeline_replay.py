@@ -20,9 +20,11 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 
@@ -372,31 +374,201 @@ def build_phase_claude_md(
 # ---------------------------------------------------------------------------
 
 
-def _build_otel_env(otel_endpoint: str) -> dict[str, str]:
-    """Build the 5 OTEL env vars for a claude subprocess.
-
-    Replicates the pattern from bikerack/launcher.py:build_otel_env()
-    without importing it (avoids cross-package dependency).
-    """
-    return {
-        "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
-        "OTEL_LOGS_EXPORTER": "otlp",
-        "OTEL_METRICS_EXPORTER": "otlp",
-        "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
-        "OTEL_EXPORTER_OTLP_ENDPOINT": otel_endpoint,
-    }
+_EXTENSION_LANGUAGES = {
+    ".ts": "typescript", ".tsx": "typescriptreact",
+    ".js": "javascript", ".jsx": "javascriptreact",
+    ".py": "python", ".go": "go", ".rs": "rust",
+    ".json": "json", ".yaml": "yaml", ".yml": "yaml",
+    ".md": "markdown", ".html": "html", ".css": "css",
+    ".sh": "shellscript", ".zsh": "shellscript",
+    ".sql": "sql", ".toml": "toml", ".xml": "xml",
+    ".c": "c", ".h": "c", ".cpp": "cpp", ".java": "java",
+    ".rb": "ruby", ".swift": "swift", ".kt": "kotlin",
+}
 
 
-def _detect_otel_endpoint(project_dir: Path) -> str | None:
-    """Auto-detect OTEL endpoint from running WheelHub (.bikerack-port file)."""
-    port_file = project_dir / ".bikerack-port"
-    if not port_file.exists():
-        return None
+def _detect_language(file_path: str) -> str:
+    ext = Path(file_path).suffix.lower()
+    return _EXTENSION_LANGUAGES.get(ext, "unknown")
+
+
+def _file_stats(file_path: str) -> dict[str, Any]:
+    """Return size and line count for a file, or empty dict on error."""
     try:
-        port = int(port_file.read_text().strip())
-        return f"http://localhost:{port}"
-    except (ValueError, OSError):
+        p = Path(file_path)
+        size = p.stat().st_size
+        content = p.read_text(errors="replace")
+        if "\0" in content:
+            return {"file_size": size, "line_count": 0, "binary": True}
+        return {"file_size": size, "line_count": content.count("\n") + 1}
+    except OSError:
+        return {}
+
+
+def _enrich_tool_event(attrs: dict[str, str], worktree: Path | None) -> dict[str, Any]:
+    """Add enrichment fields to a tool_result event based on tool type.
+
+    Returns a dict of enrichment fields to merge into the JSONL record.
+    """
+    tool = attrs.get("tool_name", "")
+    params_raw = attrs.get("tool_parameters", "{}")
+    try:
+        params = json.loads(params_raw)
+    except json.JSONDecodeError:
+        params = {}
+
+    enrichment: dict[str, Any] = {"tool_name": tool}
+
+    file_path = params.get("file_path", "")
+    if tool in ("Read", "Edit", "Write") and file_path:
+        enrichment["language"] = _detect_language(file_path)
+        # Only stat files inside the worktree (security + relevance)
+        if worktree and file_path.startswith(str(worktree)):
+            enrichment.update(_file_stats(file_path))
+        if tool == "Edit":
+            old = params.get("old_string", "")
+            new = params.get("new_string", "")
+            enrichment["diff"] = {
+                "added": len(new.splitlines()) - len(old.splitlines())
+                if old != new else 0,
+                "removed": len(old.splitlines()) - len(new.splitlines())
+                if old != new else 0,
+            }
+    elif tool == "Bash":
+        cmd = params.get("command", "")
+        enrichment["command_length"] = len(cmd)
+        success = attrs.get("success", "true")
+        enrichment["exit_code"] = 0 if success == "true" else 1
+    elif tool in ("Grep", "Glob"):
+        enrichment["pattern"] = params.get("pattern", "")
+
+    return enrichment
+
+
+def _extract_tool_attrs(log_record: dict) -> dict[str, str] | None:
+    """Extract tool attributes from an OTLP logRecord if it's a tool_result."""
+    body = log_record.get("body", {})
+    event_name = body.get("stringValue", "")
+    if event_name != "claude_code.tool_result":
         return None
+
+    attrs = {}
+    for attr in log_record.get("attributes", []):
+        key = attr.get("key", "")
+        val = attr.get("value", {})
+        attrs[key] = val.get("stringValue", val.get("intValue", ""))
+    return attrs
+
+
+class OTELFileCollector:
+    """Lightweight HTTP server that accepts OTLP JSON and writes to JSONL files.
+
+    Spins up on a random port.  Claude Code's OTEL SDK sends standard
+    ``POST /v1/logs``, ``/v1/metrics``, and ``/v1/traces`` — each request
+    body is appended as a single JSON line to ``{output_dir}/{phase}-otel.jsonl``.
+
+    When *worktree_path* is set, tool_result events are enriched with file
+    metadata (language, size, line count, diff stats) while the worktree
+    still exists on disk.
+
+    Usage::
+
+        collector = OTELFileCollector(run_dir, worktree_path=wt)
+        collector.start()
+        # ... run claude -p with collector.endpoint and collector.env() ...
+        collector.stop()
+    """
+
+    def __init__(self, output_dir: Path, *, worktree_path: Path | None = None) -> None:
+        self._output_dir = output_dir
+        self._output_dir.mkdir(parents=True, exist_ok=True)
+        self._worktree = worktree_path
+        self._phase = "unknown"
+        self._lock = threading.Lock()
+
+        parent = self
+
+        class _Handler(BaseHTTPRequestHandler):
+            def do_POST(self) -> None:  # noqa: N802
+                length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(length) if length else b""
+
+                # Determine signal type from path (logs, metrics, traces)
+                signal = self.path.rstrip("/").rsplit("/", 1)[-1]
+
+                with parent._lock:
+                    phase = parent._phase
+
+                if body:
+                    payload = json.loads(body)
+                    out_file = parent._output_dir / f"{phase}-otel.jsonl"
+                    record: dict[str, Any] = {
+                        "signal": signal,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                        "data": payload,
+                    }
+
+                    # Enrich tool_result log records
+                    if signal == "logs":
+                        enrichments = []
+                        for rl in payload.get("resourceLogs", []):
+                            for sl in rl.get("scopeLogs", []):
+                                for lr in sl.get("logRecords", []):
+                                    attrs = _extract_tool_attrs(lr)
+                                    if attrs:
+                                        enrichments.append(
+                                            _enrich_tool_event(attrs, parent._worktree)
+                                        )
+                        if enrichments:
+                            record["enrichments"] = enrichments
+
+                    with open(out_file, "a") as f:
+                        f.write(json.dumps(record) + "\n")
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"partialSuccess":{}}')
+
+            def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+                pass  # suppress request logging
+
+        self._server = HTTPServer(("127.0.0.1", 0), _Handler)
+        self._port = self._server.server_address[1]
+        self._thread: threading.Thread | None = None
+
+    @property
+    def endpoint(self) -> str:
+        return f"http://127.0.0.1:{self._port}"
+
+    @property
+    def phase(self) -> str:
+        with self._lock:
+            return self._phase
+
+    @phase.setter
+    def phase(self, value: str) -> None:
+        with self._lock:
+            self._phase = value
+
+    def env(self) -> dict[str, str]:
+        """Return the 5 OTEL env vars pointing at this collector."""
+        return {
+            "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+            "OTEL_LOGS_EXPORTER": "otlp",
+            "OTEL_METRICS_EXPORTER": "otlp",
+            "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": self.endpoint,
+        }
+
+    def start(self) -> None:
+        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._server.shutdown()
+        if self._thread:
+            self._thread.join(timeout=5)
 
 
 def run_phase(
@@ -405,21 +577,22 @@ def run_phase(
     task_prompt: str,
     *,
     model: str | None = None,
-    otel_endpoint: str | None = None,
+    otel_collector: OTELFileCollector | None = None,
 ) -> PhaseResult:
     """Run a single pipeline phase via ``claude -p`` in the worktree.
 
     CLAUDE.md must already be in place before calling this.
-    When *otel_endpoint* is set, injects OTEL env vars so traces flow
-    to the specified collector.
+    When *otel_collector* is set, injects OTEL env vars so telemetry
+    flows to the file-based collector.
     """
     cmd = ["claude", "-p", task_prompt, "--output-format", "json"]
     if model:
         cmd.extend(["--model", model])
 
     env = None
-    if otel_endpoint:
-        env = {**os.environ, **_build_otel_env(otel_endpoint)}
+    if otel_collector:
+        otel_collector.phase = role
+        env = {**os.environ, **otel_collector.env()}
 
     start = time.monotonic()
     result = subprocess.run(
@@ -471,6 +644,18 @@ def run_phase(
 # ---------------------------------------------------------------------------
 
 
+def _compute_run_dir(
+    output_dir: Path, scenario_id: str, tag: str, run_id: int
+) -> Path:
+    """Compute the run directory path, matching save_result() nesting logic."""
+    expected_suffix = Path(scenario_id) / tag
+    if output_dir.parts[-2:] == expected_suffix.parts:
+        return output_dir / f"run-{run_id}"
+    if output_dir.parts[-1:] == (scenario_id,):
+        return output_dir / tag / f"run-{run_id}"
+    return output_dir / scenario_id / tag / f"run-{run_id}"
+
+
 def run_pipeline(
     scenario: Scenario,
     *,
@@ -478,6 +663,7 @@ def run_pipeline(
     run_id: int = 1,
     project_dir: Path,
     worktree_base: Path,
+    output_dir: Path | None = None,
     model: str | None = None,
     otel_endpoint: str | None = None,
 ) -> PipelineResult:
@@ -488,19 +674,10 @@ def run_pipeline(
        then runs ``claude -p`` with the phase task prompt.
     3. Returns the collected results.
 
-    If *otel_endpoint* is not given, auto-detects from a running WheelHub
-    instance via ``.bikerack-port``.
+    OTEL telemetry is always captured to disk as JSONL files alongside
+    the phase outputs (``{phase}-otel.jsonl``).  The *otel_endpoint*
+    parameter is accepted for backwards compatibility but ignored.
     """
-    # OTEL auto-detection
-    if otel_endpoint is None:
-        otel_endpoint = _detect_otel_endpoint(project_dir)
-        if otel_endpoint:
-            print(f"  [OTEL] Auto-detected WheelHub at {otel_endpoint}")
-        else:
-            print("  [OTEL] No endpoint configured (WheelHub not running)")
-    else:
-        print(f"  [OTEL] Using endpoint: {otel_endpoint}")
-
     tag = theme or "control"
     wt_name = f"{scenario.id}-{tag}-run-{run_id}"
     wt_path = worktree_base / wt_name
@@ -517,6 +694,15 @@ def run_pipeline(
 
     # Create worktree
     create_worktree(repo, scenario.base_commit, wt_path)
+
+    # Compute run_dir early so we can place OTEL files there
+    otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
+    run_dir = _compute_run_dir(output_dir=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
+
+    # Start OTEL file collector (with enrichment while worktree exists)
+    collector = OTELFileCollector(run_dir, worktree_path=wt_path)
+    collector.start()
+    print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
 
     try:
         for role in scenario.phases:
@@ -538,7 +724,7 @@ def run_pipeline(
                 role,
                 task_prompt,
                 model=model,
-                otel_endpoint=otel_endpoint,
+                otel_collector=collector,
             )
             result.phases[role] = phase_result
 
@@ -560,6 +746,7 @@ def run_pipeline(
         print(f"  ERROR: Pipeline failed at phase: {exc}")
         raise
     finally:
+        collector.stop()
         # Generate diff of worktree changes
         diff_result = subprocess.run(
             ["git", "diff", "--stat"],
@@ -1206,6 +1393,7 @@ def run_judge_pass(
         "theme": score.theme,
         "run_id": score.run_id,
         "model": pipeline_result.model,
+        "judge_model": model or "default",
         "judge_version": JUDGE_VERSION,
         "judge_pass": pass_num,
         "total_caught": score.total_caught,
