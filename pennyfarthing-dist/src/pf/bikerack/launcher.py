@@ -9,6 +9,7 @@ import atexit
 import os
 import signal
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -79,84 +80,6 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     return Path.cwd()
 
 
-def _find_wheelhub_entry(start_path: Path | None = None) -> Path:
-    """Locate the WheelHub entry point via multi-strategy discovery.
-
-    Search order:
-      1. PENNYFARTHING_DIST env var (explicit override)
-      2. Monorepo walk-up from start_path: packages/core/dist/server/entry.js
-      3. Bundled in pip package: pf/_dist/server/wheelhub.mjs
-
-    Args:
-        start_path: Reference path for walk-up discovery. Defaults to __file__.
-
-    Raises:
-        FileNotFoundError: With list of attempted paths when no entry found.
-    """
-    if start_path is None:
-        start_path = Path(__file__)
-
-    attempted: list[str] = []
-
-    # Strategy 0: Project-local .pennyfarthing/server/wheelhub.mjs (installed by pf init)
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
-    if project_dir:
-        local_wheelhub = Path(project_dir) / ".pennyfarthing" / "server" / "wheelhub.mjs"
-        if local_wheelhub.is_file():
-            return local_wheelhub
-        attempted.append(str(local_wheelhub))
-
-    # Strategy 1: PENNYFARTHING_DIST env var override
-    env_dist = os.environ.get("PENNYFARTHING_DIST")
-    if env_dist:
-        env_dist_path = Path(env_dist)
-        if env_dist_path.exists():
-            # Env var points to pennyfarthing-dist/, parent is the repo root
-            repo_root = env_dist_path.parent
-            entry = repo_root / "packages" / "core" / "dist" / "server" / "entry.js"
-            if entry.is_file():
-                return entry
-            attempted.append(str(entry))
-            # Also check for pip-style bundled wheelhub.mjs relative to env var
-            wheelhub = env_dist_path / "server" / "wheelhub.mjs"
-            if wheelhub.is_file():
-                return wheelhub
-            attempted.append(str(wheelhub))
-
-    # Strategy 2: Monorepo walk-up from start_path
-    current = start_path.parent if start_path.is_file() else start_path
-    while True:
-        entry = current / "packages" / "core" / "dist" / "server" / "entry.js"
-        if entry.is_file():
-            return entry
-        attempted.append(str(entry))
-        parent = current.parent
-        if parent == current:
-            break
-        current = parent
-
-    # Strategy 3: Pip-installed layout — find pf/ package root, check _dist/server/wheelhub.mjs
-    # Walk up from start_path to find the pf/ package directory
-    current = start_path.parent if start_path.is_file() else start_path
-    while True:
-        if current.name == "pf" or (current / "__init__.py").exists():
-            wheelhub = current / "_dist" / "server" / "wheelhub.mjs"
-            if wheelhub.is_file():
-                return wheelhub
-            attempted.append(str(wheelhub))
-        parent = current.parent
-        if parent == current:
-            break
-        current = parent
-
-    raise FileNotFoundError(
-        "Could not find WheelHub entry point. Searched for:\n"
-        f"  - entry.js (monorepo): checked walk-up from {start_path}\n"
-        f"  - wheelhub.mjs (pip): checked _dist/server/ under pf package\n"
-        "Attempted paths:\n" + "\n".join(f"  {p}" for p in attempted)
-    )
-
-
 def _wheelhub_log_path(project_dir: Path) -> Path:
     """Return the WheelHub log file path, ensuring parent dir exists."""
     session_dir = project_dir / ".session"
@@ -165,30 +88,31 @@ def _wheelhub_log_path(project_dir: Path) -> Path:
 
 
 def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
-    """Start WheelHub server in background via BikeRack's own entry point.
+    """Start WheelHub server (Python/uvicorn) in background.
 
     Logs stdout/stderr to .session/wheelhub.log for diagnostics.
-    Returns a result dict with {success: False, error: ...} if entry point not found.
+    Returns a result dict with {success: False, error: ...} on failure.
     """
-    try:
-        entry = _find_wheelhub_entry()
-    except FileNotFoundError as exc:
-        return {"success": False, "error": str(exc)}
-
     log_path = _wheelhub_log_path(project_dir)
 
     env = os.environ.copy()
     env["WHEELHUB_PROJECT_DIR"] = str(project_dir)
 
     # Forward session ID so WheelHub resolves the correct agent persona
-    # (mirrors packages/core/src/cli/commands/cyclist.ts:190-191)
     session_id = os.environ.get("SESSION_ID") or os.environ.get("CLAUDE_SESSION_ID")
     if session_id:
         env["SESSION_ID"] = session_id
 
+    cmd = [
+        sys.executable, "-m", "uvicorn",
+        "pf.wheelhub.app:create_app",
+        "--factory",
+        "--host", "127.0.0.1",
+        "--port", "1898",
+    ]
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
-        ["node", str(entry)],
+        cmd,
         env=env,
         cwd=str(project_dir),
         stdout=log_file,
