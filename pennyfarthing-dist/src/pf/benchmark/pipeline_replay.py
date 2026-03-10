@@ -14,6 +14,7 @@ Must be run from a regular terminal (not inside Claude Code).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -88,6 +89,63 @@ class PipelineResult:
     phases: dict[str, PhaseResult] = field(default_factory=dict)
     timestamp: str = ""
     model: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# Framework version tagging
+# ---------------------------------------------------------------------------
+
+
+def _framework_version(project_dir: Path) -> dict:
+    """Collect PF framework version info for run metadata."""
+    pf_repo = project_dir / "pennyfarthing"
+
+    commit = "unknown"
+    if (pf_repo / ".git").exists():
+        try:
+            commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=pf_repo,
+                stderr=subprocess.DEVNULL,
+            ).decode().strip()[:12]
+        except subprocess.CalledProcessError:
+            pass
+
+    from pf import __version__
+    semver = __version__
+
+    # Hash each agent definition used in pipeline phases
+    agents_dir = pf_repo / "pennyfarthing-dist" / "agents"
+    agent_hashes = {}
+    for role in ["tea", "dev", "reviewer"]:
+        agent_file = agents_dir / f"{role}.md"
+        if agent_file.exists():
+            agent_hashes[role] = hashlib.sha256(
+                agent_file.read_bytes()
+            ).hexdigest()[:12]
+
+    return {
+        "commit": commit,
+        "semver": semver,
+        "agent_hashes": agent_hashes,
+    }
+
+
+def _bmad_version(bmad_root: Path) -> dict:
+    """Collect BMAD framework version info for run metadata."""
+    commit = "unknown"
+    if (bmad_root / ".git").exists():
+        try:
+            commit = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=bmad_root,
+                stderr=subprocess.DEVNULL,
+            ).decode().strip()[:12]
+        except subprocess.CalledProcessError:
+            pass
+
+    return {
+        "commit": commit,
+        "source": "BMAD-METHOD",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1175,6 +1233,8 @@ def save_result(
     pipeline_result: PipelineResult,
     score: PipelineScore | None,
     output_dir: Path,
+    *,
+    project_dir: Path | None = None,
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
@@ -1214,6 +1274,7 @@ def save_result(
         "models_used": sorted(models_used) if models_used else [pipeline_result.model or "unknown"],
         "total_cost_usd": round(total_cost, 4) if total_cost else None,
         "worktree_path": pipeline_result.worktree_path,
+        "framework_version": _framework_version(project_dir) if project_dir else None,
         "phases": {
             role: {
                 "token_usage": pr.token_usage,
@@ -1472,12 +1533,20 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
     weighted_caught = sum(f["weight"] for f in majority_findings if f["caught"])
     total_weight = scenario.total_weight
 
+    # Copy framework_version from pipeline.yaml if present
+    fw_version = None
+    pipeline_file = run_dir / "pipeline.yaml"
+    if pipeline_file.exists():
+        pipeline_meta = yaml.safe_load(pipeline_file.read_text())
+        fw_version = pipeline_meta.get("framework_version")
+
     result = {
         "judge_method": "majority_vote",
         "n_judges": n_judges,
         "majority_threshold": majority,
         "model": all_scores[0].get("model"),
         "judge_version": JUDGE_VERSION,
+        "framework_version": fw_version,
         "total_caught": total_caught,
         "total_findings": len(majority_findings),
         "weighted_caught": weighted_caught,
