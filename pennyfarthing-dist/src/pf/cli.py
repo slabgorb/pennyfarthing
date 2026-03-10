@@ -223,6 +223,7 @@ def agent():
 @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
 @click.option("--full", is_flag=True, help="Include domain docs")
 @click.option("--quiet", is_flag=True, help="Suppress section headers")
+@click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
 @click.option(
     "--tier",
     type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
@@ -236,6 +237,7 @@ def agent_start(
     minimal: bool,
     full: bool,
     quiet: bool,
+    greeting: bool,
     tier: str | None,
 ):
     """Start an agent session with full context.
@@ -258,6 +260,7 @@ def agent_start(
         minimal=minimal,
         full=full,
         quiet=quiet,
+        greeting=greeting,
         tier=tier,
     )
     raise SystemExit(exit_code)

@@ -71,6 +71,23 @@ def _print_header(title: str, quiet: bool) -> None:
         print(f"# {title}")
 
 
+def _emit_greeting(agent_name: str, persona: Any, root: Path) -> None:
+    """Emit agent greeting to stderr so it's visible to the user.
+
+    Writes to stderr to bypass stdout capture in hook contexts where
+    stdout is redirected for HookResponse JSON parsing.
+
+    Args:
+        agent_name: Agent role name (e.g. "dev")
+        persona: Persona object with .character attribute, or None
+        root: Project root path
+    """
+    if persona and hasattr(persona, "character"):
+        print(f"    Agent:   {persona.character} ({agent_name})", file=sys.stderr)
+    else:
+        print(f"    Agent:   {agent_name}", file=sys.stderr)
+
+
 def _format_workflow_state_text(result: PrimeResult) -> str:
     """Format workflow state as text output.
 
@@ -213,6 +230,7 @@ def _prime_tiered(
     session_id: str | None,
     root: Path,
     result: PrimeResult,
+    greeting: bool = False,
 ) -> int:
     """Handle reduced tier context loading (REFRESH, HANDOFF, MINIMAL).
 
@@ -228,6 +246,7 @@ def _prime_tiered(
         session_id: Explicit session ID
         root: Project root path
         result: PrimeResult to populate
+        greeting: If True, emit agent greeting to stderr
 
     Returns:
         Exit code (0 for success)
@@ -317,6 +336,10 @@ def _prime_tiered(
                         _print_header(f"Persona: {persona.character} ({agent_name})", quiet)
                         print(format_persona_compressed(persona, theme, agent_name))
 
+            # Greeting: visible to user via stderr (bypasses stdout capture)
+            if greeting:
+                _emit_greeting(agent_name, result.persona, root)
+
         if not json_output:
             # Note about behavior guides
             print()
@@ -351,6 +374,7 @@ def prime(
     session_id: str | None = None,
     project_root: Path | None = None,
     tier: str | None = None,
+    greeting: bool = False,
 ) -> int:
     """Load and print context.
 
@@ -427,6 +451,7 @@ def prime(
             session_id=session_id,
             root=root,
             result=result,
+            greeting=greeting,
         )
 
     # ==========================================================================
@@ -506,6 +531,10 @@ def prime(
                 user_title = get_user_title(root)
                 _print_header(f"Persona: {persona.character} ({agent_name})", quiet)
                 print(format_persona_output(persona, theme, agent_name, crew, user_title))
+
+    # Greeting: visible to user via stderr (bypasses stdout capture in hooks)
+    if greeting and agent_name:
+        _emit_greeting(agent_name, result.persona, root)
 
     # ==========================================================================
     # PRIORITY 4: Agent behavior guide
@@ -708,6 +737,11 @@ Examples:
         choices=["FULL", "REFRESH", "HANDOFF", "MINIMAL"],
         help="Context tier: FULL (~4000 tokens), REFRESH (~600), HANDOFF (~700), MINIMAL (~200)",
     )
+    parser.add_argument(
+        "--greeting",
+        action="store_true",
+        help="Emit agent greeting to stderr",
+    )
 
     parsed = parser.parse_args(args)
 
@@ -723,6 +757,7 @@ Examples:
             no_register=parsed.no_register,
             session_id=parsed.session_id,
             tier=parsed.tier,
+            greeting=parsed.greeting,
         )
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -750,6 +785,7 @@ try:
     @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
     @click.option("--full", is_flag=True, help="Include domain docs")
     @click.option("--quiet", is_flag=True, help="Suppress section headers")
+    @click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
     @click.option(
         "--tier",
         type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
@@ -763,6 +799,7 @@ try:
         minimal: bool,
         full: bool,
         quiet: bool,
+        greeting: bool,
         tier: str | None,
     ):
         """Load agent context (unified bootstrap).
@@ -782,6 +819,7 @@ try:
             minimal=minimal,
             full=full,
             quiet=quiet,
+            greeting=greeting,
             tier=tier,
         )
         raise SystemExit(exit_code)

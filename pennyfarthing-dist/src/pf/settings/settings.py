@@ -37,6 +37,7 @@ DEFAULTS: dict[str, Any] = {
         "pr_merge": "auto",
         "tui_statusbar": True,
         "statusbar": True,
+        "startup_agent": "sm",
     },
     "display": {
         "colorPreset": "catppuccin",
