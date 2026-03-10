@@ -411,10 +411,10 @@ class TestFormatAssignee:
     """Email to display name formatting."""
 
     def test_standard_email(self) -> None:
-        assert _format_assignee("keith.avery@1898andco.io") == "K. Avery"
+        assert _format_assignee("keith.avery@1898andco.io") == "KA"
 
     def test_underscore_email(self) -> None:
-        assert _format_assignee("john_doe@example.com") == "J. Doe"
+        assert _format_assignee("john_doe@example.com") == "JD"
 
     def test_none_returns_empty(self) -> None:
         assert _format_assignee(None) == ""
@@ -424,7 +424,7 @@ class TestFormatAssignee:
 
     def test_single_part_local(self) -> None:
         result = _format_assignee("admin@example.com")
-        assert result == "Admin"
+        assert result == "AD"
 
 
 class TestStoryLabelOwner:
@@ -440,7 +440,7 @@ class TestStoryLabelOwner:
             "assignee": "keith.avery@1898andco.io",
         }
         label = _build_story_label(story, "")
-        assert "K. Avery" in label.plain
+        assert "KA" in label.plain
 
     def test_done_hides_owner(self) -> None:
         story = {
