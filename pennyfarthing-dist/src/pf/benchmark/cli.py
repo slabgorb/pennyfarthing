@@ -77,6 +77,12 @@ def replay():
     type=click.IntRange(0, 2),
     help="Max reviewer kick-back cycles (0=disabled, max 2)",
 )
+@click.option(
+    "--bmad-root",
+    default=None,
+    type=click.Path(exists=True),
+    help="Path to BMAD-METHOD repo (uses BMAD adapter instead of PF agents)",
+)
 def replay_run(
     scenario_path,
     theme,
@@ -90,6 +96,7 @@ def replay_run(
     skip_score,
     keep_worktree,
     max_rework_cycles,
+    bmad_root,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
@@ -108,11 +115,17 @@ def replay_run(
     out_dir = (
         Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
     )
+    bmad = Path(bmad_root) if bmad_root else None
+
+    # Auto-set theme to "bmad" when using BMAD adapter
+    if bmad and not theme:
+        theme = "bmad"
 
     scenario = load_scenario(scenario_path, project_dir=project)
 
     tag = theme or "control"
-    click.echo(f"=== Pipeline Replay: {scenario.title} ===")
+    pipeline_label = "BMAD" if bmad else "PF"
+    click.echo(f"=== Pipeline Replay ({pipeline_label}): {scenario.title} ===")
     click.echo(f"  Theme:    {tag}")
     click.echo(f"  Runs:     {runs}")
     click.echo(f"  Commit:   {scenario.base_commit[:12]}")
@@ -148,6 +161,7 @@ def replay_run(
             output_dir=out_dir,
             model=model,
             max_rework_cycles=max_rework_cycles,
+            bmad_root=bmad,
         )
 
         # Score — first judge pass (saved as score.yaml)
@@ -164,7 +178,7 @@ def replay_run(
             all_scores.append(score)
 
         # Save pipeline result + score.yaml
-        run_dir = save_result(result, score, out_dir, project_dir=project)
+        run_dir = save_result(result, score, out_dir, project_dir=project, bmad_root=bmad)
         click.echo(f"  Saved to {run_dir}")
 
         # Additional judge passes (judge_1.yaml, judge_2.yaml, ...)

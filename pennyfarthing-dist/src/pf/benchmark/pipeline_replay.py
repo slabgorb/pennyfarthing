@@ -832,25 +832,38 @@ def run_pipeline(
     model: str | None = None,
     otel_endpoint: str | None = None,
     max_rework_cycles: int = 0,
+    bmad_root: Path | None = None,
 ) -> PipelineResult:
     """Run the full TEA -> Dev -> Reviewer pipeline.
 
     1. Creates a worktree at the scenario's base commit.
-    2. Sets up ``.pennyfarthing/`` symlink and ``.claude/settings.json``.
+    2. Sets up ``.pennyfarthing/`` symlink and ``.claude/settings.json``
+       (skipped for BMAD runs).
     3. For each phase, writes CLAUDE.md with the agent prompt + context,
        then runs ``claude -p`` with the phase task prompt.
     4. If *max_rework_cycles* > 0 and the reviewer rejects, re-runs the
        dev and reviewer phases with feedback injected.
     5. Returns the collected results.
 
+    When *bmad_root* is set, uses the BMAD adapter to build CLAUDE.md
+    from BMAD source files instead of PF agent definitions.  No
+    ``.pennyfarthing/`` or PF hooks are injected — pure BMAD prompts.
+
     OTEL telemetry is always captured to disk as JSONL files alongside
     the phase outputs (``{phase}-otel.jsonl``).  The *otel_endpoint*
     parameter is accepted for backwards compatibility but ignored.
     """
+    is_bmad = bmad_root is not None
     tag = theme or "control"
     wt_name = f"{scenario.id}-{tag}-run-{run_id}"
     wt_path = worktree_base / wt_name
     repo = Path(scenario.repo_path)
+
+    # Load BMAD config if this is a BMAD run
+    bmad_config = None
+    if is_bmad:
+        from pf.benchmark.bmad_adapter import BmadConfig
+        bmad_config = BmadConfig(bmad_root=bmad_root)
 
     result = PipelineResult(
         scenario_id=scenario.id,
@@ -864,8 +877,9 @@ def run_pipeline(
     # Create worktree
     create_worktree(repo, scenario.base_commit, wt_path)
 
-    # Set up .pennyfarthing/ and .claude/ in the worktree
-    setup_worktree_pf_context(wt_path, project_dir)
+    # Set up .pennyfarthing/ and .claude/ — only for PF runs
+    if not is_bmad:
+        setup_worktree_pf_context(wt_path, project_dir)
 
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
@@ -876,17 +890,58 @@ def run_pipeline(
     collector.start()
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
 
+    def _build_bmad_claude_md(role: str) -> str:
+        """Build CLAUDE.md from BMAD source files for this phase."""
+        from pf.benchmark.bmad_adapter import (
+            build_bmad_dev_claude_md,
+            build_bmad_reviewer_claude_md,
+            translate_story_file,
+        )
+
+        epic_text = Path(scenario.context_epic_path).read_text()
+        story_text = Path(scenario.context_story_path).read_text()
+
+        if role == "dev":
+            # Translate PF context into BMAD story format
+            story_content = translate_story_file(
+                bmad_config,
+                epic_context=epic_text,
+                story_context=story_text,
+                story_title=scenario.title,
+                acceptance_criteria=scenario.phase_prompts.get("dev", ""),
+            )
+            return build_bmad_dev_claude_md(
+                bmad_config,
+                story_content=story_content,
+                project_context=epic_text,
+            )
+        elif role == "reviewer":
+            # Inject dev output so reviewer can see what was produced
+            dev_output = ""
+            if "dev" in result.phases:
+                dev_output = result.phases["dev"].output_text
+            return build_bmad_reviewer_claude_md(
+                bmad_config,
+                dev_output=dev_output,
+            )
+        else:
+            # BMAD has no TEA equivalent — use a minimal prompt
+            return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
+
     def _run_single_phase(role: str, task_prompt: str, phase_key: str | None = None) -> PhaseResult:
         """Run one phase and record it in result.phases."""
         key = phase_key or role
 
-        # Extract production-faithful agent prompt
-        agent_prompt = extract_agent_prompt(
-            role, project_dir, persona=(theme is not None), theme=theme
-        )
+        if is_bmad:
+            # Pure BMAD — use adapter, no PF agent defs
+            claude_md = _build_bmad_claude_md(role)
+        else:
+            # PF path — extract agent prompt via pf agent start
+            agent_prompt = extract_agent_prompt(
+                role, project_dir, persona=(theme is not None), theme=theme
+            )
+            claude_md = build_phase_claude_md(role, agent_prompt, scenario)
 
-        # Write CLAUDE.md into worktree
-        claude_md = build_phase_claude_md(role, agent_prompt, scenario)
         (wt_path / "CLAUDE.md").write_text(claude_md)
 
         print(f"  [{key.upper()}] Running phase...")
@@ -1392,6 +1447,7 @@ def save_result(
     output_dir: Path,
     *,
     project_dir: Path | None = None,
+    bmad_root: Path | None = None,
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
@@ -1431,7 +1487,11 @@ def save_result(
         "models_used": sorted(models_used) if models_used else [pipeline_result.model or "unknown"],
         "total_cost_usd": round(total_cost, 4) if total_cost else None,
         "worktree_path": pipeline_result.worktree_path,
-        "framework_version": _framework_version(project_dir) if project_dir else None,
+        "framework_version": (
+            _bmad_version(bmad_root) if bmad_root
+            else _framework_version(project_dir) if project_dir
+            else None
+        ),
         "phases": {
             role: {
                 "token_usage": pr.token_usage,
