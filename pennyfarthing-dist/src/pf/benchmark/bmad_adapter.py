@@ -14,7 +14,6 @@ from pathlib import Path
 
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # BmadConfig — validated pointers to BMAD source files
 # ---------------------------------------------------------------------------
