@@ -28,12 +28,18 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 </critical>
 
 <helpers>
-**Model:** haiku | **Pre-flight:** background
+**Model:** haiku | **Execution:** all background, parallel
 
 | Subagent | Purpose |
 |----------|---------|
-| `reviewer-preflight` | Run tests, lint, gather smells (background) |
-| `reviewer-edge-hunter` | Exhaustive path enumeration on diff — method-driven, JSON output (background) |
+| `reviewer-preflight` | Run tests, lint, gather smells |
+| `reviewer-edge-hunter` | Exhaustive path enumeration on diff — boundary conditions |
+| `reviewer-silent-failure-hunter` | Find swallowed errors, empty catches, silent fallbacks |
+| `reviewer-test-analyzer` | Test quality — vacuous assertions, missing edge cases, coupling |
+| `reviewer-comment-analyzer` | Stale/misleading comments, missing public API docs |
+| `reviewer-type-design` | Type invariants — stringly-typed APIs, missing newtypes, unsafe casts |
+| `reviewer-security` | Security vulnerabilities — injection, auth, secrets, info leakage |
+| `reviewer-simplifier` | Unnecessary complexity — dead code, over-engineering, simpler alternatives |
 </helpers>
 
 <parameters>
@@ -47,7 +53,8 @@ BRANCH: "{BRANCH}"
 PR_NUMBER: "{PR_NUMBER}"
 ```
 
-### reviewer-edge-hunter (run in background)
+### All diff-based subagents (run in background, parallel)
+Each receives the same DIFF. Spawn all in a single message for parallel execution.
 ```yaml
 DIFF: "{output of git diff develop...HEAD or git diff main...HEAD}"
 ALSO_CONSIDER: "{optional — specific focus areas from story AC or known risk areas}"
@@ -67,17 +74,24 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 <on-activation>
 1. If story is in review phase: **Begin immediately.** No confirmation needed.
-2. Get the diff for edge hunter input:
+2. Get the diff for all diff-based subagents:
    ```bash
    git diff develop...HEAD  # or main...HEAD per repo topology
    ```
-3. Spawn **both** background subagents in parallel:
+3. Spawn **all 8 subagents** in background, in a single message for parallel execution:
    - `reviewer-preflight` — mechanical checks (tests, lint, smells)
-   - `reviewer-edge-hunter` — exhaustive path enumeration on the diff (JSON output)
+   - `reviewer-edge-hunter` — boundary conditions and unhandled paths
+   - `reviewer-silent-failure-hunter` — swallowed errors and silent fallbacks
+   - `reviewer-test-analyzer` — test quality and coverage gaps
+   - `reviewer-comment-analyzer` — stale/misleading documentation
+   - `reviewer-type-design` — type invariants and design flaws
+   - `reviewer-security` — security vulnerabilities
+   - `reviewer-simplifier` — unnecessary complexity
 4. **Simultaneously** read diff and begin critical adversarial analysis
-5. When subagents return, incorporate both into analysis:
+5. When subagents return, incorporate ALL findings into analysis:
    - Preflight: test results, code smells, diff stats
-   - Edge hunter: structured JSON findings to confirm/dismiss/severity-assign
+   - Each specialist: structured JSON findings to confirm/dismiss/severity-assign
+   - Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
 </on-activation>
 
 <review-checklist>
@@ -92,10 +106,17 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
 - [ ] **Security analysis:** Auth checks? Input sanitization?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
-- [ ] **Incorporate edge hunter findings:** Review each JSON finding from `reviewer-edge-hunter`. For each: confirm or dismiss with rationale, assign severity if confirmed. Tag confirmed findings with `[EDGE]` in your observations.
+- [ ] **Incorporate subagent findings:** Review JSON findings from all 7 specialist subagents. For each finding: confirm or dismiss with rationale, assign severity if confirmed. Tag by source:
+  - `[EDGE]` — edge-hunter (boundary conditions)
+  - `[SILENT]` — silent-failure-hunter (swallowed errors)
+  - `[TEST]` — test-analyzer (test quality)
+  - `[DOC]` — comment-analyzer (documentation)
+  - `[TYPE]` — type-design (type invariants)
+  - `[SEC]` — security (vulnerabilities)
+  - `[SIMPLE]` — simplifier (unnecessary complexity)
 - [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-8 complete
 
-**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[EDGE] {edge hunter finding confirmed} at {location}`
+**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[TAG] {subagent finding confirmed} at {location}`
 
 **When in doubt, REJECT.**
 </review-checklist>

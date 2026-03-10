@@ -155,7 +155,7 @@ def replay_run(
             all_scores.append(score)
 
         # Save pipeline result + score.yaml
-        run_dir = save_result(result, score, out_dir)
+        run_dir = save_result(result, score, out_dir, project_dir=project)
         click.echo(f"  Saved to {run_dir}")
 
         # Additional judge passes (judge_1.yaml, judge_2.yaml, ...)
@@ -240,7 +240,7 @@ def replay_score(result_dir, scenario_path, model, project_dir):
         click.echo(f"  [{status}] {f.finding_id}: {f.title} ({f.weight}pts){by}")
 
     # Save updated score
-    save_result(pipeline_result, score, result_path.parent.parent.parent)
+    save_result(pipeline_result, score, result_path.parent.parent.parent, project_dir=project)
 
 
 @replay.command("judge")
@@ -379,7 +379,14 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
     type=click.Path(exists=True),
     help="Base results directory",
 )
-def replay_compare(scenario_path, results_dir):
+@click.option(
+    "--group-by",
+    "group_by",
+    default=None,
+    type=click.Choice(["framework_version"]),
+    help="Group results by framework_version instead of theme",
+)
+def replay_compare(scenario_path, results_dir, group_by):
     """Compare pipeline results across themes for a scenario."""
     from pf.benchmark.pipeline_replay import (
         FindingScore,
@@ -400,8 +407,9 @@ def replay_compare(scenario_path, results_dir):
         click.echo(f"No results found at {scenario_dir}", err=True)
         raise SystemExit(1)
 
-    # Collect all scored runs
+    # Collect all scored runs (with version metadata)
     all_scores: list[PipelineScore] = []
+    score_versions: dict[int, str] = {}  # run_id -> version tag
     for theme_dir in sorted(scenario_dir.iterdir()):
         if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
             continue
@@ -415,12 +423,31 @@ def replay_compare(scenario_path, results_dir):
             if not chosen.exists():
                 continue
             score_data = yaml.safe_load(chosen.read_text())
+
+            # Extract version tag for grouping
+            fw = score_data.get("framework_version") or {}
+            version_tag = fw.get("tag") or fw.get("commit") or "unknown"
+
+            # Infer run_id and theme from directory path when missing
+            run_id = score_data.get("run_id")
+            if run_id is None:
+                run_name = run_dir.name  # e.g. "run-3"
+                run_id = int(run_name.split("-")[1]) if run_name.startswith("run-") else 0
+            theme = score_data.get("theme", theme_dir.name if theme_dir.name != "control" else None)
+
+            # Use a unique key combining theme + run_id
+            key = hash((theme, run_id))
+            score_versions[key] = version_tag
+
             all_scores.append(
                 PipelineScore(
-                    scenario_id=score_data["scenario_id"],
-                    theme=score_data.get("theme"),
-                    run_id=score_data["run_id"],
-                    findings=[FindingScore(**f) for f in score_data.get("findings", [])],
+                    scenario_id=score_data.get("scenario_id", scenario.id),
+                    theme=theme,
+                    run_id=run_id,
+                    findings=[
+                        FindingScore(**{k: v for k, v in f.items() if k in FindingScore.__dataclass_fields__})
+                        for f in score_data.get("findings", [])
+                    ],
                     total_caught=score_data["total_caught"],
                     total_findings=score_data["total_findings"],
                     weighted_caught=score_data["weighted_caught"],
@@ -433,12 +460,15 @@ def replay_compare(scenario_path, results_dir):
         click.echo("No scored runs found.", err=True)
         raise SystemExit(1)
 
-    # Print detection heatmap
-    _print_heatmap(scenario, all_scores)
+    if group_by == "framework_version":
+        _print_version_summary(all_scores, score_versions)
+    else:
+        # Print detection heatmap
+        _print_heatmap(scenario, all_scores)
 
-    # Save comparison
-    summary_path = build_comparison_summary(scenario, all_scores, base)
-    click.echo(f"\nSaved comparison to {summary_path}")
+        # Save comparison
+        summary_path = build_comparison_summary(scenario, all_scores, base)
+        click.echo(f"\nSaved comparison to {summary_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -535,3 +565,89 @@ def _print_heatmap(scenario, scores):
         mean_pct = sum(s.score_pct for s in theme_scores) / len(theme_scores)
         totals_row += f"{mean_caught:.1f} ({mean_pct:.0f}%)".center(col_w)
     click.echo(totals_row)
+
+
+@replay.command("backfill-versions")
+@click.option(
+    "--results-dir",
+    default=None,
+    type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option("--tag", default="baseline-pre-edge-hunter", help="Human label for backfilled runs")
+@click.option("--dry-run", is_flag=True, help="Show what would be changed without writing")
+def replay_backfill_versions(results_dir, tag, dry_run):
+    """Backfill framework_version into existing pipeline.yaml and majority_vote.yaml files."""
+    project = Path.cwd()
+    base = (
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+
+    if not base.exists():
+        click.echo(f"Results directory not found: {base}", err=True)
+        raise SystemExit(1)
+
+    from pf import __version__
+
+    default_version = {
+        "commit": "pre-edge-hunter",
+        "semver": __version__,
+        "tag": tag,
+        "agent_hashes": {},
+    }
+
+    updated = 0
+    skipped = 0
+
+    for yaml_file in sorted(base.rglob("pipeline.yaml")):
+        data = yaml.safe_load(yaml_file.read_text())
+        if data.get("framework_version"):
+            skipped += 1
+            continue
+        if dry_run:
+            click.echo(f"  Would backfill: {yaml_file}")
+        else:
+            data["framework_version"] = default_version
+            yaml_file.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
+            click.echo(f"  Backfilled: {yaml_file}")
+        updated += 1
+
+    for yaml_file in sorted(base.rglob("majority_vote.yaml")):
+        data = yaml.safe_load(yaml_file.read_text())
+        if data.get("framework_version"):
+            skipped += 1
+            continue
+        if dry_run:
+            click.echo(f"  Would backfill: {yaml_file}")
+        else:
+            data["framework_version"] = default_version
+            yaml_file.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
+            click.echo(f"  Backfilled: {yaml_file}")
+        updated += 1
+
+    action = "Would update" if dry_run else "Updated"
+    click.echo(f"\n{action} {updated} files, skipped {skipped} (already tagged)")
+
+
+def _print_version_summary(scores, score_versions):
+    """Print a summary table grouped by framework version."""
+    import statistics
+
+    # Group scores by version tag
+    groups: dict[str, list] = {}
+    for s in scores:
+        key = hash((s.theme, s.run_id))
+        version = score_versions.get(key, "unknown")
+        groups.setdefault(version, []).append(s)
+
+    click.echo(f"{'Framework Version':<25} | {'Runs':>5} | {'Median':>7} | {'Mean':>7} | {'StdDev':>7}")
+    click.echo("-" * 65)
+    for version in sorted(groups.keys()):
+        runs = groups[version]
+        pcts = [s.score_pct for s in runs]
+        median = statistics.median(pcts)
+        mean = statistics.mean(pcts)
+        stdev = statistics.stdev(pcts) if len(pcts) > 1 else 0.0
+        click.echo(
+            f"{version:<25} | {len(runs):>5} | {median:>6.1f}% | {mean:>6.1f}% | {stdev:>6.1f}"
+        )
