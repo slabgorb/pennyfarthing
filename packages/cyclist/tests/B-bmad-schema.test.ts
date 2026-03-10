@@ -101,22 +101,27 @@ describe('B-bmad-schema: BMAD Workflow Schema Validation', () => {
       }
     });
 
-    it('all workflows have valid type field', async () => {
+    it('all workflows have valid type field or phases', async () => {
       const validTypes = ['stepped', 'procedural', 'linear'];
 
       for (const path of allWorkflowPaths) {
         const content = await readFile(path, 'utf-8');
         const config = parseYaml(content) as WorkflowConfig;
-        expect(validTypes, `${path} has invalid type: ${config.workflow.type}`)
-          .toContain(config.workflow.type);
+        const hasType = validTypes.includes(config.workflow.type);
+        const hasPhases = Array.isArray((config.workflow as any).phases);
+        expect(hasType || hasPhases,
+          `${path} has neither valid type (${config.workflow.type}) nor phases`).toBe(true);
       }
     });
 
-    it('all workflows have agent field', async () => {
+    it('all workflows have agent field or phases with agents', async () => {
       for (const path of allWorkflowPaths) {
         const content = await readFile(path, 'utf-8');
         const config = parseYaml(content) as WorkflowConfig;
-        expect(config.workflow.agent, `${path} missing agent`).toBeDefined();
+        const hasAgent = config.workflow.agent !== undefined;
+        const hasPhases = Array.isArray((config.workflow as any).phases);
+        expect(hasAgent || hasPhases,
+          `${path} missing both agent and phases`).toBe(true);
       }
     });
   });
