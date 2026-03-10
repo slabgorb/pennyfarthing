@@ -6,14 +6,11 @@
     "rootDir": "src",
     "baseUrl": ".",
     "types": ["node"],
-    "paths": {
-      "@pennyfarthing/core": ["../core/src/index.ts"],
-      "@pennyfarthing/core/server": ["../core/src/server/server.ts"],
-      "@pennyfarthing/core/dist/server/api/*": ["../core/src/server/api/*"]
-    }
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/public/**/*.tsx", "src/public/**/*.ts", "src/public/styles/**"],
+  "exclude": ["node_modules", "dist", "tests"],
   "references": [
     { "path": "../core" }
   ]

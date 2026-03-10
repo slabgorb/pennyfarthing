@@ -1,82 +1,80 @@
 #!/usr/bin/env bash
-# Scenario 3: WheelHub starts on Node 24 without CJS errors
+# Scenario 3: WheelHub starts via Python uvicorn
 #
-# The whole reason for the banner fix. Tests that the bundled wheelhub.mjs
-# actually starts a server on Node 24 without "Dynamic require of 'path'
-# is not supported" or similar CJS-in-ESM errors.
+# Tests that the Python FastAPI WheelHub server starts and responds to
+# health checks. Replaces the old Node.js CJS compatibility test now
+# that WheelHub runs on Python/uvicorn (ADR-0034).
 
 source /lib.sh 2>/dev/null || source "$(dirname "$0")/../lib.sh"
-SCENARIO_NAME="WheelHub Node 24 Startup"
+SCENARIO_NAME="WheelHub Python Startup"
 header
 
-# Find the wheelhub bundle — /opt/pennyfarthing in Docker, relative path locally
-if [[ -f /opt/pennyfarthing/pennyfarthing-dist/src/pf/_dist/server/wheelhub.mjs ]]; then
-    WHEELHUB="/opt/pennyfarthing/pennyfarthing-dist/src/pf/_dist/server/wheelhub.mjs"
-else
-    # Resolve from script location: scenarios/ -> e2e/ -> tests/ -> pennyfarthing/
-    WHEELHUB="$(cd "$(dirname "$0")/../../../.." 2>/dev/null && pwd)/pennyfarthing/pennyfarthing-dist/src/pf/_dist/server/wheelhub.mjs"
-    if [[ ! -f "$WHEELHUB" ]]; then
-        # Try from pf CLI dist
-        WHEELHUB="$(python3 -c "from importlib.resources import files; print(files('pf').joinpath('_dist/server/wheelhub.mjs'))" 2>/dev/null || echo "")"
-    fi
-fi
-
 # --- Pre-flight ---
+echo "Python version: $(python3 --version)"
 echo "Node version: $(node --version)"
-assert_file "$WHEELHUB"
 
-# --- Check banner is present ---
-echo ""
-echo "Checking CJS compatibility banner ..."
-FIRST_LINE=$(head -1 "$WHEELHUB")
-if echo "$FIRST_LINE" | grep -q 'import { createRequire } from "node:module"'; then
-    pass "createRequire banner on first line"
+# Check pf CLI is available
+assert_cmd "pf CLI available" pf --version
+
+# Check uvicorn is importable inside pf's environment
+# Consumer repos install pf via pipx — uvicorn lives in that venv, not system python.
+# Use pf's own python to verify.
+PF_PYTHON="$(dirname "$(readlink -f "$(which pf)")")/../lib/python*/site-packages" 2>/dev/null
+if pf --help >/dev/null 2>&1 && python3 -c "
+import subprocess, sys, os
+# Find pf's actual interpreter by checking the shebang
+pf_bin = subprocess.check_output(['which', 'pf']).decode().strip()
+with open(pf_bin) as f:
+    shebang = f.readline().strip()
+if shebang.startswith('#!'):
+    pf_python = shebang[2:].strip()
+    result = subprocess.run([pf_python, '-c', 'import uvicorn; import fastapi'], capture_output=True)
+    sys.exit(result.returncode)
+else:
+    sys.exit(1)
+" 2>/dev/null; then
+    pass "uvicorn + fastapi available in pf's venv"
 else
-    fail "Missing createRequire banner. First line: $FIRST_LINE"
+    fail "uvicorn or fastapi not available in pf's venv"
+    summary
 fi
 
-if echo "$FIRST_LINE" | grep -q 'var require = createRequire(import.meta.url)'; then
-    pass "require = createRequire(import.meta.url) on first line"
+# Check FastAPI app can be imported via pf's python
+PF_BIN="$(which pf)"
+PF_PYTHON="$(head -1 "$PF_BIN" | sed 's/^#!//')"
+if $PF_PYTHON -c "from pf.wheelhub.app import create_app; app = create_app(); print('ok')" 2>/dev/null; then
+    pass "WheelHub FastAPI app imports successfully"
 else
-    fail "Missing require assignment on first line"
+    fail "WheelHub FastAPI app import failed"
+    summary
 fi
 
-# --- Check Proxy shim is neutralized ---
+# --- Create a minimal project dir ---
 echo ""
-echo "Checking Proxy shim is neutralized ..."
-# esbuild still generates the Proxy-based __require shim, but our banner defines
-# `require` before it runs. The shim's first branch is `typeof require !== "undefined" ? require`
-# which evaluates to our createRequire-based require, making the Proxy branch dead code.
-# The key assertion: createRequire banner appears BEFORE any __require definition.
-BANNER_LINE=$(grep -n 'var require = createRequire' "$WHEELHUB" | head -1 | cut -d: -f1)
-REQUIRE_LINE=$(grep -n 'var __require' "$WHEELHUB" | head -1 | cut -d: -f1)
-if [[ -n "$BANNER_LINE" && -n "$REQUIRE_LINE" && "$BANNER_LINE" -lt "$REQUIRE_LINE" ]]; then
-    pass "createRequire banner (line $BANNER_LINE) precedes __require shim (line $REQUIRE_LINE)"
-else
-    fail "createRequire banner must appear before __require shim (banner=$BANNER_LINE, shim=$REQUIRE_LINE)"
-fi
-
-# --- Attempt to start WheelHub ---
-echo ""
-echo "Starting WheelHub (5 second timeout) ..."
-
-# Create a minimal project dir so WheelHub can find .pennyfarthing/
+echo "Setting up test project ..."
 create_repo "$WORKSPACE/wheelhub-test"
 cd "$WORKSPACE/wheelhub-test"
 pf init --yes . 2>&1 | tail -1
 
-# Start WheelHub in background, capture output
+# --- Start WheelHub via uvicorn ---
+echo ""
+echo "Starting WheelHub (5 second timeout) ..."
+
 WHEELHUB_LOG="/tmp/wheelhub-test.log"
-node "$WHEELHUB" > "$WHEELHUB_LOG" 2>&1 &
+WHEELHUB_PORT=18980
+
+# Start uvicorn using pf's python (same as launcher.py which uses sys.executable)
+$PF_PYTHON -m uvicorn pf.wheelhub.app:create_app \
+    --factory --host 127.0.0.1 --port "$WHEELHUB_PORT" \
+    > "$WHEELHUB_LOG" 2>&1 &
 WHEELHUB_PID=$!
 
 # Wait for startup (up to 5 seconds)
-# Disable set -e for this section since kill -0 and grep may fail expectedly
 set +e
 STARTED=false
 for i in $(seq 1 50); do
     sleep 0.1
-    if grep -q "listening\|started\|ready\|WheelHub" "$WHEELHUB_LOG" 2>/dev/null; then
+    if curl -sf "http://127.0.0.1:${WHEELHUB_PORT}/health" 2>/dev/null | grep -q "ok"; then
         STARTED=true
         break
     fi
@@ -86,46 +84,53 @@ for i in $(seq 1 50); do
     fi
 done
 
-# Check for the specific CJS error
-if grep -qi "Dynamic require.*is not supported" "$WHEELHUB_LOG" 2>/dev/null; then
-    fail "CJS error: Dynamic require is not supported"
-    echo "  --- Log output ---"
-    head -20 "$WHEELHUB_LOG" | sed 's/^/  /'
-    echo "  ------------------"
-elif grep -qi "ERR_REQUIRE_ESM\|Cannot find module\|MODULE_NOT_FOUND" "$WHEELHUB_LOG" 2>/dev/null; then
-    fail "Module resolution error during startup"
-    echo "  --- Log output ---"
-    head -20 "$WHEELHUB_LOG" | sed 's/^/  /'
-    echo "  ------------------"
-elif ! kill -0 "$WHEELHUB_PID" 2>/dev/null; then
-    # Process died — check exit code
-    wait "$WHEELHUB_PID" 2>/dev/null
-    EXIT_CODE=$?
-    if [[ $EXIT_CODE -ne 0 ]]; then
-        # Check for CJS-specific errors (the ones we're testing for).
-        # Port conflicts, missing config, etc. are environment issues, not CJS failures.
-        if grep -qi "Dynamic require.*is not supported\|ERR_REQUIRE_ESM\|Cannot use import statement" "$WHEELHUB_LOG" 2>/dev/null; then
-            fail "WheelHub crashed with CJS/ESM error (code $EXIT_CODE)"
-            echo "  --- Log output ---"
-            head -30 "$WHEELHUB_LOG" | sed 's/^/  /'
-            echo "  ------------------"
-        elif grep -q "No available port\|EADDRINUSE" "$WHEELHUB_LOG" 2>/dev/null; then
-            pass "WheelHub started but port unavailable (CJS imports succeeded, code $EXIT_CODE)"
-        else
-            pass "WheelHub started and exited (code $EXIT_CODE, no CJS errors)"
-        fi
-    else
-        pass "WheelHub started and exited cleanly"
-    fi
+if [[ "$STARTED" == true ]]; then
+    pass "WheelHub started and /health returns ok"
 else
-    pass "WheelHub process alive after startup (PID $WHEELHUB_PID)"
-    # Try to hit the health endpoint
-    if command -v curl &>/dev/null; then
-        if curl -sf http://localhost:7117/api/health 2>/dev/null; then
-            pass "Health endpoint responding"
-        else
-            warn "Health endpoint not responding (may use different port)"
-        fi
+    if ! kill -0 "$WHEELHUB_PID" 2>/dev/null; then
+        wait "$WHEELHUB_PID" 2>/dev/null
+        EXIT_CODE=$?
+        fail "WheelHub process died (exit $EXIT_CODE)"
+        echo "  --- Log output ---"
+        head -30 "$WHEELHUB_LOG" | sed 's/^/  /'
+        echo "  ------------------"
+    else
+        fail "WheelHub process alive but /health not responding"
+        echo "  --- Log output ---"
+        head -30 "$WHEELHUB_LOG" | sed 's/^/  /'
+        echo "  ------------------"
+    fi
+fi
+
+# --- Test OTLP endpoint accepts data ---
+if [[ "$STARTED" == true ]]; then
+    echo ""
+    echo "Testing OTLP trace endpoint ..."
+    HTTP_CODE=$(curl -sf -o /dev/null -w '%{http_code}' \
+        -X POST "http://127.0.0.1:${WHEELHUB_PORT}/v1/traces" \
+        -H "Content-Type: application/json" \
+        -d '{"resourceSpans":[]}' 2>/dev/null)
+    if [[ "$HTTP_CODE" == "200" ]]; then
+        pass "POST /v1/traces returns 200"
+    else
+        fail "POST /v1/traces returned $HTTP_CODE (expected 200)"
+    fi
+fi
+
+# --- Test WebSocket endpoint is routable ---
+if [[ "$STARTED" == true ]] && command -v python3 &>/dev/null; then
+    echo ""
+    echo "Testing WebSocket endpoint ..."
+    # Just check the upgrade request doesn't 404
+    WS_CODE=$(curl -sf -o /dev/null -w '%{http_code}' \
+        "http://127.0.0.1:${WHEELHUB_PORT}/ws/sprint" 2>/dev/null || echo "000")
+    # WebSocket endpoints return 403 for non-upgrade HTTP requests in FastAPI
+    if [[ "$WS_CODE" == "403" || "$WS_CODE" == "426" ]]; then
+        pass "WebSocket endpoint /ws/sprint routable (HTTP $WS_CODE without upgrade)"
+    elif [[ "$WS_CODE" == "200" ]]; then
+        pass "WebSocket endpoint /ws/sprint exists"
+    else
+        warn "WebSocket endpoint /ws/sprint returned HTTP $WS_CODE"
     fi
 fi
 
@@ -133,19 +138,5 @@ fi
 kill "$WHEELHUB_PID" 2>/dev/null
 wait "$WHEELHUB_PID" 2>/dev/null
 set -e
-
-# --- Syntax check: Node can at least parse the module ---
-echo ""
-echo "Checking Node can parse the module ..."
-if node --check "$WHEELHUB" 2>/dev/null; then
-    pass "Node --check passes (valid ES module syntax)"
-else
-    # --check doesn't work on .mjs with top-level await, try import
-    if node -e "import('$WHEELHUB').catch(e => { console.error(e.message); process.exit(1) })" 2>/dev/null; then
-        pass "Node can import the module"
-    else
-        fail "Node cannot parse/import wheelhub.mjs"
-    fi
-fi
 
 summary

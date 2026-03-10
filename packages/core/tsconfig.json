@@ -3,8 +3,10 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/public", "src/server/*.tsx", "src/server/_vite-index.ts", "src/server/index.ts", "src/server/websocket-data-source.ts", "src/server/css.d.ts"]
+  "include": ["src/index.ts", "src/public/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
