@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/cyclist",
-  "version": "12.7.0",
+  "version": "13.0.0-alpha.0",
   "description": "Visual terminal interface for Claude Code - React GUI",
   "author": "1898andCo",
   "type": "module",
