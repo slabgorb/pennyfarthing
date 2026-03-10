@@ -11,8 +11,6 @@ ADR-0022, ADR-0034.
 
 from __future__ import annotations
 
-import asyncio
-import os
 import sys
 from pathlib import Path
 
