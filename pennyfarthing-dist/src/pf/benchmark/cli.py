@@ -71,6 +71,12 @@ def replay():
 @click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option(
+    "--max-rework-cycles",
+    default=0,
+    type=click.IntRange(0, 2),
+    help="Max reviewer kick-back cycles (0=disabled, max 2)",
+)
 def replay_run(
     scenario_path,
     theme,
@@ -83,6 +89,7 @@ def replay_run(
     judge_count,
     skip_score,
     keep_worktree,
+    max_rework_cycles,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
@@ -111,6 +118,7 @@ def replay_run(
     click.echo(f"  Commit:   {scenario.base_commit[:12]}")
     click.echo(f"  Phases:   {' → '.join(scenario.phases)}")
     click.echo(f"  Judge:    {judge_model or 'default'} × {judge_count}")
+    click.echo(f"  Rework:   {max_rework_cycles} max cycles")
     click.echo(f"  Output:   {out_dir}")
     click.echo()
 
@@ -139,6 +147,7 @@ def replay_run(
             worktree_base=wt_base,
             output_dir=out_dir,
             model=model,
+            max_rework_cycles=max_rework_cycles,
         )
 
         # Score — first judge pass (saved as score.yaml)
