@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/core",
-  "version": "12.7.0",
+  "version": "13.0.0-alpha.0",
   "description": "Claude Code agent framework - React GUI components",
   "type": "module",
   "keywords": [
