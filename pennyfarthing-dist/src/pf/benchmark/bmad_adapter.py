@@ -180,41 +180,27 @@ def translate_story_file(
 ) -> str:
     """Translate PF context docs into a BMAD-format story file.
 
-    Produces the standard BMAD story template structure with:
-    - Story section (user story format)
-    - Acceptance Criteria (verbatim from input)
-    - Tasks / Subtasks (empty per ADR-0035)
-    - Dev Notes (populated from epic/story context)
-    - Dev Agent Record (empty, filled by BMAD agent at runtime)
+    Reads the BMAD story template from config, substitutes placeholders,
+    and injects acceptance criteria and dev notes from PF context docs.
+    Tasks/Subtasks left empty per ADR-0035 to avoid bias.
     """
-    return f"""\
-# Story: {story_title}
+    template = config.story_template()
 
-Status: ready-for-dev
+    # Substitute BMAD template placeholders
+    result = template.replace("{{story_title}}", story_title)
+    result = result.replace("{{epic_num}}.{{story_num}}", story_title)
+    result = result.replace("{{role}}", "developer")
+    result = result.replace("{{action}}", f"implement {story_title}")
+    result = result.replace("{{benefit}}", "the acceptance criteria are satisfied")
 
-## Story
+    # Inject content into empty template sections
+    result = result.replace(
+        "## Acceptance Criteria\n",
+        f"## Acceptance Criteria\n\n{acceptance_criteria}\n",
+    )
+    result = result.replace(
+        "## Dev Notes\n",
+        f"## Dev Notes\n\n### Epic Context\n\n{epic_context}\n\n### Story Context\n\n{story_context}\n",
+    )
 
-As a developer,
-I want to implement {story_title},
-so that the acceptance criteria are satisfied.
-
-## Acceptance Criteria
-
-{acceptance_criteria}
-
-## Tasks / Subtasks
-
-## Dev Notes
-
-### Epic Context
-
-{epic_context}
-
-### Story Context
-
-{story_context}
-
-## Dev Agent Record
-
-### File List
-"""
+    return result
