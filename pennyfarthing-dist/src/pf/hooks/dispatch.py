@@ -24,6 +24,7 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("context-breaker", "Edit|Write|Bash|Task", "pf.hooks.context_breaker"),
         ("schema-validation", "Write", "pf.hooks.schema_validation"),
         ("pretooluse-forward", None, "pf.hooks.pretooluse_forward"),
+        ("plan-exit-reload", "ExitPlanMode", "pf.hooks.plan_exit_reload"),
     ],
     "PostToolUse": [
         ("sprint-yaml", "Edit|Write", "pf.hooks.sprint_yaml_validation"),
