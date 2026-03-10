@@ -32,9 +32,7 @@ export default defineConfig({
       // Map @/* to core/src/public/* (canonical source moved in 98-18)
       '@': path.resolve(__dirname, '../core/src/public'),
       // Cross-package aliases (124-6): resolve monorepo deep imports to source
-      '@pennyfarthing/bikerack/server': path.resolve(__dirname, '../core/src/server/server.ts'),
-      '@pennyfarthing/bikerack/entry': path.resolve(__dirname, '../core/src/server/entry.ts'),
-      '@pennyfarthing/bikerack': path.resolve(__dirname, '../core/src/server/_vite-index.ts'),
+      '@pennyfarthing/bikerack': path.resolve(__dirname, '../core/src/public/bikerack/index.ts'),
       '@pennyfarthing/core/components': path.resolve(__dirname, '../core/src/public/components'),
       '@pennyfarthing/core/hooks': path.resolve(__dirname, '../core/src/public/hooks'),
       '@pennyfarthing/core/styles': path.resolve(__dirname, '../core/src/public/styles'),
