@@ -71,6 +71,8 @@ def replay():
 @click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--pipeline", "pipeline_name", default="default", help="Pipeline variant: 'default' (PF) or 'bmad'")
+@click.option("--bmad-root", default=None, type=click.Path(exists=True), help="Path to BMAD-METHOD repo (required for --pipeline bmad)")
 def replay_run(
     scenario_path,
     theme,
@@ -83,6 +85,8 @@ def replay_run(
     judge_count,
     skip_score,
     keep_worktree,
+    pipeline_name,
+    bmad_root,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
@@ -104,12 +108,22 @@ def replay_run(
 
     scenario = load_scenario(scenario_path, project_dir=project)
 
-    tag = theme or "control"
+    # Build pipeline config if non-default
+    pipe_config = None
+    if pipeline_name != "default":
+        from pf.benchmark.bmad_pipeline import get_pipeline_config
+
+        bmad_path = Path(bmad_root) if bmad_root else None
+        pipe_config = get_pipeline_config(pipeline_name, bmad_root=bmad_path)
+
+    tag = pipe_config.result_subdir if pipe_config else (theme or "control")
+    phases = pipe_config.phases if pipe_config else scenario.phases
     click.echo(f"=== Pipeline Replay: {scenario.title} ===")
+    click.echo(f"  Pipeline: {pipeline_name}")
     click.echo(f"  Theme:    {tag}")
     click.echo(f"  Runs:     {runs}")
     click.echo(f"  Commit:   {scenario.base_commit[:12]}")
-    click.echo(f"  Phases:   {' → '.join(scenario.phases)}")
+    click.echo(f"  Phases:   {' → '.join(phases)}")
     click.echo(f"  Judge:    {judge_model or 'default'} × {judge_count}")
     click.echo(f"  Output:   {out_dir}")
     click.echo()
@@ -139,6 +153,7 @@ def replay_run(
             worktree_base=wt_base,
             output_dir=out_dir,
             model=model,
+            pipeline_config=pipe_config,
         )
 
         # Score — first judge pass (saved as score.yaml)

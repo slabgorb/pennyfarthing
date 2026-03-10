@@ -666,6 +666,7 @@ def run_pipeline(
     output_dir: Path | None = None,
     model: str | None = None,
     otel_endpoint: str | None = None,
+    pipeline_config: Any | None = None,
 ) -> PipelineResult:
     """Run the full TEA -> Dev -> Reviewer pipeline.
 
@@ -674,11 +675,19 @@ def run_pipeline(
        then runs ``claude -p`` with the phase task prompt.
     3. Returns the collected results.
 
+    If *pipeline_config* is provided (a ``PipelineConfig`` from
+    ``bmad_pipeline``), its phases, CLAUDE.md builder, and worktree
+    setup are used instead of the default PF pipeline.
+
     OTEL telemetry is always captured to disk as JSONL files alongside
     the phase outputs (``{phase}-otel.jsonl``).  The *otel_endpoint*
     parameter is accepted for backwards compatibility but ignored.
     """
-    tag = theme or "control"
+    # Determine phases and tag from pipeline config or defaults
+    phases = pipeline_config.phases if pipeline_config else scenario.phases
+    pipeline_name = pipeline_config.pipeline_name if pipeline_config else "default"
+    tag_suffix = pipeline_config.result_subdir if pipeline_config else None
+    tag = tag_suffix or theme or "control"
     wt_name = f"{scenario.id}-{tag}-run-{run_id}"
     wt_path = worktree_base / wt_name
     repo = Path(scenario.repo_path)
@@ -691,9 +700,31 @@ def run_pipeline(
         timestamp=datetime.now(UTC).isoformat(),
         model=model or "opus",
     )
+    # Attach pipeline metadata
+    if pipeline_config:
+        result.phases["_pipeline"] = PhaseResult(
+            role="_pipeline",
+            output_text=f"pipeline={pipeline_name}",
+        )
 
     # Create worktree
     create_worktree(repo, scenario.base_commit, wt_path)
+
+    # Run pipeline-specific worktree setup (e.g. BMAD story file)
+    if pipeline_config and pipeline_config.setup_worktree:
+        try:
+            pipeline_config.setup_worktree(
+                worktree_path=wt_path,
+                story_key=scenario.id,
+                story_title=scenario.title,
+                epic_context_path=Path(scenario.context_epic_path),
+                story_context_path=Path(scenario.context_story_path),
+                acceptance_criteria=scenario.acceptance_criteria if hasattr(scenario, "acceptance_criteria") else "",
+                project_context="",
+            )
+            print(f"  [SETUP] Pipeline worktree configured for {pipeline_name}")
+        except Exception as exc:
+            print(f"  [SETUP] WARNING: Worktree setup failed: {exc}")
 
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
@@ -705,14 +736,28 @@ def run_pipeline(
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
 
     try:
-        for role in scenario.phases:
-            # Extract production-faithful agent prompt
-            agent_prompt = extract_agent_prompt(
-                role, project_dir, persona=(theme is not None), theme=theme
-            )
+        for role in phases:
+            # Build CLAUDE.md — use pipeline config builder or default PF extraction
+            if pipeline_config and pipeline_config.build_claude_md:
+                dev_output = ""
+                if role == "reviewer":
+                    dev_phase = result.phases.get("dev")
+                    if dev_phase:
+                        dev_output = dev_phase.output_text or ""
+                claude_md = pipeline_config.build_claude_md(
+                    role=role,
+                    epic_context_path=Path(scenario.context_epic_path),
+                    story_context_path=Path(scenario.context_story_path),
+                    worktree_path=wt_path,
+                    dev_output=dev_output,
+                )
+            else:
+                agent_prompt = extract_agent_prompt(
+                    role, project_dir, persona=(theme is not None), theme=theme
+                )
+                claude_md = build_phase_claude_md(role, agent_prompt, scenario)
 
             # Write CLAUDE.md into worktree
-            claude_md = build_phase_claude_md(role, agent_prompt, scenario)
             (wt_path / "CLAUDE.md").write_text(claude_md)
 
             # Get the task prompt for this phase
