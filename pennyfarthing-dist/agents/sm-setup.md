@@ -185,6 +185,13 @@ Each finding is one list item. Use "No upstream findings" if none.
 **Urgency:** blocking, non-blocking
 
 <!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+
+## Design Deviations
+
+Agents log spec deviations as they happen — not after the fact.
+Each entry: what was changed, what the spec said, and why.
+
+<!-- Agents: append deviations below this line. Do not edit other agents' entries. -->
 ```
 
 ## Step 5: Create Branch

@@ -39,7 +39,26 @@ print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`
 If a PR already exists, skip creation.
 
-## 2. Compile Impact Summary
+## 2. Include Design Deviations in PR Body
+
+If the session file has a `## Design Deviations` section with entries (not just the template marker),
+extract it and append to the PR description body as a `## Design Deviations` section.
+
+```bash
+# Extract deviations from session (between marker comment and next ## heading)
+DEVIATIONS=$(sed -n '/^## Design Deviations/,/^## [^D]/p' ".session/{STORY_ID}-session.md" | head -n -1)
+```
+
+If the PR already exists, update the body:
+```bash
+gh pr edit {PR_NUMBER} --body "$(gh pr view {PR_NUMBER} --json body -q .body)
+
+${DEVIATIONS}"
+```
+
+If creating a new PR (Step 1), include the deviations in the initial `--body`.
+
+## 3. Compile Impact Summary
 
 Compile Delivery Findings from the session file into an Impact Summary section.
 Uses `pf.findings.summary.write_impact_summary_to_session()` which reads the
