@@ -345,6 +345,81 @@ def setup_worktree_pf_context(worktree_path: Path, project_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Worktree verification
+# ---------------------------------------------------------------------------
+
+# Paths allowed to appear in ``git status --porcelain`` after context setup.
+_ALLOWED_WORKTREE_PATHS = {
+    ".pennyfarthing",
+    ".claude/settings.json",
+    ".claude/",
+    ".claude",
+    ".session/",
+    "sprint/context/",
+}
+
+
+def verify_worktree(worktree_path: Path, expected_commit: str) -> None:
+    """Verify worktree is clean after context setup.
+
+    Checks two things:
+    1. No unexpected files in ``git status --porcelain`` output.
+    2. HEAD matches the expected base commit.
+
+    Raises ``RuntimeError`` with a descriptive message on failure.
+    """
+    # Check for unexpected files
+    status_result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=str(worktree_path),
+        capture_output=True,
+        text=True,
+    )
+    if status_result.returncode != 0:
+        raise RuntimeError(
+            f"git status failed in worktree {worktree_path}: {status_result.stderr.strip()}"
+        )
+
+    unexpected = []
+    for line in status_result.stdout.strip().splitlines():
+        if not line.strip():
+            continue
+        # Format: XY path (or XY path -> renamed_path)
+        file_path = line[3:].split(" -> ")[0]
+        if not any(
+            file_path == allowed or file_path.startswith(allowed)
+            for allowed in _ALLOWED_WORKTREE_PATHS
+        ):
+            unexpected.append(file_path)
+
+    if unexpected:
+        file_list = "\n  ".join(unexpected)
+        raise RuntimeError(
+            f"Worktree {worktree_path} has unexpected files after context setup:\n"
+            f"  {file_list}\n"
+            f"This may indicate a crashed previous run left orphaned files."
+        )
+
+    # Verify HEAD matches expected commit
+    head_result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(worktree_path),
+        capture_output=True,
+        text=True,
+    )
+    if head_result.returncode != 0:
+        raise RuntimeError(
+            f"git rev-parse HEAD failed in worktree {worktree_path}: {head_result.stderr.strip()}"
+        )
+
+    actual_commit = head_result.stdout.strip()
+    if not actual_commit.startswith(expected_commit) and not expected_commit.startswith(actual_commit):
+        raise RuntimeError(
+            f"Worktree HEAD mismatch: expected {expected_commit}, got {actual_commit}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Prompt extraction
 # ---------------------------------------------------------------------------
 
@@ -909,11 +984,15 @@ def run_pipeline(
     if not is_bmad:
         setup_worktree_pf_context(wt_path, project_dir)
 
+    # Verify worktree is clean before proceeding
+    verify_worktree(wt_path, scenario.base_commit)
+
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
     run_dir = compute_run_dir(output_base=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
 
     # Start OTEL file collector (with enrichment while worktree exists)
+    collector: OTELFileCollector | None = None
     collector = OTELFileCollector(run_dir, worktree_path=wt_path)
     collector.start()
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
@@ -1044,7 +1123,8 @@ def run_pipeline(
         print(f"  ERROR: Pipeline failed at phase: {exc}")
         raise
     finally:
-        collector.stop()
+        if collector:
+            collector.stop()
         # Generate diff of worktree changes
         diff_result = subprocess.run(
             ["git", "diff", "--stat"],
