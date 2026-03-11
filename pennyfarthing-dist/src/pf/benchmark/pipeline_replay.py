@@ -792,16 +792,11 @@ def run_phase(
 # ---------------------------------------------------------------------------
 
 
-def _compute_run_dir(
-    output_dir: Path, scenario_id: str, tag: str, run_id: int
+def compute_run_dir(
+    output_base: Path, scenario_id: str, tag: str, run_id: int
 ) -> Path:
-    """Compute the run directory path, matching save_result() nesting logic."""
-    expected_suffix = Path(scenario_id) / tag
-    if output_dir.parts[-2:] == expected_suffix.parts:
-        return output_dir / f"run-{run_id}"
-    if output_dir.parts[-1:] == (scenario_id,):
-        return output_dir / tag / f"run-{run_id}"
-    return output_dir / scenario_id / tag / f"run-{run_id}"
+    """Compute the canonical run directory: output_base/scenario_id/tag/run-N."""
+    return output_base / scenario_id / tag / f"run-{run_id}"
 
 
 _REVIEWER_REJECT_RE = re.compile(r"VERDICT:\s*REJECT", re.IGNORECASE)
@@ -916,7 +911,7 @@ def run_pipeline(
 
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
-    run_dir = _compute_run_dir(output_dir=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
+    run_dir = compute_run_dir(output_base=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
 
     # Start OTEL file collector (with enrichment while worktree exists)
     collector = OTELFileCollector(run_dir, worktree_path=wt_path)
@@ -1484,14 +1479,7 @@ def save_result(
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
-    expected_suffix = Path(pipeline_result.scenario_id) / tag
-    # Avoid double-nesting when output_dir already ends with scenario/theme
-    if output_dir.parts[-2:] == expected_suffix.parts:
-        run_dir = output_dir / f"run-{pipeline_result.run_id}"
-    elif output_dir.parts[-1:] == (pipeline_result.scenario_id,):
-        run_dir = output_dir / tag / f"run-{pipeline_result.run_id}"
-    else:
-        run_dir = output_dir / pipeline_result.scenario_id / tag / f"run-{pipeline_result.run_id}"
+    run_dir = compute_run_dir(output_dir, pipeline_result.scenario_id, tag, pipeline_result.run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Save phase outputs
