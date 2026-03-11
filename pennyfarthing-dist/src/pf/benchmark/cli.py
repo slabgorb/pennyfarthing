@@ -441,6 +441,113 @@ def replay_compare(scenario_path, results_dir):
     click.echo(f"\nSaved comparison to {summary_path}")
 
 
+@replay.command("trace")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.option("--phase", default=None, help="Show only this phase (default: all)")
+def replay_trace(run_dir, phase):
+    """Show agent trace for a pipeline run.
+
+    Displays [ROLE] Turn N blocks with tools and reasoning for each phase.
+
+    \b
+    Examples:
+        pf benchmark replay trace results/dpgd-116/firefly/run-1
+        pf benchmark replay trace results/dpgd-116/firefly/run-1 --phase dev
+    """
+    from pf.benchmark.events import parse_phase_events
+
+    run_path = Path(run_dir)
+
+    # Find OTEL files in run directory
+    otel_files = sorted(run_path.glob("*-otel.jsonl"))
+    if not otel_files:
+        click.echo("No events found")
+        return
+
+    for otel_file in otel_files:
+        phase_name = otel_file.stem.replace("-otel", "")
+        if phase and phase_name != phase:
+            continue
+
+        events = parse_phase_events(otel_file)
+        if not events.tool_calls and not events.text_blocks:
+            click.echo(f"[{phase_name.upper()}] No events found")
+            continue
+
+        click.echo(f"[{phase_name.upper()}] {len(events.tool_calls)} tool calls, "
+                    f"{len(events.text_blocks)} LLM turns")
+        click.echo(f"  Files read:    {len(events.files_read)}")
+        click.echo(f"  Files written: {len(events.files_written)}")
+        click.echo(f"  Subagents:     {len(events.subagents)}")
+
+        # Show tool call timeline
+        for tc in events.tool_calls:
+            status = "OK" if tc.success else "FAIL"
+            click.echo(f"  Turn {tc.sequence:3d}: {tc.tool_name:10s} [{status}] "
+                        f"({tc.duration_ms}ms)")
+
+        click.echo()
+
+
+@replay.command("explain")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--project-dir", default=None, type=click.Path(exists=True))
+def replay_explain(run_dir, scenario_path, project_dir):
+    """Correlate findings with agent trace evidence.
+
+    For each ground-truth finding, shows which phase read the relevant files
+    and the engagement confidence level.
+
+    \b
+    Examples:
+        pf benchmark replay explain results/dpgd-116/firefly/run-1 scenarios/dpgd-116.yaml
+    """
+    from pf.benchmark.events import correlate_finding, parse_phase_events
+    from pf.benchmark.pipeline_replay import load_scenario
+
+    run_path = Path(run_dir)
+    project = Path(project_dir) if project_dir else Path.cwd()
+    scenario = load_scenario(scenario_path, project_dir=project)
+
+    # Load pipeline.yaml for worktree_path
+    pipeline_file = run_path / "pipeline.yaml"
+    worktree_prefix = ""
+    if pipeline_file.exists():
+        pipeline_data = yaml.safe_load(pipeline_file.read_text())
+        worktree_prefix = pipeline_data.get("worktree_path", "")
+
+    # Parse events per phase
+    otel_files = sorted(run_path.glob("*-otel.jsonl"))
+    phase_events: dict[str, Any] = {}
+    for otel_file in otel_files:
+        phase_name = otel_file.stem.replace("-otel", "")
+        phase_events[phase_name] = parse_phase_events(otel_file)
+
+    if not phase_events:
+        click.echo("No events found")
+        return
+
+    click.echo(f"=== Finding Correlation: {scenario.id} ===")
+    click.echo(f"  Phases: {', '.join(phase_events.keys())}")
+    click.echo()
+
+    for finding in scenario.ground_truth:
+        click.echo(f"--- {finding.id}: {finding.title} ---")
+        click.echo(f"  Files: {', '.join(finding.files)}")
+
+        for phase_name, events in phase_events.items():
+            correlation = correlate_finding(events, finding.files, worktree_prefix)
+            icon = {"high": "+", "low": "~", "none": "-"}[correlation.engagement]
+            click.echo(f"  [{icon}] {phase_name}: {correlation.engagement}")
+            if correlation.files_read_matching:
+                click.echo(f"      Read: {', '.join(correlation.files_read_matching)}")
+            if correlation.files_grepped_matching:
+                click.echo(f"      Grep/Glob: {', '.join(correlation.files_grepped_matching)}")
+
+        click.echo()
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
