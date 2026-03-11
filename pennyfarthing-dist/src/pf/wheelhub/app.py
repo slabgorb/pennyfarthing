@@ -13,7 +13,10 @@ ADR-0022, ADR-0034.
 
 from __future__ import annotations
 
+import asyncio
+import os
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -38,10 +41,14 @@ _ws_clients: dict[str, set[WebSocket]] = {ch: set() for ch in WS_CHANNELS}
 
 
 async def _ws_handler(websocket: WebSocket, channel: str) -> None:
-    """Generic WebSocket handler — accept, hold, broadcast."""
+    """Generic WebSocket handler — accept, send initial data, hold."""
+    from .ws_push import send_initial_data
+
     await websocket.accept()
     _ws_clients[channel].add(websocket)
     try:
+        # Send initial data for this channel
+        await send_initial_data(websocket, channel)
         while True:
             # Keep connection alive, receive any client messages
             await websocket.receive_text()
@@ -65,9 +72,43 @@ async def broadcast(channel: str, data: dict) -> None:
         _ws_clients[channel].discard(ws)
 
 
+def _resolve_port() -> int:
+    """Resolve the server port from WHEELHUB_PORT env or default."""
+    return int(os.environ.get("WHEELHUB_PORT", "1898"))
+
+
+def _resolve_project_dir() -> Path | None:
+    """Resolve project dir from WHEELHUB_PROJECT_DIR env."""
+    env = os.environ.get("WHEELHUB_PROJECT_DIR")
+    return Path(env) if env else None
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Write .bikerack-port on startup, start poller, clean up on shutdown."""
+    from .ws_push import poll_and_broadcast
+
+    project_dir = _resolve_project_dir()
+    port = _resolve_port()
+    if project_dir:
+        write_port_file(project_dir, port)
+    # Start periodic broadcast for channels that change externally
+    poll_task = asyncio.create_task(poll_and_broadcast(broadcast))
+    try:
+        yield
+    finally:
+        poll_task.cancel()
+        try:
+            await poll_task
+        except asyncio.CancelledError:
+            pass
+        if project_dir:
+            cleanup_port_file(project_dir)
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="WheelHub", docs_url=None, redoc_url=None)
+    app = FastAPI(title="WheelHub", docs_url=None, redoc_url=None, lifespan=_lifespan)
 
     # --- CORS middleware ---
     app.add_middleware(
