@@ -780,8 +780,39 @@ def buffer_stream_events(
     output_path: Path,
     verbose_callback: Any | None = None,
 ) -> dict | None:
-    """Buffer stream-json events to JSONL. Not yet implemented."""
-    raise NotImplementedError("buffer_stream_events not yet implemented — Story 142-4")
+    """Buffer stream-json events from ``claude -p --output-format stream-json`` to JSONL.
+
+    Reads lines from *input_stream* (``Iterator[str]``), writes each non-blank
+    line to *output_path* as JSONL, and optionally calls *verbose_callback* with
+    the parsed dict for each event.  Returns the last ``result`` event dict, or
+    ``None`` if none was seen (e.g. crash / timeout).
+
+    Each line is flushed immediately so ``tail -f`` works during runs.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result_event: dict | None = None
+
+    with open(output_path, "w") as f:
+        for line in input_stream:
+            if not line.strip():
+                continue
+
+            f.write(line + "\n")
+            f.flush()
+
+            parsed: dict | None = None
+            try:
+                parsed = json.loads(line)
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            if parsed is not None and parsed.get("type") == "result":
+                result_event = parsed
+
+            if verbose_callback is not None and parsed is not None:
+                verbose_callback(parsed)
+
+    return result_event
 
 
 def run_phase(
