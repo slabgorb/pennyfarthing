@@ -9,9 +9,11 @@ from pf.bmad.sync import (
     BmadSyncPlan,
     DevAgentRecord,
     _collect_dev_record,
+    _extract_design_deviations,
     _find_session_file,
     _parse_session_for_record,
     _populate_dev_agent_record,
+    _push_design_deviations,
     _update_bmad_file_status,
     format_sync_plan,
     generate_sync_plan,
@@ -531,3 +533,112 @@ class TestJiraKeyOnChanges:
         plan = generate_sync_plan(pf, bmad, direction="push")
 
         assert plan.changes[0].jira_key == "DPGD-10"
+
+
+# =============================================================================
+# Design Deviations — Extract
+# =============================================================================
+
+
+class TestExtractDesignDeviations:
+    def test_extracts_deviations_section(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(
+            "# Story 5-2\n\n"
+            "## Design Deviations\n\n"
+            "<!-- marker -->\n\n"
+            "### Dev (implementation)\n"
+            "- **Binary And/Or:** Spec used Vec, implemented binary. Reason: Chumsky foldl.\n"
+            "- **Flat HashMap:** Spec used AliasEntry, implemented flat. Reason: simpler.\n\n"
+            "## Notes\n\nSome notes.\n"
+        )
+        result = _extract_design_deviations(session)
+        assert "Binary And/Or" in result
+        assert "Flat HashMap" in result
+        assert "Some notes" not in result
+
+    def test_returns_empty_for_template_only(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(
+            "# Story 5-2\n\n"
+            "## Design Deviations\n\n"
+            "Agents log spec deviations as they happen.\n"
+            "Each entry: what was changed.\n\n"
+            "<!-- Agents: append deviations below this line. -->\n\n"
+            "## Notes\n"
+        )
+        result = _extract_design_deviations(session)
+        assert result == ""
+
+    def test_returns_empty_when_section_missing(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text("# Story 5-2\n\n## Notes\n\nSome notes.\n")
+        result = _extract_design_deviations(session)
+        assert result == ""
+
+    def test_extracts_multiple_agent_subsections(self, tmp_path):
+        session = tmp_path / "session.md"
+        session.write_text(
+            "## Design Deviations\n\n"
+            "### TEA (test design)\n"
+            "- **Error granularity:** tests assert specific variant.\n\n"
+            "### Dev (implementation)\n"
+            "- **Flat HashMap:** simpler for scaffold.\n\n"
+            "### Reviewer (audit)\n"
+            "- **Flat HashMap** → ✓ ACCEPTED: correct call.\n\n"
+            "## Notes\n"
+        )
+        result = _extract_design_deviations(session)
+        assert "TEA (test design)" in result
+        assert "Dev (implementation)" in result
+        assert "Reviewer (audit)" in result
+
+
+# =============================================================================
+# Design Deviations — Push to BMAD
+# =============================================================================
+
+
+class TestPushDesignDeviations:
+    def test_appends_after_dev_agent_record(self, tmp_path):
+        bmad = tmp_path / "story.md"
+        bmad.write_text(
+            "# Story 5.2\n\n"
+            "Status: done\n\n"
+            "## Dev Agent Record\n\n"
+            "### Agent Model Used\n\nClaude Opus 4.6\n"
+        )
+        deviations = "### Dev (implementation)\n- **Binary And/Or:** foldl.\n"
+        result = _push_design_deviations(str(bmad), deviations)
+        assert result is True
+        content = bmad.read_text()
+        assert "## Design Deviations" in content
+        assert content.index("## Dev Agent Record") < content.index("## Design Deviations")
+
+    def test_replaces_existing_section(self, tmp_path):
+        bmad = tmp_path / "story.md"
+        bmad.write_text(
+            "# Story 5.2\n\n"
+            "## Design Deviations\n\n"
+            "### Dev (implementation)\n- **Old stuff.**\n\n"
+            "## Notes\n"
+        )
+        deviations = "### Dev (implementation)\n- **New stuff.**\n"
+        result = _push_design_deviations(str(bmad), deviations)
+        assert result is True
+        content = bmad.read_text()
+        assert "New stuff" in content
+        assert "Old stuff" not in content
+
+    def test_appends_at_end_without_dev_agent_record(self, tmp_path):
+        bmad = tmp_path / "story.md"
+        bmad.write_text("# Story 5.2\n\nStatus: done\n")
+        deviations = "### Dev (implementation)\n- **Binary And/Or.**\n"
+        result = _push_design_deviations(str(bmad), deviations)
+        assert result is True
+        content = bmad.read_text()
+        assert "## Design Deviations" in content
+
+    def test_returns_false_for_nonexistent_file(self, tmp_path):
+        result = _push_design_deviations(str(tmp_path / "nope.md"), "deviations")
+        assert result is False

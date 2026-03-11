@@ -383,6 +383,87 @@ def _parse_session_for_record(session_path: Path) -> DevAgentRecord:
     return record
 
 
+def _extract_design_deviations(session_path: Path) -> str:
+    """Extract the Design Deviations section from a session file.
+
+    Returns the full markdown content of the section (everything between
+    '## Design Deviations' and the next '## ' heading), or empty string
+    if the section is absent or contains only the template marker.
+    """
+    content = session_path.read_text()
+    match = re.search(
+        r"## Design Deviations.*?\n(.*?)(?=\n## (?!Design Deviations)|\Z)",
+        content,
+        re.DOTALL,
+    )
+    if not match:
+        return ""
+
+    body = match.group(1).strip()
+
+    # Skip if it's just the template with no actual entries
+    lines = [
+        line for line in body.splitlines()
+        if line.strip()
+        and not line.strip().startswith("<!--")
+        and not line.strip().startswith("Agents log")
+        and not line.strip().startswith("Each entry:")
+    ]
+    if not lines:
+        return ""
+
+    return body
+
+
+def _push_design_deviations(bmad_path: str, deviations: str) -> bool:
+    """Append or update the Design Deviations section in a BMAD story file.
+
+    If the section already exists, it is replaced. Otherwise it is appended
+    after the Dev Agent Record section (or at end of file).
+
+    Returns True if the file was modified.
+    """
+    path = Path(bmad_path)
+    if not path.exists():
+        return False
+
+    content = path.read_text()
+    section = f"## Design Deviations\n\n{deviations}\n"
+
+    if "## Design Deviations" in content:
+        # Replace existing section
+        new_content = re.sub(
+            r"## Design Deviations.*?\n(.*?)(?=\n## (?!Design Deviations)|\Z)",
+            section,
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
+        if new_content != content:
+            path.write_text(new_content)
+            return True
+        return False
+
+    # Append after Dev Agent Record if it exists, otherwise at end
+    if "## Dev Agent Record" in content:
+        # Find the end of the Dev Agent Record section
+        dar_match = re.search(
+            r"(## Dev Agent Record\n.*?)(?=\n## |\Z)",
+            content,
+            re.DOTALL,
+        )
+        if dar_match:
+            insert_pos = dar_match.end()
+            new_content = content[:insert_pos] + "\n\n" + section + content[insert_pos:]
+            path.write_text(new_content)
+            return True
+
+    # Fallback: append at end
+    content = content.rstrip() + "\n\n" + section
+    path.write_text(content)
+    return True
+
+
 def _find_pr_for_branch(branch: str, project_root: Path) -> str | None:
     """Try to find a GitHub PR URL for a branch using gh CLI."""
     subrepo = project_root / "axiathon"
@@ -570,6 +651,15 @@ def execute_sync_plan(
                     record = _collect_dev_record(change, project_root)
                     if record:
                         _populate_dev_agent_record(file_path, record)
+
+                    # Push Design Deviations from session to BMAD
+                    session_file = _find_session_file(
+                        change.jira_key, change.pf_id, project_root
+                    )
+                    if session_file:
+                        deviations = _extract_design_deviations(session_file)
+                        if deviations:
+                            _push_design_deviations(file_path, deviations)
             else:
                 result.errors.append(f"{change.bmad_key}: Failed to update Status line")
 
@@ -721,6 +811,25 @@ def format_sync_plan(
                             lines.append(f"      ... and {len(record.file_list) - 5} more")
                 else:
                     lines.append(f"  {c.pf_id} ({c.jira_key}): no session file found")
+            lines.append("")
+
+        # Design Deviations preview
+        dev_lines: list[str] = []
+        for c in record_changes:
+            session_file = _find_session_file(
+                c.jira_key, c.pf_id, project_root
+            )
+            if session_file:
+                deviations = _extract_design_deviations(session_file)
+                if deviations:
+                    dev_count = sum(
+                        1 for line in deviations.splitlines()
+                        if line.strip().startswith("- **")
+                    )
+                    dev_lines.append(f"  {c.pf_id} ({c.jira_key}): {dev_count} deviations")
+        if dev_lines:
+            lines.append(f"Design Deviations ({len(dev_lines)}):")
+            lines.extend(dev_lines)
             lines.append("")
 
     if plan.bmad_only:
