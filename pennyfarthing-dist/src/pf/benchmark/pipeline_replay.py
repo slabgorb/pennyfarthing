@@ -775,6 +775,15 @@ class OTELFileCollector:
             self._thread.join(timeout=5)
 
 
+def buffer_stream_events(
+    input_stream: Any,
+    output_path: Path,
+    verbose_callback: Any | None = None,
+) -> dict | None:
+    """Buffer stream-json events to JSONL. Not yet implemented."""
+    raise NotImplementedError("buffer_stream_events not yet implemented — Story 142-4")
+
+
 def run_phase(
     worktree_path: Path,
     role: str,
