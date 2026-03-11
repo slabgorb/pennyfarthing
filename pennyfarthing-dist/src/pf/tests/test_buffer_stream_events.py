@@ -83,9 +83,10 @@ RESULT_EVENT = json.dumps({
 })
 
 
-def _make_stream(events: list[str]) -> list[str]:
-    """Build a list of lines simulating an Iterator[str] from stdout."""
-    return events
+
+def _read_jsonl_lines(path: Path) -> list[str]:
+    """Read a JSONL file and return non-empty lines."""
+    return path.read_text().strip().split("\n")
 
 
 def _minimal_stream() -> list[str]:
@@ -121,7 +122,7 @@ class TestBufferStreamEventsBasic:
         stream = _full_stream()
         buffer_stream_events(iter(stream), output)
 
-        lines = output.read_text().strip().split("\n")
+        lines = _read_jsonl_lines(output)
         assert len(lines) == len(stream)
 
     def test_each_line_is_valid_json(self, tmp_path: Path):
@@ -129,7 +130,7 @@ class TestBufferStreamEventsBasic:
         output = tmp_path / "events.jsonl"
         buffer_stream_events(iter(_full_stream()), output)
 
-        for line in output.read_text().strip().split("\n"):
+        for line in _read_jsonl_lines(output):
             parsed = json.loads(line)
             assert "type" in parsed
 
@@ -138,7 +139,7 @@ class TestBufferStreamEventsBasic:
         output = tmp_path / "events.jsonl"
         buffer_stream_events(iter(_full_stream()), output)
 
-        lines = output.read_text().strip().split("\n")
+        lines = _read_jsonl_lines(output)
         types = [json.loads(line)["type"] for line in lines]
         assert types == [
             "system",
@@ -157,7 +158,7 @@ class TestBufferStreamEventsBasic:
         buffer_stream_events(iter(_minimal_stream()), output)
 
         assert output.exists()
-        assert len(output.read_text().strip().split("\n")) == 3
+        assert len(_read_jsonl_lines(output)) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -319,7 +320,7 @@ class TestBufferStreamEventsEdgeCases:
         stream = [SYSTEM_EVENT, "this is not json", RESULT_EVENT]
         result = buffer_stream_events(iter(stream), output)
 
-        lines = output.read_text().strip().split("\n")
+        lines = _read_jsonl_lines(output)
         assert len(lines) == 3
         # The non-JSON line is preserved
         assert lines[1] == "this is not json"
@@ -332,7 +333,7 @@ class TestBufferStreamEventsEdgeCases:
         stream = [SYSTEM_EVENT, "", "  ", RESULT_EVENT]
         result = buffer_stream_events(iter(stream), output)
 
-        lines = output.read_text().strip().split("\n")
+        lines = _read_jsonl_lines(output)
         # Only non-blank lines written
         assert len(lines) == 2
         assert result is not None
@@ -372,6 +373,6 @@ class TestBufferStreamEventsFileHandling:
 
         buffer_stream_events(iter(_minimal_stream()), output)
 
-        lines = output.read_text().strip().split("\n")
+        lines = _read_jsonl_lines(output)
         assert len(lines) == 3
         assert "old data" not in output.read_text()
