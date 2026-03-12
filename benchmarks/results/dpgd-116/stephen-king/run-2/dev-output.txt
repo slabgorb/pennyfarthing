@@ -1,0 +1,27 @@
+All clear. **123/123 tests passing, 0 clippy warnings.**
+
+## Summary
+
+**Files created (16):**
+
+| File | Purpose |
+|------|---------|
+| `src/lib.rs` | Module declarations |
+| `src/cli.rs` | `Cli` (Parser), `Commands` (Subcommand), all command group enums, global flags, `OutputFormat` ValueEnum impl |
+| `src/error.rs` | `CliError` enum (#[non_exhaustive], thiserror), exit code mapping (3=auth, 4=authz, 1=rest) |
+| `src/client.rs` | `SiemClient` wrapping reqwest, header injection prevention (CRLF/null), HTTP status→CliError mapping, body sanitization |
+| `src/config.rs` | `ClientConfig` with TOML parsing, XDG paths via dirs, env/CLI override chain, timeout validation, token-from-file rejection |
+| `src/output.rs` | `OutputFormatter` trait, `TableFormatter` (comfy-table, no_color), `JsonFormatter` (with metadata), `CsvFormatter` (proper escaping) |
+| `src/commands/mod.rs` | Module re-exports |
+| `src/commands/query.rs` | Stub → Story 5.5 |
+| `src/commands/rules.rs` | Stub → Story 6.2 |
+| `src/commands/alerts.rs` | Stubs → Story 6.5 |
+| `src/commands/ingest.rs` | Stub → Story 6.4 |
+| `src/commands/config.rs` | Stub → Story 6.3 |
+| `src/commands/status.rs` | Stub → Story 6.2 |
+| `src/commands/tenant.rs` | Stub → Story 6.7 |
+| `src/commands/login.rs` | Stub → Story 9.1 |
+| `src/commands/completion.rs` | Functional — generates bash/zsh/fish/powershell completions via clap_complete |
+| `src/commands/init.rs` | Functional — creates config directory and default cli.toml |
+
+**Tests:** 123 passed across 7 test files. **Clippy:** clean.

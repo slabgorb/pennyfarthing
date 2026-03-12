@@ -1,0 +1,76 @@
+I've now read all implementation and test files, run the tests and linters. Here is my structured review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Code Review
+
+## Observations
+
+### [CRITICAL] No `main.rs` binary entry point — `axiathon` binary does not exist
+**`crates/axiathon-client/src/main.rs`** — file does not exist. The story requires producing the `axiathon` binary with `main.rs` handling dispatch, tracing init, error catching, and `std::process::exit()` with proper exit codes. The Cargo.toml has no `[[bin]]` section. This crate is a library only — **there is no CLI binary**. AC-3 (exit codes via `process::exit`), AC-9 (completion script to stdout, instructions to stderr), AC-10 (stubs printing to stderr and exiting), and the entire binary contract are unmet.
+
+### [CRITICAL] `cargo +nightly fmt --all --check` fails — formatting violations
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check shows diffs in `cli.rs`, `client.rs`, and `config.rs`. This is a blocking issue per project policy.
+
+### [HIGH] `std::env::set_var` / `remove_var` used without synchronization in tests
+At least 6 test files call `std::env::set_var()` and `std::env::remove_var()` without any serialization mechanism. These are `unsafe` in Rust 2024 (edition declared in workspace: `edition = "2024"`) and will cause **undefined behavior** when tests run in parallel (cargo's default). This affects `global_flags.rs:189`, `config_loading.rs:94,117`, `security.rs:187,201`. On edition 2024 these should fail to compile as `set_var` is marked unsafe — the fact they compile suggests the crate's own `Cargo.toml` specifies `edition = "2021"` (line 2), which silently overrides the workspace edition. This is itself a bug (see below).
+
+### [HIGH] Crate edition `"2021"` overrides workspace `"2024"` — `Cargo.toml:2`
+`crates/axiathon-client/Cargo.toml` line 2: `edition = "2021"`. The workspace specifies `edition = "2024"` and `rust-version = "1.85"`. The crate-level `edition` takes precedence, silently downgrading from 2024 to 2021. This breaks the project's MSRV/edition policy and hides the `set_var` unsafety issue above.
+
+### [HIGH] `OutputFormatter` is a struct, not a trait — violates AC-4 spec
+The story spec states: "OutputFormatter **trait** with Table (comfy-table), JSON (serde_json), CSV (csv crate) implementations." The implementation at `output.rs:54` defines `OutputFormatter` as a `struct` with an internal enum dispatch, not a `trait`. The test file comment on line 39 even says "OutputFormatter trait" but the implementation is not a trait. This prevents downstream consumers from implementing custom formatters.
+
+### [HIGH] `ConfigFile` does not use `#[serde(deny_unknown_fields)]` — unknown fields silently accepted
+`config.rs:8`: `struct ConfigFile` and `struct ServerConfig` accept any unknown TOML keys without warning. A user could write `tokne = "..."` (typo for `token`) and it would be silently ignored. More critically, if someone adds `token = "secret"` to the config file, it's silently parsed and ignored rather than rejected with a security warning. The test `client_config_does_not_store_token_in_file` at `config_loading.rs:155` only verifies the token isn't *loaded* — it doesn't verify the config *rejects* the token field.
+
+### [MEDIUM] `expect()` calls in production output code — `output.rs:109-122`
+Lines 109, 110, 112, 117, 119, 121, 122 all use `.expect()` which panics on failure. Per Rust coding rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages here are generic ("write CSV headers", "serialize data") rather than actionable. More importantly, `format_table` returns `String` not `Result` — if serialization fails, the binary panics. The method should return `Result<String, CliError>`.
+
+### [MEDIUM] `SiemClient::get` only — no POST/PUT/DELETE methods
+AC-7 specifies `SiemClient` as the HTTP wrapper for all API communication. Only `get()` is implemented. While future stories will need POST/PUT/DELETE for rules management, alert acknowledgement, etc., the stub architecture should at minimum include the method signatures or a generic `request()` method.
+
+### [MEDIUM] `to_toml_string` uses manual format string — `config.rs:122-127`
+The `to_toml_string()` method constructs TOML via `format!()` instead of using the `toml` crate's serializer. This means special characters in the URL (e.g., quotes, backslashes) won't be properly escaped. If `server_url` contains `"`, the output will be invalid TOML.
+
+### [MEDIUM] No `IsTerminal` auto-detection for format — AC-4 gap
+AC-4 states: "Table default for TTY, JSON for piped output." The implementation has `OutputFormat::default()` returning `Table` unconditionally. There's no `std::io::IsTerminal` check anywhere. The spec explicitly calls out: "Use `std::io::IsTerminal` (not deprecated `atty` crate)."
+
+### [LOW] `--format` accepts raw string, not `ValueEnum` — `cli.rs:13`
+`--format` is defined as `value_parser = ["table", "json", "csv"]` returning `Option<String>`. The AC-4 spec and the `OutputFormat` enum suggest this should use clap's `ValueEnum` derive on `OutputFormat` for type-safe parsing, matching how `ShellArg` is handled. Currently there's no connection between the CLI `--format` flag and the `OutputFormat` enum.
+
+### [LOW] `toml` version mismatch — `Cargo.toml:22` says `"0.8"` but story spec says `"0.9"`
+Minor: the story spec calls for `toml 0.9`, the crate uses `0.8`. Not functionally blocking but deviates from spec.
+
+### [VERIFIED] Header injection (CWE-113) — properly mitigated at `client.rs:15-21`
+`sanitize_header_value` correctly rejects `\r` and `\n` in both token and tenant_id. Tests cover this in `siem_client.rs` and `security.rs`.
+
+### [VERIFIED] CWE-209 error exposure — `ServerError` and `NotFound` Display messages are generic
+`error.rs:17-21`: `NotFound` displays "resource not found", `ServerError` displays "server error" — internal details stored in the tuple field are not exposed via Display. Tests confirm this.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — correctly applied
+### [VERIFIED] `#![forbid(unsafe_code)]` on `lib.rs` — correctly applied
+### [VERIFIED] Exit code mapping 3/4 for auth/authz — correctly implemented and tested
+### [VERIFIED] Shell completion generation — functional, tested for all 4 shells
+### [VERIFIED] Stub handler pattern — returns `CliError::NotImplemented` with story reference
+### [VERIFIED] `file://` scheme rejected in config URL — `config.rs:89-91`
+### [VERIFIED] Base URL trailing slash trimmed — `client.rs:29`
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 2 |
+| High | 3 |
+| Medium | 4 |
+| Low | 2 |
+| Verified Good | 8 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking issues requiring resolution:
+1. **No `main.rs` / no binary** — The entire point of this story is the `axiathon` binary. Without it, there is no CLI.
+2. **`cargo +nightly fmt` fails** — Per project gotchas, this blocks approval.
+3. **Edition mismatch** — `edition = "2021"` in the crate Cargo.toml must be removed (use `edition.workspace = true`) to match the workspace's `"2024"`.
+4. **`env::set_var` in tests** — Once edition is fixed to 2024, these become `unsafe`. Needs `serial_test` crate or `std::sync::Mutex` guards.
+5. **`OutputFormatter` is a struct not a trait** — Violates the explicit AC-4 spec requirement.

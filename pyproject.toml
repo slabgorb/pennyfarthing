@@ -1,6 +1,6 @@
 [project]
 name = "pennyfarthing-scripts"
-version = "12.3.0"
+version = "12.6.1"
 description = "Python utilities for Pennyfarthing agent orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,8 @@ dependencies = [
     "websockets>=12.0",
     "textual-image>=0.7.0",
     "watchfiles>=1.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
 ]
 
 [project.optional-dependencies]
@@ -46,7 +48,7 @@ where = ["pennyfarthing-dist/src"]
 include = ["pf*"]
 
 [tool.setuptools.package-data]
-"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.js", "**/*.mjs", "**/*.txt", "**/*.toml"]
+"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.txt", "**/*.toml"]
 
 [tool.ruff]
 line-length = 100

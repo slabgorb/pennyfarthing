@@ -1,0 +1,600 @@
+# Pipeline Replay Comparison: dpgd-116
+scenario_id: dpgd-116
+themes:
+  control:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 1
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 20
+    score_pct: 54.1
+    caught_by_phase:
+      tea: 0
+      dev: 2
+      reviewer: 2
+  - run_id: 3
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 3
+  - run_id: 4
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 1
+  discworld:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 3
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 3
+  - run_id: 4
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  firefly:
+  - run_id: 1
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 0
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 2
+      reviewer: 1
+  - run_id: 3
+    total_caught: 1
+    weighted_caught: 5
+    score_pct: 13.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 0
+  - run_id: 4
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 0
+  - run_id: 5
+    total_caught: 5
+    weighted_caught: 23
+    score_pct: 62.2
+    caught_by_phase:
+      tea: 2
+      dev: 1
+      reviewer: 2
+  - run_id: 6
+    total_caught: 3
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  game-of-thrones:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 3
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 3
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  - run_id: 4
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 2
+  gilligans-island:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 3
+      dev: 0
+      reviewer: 0
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  - run_id: 4
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  house-md:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 13
+    score_pct: 35.1
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  - run_id: 3
+    total_caught: 4
+    weighted_caught: 20
+    score_pct: 54.1
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 4
+  jazz-legends:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 3
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+  - run_id: 3
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 0
+      dev: 2
+      reviewer: 0
+  - run_id: 4
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 2
+  mash:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+  - run_id: 2
+    total_caught: 5
+    weighted_caught: 25
+    score_pct: 67.6
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 4
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+  - run_id: 4
+    total_caught: 2
+    weighted_caught: 13
+    score_pct: 35.1
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 0
+  monty-python:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 2
+  - run_id: 3
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 2
+  - run_id: 4
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 3
+  princess-bride:
+  - run_id: 1
+    total_caught: 4
+    weighted_caught: 20
+    score_pct: 54.1
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 4
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  - run_id: 3
+    total_caught: 5
+    weighted_caught: 25
+    score_pct: 67.6
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 3
+  - run_id: 4
+    total_caught: 3
+    weighted_caught: 13
+    score_pct: 35.1
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 2
+  rome:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 1
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 2
+      dev: 0
+      reviewer: 1
+  - run_id: 4
+    total_caught: 4
+    weighted_caught: 20
+    score_pct: 54.1
+    caught_by_phase:
+      tea: 1
+      dev: 0
+      reviewer: 3
+  shakespeare:
+  - run_id: 1
+    total_caught: 4
+    weighted_caught: 18
+    score_pct: 48.6
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 3
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  - run_id: 3
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  stephen-king:
+  - run_id: 1
+    total_caught: 6
+    weighted_caught: 28
+    score_pct: 75.7
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 4
+  - run_id: 2
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 2
+      dev: 1
+      reviewer: 0
+  - run_id: 3
+    total_caught: 2
+    weighted_caught: 10
+    score_pct: 27.0
+    caught_by_phase:
+      tea: 0
+      dev: 0
+      reviewer: 2
+  - run_id: 4
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  the-west-wing:
+  - run_id: 1
+    total_caught: 3
+    weighted_caught: 13
+    score_pct: 35.1
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 2
+  - run_id: 2
+    total_caught: 4
+    weighted_caught: 20
+    score_pct: 54.1
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 3
+  - run_id: 3
+    total_caught: 5
+    weighted_caught: 23
+    score_pct: 62.2
+    caught_by_phase:
+      tea: 0
+      dev: 1
+      reviewer: 4
+  - run_id: 4
+    total_caught: 3
+    weighted_caught: 15
+    score_pct: 40.5
+    caught_by_phase:
+      tea: 1
+      dev: 1
+      reviewer: 1
+detection_heatmap:
+  C1:
+    control: null
+    discworld: null
+    firefly: reviewer
+    game-of-thrones: null
+    gilligans-island: null
+    house-md: null
+    jazz-legends: null
+    mash: tea
+    monty-python: null
+    princess-bride: null
+    rome: null
+    shakespeare: null
+    stephen-king: null
+    the-west-wing: null
+  I1:
+    control: tea
+    discworld: reviewer
+    firefly: dev
+    game-of-thrones: dev
+    gilligans-island: reviewer
+    house-md: reviewer
+    jazz-legends: reviewer
+    mash: null
+    monty-python: dev
+    princess-bride: null
+    rome: reviewer
+    shakespeare: dev
+    stephen-king: reviewer
+    the-west-wing: dev
+  I2:
+    control: null
+    discworld: tea
+    firefly: null
+    game-of-thrones: tea
+    gilligans-island: tea
+    house-md: reviewer
+    jazz-legends: null
+    mash: dev
+    monty-python: null
+    princess-bride: tea
+    rome: tea
+    shakespeare: reviewer
+    stephen-king: reviewer
+    the-west-wing: tea
+  I3:
+    control: null
+    discworld: null
+    firefly: null
+    game-of-thrones: reviewer
+    gilligans-island: null
+    house-md: null
+    jazz-legends: null
+    mash: null
+    monty-python: reviewer
+    princess-bride: reviewer
+    rome: null
+    shakespeare: null
+    stephen-king: null
+    the-west-wing: null
+  I4:
+    control: reviewer
+    discworld: reviewer
+    firefly: reviewer
+    game-of-thrones: reviewer
+    gilligans-island: reviewer
+    house-md: reviewer
+    jazz-legends: reviewer
+    mash: null
+    monty-python: reviewer
+    princess-bride: reviewer
+    rome: reviewer
+    shakespeare: reviewer
+    stephen-king: dev
+    the-west-wing: reviewer
+  I5:
+    control: null
+    discworld: null
+    firefly: null
+    game-of-thrones: null
+    gilligans-island: null
+    house-md: reviewer
+    jazz-legends: null
+    mash: null
+    monty-python: reviewer
+    princess-bride: null
+    rome: reviewer
+    shakespeare: null
+    stephen-king: null
+    the-west-wing: null
+  I6:
+    control: null
+    discworld: null
+    firefly: null
+    game-of-thrones: null
+    gilligans-island: null
+    house-md: null
+    jazz-legends: null
+    mash: null
+    monty-python: null
+    princess-bride: null
+    rome: null
+    shakespeare: null
+    stephen-king: null
+    the-west-wing: null
+ground_truth_summary:
+- id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+- id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+- id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+- id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+- id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+- id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+- id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea

@@ -1,0 +1,45 @@
+Stress test complete, failure points identified, ready for report. Here's the Machine Shop's assessment.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the REST API foundation — all five acceptance criteria require behavioral verification.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — Route existence and health endpoint behavior (15 tests)
+- `crates/axiathon-server/tests/api_response_envelope.rs` — ApiResponse `{data, error, meta}` conformance (12 tests)
+- `crates/axiathon-server/tests/api_auth.rs` — JWT Bearer, API key, scope-based auth, edge cases (16 tests)
+- `crates/axiathon-server/tests/api_rate_limiting.rs` — 429 + Retry-After, per-tenant isolation, TOML config (6 tests)
+- `crates/axiathon-server/tests/api_versioning.rs` — `/api/v1/` prefix, 404 on v2/v0, deprecation headers (9 tests)
+- `crates/axiathon-server/tests/api_security.rs` — CWE-209, malformed input, large payloads, CORS, null bytes (13 tests)
+
+**Tests Written:** ~71 tests covering 5 ACs
+**Status:** RED (failing — all tests produce `E0432: unresolved import` since no implementation exists)
+
+### AC Coverage Matrix
+
+| AC | Test File | Key Tests |
+|----|-----------|-----------|
+| REST endpoints exist | `api_endpoints.rs` | health/events/alerts/rules/queries existence, POST routing, 404 for unknown |
+| ApiResponse envelope | `api_response_envelope.rs` | data/error/meta fields, request_id as UUID, timestamp ISO 8601, trace_id, uniqueness |
+| Authentication | `api_auth.rs` | valid token 200, missing 401, expired 401, wrong scope 403, API keys, revoked key, edge cases |
+| Rate limiting | `api_rate_limiting.rs` | 429 on exceed, Retry-After header, per-tenant isolation, TOML config |
+| API versioning | `api_versioning.rs` | /api/v1/ works, bare paths 404, v2/v0 404, deprecation header mechanism |
+
+### Security Edge Cases
+- CWE-209 info exposure (no stack traces, no crate names, no SQL in errors)
+- Malformed JSON body → 400, not 500
+- 10MB payload rejection
+- Wrong Content-Type → 415/400
+- Null bytes, unicode, very long URIs → no 500
+- AppState FromRef substates (compile-time least-privilege)
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+### Expected Public API
+
+The tests define these expected exports from `axiathon_server`:
+- `app()` — async fn returning an Axum `Router` (or `impl Service`)
+- `app_with_config(RateLimitConfig)` — configurable variant
+- `RateLimitConfig` — struct with `requests_per_second`, `burst_size` (Deserialize)
+- `AppState`, `DetectionServices`, `StorageServices` — state types with `From<&AppState>`

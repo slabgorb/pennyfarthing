@@ -49,32 +49,22 @@ def compile_impact_summary(findings: list[dict]) -> dict:
                 type_counts[f["type"]] += 1
 
         count_parts = ", ".join(f"{c} {t}" for t, c in type_counts.items())
-        lines.append(
-            f"**Upstream Effects:** {finding_count} findings ({count_parts})"
-        )
+        lines.append(f"**Upstream Effects:** {finding_count} findings ({count_parts})")
 
         if blocking_count > 0:
-            lines.append(
-                f"**Blocking:** {blocking_count} BLOCKING items — see below"
-            )
+            lines.append(f"**Blocking:** {blocking_count} BLOCKING items — see below")
             lines.append("")
             lines.append("**BLOCKING:**")
             for f in blocking:
-                lines.append(
-                    f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`."
-                )
+                lines.append(f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`.")
             lines.append("")
             for f in nonblocking:
-                lines.append(
-                    f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`."
-                )
+                lines.append(f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`.")
         else:
             lines.append("**Blocking:** None")
             lines.append("")
             for f in structured:
-                lines.append(
-                    f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`."
-                )
+                lines.append(f"- **{f['type']}:** {f['description']}. Affects `{f['path']}`.")
 
     markdown = "\n".join(lines)
 
@@ -160,7 +150,7 @@ def _remove_existing_impact_summary(content: str) -> str:
     start = match.start()
 
     # Find end: next ## heading or end of content
-    rest = content[match.end():]
+    rest = content[match.end() :]
     next_heading = re.search(r"^## ", rest, re.MULTILINE)
     end = match.end() + next_heading.start() if next_heading else len(content)
 
@@ -179,7 +169,7 @@ def _find_insert_position(content: str) -> int:
     # Strategy 1: After ## Delivery Findings section (before next ## heading)
     df_match = re.search(r"^## Delivery Findings\b", content, re.MULTILINE)
     if df_match:
-        rest = content[df_match.end():]
+        rest = content[df_match.end() :]
         next_h2 = re.search(r"^## ", rest, re.MULTILINE)
         if next_h2:
             return df_match.end() + next_h2.start()

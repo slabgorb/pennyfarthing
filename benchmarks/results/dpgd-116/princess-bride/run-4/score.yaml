@@ -1,0 +1,76 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 4
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that from_file_or_default swallows all errors including
+    parse and permission failures. The reviewer did not mention this issue.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote cli_security.rs with 17 tests covering CWE-209 error info exposure.
+    Reviewer also verified CliError::Display but concluded it was correct. TEA's test
+    suite targets the vulnerability class.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection tests in cli_siem_client.rs and cli_security.rs\
+    \ covering CRLF/null bytes. Reviewer's data flow trace notes 'Cli.tenant is Option<String>\
+    \ not Option<TenantId> \u2014 no newtype validation at the CLI boundary' but accepts\
+    \ it. The raw String type issue was noted but not flagged as requiring change."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #9: ''Several dependencies (clap_complete, comfy-table,
+    csv, dirs, reqwest, toml) are declared directly in the crate instead of in [workspace.dependencies]
+    as the story guardrails specify.'''
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #6: ''RawConfig lacks #[serde(deny_unknown_fields)].
+    A typo like sever_url instead of server_url in cli.toml will be silently ignored.''
+    This covers the same silent-ignore risk including token fields.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #1 [CRITICAL]: 'Tests like cli_has_query_command_group\
+    \ use assert!(cli.is_err() || cli.is_ok()) which is a tautology \u2014 it is true\
+    \ for every Result regardless of what happened.' This identifies vacuously true\
+    \ assertions, the same class as the ground truth finding about assert!(config.server().is_none()\
+    \ || ...)."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged vacuous tautology assertions but did not specifically
+    identify the zero-assertion test that only checks non-panic with 'let _ = config'.
+    The I5 finding about tautologies is a different pattern than a test with no assertions
+    at all.

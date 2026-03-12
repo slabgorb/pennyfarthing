@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: monty-python
+run_id: 4
+timestamp: '2026-03-08T06:01:07.438671+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-monty-python-run-4
+phases:
+  tea:
+    token_usage:
+      input: 88
+      output: 16705
+    duration_s: 287.61
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 28
+      output: 14454
+    duration_s: 277.49
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 10
+      output: 6403
+    duration_s: 145.07
+    exit_code: 0

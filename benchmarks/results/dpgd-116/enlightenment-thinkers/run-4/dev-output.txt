@@ -1,0 +1,25 @@
+All 123 tests pass (25+12+13+16+16+6+10+15+10 = 123), zero failures, zero clippy warnings.
+
+## Summary
+
+**All 123 tests GREEN, clippy clean.**
+
+### Files changed:
+
+**Workspace config:**
+- `Cargo.toml` — Added workspace deps: `clap_complete`, `comfy-table`, `csv`, `dirs`, `toml_edit` (with serde). Updated `clap` to include `env` feature and disable `usage` feature (prevents "Usage:" in error output, needed for singular command rejection tests).
+
+**Crate config:**
+- `crates/axiathon-client/Cargo.toml` — Added deps: `chrono`, `clap_complete`, `comfy-table`, `csv`, `dirs`, `toml_edit`, `uuid`
+
+**Source files created (all under `crates/axiathon-client/src/`):**
+
+| File | Purpose |
+|------|---------|
+| `lib.rs` | Module declarations |
+| `error.rs` | `CliError` enum (`#[non_exhaustive]`, thiserror) with `exit_code()` mapping (1/3/4). Display intentionally omits internal details (CWE-209). |
+| `cli.rs` | `Cli` (Parser) + `Commands` (Subcommand) with all 11 command groups. Global flags: `--verbose`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`, `--format` |
+| `output.rs` | `OutputFormat` enum (ValueEnum), `OutputFormatter` trait (object-safe), `JsonFormatter` (with metadata: request_id, timestamp, api_version), `CsvFormatter` (RFC 4180), `TableFormatter` (comfy-table) |
+| `client.rs` | `SiemClient` with URL validation (HTTP/HTTPS only), CRLF sanitization on tenant/token (CWE-113), HTTP status → CliError mapping |
+| `config.rs` | `ClientConfig` with TOML loading, env var overrides, timeout validation (rejects ≤0), XDG config path via `dirs` |
+| `commands/*.rs` | 10 command modules: stub handlers returning `NotImplemented("Story X.Y")`, functional `generate_completions()` via clap_complete |

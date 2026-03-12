@@ -20,20 +20,27 @@ import yaml
 
 BMAD_TO_PF_STATUS: dict[str, str] = {
     "draft": "planning",
+    "planned": "planning",
     "ready-for-dev": "ready",
     "in-progress": "in_progress",
-    "in-review": "in_progress",
+    "review": "in_review",
+    "in-review": "in_review",
+    "done": "done",
     "completed": "done",
+    "complete": "done",
+    "backlog": "backlog",
     "blocked": "backlog",
+    "spike-validated": "ready",
 }
 
 PF_TO_BMAD_STATUS: dict[str, str] = {
     "planning": "draft",
     "ready": "ready-for-dev",
     "in_progress": "in-progress",
-    "done": "completed",
-    "backlog": "blocked",
-    "canceled": "completed",
+    "in_review": "review",
+    "done": "done",
+    "backlog": "backlog",
+    "canceled": "done",
 }
 
 
@@ -63,9 +70,7 @@ _HEADER_PATTERNS: dict[str, re.Pattern[str]] = {
 _TITLE_RE = re.compile(r"^#\s+Story\s+\d+\.\d+(?:\.\d+)?:\s*(.+)$", re.MULTILINE)
 
 # AC block: everything between ## Acceptance Criteria and the next ## heading
-_AC_RE = re.compile(
-    r"## Acceptance Criteria\s*\n(.*?)(?=\n## |\Z)", re.DOTALL
-)
+_AC_RE = re.compile(r"## Acceptance Criteria\s*\n(.*?)(?=\n## |\Z)", re.DOTALL)
 
 
 def parse_bmad_story(path: Path) -> dict[str, Any]:
@@ -79,12 +84,29 @@ def parse_bmad_story(path: Path) -> dict[str, Any]:
     """
     content = path.read_text()
 
-    # Extract header fields
+    # Extract header fields — try YAML frontmatter first, then flat headers
     fields: dict[str, str] = {}
+    fm_match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    if fm_match:
+        fm = yaml.safe_load(fm_match.group(1)) or {}
+        # Map frontmatter keys (lowercase-dashed) to internal field names
+        _FM_KEY_MAP = {
+            "status": "status",
+            "story-key": "story_key",
+            "jira": "jira",
+            "epic": "epic_line",
+            "date": "date",
+        }
+        for fm_key, field_name in _FM_KEY_MAP.items():
+            if fm_key in fm:
+                fields[field_name] = str(fm[fm_key]).strip()
+
+    # Fall back to flat Key: Value headers for any fields not found in frontmatter
     for name, pattern in _HEADER_PATTERNS.items():
-        match = pattern.search(content)
-        if match:
-            fields[name] = match.group(1).strip()
+        if name not in fields:
+            match = pattern.search(content)
+            if match:
+                fields[name] = match.group(1).strip()
 
     story_key = fields.get("story_key", "")
     # Consume all leading numeric segments as the ID
@@ -190,7 +212,7 @@ def discover_bmad_stories(
         return []
 
     stories: list[dict[str, Any]] = []
-    for md_file in sorted(artifacts_dir.glob("*.md")):
+    for md_file in sorted(artifacts_dir.rglob("*.md")):
         # Skip non-story files (e.g. 0-1-bmad-method-lifecycle.md is meta)
         if md_file.name.startswith("0-"):
             continue

@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework — every AC requires behavioral verification.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 27 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit codes 0/1/2/3/4), CWE-209 error info leak prevention |
+| `tests/output_format.rs` | 16 | AC-4 (table/json/csv), ResponseMetadata, CSV escaping, --no-color |
+| `tests/global_flags.rs` | 15 | AC-5 (--format, -v/-vv/-vvv, --quiet, --server, --config, --no-color, --tenant, global=true) |
+| `tests/siem_client.rs` | 17 | AC-7 (HTTP status mapping, header injection prevention CWE-113, token leak prevention) |
+| `tests/config_loading.rs` | 14 | AC-8 (TOML loading, env var overrides, missing file defaults, token-not-in-config security) |
+| `tests/shell_completion.rs` | 8 | AC-9 (bash/zsh/fish/powershell generation, shell-specific patterns) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (not-yet-implemented messages, story references, exit code 1) |
+
+**Tests Written:** 121 tests covering all 10 ACs
+**Status:** RED (fails to compile — expected types `Cli`, `CliError`, `SiemClient`, `ClientConfig`, `OutputFormatter`, `OutputFormat`, `ResponseMetadata`, `generate_completions` do not exist yet)
+
+**Security Tests Included:**
+- CWE-209: Server error Display must not leak internal paths/stack traces
+- CWE-113: Header injection via tenant ID with CRLF/null bytes rejected
+- Token leak: SiemClient Debug must not expose auth tokens
+- Config security: Token field in TOML must be rejected/ignored
+
+**Handoff:** To Dev for implementation (GREEN phase)

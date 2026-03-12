@@ -79,12 +79,14 @@ async def analyze_healthscore(
     for dim_name, dim_weight in w.items():
         score = raw_scores.get(dim_name)
         error = f"{dim_name} not available" if score is None else None
-        dimensions.append(DimensionScore(
-            name=dim_name,
-            score=score,
-            weight=dim_weight,
-            error=error,
-        ))
+        dimensions.append(
+            DimensionScore(
+                name=dim_name,
+                score=score,
+                weight=dim_weight,
+                error=error,
+            )
+        )
 
     composite = compute_composite_score(raw_scores, w)
     logger.info("[healthscore] Composite score: %.1f", composite)
@@ -148,17 +150,44 @@ async def _probe_churn_pydriller(target_path: Path) -> float | None:
 
     # Files that churn naturally but aren't code quality signals
     noise_patterns = {
-        "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock",
-        "tsconfig.json", "pyproject.toml", ".gitignore",
+        "package.json",
+        "package-lock.json",
+        "pnpm-lock.yaml",
+        "yarn.lock",
+        "tsconfig.json",
+        "pyproject.toml",
+        ".gitignore",
     }
     noise_exts = {
-        ".md", ".yaml", ".yml", ".json", ".lock", ".toml",
-        ".png", ".jpg", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot",
-        ".d.ts", ".snap", ".map",
+        ".md",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".lock",
+        ".toml",
+        ".png",
+        ".jpg",
+        ".svg",
+        ".ico",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".d.ts",
+        ".snap",
+        ".map",
     }
     noise_dirs = {
-        "node_modules", "dist", "build", ".git", "sprint", ".session",
-        "docs", ".github", "coverage", "__pycache__",
+        "node_modules",
+        "dist",
+        "build",
+        ".git",
+        "sprint",
+        ".session",
+        "docs",
+        ".github",
+        "coverage",
+        "__pycache__",
     }
     code_exts = {".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".rs", ".java", ".rb"}
 
@@ -210,8 +239,14 @@ async def _probe_churn_pydriller(target_path: Path) -> float | None:
     # Invert: high churn = low health score
     score = max(0.0, min(100.0, 100.0 - avg_churn))
 
-    logger.info("[healthscore:churn] PyDriller: %d code files changed, top=%s(%d), avg_churn=%.1f, score=%.1f",
-                len(file_changes), top20[0][0] if top20 else "?", max_changes, avg_churn, score)
+    logger.info(
+        "[healthscore:churn] PyDriller: %d code files changed, top=%s(%d), avg_churn=%.1f, score=%.1f",
+        len(file_changes),
+        top20[0][0] if top20 else "?",
+        max_changes,
+        avg_churn,
+        score,
+    )
     for f, c in top20[:5]:
         logger.info("[healthscore:churn]   %s: %d changes", f, c)
     return score
@@ -223,8 +258,11 @@ async def _probe_churn_fallback(target_path: Path) -> float | None:
 
     result = await analyze_repo("project", target_path, days=90)
     if not result.success or not result.file_hotspots:
-        logger.info("[healthscore:churn] No hotspot data (success=%s, count=%s)",
-                     result.success, len(result.file_hotspots) if result.file_hotspots else 0)
+        logger.info(
+            "[healthscore:churn] No hotspot data (success=%s, count=%s)",
+            result.success,
+            len(result.file_hotspots) if result.file_hotspots else 0,
+        )
         return None
     top = sorted(result.file_hotspots, key=lambda h: h.hotspot_score, reverse=True)[:20]
     avg_hotspot = sum(h.hotspot_score for h in top) / len(top)
@@ -278,7 +316,9 @@ async def _probe_complexity(target_path: Path) -> float | None:
         score = 70.0 - (avg - 5.0) * (30.0 / 5.0)
     else:
         score = max(0.0, 40.0 - (avg - 10.0) * 4.0)
-    logger.info("[healthscore:complexity] avg=%.2f, files=%d, score=%.1f", avg, len(files_with_fns), score)
+    logger.info(
+        "[healthscore:complexity] avg=%.2f, files=%d, score=%.1f", avg, len(files_with_fns), score
+    )
     return score
 
 
@@ -307,8 +347,12 @@ async def _probe_dependency_freshness(target_path: Path) -> float | None:
     outdated = len(result.outdated)
     advisories = len(result.advisories)
     score = max(0.0, 100.0 - outdated * 5.0 - advisories * 15.0)
-    logger.info("[healthscore:dependency_freshness] outdated=%d, advisories=%d, score=%.1f",
-                outdated, advisories, score)
+    logger.info(
+        "[healthscore:dependency_freshness] outdated=%d, advisories=%d, score=%.1f",
+        outdated,
+        advisories,
+        score,
+    )
     return score
 
 
@@ -326,8 +370,12 @@ async def _probe_deprecation_debt(target_path: Path) -> float | None:
     # Heuristic: each deprecated symbol deducts 5 points,
     # each one still actively called deducts an extra 10
     score = max(0.0, 100.0 - total * 5.0 - with_callers * 10.0)
-    logger.info("[healthscore:deprecation_debt] total=%d, with_callers=%d, score=%.1f",
-                total, with_callers, score)
+    logger.info(
+        "[healthscore:deprecation_debt] total=%d, with_callers=%d, score=%.1f",
+        total,
+        with_callers,
+        score,
+    )
     return score
 
 
@@ -341,16 +389,47 @@ async def _probe_test_gaps(target_path: Path) -> float | None:
     """
     logger.info("[healthscore:test_gaps] Scanning %s", target_path)
 
-    exclude_dirs = {"node_modules", "dist", "build", ".git", "__pycache__", ".cache",
-                    ".pennyfarthing", "coverage", ".next", ".venv", "venv", ".session",
-                    "sprint", "docs"}
+    exclude_dirs = {
+        "node_modules",
+        "dist",
+        "build",
+        ".git",
+        "__pycache__",
+        ".cache",
+        ".pennyfarthing",
+        "coverage",
+        ".next",
+        ".venv",
+        "venv",
+        ".session",
+        "sprint",
+        "docs",
+    }
     source_exts = {".ts", ".tsx", ".js", ".jsx", ".py"}
     # Files that don't need dedicated tests
-    non_testable_stems = {"index", "types", "constants", "config", "__init__",
-                          "cli", "__main__", "main", "preload", "vite-env"}
-    non_testable_patterns = {".d.ts", ".config.ts", ".config.js", "vite.config",
-                             "tailwind.config", "postcss.config", "jest.config",
-                             "vitest.config", "tsconfig"}
+    non_testable_stems = {
+        "index",
+        "types",
+        "constants",
+        "config",
+        "__init__",
+        "cli",
+        "__main__",
+        "main",
+        "preload",
+        "vite-env",
+    }
+    non_testable_patterns = {
+        ".d.ts",
+        ".config.ts",
+        ".config.js",
+        "vite.config",
+        "tailwind.config",
+        "postcss.config",
+        "jest.config",
+        "vitest.config",
+        "tsconfig",
+    }
 
     # Collect source files as (stem_lower, rel_path) and test files as set of stem variants
     source_files: list[tuple[str, str]] = []
@@ -473,8 +552,13 @@ async def _probe_test_gaps(target_path: Path) -> float | None:
         score = max(5.0, ratio * 150.0)
 
     score = max(0.0, min(100.0, score))
-    logger.info("[healthscore:test_gaps] source=%d, covered=%d, ratio=%.2f, score=%.1f",
-                len(source_files), covered, ratio, score)
+    logger.info(
+        "[healthscore:test_gaps] source=%d, covered=%d, ratio=%.2f, score=%.1f",
+        len(source_files),
+        covered,
+        ratio,
+        score,
+    )
     if uncovered_samples:
         logger.info("[healthscore:test_gaps] Sample uncovered: %s", uncovered_samples[:5])
     return score
@@ -489,9 +573,19 @@ async def _probe_agent_context_efficiency(target_path: Path) -> float | None:
     """
     from pf.prime.tiers import ContextTier, load_tier_components
 
-    agents = ["sm", "tea", "dev", "reviewer", "architect",
-              "pm", "tech-writer", "ux-designer", "devops", "orchestrator",
-              "ba"]
+    agents = [
+        "sm",
+        "tea",
+        "dev",
+        "reviewer",
+        "architect",
+        "pm",
+        "tech-writer",
+        "ux-designer",
+        "devops",
+        "orchestrator",
+        "ba",
+    ]
 
     target_budget = 4000
     scores: list[float] = []
@@ -510,8 +604,13 @@ async def _probe_agent_context_efficiency(target_path: Path) -> float | None:
                 agent_score = 100.0
             else:
                 agent_score = max(0.0, 100.0 - (ratio - 1.0) * 100.0)
-            logger.info("[healthscore:agent_context] %s: %d tokens (%.1f%% of budget), score=%.1f",
-                        agent, total, ratio * 100, agent_score)
+            logger.info(
+                "[healthscore:agent_context] %s: %d tokens (%.1f%% of budget), score=%.1f",
+                agent,
+                total,
+                ratio * 100,
+                agent_score,
+            )
             scores.append(agent_score)
         except Exception as exc:
             logger.warning("[healthscore:agent_context] %s failed: %s", agent, exc)

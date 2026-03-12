@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: discworld
+run_id: 4
+judge_version: v2
+judge_pass: 2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. TEA wrote
+    config loading tests but none specifically distinguish NotFound from parse/permission
+    errors. Reviewer flagged F7 (unknown fields) and F9 (silent timeout coercion)
+    but not the blanket unwrap_or_default pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for 'Error display does not leak file paths\
+    \ or stack traces \u2014 CWE-209'. Reviewer also flagged F13 about SiemClient::get()\
+    \ leaking full URL in NotFound error. Same vulnerability class (CWE-209) identified."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote tests for 'Header injection prevention (newlines in tenant\
+    \ ID and token) \u2014 CWE-113'. Reviewer verified V3 that HeaderValue::from_str()\
+    \ rejects newlines/control characters. Same vulnerability class (CWE-113) caught,\
+    \ though the raw String vs TenantId type issue was not specifically flagged."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. TEA added workspace dependency declarations but the dev apparently
+    used direct versions in the crate Cargo.toml. Reviewer flagged F6 (toml version
+    mismatch) but not the workspace = true pattern.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged F7 (''No #[serde(deny_unknown_fields)]. A config file
+    with... a typo like [sever] is silently ignored'') and F11 (token field with #[allow(dead_code)]
+    deserialized but unused). F11 specifically identifies the token field being silently
+    accepted without effect.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged F8 about security tests with 'if let Ok(config)' meaning
+    the test silently passes when the function errors, and F3 about stub handler tests
+    being tautological. Same category of vacuous/vacuously-true test assertions.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged F3: ''This tests that the Display impl on CliError::NotImplemented
+    works. It does NOT test that running axiathon status actually returns this error...
+    This is a tautology.'' Same category of tests with no meaningful assertions on
+    actual behavior.'

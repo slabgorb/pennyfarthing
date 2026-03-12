@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 4
+timestamp: '2026-03-08T08:25:28.568431+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-shakespeare-run-4
+phases:
+  tea:
+    token_usage:
+      input: 21
+      output: 21409
+    duration_s: 372.56
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 64
+      output: 26667
+    duration_s: 537.0
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 12
+      output: 8306
+    duration_s: 243.2
+    exit_code: 0

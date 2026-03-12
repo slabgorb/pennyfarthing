@@ -104,7 +104,7 @@ def _skip_frontmatter(content: str) -> int:
     if end == -1:
         return 0
     # +1 for the closing --- line itself, +1 because splitlines is 0-indexed
-    fm_block = content[:end + 4]
+    fm_block = content[: end + 4]
     # If the closing --- is followed by a newline, include that line
     if len(content) > end + 4 and content[end + 4] == "\n":
         return fm_block.count("\n") + 1
@@ -221,9 +221,7 @@ def classify_agent_files(
     return main, sub, skipped
 
 
-def validate_main_agent(
-    path: Path, agents_dir: Path
-) -> tuple[list[str], list[str]]:
+def validate_main_agent(path: Path, agents_dir: Path) -> tuple[list[str], list[str]]:
     """Validate a main agent definition file.
 
     Returns:
@@ -288,17 +286,13 @@ def validate_main_agent(
     if "critical" in tags:
         crit_line = _find_line_of_tag(content, "critical")
         if crit_line is not None and crit_line > 30:
-            warnings.append(
-                f"First <critical> at line {crit_line} (target: ≤30)"
-            )
+            warnings.append(f"First <critical> at line {crit_line} (target: ≤30)")
 
     # Check 3: Line-position check for <on-activation> (warning)
     if "on-activation" in tags:
         act_line = _find_line_of_tag(content, "on-activation")
         if act_line is not None and act_line > 100:
-            warnings.append(
-                f"<on-activation> at line {act_line} (target: ≤100)"
-            )
+            warnings.append(f"<on-activation> at line {act_line} (target: ≤100)")
 
     # Check 4: File length check (error)
     # Raised from shell script's 300 to 500 to accommodate verify-workflow in tea.md
@@ -319,18 +313,14 @@ def validate_main_agent(
         lines = content.splitlines()
         for i in range(last_close, len(lines)):
             if lines[i].strip():
-                warnings.append(
-                    f"Content found after last closing tag (line {i + 1})"
-                )
+                warnings.append(f"Content found after last closing tag (line {i + 1})")
                 break
 
     # Check 7: Checklist format check (warning)
     for checklist_tag in _CHECKLIST_TAGS:
         if checklist_tag in tags:
             if not _check_checklist_format(content, checklist_tag):
-                warnings.append(
-                    f"Tag <{checklist_tag}> has malformed checklist items"
-                )
+                warnings.append(f"Tag <{checklist_tag}> has malformed checklist items")
 
     # Check 8: Header format check (warning)
     lines = content.splitlines()
@@ -376,17 +366,13 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
     if "name" in fm:
         expected_name = path.stem
         if fm["name"] != expected_name:
-            errors.append(
-                f"Name mismatch: expected '{expected_name}', got '{fm['name']}'"
-            )
+            errors.append(f"Name mismatch: expected '{expected_name}', got '{fm['name']}'")
 
     # Model must be haiku for subagents
     if "model" in fm:
         model_val = str(fm["model"]).lower()
         if model_val != "haiku":
-            errors.append(
-                f"Subagent model must be 'haiku', got '{fm['model']}'"
-            )
+            errors.append(f"Subagent model must be 'haiku', got '{fm['model']}'")
 
     # Required tags
     tags = _find_tags(content)

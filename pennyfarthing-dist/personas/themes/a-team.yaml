@@ -15,12 +15,20 @@ theme:
   default_humor: enabled
   user_title: Client
   portrait_style: ", 1980s action TV, bold primary colors, explosion orange background, vintage VHS aesthetic"
-  tier: B
+  tier: U
   dimensions:
     tone: comedic
     era: retro
-    genre: action
+    genre: nonfiction
     energy: explosive
+    zeitgeist: high
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: casual
+    intellectual_style: improvisational
+    stakes: communal
   spinner_verbs:
     - I love it when a plan comes together
     - On the jazz
@@ -54,7 +62,7 @@ theme:
     - Murdock going howling mad
 zeitgeist:
   score: 89.0
-  rating: rich
+  rating: high
 
 agents:
   orchestrator:

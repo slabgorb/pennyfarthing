@@ -46,9 +46,7 @@ def get_session_dir(project_root: Path | None = None) -> Path:
     return root / ".session"
 
 
-def find_workflow_file(
-    workflows_dir: list[Path] | Path, workflow_name: str
-) -> Path | None:
+def find_workflow_file(workflows_dir: list[Path] | Path, workflow_name: str) -> Path | None:
     """Find workflow YAML definition.
 
     Supports both flat (name.yaml) and nested (name/workflow.yaml) layouts.
@@ -150,10 +148,13 @@ def count_steps(steps_path: Path) -> int:
     """Count step files in a directory."""
     if not steps_path.is_dir():
         return 0
-    return len([
-        f for f in steps_path.iterdir()
-        if f.is_file() and re.match(r"step-\d+", f.name) and f.suffix == ".md"
-    ])
+    return len(
+        [
+            f
+            for f in steps_path.iterdir()
+            if f.is_file() and re.match(r"step-\d+", f.name) and f.suffix == ".md"
+        ]
+    )
 
 
 def find_step_file(steps_path: Path, step_number: int) -> Path | None:
@@ -162,12 +163,15 @@ def find_step_file(steps_path: Path, step_number: int) -> Path | None:
     Handles naming variants: step-01.md, step-01-name.md, step-1-name.md
     """
     padded = f"{step_number:02d}"
-    matches = sorted([
-        f for f in steps_path.iterdir()
-        if f.is_file()
-        and (f.name.startswith(f"step-{padded}") or f.name.startswith(f"step-{step_number}-"))
-        and f.suffix == ".md"
-    ])
+    matches = sorted(
+        [
+            f
+            for f in steps_path.iterdir()
+            if f.is_file()
+            and (f.name.startswith(f"step-{padded}") or f.name.startswith(f"step-{step_number}-"))
+            and f.suffix == ".md"
+        ]
+    )
     return matches[0] if matches else None
 
 
@@ -178,7 +182,7 @@ def strip_frontmatter(content: str) -> str:
     end = content.find("---", 3)
     if end == -1:
         return content
-    return content[end + 3:].lstrip("\n")
+    return content[end + 3 :].lstrip("\n")
 
 
 def parse_session_field(content: str, field: str) -> str:
@@ -191,9 +195,7 @@ def parse_session_field(content: str, field: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def find_workflow_session(
-    session_dir: Path, workflow_name: str | None
-) -> tuple[Path, str] | None:
+def find_workflow_session(session_dir: Path, workflow_name: str | None) -> tuple[Path, str] | None:
     """Find workflow session file and determine workflow name.
 
     Args:

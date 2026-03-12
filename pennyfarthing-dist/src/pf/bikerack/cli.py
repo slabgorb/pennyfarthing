@@ -67,7 +67,6 @@ def start(project_dir, dry_run):
         # Idempotent: WheelHub already up, just exec Claude with OTEL env
         click.echo(f"BikeRack already running (PID {pid}, port {port})")
         otel_env = build_otel_env(port)
-        click.echo(f"Dashboard: http://localhost:{port}/bikerack")
         click.echo("Starting Claude CLI...")
         exec_claude(otel_env, project_dir)
 
@@ -80,14 +79,13 @@ def start(project_dir, dry_run):
         write_pid_file(project_dir, proc.pid)
 
         port = poll_for_port_file(project_dir, proc=proc)
-        click.echo(f"WheelHub listening on http://localhost:{port}")
+        click.echo(f"WheelHub listening on port {port}")
 
         otel_env = build_otel_env(port)
         click.echo("Setting OTEL environment variables...")
 
         register_cleanup(project_dir, proc.pid)
 
-        click.echo(f"Dashboard: http://localhost:{port}/bikerack")
         click.echo("Starting Claude CLI...")
         exec_claude(otel_env, project_dir)
     except (TimeoutError, RuntimeError) as e:
@@ -140,6 +138,6 @@ def status(project_dir):
         click.echo("BikeRack is running")
         click.echo(f"  PID: {result['pid']}")
         click.echo(f"  Port: {result['port']}")
-        click.echo(f"  Dashboard: {result['dashboard']}")
+        click.echo(f"  API: http://localhost:{result['port']}")
     else:
         click.echo("BikeRack is not running")

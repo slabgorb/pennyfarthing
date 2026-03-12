@@ -111,7 +111,8 @@ def get_next_story() -> dict[str, Any]:
     all_stories = get_all_stories()
     available_statuses = {"backlog", "ready", "planning"}
     backlog = [
-        s for s in all_stories
+        s
+        for s in all_stories
         if s.get("status") in available_statuses
         and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
     ]
@@ -236,4 +237,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

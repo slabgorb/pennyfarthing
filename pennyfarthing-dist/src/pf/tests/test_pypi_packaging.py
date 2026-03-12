@@ -107,8 +107,7 @@ class TestSrcLayout:
         """pf/ should NOT exist at pennyfarthing-dist/pf/ (old flat layout)."""
         old_pf = DIST_DIR / "pf"
         assert not old_pf.is_dir(), (
-            f"Old pf/ location still exists at {old_pf}. "
-            "Migration to src/ layout is incomplete."
+            f"Old pf/ location still exists at {old_pf}. Migration to src/ layout is incomplete."
         )
 
 
@@ -133,12 +132,7 @@ class TestPyprojectToml:
 
     def test_src_layout_configured(self, pyproject: dict) -> None:
         """Package discovery must point to src/ directory."""
-        find = (
-            pyproject.get("tool", {})
-            .get("setuptools", {})
-            .get("packages", {})
-            .get("find", {})
-        )
+        find = pyproject.get("tool", {}).get("setuptools", {}).get("packages", {}).get("find", {})
         assert find.get("where") == ["src"], (
             "pyproject.toml must set [tool.setuptools.packages.find] where = ['src']"
         )
@@ -155,15 +149,10 @@ class TestPyprojectToml:
     def test_version_attr_configured(self, pyproject: dict) -> None:
         """setuptools must know where to find the version attribute."""
         version_cfg = (
-            pyproject.get("tool", {})
-            .get("setuptools", {})
-            .get("dynamic", {})
-            .get("version", {})
+            pyproject.get("tool", {}).get("setuptools", {}).get("dynamic", {}).get("version", {})
         )
         attr = version_cfg.get("attr", "")
-        assert attr == "pf.__version__", (
-            f"Expected version attr 'pf.__version__', got '{attr}'"
-        )
+        assert attr == "pf.__version__", f"Expected version attr 'pf.__version__', got '{attr}'"
 
     def test_entry_point(self, pyproject: dict) -> None:
         """pf entry point must map to pf_launcher:main."""
@@ -219,9 +208,7 @@ class TestManifest:
         """MANIFEST.in must prune non-package directories."""
         content = (DIST_DIR / "MANIFEST.in").read_text().lower()
         for dirname in ["agents", "templates", "guides", "personas", "workflows"]:
-            assert dirname in content, (
-                f"MANIFEST.in should reference '{dirname}' for exclusion"
-            )
+            assert dirname in content, f"MANIFEST.in should reference '{dirname}' for exclusion"
 
 
 class TestWheelBuild:
@@ -314,9 +301,7 @@ class TestSmokeInstall:
             text=True,
             timeout=60,
         )
-        assert install_result.returncode == 0, (
-            f"pip install failed:\n{install_result.stderr}"
-        )
+        assert install_result.returncode == 0, f"pip install failed:\n{install_result.stderr}"
 
         # Run pf --version
         pf_bin = venv_dir / "bin" / "pf"
@@ -326,7 +311,5 @@ class TestSmokeInstall:
             text=True,
             timeout=10,
         )
-        assert version_result.returncode == 0, (
-            f"pf --version failed:\n{version_result.stderr}"
-        )
+        assert version_result.returncode == 0, f"pf --version failed:\n{version_result.stderr}"
         assert "pf" in version_result.stdout.lower()

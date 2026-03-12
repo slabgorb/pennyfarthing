@@ -1,0 +1,35 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the full CLI framework with multiple acceptance criteria requiring structural, behavioral, and security validation.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 20 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 15 | AC-3 (exit codes 0/1/2/3/4 via `CliError::exit_code()`) |
+| `tests/output_format.rs` | 13 | AC-4 (`OutputFormatter` trait, table/json/csv, metadata, escaping) |
+| `tests/siem_client.rs` | 11 | AC-7 (`SiemClient` construction, header injection, HTTP status mapping) |
+| `tests/config_loading.rs` | 10 | AC-8 (TOML loading, env var overrides, precedence, missing/invalid files) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell completion generation) |
+| `tests/stub_handlers.rs` | 9 | AC-10 (stub messages with story refs, exit code 1) |
+| `tests/security.rs` | 14 | CWE-209 error exposure, CRLF header injection, credential leaking, config validation |
+
+**Tests Written:** 98 tests covering 10 ACs
+**Status:** RED (failing — compilation errors, types not yet implemented)
+
+**Key test paranoia applied:**
+- Header injection with CRLF in tenant/token values
+- Token values not leaking in Debug/Display output
+- Config file not silently swallowing parse errors
+- CSV escaping for commas, quotes, newlines
+- JSON metadata fields (request_id, timestamp, api_version)
+- Negative timeout and empty URL rejection
+- Non-HTTPS URL flagged as insecure
+- Tokens not loadable from TOML config file (keychain only)
+
+**Handoff:** To Dev for GREEN phase implementation.
+
+## Delivery Findings
+
+- No upstream findings during test design.

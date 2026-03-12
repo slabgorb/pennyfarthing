@@ -1,0 +1,70 @@
+scenario_id: dpgd-116
+theme: gilligans-island
+run_id: 1
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: "TEA security tests include 'silent error swallowing' and config_loading\
+    \ tests include 'missing/invalid file errors' \u2014 tests designed to catch the\
+    \ pattern of swallowing all errors vs distinguishing NotFound from other failures."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA security tests explicitly list 'CWE-209 error exposure' as a test
+    category with 11 security tests covering error information leakage.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA security tests include 'header injection (CRLF in tenant/token)' and
+    dev implemented 'header injection prevention' in client.rs. Same vulnerability
+    class (CWE-113) addressed, though the type-safety aspect of using TenantId instead
+    of raw String may not be fully covered.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No mention of workspace dependency management anywhere in the pipeline
+    output. The dev phase even added direct deps (chrono, uuid) to the crate Cargo.toml
+    without discussion of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: No mention of deny_unknown_fields, unknown field handling, or the risk
+    of silently ignored config fields anywhere in the pipeline output.
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The pipeline itself wrote the vacuously true test (assert!(config.server().is_none()
+    || ...)) and did not flag it. No phase identified this as a problem.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The pipeline itself wrote the zero-assertion test (let _ = config;) and
+    did not flag it. No phase identified this as a problem.

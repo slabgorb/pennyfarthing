@@ -128,7 +128,13 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
             "title": "BikeRack Mode",
             "jiraKey": "MSSCI-14000",
             "stories": [
-                {"id": "101-1", "title": "Launcher CLI", "points": 3, "status": "done", "jiraKey": "MSSCI-14001"},
+                {
+                    "id": "101-1",
+                    "title": "Launcher CLI",
+                    "points": 3,
+                    "status": "done",
+                    "jiraKey": "MSSCI-14001",
+                },
             ],
         },
         {
@@ -136,13 +142,31 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
             "title": "BikeRack TUI",
             "jiraKey": "MSSCI-14510",
             "stories": [
-                {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"},
-                {"id": "103-6", "title": "SprintPanel", "points": 2, "status": "in_progress", "jiraKey": "MSSCI-14961"},
+                {
+                    "id": "103-1",
+                    "title": "Scaffold",
+                    "points": 2,
+                    "status": "done",
+                    "jiraKey": "MSSCI-14952",
+                },
+                {
+                    "id": "103-6",
+                    "title": "SprintPanel",
+                    "points": 2,
+                    "status": "in_progress",
+                    "jiraKey": "MSSCI-14961",
+                },
             ],
         },
     ],
     "futureEpics": [
-        {"id": "110", "title": "Future Epic", "description": "Coming soon", "estimatedPoints": 20, "status": "planning"},
+        {
+            "id": "110",
+            "title": "Future Epic",
+            "description": "Coming soon",
+            "estimatedPoints": 20,
+            "status": "planning",
+        },
     ],
     "sprint": {
         "number": 2606,
@@ -294,7 +318,9 @@ class TestEpicLabel:
         assert "MSSCI-14510" in label.plain
 
     def test_long_id_gets_ellipsed(self) -> None:
-        label = _build_epic_label("standalone", "Standalone Stories", 2, 7, jira_key="epic-standalone")
+        label = _build_epic_label(
+            "standalone", "Standalone Stories", 2, 7, jira_key="epic-standalone"
+        )
         plain = label.plain
         assert "\u2026" in plain, f"Long ID should be ellipsed, got: {plain}"
         # Should not exceed 11 chars for the ID portion
@@ -318,17 +344,35 @@ class TestStoryLabel:
     """Story label builder produces correct Rich Text."""
 
     def test_includes_jira_key(self) -> None:
-        story = {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
+        story = {
+            "id": "103-1",
+            "title": "Scaffold",
+            "points": 2,
+            "status": "done",
+            "jiraKey": "MSSCI-14952",
+        }
         label = _build_story_label(story, "")
         assert "MSSCI-14952" in label.plain
 
     def test_includes_points(self) -> None:
-        story = {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
+        story = {
+            "id": "103-1",
+            "title": "Scaffold",
+            "points": 2,
+            "status": "done",
+            "jiraKey": "MSSCI-14952",
+        }
         label = _build_story_label(story, "")
         assert "2" in label.plain
 
     def test_includes_title(self) -> None:
-        story = {"id": "103-1", "title": "Scaffold", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
+        story = {
+            "id": "103-1",
+            "title": "Scaffold",
+            "points": 2,
+            "status": "done",
+            "jiraKey": "MSSCI-14952",
+        }
         label = _build_story_label(story, "")
         assert "Scaffold" in label.plain
 
@@ -338,13 +382,25 @@ class TestStoryLabel:
         assert "\u2014" in label.plain
 
     def test_current_story_bolded(self) -> None:
-        story = {"id": "103-6", "title": "Current", "points": 2, "status": "in-progress", "jiraKey": "X"}
+        story = {
+            "id": "103-6",
+            "title": "Current",
+            "points": 2,
+            "status": "in-progress",
+            "jiraKey": "X",
+        }
         label = _build_story_label(story, "103-6")
         has_bold = any("bold" in str(span.style) for span in label._spans)
         assert has_bold, "Current story should have bold styling"
 
     def test_done_story_is_dim(self) -> None:
-        story = {"id": "103-1", "title": "Done one", "points": 2, "status": "done", "jiraKey": "MSSCI-14952"}
+        story = {
+            "id": "103-1",
+            "title": "Done one",
+            "points": 2,
+            "status": "done",
+            "jiraKey": "MSSCI-14952",
+        }
         label = _build_story_label(story, "")
         # Overall dim styling applied to done stories
         has_dim = any("dim" in str(span.style) for span in label._spans)
@@ -355,10 +411,10 @@ class TestFormatAssignee:
     """Email to display name formatting."""
 
     def test_standard_email(self) -> None:
-        assert _format_assignee("keith.avery@1898andco.io") == "K. Avery"
+        assert _format_assignee("keith.avery@1898andco.io") == "KA"
 
     def test_underscore_email(self) -> None:
-        assert _format_assignee("john_doe@example.com") == "J. Doe"
+        assert _format_assignee("john_doe@example.com") == "JD"
 
     def test_none_returns_empty(self) -> None:
         assert _format_assignee(None) == ""
@@ -368,7 +424,7 @@ class TestFormatAssignee:
 
     def test_single_part_local(self) -> None:
         result = _format_assignee("admin@example.com")
-        assert result == "Admin"
+        assert result == "AD"
 
 
 class TestStoryLabelOwner:
@@ -376,17 +432,23 @@ class TestStoryLabelOwner:
 
     def test_in_progress_shows_owner(self) -> None:
         story = {
-            "id": "110-2", "title": "Drill", "points": 5,
-            "status": "in-progress", "jiraKey": "MSSCI-15186",
+            "id": "110-2",
+            "title": "Drill",
+            "points": 5,
+            "status": "in-progress",
+            "jiraKey": "MSSCI-15186",
             "assignee": "keith.avery@1898andco.io",
         }
         label = _build_story_label(story, "")
-        assert "K. Avery" in label.plain
+        assert "KA" in label.plain
 
     def test_done_hides_owner(self) -> None:
         story = {
-            "id": "110-1", "title": "Done", "points": 3,
-            "status": "done", "jiraKey": "MSSCI-15185",
+            "id": "110-1",
+            "title": "Done",
+            "points": 3,
+            "status": "done",
+            "jiraKey": "MSSCI-15185",
             "assignee": "keith.avery@1898andco.io",
         }
         label = _build_story_label(story, "")
@@ -394,8 +456,11 @@ class TestStoryLabelOwner:
 
     def test_backlog_hides_owner(self) -> None:
         story = {
-            "id": "110-3", "title": "Backlog", "points": 3,
-            "status": "backlog", "jiraKey": "MSSCI-15187",
+            "id": "110-3",
+            "title": "Backlog",
+            "points": 3,
+            "status": "backlog",
+            "jiraKey": "MSSCI-15187",
             "assignee": "keith.avery@1898andco.io",
         }
         label = _build_story_label(story, "")
@@ -403,16 +468,22 @@ class TestStoryLabelOwner:
 
     def test_in_progress_no_assignee(self) -> None:
         story = {
-            "id": "110-2", "title": "Drill", "points": 5,
-            "status": "in-progress", "jiraKey": "MSSCI-15186",
+            "id": "110-2",
+            "title": "Drill",
+            "points": 5,
+            "status": "in-progress",
+            "jiraKey": "MSSCI-15186",
         }
         label = _build_story_label(story, "")
         assert "[" not in label.plain or "[]" not in label.plain
 
     def test_canceled_story_is_dim(self) -> None:
         story = {
-            "id": "110-4", "title": "Canceled one", "points": 2,
-            "status": "canceled", "jiraKey": "MSSCI-15999",
+            "id": "110-4",
+            "title": "Canceled one",
+            "points": 2,
+            "status": "canceled",
+            "jiraKey": "MSSCI-15999",
         }
         label = _build_story_label(story, "")
         has_dim = any("dim" in str(span.style) for span in label._spans)
@@ -423,24 +494,30 @@ class TestShouldExpand:
     """Default expand logic for epics."""
 
     def test_expands_with_incomplete_work(self) -> None:
-        epic = {"stories": [
-            {"points": 2, "status": "done"},
-            {"points": 3, "status": "in-progress"},
-        ]}
+        epic = {
+            "stories": [
+                {"points": 2, "status": "done"},
+                {"points": 3, "status": "in-progress"},
+            ]
+        }
         assert _should_expand(epic) is True
 
     def test_collapses_when_all_done(self) -> None:
-        epic = {"stories": [
-            {"points": 2, "status": "done"},
-            {"points": 3, "status": "done"},
-        ]}
+        epic = {
+            "stories": [
+                {"points": 2, "status": "done"},
+                {"points": 3, "status": "done"},
+            ]
+        }
         assert _should_expand(epic) is False
 
     def test_expands_when_backlog_remains(self) -> None:
-        epic = {"stories": [
-            {"points": 2, "status": "done"},
-            {"points": 3, "status": "backlog"},
-        ]}
+        epic = {
+            "stories": [
+                {"points": 2, "status": "done"},
+                {"points": 3, "status": "backlog"},
+            ]
+        }
         assert _should_expand(epic) is True
 
     def test_expands_empty_epic(self) -> None:
@@ -448,23 +525,30 @@ class TestShouldExpand:
         assert _should_expand(epic) is False
 
     def test_collapses_canceled_epic(self) -> None:
-        epic = {"status": "canceled", "stories": [
-            {"points": 2, "status": "backlog"},
-        ]}
+        epic = {
+            "status": "canceled",
+            "stories": [
+                {"points": 2, "status": "backlog"},
+            ],
+        }
         assert _should_expand(epic) is False
 
     def test_collapses_when_all_done_or_canceled(self) -> None:
-        epic = {"stories": [
-            {"points": 2, "status": "done"},
-            {"points": 3, "status": "canceled"},
-        ]}
+        epic = {
+            "stories": [
+                {"points": 2, "status": "done"},
+                {"points": 3, "status": "canceled"},
+            ]
+        }
         assert _should_expand(epic) is False
 
     def test_expands_when_mix_of_canceled_and_backlog(self) -> None:
-        epic = {"stories": [
-            {"points": 2, "status": "canceled"},
-            {"points": 3, "status": "backlog"},
-        ]}
+        epic = {
+            "stories": [
+                {"points": 2, "status": "canceled"},
+                {"points": 3, "status": "backlog"},
+            ]
+        }
         assert _should_expand(epic) is True
 
 

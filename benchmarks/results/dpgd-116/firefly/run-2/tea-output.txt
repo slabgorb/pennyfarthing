@@ -1,0 +1,39 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every acceptance criterion needs test coverage.
+
+**Test Files:**
+| File | ACs Covered | Tests |
+|------|------------|-------|
+| `cli_structure_tests.rs` | AC-1, AC-2, AC-5, AC-6 | 28 |
+| `exit_code_tests.rs` | AC-3 | 13 |
+| `output_format_tests.rs` | AC-4 | 13 |
+| `siem_client_tests.rs` | AC-7 | 13 |
+| `config_tests.rs` | AC-8 | 12 |
+| `completion_tests.rs` | AC-9 | 5 |
+| `stub_handler_tests.rs` | AC-10 | 10 |
+| `security_tests.rs` | CWE-209, header injection, credential safety | 9 |
+
+**Tests Written:** 103 tests covering all 10 ACs + security
+**Status:** RED (failing — all test files fail to compile because target modules don't exist yet)
+
+**What the tests define (expected public API):**
+- `axiathon_client::cli::Cli` — clap derive Parser with `Commands` enum (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init)
+- `axiathon_client::cli::Cli` fields — `format`, `verbose` (u8, repeatable), `quiet`, `server`, `tenant`, `config`, `no_color`
+- `axiathon_client::error::CliError` — enum with `exit_code()` method returning 0-4
+- `axiathon_client::output::OutputFormat` — Table/Json/Csv enum with `detect_default()`
+- `axiathon_client::output::OutputFormatter` — `format_table()`, `format_json()`, `format_csv()`
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `get()`, header injection, status code mapping
+- `axiathon_client::config::ClientConfig` — TOML loading, env var overrides, CLI flag overrides
+- `axiathon_client::commands::completion::generate_completions()` — bash/zsh/fish/powershell
+- `axiathon_client::commands::{status,config,ingest,alerts,query,rules,tenant,login}::handle_*()` — stub handlers
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak stack traces
+- CWE-113: Header injection via CR/LF in tenant ID and tokens
+- Credential storage: Tokens excluded from config serialization
+- Timeout bounds: Default timeout is reasonable (1-300s)
+- URL validation: Embedded credentials in API URLs
+
+**Handoff:** To Dev for implementation (GREEN phase)

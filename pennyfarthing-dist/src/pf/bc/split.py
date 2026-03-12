@@ -14,9 +14,7 @@ from pf.bc.focus import (
 )
 
 
-def set_split_layout(
-    left: str, right: str, project_dir: Path | None = None
-) -> dict:
+def set_split_layout(left: str, right: str, project_dir: Path | None = None) -> dict:
     """Set split layout in config.local.yaml.
 
     Args:

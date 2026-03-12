@@ -1,0 +1,91 @@
+Now I have a complete picture. Time for The Portfolio's assessment.
+
+---
+
+# Code Review: Story 6.1 — CLI Framework & Structure
+
+*adjusts pocket square* Well now, let's see if this code is worthy of the Howell name. The Portfolio has conducted a thorough inspection.
+
+---
+
+## Findings
+
+### 1. [CRITICAL] Missing `main.rs` — no binary is produced
+
+There is no `main.rs` in `crates/axiathon-client/src/`. The story explicitly requires producing the `axiathon` binary with a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()`. Without it, this crate is a library only — the entire point of Story 6.1 (an operator-facing CLI binary) is undelivered.
+
+No `[[bin]]` section in `Cargo.toml` either.
+
+### 2. [HIGH] Missing `logout` and `tui` command groups — AC-1 violation
+
+AC-1 requires `axiathon --help` to show: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, **`login`/`logout`**, **`tui`**, `completion`, `init`. The `Commands` enum at `cli.rs:41` is missing both `Logout` and `Tui` variants.
+
+### 3. [HIGH] `init` command is a stub — scope violation
+
+The story scope explicitly says "Shell completion generation (**functional, not stub**)" and "`axiathon init` first-time setup (**functional, not stub**)". Completion is functional, but `init` at `commands/init.rs:3` just returns `Err(CliError::NotImplemented("Story 6.1"))`. The init command should create the config directory and a default `cli.toml`.
+
+### 4. [HIGH] Nightly `cargo fmt` check fails
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check fails on `tests/stub_handlers.rs` with formatting diffs at lines 55 and 119-125.
+
+### 5. [HIGH] `ServerError` Display leaks raw server response body (CWE-209)
+
+At `error.rs:18`: `#[error("server error ({0}): {1}")]` — the `{1}` is the raw HTTP response body passed straight from `SiemClient::map_http_status`. The SECURITY doc comment says "for operator logging only" but nothing prevents this Display from being shown to the user. The body could contain SQL errors, internal stack traces, or infrastructure details. The test at `security.rs:10` checks for "stack" and "backtrace" keywords but that's a keyword allowlist, not real sanitization.
+
+### 6. [MEDIUM] `RawConfig` silently ignores unknown TOML fields
+
+At `config.rs:14`: `RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. This means a config file with `tokne = "secret"` (typo) or `token = "my-secret"` is silently accepted. The test `config_does_not_store_tokens` at `config_loading.rs:123` passes only because the field is silently dropped — a false sense of security. With `deny_unknown_fields`, typos and misplaced secrets would be caught.
+
+### 7. [MEDIUM] `generate_completion` silently returns empty string for unknown shell
+
+At `completion.rs:12`: unknown shell names return `String::new()` with no error. This is silent error swallowing — an operator running `axiathon completion tcsh` gets empty stdout with exit code 0, not an error. Should return `Result<String, CliError>` with a proper error for unsupported shells.
+
+### 8. [MEDIUM] `toml` version mismatch — workspace has 0.8, story spec says 0.9
+
+`Cargo.toml:49` specifies `toml = "0.8"` but the story's Technical Guardrails section says `toml` 0.9. Minor but shows the implementation diverged from spec.
+
+### 9. [MEDIUM] `--format` flag is unvalidated `Option<String>`
+
+At `cli.rs:13`: `format: Option<String>` accepts any string value. AC-4 requires `--format table|json|csv`. While `OutputFormat::from_str` exists, it's not wired to the clap definition. Clap supports `ValueEnum` derive or `value_parser` to restrict at parse time, giving immediate help text and rejection of invalid values. As-is, invalid format values like `--format xml` are accepted by clap and only fail later (if ever validated).
+
+### 10. [MEDIUM] Multiple `expect()` calls in production code — rule violation
+
+At `output.rs:79,84,85,88,89`: Five `expect()` calls in `format_as_csv` and `format_as_json`. The project's Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." Some messages are actionable ("write CSV headers") but `format_table` returns `String` not `Result`, making proper error propagation impossible. The method signature should return `Result<String, CliError>`.
+
+### 11. [LOW] Query stub inconsistency — "5.5" vs "Story 5.5"
+
+At `commands/query.rs:4`: `CliError::NotImplemented("5.5".into())` while all other stubs use the pattern `"Story X.Y"` (e.g., `"Story 6.2"`, `"Story 6.5"`). This makes the error message render as "not yet implemented (Story 5.5)" for the error format string but the input is just "5.5", producing "not yet implemented (5.5)".
+
+### 12. [VERIFIED] Header injection prevention works correctly
+
+`SiemClient::default_headers` at `client.rs:40-57` uses `HeaderValue::from_str()` which rejects values containing `\r\n` (reqwest/http crate validation). Tests at `siem_client.rs:156-199` verify this. CWE-113 is mitigated.
+
+### 13. [VERIFIED] Exit code mapping is correct and tested
+
+All documented exit codes (0/1/3/4) are properly mapped. Clap handles exit code 2 for usage errors. Tests are thorough.
+
+### 14. [VERIFIED] `#![forbid(unsafe_code)]` is present at `lib.rs:2`
+
+### 15. [VERIFIED] `#[non_exhaustive]` on `CliError` at `error.rs:11`
+
+### 16. [VERIFIED] No server-side crate imports — dependency boundary respected
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 3 | YES |
+| Medium | 5 | NO |
+| Low | 1 | NO |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The missing `main.rs` is disqualifying on its own — without a binary entry point, there is no CLI tool. The missing `logout`/`tui` commands violate AC-1, `init` being a stub violates the explicit scope requirement, and the nightly fmt failure violates the preflight gotcha. The CWE-209 exposure in `ServerError` Display needs attention before this goes anywhere near production.
+
+*Good heavens, one simply does not ship a CLI framework without a binary. Even Gilligan could tell you that.*

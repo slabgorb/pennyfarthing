@@ -19,9 +19,11 @@ import click.testing
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_cli():
     """Import the CLI group lazily to avoid import-time side effects."""
     from pf.cli import cli
+
     return cli
 
 
@@ -62,6 +64,7 @@ def _collect_choice_options(cmd: click.BaseCommand) -> list[tuple[click.Option, 
 # AC1: Audit — Choice value casing
 # ---------------------------------------------------------------------------
 
+
 class TestChoiceValueConsistency:
     """All click.Choice values should be lowercase for consistency.
 
@@ -94,15 +97,15 @@ class TestChoiceValueConsistency:
                             f"{cmd_name} --{opt.name}: '{val}' should be '{val.lower()}'"
                         )
 
-        assert violations == [], (
-            f"Found {len(violations)} uppercase Choice values:\n"
-            + "\n".join(f"  - {v}" for v in violations)
+        assert violations == [], f"Found {len(violations)} uppercase Choice values:\n" + "\n".join(
+            f"  - {v}" for v in violations
         )
 
 
 # ---------------------------------------------------------------------------
 # AC2: Naming conventions
 # ---------------------------------------------------------------------------
+
 
 class TestNamingConventions:
     """Command and flag naming should be consistent."""
@@ -117,9 +120,8 @@ class TestNamingConventions:
             if "_" in leaf:
                 violations.append(f"'{cmd_name}' contains underscore — use hyphens")
 
-        assert violations == [], (
-            f"Found {len(violations)} underscore command names:\n"
-            + "\n".join(f"  - {v}" for v in violations)
+        assert violations == [], f"Found {len(violations)} underscore command names:\n" + "\n".join(
+            f"  - {v}" for v in violations
         )
 
     def test_json_flag_parameter_name_consistency(self):
@@ -145,14 +147,14 @@ class TestNamingConventions:
             if name not in ACCEPTED_JSON_PARAM_NAMES
         }
         assert violations == {}, (
-            f"Unexpected --json parameter names (not in {ACCEPTED_JSON_PARAM_NAMES}): "
-            f"{violations}"
+            f"Unexpected --json parameter names (not in {ACCEPTED_JSON_PARAM_NAMES}): {violations}"
         )
 
 
 # ---------------------------------------------------------------------------
 # AC3: Syntactic sugar — top-level shortcuts
 # ---------------------------------------------------------------------------
+
 
 class TestTopLevelSugar:
     """Common sprint operations should be accessible as top-level commands.
@@ -168,8 +170,7 @@ class TestTopLevelSugar:
         cli = _get_cli()
         ctx = click.Context(cli)
         assert "status" in cli.list_commands(ctx), (
-            "'status' not found as top-level command. "
-            "Add sugar: pf status → pf sprint status"
+            "'status' not found as top-level command. Add sugar: pf status → pf sprint status"
         )
 
     def test_pf_backlog_shortcut_exists(self):
@@ -177,8 +178,7 @@ class TestTopLevelSugar:
         cli = _get_cli()
         ctx = click.Context(cli)
         assert "backlog" in cli.list_commands(ctx), (
-            "'backlog' not found as top-level command. "
-            "Add sugar: pf backlog → pf sprint backlog"
+            "'backlog' not found as top-level command. Add sugar: pf backlog → pf sprint backlog"
         )
 
     def test_pf_work_shortcut_exists(self):
@@ -186,8 +186,7 @@ class TestTopLevelSugar:
         cli = _get_cli()
         ctx = click.Context(cli)
         assert "work" in cli.list_commands(ctx), (
-            "'work' not found as top-level command. "
-            "Add sugar: pf work → pf sprint work"
+            "'work' not found as top-level command. Add sugar: pf work → pf sprint work"
         )
 
     def test_pf_story_shortcut_exists(self):
@@ -195,8 +194,7 @@ class TestTopLevelSugar:
         cli = _get_cli()
         ctx = click.Context(cli)
         assert "story" in cli.list_commands(ctx), (
-            "'story' not found as top-level command. "
-            "Add sugar: pf story → pf sprint story"
+            "'story' not found as top-level command. Add sugar: pf story → pf sprint story"
         )
 
     def test_pf_status_shortcut_invokes_sprint_status(self):
@@ -210,7 +208,10 @@ class TestTopLevelSugar:
         assert result_short.exit_code == 0
         assert result_long.exit_code == 0
         # Both should show the same help text (or at least same command description)
-        assert "sprint status" in result_short.output.lower() or "status" in result_short.output.lower()
+        assert (
+            "sprint status" in result_short.output.lower()
+            or "status" in result_short.output.lower()
+        )
 
     def test_pf_backlog_shortcut_invokes_sprint_backlog(self):
         """'pf backlog' should produce the same output as 'pf sprint backlog'."""
@@ -228,24 +229,52 @@ class TestTopLevelSugar:
 # AC4: Command tree completeness and routing
 # ---------------------------------------------------------------------------
 
+
 class TestCommandTreeCompleteness:
     """All expected command groups and subcommands should be registered."""
 
     EXPECTED_TOP_LEVEL_GROUPS = [
-        "sprint", "jira", "theme",
-        "validate", "bikerack", "bc",
-        "agent", "workflow", "debug",
+        "sprint",
+        "jira",
+        "theme",
+        "validate",
+        "bikerack",
+        "bc",
+        "agent",
+        "workflow",
+        "debug",
     ]
 
     EXPECTED_SPRINT_SUBCOMMANDS = [
-        "status", "backlog", "work", "archive", "check", "info",
-        "metrics", "future", "new", "standalone", "validate",
-        "story", "epic", "initiative",
+        "status",
+        "backlog",
+        "work",
+        "archive",
+        "check",
+        "info",
+        "metrics",
+        "future",
+        "new",
+        "standalone",
+        "validate",
+        "story",
+        "epic",
+        "initiative",
     ]
 
     EXPECTED_JIRA_SUBCOMMANDS = [
-        "view", "check", "claim", "move", "assign", "link",
-        "search", "sync", "bidirectional", "reconcile", "create", "sprint",
+        "view",
+        "check",
+        "claim",
+        "move",
+        "assign",
+        "link",
+        "search",
+        "sync",
+        "bidirectional",
+        "reconcile",
+        "create",
+        "sprint",
     ]
 
     def test_top_level_groups_registered(self):
@@ -296,6 +325,7 @@ class TestCommandTreeCompleteness:
 # AC5: Help text quality
 # ---------------------------------------------------------------------------
 
+
 class TestHelpTextQuality:
     """All commands should have meaningful help text."""
 
@@ -323,9 +353,8 @@ class TestHelpTextQuality:
                 if not cmd.help or len(cmd.help.strip()) < 10:
                     missing.append(cmd_name)
 
-        assert missing == [], (
-            f"Found {len(missing)} groups with missing/short help:\n"
-            + "\n".join(f"  - {v}" for v in missing)
+        assert missing == [], f"Found {len(missing)} groups with missing/short help:\n" + "\n".join(
+            f"  - {v}" for v in missing
         )
 
     def test_top_level_help_lists_sugar_shortcuts(self):

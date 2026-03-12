@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. TEA
+    tests config loading but doesn't specifically test that parse/permission errors
+    are distinguished from NotFound. Dev implemented the pattern without distinguishing
+    error types.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA listed ''CWE-209: Error display doesn''t leak server internals or
+    credentials'' as a security test. Reviewer verified at finding #13: ''Display
+    output avoids token/credential leakage.'' However, the reviewer did not flag that
+    eprintln!("{e}") still leaks OS-level details via Io(transparent), so partially
+    caught.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA included 'Header injection via tenant ID and token (CRLF injection)'\
+    \ tests. Reviewer verified at finding #11: 'HeaderValue::from_str() rejects values\
+    \ containing \\r\\n... Confirmed safe against CWE-113.' However, the structural\
+    \ issue of using raw String instead of TenantId from axiathon-core was not flagged\
+    \ \u2014 only the injection vector was mitigated at the HTTP layer."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. Dev added deps with direct versions and reviewer did not
+    catch the inconsistency.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer finding #15 explicitly marked 'Unknown config keys silently\
+    \ ignored' as '[VERIFIED] Forward-compatible as intended' \u2014 the opposite\
+    \ of catching this issue. The security risk of a user's token being silently ignored\
+    \ was missed."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #4: 'Vacuous assertion in config_handles_missing_file_gracefully...\
+    \ assert!(result.is_ok() || result.is_err())... This assertion is always true\
+    \ \u2014 a Result is always either Ok or Err. This test asserts nothing.'"
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The ground truth finding refers to a test with 'let _ = config;' and zero
+    assertions on default config values. While reviewer caught the vacuous assertion
+    (I5), this separate zero-assertion test was not flagged by any phase.

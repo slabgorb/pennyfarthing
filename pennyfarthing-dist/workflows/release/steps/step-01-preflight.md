@@ -95,7 +95,20 @@ Set `IS_PRERELEASE=true` and `PRERELEASE_CHANNEL` (alpha/beta/rc) for use in lat
 git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION already exists!"
 ```
 
-### 1.5 Preview
+### 1.5 E2E Test Gate
+
+Run the consumer E2E test suite. These tests verify that `pf init`, WheelHub startup,
+content preservation, and idempotency all work correctly in isolated environments.
+
+```bash
+cd {project_root}
+./tests/e2e/run.sh --local
+```
+
+All 6 scenarios must pass before proceeding with the release. If any fail, fix the
+issue before continuing — these tests protect consumer projects from broken releases.
+
+### 1.6 Preview
 
 ```
 ## Preflight Summary
@@ -105,6 +118,7 @@ git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION alrea
 | Clean working dir  | ✓/✗    |
 | On develop branch  | ✓/✗    |
 | Tag not exists     | ✓/✗    |
+| E2E tests pass     | ✓/✗    |
 
 **Version:** {CURRENT_VERSION} → {NEW_VERSION}
 **Release type:** {stable | prerelease (alpha/beta/rc)}

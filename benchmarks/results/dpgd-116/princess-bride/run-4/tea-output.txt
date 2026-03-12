@@ -1,0 +1,19 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the foundational CLI framework — all acceptance criteria require behavioral verification.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 51 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive), AC-9 (completion), AC-10 (stubs) |
+| `cli_error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4, CliError variants, Display) |
+| `cli_output_format.rs` | 18 | AC-4 (table/JSON/CSV formatting, ResponseMetadata, TTY detection, empty data) |
+| `cli_siem_client.rs` | 15 | AC-7 (SiemClient builder, header injection, HTTP status mapping, URL construction, timeout) |
+| `cli_config.rs` | 14 | AC-8 (TOML loading, env var overrides, precedence, XDG path, token rejection) |
+| `cli_security.rs` | 17 | CWE-209 (error info exposure), header injection (CRLF/null bytes), credential leakage (Debug/Display redaction), URL scheme validation |
+
+**Tests Written:** 131 tests covering all 10 ACs
+**Status:** RED (failing to compile — modules `cli`, `client`, `commands`, `config`, `error`, `output` do not exist yet)
+
+**Handoff:** To Dev for implementation. The Dev must create these modules in `crates/axiathon-client/src/` and re-export them from `lib.rs` to reach GREEN state.

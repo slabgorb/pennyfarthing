@@ -16,12 +16,20 @@ theme:
   character_immersion: high
   user_title: Young Bender
   portrait_style: ", Avatar animated series, clean cel-shaded style, elemental color coding, chi energy glow"
-  tier: A
+  tier: U
   dimensions:
     tone: balanced
     era: timeless
-    genre: fantasy-action
+    genre: fantasy
     energy: harmonious
+    zeitgeist: moderate
+    scrutiny: professional
+    cooperation_model: found-family
+    conflict_approach: consensus
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: philosophical
+    stakes: existential
   spinner_verbs:
     - Flameo hotman
     - Brewing Iroh's finest tea
@@ -55,7 +63,7 @@ theme:
     - Zuko's redemption arc
 zeitgeist:
   score: 82.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Uncle Iroh

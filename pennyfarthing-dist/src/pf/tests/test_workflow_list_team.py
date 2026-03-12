@@ -37,9 +37,7 @@ class TestWorkflowListTeamIndicator:
         assert "tdd-team" in result.output, "tdd-team workflow should appear in list"
         assert "bdd-team" in result.output, "bdd-team workflow should appear in list"
 
-    def test_workflow_list_has_team_indicator_for_tdd_team(
-        self, runner: CliRunner
-    ) -> None:
+    def test_workflow_list_has_team_indicator_for_tdd_team(self, runner: CliRunner) -> None:
         """AC4: tdd-team should have a team indicator in workflow list."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
@@ -56,13 +54,9 @@ class TestWorkflowListTeamIndicator:
         # The row should have a team indicator — could be a column value,
         # emoji, or tag that distinguishes it from non-team workflows
         line_lower = tdd_team_line.lower()
-        assert (
-            "team" in line_lower
-        ), "tdd-team row should contain a 'team' indicator"
+        assert "team" in line_lower, "tdd-team row should contain a 'team' indicator"
 
-    def test_workflow_list_has_team_indicator_for_bdd_team(
-        self, runner: CliRunner
-    ) -> None:
+    def test_workflow_list_has_team_indicator_for_bdd_team(self, runner: CliRunner) -> None:
         """AC4: bdd-team should have a team indicator in workflow list."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
@@ -76,13 +70,9 @@ class TestWorkflowListTeamIndicator:
         assert bdd_team_line is not None, "bdd-team should appear as a table row"
 
         line_lower = bdd_team_line.lower()
-        assert (
-            "team" in line_lower
-        ), "bdd-team row should contain a 'team' indicator"
+        assert "team" in line_lower, "bdd-team row should contain a 'team' indicator"
 
-    def test_non_team_workflows_lack_team_indicator(
-        self, runner: CliRunner
-    ) -> None:
+    def test_non_team_workflows_lack_team_indicator(self, runner: CliRunner) -> None:
         """AC4: Regular workflows should NOT have team indicator."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
@@ -118,9 +108,7 @@ class TestWorkflowListTeamColumnOrTag:
     def runner(self) -> CliRunner:
         return CliRunner()
 
-    def test_workflow_list_distinguishes_team_from_tandem(
-        self, runner: CliRunner
-    ) -> None:
+    def test_workflow_list_distinguishes_team_from_tandem(self, runner: CliRunner) -> None:
         """Team workflows should be distinguishable from tandem workflows."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0

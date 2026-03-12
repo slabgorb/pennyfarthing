@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: hogans-heroes
+run_id: 1
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The pipeline never flagged that from_file_or_default swallows all errors
+    including parse and permission failures. The reviewer noted config issues but
+    not this specific error-swallowing pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote security tests for CWE-209 error exposure: ''Auth errors don''t
+    leak token values, server errors don''t expose stack traces.'' The reviewer also
+    noted concerns about error detail exposure, though didn''t specifically flag the
+    Display impl on CliError for stderr.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] with_tenant() and with_token() bypass header\
+    \ validation \u2014 only try_with_* validates' noting header injection (CWE-113)\
+    \ risk. TEA also wrote header injection prevention tests for CRLF/CR/LF/null bytes\
+    \ in tenant ID. However, the specific finding about using raw String instead of\
+    \ TenantId from axiathon-core was not called out."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[HIGH] Workspace dependency declarations missing for
+    6 crates' noting that reqwest, comfy-table, clap_complete, dirs, csv, toml are
+    declared directly instead of using workspace declarations, violating the workspace
+    pattern and creating version drift risk.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged ''[HIGH] RawConfig silently ignores unknown fields (including
+    [auth] token = "...")'' noting that operators may believe their token is being
+    used when it''s silently ignored, and recommending #[serde(deny_unknown_fields)]
+    or warning on unknown sections.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always true). The reviewer verified tests but did not flag this specific logical
+    flaw in the assertion.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test with zero assertions that only checks non-panic
+    via 'let _ = config'. The reviewer did not identify this as a vacuous test.

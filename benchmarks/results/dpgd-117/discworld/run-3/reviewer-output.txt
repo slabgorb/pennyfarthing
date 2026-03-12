@@ -1,0 +1,95 @@
+---
+
+# Story 8.1 Review: REST API Foundation
+
+*"I can see what's wrong with it. And what's right. And what's been left out entirely. Headology isn't about looking — it's about SEEING."* — Granny Weatherwax
+
+---
+
+## Review Findings
+
+### [CRITICAL] Response envelope deviates from `ApiResponse<T>` defined in axiathon-core — `response.rs:1-64`
+
+The story spec and architecture docs mandate using `ApiResponse<T>` from axiathon-core. The core crate has a **fully implemented** `ApiResponse<T>` with `data: Option<T>`, `error: Option<ApiError>`, and `meta: Option<ApiMeta>` — complete with `ApiError` (code, message, trace_id, details) and `ApiMeta` (total, limit, offset).
+
+Instead, the implementation rolls its own ad-hoc envelope using raw `serde_json::json!()` macros in `response.rs`. The field names don't even match: the core type uses `error: Option<ApiError>` while the story spec says `errors: always present array`. The implementation uses singular `"error"` as an object, not `"errors"` as an array. This is a contract violation that will break every downstream consumer (SDK, WebUI, TUI).
+
+### [CRITICAL] Six unused production dependencies in Cargo.toml — `Cargo.toml:9-14`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, `serde`, and `tokio` are all declared as dependencies but **none are imported or used** anywhere in the `src/` files. This is dead weight that inflates compile times and violates workspace hygiene. The server crate has zero `use` statements referencing any of these crates.
+
+### [HIGH] No structured logging or tracing — all `src/` files
+
+The story spec requires observability. The `tracing` and `tracing-subscriber` crates are listed as dependencies but never used. There are zero `tracing::info!()`, `tracing::error!()`, or `#[instrument]` annotations. Auth failures, rate limit hits, and request processing happen silently. In production, you'd have no audit trail for authentication decisions — a security and operational gap.
+
+### [HIGH] Authentication is hardcoded string matching, not JWT validation — `middleware.rs:44-64`
+
+The auth middleware does literal string comparisons against test token names (`"test-expired-jwt-token"`, `"test-wrong-scope-jwt-token"`) instead of implementing any actual JWT validation logic. While stub responses are acceptable per the AC, the auth middleware structure has no skeleton for real validation — no JWT decoding, no signature verification, no JWKS lookup. Any non-magic-string token is accepted as valid and generates a tenant ID by string concatenation: `format!("tenant-{token}")`. This means any random string passes authentication.
+
+This is acceptable only if understood as a pure stub, but it should at minimum have a `// TODO: Replace with real JWT validation` comment and the `AuthInfo` struct should use the core `TenantContext` type rather than reinventing it with raw strings.
+
+### [HIGH] `AuthInfo` duplicates `TenantContext` from axiathon-core — `lib.rs:16-20`
+
+The core crate provides `TenantContext` with `tenant_id: TenantId`, `user_id`, `roles`, `permissions`, and `trace_id` — all with proper newtype wrapping and validated constructors. The implementation invents `AuthInfo { tenant_id: String, trace_id: String }` — raw strings with no validation, no user_id, no roles, no permissions. This violates SOUL principle 6 (explicit tenant context) and the technical guardrails which require `TenantContext` extraction from JWT/API key.
+
+### [HIGH] Rate limiter never resets — `lib.rs:62-86`
+
+The `RateLimiter` uses a `HashMap<String, usize>` that only increments, never decrements or resets. Once a tenant hits the limit, they are permanently locked out until the server restarts. There is no time window, no sliding window, no token bucket. The `Retry-After: 60` header is a lie — waiting 60 seconds changes nothing. The AC says "configurable per-tenant limits" — there's no configuration mechanism (no TOML/YAML loading per AC requirement).
+
+### [MEDIUM] Nightly fmt check fails — `tests/rest_api_foundation.rs:553,964`
+
+Two long assert lines fail `cargo +nightly fmt --all --check`. Per reviewer gotchas, nightly fmt must pass before approval. The diff shows needed reformatting at lines 553 and 964.
+
+### [MEDIUM] `AppState` missing `.with_state()` on final Router — `lib.rs:123-131`
+
+The `Router` built at line 123 never calls `.with_state(state)`. The `protected` router captures state via `from_fn_with_state`, but the top-level router has no state attached. This works only because the health route and fallback don't need state, and the nested `protected` router already captured its own state clones. However, this is fragile — adding any state-dependent middleware or handler to the outer router will fail silently at runtime.
+
+### [MEDIUM] Middleware ordering: rate_limit runs before auth check completes — `lib.rs:114-121`
+
+In Axum, `route_layer` applies middleware in reverse declaration order (last declared runs first). The rate_limit middleware is declared first (line 114), auth second (line 118), so auth runs first, then rate_limit — which is correct. However, the rate_limit middleware at `middleware.rs:115` checks `req.extensions().get::<AuthInfo>()` and silently passes through if `AuthInfo` is absent (no auth). This means unauthenticated requests bypass rate limiting entirely. An attacker could flood endpoints without auth and never get rate-limited — the 401 response would still be generated but rate limiting wouldn't protect against the request processing cost.
+
+### [MEDIUM] `health` endpoint generates a new `trace_id` per request, not correlated to incoming context — `handlers.rs:13`
+
+The health handler generates its own `uuid::Uuid::new_v4()` for `trace_id`. It doesn't accept or propagate incoming trace context (e.g., `traceparent` header from OpenTelemetry). All other handlers get trace_id from `AuthInfo`, but since health is unauthenticated, it can't. There's no mechanism to extract trace context from incoming headers for unauthenticated endpoints.
+
+### [LOW] `serde` dependency declared but never used — `Cargo.toml:17`
+
+The `serde` crate is listed as a dependency but nothing in `src/` derives `Serialize`/`Deserialize` or uses serde directly. All serialization goes through `serde_json::json!()` which only requires `serde_json`.
+
+### [LOW] `AppState` fields are private but `rate_limiter` is public — `lib.rs:90-97`
+
+Inconsistent visibility: `detection`, `storage`, `plugin`, `credential` are private (accessed via `FromRef`), but `rate_limiter` is `pub`. This breaks the encapsulation pattern. It should either all be private with `FromRef` impls, or the visibility difference should be documented.
+
+---
+
+## Verified Good
+
+- [VERIFIED] `#![forbid(unsafe_code)]` is present in `lib.rs:2`
+- [VERIFIED] Health endpoint correctly does not require authentication
+- [VERIFIED] All 49 tests pass
+- [VERIFIED] Clippy clean (zero warnings with `-D warnings`)
+- [VERIFIED] Fallback handler returns 404 for unregistered routes
+- [VERIFIED] `FromRef<AppState>` substate pattern correctly implemented for all four domain services
+- [VERIFIED] Error responses do not leak internal paths, stack traces, or implementation details (CWE-209)
+- [VERIFIED] `request_id` is a valid UUID v4 in all responses
+- [VERIFIED] Per-tenant rate limit isolation works (different tokens = different counters)
+- [VERIFIED] POST with malformed JSON returns 400 with envelope format
+- [VERIFIED] API versioning via `/api/v1/` prefix works correctly
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three Critical/High issues block approval:
+
+1. **[CRITICAL]** The response envelope ignores the existing `ApiResponse<T>` from axiathon-core and uses `"error"` (singular object) instead of `"errors"` (array) as specified. Every downstream consumer will break when this is corrected later.
+
+2. **[CRITICAL]** Six crate dependencies are declared but completely unused. This suggests either copy-paste from another crate or incomplete integration — the server crate literally doesn't import anything from axiathon-core despite it being the primary source of shared types.
+
+3. **[HIGH]** `AuthInfo` reinvents `TenantContext` with raw strings instead of using the validated, newtype-wrapped version from core. Combined with the missing `ApiResponse<T>` usage, this indicates the implementation was built in isolation from the existing codebase.
+
+4. **[HIGH]** Rate limiter permanently locks out tenants with no reset mechanism. `Retry-After: 60` is misleading.
+
+The nightly fmt failure is also a gate per project gotchas.
+
+*"The trouble with being a good witch is you have to say NO. And then you have to say WHY."* Fix the contract violations (use core types), fix the rate limiter reset, and fix the fmt. Then we'll talk.

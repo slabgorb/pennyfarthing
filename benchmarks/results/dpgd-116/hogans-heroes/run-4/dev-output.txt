@@ -1,0 +1,30 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Created:**
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with 9 variants, exit code mapping (3=auth, 4=authz, 1=all others), security-safe Display impls
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap 4.x derive, `Commands` enum with all 12 subcommands (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init), `OutputFormat` ValueEnum, global flags
+- `crates/axiathon-client/src/output.rs` — `OutputFormatter` trait with `TableFormatter` (comfy-table), `JsonFormatter` (with ResponseMetadata), `CsvFormatter` (csv crate), `detect_default_format()` TTY detection
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, validation, XDG path convention, no token storage
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection (X-Tenant-ID, Authorization), HTTP status code mapping, header injection prevention
+- `crates/axiathon-client/src/commands/` — 10 command modules: `mod.rs`, `query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`
+- `crates/axiathon-client/src/lib.rs` — barrel exports for all modules
+
+**Files Modified (test fixes for edition 2024 compatibility):**
+- `crates/axiathon-client/Cargo.toml` — changed lint config from `workspace = true` to explicit lints with `unsafe_code = "deny"` (needed for env var test safety blocks)
+- `crates/axiathon-client/tests/cli_structure.rs` — fixed `render_long_help()` mutability, `value_variants()` signature
+- `crates/axiathon-client/tests/config_loading.rs` — wrapped `set_var`/`remove_var` in unsafe blocks for edition 2024
+- `crates/axiathon-client/tests/client_http.rs` — fixed double-slash assertion to check path portion only (test bug: `//api` matched scheme `https://api`)
+
+**Tests:** 98/98 passing (GREEN)
+- cli_structure: 21/21
+- client_http: 14/14
+- completion_generation: 5/5
+- config_loading: 12/12
+- error_exit_codes: 14/14
+- output_formatting: 14/14
+- security: 9/9
+- stub_handlers: 9/9
+
+**Clippy:** Clean (0 warnings)

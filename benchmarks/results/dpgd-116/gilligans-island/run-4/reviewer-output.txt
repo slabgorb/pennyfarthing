@@ -1,0 +1,124 @@
+The `#[error("server error ({0})")]` only formats field `{0}` (the status code), but field `{1}` (the body) is silently omitted from Display. However, the body IS stored and accessible via pattern matching. Let me check what `client.rs` puts in that body field.
+
+At `client.rs:72-73`: `let body = response.text().await.unwrap_or_default();` — the raw server response body is captured. If someone later matches on `ServerError(_, body)` and logs it, that could leak internal server details. But the Display impl only shows the status code — that's a reasonable security tradeoff, though the body capture itself is concerning.
+
+Now I have everything I need. Time to deliver the verdict.
+
+---
+
+*Adjusts monogrammed cufflinks and clears throat with patrician disdain*
+
+# Code Review: Story 6.1 — CLI Framework & Structure
+
+**Reviewer:** Thurston Howell III
+**Branch:** `story/6.1-cli-framework-tests`
+
+---
+
+## Observations
+
+### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary can be produced
+
+The story's primary deliverable is "the `axiathon-client` crate producing the `axiathon` binary." There is no `main.rs` file and no `[[bin]]` section in `crates/axiathon-client/Cargo.toml`. The crate is library-only. Without a binary entry point, there is no `axiathon` executable — the core AC requirement (AC-3 exit code dispatch, AC-9 completion to stdout/instructions to stderr, AC-10 stub output) cannot function in practice. The entire dispatch logic (`match cli.command { ... }`) that calls stub handlers, prints to stderr, and calls `std::process::exit()` is missing.
+
+**At:** `crates/axiathon-client/Cargo.toml` (missing `[[bin]]`), `crates/axiathon-client/src/main.rs` (does not exist)
+
+### [HIGH] `ServerError` variant captures raw server response body — CWE-209 risk
+
+`client.rs:72` captures the full HTTP response body into `CliError::ServerError(status, body)`. While Display only shows the status code, the body is stored and accessible. Any future code that logs `{err:?}` (Debug), or pattern-matches to surface the body, will leak internal server error details (stack traces, internal paths, database errors) to the operator's terminal. The body should either be discarded, truncated, or explicitly sanitized before storage.
+
+**At:** `crates/axiathon-client/src/client.rs:72-74`
+
+### [HIGH] Nightly `rustfmt` check fails — import ordering and attribute formatting
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check fails on `cli.rs` (import ordering: `std::path::PathBuf` should come before clap imports, and `#[command(after_help = ...)]` attributes need multi-line formatting). This is a blocking finding per the project's own gotchas.
+
+**At:** `crates/axiathon-client/src/cli.rs:1-3`, `cli.rs:50`, `cli.rs:62`
+
+### [MEDIUM] `config.rs:8` — `timeout` field is `Option<i64>` allowing negative values through TOML deserialization
+
+The `ConfigFile` struct uses `Option<i64>` for timeout. While there's a runtime check for `timeout < 0`, serde happily deserializes a value like `-999999999999` into an i64, and the `as u64` cast on line 70 wraps negative values to massive unsigned values if the check at line 67 is ever bypassed or refactored. Using `Option<u64>` would make negative values a parse error at the TOML layer, defense in depth.
+
+**At:** `crates/axiathon-client/src/config.rs:8`, `config.rs:70`
+
+### [MEDIUM] `config.rs:79-85` — `load_with_env` silently ignores invalid `AXIATHON_TIMEOUT` values
+
+If `AXIATHON_TIMEOUT` is set to `"abc"` or `"-5"`, the `parse::<u64>()` fails silently and the file/default value is used. An operator who sets `AXIATHON_TIMEOUT=abc` expecting an error will get no feedback. Similarly, `AXIATHON_API_URL` is accepted without any validation (not even the http/https check that `set_api_url` applies).
+
+**At:** `crates/axiathon-client/src/config.rs:79-86`
+
+### [MEDIUM] `config.rs:114-118` — `set_api_url` silently rejects non-HTTP URLs
+
+If `set_api_url("ftp://evil.com")` is called, the URL is silently dropped and the old value kept. No error, no warning. The caller has no way to know the value was rejected. This is a silent failure pattern — should return `Result<(), CliError>`.
+
+**At:** `crates/axiathon-client/src/config.rs:114-119`
+
+### [MEDIUM] `output.rs:135-141` — `chrono_now()` function is misleadingly named; produces UNIX epoch seconds, not ISO 8601
+
+The function is named `chrono_now` but doesn't use the `chrono` crate. It produces bare UNIX epoch seconds (e.g., `"1709827200"`) as the timestamp in `ResponseMetadata`. The AC-4 spec requires `ResponseMetadata` with `timestamp` — operators and scripts parsing JSON output will receive an opaque integer-string instead of a human-readable ISO 8601 timestamp. This is a functional gap in the metadata format.
+
+**At:** `crates/axiathon-client/src/output.rs:135-141`
+
+### [MEDIUM] `client.rs:15-18` — `SiemClient::new` uses `expect()` for HTTP client construction
+
+`reqwest::Client::builder().build().expect(...)` will panic if the TLS backend can't initialize (e.g., no system CA certificates). Per project rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The message "failed to create HTTP client" is not actionable — it doesn't tell the user what to fix. This should return `Result<Self, CliError>`.
+
+**At:** `crates/axiathon-client/src/client.rs:15-18`
+
+### [MEDIUM] `config.rs:5-9` — `ConfigFile` uses default serde behavior (denies unknown fields by default? No — it ignores them)
+
+Serde's default is to **ignore** unknown fields. This means a typo like `api_rul = "..."` is silently ignored — the operator thinks they set the URL but got the default. There's a security test for this (`client_config_ignores_unknown_fields_gracefully`) that accepts EITHER behavior, which means the test is vacuous — it passes regardless of whether unknown fields are rejected or accepted. A proper test would assert ONE expected behavior.
+
+**At:** `crates/axiathon-client/src/config.rs:5-9`, `tests/security.rs:114-145`
+
+### [MEDIUM] Workspace `toml` version mismatch with story spec
+
+Story spec says `toml = "0.9"` but workspace `Cargo.toml` declares `toml = "0.8"`. This may be intentional (0.9 doesn't exist yet or was a spec error), but it should be explicitly noted.
+
+**At:** `Cargo.toml:51`
+
+### [LOW] Unused import warning: `Commands` in `cli_structure.rs:7`
+
+`Commands` is imported but never used directly. The compiler emits a warning. Clean code should not have warnings.
+
+**At:** `crates/axiathon-client/tests/cli_structure.rs:7`
+
+### [LOW] `security.rs:173-179` — `cli_error_is_not_copy` test is vacuous
+
+The test defines an `assert_not_copy` function that does literally nothing — it doesn't actually assert that `CliError` is NOT Copy. The function body is empty. The test name and comment are misleading; it's a no-op.
+
+**At:** `crates/axiathon-client/tests/security.rs:174-179`
+
+### [VERIFIED] Header injection prevention via `HeaderValue::from_str` — correctly rejects `\r\n` in tenant ID and token values at `client.rs:37-45`
+
+### [VERIFIED] Token redacted from Debug output — custom `Debug` impl at `config.rs:29-37` correctly masks token
+
+### [VERIFIED] Exit code mapping — all CliError variants map to non-zero exit codes, auth=3, authz=4, others=1
+
+### [VERIFIED] Shell completion generation is functional (not a stub) — uses `clap_complete::generate()` correctly at `commands/completion.rs:5-8`
+
+### [VERIFIED] All stub handlers return `CliError::NotImplemented` with correct story references
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 7 |
+| Low | 2 |
+| Verified Good | 5 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+
+1. **No binary entry point** — The `axiathon` binary literally cannot be built. The entire dispatch/exit-code/stderr machinery is missing. This is the story's primary deliverable.
+2. **Server error body capture** — Raw response bodies stored in error variants create a CWE-209 vector.
+3. **Nightly fmt failure** — Per project gotchas, this is a mandatory pre-merge gate.
+
+The implementation has solid foundations — the clap structure, header injection prevention, and test coverage are genuinely good. But without `main.rs`, this crate produces a library, not the `axiathon` CLI binary. That's like building a yacht with no hull, darling — all the brass fittings in the world won't keep it afloat.
