@@ -1,3 +1,5 @@
+category: "TV Series"
+
 # House MD Theme
 # House M.D. (2004-2012), David Shore / Fox
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", medical book, anatomy chart, medical illustrations"
-  tier: D
+  tier: S
+  optimized: true
   spinner_verbs:
     - Running the differential
     - It's never lupus
@@ -51,10 +54,18 @@ theme:
     era: contemporary
     genre: drama
     energy: intense
+    zeitgeist: low
+    scrutiny: adversarial
+    cooperation_model: ensemble
+    conflict_approach: confrontation
+    authority_model: meritocratic
+    formality: casual
+    intellectual_style: analytical
+    stakes: personal
 
 zeitgeist:
   score: 73.0
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

@@ -23,6 +23,7 @@ def _get_root() -> Path:
     except Exception:
         return Path.cwd()
 
+
 VALID_PANELS = [
     "sprint",
     "git",
@@ -144,9 +145,7 @@ def validate_layout_name(name: str) -> bool:
     return bool(LAYOUT_NAME_PATTERN.match(name))
 
 
-def save_named_layout(
-    name: str, layout_data: dict, project_dir: Path | None = None
-) -> dict:
+def save_named_layout(name: str, layout_data: dict, project_dir: Path | None = None) -> dict:
     """Save a named layout to config.local.yaml.
 
     Args:

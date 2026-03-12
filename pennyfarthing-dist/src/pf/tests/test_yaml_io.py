@@ -178,9 +178,7 @@ class TestDeterministicOutput:
         output = canonical_dump(data)
 
         for i, line in enumerate(output.split("\n"), 1):
-            assert line == line.rstrip(), (
-                f"Line {i} has trailing whitespace: {line!r}"
-            )
+            assert line == line.rstrip(), f"Line {i} has trailing whitespace: {line!r}"
 
     def test_ends_with_single_newline(self, full_sprint_file: Path) -> None:
         """Output should end with exactly one newline."""
@@ -200,9 +198,7 @@ class TestDeterministicOutput:
         for line in output.split("\n"):
             if line and line[0] == " ":
                 leading = len(line) - len(line.lstrip())
-                assert leading % 2 == 0, (
-                    f"Non-2-space indent ({leading}): {line!r}"
-                )
+                assert leading % 2 == 0, f"Non-2-space indent ({leading}): {line!r}"
 
     def test_multiline_uses_block_scalars(self, full_sprint_file: Path) -> None:
         """Multiline string fields (description) should use block scalar style (|)."""
@@ -266,9 +262,7 @@ class TestRoundTripIntegrity:
 
         assert str(data2["epics"][0]["description"]) == original_desc
 
-    def test_round_trip_preserves_list_fields(
-        self, tmp_path: Path, full_sprint_file: Path
-    ) -> None:
+    def test_round_trip_preserves_list_fields(self, tmp_path: Path, full_sprint_file: Path) -> None:
         """acceptance_criteria lists survive round-trip."""
         data1 = read_sprint(full_sprint_file)
         story = data1["epics"][0]["stories"][0]
@@ -307,12 +301,10 @@ class TestRoundTripIntegrity:
 
         # Dates should be strings, not datetime objects
         start = data2["sprint"]["start_date"]
-        assert isinstance(start, str) or hasattr(start, '__str__')
+        assert isinstance(start, str) or hasattr(start, "__str__")
         assert str(start) == "2026-01-20"
 
-    def test_double_round_trip_stable(
-        self, tmp_path: Path, full_sprint_file: Path
-    ) -> None:
+    def test_double_round_trip_stable(self, tmp_path: Path, full_sprint_file: Path) -> None:
         """Two consecutive round-trips produce byte-identical output."""
         data1 = read_sprint(full_sprint_file)
 
@@ -360,9 +352,7 @@ class TestAtomicWrites:
         assert out_path.exists()
         assert out_path.stat().st_size > 0
 
-    def test_write_overwrites_existing(
-        self, tmp_path: Path, minimal_sprint_file: Path
-    ) -> None:
+    def test_write_overwrites_existing(self, tmp_path: Path, minimal_sprint_file: Path) -> None:
         """write_sprint should overwrite an existing file."""
         out_path = tmp_path / "output.yaml"
         out_path.write_text("old content")
@@ -374,9 +364,7 @@ class TestAtomicWrites:
         assert "old content" not in content
         assert "sprint:" in content
 
-    def test_no_temp_file_left_on_success(
-        self, tmp_path: Path, minimal_sprint_file: Path
-    ) -> None:
+    def test_no_temp_file_left_on_success(self, tmp_path: Path, minimal_sprint_file: Path) -> None:
         """No .yaml.tmp file should remain after successful write."""
         data = read_sprint(minimal_sprint_file)
         out_path = tmp_path / "output.yaml"
@@ -421,9 +409,7 @@ class TestAtomicWrites:
         # Success here means temp was in same directory
         assert out_path.exists()
 
-    def test_write_file_is_valid_yaml(
-        self, tmp_path: Path, full_sprint_file: Path
-    ) -> None:
+    def test_write_file_is_valid_yaml(self, tmp_path: Path, full_sprint_file: Path) -> None:
         """Written file must be parseable as valid YAML."""
         import yaml
 
@@ -573,9 +559,7 @@ class TestKeyOrdering:
         expected_order = [k for k in STORY_KEY_ORDER if k in story_keys]
         assert story_keys == expected_order
 
-    def test_scrambled_keys_reordered(
-        self, tmp_path: Path, scrambled_keys_file: Path
-    ) -> None:
+    def test_scrambled_keys_reordered(self, tmp_path: Path, scrambled_keys_file: Path) -> None:
         """Reading scrambled keys and dumping should produce canonical order."""
         data = read_sprint(scrambled_keys_file)
         output = canonical_dump(data)
@@ -779,6 +763,7 @@ class TestShardedReadWrite:
 
         # Index should still have string refs
         import yaml
+
         with open(index_path) as f:
             raw_index = yaml.safe_load(f)
         assert isinstance(raw_index["epics"][0], str)
@@ -828,14 +813,17 @@ class TestShardedReadWrite:
         write_sprint(index_path, raw_data)
 
         # Existing shard files must still exist
-        assert (sharded_sprint_dir / "epic-MSSCI-14298.yaml").exists(), \
+        assert (sharded_sprint_dir / "epic-MSSCI-14298.yaml").exists(), (
             "Existing shard epic-MSSCI-14298.yaml was deleted"
-        assert (sharded_sprint_dir / "epic-40.yaml").exists(), \
+        )
+        assert (sharded_sprint_dir / "epic-40.yaml").exists(), (
             "Existing shard epic-40.yaml was deleted"
+        )
 
         # New shard must be created
-        assert (sharded_sprint_dir / "epic-99.yaml").exists(), \
+        assert (sharded_sprint_dir / "epic-99.yaml").exists(), (
             "New shard epic-99.yaml was not created"
+        )
 
         # Index should have all three as string refs
         with open(index_path) as f:
@@ -852,6 +840,7 @@ class TestShardedReadWrite:
 
         # Should be a single file, no shard files created
         import yaml
+
         with open(out_path) as f:
             raw = yaml.safe_load(f)
         assert isinstance(raw["epics"][0], dict)  # Full dicts, not refs

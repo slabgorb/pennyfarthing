@@ -68,6 +68,7 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     status_counts: dict[str, int] = {}
     total_points = 0
     completed_points = 0
+    in_review_points = 0
 
     for story in stories:
         status = story.get("status", "backlog")
@@ -78,15 +79,14 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
 
         if status in ("done", "completed"):
             completed_points += points
+        if status == "in_review":
+            in_review_points += points
 
     # Collect filtered stories if a filter is set
     filtered_stories: list[dict] = []
     if filter_status:
         match_statuses = _FILTER_MAP.get(filter_status, {filter_status})
-        filtered_stories = [
-            s for s in stories
-            if s.get("status", "backlog") in match_statuses
-        ]
+        filtered_stories = [s for s in stories if s.get("status", "backlog") in match_statuses]
 
     return {
         "sprint": sprint_info,
@@ -98,6 +98,7 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
         "completed": status_counts.get("done", 0) + status_counts.get("completed", 0),
         "total_points": total_points,
         "completed_points": completed_points,
+        "in_review_points": in_review_points,
         "filter": filter_status,
         "filtered_stories": filtered_stories,
     }
@@ -161,7 +162,12 @@ def format_status(status: dict[str, Any]) -> str:
     lines.append("")
 
     # Points
-    lines.append(f"Points: {status.get('completed_points', 0)}/{status.get('total_points', 0)}")
+    in_review_pts = status.get("in_review_points", 0)
+    pts_display = f"Points: {status.get('completed_points', 0)}"
+    if in_review_pts:
+        pts_display += f" (+{in_review_pts} in review)"
+    pts_display += f"/{status.get('total_points', 0)}"
+    lines.append(pts_display)
 
     return "\n".join(lines)
 
@@ -195,4 +201,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

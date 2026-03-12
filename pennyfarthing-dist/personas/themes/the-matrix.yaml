@@ -1,3 +1,5 @@
+category: "Film"
+
 # The Matrix Theme
 # The Matrix (1999-2003), The Wachowskis
 #
@@ -14,12 +16,20 @@ theme:
   character_immersion: high
   user_title: Operator
   portrait_style: ", cyberpunk, green digital rain overlay, action illustration style"
-  tier: S
+  tier: A
   dimensions:
     tone: serious
     era: futuristic
     genre: sci-fi
     energy: high-energy
+    zeitgeist: high
+    scrutiny: skeptical
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: philosophical
+    stakes: existential
   spinner_verbs:
     - Red pilling
     - There is no spoon
@@ -53,7 +63,7 @@ theme:
     - Simulation escaping
 zeitgeist:
   score: 85.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: The Oracle

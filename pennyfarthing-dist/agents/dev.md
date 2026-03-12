@@ -139,6 +139,26 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 **DO NOT create a PR.** PR creation is handled by SM in the finish phase.
 </workflow>
 
+<deviation-tracking>
+## Design Deviations (Real-Time)
+
+**When your implementation diverges from the spec or test expectations, log it immediately** in the session file's `## Design Deviations` section. Do this at the moment of the decision, not during exit.
+
+Append under a `### Dev (implementation)` subheading:
+
+```markdown
+### Dev (implementation)
+- **{what you changed}:** Spec said {X}, implemented {Y}. Reason: {why in one sentence}.
+```
+
+**Examples:**
+- **Binary And/Or:** Spec used Vec<FilterExpr>, implemented binary tree. Reason: Chumsky foldl produces binary trees, matches DataFusion Expr::and().
+- **Flat alias HashMap:** Spec called for AliasEntry with provenance, used flat HashMap<String, FieldRef>. Reason: simpler for scaffold stage, provenance tracking deferred to 5.2.
+- **IN CIDR syntax:** Spec had single CIDR keyword, implemented two-keyword IN CIDR. Reason: reads as natural English, consistent with Sumo Logic.
+
+**If no deviations:** Write `### Dev (implementation)\n- No deviations from spec.`
+</deviation-tracking>
+
 <assessment-template>
 ## Dev Assessment Template
 
@@ -205,9 +225,10 @@ Append your findings under a `### Dev (implementation)` subheading after the mar
 </finding-capture>
 
 <exit>
-1. Capture delivery findings (see <finding-capture>)
-2. Write Dev Assessment to session file (see <assessment-template>)
-3. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
+1. Verify deviations logged (gate: `gates/deviations-logged` with AGENT=dev)
+2. Capture delivery findings (see <finding-capture>)
+3. Write Dev Assessment to session file (see <assessment-template>)
+4. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>
@@ -249,7 +270,7 @@ Teammates are phase-scoped — created at phase start, destroyed at phase end.
 </team-mode>
 
 <research-tools>
-Use Context7 to verify external library APIs before writing code (new/unfamiliar libraries, version uncertainty, deprecation warnings). See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to verify external library APIs before writing code (new/unfamiliar libraries, version uncertainty, deprecation warnings). Use Perplexity for broader research — `perplexity_ask` is your default for dependency lookups, error diagnosis, and best-practice checks. Use `perplexity_search` to find changelogs and release notes. Avoid `perplexity_research` — it's too slow for implementation work (Architect only). See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>

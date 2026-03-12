@@ -1,0 +1,30 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the foundational CLI framework with 10 acceptance criteria requiring structural, behavioral, and security validation.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `crates/axiathon-client/tests/cli_structure.rs` | 10 | AC-1, AC-2, AC-6: Command groups, help rendering, derive macros |
+| `crates/axiathon-client/tests/exit_codes.rs` | 20 | AC-3: CliError enum, exit_code() mapping, Display sanitization |
+| `crates/axiathon-client/tests/output_format.rs` | 13 | AC-4: OutputFormatter trait, table/json/csv, CSV escaping, JSON metadata |
+| `crates/axiathon-client/tests/global_flags.rs` | 18 | AC-5: --format, -v repeatable, --quiet, --server, --tenant, --config, --no-color, env var |
+| `crates/axiathon-client/tests/siem_client.rs` | 16 | AC-7: SiemClient construction, header injection, HTTP status code mapping |
+| `crates/axiathon-client/tests/config_loading.rs` | 13 | AC-8: TOML loading, env var overrides, validation, XDG paths |
+| `crates/axiathon-client/tests/completion_stubs.rs` | 11 | AC-9, AC-10: Shell completion (bash/zsh/fish/powershell), stub handlers |
+| `crates/axiathon-client/tests/security.rs` | 8 | CWE-209, header injection (CRLF), silent error swallowing, token security |
+
+**Tests Written:** 109 tests covering all 10 ACs
+**Status:** RED (failing — all 7 test files fail to compile due to missing modules: `cli`, `error`, `output`, `client`, `config`, `commands`)
+
+**Key modules the Dev must implement:**
+- `axiathon_client::cli` — `Cli` (Parser), `Commands` (Subcommand) with all command groups
+- `axiathon_client::error` — `CliError` enum with `exit_code()` method
+- `axiathon_client::output` — `OutputFormat`, `OutputFormatter`, `ResponseMetadata`
+- `axiathon_client::client` — `SiemClient` HTTP wrapper
+- `axiathon_client::config` — `ClientConfig` TOML loading
+- `axiathon_client::commands::completion` — `generate_completion()`
+- `axiathon_client::commands` — `stub_message()`
+
+**Handoff:** To Dev for implementation

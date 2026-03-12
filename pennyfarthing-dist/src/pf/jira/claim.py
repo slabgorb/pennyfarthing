@@ -24,7 +24,6 @@ from pf.jira.client import (
 )
 
 
-
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments.
 
@@ -34,9 +33,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     Returns:
         Parsed arguments namespace
     """
-    parser = argparse.ArgumentParser(
-        description="Check availability and claim a Jira story"
-    )
+    parser = argparse.ArgumentParser(description="Check availability and claim a Jira story")
     parser.add_argument("issue_key", help="Jira issue key (e.g., MSSCI-12345)")
     parser.add_argument(
         "--claim",
@@ -141,8 +138,7 @@ def claim_story(issue_key: str) -> dict[str, Any]:
 
     if not story_id:
         errors.append(
-            f"Could not find story with jira={issue_key} in sprint YAML — "
-            f"status transition skipped"
+            f"Could not find story with jira={issue_key} in sprint YAML — status transition skipped"
         )
         return {
             "success": False,
@@ -300,6 +296,7 @@ def __getattr__(name: str) -> Any:
     """
     if name == "transition_story":
         from pf.sprint.story_transition import transition_story
+
         return transition_story
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

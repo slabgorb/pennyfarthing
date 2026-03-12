@@ -70,7 +70,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 1. Context already loaded by /prime
 2. **Context gate check:** Validate story context exists:
    ```bash
-   pf context-docs validate story {story_id}
+   pf validate context-story {story_id}
    ```
    - Exit 0: proceed — context is valid
    - Exit 1 or 2: STOP — "Story context not found or invalid. Ensure SM setup completed successfully."
@@ -327,6 +327,25 @@ If no teammates found issues: `**Overall:** simplify: clean`
 If a teammate timed out: note it in the table as `timeout — no result`.
 </verify-workflow>
 
+<deviation-tracking>
+## Design Deviations (Real-Time)
+
+**When your test design diverges from the AC or story spec, log it immediately** in the session file's `## Design Deviations` section. Do this at the moment of the decision, not during exit.
+
+Append under a `### TEA (test design)` subheading:
+
+```markdown
+### TEA (test design)
+- **{what you changed}:** Spec said {X}, tests use {Y}. Reason: {why in one sentence}.
+```
+
+**Examples:**
+- **Validation strategy:** AC says "reject invalid input", tests use property-based generation instead of example list. Reason: catches more edge cases than enumerated examples.
+- **Error granularity:** AC says "return error", tests assert specific error variant. Reason: string-bag errors violate SOUL.md #5.
+
+**If no deviations:** Write `### TEA (test design)\n- No deviations from spec.`
+</deviation-tracking>
+
 <assessment-template>
 ## TEA Assessment Template
 
@@ -415,9 +434,10 @@ Append your findings under a `### TEA (test design)` subheading after the marker
 </finding-capture>
 
 <exit>
-1. Capture delivery findings (see <finding-capture>)
-2. Write TEA Assessment to session file (see <assessment-template>)
-3. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
+1. Verify deviations logged (gate: `gates/deviations-logged` with AGENT=tea)
+2. Capture delivery findings (see <finding-capture>)
+3. Write TEA Assessment to session file (see <assessment-template>)
+4. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>

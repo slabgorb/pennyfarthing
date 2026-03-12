@@ -91,7 +91,9 @@ def assign_issue(
                 return {"success": True, "already_assigned": True}
 
     if dry_run:
-        action = f"assign {issue_key} to {assignee_email}" if assignee_email else f"unassign {issue_key}"
+        action = (
+            f"assign {issue_key} to {assignee_email}" if assignee_email else f"unassign {issue_key}"
+        )
         print(f"[DRY RUN] Would {action}")
         return {"success": True, "dry_run": True}
 

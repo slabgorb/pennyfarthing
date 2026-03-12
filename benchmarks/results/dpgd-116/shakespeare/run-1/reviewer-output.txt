@@ -1,0 +1,130 @@
+Now I have a thorough picture. Let me deliver my verdict.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*"The quality of mercy is not strained, but the quality of this code shall be examined with the utmost rigour."*
+
+Nerissa and I have traced every data flow, examined every clause. Here are our findings.
+
+---
+
+## Findings
+
+### `[HIGH]` Missing `main.rs` — binary entry point does not exist — `crates/axiathon-client/src/main.rs`
+
+The story specification requires a `main.rs` binary entry point that initializes tracing, dispatches commands, catches errors, writes them to stderr, and calls `std::process::exit()`. No `main.rs` exists. No `[[bin]]` section in `Cargo.toml`. The `axiathon` binary literally cannot be built. This is not a cosmetic omission — it is the top-level wiring that connects the entire CLI framework.
+
+**AC-3** (exit codes via `std::process::exit`), **AC-9** (completion output to stdout, instructions to stderr), and **AC-10** (stub handlers printing messages) all depend on `main.rs` to orchestrate output to the correct streams. Without it, these ACs are only testable at the library level, not as actual CLI behavior.
+
+---
+
+### `[HIGH]` Nightly `rustfmt` check fails — `crates/axiathon-client/src/commands/completion.rs`, `error.rs`, `tests/cli_structure.rs`
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* The check fails with diffs in import ordering (`completion.rs`), match arm formatting (`error.rs`), and import placement (`cli_structure.rs`). This is a blocking quality gate per project conventions.
+
+---
+
+### `[HIGH]` `RawConfig` silently accepts unknown TOML fields — `crates/axiathon-client/src/config.rs:10-21`
+
+`RawConfig` uses `#[derive(Deserialize, Default)]` without `#[serde(deny_unknown_fields)]`. An operator who typos `server_url` as `serverurl` or `server-url` gets no error — the field is silently ignored and defaults are used. This is a classic config debugging nightmare. Given that this is a security-sensitive SIEM tool, silent misconfiguration is a real operational risk.
+
+---
+
+### `[MEDIUM]` `config_rejects_server_url_without_scheme` test is vacuous — `tests/security.rs:109-124`
+
+This test allows *either* an `Err` return *or* an `Ok` with a valid scheme. It never asserts the specific behavior — it will pass regardless of what `load_from` does with a schemeless URL. Looking at the implementation, `config.rs:70-74` does reject schemeless URLs, so the test should assert `is_err()` definitively rather than accepting both outcomes.
+
+---
+
+### `[MEDIUM]` `config_file_permissions_checked_or_no_secrets` test is similarly vacuous — `tests/security.rs:141-165`
+
+Same pattern: wraps the assertion in `if let Ok(config)`. If parsing fails (e.g., due to future `deny_unknown_fields`), the test passes without verifying anything. Given the `RawConfig` explicitly declares `token`/`api_token`/`secret` fields with `#[allow(dead_code)]`, this test *should* assert `is_ok()` first, then check `token().is_none()`.
+
+---
+
+### `[MEDIUM]` `default_headers()` silently drops invalid header values — `crates/axiathon-client/src/client.rs:71-84`
+
+If `HeaderValue::from_str()` returns `Err`, the header is silently omitted. While `validate_header_value()` in `new()` catches `\r`, `\n`, `\0`, the `HeaderValue::from_str()` rejection surface is broader (non-visible ASCII). A tenant ID or token that passes `validate_header_value()` but fails `HeaderValue::from_str()` (e.g., containing non-ASCII bytes) would result in silently unauthenticated requests — a subtle and dangerous failure mode. This should at minimum log a warning, or better, validate with `HeaderValue::from_str()` directly in `new()`.
+
+---
+
+### `[MEDIUM]` `toml` version mismatch with story spec — `crates/axiathon-client/Cargo.toml:21`
+
+Story spec says `toml 0.9`, `Cargo.toml` uses `toml = "0.8"`. Neither version is in `[workspace.dependencies]` in the root `Cargo.toml` despite the story spec saying to add it there. Same for `reqwest`, `comfy-table`, `keyring`, `clap_complete`, `dirs`, and `csv` — none are workspace-managed. This creates version drift risk across crates.
+
+---
+
+### `[MEDIUM]` `edition = "2021"` in crate vs `edition = "2024"` in workspace — `crates/axiathon-client/Cargo.toml:2`
+
+The crate sets `edition = "2021"` explicitly, while the workspace package declares `edition = "2024"`. This mismatch means `axiathon-client` won't inherit the workspace edition. If intentional (e.g., dependency compat), it should be documented. If not, it's a bug.
+
+---
+
+### `[MEDIUM]` Test race conditions with `std::env::set_var` — `tests/config_loading.rs:71-73, 88-90, 113-115`
+
+Multiple tests set/remove the same environment variables (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`) without synchronization. With `cargo test` running tests in parallel, these tests can interfere with each other. Rust 1.66+ warns about this. Use `std::sync::Mutex` or a serial test runner, or use unique env var names per test.
+
+---
+
+### `[MEDIUM]` `init` command is a stub despite story spec saying it should be functional — `crates/axiathon-client/src/commands/init.rs`
+
+The story scope says: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. Completion is functional, but `init` returns `Err(CliError::NotImplemented("Story 6.1"))` — it references itself. It should create the config directory and write a default `cli.toml`.
+
+---
+
+### `[LOW]` Compiler warnings in tests — `tests/cli_structure.rs:10-11`
+
+Unused imports `Commands` and `CliError` generate compiler warnings. Clean these up.
+
+---
+
+### `[LOW]` `OutputFormat` parsing is case-sensitive — `crates/axiathon-client/src/output.rs:20-27`
+
+`"Table"`, `"JSON"`, `"CSV"` are all rejected. Consider case-insensitive parsing for operator friendliness, or document the case-sensitivity requirement.
+
+---
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in `lib.rs:2` — compliant with Rust coding rules.
+
+### `[VERIFIED]` Header injection prevention (CWE-113) — `SiemClient::validate_header_value()` rejects `\r`, `\n`, `\0` in tenant ID and token. Tests cover all three vectors.
+
+### `[VERIFIED]` CWE-209 error display — `CliError::Display` impl sanitizes output, does not expose inner `ServerError` messages. Tests verify this.
+
+### `[VERIFIED]` Exit code mapping is correct: auth=3, authz=4, errors=1, success=0. `#[non_exhaustive]` on `CliError`.
+
+### `[VERIFIED]` Token never exposed via `ClientConfig::token()` — always returns `None`. Secret fields in `RawConfig` are parsed but discarded.
+
+### `[VERIFIED]` `OutputFormatter` trait with Table/JSON/CSV implementations. JSON includes `ResponseMetadata` (request_id, timestamp, api_version). CSV uses proper `csv` crate escaping.
+
+### `[VERIFIED]` All stub handlers return `CliError::NotImplemented` with correct story references and exit code 1.
+
+### `[VERIFIED]` Clap derive macros used throughout — no imperative command building (AC-6).
+
+### `[VERIFIED]` `SiemClient` rejects `javascript:` and `data:` URL schemes, requires `http://` or `https://`.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 6 |
+| Low | 2 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity issues block approval:
+
+1. **No `main.rs`** — the binary entry point is missing entirely. The `axiathon` binary cannot be built.
+2. **Nightly `rustfmt` fails** — project gotchas mandate this check.
+3. **`RawConfig` accepts unknown fields silently** — operators will be bitten by typos in their config files with no error feedback.
+
+The implementation shows solid security awareness (header injection, CWE-209, URL scheme validation, token exclusion from config) and good structural organization. But a CLI framework without a binary entry point is like a contract without a signature — it binds no one.
+
+*"I am not bound to please thee with my answer, but I am bound to deliver it truly."*

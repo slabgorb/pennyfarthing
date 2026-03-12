@@ -148,13 +148,9 @@ def _validate_prd(path: Path) -> tuple[list[str], list[str]]:
         filler_count += len(pattern.findall(content))
 
     if filler_count > 10:
-        errors.append(
-            f"Information density: {filler_count} filler phrases found (critical: >10)"
-        )
+        errors.append(f"Information density: {filler_count} filler phrases found (critical: >10)")
     elif filler_count > 5:
-        warnings.append(
-            f"Information density: {filler_count} filler phrases found (warning: 5-10)"
-        )
+        warnings.append(f"Information density: {filler_count} filler phrases found (warning: 5-10)")
 
     # Measurability: check requirements sections for subjective language
     for name, body in sections.items():

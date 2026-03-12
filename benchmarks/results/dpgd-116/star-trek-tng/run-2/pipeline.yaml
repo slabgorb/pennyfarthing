@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: star-trek-tng
+run_id: 2
+timestamp: '2026-03-08T10:27:17.421589+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-star-trek-tng-run-2
+phases:
+  tea:
+    token_usage:
+      input: 21
+      output: 17336
+    duration_s: 345.37
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 419
+      output: 13552
+    duration_s: 287.22
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 9
+      output: 5145
+    duration_s: 102.41
+    exit_code: 0

@@ -1,0 +1,82 @@
+Good. I've verified the critical findings independently. Here's my structured review:
+
+---
+
+# Story 6.1: CLI Framework & Structure — Review
+
+**"OFF WITH THEIR HEADS!"** — The Queen has inspected this work and has findings.
+
+## Findings
+
+### `[CRITICAL]` Missing `main.rs` — no binary entry point exists
+**`crates/axiathon-client/src/main.rs`** — file does not exist. No `[[bin]]` section in `Cargo.toml` either. Story 6.1 is defined as delivering "the `axiathon` binary" but the crate is library-only. Without `main.rs`:
+- No command dispatch (CLI args → handler)
+- No tracing initialization
+- No error-to-exit-code-to-stderr flow (AC-3 partially unverifiable)
+- No config loading → CLI flag override → SiemClient wiring
+- No keyring token loading in sync context before Tokio (AC-8 requirement)
+- `axiathon --help` cannot actually run as a binary
+- AC-9 shell completion generation cannot execute end-to-end
+- AC-10 stub "not yet implemented" messages cannot display to users
+
+### `[HIGH]` Nightly rustfmt fails — 417 lines of diffs
+Per the project's own gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight."* Running it produces 417 lines of import ordering and line-length diffs across all source files. This blocks CI.
+
+### `[HIGH]` `keyring` dependency declared but never used
+`keyring = { workspace = true }` appears in `Cargo.toml:15` but `use keyring` appears in zero files. AC-8 requires: *"Tokens in OS keychain via `keyring` crate. Load token at CLI startup in sync context BEFORE entering Tokio runtime."* This is unimplemented. The dependency is dead weight.
+
+### `[MEDIUM]` `SiemClient::new()` accepts arbitrary strings as `base_url` — `client.rs:11`
+No URL validation. Empty string, whitespace, or `"not-a-url"` all accepted silently. The error surfaces later as a confusing reqwest failure rather than a clear "invalid URL" at construction time.
+
+### `[MEDIUM]` `NotFound(String)` leaks the full internal URL — `error.rs:13` / `client.rs:85`
+The `NotFound` variant stores the full constructed URL (`format!("{}{path}", self.base_url)`), but Display says `"resource not found"` — so the inner string is swallowed. This is inconsistent: either use the URL in the message for debugging, or don't store it. Currently it's dead data. If a future change exposes it via `{0}`, it would leak the internal server URL (CWE-209).
+
+### `[MEDIUM]` JSON output generates a new `request_id` per format call — `output.rs`
+`ResponseMetadata` creates `uuid::Uuid::new_v4()` inside the formatter. This means request IDs are untraceable — they don't correlate with any server-side request. Future stories expecting request tracing will need to refactor this.
+
+### `[LOW]` `tenant_id` passed as raw `String`, not `TenantId` newtype — `client.rs:26`
+The project's Rust rules state: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `axiathon-core` exports `TenantId`, but `SiemClient::with_tenant()` accepts `&str`. This bypasses the validated constructor pattern.
+
+### `[VERIFIED]` CRLF injection prevention in headers — `client.rs:21,27`
+Token and tenant_id both strip `\r` and `\n` before header injection. Tested in `siem_client.rs`. CWE-113 mitigated.
+
+### `[VERIFIED]` No token field in config struct — `config.rs`
+Config struct has only `api_url` and `timeout`. Tokens cannot accidentally be written to `cli.toml`. AC-8 token-not-in-config requirement met.
+
+### `[VERIFIED]` Error Display sanitized — no IP/port leakage — `error.rs`
+`ServerError` shows `"server error: please try again later"`, not the inner string. CWE-209 mitigated (though `NotFound` has the inconsistency noted above).
+
+### `[VERIFIED]` 91 tests pass, comprehensive coverage of library components
+CLI structure, global flags, SiemClient HTTP mapping, config loading, output formatting, exit codes, stub handlers, shell completion — all tested and passing.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present — `lib.rs:2`
+
+## Data Flow Trace
+
+`axiathon --server http://example.com status show` →
+
+1. Clap parses → `Cli { server: Some(...), command: Commands::Status(...) }` ✓
+2. **BROKEN**: No `main.rs` to load config, apply `--server` override, create `SiemClient`, dispatch to handler, map error to exit code
+3. Handler `handle_status()` returns `NotImplemented` (expected for stub) ✓
+4. Exit code mapping works in unit tests ✓
+
+**Wiring is broken** — library components are individually solid but nothing connects them.
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+The library code quality is genuinely good — well-tested, secure patterns, proper error types, CRLF sanitization. The King of Hearts notes the craftsmanship. But the Queen overrules:
+
+**A story that promises a binary but delivers only a library is not complete.**
+
+### Required before approval:
+1. **Create `main.rs`** with binary entry point, command dispatch, config loading + CLI flag override, error → stderr + exit code flow
+2. **Add `[[bin]]` to `Cargo.toml`** (or ensure default binary detection works with `main.rs`)
+3. **Run `cargo +nightly fmt --all`** and fix all 417 lines of import ordering violations
+4. **Either implement keyring loading or remove the `keyring` dependency** — dead dependencies are noise
+
+### Recommended (non-blocking):
+5. Validate `base_url` in `SiemClient::new()`
+6. Decide on `NotFound(String)` — use it or remove it
+7. Accept `&TenantId` instead of `&str` in `with_tenant()`

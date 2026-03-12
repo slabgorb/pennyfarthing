@@ -1,0 +1,94 @@
+I now have a complete picture. Time to deliver my verdict.
+
+---
+
+*Senators, Conscript Fathers, lend me your ears.*
+
+*I have examined every stone of this edifice that the developer would place before us, and I must now deliver my speech — not to praise, but to prosecute where prosecution is due, and to acknowledge where the craft is sound.*
+
+---
+
+## Review Findings — Story 6.1: CLI Framework & Structure
+
+### Critical / High Severity (Blocks Merge)
+
+**1. [HIGH] `main.rs` is a dead end — no command dispatch, no exit codes, no error handling** at `crates/axiathon-client/src/main.rs:7-8`
+
+`main.rs` parses the CLI and immediately discards the result (`let _cli = Cli::parse()`). It never dispatches commands, never calls `handle_stub()`, never prints errors to stderr, and never calls `std::process::exit()`. AC-3 requires exit codes 0/1/3/4 to actually be emitted by the binary. AC-10 requires stub handlers to print "not yet implemented" — but no handler is ever invoked. The binary parses arguments and exits 0 regardless of the command. This is the central wiring failure: the framework exists but the binary doesn't use it.
+
+**2. [HIGH] `ServerError` Display leaks internal details (CWE-209)** at `crates/axiathon-client/src/error.rs:8-9`
+
+The `ServerError` variant's display is `"server error: an internal error occurred"` — which looks safe. However, the `client.rs:78` constructs `CliError::ServerError(format!("server returned {status}"))` and the reqwest error path at line 65 does `CliError::ServerError(e.to_string())`, which can contain connection details, DNS resolution info, internal hostnames, and full reqwest error chains. The inner `String` payload is never used in Display (good), but the `Debug` derive exposes it. If any error path logs or prints `{err:?}` instead of `{err}`, internal details leak. The test `security_server_error_does_not_leak_internal_details` at `tests/security_test.rs:20-29` actually passes because the Display impl is generic — but the test has a logic bug: `!display.contains("PostgreSQL") || !display.contains("db-prod-03")` is an OR, so it passes if *either* is absent. This assertion is vacuous for the current Display impl and would also pass even if it leaked one of the two strings. The correct assertion is AND: `!display.contains("PostgreSQL") && !display.contains("db-prod-03")`.
+
+**3. [HIGH] Nightly `cargo fmt` fails across 21 diff locations** — per gotchas.md, this must pass before approval. Import ordering (std before external before crate-local) is not followed. This will fail CI.
+
+**4. [HIGH] `ClientConfig` silently accepts unknown TOML fields** at `crates/axiathon-client/src/config.rs:10-11`
+
+The `ClientConfig` struct uses default serde deserialization which silently ignores unknown fields. An operator who types `servr_url` (typo) gets the default `http://localhost:8080` with zero feedback. This is a config safety concern. Should use `#[serde(deny_unknown_fields)]` to catch typos.
+
+### Medium Severity (Should Fix)
+
+**5. [MEDIUM] `toml` version mismatch with story spec** at `crates/axiathon-client/Cargo.toml:24`
+
+Story spec says `toml 0.9`, Cargo.toml uses `toml = "0.8"`. The latest `toml` crate is 0.8.x (0.9 doesn't exist yet), so the spec is wrong, not the code. But this should be documented or the spec updated.
+
+**6. [MEDIUM] `exit_code()` returns `u32` but `std::process::exit()` takes `i32`** at `crates/axiathon-client/src/error.rs:40`
+
+When `main.rs` eventually calls `std::process::exit(err.exit_code())`, it will need a cast. The method should return `i32` to match the stdlib API and avoid a `as i32` cast at every call site.
+
+**7. [MEDIUM] `SiemClient` has no timeout configuration** at `crates/axiathon-client/src/client.rs:36-38`
+
+`ClientConfig` has a `timeout` field, but `SiemClient::new()` doesn't accept or use it. The reqwest client is built with no timeout, meaning requests can hang indefinitely. AC-7 specifies `ConnectionTimeout` error mapping, but no timeout is configured to trigger it. `reqwest` connect errors and timeouts are both routed to `ServerUnavailable` (line 62), not `ConnectionTimeout` — the `ConnectionTimeout` variant is dead code.
+
+**8. [MEDIUM] `ConnectionTimeout` variant is unreachable** at `crates/axiathon-client/src/error.rs:14`
+
+No code path ever constructs `CliError::ConnectionTimeout`. The `client.rs:60-66` error handler maps both `e.is_connect()` and `e.is_timeout()` to `ServerUnavailable`. The `ConnectionTimeout` variant exists but is never produced.
+
+**9. [MEDIUM] `keyring` crate listed in story spec but not in dependencies** at `crates/axiathon-client/Cargo.toml`
+
+The story spec lists `keyring 3` as a key dependency for OS keychain credential storage. It's not present in Cargo.toml. This is arguably out of scope (Story 9.1), but the spec says "Load token at CLI startup in sync context BEFORE entering Tokio runtime" — this foundational loading should at least have a placeholder.
+
+**10. [MEDIUM] Test `security_server_error_does_not_leak_internal_details` has a vacuous assertion** at `tests/security_test.rs:27`
+
+The assertion uses `||` (OR) where `&&` (AND) is needed: `!display.contains("PostgreSQL") || !display.contains("db-prod-03")`. With OR, at least one of the negations is always true when the display string is generic. This test can never fail regardless of the Display impl. It's a false-pass bug.
+
+### Low Severity (Non-blocking)
+
+**11. [LOW] `expect()` calls in output formatters** at `crates/axiathon-client/src/output.rs:64,90-95`
+
+Multiple `.expect()` calls in production code (`output.rs:64,90,91,93,95,96`). Per project rules, production code should use `?` or `expect()` with actionable messages. The messages here are reasonable ("CSV header write should not fail"), but the `OutputFormatter` trait returns `String`, not `Result<String>`, so errors panic. Consider returning `Result<String, CliError>` for robustness, though in practice these allocations should not fail.
+
+**12. [LOW] Stub `rules` and `tenant` tests don't verify story reference** at `tests/stub_handlers_test.rs:33,88`
+
+The `stub_rules_returns_not_implemented` and `stub_tenant_returns_not_implemented` tests check for `CliError::NotImplemented(_)` but don't verify the story number in the message (unlike all other stub tests which check `msg.contains("6.x")`). Inconsistent test rigor.
+
+### Verified Good
+
+- **[VERIFIED]** `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`
+- **[VERIFIED]** Header injection prevention (CRLF + null byte) in `SiemClient::new()` with tests
+- **[VERIFIED]** URL scheme validation (http/https only) in `SiemClient`
+- **[VERIFIED]** Clap 4.x derive-only (no imperative builder), all global flags with `global = true`
+- **[VERIFIED]** Tokens not stored in `ClientConfig` — no token/password/secret fields
+- **[VERIFIED]** All 12 command groups present: query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init
+- **[VERIFIED]** Plural command names per architecture doc (rules, alerts)
+- **[VERIFIED]** Shell completion generation works for all four shells
+- **[VERIFIED]** OutputFormatter trait with Table/JSON/CSV implementations producing valid output
+- **[VERIFIED]** All tests pass (71 tests), clippy clean with `-D warnings`
+- **[VERIFIED]** No server-side crate imports — depends only on `axiathon-core`
+- **[VERIFIED]** Config path uses XDG base directories, not `/tmp`
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*The foundation is solid marble — the crate structure, the type design, the security validations, the test coverage. But the keystone is missing. The binary does nothing. It parses and discards. No command is dispatched, no error is printed, no exit code is emitted. This is a framework without a frame.*
+
+*Three issues block this PR:*
+
+1. **`main.rs` must dispatch commands** — at minimum wire up stub handlers so the binary actually demonstrates the exit code and error output pipeline (HIGH)
+2. **Nightly `cargo fmt` must pass** — 21 import ordering violations (HIGH, per gotchas)
+3. **`ClientConfig` should deny unknown fields** — silent acceptance of typos is a config safety hazard (HIGH)
+
+*Fix the `security_test.rs:27` vacuous assertion (`||` to `&&`) while you're at it. And consider whether `ConnectionTimeout` should actually be reachable or should be removed until timeout support is wired in.*
+
+*Cicero has spoken. The Senate awaits your revised submission.*

@@ -1,3 +1,5 @@
+category: "History"
+
 # Rome Theme
 # Rome (2005-2007), HBO
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", ancient Roman mosaic portrait, tessera tile fragments, scratched graffito details, Pompeii wall art style, geometric earth tones, stone texture"
-  tier: A
+  tier: D
+  optimized: true
   spinner_verbs:
     - Crossing the Rubicon
     - Veni vidi vici
@@ -49,12 +52,20 @@ theme:
   dimensions:
     tone: serious
     era: ancient
-    genre: historical-drama
+    genre: drama
     energy: commanding
+    zeitgeist: moderate
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
 
 zeitgeist:
   score: 80.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Gaius Julius Caesar

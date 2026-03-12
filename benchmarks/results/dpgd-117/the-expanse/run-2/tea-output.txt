@@ -1,0 +1,36 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 establishes the REST API foundation — all ACs require testable HTTP behavior.
+
+**Test Files:**
+- `crates/axiathon-server/tests/rest_endpoints.rs` — 17 tests: route existence, health data, JSON content-type, 404/405 handling
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 11 tests: data/errors/meta fields, request_id UUID validation, ISO 8601 timestamp, trace_id, unique IDs per request
+- `crates/axiathon-server/tests/authentication.rs` — 15 tests: JWT valid/missing/expired/wrong-scope, API key valid/revoked/missing-scope, malformed headers, health no-auth, tenant context extraction
+- `crates/axiathon-server/tests/rate_limiting.rs` — 6 tests: 429 enforcement, Retry-After header, per-tenant isolation, envelope format
+- `crates/axiathon-server/tests/api_versioning.rs` — 9 tests: /api/v1/ prefix, v2 returns 404, case sensitivity, deprecation mechanism
+- `crates/axiathon-server/tests/security.rs` — 10 tests: CWE-209 token leaking, stack trace exposure, path leaking, error sanitization, security headers, path traversal, null bytes, oversized body
+
+**Tests Written:** 68 tests covering 5 ACs + security edge cases
+**Status:** RED (compile failure — `axiathon_server::create_test_app` not implemented)
+
+**Contract defined by tests:**
+- `create_test_app() -> Router` — builds the full Axum app with auth middleware, rate limiting, all routes
+- `create_test_app_with_rate_limit(max: u32) -> Router` — app with configurable rate limit for testing
+
+**Key design decisions encoded in tests:**
+1. **Envelope diverges from current `ApiResponse<T>`** — tests expect `errors` as always-present array and `meta` with `request_id`/`timestamp`/`trace_id` (not pagination). Implementation will need a server-specific response wrapper or evolution of the core type.
+2. **Health endpoint is unauthenticated** — all other endpoints require Bearer/ApiKey auth.
+3. **Error responses use the same envelope** — 401, 403, 404, 429 all return JSON with `errors` array and `meta`.
+
+**Handoff:** To Dev for implementation.
+
+### Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core has `meta: Option<ApiMeta>` with pagination fields (total/limit/offset), but AC requires meta with `request_id`, `timestamp`, `trace_id`. Implementation needs a server-response type or an extension of `ApiMeta`.
+  Affects `crates/axiathon-core/src/types.rs` (ApiMeta struct needs additional fields or server layer wraps differently).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` has `error: Option<ApiError>` (singular), but AC specifies `errors` as always-present array. Implementation needs to reconcile the singular error field with the array contract.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse error field shape).
+  *Found by TEA during test design.*

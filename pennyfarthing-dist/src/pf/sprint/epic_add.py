@@ -137,7 +137,9 @@ def add_epic(
 @click.command("epic-add")
 @click.argument("epic_id", type=str)
 @click.argument("title", type=str)
-@click.option("--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1")
+@click.option(
+    "--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1"
+)
 @click.option("--status", type=click.Choice(["backlog", "ready", "in_progress"]), default="backlog")
 @click.option("--repos", default="pennyfarthing")
 @click.option("--jira", "jira_id", type=str, default=None, help="Jira epic key (MSSCI-NNNNN)")
@@ -162,6 +164,7 @@ def epic_add_command(
 
     if sprint_file is None:
         from pf.common.config import get_project_root
+
         path = get_project_root() / "sprint" / "current-sprint.yaml"
     else:
         path = Path(sprint_file)

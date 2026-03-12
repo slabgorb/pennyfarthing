@@ -7,7 +7,173 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+## [13.0.0-alpha.0] - 2026-03-10
+
+### Added
+
+- **Reviewer edge-case hunter subagent** — Specialized subagent for adversarial edge-case detection (MSSCI-16333, #1323)
+- **BMAD simulator template adapter** — Benchmark scenarios can use BMAD templates for story translation (#1320)
+- **Startup agent auto-invoke** — Agents auto-invoke on SessionStart hook (MSSCI-16331, #1319)
+- **Plan mode agent reload** — Agents reload on ExitPlanMode for seamless workflow transitions (MSSCI-16323, #1318)
+- **OTEL telemetry streaming to disk** — Benchmark telemetry streams to disk instead of requiring BikeRack (MSSCI-16322, #1317)
+- **FastAPI WheelHub API routes** — Core API routes ported to Python FastAPI WheelHub (MSSCI-16314, #1313)
+- **Multi-judge benchmark support** — Pipeline replay supports multiple judges for scoring consistency (#1311)
+
+### Changed
+
+- **BREAKING: WheelHub migrated from Node.js to Python/uvicorn** — Server-side TypeScript removed entirely; WheelHub now runs on FastAPI/uvicorn (ADR-0034, #1316)
+- **Legacy TypeScript CLI removed** — Dead CLI, BMAD, and Jira TypeScript modules deleted in favor of Python pf CLI
+
+### Fixed
+
+- **Node test failures** — Deleted orphaned dist files and fixed test assertions
+- **Benchmark empty judge response warning** — Restored detailed warning for empty judge responses
+
+## [12.7.0] - 2026-03-08
+
+### Added
+
+- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring (#1309)
+- **Theme YAML schema and git snapshot command** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures (#1308)
+- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing (#1307)
+- **Kitchen-sink workflow and language-specific review checklists** — Extended gate coverage with per-language review checklists (#1302)
+
+### Changed
+
+- **Theme genre consolidation** — Reduced to 5 genres, added benchmark slicing dimensions, reset tiers to unranked
+
+### Fixed
+
+- **SESSION_ID propagation to WheelHub** — Eliminated CYCLIST_SESSION_ID, set SESSION_ID before WheelHub spawn for correct agent detection (MSSCI-16303, #1310)
+- **Merge gate docs alignment** — Gate documentation now reflects the in_review exception correctly (#1299)
+- **Lint cleanup** — Removed unused type imports, fixed f-string and import sorting
+
+## [12.6.2] - 2026-03-07
+
+### Added
+
+- **Consumer E2E test suite** — 6 scenarios covering fresh-init, re-init preservation, WheelHub Node 24, upgrade safety, orc-ax snapshot, and idempotency (MSSCI-16292)
+- **WheelHub CJS banner fix** — esbuild bundler auto-patches `createRequire` shim for Node 24 ESM compatibility (MSSCI-16292)
+- **Scenario discovery workflow** — New stepped workflow for benchmark scenario discovery
+
+### Fixed
+
+- **Hook change confirmation in pf init** — Added confirmation prompt before modifying hooks and fixed WheelHub bundle handling during init
+
+## [12.6.1] - 2026-03-07
+
+### Fixed
+
+- **TUI agent display stuck on ORC** — `getCurrentAgent()` now falls back to most recently modified agent file when `CYCLIST_SESSION_ID` is not set (standalone WheelHub via `just wheelhub`)
+- **Ghostty portrait support** — Detect Ghostty terminal as kitty graphics protocol for inline portraits
+- **Hook change confirmation in pf init** — Added confirmation prompt for hook changes and fixed WheelHub bundle handling during init
+
+## [12.6.0] - 2026-03-06
+
+### Added
+
+- **Gold standard schema for scenarios** — Benchmark scenarios support gold_standard calibration references (MSSCI-16225)
+- **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
+
+### Fixed
+
+- **TUI showing wrong agent persona** — BikeRack TUI launcher now forwards SESSION_ID to WheelHub for correct agent detection
+- **Scenario validator test casts** — Use double-cast in scenario-validator tests for type safety
+
+## [12.5.0] - 2026-03-06
+
+### Added
+
+- **Scenario Builder stepped workflow** — Interactive workflow for building benchmark scenarios with code and open-ended modes (MSSCI-16234)
+- **Perplexity research guidance** — Orchestrator pattern doc for web-grounded research (#1295)
+- **Reference anchors in judge prompts** — Benchmark judge prompts now include anchored rubric criteria (MSSCI-16220)
+- **Sprint panel in-review differentiation** — In-review stories visually distinguished from backlog (#1293)
+- **Multi-judge flag for /solo** — `--multi-judge` flag for comparative scoring (MSSCI-16215)
+- **Output style config wiring** — `output_style` from config piped into agent activation (#1289)
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI (141-18)
+- **Hook audit** — Unexported hooks exported or deleted (#1262)
+- **Core API route tests** — Test coverage for agent-load through welcome API routes (MSSCI-16132, MSSCI-16133, MSSCI-16209)
+
+### Fixed
+
+- **WheelHub in_review status mapping** — Rebuilt bundle with correct status mapping and Node 24 ESM shim (#1296, #1297, #1298)
+- **CI check failures** — Resolved all 5 failing CI checks for scenario-builder PR
+- **Stale and broken tests** — Removed stale tests and fixed broken contract tests (#1291)
+- **28 dependency vulnerabilities** — Resolved via dependency updates (#1290)
+- **TUI bugfixes** — Context lookup, workflow dots, keybinding, status CLI fixes (#1282)
+
+## [12.4.1] - 2026-03-05
+
+### Added
+
+- **SOUL.md loading in agent bootstrap** — `pf agent start` optionally loads project-level SOUL.md for personality customization
+- **Result object conversions in CLI utils** — Converted throw-based error handling to result objects in CLI utility functions (141-9)
+- **PR title format configuration** — Configurable PR title format via `repos.yaml` with project-setup wizard step (MSSCI-16205)
+- **Consumer gate extensions** — Projects can add custom gates via `repos.yaml` configuration (MSSCI-16204)
+- **In-review story status** — Model story statuses on Jira lifecycle with `in_review` support (MSSCI-16200)
+
+### Fixed
+
+- **`pf init` no longer removes custom content** — Stopped `_clean_stale_content` from deleting user-created gates, workflows, and agents from consumer repos during init
+- **Stale bootstrap_written reference** — Removed dead reference from init result output
+
+## [12.4.0] - 2026-03-05
+
+### Added
+
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI instead of TypeScript engine (141-18)
+- **Port display in TUI and CLI statusbar** — BikeRack TUI shows WheelHub port next to "Connected" indicator; CLI statusbar shows OTEL port when telemetry is active
+- **Project-level workflow definitions** — `.pennyfarthing/project/workflows/` overrides or extends distributed workflows with priority-ordered multi-dir search (141-25)
+- **Homebrew tap and shell installer** — `brew install 1898andCo/tap/pennyfarthing` for macOS/Linux (MSSCI-16164)
+- **Simplify subagents** — Three verify-phase teammates (reuse, quality, efficiency) with structured `SIMPLIFY_RESULT` format and fan-out/fan-in orchestration (138-1, 138-3, 138-4, 138-7)
+- **Batch fan-out independence check** — File-overlap validation for parallel agent execution (139-1, 140-4)
+- **`pf validate` in CI** — Document type validators wired into continuous integration (MSSCI-16146)
+- **`--json` output for pf CLI** — Five commands now support `--json` for machine-readable output (141-16)
+- **Consolidated agent validation** — `pf validate agent` replaces scattered validation logic (141-20)
+- **Fix instructions in validators** — All validators now include actionable fix suggestions (141-23)
+- **Step-level tandem/team** — Stepped workflow steps can declare tandem and team blocks (137-5)
+- **Finding format validation gate** — Delivery findings validated against ADR-0031 format (133-3)
+- **`in_review` story status** — Sprint validator and CLI recognize in-review state
+- **Expanded spinner tips and catchphrases** — 36 tips, 30 spinner verbs, 6 catchphrases per S/A tier character
+
+### Fixed
+
+- **Redundant `detect_image_protocol()` calls** — Stored result once in TUI main/dev_main
+- **Cyclist imports after story-parser deletion** — Updated CATEGORY_MAP removal
+- **OTLP receiver payload types** — Properly typed in core package
+- **Deprecated bikerack shim removed** — Stale references cleaned up (141-4)
+- **Dead scripts deleted** — Removed duplicates of pf CLI functionality (141-15)
+- **Jira transition failures surfaced** — `claim_story` no longer silently swallows errors
+- **Handoff datetime mismatch** — Handle naive/aware datetime in phase duration calc
+- **Phase name validation** — `complete_phase` rejects agent names passed as phase names
+- **Sprint archive filtering** — Filter by name when number field absent; default status to done (136-14, 137-7)
+- **Hardcoded npm commands replaced** — Agents use project-agnostic `pf check`
+- **Stale npm/uv-era references removed** — Setup workflows and docs cleaned up (136-26)
+- **`pf-` prefix in templates** — All skill/agent name references corrected
+- **Phantom validate command fixed** — `pf context-docs` replaced with `pf validate context-story/epic`
+- **SM agent workflow routing** — Removed hardcoded workflow routing from SM agent definition
+
+### Removed
+
+- **Bootstrap hook removed** — Project initialization no longer requires a bootstrap phase; `pf init` handles setup directly
+
+### Coming Soon
+
+- **Homebrew installs** — `brew install 1898andCo/tap/pennyfarthing` will be the primary install path for macOS/Linux
+
+### Changed
+
+- **TypeScript file parsers replaced with pf CLI** — Subprocess calls instead of direct parsing (141-17)
+- **`as any` casts removed** — Fixed cyclist tsc errors without type escapes (141-12)
+- **Result objects in scripts** — Converted throw to result objects in scripts and generators (141-8)
+- **Dependencies unified** — `@types/ws` and `yaml` consolidated; shared UI deps hoisted to root
+- **WheelHub max port retries** — Increased from 10 to 16
+
+### Documentation
+
+- **Onboarding rewritten** — Three user journeys with brew-first install path (MSSCI-16187)
+- **Handoff CLI guide improved** — Missing commands and examples added
+- **CLI usage docs regenerated** — All skills updated
 
 ---
 
@@ -2914,7 +3080,15 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...HEAD
+[13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
+[12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
+[12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
+[12.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.0...v12.6.1
+[12.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...v12.6.0
+[12.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...v12.5.0
+[12.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...v12.4.1
+[12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0
 [12.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.3...v12.2.0
 [12.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v12.1.2...v12.1.3

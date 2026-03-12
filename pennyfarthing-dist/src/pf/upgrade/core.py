@@ -132,10 +132,7 @@ def preserve_custom_hooks(project_root: Path) -> dict:
             if not command_hooks:
                 custom_hooks.append(hook_entry)
                 continue
-            all_managed = all(
-                _is_pf_managed_command(h.get("command", ""))
-                for h in command_hooks
-            )
+            all_managed = all(_is_pf_managed_command(h.get("command", "")) for h in command_hooks)
             if not all_managed:
                 custom_hooks.append(hook_entry)
 
@@ -183,10 +180,7 @@ def migrate_settings(project_root: Path, dry_run: bool = False) -> dict:
                 hooks_preserved.append(hook_entry)
                 preserved_by_event.setdefault(event, []).append(hook_entry)
                 continue
-            all_managed = all(
-                _is_pf_managed_command(h.get("command", ""))
-                for h in command_hooks
-            )
+            all_managed = all(_is_pf_managed_command(h.get("command", "")) for h in command_hooks)
             if all_managed:
                 hooks_removed.append(hook_entry)
             else:
@@ -281,11 +275,13 @@ def detect_cleanup_targets(project_root: Path) -> dict:
     # 1. node_modules/@pennyfarthing directory
     npm_pf_dir = project_root / "node_modules" / "@pennyfarthing"
     if npm_pf_dir.exists():
-        targets.append({
-            "type": "directory",
-            "path": str(npm_pf_dir.relative_to(project_root)),
-            "reason": "npm-era @pennyfarthing package directory",
-        })
+        targets.append(
+            {
+                "type": "directory",
+                "path": str(npm_pf_dir.relative_to(project_root)),
+                "reason": "npm-era @pennyfarthing package directory",
+            }
+        )
 
     # 2. Stale symlinks in .claude/commands/ pointing to node_modules
     commands_dir = project_root / ".claude" / "commands"
@@ -294,12 +290,14 @@ def detect_cleanup_targets(project_root: Path) -> dict:
             if entry.is_symlink():
                 link_target = str(entry.resolve())
                 if "node_modules" in link_target:
-                    targets.append({
-                        "type": "symlink",
-                        "path": str(entry.relative_to(project_root)),
-                        "target": link_target,
-                        "reason": "symlink pointing to node_modules",
-                    })
+                    targets.append(
+                        {
+                            "type": "symlink",
+                            "path": str(entry.relative_to(project_root)),
+                            "target": link_target,
+                            "reason": "symlink pointing to node_modules",
+                        }
+                    )
 
     # 3. Stale symlinks in .pennyfarthing/ pointing to node_modules
     if pf_dir.exists():
@@ -307,12 +305,14 @@ def detect_cleanup_targets(project_root: Path) -> dict:
             if entry.is_symlink():
                 raw_target = str(entry.readlink())
                 if "node_modules" in raw_target:
-                    targets.append({
-                        "type": "symlink",
-                        "path": str(entry.relative_to(project_root)),
-                        "target": raw_target,
-                        "reason": "npm-era symlink to node_modules",
-                    })
+                    targets.append(
+                        {
+                            "type": "symlink",
+                            "path": str(entry.relative_to(project_root)),
+                            "target": raw_target,
+                            "reason": "npm-era symlink to node_modules",
+                        }
+                    )
 
     # 4. npm-era Python artifacts in .pennyfarthing/
     _npm_python_artifacts = [
@@ -326,21 +326,25 @@ def detect_cleanup_targets(project_root: Path) -> dict:
     for name, artifact_type, reason in _npm_python_artifacts:
         path = pf_dir / name
         if path.exists() or path.is_symlink():
-            targets.append({
-                "type": artifact_type,
-                "path": str(path.relative_to(project_root)),
-                "reason": reason,
-            })
+            targets.append(
+                {
+                    "type": artifact_type,
+                    "path": str(path.relative_to(project_root)),
+                    "reason": reason,
+                }
+            )
 
     # 5. Old manifest.json when init-manifest.json exists
     old_manifest = pf_dir / "manifest.json"
     new_manifest = pf_dir / "init-manifest.json"
     if old_manifest.exists() and new_manifest.exists():
-        targets.append({
-            "type": "file",
-            "path": str(old_manifest.relative_to(project_root)),
-            "reason": "Node-era manifest superseded by init-manifest.json",
-        })
+        targets.append(
+            {
+                "type": "file",
+                "path": str(old_manifest.relative_to(project_root)),
+                "reason": "Node-era manifest superseded by init-manifest.json",
+            }
+        )
 
     # 6. @pennyfarthing entries in package.json dependencies
     pkg_json = project_root / "package.json"
@@ -348,25 +352,24 @@ def detect_cleanup_targets(project_root: Path) -> dict:
         try:
             pkg_data = json.loads(pkg_json.read_text())
             pf_deps = [
-                k for k in pkg_data.get("dependencies", {})
-                if k.startswith("@pennyfarthing/")
+                k for k in pkg_data.get("dependencies", {}) if k.startswith("@pennyfarthing/")
             ]
             if pf_deps:
-                targets.append({
-                    "type": "package_json",
-                    "path": "package.json",
-                    "reason": f"npm-era @pennyfarthing deps: {', '.join(pf_deps)}",
-                    "deps": pf_deps,
-                })
+                targets.append(
+                    {
+                        "type": "package_json",
+                        "path": "package.json",
+                        "reason": f"npm-era @pennyfarthing deps: {', '.join(pf_deps)}",
+                        "deps": pf_deps,
+                    }
+                )
         except (json.JSONDecodeError, OSError):
             pass
 
     return {"success": True, "targets": targets}
 
 
-def cleanup_artifacts(
-    project_root: Path, dry_run: bool = False
-) -> dict:
+def cleanup_artifacts(project_root: Path, dry_run: bool = False) -> dict:
     """Remove npm-era artifacts from a migrated project.
 
     Args:
@@ -506,9 +509,7 @@ def generate_report(results: dict) -> str:
     return "\n".join(lines)
 
 
-def run_upgrade(
-    project_root: Path, dry_run: bool = False, clean: bool = False
-) -> dict:
+def run_upgrade(project_root: Path, dry_run: bool = False, clean: bool = False) -> dict:
     """Run the full upgrade from npm-based to Python-based install.
 
     Orchestrates all migration steps:
@@ -538,13 +539,15 @@ def run_upgrade(
         # Even without active npm install, --clean can remove leftover artifacts
         if clean:
             cleanup_result = cleanup_artifacts(project_root, dry_run=dry_run)
-        report = generate_report({
-            "detection": detection,
-            "directory": {"changes": []},
-            "hooks": {},
-            "config": {"migrated": []},
-            "cleanup": cleanup_result,
-        })
+        report = generate_report(
+            {
+                "detection": detection,
+                "directory": {"changes": []},
+                "hooks": {},
+                "config": {"migrated": []},
+                "cleanup": cleanup_result,
+            }
+        )
         return {"success": True, "report": report, "changes": {}}
 
     dir_result = migrate_directory_structure(project_root, dry_run=dry_run)

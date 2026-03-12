@@ -1,0 +1,86 @@
+judge_method: majority_vote
+n_judges: 3
+majority_threshold: 2
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA explicitly listed 'CWE-209: Error display must not leak internal\
+    \ paths/stack traces' as a security test. Reviewer also flagged '[MEDIUM] ServerError\
+    \ Display leaks raw server response body \u2014 CWE-209 risk at error.rs:29'.\
+    \ Same vulnerability class addressed in both phases."
+  votes: 3/3
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA listed ''Header injection: CRLF in tenant ID and token must be rejected/sanitized''
+    and wrote siem_client tests for CRLF injection prevention. Dev implemented CRLF
+    checks in client.rs:25-33. Same vulnerability class (CWE-113) addressed, though
+    via runtime validation rather than using TenantId type.'
+  votes: 3/3
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "TEA listed 'Token in config file: must be rejected (tokens belong in\
+    \ OS keychain)' as a security test and wrote config_loading tests for it. However,\
+    \ the implementation silently returns None rather than warning/errecting, and\
+    \ the reviewer marked '[VERIFIED] Token never loaded from config file' as correct\
+    \ \u2014 missing the silent-ignore-secret-on-disk concern."
+  votes: 3/3
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] env_axiathon_timeout_rejects_non_numeric test\
+    \ is also vacuous at config_loading.rs:102-112' \u2014 same category of vacuously\
+    \ true assertion. Also flagged '[MEDIUM] CRLF injection tests are vacuous'. Demonstrates\
+    \ detection capability for vacuous test patterns."
+  votes: 3/3
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
+    \ accept success at siem_client.rs:246-271' noting 'they just let _ = client;\
+    \ and pass' with no real assertions. Same category: test with zero meaningful\
+    \ assertions, only checks non-panic."
+  votes: 3/3
+individual_scores:
+- 67.6
+- 67.6
+- 67.6

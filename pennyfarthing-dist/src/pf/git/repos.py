@@ -34,6 +34,7 @@ class RepoConfig:
     branch_strategy: str  # "trunk-based" or "gitflow"
     description: str = ""
     language: str = "unknown"
+    languages: list[str] = field(default_factory=list)
     test_command: str = ""
     build_command: str = ""
     lint_command: str = ""
@@ -42,10 +43,16 @@ class RepoConfig:
     owns: list[str] = field(default_factory=list)
     never_edit: list[str] = field(default_factory=list)
     ui_layer: str = "none"
+    pr_strategy: str = "standard"  # "standard" or "stacked"
+    stack_tool: str = ""  # "graphite" when pr_strategy is stacked
 
     @property
     def is_gitflow(self) -> bool:
         return self.branch_strategy == "gitflow"
+
+    @property
+    def is_stacked(self) -> bool:
+        return self.pr_strategy == "stacked"
 
     @property
     def upstream_ref(self) -> str:
@@ -65,6 +72,7 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         branch_strategy=data.get("branch_strategy", "trunk-based"),
         description=data.get("description", ""),
         language=data.get("language", "unknown"),
+        languages=data.get("languages", []) or [],
         test_command=data.get("test_command", ""),
         build_command=data.get("build_command", ""),
         lint_command=data.get("lint_command", ""),
@@ -73,6 +81,8 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         owns=data.get("owns", []) or [],
         never_edit=data.get("never_edit", []) or [],
         ui_layer=data.get("ui_layer", "none"),
+        pr_strategy=data.get("pr_strategy", "standard"),
+        stack_tool=data.get("stack_tool", ""),
     )
 
 
@@ -127,9 +137,7 @@ def get_repo_paths(project_root: Path | None = None) -> list[tuple[str, Path]]:
     return result
 
 
-def get_default_branch(
-    repo_name: str, project_root: Path | None = None
-) -> str:
+def get_default_branch(repo_name: str, project_root: Path | None = None) -> str:
     """Get the default branch for a specific repo.
 
     Args:
@@ -146,9 +154,7 @@ def get_default_branch(
     return "main"
 
 
-def get_repo_config(
-    repo_name: str, project_root: Path | None = None
-) -> RepoConfig | None:
+def get_repo_config(repo_name: str, project_root: Path | None = None) -> RepoConfig | None:
     """Get the full config for a specific repo.
 
     Args:
@@ -160,6 +166,116 @@ def get_repo_config(
     """
     repos = load_repos_config(project_root)
     return repos.get(repo_name)
+
+
+def load_repos_yaml_raw(project_root: Path | None = None) -> dict[str, Any]:
+    """Load raw repos.yaml as a dict (not parsed into RepoConfig).
+
+    Useful for reading top-level config like pr_title_format or gates.
+
+    Returns:
+        Raw config dict, or empty dict if not found.
+    """
+    if project_root is None:
+        project_root = get_project_root()
+
+    repos_path = project_root / ".pennyfarthing" / "repos.yaml"
+    if not repos_path.exists():
+        return {}
+
+    with open(repos_path) as f:
+        config = yaml.safe_load(f)
+
+    return config or {}
+
+
+_DEFAULT_PR_TITLE_FORMAT = "{jira_key} - {type}({scope}): {title}"
+
+
+def get_pr_title_format(project_root: Path | None = None) -> str:
+    """Get the PR title format template from repos.yaml.
+
+    Returns:
+        Format string with placeholders: {jira_key}, {type}, {scope}, {title}.
+    """
+    if project_root is None:
+        project_root = get_project_root()
+
+    repos_path = project_root / ".pennyfarthing" / "repos.yaml"
+    if not repos_path.exists():
+        return _DEFAULT_PR_TITLE_FORMAT
+
+    with open(repos_path) as f:
+        config = yaml.safe_load(f)
+
+    if not config:
+        return _DEFAULT_PR_TITLE_FORMAT
+
+    return config.get("pr_title_format", _DEFAULT_PR_TITLE_FORMAT)
+
+
+def format_pr_title(
+    *,
+    jira_key: str,
+    title: str,
+    pr_type: str = "feat",
+    scope: str = "",
+    project_root: Path | None = None,
+) -> str:
+    """Format a PR title using the project's configured template.
+
+    Args:
+        jira_key: Jira issue key (e.g., "MSSCI-16204") or story ID fallback.
+        title: Short summary of the change.
+        pr_type: Conventional commit type (feat, fix, chore, etc.).
+        scope: Optional scope (e.g., "gates", "ui").
+        project_root: Project root directory. Auto-detected if not provided.
+
+    Returns:
+        Formatted PR title string.
+    """
+    fmt = get_pr_title_format(project_root)
+    # If no scope provided, collapse "type(): title" to "type: title"
+    if not scope:
+        fmt = fmt.replace("({scope})", "")
+    return fmt.format(
+        jira_key=jira_key,
+        type=pr_type,
+        scope=scope,
+        title=title,
+    )
+
+
+def check_stack_tool_health(project_root: Path | None = None) -> dict[str, Any]:
+    """Check if required stack tools are installed for stacked PR repos.
+
+    Returns:
+        Dict with success, checks list, and any errors.
+    """
+    import shutil
+
+    repos = load_repos_config(project_root)
+    stacked = {n: r for n, r in repos.items() if r.is_stacked}
+
+    if not stacked:
+        return {"success": True, "checks": [], "message": "No stacked PR repos configured"}
+
+    checks = []
+    errors = []
+
+    gt_path = shutil.which("gt")
+    checks.append({"name": "gt-installed", "pass": gt_path is not None})
+    if not gt_path:
+        errors.append(
+            "Graphite CLI (gt) not found. Install: brew install withgraphite/tap/graphite"
+        )
+
+    return {
+        "success": len(errors) == 0,
+        "stacked_repos": list(stacked.keys()),
+        "checks": checks,
+        "errors": errors,
+    }
 
 
 def get_build_order(project_root: Path | None = None) -> list[str]:

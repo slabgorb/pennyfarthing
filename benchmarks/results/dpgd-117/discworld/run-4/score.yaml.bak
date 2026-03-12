@@ -1,0 +1,100 @@
+scenario_id: dpgd-117
+theme: discworld
+run_id: 3
+total_caught: 3
+total_findings: 10
+weighted_caught: 18
+total_weight: 52
+score_pct: 34.6
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added uuid and chrono as workspace dependencies but the reviewer never
+    flagged the 6 inline dependency versions. No phase addressed workspace-level dependency
+    management comprehensively.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentioned #[non_exhaustive] on FieldErrorCode. The reviewer
+    focused on other type issues but missed this enum extensibility concern.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The reviewer noted hardcoded uptime '0s' but did not flag the hardcoded
+    trace_id 'none' in ResponseMeta. No phase caught this distributed tracing gap.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer explicitly noted in the data flow trace: ''No tracing spans.
+    No structured logging. No tenant_id or trace_id in spans... there are zero tracing::
+    calls anywhere in the implementation despite tracing being in Cargo.toml dependencies.''
+    Also listed ''Add at least basic tracing::info! / tracing::warn! for auth events''
+    as a recommendation.'
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: The reviewer identified the absence of logging but did not specifically
+    flag misleading SECURITY comments claiming logging exists when it doesn't.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase wrote tests for non-ASCII tenant header values or flagged the
+    silent failure behavior. TEA's authentication tests covered missing/invalid headers
+    but not non-ASCII edge cases.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote a CWE-209 test but the reviewer did not flag that it only checks
+    status code without asserting on response body content. The test gap went undetected.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] CORS reflects arbitrary Origin without allowlist'
+    and noted 'The cors_does_not_allow_wildcard_origin_with_credentials test only
+    checks the literal * value, not the actual reflection behavior.' This identifies
+    the test doesn't verify actual CORS headers.
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: The reviewer recommended adding tracing but did not address log level
+    granularity (warn for 4xx vs error for 5xx). Since no logging was implemented,
+    the wrong-level issue couldn't manifest yet, but no phase established the correct
+    pattern.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] CORS reflects arbitrary Origin without allowlist'\
+    \ noting the handler 'echoes back whatever Origin header the client sends' which\
+    \ is 'functionally Access-Control-Allow-Origin: * but worse \u2014 it works with\
+    \ credentials.' Recommended 'CORS origin allowlist instead of reflection.'"

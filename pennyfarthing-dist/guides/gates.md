@@ -19,6 +19,7 @@ Gates live in `pennyfarthing-dist/gates/` and are referenced by workflow YAML fi
 | **dev-exit** | `gates/dev-exit.md` | Composite: tests-pass + no debug code | Dev → Reviewer transitions |
 | **sm-setup-exit** | `gates/sm-setup-exit.md` | Session file, fields, context, branch created | SM → next agent transitions |
 | **merge-ready** | `gates/merge-ready.md` | No open non-draft PRs | SM new work gate |
+| **status-sync** | `gates/status-sync.md` | Verify YAML and Jira status match expected state for phase | Phase entry gates |
 | **release-ready** | `gates/release-ready.md` | Composite: tests-pass + build, version, changelog | DevOps pre-deploy |
 | **reviewer-preflight-check** | `gates/reviewer-preflight-check.md` | Composite: tests-pass + code smells, error boundaries | Reviewer preflight |
 | **context-ok** | `gates/context-ok.md` | Verify context usage is below threshold before phase transition | Any phase transition gate |
@@ -78,6 +79,85 @@ Extended evaluation criteria can live in `gates/evaluations/`:
 3. The gate runner discovers files in the `gates/` directory by name
 
 Gates run as Haiku subagents — keep instructions focused and evaluation criteria concrete.
+
+## Consumer Gate Extensions
+
+Consumer repos can add custom quality checks to existing gates without forking or overriding the built-in gate files. Extensions are **additive only** — they can never weaken or remove built-in checks.
+
+### Setup
+
+1. **Write extension gate files** in `.pennyfarthing/gates/` using the standard `<gate>` schema:
+
+```markdown
+<!-- .pennyfarthing/gates/rustfmt-check.md -->
+<gate name="rustfmt-check" model="haiku">
+<purpose>Verify all Rust files are formatted with rustfmt.</purpose>
+<pass>
+Run `cargo fmt --check`. Exit code 0 = pass.
+
+GATE_RESULT:
+  status: pass
+  gate: rustfmt-check
+  message: "All Rust files properly formatted"
+  checks:
+    - name: rustfmt
+      status: pass
+      detail: "cargo fmt --check passed"
+</pass>
+<fail>
+If cargo fmt --check exits non-zero, list the unformatted files.
+
+GATE_RESULT:
+  status: fail
+  gate: rustfmt-check
+  message: "Rust formatting errors found"
+  checks:
+    - name: rustfmt
+      status: fail
+      detail: "{list of unformatted files}"
+  recovery:
+    - "Run `cargo fmt` to auto-format all files"
+</fail>
+</gate>
+```
+
+2. **Declare extensions** in `.pennyfarthing/repos.yaml`:
+
+```yaml
+gates:
+  extensions:
+    dev-exit:
+      - rustfmt-check
+      - license-check
+    quality-pass:
+      - cargo-clippy
+```
+
+### How it works
+
+When `resolve-gate` returns `RESOLVE_RESULT`, it includes a `gate_extensions` field listing any configured extensions:
+
+```yaml
+RESOLVE_RESULT:
+  status: ready
+  gate_type: dev_exit
+  gate_file: gates/dev-exit
+  gate_extensions:
+    - gates/rustfmt-check
+    - gates/license-check
+  next_agent: reviewer
+  next_phase: review
+```
+
+The agent runs the primary gate first. If it passes and `gate_extensions` is present, each extension gate runs sequentially. AND semantics — the first failure stops the chain. All checks arrays are merged into a combined result via `merge_gate_results()`.
+
+### Key properties
+
+- **Additive only** — extensions cannot weaken or remove built-in checks
+- **Config-driven** — toggle extensions without deleting files
+- **Same schema** — extension gates use identical `<gate>` XML format
+- **Fail-fast** — missing extension file errors at resolve time, not at runtime
+- **No workflow changes** — consumer never touches workflow YAML definitions
 
 ## Key Files
 

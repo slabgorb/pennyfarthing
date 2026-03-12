@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: the-matrix
+run_id: 3
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. The
+    reviewer flagged silent error swallowing in formatters but not in config loading.
+    TEA tests config loading but none test that parse/permission errors are distinguished
+    from NotFound.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA''s security_test.rs includes ''CWE-209: Error messages don''t leak
+    file paths, connection strings, or stack traces'' and ''all CliError variants
+    produce non-empty messages''. However, the reviewer also flagged related concerns
+    about SiemClient panics leaking details, though not the exact CliError Display
+    issue. Partial catch by TEA.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection tests in siem_client_test.rs (lines 104-141)\
+    \ and security_test.rs (lines 39-62) covering CWE-113 for tenant IDs. However,\
+    \ the reviewer noted these tests are vacuous (Ok branch doesn't fail), and the\
+    \ dev used assert! (panic) rather than validated TenantId from axiathon-core.\
+    \ The core issue \u2014 using raw String instead of TenantId \u2014 was not caught."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The reviewer noted a toml version mismatch but not the workspace
+    inheritance pattern issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged as [HIGH]: ''Config silently accepts unknown fields
+    (no deny_unknown_fields)'' and specifically called out the token scenario: ''a
+    token = "my-secret" field is silently swallowed with no warning''.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged the vacuous test in the same finding as I4: ''the test
+    client_config_does_not_have_token_field at config_loading_test.rs:127-138 has
+    zero assertions and would pass regardless of behavior. This is a vacuous test.'''
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged the vacuous test pattern: ''has zero assertions and
+    would pass regardless of behavior'' referring to config_loading_test.rs:127-138
+    which matches the ''let _ = config; test has no assertions'' finding.'

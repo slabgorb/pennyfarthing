@@ -1,0 +1,29 @@
+All **134 tests pass** and **clippy is clean**.
+
+## Summary
+
+**Files created** (17 files under `crates/axiathon-client/src/`):
+
+| File | Purpose |
+|------|---------|
+| `lib.rs` | Module re-exports (updated) |
+| `main.rs` | Binary entry point with dispatch and exit codes |
+| `cli.rs` | Clap 4.x derive-based CLI structure with all command groups and global flags |
+| `error.rs` | `CliError` enum with exit code mapping and security-sanitized Display |
+| `output.rs` | `OutputFormat` enum + `OutputFormatter` (table/JSON/CSV) with ANSI sanitization |
+| `config.rs` | `ClientConfig` with TOML loading, env overrides, validation |
+| `client.rs` | `SiemClient` HTTP wrapper with header injection and status code mapping |
+| `commands/mod.rs` | Command module re-exports |
+| `commands/query.rs` | Stub → Story 5.5 |
+| `commands/rules.rs` | Stub → Story 6.6 |
+| `commands/alerts.rs` | Stub → Story 6.5 |
+| `commands/ingest.rs` | Stub → Story 6.4 |
+| `commands/config.rs` | Stub → Story 6.3 |
+| `commands/status.rs` | Stub → Story 6.2 |
+| `commands/tenant.rs` | Stub → Story 6.7 |
+| `commands/login.rs` | Stub → Story 9.1 |
+| `commands/completion.rs` | Functional shell completion generation |
+| `commands/init.rs` | Functional first-time setup |
+
+**Tests:** 134/134 passing (GREEN)
+**Clippy:** Clean (0 warnings)

@@ -1,0 +1,72 @@
+scenario_id: dpgd-116
+theme: gilligans-island
+run_id: 3
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: TEA listed 'Config file not silently swallowing parse errors' as key test
+    paranoia and included tests for 'missing/invalid files' in config_loading.rs (10
+    tests covering AC-8).
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security.rs tests (14 tests) explicitly covering 'CWE-209 error\
+    \ exposure' \u2014 same vulnerability class as the ground truth finding. Dev implemented\
+    \ generic error messages."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged F10: ''--tenant uses raw String not TenantId newtype''
+    noting axiathon-core exports TenantId with validated constructors. TEA also wrote
+    header injection tests in security.rs and siem_client.rs.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged direct version strings vs workspace = true. The reviewer
+    flagged F5 (toml version mismatch) but not the workspace dependency pattern issue
+    across 6 dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer examined V4 and concluded 'RawConfig.token is #[allow(dead_code)]\
+    \ \u2014 parsed but never used. has_token_from_file stays false' as VERIFIED correct.\
+    \ Opposite conclusion \u2014 the silent ignoring of a user's secret with no warning\
+    \ was not flagged."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in the test suite. TEA likely authored the flawed test.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test (let _ = config). TEA likely
+    authored the test with no assert_eq! checks on default config values.

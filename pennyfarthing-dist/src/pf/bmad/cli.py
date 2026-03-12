@@ -134,7 +134,7 @@ def sync(
         pf_wins=wins_pf,
     )
 
-    click.echo(format_sync_plan(plan))
+    click.echo(format_sync_plan(plan, project_root=root))
 
     if not plan.changes and not (import_new and plan.bmad_only):
         return
@@ -145,6 +145,7 @@ def sync(
         sprint_path=sprint_path,
         bmad_root=bmad_root,
         import_new=import_new,
+        project_root=root,
     )
 
     if dry_run:

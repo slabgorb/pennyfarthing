@@ -1,0 +1,85 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 2
+judge_version: v2
+judge_pass: 2
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The config.rs implements from_file_or_default but neither TEA wrote a
+    test distinguishing NotFound from parse/permission errors, nor did Dev implement
+    that distinction, nor did Reviewer flag it. The Reviewer flagged unknown fields
+    but not the error-swallowing in from_file_or_default.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented CWE-209 safe Display impls in error.rs (e.g., ServerError\
+    \ shows 'server error \u2014 contact your administrator' without inner string).\
+    \ Reviewer verified: '[VERIFIED] CWE-209 error Display messages do not leak internals.'\
+    \ TEA also wrote tests at error_exit_codes.rs for CWE-209. However, the ground\
+    \ truth is about stderr leakage via eprintln \u2014 without main.rs there's no\
+    \ eprintln dispatch, so the specific stderr path isn't addressed. Still, the Display\
+    \ impl itself is sanitized, which is the same vulnerability class."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "TEA wrote header injection tests for CRLF in tenant IDs (CWE-113), and\
+    \ the Reviewer flagged that SiemClient silently drops invalid headers and tests\
+    \ are vacuous. However, the ground truth finding is specifically that tenant_id\
+    \ uses raw String instead of validated TenantId from axiathon-core \u2014 bypassing\
+    \ type-safe tenant isolation. No phase flagged the use of raw String vs TenantId\
+    \ newtype. The CRLF tests are about injection, not about using the wrong type."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned that dependencies use direct version strings instead
+    of workspace = true. The Reviewer noted toml version 0.8 vs spec 0.9 but did not
+    flag the workspace dependency pattern issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] ClientConfig silently accepts unknown fields\
+    \ including token' \u2014 explicitly noting that a config with token = \"my-secret\"\
+    \ is silently accepted and ignored, and recommending #[serde(deny_unknown_fields)]\
+    \ or warning on token/password field names."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The ground truth identifies a vacuous test where assert!(config.server().is_none()
+    || ...) always passes because the first branch is true. No phase flagged this
+    specific vacuously true assertion. The Reviewer flagged vacuous header injection
+    tests (different tests), not this config test.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The ground truth identifies a test with zero assertions (let _ = config).
+    No phase flagged this specific issue. While the Reviewer flagged other test quality
+    issues (vacuous header injection tests), this particular zero-assertion test was
+    not mentioned.

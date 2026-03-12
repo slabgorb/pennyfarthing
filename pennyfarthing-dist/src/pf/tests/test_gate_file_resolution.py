@@ -95,9 +95,7 @@ def project_with_symlinked_gates(project: Path) -> Path:
     # Remove the real .pennyfarthing/gates dir
     shutil.rmtree(project / ".pennyfarthing" / "gates")
     # Create symlink (mimics real install)
-    (project / ".pennyfarthing" / "gates").symlink_to(
-        project / "pennyfarthing-dist" / "gates"
-    )
+    (project / ".pennyfarthing" / "gates").symlink_to(project / "pennyfarthing-dist" / "gates")
     # Add a gate file to the source
     gate = project / "pennyfarthing-dist" / "gates" / "tests-pass.md"
     gate.write_text(
@@ -118,62 +116,38 @@ def project_with_symlinked_gates(project: Path) -> Path:
 class TestResolveGateFileFound:
     """AC1: Function returns path when gate file exists."""
 
-    def test_returns_found_status(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_returns_found_status(self, project_with_builtin_gate: Path) -> None:
         """AC1: Status should be 'found' when gate file exists."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["status"] == "found"
 
-    def test_returns_absolute_path(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_returns_absolute_path(self, project_with_builtin_gate: Path) -> None:
         """AC1: Path should be an absolute path string."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["path"] is not None
         assert Path(result["path"]).is_absolute()
 
-    def test_path_points_to_existing_file(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_path_points_to_existing_file(self, project_with_builtin_gate: Path) -> None:
         """AC1: Returned path should point to an actual file."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert Path(result["path"]).is_file()
 
-    def test_error_is_none_when_found(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_error_is_none_when_found(self, project_with_builtin_gate: Path) -> None:
         """AC1: Error field should be None when gate is found."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["error"] is None
 
-    def test_strips_gates_prefix(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_strips_gates_prefix(self, project_with_builtin_gate: Path) -> None:
         """AC1: 'gates/tests-pass' and 'tests-pass' should resolve the same."""
-        result_bare = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result_bare = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         result_prefixed = resolve_gate_file(
             "gates/tests-pass", project_root=project_with_builtin_gate
         )
         assert result_bare["path"] == result_prefixed["path"]
 
-    def test_result_has_required_fields(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_result_has_required_fields(self, project_with_builtin_gate: Path) -> None:
         """AC1: Result dict must have status, path, error keys."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert "status" in result
         assert "path" in result
         assert "error" in result
@@ -189,40 +163,26 @@ class TestResolveGateFileOrder:
 
     def test_local_gate_found(self, project_with_local_gate: Path) -> None:
         """AC2: Gate in .pennyfarthing/gates/ should be found."""
-        result = resolve_gate_file(
-            "custom-gate", project_root=project_with_local_gate
-        )
+        result = resolve_gate_file("custom-gate", project_root=project_with_local_gate)
         assert result["status"] == "found"
         assert ".pennyfarthing/gates/custom-gate.md" in result["path"]
 
-    def test_builtin_gate_found_as_fallback(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_builtin_gate_found_as_fallback(self, project_with_builtin_gate: Path) -> None:
         """AC2: Gate in pennyfarthing-dist/gates/ found when not in local."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["status"] == "found"
         assert "pennyfarthing-dist/gates/tests-pass.md" in result["path"]
 
-    def test_local_overrides_builtin(
-        self, project_with_both_gates: Path
-    ) -> None:
+    def test_local_overrides_builtin(self, project_with_both_gates: Path) -> None:
         """AC2: When same gate exists in both, local wins."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_both_gates
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_both_gates)
         assert result["status"] == "found"
         # Path should be the .pennyfarthing/gates/ version, not pennyfarthing-dist/
         assert ".pennyfarthing/gates/tests-pass.md" in result["path"]
 
-    def test_local_override_content_is_local_version(
-        self, project_with_both_gates: Path
-    ) -> None:
+    def test_local_override_content_is_local_version(self, project_with_both_gates: Path) -> None:
         """AC2: Content at resolved path should be the local version."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_both_gates
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_both_gates)
         content = Path(result["path"]).read_text()
         assert "Local override version" in content
 
@@ -256,9 +216,7 @@ class TestResolveGateFileNotFound:
         result = resolve_gate_file("", project_root=project)
         assert result["status"] == "not_found"
 
-    def test_missing_gates_directory_returns_not_found(
-        self, tmp_path: Path
-    ) -> None:
+    def test_missing_gates_directory_returns_not_found(self, tmp_path: Path) -> None:
         """AC3: No gates/ directories at all → not_found (no crash)."""
         # Project with .pennyfarthing but no gates subdirectory
         # Use a name that doesn't exist in the bundled fallback either
@@ -275,32 +233,20 @@ class TestResolveGateFileNotFound:
 class TestResolveGateFileSymlink:
     """AC5: Gate files found through symlinked .pennyfarthing/gates/."""
 
-    def test_symlinked_gate_found(
-        self, project_with_symlinked_gates: Path
-    ) -> None:
+    def test_symlinked_gate_found(self, project_with_symlinked_gates: Path) -> None:
         """AC5: Gate found through .pennyfarthing/gates/ symlink."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_symlinked_gates
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_symlinked_gates)
         assert result["status"] == "found"
 
-    def test_symlinked_gate_path_is_valid(
-        self, project_with_symlinked_gates: Path
-    ) -> None:
+    def test_symlinked_gate_path_is_valid(self, project_with_symlinked_gates: Path) -> None:
         """AC5: Path through symlink points to real file."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_symlinked_gates
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_symlinked_gates)
         assert result["path"] is not None
         assert Path(result["path"]).exists()
 
-    def test_symlinked_gate_content_readable(
-        self, project_with_symlinked_gates: Path
-    ) -> None:
+    def test_symlinked_gate_content_readable(self, project_with_symlinked_gates: Path) -> None:
         """AC5: Content at symlinked path is the actual gate file."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_symlinked_gates
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_symlinked_gates)
         content = Path(result["path"]).read_text()
         assert "Symlinked gate" in content
 
@@ -313,18 +259,12 @@ class TestResolveGateFileSymlink:
 class TestResolveGateFileEdgeCases:
     """Edge cases and boundary conditions."""
 
-    def test_gate_name_with_md_extension_still_works(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_gate_name_with_md_extension_still_works(self, project_with_builtin_gate: Path) -> None:
         """Edge: 'tests-pass.md' should resolve same as 'tests-pass'."""
-        result = resolve_gate_file(
-            "tests-pass.md", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass.md", project_root=project_with_builtin_gate)
         assert result["status"] == "found"
 
-    def test_gate_name_with_nested_path_rejected(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_gate_name_with_nested_path_rejected(self, project_with_builtin_gate: Path) -> None:
         """Edge: '../escape/tests-pass' should not resolve (path traversal)."""
         result = resolve_gate_file(
             "../escape/tests-pass",
@@ -332,11 +272,7 @@ class TestResolveGateFileEdgeCases:
         )
         assert result["status"] == "not_found"
 
-    def test_result_status_is_valid_enum(
-        self, project_with_builtin_gate: Path
-    ) -> None:
+    def test_result_status_is_valid_enum(self, project_with_builtin_gate: Path) -> None:
         """Edge: Status must be one of the expected values."""
-        result = resolve_gate_file(
-            "tests-pass", project_root=project_with_builtin_gate
-        )
+        result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["status"] in ("found", "not_found")

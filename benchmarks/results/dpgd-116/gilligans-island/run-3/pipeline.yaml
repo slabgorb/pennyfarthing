@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: gilligans-island
+run_id: 3
+timestamp: '2026-03-08T00:05:51.490803+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-gilligans-island-run-3
+phases:
+  tea:
+    token_usage:
+      input: 31
+      output: 22644
+    duration_s: 362.05
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 41
+      output: 13606
+    duration_s: 272.63
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 5570
+      output: 6866
+    duration_s: 281.95
+    exit_code: 0

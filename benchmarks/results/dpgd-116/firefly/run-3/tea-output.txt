@@ -1,0 +1,22 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story with 10 acceptance criteria requiring CLI framework, error handling, output formatting, HTTP client, config loading, and shell completion.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 11 | AC-1 (command groups), AC-2 (help text, examples), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 11 | AC-3 (exit codes 0/1/2/3/4), CWE-209 (error info leakage) |
+| `tests/output_format.rs` | 12 | AC-4 (table/json/csv formatting, CSV escaping, color control) |
+| `tests/global_flags.rs` | 12 | AC-5 (--format, -v/-vv, --quiet, --tenant, --server+env, --config, --no-color, global=true) |
+| `tests/siem_client.rs` | 15 | AC-7 (header injection, HTTP status mapping, timeout, header injection security) |
+| `tests/config_loading.rs` | 10 | AC-8 (TOML loading, env overrides, precedence, token-not-in-file security) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation, subcommand coverage) |
+| `tests/stub_handlers.rs` | 5 | AC-10 (story references, exit code 1, distinguishable messages) |
+
+**Tests Written:** 82 tests covering all 10 ACs
+**Status:** RED (failing — all 8 test files fail to compile because target modules don't exist)
+**Security tests:** Header injection (newlines in token/tenant), CWE-209 error exposure, token-not-in-config-file, error message length bounds
+
+**Handoff:** To Dev for implementation

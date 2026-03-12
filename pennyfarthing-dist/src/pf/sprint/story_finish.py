@@ -21,11 +21,40 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
 from pf.sprint.loader import find_epic, find_story
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
+
+
+def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> None:
+    """Add a story to the sprint completed file.
+
+    Called during story finish so that findings aggregation can discover
+    the story even before its parent epic is fully archived.
+    """
+    try:
+        archive_path = ensure_archive_file(project_root)
+        archive_data = _load_archive_file(archive_path)
+
+        existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
+        if story_id in existing_ids:
+            return
+
+        archive_data["completed_stories"].append(
+            {
+                "id": story_id,
+                "epic": story.get("jira_epic", story.get("epic", "")),
+                "title": story.get("title", ""),
+                "points": story.get("points", 0),
+                "completed": story.get("completed", date.today().isoformat()),
+            }
+        )
+        _write_archive_file(archive_path, archive_data)
+    except Exception:
+        pass  # Non-fatal — findings collection has fallback strategies
 
 
 def _parse_session(session_path: Path) -> dict[str, str]:
@@ -119,7 +148,9 @@ def finish_story(
 
     # Fallback: resolve PR from GitHub if not in session
     if not pr_number and branch:
-        result = _run(["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"])
+        result = _run(
+            ["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"]
+        )
         if result.returncode == 0 and result.stdout.strip():
             pr_number = result.stdout.strip()
 
@@ -129,18 +160,23 @@ def finish_story(
 
     # Check for dialogue file
     dialogue_path = project_root / ".session" / f"{story_id}-dialogue.md"
-    dialogue_archive_name = (
-        f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
-    )
+    dialogue_archive_name = f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
 
     if dry_run:
         from pf.common.pr_config import get_pr_merge_mode
 
         steps.append({"step": 1, "action": f"Archive session → {archive_dir / archive_name}"})
         if dialogue_path.exists():
-            steps.append({"step": "1b", "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}"})
+            steps.append(
+                {
+                    "step": "1b",
+                    "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}",
+                }
+            )
         if pr_number and get_pr_merge_mode() == "human":
-            steps.append({"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"})
+            steps.append(
+                {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
+            )
         elif pr_number:
             steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
         else:
@@ -149,7 +185,9 @@ def finish_story(
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
             steps.append({"step": 3, "action": "Skip Jira transition (no key)"})
-        steps.append({"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"})
+        steps.append(
+            {"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"}
+        )
         steps.append({"step": 5, "action": "Archive completed epics"})
         steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
         steps.append({"step": 7, "action": "Remove session file"})
@@ -171,24 +209,53 @@ def finish_story(
 
     pr_merge_mode = get_pr_merge_mode()
     if pr_number and pr_merge_mode == "human":
-        steps.append({
-            "step": 2, "action": "merge_pr", "pr": pr_number,
-            "mode": "human", "message": f"PR #{pr_number} ready for human review and merge",
-        })
+        steps.append(
+            {
+                "step": 2,
+                "action": "merge_pr",
+                "pr": pr_number,
+                "mode": "human",
+                "message": f"PR #{pr_number} ready for human review and merge",
+            }
+        )
     elif pr_number:
         result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
         if result.returncode == 0:
             steps.append({"step": 2, "action": "merge_pr", "pr": pr_number})
         else:
-            steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "warning": "Already merged or failed"})
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "pr": pr_number,
+                    "warning": "Already merged or failed",
+                }
+            )
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
-    # Two-step: in_progress → in_review → done (state machine requires review step)
-    t_result = transition_story(project_root, story_id, "in_review")
-    if t_result.get("success"):
+    # Story should already be in_review (transitioned at review phase entry).
+    # If still in_progress (legacy/edge case), do the two-step.
+    try:
+        data = read_sprint(sprint_path)
+        parts = story_id.split("-")
+        epic = find_epic(data, parts[0]) if len(parts) >= 2 else None
+        current_story = find_story(epic, story_id) if epic else None
+        current_status = (
+            current_story.get("status", "in_progress") if current_story else "in_progress"
+        )
+    except Exception:
+        current_status = "in_progress"
+
+    if current_status == "in_progress":
+        transition_story(project_root, story_id, "in_review")
+
+    if pr_merge_mode == "auto":
         t_result = transition_story(project_root, story_id, "done")
+    else:
+        # Human merge mode: leave in in_review until human merges
+        t_result = {"success": True, "to_status": "in_review"}
     if t_result.get("success"):
         if jira_key:
             steps.append({"step": 3, "action": "jira_done", "key": jira_key})
@@ -197,10 +264,42 @@ def finish_story(
         steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
     else:
         if jira_key:
-            steps.append({"step": 3, "action": "jira_done", "key": jira_key, "warning": t_result.get("error", "Transition failed")})
+            steps.append(
+                {
+                    "step": 3,
+                    "action": "jira_done",
+                    "key": jira_key,
+                    "warning": t_result.get("error", "Transition failed"),
+                }
+            )
         else:
-            steps.append({"step": 3, "action": "jira_done", "skipped": True, "warning": "No Jira key available"})
-        steps.append({"step": 4, "action": "yaml_update", "warning": t_result.get("error", "Transition failed")})
+            steps.append(
+                {
+                    "step": 3,
+                    "action": "jira_done",
+                    "skipped": True,
+                    "warning": "No Jira key available",
+                }
+            )
+        steps.append(
+            {
+                "step": 4,
+                "action": "yaml_update",
+                "warning": t_result.get("error", "Transition failed"),
+            }
+        )
+
+    # --- Step 4b: Add story to completed file ---
+    try:
+        data = read_sprint(sprint_path)
+        parts = story_id.split("-")
+        if len(parts) >= 2:
+            epic = find_epic(data, parts[0])
+            story = find_story(epic, story_id) if epic else None
+            if story:
+                _add_story_to_completed(project_root, story_id, story)
+    except Exception:
+        pass
 
     # --- Step 5: Archive completed epics ---
     result = _run(

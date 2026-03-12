@@ -69,6 +69,7 @@ def add_story(
     workflow: str = "tdd",
     jira: str | None = None,
     repos: str | None = None,
+    depends_on: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -113,6 +114,8 @@ def add_story(
         fields["jira"] = jira
     if repos is not None:
         fields["repos"] = repos
+    if depends_on is not None:
+        fields["depends_on"] = depends_on
     if story_type is not None:
         fields["type"] = story_type
 
@@ -127,6 +130,7 @@ def add_story(
     # Append to epic's stories list
     if "stories" not in epic:
         from ruamel.yaml.comments import CommentedSeq
+
         epic["stories"] = CommentedSeq()
     epic["stories"].append(story)
 
@@ -173,7 +177,7 @@ def _generate_initiative_story_id(init_data: dict[str, Any], slug: str) -> str:
         # Only count stories with matching prefix
         if not story_id.startswith(f"{prefix}-"):
             continue
-        suffix = story_id[len(prefix) + 1:]
+        suffix = story_id[len(prefix) + 1 :]
         try:
             seq = int(suffix)
             if seq > max_seq:
@@ -217,8 +221,7 @@ def add_initiative_story(
 
     if not init_path.exists():
         available = [
-            f.stem.replace("initiative-", "")
-            for f in (root / "sprint").glob("initiative-*.yaml")
+            f.stem.replace("initiative-", "") for f in (root / "sprint").glob("initiative-*.yaml")
         ]
         return {
             "success": False,
@@ -277,13 +280,26 @@ def add_initiative_story(
 @click.argument("epic_id", type=str, required=False)
 @click.argument("title", type=str, required=False)
 @click.argument("points", type=int, required=False)
-@click.option("--type", "story_type", type=click.Choice(["feature", "bug", "chore", "refactor"]), default="feature")
-@click.option("--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1")
+@click.option(
+    "--type",
+    "story_type",
+    type=click.Choice(["feature", "bug", "chore", "refactor"]),
+    default="feature",
+)
+@click.option(
+    "--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1"
+)
 @click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd"]), default="tdd")
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
-@click.option("--initiative", type=str, default=None, help="Add as standalone story to initiative (e.g., technical-debt)")
+@click.option(
+    "--initiative",
+    type=str,
+    default=None,
+    help="Add as standalone story to initiative (e.g., technical-debt)",
+)
 @click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
+@click.option("--depends-on", type=str, default=None, help="Story ID this depends on (stacked PRs)")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def story_add_command(
     epic_id: str | None,
@@ -296,6 +312,7 @@ def story_add_command(
     sprint_file: str | None,
     initiative: str | None,
     repos: str,
+    depends_on: str | None,
     dry_run: bool,
 ) -> None:
     """Add a new story to an epic or initiative.
@@ -321,7 +338,9 @@ def story_add_command(
             raise click.ClickException(f"POINTS must be an integer, got '{title}'") from err
 
         if dry_run:
-            click.echo(f"[DRY-RUN] Would add story to initiative {initiative}: {init_title} [{init_points}pts]")
+            click.echo(
+                f"[DRY-RUN] Would add story to initiative {initiative}: {init_title} [{init_points}pts]"
+            )
             return
 
         result = add_initiative_story(
@@ -336,7 +355,9 @@ def story_add_command(
         )
 
         if result["success"]:
-            click.echo(f"Added story {result['story_id']}: {init_title} [{init_points}pts] to initiative {initiative}")
+            click.echo(
+                f"Added story {result['story_id']}: {init_title} [{init_points}pts] to initiative {initiative}"
+            )
         else:
             raise click.ClickException(result["error"])
     else:
@@ -354,6 +375,7 @@ def story_add_command(
 
         if sprint_file is None:
             from pf.common.config import get_project_root
+
             path = get_project_root() / "sprint" / "current-sprint.yaml"
         else:
             path = Path(sprint_file)
@@ -368,6 +390,7 @@ def story_add_command(
             workflow=workflow,
             jira=jira_id,
             repos=repos,
+            depends_on=depends_on,
         )
 
         if result["success"]:

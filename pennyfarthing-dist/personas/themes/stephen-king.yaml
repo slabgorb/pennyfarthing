@@ -1,5 +1,7 @@
+category: "Literature"
+
 theme:
-  name: stephen-king
+  name: Stephen King
   description: "Characters from Stephen King's universe — heroes, villains, and the things that go bump in the night"
   source: "Stephen King literary universe"
   pennyfarthing_version: "10.4.0"
@@ -41,8 +43,15 @@ theme:
   dimensions:
     tone: dark
     era: contemporary
-    genre: horror
+    genre: drama
     energy: creeping
+    scrutiny: adversarial
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: meritocratic
+    formality: casual
+    intellectual_style: improvisational
+    stakes: existential
 
 agents:
   orchestrator:

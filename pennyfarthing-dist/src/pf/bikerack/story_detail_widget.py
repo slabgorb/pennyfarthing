@@ -108,9 +108,7 @@ class StoryDetailWidget(Widget):
         return Static(header_text, id="detail-header")
 
     @staticmethod
-    def _build_ac_section(
-        acs: list[dict[str, Any]], done_count: int
-    ) -> Collapsible:
+    def _build_ac_section(acs: list[dict[str, Any]], done_count: int) -> Collapsible:
         """Build the Acceptance Criteria collapsible section."""
         ac_text = Text()
         for ac in acs:
@@ -145,9 +143,7 @@ class StoryDetailWidget(Widget):
         return Collapsible(Static(git_text), title="Git")
 
     @staticmethod
-    def _build_context_section(
-        has_epic: bool, has_story: bool
-    ) -> Collapsible:
+    def _build_context_section(has_epic: bool, has_story: bool) -> Collapsible:
         """Build the Context collapsible section."""
         ctx_text = Text()
         if has_epic:

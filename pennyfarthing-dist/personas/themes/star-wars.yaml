@@ -1,3 +1,5 @@
+category: "Film"
+
 # Star Wars Theme
 # Star Wars (1977-present), Lucasfilm / Disney
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Jedi
   portrait_style: ", space opera cinematic, retro sci-fi concept art, art deco, Tamara Lempicka style"
-  tier: D
+  tier: U
+  optimized: true
   spinner_verbs:
     - Force channeling
     - Lightsaber igniting
@@ -49,12 +52,20 @@ theme:
   dimensions:
     tone: heroic
     era: timeless
-    genre: space-opera
+    genre: sci-fi
     energy: epic
+    zeitgeist: moderate
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: pragmatic
+    stakes: existential
 
 zeitgeist:
   score: 76.8
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

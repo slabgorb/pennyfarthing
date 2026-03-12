@@ -1,0 +1,58 @@
+Now I have everything I need. Here is my review.
+
+---
+
+# Story 6.1 Review — Thelonious Monk, finding the strange notes
+
+*110 tests pass. Clippy clean. But the Space tells me what's not there matters more than what is.*
+
+## Findings
+
+### [HIGH] Nightly `rustfmt` fails — import ordering violations across all source files
+`cargo +nightly fmt --all --check` produces diffs in `cli.rs`, `client.rs`, `config.rs`, `main.rs`, and all four test files. Per gotchas.md, nightly fmt must pass before approval. This is a blocking issue.
+
+**Files affected:** `src/main.rs:3`, `src/client.rs:1-2`, `src/config.rs:1`, `tests/security.rs:10-11`, `tests/siem_client.rs` (multiple), `tests/cli_binary.rs` (multiple), `tests/cli_types.rs` (multiple)
+
+### [HIGH] `with_token()` and `with_tenant()` use `assert!` — panics in production code
+At `client.rs:28-31` and `client.rs:38-40`, CWE-113 header injection protection uses `assert!()` which panics. The project's Rust rules at `.claude/rules/rust.md` explicitly say: **"No `unwrap()` in production code — use `?` or `expect()` with actionable message."** While `assert!` isn't `unwrap()`, it's the same class of unrecoverable panic. A malicious or corrupted token from env/keychain would crash the binary instead of returning a `CliError`. These should return `Result<Self, CliError>` instead.
+
+### [MEDIUM] `SiemClient::get()` creates a new `reqwest::Client` per request (`client.rs:94-100`)
+`reqwest::Client::builder().build()` is called on every `get()`. `reqwest::Client` maintains a connection pool and is designed to be reused. Creating one per request defeats connection pooling and TLS session reuse. Should build the client once in `SiemClient::new()` or lazily on first use.
+
+### [MEDIUM] Missing `rustls-tls` feature on `reqwest` — story spec says `reqwest 0.12 (json, rustls-tls)`
+Workspace `Cargo.toml:47` declares `reqwest = { version = "0.12", features = ["json"] }`. The story's Technical Guardrails explicitly specify `rustls-tls`. Without it, reqwest uses the system's OpenSSL (or no TLS at all depending on platform), which breaks the security posture for production HTTPS connections. This also contradicts the architecture doc's specification.
+
+### [MEDIUM] `ConfigFile` and `ServerSection` accept unknown fields silently (`config.rs:4-13`)
+Serde's default is to silently ignore unknown fields. A user who typos `timout = 30` or adds `tokn = "secret"` gets no warning. Adding `#[serde(deny_unknown_fields)]` would catch configuration errors early. The test `client_config_toml_does_not_contain_token_field` at `cli_types.rs:312-332` verifies that a `token` field in the TOML is ignored — but it **should** be rejected, not silently swallowed. The test's assertion `config.api_token().is_none()` passes only because `api_token()` reads from the env var, not because the config parser rejected the field.
+
+### [MEDIUM] Edition mismatch — `axiathon-client/Cargo.toml:2` uses `edition = "2021"`, workspace specifies `edition = "2024"`
+The workspace package section sets `edition = "2024"` and the Rust rules say "Edition 2024, MSRV 1.85+". The client crate hardcodes `edition = "2021"` instead of using `edition.workspace = true`. This means the crate misses edition 2024 features and lint behavior.
+
+### [MEDIUM] Config env var tests are not thread-safe (`cli_types.rs:267-271`, `cli_types.rs:276-279`)
+`std::env::set_var` / `remove_var` are process-global. In Rust 2024 these are `unsafe` (and in older editions they're unsound when tests run in parallel). Tests `client_config_env_var_overrides_file` and `client_config_timeout_env_var_override` modify env vars without synchronization. If cargo runs tests in parallel, these can interfere with each other or with `client_config_has_sensible_defaults`.
+
+### [MEDIUM] `commands/` directory is missing from the crate layout
+The story spec's "Key Files to Create" lists 10 files under `commands/` (`commands/mod.rs`, `commands/query.rs`, etc.). The implementation flattened all command definitions into `cli.rs`. While this works for stubs, it diverges from the architecture doc's prescribed layout and will require restructuring when real handlers land in stories 6.2-6.7.
+
+### [LOW] `toml` version mismatch — workspace has `0.8`, story spec says `0.9`
+`Cargo.toml:49` declares `toml = "0.8"`. The story's Technical Guardrails specify `toml 0.9`. This is low severity since 0.8 works, but it's a spec deviation.
+
+### [LOW] `init_setup()` in `main.rs:49-78` writes to the real filesystem with no test coverage
+The `axiathon init` command writes to `~/.config/axiathon/cli.toml` (or wherever `dirs::config_dir()` points). There are no tests for `init` beyond help rendering. A test should verify the directory/file creation in a temp directory. The init command also has no `--dry-run` flag for safety.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — correct per Rust rules
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`
+### [VERIFIED] Exit code mapping: 0=success, 1=error, 2=usage (clap auto), 3=auth, 4=authz — matches AC-3
+### [VERIFIED] CWE-209 protection on `ServerError` Display — body is stored but not shown in `format!("{err}")`
+### [VERIFIED] Shell completions functional for all four shells, instructions to stderr, script to stdout
+### [VERIFIED] All stub commands print "not yet implemented (Story X.Y)" with correct story references
+### [VERIFIED] No server-side crate dependencies in `axiathon-client/Cargo.toml`
+### [VERIFIED] URL validation rejects non-HTTP schemes and embedded credentials
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two HIGH findings block this:
+1. **Nightly fmt must pass** (gotchas.md requirement)
+2. **`assert!` in production code** must be replaced with `Result`-returning validation
+
+The MEDIUM findings (missing `rustls-tls`, silent unknown field acceptance, edition mismatch, non-thread-safe env var tests, missing `commands/` directory structure) should also be addressed, though individually none would block on their own.

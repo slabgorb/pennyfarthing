@@ -2,7 +2,7 @@
 
 ## Commands
 
-### `pf workflow check`
+### `pf.sh workflow check`
 
 Check current workflow state.
 
@@ -10,7 +10,7 @@ Check current workflow state.
 |------------|----------|-------------|
 | `--json` | No | Output as JSON |
 
-### `pf workflow complete-step`
+### `pf.sh workflow complete-step`
 
 Complete the current step of a stepped workflow.
 
@@ -19,7 +19,7 @@ Complete the current step of a stepped workflow.
 | `NAME` | No | Workflow name (auto-detects from session if omitted) |
 | `--step` | No | Complete a specific step number instead of current step |
 
-### `pf workflow fix-phase`
+### `pf.sh workflow fix-phase`
 
 Repair session phase tracking when handoffs didn't update properly.
 
@@ -29,7 +29,7 @@ Repair session phase tracking when handoffs didn't update properly.
 | `TARGET_PHASE` | Yes | Target phase to set (e.g., review, approved, finish) |
 | `--dry-run` | No | Preview without making changes |
 
-### `pf workflow handoff`
+### `pf.sh workflow handoff`
 
 Emit an environment-aware handoff marker.
 
@@ -37,11 +37,11 @@ Emit an environment-aware handoff marker.
 |------------|----------|-------------|
 | `NEXT_AGENT` | Yes | The agent to hand off to (tea, dev, reviewer, etc.) |
 
-### `pf workflow list`
+### `pf.sh workflow list`
 
 List all available workflows.
 
-### `pf workflow phase-check`
+### `pf.sh workflow phase-check`
 
 Check which agent owns a workflow phase.
 
@@ -50,7 +50,16 @@ Check which agent owns a workflow phase.
 | `WORKFLOW_NAME` | Yes | The workflow type (tdd, trivial, etc.) |
 | `PHASE` | Yes | The phase to check (red, implement, review, etc.) |
 
-### `pf workflow resume`
+### `pf.sh workflow phases`
+
+Show workflow phases with status annotation.
+
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `STORY_ID` | No | Story ID to look up session phase (optional) |
+| `--json` | No | Output as JSON |
+
+### `pf.sh workflow resume`
 
 Resume a stepped workflow from the current step.
 
@@ -58,7 +67,7 @@ Resume a stepped workflow from the current step.
 |------------|----------|-------------|
 | `NAME` | No | Workflow name (auto-detects from active session if omitted) |
 
-### `pf workflow show`
+### `pf.sh workflow show`
 
 Show workflow details including phase flow, triggers, and gates.
 
@@ -66,7 +75,7 @@ Show workflow details including phase flow, triggers, and gates.
 |------------|----------|-------------|
 | `NAME` | No | Workflow name (defaults to current session's workflow or tdd) |
 
-### `pf workflow start`
+### `pf.sh workflow start`
 
 Start a stepped workflow from step 1.
 
@@ -75,7 +84,7 @@ Start a stepped workflow from step 1.
 | `NAME` | Yes | Workflow name (e.g., architecture, release) |
 | `-m, --mode` | No | Mode: create, validate, or edit |
 
-### `pf workflow status`
+### `pf.sh workflow status`
 
 Show current stepped workflow progress.
 
@@ -83,7 +92,7 @@ Show current stepped workflow progress.
 |------------|----------|-------------|
 | `NAME` | No | Workflow name (auto-detects from active session if omitted) |
 
-### `pf workflow type`
+### `pf.sh workflow type`
 
 Get workflow type (phased, stepped, or procedural).
 

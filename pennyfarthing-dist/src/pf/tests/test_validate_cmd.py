@@ -476,9 +476,7 @@ class TestCLIIntegration:
         # Output should contain path-like references
         assert "sprint." in result.output or "epics[" in result.output
 
-    def test_output_human_readable(
-        self, runner: CliRunner, missing_fields_file: Path
-    ) -> None:
+    def test_output_human_readable(self, runner: CliRunner, missing_fields_file: Path) -> None:
         """Output should be human-readable with clear error descriptions."""
         result = runner.invoke(validate_command, [str(missing_fields_file)])
 

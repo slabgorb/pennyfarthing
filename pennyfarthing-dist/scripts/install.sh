@@ -17,39 +17,22 @@ has_gh_auth() {
     if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
         return 0
     fi
-    if [[ -n "${HOMEBREW_GITHUB_API_TOKEN:-}" ]]; then
-        return 0
-    fi
     return 1
 }
 
 if ! has_gh_auth; then
     log_error "GitHub authentication required (private repo)."
     echo ""
-    echo "  Option 1: Install gh and authenticate"
+    echo "  Install gh and authenticate:"
     echo "    brew install gh && gh auth login"
-    echo ""
-    echo "  Option 2: Set a personal access token"
-    echo "    export HOMEBREW_GITHUB_API_TOKEN=ghp_..."
     echo ""
     exit 1
 fi
 
 # --- Step 2: Install pf ---
-OS="$(uname -s)"
+# Prefer isolated Python tool installers (uv, pipx) over global pip.
 
-if [[ "$OS" == "Darwin" ]] && command -v brew &>/dev/null; then
-    # macOS with Homebrew — preferred path
-    log_info "Installing via Homebrew..."
-
-    # Ensure tap is added
-    if ! brew tap 2>/dev/null | grep -q 1898andco/pf; then
-        brew tap 1898andco/pf
-    fi
-
-    brew install pennyfarthing
-
-elif command -v uv &>/dev/null; then
+if command -v uv &>/dev/null; then
     log_info "Installing via uv..."
     uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
 
@@ -58,12 +41,12 @@ elif command -v pipx &>/dev/null; then
     pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
 
 elif command -v pip &>/dev/null; then
-    log_info "Installing via pip..."
+    log_warn "Installing via pip (consider installing pipx or uv for isolated environments)..."
     pip install "git+https://github.com/1898andCo/pennyfarthing.git"
 
 else
-    log_error "No supported package manager found."
-    echo "  Install one of: brew (macOS), uv, pipx, or pip"
+    log_error "No supported Python package manager found."
+    echo "  Install one of: uv (https://docs.astral.sh/uv/), pipx, or pip"
     exit 1
 fi
 

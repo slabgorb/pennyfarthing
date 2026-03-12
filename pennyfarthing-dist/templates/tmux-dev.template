@@ -146,6 +146,9 @@ case "$LAYOUT" in
     ;;
 esac
 
+# Register panes in the background
+(cd "$DIR" && pf tmux register) &
+
 # Attach
 tmux -L "$SOCKET" attach -t "$SESSION"
 

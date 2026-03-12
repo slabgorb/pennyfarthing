@@ -117,10 +117,47 @@ def resolve_gate(
             assessment_found=True,
         )
 
+    # Resolve consumer gate extensions from repos.yaml
+    gate_extensions: list[str] | None = None
+    if gate_file:
+        from pf.handoff.gate_file import resolve_gate_extensions, resolve_lang_review_extensions
+
+        gate_name_for_ext = gate_file
+        if gate_name_for_ext.startswith("gates/"):
+            gate_name_for_ext = gate_name_for_ext[len("gates/") :]
+        ext_result = resolve_gate_extensions(gate_name_for_ext, project_root=project_root)
+        if not ext_result["success"]:
+            return _result(
+                status="error",
+                error=ext_result["error"],
+            )
+        all_extensions = list(ext_result["data"]) if ext_result["data"] else []
+
+        # Auto-discover language-based review gates for dev-exit
+        if gate_name_for_ext == "dev-exit":
+            from pf.handoff.gate_file import resolve_gate_file
+
+            lang_result = resolve_lang_review_extensions(project_root=project_root)
+            if lang_result["success"] and lang_result["data"]:
+                for lang_ext in lang_result["data"]:
+                    if lang_ext not in all_extensions:
+                        all_extensions.append(lang_ext)
+
+            # Always include review-correlation on dev-exit —
+            # the gate itself checks whether review findings exist
+            corr_ref = "gates/review-correlation"
+            corr_result = resolve_gate_file("review-correlation", project_root=project_root)
+            if corr_result["status"] == "found" and corr_ref not in all_extensions:
+                all_extensions.append(corr_ref)
+
+        if all_extensions:
+            gate_extensions = all_extensions
+
     return _result(
         status="ready",
         gate_type=gate_type,
         gate_file=gate_file,
+        gate_extensions=gate_extensions,
         next_agent=next_agent,
         next_phase=next_phase,
         assessment_found=True,
@@ -131,6 +168,7 @@ def _result(
     status: str,
     gate_type: str | None = None,
     gate_file: str | None = None,
+    gate_extensions: list[str] | None = None,
     next_agent: str | None = None,
     next_phase: str | None = None,
     assessment_found: bool = False,
@@ -140,6 +178,7 @@ def _result(
         "status": status,
         "gate_type": gate_type,
         "gate_file": gate_file,
+        "gate_extensions": gate_extensions,
         "next_agent": next_agent,
         "next_phase": next_phase,
         "assessment_found": assessment_found,

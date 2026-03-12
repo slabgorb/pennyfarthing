@@ -1,3 +1,5 @@
+category: "Film"
+
 # Blade Runner Theme
 # Blade Runner (1982) / 2049 (2017), Philip K. Dick's 'Do Androids Dream of Electric Sheep?'
 #
@@ -14,12 +16,21 @@ theme:
   character_immersion: high
   user_title: Skin-job (affectionately)
   portrait_style: ", cyberpunk noir, neon pink and cyan rain-soaked lighting, Voight-Kampff eye closeup, retrofuturist dystopia"
-  tier: S
+  tier: C
+  optimized: true
   dimensions:
     tone: dramatic
     era: futuristic
     genre: sci-fi
     energy: contemplative
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: philosophical
+    stakes: existential
   spinner_verbs:
     - Retiring replicants
     - Tears in rain
@@ -53,7 +64,7 @@ theme:
     - Roy Batty weeping
 zeitgeist:
   score: 84.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Eldon Tyrell

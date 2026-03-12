@@ -106,7 +106,7 @@ Add GUI recipe to justfile?
 
 [Y] Yes, add recipe:
     gui:
-        cd pennyfarthing/packages/core && npm run dev:web
+        pf bikerack start
 
 [N] No, I'll launch it manually
 ```

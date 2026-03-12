@@ -1,3 +1,5 @@
+category: "Literature"
+
 # Discworld Theme
 # Terry Pratchett's Discworld novels
 #
@@ -22,6 +24,14 @@ theme:
     era: timeless
     genre: fantasy
     energy: measured
+    zeitgeist: high
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: analytical
+    stakes: cosmic
   spinner_verbs:
     - Headologizing
     - Channeling Narrativium
@@ -55,7 +65,7 @@ theme:
     - Great A'Tuin swims
 zeitgeist:
   score: 98.0
-  rating: exceptional
+  rating: high
 
 agents:
   orchestrator:

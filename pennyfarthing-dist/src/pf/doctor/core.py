@@ -9,7 +9,6 @@ from pathlib import Path
 
 from pf.doctor.checks import (
     CHECKS,
-    check_bootstrap,
     check_commands,
     check_config_file,
     check_content_dirs,
@@ -29,7 +28,6 @@ _CHECK_FNS = {
     "pennyfarthing_dir": check_pennyfarthing_dir,
     "config_file": check_config_file,
     "settings_hooks": check_settings_hooks,
-    "bootstrap": check_bootstrap,
     "content_dirs": check_content_dirs,
     "commands": check_commands,
     "skills": check_skills,

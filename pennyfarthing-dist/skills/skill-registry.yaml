@@ -40,7 +40,7 @@ skills:
     anti_patterns:
       - Don't manually edit config.local.yaml to set panel focus — use this skill
     related_skills: [pf-gui]
-    keywords: [bikerack, panel, focus, layout, dockview]
+    keywords: [bikerack, panel, focus, layout, dockview, panel-focus, dashboard]
 
   pf-changelog:
     name: pf-changelog
@@ -75,7 +75,7 @@ skills:
       - Don't skip security considerations in review
       - Don't approve without running tests
     related_skills: [pf-testing]
-    keywords: [pr, pull-request, quality, linting, security]
+    keywords: [pr, pull-request, quality, linting, security, self-review, checklist]
 
   pf-context-engineering:
     name: pf-context-engineering
@@ -162,7 +162,7 @@ skills:
     anti_patterns:
       - Don't bypass Jira for sprint tracking
     related_skills: [pf-sprint]
-    keywords: [atlassian, issues, tickets, backlog]
+    keywords: [atlassian, issues, tickets, backlog, sync, reconcile, assign, transition]
 
   pf-judge:
     name: pf-judge
@@ -196,7 +196,7 @@ skills:
     anti_patterns:
       - Don't create complex recipes - keep them simple and composable
     related_skills: [pf-testing]
-    keywords: [justfile, make, tasks, automation, command-runner]
+    keywords: [justfile, make, tasks, automation, command-runner, dev-server, recipes]
 
   pf-mermaid:
     name: pf-mermaid
@@ -233,7 +233,7 @@ skills:
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
   pf-settings:
-    name: pf-settings
+    name: settings
     description: View and manage .pennyfarthing/config.local.yaml settings
     category: tools
     tags: [configuration, settings, config]
@@ -307,6 +307,29 @@ skills:
     related_skills: [pf-testing, pf-agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
+  pf-tmux:
+    name: tmux
+    description: Pane management for tmux sessions — run commands, list panes, protect claude/tui
+    category: tools
+    tags: [tmux, panes, terminal, agents]
+    version: "1.0.0"
+    command_group: tmux
+    prerequisites: []
+    examples:
+      - context: Running a command in a worker pane
+        invocation: /tmux run "npm test"
+      - context: Listing available panes
+        invocation: /tmux list
+      - context: Creating a new worker pane
+        invocation: /tmux create --title "Dev Agent"
+      - context: Closing a worker pane
+        invocation: /tmux close worker
+    anti_patterns:
+      - Never use raw tmux send-keys — use pf tmux run or pf tmux send
+      - Never target claude or tui panes
+    related_skills: [pf-just]
+    keywords: [tmux, panes, terminal, worker, split, send-keys, protected, idle]
+
   pf-testing:
     name: pf-testing
     description: Test commands and TDD workflow patterns
@@ -323,7 +346,7 @@ skills:
       - Don't run tests directly - use testing-runner subagent
       - Don't skip RED phase in TDD workflow
     related_skills: [pf-code-review]
-    keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green]
+    keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green, watch, test-runner]
 
   pf-theme:
     name: pf-theme
@@ -347,11 +370,11 @@ skills:
     anti_patterns:
       - Don't edit config.local.yaml directly - use skill
     related_skills: []
-    keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard]
+    keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard, custom-theme, theme-creation]
 
 
   pf-ux-tandem:
-    name: pf-ux-tandem
+    name: ux-tandem
     description: Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
     category: development
     tags: [ux, tandem, review, tmux, collaboration, team]
@@ -389,7 +412,7 @@ skills:
 
   pf-yq:
     name: pf-yq
-    description: YAML processor for reading, modifying, and querying YAML files
+    description: Read, modify, and query YAML files from the command line using yq
     category: tools
     tags: [yaml, processing, cli]
     version: "1.0.0"

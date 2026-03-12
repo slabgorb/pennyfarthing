@@ -19,7 +19,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from pf.gates.findings import VALID_TYPES, VALID_URGENCIES, validate_findings
+from pf.gates.findings import VALID_TYPES, VALID_URGENCIES, validate_findings  # noqa: E402
 
 
 @pytest.fixture

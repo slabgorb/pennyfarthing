@@ -1,0 +1,28 @@
+The Lannisters pay their debts — and this test suite will collect every one owed by the implementation.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — foundational types, error handling, HTTP client, config loading, output formatting, and command structure all need test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 16 | AC-1, AC-2, AC-6 | Command groups in help, subcommand help rendering, derive macros, plural nouns, usage examples |
+| `tests/exit_codes.rs` | 12 | AC-3 | `CliError::exit_code()` mapping for all variants (0/1/2/3/4), Display impl, std::error::Error |
+| `tests/output_format.rs` | 11 | AC-4 | `OutputFormatter` trait, Table/JSON/CSV formatters, JSON metadata, CSV escaping (commas, quotes, newlines) |
+| `tests/global_flags.rs` | 13 | AC-5 | `--format`, `-v`/`-vv`/`-vvv`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`, global flag propagation |
+| `tests/siem_client.rs` | 11 | AC-7 | Header injection (X-Tenant-ID, Authorization Bearer), HTTP status mapping (401→AuthExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError), connection refused |
+| `tests/config_loading.rs` | 9 | AC-8 | TOML loading, missing file graceful handling, malformed TOML rejection, env var overrides, precedence, XDG path, token rejection |
+| `tests/shell_completion.rs` | 5 | AC-9 | Bash/Zsh/Fish/PowerShell generation, subcommand inclusion |
+| `tests/stub_handlers.rs` | 13 | AC-10 | All stub handlers return "not yet implemented", reference implementing story |
+| `tests/security.rs` | 9 | Security | CWE-209 error exposure, header injection (newlines, null bytes), config validation (negative/zero timeout), dependency boundary enforcement |
+
+**Tests Written:** 99 tests covering all 10 ACs + security
+**Status:** RED (all 8 test files fail to compile — unresolved imports for `cli`, `error`, `output`, `client`, `config`, `commands` modules)
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- No upstream findings during test design.

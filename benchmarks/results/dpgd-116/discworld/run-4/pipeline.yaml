@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: discworld
+run_id: 4
+timestamp: '2026-03-08T01:31:07.570795+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-discworld-run-4
+phases:
+  tea:
+    token_usage:
+      input: 254
+      output: 29200
+    duration_s: 480.14
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 34
+      output: 10695
+    duration_s: 220.5
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 8
+      output: 5426
+    duration_s: 234.23
+    exit_code: 0

@@ -29,7 +29,8 @@ repos:
     path: {relative_path}           # Path from project root
     type: {api|ui|cli|library|orchestrator|framework}
     description: {brief_description}
-    language: {typescript|python|rust|go|java}
+    language: {typescript|python|rust|go|java}  # Primary language
+    languages: [typescript, python]              # All languages (polyglot repos)
 
     # Commands (optional - omit if not applicable)
     test_command: {command}
@@ -141,6 +142,30 @@ repos:
     dev_command: npm run dev
 ```
 
+## PR TITLE FORMAT
+
+After the repos are configured, ask the user for their preferred PR title format.
+
+Use AskUserQuestion with these options:
+
+| Option | Format | Example |
+|--------|--------|---------|
+| **Jira-first (Recommended)** | `{jira_key} - {type}({scope}): {title}` | `MSSCI-16204 - feat(gates): add extensions` |
+| **Conventional** | `{type}({scope}): {title} ({jira_key})` | `feat(gates): add extensions (MSSCI-16204)` |
+| **Simple** | `{jira_key} - {title}` | `MSSCI-16204 - Add gate extensions` |
+| **Custom** | User provides their own template | Any format using `{jira_key}`, `{type}`, `{scope}`, `{title}` |
+
+Write the chosen format as `pr_title_format` at the top level of repos.yaml:
+
+```yaml
+pr_title_format: "{jira_key} - {type}({scope}): {title}"
+
+repos:
+  ...
+```
+
+If the user skips this step, the default (`{jira_key} - {type}({scope}): {title}`) is used automatically at runtime by `format_pr_title()` in `pf.git.repos`.
+
 ## SUCCESS CRITERIA
 
 ✅ repos.yaml accurately reflects project structure
@@ -148,6 +173,7 @@ repos:
 ✅ Commands verified and correct
 ✅ User has reviewed and approved
 ✅ File written to project root
+✅ PR title format configured (or default accepted)
 
 ## NEXT STEP
 

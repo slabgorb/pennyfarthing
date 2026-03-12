@@ -1,0 +1,30 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework — all structural, parsing, formatting, and error handling code needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 25 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit code mapping 0/1/2/3/4, CliError variants) |
+| `tests/output_format.rs` | 16 | AC-4 (table/json/csv, JSON metadata, CSV escaping, empty data) |
+| `tests/global_flags.rs` | 16 | AC-5 (verbose repeatable, quiet, server, tenant, config, no-color, global=true) |
+| `tests/siem_client.rs` | 15 | AC-7 (HTTP wrapper, header injection, status code mapping, URL validation) |
+| `tests/config_loading.rs` | 12 | AC-8 (TOML loading, env var overrides, XDG paths, token rejection, validation) |
+| `tests/shell_completion.rs` | 10 | AC-9 (bash/zsh/fish/powershell generation, CLI parsing, command coverage) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (all stubs return NotImplemented with story ref, exit code 1) |
+| `tests/security.rs` | 6 | CWE-209 error leakage, dependency isolation, unsafe_code forbid |
+
+**Tests Written:** 123 tests covering all 10 ACs
+**Status:** RED (failing — compilation errors from non-existent modules: `cli`, `error`, `output`, `client`, `config`, `commands`)
+
+**Security tests included:**
+- CWE-113: HTTP header injection via CRLF in tenant ID and bearer token
+- CWE-209: Error messages must not leak internal paths, SQL, or stack traces
+- Config validation: negative/zero timeouts rejected, non-numeric env vars rejected
+- Token storage: config file with `token` field is rejected/ignored (keychain only)
+- URL scheme validation: non-HTTP/HTTPS schemes rejected by SiemClient
+- Dependency isolation: no server-side crate imports
+
+**Handoff:** To Dev for implementation (GREEN phase)

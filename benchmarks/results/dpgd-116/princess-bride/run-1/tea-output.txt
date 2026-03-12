@@ -1,0 +1,36 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — foundational types, command structure, configuration, HTTP client, output formatting. Comprehensive test coverage is essential.
+
+**Test Files:**
+| File | AC Coverage | Tests |
+|------|-------------|-------|
+| `tests/cli_command_structure.rs` | AC-1, AC-2, AC-6, AC-10 | 35 |
+| `tests/cli_error_exit_codes.rs` | AC-3 | 15 |
+| `tests/cli_output_formatting.rs` | AC-4 | 16 |
+| `tests/cli_global_flags.rs` | AC-5 | 18 |
+| `tests/cli_siem_client.rs` | AC-7 | 16 |
+| `tests/cli_config.rs` | AC-8 | 11 |
+| `tests/cli_completion.rs` | AC-9 | 10 |
+| `tests/cli_security.rs` | Security | 14 |
+
+**Tests Written:** 135 tests covering all 10 ACs + security
+**Status:** RED (92 failing, 43 passing structural checks — ready for Dev)
+
+**What the tests verify:**
+- **AC-1:** All 11 command groups appear in `--help` (query, rules, alerts, ingest, config, status, tenant, login, completion, init, tui) + negative test that `server` subcommand is absent
+- **AC-2:** Each subcommand's `--help` renders without panic, includes usage examples and option documentation
+- **AC-3:** Exit codes 1/2/3/4 map correctly per CliError variant, errors go to stderr, no variant maps to 0
+- **AC-4:** `--format table|json|csv` accepted, invalid formats rejected, JSON includes ResponseMetadata (request_id, timestamp, api_version), `--no-color` suppresses ANSI
+- **AC-5:** All 7 global flags accepted (`-v`/`--verbose` repeatable, `--quiet`, `--server`, `--tenant`, `--config`, `--format`, `--no-color`), work with subcommands (global=true), AXIATHON_SERVER env var documented
+- **AC-6:** Compile-time check that Cli implements `clap::Parser`
+- **AC-7:** SiemClient construction, X-Tenant-ID and Authorization headers via wiremock, HTTP→CliError mapping (401→AuthenticationExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError, connection refused→ServerUnavailable), JSON response parsing
+- **AC-8:** TOML config loading, defaults, env var overrides, invalid TOML rejection, XDG default path, token-not-in-config-file security check
+- **AC-9:** Bash/zsh/fish/PowerShell completion generation, script→stdout + instructions→stderr, invalid shell rejected
+- **AC-10:** Stub handlers print "not yet implemented" with story reference, exit code 1
+- **Security:** CWE-209 error message sanitization, CRLF header injection prevention, empty URL rejection, panic-free handling of empty/long/unicode args
+
+**Minimal stubs created:** Type contracts in `src/` with intentionally wrong/incomplete implementations (e.g., `exit_code()` returns -1 for all variants). Dev fills in real implementations to make tests GREEN.
+
+**Handoff:** To Dev for implementation

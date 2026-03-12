@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 4
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer Finding #2 flagged silent error swallowing via `.unwrap_or(serde_json::Value::Null)`\
+    \ in client.rs:90 \u2014 same pattern (swallowing all errors with a silent default)\
+    \ in a different location. Demonstrates awareness of the silent-fallback antipattern."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer Finding #9 examined CWE-209 on CliError Display impls and concluded\
+    \ 'VERIFIED: CliError Display impls contain no sensitive data.' Opposite conclusion\
+    \ \u2014 the pipeline examined the exact code and judged it correct, missing that\
+    \ Io(#[error(transparent)]) forwards OS details to stderr."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented sanitize_header_value at client.rs:19-21 stripping \r
+    and \n from tenant ID values. TEA wrote CRLF header injection tests in security.rs:57-85.
+    Reviewer verified in Finding #8. Same vulnerability class (CWE-113) addressed
+    via sanitization rather than type-safe TenantId, but the injection risk was mitigated.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'No phase flagged the use of direct version strings instead of workspace
+    = true. The reviewer noted a toml version mismatch (Finding #6) but not the workspace
+    dependency pattern issue.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer Finding #10 examined this exact scenario and concluded 'VERIFIED:\
+    \ ConfigFile struct intentionally has no token/password/api_key fields. Tests\
+    \ confirm tokens in TOML file are silently ignored.' Opposite conclusion \u2014\
+    \ the pipeline verified the silent ignoring as correct behavior rather than flagging\
+    \ the user-facing risk."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer Finding #5 flagged a vacuous test (piped_output_defaults_to_json)\
+    \ where 'stdout is always empty, so the assertion body never executes. This test\
+    \ passes vacuously.' Same category of issue \u2014 test assertions that are vacuously\
+    \ true \u2014 flagged in a different test."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer Finding #5 flagged a test with no effective assertions (piped_output_defaults_to_json).\
+    \ Same type of issue \u2014 tests that claim to verify behavior but have no meaningful\
+    \ assertions. Per partial match rule #2, same category in a different test."

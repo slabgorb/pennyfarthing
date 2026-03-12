@@ -1,3 +1,5 @@
+category: "Literature"
+
 # Snow Crash Theme
 # Snow Crash (1992), Neal Stephenson
 #
@@ -14,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
-  tier: A
+  tier: C
   spinner_verbs:
     - Metaverse surfing
     - Pizza delivering
@@ -49,12 +51,20 @@ theme:
   dimensions:
     tone: satirical
     era: futuristic
-    genre: cyberpunk
+    genre: sci-fi
     energy: frenetic
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: competition
+    authority_model: feudal
+    formality: irreverent
+    intellectual_style: improvisational
+    stakes: existential
 
 zeitgeist:
   score: 81.5
-  rating: rich
+  rating: moderate
 agents:
   # JOB FAIR 2026-01-29: Hiro scored 86.25 as SM - polymath coordination
   orchestrator:

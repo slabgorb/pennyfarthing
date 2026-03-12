@@ -301,7 +301,7 @@ User runs /pf-session new → prime detects no epic context
 Each agent checks context usage after completing work:
 
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
+pf context
 ```
 
 | Context | Action |

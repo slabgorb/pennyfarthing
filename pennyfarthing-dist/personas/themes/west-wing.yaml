@@ -1,3 +1,5 @@
+category: "TV Series"
+
 # The West Wing Theme
 # The West Wing (1999-2006), Aaron Sorkin
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
-  tier: S
+  tier: B
+  optimized: true
   spinner_verbs:
     - Walk and talking
     - Preparing briefings
@@ -49,12 +52,20 @@ theme:
   dimensions:
     tone: idealistic
     era: contemporary
-    genre: political-drama
+    genre: drama
     energy: rapid
+    zeitgeist: moderate
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: debate
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 84.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: President Josiah Bartlet

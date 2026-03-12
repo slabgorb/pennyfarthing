@@ -64,25 +64,29 @@ def export_csv(markers: list[CodeMarker]) -> str:
     """Export markers as CSV."""
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow([
-        "path",
-        "line",
-        "marker_type",
-        "text",
-        "author",
-        "date",
-        "age_days",
-        "is_stale",
-    ])
+    writer.writerow(
+        [
+            "path",
+            "line",
+            "marker_type",
+            "text",
+            "author",
+            "date",
+            "age_days",
+            "is_stale",
+        ]
+    )
     for m in markers:
-        writer.writerow([
-            m.path,
-            m.line,
-            m.marker_type,
-            m.text,
-            m.author,
-            m.date,
-            m.age_days,
-            m.is_stale,
-        ])
+        writer.writerow(
+            [
+                m.path,
+                m.line,
+                m.marker_type,
+                m.text,
+                m.author,
+                m.date,
+                m.age_days,
+                m.is_stale,
+            ]
+        )
     return buf.getvalue()
