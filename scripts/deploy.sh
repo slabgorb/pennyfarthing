@@ -308,6 +308,9 @@ if $DRY_RUN; then
         log_dry "git push origin develop --tags"
         log_dry "pnpm publish --access public --no-git-checks --tag $PRERELEASE_CHANNEL (@pennyfarthing/core)"
         log_dry "gh release create $TAG_NAME --prerelease"
+        log_dry "python -m build --sdist"
+        log_dry "gh release upload $TAG_NAME dist/pennyfarthing_scripts-${NEW_VERSION}.tar.gz"
+        log_dry "gh api repos/1898andCo/homebrew-pf/dispatches (formula-update)"
     else
         log_dry "git checkout main && git merge develop"
         log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
@@ -315,6 +318,9 @@ if $DRY_RUN; then
         log_dry "git checkout develop"
         log_dry "pnpm publish --access public --no-git-checks (@pennyfarthing/core)"
         log_dry "gh release create $TAG_NAME"
+        log_dry "python -m build --sdist"
+        log_dry "gh release upload $TAG_NAME dist/pennyfarthing_scripts-${NEW_VERSION}.tar.gz"
+        log_dry "gh api repos/1898andCo/homebrew-pf/dispatches (formula-update)"
     fi
 else
     # Step 4: Merge to main (stable only — prereleases stay on develop)
@@ -388,6 +394,25 @@ else
         GH_PRERELEASE_FLAG="--prerelease"
     fi
     gh release create "$TAG_NAME" --title "v$NEW_VERSION" --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md#${NEW_VERSION//\.}-${TODAY//-}) for details." $GH_PRERELEASE_FLAG || log_warn "GitHub release creation failed (may already exist)"
+
+    # Step 10: Build Python sdist and attach to release
+    log_info "Building Python sdist..."
+    (cd "$PROJECT_ROOT" && python -m build --sdist) || log_warn "sdist build failed"
+    SDIST="$PROJECT_ROOT/dist/pennyfarthing_scripts-${NEW_VERSION}.tar.gz"
+    if [[ -f "$SDIST" ]]; then
+        log_info "Uploading sdist to release..."
+        gh release upload "$TAG_NAME" "$SDIST" || log_warn "sdist upload failed"
+        log_info "Attached $SDIST to release $TAG_NAME"
+    else
+        log_warn "sdist not found at $SDIST — skipping release asset upload"
+    fi
+
+    # Step 11: Notify Homebrew tap to update formula
+    log_info "Triggering Homebrew formula update..."
+    gh api repos/1898andCo/homebrew-pf/dispatches \
+        -f event_type=formula-update \
+        -f "client_payload[version]=$NEW_VERSION" \
+        || log_warn "Homebrew tap dispatch failed (repo may not exist yet)"
 fi
 
 echo ""
@@ -406,6 +431,8 @@ if $DRY_RUN; then
     for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
         [[ -f "$pkg_dir/package.json" ]] && echo "    - $(node -e "console.log(require('$pkg_dir/package.json').name)")@$NEW_VERSION"
     done
+    echo "  Would attach: pennyfarthing_scripts-${NEW_VERSION}.tar.gz (sdist)"
+    echo "  Would notify: 1898andCo/homebrew-pf (formula update)"
 else
     log_info "Deploy complete!"
     echo ""
@@ -424,5 +451,7 @@ else
     for pkg_dir in "$PROJECT_ROOT"/packages/*/; do
         [[ -f "$pkg_dir/package.json" ]] && echo "    - $(node -e "console.log(require('$pkg_dir/package.json').name)")@$NEW_VERSION"
     done
+    echo "  sdist: pennyfarthing_scripts-${NEW_VERSION}.tar.gz (attached to release)"
+    echo "  Homebrew: formula update dispatched to 1898andCo/homebrew-pf"
 fi
 echo ""

@@ -18,7 +18,7 @@ recovery is configured, follow this pipeline:
 
 4. **For each recoverable check:**
    - Invoke `/pf-context create {type} {id}` (epic or story)
-   - Re-run `pf context-docs validate {type} {id}` to verify
+   - Re-run `pf validate context-{type} {id}` to verify
 
 5. **Handle outcomes per check:**
    - **Created + validated:** Continue silently to next check or handoff
@@ -42,9 +42,9 @@ pf handoff resolve-gate 131-2 tdd setup
 
 Recovery:
 1. /pf-context create epic 131        → success
-2. pf context-docs validate epic 131   → exit 0 (pass) → continue
+2. pf validate context-epic 131   → exit 0 (pass) → continue
 3. /pf-context create story 131-2      → success
-4. pf context-docs validate story 131-2 → exit 0 (pass) → continue
+4. pf validate context-story 131-2 → exit 0 (pass) → continue
 
 Re-run gate → all pass → proceed to handoff
 ```

@@ -24,7 +24,5 @@ def is_populated() -> bool:
     """
     root = get_root()
     return (
-        (root / "agents").is_dir()
-        and (root / "commands").is_dir()
-        and (root / "skills").is_dir()
+        (root / "agents").is_dir() and (root / "commands").is_dir() and (root / "skills").is_dir()
     )

@@ -36,10 +36,11 @@ def main() -> None:
         if tool_name not in ("Edit", "Write"):
             sys.exit(0)
 
-        if not re.search(r'sprint/.*\.(yaml|yml)$', file_path):
+        if not re.search(r"sprint/.*\.(yaml|yml)$", file_path):
             sys.exit(0)
 
         from pathlib import Path
+
         if not Path(file_path).is_file():
             sys.exit(0)
 
@@ -70,20 +71,22 @@ try {
             sys.exit(0)
 
         # Validation failed
-        error_text = result.stderr.strip().replace('"', '\\"').replace('\n', ' ')
+        error_text = result.stderr.strip().replace('"', '\\"').replace("\n", " ")
         escaped_path = file_path.replace('"', '\\"')
 
-        output_hook_response(HookResponse(
-            event_name="PostToolUse",
-            additional_context=(
-                f"SPRINT YAML VALIDATION FAILED\n\n"
-                f"File: {escaped_path}\n"
-                f"Error: {error_text}\n\n"
-                f"The sprint YAML file has invalid syntax that will break the Cyclist SprintPanel.\n\n"
-                f"Common fix: Single-quoted strings cannot contain blank lines in YAML 1.2.\n"
-                f"Use literal block scalars (|) for multiline strings instead."
-            ),
-        ))
+        output_hook_response(
+            HookResponse(
+                event_name="PostToolUse",
+                additional_context=(
+                    f"SPRINT YAML VALIDATION FAILED\n\n"
+                    f"File: {escaped_path}\n"
+                    f"Error: {error_text}\n\n"
+                    f"The sprint YAML file has invalid syntax that will break the Cyclist SprintPanel.\n\n"
+                    f"Common fix: Single-quoted strings cannot contain blank lines in YAML 1.2.\n"
+                    f"Use literal block scalars (|) for multiline strings instead."
+                ),
+            )
+        )
 
     except SystemExit:
         raise

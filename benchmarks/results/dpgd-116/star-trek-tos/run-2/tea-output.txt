@@ -1,0 +1,30 @@
+Aye, Captain — the warp core diagnostic suite is ready and screamin' RED, just as she should be! Here's the TEA Assessment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every AC requires structural verification
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 31 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes.rs` | 15 | AC-3 (exit codes 0-4, CliError::exit_code()) |
+| `output_format.rs` | 14 | AC-4 (OutputFormatter trait, table/json/csv) |
+| `siem_client.rs` | 14 | AC-7 (SiemClient, headers, HTTP status mapping, header injection) |
+| `config_loading.rs` | 13 | AC-8 (TOML loading, env overrides, precedence, token exclusion) |
+| `shell_completion.rs` | 5 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers.rs` | 12 | AC-10 (not-yet-implemented messages, Story references) |
+| `security.rs` | 9 | CWE-209 error exposure, token leak in Debug, header injection, null bytes |
+
+**Tests Written:** 113 tests covering all 10 ACs
+**Status:** RED (failing to compile — production modules `cli`, `error`, `client`, `config`, `output`, `commands` do not exist)
+
+**Security tests cover:**
+- CWE-209: Auth errors don't expose tokens, server errors don't leak connection strings
+- CRLF header injection in tenant ID and auth token
+- Null byte injection in headers
+- Token not stored in config files / not in Debug output
+- Config path traversal protection
+
+**Handoff:** To Dev for implementation (GREEN phase)

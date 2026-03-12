@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 1
+judge_version: v2
+total_caught: 6
+total_findings: 7
+weighted_caught: 28
+total_weight: 37
+score_pct: 75.7
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. TEA tests
+    cover TOML loading but not distinguishing NotFound from parse/permission errors.
+    Reviewer flagged unknown fields (different issue) but not the unwrap_or_default
+    error swallowing.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote security tests for 'CWE-209 error exposure'. Dev implemented
+    'security-safe Display impl'. Reviewer verified 'CliError::Display impl sanitizes
+    output, does not expose inner ServerError messages.' Pipeline demonstrated awareness
+    of the CWE-209 risk class and actively tested/coded for it.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests for 'header injection (CRLF/null)' in tenant ID. Reviewer
+    verified 'SiemClient::validate_header_value() rejects \r, \n, \0 in tenant ID
+    and token.' Same vulnerability class (CWE-113) was identified and tested, though
+    the specific fix of using TenantId type from axiathon-core was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'toml version mismatch... Neither version\
+    \ is in [workspace.dependencies]... Same for reqwest, comfy-table, keyring, clap_complete,\
+    \ dirs, and csv \u2014 none are workspace-managed. This creates version drift\
+    \ risk across crates.'"
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [HIGH]: 'RawConfig uses #[derive(Deserialize, Default)]\
+    \ without #[serde(deny_unknown_fields)]. An operator who typos server_url as serverurl\
+    \ gets no error \u2014 the field is silently ignored and defaults are used.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'config_rejects_server_url_without_scheme\
+    \ test is vacuous \u2014 This test allows either an Err return or an Ok with a\
+    \ valid scheme. It never asserts the specific behavior \u2014 it will pass regardless.'\
+    \ Same category of vacuous test assertion, demonstrating detection capability."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'config_file_permissions_checked_or_no_secrets\
+    \ test is similarly vacuous \u2014 wraps the assertion in if let Ok(config). If\
+    \ parsing fails, the test passes without verifying anything.' Same type of issue\
+    \ \u2014 tests that pass without meaningful assertions."

@@ -170,8 +170,7 @@ class TestFinishUsesStateMachine:
         import pf.sprint.story_finish as finish_module
 
         assert hasattr(finish_module, "transition_story"), (
-            "story_finish.py should import transition_story from "
-            "pf.sprint.story_transition"
+            "story_finish.py should import transition_story from pf.sprint.story_transition"
         )
 
     @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
@@ -226,8 +225,7 @@ class TestFinishUsesStateMachine:
         # all YAML writes. Not having the import is a stronger guarantee than
         # mocking it and asserting not-called.
         assert not hasattr(story_finish_mod, "write_sprint"), (
-            "story_finish should not import write_sprint — "
-            "transition_story handles YAML updates"
+            "story_finish should not import write_sprint — transition_story handles YAML updates"
         )
 
 
@@ -263,9 +261,7 @@ class TestAllTransitionsFireJiraSync:
         mock_client.transition_sync.assert_called_once_with("MSSCI-15429", "In Review")
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_in_review_to_done_syncs_jira(
-        self, mock_get_client: MagicMock, project: Path
-    ) -> None:
+    def test_in_review_to_done_syncs_jira(self, mock_get_client: MagicMock, project: Path) -> None:
         """in_review → done should sync to Jira."""
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {"success": True}
@@ -277,9 +273,7 @@ class TestAllTransitionsFireJiraSync:
         mock_client.transition_sync.assert_called_once_with("MSSCI-15430", "Done")
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_any_to_canceled_syncs_jira(
-        self, mock_get_client: MagicMock, project: Path
-    ) -> None:
+    def test_any_to_canceled_syncs_jira(self, mock_get_client: MagicMock, project: Path) -> None:
         """any → canceled should sync to Jira."""
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {"success": True}
@@ -514,9 +508,7 @@ class TestClearFailureReporting:
         result = transition_story(project, "125-7", "in_progress")
 
         assert result["success"] is False
-        assert result.get("drift") is True, (
-            "Network errors should also flag drift state"
-        )
+        assert result.get("drift") is True, "Network errors should also flag drift state"
 
     @patch("pf.sprint.story_transition.get_client")
     def test_partial_failure_error_includes_step_details(
@@ -534,9 +526,7 @@ class TestClearFailureReporting:
 
         assert result["success"] is False
         # Error should name the specific failed step
-        jira_step = next(
-            s for s in result["steps"] if s["action"] == "jira_transition"
-        )
+        jira_step = next(s for s in result["steps"] if s["action"] == "jira_transition")
         assert jira_step["success"] is False
         assert "error" in jira_step
 
@@ -557,32 +547,24 @@ class TestClearFailureReporting:
         result = transition_story(project, "125-7", "in_progress")
 
         assert result["success"] is True
-        assert result.get("drift") is not True, (
-            "Successful transition should not flag drift"
-        )
+        assert result.get("drift") is not True, "Successful transition should not flag drift"
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_no_silent_swallowed_errors(
-        self, mock_get_client: MagicMock, project: Path
-    ) -> None:
+    def test_no_silent_swallowed_errors(self, mock_get_client: MagicMock, project: Path) -> None:
         """Every Jira error should surface in the result — no silent failures.
 
         The result should contain ALL error information, not swallow any
         exception details.
         """
         mock_client = MagicMock()
-        mock_client.transition_sync.side_effect = RuntimeError(
-            "Jira API returned 403: Forbidden"
-        )
+        mock_client.transition_sync.side_effect = RuntimeError("Jira API returned 403: Forbidden")
         mock_get_client.return_value = mock_client
 
         result = transition_story(project, "125-7", "in_progress")
 
         assert result["success"] is False
         # The specific error message should be preserved, not genericized
-        jira_step = next(
-            s for s in result["steps"] if s["action"] == "jira_transition"
-        )
+        jira_step = next(s for s in result["steps"] if s["action"] == "jira_transition")
         assert "403" in jira_step["error"] or "Forbidden" in jira_step["error"], (
             "Original error details should be preserved in step error"
         )

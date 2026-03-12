@@ -1,0 +1,28 @@
+All clean. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Tests:** 105/105 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+
+**Files Changed:**
+- `Cargo.toml` — added `env` feature to clap workspace dependency
+- `crates/axiathon-client/src/error.rs` — implemented `exit_code()` mapping (3=auth, 4=authz, 1=all others), credential-sanitizing `Display` impl
+- `crates/axiathon-client/src/client.rs` — implemented `map_http_status()` (401/403/404/429/5xx), header injection prevention (CR/LF/null sanitization), URL credential stripping, empty URL fallback
+- `crates/axiathon-client/src/config.rs` — implemented TOML loading with `deny_unknown_fields`, `default_config_path()` via `dirs` crate, `apply_env_overrides()` for `AXIATHON_API_URL`/`AXIATHON_TIMEOUT`, empty URL normalization
+- `crates/axiathon-client/src/output.rs` — implemented `format_rows()` (table via comfy-table, CSV via csv crate), `format_value()` (JSON with metadata envelope), `detect_default()` via `IsTerminal`
+- `crates/axiathon-client/src/cli.rs` — full clap derive structure with `Commands` enum (12 subcommands), all 7 global flags with proper attributes
+- `crates/axiathon-client/src/main.rs` — command dispatch with proper exit code handling
+- `crates/axiathon-client/src/commands/mod.rs` — module declarations for all 10 command modules
+- `crates/axiathon-client/src/commands/query.rs` — stub returning `NotImplemented("Story 5.5")`
+- `crates/axiathon-client/src/commands/rules.rs` — stub with list/get subcommands, `NotImplemented("Story 6.6")`
+- `crates/axiathon-client/src/commands/alerts.rs` — stub with list/acknowledge subcommands, `NotImplemented("Story 6.5")`
+- `crates/axiathon-client/src/commands/ingest.rs` — stub with status/pause subcommands, `NotImplemented("Story 6.4")`
+- `crates/axiathon-client/src/commands/config.rs` — stub with show/set subcommands, `NotImplemented("Story 6.3")`
+- `crates/axiathon-client/src/commands/status.rs` — stub returning `NotImplemented("Story 6.2")`
+- `crates/axiathon-client/src/commands/tenant.rs` — stub with list/get subcommands, `NotImplemented("Story 6.7")`
+- `crates/axiathon-client/src/commands/login.rs` — stub returning `NotImplemented("Story 9.1")`
+- `crates/axiathon-client/src/commands/completion.rs` — functional shell completion via `clap_complete::generate()`
+- `crates/axiathon-client/src/commands/init.rs` — functional first-time setup (creates config dir and file)

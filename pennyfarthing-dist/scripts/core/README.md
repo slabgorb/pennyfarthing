@@ -7,7 +7,6 @@ Essential scripts required for all Pennyfarthing operations.
 | Script | Purpose |
 |--------|---------|
 | `agent-session.sh` | Agent persona loading and session management |
-| `check-context.sh` | Context usage checker for monitoring token limits |
 | `prime.sh` | Context loading for agent activation |
 
 ## Usage
@@ -16,7 +15,7 @@ These scripts are invoked directly:
 
 ```bash
 .pennyfarthing/scripts/core/agent-session.sh start sm
-.pennyfarthing/scripts/core/check-context.sh --human
+pf context
 ```
 
 ## Ownership

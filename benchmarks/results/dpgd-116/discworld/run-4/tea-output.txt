@@ -1,0 +1,30 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework — every module needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 40 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (derive) |
+| `exit_codes.rs` | 15 | AC-3 (exit codes 0/1/2/3/4) |
+| `output_format.rs` | 16 | AC-4 (table/json/csv formatting) |
+| `siem_client.rs` | 17 | AC-7 (HTTP wrapper, headers, status code mapping) |
+| `config_loading.rs` | 13 | AC-8 (TOML loading, env overrides, precedence) |
+| `shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell) |
+| `stub_handlers.rs` | 9 | AC-10 (stub message format) |
+| `security.rs` | 8 | CWE-209, header injection, URL scheme validation |
+
+**Tests Written:** 124 tests covering all 10 ACs
+**Status:** RED (failing — compilation errors due to missing source modules)
+
+**Security tests included:**
+- Header injection prevention (newlines in tenant ID and token) — CWE-113
+- Error display does not leak file paths or stack traces — CWE-209
+- Config rejects tokens in file (must use OS keychain)
+- URL scheme validation (rejects `javascript:`, `file://`)
+- Exit codes never return 0 for error variants
+
+**Workspace dependencies added:** `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`, `assert_cmd`, `predicates`, `tempfile`, `wiremock`
+
+**Handoff:** To Dev for implementation (GREEN phase)

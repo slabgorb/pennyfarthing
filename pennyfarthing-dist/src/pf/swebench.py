@@ -204,10 +204,34 @@ def get_meaningful_patterns(
         Filtered list of meaningful patterns
     """
     common_words = {
-        "if", "else", "elif", "return", "self", "def", "class",
-        "for", "in", "not", "and", "or", "is", "none", "true",
-        "false", "import", "from", "as", "with", "try", "except",
-        "finally", "raise", "pass", "break", "continue", "while",
+        "if",
+        "else",
+        "elif",
+        "return",
+        "self",
+        "def",
+        "class",
+        "for",
+        "in",
+        "not",
+        "and",
+        "or",
+        "is",
+        "none",
+        "true",
+        "false",
+        "import",
+        "from",
+        "as",
+        "with",
+        "try",
+        "except",
+        "finally",
+        "raise",
+        "pass",
+        "break",
+        "continue",
+        "while",
     }
 
     if exclude_common:

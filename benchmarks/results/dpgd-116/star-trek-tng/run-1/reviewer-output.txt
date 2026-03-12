@@ -1,0 +1,81 @@
+All data collected. Let me now deliver my findings.
+
+---
+
+## Code Review: Story 6.1 — CLI Framework & Structure
+
+*Fascinating. I have completed a thorough logical analysis of this implementation. The code compiles, tests pass, and clippy is clean. However, my instruments detect several significant anomalies that require attention.*
+
+---
+
+### Findings
+
+**[CRITICAL] `main.rs` is a dead shell — no command dispatch, no error handling, no exit codes** at `crates/axiathon-client/src/main.rs:7-9`
+
+The binary entry point parses CLI args and immediately drops the result. No command handlers are invoked. No errors are caught. No `std::process::exit()` is called. The binary is functionally inert — it parses arguments then exits 0 regardless. This violates **AC-3** (exit code mapping), **AC-10** (stub handlers print messages and exit 1), and **AC-9** (completion command must output scripts). The entire command dispatch and error-to-exit-code wiring layer is missing. *Dr. McCoy would say: "It's dead, Jim."*
+
+**[HIGH] CWE-209: `NotFound` Display leaks server response body** at `crates/axiathon-client/src/error.rs:20` + `client.rs:72`
+
+`CliError::NotFound(String)` uses `#[error("not found: {0}")]` which directly exposes the inner string in user-facing output. In `client.rs:96`, the server's HTTP 404 response body is passed verbatim as that string. Server 404 bodies routinely contain internal paths, endpoint details, or framework stack traces. This is a CWE-209 information exposure to the user. `ServerError` correctly hides its body (`{0}` references only the status code), but `NotFound` does not follow the same pattern.
+
+**[HIGH] Config silently swallows non-NotFound IO errors** at `crates/axiathon-client/src/config.rs:34`
+
+```rust
+Err(_) => return Ok(Self::default()),
+```
+
+If the config file exists but is unreadable (EACCES, EISDIR, disk error), the code silently returns defaults. The operator will believe default config is in effect with no indication their config file was ignored. Only `NotFound` should fall back to defaults; other IO errors should propagate. This is a silent failure that contradicts the project's Bash rules ethos of "never suppress errors."
+
+**[HIGH] `RawConfig` accepts unknown TOML fields silently** at `crates/axiathon-client/src/config.rs:7-13`
+
+`#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]` means typos like `api-url` (hyphen vs underscore) or `timout` are silently ignored, and the default value is used instead. An operator could have a config file that appears correct but is completely ineffective. This is a particularly insidious class of misconfiguration.
+
+**[HIGH] `with_env_overrides` skips URL scheme validation** at `crates/axiathon-client/src/config.rs:74-82`
+
+The `from_file()` method validates that `api_url` uses http/https scheme, but `with_env_overrides()` directly substitutes the env value with zero validation. `AXIATHON_API_URL=ftp://evil.com` or `AXIATHON_API_URL=""` bypasses all checks. Env var overrides should go through the same validation as file values.
+
+**[MEDIUM] Nightly `rustfmt` check fails** — import ordering in `cli_output_format.rs` and `cli_security.rs`
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check fails on two test files with misordered imports. This must be fixed before approval.
+
+**[MEDIUM] `--server` flag is hidden and lacks `env` attribute** at `crates/axiathon-client/src/cli.rs:18`
+
+AC-5 specifies `--server` supports `AXIATHON_SERVER` env var. The flag has `hide = true` (not visible in help) and no `env = "AXIATHON_SERVER"` attribute. Other env-backed flags (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`) also lack `env` attributes on their clap args, though they're handled via `with_env_overrides()` — which is never called since `main.rs` dispatches nothing.
+
+**[MEDIUM] `tenant` uses raw `String` instead of `TenantId` newtype** at `crates/axiathon-client/src/cli.rs:23` and `client.rs:9`
+
+The Rust coding rules mandate: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." `axiathon-core` exports `TenantId` with validated constructors. Both the CLI `--tenant` flag and `SiemClient::tenant_id` field use raw `Option<String>`, losing type safety at the trust boundary.
+
+**[MEDIUM] Several command Args structs lack subcommands** at `crates/axiathon-client/src/cli.rs:98-128`
+
+`AlertsArgs`, `IngestArgs`, `ConfigArgs`, `StatusArgs`, `TenantArgs`, `LoginArgs`, `LogoutArgs`, `TuiArgs`, and `InitArgs` are empty structs with no `#[command(subcommand)]`. The architecture doc mandates "plural nouns with verb subcommands" (`axiathon alerts acknowledge <id>`). While these are stubs, the subcommand structure should be present even if the handlers are stubs, so that help output shows the expected command structure.
+
+**[MEDIUM] `CliError::General` propagates raw reqwest error strings in Display** at `crates/axiathon-client/src/error.rs:12` + `client.rs:90-100`
+
+`CliError::General(format!("request failed: {e}"))` passes through `reqwest` error messages which can contain server URLs, DNS resolution details, and TLS certificate information. While less severe than the `NotFound` case, this still represents information leakage through error Display.
+
+**[LOW] JSON `request_id` is nanosecond timestamp, not a proper identifier** at `crates/axiathon-client/src/output.rs:82`
+
+`format!("{:x}", now.as_nanos())` produces a hex timestamp, not a UUID or unique request identifier. Two calls in the same nanosecond produce identical IDs. Consider using `Uuid::new_v4()` (already a workspace dependency) for proper request correlation.
+
+**[LOW] `format_as_json` panics on serialization failure** at `crates/axiathon-client/src/output.rs:88`
+
+`.expect("JSON serialization failed")` will panic rather than returning a `Result`. Similarly for CSV at lines 93-99. For a CLI tool, a panic produces an unhelpful backtrace rather than a clean error message.
+
+**[VERIFIED]** `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`.
+**[VERIFIED]** Header injection (CWE-113) properly mitigated via CRLF check in `client.rs:49-53`.
+**[VERIFIED]** `CliError` is `#[non_exhaustive]` per coding rules.
+**[VERIFIED]** Workspace dependency declarations properly used in `Cargo.toml`.
+**[VERIFIED]** Shell completion generation is functional (not a stub).
+**[VERIFIED]** All clippy warnings pass with `-D warnings`.
+**[VERIFIED]** Config file token field is parsed but not exposed via `has_token_from_file()`.
+
+---
+
+### Verdict: **CHANGES_REQUESTED**
+
+The Critical finding (`main.rs` non-functional — no dispatch, no exit codes, no error output) alone is blocking. The binary compiles and tests pass at the unit level, but the integration point — the actual binary behavior — is completely missing. An operator running `axiathon status` gets exit code 0 and silence, not "not yet implemented (Story 6.2)" with exit code 1.
+
+The three High findings (CWE-209 via `NotFound` Display, silent IO error swallowing in config, missing `deny_unknown_fields`, env override validation bypass) compound the concern. The code has good bones — the type design, header injection prevention, and test coverage are solid — but the wiring and security hardening need another pass.
+
+*It would be illogical to approve code that does not execute its stated purpose.*

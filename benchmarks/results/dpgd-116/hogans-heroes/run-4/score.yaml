@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: hogans-heroes
+run_id: 4
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified from_file_or_default swallowing parse/permission errors
+    via unwrap_or_default(). The reviewer flagged unknown fields (I4) but not the
+    error-swallowing constructor pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote security tests for CWE-209 error exposure: ''internal connection
+    strings must not leak through Display''. Reviewer also flagged CWE-209 on ServerError
+    Display/Debug path at error.rs:24.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote CWE-113 header injection tests: ''tenant ID and auth token
+    with \r\n and \x00 must be rejected''. Dev implemented prevention via HeaderValue::from_str().
+    Reviewer verified. Same vulnerability class caught, though the type-safety fix
+    (use TenantId) was not specifically recommended.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the 6 dependencies using direct version strings instead
+    of workspace = true. TEA added workspace dependencies but the Dev Cargo.toml changes
+    don't show workspace = true usage. Reviewer mentioned toml version mismatch but
+    not the workspace inheritance pattern.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as HIGH: 'RawConfig silently ignores unknown fields\
+    \ \u2014 config safety hazard for operators. #[serde(deny_unknown_fields)] should\
+    \ be used with an explicit allowlist, or at minimum unknown fields should produce\
+    \ a warning.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always true). TEA wrote config_loading tests but the vacuous assertion was
+    not flagged by any phase.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. TEA wrote config_loading
+    tests but the 'let _ = config' pattern with no assert was not flagged by any phase.

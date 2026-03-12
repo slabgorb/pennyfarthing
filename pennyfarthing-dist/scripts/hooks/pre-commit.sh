@@ -79,18 +79,16 @@ if [[ -n "$AGENT_FILES" ]]; then
     echo "$AGENT_FILES" | sed 's/^/  /'
     echo ""
 
-    VALIDATOR="$PROJECT_ROOT/pennyfarthing-dist/scripts/validation/validate-agent-schema.sh"
+    echo "Running agent schema validation..."
+    echo ""
 
-    if [[ -x "$VALIDATOR" ]]; then
-        echo "Running agent schema validation..."
-        echo ""
-
-        if ! "$VALIDATOR"; then
+    if command -v pf &>/dev/null; then
+        if ! pf validate agent; then
             echo ""
             echo "COMMIT BLOCKED - Agent validation failed"
             echo ""
             echo "Fix the validation errors above and try again."
-            echo "Run 'just validate-agents -v' for detailed output."
+            echo "Run 'pf validate agent' for detailed output."
             echo ""
             exit 1
         fi
@@ -98,8 +96,7 @@ if [[ -n "$AGENT_FILES" ]]; then
         echo ""
         echo "✓ Agent validation passed"
     else
-        echo "Warning: Agent validator not found at $VALIDATOR"
-        echo "Skipping agent validation."
+        echo "Warning: pf CLI not found — skipping agent validation."
     fi
 fi
 

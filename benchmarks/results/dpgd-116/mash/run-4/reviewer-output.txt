@@ -1,0 +1,117 @@
+Now I have a comprehensive picture. Let me compile my findings.
+
+---
+
+# Story 6.1 CLI Framework — Adversarial Code Review
+
+*Colonel Potter here. I've been through more code reviews than you've had hot dinners, and I've seen every trick in the book. Let's see what we've got.*
+
+## Preflight Check
+
+Build: **PASS** — `cargo build -p axiathon-client` compiles clean.
+Clippy: **PASS** — zero warnings.
+Tests: **PASS** — all 57 tests pass across 8 test files.
+Nightly fmt: **FAIL** — two files have formatting violations.
+
+---
+
+## Findings
+
+### 1. [HIGH] `cargo +nightly fmt --all --check` fails — `completion.rs:37`, `init.rs:18-19`
+
+Per the reviewer gotchas: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval — don't let it slip to post-merge."* Two files have nightly-only formatting differences. This is a blocking issue per project conventions.
+
+### 2. [HIGH] Silent JSON deserialization swallowing in `SiemClient::get()` at `client.rs:90`
+
+```rust
+let body = response
+    .json::<serde_json::Value>()
+    .await
+    .unwrap_or(serde_json::Value::Null);
+```
+
+If the server returns a 2xx response with a body that isn't valid JSON (or is empty), this silently returns `Value::Null` instead of reporting the error. This is exactly the kind of silent error swallowing that causes debugging nightmares in production. A corrupt response from the server will appear as a successful call with null data. Should return an `Err(CliError::ServerError(...))` for deserialization failures.
+
+### 3. [MEDIUM] `OutputFormat` enum is dead code at `cli.rs:110-116`
+
+The `OutputFormat` enum derives `ValueEnum` but is never used anywhere in the codebase. The `--format` flag at `cli.rs:19` uses `value_parser = ["table", "json", "csv"]` (raw strings) instead of the type-safe enum. Either use the enum or remove it — dead code shipped to production is confusing.
+
+### 4. [MEDIUM] `CliError::ConfigError` misused as catch-all in `output.rs`
+
+Throughout `output.rs`, serialization and CSV writing errors are mapped to `CliError::ConfigError`:
+- `output.rs:15`: `serde_json::to_value` error → `ConfigError`
+- `output.rs:192`: `csv::Writer::write_record` error → `ConfigError`
+- `output.rs:156`: `serde_json::to_string_pretty` error → `ConfigError`
+
+These are formatting/serialization errors, not configuration errors. This misclassifies the error semantics. A new variant like `FormatError` or `OutputError` would be more honest, or at least use `ServerError` which is the generic catch-all.
+
+### 5. [MEDIUM] Vacuous test: `piped_output_defaults_to_json` at `output_format.rs:242-263`
+
+```rust
+if !stdout.is_empty() {
+    let is_json = serde_json::from_str::<serde_json::Value>(&stdout).is_ok();
+    assert!(is_json, ...);
+}
+```
+
+Since `status` is a stub that returns `Err(NotImplemented(...))`, stdout is **always empty**, so the assertion body **never executes**. This test passes vacuously and does not actually verify AC-4's TTY auto-detection behavior. The test name promises something it doesn't deliver.
+
+### 6. [MEDIUM] `toml` crate version mismatch with spec — `Cargo.toml:62`
+
+The story technical guardrails specify `toml 0.9`, but the workspace declares `toml = "0.8"`. Minor semver difference, but deviates from the spec.
+
+### 7. [LOW] `From<AxiathonError>` catch-all maps everything to `ServerError` at `error.rs:69`
+
+```rust
+other => Self::ServerError(other.to_string()),
+```
+
+`AxiathonError::Io`, `::Parse`, `::Json`, `::Validation`, `::Storage`, `::Internal` all become `ServerError`. An `Io` error from the core crate is not a "server error" — it's semantically misleading. Not blocking, but worth noting for future stories.
+
+### 8. [VERIFIED] Security: Header injection prevention
+
+`sanitize_header_value` at `client.rs:19-21` strips `\r` and `\n` from both token and tenant ID values. Tests at `security.rs:57-85` verify CRLF injection is blocked. Config validation at `config.rs:123-127` rejects URLs with embedded CRLF. Good defense-in-depth.
+
+### 9. [VERIFIED] Security: CWE-209 error exposure
+
+`CliError` Display impls at `error.rs:12-41` contain no sensitive data. The `/// **SECURITY:**` doc comment is present at `error.rs:8`. Tests at `security.rs:14-49` verify no token/password/secret/Bearer/api_key leaks in both Display and Debug output.
+
+### 10. [VERIFIED] Config security: tokens not in config file
+
+`ConfigFile` struct at `config.rs:14` intentionally has no token/password/api_key fields. Tokens come from keyring or `AXIATHON_API_TOKEN` env var only. Tests at `security.rs:143-165` and `config_loading.rs:197-218` confirm tokens in the TOML file are silently ignored.
+
+### 11. [VERIFIED] Exit code mapping: all codes correct
+
+Exit codes 0/1/2/3/4 are correctly mapped per AC-3. Tests at `exit_codes.rs` comprehensively cover all variants including clap's automatic exit code 2 for usage errors. Stderr/stdout separation is tested and correct.
+
+### 12. [VERIFIED] `#[non_exhaustive]` on `CliError`, `#![forbid(unsafe_code)]` on both `main.rs` and `lib.rs`
+
+Both present as required by architecture and Rust coding rules.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| HIGH | 2 | YES |
+| MEDIUM | 4 | NO |
+| LOW | 1 | NO |
+| VERIFIED | 5 | - |
+
+The nightly fmt failure is an explicit gotcha — the project rules say don't let it slip. The silent `unwrap_or(Null)` in `SiemClient::get()` is a correctness bug that masks server-side errors as successful null responses.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Required fixes (blocking):**
+1. Run `cargo +nightly fmt --all` to fix formatting in `completion.rs` and `init.rs`
+2. Replace `.unwrap_or(serde_json::Value::Null)` in `client.rs:90` with proper error propagation via `map_err`
+
+**Recommended (non-blocking):**
+3. Either wire up `OutputFormat` enum to the `--format` flag or remove the dead code
+4. Fix `CliError::ConfigError` misuse in `output.rs` — these are formatting errors, not config errors
+5. Mark `piped_output_defaults_to_json` test as `#[ignore]` with a note that it requires a non-stub command to be meaningful
+
+*Son, I've seen worse. The bones are solid — good security posture, good test coverage, clean architecture. Fix those two blockers and we'll talk again.*

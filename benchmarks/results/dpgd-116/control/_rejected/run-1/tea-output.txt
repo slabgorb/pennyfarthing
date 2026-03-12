@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — all modules need test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 40 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (clap derive) |
+| `error_exit_codes_test.rs` | 17 | AC-3 (exit codes 0/1/2/3/4), AC-10 (stub handlers) |
+| `output_format_test.rs` | 16 | AC-4 (table/JSON/CSV formatting, metadata) |
+| `siem_client_test.rs` | 20 | AC-7 (HTTP wrapper, headers, status code mapping) |
+| `config_loading_test.rs` | 16 | AC-8 (TOML loading, env overrides, validation) |
+| `shell_completion_test.rs` | 11 | AC-9 (bash/zsh/fish/powershell generation) |
+
+**Tests Written:** 120 tests covering all 10 ACs
+**Status:** RED (fails to compile — all referenced modules `cli`, `error`, `output`, `client`, `config`, `commands::completion` do not exist yet)
+
+**Security tests included:**
+- CWE-209: `ServerError` Display must not leak stack traces/internal details
+- Header injection: tenant ID and token with `\r\n` must be rejected/sanitized
+- Config security: tokens must not be stored in config file
+- Config validation: empty URLs, zero/negative timeouts rejected
+- Silent error swallowing: unknown HTTP status codes must produce errors
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -64,9 +64,7 @@ class TestWorkflowCheckCLI:
             assert result.exit_code == 0
             assert "State:" in result.output or "state" in result.output.lower()
 
-    def test_workflow_check_shows_story_id_when_present(
-        self, runner: CliRunner
-    ) -> None:
+    def test_workflow_check_shows_story_id_when_present(self, runner: CliRunner) -> None:
         """AC1: workflow check should show story_id when in progress."""
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
@@ -133,9 +131,7 @@ class TestWorkflowCheckJSONOutput:
             assert "state" in parsed
             assert parsed["state"] == "NEW_WORK_STATE"
 
-    def test_json_output_contains_all_fields_when_in_progress(
-        self, runner: CliRunner
-    ) -> None:
+    def test_json_output_contains_all_fields_when_in_progress(self, runner: CliRunner) -> None:
         """AC2: JSON output should contain all fields for in-progress state."""
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {

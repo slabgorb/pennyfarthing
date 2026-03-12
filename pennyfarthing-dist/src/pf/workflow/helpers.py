@@ -21,27 +21,50 @@ def get_workflows_dir(project_root: Path | None = None) -> Path:
     return root / ".pennyfarthing" / "workflows"
 
 
+def get_project_workflows_dir(project_root: Path | None = None) -> Path:
+    """Get the project-level workflows directory path."""
+    root = project_root or get_project_root()
+    return root / ".pennyfarthing" / "project" / "workflows"
+
+
+def get_all_workflows_dirs(project_root: Path | None = None) -> list[Path]:
+    """Get workflow directories in priority order (project first, then dist)."""
+    root = project_root or get_project_root()
+    dirs: list[Path] = []
+    project_dir = get_project_workflows_dir(root)
+    if project_dir.is_dir():
+        dirs.append(project_dir)
+    dist_dir = get_workflows_dir(root)
+    if dist_dir.is_dir():
+        dirs.append(dist_dir)
+    return dirs
+
+
 def get_session_dir(project_root: Path | None = None) -> Path:
     """Get the session directory path."""
     root = project_root or get_project_root()
     return root / ".session"
 
 
-def find_workflow_file(workflows_dir: Path, workflow_name: str) -> Path | None:
+def find_workflow_file(workflows_dir: list[Path] | Path, workflow_name: str) -> Path | None:
     """Find workflow YAML definition.
 
     Supports both flat (name.yaml) and nested (name/workflow.yaml) layouts.
+    Accepts a single Path or list of Paths (searched in order, first match wins).
 
     Returns:
         Path to the workflow file, or None if not found.
     """
-    flat = workflows_dir / f"{workflow_name}.yaml"
-    if flat.exists():
-        return flat
+    dirs = [workflows_dir] if isinstance(workflows_dir, Path) else workflows_dir
 
-    nested = workflows_dir / workflow_name / "workflow.yaml"
-    if nested.exists():
-        return nested
+    for d in dirs:
+        flat = d / f"{workflow_name}.yaml"
+        if flat.exists():
+            return flat
+
+        nested = d / workflow_name / "workflow.yaml"
+        if nested.exists():
+            return nested
 
     return None
 
@@ -125,10 +148,13 @@ def count_steps(steps_path: Path) -> int:
     """Count step files in a directory."""
     if not steps_path.is_dir():
         return 0
-    return len([
-        f for f in steps_path.iterdir()
-        if f.is_file() and re.match(r"step-\d+", f.name) and f.suffix == ".md"
-    ])
+    return len(
+        [
+            f
+            for f in steps_path.iterdir()
+            if f.is_file() and re.match(r"step-\d+", f.name) and f.suffix == ".md"
+        ]
+    )
 
 
 def find_step_file(steps_path: Path, step_number: int) -> Path | None:
@@ -137,12 +163,15 @@ def find_step_file(steps_path: Path, step_number: int) -> Path | None:
     Handles naming variants: step-01.md, step-01-name.md, step-1-name.md
     """
     padded = f"{step_number:02d}"
-    matches = sorted([
-        f for f in steps_path.iterdir()
-        if f.is_file()
-        and (f.name.startswith(f"step-{padded}") or f.name.startswith(f"step-{step_number}-"))
-        and f.suffix == ".md"
-    ])
+    matches = sorted(
+        [
+            f
+            for f in steps_path.iterdir()
+            if f.is_file()
+            and (f.name.startswith(f"step-{padded}") or f.name.startswith(f"step-{step_number}-"))
+            and f.suffix == ".md"
+        ]
+    )
     return matches[0] if matches else None
 
 
@@ -153,7 +182,7 @@ def strip_frontmatter(content: str) -> str:
     end = content.find("---", 3)
     if end == -1:
         return content
-    return content[end + 3:].lstrip("\n")
+    return content[end + 3 :].lstrip("\n")
 
 
 def parse_session_field(content: str, field: str) -> str:
@@ -166,9 +195,7 @@ def parse_session_field(content: str, field: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def find_workflow_session(
-    session_dir: Path, workflow_name: str | None
-) -> tuple[Path, str] | None:
+def find_workflow_session(session_dir: Path, workflow_name: str | None) -> tuple[Path, str] | None:
     """Find workflow session file and determine workflow name.
 
     Args:

@@ -78,7 +78,7 @@ def format_size_info(size_info: dict[int, dict[str, Any]]) -> str:
         lines.append(f"{points} points - {info['scale']}")
         lines.append(f"  Complexity: {info['complexity']}")
         lines.append(f"  Examples: {', '.join(info['examples'])}")
-        if info.get('workflow'):
+        if info.get("workflow"):
             lines.append(f"  Workflow: {info['workflow']}")
         lines.append("")
 
@@ -109,4 +109,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

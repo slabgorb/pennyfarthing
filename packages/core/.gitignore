@@ -1,6 +1,0 @@
-# Generated test/benchmark results
-internal/
-
-# Symlinks for npm publish (pennyfarthing-dist lives at monorepo root)
-pennyfarthing-dist
-pennyfarthing-dist/pf

@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 5
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors via
+    unwrap_or_default(). The reviewer flagged deny_unknown_fields but not the error-swallowing
+    pattern in from_file_or_default.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote security tests for CWE-209 error exposure. Dev implemented
+    security-safe Display impl. Reviewer verified: ''CliError::Display impl sanitizes
+    output, does not expose inner ServerError messages.'''
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests for 'header injection (CRLF/null)' in tenant ID and auth
+    token. Dev implemented validate_header_value() rejecting \r, \n, \0. Same vulnerability
+    class (CWE-113) addressed via runtime validation rather than type-level TenantId
+    usage.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer MEDIUM finding: 'toml version mismatch... Neither version is\
+    \ in [workspace.dependencies]... Same for reqwest, comfy-table, keyring, clap_complete,\
+    \ dirs, and csv \u2014 none are workspace-managed. This creates version drift\
+    \ risk across crates.'"
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer reached opposite conclusion \u2014 verified as correct: 'Token\
+    \ never exposed via ClientConfig::token() \u2014 always returns None. Secret fields\
+    \ in RawConfig are parsed but discarded.' The reviewer's deny_unknown_fields finding\
+    \ wouldn't help since token IS a defined field in RawConfig."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer MEDIUM finding: 'config_rejects_server_url_without_scheme test\
+    \ is vacuous \u2014 This test allows either an Err return or an Ok... it will\
+    \ pass regardless' and 'config_file_permissions_checked_or_no_secrets test is\
+    \ similarly vacuous'. Same category of vacuous assertion patterns."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged multiple vacuous test patterns (MEDIUM findings about\
+    \ tests that pass without verifying anything). Same category \u2014 tests that\
+    \ provide no meaningful assertion. 'If parsing fails... the test passes without\
+    \ verifying anything.'"

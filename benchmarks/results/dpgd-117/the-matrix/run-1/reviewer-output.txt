@@ -1,0 +1,121 @@
+I have now read all source and test files. Here is my adversarial review.
+
+---
+
+# Story 8.1: REST API Foundation — Adversarial Code Review
+
+*"Causality. There is no escape from it. We are forever slaves to it. Let me trace every cause to every effect in this code."*
+
+## Review Findings
+
+### CRITICAL
+
+**1. [CRITICAL] `ApiResponse<T>` from `axiathon-core` is completely ignored — parallel, divergent envelope implementation** at `response.rs:1-31`
+
+The story *explicitly* requires: "All responses use `ApiResponse<T>` from axiathon-core." The core crate already has `ApiResponse<T>`, `ApiError`, `ApiMeta`, `FieldError` — a fully typed, tested envelope with `Serialize`/`Deserialize` derives, snapshot tests, and property tests.
+
+Instead, the implementation creates `response.rs` with `success_envelope()` and `error_envelope()` functions that return raw `serde_json::Value`. This means:
+- **Two competing envelope schemas exist** — `axiathon-core` has `{data, error, meta}` (singular `error` with `code/message/trace_id`), while `response.rs` produces `{data, errors, meta}` (plural `errors` array with `type/title/status`).
+- The `axiathon-core` dependency is declared in `Cargo.toml:9` but **never imported** in any source file.
+- The story's requirement for RFC 9457 alignment is met by `response.rs`, but it directly contradicts the typed core envelope. This will cause integration breakage when Stories 8.2+ try to use the core `ApiResponse<T>`.
+
+**2. [CRITICAL] Authentication is hardcoded test fixtures in production code — no JWT infrastructure** at `auth.rs:93-148`
+
+The `validate_token()` and `validate_api_key()` functions are string match tables:
+```rust
+match token {
+    "test-valid-token" => Ok(AuthContext { ... }),
+    "test-expired-token" => Err(AuthError::Expired),
+    ...
+}
+```
+There is no JWT parsing, no EdDSA/Ed25519 signature verification, no JWKS key loading, no token expiration checking, no claims extraction. The story requires "JWT (EdDSA/Ed25519)" with "Bearer token validation." While stubs are acceptable for *handler business logic*, the auth middleware is the **security boundary** — it must at minimum have the structure and types for real JWT validation, not hardcoded string matches that will ship as-is.
+
+### HIGH
+
+**3. [HIGH] Failed auth requests completely bypass rate limiting — enables credential brute force** at `lib.rs:44-45`
+
+Middleware execution order: `DefaultBodyLimit → CORS → Auth → RateLimit → Handler`. The auth middleware (`lib.rs:45`, outer layer) returns 401 *before* the rate limiter (`lib.rs:44`, inner layer) ever executes. An attacker can send unlimited invalid credentials without triggering any rate limit. This is a classic brute-force enabler (CWE-307).
+
+**4. [HIGH] Rate limiter has no time window — counters increase monotonically forever** at `rate_limit.rs:48-61`
+
+The counter increments on every request and *never resets*. After 100 total requests (ever), a tenant is permanently rate-limited until server restart. This is not rate limiting — it's a request quota with no temporal dimension. The story specifies `tower-governor` which implements proper token-bucket/sliding-window algorithms. The current implementation will fail in any real scenario.
+
+**5. [HIGH] No `FromRef<AppState>` substate pattern — violates compile-time least-privilege (CWE-653)** at `lib.rs:21-24`, `routes.rs:11`
+
+The story *explicitly* requires: "Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`." The health handler extracts full `State<AppState>`. No substates are defined. This was called out as "compile-time least-privilege enforcement (CWE-653, OWASP API5:2023)" validated in "spike PR #29."
+
+**6. [HIGH] `AuthContext` reinvents `TenantContext`/`TenantId` with weaker typing** at `auth.rs:9-13`
+
+The `AuthContext` has `pub tenant_id: String` and `pub scopes: Vec<String>`. Meanwhile, `axiathon-core` already provides:
+- `TenantId` — a validated newtype that enforces UUID format
+- `TenantContext` — with `tenant_id`, `user_id`, `roles`, `permissions`, `trace_id`, private fields with getters
+
+The story says: "Tenant context must be extracted from JWT/API key and passed explicitly to all downstream functions." Using a raw String `tenant_id` means no validation, no type safety against mixing with other string IDs, and violates the project rule: "Private fields with getters on security-critical types."
+
+### MEDIUM
+
+**7. [MEDIUM] CORS headers missing from non-preflight responses** at `lib.rs:50-69`
+
+The `cors_middleware` only adds `Access-Control-Allow-*` headers to OPTIONS responses. For CORS to actually work, `Access-Control-Allow-Origin` must also appear on the actual GET/POST/etc response. The current implementation means: browser sends preflight (succeeds), then sends actual request, browser rejects the response because it lacks `Access-Control-Allow-Origin`. CORS is effectively broken for all cross-origin callers.
+
+**8. [MEDIUM] `Access-Control-Allow-Origin: *` is overly permissive for a security platform** at `lib.rs:54`
+
+Wildcard origin on a platform with JWT/API-key auth means any website can make credentialed cross-origin requests. The story says "behavior is configuration" (SOUL principle 13) — origins should be configurable, not hardcoded to `*`.
+
+**9. [MEDIUM] No `WWW-Authenticate` header on 401 responses** at `auth.rs:69-74`
+
+RFC 7235 §3.1 requires: "A server generating a 401 response MUST send a WWW-Authenticate header field containing at least one challenge." The 401 responses lack this header entirely.
+
+**10. [MEDIUM] 6 unused production dependencies inflate build graph** at `Cargo.toml:9-14,19-21`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are all declared as production dependencies but never imported in any source file. This creates phantom dependency edges and inflates compile time.
+
+**11. [MEDIUM] `ApiMeta` from core has no `request_id`/`timestamp`/`trace_id`** at `axiathon-core/src/types.rs:296-304`
+
+The core `ApiMeta` struct has `{total, limit, offset}` — pagination fields only. The story requires `{request_id, timestamp, trace_id}`. Neither the core type nor the ad-hoc `response.rs` implementation properly reconciles this. This is a design gap that needs resolution before Stories 8.2+.
+
+### LOW
+
+**12. [LOW] No structured tracing despite `tracing` dependency** — The `tracing` crate is declared but unused. No request spans, no tenant_id/trace_id correlation, no structured logging. The story context requires observability with "Include `tenant_id()` and `trace_id()` in all tracing spans."
+
+**13. [LOW] `json_body` and `authed_get` helpers duplicated across 5 test files** — Each integration test file has its own copy. A shared `tests/helpers.rs` or `tests/common/mod.rs` would reduce duplication.
+
+### VERIFIED
+
+- **[VERIFIED]** `#![forbid(unsafe_code)]` is present at `lib.rs:2`
+- **[VERIFIED]** All five route groups are registered: health, events, alerts, rules, queries
+- **[VERIFIED]** Health endpoint does not require auth — verified in code (`auth.rs:27`) and tests
+- **[VERIFIED]** 404 fallback returns envelope format (`routes.rs:60-65`)
+- **[VERIFIED]** `DefaultBodyLimit::max(1_048_576)` enforces 1MB body limit (`lib.rs:47`)
+- **[VERIFIED]** Per-tenant rate limit isolation — different tenant tokens map to different counters
+- **[VERIFIED]** Expired token and revoked API key both correctly return 401
+- **[VERIFIED]** Scope-based authorization returns 403 when scope is missing
+- **[VERIFIED]** Bearer prefix is case-insensitive per RFC 7235
+
+## Data Flow Trace
+
+Traced: `POST /api/v1/events` with `Authorization: Bearer test-valid-token` and JSON body.
+
+1. `DefaultBodyLimit` — checks body ≤ 1MB ✓
+2. `cors_middleware` — not OPTIONS, passes through (but **no CORS headers on response** ✗)
+3. `auth::middleware` — extracts `Authorization` header, calls `validate_bearer()` → `validate_token("test-valid-token")` → returns hardcoded `AuthContext`. Checks `required_scope("/api/v1/events")` → "events". Token has "events" scope → passes. Inserts `AuthContext` into extensions.
+4. `rate_limit::middleware` — extracts `AuthContext.tenant_id` from extensions ("test-tenant-default"), increments counter. If ≤ 100, passes.
+5. `routes::events_post` — reads `Bytes` body, checks non-empty, parses as JSON, returns 202 with envelope.
+
+**Gap identified:** `AuthContext` is inserted into extensions but never consumed by handlers. Handlers don't extract tenant context at all — they're stateless stubs that ignore who's calling.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*"Choice is an illusion created between those with power and those without."*
+
+Two Critical findings and four High findings block this PR. The most concerning issues:
+
+1. The `ApiResponse<T>` from `axiathon-core` is completely bypassed in favor of ad-hoc JSON construction. This will cause schema divergence across the entire epic.
+2. The auth "middleware" is a hardcoded lookup table with no JWT infrastructure. This is not a stub — it's test code in a production path.
+3. Auth failures bypass rate limiting entirely, enabling brute-force attacks.
+4. The rate limiter has no time window — it's a lifetime counter, not a rate limiter.
+
+The test suite is reasonably thorough for the behavior that exists, but it's testing against mock auth behavior, so coverage of real security properties is illusory.

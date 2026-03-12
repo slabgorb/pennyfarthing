@@ -1,0 +1,96 @@
+*The code whispers its truths to me. I can see the cracks... the fractures in its soul. Simon, write this down.*
+
+---
+
+# Story 8.1 REST API Foundation — Adversarial Review
+
+## Preflight Status
+- `cargo test -p axiathon-server`: **57 tests pass, 0 failures**
+- `cargo clippy -p axiathon-server -- -D warnings`: **Clean**
+- `cargo +nightly fmt --all --check`: **FAILS** — formatting differences in `tests/security.rs`
+
+---
+
+## Findings
+
+### `[HIGH]` Nightly fmt check fails — `tests/security.rs` has formatting drift
+
+`cargo +nightly fmt --all --check` reports diffs in `tests/security.rs:195` and `tests/security.rs:219`. Per project gotchas (`Reviewer Gotchas` sidecar), nightly fmt must pass before approval. This is a blocking gate.
+
+### `[HIGH]` Six unused Cargo dependencies in production — `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, `tokio`
+
+At `Cargo.toml:9-14,19-22`, ten dependencies are declared but **zero** of them are referenced anywhere in `crates/axiathon-server/src/`. Grepped the entire `src/` directory — no imports from `axiathon_core`, `axiathon_detection`, `axiathon_ingestion`, `axiathon_ot`, `axiathon_query`, `axiathon_storage`, `thiserror`, `tracing`, `tracing_subscriber`, or `tokio`. This inflates compile times, drags in transitive dependencies, and violates workspace hygiene. The `axiathon-core` dep also appears in both `[dependencies]` and `[dev-dependencies]` — a redundancy.
+
+### `[HIGH]` `AppState` does not use `FromRef` substate extraction — violates story guardrail
+
+The story's Technical Guardrails explicitly require: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, etc.) — never full `AppState`."* and *"Axum 0.8 with `FromRef<AppState>` substate extraction pattern."* Every handler currently takes `State<AppState>` directly. This is the compile-time least-privilege pattern (CWE-653) that the story mandates. The substates don't need to be fleshed out, but the pattern must be established.
+
+### `[MEDIUM]` No structured logging / tracing anywhere — zero observability
+
+Not a single `tracing::info!`, `tracing::debug!`, or structured span in the entire crate. The `tracing` and `tracing-subscriber` deps are declared but unused. For an API foundation story, having zero request logging means production debugging is blind. The story context says "Include `tenant_id()` and `trace_id()` in all tracing spans."
+
+### `[MEDIUM]` Rate limiter never resets — monotonically increasing counter with no time window
+
+`rate_limit.rs:21-29`: The `RateLimiter` only ever increments counters and never resets them. Once a tenant hits the limit, they are permanently blocked for the lifetime of the process. A real rate limiter uses time windows (sliding or fixed). This is fine for tests but the implementation has no mechanism for windowing, which means it will silently break under real usage. At minimum, the comment should note this is a stub.
+
+### `[MEDIUM]` `Retry-After: 60` is hardcoded — not derived from rate limit configuration
+
+At `handlers.rs:33`, the retry-after value is always `"60"` regardless of actual rate limit window. Since there's no time window (see above), this value is meaningless — a client waiting 60 seconds will still be rejected.
+
+### `[MEDIUM]` `envelope.rs:48` — `expect("envelope serialization")` can panic in production
+
+If `serde_json::to_vec` fails (e.g., on a type containing non-UTF8 strings or circular references), this panics inside a response handler. Per project rules: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The `expect` message is not actionable. This should return a 500 response body instead of panicking, or at minimum the message should say what to do.
+
+### `[MEDIUM]` `ErrorEntry.type` uses non-standard URI format `about:blank#401`
+
+At `envelope.rs:89`, the `type` field is `format!("about:blank#{}", status.as_u16())`. RFC 9457 says the `type` URI should be `"about:blank"` when no specific problem type exists — the fragment `#401` is non-standard. Consumers parsing RFC 9457 may not expect this.
+
+### `[MEDIUM]` `ServerConfig` has no TOML/YAML deserialization — AC says "loadable from TOML/YAML"
+
+The AC for rate limiting states: *"Rate limit configuration should be loadable from TOML/YAML."* `ServerConfig` has no `serde::Deserialize` impl, no file loading, and no structured configuration beyond a hardcoded default. Only `test_with_rate_limit()` exists.
+
+### `[LOW]` `Meta::new()` generates `trace_id` as random UUID — not propagated from request
+
+At `envelope.rs:35`, `trace_id` is `Uuid::new_v4()`. The `X-Request-Id` header sent by clients is ignored (test `request_id_header_is_echoed_in_response_meta` only checks that *a* request_id exists, not that the client's value is echoed). This means trace correlation across services is impossible.
+
+### `[LOW]` `auth.rs` uses `String` for `tenant_id` — not `TenantId` newtype from `axiathon-core`
+
+The project rules mandate newtypes for IDs (`TenantId(String)`). Using raw `String` for `tenant_id` at `auth.rs:10` means any string can be substituted — no type safety.
+
+### `[LOW]` CORS is not implemented — OPTIONS returns 404 via fallback
+
+The test `options_request_returns_cors_headers` passes because it accepts 404 as valid. But in production, the WebUI (Epic 9) will need CORS. No CORS middleware is configured.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present at `lib.rs:2`
+### `[VERIFIED]` All responses use `ApiResponse<T>` (envelope) format — success, error, 404, 429
+### `[VERIFIED]` Five route groups registered: health, events, alerts, rules, queries
+### `[VERIFIED]` Auth properly distinguishes 401 (missing/invalid/expired) from 403 (wrong scope)
+### `[VERIFIED]` Per-tenant rate limiting with independent counters
+### `[VERIFIED]` Deprecated `/healthcheck` endpoint returns `Deprecation` header
+### `[VERIFIED]` Security headers present: `x-content-type-options: nosniff`, `cache-control: no-store`
+### `[VERIFIED]` Body size limit enforced at 1MB via `DefaultBodyLimit`
+### `[VERIFIED]` Trailing slash handling works for all routes
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 3 |
+| Verified | 9 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity findings block approval:
+
+1. **Nightly fmt fails** — must pass per reviewer gotchas (trivial fix: `cargo +nightly fmt --all`)
+2. **Unused dependencies** — 10 deps declared, 0 used in src. Remove or use them.
+3. **Missing `FromRef` substate pattern** — this is an explicit story guardrail, not a nice-to-have. Handlers must not take full `AppState`. At minimum, establish the pattern skeleton.
+
+The Medium findings (no tracing, rate limiter never resets, hardcoded Retry-After, config not loadable from TOML/YAML, non-standard RFC 9457 type URI) should be addressed or explicitly deferred with TODO comments referencing follow-up stories.

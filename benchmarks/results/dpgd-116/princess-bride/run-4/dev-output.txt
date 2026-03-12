@@ -1,0 +1,22 @@
+**134 tests passing, 0 failures, 0 clippy warnings.** All GREEN.
+
+## Summary
+
+### Production files created (in `crates/axiathon-client/src/`):
+
+| File | Description |
+|------|-------------|
+| `lib.rs` | Module re-exports |
+| `cli.rs` | `Cli` (Parser) + `Commands` (Subcommand) with 12 command groups, global flags, after_help examples |
+| `error.rs` | `CliError` enum (10 variants, `#[non_exhaustive]`) with `exit_code()` mapping (3=auth, 4=authz, 1=rest) |
+| `output.rs` | `OutputFormat`, `OutputFormatter` (Table/JSON/CSV), `ResponseMetadata` |
+| `config.rs` | `ClientConfig` with TOML loading, builder pattern, env/CLI override layering, validation |
+| `client.rs` | `SiemClient` HTTP wrapper with builder, header injection, HTTP→CliError mapping, URL construction |
+| `commands/mod.rs` | Module re-exports for all 10 command modules |
+| `commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` | Stub handlers returning `NotImplemented` with story numbers |
+| `commands/completion.rs` | Functional shell completion generation via `clap_complete` |
+| `commands/init.rs` | Functional init creating config directory |
+
+### Test fixes (API mismatch with clap 4.5.60):
+- `cli_structure.rs`: Added `mut` for `render_help()` calls (requires `&mut self`)
+- `cli_siem_client.rs`: Fixed `//api` assertion that matched scheme separator `://api`

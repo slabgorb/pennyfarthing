@@ -1,19 +1,18 @@
 # @pennyfarthing/core
 
-Core library for the Pennyfarthing agent framework. Provides the WheelHub server, CLI tools, workflow engine, and shared utilities consumed by Cyclist, BikeRack, and external tooling.
+Core library for the Pennyfarthing agent framework. Provides CLI tools, workflow engine, and shared utilities consumed by BikeRack and external tooling.
 
 ## Overview
 
 `@pennyfarthing/core` is the backbone of the Pennyfarthing framework. It ships:
 
-- **WheelHub** — Express + WebSocket server exposing all panel data over a REST/WS API
-- **BikeRack entry point** — standalone TUI panel server (`pf bikerack start`)
 - **CLI** — `pennyfarthing` command for install management, theme control, and skill/command authoring
 - **Workflow engine** — BikeLane loader, router, gate handler, and session state tracking
 - **Shared utilities** — theme loading, skill search, marker detection, portrait resolution, plugin discovery
 - **Benchmark API** — JobFair result aggregation and OCEAN correlation analysis
+- **React panels** — BikeRack GUI components (built via Vite)
 
-The package is published as `@pennyfarthing/core` and consumed directly by `@pennyfarthing/cyclist`. It can also be consumed programmatically by external tools via its `index.ts` exports.
+The WheelHub server is now Python-based (FastAPI) at `pennyfarthing-dist/src/pf/wheelhub/`. See ADR-0022.
 
 ## Prerequisites
 
@@ -40,62 +39,13 @@ pnpm run build
 
 ## Architecture
 
-### WheelHub (`src/server/`)
+### WheelHub (Python FastAPI)
 
-WheelHub is the Express + WebSocket server that powers all panel UIs. It exposes REST endpoints and WebSocket feeds for stats, personas, git state, story context, settings, telemetry, and more.
+WheelHub is the Python FastAPI server that powers all panel UIs. It exposes REST endpoints and WebSocket feeds for stats, personas, git state, story context, settings, telemetry, and more.
 
-**Entry points:**
+**Location:** `pennyfarthing-dist/src/pf/wheelhub/`
 
-| Export path | File | Purpose |
-|-------------|------|---------|
-| `@pennyfarthing/core/server` | `src/server/server.ts` | WheelHub Express app + `createTerminalServer()` |
-| `@pennyfarthing/core/bikerack/entry` | `src/server/entry.ts` | BikeRack standalone process launcher |
-
-**Server startup flow:**
-
-1. `createTerminalServer()` builds the Express app
-2. `findAvailablePort()` finds an open port (default 1898 for Cyclist, 2898 for BikeRack)
-3. `setupWebSocketServers()` attaches WebSocket servers for stats, persona, token stats, bell, hook requests, and git diffs
-4. Plugin routers are registered via `initPluginRouters()`
-5. BikeRack writes `.bikerack-port` to the project directory on listen
-
-### API Routes (`src/server/api/`)
-
-Each module creates its own Express router, registered in `server.ts`. Routes are grouped by domain:
-
-| Module | Endpoint prefix | Purpose |
-|--------|----------------|---------|
-| `stats.ts` | `/api/stats` | Tool use counts, context stats, session info |
-| `token-stats.ts` | `/api/token-stats` | Token consumption from OTEL spans |
-| `persona.ts` | `/api/persona` | Active theme/persona, agent mappings |
-| `portrait.ts` | `/api/portraits` | Portrait image resolution |
-| `git.ts` | `/api/git` | Multi-repo git status from `repos.yaml` |
-| `story.ts` | `/api/story` | Active story/session file parsing |
-| `context.ts` | `/api/context` | Context window usage percentage |
-| `settings.ts` | `/api/settings` | Project and user settings read/write |
-| `mode.ts` | `/api/mode` | Display mode (tui / gui / ide) |
-| `otlp.ts` | `/v1/traces` | OTEL trace ingestion from Claude Code |
-| `telemetry.ts` | `/api/telemetry` | Parsed span data |
-| `spans.ts` | `/api/spans` | Enriched span hierarchy |
-| `evaluation.ts` | `/api/evaluation` | Agent evaluation scores |
-| `hook-request.ts` | `/api/hooks` | Hook permission requests from Claude |
-| `permissions.ts` | `/api/permissions` | Grant management |
-| `identity.ts` | `/api/identity` | User identity (email from OTEL) |
-| `todos.ts` | `/api/todos` | Claude Code todo tracking |
-| `audit-log.ts` | `/api/audit-log` | Hook audit history |
-| `file-browser.ts` | `/api/files` | Project file tree |
-| `agent-load.ts` | `/api/agent-load` | Agent context load metrics |
-| `bell.ts` | `/api/bell` | Bell mode message queue |
-| `hotspots.ts` | `/api/hotspots` | Code complexity hotspots |
-| `code-markers.ts` | `/api/markers` | Reflector markers from agent output |
-| `dead-code.ts` | `/api/dead-code` | Unused code detection |
-| `complexity.ts` | `/api/complexity` | File complexity analysis |
-| `dependencies.ts` | `/api/dependencies` | Dependency graph |
-| `health-score.ts` | `/api/health` | Codebase health score |
-| `project-info.ts` | `/api/project` | Project metadata |
-| `theme-agents.ts` | `/api/theme-agents` | Agent-to-character mappings for active theme |
-
-A static `/health` endpoint (no prefix) is used by hooks to verify WheelHub is running before injecting messages.
+The Node.js Express server was removed in Story 48-4 (Epic 48: Python WheelHub Migration).
 
 ### CLI (`src/cli/`)
 
@@ -107,7 +57,6 @@ The `pennyfarthing` binary (registered in `pennyfarthing-dist/`) provides:
 | `pf validate` | Health check with `--fix` auto-repair |
 | `pennyfarthing uninstall` | Remove Pennyfarthing from a project |
 | `pennyfarthing version` | Show installed version |
-| `pennyfarthing cyclist` | Launch Cyclist web UI |
 | `pennyfarthing theme list/set/show/create` | Manage persona themes |
 | `pennyfarthing command list/add/remove/link/sync` | Manage slash commands |
 | `pennyfarthing skill list/add/remove/link/sync` | Manage skills |
@@ -178,42 +127,19 @@ The build produces two outputs:
 ### Test
 
 ```bash
-pnpm test    # node --test dist/**/*.test.js (~1562 tests)
+pnpm test    # node --test dist/**/*.test.js
 pnpm lint    # eslint src/
 ```
 
 Tests use Node's native test runner. Run `pnpm run build` before testing — tests run against `dist/`, not `src/`.
 
-### Key Source Files
-
-| File | Purpose |
-|------|---------|
-| `src/index.ts` | Public programmatic API exports |
-| `src/cli/index.ts` | CLI entry point (`pennyfarthing` binary) |
-| `src/server/server.ts` | WheelHub Express app, all route registration |
-| `src/server/entry.ts` | BikeRack standalone process launcher |
-| `src/server/websocket.ts` | WebSocket server setup and broadcast logic |
-| `src/server/otlp-receiver.ts` | OTEL trace ingestion and `OTLPProvider` interface |
-| `src/server/pennyfarthing.ts` | Project detection, persona resolution, agent watch |
-| `src/server/git-cache.ts` | Git status cache with periodic polling |
-| `src/server/sprint-data.ts` | Sprint YAML parsing for panel display |
-| `src/server/story-parser.ts` | Session file parsing for active story context |
-| `src/server/settings.ts` | Settings load/save with change events |
-
 ## Exports
 
-The package exports three surfaces:
-
 **`@pennyfarthing/core`** (root) — programmatic API: utilities, types, workflow functions, benchmark API, plugin discovery. Import this in scripts and tools that need to read Pennyfarthing data without starting a server.
-
-**`@pennyfarthing/core/server`** — WheelHub Express app and server factories. Used by Cyclist to mount the server inside its own process.
-
-**`@pennyfarthing/core/bikerack/entry`** — standalone BikeRack server process. Invoked by `pf bikerack start` to run panels in TUI mode without Cyclist.
 
 ## Related Packages
 
 | Package | Description |
 |---------|-------------|
-| [`@pennyfarthing/cyclist`](../cyclist/) | Visual terminal UI — thin wrapper over core's WheelHub |
-| [`@pennyfarthing/shared`](../shared/) | Shared types (absorbed into core at v12) |
-| [`packages/benchmark`](../../packages/benchmark/) | JobFair benchmark runner and persona evaluation |
+| [`@pennyfarthing/cyclist`](../cyclist/) | BikeRack GUI React build |
+| [`pennyfarthing-dist/src/pf/wheelhub/`](../../pennyfarthing-dist/src/pf/wheelhub/) | Python FastAPI WheelHub server |

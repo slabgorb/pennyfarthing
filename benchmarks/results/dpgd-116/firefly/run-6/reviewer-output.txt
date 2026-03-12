@@ -1,0 +1,77 @@
+Now I have a complete picture. Here is my adversarial review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Review
+
+*River sees the code's soul. Simon documents the findings.*
+
+## Observations
+
+### [HIGH] Missing `main.rs` — no binary can be built
+**`crates/axiathon-client/src/main.rs`** does not exist. The story requires an `axiathon` binary produced by this crate. Without `main.rs`, there is no binary entry point — `cargo build --bin axiathon` will fail. The `Cargo.toml` doesn't declare `[[bin]]` either. This is a fundamental deliverable gap: the entire command dispatch loop, exit code mapping (`std::process::exit()`), config loading, token loading, and tracing init described in AC-3/AC-7/AC-8 cannot be exercised.
+
+### [HIGH] Nightly `cargo fmt` check fails — 3 files have formatting drift
+`cargo +nightly fmt --all --check` reports diffs in `cli.rs`, `commands/completion.rs`, and `config.rs`. Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* This blocks approval.
+
+### [HIGH] Workspace `toml` version mismatch — spec says 0.9, workspace has 0.8
+The story's Technical Guardrails specify `toml 0.9`. The workspace `Cargo.toml:49` declares `toml = "0.8"`. This is a spec deviation that must be reconciled. Either the spec is wrong or the dependency is.
+
+### [MEDIUM] `RawConfig` silently ignores unknown fields — intentional but risky
+`config.rs:13` — `RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. The comment at line 12 says "unknown fields are silently ignored," and the test at `config_loading.rs:147` confirms `token` fields are silently dropped. This is the *intended* behavior (security: don't store tokens in config). However, it means operator typos like `servre_url` are silently ignored with no warning, making config debugging painful. A `#[serde(deny_unknown_fields)]` with an allow-list would be more robust. Flagging as medium since the decision is deliberate.
+
+### [MEDIUM] `CliError::NotFound` Display leaks the inner string directly
+`error.rs:54` — `NotFound(resource) => write!(f, "Not found: {resource}")`. The `resource` value comes from `client.rs:87` where it's hardcoded to `"resource not found"`, but the variant accepts any `String`. If a future caller passes server response body content into `NotFound(body)`, the Display impl will expose it to the user verbatim. The SECURITY comment on the type promises generic messages. The `ServerError` variant correctly suppresses its inner value; `NotFound` should do the same.
+
+### [MEDIUM] `from_file_or_default` swallows parse errors silently
+`config.rs:77-79` — `from_file_or_default` calls `unwrap_or_default()`, meaning a malformed TOML file (syntax error, wrong types) silently falls back to defaults. An operator with a typo in their config will get no warning. This should at minimum log a warning, or better, return an error for parse failures while only defaulting for "file not found."
+
+### [MEDIUM] `--server` env var name inconsistency
+AC-5 says `--server` supports `AXIATHON_SERVER` env var, but `config.rs:83` reads `AXIATHON_API_URL`. The CLI flag is `--server`, the env var should arguably be `AXIATHON_SERVER` per the AC, but the implementation uses `AXIATHON_API_URL`. The test at `config_loading.rs:105` tests `AXIATHON_API_URL`. This is an AC deviation.
+
+### [LOW] JSON metadata has placeholder values
+`output.rs:97` — `request_id` is hardcoded to `"00000000-0000-0000-0000-000000000000"` and `timestamp` is empty string. For a stub/framework story this is acceptable, but should be noted for future stories.
+
+### [LOW] `keyring` crate is listed as a dependency in the story spec but not in `Cargo.toml`
+The Technical Guardrails list `keyring 3` as a key dependency. It's not in the `Cargo.toml` for axiathon-client. This is acceptable since the story scope says login/auth is out of scope (Story 9.1), but it's a gap against the spec's dependency list.
+
+### [VERIFIED] Header injection (CWE-113) is properly mitigated
+`client.rs:62` — `HeaderValue::from_str()` rejects CRLF characters. Tests in `security.rs:52-96` confirm this for both tenant and token headers. The `if let Ok(val)` pattern silently drops invalid values rather than erroring, which is acceptable for defense-in-depth.
+
+### [VERIFIED] CWE-209 error exposure is properly mitigated
+`error.rs:49` — `ServerError` Display shows generic message, not the inner string. `security.rs:18-31` tests confirm internal IPs/ports are not leaked.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` in `lib.rs`, `deny` in `lints` for tests
+Tests that need `set_var`/`remove_var` properly use `#![allow(unsafe_code)]` at crate level with `// SAFETY` comments.
+
+### [VERIFIED] Exit code mapping is complete and correct
+All 9 `CliError` variants are tested individually. Auth → 3, authz → 4, all others → 1.
+
+### [VERIFIED] Shell completion is functional (not stub)
+`generate_completion()` produces real output and is tested for all 4 shell types.
+
+### [VERIFIED] All global flags are `global = true`
+Tests in `global_flags.rs` verify each flag's global status via clap introspection.
+
+### [VERIFIED] Plural noun command naming matches architecture doc
+`rules`, `alerts` — tested in `cli_structure.rs:38-61`.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| HIGH | 3 | YES |
+| MEDIUM | 4 | NO |
+| LOW | 2 | NO |
+| VERIFIED | 7 | — |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+1. **No `main.rs`** — the binary cannot be built, which is the primary deliverable
+2. **Nightly fmt fails** — per gotchas.md, this blocks approval
+3. **`toml` version mismatch** (0.8 vs spec's 0.9) — needs reconciliation
+
+The MEDIUM findings (silent config error swallowing, `NotFound` Display leak potential, env var name mismatch vs AC) should be addressed but are not individually blocking.

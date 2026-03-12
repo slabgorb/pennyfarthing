@@ -1,0 +1,121 @@
+I have now examined every file, every line, every clause of this contract. Let me deliver my verdict.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*"The quality of mercy is not strained — but the quality of code review is."*
+
+**114 tests pass. Clippy clean. The foundation is structurally sound. But I have found issues the preflight missed.**
+
+---
+
+## Findings
+
+### [HIGH] Nightly rustfmt check fails — 247 lines of diff at `crates/axiathon-client/src/client.rs`, `commands/completion.rs`, `config.rs`, and multiple test files
+
+Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* Import ordering violations (local before external in `completion.rs:1-2`), function signature formatting (`client.rs:70-73`), and `format!` string wrapping (`client.rs:105-110`) all diverge from nightly. **This blocks merge.**
+
+### [HIGH] New dependencies not declared at workspace level — `crates/axiathon-client/Cargo.toml:16-26`
+
+The story explicitly requires: *"Add to `[workspace.dependencies]`: `reqwest` 0.12, `comfy-table` 7, `keyring` 3, `clap_complete` 4, `dirs` 6, `csv` 1, `toml` 0.9."* Instead, these six dependencies are pinned directly in the crate Cargo.toml with hardcoded versions (`clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `keyring = "3"`, `reqwest = { version = "0.12", ... }`, `toml = "0.8"`). When other crates need `reqwest` or `toml`, versions will drift. The root `Cargo.toml` `[workspace.dependencies]` section is untouched. **This violates the workspace dependency management architecture.**
+
+### [MEDIUM] `toml` version mismatch — `crates/axiathon-client/Cargo.toml:26`
+
+Story specifies `toml` 0.9. Code uses `toml = "0.8"`. Minor but deviates from the specification without justification.
+
+### [MEDIUM] Vacuous test: `siem_client_rejects_newlines_in_token` — `tests/siem_client.rs:251-256`
+
+```rust
+assert!(
+    !client.has_token() || {
+        true // This will need implementation-specific checks
+    },
+);
+```
+
+`has_token()` returns `true` (token was set), so the assertion evaluates `true || { true }` which is always true. This test **asserts nothing** about token sanitization. The implementation at `client.rs:48` does correctly sanitize CRLF, but this test doesn't verify it. Compare with the tenant test at line 231 which correctly asserts `!tenant.contains('\r')`.
+
+### [MEDIUM] Vacuous test: `client_config_handles_unreadable_file` — `tests/config_loading.rs:217-220`
+
+```rust
+assert!(
+    result.is_ok() || result.is_err(),
+    "Non-existent config should be handled gracefully"
+);
+```
+
+`is_ok() || is_err()` is a tautology — always true. This tests nothing. Should assert specifically that non-existent path returns `Ok` with defaults (which is the actual behavior at `config.rs:84-85`).
+
+### [MEDIUM] Vacuous test: `client_config_rejects_unknown_keys_gracefully` — `tests/config_loading.rs:176`
+
+```rust
+let _result = ClientConfig::load_from(&config_path);
+// If we get here without panic, the test passes
+```
+
+The result is discarded without assertion. The test verifies "doesn't panic" but doesn't verify *what* happened with the unknown key. Given that `RawConfig` uses `#[serde(flatten)]` to silently swallow unknowns (`config.rs:18-19`), this test provides false confidence about behavior that isn't actually validated.
+
+### [MEDIUM] `unsafe_code` lint downgraded from `forbid` to `deny` — `crates/axiathon-client/Cargo.toml:45`
+
+The workspace root sets `unsafe_code = "forbid"`. This crate overrides to `deny` to allow `#[allow(unsafe_code)]` on test-only `set_var` calls. The comment at line 43-44 documents the rationale, and `lib.rs:2` / `main.rs:2` both retain `#![forbid(unsafe_code)]`. This is acceptable but creates a surface area risk — if a new binary target is added to this crate without the `#![forbid]` attribute, unsafe code could slip in.
+
+### [VERIFIED] Header injection prevention — `client.rs:39-42, 47-51`
+
+CRLF characters correctly stripped from both tenant ID and token before header injection. The tenant sanitization test at `siem_client.rs:231-242` properly verifies this. (Token test is vacuous — see finding above.)
+
+### [VERIFIED] Token redaction in Debug — `client.rs:15-22`
+
+Custom `Debug` impl correctly omits the `token` field and shows only `has_token: bool`. Tests at `siem_client.rs:264-273` and `security.rs:161-169` both verify this.
+
+### [VERIFIED] Exit code contract — `error.rs:46-60`
+
+All 9 error variants map to correct exit codes. 13 tests exhaustively cover the mapping including range validation. Auth (3) and authz (4) correctly differentiated.
+
+### [VERIFIED] Error message security (CWE-209) — `error.rs:8-44`
+
+Error Display implementations are concise and don't leak internal paths, stack traces, or permission details. Security comment at `error.rs:3-4` documents the intent.
+
+### [VERIFIED] Subcommand parsing works correctly for stub scope
+
+The `{ .. }` pattern in `main.rs:13-18` discards parsed subcommand variants, but this is correct for stubs — clap still validates the subcommand structure (e.g., `axiathon config` without a subcommand correctly fails with usage error). When Stories 6.2+ implement real handlers, the `{ .. }` naturally evolves to `{ command } => match command { ... }`.
+
+### [VERIFIED] Config precedence chain — `config.rs:48-100`
+
+CLI flags > env vars > config file > defaults correctly implemented. `override_server_url` method enables CLI flag precedence. Env vars applied after file loading.
+
+---
+
+## Test Coverage Summary
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| cli_structure.rs | 11 | AC-1, AC-2, AC-6 |
+| global_flags.rs | 18 | AC-5 |
+| config_loading.rs | 11 | AC-8 (3 vacuous) |
+| exit_codes.rs | 13 | AC-3 |
+| output_format.rs | 15 | AC-4 |
+| siem_client.rs | 17 | AC-7 (1 vacuous) |
+| shell_completion.rs | 6 | AC-9 |
+| stub_handlers.rs | 9 | AC-10 |
+| security.rs | 14 | CWE-209, thread safety |
+| **Total** | **114** | **3 vacuous** |
+
+---
+
+## Verdict
+
+### **CHANGES_REQUESTED**
+
+**Blocking issues (must fix):**
+
+1. **[HIGH]** Run `cargo +nightly fmt --all` to fix formatting — 247 lines of diff
+2. **[HIGH]** Move `clap_complete`, `comfy-table`, `keyring`, `dirs`, `csv`, `toml`, `reqwest` declarations to `[workspace.dependencies]` in root `Cargo.toml` and reference as `{ workspace = true }` in crate Cargo.toml
+
+**Should fix before merge:**
+
+3. **[MEDIUM]** Fix vacuous test `siem_client_rejects_newlines_in_token` — assert the token doesn't contain `\r` or `\n` (mirror the tenant test pattern)
+4. **[MEDIUM]** Fix vacuous test `client_config_handles_unreadable_file` — assert `result.is_ok()` specifically
+5. **[MEDIUM]** Fix vacuous test `client_config_rejects_unknown_keys_gracefully` — assert the result is `Ok` and the known fields loaded correctly despite unknown keys
+
+*"The law hath not been dead, though it hath slept."* The workspace dependency rules and nightly fmt requirements are clear in the architecture docs. Fix these, and this otherwise excellent foundation earns its approval.

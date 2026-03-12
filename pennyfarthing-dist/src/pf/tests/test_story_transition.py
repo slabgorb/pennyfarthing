@@ -353,6 +353,7 @@ class TestInvalidTransitions:
         data = read_sprint(sprint_path)
         data["epics"][0]["stories"][0]["status"] = "canceled"
         from pf.sprint.yaml_io import write_sprint
+
         write_sprint(sprint_path, data)
 
         result = transition_story(project, "125-7", "in_progress")
@@ -459,7 +460,9 @@ class TestPartialFailure:
         assert "Jira unreachable" in jira_step["error"]
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_missing_jira_key_skips_jira(self, mock_get_client: MagicMock, project_no_jira: Path) -> None:
+    def test_missing_jira_key_skips_jira(
+        self, mock_get_client: MagicMock, project_no_jira: Path
+    ) -> None:
         """Story without Jira key should skip Jira step and still succeed."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -489,7 +492,9 @@ class TestPartialFailure:
         assert step_nums == sorted(step_nums)
 
     @patch("pf.sprint.story_transition.get_client")
-    def test_step_count_matches_expectations(self, mock_get_client: MagicMock, project: Path) -> None:
+    def test_step_count_matches_expectations(
+        self, mock_get_client: MagicMock, project: Path
+    ) -> None:
         """Should have steps for: validate, yaml_update, jira_transition at minimum."""
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {"success": True}

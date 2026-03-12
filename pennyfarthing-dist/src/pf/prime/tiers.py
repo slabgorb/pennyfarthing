@@ -38,9 +38,11 @@ def estimate_tokens(text: str) -> int:
 from pf.prime.loader import (  # noqa: E402
     load_agent_definition,
     load_behavior_guide,
+    load_output_style,
     load_repos_topology,
     load_session_context,
     load_sidecars,
+    load_soul,
     load_sprint_context,
     load_step_content,
 )
@@ -62,6 +64,7 @@ class ContextTier(Enum):
     REFRESH = "REFRESH"
     HANDOFF = "HANDOFF"
     MINIMAL = "MINIMAL"
+    SUBAGENT = "SUBAGENT"
 
 
 def tier_from_string(value: str) -> ContextTier:
@@ -186,10 +189,45 @@ def load_tier_components(
         components["total_tokens"] = sum(token_counts.values())
         return components
 
+    if tier == ContextTier.SUBAGENT:
+        # SUBAGENT: Session + sprint + repos. No agent def, persona, or guide
+        # (native .md file carries those).
+        sprint_content = load_sprint_context(project_root)
+        if sprint_content:
+            add_component("sprint_context", sprint_content)
+
+        topology_content = load_repos_topology(project_root)
+        if topology_content:
+            add_component("repos_topology", topology_content)
+
+        session_result = load_session_context(project_root)
+        if session_result:
+            filename, header, assessment = session_result
+            add_component("session_header", header)
+            if assessment:
+                add_component("session_assessment", assessment)
+
+        sidecars = load_sidecars(agent_name, project_root)
+        if sidecars:
+            add_component("sidecars", sidecars)
+
+        components["token_counts"] = token_counts
+        components["total_tokens"] = sum(token_counts.values())
+        return components
+
     # FULL tier: Everything
     agent_content = load_agent_definition(agent_name, project_root)
     if agent_content:
         add_component("agent_definition", agent_content)
+
+    soul_content = load_soul(project_root)
+    if soul_content:
+        add_component("soul", soul_content)
+
+    style_result = load_output_style(project_root)
+    if style_result:
+        _, style_content = style_result
+        add_component("output_style", style_content)
 
     if is_character_voice_enabled(project_root):
         persona, theme = load_persona(agent_name, project_root)
@@ -198,9 +236,7 @@ def load_tier_components(
 
             crew = get_crew_manifest(project_root)
             user_title = get_user_title(project_root)
-            persona_content = format_persona_output(
-                persona, theme, agent_name, crew, user_title
-            )
+            persona_content = format_persona_output(persona, theme, agent_name, crew, user_title)
             add_component("persona", persona_content)
 
     guide_content = load_behavior_guide(project_root)

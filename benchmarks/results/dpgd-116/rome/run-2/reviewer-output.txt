@@ -1,0 +1,75 @@
+---
+
+*Cicero strikes the podium.*
+
+**Senators, I have completed my examination of this code.** Let me deliver my findings with the precision this tribunal demands.
+
+---
+
+## Review Findings: Story 6.1 — CLI Framework & Structure
+
+### [CRITICAL] Missing `main.rs` binary entry point — at `crates/axiathon-client/src/main.rs`
+
+The story spec explicitly requires a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()` with the appropriate exit code. **No `main.rs` exists.** The `axiathon` binary cannot be built. This means AC-3 (exit codes applied at process level), AC-10 (stubs print to stderr and exit), and the entire binary are non-functional. The crate is library-only.
+
+### [HIGH] Missing `tui` and `logout` command variants — at `crates/axiathon-client/src/cli.rs`
+
+AC-1 mandates: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/**logout**, **tui**, completion, init."* Neither `Tui` nor `Logout` appear in the `Commands` enum. The help test (`help_lists_all_command_groups`) does not check for "tui" or "logout", masking this gap.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — at `crates/axiathon-client/src/cli.rs`, `client.rs`
+
+Per project gotchas, nightly fmt is a required preflight gate. Multiple files have import ordering and attribute formatting violations. This must be fixed before merge.
+
+### [HIGH] Config silently accepts unknown fields — at `crates/axiathon-client/src/config.rs:4-6`
+
+`ConfigFile` and `ServerConfig` lack `#[serde(deny_unknown_fields)]`. A typo like `[sever]` or `tmeout = 30` is silently ignored. Operators will waste hours debugging why their config changes have no effect. This is a category of bug that shows up in production support tickets repeatedly.
+
+### [MEDIUM] Config `token` field is parsed then discarded — silent security hazard — at `crates/axiathon-client/src/config.rs:14-16`
+
+The `ServerConfig` struct has `token: Option<String>` with `#[allow(dead_code)]`. This means if an operator puts `token = "secret"` in their TOML, serde happily parses it, holds it in memory, and then it's silently discarded. The test (`config_does_not_store_token`) asserts `config.token().is_none()`, but the secret **was still loaded into `ServerConfig.token`** in memory. Either reject the field with `deny_unknown_fields` or don't define it. Having it present with `allow(dead_code)` is misleading.
+
+### [MEDIUM] `AXIATHON_SERVER` env var not wired — at `crates/axiathon-client/src/config.rs:75-87`
+
+AC-5 states: *"`--server` supports `AXIATHON_SERVER` env var."* The config's env override loop only handles `AXIATHON_API_URL` and `AXIATHON_TIMEOUT`. There is no `AXIATHON_SERVER` mapping at all. The `--server` flag on the CLI struct (`cli.rs:18`) has `hide = true`, suggesting it exists but the env var wiring is incomplete.
+
+### [MEDIUM] `toml` version mismatch with spec — at `Cargo.toml:50`
+
+Workspace declares `toml = "0.8"`. Story spec says `toml` 0.9. Minor, but the spec should match reality or be updated.
+
+### [MEDIUM] `default_path()` uses `dirs::home_dir()` not `dirs::config_dir()` — at `crates/axiathon-client/src/config.rs:93-98`
+
+The code manually constructs `~/.config/axiathon/cli.toml` using `home_dir()`, but the `dirs` crate provides `config_dir()` which correctly respects `XDG_CONFIG_HOME` on Linux and platform-specific config locations on macOS/Windows. Using `home_dir().join(".config")` is incorrect on macOS (should be `~/Library/Application Support`) and ignores `XDG_CONFIG_HOME` overrides.
+
+### [MEDIUM] `Completion` shell argument is a raw `String`, not `clap_complete::Shell` — at `crates/axiathon-client/src/cli.rs:77-79`
+
+The `Completion` variant takes `shell: String` and validation happens at runtime in `generate_completions()`. Using `Shell` directly in the clap derive struct would give better help output and compile-time safety via clap's `ValueEnum`.
+
+### [LOW] `config_rejects_non_https_server_url_in_production` test is vacuous — at `tests/config_loading.rs:219-224`
+
+This test loads a config with `http://insecure.example.com`, then checks the result. The `if let Ok(cfg)` branch does the assertion, but if the load itself returns `Err`, the test passes without exercising the assertion at all. Since `validate_url` **does** reject this, the test works by accident. A direct `assert!(config.is_err(), ...)` would be clearer and non-vacuous.
+
+### [LOW] `exit_code()` returns `u32` but `std::process::exit()` takes `i32` — at `crates/axiathon-client/src/error.rs:37`
+
+When `main.rs` is eventually written, it will need a cast. Using `i32` from the start would be more natural.
+
+### [VERIFIED] Header injection prevention (CWE-113) — `validate_header_value` correctly checks `\r`, `\n`, `\0` at `client.rs:73-79`. Tests cover CRLF, CR-only, and null byte. Good.
+
+### [VERIFIED] CWE-209 error exposure — `CliError` Display impls are user-friendly. No stack traces, no HTTP status codes in auth messages. Security doc comment present.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` — Present at `lib.rs:2`.
+
+### [VERIFIED] Dependency boundary — `Cargo.toml` only depends on `axiathon-core`, no server crates.
+
+### [VERIFIED] `clap` derive-only approach — No imperative `Command::new()` calls. AC-6 satisfied.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Blocking issues:**
+1. **No `main.rs`** — the binary doesn't exist. This is the core deliverable.
+2. **Missing `tui` and `logout` commands** — AC-1 explicitly requires them.
+3. **Nightly fmt failures** — per project gotchas, this is a gate.
+4. **Config accepts unknown fields silently** — operational hazard.
+
+The library code quality is solid — error handling, header injection prevention, output formatting, and test coverage for what exists are all good. But shipping a CLI story without a binary entry point and two missing commands is not acceptable. Fix the four blockers and this will be in good shape.

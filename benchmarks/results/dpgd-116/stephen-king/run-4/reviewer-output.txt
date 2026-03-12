@@ -1,0 +1,99 @@
+Now I have everything. Time to deliver my findings.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*The man in black fled across the desert, and the gunslinger followed. I have followed every line of this code with the same relentless patience.*
+
+---
+
+## Observations
+
+### 1. [HIGH] `cargo +nightly fmt --all --check` fails — `client.rs`, `init.rs`, `config.rs`
+
+Nightly rustfmt reports formatting diffs in three files. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." This blocks merge.
+
+**Files:** `client.rs:44`, `init.rs:5`, `config.rs:69`
+
+### 2. [HIGH] No `main.rs` binary entry point — AC-3 exit code contract is unverifiable at runtime
+
+The story requires `crates/axiathon-client/src/main.rs` as the binary entry point where `CliError::exit_code()` drives `std::process::exit()`. This file does not exist. Without it:
+- The `axiathon` binary cannot be built
+- AC-3's exit code mapping (errors to stderr, output to stdout, `std::process::exit()`) is a dead letter — the `exit_code()` method exists but nothing calls it
+- The keyring token loading "before entering Tokio runtime" requirement (Technical Guardrails) has no place to live
+
+The `Cargo.toml` has no `[[bin]]` section either, so `cargo build -p axiathon-client` will only produce the library, not the `axiathon` binary.
+
+### 3. [MEDIUM] `OutputFormatter::format_json` uses `.expect()` in production code — `output.rs:48`
+
+```rust
+serde_json::to_string_pretty(&response).expect("JSON serialization should not fail")
+```
+
+The project rules state: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect` message here is explanatory rather than actionable. More critically, `format_csv` has three `.expect()` calls (lines 54, 56, 59) and an additional `.expect()` on line 60-61. While these are unlikely to fail on well-formed input, the `format_*` methods return `String` rather than `Result<String, CliError>`, which means errors would panic rather than propagate. This is a design smell — not blocking, but worth noting for when real data flows through.
+
+### 4. [MEDIUM] `SiemClient` uses raw `String` for `tenant_id` instead of `TenantId` newtype — `client.rs:11`
+
+The project's Rust rules mandate: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `axiathon-core` crate exports `TenantId`. Yet `SiemClient` stores `tenant_id: Option<String>` and `with_tenant_id` accepts `&str`. The CLI `--tenant` flag is also `Option<String>` in `cli.rs:30`. This bypasses the type safety the project was designed around.
+
+### 5. [MEDIUM] `ServerError` and `Unauthorized` Display impls pass through raw server body text — CWE-209 risk — `error.rs:26,29`
+
+```rust
+#[error("server error: {0}")]
+ServerError(String),
+#[error("unauthorized: {0}")]
+Unauthorized(String),
+```
+
+The `body` from `map_status_error` flows directly into these variants. If the server returns verbose error details (stack traces, internal paths, DB errors), they get printed to the operator's terminal via `Display`. The security comment says "Display output is for internal logging only — sanitize before sending to clients" but this IS the client — the operator sees everything Display produces. The test `error_display_does_not_leak_internals` at `security.rs:127-133` is a no-op: it feeds a hardcoded string and only checks `!display.is_empty()`, which proves nothing about sanitization.
+
+### 6. [MEDIUM] `config_rejects_non_http_api_url` test has a weak assertion — `config_loading.rs:186-192`
+
+```rust
+if let Ok(config) = result {
+    assert!(
+        config.api_url().starts_with("http://") || config.api_url().starts_with("https://"),
+        ...
+    );
+}
+```
+
+The `if let Ok` silently passes when the result is `Err`. This means the test doesn't actually verify *which* behavior occurs — it accepts both rejection and acceptance. The implementation does reject (via `validate()`), so the test should assert `result.is_err()` to lock that behavior.
+
+### 7. [MEDIUM] `config_file_does_not_store_tokens` test — vacuous success path — `config_loading.rs:160-171`
+
+The `deny_unknown_fields` serde attribute means `ClientConfig::from_file` returns `Err` when `token` is present. The `Ok(c)` branch with `has_token_field()` can never execute. The test passes but doesn't verify the *intended* behavior (rejection) — it just happens to not fail. Should explicitly assert `result.is_err()`.
+
+### 8. [LOW] `OutputFormatter` is a struct with only associated functions, not a trait — `output.rs:14`
+
+AC-4 specifies an "`OutputFormatter` trait with Table/JSON/CSV implementations." The implementation is a unit struct with static methods, not a trait. This won't block extensibility today since it's stubs, but it doesn't match the spec.
+
+### 9. [LOW] `Completion` command variant takes no arguments — `cli.rs:104`
+
+AC-9 requires `axiathon completion <shell>` — the shell should be a required argument. Currently `Commands::Completion` is a unit variant with no `Shell` field, so there's no way to specify bash/zsh/fish from the CLI. The `generate_completion` function accepts `Shell` but nothing parses it from argv.
+
+### 10. [LOW] `init.rs` creates directory but writes no default config file
+
+`execute()` creates the parent directory for `cli.toml` but doesn't write a default config file. For a "first-time setup" command, the operator gets an empty directory. This is arguably out of scope for a stub, but `init` is listed as "functional, not stub" in the story scope.
+
+### 11. [VERIFIED] Header injection (CWE-113) — CRLF stripped in `with_tenant_id` and `with_token` at `client.rs:36-39,47-50`. `HeaderValue::from_str` provides secondary defense.
+
+### 12. [VERIFIED] `deny_unknown_fields` on `ClientConfig` — unknown TOML keys (including `token`) are rejected at `config.rs:29`.
+
+### 13. [VERIFIED] URL scheme validation — both `SiemClient::new` and `ClientConfig::validate` reject non-http(s) schemes.
+
+### 14. [VERIFIED] `#![forbid(unsafe_code)]` in `lib.rs:2` and workspace-level `unsafe_code = "forbid"` in root `Cargo.toml:73`.
+
+### 15. [VERIFIED] Dependency boundary — `axiathon-client/Cargo.toml` depends only on `axiathon-core`, no server-side crates. Test at `security.rs:60-77` enforces this.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two **HIGH** issues block approval:
+
+1. **Nightly fmt fails** — three files need reformatting. This is a mechanical fix.
+2. **No `main.rs`** — the `axiathon` binary cannot be built. The exit code contract (AC-3), CLI dispatch, keyring loading, and stderr/stdout routing all depend on this file existing. Without it, the story's core deliverable — *an operator-facing CLI binary* — does not exist. The library compiles and tests pass, but there is no binary.
+
+The gunslinger does not holster his irons until the Tower stands. Fix these, and we'll talk.

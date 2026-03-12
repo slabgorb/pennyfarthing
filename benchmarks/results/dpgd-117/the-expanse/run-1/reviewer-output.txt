@@ -1,0 +1,105 @@
+Good. Now I have everything I need. Here's the review.
+
+---
+
+# Story 8.1 Review: REST API Foundation
+
+*Well, well. Let me look at what someone brought me and called it "done."*
+
+## Observations
+
+### CRITICAL
+
+**[CRITICAL] Duplicate response envelope diverges from `axiathon-core::ApiResponse<T>` — `response.rs:9-92`**
+
+The story explicitly requires using `ApiResponse<T>` from `axiathon-core`. Instead, a completely new `Envelope<T>` type was invented in `crates/axiathon-server/src/response.rs`. The two types have fundamentally different shapes:
+
+- **axiathon-core `ApiResponse<T>`**: `data`, `error` (singular `Option<ApiError>`), `meta` (pagination-focused `ApiMeta`)
+- **New `Envelope<T>`**: `data`, `errors` (Vec), `meta` (`EnvelopeMeta` with request_id/timestamp/trace_id)
+
+The story spec says: *"All responses use `ApiResponse<T>` from axiathon-core."* This either needs to use the core type directly, or the core type needs to be updated to match the RFC 9457 envelope spec. Building a parallel type system is architectural drift that will cause integration pain in every subsequent story.
+
+### HIGH
+
+**[HIGH] No `AppState` / `FromRef` substate pattern — entire `app.rs`**
+
+The story's #1 technical guardrail: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`. This is a compile-time least-privilege enforcement (CWE-653, OWASP API5:2023)."*
+
+There is no `AppState`. There are no substates. Handlers take zero state parameters. The test `handler_cannot_access_full_app_state_only_substates` at `security.rs:312` literally just creates an app and calls it proven — that's a rubber-stamp test, not a compile-time guarantee. The `FromRef` pattern is the entire architectural point of this story.
+
+**[HIGH] Rate limiter uses global `static LazyLock<Mutex<HashMap>>` with no time window — `rate_limit.rs:16-17`**
+
+This counter never resets. Once you hit the limit, you're permanently rate-limited until process restart. That's not rate limiting — that's a kill switch. The static also leaks state across tests (it's process-global), making test ordering non-deterministic. The `expect("lock poisoned")` on line 45 will panic and crash the server if any thread panics while holding the lock.
+
+**[HIGH] `AuthInfo` ignores `TenantContext` from axiathon-core — `auth.rs:14-17`**
+
+`AuthInfo { tenant_id: String }` is a bare string. The core crate provides `TenantContext` with `TenantId` (validated newtype), `user_id`, `roles`, `permissions`, and `trace_id`. The story requires: *"Tenant context must be extracted from JWT/API key and passed explicitly to all downstream functions."* A raw string `tenant_id` provides zero type safety, no role/permission information, and no trace correlation.
+
+**[HIGH] Zero observability — no `tracing` usage anywhere**
+
+`tracing` and `tracing-subscriber` are declared as dependencies but never imported or used in any source file. There are no `#[instrument]` annotations, no span creation, no structured logging on auth failures, rate limit hits, or request processing. The story requires trace_id correlation and the AC spec says `meta` must include `trace_id`. Currently `trace_id` is just a random UUID unconnected to any tracing infrastructure.
+
+### MEDIUM
+
+**[MEDIUM] Bearer token parsing accepts `"Bearertoken"` (no space required) — `auth.rs:53`**
+
+`strip_prefix("Bearer")` matches the literal bytes without requiring the RFC 7235 space separator. `"Bearermalicious"` would be parsed as token `"malicious"`. Should be `strip_prefix("Bearer ")` to enforce the space. The test `bearer_token_with_extra_spaces_is_handled` verifies no 500 but doesn't assert the correct status code.
+
+**[MEDIUM] `tenant_rate_limits` config field is dead code — `config.rs:8`, `rate_limit.rs`**
+
+`ServerConfig::tenant_rate_limits` is populated by `with_tenant_rate_limit()` and tested at `rate_limiting.rs:164`, but the rate limit middleware never reads it. Every tenant gets the same global limit. The test `rate_limit_is_configurable_per_tenant` just calls `create_app` and considers that proof — it verifies nothing about per-tenant enforcement.
+
+**[MEDIUM] `cargo +nightly fmt --all --check` fails**
+
+Import ordering in `app.rs` doesn't pass nightly rustfmt. Per the reviewer gotchas: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."*
+
+**[MEDIUM] JWKS endpoint bypasses response envelope — `jwks.rs:7-9`**
+
+Returns raw `Json(json!({ "keys": [] }))` instead of the standard envelope. While JWKS is a well-known format, this is the only endpoint that doesn't wrap in `Envelope<T>`, creating inconsistency. At minimum, document why this is intentional.
+
+**[MEDIUM] `axiathon-core` duplicated in `[dependencies]` and `[dev-dependencies]` — `Cargo.toml:9,26`**
+
+`axiathon-core` appears in both sections. The `[dev-dependencies]` entry is redundant since regular dependencies are already available in tests.
+
+**[MEDIUM] No CORS configuration**
+
+No CORS middleware or headers. The story's security checklist calls for CORS policy analysis. Any browser-based client (Epic 9 WebUI) will be blocked.
+
+### LOW
+
+**[LOW] `#[non_exhaustive]` missing on `ApiError` enum — `error.rs:12`**
+
+Per `rust.md`: *"`#[non_exhaustive]` on enums that will grow."* `ApiError` will definitely grow as more stories add error variants (NotFound, Conflict, etc.).
+
+**[LOW] Uptime is hardcoded to `"0s"` — `health.rs:19`**
+
+The AC says health should return *"actual server health (uptime, version)."* Version is correct via `env!("CARGO_PKG_VERSION")`, but uptime is always `"0s"`.
+
+**[LOW] `tracing` and `tracing-subscriber` are unused dependencies**
+
+Declared in `Cargo.toml:21-22` but zero imports in source. `cargo clippy` doesn't catch this since they're not explicitly `use`d.
+
+### VERIFIED
+
+- [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2` — compile-time enforcement confirmed
+- [VERIFIED] All five route groups registered under `/api/v1/` — health, events, alerts, rules, queries
+- [VERIFIED] 401/403/429 error responses use the envelope format
+- [VERIFIED] Health endpoint does not require authentication
+- [VERIFIED] JWKS at `/.well-known/jwks.json` is outside `/api/v1/` prefix
+- [VERIFIED] All 42 tests pass, clippy clean
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three blocking issues must be resolved:
+
+1. **Use or evolve `axiathon-core::ApiResponse<T>`** instead of the parallel `Envelope<T>`. If the core type needs to change shape (it probably does — the `errors` array and proper `meta` with request_id/timestamp/trace_id are correct per the story spec), update it there so all crates share one envelope.
+
+2. **Implement `AppState` with `FromRef` substates.** Even if the substates are empty structs for now, the pattern must exist. This is the compile-time least-privilege enforcement the story was designed to establish.
+
+3. **Replace the global static rate limiter** with something that (a) has a time window and (b) doesn't leak across tests. At minimum, make it part of `AppState` so each app instance has its own counter.
+
+Additionally, the nightly fmt failure and the `AuthInfo` → `TenantContext` gap need to be addressed before this can pass review.
+
+*Arjun would say "the foundation is structurally sound and the test coverage is admirably thorough." He's being generous. The skeleton is here but the bones are wrong — you built a second spine instead of using the one we already have.*

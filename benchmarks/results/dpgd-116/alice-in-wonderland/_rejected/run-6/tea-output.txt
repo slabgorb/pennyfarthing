@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework — all acceptance criteria require behavioral verification.
+
+**Test Files:**
+| File | AC Coverage | Tests |
+|------|-------------|-------|
+| `tests/cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 15 tests — command groups, help rendering, global flags, derive verification |
+| `tests/exit_codes.rs` | AC-3 | 13 tests — exit code mapping for all CliError variants + security (CWE-209) |
+| `tests/output_format.rs` | AC-4 | 13 tests — table/json/csv formatting, metadata, escaping, edge cases |
+| `tests/siem_client.rs` | AC-7 | 14 tests — HTTP status mapping, header injection, connection errors, security |
+| `tests/config_loading.rs` | AC-8 | 13 tests — TOML parsing, env var overrides, custom path, validation, token exclusion |
+| `tests/shell_completion.rs` | AC-9 | 5 tests — bash/zsh/fish/powershell generation + uniqueness |
+| `tests/stub_handlers.rs` | AC-10 | 12 tests — stub returns, story references, display formatting |
+
+**Tests Written:** 85 tests covering all 10 ACs
+**Status:** RED (failing — all compilation errors are unresolved imports for modules Dev must create: `cli`, `error`, `output`, `client`, `config`, `commands/*`)
+
+**Security tests included:**
+- CWE-209: Server error display must not leak internal IPs/ports
+- Header injection: Tenant ID and token with CRLF must be rejected/sanitized
+- Token exclusion: Config struct must not have a `token()` accessor
+- Config validation: Negative/zero timeouts rejected
+- Non-numeric env var timeout produces clear error
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -11,7 +11,6 @@ Uncategorized utilities and one-off scripts.
 | `run-ci.sh` | Run CI locally |
 | `pf hooks statusline` | Status line configuration |
 | `uninstall.sh` | Uninstall Pennyfarthing from project |
-| `backlog.sh` | Backlog operations |
 | `repo-utils.sh` | Multi-repo utilities |
 | `repo-scan.sh` | Repository scanner |
 | `add-short-names.mjs` | Add short names to themes |
@@ -24,7 +23,6 @@ Uncategorized utilities and one-off scripts.
 | `log-skill-usage.sh` | Log skill invocations |
 | `skill-usage-report.sh` | Generate skill usage reports |
 | `run-timestamp.sh` | Timestamp utility |
-| `validate-subagent-frontmatter.sh` | Validate subagent YAML frontmatter |
 
 ## Usage
 

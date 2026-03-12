@@ -121,7 +121,7 @@ After completing work:
 
 1. Write assessment to session file
 2. Spawn handoff helper (`.pennyfarthing/agents/{agent}-handoff.md`)
-3. Check context: `eval $(.pennyfarthing/scripts/core/check-context.sh)`
+3. Check context: `pf context`
 4. If `HANDOFF_MODE=auto`: Use Skill tool to invoke next agent
 5. If `HANDOFF_MODE=ask`: Tell user to start fresh session
 

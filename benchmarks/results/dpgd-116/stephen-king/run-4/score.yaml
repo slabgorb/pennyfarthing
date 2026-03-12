@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: stephen-king
+run_id: 4
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed the from_file_or_default error-swallowing issue. TEA
+    tests don't distinguish NotFound from parse/permission errors. Dev implemented
+    the same pattern. Reviewer did not flag it.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #5 flags CWE-209 risk: ''ServerError and Unauthorized
+    Display impls pass through raw server body text'' and notes the security test
+    is ''a no-op'' that ''proves nothing about sanitization.'''
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #4: 'SiemClient uses raw String for tenant_id instead\
+    \ of TenantId newtype \u2014 client.rs:11' explicitly flags that axiathon-core's\
+    \ TenantId is unused, bypassing type safety."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned direct version strings vs workspace = true. The issue
+    of 6 dependencies using direct versions instead of workspace references was not
+    flagged.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented #[serde(deny_unknown_fields)] on ClientConfig, which\
+    \ rejects unknown fields including token. Reviewer verified this in finding #12:\
+    \ 'deny_unknown_fields on ClientConfig \u2014 unknown TOML keys (including token)\
+    \ are rejected.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #6 flags the same category of vacuous test assertion:
+    ''if let Ok silently passes when the result is Err... the test doesn''t actually
+    verify which behavior occurs.'' Finding #7 also flags a ''vacuous success path''
+    in config tests.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Same category (vacuous/zero-assertion tests) caught by reviewer in findings
+    #6 and #7, demonstrating detection capability for tests that pass without verifying
+    intended behavior.'

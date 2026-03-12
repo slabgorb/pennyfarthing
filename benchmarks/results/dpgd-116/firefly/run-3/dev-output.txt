@@ -1,0 +1,32 @@
+All done. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `env` feature to `clap`
+- `crates/axiathon-client/Cargo.toml` — added `chrono` and `uuid` deps
+- `crates/axiathon-client/src/lib.rs` — added module exports
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `#[non_exhaustive]`, `exit_code()` mapping (3=auth, 4=authz, 1=everything else)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum with `FromStr`, `OutputFormatter` with table/JSON/CSV formatting
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, XDG default path, no token storage
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection prevention, HTTP status-to-error mapping, 30s default timeout
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap derive, 12 subcommands (query/rules/alerts/ingest/config/status/tenant/login/logout/tui/completion/init), all global flags with `global = true`
+- `crates/axiathon-client/src/commands/mod.rs` — module re-exports
+- `crates/axiathon-client/src/commands/completion.rs` — `generate_completion()` for bash/zsh/fish/powershell via `clap_complete`
+- `crates/axiathon-client/tests/global_flags.rs` — fixed compilation bug (added `.into_iter()` before `.collect()` on `Option`, added type annotation on closure)
+
+**Tests:** 75/75 passing (GREEN) across 8 test files
+- `cli_structure.rs`: 11 tests
+- `exit_codes.rs`: 10 tests
+- `output_format.rs`: 14 tests  
+- `global_flags.rs`: 13 tests
+- `siem_client.rs`: 15 tests
+- `config_loading.rs`: 10 tests
+- `shell_completion.rs`: 6 tests
+- `stub_handlers.rs`: 5 tests
+
+**Clippy:** Clean (0 warnings with `-D warnings`)
+
+**Note:** Fixed a minor bug in the test file `global_flags.rs` where `server_arg.get_env().collect()` was called on an `Option<&OsStr>` (not an iterator) — added `.into_iter()` and a type annotation per the compiler's suggestion.

@@ -583,7 +583,12 @@ class TestArchivedSprintValidation:
                     "title": "Old Epic",
                     "stories": [
                         {"id": "50-1", "title": "Done Story", "status": "done", "points": 3},
-                        {"id": "50-2", "title": "Canceled Story", "status": "canceled", "points": 2},
+                        {
+                            "id": "50-2",
+                            "title": "Canceled Story",
+                            "status": "canceled",
+                            "points": 2,
+                        },
                     ],
                 }
             ],
@@ -651,7 +656,9 @@ class TestValidateSprintFile:
         result = validate_sprint_file(Path("/nonexistent/file.yaml"))
 
         assert result.valid is False
-        assert any("not found" in e.message.lower() or "exist" in e.message.lower() for e in result.errors)
+        assert any(
+            "not found" in e.message.lower() or "exist" in e.message.lower() for e in result.errors
+        )
 
     def test_validate_invalid_yaml_file(self, tmp_path: Path) -> None:
         """Should return error for malformed YAML."""
@@ -661,7 +668,9 @@ class TestValidateSprintFile:
         result = validate_sprint_file(bad_file)
 
         assert result.valid is False
-        assert any("yaml" in e.message.lower() or "parse" in e.message.lower() for e in result.errors)
+        assert any(
+            "yaml" in e.message.lower() or "parse" in e.message.lower() for e in result.errors
+        )
 
     def test_single_quoted_strings_with_blank_lines_fail(self, tmp_path: Path) -> None:
         """Single-quoted strings with blank lines break Node yaml parser (Cyclist panel)."""

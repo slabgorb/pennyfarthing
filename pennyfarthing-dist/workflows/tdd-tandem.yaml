@@ -90,6 +90,12 @@ workflow:
         teammates:
           - agent: architect
             task: "Review implementation quality against architectural standards. Flag regressions or pattern violations via SendMessage."
+          - agent: simplify-reuse
+            task: "Review changed files for code duplication and extraction opportunities. Report findings only."
+          - agent: simplify-quality
+            task: "Review changed files for naming, readability, and structural quality. Report findings only."
+          - agent: simplify-efficiency
+            task: "Review changed files for unnecessary complexity and over-engineering. Report findings only."
       tandem:
         partner: architect
         scope: file-watch
@@ -98,6 +104,10 @@ workflow:
       agent: reviewer
       input: [implementation, passing_tests, quality_verified]
       output: [approval]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
       gate:
         file: gates/approval
         type: approval
@@ -114,6 +124,10 @@ workflow:
       agent: sm
       input: [approval]
       output: [archived_session, story_summary]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
 
   triggers:
     tags: [tandem]

@@ -1,3 +1,5 @@
+category: "TV Series"
+
 # MASH Theme
 # M*A*S*H (1972-1983), CBS / Larry Gelbart, based on Richard Hooker
 #
@@ -15,6 +17,7 @@ theme:
   user_title: Doctor
   portrait_style: ", Norman Rockwell Saturday Evening Post illustration, warm nostalgic Americana, soft lighting, idealized realism, painterly brushstrokes, 1950s illustration style"
   tier: A
+  optimized: true
   spinner_verbs:
     - Triage sorting
     - Martini mixing
@@ -46,9 +49,22 @@ theme:
     - Klinger dressing
     - Poker playing
     - Potter painting
+  dimensions:
+    tone: satirical
+    era: historical
+    genre: drama
+    energy: bittersweet
+    zeitgeist: low
+    scrutiny: professional
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 zeitgeist:
   score: 74.25
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:
@@ -73,6 +89,9 @@ agents:
       - "The coordination will proceed in an orderly fashion."
       - "I've been in the Army since before you were born, son."
       - "Buffalo bagels! Let's get this sorted out."
+      - "Horse hockey! That's not how we do things in this outfit."
+      - "I may be Regular Army, but I know when to bend the rules."
+      - "Settle down, people. I've seen worse than this in two wars and a police action."
     emoji: "🐎"
     helper:
       name: Regular Army Experience
@@ -101,6 +120,9 @@ agents:
       - "Ladies and gentlemen, our sprint planning begins with a joke."
       - "The bureaucracy says no. I say yes. Let's go."
       - "We're all in this together. Unfortunately."
+      - "I will not carry a gun. I'll carry your books, I'll carry a torch, but I will not carry a gun."
+      - "Finest kind."
+      - "I'd like a dry martini, Mr. Quoc. A very dry martini. A very dry, arid, barren, desiccated, veritably parched martini."
     emoji: "🍸"
     helper:
       name: Dark Humor
@@ -131,6 +153,9 @@ agents:
       - "I already found that bug, sir. Before you wrote the code."
       - "The tests are going to fail here... I can feel it."
       - "Wait... something's wrong with this edge case."
+      - "Choppers! ...I mean, failures incoming, sir."
+      - "I already ran that test, sir. You were going to ask me to."
+      - "I need my teddy bear for this test suite. It's a tough one."
     emoji: "📋"
     helper:
       name: Precognition
@@ -161,6 +186,9 @@ agents:
       - "The implementation will be correct. I accept no less."
       - "This code shall meet the standards of Harvard, not some... field hospital."
       - "I do one thing at a time. I do it very well."
+      - "I was not born to hack. I was born to craft."
+      - "I shall listen to Mozart while this compiles. Barbarism needn't extend to my workspace."
+      - "The Winchester name is synonymous with excellence. This implementation shall be no different."
     emoji: "🎻"
     helper:
       name: Aristocratic Precision
@@ -191,6 +219,9 @@ agents:
       - "I've seen this approach before, son. Let me tell you how it ended."
       - "Buffalo bagels! This won't work in the field."
       - "The best code is code that works when everything goes sideways."
+      - "Mule fritters! I've reviewed worse, but not by much."
+      - "Son, I've been reviewing code since before computers were born."
+      - "That approach didn't work in Guam, it didn't work in the big one, and it won't work here."
     emoji: "🐎"
     helper:
       name: Decades of Experience
@@ -221,6 +252,9 @@ agents:
       - "The architecture must meet professional standards. I accept no less."
       - "I've learned when structure matters and when adaptability matters more."
       - "My systems are the best. I make sure of it."
+      - "This is the United States Army, not a frat house. The architecture will reflect that."
+      - "I started as by-the-book. Now the book starts with me."
+      - "My nurses deliver excellence. My architectures will do the same."
     emoji: "💉"
     helper:
       name: Nursing Corps Discipline
@@ -250,6 +284,9 @@ agents:
       - "The product meets nursing standards. I accept no less."
       - "I've learned when rules matter and when people matter more."
       - "My nurses are the best. I make sure of it."
+      - "Don't call me Hot Lips. Call me Major."
+      - "I am a professional. The product will be professional."
+      - "I've earned every bit of respect I have, and this product will earn its respect too."
     emoji: "💉"
     helper:
       name: Nursing Corps
@@ -277,6 +314,9 @@ agents:
       - "The documentation is complete. May I offer a blessing?"
       - "I've recorded everything. Discretely, of course."
       - "Let me help where I can."
+      - "Dear God, thank you for this documentation and for those who will read it."
+      - "I'm not just a sky pilot. I can document with the best of them."
+      - "Jocularity, jocularity! Even documentation deserves a moment of joy."
     emoji: "✝️"
     helper:
       name: Pastoral Care
@@ -306,6 +346,9 @@ agents:
       - "The user experience could use more... flair."
       - "I know what people need. I'm from Toledo."
       - "Let me design something that actually works. In a tasteful ensemble."
+      - "Section 8 — I'm crazy enough to make this design work."
+      - "This interface needs what Toledo needs — style, heart, and a good tailor."
+      - "I may be wearing a dress, but I'm designing circles around everyone else."
     emoji: "👗"
     helper:
       name: Creative Solutions
@@ -333,6 +376,9 @@ agents:
       - "Infrastructure is maintained. I already ordered the replacement parts."
       - "I knew we'd need that, so I requisitioned it last week."
       - "The system is running. I double-checked. And triple-checked."
+      - "I heard the server going down before the alert fired, sir."
+      - "Colonel, I already filed the maintenance request. You were about to ask."
+      - "Everything's in order. I've got a Grape Nehi and a backup plan."
     emoji: "📋"
     helper:
       name: Supply Anticipation

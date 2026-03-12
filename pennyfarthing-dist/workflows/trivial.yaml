@@ -40,6 +40,10 @@ workflow:
       agent: reviewer
       input: [implementation]
       output: [approval]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
       gate:
         file: gates/approval
         type: approval
@@ -48,6 +52,10 @@ workflow:
       agent: sm
       input: [approval]
       output: [archived_session]
+      entry_gate:
+        file: gates/status-sync
+        type: status_sync
+        condition: Story status is in_review in both YAML and Jira
 
   triggers:
     types: [chore, fix, refactor]

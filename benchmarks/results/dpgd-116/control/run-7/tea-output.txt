@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — every AC needs test coverage.
+
+**Test Files:**
+| File | Tests | Covers |
+|---|---|---|
+| `cli_structure.rs` | 39 | AC-1 (command groups, plural nouns), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes.rs` | 14 | AC-3 (exit code mapping 0/1/2/3/4, error traits, distinct auth/authz codes) |
+| `output_format.rs` | 14 | AC-4 (table/JSON/CSV formatting, metadata, escaping, edge cases) |
+| `siem_client.rs` | 15 | AC-7 (construction, HTTP status→CliError mapping, header injection prevention, URL building) |
+| `config_loading.rs` | 11 | AC-8 (TOML loading, file/defaults/overrides, token exclusion, XDG path) |
+| `shell_completion.rs` | 5 | AC-9 (bash/zsh/fish/powershell generation, subcommand coverage) |
+| `stub_handlers.rs` | 10 | AC-10 (stub messages reference correct story, exit code 1) |
+| `security.rs` | 8 | CWE-209 error exposure, header injection, config validation bounds |
+
+**Tests Written:** 116 tests covering all 10 ACs
+**Status:** RED (failing — all 8 test files fail to compile because modules `cli`, `error`, `client`, `config`, `output`, `commands::*` do not exist yet)
+
+**Key design decisions:**
+- Env var override tests use `apply_overrides(HashMap)` instead of `set_var`/`remove_var` to comply with `#![forbid(unsafe_code)]` in edition 2024
+- Security tests cover header injection (CWE-113), error information leakage (CWE-209), timeout bounds validation
+- Token-in-config-file test enforces the keychain-only token storage requirement
+- `[[bin]]` section removed from Cargo.toml (Dev will add it back with `main.rs`)
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -2,7 +2,7 @@
 
 ## Commands
 
-### `pf theme create`
+### `pf.sh theme create`
 
 Create a new custom theme from a base theme.
 
@@ -13,11 +13,15 @@ Create a new custom theme from a base theme.
 | `--user` | No | Create as user-level theme (~/.claude/pennyfarthing/themes/) |
 | `--dry-run` | No | Show what would be done without making changes |
 
-### `pf theme list`
+### `pf.sh theme list`
 
 Show all available themes with current theme highlighted.
 
-### `pf theme set`
+| Arg/Option | Required | Description |
+|------------|----------|-------------|
+| `--json` | No | Output as JSON |
+
+### `pf.sh theme set`
 
 Set the active persona theme.
 
@@ -26,7 +30,7 @@ Set the active persona theme.
 | `NAME` | Yes | Theme name to activate |
 | `--dry-run` | No | Show what would be done without making changes |
 
-### `pf theme show`
+### `pf.sh theme show`
 
 Show theme details including agent character mappings.
 
@@ -34,4 +38,5 @@ Show theme details including agent character mappings.
 |------------|----------|-------------|
 | `NAME` | No | Theme to show (defaults to current theme) |
 | `--full` | No | Show full agent details (OCEAN, quirks, catchphrases, etc.) |
+| `--json` | No | Output as JSON |
 

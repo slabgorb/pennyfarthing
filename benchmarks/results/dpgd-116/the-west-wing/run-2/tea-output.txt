@@ -1,0 +1,8 @@
+RED phase complete. 113 failing tests committed at `e9bd0c9`, ready for Dev to implement the GREEN phase. The tests expect these public modules from `axiathon_client`:
+
+- `cli::Cli` — clap derive Parser with global flags
+- `error::CliError` — error enum with `exit_code()` method
+- `output::{OutputFormat, OutputFormatter}` — formatting trait + enum
+- `client::SiemClient` — HTTP wrapper with header injection
+- `config::ClientConfig` — TOML config with env overrides
+- `commands::{status, config, ingest, alerts, query, login, tenant, rules, completion}` — stub handlers + completion generator

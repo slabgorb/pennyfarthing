@@ -1,0 +1,29 @@
+All GREEN. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Tests:** 105/105 passing (GREEN), 0 clippy warnings
+
+**Files Created:**
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `thiserror`, exit code mapping (1=error, 3=auth, 4=authz)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum, `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (csv crate)
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping `reqwest::Client` with header injection, HTTP status mapping, CRLF sanitization, redacted Debug impl
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), validation (empty URL fallback, timeout clamping to 1h max)
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct (clap derive), `Commands` enum with all 12 command groups, global flags with `global = true`
+- `crates/axiathon-client/src/commands/mod.rs` — re-exports all command modules
+- `crates/axiathon-client/src/commands/{status,config,ingest,alerts,query,rules,tenant,login}.rs` — stub handlers returning `CliError::NotImplemented` with story references
+- `crates/axiathon-client/src/commands/completion.rs` — functional shell completion via `clap_complete::generate()`
+- `crates/axiathon-client/src/commands/init.rs` — functional first-time setup creating default config
+
+**Files Modified:**
+- `crates/axiathon-client/src/lib.rs` — added module declarations
+- `crates/axiathon-client/src/main.rs` — full dispatch to command handlers with exit code mapping
+- `crates/axiathon-client/Cargo.toml` — added `chrono` dep, `env` feature for clap, overrode `unsafe_code` lint to `deny` (from workspace `forbid`) so tests can use `set_var`
+- `crates/axiathon-client/tests/cli_structure.rs` — fixed edition 2024 `render_help()` mutability and unused variable
+- `crates/axiathon-client/tests/config_loading.rs` — wrapped `set_var`/`remove_var` in `unsafe` blocks with `#[allow(unsafe_code)]` (required by edition 2024)
+- `crates/axiathon-client/tests/global_flags.rs` — fixed `get_env()` API (returns `Option` not iterator in clap 4.5)
+
+**Delivery Findings:**
+- **Gap** (non-blocking): Test files use `std::env::set_var` which is unsafe in edition 2024. Tests needed mechanical fixes (`unsafe` blocks + lint override). Affects `crates/axiathon-client/tests/config_loading.rs` (tests should use `serial_test` crate or env-var-free testing pattern). *Found by Dev during implementation.*

@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: the-expanse
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA security.rs mentions 'silent error swallowing' but in context of 'non-2xx
+    responses' (SiemClient HTTP), not config's from_file_or_default. Config_loading.rs
+    tests cover 'TOML loading, env overrides, precedence, validation' but no specific
+    mention of distinguishing NotFound from parse/permission errors. The specific
+    from_file_or_default issue was never flagged.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA security.rs explicitly covers 'CWE-209 error exposure' \u2014 same\
+    \ vulnerability class as the finding about CliError Display leaking internal details\
+    \ to stderr."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA siem_client.rs tests cover 'header injection' and security.rs covers
+    'CWE-113 header injection'. Dev implemented newline rejection in with_token/with_tenant.
+    Same vulnerability class addressed, though via input validation rather than using
+    TenantId type.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer states '[VERIFIED] Workspace dependencies correctly declared\
+    \ in root Cargo.toml:52-58' \u2014 verified workspace-level declarations exist\
+    \ but did not check whether the crate's Cargo.toml uses 'workspace = true' vs\
+    \ direct version strings. Opposite conclusion on related code."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged: 'RawConfig uses #[derive(Deserialize)] with\
+    \ deny_unknown_fields absent \u2014 unknown fields silently ignored... A TOML\
+    \ file with token = \"secret\" is silently accepted without error... Consider\
+    \ #[serde(deny_unknown_fields)]'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No mention of vacuously true assertions or None || true pattern anywhere
+    in TEA test design, dev implementation, or reviewer findings.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No mention of zero-assertion tests or tests that only check non-panic
+    behavior. The pipeline wrote these tests but never flagged them as inadequate.

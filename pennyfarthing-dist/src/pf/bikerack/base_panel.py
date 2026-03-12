@@ -17,18 +17,18 @@ from pf.bikerack.colors import warn_style
 
 # Nerd Font icon registry: panel_name → (nerd_font_icon, ascii_fallback)
 PANEL_ICONS: dict[str, tuple[str, str]] = {
-    "sprint": ("\uf0e7", "#"),       # nf-fa-bolt
-    "git": ("\ue725", "G"),          # nf-dev-git_branch
-    "diffs": ("\uf440", "D"),        # nf-oct-diff
-    "todo": ("\uf046", "T"),         # nf-fa-check_square_o
-    "workflow": ("\uf126", "W"),     # nf-fa-code_fork
-    "background": ("\uf110", "B"),   # nf-fa-spinner
-    "audit-log": ("\uf15c", "L"),    # nf-fa-file_text
-    "ac": ("\uf00c", "A"),           # nf-fa-check
-    "debug": ("\uf188", "d"),        # nf-fa-bug
-    "settings": ("\uf013", "S"),     # nf-fa-gear
-    "tty": ("\uf120", ">"),          # nf-fa-terminal
-    "progress": ("\uf200", "P"),     # nf-fa-pie_chart
+    "sprint": ("\uf0e7", "#"),  # nf-fa-bolt
+    "git": ("\ue725", "G"),  # nf-dev-git_branch
+    "diffs": ("\uf440", "D"),  # nf-oct-diff
+    "todo": ("\uf046", "T"),  # nf-fa-check_square_o
+    "workflow": ("\uf126", "W"),  # nf-fa-code_fork
+    "background": ("\uf110", "B"),  # nf-fa-spinner
+    "audit-log": ("\uf15c", "L"),  # nf-fa-file_text
+    "ac": ("\uf00c", "A"),  # nf-fa-check
+    "debug": ("\uf188", "d"),  # nf-fa-bug
+    "settings": ("\uf013", "S"),  # nf-fa-gear
+    "tty": ("\uf120", ">"),  # nf-fa-terminal
+    "progress": ("\uf200", "P"),  # nf-fa-pie_chart
 }
 
 

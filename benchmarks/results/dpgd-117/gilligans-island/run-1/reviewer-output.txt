@@ -1,0 +1,95 @@
+*Sets down brandy snifter with a disapproving clink*
+
+Good heavens. I've completed my inspection of this establishment, and I must say, while the hired help has produced something that *functions*, there are matters of pedigree that simply cannot be overlooked. Let me present The Portfolio's findings.
+
+---
+
+# Code Review: Story 8.1 — REST API Foundation
+
+## Review Checklist
+
+- [x] Find at least 5 observations
+- [x] Trace data flow (request → auth middleware → handler → response)
+- [x] Wiring: UI→backend connections accessible
+- [x] Identify patterns (good and bad)
+- [x] Verify error handling
+- [x] Security analysis
+- [x] Hard questions: edge cases, race conditions
+- [x] Make judgment
+
+---
+
+## Findings
+
+### `[HIGH]` Duplicate `ApiResponse` — ignores `axiathon_core::ApiResponse` entirely
+
+`axiathon-server/src/response.rs` defines its own `ApiResponse<T>`, `ApiEnvelope<T>`, `Meta`, and `ErrorEntry` types. Meanwhile, `axiathon-core/src/types.rs:221-278` already exports `ApiResponse<T>`, `ApiError`, `ApiMeta`. The story spec explicitly says *"ApiResponse<T> from axiathon-core"*. The two types are structurally incompatible:
+
+- **Core:** `data`, `error` (singular, optional), `meta` (optional) — all with `skip_serializing_if`
+- **Server:** `data`, `meta` (always present), `errors` (Vec, always present)
+
+The server's design is arguably better (closer to RFC 9457 and the spec's "always present" requirements), but the core type should be updated to match, not bypassed. Having two competing envelope types will cause confusion in later stories when other crates need to produce API responses. `response.rs:1-139`.
+
+### `[HIGH]` No `FromRef<AppState>` substate pattern — uses `Extension` instead
+
+The story spec explicitly requires: *"Handlers must declare domain-scoped substates (DetectionServices, StorageServices, PluginServices, CredentialServices) — never full AppState. This is a compile-time least-privilege enforcement."* The implementation uses `axum::Extension` for both `HealthState` and `RateLimiter` (`lib.rs:48,54`). No `AppState` struct exists. No `FromRef` impl exists. This architectural foundation is the entire point of Story 8.1 — later stories depend on it. This will require rework.
+
+### `[HIGH]` No `TenantContext` extraction from authenticated credentials
+
+The auth middleware (`middleware/auth.rs:18-61`) validates credentials and returns pass/fail, but never extracts a `TenantContext` from the JWT claims or API key metadata, and never injects it into the request extensions. The story spec says: *"Tenant context must be extracted from JWT/API key and passed explicitly to all downstream functions."* The test `tenant_context_extracted_from_jwt` at `api_auth.rs:305-328` only verifies the request doesn't 500 — a vacuously true assertion that doesn't actually test context extraction.
+
+### `[HIGH]` Six unused crate dependencies — build bloat and false coupling
+
+`Cargo.toml:9-14` declares dependencies on `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`. Zero of these are imported anywhere in `src/`. Additionally, `thiserror`, `tracing`, and `tracing-subscriber` are declared but never used. That's **9 dependencies** with zero references. This inflates compile times, creates false coupling in the dependency graph, and may pull in unnecessary transitive dependencies.
+
+### `[HIGH]` `std::sync::Mutex` with `expect()` in async middleware
+
+`rate_limit.rs:47`: `self.inner.lock().expect("rate limiter lock poisoned")` — this panics on a poisoned lock. While `std::sync::Mutex` is acceptable here (the critical section doesn't span `.await`), the `expect` will crash the server if any thread panics while holding the lock. The Rust coding rules say *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The message is present but the behavior (panic) is unacceptable for a rate limiter in production. A poisoned lock should degrade gracefully (e.g., allow the request through) rather than crash the server.
+
+### `[MEDIUM]` Nightly `rustfmt` check fails — import ordering issues
+
+Per the reviewer gotchas document: *"Always include `cargo +nightly fmt --all --check` in the preflight."* The check shows import reordering diffs in `lib.rs`. This should have been caught before review.
+
+### `[MEDIUM]` No structured logging or tracing
+
+`tracing` is listed as a dependency but never imported. There are zero `tracing::info!`, `tracing::error!`, or `#[instrument]` calls. No request spans, no trace correlation, no error logging. The story spec mentions trace IDs in the response envelope, but actual observability instrumentation is absent. When something goes wrong in production, there will be no server-side log trail.
+
+### `[MEDIUM]` `expect("envelope serializes")` can panic on pathological data
+
+`response.rs:112`: `serde_json::to_string(&self.envelope).expect("envelope serializes")`. Since `T: Serialize` is generic, if a handler returns data containing `f64::NAN` or a map with non-string keys, this will panic and crash the server. `IntoResponse` doesn't return `Result`, but a fallback to a hardcoded 500 JSON string would be more resilient.
+
+### `[MEDIUM]` Test `error_response_has_null_data` tests the wrong thing
+
+`api_envelope.rs:46-55` says *"Request a nonexistent resource to trigger an error response"* but hits `/api/v1/alerts/nonexistent-id` without auth. Since `/alerts/{id}` is a protected route, the auth middleware returns 401 before the handler runs. The test accidentally validates the 401 envelope format, not the 404 resource-not-found envelope format. The assertions pass coincidentally.
+
+### `[MEDIUM]` Health endpoint subject to rate limiting
+
+The rate limiter is applied globally at the outermost layer (`lib.rs:53`). This means health check probes from load balancers count against the rate limit. A high-frequency health check could trigger 429 on the health endpoint, causing the LB to mark the server as unhealthy. Health should be exempt.
+
+### `[MEDIUM]` `error_type` uses non-standard URI fragment
+
+`response.rs:98`: `format!("about:blank#{}", status.as_u16())` produces `about:blank#404`. RFC 9457 §4.2.1 says `about:blank` should be used when no specific problem type URI is defined — without a fragment. The `#404` suffix is non-standard and may confuse clients that parse the `type` field as a URI.
+
+### `[LOW]` Content-type validation allows empty content-type on POST
+
+`body_limit.rs:45`: `if !content_type.is_empty() && !content_type.contains("application/json")` — a POST request with no Content-Type header passes this check. Whether this is intentional (permissive) or a bug depends on the API contract, but it's worth noting that an empty body with no content-type on POST will pass through to the handler.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### `[VERIFIED]` All error responses use the envelope format — no Axum default text errors leak
+### `[VERIFIED]` Auth error messages are generic — no oracle attack surface (CWE-209 check at `auth.rs:27,44,59`)
+### `[VERIFIED]` Rate limiting correctly uses per-tenant buckets with independent windows
+### `[VERIFIED]` All tests pass (48 tests across 7 files), clippy clean
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+
+1. **Duplicate `ApiResponse`** — must reconcile with `axiathon-core` or update the core type. Two competing envelope types will cause integration pain in Stories 8.2+.
+2. **No `FromRef<AppState>` substate pattern** — this is the central architectural decision of Story 8.1. Using `Extension` throughout bypasses the compile-time least-privilege enforcement the story requires.
+3. **No `TenantContext` extraction** — auth validates credentials but doesn't produce a tenant context. This is a core AC requirement.
+
+Additionally, the **unused dependencies** should be cleaned up (trivial fix), and **nightly fmt** must pass before resubmission.
+
+The code quality is otherwise solid — good test coverage, proper error sanitization, clean envelope format, and working rate limiting. But the three architectural omissions above mean the foundation isn't ready for later stories to build on. Fix those, and this will be in much better shape.

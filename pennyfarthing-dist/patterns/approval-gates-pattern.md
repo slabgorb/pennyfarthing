@@ -404,7 +404,7 @@ After gate passage, check context usage before invoking next agent:
 
 ```bash
 # Check context usage
-$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
+pf context
 
 # Routing decision:
 # If < 60%: Invoke next agent directly in this session
@@ -560,6 +560,27 @@ When some checks pass but others fail:
 ### Decision
 Gate BLOCKED. Address security issue before proceeding.
 ```
+
+## Gate Language: Admonition Framing
+
+Gate instructions MUST use hard-block admonition language. Never frame gates as suggestions, recommendations, or even "you MUST" — models treat these as optional under pressure.
+
+**Correct (admonition):**
+```
+Do not proceed with implementation until you have read every source file
+and listed all silent-failure issues with file:line references.
+```
+
+**Wrong (suggestion):**
+```
+You MUST audit source files before implementing.
+Please check for silent failures.
+You should review the codebase first.
+```
+
+The pattern is always: **"Do not proceed with [next action] until [condition is met]."**
+
+This framing works because it defines a blocking precondition rather than adding a task to a list. The agent cannot rationalize skipping it — there is no "next action" available until the condition is satisfied.
 
 ## Anti-Patterns
 
