@@ -1,0 +1,22 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/Cargo.toml` — added clap (env feature), clap_complete, comfy-table, csv, dirs, reqwest, serde, serde_json, toml, uuid, chrono dependencies; set edition to 2021 (required because tests use `std::env::set_var` which is unsafe in edition 2024)
+- `crates/axiathon-client/src/lib.rs` — re-exports all modules
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with 10 variants, `#[non_exhaustive]`, exit code mapping (0/1/3/4), thiserror Display
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum (Table/Json/Csv), `OutputFormatter` trait (object-safe), `TableFormatter` (comfy-table), `JsonFormatter` (with metadata envelope), `CsvFormatter` (proper escaping via csv crate)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), XDG default path, token field ignored, validation (positive timeout), `with_overrides()` for CLI precedence
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping reqwest, header injection prevention (newline/null byte validation), `X-Tenant-ID` and `Authorization: Bearer` header injection, HTTP status code mapping (401→AuthenticationExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError, connect error→ServerUnavailable, timeout→ConnectionTimeout)
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap 4.x derive, `Commands` enum with 12 subcommands (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init), global flags (--format, -v, --quiet, --server, --tenant, --config, --no-color), custom `command()` that calls `build()` for global arg propagation
+- `crates/axiathon-client/src/commands/mod.rs` — re-exports all command modules
+- `crates/axiathon-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — stub handlers returning "not yet implemented (Story X.Y)"
+- `crates/axiathon-client/src/commands/completion.rs` — `generate_completion()` using clap_complete
+- `crates/axiathon-client/src/commands/init.rs` — first-time setup handler
+
+**Tests:** 107/107 passing (GREEN, `--test-threads=1` required due to test-authored env var race condition)
+**Clippy:** Clean (`-D warnings`)
+**Branch:** HEAD (not yet pushed — awaiting branch creation)
+
+**Note:** One config test (`client_config_loads_from_toml_file`) can flake under parallel execution due to env var race with `client_config_env_var_overrides_timeout`. Both tests manipulate `AXIATHON_TIMEOUT` globally. This is inherent in the test design — the tests pass reliably with `--test-threads=1`.

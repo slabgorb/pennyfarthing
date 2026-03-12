@@ -32,7 +32,8 @@ def handoff():
 @click.argument("story_id")
 @click.argument("workflow")
 @click.argument("phase")
-def resolve_gate_cmd(story_id: str, workflow: str, phase: str):
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def resolve_gate_cmd(story_id: str, workflow: str, phase: str, output_json: bool):
     """Resolve the gate for the current workflow phase.
 
     Reads workflow YAML, checks assessment, returns RESOLVE_RESULT.
@@ -42,14 +43,31 @@ def resolve_gate_cmd(story_id: str, workflow: str, phase: str):
       STORY_ID  - Story identifier (e.g., 105-1)
       WORKFLOW  - Workflow name (e.g., tdd, trivial, patch)
       PHASE     - Current phase name (e.g., green, implement, fix)
+
+    \b
+    JSON Output (--json):
+      {
+        "status": "ready" | "blocked" | "skip" | "error",
+        "gate_type": string | null,
+        "gate_file": string | null,
+        "next_agent": string | null,
+        "next_phase": string | null,
+        "assessment_found": boolean,
+        "error": string | null
+      }
     """
     from pf.handoff.resolve_gate import resolve_gate
 
     result = resolve_gate(story_id, workflow, phase)
 
-    import yaml
+    if output_json:
+        import json
 
-    click.echo(yaml.dump({"RESOLVE_RESULT": result}, default_flow_style=False).rstrip())
+        click.echo(json.dumps(result, indent=2))
+    else:
+        import yaml
+
+        click.echo(yaml.dump({"RESOLVE_RESULT": result}, default_flow_style=False).rstrip())
 
     if result.get("status") == "blocked":
         raise SystemExit(1)
@@ -120,6 +138,100 @@ def marker_cmd(next_agent: str | None, error_msg: str | None):
         )
 
     click.echo(generate_marker(next_agent, error=error_msg))
+
+
+@handoff.command("status")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def status_cmd(output_json: bool):
+    """Show current handoff/gate state for the active session.
+
+    \b
+    JSON Output (--json):
+      {
+        "story_id": string | null,
+        "phase": string | null,
+        "workflow": string | null,
+        "gate_type": string | null,
+        "next_phase": string | null,
+        "next_agent": string | null,
+        "status": "active" | "no_session"
+      }
+    """
+    import re
+
+    from pf.common.config import get_project_root
+
+    root = get_project_root()
+    session_dir = root / ".session"
+
+    result = {
+        "story_id": None,
+        "phase": None,
+        "workflow": None,
+        "gate_type": None,
+        "next_phase": None,
+        "next_agent": None,
+        "status": "no_session",
+    }
+
+    if session_dir.is_dir():
+        for sf in sorted(session_dir.glob("*-session.md")):
+            content = sf.read_text()
+            wf_match = re.search(r"\*\*Workflow:\*\*\s*(\S+)", content)
+            ph_match = re.search(r"\*\*Phase:\*\*\s*(\S+)", content)
+            sid_match = re.search(r"# Story (\S+)", content)
+
+            if wf_match or ph_match:
+                result["status"] = "active"
+                if wf_match:
+                    result["workflow"] = wf_match.group(1)
+                if ph_match:
+                    result["phase"] = ph_match.group(1)
+                if sid_match:
+                    result["story_id"] = sid_match.group(1)
+
+                # Resolve gate_type, next_phase, next_agent from workflow YAML
+                if result["workflow"] and result["phase"]:
+                    try:
+                        from pf.workflow.helpers import (
+                            find_workflow_file,
+                            get_workflows_dir,
+                            load_workflow_data,
+                        )
+
+                        workflows_dir = get_workflows_dir(root)
+                        wf_file = find_workflow_file(workflows_dir, result["workflow"])
+                        if wf_file:
+                            data = load_workflow_data(wf_file)
+                            phases = data.get("workflow", {}).get("phases", [])
+                            for i, p in enumerate(phases):
+                                if p.get("name") == result["phase"]:
+                                    gate = p.get("gate", {})
+                                    if isinstance(gate, dict):
+                                        result["gate_type"] = gate.get("type")
+                                    if i + 1 < len(phases):
+                                        result["next_phase"] = phases[i + 1].get("name")
+                                        result["next_agent"] = phases[i + 1].get("agent")
+                                    break
+                    except Exception:
+                        pass
+                break
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(result, indent=2))
+    else:
+        if result["status"] == "no_session":
+            click.echo("No active session found.")
+        else:
+            click.echo(f"Story: {result['story_id']}")
+            click.echo(f"Phase: {result['phase']}")
+            click.echo(f"Workflow: {result['workflow']}")
+            if result["gate_type"]:
+                click.echo(f"Gate: {result['gate_type']}")
+            if result["next_phase"]:
+                click.echo(f"Next: {result['next_phase']} ({result['next_agent']})")
 
 
 @handoff.command("phase-check")

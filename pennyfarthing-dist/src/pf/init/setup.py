@@ -90,10 +90,40 @@ class SetupState:
         return None
 
 
+def _detect_branch_strategy(repo_path: Path) -> str:
+    """Infer branch strategy from remote branches."""
+    try:
+        result = subprocess.run(
+            ["git", "branch", "-r"],
+            capture_output=True,
+            text=True,
+            cwd=str(repo_path),
+        )
+        if result.returncode == 0 and "origin/develop" in result.stdout:
+            return "gitflow"
+    except Exception:
+        pass
+    return "trunk-based"
+
+
+def _detect_repo_type(repo_path: Path) -> str:
+    """Infer repo type from contents."""
+    if (repo_path / "pyproject.toml").exists() or (repo_path / "setup.py").exists():
+        return "python"
+    if (repo_path / "Cargo.toml").exists():
+        return "rust"
+    if (repo_path / "package.json").exists():
+        return "node"
+    if (repo_path / "go.mod").exists():
+        return "go"
+    return "unknown"
+
+
 def discover_repos(project_root: Path) -> dict[str, Any]:
     """Discover git repositories in the project directory.
 
-    Checks the project root for a .git directory and writes repos.yaml.
+    Scans the project root and depth-1 subdirectories for .git directories.
+    When subrepos are found, classifies root as orchestrator.
 
     Args:
         project_root: Project root directory
@@ -102,15 +132,40 @@ def discover_repos(project_root: Path) -> dict[str, Any]:
         Result dict: {success, data: {repos: {name: config}}}
     """
     repos: dict[str, Any] = {}
+    subrepos: list[Path] = []
 
+    # Scan depth-1 subdirectories for child .git dirs
+    if (project_root / ".git").is_dir():
+        for child in sorted(project_root.iterdir()):
+            if not child.is_dir() or child.name.startswith("."):
+                continue
+            if (child / ".git").is_dir():
+                subrepos.append(child)
+
+    has_subrepos = len(subrepos) > 0
+
+    # Root repo
     if (project_root / ".git").is_dir():
         name = project_root.resolve().name
         default_branch = _detect_default_branch(project_root)
+        root_type = "orchestrator" if has_subrepos else "standalone"
         repos[name] = {
             "path": ".",
-            "type": "standalone",
+            "type": root_type,
             "default_branch": default_branch,
             "branch_strategy": "trunk-based",
+        }
+
+    # Subrepos
+    for child in subrepos:
+        default_branch = _detect_default_branch(child)
+        branch_strategy = _detect_branch_strategy(child)
+        repo_type = _detect_repo_type(child)
+        repos[child.name] = {
+            "path": child.name,
+            "type": repo_type,
+            "default_branch": default_branch,
+            "branch_strategy": branch_strategy,
         }
 
     pf_dir = project_root / ".pennyfarthing"
@@ -284,7 +339,11 @@ def write_repos_yaml(target_dir: Path, repos: dict[str, Any]) -> dict[str, Any]:
     """Write discovered repos to .pennyfarthing/repos.yaml."""
     repos_path = target_dir / ".pennyfarthing" / "repos.yaml"
     repos_path.parent.mkdir(parents=True, exist_ok=True)
-    repos_path.write_text(yaml.dump({"repos": repos}, default_flow_style=False))
+    data = {
+        "pr_title_format": "{jira_key} - {type}({scope}): {title}",
+        "repos": repos,
+    }
+    repos_path.write_text(yaml.dump(data, default_flow_style=False))
     return {"success": True}
 
 

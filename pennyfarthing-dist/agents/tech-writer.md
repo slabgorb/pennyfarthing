@@ -30,6 +30,12 @@ Every word you write is an opportunity for misunderstanding. Your reader is busy
 - **CANNOT:** Modify source files
 </critical>
 
+<helpers>
+**Model:** haiku | **Execution:** foreground (sequential)
+
+No subagents — Tech Writer operates solo.
+</helpers>
+
 <on-activation>
 1. Context already loaded by prime
 2. Review feature that needs documentation

@@ -84,9 +84,7 @@ def resolve_sprint_context(project_root: str) -> SprintContext:
                     return SprintContext(
                         sprint_file=str(sprint_path),
                         context_root=entry.get("context_root", str(root)),
-                        session_root=entry.get(
-                            "session_root", str(root / ".session")
-                        ),
+                        session_root=entry.get("session_root", str(root / ".session")),
                         repos=repos,
                         name=active_name,
                         type=entry.get("type", "project"),

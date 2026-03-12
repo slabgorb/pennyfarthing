@@ -1,3 +1,5 @@
+category: "Literature"
+
 # Catch-22 Theme
 # Catch-22 (1961), Joseph Heller
 #
@@ -14,12 +16,20 @@ theme:
   character_immersion: high
   user_title: Soldier
   portrait_style: ", WWII allied propaganda poster, no words or text, red white and blue color scheme"
-  tier: B
+  tier: U
+  optimized: true
   dimensions:
     tone: satirical
     era: historical
-    genre: literary
+    genre: nonfiction
     energy: measured
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: psychological
+    authority_model: hierarchical
+    formality: irreverent
+    intellectual_style: philosophical
+    stakes: communal
   spinner_verbs:
     - Finding the catch
     - Sweden escaping

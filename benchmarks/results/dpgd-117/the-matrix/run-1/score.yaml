@@ -1,0 +1,98 @@
+scenario_id: dpgd-117
+theme: the-matrix
+run_id: 1
+judge_version: v2
+total_caught: 3
+total_findings: 10
+weighted_caught: 18
+total_weight: 52
+score_pct: 34.6
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer flagged unused dependencies (finding #10) but never mentioned
+    inline versions vs workspace=true. Dev added dependencies inline without using
+    workspace declarations.'
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'FieldErrorCode and #[non_exhaustive] never mentioned in any phase despite
+    the project''s SOUL.md rule about non_exhaustive on enums that will grow.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'TEA wrote tests expecting trace_id in meta, but no phase flagged that
+    the implementation hardcodes ''none'' instead of deriving from request context.
+    Reviewer finding #12 mentions no trace_id correlation but in the context of tracing
+    spans, not the response envelope.'
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #12: 'No structured tracing despite tracing dependency\
+    \ \u2014 The tracing crate is declared but unused. No request spans, no tenant_id/trace_id\
+    \ correlation, no structured logging.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that a SECURITY comment claims errors are 'logged for
+    debugging' when no logging calls exist. Reviewer noted absence of logging but
+    did not connect it to misleading security comments.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No test was written for non-ASCII characters in X-Tenant-ID header, and
+    no phase mentioned this edge case.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote a CWE-209 test, but the ground truth finding is that this test
+    only checks status code without asserting on response body content. No phase identified
+    the test as insufficient.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #7: 'CORS headers missing from non-preflight responses'\
+    \ and the data flow trace explicitly notes 'no CORS headers on response.' This\
+    \ identifies the same functional gap \u2014 CORS headers aren't actually present,\
+    \ which means the test checking only status is also vacuous."
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Since zero logging exists (I4), there are no log level choices to critique.
+    No phase mentioned appropriate log level differentiation between 4xx and 5xx.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #8: ''Access-Control-Allow-Origin: * is overly permissive
+    for a security platform... origins should be configurable, not hardcoded to *.'''

@@ -19,13 +19,23 @@ def hooks():
 
 
 @hooks.command("dispatch")
-@click.argument("event", type=click.Choice([
-    "PreToolUse", "PostToolUse", "SessionStart", "Stop",
-    "SessionEnd", "PreCompact",
-]))
+@click.argument(
+    "event",
+    type=click.Choice(
+        [
+            "PreToolUse",
+            "PostToolUse",
+            "SessionStart",
+            "Stop",
+            "SessionEnd",
+            "PreCompact",
+        ]
+    ),
+)
 def dispatch(event):
     """Run all hooks for EVENT in a single process."""
     from pf.hooks.dispatch import dispatch as run_dispatch
+
     run_dispatch(event)
 
 
@@ -33,6 +43,7 @@ def dispatch(event):
 def session_start():
     """SessionStart hook — session setup, WheelHub auto-start, OTEL config."""
     from pf.hooks.session_start import main
+
     main()
 
 
@@ -40,6 +51,7 @@ def session_start():
 def session_stop():
     """Stop hook — save checkpoint for cross-session continuity."""
     from pf.hooks.session_stop import main
+
     main()
 
 
@@ -47,6 +59,7 @@ def session_stop():
 def session_end():
     """SessionEnd hook — cleanup BikeRack, tmux status, final checkpoint."""
     from pf.hooks.session_end import main
+
     main()
 
 
@@ -54,6 +67,7 @@ def session_end():
 def pre_compact():
     """PreCompact hook — save context checkpoint before compaction."""
     from pf.hooks.pre_compact import main
+
     main()
 
 
@@ -61,6 +75,7 @@ def pre_compact():
 def pre_edit_check():
     """PreToolUse hook — block edits to protected files."""
     from pf.hooks.pre_edit_check import main
+
     main()
 
 
@@ -68,6 +83,7 @@ def pre_edit_check():
 def context_warning():
     """PreToolUse hook — warn when context usage is high."""
     from pf.hooks.context_warning import main
+
     main()
 
 
@@ -75,6 +91,7 @@ def context_warning():
 def context_breaker():
     """PreToolUse hook — block tool execution at critical context usage."""
     from pf.hooks.context_breaker import main
+
     main()
 
 
@@ -82,6 +99,7 @@ def context_breaker():
 def pretooluse_forward():
     """PreToolUse hook — forward tool inputs to WheelHub for audit log enrichment."""
     from pf.hooks.pretooluse_forward import main
+
     main()
 
 
@@ -89,14 +107,15 @@ def pretooluse_forward():
 def schema_validation():
     """PreToolUse hook — validate XML schema on Write operations."""
     from pf.hooks.schema_validation import main
-    main()
 
+    main()
 
 
 @hooks.command("sprint-yaml")
 def sprint_yaml():
     """PostToolUse hook — validate sprint YAML after Edit/Write."""
     from pf.hooks.sprint_yaml_validation import main
+
     main()
 
 
@@ -104,6 +123,7 @@ def sprint_yaml():
 def agent_reload():
     """SessionStart hook — reload active agent after compact/clear."""
     from pf.hooks.agent_reload import main
+
     main()
 
 
@@ -111,4 +131,5 @@ def agent_reload():
 def statusline():
     """statusLine hook — render Claude Code status bar."""
     from pf.hooks.statusline import main
+
     main()

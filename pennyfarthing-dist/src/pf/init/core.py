@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pf.common.discovery import resolve_pf_binary, write_shim
-from pf.common.hooks import BOOTSTRAP_HOOKS, INFRASTRUCTURE_HOOKS, resolve_hook_paths
+from pf.common.hooks import INFRASTRUCTURE_HOOKS, resolve_hook_paths
 from pf.hooks.frontmatter import collect_all_frontmatter_hooks, merge_with_infrastructure
 
 # Wrap the shared hooks in the settings envelope expected by settings.local.json.
@@ -213,10 +213,126 @@ def verify_pf_cli() -> dict:
     }
 
 
+def preview_hook_changes(
+    target_dir: Path,
+    dist_root: Path,
+) -> dict:
+    """Preview what hook changes pf init would make to settings.local.json.
+
+    Returns:
+        {
+            "has_changes": bool,
+            "is_new": bool,          # True if settings.local.json doesn't exist yet
+            "added": list[str],      # Hook commands that would be added
+            "removed": list[str],    # Hook commands that would be removed
+            "upgraded": list[str],   # Hook commands that would be rewritten
+        }
+    """
+    settings_path = target_dir / ".claude" / "settings.local.json"
+
+    if not settings_path.exists():
+        frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
+        merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
+        all_commands = []
+        for _event, entries in merged.get("hooks", {}).items():
+            for entry in entries:
+                for h in entry.get("hooks", []):
+                    if isinstance(h, dict) and h.get("command"):
+                        all_commands.append(h["command"])
+        return {
+            "has_changes": True,
+            "is_new": True,
+            "added": all_commands,
+            "removed": [],
+            "upgraded": [],
+        }
+
+    try:
+        before = json.loads(settings_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {"has_changes": False, "is_new": False, "added": [], "removed": [], "upgraded": []}
+
+    # Simulate the upgrade + merge
+    import copy
+
+    after = copy.deepcopy(before)
+    frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
+
+    # Simulate _upgrade_hooks inline (without writing)
+    hooks = after.get("hooks", {})
+    for hook_type, canonical_entries in INFRASTRUCTURE_HOOKS.items():
+        existing = hooks.get(hook_type, [])
+        if not isinstance(existing, list):
+            existing = []
+        has_dispatcher = any(
+            "pf hooks dispatch" in h.get("command", "")
+            for entry in existing
+            for h in entry.get("hooks", [])
+            if isinstance(h, dict)
+        )
+        if not has_dispatcher:
+            project_hooks = []
+            for entry in existing:
+                hook_list = entry.get("hooks", [])
+                is_old_pf = any(
+                    _is_old_pf_hook_command(h.get("command", ""))
+                    for h in hook_list
+                    if isinstance(h, dict)
+                )
+                if not is_old_pf:
+                    project_hooks.append(entry)
+            hooks[hook_type] = canonical_entries + project_hooks
+    after["hooks"] = hooks
+
+    after = merge_with_infrastructure(after, frontmatter_hooks)
+    resolve_hook_paths(after, target_dir)
+
+    # Also resolve before for comparison
+    before_resolved = copy.deepcopy(before)
+    resolve_hook_paths(before_resolved, target_dir)
+
+    # Diff the hook commands
+    def _extract_commands(settings: dict) -> set[str]:
+        cmds: set[str] = set()
+        for _event, entries in settings.get("hooks", {}).items():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                for h in entry.get("hooks", []):
+                    if isinstance(h, dict) and h.get("command"):
+                        cmds.add(h["command"])
+        return cmds
+
+    before_cmds = _extract_commands(before_resolved)
+    after_cmds = _extract_commands(after)
+
+    added = sorted(after_cmds - before_cmds)
+    removed = sorted(before_cmds - after_cmds)
+
+    # Check for upgraded (rewritten) commands — same dispatch name, different path
+    upgraded: list[str] = []
+    before_raw = _extract_commands(before)
+    after_raw = _extract_commands(after)
+    for cmd in before_raw:
+        if cmd not in after_raw and cmd not in removed:
+            upgraded.append(cmd)
+
+    has_changes = bool(added or removed or upgraded) or (after != before_resolved)
+
+    return {
+        "has_changes": has_changes,
+        "is_new": False,
+        "added": added,
+        "removed": removed,
+        "upgraded": upgraded,
+    }
+
+
 def init_project(
     target_dir: Path,
     dist_root: Path,
     dry_run: bool = False,
+    skip_hooks: bool = False,
 ) -> dict:
     """Initialize a Pennyfarthing project.
 
@@ -256,16 +372,12 @@ def init_project(
     directories = _PENNYFARTHING_DIRS + _CLAUDE_DIRS
 
     # --- Identify content dirs to copy ---
-    content_dirs_to_copy = [
-        name for name in _CONTENT_DIRS if (dist_root / name).is_dir()
-    ]
+    content_dirs_to_copy = [name for name in _CONTENT_DIRS if (dist_root / name).is_dir()]
 
     if dry_run:
         from pf.init.justfile import update_framework_justfile
 
-        justfile_result = update_framework_justfile(
-            target_dir, dist_root, dry_run=True
-        )
+        justfile_result = update_framework_justfile(target_dir, dist_root, dry_run=True)
         justfile_data = justfile_result.get("data", {}) if justfile_result["success"] else {}
 
         return {
@@ -349,8 +461,6 @@ def init_project(
             if dest.is_symlink():
                 dest.unlink()
             _copy_tree(dist_root / dir_name, dest)
-            # Clean files that no longer exist in source (renamed/moved)
-            _clean_stale_content(dist_root / dir_name, dest)
             content_dirs_copied += 1
 
         # --- Centralize portraits to shared XDG location ---
@@ -358,9 +468,6 @@ def init_project(
         portraits_linked = _symlink_portraits(target_dir)
 
         symlinks_fixed = 0
-
-    # --- Install WheelHub server bundle ---
-    _install_wheelhub(target_dir, dist_root)
 
     # --- Install tmux config samples and launcher ---
     tmux_installed = _install_tmux_files(target_dir, dist_root)
@@ -375,12 +482,15 @@ def init_project(
     settings_path = target_dir / ".claude" / "settings.local.json"
     settings_written = False
     hooks_upgraded = False
+    hooks_skipped = False
     frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
     if not settings_path.exists():
         merged = merge_with_infrastructure(_MINIMAL_SETTINGS, frontmatter_hooks)
         resolve_hook_paths(merged, target_dir)
         settings_path.write_text(json.dumps(merged, indent=2) + "\n")
         settings_written = True
+    elif skip_hooks:
+        hooks_skipped = True
     else:
         hooks_upgraded = _upgrade_hooks(settings_path)
         # Merge frontmatter hooks into existing settings
@@ -392,7 +502,8 @@ def init_project(
             hooks_upgraded = True
 
     # --- Clean parked Cyclist hooks from settings and config ---
-    _clean_parked_hooks(settings_path, target_dir)
+    if not hooks_skipped:
+        _clean_parked_hooks(settings_path, target_dir)
 
     # --- Write init manifest ---
     if is_dogfooding:
@@ -402,9 +513,6 @@ def init_project(
 
     # --- Update .gitignore ---
     _update_gitignore(target_dir)
-
-    # --- Write committed bootstrap settings (not gitignored) ---
-    bootstrap_written = _write_bootstrap_settings(target_dir, dist_root)
 
     # --- Run auto-setup workflow ---
     from pf.init import setup
@@ -428,7 +536,6 @@ def init_project(
                 "gitignore_updated": True,
                 "tmux_installed": tmux_installed,
                 "shim_installed": shim_result.get("success", False),
-                "bootstrap_written": bootstrap_written,
                 "justfile": justfile_data,
                 "setup": setup_result.get("data", {}),
                 "portraits": portrait_result,
@@ -448,7 +555,6 @@ def init_project(
             "gitignore_updated": True,
             "tmux_installed": tmux_installed,
             "shim_installed": shim_result.get("success", False),
-            "bootstrap_written": bootstrap_written,
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
             "portraits": portrait_result,
@@ -504,55 +610,14 @@ def _copy_tree(src: Path, dst: Path) -> None:
             shutil.copy2(item, dest_item)
 
 
-def _clean_stale_content(src: Path, dst: Path) -> None:
-    """Remove files in dst that no longer exist in src.
-
-    Removes any file type (.md, .py, .sh, .mjs, etc.) since content dirs
-    are fully pf-managed. Sidecars are NOT in _CONTENT_DIRS so they are
-    never touched. Recurses into subdirectories.
-    """
-    if not dst.is_dir() or not src.is_dir():
-        return
-    for item in dst.iterdir():
-        if item.is_dir():
-            src_item = src / item.name
-            if src_item.is_dir():
-                _clean_stale_content(src_item, item)
-        elif item.is_file() and not (src / item.name).exists():
-            item.unlink()
-
-
-def _install_wheelhub(target_dir: Path, dist_root: Path) -> None:
-    """Install the bundled WheelHub server to .pennyfarthing/server/.
-
-    WheelHub is a self-contained ~1.8MB Node.js bundle (express, ws, yaml
-    all baked in). Consumer projects need it for TUI/GUI but it's not in
-    _CONTENT_DIRS since it lives in _dist/server/.
-    """
-    # Check dist_root first (dev environment)
-    source = dist_root / "server" / "wheelhub.mjs"
-    if not source.is_file():
-        # Fall back to pip-installed _dist
-        try:
-            from pf._dist import get_root, is_populated
-
-            if is_populated():
-                source = get_root() / "server" / "wheelhub.mjs"
-        except (ImportError, ModuleNotFoundError):
-            pass
-    if not source.is_file():
-        return
-    dest_dir = target_dir / ".pennyfarthing" / "server"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, dest_dir / "wheelhub.mjs")
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
-    """Install tmux config samples and launcher to the project root.
+    """Install tmux config samples and launcher as symlinks to templates.
 
-    Copies tmux.conf.template variants as *-sample files and installs
-    the tmux-dev launcher. Skips files that already exist (user may
-    have customized them).
+    Creates symlinks from the project root to the template sources in
+    pennyfarthing-dist/templates/. Replaces stale copies with symlinks.
+    Skips non-framework files (user's local tmux.conf) that aren't symlinks.
 
     Returns:
         List of installed file names.
@@ -573,13 +638,22 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-        # Always overwrite tmux-dev (framework code), skip config samples if customized
-        if dest.exists() and dest_name != "tmux-dev":
+
+        # Compute relative symlink target
+        rel_target = os.path.relpath(src, target_dir)
+
+        # If dest is already correct symlink, skip
+        if dest.is_symlink() and os.readlink(str(dest)) == rel_target:
             continue
-        shutil.copy2(src, dest)
-        # Make tmux-dev executable
-        if dest_name == "tmux-dev":
-            dest.chmod(dest.stat().st_mode | 0o111)
+
+        # For config samples: skip if user has a non-symlink customized copy
+        if dest.exists() and not dest.is_symlink() and dest_name != "tmux-dev":
+            continue
+
+        # Remove stale file/symlink and create fresh symlink
+        if dest.exists() or dest.is_symlink():
+            dest.unlink()
+        dest.symlink_to(rel_target)
         installed.append(dest_name)
 
     return installed
@@ -753,77 +827,6 @@ def _clean_parked_hooks(settings_path: Path, target_dir: Path) -> bool:
     return changed
 
 
-def _write_bootstrap_settings(target_dir: Path, dist_root: Path) -> bool:
-    """Write committed bootstrap settings for zero-friction onboarding.
-
-    Copies bootstrap.sh to .claude/hooks/ and writes .claude/settings.json
-    with a SessionStart hook that auto-installs pf on first clone.
-
-    Both files are committed to the repo (not gitignored) so new developers
-    get a working setup immediately after clone + open Claude Code.
-
-    Returns:
-        True if any files were written or updated.
-    """
-    changed = False
-
-    # --- Copy bootstrap.sh ---
-    hooks_dir = target_dir / ".claude" / "hooks"
-    hooks_dir.mkdir(parents=True, exist_ok=True)
-    bootstrap_dest = hooks_dir / "bootstrap.sh"
-
-    # Find bootstrap.sh source
-    bootstrap_src = dist_root / "templates" / "bootstrap.sh"
-    if not bootstrap_src.is_file():
-        # Fall back to pip-installed _dist
-        try:
-            from pf._dist import get_root, is_populated
-
-            if is_populated():
-                bootstrap_src = get_root() / "templates" / "bootstrap.sh"
-        except (ImportError, ModuleNotFoundError):
-            pass
-
-    if bootstrap_src.is_file():
-        shutil.copy2(bootstrap_src, bootstrap_dest)
-        bootstrap_dest.chmod(bootstrap_dest.stat().st_mode | 0o755)
-        changed = True
-
-    # --- Write/update .claude/settings.json ---
-    settings_path = target_dir / ".claude" / "settings.json"
-    if settings_path.is_file():
-        try:
-            data = json.loads(settings_path.read_text())
-        except (json.JSONDecodeError, OSError):
-            data = {}
-    else:
-        data = {}
-
-    # Merge bootstrap hooks, preserving existing non-hook settings
-    existing_hooks = data.get("hooks", {})
-    needs_update = False
-
-    for event, entries in BOOTSTRAP_HOOKS.items():
-        existing_entries = existing_hooks.get(event, [])
-        # Check if bootstrap hook already present
-        has_bootstrap = any(
-            "bootstrap.sh" in h.get("command", "")
-            for entry in existing_entries
-            for h in entry.get("hooks", [])
-            if isinstance(h, dict)
-        )
-        if not has_bootstrap:
-            existing_hooks[event] = entries + existing_entries
-            needs_update = True
-
-    if needs_update:
-        data["hooks"] = existing_hooks
-        settings_path.write_text(json.dumps(data, indent=2) + "\n")
-        changed = True
-
-    return changed
-
-
 def _clean_stale_artifacts(target_dir: Path) -> None:
     """Remove stale npm-era artifacts from .pennyfarthing/.
 
@@ -878,8 +881,12 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
     # Remove stale node_modules/@pennyfarthing packages and pnpm cache if present
     nm = target_dir / "node_modules"
     if nm.is_dir():
-        for pkg in ["@pennyfarthing/core", "@pennyfarthing/shared",
-                     "@pennyfarthing/cyclist", "pennyfarthing"]:
+        for pkg in [
+            "@pennyfarthing/core",
+            "@pennyfarthing/shared",
+            "@pennyfarthing/cyclist",
+            "pennyfarthing",
+        ]:
             pkg_path = nm / pkg
             if pkg_path.is_symlink():
                 pkg_path.unlink()
@@ -980,6 +987,7 @@ def _find_portraits_source(dist_root: Path) -> Path | None:
     # Fall back to pip-installed _dist (always has real images from wheel)
     try:
         from pf._dist import get_root, is_populated
+
         if is_populated():
             pip_portraits = get_root() / "personas" / "portraits"
             if pip_portraits.is_dir():
@@ -1037,11 +1045,17 @@ def _install_portraits(dist_root: Path) -> dict:
     _copy_tree(source, target)
 
     # Write version manifest
-    manifest_path.write_text(json.dumps({
-        "pf_version": __version__,
-        "installed_at": datetime.now(UTC).isoformat(),
-        "source": str(source),
-    }, indent=2) + "\n")
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "pf_version": __version__,
+                "installed_at": datetime.now(UTC).isoformat(),
+                "source": str(source),
+            },
+            indent=2,
+        )
+        + "\n"
+    )
 
     return {
         "installed": True,
@@ -1108,10 +1122,7 @@ def _update_gitignore(target_dir: Path) -> None:
         if line.endswith("/") and not line.endswith("/*"):
             normalized_existing.add(line + "*")  # ".session/" -> ".session/*"
 
-    new_entries = [
-        e for e in _GITIGNORE_ENTRIES
-        if e.strip() not in normalized_existing
-    ]
+    new_entries = [e for e in _GITIGNORE_ENTRIES if e.strip() not in normalized_existing]
 
     if new_entries:
         # Ensure trailing newline before appending

@@ -1,0 +1,20 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/src/lib.rs` — Added module declarations for cli, client, commands, config, error, output
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `thiserror`, exit code mapping (0/1/3/4)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum (Table/Json/Csv) with `FromStr`, `OutputFormatter` with table (comfy-table), JSON (with metadata), CSV (csv crate) formatting
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides via `EnvOverrides`, XDG path discovery, token-in-file rejection
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping reqwest with builder pattern, header injection validation (CWE-113), non-HTTP URL normalization
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap derive, `Commands` enum with all 12 command groups (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init), global flags (format, verbose, quiet, server, tenant, config, no-color)
+- `crates/axiathon-client/src/commands/mod.rs` — Commands module re-export
+- `crates/axiathon-client/src/commands/completion.rs` — Shell completion generation via `clap_complete`
+- `crates/axiathon-client/Cargo.toml` — Added `chrono` and `uuid` dependencies
+- `crates/axiathon-client/tests/config_loading.rs` — Fixed env var tests for Rust edition 2024 (`set_var`/`remove_var` are unsafe); refactored to use explicit `EnvOverrides` parameter injection
+
+**Tests:** 76/76 passing (GREEN)
+**Clippy:** Clean, zero warnings
+
+**Test fix note:** The original env var tests used `std::env::set_var`/`remove_var` which became unsafe in Rust edition 2024. Since the workspace forbids unsafe code, I refactored the config module to accept `EnvOverrides` as an explicit parameter and updated 3 tests to use this testable API instead. Same behavior coverage, edition-2024 compatible.

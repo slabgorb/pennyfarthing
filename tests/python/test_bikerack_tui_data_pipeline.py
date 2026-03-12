@@ -31,11 +31,11 @@ from rich.console import Console
 # Test data fixtures — WheelHub wire formats
 # ---------------------------------------------------------------------------
 
-# Error payload: context.py not found (server returns error)
+# Error payload: context_window.py not found (server returns error)
 CONTEXT_ERROR: dict[str, Any] = {
     "type": "update",
     "context": {
-        "error": "context.py not found",
+        "error": "context_window.py not found",
         "percent": None,
     },
 }
@@ -160,13 +160,13 @@ class TestDebugPanelErrorState:
     """AC1: DebugPanel renders error state when context channel has error."""
 
     def test_context_error_shows_error_message(self):
-        """When context channel returns {error: 'context.py not found', percent: null},
+        """When context channel returns {error: 'context_window.py not found', percent: null},
         panel should show the error message, not 'No context data'."""
         panel = DebugPanel(client=MagicMock())
         panel._handle_context_message(CONTEXT_ERROR)
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
-        assert "context.py not found" in output, (
+        assert "context_window.py not found" in output, (
             f"Error message should be visible, got: {output!r}"
         )
         assert "No context data" not in output, (
@@ -206,7 +206,7 @@ class TestDebugPanelErrorState:
         assert "FULL" in output, (
             f"Should recover to normal rendering, got: {output!r}"
         )
-        assert "context.py not found" not in output, (
+        assert "context_window.py not found" not in output, (
             f"Error should be cleared after recovery, got: {output!r}"
         )
 
@@ -406,7 +406,7 @@ class TestAutomaticRecovery:
         error_result = panel.render_panel(panel._context_data or {})
         error_output = _render_to_string(error_result)
         # Verify error is shown
-        assert "context.py not found" in error_output, (
+        assert "context_window.py not found" in error_output, (
             f"Error should be visible first, got: {error_output!r}"
         )
 
@@ -417,7 +417,7 @@ class TestAutomaticRecovery:
         assert "FULL" in recovery_output, (
             f"Should recover to normal rendering, got: {recovery_output!r}"
         )
-        assert "context.py not found" not in recovery_output, (
+        assert "context_window.py not found" not in recovery_output, (
             f"Error message should be gone after recovery, got: {recovery_output!r}"
         )
 
@@ -547,7 +547,7 @@ class TestDebugPanelChannelIndependence:
             f"Token stats should render despite context error, got: {output!r}"
         )
         # Context error should also be visible
-        assert "context.py not found" in output or "error" in output.lower(), (
+        assert "context_window.py not found" in output or "error" in output.lower(), (
             f"Context error should be visible alongside token stats, got: {output!r}"
         )
 
@@ -571,7 +571,7 @@ class TestDebugPanelChannelIndependence:
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
         # Should show context error, not crash
-        assert "context.py not found" in output or "error" in output.lower(), (
+        assert "context_window.py not found" in output or "error" in output.lower(), (
             f"Should handle both channels erroring, got: {output!r}"
         )
 
@@ -598,7 +598,7 @@ class TestDebugPanelChannelIndependence:
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
         # Both should be present: error message AND token stats
-        has_error = "context.py not found" in output
+        has_error = "context_window.py not found" in output
         has_stats = "25,000" in output or "25" in output
         assert has_error and has_stats, (
             f"Should show both error and stats. "

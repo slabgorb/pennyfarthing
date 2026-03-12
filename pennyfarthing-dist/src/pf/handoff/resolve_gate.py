@@ -43,13 +43,21 @@ def resolve_gate(
 
     workflow_path = _find_workflow_yaml(project_root, workflow)
     if workflow_path is None:
-        return _result(status="error", error=f"Workflow '{workflow}' not found")
+        available = _list_available_workflows(project_root)
+        hint = f" To fix: Use one of: {', '.join(available)}" if available else ""
+        return _result(status="error", error=f"Workflow '{workflow}' not found.{hint}")
 
     try:
         data = yaml.safe_load(workflow_path.read_text())
         phases = data["workflow"]["phases"]
     except Exception as e:
-        return _result(status="error", error=f"Failed to parse workflow: {e}")
+        return _result(
+            status="error",
+            error=(
+                f"Failed to parse workflow: {e}. "
+                f"To fix: Check `{workflow_path}` for valid YAML with a `workflow.phases` array"
+            ),
+        )
 
     current_idx = None
     current_phase = None
@@ -60,9 +68,11 @@ def resolve_gate(
             break
 
     if current_phase is None:
+        valid_phases = [p["name"] for p in phases]
+        hint = f" To fix: Use one of: {', '.join(valid_phases)}" if valid_phases else ""
         return _result(
             status="error",
-            error=f"Phase '{phase}' not found in workflow '{workflow}'",
+            error=f"Phase '{phase}' not found in workflow '{workflow}'.{hint}",
         )
 
     gate = current_phase.get("gate")
@@ -107,10 +117,47 @@ def resolve_gate(
             assessment_found=True,
         )
 
+    # Resolve consumer gate extensions from repos.yaml
+    gate_extensions: list[str] | None = None
+    if gate_file:
+        from pf.handoff.gate_file import resolve_gate_extensions, resolve_lang_review_extensions
+
+        gate_name_for_ext = gate_file
+        if gate_name_for_ext.startswith("gates/"):
+            gate_name_for_ext = gate_name_for_ext[len("gates/") :]
+        ext_result = resolve_gate_extensions(gate_name_for_ext, project_root=project_root)
+        if not ext_result["success"]:
+            return _result(
+                status="error",
+                error=ext_result["error"],
+            )
+        all_extensions = list(ext_result["data"]) if ext_result["data"] else []
+
+        # Auto-discover language-based review gates for dev-exit
+        if gate_name_for_ext == "dev-exit":
+            from pf.handoff.gate_file import resolve_gate_file
+
+            lang_result = resolve_lang_review_extensions(project_root=project_root)
+            if lang_result["success"] and lang_result["data"]:
+                for lang_ext in lang_result["data"]:
+                    if lang_ext not in all_extensions:
+                        all_extensions.append(lang_ext)
+
+            # Always include review-correlation on dev-exit —
+            # the gate itself checks whether review findings exist
+            corr_ref = "gates/review-correlation"
+            corr_result = resolve_gate_file("review-correlation", project_root=project_root)
+            if corr_result["status"] == "found" and corr_ref not in all_extensions:
+                all_extensions.append(corr_ref)
+
+        if all_extensions:
+            gate_extensions = all_extensions
+
     return _result(
         status="ready",
         gate_type=gate_type,
         gate_file=gate_file,
+        gate_extensions=gate_extensions,
         next_agent=next_agent,
         next_phase=next_phase,
         assessment_found=True,
@@ -121,6 +168,7 @@ def _result(
     status: str,
     gate_type: str | None = None,
     gate_file: str | None = None,
+    gate_extensions: list[str] | None = None,
     next_agent: str | None = None,
     next_phase: str | None = None,
     assessment_found: bool = False,
@@ -130,6 +178,7 @@ def _result(
         "status": status,
         "gate_type": gate_type,
         "gate_file": gate_file,
+        "gate_extensions": gate_extensions,
         "next_agent": next_agent,
         "next_phase": next_phase,
         "assessment_found": assessment_found,
@@ -145,6 +194,20 @@ def _find_workflow_yaml(project_root: Path, workflow: str) -> Path | None:
     if subdir.exists():
         return subdir
     return None
+
+
+def _list_available_workflows(project_root: Path) -> list[str]:
+    """List available workflow names by scanning the workflows directory."""
+    workflows_dir = project_root / ".pennyfarthing" / "workflows"
+    if not workflows_dir.is_dir():
+        return []
+    names: set[str] = set()
+    for path in workflows_dir.iterdir():
+        if path.is_file() and path.suffix == ".yaml":
+            names.add(path.stem)
+        elif path.is_dir() and (path / "workflow.yaml").exists():
+            names.add(path.name)
+    return sorted(names)
 
 
 def _find_project_root() -> Path:

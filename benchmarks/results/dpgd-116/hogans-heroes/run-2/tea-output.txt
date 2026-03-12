@@ -1,0 +1,33 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers foundational CLI framework — all 10 ACs need test coverage.
+
+**Test Files:**
+
+| File | Tests | ACs Covered |
+|------|-------|-------------|
+| `tests/cli_structure.rs` | 29 | AC-1, AC-2, AC-5, AC-6 |
+| `tests/exit_codes.rs` | 15 | AC-3 |
+| `tests/output_format.rs` | 12 | AC-4 |
+| `tests/siem_client.rs` | 15 | AC-7 |
+| `tests/config_loading.rs` | 12 | AC-8 |
+| `tests/shell_completion.rs` | 10 | AC-9 |
+| `tests/stub_handlers.rs` | 12 | AC-10 |
+| `tests/security.rs` | 13 | CWE-209, header injection, config validation |
+
+**Tests Written:** 118 tests covering all 10 ACs
+**Status:** RED (failing — all tests fail to compile because `cli`, `error`, `client`, `config`, `output`, and `commands` modules don't exist yet)
+
+**Key test coverage areas:**
+- Command group existence and help rendering for all 10+ commands
+- Plural noun naming enforcement (`rules` not `rule`, `alerts` not `alert`)
+- Exit code mapping for all `CliError` variants (0/1/2/3/4)
+- Output formatting with CSV escaping, JSON metadata, ANSI color control
+- `SiemClient` header injection (tenant + auth), HTTP status code mapping (401→403→404→429→5xx)
+- Config loading with TOML, env var overrides, precedence chain
+- Shell completions for bash/zsh/fish/PowerShell
+- Stub handlers returning "not yet implemented (Story X.Y)" with exit code 1
+- **Security:** CWE-209 error exposure, CRLF header injection prevention, null byte rejection, token isolation from config files, silent error swallowing prevention
+
+**Handoff:** To Dev for implementation (GREEN phase)

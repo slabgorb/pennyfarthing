@@ -1,0 +1,34 @@
+No session file exists. Here's the TEA assessment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational CLI framework story with 10 ACs covering command structure, error handling, HTTP client, config loading, output formatting, and shell completions.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 18 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes.rs` | 13 | AC-3 (exit codes 0/1/3/4), CWE-209 error info leakage |
+| `output_format.rs` | 10 | AC-4 (table/json/csv formatting, no-color, CSV escaping) |
+| `siem_client.rs` | 14 | AC-7 (HTTP headers, status code mapping, header injection prevention) |
+| `config_loading.rs` | 9 | AC-8 (TOML loading, env overrides, CLI flag precedence, token exclusion) |
+| `shell_completion.rs` | 5 | AC-9 (bash/zsh/fish/PowerShell generation) |
+| `stub_handlers.rs` | 8 | AC-10 (stub "not yet implemented" messages with story references) |
+| `security.rs` | 6 | Dependency boundaries, CWE-209, unsafe_code forbid, AxiathonError→CliError mapping |
+
+**Tests Written:** 83 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules don't exist yet)
+
+**Security tests included:**
+- CWE-209: Error messages must not leak file paths, SQL, or tokens
+- CWE-113: Header injection via newlines in token/tenant values
+- Dependency boundary: client must not import server-side crates
+- Config security: tokens must not be stored in config file
+- `#![forbid(unsafe_code)]` enforcement
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+## Delivery Findings
+
+- No upstream findings during test design.

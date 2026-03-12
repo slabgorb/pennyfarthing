@@ -1,0 +1,94 @@
+I have now reviewed all source code and tests. Let me compile my findings.
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+*Reviewed by: The Librarian*
+
+Like tracing the etymology of a Sumerian glyph through its Akkadian transliteration — every layer of this code has been examined for what it reveals and what it conceals.
+
+---
+
+## Findings
+
+### [CRITICAL] `with_token()` bypasses CRLF/null-byte validation — CWE-113 header injection at `client.rs:39`
+
+`SiemClient::with_token()` and `with_tenant()` (lines 39-48) accept arbitrary strings with **no validation**. The validated alternatives `try_with_token()` and `try_with_tenant()` exist, but the unsafe path is the more convenient API and will likely be the one developers reach for. The `build_request()` method at line 88 calls `HeaderValue::from_str().expect("valid header")` — this **will panic** if a malicious value containing bytes outside the visible ASCII range (0x20-0x7E, plus tab) is passed through `with_token()`. While reqwest's `HeaderValue::from_str` rejects some bad values, it does so by panicking via `expect`, not by returning an error. This is both a header injection vector and a denial-of-service via panic.
+
+**Fix:** Either remove the unchecked `with_token()`/`with_tenant()` methods entirely, or add validation inside them. The `try_*` variants should be the only public API.
+
+### [HIGH] `RawConfig` silently accepts unknown fields — config typo swallowing at `config.rs:11`
+
+`RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A user who types `timout = 30` (missing 'e') or `sever.url = ...` will get **zero feedback** — the typo is silently ignored and defaults are used. This is a well-known configuration footgun. The story AC-8 specifies config loading but the architecture doc calls for validation.
+
+**Fix:** Add `#[serde(deny_unknown_fields)]` to `RawConfig`, `RawServerConfig`, `RawOutputConfig`, and `RawAuthConfig`.
+
+### [HIGH] Nightly rustfmt check fails at `client.rs:85-94`
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." The nightly fmt check shows formatting violations in `client.rs` (long lines at 88, 91, 94). This is a blocking finding per project rules.
+
+### [MEDIUM] `with_server_url()` skips URL validation at `config.rs:132-135`
+
+`ClientConfig::load()` validates URLs at line 103, but `with_server_url()` accepts any string without checking the `http://`/`https://` scheme prefix. A CLI flag like `--server ftp://evil.com` would bypass validation.
+
+### [MEDIUM] `timeout_secs` uses `i64` then casts to `u64` — truncation risk at `config.rs:109`
+
+`RawServerConfig.timeout` is `Option<i64>`, validated as `> 0`, then cast to `u64` via `as`. While the `<= 0` check prevents negative values from reaching the cast, using `i64` at all is unnecessary — the TOML spec supports unsigned integers. If the TOML parser yields a very large `i64` that happens to be positive, it casts correctly, but the type doesn't communicate intent. Should be `u64` with serde validation.
+
+### [MEDIUM] `build_request` panics on invalid HTTP method at `client.rs:83`
+
+`method.parse().expect("valid HTTP method")` will panic if an invalid method string is passed. This is internal API, but `build_request` is `pub`. Should return `Result` or use a typed enum for methods.
+
+### [MEDIUM] `format` flag uses raw `String` instead of `OutputFormat` enum at `cli.rs:15-16`
+
+The `--format` flag is `Option<String>` with a `value_parser` restriction. But there's already an `OutputFormat` enum in `output.rs`. Using `clap::ValueEnum` on `OutputFormat` would provide type safety at the parsing boundary and eliminate the parse-then-match pattern.
+
+### [MEDIUM] No `main.rs` — binary entry point is missing
+
+The story specifies `main.rs` as the binary entry point with error catching and `std::process::exit()`. There's no `main.rs` in the source, and no `[[bin]]` section in `Cargo.toml`. The crate is library-only, which means there's no actual `axiathon` binary being produced. AC-3 requires `main.rs` to catch errors and map to exit codes.
+
+### [LOW] `toml` version mismatch — Cargo.toml says `0.8`, story spec says `0.9` at `Cargo.toml:21`
+
+Story context specifies `toml 0.9` but `Cargo.toml` uses `0.8`. Minor, but diverges from spec. `0.8` works fine functionally.
+
+### [LOW] Test `cli_commands_enum_has_all_required_variants` has wildcard arm that defeats exhaustiveness at `cli_structure.rs:127`
+
+The test at line 127 includes `_ => {}` which silently accepts any new variant, defeating the stated purpose of catching missing variants at compile time. The comment acknowledges this but says "Remove the wildcard if Commands is NOT `#[non_exhaustive]`" — and `Commands` is indeed **not** `#[non_exhaustive]` (unlike `CliError`). The wildcard should be removed.
+
+### [LOW] `env_var_overrides` tests don't clean up on panic at `config_loading.rs:100-107`
+
+The `set_var`/`remove_var` pattern has no RAII guard — if the test panics between set and remove, the env var leaks. `serial_test` helps with ordering but doesn't prevent cross-test pollution on panic. A drop guard would be more robust.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2` — production code is safe
+### [VERIFIED] Token ignored from config file — `config.rs:73-75` warns and discards
+### [VERIFIED] CWE-209 — `CliError` Display impls don't leak internal details (error.rs:14-43)
+### [VERIFIED] Exit code mapping correct — 3 for auth, 4 for authz, 1 for others
+### [VERIFIED] Header injection tests exist for CRLF and null bytes in `siem_client.rs:160-189`
+### [VERIFIED] CSV escaping uses `csv` crate (RFC 4180 compliant)
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — correct per Rust rules
+### [VERIFIED] Workspace dependency alignment — `clap`, `serde`, `thiserror`, `uuid`, `chrono` all use workspace versions
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 2 |
+| Medium | 4 |
+| Low | 3 |
+| Verified Good | 8 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three blocking findings:
+
+1. **[CRITICAL]** `with_token()`/`with_tenant()` bypass header value validation — either remove them or add validation
+2. **[HIGH]** `RawConfig` silently swallows unknown fields — add `deny_unknown_fields`
+3. **[HIGH]** Nightly `rustfmt` check fails — fix formatting in `client.rs`
+
+The missing `main.rs` (Medium) is also concerning as it means no binary is actually produced, but this could be deferred if the intent is a library-first approach with binary wiring in a follow-up.

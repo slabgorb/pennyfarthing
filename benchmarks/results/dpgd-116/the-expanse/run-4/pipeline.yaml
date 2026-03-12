@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: the-expanse
+run_id: 4
+timestamp: '2026-03-08T09:55:51.350438+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-the-expanse-run-4
+phases:
+  tea:
+    token_usage:
+      input: 89
+      output: 21012
+    duration_s: 389.74
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 31
+      output: 16652
+    duration_s: 352.42
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 12
+      output: 5229
+    duration_s: 110.56
+    exit_code: 0

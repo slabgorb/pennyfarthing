@@ -31,22 +31,55 @@ def theme():
 
 
 @theme.command("list")
-def list_cmd():
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+@click.option(
+    "--agent",
+    default=None,
+    help="Show character for this agent type across all themes (e.g. tea, dev, reviewer)",
+)
+def list_cmd(output_json: bool, agent: str | None):
     """Show all available themes with current theme highlighted."""
-    from pf.common.themes import format_theme_list
+    if agent:
+        from pf.common.themes import format_theme_agent_list
 
-    click.echo(format_theme_list())
+        click.echo(format_theme_agent_list(agent, as_json=output_json))
+    elif output_json:
+        import json
+
+        from pf.common.themes import load_theme_metadata
+
+        data = load_theme_metadata()
+        click.echo(json.dumps(data, indent=2))
+    else:
+        from pf.common.themes import format_theme_list
+
+        click.echo(format_theme_list())
 
 
 @theme.command("show")
 @click.argument("name", required=False)
-@click.option("--full", is_flag=True, help="Show full agent details (OCEAN, quirks, catchphrases, etc.)")
-def show(name: str | None, full: bool):
+@click.option(
+    "--full", is_flag=True, help="Show full agent details (OCEAN, quirks, catchphrases, etc.)"
+)
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def show(name: str | None, full: bool, output_json: bool):
     """Show theme details including agent character mappings.
 
     \b
     Arguments:
       NAME  - Theme to show (defaults to current theme)
+
+    \b
+    JSON Output (--json):
+      {
+        "name": string,
+        "theme": {"description": string, "tier": string | null, ...},
+        "agents": {"sm": {"character": string, "style": string, ...}, ...}
+      }
+
+    \b
+    Error Response (--json, exit 1):
+      {"error": string, "code": "THEME_NOT_FOUND" | "NO_THEME", "detail": null}
     """
     import yaml
 
@@ -60,18 +93,61 @@ def show(name: str | None, full: bool):
     if not theme_name:
         theme_name = get_current_theme()
         if not theme_name:
+            if output_json:
+                import json
+
+                click.echo(
+                    json.dumps(
+                        {
+                            "error": "No theme configured",
+                            "code": "NO_THEME",
+                            "detail": None,
+                        },
+                        indent=2,
+                    )
+                )
+                raise SystemExit(1)
             click.echo("No theme currently set.")
             click.echo("Use 'pf theme set <name>' to select a theme.")
             return
 
     theme_path = resolve_theme_path(theme_name)
     if not theme_path:
+        if output_json:
+            import json
+
+            click.echo(
+                json.dumps(
+                    {
+                        "error": f"Theme not found: {theme_name}",
+                        "code": "THEME_NOT_FOUND",
+                        "detail": None,
+                    },
+                    indent=2,
+                )
+            )
+            raise SystemExit(1)
         available = ", ".join(list_themes()[:10])
         raise click.ClickException(f"Theme '{theme_name}' not found.\nAvailable: {available}...")
 
     data = yaml.safe_load(theme_path.read_text())
     if not data:
         raise click.ClickException(f"Invalid theme file: {theme_path}")
+
+    if output_json:
+        import json
+
+        click.echo(
+            json.dumps(
+                {
+                    "name": theme_name,
+                    "theme": data.get("theme", {}),
+                    "agents": data.get("agents", {}),
+                },
+                indent=2,
+            )
+        )
+        return
 
     theme_meta = data.get("theme", {})
     agents = data.get("agents", {})
@@ -82,13 +158,32 @@ def show(name: str | None, full: bool):
         click.echo(f"Description: {theme_meta['description']}")
     if theme_meta.get("tier"):
         click.echo(f"Tier: {theme_meta['tier']}")
+    if theme_meta.get("optimized"):
+        click.echo("Job Fair Optimized: yes")
+
+    # Dimensions
+    dims = theme_meta.get("dimensions")
+    if dims and isinstance(dims, dict):
+        click.echo()
+        click.echo("Dimensions:")
+        for k, v in dims.items():
+            click.echo(f"  {k}: {v}")
+
     click.echo()
 
     # Agents
     click.echo("Agents:")
     agent_order = [
-        "sm", "tea", "dev", "reviewer", "orchestrator",
-        "pm", "architect", "devops", "tech-writer", "ux-designer",
+        "sm",
+        "tea",
+        "dev",
+        "reviewer",
+        "orchestrator",
+        "pm",
+        "architect",
+        "devops",
+        "tech-writer",
+        "ux-designer",
     ]
 
     displayed: set[str] = set()
@@ -214,9 +309,7 @@ def set_theme(name: str, dry_run: bool):
         "# Pennyfarthing Local Configuration\n"
         "# This file is gitignored - your personal preferences\n\n"
     )
-    config_path.write_text(
-        header + yaml.dump(config, default_flow_style=False, sort_keys=False)
-    )
+    config_path.write_text(header + yaml.dump(config, default_flow_style=False, sort_keys=False))
 
     click.echo(f"Theme changed to '{name}'.")
 
@@ -247,7 +340,9 @@ def set_theme(name: str, dry_run: bool):
 @theme.command("create")
 @click.argument("name")
 @click.option("--base", default=None, help="Base theme to copy from (defaults to current theme)")
-@click.option("--user", is_flag=True, help="Create as user-level theme (~/.claude/pennyfarthing/themes/)")
+@click.option(
+    "--user", is_flag=True, help="Create as user-level theme (~/.claude/pennyfarthing/themes/)"
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def create(name: str, base: str | None, user: bool, dry_run: bool):
     """Create a new custom theme from a base theme.

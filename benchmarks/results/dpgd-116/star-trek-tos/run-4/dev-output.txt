@@ -1,0 +1,22 @@
+All **125/125 tests passing**, clippy clean with `-D warnings`.
+
+## Summary
+
+**Files created** (production code in `crates/axiathon-client/src/`):
+- `lib.rs` — Module barrel re-exports
+- `cli.rs` — `Cli` (Parser) and `Commands` (Subcommand) with all command groups and global flags
+- `error.rs` — `#[non_exhaustive] CliError` enum with `exit_code()` mapping (0/1/3/4), CWE-209-safe Display
+- `output.rs` — `OutputFormat` enum, `OutputFormatter` trait (object-safe), `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (csv crate)
+- `config.rs` — `ClientConfig` with TOML parsing, env var overrides, XDG default path, validation
+- `client.rs` — `SiemClient` with URL normalization, token/tenant setters, header injection validation, HTTP error mapping
+- `commands/mod.rs` — Module re-exports
+- `commands/completion.rs` — `generate_completion()` for bash/zsh/fish/powershell via clap_complete
+- `commands/stubs.rs` — `stub_message()` with story references
+
+**Files modified:**
+- `Cargo.toml` — Added workspace deps (clap_complete, comfy-table, csv, dirs, reqwest, toml), enabled clap `env` feature, relaxed `unsafe_code` from `forbid` to `deny` (production code still uses `#![forbid(unsafe_code)]`)
+- `crates/axiathon-client/Cargo.toml` — Added all required dependencies
+- `tests/cli_config.rs` — Wrapped `set_var`/`remove_var` in unsafe blocks (edition 2024 requirement)
+- `tests/cli_structure.rs` — Same unsafe wrapping for env var test
+
+**Tests:** 125 passed across 7 test files, 0 failures. Clippy clean.

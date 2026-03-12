@@ -1,0 +1,104 @@
+Good. I have a comprehensive picture. Let me now compile my findings.
+
+---
+
+## Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*Reviewer: Commander Spock (visiting from Enterprise)*
+
+Fascinating. I have examined every source file and test with the rigor of a Vulcan science officer. Here are my findings.
+
+---
+
+### Findings
+
+**1. [CRITICAL] CWE-209: `ServerError` Display leaks raw server details — `error.rs:29`**
+
+The `ServerError(String)` variant's `#[error("server error — please try again later")]` Display impl does NOT interpolate the inner string... however, the `Display` test `cli_error_display_does_not_leak_internals` at `security.rs:31-43` **passes by accident**. The `#[error]` attribute says `"server error — please try again later"` (a static string), so the inner `String` is never displayed. But the field *exists* and is accessible via `Debug`, and it contains raw server error text. While `main.rs:19` uses `format!("Error: {e}")` (Display, which is safe), the `NotImplemented` variant at `main.rs:17` prints its inner string directly via `{msg}`. This inconsistency is a pattern smell — if someone later uses Debug on `ServerError`, internals leak. **The inner String on ServerError is dead storage — it is set in `map_http_status` but never read.** This is a correctness issue: `CliError::ServerError(format!("HTTP {code}"))` stores data that is never surfaced, creating a false sense that error details are being preserved.
+
+**2. [HIGH] Nightly `cargo fmt` check fails — `cli.rs`**
+
+Per the gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* The nightly fmt check shows diffs in `cli.rs` (long `#[command(after_help = ...)]` lines) and likely `client.rs`. **This blocks merge per project rules.**
+
+**3. [HIGH] `ClientConfig` accepts unknown fields silently — `config.rs:14`**
+
+`#[serde(default)]` is present, but `#[serde(deny_unknown_fields)]` is absent. The test at `config_loading.rs:112-131` tries to verify that a `token` field in config is rejected, but it actually **passes through silently** — TOML with `token = "should-not-work"` deserializes successfully and the token is silently discarded. This means an operator could put `token = "my-secret"` in the plaintext config file thinking it works, when it's actually ignored. The test checks `!format!("{cfg:?}").contains("should-not-work")` which passes because the field is dropped, but the test **doesn't actually assert the right thing** — it should verify that parsing fails or at minimum logs a warning. An operator storing credentials in plaintext, believing they're being used, is a security anti-pattern.
+
+**4. [HIGH] `timeout_seconds` uses `i64` allowing negative values at the type level — `config.rs:17`**
+
+The field is `Option<i64>`, but a timeout should never be negative. While `validate()` catches `<= 0`, the `apply_env_overrides_from` method at `config.rs:59` does `t.parse::<i64>()` and silently ignores parse failures. If someone sets `AXIATHON_TIMEOUT=abc`, the override is silently dropped — no warning, no error. The type should be `u64` or `u32` to prevent negative values at the type level, and parse failures should be reported.
+
+**5. [MEDIUM] `main.rs:43` — Dead `_ => ...` match arm**
+
+The `Commands` enum is `#[non_exhaustive]`, but the match in `run()` already handles every variant. The wildcard arm at line 43 is unreachable dead code. While not harmful, it means if a new variant is added, it silently hits the catch-all instead of causing a compile error that would force the developer to implement it. The `#[non_exhaustive]` attribute is on an enum *in the same crate*, which has no effect — `#[non_exhaustive]` only affects downstream/external crates.
+
+**6. [MEDIUM] `--server` flag is `hide = true` — `cli.rs:35`**
+
+AC-5 says `--server` supports `AXIATHON_SERVER` env var, but the flag is hidden from `--help`. The story context says `--server` is a global flag that should be documented. Hiding it from help contradicts AC-2 ("document all options with defaults"). Why is it hidden?
+
+**7. [MEDIUM] `from_config` ignores tenant_id — `client.rs:38`**
+
+`SiemClient::from_config` hardcodes `None` for `tenant_id`. The `Cli` struct has `--tenant` global flag, but there is no wiring from `Cli.tenant` to `SiemClient`. When commands are eventually implemented, someone will need to thread this through. Not a blocker for stubs, but worth noting as an integration gap.
+
+**8. [MEDIUM] `default_format_is_json_when_piped` test FAILS — `output_format.rs:147-157`**
+
+This test asserts that when piped (non-TTY), output defaults to JSON. But the `status` command is a stub that writes to stderr and produces empty stdout. The test fails because stdout is empty, not matching either `{` or `not yet implemented`. AC-4 says "Table default for TTY, JSON for piped output" but this auto-detection is **not implemented** — `OutputFormat::Table` is the hardcoded default in `cli.rs:19`. This is a missing feature, not just a test issue.
+
+**9. [MEDIUM] `rules` stub says "Story 6.5" but should say "Story 6.6" — `rules.rs:26`**
+
+Per the epic doc, rules management is not explicitly called out as a specific story, but alerts management is Story 6.5. Having both `rules` and `alerts` claim Story 6.5 is incorrect. The rules stub should reference the correct story.
+
+**10. [LOW] `toml` version mismatch: workspace declares `0.8`, story spec says `0.9` — `Cargo.toml:54`**
+
+The workspace `Cargo.toml` declares `toml = "0.8"`, but the story Technical Guardrails specify `toml 0.9`. Since `0.9` may not exist yet, `0.8` is fine, but this should be documented as a conscious deviation.
+
+**11. [LOW] Missing `keyring` dependency — `Cargo.toml`**
+
+The story requires `keyring` 3 for OS keychain credential storage. It's listed in workspace dependencies as required, but it's not in the workspace `Cargo.toml` nor in `axiathon-client/Cargo.toml`. While keychain integration is deferred to Story 9.1, the workspace-level dependency declaration was supposed to happen in this story per Technical Guardrails.
+
+**12. [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`.**
+
+**13. [VERIFIED] Header injection (CWE-113) prevention implemented via `sanitize_header_value()` at `client.rs:17-19`. Tests cover CRLF injection for both tenant ID and token.**
+
+**14. [VERIFIED] Exit codes 0/1/2/3/4 correctly mapped. Tests comprehensive.**
+
+**15. [VERIFIED] Shell completion generation is functional (not a stub). Tests verify non-trivial output for bash/zsh/fish/powershell. Instructions go to stderr.**
+
+**16. [VERIFIED] All command groups present in help: query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init.**
+
+**17. [VERIFIED] `server` command correctly excluded from client binary.**
+
+**18. [VERIFIED] Clap derive macros used throughout — no imperative command building.**
+
+---
+
+### Summary Table
+
+| # | Severity | Finding |
+|---|----------|---------|
+| 1 | CRITICAL | `ServerError` inner string is dead storage; Display hides it but Debug doesn't |
+| 2 | HIGH | Nightly `cargo fmt` check fails — blocks merge per gotchas |
+| 3 | HIGH | `ClientConfig` silently accepts unknown fields including `token` |
+| 4 | HIGH | `timeout_seconds` as `i64` + silent env parse failures |
+| 5 | MEDIUM | Dead `_` match arm in `main.rs` on same-crate `#[non_exhaustive]` |
+| 6 | MEDIUM | `--server` flag hidden from help, contradicting AC-2/AC-5 |
+| 7 | MEDIUM | `from_config` drops tenant_id — no wiring from CLI flag |
+| 8 | MEDIUM | Failing test + missing TTY auto-detection for output format |
+| 9 | MEDIUM | Rules stub references wrong story number |
+| 10 | LOW | `toml` version `0.8` vs spec `0.9` |
+| 11 | LOW | Missing `keyring` workspace dependency declaration |
+
+---
+
+### Verdict: **CHANGES_REQUESTED**
+
+*Fascinating. The implementation demonstrates logical structural organization — the crate layout, clap derive usage, and command routing are sound. However, I find it... illogical... to proceed with 1 Critical and 3 High severity findings unresolved.*
+
+*Dr. McCoy would say: "Dammit Jim, you can't ship code that silently swallows config fields and fails nightly fmt!"*
+
+**Required before approval:**
+1. Fix nightly `cargo fmt` violations
+2. Add `#[serde(deny_unknown_fields)]` to `ClientConfig` or at minimum warn on unknown fields
+3. Address the `ServerError` dead-storage pattern — either remove the inner `String` or surface it
+4. Fix the failing test `default_format_is_json_when_piped`
+5. Fix `timeout_seconds` type to `u64` or report env parse failures

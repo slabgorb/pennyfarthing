@@ -1,0 +1,73 @@
+scenario_id: dpgd-116
+theme: firefly
+run_id: 2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'No phase addressed from_file_or_default swallowing all errors. Reviewer
+    flagged silent env var parsing (finding #3) and missing deny_unknown_fields (#8),
+    but never the unwrap_or_default pattern that catches permission/parse errors.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security_tests.rs covering 'CWE-209: Error messages don't leak\
+    \ stack traces.' However, reviewer later found those security tests vacuous (findings\
+    \ #4/#5), so the catch is partial \u2014 the issue was identified but test enforcement\
+    \ is weak."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented CR/LF sanitization in client.rs:34,43 \u2014 reviewer\
+    \ verified: 'Header injection prevention: CR/LF stripped from tokens and tenant\
+    \ IDs.' However, the deeper type-safety issue (using raw String instead of TenantId\
+    \ from axiathon-core) was not flagged by any phase."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: dev
+  evidence: 'Reviewer verified: ''Workspace dependency management: all deps use {
+    workspace = true }''. Dev implemented it correctly from the start.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #8: ''No #[serde(deny_unknown_fields)]. A typo like
+    api_ur1 or timeoutt is silently ignored with the default used instead. This is
+    a classic operator footgun in config files.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer caught different vacuous tests in security_tests.rs (findings
+    #4 and #5: token newline check and HTTP URL tautology), but not the specific config
+    test where assert!(config.server().is_none() || ...) is vacuously true.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test that only checks non-panic via
+    'let _ = config'. TEA wrote 12 config tests but this specific pattern was not
+    identified. Reviewer's vacuous test findings were limited to security_tests.rs.

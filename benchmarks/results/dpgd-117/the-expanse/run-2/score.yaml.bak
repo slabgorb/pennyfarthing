@@ -1,0 +1,94 @@
+scenario_id: dpgd-117
+theme: the-expanse
+run_id: 1
+total_caught: 2
+total_findings: 10
+weighted_caught: 10
+total_weight: 52
+score_pct: 19.2
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added chrono and uuid to Cargo.toml but no mention of workspace-level
+    dependencies. Reviewer did not flag inline dependency versions.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: ResponseEnvelope and ErrorDetail are not #[non_exhaustive]\
+    \ \u2014 but this was about response structs, not FieldErrorCode specifically.\
+    \ FieldErrorCode itself was not mentioned."
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA wrote tests expecting trace_id in meta, but no test asserts trace_id
+    derives from request context rather than being hardcoded. Reviewer did not flag
+    hardcoded 'none' trace_id.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'Zero structured logging / tracing instrumentation\
+    \ \u2014 No #[instrument] on handlers. No tracing::info!(), tracing::warn!(),\
+    \ or tracing::error!() calls.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged zero logging but did not specifically call out misleading
+    SECURITY comments claiming logging exists when it doesn't.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No test was written for non-ASCII tenant header values. TEA tests cover
+    auth headers but not X-Tenant-ID with non-ASCII characters.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote CWE-209 tests in security.rs but reviewer verified 'CWE-209
+    properly addressed' without noting the body assertion gap. The test checks status
+    code but not response body content.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No CORS preflight test exists in the test files. CORS was not part of
+    the TEA test plan and the reviewer did not flag CORS header verification gaps.
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged zero logging (I4) but since no logging was added by Dev,
+    the wrong-log-level issue never manifested. No phase addressed log level differentiation
+    between 4xx and 5xx.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No CORS middleware was mentioned in the code changes summary. No test
+    covers CORS origin/method/header restrictions. Reviewer did not flag CWE-942.

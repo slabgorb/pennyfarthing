@@ -1,0 +1,23 @@
+Zero clippy warnings. All 86 tests pass, clippy is clean.
+
+## Summary
+
+**Files created (production code):**
+- `crates/axiathon-client/src/lib.rs` — module re-exports
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with exit code mapping (0/1/3/4)
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap 4.x derive, 12 command groups, 7 global flags
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection, status code mapping, header validation
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` TOML loading, env var overrides, XDG path, token security
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum + `OutputFormatter` (table/JSON/CSV)
+- `crates/axiathon-client/src/commands/mod.rs` — module re-exports
+- `crates/axiathon-client/src/commands/{status,config,ingest,alerts,query,rules,tenant,login}.rs` — stub handlers with story references
+- `crates/axiathon-client/src/commands/completion.rs` — shell completion generation via `clap_complete`
+- `crates/axiathon-client/src/commands/init.rs` — first-time setup
+
+**Files modified:**
+- `Cargo.toml` (workspace) — added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest` to workspace deps
+- `crates/axiathon-client/Cargo.toml` — added production deps, `serial_test` dev dep, custom lints (deny vs forbid for unsafe_code)
+- `crates/axiathon-client/tests/config_loading.rs` — wrapped `set_var`/`remove_var` in `unsafe` blocks, added `#[serial]` for env var tests
+- `crates/axiathon-client/tests/security.rs` — same unsafe/serial fixes
+
+**Tests:** 86/86 passing (GREEN), 0 clippy warnings

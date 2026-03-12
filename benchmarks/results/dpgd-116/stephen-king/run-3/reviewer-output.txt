@@ -1,0 +1,127 @@
+I have now read all the code. Let me compile my full review.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*The man in black fled across the desert, and the gunslinger followed — into the code.*
+
+I have traced every path, every data flow, every error mapping. Here are my findings. The ka-tet has done solid structural work, but I found rot beneath the floorboards.
+
+---
+
+## Findings
+
+### `[CRITICAL]` F1 — CWE-209: `CliError::Generic` leaks raw error strings to stderr at `error.rs:12`
+
+`CliError::Generic(String)` uses `#[error("error: {0}")]`, which prints the inner string verbatim to the user via `main.rs:15` (`eprintln!("{e}")`). The `SiemClient::get()` method at `client.rs:128` feeds raw `reqwest` error messages into `Generic(e.to_string())`. Reqwest error strings can contain full URLs (with query params, tokens in URLs), internal DNS resolution details, and TLS certificate details. This is a CWE-209 information exposure vector.
+
+Similarly, `ServerError(u16, String)` stores the raw HTTP body but the Display impl at `error.rs:18` only shows `"server error (HTTP {0})"` — **however**, the `NotFound` variant at `error.rs:15` shows `"not found: resource not found"` but **stores** the body string that is never displayed. This is inconsistent — the stored body is accessible via Debug but not Display, which is fine, but the `Generic` variant has no such protection.
+
+**Fix:** Sanitize or limit the `Generic` Display output. Consider `"error: an unexpected error occurred"` or truncate/sanitize the inner string.
+
+### `[HIGH]` F2 — Test suite has a failing test due to env var race condition at `cli_config.rs:216`
+
+`config_accepts_valid_toml_with_all_fields` **fails** because `config_axiathon_timeout_env_overrides_file` sets `AXIATHON_TIMEOUT=60` and the tests run in parallel. Edition 2024 made `set_var` unsafe precisely because of this. The `remove_var` call at line 106 races with the `from_file` call in other tests. This is a real test failure — **the test suite does not pass**.
+
+**Fix:** Either run env-mutating tests with `#[serial]` (from `serial_test` crate), or use `temp_env` for scoped env var mutation, or restructure `ClientConfig` to accept env vars as parameters instead of reading globals.
+
+### `[HIGH]` F3 — Missing `logout` command per AC-1 at `cli.rs:44`
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: ... `login`/`logout` ..."*. There is no `Logout` variant in the `Commands` enum. The `login.rs` module only defines `LoginArgs` — no `LogoutArgs`. This is an AC violation.
+
+### `[HIGH]` F4 — `build_url` path traversal prevention is broken at `client.rs:84-97`
+
+The `build_url` method attempts to prevent path traversal by collapsing `..` segments, but the logic at line 90 (`if clean.len() > 2`) is arbitrary and wrong. It only pops if there are more than 2 segments, meaning `../../../etc/passwd` with fewer initial segments is **not** properly blocked.
+
+Test at `cli_security.rs:156` asserts `url.starts_with("https://localhost:8080/api/v1/")` for input `/api/v1/../../etc/passwd`. Let me trace: segments = `["api", "v1", "..", "..", "etc", "passwd"]`. Processing:
+- "api" → clean = ["api"]
+- "v1" → clean = ["api", "v1"]
+- ".." → clean.len() == 2, NOT > 2, so no pop → clean = ["api", "v1"]
+- ".." → clean.len() == 2, NOT > 2, so no pop → clean = ["api", "v1"]
+- "etc" → clean = ["api", "v1", "etc"]
+- "passwd" → clean = ["api", "v1", "etc", "passwd"]
+
+Result: `https://localhost:8080/api/v1/etc/passwd`. The test passes but **only by accident** — the `> 2` threshold happens to match this specific input. For input `/api/../../etc/passwd`:
+- "api" → clean = ["api"]
+- ".." → clean.len() == 1, no pop → clean = ["api"]
+- ".." → clean.len() == 1, no pop → clean = ["api"]
+- "etc" → clean = ["api", "etc"]
+
+This produces `https://localhost:8080/api/etc/passwd` — the traversal was silently absorbed but the path is still wrong. The correct approach is `if !clean.is_empty() { clean.pop(); }` or better yet, reject `..` entirely.
+
+### `[HIGH]` F5 — `cargo +nightly fmt --all --check` fails
+
+Per the Reviewer Gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* The check shows diffs in `cli.rs`, `client.rs`. This must be fixed before approval.
+
+### `[MEDIUM]` F6 — `output.rs:75` uses `expect()` in production code at `output.rs:92-98`
+
+The `CsvFormatter::format` method uses `.expect("write CSV headers")`, `.expect("write CSV row")`, `.expect("flush CSV")`, and `.expect("CSV inner")`. The Rust rules (`.claude/rules/rust.md`) state: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The `expect()` messages here are not "actionable" — they don't tell the operator what to do. More importantly, the `OutputFormatter` trait returns `String`, not `Result<String>`, so errors cannot propagate. Writing to a `Vec<u8>` is infallible in practice, but the `JsonFormatter` at line 75 also uses `expect("JSON serialization cannot fail")`. These are technically acceptable but should be documented as infallible operations.
+
+### `[MEDIUM]` F7 — `RawConfig` uses `#[serde(default)]` but does not use `#[serde(deny_unknown_fields)]` at `config.rs:12`
+
+The test `config_ignores_unknown_fields` at `cli_config.rs:219` explicitly verifies that unknown fields are silently ignored. This is the correct choice for forward compatibility (an older CLI reading a newer config file). **Verified good** — this is intentional.
+
+### `[MEDIUM]` F8 — `toml` version mismatch: story specifies 0.9, workspace has 0.8 at `Cargo.toml:49`
+
+The story's Technical Guardrails section says *"toml 0.9"* but the workspace declares `toml = "0.8"`. This is a spec-vs-implementation mismatch. `toml 0.9` may not exist yet (latest stable may be 0.8.x), so this might be a spec error, but it should be called out.
+
+### `[MEDIUM]` F9 — `tenant` field uses raw `String` instead of validated `TenantId` newtype at `cli.rs:29`, `client.rs:10`
+
+The project's Rust rules specify newtypes for IDs: `TenantId(String)`. The `axiathon-core` crate exports `TenantId`. Yet both `Cli.tenant` and `SiemClient.tenant` use raw `Option<String>`. The `with_tenant` method should accept/validate a `TenantId` at the boundary. This is not blocking for a stub story but is a type safety gap.
+
+### `[LOW]` F10 — `keyring` dependency missing from `Cargo.toml` at `Cargo.toml:8`
+
+AC-8 specifies: *"Tokens in OS keychain, NOT config file"* and the Technical Guardrails mention `keyring 3` for OS keychain credential storage. The workspace `Cargo.toml` does not declare `keyring`, and the crate `Cargo.toml` does not include it. The config falls back to `AXIATHON_API_TOKEN` env var only. This is acceptable for Story 6.1 scope (keychain loading is for Story 9.1), but the workspace dependency should be declared per the story's Workspace Cargo.toml Changes section.
+
+### `[LOW]` F11 — No TTY auto-detection for default output format
+
+AC-4 states: *"Table default for TTY, JSON for piped output"*. The `OutputFormat` default is hardcoded to `Table` at `output.rs:10`. There is no TTY detection using `std::io::IsTerminal`. This means piped output defaults to table format, not JSON. The Technical Guardrails explicitly mention `std::io::IsTerminal`.
+
+### `[VERIFIED]` V1 — Header injection prevention works correctly
+
+`sanitize_header_value` at `client.rs:15` rejects `\0`, `\r`, `\n`. `SiemClient::new` strips `\r\n` from base URL. `HeaderValue::from_str` in `default_headers` provides an additional layer of validation. Tests cover null bytes, CRLF injection in tokens, tenant IDs, and URLs.
+
+### `[VERIFIED]` V2 — `ServerError` Display does NOT leak the response body
+
+`#[error("server error (HTTP {0})")]` at `error.rs:18` only formats the status code `{0}`, not the body `{1}`. The body is stored for programmatic access but never shown to users. This is correct CWE-209 mitigation for server errors.
+
+### `[VERIFIED]` V3 — Config token redaction in Debug output
+
+`ClientConfig` implements a manual `Debug` at `config.rs:27-36` that shows `"[REDACTED]"` for the token field. Test at `cli_security.rs:136` verifies this.
+
+### `[VERIFIED]` V4 — `#[non_exhaustive]` on `CliError`
+
+Correctly applied at `error.rs:10`. Test at `cli_error_exit_codes.rs:120` verifies wildcard arm compiles.
+
+### `[VERIFIED]` V5 — `#![forbid(unsafe_code)]` in both `lib.rs:2` and `main.rs:2`
+
+Both entry points correctly forbid unsafe code.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 4 | YES |
+| Medium | 4 | NO |
+| Low | 2 | NO |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The Tower will not be reached with broken tests and leaking error messages, Roland says. Five blocking issues must be resolved:
+
+1. **F1** — Sanitize `CliError::Generic` Display output to prevent CWE-209 information exposure
+2. **F2** — Fix env var race condition causing `config_accepts_valid_toml_with_all_fields` test failure
+3. **F3** — Add `logout` command variant per AC-1
+4. **F4** — Fix `build_url` path traversal logic (the `> 2` threshold is arbitrary and incorrect)
+5. **F5** — Run `cargo +nightly fmt --all` to fix formatting
+
+The Medium/Low findings (F6, F8, F9, F10, F11) can be addressed in follow-up stories but should be tracked.
+
+*The world has moved on, but these issues have not. Fix them, or face the clearing at the end of the path with broken guns.*

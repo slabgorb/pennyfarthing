@@ -1,0 +1,26 @@
+All tests committed in RED state. Here's the summary:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — foundational types, modules, and behaviors all need test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 10 | AC-1 (command groups), AC-2 (help), AC-6 (clap derive) |
+| `exit_codes_test.rs` | 8 | AC-3 (exit codes 0/1/2/3/4 via CliError) |
+| `output_format_test.rs` | 11 | AC-4 (table/json/csv formatting, escaping, no-color) |
+| `global_flags_test.rs` | 11 | AC-5 (-v repeatable, --quiet, --server env var, --no-color) |
+| `siem_client_test.rs` | 13 | AC-7 (HTTP wrapper, status mapping, header injection) |
+| `config_test.rs` | 10 | AC-8 (TOML loading, env overrides, XDG paths) |
+| `completion_test.rs` | 7 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers_test.rs` | 10 | AC-10 (stub messages, story references, exit code 1) |
+| `security_test.rs` | 11 | CWE-209, CWE-113, silent errors, config validation |
+
+**Tests Written:** 91 tests covering all 10 ACs + security
+**Status:** RED (compilation failures — all referenced modules unresolved: `cli`, `client`, `commands`, `config`, `error`, `output`)
+
+**Cargo.toml updates:** Added workspace dependencies (`clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`) and client crate dependencies.
+
+**Handoff:** To Dev for implementation (GREEN phase). The dev needs to create all modules in `crates/axiathon-client/src/` and export them from `lib.rs`.

@@ -1,0 +1,23 @@
+All 49 tests pass, clippy is clean. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-server/Cargo.toml` — added `chrono`, `uuid`, `tower`, `tower-http` dependencies
+- `crates/axiathon-server/src/lib.rs` — server setup with `app()`, `app_with_config()`, `app_with_deprecated_routes()`, `AppState`, `ServerConfig`
+- `crates/axiathon-server/src/response.rs` — `ApiResponseEnvelope` with `data`/`meta`/`errors` three-field envelope, `EnvelopeResponse` for IntoResponse, RFC 9457-aligned `ErrorDetail`
+- `crates/axiathon-server/src/middleware.rs` — auth middleware (Bearer token parsing, scope checking, rate limiting per-tenant), `AuthCredential` type
+- `crates/axiathon-server/src/routes.rs` — health, events, alerts, rules, queries route handlers; fallback 404 handler; deprecated route support; POST body validation (JSON, size, content-type)
+- `crates/axiathon-server/src/test_helpers.rs` — `create_valid_jwt`, `create_expired_jwt`, `create_valid_api_key`, `create_revoked_api_key`
+
+**Tests:** 49/49 passing (GREEN) across 6 test files:
+- `rest_endpoints.rs` — 9 tests
+- `api_response_envelope.rs` — 11 tests
+- `authentication.rs` — 12 tests
+- `rate_limiting.rs` — 5 tests
+- `api_versioning.rs` — 5 tests
+- `security_edge_cases.rs` — 12 tests (including `#![forbid(unsafe_code)]` verification)
+
+**Branch:** test/story-8.1-rest-api-foundation (not pushed — per workflow, push after assessment)

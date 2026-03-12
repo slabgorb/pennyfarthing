@@ -1,0 +1,84 @@
+scenario_id: dpgd-116
+theme: snow-crash
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA mentions 'No silent error swallowing' as a general security test,
+    but no test specifically verifies that from_file_or_default distinguishes NotFound
+    from parse/permission errors. Reviewer F7 flags silent ignoring of env var overrides
+    but not from_file_or_default. The general concern is not specific enough to lead
+    a developer to fix this particular method.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA explicitly includes 'CWE-209: Error Display doesn't leak stack traces/internals'\
+    \ in security tests. Dev implemented 'sanitized Display (CWE-209)' in error.rs.\
+    \ Reviewer verified V7: 'Display impl on ServerError does not leak the inner string.'\
+    \ However, the ground truth concern is about eprintln in main printing Display\
+    \ directly to stderr \u2014 and Reviewer F2 notes main.rs doesn't even exist,\
+    \ so the leak path isn't addressed."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA includes 'CWE-113: Header injection prevention (CRLF in token/tenant\
+    \ values)' tests. Reviewer F4 flags 'with_token() / with_tenant() bypass CWE-113\
+    \ validation.' Same vulnerability class (CWE-113) identified, though the ground\
+    \ truth specifically wants TenantId type from axiathon-core rather than raw String\
+    \ \u2014 the type-safety angle is not addressed, only the injection prevention\
+    \ angle."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer V9 states 'Workspace dependency declarations used correctly'\
+    \ \u2014 the opposite conclusion. The ground truth identifies 6 deps using direct\
+    \ version strings instead of workspace = true. The reviewer examined this area\
+    \ and concluded it was correct, which is worse than not examining it."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F5 explicitly flags: ''RawConfig silently ignores unknown TOML
+    fields (secret exposure risk)'' and recommends ''#[serde(deny_unknown_fields)]''
+    or warn on unknown fields. Directly matches the ground truth finding about token
+    field being silently ignored.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always passes). TEA wrote the tests but did not flag this logical error. Reviewer
+    did not catch it during review.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic.
+    TEA wrote the test with 'let _ = config' but did not flag the missing assertions.
+    Reviewer did not catch it.

@@ -1,0 +1,102 @@
+I have all the information I need. Let me compile my findings.
+
+---
+
+# Story 8.1 REST API Foundation — Adversarial Code Review
+
+## Preflight Results
+
+| Check | Result |
+|-------|--------|
+| `cargo clippy -p axiathon-server -- -D warnings` | PASS |
+| `cargo test -p axiathon-server` | **FAIL** — 1 test failure (`null_bytes_in_auth_header_returns_401`) |
+| `cargo +nightly fmt --all --check` | **FAIL** — formatting diffs in `tests/security.rs` |
+
+---
+
+## Findings
+
+### [CRITICAL] Test suite has a failing test — `auth_middleware.rs:363`
+
+The test `null_bytes_in_auth_header_returns_401` panics at line 35 because `"Bearer test\0injected"` contains a null byte, which is invalid for HTTP header values. The `Request::builder()` returns `Err(InvalidHeaderValue)` and the `.expect("request builder")` panics. This is a test bug — it tests something HTTP itself rejects at the framework level — but a failing test in the suite is a blocking issue. It must be fixed (either remove the test or use a raw hyper request that handles the error).
+
+### [HIGH] Duplicate `ApiResponse` types — server ignores `axiathon-core::ApiResponse<T>` entirely — `lib.rs:103-108`
+
+The story specifies that `ApiResponse<T>` should come from `axiathon-core`. Instead, the server defines its own `ApiResponseEnvelope<T>` with a different shape (`errors: Vec<ApiErrorDetail>` + `meta: ResponseMeta`) while `axiathon-core::types::ApiResponse<T>` uses `error: Option<ApiError>` + `meta: Option<ApiMeta>` with pagination fields. Neither the `axiathon-core` dependency nor any of its types are used anywhere in the server source. The AC says: "All responses use `ApiResponse<T>` from axiathon-core." The two types have incompatible semantics (plural `errors[]` array vs singular `error` object; always-present `meta` vs optional `meta`). This will cause integration pain in later stories when other crates expect the core type.
+
+### [HIGH] Six unused crate dependencies in `Cargo.toml` — `Cargo.toml:9-13,19,22-23`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, and `tracing-subscriber` are declared as dependencies but **none are used** in `src/lib.rs`. This bloats compile times and creates false dependency edges in the workspace graph. `thiserror`, `tracing`, and `tracing-subscriber` are workspace deps pulled in but never imported.
+
+### [HIGH] Global static rate limiter shared across tests — `lib.rs:39-40`
+
+`GLOBAL_RATE_LIMITER` is a `LazyLock<Arc<Mutex<RateLimiterState>>>` shared across all `create_app()` calls. Since integration tests run in the same process (per test binary), rate limiter state bleeds between tests. The `rate_limiting.rs` tests work by luck of execution order — if `exceeding_rate_limit_returns_429` runs before `rate_limit_applies_per_operation`, the latter could fail because the bucket for `"tenant-default"` is already exhausted. This is a test isolation bug that will cause flaky CI.
+
+### [HIGH] No structured logging / tracing anywhere — `lib.rs` (entire file)
+
+The story AC says tenant context must carry `trace_id` and the project rules (`.claude/rules/rust.md`) require "Include `tenant_id()` and `trace_id()` in all tracing spans." There is zero `tracing` instrumentation in the server — no `#[instrument]`, no `tracing::info!()`, no span creation. The `tracing` and `tracing-subscriber` deps are declared but unused. Without observability, production debugging is impossible and this violates a core project convention.
+
+### [MEDIUM] `cargo +nightly fmt --all --check` fails — `tests/security.rs`
+
+Per project gotchas (`gotchas.md`): "Always include `cargo +nightly fmt --all --check` in the preflight." The nightly formatter found diffs in `security.rs` around multi-line function calls that should be collapsed.
+
+### [MEDIUM] `TenantContext` is never constructed from auth info — `lib.rs:294-354`
+
+The auth middleware extracts `AuthInfo { tenant_id, scopes }` but never builds a `TenantContext` or passes it downstream. The `tenant_id` from auth is used only for rate limiting. Handlers receive `DetectionServices`/`StorageServices` substates but have no access to tenant identity. The AC states: "Tenant context must be extractable from the authenticated credential." This is partially unmet — the mechanism exists in `axiathon-core` but is not wired.
+
+### [MEDIUM] Hardcoded test tokens instead of JWT validation — `lib.rs:226-249`
+
+The `validate_bearer` function is a match on hardcoded string literals (`"test-valid-token"`, `"test-readonly-token"`, etc.). There is no JWT parsing, no EdDSA/Ed25519 signature verification, no expiry check. The AC says "JWT (EdDSA/Ed25519)." While stub behavior is acceptable per scope ("stubs that return correct envelope format are sufficient"), the auth system isn't stubbed — it's hardcoded to specific test values with no path to real JWT validation. There's no `jsonwebtoken` or `ed25519-dalek` dependency. A TODO comment or trait-based auth provider would show intent.
+
+### [MEDIUM] Body size limit checks only `Content-Length` header — `lib.rs:393-404`
+
+The `body_limit_middleware` only inspects the `Content-Length` header. A client can send a body without `Content-Length` (chunked transfer encoding), bypassing the limit entirely. Axum's built-in `DefaultBodyLimit` layer or `RequestBodyLimit` would be more robust.
+
+### [MEDIUM] `ServerConfig` rate limit is hardcoded, not loadable from TOML/YAML — `lib.rs:22-33`
+
+AC says: "Rate limit configuration should be loadable from TOML/YAML (SOUL principle 13: behavior is configuration)." `ServerConfig` has a `Default` impl with `rate_limit_per_second: 100` but no file-based loading, no `serde::Deserialize`, and `create_app()` always uses `ServerConfig::default()`.
+
+### [LOW] `expect("serialize")` in `success_response` and `error_response` — `lib.rs:141,156`
+
+Using `.expect("serialize")` on `serde_json::to_value()` will panic if serialization fails. While unlikely for the current types, production code should not use `expect()` per `.claude/rules/rust.md`: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The message `"serialize"` is not actionable — something like `"ApiResponseEnvelope serialization failed: all fields are Serialize"` would be.
+
+### [LOW] `#[non_exhaustive]` missing on public enums — `lib.rs:271-276`
+
+`AuthError` is private (no `pub`), so this is fine. But `ApiErrorDetail`, `ResponseMeta`, and `ApiResponseEnvelope` are all `pub` structs without `#[non_exhaustive]`. Per `.claude/rules/rust.md`: "`#[non_exhaustive]` on enums that will grow." These types will grow as more error types and metadata fields are added.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`
+
+Confirmed in both `axiathon-server` and `axiathon-core`.
+
+### [VERIFIED] Five route groups registered — `lib.rs:483-489`
+
+`/api/v1/health`, `/api/v1/events`, `/api/v1/alerts`, `/api/v1/rules`, `/api/v1/queries` all present.
+
+### [VERIFIED] `FromRef<AppState>` substate pattern implemented — `lib.rs:63-97`
+
+`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices` all have `FromRef` impls and handlers use scoped substates, not `AppState`.
+
+### [VERIFIED] Error responses don't leak internal details
+
+Checked auth error paths — they return generic messages ("Authentication required", "Invalid credentials", "Insufficient permissions"). No internal error details are exposed.
+
+### [VERIFIED] Fallback handler returns envelope-formatted 404 — `lib.rs:471-473`
+
+All unmatched routes return the envelope format.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking issues (must fix):
+1. **Failing test** (`null_bytes_in_auth_header_returns_401`) — test suite must be green
+2. **Nightly fmt check fails** — per project gotchas, this blocks approval
+3. **Duplicate ApiResponse type** — server defines its own envelope instead of using/extending `axiathon-core::ApiResponse<T>`. This divergence will break cross-crate contracts in stories 8.2+
+4. **Global rate limiter causes test isolation issues** — shared mutable state across test invocations
+5. **Six unused crate dependencies** — `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are dead weight
+
+### Should fix before merge:
+6. Wire `TenantContext` construction from `AuthInfo` in the auth middleware
+7. Add at minimum `tracing::info!` spans on request entry/exit with `tenant_id` and `trace_id`
+8. Make `ServerConfig` deserializable and loadable from file (even if `create_app` still defaults)
+9. Use Axum's `RequestBodyLimit` instead of header-only check

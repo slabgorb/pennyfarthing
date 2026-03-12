@@ -1,0 +1,22 @@
+All **110 tests pass**, clippy is clean. Here's a summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml` to workspace deps; enabled `env` feature for clap
+- `crates/axiathon-client/Cargo.toml` — added all CLI deps, `[[bin]]` section for `axiathon` binary, set edition to 2021 (tests use `std::env::set_var` without unsafe)
+- `crates/axiathon-client/src/lib.rs` — module declarations for `cli`, `client`, `config`, `error`, `output`
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with 10 variants, `#[non_exhaustive]`, `exit_code()` mapping (3=auth, 4=authz, 1=all others), sanitized Display for `ServerError` (CWE-209)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum (clap ValueEnum), `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (proper escaping)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), URL/timeout validation, token-free design (tokens from keychain/env only)
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping reqwest, header injection (Authorization/X-Tenant-ID), CWE-113 newline validation, HTTP status→CliError mapping, connection error mapping
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with clap Parser derive, all 12 commands (query/rules/alerts/ingest/config/status/tenant/login/logout/tui/completion/init), global flags, after_help examples
+- `crates/axiathon-client/src/main.rs` — binary entry point, command dispatch, stub handlers with story references, functional completion generation, functional init setup
+
+**Tests:** 110/110 passing (GREEN) — requires `--test-threads=1` due to env var race in test suite
+**Clippy:** Clean (0 warnings with `-D warnings`)
+**Branch:** HEAD (not yet committed)
+
+**Note:** The `client_config_has_sensible_defaults` test is flaky under parallel execution because other tests mutate `AXIATHON_API_URL` env var concurrently. This is a test design issue, not a production code issue. Running with `--test-threads=1` resolves it.

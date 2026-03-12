@@ -98,104 +98,6 @@ check_theme_version() {
   return 0
 }
 
-# Function to output persona for an agent
-output_persona() {
-  local agent_name="$1"
-  local config_file=""
-  local theme=""
-  local theme_file=""
-
-  # Check for config files in priority order:
-  # 1. .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
-  # 2. .pennyfarthing/persona-config.yaml (project default, committed)
-  if [ -f "$PROJECT_ROOT/.pennyfarthing/config.local.yaml" ]; then
-    config_file="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
-  elif [ -f "$PROJECT_ROOT/.pennyfarthing/persona-config.yaml" ]; then
-    config_file="$PROJECT_ROOT/.pennyfarthing/persona-config.yaml"
-  else
-    echo "<!-- No persona config found -->" >&2
-    return 1
-  fi
-
-  # Get theme from config
-  theme=$(yq '.theme' "$config_file" 2>/dev/null)
-  if [ -z "$theme" ] || [ "$theme" = "null" ]; then
-    echo "<!-- No theme configured -->" >&2
-    return 1
-  fi
-
-  # Find theme file - single source of truth: .pennyfarthing/personas/themes/
-  theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
-  if [ ! -f "$theme_file" ]; then
-    echo "<!-- Theme file not found: ${theme_file} -->" >&2
-    return 1
-  fi
-
-  # Check theme version compatibility (warns on major/minor mismatch)
-  check_theme_version "$theme_file" "$theme"
-
-  # Extract agent persona
-  local persona=$(yq ".agents.${agent_name}" "$theme_file" 2>/dev/null)
-  if [ -z "$persona" ] || [ "$persona" = "null" ]; then
-    echo "<!-- No persona found for agent: ${agent_name} -->" >&2
-    return 1
-  fi
-
-  # Output persona in a format Claude can use
-  echo ""
-  echo "<persona agent=\"${agent_name}\" theme=\"${theme}\">"
-  echo "Character: $(yq ".agents.${agent_name}.character" "$theme_file")"
-  echo "Style: $(yq ".agents.${agent_name}.style" "$theme_file")"
-  echo "Role: $(yq ".agents.${agent_name}.role" "$theme_file")"
-
-  # Optional fields
-  local trait=$(yq ".agents.${agent_name}.trait // \"\"" "$theme_file")
-  [ -n "$trait" ] && [ "$trait" != "null" ] && [ "$trait" != "" ] && echo "Trait: $trait"
-
-  local quirk=$(yq ".agents.${agent_name}.quirk // \"\"" "$theme_file")
-  [ -n "$quirk" ] && [ "$quirk" != "null" ] && [ "$quirk" != "" ] && echo "Quirk: $quirk"
-
-  local motto=$(yq ".agents.${agent_name}.motto // \"\"" "$theme_file")
-  [ -n "$motto" ] && [ "$motto" != "null" ] && [ "$motto" != "" ] && echo "Motto: $motto"
-
-  local quote=$(yq ".agents.${agent_name}.quote // \"\"" "$theme_file")
-  [ -n "$quote" ] && [ "$quote" != "null" ] && [ "$quote" != "" ] && echo "Quote: $quote"
-
-  # Helper info
-  local helper_name=$(yq ".agents.${agent_name}.helper.name // \"\"" "$theme_file")
-  local helper_style=$(yq ".agents.${agent_name}.helper.style // \"\"" "$theme_file")
-  if [ -n "$helper_name" ] && [ "$helper_name" != "null" ] && [ "$helper_name" != "" ]; then
-    echo "Helper: ${helper_name} - ${helper_style}"
-  fi
-
-  echo "</persona>"
-
-  # Output portrait path if available (for Claude to read with Read tool)
-  local portrait_path=$(node "$PROJECT_ROOT/scripts/resolve-portrait.mjs" "$theme" "$agent_name" 2>/dev/null)
-  if [ -n "$portrait_path" ] && [ -f "$portrait_path" ]; then
-    echo ""
-    echo "<portrait>$portrait_path</portrait>"
-  fi
-
-  # Output user title if defined
-  local user_title=$(yq ".theme.user_title // \"\"" "$theme_file" 2>/dev/null)
-  if [ -n "$user_title" ] && [ "$user_title" != "null" ] && [ "$user_title" != "" ]; then
-    echo ""
-    echo "<user-title>Address the user as: ${user_title}</user-title>"
-  fi
-
-  # Output crew manifest so agents know other characters
-  echo ""
-  echo "<crew theme=\"${theme}\">"
-  echo "When handing off to other agents, address them by character name:"
-  for role in sm tea dev reviewer architect pm tech-writer ux-designer devops orchestrator ba; do
-    local char=$(yq ".agents.${role}.character // \"\"" "$theme_file" 2>/dev/null)
-    if [ -n "$char" ] && [ "$char" != "null" ] && [ "$char" != "" ]; then
-      printf "  %-12s %s\n" "${role}:" "$char"
-    fi
-  done
-  echo "</crew>"
-}
 
 case "$1" in
   start)
@@ -369,13 +271,7 @@ case "$1" in
     fi
 
     CURRENT_AGENT=$(cat "$AGENT_FILE")
-    echo "Refreshing persona for: $CURRENT_AGENT"
-
-    if is_character_voice_enabled; then
-      output_persona "$CURRENT_AGENT"
-    else
-      echo "Character voice disabled - no persona to refresh"
-    fi
+    echo "Use 'pf agent start $CURRENT_AGENT' to refresh persona" >&2
     ;;
   *)
     echo "Usage: agent-session.sh <start|stop|stop-all|status|list|refresh> [args]" >&2

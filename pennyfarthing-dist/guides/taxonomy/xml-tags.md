@@ -640,7 +640,7 @@ After gate passes, proceed to step-02-context.md
 
 ## Agent File Validation Rules
 
-This section documents the structural constraints enforced by `validate-agent-schema.sh` on agent files.
+This section documents the structural constraints enforced by `pf validate agent` on agent files.
 
 ### Tag Categories
 
@@ -845,7 +845,7 @@ model: haiku
 
 ### Validation Rules
 
-The validator (`validate-agent-schema.sh`) enforces:
+The validator (`pf validate agent`) enforces:
 
 | Rule | Severity | Description |
 |------|----------|-------------|

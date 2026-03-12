@@ -54,9 +54,9 @@ def _status_badge(status: str) -> Text:
 
 
 def _format_assignee(email: str | None) -> str:
-    """Format an email address into a short display name.
+    """Format an email address into two-letter initials.
 
-    ``"keith.avery@1898andco.io"`` → ``"K. Avery"``
+    ``"keith.avery@1898andco.io"`` → ``"KA"``
     ``None`` → ``""``
     """
     if not email:
@@ -64,10 +64,12 @@ def _format_assignee(email: str | None) -> str:
     local = email.split("@")[0]
     parts = local.replace("_", ".").split(".")
     if len(parts) < 2:
-        return parts[0].capitalize()
-    first_initial = parts[0][0].upper() if parts[0] else ""
-    last = parts[-1].capitalize()
-    return f"{first_initial}. {last}"
+        first = parts[0][0].upper() if parts[0] else ""
+        second = parts[0][1].upper() if len(parts[0]) > 1 else ""
+    else:
+        first = parts[0][0].upper() if parts[0] else ""
+        second = parts[-1][0].upper() if parts[-1] else ""
+    return first + second
 
 
 def _should_expand(epic: dict[str, Any]) -> bool:
@@ -92,10 +94,17 @@ def _should_expand(epic: dict[str, Any]) -> bool:
     return has_in_progress or done_pts < total_pts
 
 
-_EPIC_ID_WIDTH = 11  # "MSSCI-NNNNN" = 11 chars
+_EPIC_ID_WIDTH = 11  # "AAAAA-XXXXX" = 11; fits any 5+5 key
 
 # Sort order: actionable items first, completed last
-_STATUS_ORDER = {"in-progress": 0, "in-review": 1, "blocked": 2, "backlog": 3, "done": 4, "canceled": 5}
+_STATUS_ORDER = {
+    "in-progress": 0,
+    "in-review": 1,
+    "blocked": 2,
+    "backlog": 3,
+    "done": 4,
+    "canceled": 5,
+}
 
 
 def _build_epic_label(
@@ -117,8 +126,14 @@ def _build_epic_label(
     ordinal_padded = f"{epic_id:<4}"
     label.append(ordinal_padded, style=id_style)
     if jira_key:
-        display_jira = jira_key if len(jira_key) <= _EPIC_ID_WIDTH else jira_key[: _EPIC_ID_WIDTH - 1] + "\u2026"
-        label.append(f"  {display_jira:<{_EPIC_ID_WIDTH}}", style="dim cyan" if completed else "cyan")
+        display_jira = (
+            jira_key
+            if len(jira_key) <= _EPIC_ID_WIDTH
+            else jira_key[: _EPIC_ID_WIDTH - 1] + "\u2026"
+        )
+        label.append(
+            f"  {display_jira:<{_EPIC_ID_WIDTH}}", style="dim cyan" if completed else "cyan"
+        )
     else:
         label.append(" " * (_EPIC_ID_WIDTH + 2))
     label.append("  ")
@@ -140,13 +155,10 @@ def _build_epic_label(
     return label
 
 
-def _build_story_label(
-    story: dict[str, Any], current_story_id: str, max_width: int = 80
-) -> Text:
+def _build_story_label(story: dict[str, Any], current_story_id: str, max_width: int = 80) -> Text:
     """Build Rich Text label for a story tree leaf.
 
-    Layout: ``✓  126-1   MSSCI-14952  2pt  Story title``
-    In-progress adds owner: ``⟳  126-3   MSSCI-15186  5pt  Story title  [K. Avery]``
+    Layout: ``✓  126-1  KA MSSCI-1495  2pt  Story title``
     Done stories are rendered entirely dim.
     """
     story_id = story.get("id", "")
@@ -167,31 +179,42 @@ def _build_story_label(
     ordinal_padded = f"{story_id:<6}"
     label.append(f"  {ordinal_padded}", style="dim" if is_done else ("bold" if is_current else ""))
 
-    # MSSCI key flush left, fixed-width (12 chars — fits "MSSCI-NNNNN" + pad)
-    jira_padded = f"{jira:<12}"
-    label.append(f"  {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan"))
+    # Assignee initials badge between ordinal and Jira key
+    owner = _format_assignee(story.get("assignee") or story.get("assignedTo"))
+    if owner:
+        owner_style = (
+            "reverse yellow"
+            if is_in_progress
+            else "reverse cyan"
+            if status == "in-review"
+            else "dim on grey23"
+            if is_done
+            else "reverse dim"
+        )
+        label.append(f" {owner} ", style=owner_style)
+    else:
+        label.append("    ")  # 4-char placeholder: space + 2 initials + space
 
-    # Points right-aligned with unit
-    pts_str = f"{pts}pt" if isinstance(pts, int) else f"{pts!s}pt"
-    label.append(f"  {pts_str:>4}", style="dim")
+    # Jira key flush left, fixed-width (fits "AAAAA-XXXXX" without truncation)
+    if len(jira) > _EPIC_ID_WIDTH:
+        jira = jira[: _EPIC_ID_WIDTH - 1] + "\u2026"
+    jira_padded = f"{jira:<{_EPIC_ID_WIDTH}}"
+    label.append(
+        f" {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan")
+    )
+
+    # Points right-aligned
+    label.append(f" {pts:>2}", style="dim")
 
     # Truncate title to fit available width
-    # Reserve space for owner suffix on in-progress stories (~12 chars)
     used = len(label.plain) + 2  # +2 for "  " before title
-    owner_reserve = 12 if is_in_progress else 0
     # ~6 for tree indent (deeper than epics: guide_depth + parent + leaf)
-    available = max_width - used - 6 - owner_reserve
+    available = max_width - used - 6
     if available > 0 and len(title) > available:
         title = title[: available - 1] + "\u2026"
 
     # Title
     label.append(f"  {title}", style="dim" if is_done else "")
-
-    # Owner for in-progress stories
-    if is_in_progress:
-        owner = _format_assignee(story.get("assignee"))
-        if owner:
-            label.append(f"  [{owner}]", style="dim yellow")
 
     if is_current:
         label.stylize("bold")
@@ -250,9 +273,7 @@ class SprintPanel(Widget):
         self._loading_timeout: int = 10
 
     def compose(self) -> ComposeResult:
-        yield Static(
-            "[dim]Waiting for sprint data...[/dim]", id="sprint-header"
-        )
+        yield Static("[dim]Waiting for sprint data...[/dim]", id="sprint-header")
         yield Static(
             "[dim bright_black]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim  c:copy ID[/dim bright_black]",
             id="sprint-hints",
@@ -316,15 +337,18 @@ class SprintPanel(Widget):
         done = sprint.get("done", 0)
         remaining = sprint.get("remaining", 0)
         in_progress = sprint.get("inProgress", 0)
-        total = done + remaining + in_progress
+        in_review = sprint.get("inReview", 0)
+        total = done + remaining + in_progress + in_review
         pct = int(done / total * 100) if total > 0 else 0
         # Use compact unit "p" on narrow panes (<55 chars), "pts" otherwise
         unit = "p" if tree_width < 55 else " pts"
+        review_part = f"  [cyan]\u25ce{in_review}{unit}[/cyan]" if in_review else ""
         header_text = Text.from_markup(
             f"Sprint {sprint_num}  "
             f"[green]\u2713{done}{unit}[/green]  "
             f"\u25ef{remaining}{unit}  "
-            f"[yellow]\u27f3{in_progress}{unit}[/yellow]  "
+            f"[yellow]\u27f3{in_progress}{unit}[/yellow]"
+            f"{review_part}  "
             f"[dim]{pct}%[/dim]"
         )
         registry = payload.get("registry")
@@ -382,7 +406,10 @@ class SprintPanel(Widget):
                         done_pts += pts
 
             label = _build_epic_label(
-                epic_id, epic_title, done_pts, total_pts,
+                epic_id,
+                epic_title,
+                done_pts,
+                total_pts,
                 jira_key=epic.get("jiraKey", ""),
                 max_width=tree_width,
             )
@@ -439,7 +466,10 @@ class SprintPanel(Widget):
                             done_pts += pts
 
                 label = _build_epic_label(
-                    epic_id, epic_title, done_pts, total_pts,
+                    epic_id,
+                    epic_title,
+                    done_pts,
+                    total_pts,
                     jira_key=epic.get("jiraKey", ""),
                     completed=True,
                     max_width=tree_width,

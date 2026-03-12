@@ -1,8 +1,6 @@
 # Relay Mode
 
 <info>
-> **Deprecated.** Relay mode was designed for the legacy marker protocol. It may be removed in a future release.
-
 Automatic agent handoff execution. When enabled, BikeRack GUI auto-executes handoff markers without waiting for user confirmation.
 </info>
 

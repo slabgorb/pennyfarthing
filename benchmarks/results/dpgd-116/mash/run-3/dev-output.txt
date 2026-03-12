@@ -1,0 +1,34 @@
+All 116 tests pass, clippy is clean.
+
+## Summary
+
+**All 116 tests GREEN, 0 failures, clippy clean.**
+
+### Files Created (14 files)
+
+| File | Purpose |
+|------|---------|
+| `src/error.rs` | `CliError` enum with 10 variants, `exit_code()` mapping (0/1/3/4), `from_http_status()`, safe `Display` impl |
+| `src/config.rs` | `ClientConfig` with TOML loading, env var overrides, XDG default path, token-free security |
+| `src/output.rs` | `OutputFormat` enum (Table/Json/Csv) with `FromStr`, `OutputFormatter` with comfy-table/serde_json/csv backends |
+| `src/client.rs` | `SiemClient` wrapping `reqwest::Client`, header injection (X-Tenant-ID, Authorization: Bearer), CRLF/null-byte validation |
+| `src/cli.rs` | `Cli` struct (Parser derive), `Commands` enum (Subcommand derive), 7 global flags, 12 command groups |
+| `src/main.rs` | Binary entry point dispatching commands to handlers |
+| `src/commands/mod.rs` | Re-exports all command modules |
+| `src/commands/query.rs` | QueryCommands + stub (Story 5.5) |
+| `src/commands/rules.rs` | RulesCommands + stub (Story 6.x) |
+| `src/commands/alerts.rs` | AlertsCommands + stub (Story 6.x) |
+| `src/commands/ingest.rs` | IngestCommands + stub (Story 6.x) |
+| `src/commands/config.rs` | ConfigCommands + stub (Story 6.x) |
+| `src/commands/status.rs` | Stub (Story 6.2) |
+| `src/commands/tenant.rs` | TenantCommands + stub (Story 6.x) |
+| `src/commands/login.rs` | Stub (Story 9.1) |
+| `src/commands/completion.rs` | Functional shell completion generation (bash/zsh/fish/PowerShell) |
+| `src/commands/init.rs` | Functional dry-run init |
+
+### Files Modified (2 files)
+
+| File | Change |
+|------|--------|
+| `src/lib.rs` | Added module declarations |
+| `Cargo.toml` | Added `chrono`, `uuid` deps; set `edition = "2021"` (tests use `std::env::set_var` which is unsafe in edition 2024) |

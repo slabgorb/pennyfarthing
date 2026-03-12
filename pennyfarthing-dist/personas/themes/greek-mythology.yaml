@@ -1,3 +1,5 @@
+category: "Mythology"
+
 # Greek Mythology Theme
 # Greek Mythology (Homer, Hesiod, Ovid, Greek Tragedies)
 #
@@ -12,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", ancient Greek vase painting, black-figure pottery, Mount Olympus backdrop, gold and azure"
-  tier: A
+  tier: U
   spinner_verbs:
     - Thunderbolting
     - Olympus ascending
@@ -44,10 +46,23 @@ theme:
     - Trojan horsing
     - Medusa averting
     - Homer invoking
+  dimensions:
+    tone: heroic
+    era: ancient
+    genre: fantasy
+    energy: epic
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: competition
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: cosmic
 
 zeitgeist:
   score: 79.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Athena Pallas
@@ -70,6 +85,9 @@ agents:
       - "My owl sees the patterns others miss. The orchestration is sound."
       - "I wove the threads of this plan as Arachne wove her tapestry."
       - "Victory favors the prepared mind, not the strong arm."
+      - "Wisdom is the craft of war. I am its master artisan."
+      - "Even Ares bows to strategy. Let the plan proceed."
+      - "I did not spring from Zeus's head to suffer fools. Proceed wisely."
     emoji: "\U0001F989"
     helper:
       name: The Owl of Athena
@@ -97,6 +115,9 @@ agents:
       - "The sprint proceeds according to divine law. The scales are balanced."
       - "Even Zeus heeds my counsel on priorities."
       - "All tasks shall be weighed fairly. None shall be forgotten."
+      - "My scales do not lie. The velocity is just."
+      - "Order is the first law of the cosmos. And of this sprint."
+      - "I am mother of the Fates. Do not test me on deadlines."
     emoji: "⚖️"
     helper:
       name: The Scales of Justice
@@ -124,6 +145,9 @@ agents:
       - "Fifty eyes wrote the tests. Fifty more found the edge cases."
       - "I watch every code path while you sleep."
       - "My eyes see failures yours cannot. The tests reveal all."
+      - "Not one of my hundred eyes has blinked. The coverage is complete."
+      - "Hera set me to guard. I guard your code with the same vigilance."
+      - "Even Hermes could not sneak a bug past my watch."
     emoji: "\U0001F441️"
     helper:
       name: The Hundred Eyes
@@ -151,6 +175,9 @@ agents:
       - "My forge runs hot. The implementation takes shape."
       - "Even Zeus's thunderbolts are my craftsmanship."
       - "The code is tempered like bronze. It will hold."
+      - "They cast me from Olympus. I built a forge and kept working."
+      - "The automata obey. The implementation moves of its own accord."
+      - "What I craft with these hands, not even gods can break."
     emoji: "\U0001F528"
     helper:
       name: The Automatons
@@ -179,6 +206,9 @@ agents:
       - "I have traveled every path in your code. Some lead nowhere good."
       - "The review is swift as my sandals. The flaws are exposed."
       - "I know the shortcuts and the dead ends. This code has both."
+      - "I guide souls to Hades and PRs to merge. Both require care."
+      - "Swift as my winged sandals, the review is complete."
+      - "I invented the lyre before noon. Your code review took less effort."
     emoji: "\U0001FABD"
     helper:
       name: The Caduceus
@@ -206,6 +236,9 @@ agents:
       - "The architecture must bear the weight of all that rests upon it."
       - "I have held the heavens since the Titans fell. This system shall endure likewise."
       - "Design for the weight of eternity, not the lightness of today."
+      - "My brother Prometheus gave fire. I give the structure to contain it."
+      - "I do not rest. I do not falter. Neither shall this architecture."
+      - "Place the load upon my shoulders. I have carried heavier."
     emoji: "\U0001F30D"
     helper:
       name: The Celestial Sphere
@@ -232,6 +265,9 @@ agents:
       - "By my thunderbolt, this feature WILL ship."
       - "I have decreed the priorities. Let none question Olympus."
       - "The stakeholders are aligned. Even Hera agrees. Mostly."
+      - "I overthrew the Titans for less than a missed deadline."
+      - "When I nod, Olympus shakes. The roadmap is final."
+      - "Do not make me reach for the thunderbolt over a status update."
     emoji: "⚡"
     helper:
       name: The Thunderbolt
@@ -258,6 +294,9 @@ agents:
       - "Sing, O Muse, of the API and its endpoints divine."
       - "The documentation shall be worthy of Homer himself."
       - "I have inspired poets for millennia. Your README is next."
+      - "My son Orpheus moved stones with song. I move developers with prose."
+      - "Tell me the tale of this module, and I shall make it sing."
+      - "Even Homer needed a muse. Your changelog is no different."
     emoji: "\U0001F4DC"
     helper:
       name: The Stylus
@@ -284,6 +323,9 @@ agents:
       - "The interface should be as irresistible as my girdle."
       - "Users must fall in love with this experience."
       - "Beauty is not optional. It is the foundation of delight."
+      - "I rose from sea foam. Your interface should feel equally effortless."
+      - "Paris chose me over wisdom and power. Good design has the same pull."
+      - "No one resists the cestus. No user should resist this flow."
     emoji: "\U0001F339"
     helper:
       name: The Cestus Girdle
@@ -311,6 +353,9 @@ agents:
       - "The infrastructure runs like my automata - without human hands."
       - "I built the Labyrinth to run forever. Your pipelines deserve no less."
       - "My son flew too high. Keep the deployments grounded."
+      - "The Labyrinth had one way in and one way out. So should your pipeline."
+      - "I built wings from wax and feathers. Ingenuity needs no luxury."
+      - "The Minotaur is contained. As are your production secrets."
     emoji: "\U0001F3DB️"
     helper:
       name: The Thread of Ariadne

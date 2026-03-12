@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: snow-crash
+run_id: 2
+timestamp: '2026-03-08T17:26:12.530054+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-snow-crash-run-2
+phases:
+  tea:
+    token_usage:
+      input: 30
+      output: 20835
+    duration_s: 350.95
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 75
+      output: 31806
+    duration_s: 671.08
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 9
+      output: 4737
+    duration_s: 121.03
+    exit_code: 0

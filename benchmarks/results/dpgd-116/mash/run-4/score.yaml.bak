@@ -1,0 +1,74 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 4
+total_caught: 2
+total_findings: 7
+weighted_caught: 13
+total_weight: 37
+score_pct: 35.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: TEA's security.rs includes a test for 'silent error swallowing' which
+    targets exactly this pattern of from_file_or_default masking parse/permission
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer verified CWE-209 but only checked for token/password/secret/Bearer/api_key\
+    \ leaks in Display/Debug. The actual issue \u2014 Io(#[error(transparent)]) forwarding\
+    \ full OS error paths to stderr \u2014 was not flagged. The security tests check\
+    \ a narrower scope than the real vulnerability."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented sanitize_header_value at client.rs:19-21 stripping \\\
+    r and \\n from tenant ID values, and TEA wrote CRLF injection tests in security.rs:57-85.\
+    \ However, the deeper issue of using raw String instead of axiathon-core's validated\
+    \ TenantId was not addressed \u2014 only the symptom was mitigated."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer flagged toml version mismatch with spec (finding #6) but did
+    not flag the 6 dependencies using direct version strings instead of workspace
+    = true. The Cargo.toml diff shows only 2 lines changed.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer finding #10 explicitly marks ''tokens in the TOML file are silently
+    ignored'' as VERIFIED (correct behavior). The pipeline treats the silent ignoring
+    as a security feature rather than recognizing it as a usability/security gap where
+    users believe they''re authenticated when they''re not.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer flagged a different vacuous test (piped_output_defaults_to_json,
+    finding #5) but did not identify the config test with assert!(config.server().is_none()
+    || ...) where the OR makes the assertion always true.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test using 'let _ = config' with no
+    assert_eq! checks on server() or token() for the default config.

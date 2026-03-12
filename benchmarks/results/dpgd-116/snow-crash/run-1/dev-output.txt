@@ -1,0 +1,21 @@
+All **121 tests pass**, clippy is clean.
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/src/lib.rs` — module declarations
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `#[non_exhaustive]`, thiserror, exit code mapping, sanitized Display
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct (Parser), `Commands` enum (Subcommand), 7 global flags with `global = true`
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, validation (URL, timeout), token rejection
+- `crates/axiathon-client/src/client.rs` — `SiemClient` with header injection, CRLF/null-byte validation, HTTP status→CliError mapping
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum, `OutputFormatter` trait, `TableFormatter`/`JsonFormatter`/`CsvFormatter`
+- `crates/axiathon-client/src/commands/` — 11 command modules: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`, `completion`, `init`, `tui`
+- `crates/axiathon-client/Cargo.toml` — added `uuid`, `chrono`, `serial_test` deps; overrode `unsafe_code` lint to `deny` for edition 2024 env var tests
+- `Cargo.toml` — added `env` feature to workspace clap dependency
+- `crates/axiathon-client/tests/cli_structure.rs` — wrapped `set_var`/`remove_var` in `unsafe` (edition 2024)
+- `crates/axiathon-client/tests/config_loading.rs` — wrapped `set_var`/`remove_var` in `unsafe`, added `#[serial]` for env var race prevention
+
+**Tests:** 121/121 passing (GREEN)
+**Clippy:** Clean (0 warnings)

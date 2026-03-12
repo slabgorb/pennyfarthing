@@ -115,7 +115,12 @@ def dry_run(version: str | None, bump: str | None):
 
 
 @release.command()
-@click.option("--manifest", default=None, type=click.Path(), help="Path to manifest JSON (default: tests/fixtures/package-manifest.json)")
+@click.option(
+    "--manifest",
+    default=None,
+    type=click.Path(),
+    help="Path to manifest JSON (default: tests/fixtures/package-manifest.json)",
+)
 def verify(manifest: str | None):
     """Verify package contents against a known-good manifest.
 

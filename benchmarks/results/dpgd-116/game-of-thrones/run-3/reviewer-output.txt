@@ -1,0 +1,127 @@
+*steeples fingers*
+
+All tests pass, clippy is clean. But oh, I see things. Things that others have overlooked. Let me present my findings.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+**Reviewer:** Petyr Baelish
+**Stance:** Skeptical. Let me show you what your "passing tests" actually prove.
+
+---
+
+## Findings
+
+### `[CRITICAL]` main.rs is a dead placeholder — binary is non-functional at `main.rs:4-8`
+
+The entire `main.rs` is:
+```rust
+fn main() {
+    eprintln!("axiathon: use --help for usage information");
+    std::process::exit(1);
+}
+```
+
+This means:
+- `axiathon --help` does **NOT** show command groups (violates **AC-1**)
+- `axiathon completion bash` does **NOT** generate completions (violates **AC-9**)
+- `axiathon status` does **NOT** print "not yet implemented" (violates **AC-10**)
+- Exit codes are **NOT** mapped via `CliError::exit_code()` (violates **AC-3**)
+- No command is dispatched. The binary always exits with code 1.
+
+The tests pass because they test the *library types* in isolation — `Cli::try_parse_from()`, `CliError::exit_code()`, `generate_completion()` — but **none of them test the actual binary**. The wiring between `main.rs` and all the library code simply does not exist. This is a ship-stopper.
+
+---
+
+### `[HIGH]` Nightly `cargo fmt` check fails at `config.rs:64`, `output.rs:136`, `cli_structure_test.rs:9`
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." Three files have formatting diffs. This blocks merge.
+
+---
+
+### `[HIGH]` `NotFound` Display leaks raw server response body — CWE-209 at `error.rs:12`
+
+```rust
+#[error("not found: {0}")]
+NotFound(String),
+```
+
+`SiemClient::map_status_error(404, body)` stores the raw HTTP response body in `NotFound(body.to_string())`. The `Display` impl then renders it directly to the user. If the server returns internal paths, database IDs, or debug info in 404 bodies, they leak to operators. The `SECURITY` doc comment on the enum says Display should sanitize, but `NotFound` doesn't.
+
+---
+
+### `[HIGH]` AC-2 requires `after_help` usage examples — none present
+
+AC-2 states: "include `after_help` usage examples for each command group." No command struct (`QueryArgs`, `RulesArgs`, `AlertsArgs`, etc.) has a `#[command(after_help = "...")]` attribute. Every `axiathon <cmd> --help` is bare minimum.
+
+---
+
+### `[MEDIUM]` `serde(flatten)` silently absorbs config typos at `config.rs:15`
+
+```rust
+#[serde(flatten)]
+_extra: serde_json::Map<String, serde_json::Value>,
+```
+
+If an operator writes `api_urll = "..."` (typo) in their config file, it's silently absorbed into `_extra`. No warning, no error. The operator runs with the default `http://localhost:8080` thinking they configured a remote server. This is a config safety hazard. Consider `#[serde(deny_unknown_fields)]` or at minimum logging a warning when `_extra` is non-empty.
+
+---
+
+### `[MEDIUM]` `uuid_v4_string()` is misleadingly named at `output.rs:103`
+
+The function is called `uuid_v4_string` but generates `req-{nanos_hex}` — not a UUID v4 at all. It's a timestamp-based request ID. The name is deceptive and will confuse future maintainers.
+
+---
+
+### `[MEDIUM]` `chrono_now_string()` returns raw Unix epoch seconds at `output.rs:113`
+
+The function name suggests chrono/ISO-8601 but returns a bare number like `"1709913600"`. The `ResponseMetadata` `timestamp` field should be ISO 8601 (`2024-03-08T12:00:00Z`) for operator readability and standard compliance.
+
+---
+
+### `[MEDIUM]` `toml` version mismatch — workspace declares 0.8, story specifies 0.9 at `Cargo.toml:58`
+
+The story guardrails say `toml` 0.9 but the workspace uses `toml = "0.8"`. Minor, but diverges from spec.
+
+---
+
+### `[LOW]` `with_env_overrides` silently ignores invalid timeout at `config.rs:75-80`
+
+The doc comment says "Invalid values are silently ignored." An operator setting `AXIATHON_TIMEOUT=abc` gets the default with no warning. This could mask misconfiguration in CI/CD pipelines.
+
+---
+
+### `[LOW]` `expect()` calls in CSV/JSON formatters at `output.rs:99,136-142`
+
+Multiple `.expect("... cannot fail")` calls. While these are likely safe for in-memory writes, the Rust coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The messages are explanatory but not actionable — an operator seeing "CSV flush cannot fail" won't know what to do.
+
+---
+
+## Verified Good
+
+- `[VERIFIED]` `#[forbid(unsafe_code)]` present on both `lib.rs:2` and `main.rs:2`
+- `[VERIFIED]` CWE-113 header injection prevention in `client.rs:65-71` — CR, LF, null rejected
+- `[VERIFIED]` URL scheme validation in `client.rs:26-30` — only http/https accepted
+- `[VERIFIED]` `#[non_exhaustive]` on `CliError` at `error.rs:8`
+- `[VERIFIED]` No server-side crate imports — `Cargo.toml` depends only on `axiathon-core`
+- `[VERIFIED]` `ServerError` Display at `error.rs:15` correctly omits the body string (`{0}` = status code only)
+- `[VERIFIED]` Shell completion generation is functional, not a stub
+- `[VERIFIED]` Global flags all use `global = true`
+- `[VERIFIED]` Config `Debug` impl at `config.rs:18-25` uses custom impl excluding `_extra`
+- `[VERIFIED]` Plural command names (rules, alerts) per architecture mandate
+
+---
+
+## Verdict
+
+# CHANGES_REQUESTED
+
+**Blocking issues (must fix):**
+
+1. **`main.rs` must wire up clap parsing, command dispatch, and exit code mapping.** The binary is a dead placeholder. All ACs that involve running `axiathon` as a binary are unmet.
+2. **Nightly `cargo fmt` must pass.** Three files have formatting diffs.
+3. **`NotFound` Display must not leak raw server response body.** Sanitize or genericize the message.
+4. **AC-2 `after_help` usage examples must be added** to at least the major command groups.
+
+*Chaos is a ladder, but a binary that doesn't parse its arguments... that's just a pit.*

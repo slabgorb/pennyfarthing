@@ -1,0 +1,107 @@
+I have everything I need. Let me compile the full review.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*Everybody lies. Especially code that passes its own tests.*
+
+## Preflight
+
+- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
+- `cargo +nightly fmt --all --check`: **FAIL** (import ordering)
+- `cargo test -p axiathon-client`: **FAIL** (1 test failure: `siem_client_url_no_double_slash`)
+
+---
+
+## Findings
+
+### [CRITICAL] F1: Test failure — `siem_client_url_no_double_slash` at `tests/siem_client.rs:199`
+
+The test creates `SiemClient::new("https://api.axiathon.local/")` then calls `build_url("/api/v1/status")`. `build_url` strips the trailing slash from the base URL, producing `https://api.axiathon.local/api/v1/status`. The test then asserts `!url.contains("//api")` — but `https://` contains `//` and the assertion message says "URL should not have double slashes" while the URL is actually **correct**. The test is a false-negative bug: it panics on valid output. The assertion pattern `//api` doesn't match (the `//` is in the scheme), so looking more carefully — actually the URL `https://api.axiathon.local/api/v1/status` does contain the substring `//api` within `local//api` — wait, no. The trailing slash is stripped, so it's `https://api.axiathon.local` + `/api/v1/status` = `https://api.axiathon.local/api/v1/status`. The substring `//api` only appears if... Ah, the `//` is in `https://api` — yes, `https://api` contains `//a` not `//api`. Let me re-read: `https://api.axiathon.local/api/v1/status` — searching for `//api`: positions are `https:` then `//api.axiathon...` — YES, `//api` matches at position 6 in the scheme! The test is broken because it's matching the `//` in the `https://` scheme. This is a **buggy test assertion**, not a code bug. But it means the test suite doesn't pass, which is a blocking issue.
+
+### [HIGH] F2: Missing `main.rs` — no binary entry point
+
+AC-3 requires `main.rs` that catches errors and calls `std::process::exit()`. There is no `main.rs` in the crate. The `Cargo.toml` has no `[[bin]]` section. The crate is library-only. This means:
+- No `axiathon` binary is produced
+- No exit code dispatch logic exists
+- No tracing initialization
+- The story's fundamental deliverable (an operator-facing CLI binary) doesn't exist yet
+
+### [HIGH] F3: Missing `logout` and `tui` commands — AC-1 violation at `src/cli.rs:51`
+
+AC-1 explicitly requires: "`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum is missing both `Logout` and `Tui` variants. Two of the required command groups are absent.
+
+### [HIGH] F4: `RawConfig` silently ignores unknown fields — config security at `src/config.rs:8`
+
+`RawConfig` uses default serde deserialization, which silently ignores unknown fields. The tests at `config_loading.rs:137-174` verify that `token` and `api_key` fields don't get loaded, but the test is vacuous: it checks `has_token_from_file()` which is hardcoded to `false`. If someone puts `token = "secret"` in the TOML, serde silently drops it — no warning, no error. This is a false sense of security. The `#[serde(deny_unknown_fields)]` attribute should be used, or at minimum a warning should be emitted. As-is, operators get no feedback that their config file contains unrecognized (possibly security-sensitive) fields.
+
+### [HIGH] F5: `apply_env_override` silently swallows invalid values at `src/config.rs:73`
+
+When `AXIATHON_TIMEOUT` is set to an invalid value (e.g., `"0"`, `"-1"`, `"abc"`), the override is silently ignored. No warning, no error. An operator who sets `AXIATHON_TIMEOUT=0` will get the default 30s timeout with zero indication their override was rejected. This violates fail-loud principles. At minimum, log a warning via `tracing::warn!`.
+
+### [MEDIUM] F6: `toml` version mismatch — `Cargo.toml` says `0.8`, story spec says `0.9` at `Cargo.toml:21`
+
+The story guardrails specify `toml 0.9` but the dependency is `toml = "0.8"`. While 0.8 works fine functionally, this deviates from the architecture spec.
+
+### [MEDIUM] F7: Workspace dependency hygiene — non-workspace deps at `Cargo.toml:12-16`
+
+`clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, and `toml` are specified inline with version numbers rather than as workspace dependencies. The story spec says to add these to `[workspace.dependencies]`. This means other crates can't share version pins, risking version fragmentation across the workspace.
+
+### [MEDIUM] F8: `OutputFormatter::format_json` uses `expect()` in production code at `src/output.rs:81`
+
+`serde_json::to_string_pretty(&output).expect("JSON serialization should not fail")` — the Rust coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The same applies to the CSV methods at lines 87-93 which have multiple `expect()` calls. While these are unlikely to fail, the pattern should use `?` or return `Result`.
+
+### [MEDIUM] F9: `format_json` generates random `request_id` per call — untestable at `src/output.rs:75`
+
+Every call to `format_json` generates a fresh `Uuid::new_v4()`, making JSON output non-deterministic. This makes it impossible to snapshot-test or diff JSON output. The `request_id` should be injected, not generated inside the formatter.
+
+### [MEDIUM] F10: `completion.rs` silently returns nothing for unknown shells at `commands/completion.rs:16`
+
+`generate_completion("unknown-shell", &mut buf)` silently writes nothing. No error, no warning. The user runs `axiathon completion unknown-shell` and gets empty stdout. This should return a `CliError` listing supported shells.
+
+### [LOW] F11: `--format` is `Option<String>` instead of typed enum at `src/cli.rs:24`
+
+The `--format` flag accepts any string. clap supports `ValueEnum` derive which would give tab completion and validation at parse time. Using `Option<String>` defers validation and loses shell completion for format values.
+
+### [LOW] F12: Nightly fmt check fails
+
+`cargo +nightly fmt --all --check` shows import ordering differences in `cli.rs` and several command files. Per the gotchas doc, this must pass before approval.
+
+### [VERIFIED] Header injection prevention — `sanitize_header_value` at `src/client.rs:24`
+
+CR/LF stripping is correctly applied to both token and tenant_id values. Prevents CWE-113.
+
+### [VERIFIED] CWE-209 — `ServerError` Display at `src/error.rs:23`
+
+`ServerError` display shows only "Server returned error (HTTP {code})" — the body string is stored but not displayed. Good.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` at `src/error.rs:9`
+
+Correctly applied for forward compatibility.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` at `src/lib.rs:2`
+
+Present and correct.
+
+### [VERIFIED] `Unauthorized` Display doesn't leak details at `src/error.rs:17`
+
+Shows only "Permission denied", not the inner string. Good security practice.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 4 | YES |
+| Medium | 5 | NO |
+| Low | 2 | NO |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The test suite doesn't pass (F1), there's no binary entry point (F2), two required commands are missing (F3), and config silently swallows unknown fields including secrets (F4). The implementation is structurally sound — good error type design, proper header sanitization, correct CWE-209 mitigation — but it's not shippable. Fix the blockers, run `cargo +nightly fmt`, and come back. I'll be here. I'm always here.
