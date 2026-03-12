@@ -102,6 +102,7 @@ def replay_run(
     from pf.benchmark.pipeline_replay import (
         PipelineScore,
         compute_majority_vote,
+        compute_run_dir,
         load_scenario,
         remove_worktree,
         run_judge_pass,
@@ -138,7 +139,7 @@ def replay_run(
     all_scores: list[PipelineScore] = []
 
     # Auto-increment: find highest existing run number
-    theme_dir = out_dir / scenario.id / tag
+    theme_dir = compute_run_dir(out_dir, scenario.id, tag, 0).parent
     start_id = 1
     if theme_dir.exists():
         existing = [
@@ -588,6 +589,168 @@ def _print_heatmap(scenario, scores):
         mean_pct = sum(s.score_pct for s in theme_scores) / len(theme_scores)
         totals_row += f"{mean_caught:.1f} ({mean_pct:.0f}%)".center(col_w)
     click.echo(totals_row)
+
+
+@replay.command("phase")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--run", "run_num", required=True, type=int, help="Run number to replay against")
+@click.option("--phase", "phase_name", required=True, help="Phase to re-run (e.g. reviewer, tea, dev)")
+@click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
+@click.option("--model", default=None, help="Claude model for the phase agent")
+@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-count", default=3, type=int, help="Number of judge passes (default: 3)")
+@click.option(
+    "--theme", default=None,
+    help="Theme tag for result lookup (default: control)",
+)
+@click.option(
+    "--results-dir", default=None, type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option(
+    "--worktree-base", default="/tmp/pf-replay", type=click.Path(),
+    help="Base directory for git worktrees",
+)
+@click.option(
+    "--project-dir", default=None, type=click.Path(exists=True),
+    help="Project with pennyfarthing installed",
+)
+@click.option(
+    "--output-dir", default=None, type=click.Path(),
+    help="Where results are stored (default: internal/results/pipeline-replay/)",
+)
+def replay_phase(
+    scenario_path, run_num, phase_name, keep_worktree, rejudge,
+    model, judge_model, judge_count, theme, results_dir,
+    worktree_base, project_dir, output_dir,
+):
+    """Re-run a single phase against an existing run's state.
+
+    Useful for testing agent changes without re-running the full pipeline.
+    For example, re-run just the reviewer after fixing a rubber-stamp gate.
+
+    \b
+    Examples:
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --rejudge
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --keep-worktree
+    """
+    from pf.benchmark.pipeline_replay import (
+        compute_run_dir,
+        load_scenario,
+        run_phase_replay,
+    )
+
+    project = Path(project_dir) if project_dir else Path.cwd()
+    wt_base = Path(worktree_base)
+    out_dir = (
+        Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+    base_results = Path(results_dir) if results_dir else out_dir
+
+    scenario = load_scenario(scenario_path, project_dir=project)
+    tag = theme or "control"
+
+    run_dir = compute_run_dir(base_results, scenario.id, tag, run_num)
+    if not run_dir.exists():
+        click.echo(f"Error: run directory not found: {run_dir}", err=True)
+        raise SystemExit(1)
+
+    if phase_name not in scenario.phases:
+        click.echo(
+            f"Error: phase '{phase_name}' not in scenario phases: {scenario.phases}",
+            err=True,
+        )
+        raise SystemExit(1)
+
+    click.echo(f"=== Phase Replay: {scenario.id} / run-{run_num} / {phase_name} ===")
+    click.echo(f"  Run dir:  {run_dir}")
+    click.echo(f"  Phase:    {phase_name}")
+    click.echo(f"  Rejudge:  {'yes' if rejudge else 'no'}")
+    click.echo()
+
+    result = run_phase_replay(
+        scenario,
+        run_dir,
+        phase_name,
+        project_dir=project,
+        worktree_base=wt_base,
+        model=model,
+        keep_worktree=keep_worktree,
+        rejudge=rejudge,
+        judge_model=judge_model,
+        judge_count=judge_count,
+    )
+
+    click.echo()
+    click.echo(f"=== Phase replay complete (retry {result['retry_num']}) ===")
+    if "majority_vote" in result:
+        mv = result["majority_vote"]
+        click.echo(f"  Score: {mv['weighted_caught']}/{mv['total_weight']} ({mv['score_pct']}%)")
+    elif "scores" in result and result["scores"]:
+        sc = result["scores"][0]
+        click.echo(f"  Score: {sc['weighted_caught']}/{sc['total_weight']} ({sc['score_pct']}%)")
+
+
+@replay.command("narrate")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.option("--yes", "skip_confirm", is_flag=True, help="Skip cost confirmation")
+@click.option("--force", is_flag=True, help="Regenerate even if cached")
+@click.option("--finding", default=None, help="Focus on a specific finding ID")
+@click.option("--model", default=None, help="Claude model (default: claude-sonnet-4-6)")
+def replay_narrate(run_dir, skip_confirm, force, finding, model):
+    """Generate an LLM-narrated trace of a pipeline run.
+
+    Produces a narrative.md file explaining what the agent did, what it
+    missed, and why. Costs ~$0.50 per narration.
+
+    \b
+    Examples:
+        pf benchmark replay narrate runs/run-1 --yes
+        pf benchmark replay narrate runs/run-1 --finding I3
+        pf benchmark replay narrate runs/run-1 --force --yes
+    """
+    from pf.benchmark.narrate import generate_narrative
+
+    run_path = Path(run_dir)
+
+    # Load scenario metadata from pipeline.yaml if available
+    pipeline_file = run_path / "pipeline.yaml"
+    scenario_id = "unknown"
+    title = "Pipeline Run"
+    phases = ["tea", "dev", "reviewer"]
+    if pipeline_file.exists():
+        pipeline_data = yaml.safe_load(pipeline_file.read_text())
+        scenario_id = pipeline_data.get("scenario_id", scenario_id)
+        if "phases" in pipeline_data and isinstance(pipeline_data["phases"], dict):
+            phases = list(pipeline_data["phases"].keys())
+
+    # Check cache first
+    narrative_path = run_path / "narrative.md"
+    if narrative_path.exists() and not force:
+        click.echo(f"Cached narrative found: {narrative_path}")
+        click.echo(narrative_path.read_text())
+        return
+
+    # Cost warning
+    click.echo("Narration costs ~$0.50 per run (LLM call).", err=True)
+    if not skip_confirm:
+        if not click.confirm("Proceed?"):
+            return
+
+    click.echo(f"Generating narrative for {run_path.name}...")
+    result_path = generate_narrative(
+        run_path,
+        scenario_id,
+        phases,
+        title,
+        model=model,
+        finding_id=finding,
+        force=force,
+        project_dir=Path.cwd(),
+    )
+    click.echo(f"Narrative saved to {result_path}")
 
 
 @replay.command("backfill-versions")

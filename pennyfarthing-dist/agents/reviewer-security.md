@@ -80,26 +80,42 @@ If `ALSO_CONSIDER` was provided, check those specific threat vectors.
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `SECURITY_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "vulnerability": "CWE-ID: description (max 15 words)",
-  "exploit_scenario": "how an attacker exploits this (max 15 words)",
-  "mitigation": "minimal code sketch or pattern that fixes it"
-}]
-```
-
-An empty array `[]` is valid when no security issues are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 SECURITY_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-security
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+SECURITY_RESULT:
+  agent: reviewer-security
+  status: findings
+  findings:
+    - file: "src/api/routes.ts"
+      line: 34
+      category: "injection"
+      description: "CWE-78: User input concatenated into shell command without sanitization"
+      suggestion: "Use execFile() with argument array instead of exec() with string"
+      confidence: high
+    - file: "src/services/auth.ts"
+      line: 91
+      category: "info-leakage"
+      description: "CWE-209: Stack trace returned to client in error response body"
+      suggestion: "Return generic error message; log stack trace server-side only"
+      confidence: high
+```
+
+**Categories:** `injection` | `auth-bypass` | `info-leakage` | `weak-crypto` | `hardcoded-secret` | `path-traversal` | `xss` | `csrf` | `cors-misconfig` | `insecure-deserialization`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Exploitable vulnerability with clear attack path | Confirm and flag as CRITICAL/HIGH |
+| `medium` | Potential vulnerability requiring specific conditions | Review and assess severity |
+| `low` | Defense-in-depth concern, not directly exploitable | Note only |
 </output>

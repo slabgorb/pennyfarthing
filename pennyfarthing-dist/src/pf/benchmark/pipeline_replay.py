@@ -66,6 +66,9 @@ class Scenario:
     total_weight: int
     phase_prompts: dict[str, str]
     original_pipeline: dict[str, Any] = field(default_factory=dict)
+    context_type: str = "sprint"  # "sprint" (epic+story) or "repo" (claude_md)
+    claude_md_path: str = ""  # For repo-context scenarios
+    roots: dict[str, str] = field(default_factory=dict)  # e.g. {"repo": "../poller-cobra"}
 
 
 @dataclass
@@ -187,16 +190,42 @@ def load_scenario(path: str | Path, project_dir: str | Path | None = None) -> Sc
     ctx = raw.get("context", {})
     repo = raw.get("repo", {})
 
+    # Resolve roots relative to scenario file's parent directory
+    raw_roots = raw.get("roots", {})
+    roots = {k: str((path.parent / v).resolve()) for k, v in raw_roots.items()}
+
+    # Resolve repo path: roots.repo overrides repo.path
+    repo_path_str = repo.get("path", "")
+    if roots.get("repo"):
+        resolved_repo = roots["repo"]
+    else:
+        resolved_repo = str(project / repo_path_str)
+
+    # Detect context type: "sprint" has epic+story keys, "repo" has claude_md
+    if "epic" in ctx:
+        context_type = "sprint"
+        context_epic_path = str(project / ctx["epic"])
+        context_story_path = str(project / ctx["story"])
+        claude_md_path = ""
+    else:
+        context_type = "repo"
+        context_epic_path = ""
+        context_story_path = ""
+        # Resolve claude_md relative to the repo root
+        claude_md_path = (
+            str(Path(resolved_repo) / ctx["claude_md"]) if ctx.get("claude_md") else ""
+        )
+
     return Scenario(
         id=raw["id"],
         title=raw["title"],
         story_id=raw["story_id"],
         jira=raw["jira"],
-        repo_path=str(project / repo["path"]),
+        repo_path=resolved_repo,
         base_commit=repo["base_commit"],
         branch=repo.get("branch", ""),
-        context_epic_path=str(project / ctx["epic"]),
-        context_story_path=str(project / ctx["story"]),
+        context_epic_path=context_epic_path,
+        context_story_path=context_story_path,
         session_archive_path=(
             str(project / ctx["session_archive"]) if ctx.get("session_archive") else None
         ),
@@ -205,6 +234,9 @@ def load_scenario(path: str | Path, project_dir: str | Path | None = None) -> Sc
         total_weight=gt.get("total_weight", sum(f.weight for f in findings)),
         phase_prompts=raw.get("phase_prompts", {}),
         original_pipeline=raw.get("original_pipeline", {}),
+        context_type=context_type,
+        claude_md_path=claude_md_path,
+        roots=roots,
     )
 
 
@@ -313,15 +345,87 @@ def setup_worktree_pf_context(worktree_path: Path, project_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Worktree verification
+# ---------------------------------------------------------------------------
+
+# Paths allowed to appear in ``git status --porcelain`` after context setup.
+_ALLOWED_WORKTREE_PATHS = {
+    ".pennyfarthing",
+    ".claude/settings.json",
+    ".claude/",
+    ".claude",
+    ".session/",
+    "sprint/context/",
+}
+
+
+def verify_worktree(worktree_path: Path, expected_commit: str) -> None:
+    """Verify worktree is clean after context setup.
+
+    Checks two things:
+    1. No unexpected files in ``git status --porcelain`` output.
+    2. HEAD matches the expected base commit.
+
+    Raises ``RuntimeError`` with a descriptive message on failure.
+    """
+    # Check for unexpected files
+    status_result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=str(worktree_path),
+        capture_output=True,
+        text=True,
+    )
+    if status_result.returncode != 0:
+        raise RuntimeError(
+            f"git status failed in worktree {worktree_path}: {status_result.stderr.strip()}"
+        )
+
+    unexpected = []
+    for line in status_result.stdout.strip().splitlines():
+        if not line.strip():
+            continue
+        # Format: XY path (or XY path -> renamed_path)
+        file_path = line[3:].split(" -> ")[0]
+        if not any(
+            file_path == allowed or file_path.startswith(allowed)
+            for allowed in _ALLOWED_WORKTREE_PATHS
+        ):
+            unexpected.append(file_path)
+
+    if unexpected:
+        file_list = "\n  ".join(unexpected)
+        raise RuntimeError(
+            f"Worktree {worktree_path} has unexpected files after context setup:\n"
+            f"  {file_list}\n"
+            f"This may indicate a crashed previous run left orphaned files."
+        )
+
+    # Verify HEAD matches expected commit
+    head_result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(worktree_path),
+        capture_output=True,
+        text=True,
+    )
+    if head_result.returncode != 0:
+        raise RuntimeError(
+            f"git rev-parse HEAD failed in worktree {worktree_path}: {head_result.stderr.strip()}"
+        )
+
+    actual_commit = head_result.stdout.strip()
+    if not actual_commit.startswith(expected_commit) and not expected_commit.startswith(actual_commit):
+        raise RuntimeError(
+            f"Worktree HEAD mismatch: expected {expected_commit}, got {actual_commit}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Prompt extraction
 # ---------------------------------------------------------------------------
 
 # XML tags stripped from agent output for benchmark prompts
 _STRIP_TAGS = [
-    "parameters",
     "phase-check",
-    "on-activation",
-    "assessment-templates",
     "finding-capture",
     "exit",
     "tandem-consultation",
@@ -438,31 +542,19 @@ def build_phase_claude_md(
 
     Includes the agent definition/persona and the epic+story context so the
     agent has everything it needs without pennyfarthing installed.
+
+    For repo-context scenarios (no epic/story), includes the repo's own
+    CLAUDE.md instead.
     """
-    epic_text = Path(scenario.context_epic_path).read_text()
-    story_text = Path(scenario.context_story_path).read_text()
+    parts = [f"# Pipeline Replay Benchmark — {role.upper()} Phase"]
+    parts.append(f"\n## Agent Context\n\n{agent_prompt}\n\n---")
 
-    return f"""\
-# Pipeline Replay Benchmark — {role.upper()} Phase
-
-## Agent Context
-
-{agent_prompt}
-
----
-
-## Epic Context
-
-{epic_text}
-
----
-
-## Story Context
-
-{story_text}
-
----
-
+    if scenario.context_type == "sprint":
+        epic_text = Path(scenario.context_epic_path).read_text()
+        story_text = Path(scenario.context_story_path).read_text()
+        parts.append(f"\n## Epic Context\n\n{epic_text}\n\n---")
+        parts.append(f"\n## Story Context\n\n{story_text}\n\n---")
+        parts.append("""
 ## Project Notes
 
 - This is a Rust workspace. The target crate is `crates/axiathon-server/`.
@@ -471,7 +563,14 @@ def build_phase_claude_md(
 - Run tests: `cargo test -p axiathon-server`
 - Run lint: `cargo clippy -p axiathon-server`
 - The crate `axiathon-core` has existing types (`AxiathonError`, `TenantId`, etc.)
-"""
+""")
+    else:
+        # Repo-context: include the repo's own CLAUDE.md if it exists
+        if scenario.claude_md_path and Path(scenario.claude_md_path).exists():
+            repo_claude_md = Path(scenario.claude_md_path).read_text()
+            parts.append(f"\n## Project Context\n\n{repo_claude_md}\n\n---")
+
+    return "\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -684,16 +783,30 @@ def run_phase(
     model: str | None = None,
     otel_collector: OTELFileCollector | None = None,
     project_dir: Path | None = None,
+    resume_session_id: str | None = None,
 ) -> PhaseResult:
     """Run a single pipeline phase via ``claude -p`` in the worktree.
 
     CLAUDE.md must already be in place before calling this.
+    When *resume_session_id* is set, resumes the given session so the
+    model has full conversation history from previous phases.
     When *otel_collector* is set, injects OTEL env vars so telemetry
     flows to the file-based collector.
     When *project_dir* is set, ``CLAUDE_PROJECT_DIR`` is set so hooks
     and ``pf`` resolve the worktree as the project root.
     """
-    cmd = ["claude", "-p", task_prompt, "--output-format", "json"]
+    # Wrap the task prompt so the model defers to CLAUDE.md for agent
+    # workflow (especially <on-activation> which drives subagent fan-out)
+    # rather than treating the task prompt as a self-contained instruction.
+    wrapped_prompt = (
+        "Your agent definition, workflow, and activation instructions are in "
+        "this project's CLAUDE.md. Follow the workflow described there — "
+        "including any subagent spawning in <on-activation>.\n\n"
+        f"Your task:\n{task_prompt}"
+    )
+    cmd = ["claude", "-p", wrapped_prompt, "--output-format", "json"]
+    if resume_session_id:
+        cmd.extend(["--resume", resume_session_id])
     if model:
         cmd.extend(["--model", model])
 
@@ -759,16 +872,11 @@ def run_phase(
 # ---------------------------------------------------------------------------
 
 
-def _compute_run_dir(
-    output_dir: Path, scenario_id: str, tag: str, run_id: int
+def compute_run_dir(
+    output_base: Path, scenario_id: str, tag: str, run_id: int
 ) -> Path:
-    """Compute the run directory path, matching save_result() nesting logic."""
-    expected_suffix = Path(scenario_id) / tag
-    if output_dir.parts[-2:] == expected_suffix.parts:
-        return output_dir / f"run-{run_id}"
-    if output_dir.parts[-1:] == (scenario_id,):
-        return output_dir / tag / f"run-{run_id}"
-    return output_dir / scenario_id / tag / f"run-{run_id}"
+    """Compute the canonical run directory: output_base/scenario_id/tag/run-N."""
+    return output_base / scenario_id / tag / f"run-{run_id}"
 
 
 _REVIEWER_REJECT_RE = re.compile(r"VERDICT:\s*REJECT", re.IGNORECASE)
@@ -801,6 +909,22 @@ The reviewer has requested changes. Review the feedback below and implement the 
 """
 
 
+_REVIEWER_MIN_OUTPUT_TOKENS = 200  # ~150 words minimum for a real review
+
+
+def _is_reviewer_rubber_stamp(output_text: str) -> bool:
+    """Detect whether reviewer output is a rubber stamp.
+
+    Returns ``True`` when the reviewer approved without engaging with the
+    subagent findings — output too short to contain a real review.
+    """
+    if not _REVIEWER_APPROVE_RE.search(output_text):
+        return False  # Only check approvals
+    # Split on whitespace to approximate token count
+    word_count = len(output_text.split())
+    return word_count < _REVIEWER_MIN_OUTPUT_TOKENS
+
+
 def _detect_reviewer_rejection(output_text: str) -> bool:
     """Detect whether reviewer output indicates a rejection.
 
@@ -819,6 +943,144 @@ def _detect_reviewer_rejection(output_text: str) -> bool:
 def _build_reviewer_task_prompt(base_prompt: str) -> str:
     """Append verdict instruction to the reviewer's task prompt."""
     return base_prompt + _REVIEWER_VERDICT_INSTRUCTION
+
+
+# ---------------------------------------------------------------------------
+# Reviewer subagent fan-out (harness-driven)
+# ---------------------------------------------------------------------------
+
+_REVIEWER_SUBAGENTS = [
+    "reviewer-edge-hunter",
+    "reviewer-silent-failure-hunter",
+    "reviewer-test-analyzer",
+    "reviewer-comment-analyzer",
+    "reviewer-type-design",
+    "reviewer-security",
+    "reviewer-simplifier",
+]
+
+
+def _run_reviewer_fanout(
+    worktree_path: Path,
+    project_dir: Path,
+    *,
+    diff: str,
+    model: str | None = None,
+) -> str:
+    """Fan out reviewer subagents as parallel claude -p calls.
+
+    Runs all 7 diff-based subagents concurrently using haiku, collects
+    their findings, and returns a consolidated findings block to inject
+    into the main reviewer prompt.
+
+    Also runs reviewer-preflight in the worktree for tests/lint.
+    """
+    import concurrent.futures
+
+    agents_dir = project_dir / ".pennyfarthing" / "agents"
+
+    def _run_subagent(name: str) -> tuple[str, str]:
+        """Run a single subagent and return (name, output)."""
+        agent_file = agents_dir / f"{name}.md"
+        if not agent_file.exists():
+            return name, f"ERROR: agent file not found: {agent_file}"
+
+        agent_prompt = agent_file.read_text()
+        # Strip frontmatter
+        agent_prompt = re.sub(
+            r"^---\n.*?^---\n", "", agent_prompt,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+        task = (
+            f"Analyze this diff and report findings in structured YAML.\n\n"
+            f"## Agent Instructions\n\n{agent_prompt}\n\n"
+            f"## Diff to Analyze\n\n```diff\n{diff}\n```\n"
+        )
+
+        cmd = ["claude", "-p", task, "--output-format", "json", "--model",
+               "claude-haiku-4-5-20251001"]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=str(worktree_path),
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env={**os.environ},
+            )
+            # Extract text from JSON output
+            try:
+                parsed = json.loads(result.stdout)
+                text = parsed.get("result", result.stdout)
+            except (json.JSONDecodeError, TypeError):
+                text = result.stdout
+            return name, text
+        except subprocess.TimeoutExpired:
+            return name, "TIMEOUT: subagent exceeded 120s"
+        except Exception as e:
+            return name, f"ERROR: {e}"
+
+    def _run_preflight() -> tuple[str, str]:
+        """Run preflight checks (tests + lint) in the worktree."""
+        checks = []
+        # Run tests
+        test_result = subprocess.run(
+            ["cargo", "test", "--workspace"],
+            cwd=str(worktree_path),
+            capture_output=True, text=True, timeout=120,
+        )
+        checks.append(f"## Tests\nExit code: {test_result.returncode}\n"
+                       f"```\n{test_result.stdout[-2000:]}\n```")
+        if test_result.stderr:
+            checks.append(f"```stderr\n{test_result.stderr[-1000:]}\n```")
+
+        # Run clippy
+        lint_result = subprocess.run(
+            ["cargo", "clippy", "--workspace", "--", "-W", "clippy::all"],
+            cwd=str(worktree_path),
+            capture_output=True, text=True, timeout=120,
+        )
+        checks.append(f"## Clippy\nExit code: {lint_result.returncode}\n"
+                       f"```\n{lint_result.stderr[-2000:]}\n```")
+
+        return "reviewer-preflight", "\n".join(checks)
+
+    n = len(_REVIEWER_SUBAGENTS)
+    print(f"  [FANOUT] Spawning {n} subagents + preflight...")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(_run_subagent, name): name
+            for name in _REVIEWER_SUBAGENTS
+        }
+        futures[pool.submit(_run_preflight)] = "reviewer-preflight"
+
+        results: dict[str, str] = {}
+        for future in concurrent.futures.as_completed(futures):
+            name = futures[future]
+            try:
+                agent_name, output = future.result()
+                results[agent_name] = output
+                print(f"  [FANOUT] {agent_name} done")
+            except Exception as e:
+                results[name] = f"ERROR: {e}"
+                print(f"  [FANOUT] {name} failed: {e}")
+
+    # Build consolidated findings block
+    parts = ["## Subagent Findings (Harness Fan-Out)\n"]
+    parts.append("The following findings were produced by specialist "
+                 "subagents analyzing the diff. Review each finding, "
+                 "confirm or dismiss with rationale, and incorporate "
+                 "confirmed findings into your assessment.\n")
+
+    for name in ["reviewer-preflight"] + _REVIEWER_SUBAGENTS:
+        tag = name.replace("reviewer-", "").upper()
+        output = results.get(name, "NO OUTPUT")
+        parts.append(f"### [{tag}] {name}\n\n{output}\n")
+
+    return "\n".join(parts)
 
 
 def run_pipeline(
@@ -881,11 +1143,26 @@ def run_pipeline(
     if not is_bmad:
         setup_worktree_pf_context(wt_path, project_dir)
 
+    # Create session file for cross-phase context passing
+    session_dir = wt_path / ".session"
+    session_dir.mkdir(exist_ok=True)
+    session_file = session_dir / "pipeline-session.md"
+    session_file.write_text(
+        f"# Pipeline Session — {scenario.id}\n\n"
+        f"**Scenario:** {scenario.id}\n"
+        f"**Commit:** {scenario.base_commit}\n\n"
+        "---\n\n"
+    )
+
+    # Verify worktree is clean before proceeding
+    verify_worktree(wt_path, scenario.base_commit)
+
     # Compute run_dir early so we can place OTEL files there
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
-    run_dir = _compute_run_dir(output_dir=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
+    run_dir = compute_run_dir(output_base=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
 
     # Start OTEL file collector (with enrichment while worktree exists)
+    collector: OTELFileCollector | None = None
     collector = OTELFileCollector(run_dir, worktree_path=wt_path)
     collector.start()
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
@@ -898,8 +1175,8 @@ def run_pipeline(
             translate_story_file,
         )
 
-        epic_text = Path(scenario.context_epic_path).read_text()
-        story_text = Path(scenario.context_story_path).read_text()
+        epic_text = Path(scenario.context_epic_path).read_text() if scenario.context_epic_path else ""
+        story_text = Path(scenario.context_story_path).read_text() if scenario.context_story_path else ""
 
         if role == "dev":
             # Translate PF context into BMAD story format
@@ -928,8 +1205,12 @@ def run_pipeline(
             # BMAD has no TEA equivalent — use a minimal prompt
             return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
 
+    # Session ID for cross-phase continuity via --resume
+    pipeline_session_id: str | None = None
+
     def _run_single_phase(role: str, task_prompt: str, phase_key: str | None = None) -> PhaseResult:
         """Run one phase and record it in result.phases."""
+        nonlocal pipeline_session_id
         key = phase_key or role
 
         if is_bmad:
@@ -952,7 +1233,12 @@ def run_pipeline(
             model=model,
             otel_collector=collector,
             project_dir=project_dir,
+            resume_session_id=pipeline_session_id,
         )
+        # Capture session ID from first phase, reuse for all subsequent
+        if phase_result.session_id and not pipeline_session_id:
+            pipeline_session_id = phase_result.session_id
+            print(f"  [SESSION] Established: {pipeline_session_id[:8]}")
         result.phases[key] = phase_result
 
         tokens = phase_result.token_usage
@@ -971,16 +1257,137 @@ def run_pipeline(
 
         return phase_result
 
+    def _run_scout(agent_name: str, focus: str) -> str:
+        """Run a specialist scout on the full codebase before a phase."""
+        agents_dir = project_dir / ".pennyfarthing" / "agents"
+        agent_file = agents_dir / f"{agent_name}.md"
+        if not agent_file.exists():
+            return ""
+        agent_prompt = agent_file.read_text()
+        agent_prompt = re.sub(
+            r"^---\n.*?^---\n", "", agent_prompt,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        src_list = subprocess.run(
+            ["find", ".", "-name", "*.rs", "-type", "f"],
+            cwd=str(wt_path), capture_output=True, text=True, timeout=10,
+        )
+        scan_task = (
+            f"{focus}\n\n"
+            f"## Agent Instructions\n\n{agent_prompt}\n\n"
+            f"## Source Files\n\n{src_list.stdout}\n\n"
+            f"Read each file and analyze. Report findings with file path and line."
+        )
+        tag = agent_name.replace("reviewer-", "").upper()
+        print(f"  [{tag}-SCAN] Running pre-phase scan...")
+        scan_result = subprocess.run(
+            ["claude", "-p", scan_task, "--output-format", "json",
+             "--model", "claude-haiku-4-5-20251001"],
+            cwd=str(wt_path), capture_output=True, text=True,
+            timeout=120, env={**os.environ},
+        )
+        try:
+            parsed = json.loads(scan_result.stdout)
+            output = parsed.get("result", scan_result.stdout)
+        except (json.JSONDecodeError, TypeError):
+            output = scan_result.stdout
+        print(f"  [{tag}-SCAN] Done")
+        return output
+
+    # Pre-phase scout configs: specialist scans on full codebase before each phase
+    _PHASE_SCOUTS: dict[str, list[tuple[str, str, str]]] = {
+        "tea": [
+            ("reviewer-test-analyzer",
+             "Scan ALL test files for quality issues — vacuous assertions, "
+             "tests that prove nothing, missing edge cases, zero-assertion tests.",
+             "Pre-existing Test Quality Issues"),
+        ],
+        "dev": [
+            ("reviewer-silent-failure-hunter",
+             "Scan ALL source files for silent failures — swallowed errors, "
+             "empty catches, fallbacks that hide problems. Focus on functions "
+             "that return defaults instead of propagating errors.",
+             "Pre-existing Silent Failures"),
+            ("reviewer-security",
+             "Scan ALL source files for security vulnerabilities — injection "
+             "risks, raw string APIs that should use newtypes, auth bypasses.",
+             "Pre-existing Security Issues"),
+            ("reviewer-type-design",
+             "Scan ALL source files for type design issues — stringly-typed "
+             "APIs, missing newtypes, unsafe casts, weak type invariants.",
+             "Pre-existing Type Design Issues"),
+        ],
+    }
+
     try:
         # Run initial phases linearly
         for role in scenario.phases:
             task_prompt = scenario.phase_prompts.get(role, f"Begin {role} phase.")
 
-            # Append verdict instruction to reviewer prompts
-            if role == "reviewer":
+            # Run pre-phase scouts if configured (PF runs only)
+            if not is_bmad and role in _PHASE_SCOUTS:
+                import concurrent.futures
+                scouts = _PHASE_SCOUTS[role]
+                with concurrent.futures.ThreadPoolExecutor(max_workers=len(scouts)) as pool:
+                    futures = {
+                        pool.submit(_run_scout, name, focus): (name, heading)
+                        for name, focus, heading in scouts
+                    }
+                    for future in concurrent.futures.as_completed(futures):
+                        _, heading = futures[future]
+                        findings = future.result()
+                        if findings:
+                            task_prompt += (
+                                f"\n\n## {heading}\n\n"
+                                f"Do not proceed with implementation until you have "
+                                f"addressed the following pre-existing issues:\n\n"
+                                f"{findings}"
+                            )
+
+            # Reviewer: fan out subagents from harness, inject findings
+            if role == "reviewer" and not is_bmad:
+                # Get diff for subagents
+                diff_result = subprocess.run(
+                    ["git", "diff", scenario.base_commit + "...HEAD"],
+                    cwd=str(wt_path),
+                    capture_output=True, text=True, timeout=30,
+                )
+                diff_text = diff_result.stdout or "(no diff)"
+
+                fanout_findings = _run_reviewer_fanout(
+                    wt_path, project_dir, diff=diff_text, model=model,
+                )
+                task_prompt = (
+                    task_prompt + "\n\n" + fanout_findings
+                )
+                task_prompt = _build_reviewer_task_prompt(task_prompt)
+            elif role == "reviewer":
                 task_prompt = _build_reviewer_task_prompt(task_prompt)
 
-            _run_single_phase(role, task_prompt)
+            phase_result = _run_single_phase(role, task_prompt)
+
+            # Rubber-stamp gate: if reviewer approved with trivially short
+            # output, it ignored the subagent findings.  Retry once with an
+            # explicit instruction to engage.
+            if (
+                role == "reviewer"
+                and not is_bmad
+                and phase_result is not None
+                and _is_reviewer_rubber_stamp(phase_result.output_text)
+            ):
+                print("  [GATE] Reviewer rubber-stamped — retrying with explicit engagement instruction")
+                retry_prompt = (
+                    task_prompt
+                    + "\n\n## CRITICAL: Engage With Subagent Findings\n\n"
+                    "Your previous review was rejected by the quality gate "
+                    "because it did not engage with the subagent findings above. "
+                    "You MUST:\n"
+                    "1. Address EACH subagent's findings individually — confirm or dismiss with rationale\n"
+                    "2. List all confirmed findings with severity and affected files\n"
+                    "3. Your output must be a thorough review, not a summary dismissal\n"
+                    "4. End with VERDICT: APPROVE or VERDICT: REJECT\n"
+                )
+                phase_result = _run_single_phase("reviewer", retry_prompt, phase_key="reviewer")
 
         # Kick-back loop: if reviewer rejected and rework cycles are enabled
         if max_rework_cycles > 0 and "reviewer" in result.phases:
@@ -1016,7 +1423,8 @@ def run_pipeline(
         print(f"  ERROR: Pipeline failed at phase: {exc}")
         raise
     finally:
-        collector.stop()
+        if collector:
+            collector.stop()
         # Generate diff of worktree changes
         diff_result = subprocess.run(
             ["git", "diff", "--stat"],
@@ -1451,14 +1859,7 @@ def save_result(
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
-    expected_suffix = Path(pipeline_result.scenario_id) / tag
-    # Avoid double-nesting when output_dir already ends with scenario/theme
-    if output_dir.parts[-2:] == expected_suffix.parts:
-        run_dir = output_dir / f"run-{pipeline_result.run_id}"
-    elif output_dir.parts[-1:] == (pipeline_result.scenario_id,):
-        run_dir = output_dir / tag / f"run-{pipeline_result.run_id}"
-    else:
-        run_dir = output_dir / pipeline_result.scenario_id / tag / f"run-{pipeline_result.run_id}"
+    run_dir = compute_run_dir(output_dir, pipeline_result.scenario_id, tag, pipeline_result.run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Save phase outputs
@@ -1532,6 +1933,15 @@ def save_result(
     diff_pr = pipeline_result.phases.get("_diff_stat")
     if diff_pr:
         (run_dir / "diff-stat.txt").write_text(diff_pr.output_text)
+
+    # Generate and save events summary from OTEL data
+    from pf.benchmark.events import generate_events_summary
+
+    phase_names = [r for r in pipeline_result.phases if not r.startswith("_")]
+    events_summary = generate_events_summary(run_dir, phase_names)
+    (run_dir / "events-summary.yaml").write_text(
+        yaml.dump(events_summary, default_flow_style=False, sort_keys=False)
+    )
 
     return run_dir
 
@@ -1776,3 +2186,403 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
     out_file = run_dir / "majority_vote.yaml"
     out_file.write_text(yaml.dump(result, default_flow_style=False, sort_keys=False))
     return result
+
+
+# ---------------------------------------------------------------------------
+# Single-phase replay
+# ---------------------------------------------------------------------------
+
+
+def _next_retry_number(run_dir: Path, phase: str) -> int:
+    """Find the next retry number for a phase in a run directory.
+
+    Scans for files like ``reviewer-output-retry-1.txt`` and returns N+1.
+    """
+    existing = []
+    for f in run_dir.iterdir():
+        if f.name.startswith(f"{phase}-output-retry-") and f.name.endswith(".txt"):
+            try:
+                n = int(f.stem.split("-retry-")[1])
+                existing.append(n)
+            except (IndexError, ValueError):
+                pass
+    return (max(existing) + 1) if existing else 1
+
+
+def run_phase_replay(
+    scenario: Scenario,
+    run_dir: Path,
+    phase: str,
+    *,
+    project_dir: Path,
+    worktree_base: Path,
+    model: str | None = None,
+    keep_worktree: bool = False,
+    rejudge: bool = False,
+    judge_model: str | None = None,
+    judge_count: int = 3,
+) -> dict:
+    """Re-run a single phase against an existing run's worktree state.
+
+    1. Reads ``pipeline.yaml`` from *run_dir* to get metadata.
+    2. Recreates the worktree at the base commit (or reuses if it exists
+       and *keep_worktree* is set on the original run).
+    3. If prior phases exist (e.g. tea, dev before reviewer), replays
+       their code changes by checking out the run's final state.
+    4. Runs only the requested phase with its full machinery.
+    5. Saves output as ``{phase}-output-retry-N.txt`` alongside existing files.
+    6. Optionally re-judges against the new output.
+
+    Returns a dict with retry number, phase result, and optional scores.
+    """
+    meta_file = run_dir / "pipeline.yaml"
+    if not meta_file.exists():
+        raise FileNotFoundError(f"pipeline.yaml not found in {run_dir}")
+
+    meta = yaml.safe_load(meta_file.read_text())
+    retry_num = _next_retry_number(run_dir, phase)
+
+    # Determine worktree path
+    tag = meta.get("theme") or "control"
+    run_id = meta["run_id"]
+    wt_name = f"{scenario.id}-{tag}-run-{run_id}-retry-{retry_num}"
+    original_wt = Path(meta.get("worktree_path", ""))
+
+    # Reuse existing worktree if it still exists, otherwise recreate
+    if original_wt.exists() and (original_wt / ".git").exists():
+        wt_path = original_wt
+        print(f"  [WORKTREE] Reusing existing: {wt_path}")
+    else:
+        wt_path = worktree_base / wt_name
+        repo = Path(scenario.repo_path)
+        print(f"  [WORKTREE] Creating at {scenario.base_commit[:12]}...")
+        create_worktree(repo, scenario.base_commit, wt_path)
+        setup_worktree_pf_context(wt_path, project_dir)
+
+        # Apply code changes from prior phases by cherry-picking the dev output.
+        # The simplest approach: replay the prior phases' code by re-running
+        # `git apply` on the diff — but we don't have the full diff saved.
+        # Instead, we need the user to use --keep-worktree on the original run,
+        # or we accept that we start from base_commit (TEA+Dev changes lost).
+        prior_phases = []
+        for p in scenario.phases:
+            if p == phase:
+                break
+            prior_phases.append(p)
+
+        if prior_phases:
+            print(
+                f"  [WORKTREE] WARNING: Prior phases ({', '.join(prior_phases)}) "
+                f"ran in original worktree. Starting from base commit — "
+                f"code changes from prior phases are NOT present. "
+                f"Use --keep-worktree on original run to preserve state."
+            )
+
+    # Start OTEL collector for retry
+    collector = OTELFileCollector(run_dir, worktree_path=wt_path)
+    collector.start()
+    # Override phase name to include retry suffix
+    retry_phase_name = f"{phase}-retry-{retry_num}"
+
+    result_data: dict[str, Any] = {
+        "retry_num": retry_num,
+        "phase": phase,
+        "run_dir": str(run_dir),
+    }
+
+    try:
+        # Build task prompt
+        task_prompt = scenario.phase_prompts.get(phase, f"Begin {phase} phase.")
+
+        # Run pre-phase scouts if applicable
+        if phase in _PHASE_SCOUTS:
+            import concurrent.futures
+            scouts = _PHASE_SCOUTS[phase]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(scouts)) as pool:
+                futures = {
+                    pool.submit(_run_scout_standalone, wt_path, project_dir, name, focus): (name, heading)
+                    for name, focus, heading in scouts
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    _, heading = futures[future]
+                    findings = future.result()
+                    if findings:
+                        task_prompt += (
+                            f"\n\n## {heading}\n\n"
+                            f"Do not proceed with implementation until you have "
+                            f"addressed the following pre-existing issues:\n\n"
+                            f"{findings}"
+                        )
+
+        # Reviewer: fan out subagents from harness
+        if phase == "reviewer":
+            diff_result = subprocess.run(
+                ["git", "diff", scenario.base_commit + "...HEAD"],
+                cwd=str(wt_path),
+                capture_output=True, text=True, timeout=30,
+            )
+            diff_text = diff_result.stdout or "(no diff)"
+
+            fanout_findings = _run_reviewer_fanout(
+                wt_path, project_dir, diff=diff_text, model=model,
+            )
+            task_prompt = task_prompt + "\n\n" + fanout_findings
+            task_prompt = _build_reviewer_task_prompt(task_prompt)
+
+        # Extract agent prompt and build CLAUDE.md
+        theme = meta.get("theme")
+        agent_prompt = extract_agent_prompt(
+            phase, project_dir, persona=(theme is not None), theme=theme
+        )
+        claude_md = build_phase_claude_md(phase, agent_prompt, scenario)
+        (wt_path / "CLAUDE.md").write_text(claude_md)
+
+        # Set OTEL phase name with retry suffix
+        collector.phase = retry_phase_name
+
+        print(f"  [{phase.upper()}] Running phase (retry {retry_num})...")
+        phase_result = run_phase(
+            wt_path,
+            phase,
+            task_prompt,
+            model=model,
+            otel_collector=collector,
+            project_dir=project_dir,
+        )
+
+        tokens = phase_result.token_usage
+        actual_models = list(phase_result.model_usage.keys())
+        model_str = actual_models[0] if actual_models else model or "?"
+        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
+        sid_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
+        print(
+            f"  [{phase.upper()}] Done in {phase_result.duration_s}s "
+            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
+            f"model={model_str}{cost_str}{sid_str})"
+        )
+
+        # Rubber-stamp gate for reviewer retries
+        if (
+            phase == "reviewer"
+            and _is_reviewer_rubber_stamp(phase_result.output_text)
+        ):
+            print("  [GATE] Reviewer rubber-stamped — retrying with engagement instruction")
+            retry_prompt = (
+                task_prompt
+                + "\n\n## CRITICAL: Engage With Subagent Findings\n\n"
+                "Your previous review was rejected by the quality gate "
+                "because it did not engage with the subagent findings above. "
+                "You MUST:\n"
+                "1. Address EACH subagent's findings individually\n"
+                "2. List all confirmed findings with severity and affected files\n"
+                "3. Your output must be a thorough review, not a summary dismissal\n"
+                "4. End with VERDICT: APPROVE or VERDICT: REJECT\n"
+            )
+            phase_result = run_phase(
+                wt_path, phase, retry_prompt,
+                model=model, otel_collector=collector, project_dir=project_dir,
+            )
+
+        # Save retry output
+        output_file = run_dir / f"{phase}-output-retry-{retry_num}.txt"
+        output_file.write_text(phase_result.output_text)
+        print(f"  Saved: {output_file.name}")
+
+        # Save retry metadata
+        retry_meta = {
+            "retry_num": retry_num,
+            "phase": phase,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "model": model or "opus",
+            "duration_s": phase_result.duration_s,
+            "cost_usd": round(phase_result.cost_usd, 4) if phase_result.cost_usd else None,
+            "token_usage": phase_result.token_usage,
+            "model_usage": phase_result.model_usage or None,
+            "session_id": phase_result.session_id,
+            "exit_code": phase_result.exit_code,
+            "worktree_path": str(wt_path),
+        }
+        retry_meta_file = run_dir / f"{phase}-retry-{retry_num}.yaml"
+        retry_meta_file.write_text(
+            yaml.dump(retry_meta, default_flow_style=False, sort_keys=False)
+        )
+
+        result_data["phase_result"] = phase_result
+        result_data["output_file"] = str(output_file)
+
+        # Optionally re-judge using the retry output
+        if rejudge:
+            # Reconstruct pipeline result but swap in the retry output
+            pipeline_result = reconstruct_pipeline_result(run_dir, scenario)
+            if pipeline_result:
+                # Replace the phase output with retry output
+                pipeline_result.phases[phase] = phase_result
+                # Also include diff stat if worktree has changes
+                diff_result = subprocess.run(
+                    ["git", "diff", "--stat"],
+                    cwd=str(wt_path),
+                    capture_output=True, text=True,
+                )
+                if diff_result.stdout.strip():
+                    pipeline_result.phases["_diff_stat"] = PhaseResult(
+                        role="_diff", output_text=diff_result.stdout,
+                    )
+
+                scores = []
+                for j in range(judge_count):
+                    jmodel = judge_model or "claude-sonnet-4-6"
+                    print(f"  [JUDGE {j + 1}/{judge_count}] Scoring retry output ({jmodel})...")
+                    score = score_with_judge(
+                        scenario, pipeline_result, model=jmodel, project_dir=project_dir,
+                    )
+                    print(
+                        f"  [JUDGE {j + 1}/{judge_count}] Score: "
+                        f"{score.weighted_caught}/{score.total_weight} "
+                        f"({score.score_pct}%) — {score.total_caught}/{score.total_findings} findings"
+                    )
+                    score_data = {
+                        "scenario_id": score.scenario_id,
+                        "theme": score.theme,
+                        "run_id": score.run_id,
+                        "judge_model": jmodel,
+                        "judge_version": JUDGE_VERSION,
+                        "judge_pass": j + 1,
+                        "retry_num": retry_num,
+                        "total_caught": score.total_caught,
+                        "total_findings": score.total_findings,
+                        "weighted_caught": score.weighted_caught,
+                        "total_weight": score.total_weight,
+                        "score_pct": score.score_pct,
+                        "findings": [asdict(f) for f in score.findings],
+                    }
+                    score_file = run_dir / f"{phase}-retry-{retry_num}-judge-{j + 1}.yaml"
+                    score_file.write_text(
+                        yaml.dump(score_data, default_flow_style=False, sort_keys=False)
+                    )
+                    scores.append(score_data)
+
+                result_data["scores"] = scores
+
+                # Majority vote if multiple judges
+                if len(scores) >= 2:
+                    mv = _compute_retry_majority_vote(scores, scenario, retry_num)
+                    mv_file = run_dir / f"{phase}-retry-{retry_num}-majority.yaml"
+                    mv_file.write_text(
+                        yaml.dump(mv, default_flow_style=False, sort_keys=False)
+                    )
+                    print(f"  [MAJORITY] {mv['n_judges']}j vote: {mv['score_pct']}%")
+                    result_data["majority_vote"] = mv
+
+    finally:
+        collector.stop()
+        # Clean up worktree if we created it and keep_worktree is not set
+        if not keep_worktree and str(wt_path) != str(original_wt):
+            try:
+                remove_worktree(Path(scenario.repo_path), wt_path)
+            except Exception:
+                print(f"  Warning: could not remove worktree {wt_path}")
+
+    return result_data
+
+
+def _run_scout_standalone(
+    wt_path: Path,
+    project_dir: Path,
+    agent_name: str,
+    focus: str,
+) -> str:
+    """Run a specialist scout — standalone version for phase replay."""
+    agents_dir = project_dir / ".pennyfarthing" / "agents"
+    agent_file = agents_dir / f"{agent_name}.md"
+    if not agent_file.exists():
+        return ""
+    agent_prompt = agent_file.read_text()
+    agent_prompt = re.sub(
+        r"^---\n.*?^---\n", "", agent_prompt,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    src_list = subprocess.run(
+        ["find", ".", "-name", "*.rs", "-type", "f"],
+        cwd=str(wt_path), capture_output=True, text=True, timeout=10,
+    )
+    scan_task = (
+        f"{focus}\n\n"
+        f"## Agent Instructions\n\n{agent_prompt}\n\n"
+        f"## Source Files\n\n{src_list.stdout}\n\n"
+        f"Read each file and analyze. Report findings with file path and line."
+    )
+    tag = agent_name.replace("reviewer-", "").upper()
+    print(f"  [{tag}-SCAN] Running pre-phase scan...")
+    scan_result = subprocess.run(
+        ["claude", "-p", scan_task, "--output-format", "json",
+         "--model", "claude-haiku-4-5-20251001"],
+        cwd=str(wt_path), capture_output=True, text=True,
+        timeout=120, env={**os.environ},
+    )
+    try:
+        parsed = json.loads(scan_result.stdout)
+        output = parsed.get("result", scan_result.stdout)
+    except (json.JSONDecodeError, TypeError):
+        output = scan_result.stdout
+    print(f"  [{tag}-SCAN] Done")
+    return output
+
+
+def _compute_retry_majority_vote(
+    scores: list[dict],
+    scenario: Scenario,
+    retry_num: int,
+) -> dict:
+    """Compute majority vote from retry judge scores."""
+    n_judges = len(scores)
+    majority = n_judges // 2 + 1
+    gt_map = {f.id: f for f in scenario.ground_truth}
+
+    majority_findings = []
+    for fid in [f.id for f in scenario.ground_truth]:
+        caught_votes = 0
+        caught_by_votes: dict[str, int] = {}
+        evidences = []
+
+        for sc in scores:
+            finding = next((f for f in sc.get("findings", []) if f["finding_id"] == fid), None)
+            if finding and finding.get("caught"):
+                caught_votes += 1
+                by = finding.get("caught_by", "unknown")
+                caught_by_votes[by] = caught_by_votes.get(by, 0) + 1
+                if finding.get("evidence"):
+                    evidences.append(finding["evidence"])
+
+        caught = caught_votes >= majority
+        caught_by = (
+            max(caught_by_votes, key=caught_by_votes.get) if caught and caught_by_votes else None
+        )
+        majority_findings.append({
+            "finding_id": fid,
+            "title": gt_map[fid].title,
+            "weight": gt_map[fid].weight,
+            "phase_ideal": gt_map[fid].phase_ideal,
+            "caught": caught,
+            "caught_by": caught_by,
+            "evidence": evidences[0] if evidences else "",
+            "votes": f"{caught_votes}/{n_judges}",
+        })
+
+    total_caught = sum(1 for f in majority_findings if f["caught"])
+    weighted_caught = sum(f["weight"] for f in majority_findings if f["caught"])
+    total_weight = scenario.total_weight
+
+    return {
+        "judge_method": "majority_vote",
+        "n_judges": n_judges,
+        "majority_threshold": majority,
+        "retry_num": retry_num,
+        "judge_version": JUDGE_VERSION,
+        "total_caught": total_caught,
+        "total_findings": len(majority_findings),
+        "weighted_caught": weighted_caught,
+        "total_weight": total_weight,
+        "score_pct": round(weighted_caught / total_weight * 100, 1) if total_weight else 0.0,
+        "findings": majority_findings,
+        "individual_scores": [s.get("score_pct", 0) for s in scores],
+    }

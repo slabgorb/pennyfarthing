@@ -323,17 +323,6 @@ calibrated:
       distinctiveness: 100
     notes: "Perfect agent distinctiveness - Mike vs Jimmy vs Chuck utterly different"
 
-  sandman:
-    composite: 83.0
-    rating: rich
-    breakdown:
-      behavioral: 85
-      speech: 80
-      catchphrases: 85
-      helpers: 80
-      distinctiveness: 85
-    notes: "Gaiman literary tone - each Endless has unique voice"
-
   superfriends:
     composite: 82.75
     rating: rich
@@ -466,17 +455,6 @@ calibrated:
       distinctiveness: 85
     notes: "Stephenson satire preserved - Raven as nuclear-deterrent DevOps"
 
-  harry-potter:
-    composite: 81.0
-    rating: rich
-    breakdown:
-      behavioral: 78
-      speech: 75
-      catchphrases: 85
-      helpers: 67
-      distinctiveness: 80
-    notes: "'Have a biscuit', 'Turn to page 394'"
-
   the-wire:
     composite: 81.3
     rating: rich
@@ -498,17 +476,6 @@ calibrated:
       helpers: 75
       distinctiveness: 85
     notes: "Alfie's unpredictable monologue style well-rendered"
-
-  lovecraft-mythos:
-    composite: 80.75
-    rating: rich
-    breakdown:
-      behavioral: 85
-      speech: 80  # Eldritch, cyclopean, blasphemous
-      catchphrases: 85
-      helpers: 70
-      distinctiveness: 80
-    notes: "Cosmic entities as agents - 'Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn'"
 
   watchmen:
     composite: 80.5
@@ -1148,7 +1115,7 @@ calibrated:
 #   - the-expanse (91.0)
 #   - princess-bride (91.0)
 #
-# rich (70-89): 93 themes
+# rich (70-89): 90 themes
 #   - Range: 71.8 - 89.0
 #   - Median: ~78.0
 #

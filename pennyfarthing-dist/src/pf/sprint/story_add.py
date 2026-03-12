@@ -69,6 +69,7 @@ def add_story(
     workflow: str = "tdd",
     jira: str | None = None,
     repos: str | None = None,
+    depends_on: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -113,6 +114,8 @@ def add_story(
         fields["jira"] = jira
     if repos is not None:
         fields["repos"] = repos
+    if depends_on is not None:
+        fields["depends_on"] = depends_on
     if story_type is not None:
         fields["type"] = story_type
 
@@ -296,6 +299,7 @@ def add_initiative_story(
     help="Add as standalone story to initiative (e.g., technical-debt)",
 )
 @click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
+@click.option("--depends-on", type=str, default=None, help="Story ID this depends on (stacked PRs)")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def story_add_command(
     epic_id: str | None,
@@ -308,6 +312,7 @@ def story_add_command(
     sprint_file: str | None,
     initiative: str | None,
     repos: str,
+    depends_on: str | None,
     dry_run: bool,
 ) -> None:
     """Add a new story to an epic or initiative.
@@ -385,6 +390,7 @@ def story_add_command(
             workflow=workflow,
             jira=jira_id,
             repos=repos,
+            depends_on=depends_on,
         )
 
         if result["success"]:

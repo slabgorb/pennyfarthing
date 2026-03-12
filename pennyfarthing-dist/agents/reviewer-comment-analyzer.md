@@ -58,26 +58,42 @@ If `ALSO_CONSIDER` was provided, check those specific areas.
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `COMMENT_ANALYZER_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "doc_issue": "what is wrong with this comment/doc (max 15 words)",
-  "actual_behavior": "what the code actually does (max 15 words)",
-  "fix": "corrected comment text or 'add doc for: {description}'"
-}]
-```
-
-An empty array `[]` is valid when no documentation issues are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 COMMENT_ANALYZER_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-comment-analyzer
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+COMMENT_ANALYZER_RESULT:
+  agent: reviewer-comment-analyzer
+  status: findings
+  findings:
+    - file: "src/services/auth.ts"
+      line: 12
+      category: "stale-comment"
+      description: "Docstring says 'returns user ID' but function now returns full User object"
+      suggestion: "Update: '@returns {User} The authenticated user object'"
+      confidence: high
+    - file: "src/api/routes.ts"
+      line: 45
+      category: "missing-api-doc"
+      description: "Exported POST /users endpoint has no doc explaining request body contract"
+      suggestion: "Add doc: 'Creates user. Body: {name, email}. Returns 201 with User.'"
+      confidence: medium
+```
+
+**Categories:** `stale-comment` | `lying-docstring` | `copy-paste-doc` | `todo-no-context` | `missing-api-doc` | `param-mismatch` | `return-undocumented` | `misleading-name`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Comment provably contradicts current code | Confirm and flag |
+| `medium` | Comment is likely stale but requires context to confirm | Review before flagging |
+| `low` | Comment could be clearer but isn't actively misleading | Note only |
 </output>

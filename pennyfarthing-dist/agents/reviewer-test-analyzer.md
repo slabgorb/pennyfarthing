@@ -60,26 +60,42 @@ If `ALSO_CONSIDER` was provided, check those specific criteria.
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `TEST_ANALYZER_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "test_issue": "what is wrong with this test (max 15 words)",
-  "why_it_matters": "what bug could slip through (max 15 words)",
-  "improvement": "minimal code sketch or description of better test"
-}]
-```
-
-An empty array `[]` is valid when no test quality issues are found.
-
-Wrap the JSON in a result block:
-
-```
+### Clean (no findings)
+```yaml
 TEST_ANALYZER_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-test-analyzer
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+TEST_ANALYZER_RESULT:
+  agent: reviewer-test-analyzer
+  status: findings
+  findings:
+    - file: "tests/auth.test.ts"
+      line: 34
+      category: "vacuous-assertion"
+      description: "Test asserts result is truthy but any non-null value passes"
+      suggestion: "Assert specific expected value: expect(result).toEqual({...})"
+      confidence: high
+    - file: "tests/upload.test.ts"
+      line: 78
+      category: "missing-edge-case"
+      description: "Happy path tested but no test for empty file upload"
+      suggestion: "Add test: upload empty file → expect validation error"
+      confidence: medium
+```
+
+**Categories:** `vacuous-assertion` | `zero-assertion` | `tautological` | `implementation-coupling` | `missing-edge-case` | `incomplete-mock` | `flakiness` | `copy-paste` | `missing-negative`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Test provably cannot catch the bug it claims to test | Confirm and flag |
+| `medium` | Test is weak but not completely vacuous | Review before flagging |
+| `low` | Test could be stronger but covers basic behavior | Note only |
 </output>

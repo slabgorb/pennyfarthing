@@ -29,6 +29,7 @@
   "scripts": {
     "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh && ./pennyfarthing-dist/scripts/git/changelog-links.sh --validate",
     "docs": "./scripts/generate-skill-docs.sh",
+    "lint": "npm run lint:md",
     "lint:md": "markdownlint-cli2 'pennyfarthing-dist/**/*.md'"
   },
   "devDependencies": {

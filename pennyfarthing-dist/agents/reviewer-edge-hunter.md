@@ -47,26 +47,42 @@ Walk every branching path and boundary condition within the changed code — rep
 ### Step 4: Output Findings
 
 <output>
-Return ONLY a valid JSON array. Each object has exactly four fields:
+Return a `EDGE_HUNTER_RESULT` YAML block. Findings are a native YAML array — not JSON.
 
-```json
-[{
-  "location": "file:start-end",
-  "trigger_condition": "one-line description (max 15 words)",
-  "guard_snippet": "minimal code sketch that closes the gap",
-  "potential_consequence": "what could go wrong (max 15 words)"
-}]
-```
-
-An empty array `[]` is valid when no unhandled paths are found.
-
-Wrap the JSON in an `EDGE_HUNTER_RESULT:` block:
-
-```
+### Clean (no findings)
+```yaml
 EDGE_HUNTER_RESULT:
-  status: success
-  findings_count: {N}
-  findings_json: |
-    [{...}, ...]
+  agent: reviewer-edge-hunter
+  status: clean
+  findings: []
 ```
+
+### Findings
+```yaml
+EDGE_HUNTER_RESULT:
+  agent: reviewer-edge-hunter
+  status: findings
+  findings:
+    - file: "src/handlers/user.ts"
+      line: 42
+      category: "missing-guard"
+      description: "No null check on user input before DB query"
+      suggestion: "if (!input) return error"
+      confidence: high
+    - file: "src/api/routes.ts"
+      line: 88
+      category: "missing-else"
+      description: "Switch has no default case for unknown status values"
+      suggestion: "default: throw new UnreachableError(status)"
+      confidence: medium
+```
+
+**Categories:** `missing-guard` | `missing-else` | `off-by-one` | `overflow` | `race-condition` | `unclosed-resource` | `type-coercion` | `timeout-gap` | `unhandled-path`
+
+**Confidence:**
+| Level | Meaning | Reviewer Action |
+|-------|---------|-----------------|
+| `high` | Clearly unhandled, reachable path | Confirm and flag |
+| `medium` | Likely unhandled but context-dependent | Review before flagging |
+| `low` | Possibly handled elsewhere or intentional | Note only |
 </output>

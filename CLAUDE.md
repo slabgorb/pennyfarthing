@@ -111,6 +111,7 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Workflow Step | `schemas/workflow-step-schema.md` | Step file XML tag schema |
 | Skill | `schemas/skill-schema.md` | Skill file structure and XML tags |
 | Context | `schemas/context-schema.md` | Context document sections and validation |
+| Handoff Document | `schemas/handoff-document-schema.md` | Inter-agent handoff contract for native subagents |
 
 ### Patterns (`patterns/`)
 
