@@ -102,6 +102,7 @@ def replay_run(
     from pf.benchmark.pipeline_replay import (
         PipelineScore,
         compute_majority_vote,
+        compute_run_dir,
         load_scenario,
         remove_worktree,
         run_judge_pass,
@@ -138,7 +139,7 @@ def replay_run(
     all_scores: list[PipelineScore] = []
 
     # Auto-increment: find highest existing run number
-    theme_dir = out_dir / scenario.id / tag
+    theme_dir = compute_run_dir(out_dir, scenario.id, tag, 0).parent
     start_id = 1
     if theme_dir.exists():
         existing = [
