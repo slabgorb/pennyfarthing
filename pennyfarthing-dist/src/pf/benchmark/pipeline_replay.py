@@ -1215,13 +1215,62 @@ def run_pipeline(
 
         return phase_result
 
+    # Pre-compute silent failure scan for dev phase injection
+    _silent_failure_findings = None
+
     try:
         # Run initial phases linearly
         for role in scenario.phases:
             task_prompt = scenario.phase_prompts.get(role, f"Begin {role} phase.")
 
+            # Dev: run silent-failure-hunter on full codebase (not diff)
+            # so it can catch pre-existing bugs like swallowed errors
+            if role == "dev" and not is_bmad:
+                agents_dir = project_dir / ".pennyfarthing" / "agents"
+                agent_file = agents_dir / "reviewer-silent-failure-hunter.md"
+                if agent_file.exists():
+                    agent_prompt = agent_file.read_text()
+                    agent_prompt = re.sub(
+                        r"^---\n.*?^---\n", "", agent_prompt,
+                        flags=re.MULTILINE | re.DOTALL,
+                    )
+                    # List all source files for full-codebase scan
+                    src_list = subprocess.run(
+                        ["find", ".", "-name", "*.rs", "-type", "f"],
+                        cwd=str(wt_path), capture_output=True, text=True, timeout=10,
+                    )
+                    scan_task = (
+                        f"Scan ALL source files for silent failures — swallowed errors, "
+                        f"empty catches, fallbacks that hide problems. Report each with "
+                        f"file path and line. Focus on functions that return defaults "
+                        f"instead of propagating errors.\n\n"
+                        f"## Agent Instructions\n\n{agent_prompt}\n\n"
+                        f"## Source Files\n\n{src_list.stdout}\n\n"
+                        f"Read each file and analyze for silent failures."
+                    )
+                    print("  [SILENT-SCAN] Running pre-dev silent failure scan...")
+                    scan_result = subprocess.run(
+                        ["claude", "-p", scan_task, "--output-format", "json",
+                         "--model", "claude-haiku-4-5-20251001"],
+                        cwd=str(wt_path), capture_output=True, text=True,
+                        timeout=120, env={**os.environ},
+                    )
+                    try:
+                        parsed = json.loads(scan_result.stdout)
+                        _silent_failure_findings = parsed.get("result", scan_result.stdout)
+                    except (json.JSONDecodeError, TypeError):
+                        _silent_failure_findings = scan_result.stdout
+                    print("  [SILENT-SCAN] Done")
+
+                    task_prompt = (
+                        task_prompt + "\n\n## Pre-existing Silent Failures\n\n"
+                        "The following silent failures were found in the existing "
+                        "codebase. Fix any that fall within your implementation scope.\n\n"
+                        + _silent_failure_findings
+                    )
+
             # Reviewer: fan out subagents from harness, inject findings
-            if role == "reviewer" and not is_bmad:
+            elif role == "reviewer" and not is_bmad:
                 # Get diff for subagents
                 diff_result = subprocess.run(
                     ["git", "diff", scenario.base_commit + "...HEAD"],
