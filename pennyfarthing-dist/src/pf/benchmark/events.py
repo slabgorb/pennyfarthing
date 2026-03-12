@@ -38,7 +38,7 @@ def _parse_phase_otel(otel_path: Path) -> dict[str, Any]:
                 for lr in sl.get("logRecords", []):
                     body = lr.get("body", {}).get("stringValue", "")
                     attrs = {
-                        a["key"]: a.get("value", {}).get(
+                        a.get("key", ""): a.get("value", {}).get(
                             "stringValue", a.get("value", {}).get("intValue", "")
                         )
                         for a in lr.get("attributes", [])
@@ -57,21 +57,12 @@ def _parse_phase_otel(otel_path: Path) -> dict[str, Any]:
                         found_any = True
 
     if not found_any:
-        return _empty_phase_summary()
+        return {"has_events": False, "tool_counts": {}, "files_touched": []}
 
     return {
         "has_events": True,
         "tool_counts": dict(tool_counts),
         "files_touched": sorted(files_touched),
-    }
-
-
-def _empty_phase_summary() -> dict[str, Any]:
-    """Return a fallback summary for phases with no OTEL data."""
-    return {
-        "has_events": False,
-        "tool_counts": {},
-        "files_touched": [],
     }
 
 
@@ -100,7 +91,7 @@ def generate_events_summary(run_dir: Path, phases: list[str]) -> dict[str, Any]:
         if otel_path.exists() and otel_path.stat().st_size > 0:
             summary = _parse_phase_otel(otel_path)
         else:
-            summary = _empty_phase_summary()
+            summary = {"has_events": False, "tool_counts": {}, "files_touched": []}
 
         phase_summaries[phase] = summary
         if summary["has_events"]:
