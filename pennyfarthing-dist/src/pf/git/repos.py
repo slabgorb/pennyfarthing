@@ -43,10 +43,16 @@ class RepoConfig:
     owns: list[str] = field(default_factory=list)
     never_edit: list[str] = field(default_factory=list)
     ui_layer: str = "none"
+    pr_strategy: str = "standard"  # "standard" or "stacked"
+    stack_tool: str = ""  # "graphite" when pr_strategy is stacked
 
     @property
     def is_gitflow(self) -> bool:
         return self.branch_strategy == "gitflow"
+
+    @property
+    def is_stacked(self) -> bool:
+        return self.pr_strategy == "stacked"
 
     @property
     def upstream_ref(self) -> str:
@@ -75,6 +81,8 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         owns=data.get("owns", []) or [],
         never_edit=data.get("never_edit", []) or [],
         ui_layer=data.get("ui_layer", "none"),
+        pr_strategy=data.get("pr_strategy", "standard"),
+        stack_tool=data.get("stack_tool", ""),
     )
 
 
