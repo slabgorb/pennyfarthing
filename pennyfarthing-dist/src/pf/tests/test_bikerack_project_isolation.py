@@ -260,7 +260,7 @@ class TestProjectIsolation:
         assert port_a == 2898
         # Project B detects orphan on default port (intended behavior)
         assert running_b is True
-        assert port_b == 1898
+        assert port_b == 2898
 
     def test_is_already_running_only_probes_own_port(self, tmp_project):
         """is_already_running must only probe the port from its own port file.

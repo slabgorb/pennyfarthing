@@ -194,8 +194,8 @@ def _probe_wheelhub(port: int, timeout: float = 1.0) -> bool:
 
 
 def _default_port() -> int:
-    """Resolve default WheelHub port from WHEELHUB_PORT env or 1898."""
-    return int(os.environ.get("WHEELHUB_PORT", "1898"))
+    """Resolve default WheelHub port from WHEELHUB_PORT env or 2898."""
+    return int(os.environ.get("WHEELHUB_PORT", "2898"))
 
 
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
