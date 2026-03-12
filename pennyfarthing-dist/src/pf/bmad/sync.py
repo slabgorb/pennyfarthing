@@ -9,6 +9,7 @@ markdown header format instead of a REST API.
 from __future__ import annotations
 
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -19,6 +20,19 @@ from pf.bmad.parser import (
     map_pf_to_bmad,
 )
 from pf.common.config import load_pennyfarthing_config
+
+# Status progression rank (higher = further along).
+# Push sync only moves BMAD forward, pull sync only moves PF forward.
+_BMAD_STATUS_RANK: dict[str, int] = {
+    "draft": 0,
+    "backlog": 1,
+    "ready-for-dev": 2,
+    "in-progress": 3,
+    "review": 4,
+    "done": 5,
+    "completed": 5,
+    "complete": 5,
+}
 
 # =============================================================================
 # Data Classes
@@ -36,6 +50,7 @@ class BmadSyncChange:
     pf_value: Any
     bmad_value: Any
     target_value: Any
+    jira_key: str = ""
 
 
 @dataclass
@@ -100,31 +115,63 @@ def generate_sync_plan(
     """
     plan = BmadSyncPlan()
 
-    # Build lookup maps keyed on bmad_key
+    def _jira_keys(jira_raw: str) -> set[str]:
+        """Extract individual Jira keys from compound refs like 'DPGD-10 / DPGD-17'."""
+        if not jira_raw:
+            return set()
+        return {k.strip() for k in jira_raw.replace("/", ",").split(",") if k.strip()}
+
+    # Index PF stories by bmad_key and by each Jira key
     pf_by_key: dict[str, dict] = {}
+    pf_by_jira: dict[str, dict] = {}
     for story in pf_stories:
         key = story.get("bmad_key", "")
         if key:
             pf_by_key[key] = story
+        for jk in _jira_keys(story.get("jira", "")):
+            pf_by_jira[jk] = story
 
+    # Index BMAD stories by bmad_key and by each Jira key
     bmad_by_key: dict[str, dict] = {}
+    bmad_by_jira: dict[str, dict] = {}
     for story in bmad_stories:
         key = story.get("bmad_key", "")
         if key:
             bmad_by_key[key] = story
+        for jk in _jira_keys(story.get("jira", "")):
+            bmad_by_jira[jk] = story
 
-    pf_keys = set(pf_by_key.keys())
-    bmad_keys = set(bmad_by_key.keys())
+    # Match cascade: Jira key first, then exact bmad_key
+    matched_pairs: list[tuple[dict, dict]] = []  # (pf_story, bmad_story)
+    matched_pf: set[str] = set()    # bmad_keys of matched PF stories
+    matched_bmad: set[str] = set()  # bmad_keys of matched BMAD stories
 
-    plan.pf_only = sorted(pf_keys - bmad_keys)
-    plan.bmad_only = sorted(bmad_keys - pf_keys)
-    plan.both = sorted(pf_keys & bmad_keys)
+    # Pass 1: Match by Jira key (most stable identifier)
+    for jk, pf_story in pf_by_jira.items():
+        pk = pf_story.get("bmad_key", "")
+        if pk in matched_pf:
+            continue
+        bmad_story = bmad_by_jira.get(jk)
+        if bmad_story:
+            bk = bmad_story.get("bmad_key", "")
+            if bk not in matched_bmad:
+                matched_pairs.append((pf_story, bmad_story))
+                matched_pf.add(pk)
+                matched_bmad.add(bk)
+
+    # Pass 2: Match by exact bmad_key for anything not yet matched
+    for key in set(pf_by_key) & set(bmad_by_key):
+        if key not in matched_pf and key not in matched_bmad:
+            matched_pairs.append((pf_by_key[key], bmad_by_key[key]))
+            matched_pf.add(key)
+            matched_bmad.add(key)
+
+    plan.pf_only = sorted(set(pf_by_key) - matched_pf)
+    plan.bmad_only = sorted(set(bmad_by_key) - matched_bmad)
+    plan.both = sorted(matched_pf & matched_bmad)
 
     # Compare matched stories
-    for key in plan.both:
-        pf_story = pf_by_key[key]
-        bmad_story = bmad_by_key[key]
-
+    for pf_story, bmad_story in matched_pairs:
         pf_status = pf_story.get("status", "planning")
         bmad_status_raw = bmad_story.get("bmad_status", "draft")
         bmad_status_as_pf = map_bmad_to_pf(bmad_status_raw)
@@ -132,33 +179,45 @@ def generate_sync_plan(
         if pf_status == bmad_status_as_pf:
             continue  # In sync
 
-        pf_id = pf_story.get("id", key)
+        pf_id = pf_story.get("id", "")
+        bmad_key = bmad_story.get("bmad_key", "")
+        # Prefer BMAD Jira key, fall back to PF
+        jira_key = bmad_story.get("jira", "") or pf_story.get("jira", "")
+        # Take first key from compound refs like "DPGD-10 / DPGD-17"
+        if "/" in jira_key:
+            jira_key = jira_key.split("/")[0].strip()
 
         if direction == "pull":
             # BMAD → PF
             plan.changes.append(
                 BmadSyncChange(
-                    bmad_key=key,
+                    bmad_key=bmad_key,
                     pf_id=pf_id,
                     field="status",
                     action="update-pf",
                     pf_value=pf_status,
                     bmad_value=bmad_status_raw,
                     target_value=bmad_status_as_pf,
+                    jira_key=jira_key,
                 )
             )
         elif direction == "push":
-            # PF → BMAD
+            # PF → BMAD (forward-only: never demote BMAD status)
             target_bmad = map_pf_to_bmad(pf_status)
+            target_rank = _BMAD_STATUS_RANK.get(target_bmad, 0)
+            current_rank = _BMAD_STATUS_RANK.get(bmad_status_raw, 0)
+            if target_rank <= current_rank:
+                continue  # Skip backward transitions
             plan.changes.append(
                 BmadSyncChange(
-                    bmad_key=key,
+                    bmad_key=bmad_key,
                     pf_id=pf_id,
                     field="status",
                     action="update-bmad",
                     pf_value=pf_status,
                     bmad_value=bmad_status_raw,
                     target_value=target_bmad,
+                    jira_key=jira_key,
                 )
             )
         else:
@@ -167,25 +226,27 @@ def generate_sync_plan(
                 target_bmad = map_pf_to_bmad(pf_status)
                 plan.changes.append(
                     BmadSyncChange(
-                        bmad_key=key,
+                        bmad_key=bmad_key,
                         pf_id=pf_id,
                         field="status",
                         action="update-bmad",
                         pf_value=pf_status,
                         bmad_value=bmad_status_raw,
                         target_value=target_bmad,
+                        jira_key=jira_key,
                     )
                 )
             else:
                 plan.changes.append(
                     BmadSyncChange(
-                        bmad_key=key,
+                        bmad_key=bmad_key,
                         pf_id=pf_id,
                         field="status",
                         action="update-pf",
                         pf_value=pf_status,
                         bmad_value=bmad_status_raw,
                         target_value=bmad_status_as_pf,
+                        jira_key=jira_key,
                     )
                 )
 
@@ -226,6 +287,288 @@ def _update_bmad_file_status(bmad_path: str, new_status: str) -> bool:
     return True
 
 
+# =============================================================================
+# Dev Agent Record Population
+# =============================================================================
+
+_AGENT_MODEL_DEFAULT = "Claude Opus 4.6 via Claude Code CLI"
+
+
+@dataclass
+class DevAgentRecord:
+    """Data for populating the Dev Agent Record section in BMAD story files."""
+
+    agent_model: str = ""
+    debug_log_refs: list[str] = field(default_factory=list)
+    completion_notes: list[str] = field(default_factory=list)
+    file_list: list[str] = field(default_factory=list)
+
+
+def _find_session_file(
+    jira_key: str, story_id: str, project_root: Path
+) -> Path | None:
+    """Find a session file by Jira key or story ID.
+
+    Searches active sessions first, then archive.
+    """
+    search_dirs = [
+        project_root / ".session",
+        project_root / "sprint" / "archive",
+    ]
+
+    for search_dir in search_dirs:
+        if not search_dir.is_dir():
+            continue
+        for f in sorted(search_dir.glob("*-session.md")):
+            if jira_key and jira_key in f.name:
+                return f
+            if story_id and story_id.replace("-", ".") in f.name:
+                return f
+    return None
+
+
+def _parse_session_for_record(session_path: Path) -> DevAgentRecord:
+    """Extract Dev Agent Record data from a PF session file."""
+    content = session_path.read_text()
+    record = DevAgentRecord()
+    record.agent_model = _AGENT_MODEL_DEFAULT
+
+    # Extract branch name
+    branch_match = re.search(r"\*\*Branch:\*\*\s*(.+?)(?:\s*\(pushed\))?$", content, re.MULTILINE)
+    branch = branch_match.group(1).strip() if branch_match else ""
+
+    # Extract Files Changed from Dev Assessment
+    files_section = re.search(
+        r"\*\*Files Changed:\*\*\s*\n(.*?)(?=\n\*\*|\n##|\Z)",
+        content,
+        re.DOTALL,
+    )
+    if files_section:
+        for line in files_section.group(1).strip().splitlines():
+            line = line.strip()
+            if line.startswith("- "):
+                record.file_list.append(line[2:].strip())
+
+    # Extract completion notes from Dev Assessment body
+    # Look for lines between "Dev Assessment" header and the next ##
+    dev_section = re.search(
+        r"## Dev Assessment\s*\n(.*?)(?=\n## |\Z)",
+        content,
+        re.DOTALL,
+    )
+    if dev_section:
+        body = dev_section.group(1)
+        # Look for any bullet points that aren't structured fields
+        for line in body.strip().splitlines():
+            line = line.strip()
+            if line.startswith("- ") and not line.startswith("- `"):
+                record.completion_notes.append(line[2:].strip())
+
+    # Extract Delivery Findings if present
+    findings_section = re.search(
+        r"## Delivery Findings\s*\n(.*?)(?=\n## |\Z)",
+        content,
+        re.DOTALL,
+    )
+    if findings_section:
+        for line in findings_section.group(1).strip().splitlines():
+            line = line.strip()
+            if line.startswith("- ") and "No upstream findings" not in line:
+                record.completion_notes.append(f"[Finding] {line[2:].strip()}")
+
+    # Debug log references: branch + try to find PR
+    if branch:
+        record.debug_log_refs.append(f"Branch: {branch}")
+
+    return record
+
+
+def _extract_design_deviations(session_path: Path) -> str:
+    """Extract the Design Deviations section from a session file.
+
+    Returns the full markdown content of the section (everything between
+    '## Design Deviations' and the next '## ' heading), or empty string
+    if the section is absent or contains only the template marker.
+    """
+    content = session_path.read_text()
+    match = re.search(
+        r"## Design Deviations.*?\n(.*?)(?=\n## (?!Design Deviations)|\Z)",
+        content,
+        re.DOTALL,
+    )
+    if not match:
+        return ""
+
+    body = match.group(1).strip()
+
+    # Skip if it's just the template with no actual entries
+    lines = [
+        line for line in body.splitlines()
+        if line.strip()
+        and not line.strip().startswith("<!--")
+        and not line.strip().startswith("Agents log")
+        and not line.strip().startswith("Each entry:")
+    ]
+    if not lines:
+        return ""
+
+    return body
+
+
+def _push_design_deviations(bmad_path: str, deviations: str) -> bool:
+    """Append or update the Design Deviations section in a BMAD story file.
+
+    If the section already exists, it is replaced. Otherwise it is appended
+    after the Dev Agent Record section (or at end of file).
+
+    Returns True if the file was modified.
+    """
+    path = Path(bmad_path)
+    if not path.exists():
+        return False
+
+    content = path.read_text()
+    section = f"## Design Deviations\n\n{deviations}\n"
+
+    if "## Design Deviations" in content:
+        # Replace existing section
+        new_content = re.sub(
+            r"## Design Deviations.*?\n(.*?)(?=\n## (?!Design Deviations)|\Z)",
+            section,
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
+        if new_content != content:
+            path.write_text(new_content)
+            return True
+        return False
+
+    # Append after Dev Agent Record if it exists, otherwise at end
+    if "## Dev Agent Record" in content:
+        # Find the end of the Dev Agent Record section
+        dar_match = re.search(
+            r"(## Dev Agent Record\n.*?)(?=\n## |\Z)",
+            content,
+            re.DOTALL,
+        )
+        if dar_match:
+            insert_pos = dar_match.end()
+            new_content = content[:insert_pos] + "\n\n" + section + content[insert_pos:]
+            path.write_text(new_content)
+            return True
+
+    # Fallback: append at end
+    content = content.rstrip() + "\n\n" + section
+    path.write_text(content)
+    return True
+
+
+def _find_pr_for_branch(branch: str, project_root: Path) -> str | None:
+    """Try to find a GitHub PR URL for a branch using gh CLI."""
+    subrepo = project_root / "axiathon"
+    if not subrepo.is_dir():
+        return None
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "list", "--head", branch, "--json", "number,url", "--limit", "1"],
+            capture_output=True,
+            text=True,
+            cwd=subrepo,
+            timeout=10,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            import json
+            prs = json.loads(result.stdout)
+            if prs:
+                return prs[0].get("url", "")
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        pass
+    return None
+
+
+def _populate_dev_agent_record(bmad_path: str, record: DevAgentRecord) -> bool:
+    """Write Dev Agent Record data into a BMAD story markdown file.
+
+    Only populates sections that are currently blank. Does not overwrite
+    existing content.
+
+    Returns True if the file was modified.
+    """
+    path = Path(bmad_path)
+    if not path.exists():
+        return False
+
+    content = path.read_text()
+
+    if "## Dev Agent Record" not in content:
+        return False
+
+    modified = False
+
+    # Pattern: ### Heading\n\n### Next or ### Heading\n\n## Next or end of file
+    # A "blank" section has nothing between the heading and the next heading
+    sections = {
+        "Agent Model Used": record.agent_model,
+        "Debug Log References": "\n".join(f"- {r}" for r in record.debug_log_refs) if record.debug_log_refs else "",
+        "Completion Notes List": "\n".join(f"- {n}" for n in record.completion_notes) if record.completion_notes else "",
+        "File List": "```\n" + "\n".join(record.file_list) + "\n```" if record.file_list else "",
+    }
+
+    for heading, value in sections.items():
+        if not value:
+            continue
+
+        # Match section content between ### Heading and next ### or ## or EOF
+        pattern = re.compile(
+            rf"(### {re.escape(heading)})\n(.*?)(?=\n###|\n##[^#]|\Z)",
+            re.DOTALL,
+        )
+        match = pattern.search(content)
+        if match:
+            replacement = f"{match.group(1)}\n\n{value}\n"
+            content = content[:match.start()] + replacement + content[match.end():]
+            modified = True
+
+    if modified:
+        path.write_text(content)
+
+    return modified
+
+
+def _collect_dev_record(
+    change: BmadSyncChange,
+    project_root: Path,
+) -> DevAgentRecord | None:
+    """Build a DevAgentRecord for a sync change if applicable.
+
+    Only builds records for push changes targeting review or done status.
+    """
+    if change.action != "update-bmad":
+        return None
+    if change.target_value not in ("review", "done", "completed", "complete"):
+        return None
+
+    session_file = _find_session_file(
+        change.jira_key, change.pf_id, project_root
+    )
+    if not session_file:
+        return None
+
+    record = _parse_session_for_record(session_file)
+
+    # Try to find PR URL from branch in debug refs
+    for ref in record.debug_log_refs:
+        if ref.startswith("Branch: "):
+            branch = ref.split("Branch: ", 1)[1]
+            pr_url = _find_pr_for_branch(branch, project_root)
+            if pr_url:
+                record.debug_log_refs.insert(0, f"PR: {pr_url}")
+            break
+
+    return record
+
+
 def execute_sync_plan(
     plan: BmadSyncPlan,
     *,
@@ -234,6 +577,7 @@ def execute_sync_plan(
     bmad_root: Path | None = None,
     import_new: bool = False,
     repos: str = "axiathon",
+    project_root: Path | None = None,
 ) -> BmadSyncResult:
     """Execute a sync plan.
 
@@ -301,6 +645,21 @@ def execute_sync_plan(
             if _update_bmad_file_status(file_path, change.target_value):
                 result.changes_applied += 1
                 result.bmad_modified = True
+
+                # Populate Dev Agent Record for review/done transitions
+                if project_root:
+                    record = _collect_dev_record(change, project_root)
+                    if record:
+                        _populate_dev_agent_record(file_path, record)
+
+                    # Push Design Deviations from session to BMAD
+                    session_file = _find_session_file(
+                        change.jira_key, change.pf_id, project_root
+                    )
+                    if session_file:
+                        deviations = _extract_design_deviations(session_file)
+                        if deviations:
+                            _push_design_deviations(file_path, deviations)
             else:
                 result.errors.append(f"{change.bmad_key}: Failed to update Status line")
 
@@ -391,11 +750,16 @@ def _import_new_stories(
 # =============================================================================
 
 
-def format_sync_plan(plan: BmadSyncPlan) -> str:
+def format_sync_plan(
+    plan: BmadSyncPlan,
+    *,
+    project_root: Path | None = None,
+) -> str:
     """Format a sync plan for human-readable display.
 
     Args:
         plan: The plan to format
+        project_root: If provided, shows Dev Agent Record preview for push changes
 
     Returns:
         Formatted string.
@@ -416,6 +780,57 @@ def format_sync_plan(plan: BmadSyncPlan) -> str:
                 f"{c.pf_value!r} / {c.bmad_value!r} → {c.target_value!r}"
             )
         lines.append("")
+
+    # Dev Agent Record preview for push changes to review/done
+    if project_root:
+        record_changes = [
+            c for c in plan.changes
+            if c.action == "update-bmad"
+            and c.target_value in ("review", "done", "completed", "complete")
+        ]
+        if record_changes:
+            lines.append(f"Dev Agent Records ({len(record_changes)}):")
+            for c in record_changes:
+                record = _collect_dev_record(c, project_root)
+                if record:
+                    lines.append(f"  {c.pf_id} ({c.jira_key}):")
+                    lines.append(f"    Agent Model: {record.agent_model}")
+                    if record.debug_log_refs:
+                        lines.append(f"    Debug Refs: {', '.join(record.debug_log_refs)}")
+                    if record.completion_notes:
+                        lines.append(f"    Notes: {len(record.completion_notes)} items")
+                        for note in record.completion_notes[:3]:
+                            lines.append(f"      - {note[:80]}{'...' if len(note) > 80 else ''}")
+                        if len(record.completion_notes) > 3:
+                            lines.append(f"      ... and {len(record.completion_notes) - 3} more")
+                    if record.file_list:
+                        lines.append(f"    Files: {len(record.file_list)} changed")
+                        for f in record.file_list[:5]:
+                            lines.append(f"      {f[:100]}")
+                        if len(record.file_list) > 5:
+                            lines.append(f"      ... and {len(record.file_list) - 5} more")
+                else:
+                    lines.append(f"  {c.pf_id} ({c.jira_key}): no session file found")
+            lines.append("")
+
+        # Design Deviations preview
+        dev_lines: list[str] = []
+        for c in record_changes:
+            session_file = _find_session_file(
+                c.jira_key, c.pf_id, project_root
+            )
+            if session_file:
+                deviations = _extract_design_deviations(session_file)
+                if deviations:
+                    dev_count = sum(
+                        1 for line in deviations.splitlines()
+                        if line.strip().startswith("- **")
+                    )
+                    dev_lines.append(f"  {c.pf_id} ({c.jira_key}): {dev_count} deviations")
+        if dev_lines:
+            lines.append(f"Design Deviations ({len(dev_lines)}):")
+            lines.extend(dev_lines)
+            lines.append("")
 
     if plan.bmad_only:
         lines.append(f"New in BMAD ({len(plan.bmad_only)}):")

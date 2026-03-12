@@ -312,7 +312,12 @@ def _load_theme_dimensions(theme_name: str, themes_dir: str) -> dict[str, str] |
         return None
     try:
         data = yaml.safe_load(Path(theme_path).read_text())
-        return (data or {}).get("theme", {}).get("dimensions")
+        theme_block = (data or {}).get("theme", {})
+        dims = theme_block.get("dimensions")
+        if dims and isinstance(dims, dict):
+            # Include optimized as a pseudo-dimension for benchmark filtering
+            dims["optimized"] = "yes" if theme_block.get("optimized") else "no"
+        return dims
     except Exception:
         return None
 

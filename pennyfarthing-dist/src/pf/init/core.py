@@ -469,9 +469,6 @@ def init_project(
 
         symlinks_fixed = 0
 
-    # --- Install WheelHub server bundle ---
-    _install_wheelhub(target_dir, dist_root)
-
     # --- Install tmux config samples and launcher ---
     tmux_installed = _install_tmux_files(target_dir, dist_root)
 
@@ -613,37 +610,14 @@ def _copy_tree(src: Path, dst: Path) -> None:
             shutil.copy2(item, dest_item)
 
 
-def _install_wheelhub(target_dir: Path, dist_root: Path) -> None:
-    """Install the bundled WheelHub server to .pennyfarthing/server/.
-
-    WheelHub is a self-contained ~1.8MB Node.js bundle (express, ws, yaml
-    all baked in). Consumer projects need it for TUI/GUI but it's not in
-    _CONTENT_DIRS since it lives in _dist/server/.
-    """
-    # Check dist_root first (dev environment)
-    source = dist_root / "server" / "wheelhub.mjs"
-    if not source.is_file():
-        # Fall back to pip-installed _dist
-        try:
-            from pf._dist import get_root, is_populated
-
-            if is_populated():
-                source = get_root() / "server" / "wheelhub.mjs"
-        except (ImportError, ModuleNotFoundError):
-            pass
-    if not source.is_file():
-        return
-    dest_dir = target_dir / ".pennyfarthing" / "server"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, dest_dir / "wheelhub.mjs")
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
-    """Install tmux config samples and launcher to the project root.
+    """Install tmux config samples and launcher as symlinks to templates.
 
-    Copies tmux.conf.template variants as *-sample files and installs
-    the tmux-dev launcher. Skips files that already exist (user may
-    have customized them).
+    Creates symlinks from the project root to the template sources in
+    pennyfarthing-dist/templates/. Replaces stale copies with symlinks.
+    Skips non-framework files (user's local tmux.conf) that aren't symlinks.
 
     Returns:
         List of installed file names.
@@ -664,13 +638,22 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-        # Always overwrite tmux-dev (framework code), skip config samples if customized
-        if dest.exists() and dest_name != "tmux-dev":
+
+        # Compute relative symlink target
+        rel_target = os.path.relpath(src, target_dir)
+
+        # If dest is already correct symlink, skip
+        if dest.is_symlink() and os.readlink(str(dest)) == rel_target:
             continue
-        shutil.copy2(src, dest)
-        # Make tmux-dev executable
-        if dest_name == "tmux-dev":
-            dest.chmod(dest.stat().st_mode | 0o111)
+
+        # For config samples: skip if user has a non-symlink customized copy
+        if dest.exists() and not dest.is_symlink() and dest_name != "tmux-dev":
+            continue
+
+        # Remove stale file/symlink and create fresh symlink
+        if dest.exists() or dest.is_symlink():
+            dest.unlink()
+        dest.symlink_to(rel_target)
         installed.append(dest_name)
 
     return installed

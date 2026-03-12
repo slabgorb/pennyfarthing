@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Dear Client
   portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
-  tier: S
+  tier: A
+  optimized: true
   spinner_verbs:
     - Deducing
     - Elementary

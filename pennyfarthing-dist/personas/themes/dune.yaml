@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Cousin
   portrait_style: ", ink and watercolor wash, sepia tones, detailed linework"
-  tier: A
+  tier: S
+  optimized: true
   dimensions:
     tone: serious
     era: futuristic

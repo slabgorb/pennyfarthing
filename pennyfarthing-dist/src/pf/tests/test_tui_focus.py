@@ -117,12 +117,13 @@ class TestFocusSubscription:
 
         loop = asyncio.new_event_loop()
         try:
-            loop.run_until_complete(app.on_mount())
+            with patch("pf.bikerack.tui.get_last_panel", return_value={"success": False}):
+                loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
 
         # Should not raise — graceful no-op
-        # _focused_panel defaults to "sprint" and on_mount sets it to "sprint"
+        # _focused_panel defaults to "sprint" when no last panel saved
         assert app._focused_panel == "sprint"
 
 

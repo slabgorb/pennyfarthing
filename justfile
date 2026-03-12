@@ -140,14 +140,14 @@ gui *args:
 
     case "$mode" in
         web)
-            echo "Starting BikeRack GUI (Web dev mode)..."
+            echo "Starting BikeRack GUI (Vite dev mode)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm run dev:web
+            eval $env_vars pnpm run dev:vite
             ;;
         server)
-            echo "Starting BikeRack GUI (Web server)..."
+            echo "Starting BikeRack (WheelHub Python server)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm start
+            eval $env_vars pf bikerack start
             ;;
     esac
 
@@ -283,37 +283,15 @@ validate-subagents:
 validate-sprint *args:
     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.sprint.validator {{args}}
 
+<<<<<<< HEAD
 # Check if wheelhub.mjs bundle is stale vs TypeScript source
 check-bundle-drift:
     ./scripts/check-bundle-drift.sh
 
-# Rebuild wheelhub.mjs bundle from TypeScript source
-rebuild-wheelhub:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "Step 1/4: Building TypeScript..."
-    cd packages/core && pnpm run build:tsc
-    cd ../..
-    echo "Step 2/4: Bundling with esbuild..."
-    npx esbuild packages/core/dist/server/entry.js --bundle --format=esm --platform=node --outfile=/tmp/wheelhub.mjs
-    echo "Step 3/4: Patching CJS shim for Node 24..."
-    python3 -c "
-import re
-with open('/tmp/wheelhub.mjs', 'r') as f:
-    content = f.read()
-old = r'var __require = /\* @__PURE__ \*/ \(\(x\) => typeof require.*?\)\(0\);'
-new = 'var __require = /* @__PURE__ */ ((x) => typeof require !== \"undefined\" ? require : __createRequire(import.meta.url))(0);'
-content = re.sub(old, new, content, flags=re.DOTALL)
-content = 'import { createRequire as __createRequire } from \"node:module\";\n' + content
-with open('/tmp/wheelhub.mjs', 'w') as f:
-    f.write(content)
-"
-    echo "Step 4/4: Copying to pennyfarthing-dist..."
-    cp /tmp/wheelhub.mjs pennyfarthing-dist/src/pf/_dist/server/wheelhub.mjs
-    echo "Done. Run 'pipx install --force .' then 'pf init' in consumer projects."
-
+=======
+>>>>>>> origin/develop
 # Run all validations
-validate: validate-agents validate-subagents validate-sprint check-bundle-drift
+validate: validate-agents validate-subagents validate-sprint
 
 # =============================================================================
 # BikeRack

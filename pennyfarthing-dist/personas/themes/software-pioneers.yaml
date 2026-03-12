@@ -16,7 +16,8 @@ theme:
   character_immersion: medium
   user_title: Colleague
   portrait_style: ", woodcut engraving, scientific journal illustration, fine crosshatching, black ink on cream paper"
-  tier: D
+  tier: U
+  optimized: true
   spinner_verbs:
     - Computing
     - Algorithm writing
