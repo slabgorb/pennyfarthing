@@ -66,6 +66,9 @@ class Scenario:
     total_weight: int
     phase_prompts: dict[str, str]
     original_pipeline: dict[str, Any] = field(default_factory=dict)
+    context_type: str = "sprint"  # "sprint" (epic+story) or "repo" (claude_md)
+    claude_md_path: str = ""  # For repo-context scenarios
+    roots: dict[str, str] = field(default_factory=dict)  # e.g. {"repo": "../poller-cobra"}
 
 
 @dataclass
@@ -187,16 +190,42 @@ def load_scenario(path: str | Path, project_dir: str | Path | None = None) -> Sc
     ctx = raw.get("context", {})
     repo = raw.get("repo", {})
 
+    # Resolve roots relative to scenario file's parent directory
+    raw_roots = raw.get("roots", {})
+    roots = {k: str((path.parent / v).resolve()) for k, v in raw_roots.items()}
+
+    # Resolve repo path: roots.repo overrides repo.path
+    repo_path_str = repo.get("path", "")
+    if roots.get("repo"):
+        resolved_repo = roots["repo"]
+    else:
+        resolved_repo = str(project / repo_path_str)
+
+    # Detect context type: "sprint" has epic+story keys, "repo" has claude_md
+    if "epic" in ctx:
+        context_type = "sprint"
+        context_epic_path = str(project / ctx["epic"])
+        context_story_path = str(project / ctx["story"])
+        claude_md_path = ""
+    else:
+        context_type = "repo"
+        context_epic_path = ""
+        context_story_path = ""
+        # Resolve claude_md relative to the repo root
+        claude_md_path = (
+            str(Path(resolved_repo) / ctx["claude_md"]) if ctx.get("claude_md") else ""
+        )
+
     return Scenario(
         id=raw["id"],
         title=raw["title"],
         story_id=raw["story_id"],
         jira=raw["jira"],
-        repo_path=str(project / repo["path"]),
+        repo_path=resolved_repo,
         base_commit=repo["base_commit"],
         branch=repo.get("branch", ""),
-        context_epic_path=str(project / ctx["epic"]),
-        context_story_path=str(project / ctx["story"]),
+        context_epic_path=context_epic_path,
+        context_story_path=context_story_path,
         session_archive_path=(
             str(project / ctx["session_archive"]) if ctx.get("session_archive") else None
         ),
@@ -205,6 +234,9 @@ def load_scenario(path: str | Path, project_dir: str | Path | None = None) -> Sc
         total_weight=gt.get("total_weight", sum(f.weight for f in findings)),
         phase_prompts=raw.get("phase_prompts", {}),
         original_pipeline=raw.get("original_pipeline", {}),
+        context_type=context_type,
+        claude_md_path=claude_md_path,
+        roots=roots,
     )
 
 
@@ -435,31 +467,19 @@ def build_phase_claude_md(
 
     Includes the agent definition/persona and the epic+story context so the
     agent has everything it needs without pennyfarthing installed.
+
+    For repo-context scenarios (no epic/story), includes the repo's own
+    CLAUDE.md instead.
     """
-    epic_text = Path(scenario.context_epic_path).read_text()
-    story_text = Path(scenario.context_story_path).read_text()
+    parts = [f"# Pipeline Replay Benchmark — {role.upper()} Phase"]
+    parts.append(f"\n## Agent Context\n\n{agent_prompt}\n\n---")
 
-    return f"""\
-# Pipeline Replay Benchmark — {role.upper()} Phase
-
-## Agent Context
-
-{agent_prompt}
-
----
-
-## Epic Context
-
-{epic_text}
-
----
-
-## Story Context
-
-{story_text}
-
----
-
+    if scenario.context_type == "sprint":
+        epic_text = Path(scenario.context_epic_path).read_text()
+        story_text = Path(scenario.context_story_path).read_text()
+        parts.append(f"\n## Epic Context\n\n{epic_text}\n\n---")
+        parts.append(f"\n## Story Context\n\n{story_text}\n\n---")
+        parts.append("""
 ## Project Notes
 
 - This is a Rust workspace. The target crate is `crates/axiathon-server/`.
@@ -468,7 +488,14 @@ def build_phase_claude_md(
 - Run tests: `cargo test -p axiathon-server`
 - Run lint: `cargo clippy -p axiathon-server`
 - The crate `axiathon-core` has existing types (`AxiathonError`, `TenantId`, etc.)
-"""
+""")
+    else:
+        # Repo-context: include the repo's own CLAUDE.md if it exists
+        if scenario.claude_md_path and Path(scenario.claude_md_path).exists():
+            repo_claude_md = Path(scenario.claude_md_path).read_text()
+            parts.append(f"\n## Project Context\n\n{repo_claude_md}\n\n---")
+
+    return "\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -904,8 +931,8 @@ def run_pipeline(
             translate_story_file,
         )
 
-        epic_text = Path(scenario.context_epic_path).read_text()
-        story_text = Path(scenario.context_story_path).read_text()
+        epic_text = Path(scenario.context_epic_path).read_text() if scenario.context_epic_path else ""
+        story_text = Path(scenario.context_story_path).read_text() if scenario.context_story_path else ""
 
         if role == "dev":
             # Translate PF context into BMAD story format
