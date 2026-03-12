@@ -613,11 +613,11 @@ def _copy_tree(src: Path, dst: Path) -> None:
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
-    """Install tmux config samples and launcher as symlinks to templates.
+    """Install tmux config samples and launcher to the project root.
 
-    Creates symlinks from the project root to the template sources in
-    pennyfarthing-dist/templates/. Replaces stale copies with symlinks.
-    Skips non-framework files (user's local tmux.conf) that aren't symlinks.
+    Copies tmux.conf.template variants as *-sample files and installs
+    the tmux-dev launcher. Skips files that already exist (user may
+    have customized them).
 
     Returns:
         List of installed file names.
@@ -638,22 +638,16 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-
-        # Compute relative symlink target
-        rel_target = os.path.relpath(src, target_dir)
-
-        # If dest is already correct symlink, skip
-        if dest.is_symlink() and os.readlink(str(dest)) == rel_target:
+        # Always overwrite tmux-dev (framework code), skip config samples if customized
+        if dest.exists() and dest_name != "tmux-dev":
             continue
-
-        # For config samples: skip if user has a non-symlink customized copy
-        if dest.exists() and not dest.is_symlink() and dest_name != "tmux-dev":
-            continue
-
-        # Remove stale file/symlink and create fresh symlink
-        if dest.exists() or dest.is_symlink():
+        # Remove existing symlinks/files that resolve to the same path (avoids SameFileError)
+        if dest.is_symlink() or (dest.exists() and dest.resolve() == src.resolve()):
             dest.unlink()
-        dest.symlink_to(rel_target)
+        shutil.copy2(src, dest)
+        # Make tmux-dev executable
+        if dest_name == "tmux-dev":
+            dest.chmod(dest.stat().st_mode | 0o111)
         installed.append(dest_name)
 
     return installed

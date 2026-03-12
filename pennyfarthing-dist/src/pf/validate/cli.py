@@ -28,6 +28,7 @@ VALIDATORS = {
     "prd": "pf.validate.adapters.prd",
     "architecture": "pf.validate.adapters.architecture",
     "theme": "pf.validate.adapters.theme",
+    "version": "pf.validate.adapters.version",
 }
 
 
@@ -108,6 +109,7 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
       prd                - Product Requirements Documents (structure, density, measurability)
       architecture       - Architecture documents (sections, diagrams, references)
       theme              - Theme persona YAML (roles, OCEAN scores, dimensions)
+      version            - Version consistency (VERSION, __init__.py, pyproject.toml)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
@@ -310,6 +312,16 @@ def validate_architecture(ctx):
 def validate_theme(ctx):
     """Validate theme persona YAML (roles, OCEAN scores, dimensions)."""
     report = _run_validator("theme", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("version")
+@click.pass_context
+def validate_version(ctx):
+    """Validate version consistency (VERSION, __init__.py, pyproject.toml)."""
+    report = _run_validator("version", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)
