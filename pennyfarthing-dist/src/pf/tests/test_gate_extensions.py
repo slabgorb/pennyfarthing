@@ -84,9 +84,9 @@ class TestResolveGateExtensionsFound:
     def test_multiple_extensions(self, project: Path) -> None:
         _write_gate(project / ".pennyfarthing" / "gates" / "rustfmt-check.md", "rustfmt-check")
         _write_gate(project / ".pennyfarthing" / "gates" / "license-check.md", "license-check")
-        _write_config(project, {
-            "gates": {"extensions": {"dev-exit": ["rustfmt-check", "license-check"]}}
-        })
+        _write_config(
+            project, {"gates": {"extensions": {"dev-exit": ["rustfmt-check", "license-check"]}}}
+        )
 
         result = resolve_gate_extensions("dev-exit", project_root=project)
         assert result["success"] is True
@@ -116,9 +116,9 @@ class TestResolveGateExtensionsNotFound:
     def test_partial_missing_fails_fast(self, project: Path) -> None:
         """First valid, second missing — should fail on second."""
         _write_gate(project / ".pennyfarthing" / "gates" / "good-check.md", "good-check")
-        _write_config(project, {
-            "gates": {"extensions": {"dev-exit": ["good-check", "missing-check"]}}
-        })
+        _write_config(
+            project, {"gates": {"extensions": {"dev-exit": ["good-check", "missing-check"]}}}
+        )
 
         result = resolve_gate_extensions("dev-exit", project_root=project)
         assert result["success"] is False
@@ -134,12 +134,16 @@ class TestMergeGateResults:
     """AND semantics: both must pass for combined pass."""
 
     def test_both_pass(self) -> None:
-        primary = {"status": "pass", "message": "Tests pass", "checks": [
-            {"name": "tests", "status": "pass", "detail": "ok"}
-        ]}
-        extension = {"status": "pass", "message": "Fmt ok", "checks": [
-            {"name": "rustfmt", "status": "pass", "detail": "clean"}
-        ]}
+        primary = {
+            "status": "pass",
+            "message": "Tests pass",
+            "checks": [{"name": "tests", "status": "pass", "detail": "ok"}],
+        }
+        extension = {
+            "status": "pass",
+            "message": "Fmt ok",
+            "checks": [{"name": "rustfmt", "status": "pass", "detail": "clean"}],
+        }
         result = merge_gate_results(primary, extension)
         assert result["status"] == "pass"
         assert len(result["checks"]) == 2
@@ -165,22 +169,28 @@ class TestMergeGateResults:
         assert result["status"] == "fail"
 
     def test_checks_concatenated(self) -> None:
-        primary = {"status": "pass", "message": "A", "checks": [
-            {"name": "a", "status": "pass", "detail": "1"},
-            {"name": "b", "status": "pass", "detail": "2"},
-        ]}
-        extension = {"status": "pass", "message": "B", "checks": [
-            {"name": "c", "status": "pass", "detail": "3"},
-        ]}
+        primary = {
+            "status": "pass",
+            "message": "A",
+            "checks": [
+                {"name": "a", "status": "pass", "detail": "1"},
+                {"name": "b", "status": "pass", "detail": "2"},
+            ],
+        }
+        extension = {
+            "status": "pass",
+            "message": "B",
+            "checks": [
+                {"name": "c", "status": "pass", "detail": "3"},
+            ],
+        }
         result = merge_gate_results(primary, extension)
         assert len(result["checks"]) == 3
         assert [c["name"] for c in result["checks"]] == ["a", "b", "c"]
 
     def test_recovery_merged(self) -> None:
-        primary = {"status": "fail", "message": "A", "checks": [],
-                    "recovery": ["fix A"]}
-        extension = {"status": "fail", "message": "B", "checks": [],
-                     "recovery": ["fix B"]}
+        primary = {"status": "fail", "message": "A", "checks": [], "recovery": ["fix A"]}
+        extension = {"status": "fail", "message": "B", "checks": [], "recovery": ["fix B"]}
         result = merge_gate_results(primary, extension)
         assert result["recovery"] == ["fix A", "fix B"]
 
@@ -212,9 +222,14 @@ class TestResolveGateWithExtensions:
             "workflow": {
                 "name": "test-wf",
                 "phases": [
-                    {"name": "implement", "agent": "dev", "gate": {
-                        "file": "gates/dev-exit", "type": "dev_exit",
-                    }},
+                    {
+                        "name": "implement",
+                        "agent": "dev",
+                        "gate": {
+                            "file": "gates/dev-exit",
+                            "type": "dev_exit",
+                        },
+                    },
                     {"name": "review", "agent": "reviewer"},
                 ],
             }

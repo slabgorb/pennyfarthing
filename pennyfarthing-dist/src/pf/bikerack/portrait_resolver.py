@@ -177,7 +177,9 @@ def resolve_portrait_path(
     if pnpm_cyclist.is_dir():
         for entry in pnpm_cyclist.iterdir():
             if entry.name.startswith("@pennyfarthing+cyclist@"):
-                candidate = entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
+                candidate = (
+                    entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
+                )
                 cyclist_portrait_dirs.append(candidate)
                 break
 

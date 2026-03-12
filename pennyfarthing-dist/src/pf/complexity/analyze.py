@@ -65,7 +65,7 @@ def _parse_eslint_output(output: str, target_path: Path) -> list[FileComplexity]
 
         # Make path relative to target directory
         if file_path.startswith(target_str):
-            rel_path = file_path[len(target_str):]
+            rel_path = file_path[len(target_str) :]
         else:
             rel_path = file_path
 
@@ -93,20 +93,20 @@ def _parse_eslint_output(output: str, target_path: Path) -> list[FileComplexity]
                     line_counts.append(int(m.group(1)))
 
         function_count = len(complexities)
-        avg_complexity = (
-            sum(complexities) / len(complexities) if complexities else 0.0
-        )
+        avg_complexity = sum(complexities) / len(complexities) if complexities else 0.0
         max_nesting = max(depths) if depths else 0
         longest_fn = max(line_counts) if line_counts else 0
 
-        files.append(FileComplexity(
-            path=rel_path,
-            total_lines=0,  # populated by _count_file_lines
-            longest_function=longest_fn,
-            avg_cyclomatic_complexity=round(avg_complexity, 1),
-            max_nesting_depth=max_nesting,
-            function_count=function_count,
-        ))
+        files.append(
+            FileComplexity(
+                path=rel_path,
+                total_lines=0,  # populated by _count_file_lines
+                longest_function=longest_fn,
+                avg_cyclomatic_complexity=round(avg_complexity, 1),
+                max_nesting_depth=max_nesting,
+                function_count=function_count,
+            )
+        )
 
     return files
 
@@ -116,11 +116,15 @@ async def _run_eslint(eslint_bin: Path, target_path: Path) -> tuple[str, str, in
     proc = await asyncio.create_subprocess_exec(
         str(eslint_bin),
         str(target_path),
-        "--format", "json",
+        "--format",
+        "json",
         "--no-config-lookup",
-        "--rule", 'complexity: ["warn", 1]',
-        "--rule", 'max-depth: ["warn", 1]',
-        "--rule", 'max-lines-per-function: ["warn", 1]',
+        "--rule",
+        'complexity: ["warn", 1]',
+        "--rule",
+        'max-depth: ["warn", 1]',
+        "--rule",
+        'max-lines-per-function: ["warn", 1]',
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )

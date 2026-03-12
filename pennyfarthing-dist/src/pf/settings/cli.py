@@ -48,7 +48,7 @@ def get(key: str):
 @click.argument("key")
 @click.argument("value")
 def set(key: str, value: str):
-    """Set a setting value by dot-path (e.g. workflow.bell_mode true)."""
+    """Set a setting value by dot-path (e.g. workflow.relay_mode true)."""
     from pf.settings.settings import set_setting
 
     set_setting(key, value)

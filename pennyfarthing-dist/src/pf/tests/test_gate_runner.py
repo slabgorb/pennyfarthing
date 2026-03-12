@@ -232,16 +232,12 @@ class TestParseGateFileModel:
         result = parse_gate_file(gate_file_custom_model)
         assert result["model"] == "sonnet"
 
-    def test_defaults_to_haiku_when_no_model(
-        self, gate_file_no_model: Path
-    ) -> None:
+    def test_defaults_to_haiku_when_no_model(self, gate_file_no_model: Path) -> None:
         """AC3: Missing model attribute defaults to 'haiku'."""
         result = parse_gate_file(gate_file_no_model)
         assert result["model"] == "haiku"
 
-    def test_extracts_name_when_no_model(
-        self, gate_file_no_model: Path
-    ) -> None:
+    def test_extracts_name_when_no_model(self, gate_file_no_model: Path) -> None:
         """AC3: Gate name still extracted when model is missing."""
         result = parse_gate_file(gate_file_no_model)
         assert result["name"] == "simple-check"
@@ -510,47 +506,27 @@ class TestExtractGateResultRegex:
     def test_gate_result_in_code_block(self) -> None:
         """AC5: GATE_RESULT inside a code block still extracted."""
         output = (
-            "```yaml\n"
-            "GATE_RESULT:\n"
-            "  status: pass\n"
-            '  message: "All clear"\n'
-            "  checks: []\n"
-            "```\n"
+            '```yaml\nGATE_RESULT:\n  status: pass\n  message: "All clear"\n  checks: []\n```\n'
         )
         result = extract_gate_result(output)
         assert result["status"] == "pass"
 
     def test_handles_extra_whitespace(self) -> None:
         """AC5: Extra whitespace in GATE_RESULT still parses."""
-        output = (
-            "GATE_RESULT:\n"
-            "  status:   pass\n"
-            '  message:   "Tests OK"\n'
-            "  checks:   []\n"
-        )
+        output = 'GATE_RESULT:\n  status:   pass\n  message:   "Tests OK"\n  checks:   []\n'
         result = extract_gate_result(output)
         assert result["status"] == "pass"
 
     def test_handles_unquoted_message(self) -> None:
         """AC5: Message without quotes still extracted."""
-        output = (
-            "GATE_RESULT:\n"
-            "  status: pass\n"
-            "  message: All tests passing\n"
-            "  checks: []\n"
-        )
+        output = "GATE_RESULT:\n  status: pass\n  message: All tests passing\n  checks: []\n"
         result = extract_gate_result(output)
         assert result["status"] == "pass"
         assert len(result["message"]) > 0
 
     def test_handles_single_quoted_message(self) -> None:
         """AC5: Single-quoted message extracted."""
-        output = (
-            "GATE_RESULT:\n"
-            "  status: pass\n"
-            "  message: 'All tests passing'\n"
-            "  checks: []\n"
-        )
+        output = "GATE_RESULT:\n  status: pass\n  message: 'All tests passing'\n  checks: []\n"
         result = extract_gate_result(output)
         assert result["status"] == "pass"
         assert "All tests passing" in result["message"]

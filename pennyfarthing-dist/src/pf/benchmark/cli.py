@@ -462,13 +462,21 @@ def replay():
     help="Where to store results (default: internal/results/pipeline-replay/)",
 )
 @click.option("--model", default=None, help="Claude model for pipeline agents")
-@click.option("--judge-model", default=None, help="Claude model for scoring judge")
+@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
 @click.option(
-    "--otel-endpoint",
+    "--max-rework-cycles",
+    default=0,
+    type=click.IntRange(0, 2),
+    help="Max reviewer kick-back cycles (0=disabled, max 2)",
+)
+@click.option(
+    "--bmad-root",
     default=None,
-    help="OTEL collector endpoint (auto-detects WheelHub if omitted)",
+    type=click.Path(exists=True),
+    help="Path to BMAD-METHOD repo (uses BMAD adapter instead of PF agents)",
 )
 def replay_run(
     scenario_path,
@@ -479,15 +487,20 @@ def replay_run(
     output_dir,
     model,
     judge_model,
+    judge_count,
     skip_score,
     keep_worktree,
-    otel_endpoint,
+    max_rework_cycles,
+    bmad_root,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
         PipelineScore,
+        compute_majority_vote,
+        compute_run_dir,
         load_scenario,
         remove_worktree,
+        run_judge_pass,
         run_pipeline,
         save_result,
         score_with_judge,
@@ -495,23 +508,33 @@ def replay_run(
 
     project = Path(project_dir) if project_dir else Path.cwd()
     wt_base = Path(worktree_base)
-    out_dir = Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    out_dir = (
+        Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+    bmad = Path(bmad_root) if bmad_root else None
+
+    # Auto-set theme to "bmad" when using BMAD adapter
+    if bmad and not theme:
+        theme = "bmad"
 
     scenario = load_scenario(scenario_path, project_dir=project)
 
     tag = theme or "control"
-    click.echo(f"=== Pipeline Replay: {scenario.title} ===")
+    pipeline_label = "BMAD" if bmad else "PF"
+    click.echo(f"=== Pipeline Replay ({pipeline_label}): {scenario.title} ===")
     click.echo(f"  Theme:    {tag}")
     click.echo(f"  Runs:     {runs}")
     click.echo(f"  Commit:   {scenario.base_commit[:12]}")
     click.echo(f"  Phases:   {' → '.join(scenario.phases)}")
+    click.echo(f"  Judge:    {judge_model or 'default'} × {judge_count}")
+    click.echo(f"  Rework:   {max_rework_cycles} max cycles")
     click.echo(f"  Output:   {out_dir}")
     click.echo()
 
     all_scores: list[PipelineScore] = []
 
     # Auto-increment: find highest existing run number
-    theme_dir = out_dir / scenario.id / tag
+    theme_dir = compute_run_dir(out_dir, scenario.id, tag, 0).parent
     start_id = 1
     if theme_dir.exists():
         existing = [
@@ -531,26 +554,55 @@ def replay_run(
             run_id=run_id,
             project_dir=project,
             worktree_base=wt_base,
+            output_dir=out_dir,
             model=model,
-            otel_endpoint=otel_endpoint,
+            max_rework_cycles=max_rework_cycles,
+            bmad_root=bmad,
         )
 
-        # Score
+        # Score — first judge pass (saved as score.yaml)
         score = None
         if not skip_score:
-            click.echo("  [JUDGE] Scoring against ground truth...")
+            click.echo(f"  [JUDGE 1/{judge_count}] Scoring against ground truth ({judge_model or 'default'})...")
             score = score_with_judge(
                 scenario, result, model=judge_model, project_dir=project
             )
             click.echo(
-                f"  [JUDGE] Score: {score.weighted_caught}/{score.total_weight} "
+                f"  [JUDGE 1/{judge_count}] Score: {score.weighted_caught}/{score.total_weight} "
                 f"({score.score_pct}%) — {score.total_caught}/{score.total_findings} findings"
             )
             all_scores.append(score)
 
-        # Save
-        run_dir = save_result(result, score, out_dir)
+        # Save pipeline result + score.yaml
+        run_dir = save_result(result, score, out_dir, project_dir=project, bmad_root=bmad)
         click.echo(f"  Saved to {run_dir}")
+
+        # Additional judge passes (judge_1.yaml, judge_2.yaml, ...)
+        if not skip_score and judge_count > 1:
+            for pass_num in range(1, judge_count):
+                click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] Additional judge pass...")
+                try:
+                    jresult = run_judge_pass(
+                        run_dir, scenario, pass_num,
+                        model=judge_model, project_dir=project,
+                    )
+                    if jresult:
+                        click.echo(
+                            f"  [JUDGE {pass_num + 1}/{judge_count}] Score: "
+                            f"{jresult['weighted_caught']}/{jresult['total_weight']} "
+                            f"({jresult['score_pct']}%)"
+                        )
+                    else:
+                        click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] Failed to score")
+                except Exception as e:
+                    click.echo(f"  [JUDGE {pass_num + 1}/{judge_count}] ERROR: {e}")
+
+            # Compute majority vote
+            mv = compute_majority_vote(run_dir, scenario)
+            if mv:
+                click.echo(
+                    f"  [MAJORITY] {mv['n_judges']}j vote: {mv['score_pct']}%"
+                )
 
         # Cleanup worktree
         if not keep_worktree:
@@ -607,7 +659,7 @@ def replay_score(result_dir, scenario_path, model, project_dir):
         click.echo(f"  [{status}] {f.finding_id}: {f.title} ({f.weight}pts){by}")
 
     # Save updated score
-    save_result(pipeline_result, score, result_path.parent.parent.parent)
+    save_result(pipeline_result, score, result_path.parent.parent.parent, project_dir=project)
 
 
 @replay.command("judge")
@@ -654,9 +706,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
     scenario = load_scenario(scenario_path, project_dir=project)
 
     base = (
-        Path(results_dir)
-        if results_dir
-        else project / "internal" / "results" / "pipeline-replay"
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
     )
     scenario_dir = base / scenario.id
 
@@ -721,9 +771,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
                 break
             start = time.time()
             try:
-                result = run_judge_pass(
-                    run_dir, scenario, p, model=model, project_dir=project
-                )
+                result = run_judge_pass(run_dir, scenario, p, model=model, project_dir=project)
                 elapsed = time.time() - start
                 if result:
                     click.echo(f"    Pass {p}: {result['score_pct']}% ({elapsed:.0f}s)")
@@ -736,9 +784,7 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
         if not shutdown:
             mv = compute_majority_vote(run_dir, scenario)
             if mv:
-                click.echo(
-                    f"    Majority vote ({mv['n_judges']}j): {mv['score_pct']}%"
-                )
+                click.echo(f"    Majority vote ({mv['n_judges']}j): {mv['score_pct']}%")
 
     click.echo()
     click.echo(f"=== Done: {judged} judge passes added, {skipped} runs already at target ===")
@@ -752,7 +798,14 @@ def replay_judge(scenario_path, results_dir, theme, target_judges, model, projec
     type=click.Path(exists=True),
     help="Base results directory",
 )
-def replay_compare(scenario_path, results_dir):
+@click.option(
+    "--group-by",
+    "group_by",
+    default=None,
+    type=click.Choice(["framework_version"]),
+    help="Group results by framework_version instead of theme",
+)
+def replay_compare(scenario_path, results_dir, group_by):
     """Compare pipeline results across themes for a scenario."""
     from pf.benchmark.pipeline_replay import (
         FindingScore,
@@ -764,15 +817,18 @@ def replay_compare(scenario_path, results_dir):
     project = Path.cwd()
     scenario = load_scenario(scenario_path, project_dir=project)
 
-    base = Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    base = (
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    )
     scenario_dir = base / scenario.id
 
     if not scenario_dir.exists():
         click.echo(f"No results found at {scenario_dir}", err=True)
         raise SystemExit(1)
 
-    # Collect all scored runs
+    # Collect all scored runs (with version metadata)
     all_scores: list[PipelineScore] = []
+    score_versions: dict[int, str] = {}  # run_id -> version tag
     for theme_dir in sorted(scenario_dir.iterdir()):
         if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
             continue
@@ -786,13 +842,30 @@ def replay_compare(scenario_path, results_dir):
             if not chosen.exists():
                 continue
             score_data = yaml.safe_load(chosen.read_text())
+
+            # Extract version tag for grouping
+            fw = score_data.get("framework_version") or {}
+            version_tag = fw.get("tag") or fw.get("commit") or "unknown"
+
+            # Infer run_id and theme from directory path when missing
+            run_id = score_data.get("run_id")
+            if run_id is None:
+                run_name = run_dir.name  # e.g. "run-3"
+                run_id = int(run_name.split("-")[1]) if run_name.startswith("run-") else 0
+            theme = score_data.get("theme", theme_dir.name if theme_dir.name != "control" else None)
+
+            # Use a unique key combining theme + run_id
+            key = hash((theme, run_id))
+            score_versions[key] = version_tag
+
             all_scores.append(
                 PipelineScore(
-                    scenario_id=score_data["scenario_id"],
-                    theme=score_data.get("theme"),
-                    run_id=score_data["run_id"],
+                    scenario_id=score_data.get("scenario_id", scenario.id),
+                    theme=theme,
+                    run_id=run_id,
                     findings=[
-                        FindingScore(**f) for f in score_data.get("findings", [])
+                        FindingScore(**{k: v for k, v in f.items() if k in FindingScore.__dataclass_fields__})
+                        for f in score_data.get("findings", [])
                     ],
                     total_caught=score_data["total_caught"],
                     total_findings=score_data["total_findings"],
@@ -806,12 +879,15 @@ def replay_compare(scenario_path, results_dir):
         click.echo("No scored runs found.", err=True)
         raise SystemExit(1)
 
-    # Print detection heatmap
-    _print_heatmap(scenario, all_scores)
+    if group_by == "framework_version":
+        _print_version_summary(all_scores, score_versions)
+    else:
+        # Print detection heatmap
+        _print_heatmap(scenario, all_scores)
 
-    # Save comparison
-    summary_path = build_comparison_summary(scenario, all_scores, base)
-    click.echo(f"\nSaved comparison to {summary_path}")
+        # Save comparison
+        summary_path = build_comparison_summary(scenario, all_scores, base)
+        click.echo(f"\nSaved comparison to {summary_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -833,10 +909,7 @@ def _print_run_summary(scenario, scores):
     click.echo("\n  Finding detection rates:")
     for gt in scenario.ground_truth:
         caught_count = sum(
-            1
-            for s in scores
-            for f in s.findings
-            if f.finding_id == gt.id and f.caught
+            1 for s in scores for f in s.findings if f.finding_id == gt.id and f.caught
         )
         rate = caught_count / len(scores) * 100
         click.echo(f"    {gt.id}: {caught_count}/{len(scores)} ({rate:.0f}%) — {gt.title}")
@@ -857,10 +930,7 @@ def _print_run_summary(scenario, scores):
     for phase in scenario.phases:
         findings = phase_catches.get(phase, {})
         total = sum(findings.values())
-        detail = ", ".join(
-            f"{fid}({c}/{len(scores)})"
-            for fid, c in sorted(findings.items())
-        )
+        detail = ", ".join(f"{fid}({c}/{len(scores)})" for fid, c in sorted(findings.items()))
         click.echo(f"    {phase:10s}: {total:2d} catches — {detail if detail else 'none'}")
 
 
@@ -914,3 +984,251 @@ def _print_heatmap(scenario, scores):
         mean_pct = sum(s.score_pct for s in theme_scores) / len(theme_scores)
         totals_row += f"{mean_caught:.1f} ({mean_pct:.0f}%)".center(col_w)
     click.echo(totals_row)
+
+
+@replay.command("phase")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--run", "run_num", required=True, type=int, help="Run number to replay against")
+@click.option("--phase", "phase_name", required=True, help="Phase to re-run (e.g. reviewer, tea, dev)")
+@click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
+@click.option("--model", default=None, help="Claude model for the phase agent")
+@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-count", default=3, type=int, help="Number of judge passes (default: 3)")
+@click.option(
+    "--theme", default=None,
+    help="Theme tag for result lookup (default: control)",
+)
+@click.option(
+    "--results-dir", default=None, type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option(
+    "--worktree-base", default="/tmp/pf-replay", type=click.Path(),
+    help="Base directory for git worktrees",
+)
+@click.option(
+    "--project-dir", default=None, type=click.Path(exists=True),
+    help="Project with pennyfarthing installed",
+)
+@click.option(
+    "--output-dir", default=None, type=click.Path(),
+    help="Where results are stored (default: internal/results/pipeline-replay/)",
+)
+def replay_phase(
+    scenario_path, run_num, phase_name, keep_worktree, rejudge,
+    model, judge_model, judge_count, theme, results_dir,
+    worktree_base, project_dir, output_dir,
+):
+    """Re-run a single phase against an existing run's state.
+
+    Useful for testing agent changes without re-running the full pipeline.
+    For example, re-run just the reviewer after fixing a rubber-stamp gate.
+
+    \b
+    Examples:
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --rejudge
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --keep-worktree
+    """
+    from pf.benchmark.pipeline_replay import (
+        compute_run_dir,
+        load_scenario,
+        run_phase_replay,
+    )
+
+    project = Path(project_dir) if project_dir else Path.cwd()
+    wt_base = Path(worktree_base)
+    out_dir = (
+        Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+    base_results = Path(results_dir) if results_dir else out_dir
+
+    scenario = load_scenario(scenario_path, project_dir=project)
+    tag = theme or "control"
+
+    run_dir = compute_run_dir(base_results, scenario.id, tag, run_num)
+    if not run_dir.exists():
+        click.echo(f"Error: run directory not found: {run_dir}", err=True)
+        raise SystemExit(1)
+
+    if phase_name not in scenario.phases:
+        click.echo(
+            f"Error: phase '{phase_name}' not in scenario phases: {scenario.phases}",
+            err=True,
+        )
+        raise SystemExit(1)
+
+    click.echo(f"=== Phase Replay: {scenario.id} / run-{run_num} / {phase_name} ===")
+    click.echo(f"  Run dir:  {run_dir}")
+    click.echo(f"  Phase:    {phase_name}")
+    click.echo(f"  Rejudge:  {'yes' if rejudge else 'no'}")
+    click.echo()
+
+    result = run_phase_replay(
+        scenario,
+        run_dir,
+        phase_name,
+        project_dir=project,
+        worktree_base=wt_base,
+        model=model,
+        keep_worktree=keep_worktree,
+        rejudge=rejudge,
+        judge_model=judge_model,
+        judge_count=judge_count,
+    )
+
+    click.echo()
+    click.echo(f"=== Phase replay complete (retry {result['retry_num']}) ===")
+    if "majority_vote" in result:
+        mv = result["majority_vote"]
+        click.echo(f"  Score: {mv['weighted_caught']}/{mv['total_weight']} ({mv['score_pct']}%)")
+    elif "scores" in result and result["scores"]:
+        sc = result["scores"][0]
+        click.echo(f"  Score: {sc['weighted_caught']}/{sc['total_weight']} ({sc['score_pct']}%)")
+
+
+@replay.command("narrate")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.option("--yes", "skip_confirm", is_flag=True, help="Skip cost confirmation")
+@click.option("--force", is_flag=True, help="Regenerate even if cached")
+@click.option("--finding", default=None, help="Focus on a specific finding ID")
+@click.option("--model", default=None, help="Claude model (default: claude-sonnet-4-6)")
+def replay_narrate(run_dir, skip_confirm, force, finding, model):
+    """Generate an LLM-narrated trace of a pipeline run.
+
+    Produces a narrative.md file explaining what the agent did, what it
+    missed, and why. Costs ~$0.50 per narration.
+
+    \b
+    Examples:
+        pf benchmark replay narrate runs/run-1 --yes
+        pf benchmark replay narrate runs/run-1 --finding I3
+        pf benchmark replay narrate runs/run-1 --force --yes
+    """
+    from pf.benchmark.narrate import generate_narrative
+
+    run_path = Path(run_dir)
+
+    # Load scenario metadata from pipeline.yaml if available
+    pipeline_file = run_path / "pipeline.yaml"
+    scenario_id = "unknown"
+    title = "Pipeline Run"
+    phases = ["tea", "dev", "reviewer"]
+    if pipeline_file.exists():
+        pipeline_data = yaml.safe_load(pipeline_file.read_text())
+        scenario_id = pipeline_data.get("scenario_id", scenario_id)
+        if "phases" in pipeline_data and isinstance(pipeline_data["phases"], dict):
+            phases = list(pipeline_data["phases"].keys())
+
+    # Check cache first
+    narrative_path = run_path / "narrative.md"
+    if narrative_path.exists() and not force:
+        click.echo(f"Cached narrative found: {narrative_path}")
+        click.echo(narrative_path.read_text())
+        return
+
+    # Cost warning
+    click.echo("Narration costs ~$0.50 per run (LLM call).", err=True)
+    if not skip_confirm:
+        if not click.confirm("Proceed?"):
+            return
+
+    click.echo(f"Generating narrative for {run_path.name}...")
+    result_path = generate_narrative(
+        run_path,
+        scenario_id,
+        phases,
+        title,
+        model=model,
+        finding_id=finding,
+        force=force,
+        project_dir=Path.cwd(),
+    )
+    click.echo(f"Narrative saved to {result_path}")
+
+
+@replay.command("backfill-versions")
+@click.option(
+    "--results-dir",
+    default=None,
+    type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option("--tag", default="baseline-pre-edge-hunter", help="Human label for backfilled runs")
+@click.option("--dry-run", is_flag=True, help="Show what would be changed without writing")
+def replay_backfill_versions(results_dir, tag, dry_run):
+    """Backfill framework_version into existing pipeline.yaml and majority_vote.yaml files."""
+    project = Path.cwd()
+    base = (
+        Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+
+    if not base.exists():
+        click.echo(f"Results directory not found: {base}", err=True)
+        raise SystemExit(1)
+
+    from pf import __version__
+
+    default_version = {
+        "commit": "pre-edge-hunter",
+        "semver": __version__,
+        "tag": tag,
+        "agent_hashes": {},
+    }
+
+    updated = 0
+    skipped = 0
+
+    for yaml_file in sorted(base.rglob("pipeline.yaml")):
+        data = yaml.safe_load(yaml_file.read_text())
+        if data.get("framework_version"):
+            skipped += 1
+            continue
+        if dry_run:
+            click.echo(f"  Would backfill: {yaml_file}")
+        else:
+            data["framework_version"] = default_version
+            yaml_file.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
+            click.echo(f"  Backfilled: {yaml_file}")
+        updated += 1
+
+    for yaml_file in sorted(base.rglob("majority_vote.yaml")):
+        data = yaml.safe_load(yaml_file.read_text())
+        if data.get("framework_version"):
+            skipped += 1
+            continue
+        if dry_run:
+            click.echo(f"  Would backfill: {yaml_file}")
+        else:
+            data["framework_version"] = default_version
+            yaml_file.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
+            click.echo(f"  Backfilled: {yaml_file}")
+        updated += 1
+
+    action = "Would update" if dry_run else "Updated"
+    click.echo(f"\n{action} {updated} files, skipped {skipped} (already tagged)")
+
+
+def _print_version_summary(scores, score_versions):
+    """Print a summary table grouped by framework version."""
+    import statistics
+
+    # Group scores by version tag
+    groups: dict[str, list] = {}
+    for s in scores:
+        key = hash((s.theme, s.run_id))
+        version = score_versions.get(key, "unknown")
+        groups.setdefault(version, []).append(s)
+
+    click.echo(f"{'Framework Version':<25} | {'Runs':>5} | {'Median':>7} | {'Mean':>7} | {'StdDev':>7}")
+    click.echo("-" * 65)
+    for version in sorted(groups.keys()):
+        runs = groups[version]
+        pcts = [s.score_pct for s in runs]
+        median = statistics.median(pcts)
+        mean = statistics.mean(pcts)
+        stdev = statistics.stdev(pcts) if len(pcts) > 1 else 0.0
+        click.echo(
+            f"{version:<25} | {len(runs):>5} | {median:>6.1f}% | {mean:>6.1f}% | {stdev:>6.1f}"
+        )

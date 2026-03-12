@@ -35,11 +35,11 @@ STEPS_DIR = WORKFLOW_DIR / "steps"
 
 # The five required topic areas from AC2
 REQUIRED_TOPICS = [
-    "theme",       # theme selection
-    "agent",       # agent activation
-    "workflow",    # workflow basics
-    "sprint",      # sprint commands
-    "config",      # hook/config overview (may also match "hook")
+    "theme",  # theme selection
+    "agent",  # agent activation
+    "workflow",  # workflow basics
+    "sprint",  # sprint commands
+    "config",  # hook/config overview (may also match "hook")
 ]
 
 
@@ -47,8 +47,7 @@ REQUIRED_TOPICS = [
 def workflow_yaml() -> dict:
     """Load and parse the guided-tour workflow YAML."""
     assert WORKFLOW_YAML.exists(), (
-        f"Workflow file not found at {WORKFLOW_YAML}. "
-        "Create guided-tour/workflow.yaml to proceed."
+        f"Workflow file not found at {WORKFLOW_YAML}. Create guided-tour/workflow.yaml to proceed."
     )
     with open(WORKFLOW_YAML) as f:
         data = yaml.safe_load(f)
@@ -67,8 +66,7 @@ def workflow_config(workflow_yaml: dict) -> dict:
 def step_files() -> list[Path]:
     """Collect all step markdown files from the steps directory."""
     assert STEPS_DIR.is_dir(), (
-        f"Steps directory not found at {STEPS_DIR}. "
-        "Create guided-tour/steps/ with step files."
+        f"Steps directory not found at {STEPS_DIR}. Create guided-tour/steps/ with step files."
     )
     files = sorted(STEPS_DIR.glob("step-*.md"))
     assert len(files) > 0, "No step files found in steps directory"
@@ -91,15 +89,11 @@ class TestWorkflowDefinition:
 
     def test_workflow_directory_exists(self) -> None:
         """AC1: guided-tour/ directory should exist under workflows/."""
-        assert WORKFLOW_DIR.is_dir(), (
-            f"Expected workflow directory at {WORKFLOW_DIR}"
-        )
+        assert WORKFLOW_DIR.is_dir(), f"Expected workflow directory at {WORKFLOW_DIR}"
 
     def test_workflow_yaml_exists(self) -> None:
         """AC1: workflow.yaml should exist in guided-tour/."""
-        assert WORKFLOW_YAML.is_file(), (
-            f"Expected workflow.yaml at {WORKFLOW_YAML}"
-        )
+        assert WORKFLOW_YAML.is_file(), f"Expected workflow.yaml at {WORKFLOW_YAML}"
 
     def test_workflow_name_is_guided_tour(self, workflow_config: dict) -> None:
         """AC1: workflow.name should be 'guided-tour'."""
@@ -132,9 +126,7 @@ class TestWorkflowDefinition:
 
     def test_steps_directory_exists(self) -> None:
         """AC1: steps/ directory should exist under guided-tour/."""
-        assert STEPS_DIR.is_dir(), (
-            f"Expected steps directory at {STEPS_DIR}"
-        )
+        assert STEPS_DIR.is_dir(), f"Expected steps directory at {STEPS_DIR}"
 
 
 # ============================================================================
@@ -147,13 +139,9 @@ class TestTopicCoverage:
 
     def test_minimum_step_count(self, step_files: list[Path]) -> None:
         """AC2: Tour should have at least 5 steps (one per topic area)."""
-        assert len(step_files) >= 5, (
-            f"Expected at least 5 step files, found {len(step_files)}"
-        )
+        assert len(step_files) >= 5, f"Expected at least 5 step files, found {len(step_files)}"
 
-    def test_step_files_follow_naming_pattern(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_step_files_follow_naming_pattern(self, step_files: list[Path]) -> None:
         """AC2: Step files should follow step-{nn}-{name}.md pattern."""
         pattern = re.compile(r"^step-\d{2}-.+\.md$")
         for f in step_files:
@@ -195,8 +183,7 @@ class TestTopicCoverage:
         has_hook = "hook" in combined
         has_config = "config" in combined
         assert has_hook or has_config, (
-            "No step file mentions 'hook' or 'config' — "
-            "hook/config overview topic is missing"
+            "No step file mentions 'hook' or 'config' — hook/config overview topic is missing"
         )
 
 
@@ -210,48 +197,37 @@ class TestVerificationGates:
 
     def test_workflow_has_gates_config(self, workflow_config: dict) -> None:
         """AC3: Workflow YAML should define gates configuration."""
-        assert "gates" in workflow_config, (
-            "Workflow must define gates configuration"
-        )
+        assert "gates" in workflow_config, "Workflow must define gates configuration"
 
     def test_gates_has_after_steps(self, workflow_config: dict) -> None:
         """AC3: Gates should specify after_steps list."""
         gates = workflow_config.get("gates", {})
         assert "after_steps" in gates, "Gates must define after_steps list"
-        assert isinstance(gates["after_steps"], list), (
-            "after_steps must be a list"
-        )
+        assert isinstance(gates["after_steps"], list), "after_steps must be a list"
         assert len(gates["after_steps"]) > 0, "after_steps must not be empty"
 
-    def test_step_files_have_gate_sections(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_step_files_have_gate_sections(self, step_files: list[Path]) -> None:
         """AC3: Each step should have a <gate> section with completion criteria."""
         for f in step_files:
             content = f.read_text()
             assert "<gate>" in content, (
-                f"Step {f.name} is missing <gate> section — "
-                "every step needs a verification gate"
+                f"Step {f.name} is missing <gate> section — every step needs a verification gate"
             )
-            assert "</gate>" in content, (
-                f"Step {f.name} has unclosed <gate> tag"
-            )
+            assert "</gate>" in content, f"Step {f.name} has unclosed <gate> tag"
 
-    def test_gate_sections_have_criteria(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_gate_sections_have_criteria(self, step_files: list[Path]) -> None:
         """AC3: Gate sections should contain checkable criteria."""
         for f in step_files:
             content = f.read_text()
             # Extract gate content
-            gate_match = re.search(
-                r"<gate>(.*?)</gate>", content, re.DOTALL
-            )
+            gate_match = re.search(r"<gate>(.*?)</gate>", content, re.DOTALL)
             if gate_match:
                 gate_content = gate_match.group(1)
                 # Should have at least one checkbox or criterion
                 has_checkbox = "- [" in gate_content
-                has_criterion = "criterion" in gate_content.lower() or len(gate_content.strip()) > 10
+                has_criterion = (
+                    "criterion" in gate_content.lower() or len(gate_content.strip()) > 10
+                )
                 assert has_checkbox or has_criterion, (
                     f"Step {f.name} gate section has no checkable criteria"
                 )
@@ -265,19 +241,13 @@ class TestVerificationGates:
 class TestCLIStart:
     """AC4: Tour can be started via /pf-workflow start guided-tour."""
 
-    def test_guided_tour_appears_in_workflow_list(
-        self, runner: CliRunner
-    ) -> None:
+    def test_guided_tour_appears_in_workflow_list(self, runner: CliRunner) -> None:
         """AC4: guided-tour should appear in pf workflow list output."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
-        assert "guided-tour" in result.output, (
-            "guided-tour workflow not found in workflow list"
-        )
+        assert "guided-tour" in result.output, "guided-tour workflow not found in workflow list"
 
-    def test_guided_tour_listed_as_stepped(
-        self, runner: CliRunner
-    ) -> None:
+    def test_guided_tour_listed_as_stepped(self, runner: CliRunner) -> None:
         """AC4: guided-tour should be listed as 'stepped' type."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
@@ -288,12 +258,8 @@ class TestCLIStart:
                 tour_line = line
                 break
 
-        assert tour_line is not None, (
-            "guided-tour not found as a table row in workflow list"
-        )
-        assert "stepped" in tour_line.lower(), (
-            "guided-tour should be listed as 'stepped' type"
-        )
+        assert tour_line is not None, "guided-tour not found as a table row in workflow list"
+        assert "stepped" in tour_line.lower(), "guided-tour should be listed as 'stepped' type"
 
     def test_workflow_show_guided_tour(self, runner: CliRunner) -> None:
         """AC4: pf workflow show guided-tour should display details."""
@@ -310,9 +276,7 @@ class TestCLIStart:
 class TestOnboardingIntegration:
     """AC5: Tour integrates with getting-started guide and welcome nudge."""
 
-    def test_workflow_description_mentions_onboarding(
-        self, workflow_config: dict
-    ) -> None:
+    def test_workflow_description_mentions_onboarding(self, workflow_config: dict) -> None:
         """AC5: Workflow description should reference onboarding or discovery."""
         desc = workflow_config.get("description", "").lower()
         onboarding_terms = ["onboarding", "getting started", "discovery", "new user", "tour"]
@@ -320,9 +284,7 @@ class TestOnboardingIntegration:
             "Workflow description should reference onboarding/discovery"
         )
 
-    def test_step_references_help_command(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_step_references_help_command(self, step_files: list[Path]) -> None:
         """AC5: At least one step should reference /pf-help or getting-started."""
         combined = " ".join(f.read_text() for f in step_files)
         has_help = "/pf-help" in combined
@@ -332,9 +294,7 @@ class TestOnboardingIntegration:
             "integration with onboarding stories is missing"
         )
 
-    def test_workflow_has_onboarding_triggers(
-        self, workflow_config: dict
-    ) -> None:
+    def test_workflow_has_onboarding_triggers(self, workflow_config: dict) -> None:
         """AC5: Workflow should have trigger tags for onboarding discovery."""
         triggers = workflow_config.get("triggers", {})
         tags = triggers.get("tags", [])
@@ -354,9 +314,7 @@ class TestOnboardingIntegration:
 class TestResumability:
     """AC6: Tour is resumable after interruption."""
 
-    def test_steps_have_sequential_numbering(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_steps_have_sequential_numbering(self, step_files: list[Path]) -> None:
         """AC6: Steps should have sequential numbers for resume tracking."""
         numbers = []
         for f in step_files:
@@ -366,22 +324,16 @@ class TestResumability:
 
         # Should be sequential starting from 1
         expected = list(range(1, len(numbers) + 1))
-        assert numbers == expected, (
-            f"Step numbers {numbers} should be sequential {expected}"
-        )
+        assert numbers == expected, f"Step numbers {numbers} should be sequential {expected}"
 
-    def test_steps_have_meta_with_next(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_steps_have_meta_with_next(self, step_files: list[Path]) -> None:
         """AC6: Non-final steps with <step-meta> should have 'next' field.
 
         step-meta is optional — steps without it are skipped.
         """
         for f in step_files[:-1]:  # All except last
             content = f.read_text()
-            meta_match = re.search(
-                r"<step-meta>(.*?)</step-meta>", content, re.DOTALL
-            )
+            meta_match = re.search(r"<step-meta>(.*?)</step-meta>", content, re.DOTALL)
             if not meta_match:
                 continue  # step-meta is optional
             meta_content = meta_match.group(1)
@@ -393,9 +345,7 @@ class TestResumability:
         """AC6: Final step should use 'next: complete' sentinel."""
         final = step_files[-1]
         content = final.read_text()
-        meta_match = re.search(
-            r"<step-meta>(.*?)</step-meta>", content, re.DOTALL
-        )
+        meta_match = re.search(r"<step-meta>(.*?)</step-meta>", content, re.DOTALL)
         assert meta_match, f"Final step {final.name} missing <step-meta>"
         meta_content = meta_match.group(1)
         assert "next: complete" in meta_content, (
@@ -411,39 +361,27 @@ class TestResumability:
 class TestProgressVisibility:
     """AC7: Tour progress is visible via /pf-workflow status guided-tour."""
 
-    def test_workflow_has_collaboration_menus(
-        self, workflow_config: dict
-    ) -> None:
+    def test_workflow_has_collaboration_menus(self, workflow_config: dict) -> None:
         """AC7: Workflow should define collaboration menus for user interaction."""
         collab = workflow_config.get("collaboration", {})
         menus = collab.get("menus", [])
-        assert len(menus) > 0, (
-            "Workflow should define collaboration menus"
-        )
+        assert len(menus) > 0, "Workflow should define collaboration menus"
 
-    def test_collaboration_has_continue_option(
-        self, workflow_config: dict
-    ) -> None:
+    def test_collaboration_has_continue_option(self, workflow_config: dict) -> None:
         """AC7: Collaboration menus should include a Continue option."""
         collab = workflow_config.get("collaboration", {})
         menus = collab.get("menus", [])
         menu_names = [m.get("name", "").lower() for m in menus]
-        assert "continue" in menu_names, (
-            "Collaboration menus should include a 'Continue' option"
-        )
+        assert "continue" in menu_names, "Collaboration menus should include a 'Continue' option"
 
-    def test_steps_have_step_meta_number(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_steps_have_step_meta_number(self, step_files: list[Path]) -> None:
         """AC7: Steps with <step-meta> should include a step number.
 
         step-meta is optional — steps without it are skipped.
         """
         for f in step_files:
             content = f.read_text()
-            meta_match = re.search(
-                r"<step-meta>(.*?)</step-meta>", content, re.DOTALL
-            )
+            meta_match = re.search(r"<step-meta>(.*?)</step-meta>", content, re.DOTALL)
             if not meta_match:
                 continue  # step-meta is optional
             meta_content = meta_match.group(1)
@@ -464,21 +402,15 @@ class TestStepStructure:
         """Steps should have <purpose> sections."""
         for f in step_files:
             content = f.read_text()
-            assert "<purpose>" in content, (
-                f"Step {f.name} missing <purpose> section"
-            )
+            assert "<purpose>" in content, f"Step {f.name} missing <purpose> section"
 
     def test_steps_have_instructions(self, step_files: list[Path]) -> None:
         """Steps should have <instructions> sections."""
         for f in step_files:
             content = f.read_text()
-            assert "<instructions>" in content, (
-                f"Step {f.name} missing <instructions> section"
-            )
+            assert "<instructions>" in content, f"Step {f.name} missing <instructions> section"
 
-    def test_steps_have_collaboration_menu_or_switch(
-        self, step_files: list[Path]
-    ) -> None:
+    def test_steps_have_collaboration_menu_or_switch(self, step_files: list[Path]) -> None:
         """Steps should have <collaboration-menu> or <switch> sections.
 
         <switch> with attributes (e.g. <switch tool="AskUserQuestion">) replaces
@@ -496,6 +428,4 @@ class TestStepStructure:
         """Steps should start with a markdown H1 title."""
         for f in step_files:
             content = f.read_text().strip()
-            assert content.startswith("# "), (
-                f"Step {f.name} should start with '# Title'"
-            )
+            assert content.startswith("# "), f"Step {f.name} should start with '# Title'"

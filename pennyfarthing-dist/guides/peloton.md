@@ -228,10 +228,17 @@ repo:
   base_commit: abc123def456         # Commit BEFORE the pipeline ran
   branch: feature/story-N.N-name   # Branch the PR was on
 
+## Context — Sprint (has epic+story docs from pennyfarthing orchestrator)
 context:
   epic: sprint/context/context-epic-N.md
   story: sprint/context/context-story-N-N.md
   session_archive: sprint/archive/DPGD-XXX-session.md  # optional
+
+## Context — Repo (pre-framework PRs, external repos without sprint docs)
+# context:
+#   claude_md: CLAUDE.md            # Relative to repo root (resolved via roots.repo)
+# roots:
+#   repo: ../../../../../poller-orc/poller-cobra  # Relative to scenario file
 
 phases: [tea, dev, reviewer]
 

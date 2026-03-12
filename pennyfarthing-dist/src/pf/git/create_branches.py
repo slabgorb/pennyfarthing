@@ -133,9 +133,7 @@ async def create_or_checkout_branch(
 
         if local_rc == 0:
             # Branch exists locally, check it out
-            _, _, checkout_rc = await _run_git_command(
-                ["checkout", branch_name], path
-            )
+            _, _, checkout_rc = await _run_git_command(["checkout", branch_name], path)
             if checkout_rc != 0:
                 return BranchResult(
                     name=name,
@@ -169,18 +167,14 @@ async def create_or_checkout_branch(
             else:
                 # Branch doesn't exist, create from develop
                 # First ensure we have develop
-                await _run_git_command(
-                    ["fetch", "origin", "develop:develop", "--quiet"], path
-                )
+                await _run_git_command(["fetch", "origin", "develop:develop", "--quiet"], path)
 
                 # Checkout develop
                 await _run_git_command(["checkout", "develop", "--quiet"], path)
                 await _run_git_command(["pull", "origin", "develop", "--quiet"], path)
 
                 # Create new branch
-                _, _, create_rc = await _run_git_command(
-                    ["checkout", "-b", branch_name], path
-                )
+                _, _, create_rc = await _run_git_command(["checkout", "-b", branch_name], path)
                 if create_rc != 0:
                     return BranchResult(
                         name=name,
@@ -192,14 +186,10 @@ async def create_or_checkout_branch(
                 action = BranchAction.CREATED
 
         # Get current branch for verification
-        current_branch, _, _ = await _run_git_command(
-            ["branch", "--show-current"], path
-        )
+        current_branch, _, _ = await _run_git_command(["branch", "--show-current"], path)
 
         # Get latest commit info
-        commit_info, _, _ = await _run_git_command(
-            ["log", "-1", "--format=%h - %s"], path
-        )
+        commit_info, _, _ = await _run_git_command(["log", "-1", "--format=%h - %s"], path)
 
         # Get tracking info
         tracking, _, tracking_rc = await _run_git_command(
@@ -279,6 +269,7 @@ def detect_worktree(current_dir: Path | None = None) -> tuple[bool, str | None, 
     # Not in a worktree
     try:
         from pf.common.config import get_project_root
+
         base_path = get_project_root(current_dir)
     except FileNotFoundError:
         base_path = current_dir
@@ -331,7 +322,10 @@ def format_results(results: Sequence[BranchResult], branch_name: str) -> str:
     lines.append("━" * 50)
 
     success_count = sum(
-        1 for r in results if r.action in (
+        1
+        for r in results
+        if r.action
+        in (
             BranchAction.CREATED,
             BranchAction.CHECKED_OUT_LOCAL,
             BranchAction.CHECKED_OUT_REMOTE,

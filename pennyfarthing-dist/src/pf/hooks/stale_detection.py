@@ -50,7 +50,9 @@ def _extract_commands(hooks: dict) -> set[tuple[str, str, str | None]]:
     return result
 
 
-def _find_missing_infrastructure(installed_commands: set[tuple[str, str, str | None]]) -> list[dict]:
+def _find_missing_infrastructure(
+    installed_commands: set[tuple[str, str, str | None]],
+) -> list[dict]:
     """Find infrastructure hooks not present in installed settings."""
     # Build set of (event, command) from installed — ignore matcher for matching
     installed_event_commands: set[tuple[str, str]] = {
@@ -167,9 +169,7 @@ def detect_stale_hooks(
 
     missing_frontmatter: list[dict] = []
     if dist_root is not None:
-        missing_frontmatter = _find_missing_frontmatter(
-            installed_commands, dist_root
-        )
+        missing_frontmatter = _find_missing_frontmatter(installed_commands, dist_root)
 
     stale = bool(missing_infra or missing_frontmatter or deprecated)
     summary = _build_summary(missing_infra, missing_frontmatter, deprecated)

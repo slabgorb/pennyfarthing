@@ -28,9 +28,7 @@ def format_outdated_table(packages: list[OutdatedPackage]) -> str:
 
     lines = [hdr, sep]
     for p in packages:
-        lines.append(
-            f"{p.name:<30}  {p.current:<12}  {p.wanted:<12}  {p.latest:<12}  {p.type}"
-        )
+        lines.append(f"{p.name:<30}  {p.current:<12}  {p.wanted:<12}  {p.latest:<12}  {p.type}")
     return "\n".join(lines)
 
 

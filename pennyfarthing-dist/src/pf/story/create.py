@@ -134,7 +134,9 @@ def main(args: list[str] | None = None) -> int:
     parser.add_argument("epic_id", help="Parent epic ID")
     parser.add_argument("title", help="Story title")
     parser.add_argument("points", type=int, help="Story points")
-    parser.add_argument("--type", choices=["feature", "bug", "refactor", "chore"], default="feature")
+    parser.add_argument(
+        "--type", choices=["feature", "bug", "refactor", "chore"], default="feature"
+    )
     parser.add_argument("--priority", choices=["P0", "P1", "P2", "P3"], default="P2")
     parser.add_argument("--workflow", help="Override workflow")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be created")
@@ -164,4 +166,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

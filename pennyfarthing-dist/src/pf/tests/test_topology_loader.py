@@ -88,9 +88,7 @@ def full_project(tmp_path: Path) -> Path:
     pf_dir.mkdir()
 
     # repos.yaml with topology
-    (pf_dir / "repos.yaml").write_text(
-        yaml.dump(VALID_REPOS_YAML, default_flow_style=False)
-    )
+    (pf_dir / "repos.yaml").write_text(yaml.dump(VALID_REPOS_YAML, default_flow_style=False))
 
     # Agent definition
     agents_dir = pf_dir / "agents"
@@ -112,13 +110,7 @@ def full_project(tmp_path: Path) -> Path:
     themes_dir = pf_dir / "personas" / "themes"
     themes_dir.mkdir(parents=True)
     (themes_dir / "test.yaml").write_text(
-        yaml.dump(
-            {
-                "agents": {
-                    "dev": {"character": "Dev", "style": "s", "role": "r"}
-                }
-            }
-        )
+        yaml.dump({"agents": {"dev": {"character": "Dev", "style": "s", "role": "r"}}})
     )
 
     # Sprint
@@ -131,9 +123,7 @@ def full_project(tmp_path: Path) -> Path:
     # Session
     session_dir = tmp_path / ".session"
     session_dir.mkdir()
-    (session_dir / "test-session.md").write_text(
-        "# Test Session\n\n- **Phase:** green"
-    )
+    (session_dir / "test-session.md").write_text("# Test Session\n\n- **Phase:** green")
 
     return tmp_path
 
@@ -315,9 +305,7 @@ class TestFullTierTopology:
         assert "repos_topology" in token_counts
         assert token_counts["repos_topology"] > 0
 
-    def test_full_tier_text_output_includes_topology(
-        self, full_project: Path, capsys
-    ) -> None:
+    def test_full_tier_text_output_includes_topology(self, full_project: Path, capsys) -> None:
         """Test FULL tier text output includes topology section."""
         from pf.prime.cli import prime
 
@@ -351,9 +339,7 @@ class TestFullTierTopology:
 class TestJSONTopologyOutput:
     """Tests that JSON output includes topology in components list (AC3)."""
 
-    def test_json_output_has_topology_component(
-        self, full_project: Path, capsys
-    ) -> None:
+    def test_json_output_has_topology_component(self, full_project: Path, capsys) -> None:
         """Test JSON output includes topology in components list."""
         import json
 
@@ -384,9 +370,7 @@ class TestJSONTopologyOutput:
         component_names = [c["name"] for c in data.get("components", [])]
         assert "repos_topology" in component_names
 
-    def test_json_topology_component_has_tokens(
-        self, full_project: Path, capsys
-    ) -> None:
+    def test_json_topology_component_has_tokens(self, full_project: Path, capsys) -> None:
         """Test JSON topology component has token count."""
         import json
 
@@ -420,9 +404,7 @@ class TestJSONTopologyOutput:
         assert topology_component is not None
         assert topology_component["tokens"] > 0
 
-    def test_json_topology_component_has_source(
-        self, full_project: Path, capsys
-    ) -> None:
+    def test_json_topology_component_has_source(self, full_project: Path, capsys) -> None:
         """Test JSON topology component has source path."""
         import json
 
@@ -536,12 +518,8 @@ class TestTopologyTokenCounting:
         topology_tokens = token_counts.get("repos_topology", 0)
 
         # Two repos with topology fields should be 100-500 tokens
-        assert topology_tokens >= 50, (
-            f"Topology too small: {topology_tokens} tokens"
-        )
-        assert topology_tokens <= 500, (
-            f"Topology too large: {topology_tokens} tokens"
-        )
+        assert topology_tokens >= 50, f"Topology too small: {topology_tokens} tokens"
+        assert topology_tokens <= 500, f"Topology too large: {topology_tokens} tokens"
 
     def test_topology_included_in_total_tokens(self, full_project: Path) -> None:
         """Test topology tokens are included in total_tokens sum."""

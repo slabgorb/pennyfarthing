@@ -45,9 +45,7 @@ def _get_worktree_root(project_root: Path | None = None) -> Path:
     return project_root / "worktrees"
 
 
-def _filter_repos(
-    repos: dict[str, object], filter_str: str
-) -> list[str]:
+def _filter_repos(repos: dict[str, object], filter_str: str) -> list[str]:
     """Filter repo names by type or comma-separated list."""
     from pf.git.repos import RepoConfig
 
@@ -277,7 +275,11 @@ def show_worktree_status() -> int:
             if repo_wt.exists():
                 branch, _ = _git(["branch", "--show-current"], repo_wt)
                 status_out, _ = _git(["status", "--short"], repo_wt)
-                count = len([line for line in status_out.split("\n") if line.strip()]) if status_out else 0
+                count = (
+                    len([line for line in status_out.split("\n") if line.strip()])
+                    if status_out
+                    else 0
+                )
                 print(f"  {repo_name} ({cfg.repo_type}): {branch} ({count} uncommitted)")
 
         # Check for session files referencing this worktree

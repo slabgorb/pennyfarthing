@@ -29,6 +29,14 @@ pf <command> [args...]
 
 ---
 
+<plan-mode>
+## Plan Mode
+
+To hand off plan execution to a different agent: `echo "dev" > .session/.plan-exit-agent` before entering plan mode. The `plan-exit-reload` hook consumes the file on exit and loads that agent automatically. Omit the file to reload the current phase owner. See `guides/plan-mode.md` for details.
+</plan-mode>
+
+---
+
 ## Reference
 
 <info>
@@ -41,6 +49,8 @@ pf <command> [args...]
 **Subagents:** Include skill paths in prompts - they don't auto-load.
 
 **Dogfooding:** Write to `pennyfarthing-dist/` not `.claude/` (symlink issue).
+
+**tmux:** Use `pf tmux run <cmd>` for worker panes. See `guides/tmux-panes.md`. Never use raw `tmux send-keys`.
 </info>
 
 **Exit:** Each agent's `<exit>` section defines the handoff sequence. See `guides/handoff-cli.md` for the full protocol.
