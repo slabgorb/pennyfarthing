@@ -909,6 +909,22 @@ The reviewer has requested changes. Review the feedback below and implement the 
 """
 
 
+_REVIEWER_MIN_OUTPUT_TOKENS = 200  # ~150 words minimum for a real review
+
+
+def _is_reviewer_rubber_stamp(output_text: str) -> bool:
+    """Detect whether reviewer output is a rubber stamp.
+
+    Returns ``True`` when the reviewer approved without engaging with the
+    subagent findings — output too short to contain a real review.
+    """
+    if not _REVIEWER_APPROVE_RE.search(output_text):
+        return False  # Only check approvals
+    # Split on whitespace to approximate token count
+    word_count = len(output_text.split())
+    return word_count < _REVIEWER_MIN_OUTPUT_TOKENS
+
+
 def _detect_reviewer_rejection(output_text: str) -> bool:
     """Detect whether reviewer output indicates a rejection.
 
@@ -1348,7 +1364,30 @@ def run_pipeline(
             elif role == "reviewer":
                 task_prompt = _build_reviewer_task_prompt(task_prompt)
 
-            _run_single_phase(role, task_prompt)
+            phase_result = _run_single_phase(role, task_prompt)
+
+            # Rubber-stamp gate: if reviewer approved with trivially short
+            # output, it ignored the subagent findings.  Retry once with an
+            # explicit instruction to engage.
+            if (
+                role == "reviewer"
+                and not is_bmad
+                and phase_result is not None
+                and _is_reviewer_rubber_stamp(phase_result.output_text)
+            ):
+                print("  [GATE] Reviewer rubber-stamped — retrying with explicit engagement instruction")
+                retry_prompt = (
+                    task_prompt
+                    + "\n\n## CRITICAL: Engage With Subagent Findings\n\n"
+                    "Your previous review was rejected by the quality gate "
+                    "because it did not engage with the subagent findings above. "
+                    "You MUST:\n"
+                    "1. Address EACH subagent's findings individually — confirm or dismiss with rationale\n"
+                    "2. List all confirmed findings with severity and affected files\n"
+                    "3. Your output must be a thorough review, not a summary dismissal\n"
+                    "4. End with VERDICT: APPROVE or VERDICT: REJECT\n"
+                )
+                phase_result = _run_single_phase("reviewer", retry_prompt, phase_key="reviewer")
 
         # Kick-back loop: if reviewer rejected and rework cycles are enabled
         if max_rework_cycles > 0 and "reviewer" in result.phases:
