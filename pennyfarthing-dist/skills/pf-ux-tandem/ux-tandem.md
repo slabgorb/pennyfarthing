@@ -1,5 +1,5 @@
 ---
-name: pf-ux-tandem
+name: ux-tandem
 description: Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
 ---
 

@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Captain
   portrait_style: ", 1960s Starfleet, bold primary uniforms, retro-futuristic lighting, Kirk-era heroic"
-  tier: A
+  tier: D
+  optimized: true
   spinner_verbs:
     - Beaming up
     - Boldly going

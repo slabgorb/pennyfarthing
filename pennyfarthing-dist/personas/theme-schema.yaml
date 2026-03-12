@@ -85,8 +85,8 @@ theme_section:
     type: enum
     values: [S, A, B, C, D, U]
     description: >
-      Theme quality tier.
-      S=exceptional, A=strong, B=solid, C=adequate, D=minimal, U=unranked
+      Theme quality tier based on DPGD-116 pipeline replay benchmark (weighted avg score_pct).
+      S=≥60%, A=≥55%, B=≥50%, C=≥45%, D=<45%, U=no benchmark data
 
   dimensions:
     required: true

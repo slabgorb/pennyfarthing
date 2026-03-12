@@ -17,6 +17,7 @@ theme:
   user_title: Partner
   portrait_style: ", gritty urban screenprinted-poster style, Baltimore street scenes"
   tier: S
+  optimized: true
   spinner_verbs:
     - Corner watching
     - Working the wire

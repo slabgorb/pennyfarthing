@@ -283,6 +283,13 @@ validate-subagents:
 validate-sprint *args:
     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.sprint.validator {{args}}
 
+<<<<<<< HEAD
+# Check if wheelhub.mjs bundle is stale vs TypeScript source
+check-bundle-drift:
+    ./scripts/check-bundle-drift.sh
+
+=======
+>>>>>>> origin/develop
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
 
